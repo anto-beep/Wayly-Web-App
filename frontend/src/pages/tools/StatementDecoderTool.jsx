@@ -4,6 +4,7 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { api } from "@/lib/api";
 import { Upload, Loader2, AlertTriangle, Check, ArrowRight, Sparkles } from "lucide-react";
+import EmailResultButton from "@/components/EmailResultButton";
 
 const SAMPLE = `BlueBerry Care — Monthly Statement
 For: Dorothy Anderson · April 2026
@@ -174,11 +175,18 @@ export default function StatementDecoderTool() {
                                 <p className="text-sm text-muted-k mt-1">Kindred watches every statement, alerts you when something's off, and tracks your quarterly budget across all three streams.</p>
                                 <div className="mt-3 flex items-center gap-3 flex-wrap">
                                     <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]" data-testid="decoder-upgrade">
-                                        Start free 30-day trial
+                                        Start free 14-day trial
                                     </Link>
                                     <Link to="/ai-tools/budget-calculator" className="text-sm text-primary-k underline inline-flex items-center gap-1">
                                         Calculate your budget <ArrowRight className="h-3.5 w-3.5" />
                                     </Link>
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-kindred">
+                                    <EmailResultButton
+                                        tool="Statement Decoder"
+                                        headline={result.summary?.slice(0, 200) || "Your statement, decoded"}
+                                        bodyHtml={`<h3 style="font-family:Georgia,serif;color:#1F3A5F">Plain-English summary</h3><p>${(result.summary || "").replace(/</g, "&lt;")}</p><h3 style="font-family:Georgia,serif;color:#1F3A5F;margin-top:24px">Line items</h3><ul>${(result.line_items || []).map(li => `<li>${li.date} — ${li.service_name} (${li.stream}) — $${(li.total || 0).toFixed(2)}</li>`).join("")}</ul>${(result.anomalies || []).length ? `<h3 style="font-family:Georgia,serif;color:#C5734D;margin-top:24px">Things to check</h3><ul>${(result.anomalies || []).map(a => `<li><strong>${a.title}</strong> — ${a.detail}${a.suggested_action ? ` → <em>${a.suggested_action}</em>` : ""}</li>`).join("")}</ul>` : ""}`}
+                                    />
                                 </div>
                             </div>
                         </div>

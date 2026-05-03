@@ -51,6 +51,26 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Iteration 2: 32/32 backend pytest (added 11 public‑tool tests), all marketing + tool + auth flows.
 - Iteration 3: 11/11 new backend + full regression on 8 public tool endpoints + cathy login. Frontend: 100% — all routes, plan‑gating, contact intents, role toggle, login regression.
 
+## Implemented (Iteration 4 — Feb 2026 · Wrapper, Email, Plans, Dashboards, Resources)
+- **Public Tool Wrapper** (Claude Haiku 4.5 — `claude-haiku-4-5-20251001`) wired in front of every free-text public endpoint: Statement Decoder (text + file), Reassessment Letter, Care Plan Reviewer, Family Coordinator chat. Performs PII redaction (deterministic regex local pass + Haiku LLM extra pass), abuse/distress classification (clinical / financial / distress / manipulation) with short-circuit responses. Defence in depth: never trusts LLM to "un-redact" — always re-runs local regex on whatever Haiku returns. Surfaces `redaction_notice` + `redaction_count` on responses.
+- **Resend email service** (`/app/backend/email_service.py`) with graceful no-op fallback. When `RESEND_API_KEY` starts with `re_demo_` / `re_test_` or is absent, sends are logged to stdout and return `{ok:true, mocked:true}`. When a real key is present, emails go live without code change.
+- **Two new endpoints**: `POST /api/public/email-result` (email-my-result for the public tools, with HTML‑sanitised body) · contact form now triggers `email_service.notify_team_contact` to ping the team inbox.
+- **Tool prompt refactor**: Reassessment Letter, Care Plan Reviewer, Family Coordinator now require gender‑neutral language (no "Mum" default), explicit refusal rules (no provider recommendations, no clinical or financial‑product advice), and source‑grounded answers ("never invent dollar figures, dates, or section numbers"). Family Coordinator tone: "the friendliest, most patient, most well‑informed niece in Australia".
+- **`EmailResultButton` component** wired into Statement Decoder + Reassessment Letter (the highest‑intent results). Captures email at the moment of value delivery → fires `/api/public/email-result`.
+- **Plan picker on signup** (`/signup`): 3 plans (Free / Solo / Family — Lifetime tier removed entirely). URL parameter support (`/signup?plan=solo`). Plan stored on user (`user.plan`). New `PUT /api/auth/plan` endpoint.
+- **Plan‑conditional Caregiver Dashboard**: Free plan sees a paywall card only (FreePlanLimitCard with "Compare plans" CTA) — no household onboarding required for free users. Solo sees stream cards, lifetime cap, alerts, recent statements, AI chat preview, audit log. Family adds family thread preview + Sunday digest hint. Solo plan gets an "upgrade to Family" nudge.
+- **`Contact` added to main marketing nav** (desktop + mobile menus).
+- **Lifetime tier removed everywhere**: Pricing.jsx (3 columns now), Features.jsx plan matrix (3 columns), all comparison tables and FAQ.
+- **In‑app Layout plan badge** chip in the header that links to /pricing for plan changes.
+- **Resources hub**: `/resources`, `/resources/glossary` (37 terms with live search), `/resources/templates` (6 templates), `/resources/articles` (10 pillar articles) and `/resources/articles/:slug` (full article view with up‑next nav). Static content registry at `/app/frontend/src/data/resources.js` — editorial team can extend without backend changes.
+
+## Test status
+- Iteration 1: 21/21 backend pytest, all frontend flows.
+- Iteration 2: 32/32 backend pytest (added 11 public‑tool tests), all marketing + tool + auth flows.
+- Iteration 3: 11/11 new backend + full regression. Frontend 100%.
+- Iteration 4: 17/18 backend (1 critical wrapper-not-wired bug → fixed in iteration 5). Frontend 100%.
+- Iteration 5: 4/4 critical-path backend tests pass after the wrapper fix.
+
 ## Backlog (P0/P1)
 - P0: Wire the **Public Tool Wrapper** (Claude Haiku 4.5) in front of every public tool endpoint — PII redaction, abuse/distress check, route classification. Spec lives in `/app/memory/EMERGENT_PROMPT.md` §4.
 - P0: Refactor each public tool prompt to the v2 spec in `EMERGENT_PROMPT.md` §5 (output structure, refusal rules, conversion CTA, inclusive language).

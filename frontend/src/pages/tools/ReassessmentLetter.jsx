@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import EmailResultButton from "@/components/EmailResultButton";
 
 export default function ReassessmentLetter() {
     const { user } = useAuth();
@@ -99,7 +100,14 @@ export default function ReassessmentLetter() {
                         <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
                             <div className="font-medium text-primary-k">Want Kindred to track the response?</div>
                             <p className="text-sm text-muted-k mt-1">Paid plans watch for the My Aged Care reply, log it to your audit trail, and walk you through the next steps.</p>
-                            <Link to="/signup" className="mt-3 inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
+                            <div className="mt-3 flex items-center gap-3 flex-wrap">
+                                <Link to="/signup" className="inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
+                                <EmailResultButton
+                                    tool="Reassessment Letter"
+                                    headline={`Reassessment letter for ${form.participant_name || "[Participant]"}`}
+                                    bodyHtml={`<p style="margin:0 0 12px;color:#555;font-size:13px">Draft reassessment letter to My Aged Care:</p><pre style="white-space:pre-wrap;font-family:Georgia,serif;color:#1F3A5F;background:#FAF7F2;padding:16px;border-radius:8px;border:1px solid #e5dfd2">${(letter || "").replace(/</g, "&lt;")}</pre>`}
+                                />
+                            </div>
                         </div>
                     </div>
                 )}

@@ -34,6 +34,10 @@ import Demo from "@/pages/Demo";
 import Contact from "@/pages/Contact";
 import ForAdvisors from "@/pages/ForAdvisors";
 import ForGPs from "@/pages/ForGPs";
+import ResourcesIndex from "@/pages/resources/ResourcesIndex";
+import Glossary from "@/pages/resources/Glossary";
+import Templates from "@/pages/resources/Templates";
+import ArticlesIndex, { ArticleDetail } from "@/pages/resources/Articles";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -74,6 +78,11 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/for-advisors" element={<ForAdvisors />} />
                     <Route path="/for-gps" element={<ForGPs />} />
+                    <Route path="/resources" element={<ResourcesIndex />} />
+                    <Route path="/resources/glossary" element={<Glossary />} />
+                    <Route path="/resources/templates" element={<Templates />} />
+                    <Route path="/resources/articles" element={<ArticlesIndex />} />
+                    <Route path="/resources/articles/:slug" element={<ArticleDetail />} />
                     <Route path="/ai-tools" element={<AIToolsIndex />} />
                     <Route path="/ai-tools/statement-decoder" element={<StatementDecoderTool />} />
                     <Route path="/ai-tools/budget-calculator" element={<BudgetCalculatorTool />} />
