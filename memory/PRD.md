@@ -36,10 +36,24 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Crisis resources surfaced site-wide: 1800 ELDERHelp 1800 353 374, OPAN 1800 700 600, Beyond Blue 1300 22 4636, Lifeline 13 11 14.
 - Brand re-skin to navy/gold across both marketing and product.
 
+## Implemented (Iteration 3 — Feb 2026 · routing, plan‑gating, Book‑a‑Demo)
+- All 8 AI tool pages now reachable under `/ai-tools/<slug>` (5 newly wired routes); `/features`, `/demo`, `/contact`, `/for-advisors`, `/for-gps` also wired in `App.js`.
+- New `/features` page with sticky tab nav (AI Tools · Wedge · Caregiver · Participant · Family · Trust), card grid for every capability, plan‑comparison matrix, dual CTA (`Start free trial` + `Book a demo`).
+- Plan‑gating UX: `Free` badge on Statement Decoder + Budget Calculator; `Solo+` badge on the other 6. New `UpgradeGate.jsx` component renders above the form on the 6 Solo+ tools when no user is signed in (visible upsell — endpoints remain public this phase).
+- AIToolsIndex no longer shows any "Soon" labels; every card links live.
+- `/contact?intent=demo` swaps the simple form for a richer Book‑a‑Demo intake: phone, size, biggest_pain (required), success_in_six_months, preferred_time chips (morning/lunch/afternoon/evening). Default `/contact` keeps the simple form.
+- New backend endpoint `POST /api/contact` with `EmailStr` validation; persists to `db.contact_requests`. Returns `{ok, intent}`.
+- Inclusive‑language scrub: removed default "Mum" wording from Landing persona blurbs, FAQ, ReassessmentLetter and ContributionEstimator placeholders, Demo digest. Named persona Dorothy retained.
+- Master Emergent build prompt v3 saved at `/app/memory/EMERGENT_PROMPT.md` (full spec for Public Tool Wrapper, all 8 tool prompts, plan‑gating ladder, page‑by‑page IA, brand and acceptance criteria).
+
+## Test status
+- Iteration 1: 21/21 backend pytest, all frontend flows.
+- Iteration 2: 32/32 backend pytest (added 11 public‑tool tests), all marketing + tool + auth flows.
+- Iteration 3: 11/11 new backend + full regression on 8 public tool endpoints + cathy login. Frontend: 100% — all routes, plan‑gating, contact intents, role toggle, login regression.
+
 ## Backlog (P0/P1)
-- P0: 5 remaining AI tools (Classification Self-Check, Reassessment Letter, Contribution Estimator, Care Plan Reviewer, Family Care Coordinator chat).
-- P0: `/demo` — interactive sample household (Dorothy Anderson preset).
-- P0: `/for-advisors` and `/for-gps` vertical landing pages.
+- P0: Wire the **Public Tool Wrapper** (Claude Haiku 4.5) in front of every public tool endpoint — PII redaction, abuse/distress check, route classification. Spec lives in `/app/memory/EMERGENT_PROMPT.md` §4.
+- P0: Refactor each public tool prompt to the v2 spec in `EMERGENT_PROMPT.md` §5 (output structure, refusal rules, conversion CTA, inclusive language).
 - P0: Resources hub — blog index, glossary, templates library, 10 launch pillar articles.
 - P0: Multi-user households (invite siblings as secondary caregivers).
 - P0: Real calendar agent (replace mocked appointment).

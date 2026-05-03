@@ -11,7 +11,7 @@ from typing import List, Optional
 from collections import defaultdict
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Request, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
@@ -928,7 +928,7 @@ async def root():
 # ---------------------------------------------------------------------------
 class ContactBody(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     phone: Optional[str] = None
     role: str
     intent: str = "general"        # "general" | "demo"
