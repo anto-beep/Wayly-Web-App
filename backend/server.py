@@ -716,6 +716,208 @@ async def public_price_check(body: PublicPriceBody, request: Request):
     }
 
 
+# ---- Tool 4: Classification self-check (12-question quiz) ----
+class PublicClassificationBody(BaseModel):
+    answers: List[int] = Field(min_length=12, max_length=12)  # each 0-4
+    current_classification: int | None = None
+
+
+@api.post("/public/classification-check")
+async def public_classification_check(body: PublicClassificationBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    if not all(0 <= a <= 4 for a in body.answers):
+        raise HTTPException(status_code=400, detail="Each answer must be 0–4")
+    score = sum(body.answers)  # 0..48
+    # Map to classification range
+    if score <= 6:
+        low, high = 1, 2
+    elif score <= 12:
+        low, high = 2, 3
+    elif score <= 18:
+        low, high = 3, 4
+    elif score <= 24:
+        low, high = 4, 5
+    elif score <= 30:
+        low, high = 5, 6
+    elif score <= 36:
+        low, high = 6, 7
+    else:
+        low, high = 7, 8
+    annual_low = budget_lib.CLASSIFICATIONS[low]["annual"]
+    annual_high = budget_lib.CLASSIFICATIONS[high]["annual"]
+    suggest_reassess = body.current_classification is not None and (
+        body.current_classification < low or body.current_classification > high + 1
+    )
+    return {
+        "score": score,
+        "score_max": 48,
+        "likely_low": low,
+        "likely_high": high,
+        "likely_label": f"Classification {low}" if low == high else f"Classification {low}–{high}",
+        "annual_range": [annual_low, annual_high],
+        "current_classification": body.current_classification,
+        "suggest_reassessment": suggest_reassess,
+        "caveat": "This is informational only. Only the My Aged Care Independent Assessment Tool (IAT) determines the actual classification.",
+    }
+
+
+# ---- Tool 5: Reassessment letter drafter ----
+class PublicReassessmentBody(BaseModel):
+    participant_name: str = Field(min_length=1, max_length=120)
+    current_classification: int = Field(ge=1, le=8)
+    changes_summary: str = Field(min_length=10, max_length=4000)
+    recent_events: str | None = None
+    sender_name: str = Field(min_length=1, max_length=120)
+    relationship: str | None = "family caregiver"
+
+
+@api.post("/public/reassessment-letter")
+async def public_reassessment_letter(body: PublicReassessmentBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail="LLM unavailable")
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    system = (
+        "You are a paperwork drafter for Australian Support at Home. Draft a polite, factual "
+        "reassessment request letter to My Aged Care. Australian English. 250–400 words. "
+        "Plain professional tone. Use the participant's name and the sender's name. "
+        "Reference Aged Care Act 2024 framework where relevant. End with a specific request "
+        "and a 14-day response timeframe. Output ONLY the letter body — no preamble, no markdown."
+    )
+    chat = LlmChat(
+        api_key=key, session_id=f"reassess-{datetime.now(timezone.utc).timestamp()}",
+        system_message=system,
+    ).with_model("anthropic", "claude-sonnet-4-5-20250929")
+    prompt = (
+        f"Participant: {body.participant_name}\n"
+        f"Current classification: Classification {body.current_classification}\n"
+        f"What's changed: {body.changes_summary}\n"
+        f"Recent events: {body.recent_events or 'none specified'}\n"
+        f"Letter sender: {body.sender_name} ({body.relationship or 'family caregiver'})"
+    )
+    letter = await chat.send_message(UserMessage(text=prompt))
+    return {"letter": letter.strip(), "word_count": len(letter.split())}
+
+
+# ---- Tool 6: Contribution estimator ----
+PENSION_RATES = {
+    "full":      {"clinical": 0.0, "independence": 0.05, "everyday_living": 0.175},
+    "part":      {"clinical": 0.0, "independence": 0.175, "everyday_living": 0.50},
+    "self":      {"clinical": 0.0, "independence": 0.50, "everyday_living": 0.80},
+}
+
+
+class PublicContributionBody(BaseModel):
+    classification: int = Field(ge=1, le=8)
+    pension_status: str = Field(pattern="^(full|part|self)$")
+    is_grandfathered: bool = False
+    expected_mix_clinical_pct: float = Field(ge=0, le=100, default=30)
+    expected_mix_independence_pct: float = Field(ge=0, le=100, default=45)
+    expected_mix_everyday_pct: float = Field(ge=0, le=100, default=25)
+
+
+@api.post("/public/contribution-estimator")
+async def public_contribution_estimator(body: PublicContributionBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    total_pct = body.expected_mix_clinical_pct + body.expected_mix_independence_pct + body.expected_mix_everyday_pct
+    if total_pct < 95 or total_pct > 105:
+        raise HTTPException(status_code=400, detail="Service mix percentages should sum to 100")
+    rates = PENSION_RATES[body.pension_status]
+    quarterly = budget_lib.quarterly_budget(body.classification)
+    annual_service = quarterly * 4
+    clin = annual_service * (body.expected_mix_clinical_pct / 100)
+    ind = annual_service * (body.expected_mix_independence_pct / 100)
+    ev = annual_service * (body.expected_mix_everyday_pct / 100)
+    contrib_clin = clin * rates["clinical"]
+    contrib_ind = ind * rates["independence"]
+    contrib_ev = ev * rates["everyday_living"]
+    annual_contrib = round(contrib_clin + contrib_ind + contrib_ev, 2)
+    quarterly_contrib = round(annual_contrib / 4, 2)
+    cap = budget_lib.lifetime_cap(body.is_grandfathered)
+    years_to_cap = round(cap / annual_contrib, 1) if annual_contrib > 0 else None
+    return {
+        "annual_service_total": round(annual_service, 2),
+        "annual_contribution": annual_contrib,
+        "quarterly_contribution": quarterly_contrib,
+        "per_stream": [
+            {"stream": "Clinical", "annual_charged": round(clin, 2), "annual_contribution": round(contrib_clin, 2), "rate_pct": rates["clinical"] * 100},
+            {"stream": "Independence", "annual_charged": round(ind, 2), "annual_contribution": round(contrib_ind, 2), "rate_pct": rates["independence"] * 100},
+            {"stream": "Everyday Living", "annual_charged": round(ev, 2), "annual_contribution": round(contrib_ev, 2), "rate_pct": rates["everyday_living"] * 100},
+        ],
+        "lifetime_cap": cap,
+        "years_to_cap": years_to_cap,
+        "pension_status": body.pension_status,
+    }
+
+
+# ---- Tool 7: Care plan reviewer ----
+class PublicCarePlanBody(BaseModel):
+    text: str = Field(min_length=50, max_length=20000)
+
+
+@api.post("/public/care-plan-review")
+async def public_care_plan_review(body: PublicCarePlanBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail="LLM unavailable")
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    system = (
+        "You review Australian Support at Home care plans. Check coverage against the "
+        "Statement of Rights (Aged Care Act 2024) and the National Quality Standards. "
+        "Output STRICT JSON: {\"summary\":\"1 paragraph\",\"coverage\":[{\"item\":\"...\","
+        "\"present\":true/false,\"note\":\"...\"}],\"gaps\":[\"...\"],"
+        "\"questions_to_raise\":[\"...\"]}. Coverage items to check: goals stated, "
+        "services listed with frequency, review date set, restorative focus, cultural/"
+        "language preferences, advance care directive referenced, named worker preferences, "
+        "complaint pathway, contribution amounts, rights statement. No markdown."
+    )
+    chat = LlmChat(
+        api_key=key, session_id=f"careplan-{datetime.now(timezone.utc).timestamp()}",
+        system_message=system,
+    ).with_model("anthropic", "claude-sonnet-4-5-20250929")
+    raw = await chat.send_message(UserMessage(text=f"Care plan:\n\n{body.text[:18000]}"))
+    import json as _json
+    try:
+        from agents import _strip_json
+        return _json.loads(_strip_json(raw))
+    except Exception:
+        return {"summary": raw[:500], "coverage": [], "gaps": [], "questions_to_raise": []}
+
+
+# ---- Tool 8: Family Care Coordinator chat (public) ----
+class PublicChatBody(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    session_id: str | None = None
+
+
+@api.post("/public/family-coordinator-chat")
+async def public_family_coordinator(body: PublicChatBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail="LLM unavailable")
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    system = (
+        "You are Kindred's Family Care Coordinator — a friendly, expert chat assistant for "
+        "Australian families navigating the Support at Home program. Ground answers in: Aged "
+        "Care Act 2024, Support at Home program manual, National Quality Standards. Australian "
+        "English. Plain language. Lead with the answer, then context. Cite sources where you "
+        "can. NEVER invent dollar figures or dates — say 'I don't have a current figure for "
+        "that' and point to the official source. NEVER give clinical or financial-product "
+        "advice. If a user mentions abuse, distress, or self-harm, respond: 'That sounds really "
+        "hard. Are you safe right now? Lifeline 13 11 14, 1800ELDERHelp 1800 353 374.' Keep "
+        "responses under 6 sentences unless asked for detail."
+    )
+    sid = body.session_id or f"public-chat-{_client_ip(request)}"
+    chat = LlmChat(api_key=key, session_id=sid, system_message=system).with_model(
+        "anthropic", "claude-sonnet-4-5-20250929"
+    )
+    reply = await chat.send_message(UserMessage(text=body.message))
+    return {"reply": reply, "session_id": sid}
+
+
 @api.get("/")
 async def root():
     return {"service": "kindred", "ok": True}
