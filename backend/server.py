@@ -923,6 +923,31 @@ async def root():
     return {"service": "kindred", "ok": True}
 
 
+# ---------------------------------------------------------------------------
+# Contact / Book a demo
+# ---------------------------------------------------------------------------
+class ContactBody(BaseModel):
+    name: str
+    email: str
+    phone: Optional[str] = None
+    role: str
+    intent: str = "general"        # "general" | "demo"
+    context: Optional[str] = None
+    size: Optional[str] = None
+    biggest_pain: Optional[str] = None
+    success_in_six_months: Optional[str] = None
+    preferred_time: Optional[str] = None
+
+
+@api.post("/contact")
+async def contact_submit(body: ContactBody):
+    doc = body.model_dump()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    await db.contact_requests.insert_one(doc)
+    doc.pop("_id", None)
+    return {"ok": True, "intent": body.intent}
+
+
 app.include_router(api)
 
 app.add_middleware(

@@ -26,7 +26,7 @@ const PERSONAS = [
         title: "I'm a financial advisor",
         sub: "For practices",
         cta: "Book a demo",
-        href: "/for-advisors",
+        href: "/contact?intent=demo",
     },
 ];
 
@@ -51,7 +51,7 @@ const FAQ = [
     { q: "Can multiple family members share one account?", a: "Yes — that's the Family plan. Up to 5 family members, each with their own role-based view." },
     { q: "Does Kindred give clinical or financial advice?", a: "No. We help you understand the system. Clinical advice comes from your care team; financial advice from a licensed advisor." },
     { q: "What if my parent moves to residential care?", a: "We pause billing immediately and provide a transition guide." },
-    { q: "Can I try it with sample data first?", a: "Yes — visit our demo page (coming shortly) to explore a sample household with no signup. Or paste a statement into the decoder above right now." },
+    { q: "Can I try it with sample data first?", a: "Yes — the /demo page walks you through a sample household with no signup. Or paste a statement into the decoder above right now." },
 ];
 
 function useCountdown(target) {
@@ -153,7 +153,7 @@ export default function Landing() {
                 </h2>
                 <div className="mt-10 grid md:grid-cols-3 gap-6">
                     {[
-                        { t: "For the family caregiver", b: "You're working full-time. Mum's statement is in your inbox. You don't know what 80% of it means. The siblings are calling with opinions." },
+                        { t: "For the family caregiver", b: "You're working full-time. Your parent's statement is in your inbox. You don't know what 80% of it means. The siblings are calling with opinions." },
                         { t: "For the participant", b: "Eight classifications, three streams, dozens of service codes. Government calculators don't help; the funding goes underused." },
                         { t: "For the financial advisor", b: "Lifetime caps, quarterly budgets, contribution scaling, indexation. Your spreadsheet just got a lot more complex." },
                     ].map((c) => (

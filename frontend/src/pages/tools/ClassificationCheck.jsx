@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import UpgradeGate from "@/components/UpgradeGate";
+import { useAuth } from "@/context/AuthContext";
 import { api, formatAUD } from "@/lib/api";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
@@ -29,6 +31,7 @@ const SCALE = [
 ];
 
 export default function ClassificationCheck() {
+    const { user } = useAuth();
     const [answers, setAnswers] = useState(Array(12).fill(null));
     const [current, setCurrent] = useState("");
     const [loading, setLoading] = useState(false);
@@ -54,7 +57,7 @@ export default function ClassificationCheck() {
             <MarketingHeader />
             <section className="mx-auto max-w-3xl px-6 pt-12 pb-6">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
-                <span className="overline mt-6 block">Free tool · No signup</span>
+                <span className="overline mt-6 block">Solo plan · 14‑day free trial</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Classification Self-Check</h1>
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">
                     Answer 12 questions about daily life. We'll show you the classification range your parent is likely to fall in — and whether to consider a reassessment.
@@ -63,6 +66,7 @@ export default function ClassificationCheck() {
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
+                {!user && <UpgradeGate toolName="The Classification Self-Check" />}
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-6" data-testid="classification-quiz">
                     {QUESTIONS.map((q, i) => (
                         <div key={i}>

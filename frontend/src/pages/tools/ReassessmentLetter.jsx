@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import UpgradeGate from "@/components/UpgradeGate";
+import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ReassessmentLetter() {
+    const { user } = useAuth();
     const [form, setForm] = useState({
         participant_name: "",
         current_classification: 4,
@@ -45,12 +48,13 @@ export default function ReassessmentLetter() {
             <MarketingHeader />
             <section className="mx-auto max-w-3xl px-6 pt-12 pb-6">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
-                <span className="overline mt-6 block">Free tool · No signup</span>
+                <span className="overline mt-6 block">Solo plan · 14‑day free trial</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Reassessment Letter Drafter</h1>
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">Tell us what's changed since the last assessment. We'll draft a clear, polite reassessment request you can send to My Aged Care.</p>
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
+                {!user && <UpgradeGate toolName="The Reassessment Letter Drafter" />}
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="reassessment-form">
                     <div className="grid sm:grid-cols-2 gap-4">
                         <label className="block"><span className="text-sm text-muted-k">Participant name</span>
@@ -63,7 +67,7 @@ export default function ReassessmentLetter() {
                         </label>
                     </div>
                     <label className="block"><span className="text-sm text-muted-k">What's changed since the last assessment?</span>
-                        <textarea value={form.changes_summary} onChange={update("changes_summary")} rows={4} required placeholder="e.g. Mum's mobility has dropped significantly since her hospital admission; she now needs help with showering and meal prep daily." data-testid="rl-changes" className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
+                        <textarea value={form.changes_summary} onChange={update("changes_summary")} rows={4} required placeholder="e.g. Their mobility has dropped significantly since the recent hospital admission; they now need help with showering and meal prep daily." data-testid="rl-changes" className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
                     </label>
                     <label className="block"><span className="text-sm text-muted-k">Recent events (optional)</span>
                         <textarea value={form.recent_events} onChange={update("recent_events")} rows={2} placeholder="e.g. Hospital admission 14 March, fall on 2 April, new dementia diagnosis." data-testid="rl-events" className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />

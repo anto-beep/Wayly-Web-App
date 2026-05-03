@@ -140,7 +140,7 @@ export default function Demo() {
         <div className="space-y-6">
             <div className="bg-surface-2 rounded-xl p-6 border border-kindred">
                 <span className="overline">Sunday digest — read-only</span>
-                <p className="mt-3 font-medium text-primary-k">Mum's week — Sun 27 April 2026</p>
+                <p className="mt-3 font-medium text-primary-k">Dorothy's week — Sun 27 April 2026</p>
                 <p className="mt-2 text-sm text-muted-k leading-relaxed">It was a steady week — four appointments, no issues. Cleaning rate flagged for Cathy to query. Q3 budget at 47% used. Handrail install booked for Tuesday.</p>
             </div>
             <div className="bg-surface border border-kindred rounded-xl p-5">

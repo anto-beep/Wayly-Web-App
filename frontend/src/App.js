@@ -22,8 +22,18 @@ import AIToolsIndex from "@/pages/AIToolsIndex";
 import StatementDecoderTool from "@/pages/tools/StatementDecoderTool";
 import BudgetCalculatorTool from "@/pages/tools/BudgetCalculatorTool";
 import PriceCheckerTool from "@/pages/tools/PriceCheckerTool";
+import ClassificationCheck from "@/pages/tools/ClassificationCheck";
+import ReassessmentLetter from "@/pages/tools/ReassessmentLetter";
+import ContributionEstimator from "@/pages/tools/ContributionEstimator";
+import CarePlanReviewer from "@/pages/tools/CarePlanReviewer";
+import FamilyCoordinator from "@/pages/tools/FamilyCoordinator";
 import Pricing from "@/pages/Pricing";
 import Trust from "@/pages/Trust";
+import Features from "@/pages/Features";
+import Demo from "@/pages/Demo";
+import Contact from "@/pages/Contact";
+import ForAdvisors from "@/pages/ForAdvisors";
+import ForGPs from "@/pages/ForGPs";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -56,12 +66,22 @@ function App() {
                 <Routes>
                     {/* Public marketing pages — accessible to everyone, logged in or not */}
                     <Route path="/" element={<Landing />} />
+                    <Route path="/features" element={<Features />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/trust" element={<Trust />} />
+                    <Route path="/demo" element={<Demo />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/for-advisors" element={<ForAdvisors />} />
+                    <Route path="/for-gps" element={<ForGPs />} />
                     <Route path="/ai-tools" element={<AIToolsIndex />} />
                     <Route path="/ai-tools/statement-decoder" element={<StatementDecoderTool />} />
                     <Route path="/ai-tools/budget-calculator" element={<BudgetCalculatorTool />} />
                     <Route path="/ai-tools/provider-price-checker" element={<PriceCheckerTool />} />
+                    <Route path="/ai-tools/classification-self-check" element={<ClassificationCheck />} />
+                    <Route path="/ai-tools/reassessment-letter" element={<ReassessmentLetter />} />
+                    <Route path="/ai-tools/contribution-estimator" element={<ContributionEstimator />} />
+                    <Route path="/ai-tools/care-plan-reviewer" element={<CarePlanReviewer />} />
+                    <Route path="/ai-tools/family-coordinator" element={<FamilyCoordinator />} />
 
                     {/* Auth pages */}
                     <Route path="/login" element={<PublicAuthOnly><Login /></PublicAuthOnly>} />

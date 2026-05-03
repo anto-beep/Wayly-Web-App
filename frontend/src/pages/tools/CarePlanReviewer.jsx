@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import UpgradeGate from "@/components/UpgradeGate";
+import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Loader2, Sparkles, Check, X } from "lucide-react";
 
 export default function CarePlanReviewer() {
+    const { user } = useAuth();
     const [text, setText] = useState("");
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -24,14 +27,15 @@ export default function CarePlanReviewer() {
             <MarketingHeader />
             <section className="mx-auto max-w-3xl px-6 pt-12 pb-6">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
-                <span className="overline mt-6 block">Free tool · No signup</span>
+                <span className="overline mt-6 block">Solo plan · 14‑day free trial</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Care Plan Reviewer</h1>
-                <p className="mt-4 text-lg text-muted-k leading-relaxed">Paste your care plan text. We'll check it against the Statement of Rights (Aged Care Act 2024) and the National Quality Standards — and flag the gaps.</p>
+                <p className="mt-4 text-lg text-muted-k leading-relaxed">Paste the care plan text. We'll check it against the Statement of Rights (Aged Care Act 2024) and the National Quality Standards — and flag the gaps.</p>
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
+                {!user && <UpgradeGate toolName="The Care Plan Reviewer" />}
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="care-plan-form">
-                    <textarea value={text} onChange={(e) => setText(e.target.value)} rows={12} placeholder="Paste the full text of your care plan here…" data-testid="cp-text" className="w-full rounded-md border border-kindred bg-surface-2 p-3 text-sm focus:outline-none focus:ring-2 ring-primary-k" />
+                    <textarea value={text} onChange={(e) => setText(e.target.value)} rows={12} placeholder="Paste the full text of the care plan here…" data-testid="cp-text" className="w-full rounded-md border border-kindred bg-surface-2 p-3 text-sm focus:outline-none focus:ring-2 ring-primary-k" />
                     <button onClick={submit} disabled={loading || text.length < 50} data-testid="cp-submit" className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2">
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {loading ? "Reviewing…" : "Review my care plan"}
