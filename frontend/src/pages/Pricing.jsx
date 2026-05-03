@@ -9,38 +9,29 @@ const TIERS = [
         name: "Free",
         price: "$0",
         period: "forever",
-        desc: "All 8 AI tools, 5 uses per month each. Newsletter. Public templates. Glossary.",
+        desc: "2 of 8 AI tools (Statement Decoder + Budget Calculator). 5 uses per month each. Newsletter. Public templates. Glossary.",
         cta: "Get started",
-        href: "/signup",
+        href: "/signup?plan=free",
         featured: false,
     },
     {
         name: "Solo",
         price: "$19",
         period: "per month",
-        desc: "Everything Free + connected household, unlimited statement parsing, daily anomaly alerts, 1 family member.",
+        desc: "All 8 AI tools, unlimited statement parsing, daily anomaly alerts, 1 caregiver seat. 14‑day free trial.",
         cta: "Start free trial",
-        href: "/signup",
+        href: "/signup?plan=solo",
         featured: false,
     },
     {
         name: "Family",
         price: "$39",
         period: "per month",
-        desc: "Everything Solo + up to 5 family members, family digest, decision log, paramount-member permissions, advisor read-only sharing.",
+        desc: "Everything Solo + up to 5 family seats, Sunday digest emails, decision log, role-based permissions, advisor read-only sharing.",
         cta: "Start free trial",
-        href: "/signup",
+        href: "/signup?plan=family",
         featured: true,
         badge: "Most popular",
-    },
-    {
-        name: "Lifetime",
-        price: "$799",
-        period: "once",
-        desc: "Everything Family forever, no recurring. Best for households who prefer one-and-done.",
-        cta: "Buy once",
-        href: "/signup",
-        featured: false,
     },
 ];
 
@@ -62,32 +53,32 @@ const ADVISOR = [
 ];
 
 const FEATURE_ROWS = [
-    { feature: "All 8 AI tools (rate-limited)", values: [true, true, true, true] },
-    { feature: "Statement parsing", values: ["5/mo", "Unlimited", "Unlimited", "Unlimited"] },
-    { feature: "Anomaly alerts", values: [false, true, true, true] },
-    { feature: "Quarterly budget tracking", values: [false, true, true, true] },
-    { feature: "Lifetime cap tracking", values: [false, true, true, true] },
-    { feature: "AI chat", values: ["Limited", true, true, true] },
-    { feature: "Family members", values: ["—", "1", "Up to 5", "Up to 5"] },
-    { feature: "Family digest emails", values: [false, false, true, true] },
-    { feature: "Decision log", values: [false, false, true, true] },
-    { feature: "Audit log (immutable)", values: [false, true, true, true] },
-    { feature: "Advisor read-only sharing", values: [false, false, true, true] },
-    { feature: "Paramount-member permissions", values: [false, false, true, true] },
-    { feature: "Voice for participant", values: [false, true, true, true] },
-    { feature: "Australian-hosted, encrypted", values: [true, true, true, true] },
-    { feature: "Priority support", values: [false, false, true, true] },
+    { feature: "Public AI tools", values: ["2 of 8", "All 8", "All 8"] },
+    { feature: "Statement parsing", values: ["5/mo", "Unlimited", "Unlimited"] },
+    { feature: "Anomaly alerts", values: [false, true, true] },
+    { feature: "Quarterly budget tracking", values: [false, true, true] },
+    { feature: "Lifetime cap tracking", values: [false, true, true] },
+    { feature: "AI chat", values: ["Limited", true, true] },
+    { feature: "Family seats", values: ["—", "1", "Up to 5"] },
+    { feature: "Sunday digest emails", values: [false, false, true] },
+    { feature: "Decision log", values: [false, false, true] },
+    { feature: "Audit log (immutable)", values: [false, true, true] },
+    { feature: "Advisor / GP read-only sharing", values: [false, false, true] },
+    { feature: "Role-based permissions", values: [false, false, true] },
+    { feature: "Voice for participant", values: [false, true, true] },
+    { feature: "Australian-hosted, encrypted", values: [true, true, true] },
+    { feature: "Priority support", values: [false, false, true] },
 ];
 
 const FAQ = [
     { q: "What counts as one household?", a: "One participant + their family. Two parents both on Support at Home = two households (we offer 30% off the second)." },
-    { q: "Free vs Solo — what's the real difference?", a: "Free = use the AI tools occasionally. Solo = Kindred actively watches your statements, budget, and care every day and alerts you when something needs attention." },
-    { q: "Why is Family $39 if Solo is $19?", a: "Family adds: up to 5 members, role permissions, family digest, shared decision log, advisor read-only sharing. Most households use Family." },
+    { q: "Free vs Solo — what's the real difference?", a: "Free = 2 public AI tools, occasional use. Solo = all 8 tools + Kindred actively watches your statements, budget, and care every day and alerts you when something needs attention." },
+    { q: "Why is Family $39 if Solo is $19?", a: "Family adds: up to 5 seats, role permissions, Sunday digest, decision log, advisor read-only sharing. Most households use Family." },
     { q: "Pensioner discount?", a: "Yes — 50% off Solo and Family with verified full-pension status." },
     { q: "Can I deduct Kindred from my parent's Support at Home funding?", a: "No — Kindred is software for the family, not a Support at Home service. Paid by the family directly." },
-    { q: "Refund policy?", a: "30-day full refund, no questions. Prorated annual refund for Lifetime." },
+    { q: "Refund policy?", a: "30-day full refund, no questions." },
     { q: "What happens if my parent moves to residential care?", a: "We pause billing immediately and give you a transition guide." },
-    { q: "Free trial?", a: "Yes — 30 days, no card needed." },
+    { q: "Free trial?", a: "Yes — 14 days on Solo or Family, no card needed." },
 ];
 
 function Cell({ v }) {
@@ -111,7 +102,7 @@ export default function Pricing() {
 
             {/* CONSUMER TIERS */}
             <section className="mx-auto max-w-7xl px-6 pb-12">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5" data-testid="pricing-tiers">
+                <div className="grid sm:grid-cols-3 gap-5" data-testid="pricing-tiers">
                     {TIERS.map((t) => (
                         <div
                             key={t.name}

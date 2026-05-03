@@ -40,6 +40,17 @@ export default function Layout({ children }) {
                                 <span className="text-xs text-muted-k">Classification {household.classification} · {household.provider_name}</span>
                             </div>
                         )}
+                        {user && (
+                            <Link
+                                to="/pricing"
+                                data-testid="layout-plan-badge"
+                                className="hidden md:inline-flex items-center gap-2 rounded-full bg-surface-2 border border-kindred px-3 py-1.5 text-xs hover:bg-surface transition-colors"
+                                title="Change plan"
+                            >
+                                <span className="font-medium text-primary-k uppercase tracking-wider">{user.plan || "free"}</span>
+                                <span className="text-muted-k">plan</span>
+                            </Link>
+                        )}
                         <Link
                             to="/participant"
                             data-testid="participant-view-link"

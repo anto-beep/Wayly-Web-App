@@ -61,16 +61,16 @@ const TRUST = [
 ];
 
 const PLAN_MATRIX = [
-    { feature: "Public AI tools", values: ["2 of 8", "All 8", "All 8", "All 8"] },
-    { feature: "Saved tool history", values: ["—", "Yes", "Yes", "Yes"] },
-    { feature: "Statement Auto‑Decode (forward email)", values: ["—", "Yes", "Yes", "Yes"] },
-    { feature: "Anomaly Watch", values: ["—", "Yes", "Yes", "Yes"] },
-    { feature: "Family seats", values: ["—", "1", "5", "5"] },
-    { feature: "Audit log + advisor finance‑only view", values: ["—", "Yes", "Yes", "Yes"] },
-    { feature: "Care plan store", values: ["—", "Yes", "Yes", "Yes"] },
-    { feature: "Pension discount (full‑pension households)", values: ["—", "50% off", "50% off", "—"] },
+    { feature: "Public AI tools", values: ["2 of 8", "All 8", "All 8"] },
+    { feature: "Saved tool history", values: ["—", "Yes", "Yes"] },
+    { feature: "Statement Auto‑Decode (forward email)", values: ["—", "Yes", "Yes"] },
+    { feature: "Anomaly Watch", values: ["—", "Yes", "Yes"] },
+    { feature: "Family seats", values: ["—", "1", "5"] },
+    { feature: "Audit log + advisor finance‑only view", values: ["—", "Yes", "Yes"] },
+    { feature: "Care plan store", values: ["—", "Yes", "Yes"] },
+    { feature: "Pension discount (full‑pension households)", values: ["—", "50% off", "50% off"] },
 ];
-const PLAN_HEADERS = ["Free", "Solo $19/mo", "Family $39/mo", "Lifetime $799"];
+const PLAN_HEADERS = ["Free", "Solo $19/mo", "Family $39/mo"];
 
 const Section = ({ id, eyebrow, title, sub, children }) => (
     <section id={id} className="mx-auto max-w-7xl px-6 py-16" data-testid={`features-section-${id}`}>

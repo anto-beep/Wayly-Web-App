@@ -28,6 +28,7 @@ from models import (
     LoginRequest,
     TokenResponse,
     UserPublic,
+    PlanUpdate,
     HouseholdCreate,
     Household,
     Statement,
@@ -44,6 +45,8 @@ from models import (
 )
 import budget as budget_lib
 from agents import parse_statement, explain_anomalies, chat_with_kindred
+from wrapper import run_wrapper
+import email_service
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
@@ -99,6 +102,7 @@ def _user_public(u: dict) -> UserPublic:
         email=u["email"],
         name=u["name"],
         role=u["role"],
+        plan=u.get("plan", "free"),
         household_id=u.get("household_id"),
         created_at=u["created_at"],
     )
@@ -116,6 +120,7 @@ async def signup(payload: SignupRequest):
         "password_hash": hash_password(payload.password),
         "name": payload.name,
         "role": payload.role,
+        "plan": payload.plan,
         "household_id": None,
         "created_at": now_iso(),
     }
@@ -135,6 +140,13 @@ async def login(payload: LoginRequest):
 
 @api.get("/auth/me", response_model=UserPublic)
 async def me(user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    return _user_public(u)
+
+
+@api.put("/auth/plan", response_model=UserPublic)
+async def update_plan(payload: PlanUpdate, user_id: str = Depends(get_current_user_id)):
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": payload.plan}})
     u = await _get_user(user_id)
     return _user_public(u)
 
@@ -777,13 +789,22 @@ async def public_reassessment_letter(body: PublicReassessmentBody, request: Requ
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
         raise HTTPException(status_code=503, detail="LLM unavailable")
+    # Wrapper redacts PII from the free-text fields
+    free_text = f"{body.changes_summary}\n{body.recent_events or ''}"
+    wrapped = await run_wrapper(free_text)
+    if wrapped["abuse_flag"]:
+        return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     system = (
         "You are a paperwork drafter for Australian Support at Home. Draft a polite, factual "
         "reassessment request letter to My Aged Care. Australian English. 250–400 words. "
-        "Plain professional tone. Use the participant's name and the sender's name. "
-        "Reference Aged Care Act 2024 framework where relevant. End with a specific request "
-        "and a 14-day response timeframe. Output ONLY the letter body — no preamble, no markdown."
+        "Plain professional tone. Use the participant's name and the sender's name. Use "
+        "gender‑neutral language unless the user has supplied otherwise — never default to "
+        "'Mum'. Reference Aged Care Act 2024 framework where relevant. End with a specific "
+        "request and a 14‑day response timeframe. Output ONLY the letter body — no preamble, "
+        "no markdown. NEVER claim a specific reassessment outcome ('they should be on L7') — "
+        "frame as 'we'd like the assessor to consider whether the current classification still "
+        "fits'."
     )
     chat = LlmChat(
         api_key=key, session_id=f"reassess-{datetime.now(timezone.utc).timestamp()}",
@@ -792,12 +813,14 @@ async def public_reassessment_letter(body: PublicReassessmentBody, request: Requ
     prompt = (
         f"Participant: {body.participant_name}\n"
         f"Current classification: Classification {body.current_classification}\n"
-        f"What's changed: {body.changes_summary}\n"
-        f"Recent events: {body.recent_events or 'none specified'}\n"
+        f"What's changed: {wrapped['redacted_input']}\n"
         f"Letter sender: {body.sender_name} ({body.relationship or 'family caregiver'})"
     )
     letter = await chat.send_message(UserMessage(text=prompt))
-    return {"letter": letter.strip(), "word_count": len(letter.split())}
+    out = {"letter": letter.strip(), "word_count": len(letter.split())}
+    if wrapped["redaction_notice"]:
+        out["redaction_notice"] = wrapped["redaction_notice"]
+    return out
 
 
 # ---- Tool 6: Contribution estimator ----
@@ -862,28 +885,35 @@ async def public_care_plan_review(body: PublicCarePlanBody, request: Request):
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
         raise HTTPException(status_code=503, detail="LLM unavailable")
+    wrapped = await run_wrapper(body.text)
+    if wrapped["abuse_flag"]:
+        return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     system = (
         "You review Australian Support at Home care plans. Check coverage against the "
         "Statement of Rights (Aged Care Act 2024) and the National Quality Standards. "
+        "Use gender‑neutral language — never default to 'Mum'. "
         "Output STRICT JSON: {\"summary\":\"1 paragraph\",\"coverage\":[{\"item\":\"...\","
         "\"present\":true/false,\"note\":\"...\"}],\"gaps\":[\"...\"],"
-        "\"questions_to_raise\":[\"...\"]}. Coverage items to check: goals stated, "
-        "services listed with frequency, review date set, restorative focus, cultural/"
-        "language preferences, advance care directive referenced, named worker preferences, "
-        "complaint pathway, contribution amounts, rights statement. No markdown."
+        "\"questions_to_raise\":[\"...\"]}. Coverage items: goals stated, services listed "
+        "with frequency, review date set, restorative focus, cultural/language preferences, "
+        "advance care directive referenced, named worker preferences, complaint pathway, "
+        "contribution amounts, rights statement. No markdown."
     )
     chat = LlmChat(
         api_key=key, session_id=f"careplan-{datetime.now(timezone.utc).timestamp()}",
         system_message=system,
     ).with_model("anthropic", "claude-sonnet-4-5-20250929")
-    raw = await chat.send_message(UserMessage(text=f"Care plan:\n\n{body.text[:18000]}"))
+    raw = await chat.send_message(UserMessage(text=f"Care plan:\n\n{wrapped['redacted_input'][:18000]}"))
     import json as _json
     try:
         from agents import _strip_json
-        return _json.loads(_strip_json(raw))
+        out = _json.loads(_strip_json(raw))
     except Exception:
-        return {"summary": raw[:500], "coverage": [], "gaps": [], "questions_to_raise": []}
+        out = {"summary": raw[:500], "coverage": [], "gaps": [], "questions_to_raise": []}
+    if wrapped["redaction_notice"]:
+        out["redaction_notice"] = wrapped["redaction_notice"]
+    return out
 
 
 # ---- Tool 8: Family Care Coordinator chat (public) ----
@@ -898,24 +928,39 @@ async def public_family_coordinator(body: PublicChatBody, request: Request):
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
         raise HTTPException(status_code=503, detail="LLM unavailable")
+    wrapped = await run_wrapper(body.message)
+    if wrapped["abuse_flag"]:
+        return {
+            "reply": wrapped["abuse_response"],
+            "session_id": body.session_id or f"public-chat-{_client_ip(request)}",
+            "abuse_flag": wrapped["abuse_flag"],
+        }
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     system = (
         "You are Kindred's Family Care Coordinator — a friendly, expert chat assistant for "
-        "Australian families navigating the Support at Home program. Ground answers in: Aged "
-        "Care Act 2024, Support at Home program manual, National Quality Standards. Australian "
-        "English. Plain language. Lead with the answer, then context. Cite sources where you "
-        "can. NEVER invent dollar figures or dates — say 'I don't have a current figure for "
-        "that' and point to the official source. NEVER give clinical or financial-product "
-        "advice. If a user mentions abuse, distress, or self-harm, respond: 'That sounds really "
-        "hard. Are you safe right now? Lifeline 13 11 14, 1800ELDERHelp 1800 353 374.' Keep "
-        "responses under 6 sentences unless asked for detail."
+        "Australian families navigating the Support at Home program. Tone: the friendliest, "
+        "most patient, most well‑informed niece in Australia — calm, specific, never "
+        "breathless. Ground answers in: Aged Care Act 2024, Support at Home program manual, "
+        "National Quality Standards. Australian English. Use gender‑neutral language; refer "
+        "to 'the person you care for' or 'the participant', never default to 'Mum'. Lead "
+        "with the answer (1‑2 sentences), then one paragraph of context, then cite sources "
+        "where you can ('Aged Care Act 2024, section X'). NEVER invent dollar figures, "
+        "dates, or section numbers — say 'I don't have a current figure for that — the "
+        "authoritative source is My Aged Care on 1800 200 422'. NEVER give clinical or "
+        "financial‑product advice; redirect to the GP / a FAAA‑registered advisor. NEVER "
+        "recommend a specific provider. If asked, you are Kindred's AI; offer human handoff "
+        "with 'type human and I'll connect you'. Keep responses 50–150 words by default, "
+        "up to 250 only if needed. End with one soft next step (a relevant tool or guide)."
     )
     sid = body.session_id or f"public-chat-{_client_ip(request)}"
     chat = LlmChat(api_key=key, session_id=sid, system_message=system).with_model(
         "anthropic", "claude-sonnet-4-5-20250929"
     )
-    reply = await chat.send_message(UserMessage(text=body.message))
-    return {"reply": reply, "session_id": sid}
+    reply = await chat.send_message(UserMessage(text=wrapped["redacted_input"]))
+    out: dict = {"reply": reply, "session_id": sid}
+    if wrapped["redaction_notice"]:
+        out["redaction_notice"] = wrapped["redaction_notice"]
+    return out
 
 
 @api.get("/")
@@ -945,7 +990,46 @@ async def contact_submit(body: ContactBody):
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.contact_requests.insert_one(doc)
     doc.pop("_id", None)
+    # Notify the team — graceful no-op if Resend isn't configured
+    try:
+        await email_service.notify_team_contact(doc)
+    except Exception as e:
+        logger.warning("Contact notification failed: %s", e)
     return {"ok": True, "intent": body.intent}
+
+
+# ---------------------------------------------------------------------------
+# Email my result (public tools)
+# ---------------------------------------------------------------------------
+class EmailResultBody(BaseModel):
+    email: EmailStr
+    tool: str = Field(min_length=2, max_length=80)
+    headline: str = Field(min_length=1, max_length=240)
+    body_html: str = Field(min_length=1, max_length=80000)
+
+
+@api.post("/public/email-result")
+async def public_email_result(body: EmailResultBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    # Light HTML safety: forbid script/iframe tags in body_html
+    cleaned = body.body_html
+    for bad in ("<script", "</script>", "<iframe", "</iframe>", "javascript:"):
+        cleaned = cleaned.replace(bad, "")
+    res = await email_service.email_tool_result(
+        to=body.email,
+        tool_name=body.tool,
+        headline=body.headline,
+        body_html=cleaned,
+    )
+    # Persist for audit (24h TTL conceptually — we keep simple here)
+    await db.tool_email_log.insert_one({
+        "email": body.email,
+        "tool": body.tool,
+        "ok": bool(res.get("ok")),
+        "mocked": bool(res.get("mocked")),
+        "ts": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"ok": bool(res.get("ok")), "mocked": bool(res.get("mocked"))}
 
 
 app.include_router(api)

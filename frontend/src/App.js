@@ -43,7 +43,8 @@ function RequireAuth({ children, requireHousehold = true }) {
     const { user, household, loading } = useAuth();
     if (loading) return <Loading />;
     if (!user) return <Navigate to="/login" replace />;
-    if (requireHousehold && !household) return <Navigate to="/onboarding" replace />;
+    // Free plan users don't need household tracking — they see a paywall in /app instead.
+    if (requireHousehold && !household && user.plan !== "free") return <Navigate to="/onboarding" replace />;
     return children;
 }
 
@@ -52,7 +53,7 @@ function PublicAuthOnly({ children }) {
     const { user, household, loading } = useAuth();
     if (loading) return <Loading />;
     if (user) {
-        if (!household) return <Navigate to="/onboarding" replace />;
+        if (!household && user.plan !== "free") return <Navigate to="/onboarding" replace />;
         return <Navigate to={user.role === "participant" ? "/participant" : "/app"} replace />;
     }
     return children;

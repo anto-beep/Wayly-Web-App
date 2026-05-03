@@ -7,6 +7,7 @@ const NAV = [
     { to: "/ai-tools", label: "AI Tools" },
     { to: "/pricing", label: "Pricing" },
     { to: "/trust", label: "Trust" },
+    { to: "/contact", label: "Contact" },
 ];
 
 export default function MarketingHeader() {
