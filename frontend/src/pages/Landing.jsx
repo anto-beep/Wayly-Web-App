@@ -219,7 +219,7 @@ export default function Landing() {
                         </p>
                     </div>
                     <div className="lg:col-span-5">
-                        <div className="bg-surface border border-kindred rounded-2xl p-6 grid grid-cols-3 gap-4 text-center">
+                        <div className="bg-surface border border-kindred rounded-2xl p-6 grid grid-cols-3 gap-4 text-center" data-testid="countdown-card">
                             {[
                                 { v: countdown.days, l: "days" },
                                 { v: countdown.hours, l: "hours" },
