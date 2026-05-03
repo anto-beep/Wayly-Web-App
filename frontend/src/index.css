@@ -1,75 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Figtree:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-    margin: 0;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-        "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-        sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-    font-family:
-        source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+:root {
+    /* Kindred design tokens — Organic & Earthy (Light) */
+    --kindred-bg: #F9F8F6;
+    --kindred-surface: #FFFFFF;
+    --kindred-surface-2: #F2EFE9;
+    --kindred-primary: #2A3B32;
+    --kindred-primary-fg: #FFFFFF;
+    --kindred-sage: #8B9B82;
+    --kindred-terracotta: #A05545;
+    --kindred-text: #1A1A1A;
+    --kindred-muted: #5C665A;
+    --kindred-border: #E5E2DC;
+    --kindred-success: #3A5A40;
+    --kindred-alert: #A05545;
 }
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 3.9%;
+        --background: 38 18% 97%;
+        --foreground: 0 0% 10%;
         --card: 0 0% 100%;
-        --card-foreground: 0 0% 3.9%;
+        --card-foreground: 0 0% 10%;
         --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 9%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 0 0% 96.1%;
-        --secondary-foreground: 0 0% 9%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 45.1%;
-        --accent: 0 0% 96.1%;
-        --accent-foreground: 0 0% 9%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 89.8%;
-        --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
-        --chart-1: 12 76% 61%;
-        --chart-2: 173 58% 39%;
-        --chart-3: 197 37% 24%;
-        --chart-4: 43 74% 66%;
-        --chart-5: 27 87% 67%;
-        --radius: 0.5rem;
-    }
-    .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 14.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
+        --popover-foreground: 0 0% 10%;
+        --primary: 150 16% 20%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 38 21% 93%;
+        --secondary-foreground: 150 16% 20%;
+        --muted: 38 21% 93%;
+        --muted-foreground: 130 5% 38%;
+        --accent: 100 12% 56%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 12 41% 45%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 36 16% 87%;
+        --input: 36 16% 87%;
+        --ring: 150 16% 20%;
+        --radius: 0.75rem;
     }
 }
 
@@ -77,39 +49,65 @@ code {
     * {
         @apply border-border;
     }
+    html, body, #root {
+        height: 100%;
+    }
     body {
-        @apply bg-background text-foreground;
+        margin: 0;
+        background-color: var(--kindred-bg);
+        color: var(--kindred-text);
+        font-family: 'Figtree', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: "ss01", "ss02";
+    }
+    h1, h2, h3, h4, h5, h6, .font-heading {
+        font-family: 'Outfit', system-ui, sans-serif;
+        letter-spacing: -0.01em;
+    }
+    code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 }
 
+@layer utilities {
+    .bg-kindred { background-color: var(--kindred-bg); }
+    .bg-surface { background-color: var(--kindred-surface); }
+    .bg-surface-2 { background-color: var(--kindred-surface-2); }
+    .bg-primary-k { background-color: var(--kindred-primary); }
+    .text-primary-k { color: var(--kindred-primary); }
+    .text-muted-k { color: var(--kindred-muted); }
+    .text-sage { color: var(--kindred-sage); }
+    .text-terracotta { color: var(--kindred-terracotta); }
+    .bg-sage { background-color: var(--kindred-sage); }
+    .bg-terracotta { background-color: var(--kindred-terracotta); }
+    .border-kindred { border-color: var(--kindred-border); }
+    .ring-primary-k { --tw-ring-color: var(--kindred-primary); }
+    .overline {
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: var(--kindred-muted);
+    }
+}
+
+/* Drop default Create-React-App debug wrapper */
 @layer base {
     [data-debug-wrapper="true"] {
         display: contents !important;
     }
+}
 
-    [data-debug-wrapper="true"] > * {
-        margin-left: inherit;
-        margin-right: inherit;
-        margin-top: inherit;
-        margin-bottom: inherit;
-        padding-left: inherit;
-        padding-right: inherit;
-        padding-top: inherit;
-        padding-bottom: inherit;
-        column-gap: inherit;
-        row-gap: inherit;
-        gap: inherit;
-        border-left-width: inherit;
-        border-right-width: inherit;
-        border-top-width: inherit;
-        border-bottom-width: inherit;
-        border-left-style: inherit;
-        border-right-style: inherit;
-        border-top-style: inherit;
-        border-bottom-style: inherit;
-        border-left-color: inherit;
-        border-right-color: inherit;
-        border-top-color: inherit;
-        border-bottom-color: inherit;
-    }
+/* Custom file-upload dotted box hover */
+.dropzone {
+    transition: all 180ms ease;
+}
+.dropzone:hover {
+    border-color: var(--kindred-primary);
+    background: var(--kindred-surface-2);
+}
+.dropzone.active {
+    border-color: var(--kindred-primary);
+    background: var(--kindred-surface-2);
 }
