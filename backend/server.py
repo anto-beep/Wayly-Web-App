@@ -630,7 +630,14 @@ async def _run_public_decode(text: str) -> dict:
 @api.post("/public/decode-statement-text")
 async def public_decode_text(body: PublicTextBody, request: Request):
     _check_rate_limit(_client_ip(request))
-    return await _run_public_decode(body.text)
+    wrapped = await run_wrapper(body.text)
+    if wrapped["abuse_flag"]:
+        return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
+    result = await _run_public_decode(wrapped["redacted_input"])
+    if wrapped["redaction_notice"]:
+        result["redaction_notice"] = wrapped["redaction_notice"]
+        result["redaction_count"] = wrapped["redaction_count"]
+    return result
 
 
 @api.post("/public/decode-statement")
@@ -644,7 +651,14 @@ async def public_decode_file(request: Request, file: UploadFile = File(...)):
     text = _extract_text(file.filename, raw)
     if not text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from file")
-    return await _run_public_decode(text)
+    wrapped = await run_wrapper(text)
+    if wrapped["abuse_flag"]:
+        return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
+    result = await _run_public_decode(wrapped["redacted_input"])
+    if wrapped["redaction_notice"]:
+        result["redaction_notice"] = wrapped["redaction_notice"]
+        result["redaction_count"] = wrapped["redaction_count"]
+    return result
 
 
 @api.post("/public/budget-calc")
