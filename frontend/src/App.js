@@ -38,6 +38,8 @@ import ResourcesIndex from "@/pages/resources/ResourcesIndex";
 import Glossary from "@/pages/resources/Glossary";
 import Templates from "@/pages/resources/Templates";
 import ArticlesIndex, { ArticleDetail } from "@/pages/resources/Articles";
+import AuthCallback from "@/pages/AuthCallback";
+import BillingSuccess from "@/pages/BillingSuccess";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -64,11 +66,27 @@ function PublicAuthOnly({ children }) {
 }
 
 function App() {
+    // CRITICAL: Detect Emergent OAuth callback synchronously, before any router
+    // logic runs. The session_id arrives in the URL fragment and must be
+    // exchanged before AuthProvider hits /auth/me (which would 401).
+    if (typeof window !== "undefined" && window.location.hash?.includes("session_id=")) {
+        return (
+            <AuthProvider>
+                <Toaster richColors position="top-right" />
+                <BrowserRouter>
+                    <AuthCallback />
+                </BrowserRouter>
+            </AuthProvider>
+        );
+    }
     return (
         <AuthProvider>
             <BrowserRouter>
                 <Toaster richColors position="top-right" />
                 <Routes>
+                    {/* Auth callback (also reachable via direct route) */}
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+
                     {/* Public marketing pages — accessible to everyone, logged in or not */}
                     <Route path="/" element={<Landing />} />
                     <Route path="/features" element={<Features />} />
@@ -96,6 +114,7 @@ function App() {
                     {/* Auth pages */}
                     <Route path="/login" element={<PublicAuthOnly><Login /></PublicAuthOnly>} />
                     <Route path="/signup" element={<PublicAuthOnly><Signup /></PublicAuthOnly>} />
+                    <Route path="/billing/success" element={<BillingSuccess />} />
 
                     {/* Authenticated app */}
                     <Route path="/onboarding" element={<RequireAuth requireHousehold={false}><Onboarding /></RequireAuth>} />

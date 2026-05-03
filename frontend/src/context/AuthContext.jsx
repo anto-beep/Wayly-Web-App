@@ -17,7 +17,23 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
+    const refreshUser = useCallback(async () => {
+        try {
+            const { data } = await api.get("/auth/me");
+            setUser(data);
+            return data;
+        } catch {
+            return null;
+        }
+    }, []);
+
     const bootstrap = useCallback(async () => {
+        // CRITICAL: If returning from Emergent OAuth, skip the /me check —
+        // AuthCallback will exchange the session_id first.
+        if (typeof window !== "undefined" && window.location.hash?.includes("session_id=")) {
+            setLoading(false);
+            return;
+        }
         const token = localStorage.getItem("kindred_token");
         if (!token) {
             setLoading(false);
@@ -54,7 +70,17 @@ export function AuthProvider({ children }) {
         return data.user;
     };
 
-    const logout = () => {
+    const completeGoogleAuth = async (sessionId) => {
+        const { data } = await api.post("/auth/google-session", { session_id: sessionId });
+        setAuthToken(data.token);
+        setUser(data.user);
+        await refreshHousehold();
+        setLoading(false);
+        return data.user;
+    };
+
+    const logout = async () => {
+        try { await api.post("/auth/logout"); } catch { /* ignore */ }
         setAuthToken(null);
         setUser(null);
         setHousehold(null);
@@ -62,7 +88,7 @@ export function AuthProvider({ children }) {
 
     return (
         <AuthContext.Provider
-            value={{ user, household, loading, login, signup, logout, refreshHousehold, setUser }}
+            value={{ user, household, loading, login, signup, logout, refreshHousehold, refreshUser, setUser, completeGoogleAuth }}
         >
             {children}
         </AuthContext.Provider>

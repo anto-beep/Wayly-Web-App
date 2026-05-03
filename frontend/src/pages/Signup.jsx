@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { HeartHandshake, Check } from "lucide-react";
+import { HeartHandshake, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const PLANS = [
     {
@@ -63,9 +65,28 @@ export default function Signup() {
         setSubmitting(true);
         try {
             const u = await signup(form);
-            const verb = form.plan === "free" ? "Welcome" : "Trial started";
+            const verb = form.plan === "free" ? "Welcome" : "Account ready";
             toast.success(`${verb}, ${u.name.split(" ")[0]}`);
-            nav("/onboarding");
+            // Paid plans → Stripe Checkout. Free → straight to onboarding.
+            if (form.plan === "solo" || form.plan === "family") {
+                try {
+                    const { data } = await api.post("/billing/checkout", {
+                        plan: form.plan,
+                        origin_url: window.location.origin,
+                    });
+                    if (data.url) {
+                        window.location.href = data.url;
+                        return;
+                    }
+                    toast.error("Could not start checkout — redirecting to onboarding.");
+                    nav("/onboarding");
+                } catch (err) {
+                    toast.error(err?.response?.data?.detail || "Could not start checkout.");
+                    nav("/onboarding");
+                }
+            } else {
+                nav("/app");
+            }
         } catch (err) {
             toast.error(err?.response?.data?.detail || "Could not create account");
         } finally {
@@ -139,9 +160,25 @@ export default function Signup() {
                         <div className="bg-surface border border-kindred rounded-2xl p-7 sticky top-6">
                             <span className="overline">Step 2 — Your details</span>
                             <h2 className="font-heading text-2xl text-primary-k mt-2 tracking-tight">
-                                {form.plan === "free" ? "Create free account" : "Start 14-day trial"}
+                                {form.plan === "free" ? "Create free account" : `Continue to checkout`}
                             </h2>
-                            <form onSubmit={submit} className="mt-5 space-y-4">
+
+                            <div className="mt-5">
+                                <GoogleSignInButton testid="signup-google" label={form.plan === "free" ? "Continue with Google" : "Sign up with Google"} />
+                                <p className="mt-2 text-xs text-muted-k">
+                                    {form.plan === "free"
+                                        ? "Quick start — we'll create your account from your Google profile."
+                                        : "After Google sign-in we'll redirect you to Stripe to complete the trial setup."}
+                                </p>
+                            </div>
+
+                            <div className="my-5 flex items-center gap-3 text-xs text-muted-k">
+                                <span className="flex-1 h-px bg-kindred"></span>
+                                <span>or with email</span>
+                                <span className="flex-1 h-px bg-kindred"></span>
+                            </div>
+
+                            <form onSubmit={submit} className="space-y-4">
                                 <label className="block">
                                     <span className="text-sm text-muted-k">Your name</span>
                                     <input
@@ -207,9 +244,10 @@ export default function Signup() {
                                     type="submit"
                                     disabled={submitting}
                                     data-testid="signup-submit-button"
-                                    className="w-full bg-primary-k text-white rounded-md py-3 text-base hover:bg-[#16294a] transition-colors disabled:opacity-60"
+                                    className="w-full bg-primary-k text-white rounded-md py-3 text-base hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                                 >
-                                    {submitting ? "Creating account…" : (form.plan === "free" ? "Create account" : "Start trial")}
+                                    {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    {submitting ? "Working…" : (form.plan === "free" ? "Create account" : `Pay $${form.plan === "solo" ? "19" : "39"} & start`)}
                                 </button>
                             </form>
                             <p className="mt-5 text-sm text-muted-k">

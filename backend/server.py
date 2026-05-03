@@ -7,9 +7,10 @@ import statistics
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Optional
+from typing import Literal as _LiteralType  # noqa: F401
 
 from collections import defaultdict
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Request, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Request, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
 from starlette.middleware.cors import CORSMiddleware
@@ -47,6 +48,10 @@ import budget as budget_lib
 from agents import parse_statement, explain_anomalies, chat_with_kindred
 from wrapper import run_wrapper
 import email_service
+from auth_emergent import exchange_session_id
+from emergentintegrations.payments.stripe.checkout import (
+    StripeCheckout, CheckoutSessionRequest,
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
@@ -149,6 +154,80 @@ async def update_plan(payload: PlanUpdate, user_id: str = Depends(get_current_us
     await db.users.update_one({"id": user_id}, {"$set": {"plan": payload.plan}})
     u = await _get_user(user_id)
     return _user_public(u)
+
+
+# ----------------- emergent google auth -----------------
+class GoogleSessionBody(BaseModel):
+    session_id: str = Field(min_length=4, max_length=512)
+
+
+@api.post("/auth/google-session", response_model=TokenResponse)
+async def google_session(body: GoogleSessionBody, response: Response):
+    """Exchange a session_id from #session_id=… for a JWT + persistent cookie."""
+    try:
+        data = await exchange_session_id(body.session_id)
+    except Exception as e:
+        logger.warning("Emergent OAuth exchange failed: %s", e)
+        raise HTTPException(status_code=401, detail="Could not verify Google session")
+    email = (data.get("email") or "").lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="No email returned from Google")
+    name = data.get("name") or email.split("@")[0]
+    picture = data.get("picture")
+    session_token = data.get("session_token")
+
+    existing = await db.users.find_one({"email": email}, {"_id": 0})
+    if existing:
+        await db.users.update_one(
+            {"id": existing["id"]},
+            {"$set": {"name": existing.get("name") or name, "picture": picture, "auth_method": "google"}},
+        )
+        user = await _get_user(existing["id"])
+    else:
+        user = {
+            "id": new_id(),
+            "email": email,
+            "password_hash": "",
+            "name": name,
+            "picture": picture,
+            "role": "caregiver",
+            "plan": "free",
+            "household_id": None,
+            "auth_method": "google",
+            "created_at": now_iso(),
+        }
+        await db.users.insert_one(user)
+
+    if session_token:
+        await db.user_sessions.update_one(
+            {"user_id": user["id"]},
+            {
+                "$set": {
+                    "user_id": user["id"],
+                    "session_token": session_token,
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+                }
+            },
+            upsert=True,
+        )
+        response.set_cookie(
+            "session_token",
+            session_token,
+            max_age=7 * 24 * 3600,
+            path="/",
+            httponly=True,
+            secure=True,
+            samesite="none",
+        )
+    token = create_token(user["id"])
+    return TokenResponse(token=token, user=_user_public(user))
+
+
+@api.post("/auth/logout")
+async def logout(response: Response, user_id: str = Depends(get_current_user_id)):
+    await db.user_sessions.delete_many({"user_id": user_id})
+    response.delete_cookie("session_token", path="/")
+    return {"ok": True}
 
 
 # ----------------- household -----------------
@@ -695,6 +774,7 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request):
 
 @api.post("/public/price-check")
 async def public_price_check(body: PublicPriceBody, request: Request):
+    await _require_solo_plus(request, "Provider Price Checker")
     _check_rate_limit(_client_ip(request))
     bench = PRICE_BENCHMARKS.get(body.service, {"median": body.rate, "cap": body.rate})
     median = bench["median"]
@@ -750,6 +830,7 @@ class PublicClassificationBody(BaseModel):
 
 @api.post("/public/classification-check")
 async def public_classification_check(body: PublicClassificationBody, request: Request):
+    await _require_solo_plus(request, "Classification Self-Check")
     _check_rate_limit(_client_ip(request))
     if not all(0 <= a <= 4 for a in body.answers):
         raise HTTPException(status_code=400, detail="Each answer must be 0–4")
@@ -799,6 +880,7 @@ class PublicReassessmentBody(BaseModel):
 
 @api.post("/public/reassessment-letter")
 async def public_reassessment_letter(body: PublicReassessmentBody, request: Request):
+    await _require_solo_plus(request, "Reassessment Letter Drafter")
     _check_rate_limit(_client_ip(request))
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
@@ -856,6 +938,7 @@ class PublicContributionBody(BaseModel):
 
 @api.post("/public/contribution-estimator")
 async def public_contribution_estimator(body: PublicContributionBody, request: Request):
+    await _require_solo_plus(request, "Contribution Estimator")
     _check_rate_limit(_client_ip(request))
     total_pct = body.expected_mix_clinical_pct + body.expected_mix_independence_pct + body.expected_mix_everyday_pct
     if total_pct < 95 or total_pct > 105:
@@ -895,6 +978,7 @@ class PublicCarePlanBody(BaseModel):
 
 @api.post("/public/care-plan-review")
 async def public_care_plan_review(body: PublicCarePlanBody, request: Request):
+    await _require_solo_plus(request, "Care Plan Reviewer")
     _check_rate_limit(_client_ip(request))
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
@@ -938,6 +1022,7 @@ class PublicChatBody(BaseModel):
 
 @api.post("/public/family-coordinator-chat")
 async def public_family_coordinator(body: PublicChatBody, request: Request):
+    await _require_solo_plus(request, "Family Care Coordinator")
     _check_rate_limit(_client_ip(request))
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
@@ -1044,6 +1129,156 @@ async def public_email_result(body: EmailResultBody, request: Request):
         "ts": datetime.now(timezone.utc).isoformat(),
     })
     return {"ok": bool(res.get("ok")), "mocked": bool(res.get("mocked"))}
+
+
+# ---------------------------------------------------------------------------
+# Plan enforcement (Solo+ public tools)
+# ---------------------------------------------------------------------------
+SOLO_PLUS = {"solo", "family"}
+
+
+async def _user_from_request(request: Request) -> Optional[dict]:
+    """Best-effort: return the calling user from Bearer JWT, else None."""
+    auth = request.headers.get("authorization") or ""
+    if not auth.lower().startswith("bearer "):
+        return None
+    token = auth.split(" ", 1)[1].strip()
+    try:
+        from auth import decode_token
+        uid = decode_token(token)
+        return await db.users.find_one({"id": uid}, {"_id": 0})
+    except Exception:
+        return None
+
+
+async def _require_solo_plus(request: Request, tool_label: str):
+    user = await _user_from_request(request)
+    if not user or user.get("plan") not in SOLO_PLUS:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "code": "plan_required",
+                "tool": tool_label,
+                "message": f"{tool_label} is part of the Solo and Family plans. Start a 14-day free trial — no card needed.",
+                "upgrade_url": "/signup?plan=family",
+            },
+        )
+
+
+# ---------------------------------------------------------------------------
+# Stripe billing
+# ---------------------------------------------------------------------------
+PLAN_PRICES = {
+    "solo": {"amount": 19.00, "currency": "aud", "label": "Kindred Solo"},
+    "family": {"amount": 39.00, "currency": "aud", "label": "Kindred Family"},
+}
+
+
+class CheckoutBody(BaseModel):
+    plan: _LiteralType["solo", "family"]
+    origin_url: str = Field(min_length=8, max_length=200)
+
+
+@api.post("/billing/checkout")
+async def billing_checkout(body: CheckoutBody, request: Request, user_id: str = Depends(get_current_user_id)):
+    if body.plan not in PLAN_PRICES:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Billing unavailable")
+    host_url = str(request.base_url).rstrip("/")
+    webhook_url = f"{host_url}/api/webhook/stripe"
+    stripe = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
+    spec = PLAN_PRICES[body.plan]
+    success_url = f"{body.origin_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{body.origin_url}/pricing?cancelled=1"
+    metadata = {"user_id": user_id, "plan": body.plan, "kind": "kindred_subscription"}
+    req = CheckoutSessionRequest(
+        amount=float(spec["amount"]),
+        currency=spec["currency"],
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=metadata,
+    )
+    session = await stripe.create_checkout_session(req)
+    await db.payment_transactions.insert_one({
+        "session_id": session.session_id,
+        "user_id": user_id,
+        "plan": body.plan,
+        "amount": float(spec["amount"]),
+        "currency": spec["currency"],
+        "metadata": metadata,
+        "payment_status": "initiated",
+        "ts": now_iso(),
+    })
+    return {"url": session.url, "session_id": session.session_id}
+
+
+@api.get("/billing/status/{session_id}")
+async def billing_status(session_id: str, user_id: str = Depends(get_current_user_id)):
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Billing unavailable")
+    tx = await db.payment_transactions.find_one({"session_id": session_id, "user_id": user_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(status_code=404, detail="Session not found")
+    stripe_client = StripeCheckout(api_key=api_key, webhook_url="")
+    chk = await stripe_client.get_checkout_status(session_id)
+    payment_status = (chk.payment_status or "").lower()
+    # Update transaction (idempotent — only flip plan once on first paid event)
+    if payment_status == "paid" and tx["payment_status"] != "paid":
+        plan = tx["plan"]
+        await db.users.update_one({"id": user_id}, {"$set": {"plan": plan}})
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {"payment_status": "paid", "paid_at": now_iso()}},
+        )
+        try:
+            user = await _get_user(user_id)
+            await email_service.email_tool_result(
+                to=user["email"],
+                tool_name=f"Welcome to {plan.capitalize()}",
+                headline=f"You're on Kindred {plan.capitalize()} — let's get you set up.",
+                body_html=f"<p>Thanks {user['name'].split(' ')[0]} — payment received.</p><p>Next steps: <a href='/onboarding'>complete onboarding</a> to set up your household.</p>",
+            )
+        except Exception as e:
+            logger.warning("Welcome email failed: %s", e)
+    elif chk.status == "expired":
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {"payment_status": "expired"}},
+        )
+    return {
+        "status": chk.status,
+        "payment_status": chk.payment_status,
+        "amount_total": chk.amount_total,
+        "currency": chk.currency,
+        "plan": tx["plan"],
+    }
+
+
+@api.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        return {"ok": False}
+    body = await request.body()
+    sig = request.headers.get("Stripe-Signature", "")
+    try:
+        stripe = StripeCheckout(api_key=api_key, webhook_url="")
+        ev = await stripe.handle_webhook(body, sig)
+    except Exception as e:
+        logger.warning("Stripe webhook parse failed: %s", e)
+        return {"ok": False}
+    if (ev.payment_status or "").lower() == "paid" and ev.session_id:
+        tx = await db.payment_transactions.find_one({"session_id": ev.session_id})
+        if tx and tx.get("payment_status") != "paid":
+            await db.users.update_one({"id": tx["user_id"]}, {"$set": {"plan": tx["plan"]}})
+            await db.payment_transactions.update_one(
+                {"session_id": ev.session_id},
+                {"$set": {"payment_status": "paid", "paid_at": now_iso(), "webhook_event": ev.event_type}},
+            )
+    return {"ok": True}
 
 
 app.include_router(api)
