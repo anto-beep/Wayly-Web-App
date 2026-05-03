@@ -1,0 +1,97 @@
+{
+  "project_name": "Kindred",
+  "theme": "Light",
+  "archetype": "1 - Organic & Earthy",
+  "colors": {
+    "background": "#F9F8F6",
+    "surface": "#FFFFFF",
+    "surface_secondary": "#F2EFE9",
+    "primary": "#2A3B32", 
+    "primary_foreground": "#FFFFFF",
+    "accent_sage": "#8B9B82",
+    "accent_terracotta": "#A05545",
+    "text_main": "#1A1A1A",
+    "text_muted": "#5C665A",
+    "border": "#E5E2DC",
+    "alert": "#A05545",
+    "success": "#3A5A40"
+  },
+  "typography": {
+    "fonts": {
+      "heading": "'Outfit', sans-serif",
+      "body": "'Figtree', sans-serif"
+    },
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight font-light",
+      "h2": "text-2xl sm:text-3xl tracking-tight",
+      "h3": "text-xl sm:text-2xl",
+      "body": "text-base leading-relaxed",
+      "overline": "uppercase text-xs tracking-[0.2em] font-medium text-text_muted",
+      "participant_h1": "text-4xl sm:text-5xl font-bold tracking-tight",
+      "participant_body": "text-2xl sm:text-3xl leading-relaxed"
+    },
+    "rules": [
+      "No generic Sans (Inter, Roboto) for headings.",
+      "Use 'Outfit' for all headings and 'Figtree' for body.",
+      "Tight letter spacing on headings.",
+      "Overlines are Uppercase, tiny, wide spacing.",
+      "Participant mode strictly uses very large typography (min 24pt for body)."
+    ]
+  },
+  "spacing_and_layout": {
+    "caregiver_mode": "Control Room Grid. Base grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4. Gap-6. Compact density, 1px solid borders. Use pure HTML + Tailwind for structures.",
+    "participant_mode": "Single column or max 2 column grid. Gap-8. Huge paddings (p-8, p-12). Massive tap targets.",
+    "general": [
+      "Generous spacing for padding: p-6 or p-8 inside cards.",
+      "Containers with borders must have internal padding.",
+      "Optical alignment over geometrical alignment."
+    ]
+  },
+  "components": {
+    "buttons": {
+      "caregiver": "Rounded-md, solid colors, crisp. Explicit hover states (hover:bg-primary/90 hover:text-white).",
+      "participant": "Massive height, rounded-2xl or full, extremely clear contrast and large text."
+    },
+    "cards": "Solid background (surface or surface_secondary), 1px subtle border (border-border), no shadow by default. Hover adds slight lift (-translate-y-1) and shadow-lg.",
+    "navigation": "Header with Glassmorphism (backdrop-blur-xl bg-white/70) or Solid background, sticky z-50. 1px bottom border. Navigation must be visible on desktop."
+  },
+  "media": {
+    "logos": [
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/47be6ff3-10f9-4eef-960a-45a1666874da/images/5665f2236b1c8ff501a768e5de8d99d4e616a606127c319ebdb990a2bfed82f4.png",
+        "category": "Main Logo",
+        "description": "Premium organic logo mark for Kindred."
+      }
+    ],
+    "backgrounds": [
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/47be6ff3-10f9-4eef-960a-45a1666874da/images/738c77e78a1218f6148da5787ffeaad77af49545f3b28e3a2339a4f91cfe0dca.png",
+        "category": "Hero/Dashboard Background",
+        "description": "Soft premium organic abstract background."
+      }
+    ],
+    "avatars": [
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/47be6ff3-10f9-4eef-960a-45a1666874da/images/244f566cccf544e84bc95867807368dcbb2db3dfcd3614540310642d21e8d531.png",
+        "category": "Avatar Placeholder",
+        "description": "Minimalist avatar in clay/sand colors."
+      }
+    ]
+  },
+  "accessibility": {
+    "contrast": "WCAG 2.2 AA compliant. Normal text minimum 4.5:1. Participant mode demands high legibility.",
+    "motion": "Minimal animations, mostly micro-interactions. Respect prefers-reduced-motion.",
+    "testing": "All interactive and key informational elements MUST include data-testid attribute (e.g., data-testid='upload-statement-button')."
+  },
+  "instructions_to_main_agent": [
+    "Build the dashboard using React, Tailwind CSS, and Shadcn UI components.",
+    "Implement two separate views/modes: Caregiver Dashboard and Participant View. Role selection on login/signup.",
+    "Use 'Outfit' for headings and 'Figtree' for body text. Add them via Google Fonts.",
+    "Install and use lucide-react for standard icons.",
+    "Caregiver view: Information-dense, scannable. Show budget burn across three streams, lifetime cap progress, alerts/anomalies, and family thread.",
+    "Participant view: Massively scaled typography (24pt body), single-action focus, today's appointments, budget in one number/sentence, huge 'call my daughter' & 'something's not right' buttons.",
+    "Implement drag-drop for PDF/CSV upload.",
+    "Avoid typical US/UK aged-care stock imagery. Rely on the calm textures, clean typography, and organic UI styling provided.",
+    "Ensure all buttons, inputs, and major sections have data-testid attributes."
+  ]
+}
