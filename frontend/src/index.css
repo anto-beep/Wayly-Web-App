@@ -1,47 +1,48 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Figtree:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-    /* Kindred design tokens — Organic & Earthy (Light) */
-    --kindred-bg: #F9F8F6;
+    /* Kindred brand tokens — Warm navy + gold */
+    --kindred-bg: #FAF7F2;
     --kindred-surface: #FFFFFF;
-    --kindred-surface-2: #F2EFE9;
-    --kindred-primary: #2A3B32;
+    --kindred-surface-2: #F2EEE5;
+    --kindred-primary: #1F3A5F;       /* warm deep navy */
     --kindred-primary-fg: #FFFFFF;
-    --kindred-sage: #8B9B82;
-    --kindred-terracotta: #A05545;
+    --kindred-gold: #D4A24E;          /* warm gold accent */
+    --kindred-sage: #7A9B7E;          /* soft sage success */
+    --kindred-terracotta: #C5734D;    /* muted terracotta alert */
     --kindred-text: #1A1A1A;
-    --kindred-muted: #5C665A;
-    --kindred-border: #E5E2DC;
-    --kindred-success: #3A5A40;
-    --kindred-alert: #A05545;
+    --kindred-muted: #5C6878;
+    --kindred-border: #E8E2D6;
+    --kindred-success: #7A9B7E;
+    --kindred-alert: #C5734D;
 }
 
 @layer base {
     :root {
-        --background: 38 18% 97%;
+        --background: 38 33% 97%;
         --foreground: 0 0% 10%;
         --card: 0 0% 100%;
         --card-foreground: 0 0% 10%;
         --popover: 0 0% 100%;
         --popover-foreground: 0 0% 10%;
-        --primary: 150 16% 20%;
+        --primary: 213 51% 25%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 38 21% 93%;
-        --secondary-foreground: 150 16% 20%;
-        --muted: 38 21% 93%;
-        --muted-foreground: 130 5% 38%;
-        --accent: 100 12% 56%;
+        --secondary: 38 33% 92%;
+        --secondary-foreground: 213 51% 25%;
+        --muted: 38 33% 92%;
+        --muted-foreground: 213 14% 42%;
+        --accent: 39 60% 57%;
         --accent-foreground: 0 0% 100%;
-        --destructive: 12 41% 45%;
+        --destructive: 18 49% 54%;
         --destructive-foreground: 0 0% 100%;
-        --border: 36 16% 87%;
-        --input: 36 16% 87%;
-        --ring: 150 16% 20%;
-        --radius: 0.75rem;
+        --border: 36 32% 87%;
+        --input: 36 32% 87%;
+        --ring: 213 51% 25%;
+        --radius: 0.625rem;
     }
 }
 
@@ -56,17 +57,19 @@
         margin: 0;
         background-color: var(--kindred-bg);
         color: var(--kindred-text);
-        font-family: 'Figtree', system-ui, -apple-system, sans-serif;
+        font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+        font-feature-settings: "tnum" 1, "lnum" 1;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        font-feature-settings: "ss01", "ss02";
     }
     h1, h2, h3, h4, h5, h6, .font-heading {
-        font-family: 'Outfit', system-ui, sans-serif;
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-weight: 500;
         letter-spacing: -0.01em;
     }
-    code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    code, .tabular {
+        font-variant-numeric: tabular-nums;
+        font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
     }
 }
 
@@ -79,35 +82,31 @@
     .text-muted-k { color: var(--kindred-muted); }
     .text-sage { color: var(--kindred-sage); }
     .text-terracotta { color: var(--kindred-terracotta); }
+    .text-gold { color: var(--kindred-gold); }
     .bg-sage { background-color: var(--kindred-sage); }
     .bg-terracotta { background-color: var(--kindred-terracotta); }
+    .bg-gold { background-color: var(--kindred-gold); }
     .border-kindred { border-color: var(--kindred-border); }
+    .border-gold { border-color: var(--kindred-gold); }
     .ring-primary-k { --tw-ring-color: var(--kindred-primary); }
     .overline {
         text-transform: uppercase;
-        letter-spacing: 0.2em;
-        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        font-size: 0.72rem;
         font-weight: 500;
         color: var(--kindred-muted);
+        font-family: 'IBM Plex Sans', sans-serif;
     }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
 }
 
-/* Drop default Create-React-App debug wrapper */
 @layer base {
-    [data-debug-wrapper="true"] {
-        display: contents !important;
-    }
+    [data-debug-wrapper="true"] { display: contents !important; }
 }
 
-/* Custom file-upload dotted box hover */
-.dropzone {
-    transition: all 180ms ease;
-}
-.dropzone:hover {
-    border-color: var(--kindred-primary);
-    background: var(--kindred-surface-2);
-}
-.dropzone.active {
+/* Drag-drop styling */
+.dropzone { transition: all 180ms ease; }
+.dropzone:hover, .dropzone.active {
     border-color: var(--kindred-primary);
     background: var(--kindred-surface-2);
 }

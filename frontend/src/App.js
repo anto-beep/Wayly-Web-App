@@ -18,13 +18,15 @@ import Chat from "@/pages/Chat";
 import FamilyThread from "@/pages/FamilyThread";
 import AuditLog from "@/pages/AuditLog";
 import ParticipantView from "@/pages/ParticipantView";
+import AIToolsIndex from "@/pages/AIToolsIndex";
+import StatementDecoderTool from "@/pages/tools/StatementDecoderTool";
+import BudgetCalculatorTool from "@/pages/tools/BudgetCalculatorTool";
+import PriceCheckerTool from "@/pages/tools/PriceCheckerTool";
+import Pricing from "@/pages/Pricing";
+import Trust from "@/pages/Trust";
 
 function Loading() {
-    return (
-        <div className="min-h-screen flex items-center justify-center text-muted-k">
-            Loading…
-        </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
 }
 
 function RequireAuth({ children, requireHousehold = true }) {
@@ -35,7 +37,8 @@ function RequireAuth({ children, requireHousehold = true }) {
     return children;
 }
 
-function PublicOnly({ children }) {
+function PublicAuthOnly({ children }) {
+    /** /login + /signup pages — redirect logged-in users into the app */
     const { user, household, loading } = useAuth();
     if (loading) return <Loading />;
     if (user) {
@@ -51,81 +54,30 @@ function App() {
             <BrowserRouter>
                 <Toaster richColors position="top-right" />
                 <Routes>
-                    <Route path="/" element={<PublicOnly><Landing /></PublicOnly>} />
-                    <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-                    <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
-                    <Route
-                        path="/onboarding"
-                        element={
-                            <RequireAuth requireHousehold={false}>
-                                <Onboarding />
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/app"
-                        element={
-                            <RequireAuth>
-                                <Layout><CaregiverDashboard /></Layout>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/app/statements"
-                        element={
-                            <RequireAuth>
-                                <Layout><StatementsList /></Layout>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/app/statements/upload"
-                        element={
-                            <RequireAuth>
-                                <Layout><StatementUpload /></Layout>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/app/statements/:id"
-                        element={
-                            <RequireAuth>
-                                <Layout><StatementDetail /></Layout>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/app/chat"
-                        element={
-                            <RequireAuth>
-                                <Layout><Chat /></Layout>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/app/family"
-                        element={
-                            <RequireAuth>
-                                <Layout><FamilyThread /></Layout>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/app/audit"
-                        element={
-                            <RequireAuth>
-                                <Layout><AuditLog /></Layout>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/participant"
-                        element={
-                            <RequireAuth>
-                                <ParticipantView />
-                            </RequireAuth>
-                        }
-                    />
+                    {/* Public marketing pages — accessible to everyone, logged in or not */}
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/trust" element={<Trust />} />
+                    <Route path="/ai-tools" element={<AIToolsIndex />} />
+                    <Route path="/ai-tools/statement-decoder" element={<StatementDecoderTool />} />
+                    <Route path="/ai-tools/budget-calculator" element={<BudgetCalculatorTool />} />
+                    <Route path="/ai-tools/provider-price-checker" element={<PriceCheckerTool />} />
+
+                    {/* Auth pages */}
+                    <Route path="/login" element={<PublicAuthOnly><Login /></PublicAuthOnly>} />
+                    <Route path="/signup" element={<PublicAuthOnly><Signup /></PublicAuthOnly>} />
+
+                    {/* Authenticated app */}
+                    <Route path="/onboarding" element={<RequireAuth requireHousehold={false}><Onboarding /></RequireAuth>} />
+                    <Route path="/app" element={<RequireAuth><Layout><CaregiverDashboard /></Layout></RequireAuth>} />
+                    <Route path="/app/statements" element={<RequireAuth><Layout><StatementsList /></Layout></RequireAuth>} />
+                    <Route path="/app/statements/upload" element={<RequireAuth><Layout><StatementUpload /></Layout></RequireAuth>} />
+                    <Route path="/app/statements/:id" element={<RequireAuth><Layout><StatementDetail /></Layout></RequireAuth>} />
+                    <Route path="/app/chat" element={<RequireAuth><Layout><Chat /></Layout></RequireAuth>} />
+                    <Route path="/app/family" element={<RequireAuth><Layout><FamilyThread /></Layout></RequireAuth>} />
+                    <Route path="/app/audit" element={<RequireAuth><Layout><AuditLog /></Layout></RequireAuth>} />
+                    <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />
+
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </BrowserRouter>

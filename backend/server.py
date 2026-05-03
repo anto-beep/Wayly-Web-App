@@ -8,8 +8,10 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, status
+from collections import defaultdict
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Request, status
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
@@ -522,6 +524,196 @@ async def flag_concern(payload: ConcernCreate, user_id: str = Depends(get_curren
     )
     await db.family_messages.insert_one(msg.model_dump())
     return {"ok": True}
+
+
+# ----------------- public AI tools (no auth, IP rate-limited) -----------------
+RATE_LIMIT_BUCKET: dict[str, list[datetime]] = defaultdict(list)
+RATE_LIMIT_WINDOW = timedelta(days=30)
+RATE_LIMIT_MAX = 5
+
+
+def _client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _check_rate_limit(ip: str) -> None:
+    now = datetime.now(timezone.utc)
+    RATE_LIMIT_BUCKET[ip] = [t for t in RATE_LIMIT_BUCKET[ip] if now - t < RATE_LIMIT_WINDOW]
+    if len(RATE_LIMIT_BUCKET[ip]) >= RATE_LIMIT_MAX:
+        raise HTTPException(
+            status_code=429,
+            detail="You've reached the free-tool limit (5 uses per month). Sign up to keep going.",
+        )
+    RATE_LIMIT_BUCKET[ip].append(now)
+
+
+class PublicTextBody(BaseModel):
+    text: str = Field(min_length=10, max_length=40000)
+
+
+class PublicBudgetBody(BaseModel):
+    classification: int = Field(ge=1, le=8)
+    is_grandfathered: bool = False
+    current_lifetime_balance: float = 0.0
+    expected_annual_burn: float | None = None
+
+
+class PublicPriceBody(BaseModel):
+    service: str
+    rate: float = Field(gt=0)
+    postcode: str | None = None
+    provider: str | None = None
+
+
+# Indicative network-median rates (AUD/hour or per-visit) — derived from public provider price lists.
+# These are placeholder benchmarks for MVP; real medians come from accumulated user data over time.
+PRICE_BENCHMARKS = {
+    "Domestic assistance — cleaning": {"median": 76.0, "cap": 82.0},
+    "Personal care": {"median": 84.0, "cap": 90.0},
+    "Occupational therapy": {"median": 155.0, "cap": 165.0},
+    "Physiotherapy": {"median": 145.0, "cap": 158.0},
+    "Social support": {"median": 70.0, "cap": 78.0},
+    "Transport — community access": {"median": 35.0, "cap": 38.0},
+    "Home maintenance / gardening": {"median": 75.0, "cap": 82.0},
+    "Meal preparation": {"median": 68.0, "cap": 74.0},
+    "Nursing — registered": {"median": 165.0, "cap": 178.0},
+    "Allied health — podiatry": {"median": 130.0, "cap": 140.0},
+}
+
+
+async def _run_public_decode(text: str) -> dict:
+    parsed = await parse_statement(text, household_id="public")
+    line_items_in: List[dict] = parsed.get("line_items", []) or []
+    coerced: List[dict] = []
+    for li in line_items_in:
+        try:
+            obj = StatementLineItem(
+                date=str(li.get("date", "1970-01-01"))[:10],
+                service_code=li.get("service_code"),
+                service_name=str(li.get("service_name") or "Service"),
+                stream=li.get("stream") if li.get("stream") in ("Clinical", "Independence", "Everyday Living") else "Everyday Living",
+                units=float(li.get("units") or 0),
+                unit_price=float(li.get("unit_price") or 0),
+                total=float(li.get("total") or 0),
+                contribution_paid=float(li.get("contribution_paid") or 0),
+                government_paid=float(li.get("government_paid") or 0),
+                confidence=float(li.get("confidence") or 0.8),
+            )
+            coerced.append(obj.model_dump())
+        except Exception as e:
+            logger.warning("public decode skipped line: %s", e)
+    raw_anoms = _detect_anomalies(coerced, [], provider_published={})
+    explained = await explain_anomalies(raw_anoms, "public")
+    return {
+        "summary": parsed.get("summary"),
+        "period_label": parsed.get("period_label"),
+        "line_items": coerced,
+        "anomalies": explained,
+    }
+
+
+@api.post("/public/decode-statement-text")
+async def public_decode_text(body: PublicTextBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    return await _run_public_decode(body.text)
+
+
+@api.post("/public/decode-statement")
+async def public_decode_file(request: Request, file: UploadFile = File(...)):
+    _check_rate_limit(_client_ip(request))
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if len(raw) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 10 MB)")
+    text = _extract_text(file.filename, raw)
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract text from file")
+    return await _run_public_decode(text)
+
+
+@api.post("/public/budget-calc")
+async def public_budget_calc(body: PublicBudgetBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    classification = body.classification
+    annual = budget_lib.CLASSIFICATIONS[classification]["annual"]
+    quarterly = budget_lib.quarterly_budget(classification)
+    allocations = budget_lib.stream_allocations(classification)
+    rollover = budget_lib.rollover_cap(classification)
+    cap_amount = budget_lib.lifetime_cap(body.is_grandfathered)
+    contributions = max(0.0, body.current_lifetime_balance)
+    pct = (contributions / cap_amount * 100) if cap_amount else 0.0
+    years_to_cap = None
+    if body.expected_annual_burn and body.expected_annual_burn > 0:
+        remaining = max(0.0, cap_amount - contributions)
+        years_to_cap = round(remaining / body.expected_annual_burn, 2)
+    return {
+        "classification": classification,
+        "classification_label": budget_lib.CLASSIFICATIONS[classification]["label"],
+        "annual_total": annual,
+        "quarterly_total": quarterly,
+        "rollover_cap": rollover,
+        "streams": [
+            {"stream": s, "allocated": allocations[s]} for s in budget_lib.STREAMS
+        ],
+        "lifetime_cap": cap_amount,
+        "lifetime_contributions": contributions,
+        "lifetime_pct": round(pct, 2),
+        "years_to_cap": years_to_cap,
+        "is_grandfathered": body.is_grandfathered,
+    }
+
+
+@api.post("/public/price-check")
+async def public_price_check(body: PublicPriceBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    bench = PRICE_BENCHMARKS.get(body.service, {"median": body.rate, "cap": body.rate})
+    median = bench["median"]
+    cap = bench["cap"]
+    delta_pct = ((body.rate - median) / median * 100) if median else 0.0
+    if body.rate > cap:
+        verdict, label = "high", "Above the 1 July 2026 cap"
+        assessment = (
+            f"At ${body.rate:.2f}/unit, this is above the published 1 July 2026 cap of "
+            f"${cap:.2f}. From that date, providers cannot exceed the cap."
+        )
+        suggested = "Ask the provider for a corrected rate, or raise it with the Aged Care Quality and Safety Commission."
+    elif body.rate > median * 1.10:
+        verdict, label = "high", "Higher than the typical rate"
+        assessment = (
+            f"At ${body.rate:.2f}/unit, this is about {delta_pct:.0f}% above the network median "
+            f"of ${median:.2f}. Worth asking the provider why."
+        )
+        suggested = "Email the provider asking for a written explanation of the rate."
+    elif body.rate < median * 0.85:
+        verdict, label = "low", "Below the typical rate"
+        assessment = (
+            f"At ${body.rate:.2f}/unit, this is below the network median of ${median:.2f}. "
+            "That's likely a good outcome — confirm the service quality is what you'd expect."
+        )
+        suggested = None
+    else:
+        verdict, label = "fair", "About what you'd expect"
+        assessment = (
+            f"At ${body.rate:.2f}/unit, you're within typical range for {body.service.lower()} "
+            f"(network median ${median:.2f}, 1 Jul 2026 cap ${cap:.2f})."
+        )
+        suggested = None
+
+    return {
+        "service": body.service,
+        "charged": body.rate,
+        "median": median,
+        "cap": cap,
+        "delta_pct": round(delta_pct, 2),
+        "verdict": verdict,
+        "verdict_label": label,
+        "assessment": assessment,
+        "suggested_action": suggested,
+    }
 
 
 @api.get("/")

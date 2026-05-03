@@ -5,8 +5,9 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                heading: ["Outfit", "system-ui", "sans-serif"],
-                sans: ["Figtree", "system-ui", "sans-serif"],
+                heading: ["Crimson Pro", "Georgia", "serif"],
+                sans: ["IBM Plex Sans", "system-ui", "sans-serif"],
+                mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
             },
             borderRadius: {
                 lg: "var(--radius)",
@@ -16,68 +17,41 @@ module.exports = {
             colors: {
                 background: "hsl(var(--background))",
                 foreground: "hsl(var(--foreground))",
-                card: {
-                    DEFAULT: "hsl(var(--card))",
-                    foreground: "hsl(var(--card-foreground))",
-                },
-                popover: {
-                    DEFAULT: "hsl(var(--popover))",
-                    foreground: "hsl(var(--popover-foreground))",
-                },
-                primary: {
-                    DEFAULT: "hsl(var(--primary))",
-                    foreground: "hsl(var(--primary-foreground))",
-                },
-                secondary: {
-                    DEFAULT: "hsl(var(--secondary))",
-                    foreground: "hsl(var(--secondary-foreground))",
-                },
-                muted: {
-                    DEFAULT: "hsl(var(--muted))",
-                    foreground: "hsl(var(--muted-foreground))",
-                },
-                accent: {
-                    DEFAULT: "hsl(var(--accent))",
-                    foreground: "hsl(var(--accent-foreground))",
-                },
-                destructive: {
-                    DEFAULT: "hsl(var(--destructive))",
-                    foreground: "hsl(var(--destructive-foreground))",
-                },
+                card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
+                popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
+                primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
+                secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
+                muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
+                accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
+                destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",
                 kindred: {
-                    bg: "#F9F8F6",
+                    bg: "#FAF7F2",
                     surface: "#FFFFFF",
-                    surface2: "#F2EFE9",
-                    primary: "#2A3B32",
-                    sage: "#8B9B82",
-                    terracotta: "#A05545",
+                    surface2: "#F2EEE5",
+                    primary: "#1F3A5F",
+                    gold: "#D4A24E",
+                    sage: "#7A9B7E",
+                    terracotta: "#C5734D",
                     text: "#1A1A1A",
-                    muted: "#5C665A",
-                    border: "#E5E2DC",
-                    success: "#3A5A40",
+                    muted: "#5C6878",
+                    border: "#E8E2D6",
                 },
             },
             keyframes: {
-                "accordion-down": {
-                    from: { height: "0" },
-                    to: { height: "var(--radix-accordion-content-height)" },
-                },
-                "accordion-up": {
-                    from: { height: "var(--radix-accordion-content-height)" },
-                    to: { height: "0" },
-                },
+                "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
+                "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
                 "fade-up": {
-                    "0%": { opacity: "0", transform: "translateY(8px)" },
+                    "0%": { opacity: "0", transform: "translateY(10px)" },
                     "100%": { opacity: "1", transform: "translateY(0)" },
                 },
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
-                "fade-up": "fade-up 0.5s ease-out both",
+                "fade-up": "fade-up 0.6s ease-out both",
             },
         },
     },

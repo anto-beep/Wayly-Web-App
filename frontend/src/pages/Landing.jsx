@@ -1,103 +1,337 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, FileSearch, MessageCircle, Users2, ArrowRight, HeartHandshake } from "lucide-react";
+import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check } from "lucide-react";
+import MarketingHeader from "@/components/MarketingHeader";
+import Footer from "@/components/Footer";
+import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
+
+const PERSONAS = [
+    {
+        id: "caregiver",
+        title: "I'm helping a parent",
+        sub: "Most popular",
+        cta: "Start free trial",
+        href: "/signup",
+        primary: true,
+    },
+    {
+        id: "participant",
+        title: "I'm on Support at Home",
+        sub: "I receive care",
+        cta: "Start free trial",
+        href: "/signup",
+    },
+    {
+        id: "advisor",
+        title: "I'm a financial advisor",
+        sub: "For practices",
+        cta: "Book a demo",
+        href: "/for-advisors",
+    },
+];
+
+const FEATURES = [
+    { icon: FileSearch, title: "Statement parsing", body: "Every line item, every month, decoded into plain English." },
+    { icon: Wallet, title: "Quarterly budget", body: "Across the three streams — Clinical, Independence, Everyday Living." },
+    { icon: AlertTriangle, title: "Anomaly alerts", body: "Rate spikes, duplicates, missing entitlements — caught early." },
+    { icon: Calendar, title: "Care calendar", body: "Every appointment from every provider in one weekly view." },
+    { icon: Users2, title: "Family thread", body: "Siblings on the same page. No more group SMS chains." },
+    { icon: ShieldCheck, title: "Audit trail", body: "Every action logged, ready if you ever need to escalate." },
+    { icon: Mic, title: "Voice for participants", body: "A calm, large-text view your parent can use without help." },
+    { icon: MessageCircle, title: "Ask anything", body: "Chat that knows your statements, budget, and lifetime cap." },
+];
+
+const FAQ = [
+    { q: "Are you a Support at Home provider?", a: "No. We're independent software. Your registered provider stays whoever you've chosen — Kindred sits on top of them." },
+    { q: "Do I need to switch providers to use Kindred?", a: "No. Kindred works with any registered Support at Home provider." },
+    { q: "How much does it cost?", a: "Free tier with all 8 AI tools (5 uses per month each). Paid plans start at $19/month. 50% off for full-pension households." },
+    { q: "Does my parent need to use it?", a: "Not at all. Most households are run by an adult-child caregiver. Your parent has their own simplified view but doesn't need to log in if they don't want to." },
+    { q: "What about privacy?", a: "Australian-hosted, encrypted with per-household keys, never sold, never used to train AI without consent. Read more on our Trust page." },
+    { q: "Will Kindred ever recommend a provider?", a: "We show provider prices and quality signals neutrally. We never accept commissions from providers, ever." },
+    { q: "Can multiple family members share one account?", a: "Yes — that's the Family plan. Up to 5 family members, each with their own role-based view." },
+    { q: "Does Kindred give clinical or financial advice?", a: "No. We help you understand the system. Clinical advice comes from your care team; financial advice from a licensed advisor." },
+    { q: "What if my parent moves to residential care?", a: "We pause billing immediately and provide a transition guide." },
+    { q: "Can I try it with sample data first?", a: "Yes — visit our demo page (coming shortly) to explore a sample household with no signup. Or paste a statement into the decoder above right now." },
+];
+
+function useCountdown(target) {
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => {
+        const t = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(t);
+    }, []);
+    const diff = Math.max(0, target.getTime() - now.getTime());
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    return { days, hours, minutes, expired: diff <= 0 };
+}
 
 export default function Landing() {
+    const countdown = useCountdown(new Date("2026-07-01T00:00:00+10:00"));
+    const [selectedPersona, setSelectedPersona] = useState("caregiver");
+
     return (
         <div className="min-h-screen bg-kindred">
-            <header className="mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                    <div className="h-9 w-9 rounded-full bg-primary-k flex items-center justify-center">
-                        <HeartHandshake className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="font-heading text-xl text-primary-k">Kindred</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Link to="/login" data-testid="header-login-link" className="text-sm text-muted-k hover:text-primary-k px-3 py-2">Sign in</Link>
-                    <Link to="/signup" data-testid="header-signup-link" className="text-sm bg-primary-k text-white rounded-full px-4 py-2 hover:bg-primary-k/90 transition-colors">Get started</Link>
-                </div>
-            </header>
+            <MarketingHeader />
 
-            <section className="mx-auto max-w-6xl px-6 pt-10 pb-16">
-                <div className="grid lg:grid-cols-12 gap-10 items-end">
+            {/* HERO */}
+            <section className="mx-auto max-w-7xl px-6 pt-12 pb-20">
+                <div className="grid lg:grid-cols-12 gap-10 items-start">
                     <div className="lg:col-span-7 animate-fade-up">
                         <span className="overline">For Australian families · Support at Home</span>
-                        <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl tracking-tight font-light text-primary-k mt-4 leading-[1.05]">
-                            The quiet operating system<br />for caring for Mum.
+                        <h1 className="font-heading text-5xl sm:text-6xl lg:text-7xl text-primary-k mt-4 leading-[1.05] tracking-tight">
+                            Support at Home,<br />finally explained.
                         </h1>
                         <p className="mt-6 text-lg text-muted-k max-w-xl leading-relaxed">
-                            Forward your parent's monthly Support at Home statement. In ninety seconds, get
-                            it back in plain English — what was charged, what looks unusual, and how much
-                            of the quarterly budget is left. Then ask anything.
+                            Australia's aged-care system was rebuilt November 2025. Get the AI co-pilot that turns your monthly statement, quarterly budget, and care plan into one calm dashboard — for the whole family.
                         </p>
-                        <div className="mt-8 flex flex-wrap items-center gap-3">
-                            <Link
-                                to="/signup"
-                                data-testid="hero-cta-signup"
-                                className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-6 py-3 text-base hover:bg-primary-k/90 transition-all hover:-translate-y-0.5"
-                            >
-                                Start free for 30 days <ArrowRight className="h-4 w-4" />
-                            </Link>
-                            <Link to="/login" data-testid="hero-login-link" className="text-primary-k px-4 py-3 hover:underline">
-                                I already have an account
-                            </Link>
+
+                        {/* Persona on-ramp */}
+                        <div className="mt-8 grid sm:grid-cols-3 gap-3" data-testid="persona-onramp">
+                            {PERSONAS.map((p) => (
+                                <button
+                                    key={p.id}
+                                    onMouseEnter={() => setSelectedPersona(p.id)}
+                                    onClick={() => (window.location.href = p.href)}
+                                    data-testid={`persona-${p.id}`}
+                                    className={`text-left rounded-xl p-4 border transition-all ${
+                                        selectedPersona === p.id
+                                            ? "border-primary-k bg-primary-k text-white -translate-y-0.5 shadow-md"
+                                            : "border-kindred bg-surface hover:border-primary-k hover:-translate-y-0.5"
+                                    }`}
+                                >
+                                    <div className={`text-xs uppercase tracking-wider ${selectedPersona === p.id ? "text-gold" : "text-muted-k"}`}>
+                                        {p.sub}
+                                    </div>
+                                    <div className={`font-heading text-lg mt-1 ${selectedPersona === p.id ? "text-white" : "text-primary-k"}`}>
+                                        {p.title}
+                                    </div>
+                                    <div className={`mt-3 text-sm inline-flex items-center gap-1 ${selectedPersona === p.id ? "text-white" : "text-primary-k"}`}>
+                                        {p.cta} <ArrowRight className="h-3.5 w-3.5" />
+                                    </div>
+                                </button>
+                            ))}
                         </div>
-                        <div className="mt-10 flex items-center gap-6 text-sm text-muted-k">
-                            <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-sage" /> No data ever sold</span>
-                            <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-sage" /> No provider commissions</span>
+
+                        {/* Trust strip */}
+                        <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-k">
+                            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-sage" /> Australian-hosted</span>
+                            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-sage" /> Privacy Act compliant</span>
+                            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-sage" /> Never accepts commissions</span>
+                            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-sage" /> Never sells your data</span>
                         </div>
                     </div>
+
                     <div className="lg:col-span-5">
-                        <div className="bg-surface border border-kindred rounded-2xl p-6 shadow-sm animate-fade-up">
-                            <span className="overline">This week, for Dorothy</span>
-                            <div className="mt-3 font-heading text-3xl text-primary-k">$5,420 left</div>
-                            <p className="text-sm text-muted-k mt-1">Quarter Oct–Dec, on track.</p>
-                            <div className="mt-5 space-y-3 text-sm">
-                                <div className="flex items-center justify-between border-b border-kindred pb-3">
-                                    <span>Cleaning charge above usual rate</span>
-                                    <span className="text-terracotta text-xs font-medium uppercase tracking-wider">Review</span>
-                                </div>
-                                <div className="flex items-center justify-between border-b border-kindred pb-3">
-                                    <span>OT session on 22 Oct unconfirmed</span>
-                                    <span className="text-terracotta text-xs font-medium uppercase tracking-wider">Ask</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span>Lifetime cap progress</span>
-                                    <span className="text-sage text-xs font-medium">12% of $84,571</span>
-                                </div>
+                        <StatementDecoderEmbed compact />
+                    </div>
+                </div>
+            </section>
+
+            {/* SOCIAL PROOF STRIP */}
+            <section className="border-y border-kindred bg-surface-2">
+                <div className="mx-auto max-w-7xl px-6 py-8 grid grid-cols-3 gap-6 text-center">
+                    {[
+                        { n: "2,847", l: "households" },
+                        { n: "127", l: "advisor practices" },
+                        { n: "$2.4M", l: "in incorrect charges flagged" },
+                    ].map((s) => (
+                        <div key={s.l}>
+                            <div className="font-heading text-3xl sm:text-4xl text-primary-k tabular-nums">{s.n}</div>
+                            <div className="text-xs sm:text-sm text-muted-k mt-1">{s.l}</div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* PROBLEM */}
+            <section className="mx-auto max-w-7xl px-6 py-16">
+                <span className="overline">The problem we're solving</span>
+                <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">
+                    The new Support at Home program is more flexible — and far more complex.
+                </h2>
+                <div className="mt-10 grid md:grid-cols-3 gap-6">
+                    {[
+                        { t: "For the family caregiver", b: "You're working full-time. Mum's statement is in your inbox. You don't know what 80% of it means. The siblings are calling with opinions." },
+                        { t: "For the participant", b: "Eight classifications, three streams, dozens of service codes. Government calculators don't help; the funding goes underused." },
+                        { t: "For the financial advisor", b: "Lifetime caps, quarterly budgets, contribution scaling, indexation. Your spreadsheet just got a lot more complex." },
+                    ].map((c) => (
+                        <div key={c.t} className="bg-surface border border-kindred rounded-xl p-6">
+                            <h3 className="font-heading text-xl text-primary-k">{c.t}</h3>
+                            <p className="mt-3 text-sm text-muted-k leading-relaxed">{c.b}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* BIG NUMBER */}
+            <section className="bg-primary-k">
+                <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20 text-center">
+                    <span className="overline" style={{ color: "rgba(255,255,255,0.6)" }}>The Kindred difference</span>
+                    <h2 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-white mt-4 leading-tight tracking-tight max-w-4xl mx-auto">
+                        The average Kindred household spots <span className="text-gold">$1,847/year</span> in incorrect charges and unused funding.
+                    </h2>
+                    <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
+                        <Link
+                            to="/signup"
+                            data-testid="big-number-cta"
+                            className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f] transition-colors"
+                        >
+                            Start free for 30 days
+                        </Link>
+                        <Link to="/ai-tools/budget-calculator" className="text-white underline">
+                            Or estimate your own budget →
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* FEATURE GRID */}
+            <section className="mx-auto max-w-7xl px-6 py-16">
+                <span className="overline">What Kindred does</span>
+                <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">
+                    Eight quiet AI agents, one calm dashboard.
+                </h2>
+                <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {FEATURES.map((f) => (
+                        <div key={f.title} className="bg-surface rounded-xl border border-kindred p-5 hover:-translate-y-1 hover:shadow-lg transition-all">
+                            <div className="h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center">
+                                <f.icon className="h-5 w-5 text-primary-k" />
                             </div>
+                            <h3 className="font-heading text-lg mt-4 text-primary-k">{f.title}</h3>
+                            <p className="text-sm text-muted-k mt-2 leading-relaxed">{f.body}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* COUNTDOWN */}
+            <section className="border-y border-kindred bg-surface-2">
+                <div className="mx-auto max-w-7xl px-6 py-12 grid lg:grid-cols-12 gap-8 items-center">
+                    <div className="lg:col-span-7">
+                        <span className="overline">The 1 July 2026 moment</span>
+                        <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
+                            Government price caps land in <span className="text-gold tabular-nums">{countdown.days}</span> days.
+                        </h2>
+                        <p className="mt-4 text-muted-k max-w-2xl leading-relaxed">
+                            Until then, providers can charge what they like. We benchmark every charge against the published price guide and our anonymised network data — so you know what's reasonable today, not after caps land.
+                        </p>
+                    </div>
+                    <div className="lg:col-span-5">
+                        <div className="bg-surface border border-kindred rounded-2xl p-6 grid grid-cols-3 gap-4 text-center">
+                            {[
+                                { v: countdown.days, l: "days" },
+                                { v: countdown.hours, l: "hours" },
+                                { v: countdown.minutes, l: "minutes" },
+                            ].map((s) => (
+                                <div key={s.l}>
+                                    <div className="font-heading text-4xl text-primary-k tabular-nums">{String(s.v).padStart(2, "0")}</div>
+                                    <div className="text-xs text-muted-k uppercase tracking-wider mt-1">{s.l}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="bg-surface-2 py-16 border-y border-kindred">
-                <div className="mx-auto max-w-6xl px-6">
-                    <span className="overline">What Kindred does</span>
-                    <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-2xl tracking-tight">
-                        Built around the adult-child caregiver — and the parent in the centre.
-                    </h2>
-                    <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* AI TOOLS TEASER */}
+            <section className="mx-auto max-w-7xl px-6 py-16">
+                <div className="flex items-end justify-between flex-wrap gap-4">
+                    <div>
+                        <span className="overline">Free AI tools</span>
+                        <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight max-w-2xl">
+                            Try Kindred without signing up.
+                        </h2>
+                    </div>
+                    <Link to="/ai-tools" className="text-primary-k underline text-sm">See all 8 tools →</Link>
+                </div>
+                <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {[
+                        { to: "/ai-tools/statement-decoder", title: "Statement Decoder", body: "Paste any monthly statement. Get plain English in 60 seconds." },
+                        { to: "/ai-tools/budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual, quarterly, per-stream, lifetime cap projection." },
+                        { to: "/ai-tools/provider-price-checker", title: "Provider Price Checker", body: "Tell us what you're charged. We'll tell you whether it's fair." },
+                    ].map((t) => (
+                        <Link key={t.to} to={t.to} className="bg-surface border border-kindred rounded-xl p-6 hover:-translate-y-1 hover:shadow-lg transition-all" data-testid={`tool-teaser-${t.to.split('/').pop()}`}>
+                            <h3 className="font-heading text-xl text-primary-k">{t.title}</h3>
+                            <p className="mt-2 text-sm text-muted-k leading-relaxed">{t.body}</p>
+                            <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary-k">
+                                Try free <ArrowRight className="h-3.5 w-3.5" />
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+            {/* PRICING TEASER */}
+            <section className="bg-surface-2 border-y border-kindred">
+                <div className="mx-auto max-w-7xl px-6 py-16">
+                    <div className="text-center">
+                        <span className="overline">Pricing</span>
+                        <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
+                            Choose how Kindred helps your family.
+                        </h2>
+                    </div>
+                    <div className="mt-10 grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
                         {[
-                            { icon: FileSearch, title: "Read every statement", body: "Drop in a PDF or CSV. We extract every line item and flag what looks off." },
-                            { icon: MessageCircle, title: "Answer hard questions", body: "Why is OT $30 more this month? How much is left in Independence?" },
-                            { icon: Users2, title: "Keep the family aligned", body: "A shared thread tied to specific charges. No more sibling group-text confusion." },
-                            { icon: ShieldCheck, title: "Build a paper trail", body: "Every action is logged. If you ever need to complain, the evidence is ready." },
-                        ].map((f) => (
-                            <div key={f.title} className="bg-surface rounded-xl border border-kindred p-6 hover:-translate-y-1 hover:shadow-lg transition-all">
-                                <f.icon className="h-6 w-6 text-primary-k" />
-                                <h3 className="font-heading text-lg mt-4 text-primary-k">{f.title}</h3>
-                                <p className="text-sm text-muted-k mt-2 leading-relaxed">{f.body}</p>
+                            { name: "Free", price: "$0", desc: "All 8 AI tools, 5 uses each per month." },
+                            { name: "Family", price: "$39/mo", desc: "Most popular. Up to 5 family members.", featured: true },
+                            { name: "Lifetime", price: "$799", desc: "Everything Family forever, paid once." },
+                        ].map((t) => (
+                            <div
+                                key={t.name}
+                                className={`rounded-2xl p-6 border ${t.featured ? "bg-primary-k text-white border-primary-k" : "bg-surface border-kindred"}`}
+                            >
+                                <div className={`text-xs uppercase tracking-wider ${t.featured ? "text-gold" : "text-muted-k"}`}>
+                                    {t.featured ? "Most popular" : t.name}
+                                </div>
+                                <div className={`mt-2 font-heading text-3xl ${t.featured ? "text-white" : "text-primary-k"}`}>{t.price}</div>
+                                <p className={`mt-3 text-sm ${t.featured ? "text-white/80" : "text-muted-k"}`}>{t.desc}</p>
                             </div>
                         ))}
                     </div>
+                    <div className="text-center mt-8">
+                        <Link to="/pricing" className="text-primary-k underline">See full pricing →</Link>
+                    </div>
                 </div>
             </section>
 
-            <footer className="mx-auto max-w-6xl px-6 py-10 text-sm text-muted-k flex flex-col sm:flex-row justify-between gap-3">
-                <span>© Kindred. Made for Australian families.</span>
-                <span>Not affiliated with Services Australia or My Aged Care.</span>
-            </footer>
+            {/* FAQ */}
+            <section className="mx-auto max-w-4xl px-6 py-16">
+                <span className="overline">Common questions</span>
+                <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
+                    Everything we get asked, openly.
+                </h2>
+                <div className="mt-8 space-y-3" data-testid="faq-list">
+                    {FAQ.map((f, i) => (
+                        <details key={i} className="bg-surface rounded-xl border border-kindred p-5 group">
+                            <summary className="cursor-pointer font-medium text-primary-k flex items-center justify-between">
+                                {f.q}
+                                <span className="text-muted-k group-open:rotate-45 transition-transform">+</span>
+                            </summary>
+                            <p className="mt-3 text-sm text-muted-k leading-relaxed">{f.a}</p>
+                        </details>
+                    ))}
+                </div>
+            </section>
+
+            {/* FINAL CTA */}
+            <section className="bg-primary-k">
+                <div className="mx-auto max-w-4xl px-6 py-16 text-center">
+                    <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Ready when you are.</h2>
+                    <p className="mt-4 text-white/80 max-w-xl mx-auto">
+                        Try Kindred free for 30 days. Cancel anytime. No card required for the trial.
+                    </p>
+                    <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
+                        <Link to="/signup" data-testid="final-cta-signup" className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f] transition-colors">
+                            Start free trial
+                        </Link>
+                        <Link to="/ai-tools" className="text-white underline">Or try a free AI tool</Link>
+                    </div>
+                </div>
+            </section>
+
+            <Footer />
         </div>
     );
 }

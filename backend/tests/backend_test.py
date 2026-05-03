@@ -269,3 +269,139 @@ class TestParticipant:
         assert any(e["action"] == "CONCERN_FLAGGED" for e in a)
         m = requests.get(f"{API}/family-thread", headers=existing_headers, timeout=15).json()
         assert any("Concern flagged" in msg["body"] for msg in m)
+
+
+# ---------- PUBLIC AI TOOLS (no auth, IP rate-limited 5/30days) ----------
+def _ip(suffix: str) -> dict:
+    """Generate a unique x-forwarded-for IP per test to avoid rate-limit collisions."""
+    return {"x-forwarded-for": f"10.99.{abs(hash(suffix)) % 250}.{abs(hash(suffix + 'b')) % 250}"}
+
+
+class TestPublicBudget:
+    def test_budget_calc_basic(self):
+        r = requests.post(f"{API}/public/budget-calc", json={
+            "classification": 4, "is_grandfathered": False,
+            "current_lifetime_balance": 0, "expected_annual_burn": None,
+        }, headers=_ip("budget-basic"), timeout=15)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d["classification"] == 4
+        assert d["annual_total"] > 0
+        assert d["quarterly_total"] > 0
+        assert len(d["streams"]) == 3
+        assert {s["stream"] for s in d["streams"]} == {"Clinical", "Independence", "Everyday Living"}
+        assert d["lifetime_cap"] > 0
+        assert d["years_to_cap"] is None
+
+    def test_budget_calc_with_burn(self):
+        r = requests.post(f"{API}/public/budget-calc", json={
+            "classification": 6, "is_grandfathered": True,
+            "current_lifetime_balance": 5000, "expected_annual_burn": 4000,
+        }, headers=_ip("budget-burn"), timeout=15)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d["classification"] == 6
+        assert d["is_grandfathered"] is True
+        assert d["lifetime_contributions"] == 5000
+        assert d["years_to_cap"] is not None and d["years_to_cap"] > 0
+        assert d["lifetime_pct"] >= 0
+
+    def test_budget_calc_rejects_invalid_classification(self):
+        r = requests.post(f"{API}/public/budget-calc", json={
+            "classification": 99, "is_grandfathered": False,
+            "current_lifetime_balance": 0,
+        }, headers=_ip("budget-bad"), timeout=15)
+        assert r.status_code == 422
+
+
+class TestPublicPriceCheck:
+    def test_price_high_above_cap(self):
+        r = requests.post(f"{API}/public/price-check", json={
+            "service": "Domestic assistance — cleaning", "rate": 120.0,
+        }, headers=_ip("price-high"), timeout=15)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d["verdict"] == "high"
+        assert d["charged"] == 120.0
+        assert d["median"] == 76.0
+        assert d["cap"] == 82.0
+        assert "cap" in d["verdict_label"].lower() or d["verdict_label"]
+        assert d["suggested_action"]
+
+    def test_price_fair(self):
+        r = requests.post(f"{API}/public/price-check", json={
+            "service": "Personal care", "rate": 84.0,
+        }, headers=_ip("price-fair"), timeout=15)
+        assert r.status_code == 200
+        d = r.json()
+        assert d["verdict"] == "fair"
+
+    def test_price_low(self):
+        r = requests.post(f"{API}/public/price-check", json={
+            "service": "Occupational therapy", "rate": 100.0,
+        }, headers=_ip("price-low"), timeout=15)
+        assert r.status_code == 200
+        d = r.json()
+        assert d["verdict"] == "low"
+
+    def test_price_unknown_service_falls_back(self):
+        r = requests.post(f"{API}/public/price-check", json={
+            "service": "Unknown service xyz", "rate": 50.0,
+        }, headers=_ip("price-unknown"), timeout=15)
+        assert r.status_code == 200
+        d = r.json()
+        assert d["verdict"] in ("fair", "high", "low")
+
+
+class TestPublicDecode:
+    SAMPLE = (
+        "Statement period 1 Apr 2026 – 30 Apr 2026\n"
+        "Date,Service,Stream,Units,Unit Price,Total,Contribution Paid,Government Paid\n"
+        "2026-04-05,Domestic assistance,Everyday Living,2,75.50,151.00,25.00,126.00\n"
+        "2026-04-12,Personal care,Independence,1.5,82.00,123.00,20.00,103.00\n"
+        "2026-04-15,Occupational therapy,Clinical,1,150.00,150.00,0.00,150.00\n"
+    )
+
+    def test_decode_text(self):
+        r = requests.post(f"{API}/public/decode-statement-text",
+                          json={"text": self.SAMPLE},
+                          headers=_ip("decode-text"), timeout=120)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert "summary" in d
+        assert isinstance(d["line_items"], list) and len(d["line_items"]) >= 1
+        for li in d["line_items"]:
+            assert li["stream"] in ("Clinical", "Independence", "Everyday Living")
+        assert isinstance(d["anomalies"], list)
+
+    def test_decode_text_too_short(self):
+        r = requests.post(f"{API}/public/decode-statement-text",
+                          json={"text": "x"},
+                          headers=_ip("decode-short"), timeout=15)
+        assert r.status_code == 422
+
+    def test_decode_file_upload(self):
+        files = {"file": ("test.csv", io.BytesIO(self.SAMPLE.encode()), "text/csv")}
+        r = requests.post(f"{API}/public/decode-statement",
+                          files=files, headers=_ip("decode-file"), timeout=120)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert isinstance(d["line_items"], list) and len(d["line_items"]) >= 1
+
+
+class TestPublicRateLimit:
+    def test_rate_limit_returns_429_after_5(self):
+        ip_headers = {"x-forwarded-for": "10.66.66.66"}
+        last_status = None
+        for i in range(7):
+            r = requests.post(f"{API}/public/price-check", json={
+                "service": "Personal care", "rate": 80.0,
+            }, headers=ip_headers, timeout=15)
+            last_status = r.status_code
+            if r.status_code == 429:
+                # Should have been hit at the 6th request (after 5 success)
+                assert i >= 5, f"Rate-limited too early at request {i+1}"
+                msg = r.json().get("detail", "")
+                assert "limit" in msg.lower() or "sign up" in msg.lower()
+                return
+        assert False, f"Expected 429 within 7 requests, last status={last_status}"
