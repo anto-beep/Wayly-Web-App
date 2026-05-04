@@ -18,7 +18,7 @@ const TIERS = [
         name: "Solo",
         price: "$19",
         period: "per month",
-        desc: "All 8 AI tools, unlimited statement parsing, daily anomaly alerts, 1 caregiver seat. 14‑day free trial.",
+        desc: "All 8 AI tools, unlimited statement parsing, daily anomaly alerts, 1 caregiver seat. 7-day free trial.",
         cta: "Start free trial",
         href: "/signup?plan=solo",
         featured: false,

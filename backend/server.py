@@ -1020,7 +1020,6 @@ class PublicChatBody(BaseModel):
 
 @api.post("/public/family-coordinator-chat")
 async def public_family_coordinator(body: PublicChatBody, request: Request):
-    await _require_solo_plus(request, "Family Care Coordinator")
     _check_rate_limit(_client_ip(request))
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:

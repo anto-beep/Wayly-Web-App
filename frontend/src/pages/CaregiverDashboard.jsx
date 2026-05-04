@@ -35,7 +35,7 @@ function FreePlanLimitCard() {
                 <div className="flex-1">
                     <h2 className="font-heading text-xl text-primary-k">Free plan — connected household tracking is on Solo and Family.</h2>
                     <p className="mt-2 text-sm text-muted-k leading-relaxed">
-                        On Free you can use 2 public AI tools (Statement Decoder + Budget Calculator). To unlock budget tracking, anomaly alerts, family thread, audit log, and AI chat for your specific household — start a 14‑day free trial.
+        On Free you can use all 8 public AI tools (rate limited to 5 uses per hour per tool). To unlock budget tracking, anomaly alerts, family thread, audit log, and AI chat for your specific household — start a 7-day free trial.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                         <Link to="/pricing" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]" data-testid="dashboard-upgrade-cta">Compare plans</Link>

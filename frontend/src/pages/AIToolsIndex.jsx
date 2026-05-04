@@ -73,7 +73,7 @@ export default function AIToolsIndex() {
                     Eight tools. No signup. Built for Australian families.
                 </h1>
                 <p className="mt-5 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    Each tool addresses a specific pain in Australia's Support at Home program. Two are <span className="text-primary-k font-medium">free for everyone</span>; the rest are part of any paid plan (free 14‑day trial, no card needed).
+                    Every tool is free to use with a 5-uses-per-hour limit per IP. Create a free account for unlimited access. Australian-hosted, never sold.
                 </p>
             </section>
             <section className="mx-auto max-w-7xl px-6 pb-20">
