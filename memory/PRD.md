@@ -166,6 +166,44 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 ## Test status
 - Iteration 12: 100% frontend (7/7 acceptance items via Playwright). Backend skipped (no backend changes). Iter 11 + earlier regression: cathy login, ⌘K palette, Statement Decoder no-gate path, /pricing devices strip — all green.
 
+## Implemented (Iteration 14 — Feb 2026 · Chunked-parallel Statement Decoder, PII bypass, progress UI)
+
+The iter13 two-pass decoder still occasionally truncated long statements when Pass 1 hit the LLM output-token limit (1 line item extracted instead of 12+) and the wrapper was stripping the participant's own name. Replaced with a chunked-parallel pipeline:
+
+### Pass 1 — Chunked parallel extraction (`extract_statement` in `agents.py`)
+- 5 parallel Haiku 4.5 calls via `asyncio.gather` — each with a focused system prompt and bounded `max_tokens`:
+  - **Header** (`max_tokens=800`) — participant_name, MAC ID, classification, quarterly_budget_total, care_management_rate_pct, lifetime cap, direct debit.
+  - **Clinical** (`max_tokens=2500`) — every nursing / allied-health / wound-care line item.
+  - **Independence** (`max_tokens=2500`) — every personal-care / respite / social-support / transport line item (incl. cancellations & weekend variants).
+  - **EverydayLiving** (`max_tokens=2500`) — every domestic / gardening / meal / shopping line item PLUS AT-HM items (re-coded `stream:"ATHM"`).
+  - **Adjustments** (`max_tokens=800`) — Care management fee + previous-period adjustments array.
+- Each chunk has a "CRITICAL — COMPLETENESS" rubric demanding exhaustive enumeration; AT- service codes are defensively re-coded ATHM at assembly time.
+- New `_safe_json_load` + `_try_json_repair` helpers — rebalance unbalanced brackets / drop trailing commas / close unterminated strings on truncated chunks.
+- Each chunk has **one retry** on transport / parse failure (fresh session id) to ride through rare flaky Haiku responses.
+
+### Pass 2 — Audit (`audit_statement` in `agents.py`)
+- Haiku 4.5 with `max_tokens=4000`, 10-rule audit against the assembled JSON.
+- Same `_safe_json_load` repair fallback.
+
+### PII bypass for the Statement Decoder
+- `wrapper.run_wrapper(text, pii_redact=False)` skips the redaction pass entirely (still runs the abuse-only classifier).
+- `server.py` decode-text + decode-file endpoints both pass `pii_redact=False` so participant names survive ("Margaret Kowalski" preserved end-to-end).
+
+### Frontend progress indicator
+- New `<DecoderProgress>` component (`/app/frontend/src/components/DecoderProgress.jsx`) — 6 timed steps (Header / Clinical / Independence / Everyday / Adjustments / Audit) with `pending → active → complete` states and elapsed-seconds counter. Driven by a 250ms tick + step-schedule (parallel chunks `doneAt:11-14s`, audit `doneAt:60s`).
+- Wired into `StatementDecoderTool.jsx` — renders below the Decode submit button while `loading` is true.
+- All steps have `data-testid=decoder-step-{header|clinical|independence|everyday|adjustments|audit}` + `data-status` attribute for testing.
+
+### Wall-clock & acceptance
+- 5 parallel extract chunks complete in **~10-15s** (vs. ~10s for the prior single call but now with full coverage of long statements).
+- Audit completes in **~25-30s**.
+- **Total: 42-51s** end-to-end on the public preview URL — comfortably inside the 60s K8s ingress budget.
+- Margaret Kowalski April 2026 fixture: 12 line items, all 5 streams, 4 HIGH / 3 MEDIUM / 3 LOW anomalies, partial_result=false, participant_name='Margaret Kowalski' (unredacted).
+
+## Test status iter 14
+- Backend 11/11 pytest pass; Playwright frontend 100% happy-path; iter13 502 gateway-timeout regression fully resolved; daily-limit cookie + paid-tool gating regressions both green.
+
+
 ## Implemented (Iteration 13 — Feb 2026 · Two-pass Statement Decoder pipeline)
 
 The single-pass decoder was producing summaries but missing anomalies. Replaced with a structured two-pass pipeline:

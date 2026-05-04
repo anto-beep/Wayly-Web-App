@@ -602,25 +602,38 @@ async def _llm_chunk_call(
     session_id: str,
     max_tokens: int,
 ) -> Optional[Any]:
-    """Run a single chunked extraction call. Returns parsed JSON or None."""
+    """Run a single chunked extraction call with one retry. Returns parsed
+    JSON or None. Retries once on transport / parse failure to ride through
+    the rare flaky Haiku response.
+    """
     key = _key()
     if not key:
         raise RuntimeError("EMERGENT_LLM_KEY not configured")
-    chat = LlmChat(
-        api_key=key,
-        session_id=session_id,
-        system_message=system_message,
-    ).with_model(MODEL_PROVIDER, EXTRACTOR_MODEL).with_params(max_tokens=max_tokens)
-    raw = None
-    try:
-        raw = await chat.send_message(UserMessage(text=user_text))
-    except Exception as e:
-        logger.warning("Chunk call %s failed: %s", session_id, e)
-        return None
-    parsed = _safe_json_load(raw)
-    if parsed is None:
-        logger.warning("Chunk %s returned unparseable JSON | raw[:300]=%r", session_id, str(raw)[:300])
-    return parsed
+
+    async def _attempt(attempt: int) -> Optional[Any]:
+        chat = LlmChat(
+            api_key=key,
+            session_id=f"{session_id}-a{attempt}",
+            system_message=system_message,
+        ).with_model(MODEL_PROVIDER, EXTRACTOR_MODEL).with_params(max_tokens=max_tokens)
+        try:
+            raw = await chat.send_message(UserMessage(text=user_text))
+        except Exception as e:
+            logger.warning("Chunk call %s attempt %d failed: %s", session_id, attempt, e)
+            return None
+        parsed = _safe_json_load(raw)
+        if parsed is None:
+            logger.warning(
+                "Chunk %s attempt %d returned unparseable JSON | raw[:300]=%r",
+                session_id, attempt, str(raw)[:300],
+            )
+        return parsed
+
+    result = await _attempt(1)
+    if result is not None:
+        return result
+    # One retry — fresh session id so any stuck conversation state is reset
+    return await _attempt(2)
 
 
 _HEADER_DEFAULTS = {
