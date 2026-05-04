@@ -10,56 +10,72 @@ const TOOLS = [
         title: "Statement Decoder",
         body: "Paste any Support at Home monthly statement and get a plain-English explanation in 60 seconds.",
         icon: FileSearch,
-        plan: "Free",
+        plan: "Free — 1 use/day",
+        planTone: "free",
+        planSub: "No signup required",
     },
     {
         slug: "budget-calculator",
         title: "Budget & Lifetime Cap Calculator",
         body: "Enter your classification and contribution status. See annual budget, per-stream allocation, and lifetime cap projection.",
         icon: Wallet,
-        plan: "Free",
+        plan: "Solo & Family",
+        planTone: "paid",
+        planSub: "7-day free trial",
     },
     {
         slug: "provider-price-checker",
         title: "Provider Price Checker",
         body: "Tell us what you're being charged. We'll tell you whether it's fair against published medians and (after 1 Jul 2026) the cap.",
         icon: BarChart3,
-        plan: "Free",
+        plan: "Solo & Family",
+        planTone: "paid",
+        planSub: "7-day free trial",
     },
     {
         slug: "classification-self-check",
         title: "Classification Self-Check",
         body: "Answer 12 questions about daily life. See which classification is likely — and whether to request a reassessment.",
         icon: ListChecks,
-        plan: "Free",
+        plan: "Solo & Family",
+        planTone: "paid",
+        planSub: "7-day free trial",
     },
     {
         slug: "reassessment-letter",
         title: "Reassessment Letter Drafter",
         body: "Tell us what's changed. We'll draft a clear reassessment request ready to send to My Aged Care.",
         icon: FileEdit,
-        plan: "Free",
+        plan: "Solo & Family",
+        planTone: "paid",
+        planSub: "7-day free trial",
     },
     {
         slug: "contribution-estimator",
         title: "Contribution Estimator",
         body: "How much will you actually pay each quarter under Support at Home? Enter the situation, see a clear breakdown.",
         icon: Receipt,
-        plan: "Free",
+        plan: "Solo & Family",
+        planTone: "paid",
+        planSub: "7-day free trial",
     },
     {
         slug: "care-plan-reviewer",
         title: "Care Plan Reviewer",
         body: "Paste a care plan. We'll check it against the Statement of Rights and the National Quality Standards.",
         icon: ClipboardCheck,
-        plan: "Free",
+        plan: "Solo & Family",
+        planTone: "paid",
+        planSub: "7-day free trial",
     },
     {
         slug: "family-coordinator",
         title: "Family Care Coordinator",
         body: "Ask any question about Australia's aged-care system. Answers grounded in the Aged Care Act 2024 and program manual.",
         icon: MessageCircle,
-        plan: "Free",
+        plan: "Solo & Family",
+        planTone: "paid",
+        planSub: "7-day free trial",
     },
 ];
 
@@ -88,14 +104,17 @@ export default function AIToolsIndex() {
                                 <div className="h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center">
                                     <t.icon className="h-5 w-5 text-primary-k" />
                                 </div>
-                                <span
-                                    className={`text-xs font-medium uppercase tracking-wider rounded-full px-2.5 py-1 ${
-                                        t.plan === "Free" ? "bg-sage/20 text-[#3A5A40]" : "bg-gold/20 text-primary-k"
-                                    }`}
-                                    data-testid={`ai-tool-plan-${t.slug}`}
-                                >
-                                    {t.plan}
-                                </span>
+                                <div className="text-right">
+                                    <span
+                                        className={`text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 ${
+                                            t.planTone === "free" ? "bg-sage/20 text-[#3A5A40]" : "bg-[#1F3A5F] text-white"
+                                        }`}
+                                        data-testid={`ai-tool-plan-${t.slug}`}
+                                    >
+                                        {t.plan}
+                                    </span>
+                                    {t.planSub && <div className="text-[10px] text-muted-k mt-1">{t.planSub}</div>}
+                                </div>
                             </div>
                             <h2 className="font-heading text-xl text-primary-k mt-4">{t.title}</h2>
                             <p className="mt-2 text-sm text-muted-k leading-relaxed">{t.body}</p>

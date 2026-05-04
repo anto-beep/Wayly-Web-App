@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { TrendingUp, Users, FileText, Briefcase, Check, ArrowRight } from "lucide-react";
+import { BrowserFrame, ScreenshotDashboard, ScreenshotBudget } from "@/components/Screenshots";
 
 const FEATURES = [
     { icon: Users, title: "Client roster", body: "All your aged-care clients on one screen — classification, quarterly burn, lifetime-cap progress." },
@@ -63,6 +64,21 @@ export default function ForAdvisors() {
                             </div>
                         ))}
                     </div>
+                </div>
+            </section>
+
+            <section className="mx-auto max-w-7xl px-6 py-12" data-testid="advisor-screenshots">
+                <div className="text-center max-w-2xl mx-auto">
+                    <span className="overline">What you'll see</span>
+                    <h2 className="font-heading text-3xl text-primary-k mt-3 tracking-tight">The two screens you'll spend most of your day on.</h2>
+                </div>
+                <div className="mt-10 grid lg:grid-cols-2 gap-6 hidden md:grid">
+                    <BrowserFrame url="app.kindred.au/clients/budget" scale={0.7} label="Budget and lifetime cap forecasting view">
+                        <ScreenshotBudget />
+                    </BrowserFrame>
+                    <BrowserFrame url="app.kindred.au/clients/dashboard" scale={0.7} label="Client overview dashboard">
+                        <ScreenshotDashboard />
+                    </BrowserFrame>
                 </div>
             </section>
 

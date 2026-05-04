@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { Check, Minus, ShieldCheck } from "lucide-react";
+import { BrowserFrame, PhoneFrame, ScreenshotDashboard, ScreenshotParticipant, ScreenshotFamilyThread } from "@/components/Screenshots";
 
 const TIERS = [
     {
         name: "Free",
         price: "$0",
         period: "forever",
-        desc: "2 of 8 AI tools (Statement Decoder + Budget Calculator). 5 uses per month each. Newsletter. Public templates. Glossary.",
+        desc: "Statement Decoder — 1 use per day, no signup. Newsletter. Public templates. Glossary.",
         cta: "Get started",
         href: "/signup?plan=free",
         featured: false,
@@ -150,6 +151,34 @@ export default function Pricing() {
                             </Link>
                         </div>
                     ))}
+                </div>
+            </section>
+
+            {/* DEVICES STRIP — built for the whole family */}
+            <section className="mx-auto max-w-7xl px-6 py-12" data-testid="pricing-devices-strip">
+                <div className="text-center max-w-2xl mx-auto">
+                    <h3 className="font-heading text-2xl text-primary-k tracking-tight">Built for the whole family.</h3>
+                    <p className="text-sm text-muted-k mt-2">Same data. Three views — calibrated for the person using each one.</p>
+                </div>
+                <div className="mt-10 hidden md:flex items-end justify-center gap-6 overflow-x-auto">
+                    <div className="text-center">
+                        <PhoneFrame scale={0.5} label="Participant view on iPhone — Dorothy's screen">
+                            <ScreenshotParticipant />
+                        </PhoneFrame>
+                        <div className="mt-3 text-xs text-muted-k">Simple view for Mum</div>
+                    </div>
+                    <div className="text-center">
+                        <BrowserFrame url="app.kindred.au/dashboard" scale={0.55} label="Caregiver dashboard on MacBook">
+                            <ScreenshotDashboard />
+                        </BrowserFrame>
+                        <div className="mt-3 text-xs text-muted-k">Full dashboard for you</div>
+                    </div>
+                    <div className="text-center">
+                        <PhoneFrame scale={0.5} label="Family thread chat on iPhone">
+                            <ScreenshotFamilyThread />
+                        </PhoneFrame>
+                        <div className="mt-3 text-xs text-muted-k">Family in the loop</div>
+                    </div>
                 </div>
             </section>
 

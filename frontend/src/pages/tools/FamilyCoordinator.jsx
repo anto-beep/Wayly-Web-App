@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import ToolGate from "@/components/ToolGate";
+import { ScreenshotFamilyThread } from "@/components/Screenshots";
+import useToolAccess from "@/hooks/useToolAccess";
 import { api } from "@/lib/api";
 import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
 
@@ -13,6 +16,7 @@ const SUGGESTIONS = [
 ];
 
 export default function FamilyCoordinator() {
+    const access = useToolAccess();
     const [msgs, setMsgs] = useState([]);
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
@@ -35,6 +39,9 @@ export default function FamilyCoordinator() {
             setMsgs((x) => [...x, { id: `e-${Date.now()}`, role: "assistant", content: err?.response?.data?.detail || "Sorry — couldn't reach the assistant." }]);
         } finally { setBusy(false); }
     };
+
+    if (access === "loading") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
+    if (access === "blocked") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><ToolGate toolName="Family Care Coordinator"><ScreenshotFamilyThread /></ToolGate><Footer /></div>);
 
     return (
         <div className="min-h-screen bg-kindred flex flex-col">

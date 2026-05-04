@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import ToolGate from "@/components/ToolGate";
+import { ScreenshotStatement } from "@/components/Screenshots";
+import useToolAccess from "@/hooks/useToolAccess";
 import { api, formatAUD2, formatAUD } from "@/lib/api";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
@@ -12,6 +15,7 @@ const PENSION = [
 ];
 
 export default function ContributionEstimator() {
+    const access = useToolAccess();
     const [form, setForm] = useState({
         classification: 4,
         pension_status: "full",
@@ -30,6 +34,9 @@ export default function ContributionEstimator() {
             setResult(data);
         } finally { setLoading(false); }
     };
+
+    if (access === "loading") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
+    if (access === "blocked") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><ToolGate toolName="Contribution Estimator"><ScreenshotStatement /></ToolGate><Footer /></div>);
 
     return (
         <div className="min-h-screen bg-kindred">

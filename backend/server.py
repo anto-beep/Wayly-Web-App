@@ -951,6 +951,123 @@ def _check_rate_limit(ip: str) -> None:
     RATE_LIMIT_BUCKET[ip].append(now)
 
 
+# ---------------------------------------------------------------------------
+# Tool-access gating
+# ---------------------------------------------------------------------------
+SD_COOKIE_NAME = "kindred_sd_used"
+SD_WINDOW_SECONDS = 24 * 60 * 60  # 24 hours
+PAID_PLANS = {"solo", "family", "advisor", "advisor_pro"}
+
+
+def _trial_active(u: dict) -> bool:
+    """True if the user has an active 7-day trial."""
+    ends = u.get("trial_ends_at")
+    if not ends:
+        return False
+    try:
+        if isinstance(ends, str):
+            return datetime.fromisoformat(ends.replace("Z", "+00:00")) > datetime.now(timezone.utc)
+    except Exception:
+        return False
+    return False
+
+
+async def _user_from_request(request: Request) -> Optional[dict]:
+    """Best-effort: return the calling user from Bearer JWT, else None."""
+    auth = request.headers.get("authorization") or ""
+    if not auth.lower().startswith("bearer "):
+        return None
+    token = auth.split(" ", 1)[1].strip()
+    try:
+        from auth import decode_token
+        uid = decode_token(token)
+        return await db.users.find_one({"id": uid}, {"_id": 0})
+    except Exception:
+        return None
+
+
+async def _require_paid_plan(request: Request, response: Response, tool_label: str = "This tool") -> dict:
+    """Dependency: only Solo/Family/Advisor or active trial may call gated tools.
+
+    401 for unauthenticated. 403 for Free / expired-trial. Returns the user.
+    """
+    user = await _user_from_request(request)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail={"error": "unauthenticated", "message": "Sign in required.", "redirect": "/signup"},
+        )
+    plan = (user.get("plan") or "free").lower()
+    if plan in PAID_PLANS or _trial_active(user):
+        return user
+    raise HTTPException(
+        status_code=403,
+        detail={
+            "error": "plan_required",
+            "message": f"{tool_label} requires a Solo or Family plan.",
+            "redirect": "/pricing",
+        },
+    )
+
+
+def _sd_cookie_used_recently(request: Request) -> Optional[datetime]:
+    """If the visitor has used Statement Decoder within the last 24h, return ts."""
+    raw = request.cookies.get(SD_COOKIE_NAME)
+    if not raw:
+        return None
+    try:
+        ts = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if datetime.now(timezone.utc) - ts < timedelta(seconds=SD_WINDOW_SECONDS):
+            return ts
+    except Exception:
+        return None
+    return None
+
+
+def _set_sd_cookie(response: Response) -> None:
+    """Stamp the visitor's 1-per-day cookie. HttpOnly, 24h, Lax, secure-by-host."""
+    response.set_cookie(
+        key=SD_COOKIE_NAME,
+        value=datetime.now(timezone.utc).isoformat(),
+        max_age=SD_WINDOW_SECONDS,
+        httponly=True,
+        samesite="lax",
+        secure=True,
+        path="/",
+    )
+
+
+async def _enforce_statement_decoder_limit(request: Request, response: Response) -> dict:
+    """Gating logic for the public Statement Decoder.
+
+    - Logged-in Solo/Family/trial users bypass entirely (no cookie touch).
+    - Logged-in Free users + unauthenticated visitors get 1 free decode per
+      24h, tracked via HttpOnly cookie.
+    - 429 with next_available_at when limit hit.
+    """
+    user = await _user_from_request(request)
+    if user:
+        plan = (user.get("plan") or "free").lower()
+        if plan in PAID_PLANS or _trial_active(user):
+            return {"user": user, "is_free_use": False}
+    used_at = _sd_cookie_used_recently(request)
+    if used_at:
+        next_at = used_at + timedelta(seconds=SD_WINDOW_SECONDS)
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "daily_limit",
+                "message": "You've used your free decode for today. Come back tomorrow — or sign up for unlimited access.",
+                "next_available_at": next_at.isoformat(),
+                "used_at": used_at.isoformat(),
+            },
+        )
+    # First use today — also enforce the global IP rate limit as a soft cap
+    _check_rate_limit(_client_ip(request))
+    _set_sd_cookie(response)
+    return {"user": user, "is_free_use": True}
+
+
 class PublicTextBody(BaseModel):
     text: str = Field(min_length=10, max_length=40000)
 
@@ -1017,8 +1134,8 @@ async def _run_public_decode(text: str) -> dict:
 
 
 @api.post("/public/decode-statement-text")
-async def public_decode_text(body: PublicTextBody, request: Request):
-    _check_rate_limit(_client_ip(request))
+async def public_decode_text(body: PublicTextBody, request: Request, response: Response):
+    await _enforce_statement_decoder_limit(request, response)
     wrapped = await run_wrapper(body.text)
     if wrapped["abuse_flag"]:
         return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
@@ -1030,8 +1147,8 @@ async def public_decode_text(body: PublicTextBody, request: Request):
 
 
 @api.post("/public/decode-statement")
-async def public_decode_file(request: Request, file: UploadFile = File(...)):
-    _check_rate_limit(_client_ip(request))
+async def public_decode_file(request: Request, response: Response, file: UploadFile = File(...)):
+    await _enforce_statement_decoder_limit(request, response)
     raw = await file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty file")
@@ -1051,8 +1168,8 @@ async def public_decode_file(request: Request, file: UploadFile = File(...)):
 
 
 @api.post("/public/budget-calc")
-async def public_budget_calc(body: PublicBudgetBody, request: Request):
-    _check_rate_limit(_client_ip(request))
+async def public_budget_calc(body: PublicBudgetBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Budget Calculator")
     classification = body.classification
     annual = budget_lib.CLASSIFICATIONS[classification]["annual"]
     quarterly = budget_lib.quarterly_budget(classification)
@@ -1083,8 +1200,8 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request):
 
 
 @api.post("/public/price-check")
-async def public_price_check(body: PublicPriceBody, request: Request):
-    _check_rate_limit(_client_ip(request))
+async def public_price_check(body: PublicPriceBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Provider Price Checker")
     bench = PRICE_BENCHMARKS.get(body.service, {"median": body.rate, "cap": body.rate})
     median = bench["median"]
     cap = bench["cap"]
@@ -1138,8 +1255,8 @@ class PublicClassificationBody(BaseModel):
 
 
 @api.post("/public/classification-check")
-async def public_classification_check(body: PublicClassificationBody, request: Request):
-    _check_rate_limit(_client_ip(request))
+async def public_classification_check(body: PublicClassificationBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Classification Self-Check")
     if not all(0 <= a <= 4 for a in body.answers):
         raise HTTPException(status_code=400, detail="Each answer must be 0–4")
     score = sum(body.answers)  # 0..48
@@ -1187,8 +1304,8 @@ class PublicReassessmentBody(BaseModel):
 
 
 @api.post("/public/reassessment-letter")
-async def public_reassessment_letter(body: PublicReassessmentBody, request: Request):
-    _check_rate_limit(_client_ip(request))
+async def public_reassessment_letter(body: PublicReassessmentBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Reassessment Letter Generator")
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
         raise HTTPException(status_code=503, detail="LLM unavailable")
@@ -1244,8 +1361,8 @@ class PublicContributionBody(BaseModel):
 
 
 @api.post("/public/contribution-estimator")
-async def public_contribution_estimator(body: PublicContributionBody, request: Request):
-    _check_rate_limit(_client_ip(request))
+async def public_contribution_estimator(body: PublicContributionBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Contribution Estimator")
     total_pct = body.expected_mix_clinical_pct + body.expected_mix_independence_pct + body.expected_mix_everyday_pct
     if total_pct < 95 or total_pct > 105:
         raise HTTPException(status_code=400, detail="Service mix percentages should sum to 100")
@@ -1283,8 +1400,8 @@ class PublicCarePlanBody(BaseModel):
 
 
 @api.post("/public/care-plan-review")
-async def public_care_plan_review(body: PublicCarePlanBody, request: Request):
-    _check_rate_limit(_client_ip(request))
+async def public_care_plan_review(body: PublicCarePlanBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Care Plan Reviewer")
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
         raise HTTPException(status_code=503, detail="LLM unavailable")
@@ -1326,8 +1443,8 @@ class PublicChatBody(BaseModel):
 
 
 @api.post("/public/family-coordinator-chat")
-async def public_family_coordinator(body: PublicChatBody, request: Request):
-    _check_rate_limit(_client_ip(request))
+async def public_family_coordinator(body: PublicChatBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Family Care Coordinator")
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
         raise HTTPException(status_code=503, detail="LLM unavailable")

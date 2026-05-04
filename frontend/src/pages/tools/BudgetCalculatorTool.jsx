@@ -4,6 +4,9 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { api, formatAUD, formatAUD2 } from "@/lib/api";
 import { Loader2, ArrowRight, Sparkles } from "lucide-react";
+import ToolGate from "@/components/ToolGate";
+import { ScreenshotBudget } from "@/components/Screenshots";
+import useToolAccess from "@/hooks/useToolAccess";
 
 const CLASSIFICATIONS = [
     { v: 1, annual: 10731 },
@@ -17,6 +20,7 @@ const CLASSIFICATIONS = [
 ];
 
 export default function BudgetCalculatorTool() {
+    const access = useToolAccess();
     const [classification, setClassification] = useState(4);
     const [isGrandfathered, setIsGrandfathered] = useState(false);
     const [currentBalance, setCurrentBalance] = useState(0);
@@ -39,6 +43,26 @@ export default function BudgetCalculatorTool() {
         }
     };
 
+    if (access === "loading") {
+        return (
+            <div className="min-h-screen bg-kindred">
+                <MarketingHeader />
+                <div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                <Footer />
+            </div>
+        );
+    }
+    if (access === "blocked") {
+        return (
+            <div className="min-h-screen bg-kindred">
+                <MarketingHeader />
+                <ToolGate toolName="Budget Calculator">
+                    <ScreenshotBudget />
+                </ToolGate>
+                <Footer />
+            </div>
+        );
+    }
     return (
         <div className="min-h-screen bg-kindred">
             <MarketingHeader />

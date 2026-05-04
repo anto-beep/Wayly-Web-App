@@ -4,6 +4,8 @@ import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, Ale
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
+import { BrowserFrame, ScreenshotStatement, ScreenshotDashboard, ScreenshotFamilyThread, ScreenshotAnomaly } from "@/components/Screenshots";
+import RevealOnScroll from "@/components/RevealOnScroll";
 
 const PERSONAS = [
     {
@@ -165,6 +167,58 @@ export default function Landing() {
                 </div>
             </section>
 
+            {/* HOW IT WORKS — three steps with real screenshots */}
+            <section className="mx-auto max-w-7xl px-6 py-16" data-testid="how-it-works">
+                <div className="text-center max-w-2xl mx-auto">
+                    <span className="overline">How it works</span>
+                    <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
+                        Three steps. Five minutes a month. The whole family in the loop.
+                    </h2>
+                </div>
+
+                {/* Step 1 — screenshot LEFT, copy RIGHT */}
+                <div className="mt-14 grid lg:grid-cols-2 gap-10 items-center">
+                    <RevealOnScroll rotate={-1.5} className="hidden sm:block">
+                        <BrowserFrame url="app.kindred.au/decode" scale={0.78} label="Statement decoder result">
+                            <ScreenshotStatement />
+                        </BrowserFrame>
+                    </RevealOnScroll>
+                    <div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 01</div>
+                        <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Forward your statement. Get plain English in 90 seconds.</h3>
+                        <p className="mt-4 text-muted-k leading-relaxed max-w-md">Drop in your provider's monthly PDF, CSV or pasted text. Kindred extracts every line item, breaks it down by stream, and explains it like a friend who's been through this before.</p>
+                    </div>
+                </div>
+
+                {/* Step 2 — copy LEFT, screenshot RIGHT */}
+                <div className="mt-20 grid lg:grid-cols-2 gap-10 items-center">
+                    <div className="lg:order-1 order-2">
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 02</div>
+                        <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Kindred watches for anything unusual — so you don't have to.</h3>
+                        <p className="mt-4 text-muted-k leading-relaxed max-w-md">Rate increases. Duplicate visits. Rollover risk. Lifetime cap creep. We compare every charge against the published price and flag what doesn't add up — with the receipts.</p>
+                    </div>
+                    <RevealOnScroll rotate={1} className="lg:order-2 order-1 hidden sm:block">
+                        <BrowserFrame url="app.kindred.au/anomalies" scale={0.78} label="Anomaly alert detail">
+                            <ScreenshotAnomaly />
+                        </BrowserFrame>
+                    </RevealOnScroll>
+                </div>
+
+                {/* Step 3 — screenshot LEFT, copy RIGHT */}
+                <div className="mt-20 grid lg:grid-cols-2 gap-10 items-center">
+                    <RevealOnScroll rotate={-1}>
+                        <BrowserFrame url="app.kindred.au/family" scale={0.78} label="Family thread chat">
+                            <ScreenshotFamilyThread />
+                        </BrowserFrame>
+                    </RevealOnScroll>
+                    <div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 03</div>
+                        <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Your whole family, on the same page.</h3>
+                        <p className="mt-4 text-muted-k leading-relaxed max-w-md">Loop in siblings, advisors, and even your parent's GP. Kindred answers the practical questions ("is a handrail covered?") so the conversation stays on what really matters.</p>
+                    </div>
+                </div>
+            </section>
+
             {/* BIG NUMBER */}
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20 text-center">
@@ -203,6 +257,26 @@ export default function Landing() {
                             <p className="text-sm text-muted-k mt-2 leading-relaxed">{f.body}</p>
                         </div>
                     ))}
+                </div>
+            </section>
+
+            {/* SEE THE DASHBOARD — full-width strip with wipe reveal */}
+            <section className="mx-auto max-w-7xl px-6 py-16" data-testid="dashboard-strip">
+                <div className="text-center max-w-2xl mx-auto">
+                    <span className="overline">The product</span>
+                    <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">One calm dashboard for everything.</h2>
+                </div>
+                <div className="mt-10 max-w-5xl mx-auto hidden sm:block">
+                    <RevealOnScroll mode="wipe">
+                        <BrowserFrame url="app.kindred.au/dashboard" scale={0.9} label="Caregiver dashboard with stat cards, anomalies, and latest statement">
+                            <ScreenshotDashboard />
+                        </BrowserFrame>
+                    </RevealOnScroll>
+                </div>
+                <div className="text-center mt-8">
+                    <Link to="/signup?plan=solo" data-testid="dashboard-strip-cta" className="inline-flex items-center gap-2 bg-gold text-primary-k font-semibold rounded-full px-6 py-3 hover:brightness-95">
+                        Start your free 7-day trial <ArrowRight className="h-4 w-4" />
+                    </Link>
                 </div>
             </section>
 
@@ -274,9 +348,9 @@ export default function Landing() {
                     </div>
                     <div className="mt-10 grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
                         {[
-                            { name: "Free", price: "$0", desc: "All 8 AI tools, 5 uses each per month." },
-                            { name: "Family", price: "$39/mo", desc: "Most popular. Up to 5 family members.", featured: true },
-                            { name: "Lifetime", price: "$799", desc: "Everything Family forever, paid once." },
+                            { name: "Free", price: "$0", desc: "Statement Decoder — 1 use per day, no signup." },
+                            { name: "Solo", price: "$19/mo", desc: "All 8 AI tools, unlimited. 1 caregiver seat." },
+                            { name: "Family", price: "$39/mo", desc: "Most popular. Up to 5 family members + Sunday digest.", featured: true },
                         ].map((t) => (
                             <div
                                 key={t.name}
