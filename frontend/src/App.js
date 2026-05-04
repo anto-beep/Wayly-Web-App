@@ -40,6 +40,9 @@ import Templates from "@/pages/resources/Templates";
 import ArticlesIndex, { ArticleDetail } from "@/pages/resources/Articles";
 import AuthCallback from "@/pages/AuthCallback";
 import BillingSuccess from "@/pages/BillingSuccess";
+import { ForgotPassword, ResetPassword } from "@/pages/PasswordReset";
+import Settings from "@/pages/Settings";
+import InviteAccept from "@/pages/InviteAccept";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -114,6 +117,9 @@ function App() {
                     {/* Auth pages */}
                     <Route path="/login" element={<PublicAuthOnly><Login /></PublicAuthOnly>} />
                     <Route path="/signup" element={<PublicAuthOnly><Signup /></PublicAuthOnly>} />
+                    <Route path="/forgot" element={<ForgotPassword />} />
+                    <Route path="/reset" element={<ResetPassword />} />
+                    <Route path="/invite" element={<InviteAccept />} />
                     <Route path="/billing/success" element={<BillingSuccess />} />
 
                     {/* Authenticated app */}
@@ -125,6 +131,8 @@ function App() {
                     <Route path="/app/chat" element={<RequireAuth><Layout><Chat /></Layout></RequireAuth>} />
                     <Route path="/app/family" element={<RequireAuth><Layout><FamilyThread /></Layout></RequireAuth>} />
                     <Route path="/app/audit" element={<RequireAuth><Layout><AuditLog /></Layout></RequireAuth>} />
+                    <Route path="/settings" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
+                    <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />
 
                     <Route path="*" element={<Navigate to="/" replace />} />

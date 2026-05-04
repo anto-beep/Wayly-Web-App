@@ -1,12 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatAUD } from "@/lib/api";
-import { Phone, AlertOctagon, Clock, ArrowLeft } from "lucide-react";
+import { Phone, AlertOctagon, Clock, ArrowLeft, Smile, Meh, Frown } from "lucide-react";
 import { toast } from "sonner";
+
+const MOODS = [
+    { v: "good", label: "I feel good", Icon: Smile, cls: "bg-sage text-white", note: "Pleasant day" },
+    { v: "okay", label: "I'm OK", Icon: Meh, cls: "bg-gold text-primary-k", note: "Just checking in" },
+    { v: "not_great", label: "Not great", Icon: Frown, cls: "bg-terracotta text-white", note: "Will notify caregiver" },
+];
 
 export default function ParticipantView() {
     const [data, setData] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+    const [checkedIn, setCheckedIn] = useState(null); // mood value after submit
+    const [loggingMood, setLoggingMood] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -14,8 +22,30 @@ export default function ParticipantView() {
                 const { data } = await api.get("/participant/today");
                 setData(data);
             } catch {}
+            try {
+                const { data: well } = await api.get("/participant/wellbeing");
+                if (well?.length > 0) {
+                    const todayISO = new Date().toISOString().slice(0, 10);
+                    const latest = well[0];
+                    if ((latest.created_at || "").slice(0, 10) === todayISO) setCheckedIn(latest.mood);
+                }
+            } catch {}
         })();
     }, []);
+
+    const logMood = async (mood) => {
+        if (loggingMood) return;
+        setLoggingMood(true);
+        try {
+            await api.post("/participant/wellbeing", { mood, notify_caregiver: mood === "not_great" });
+            setCheckedIn(mood);
+            toast.success(mood === "not_great" ? "We've let your family know." : "Thanks — noted for today.");
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || "Could not save");
+        } finally {
+            setLoggingMood(false);
+        }
+    };
 
     const flagConcern = async () => {
         if (submitting) return;
@@ -56,6 +86,31 @@ export default function ParticipantView() {
                     <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-2 font-bold">
                         {data.today_label}.
                     </h1>
+                </div>
+
+                {/* Wellbeing check-in — giant buttons, one-per-day */}
+                <div className="bg-surface border border-kindred rounded-3xl p-10" data-testid="wellbeing-card">
+                    <span className="overline" style={{ fontSize: "0.85rem" }}>How are you today?</span>
+                    {checkedIn ? (
+                        <p className="mt-4 text-3xl text-primary-k leading-snug" data-testid="wellbeing-already">
+                            ✓ You've checked in today ({MOODS.find((m) => m.v === checkedIn)?.label.toLowerCase()}). Come back tomorrow.
+                        </p>
+                    ) : (
+                        <div className="mt-5 grid sm:grid-cols-3 gap-4" data-testid="wellbeing-buttons">
+                            {MOODS.map((m) => (
+                                <button
+                                    key={m.v}
+                                    onClick={() => logMood(m.v)}
+                                    disabled={loggingMood}
+                                    data-testid={`wellbeing-${m.v}`}
+                                    className={`${m.cls} rounded-2xl p-6 flex flex-col items-center gap-3 disabled:opacity-60 hover:brightness-95 transition-all min-h-[140px]`}
+                                >
+                                    <m.Icon className="h-10 w-10" />
+                                    <span className="text-xl font-semibold">{m.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div className="bg-surface border border-kindred rounded-3xl p-10" data-testid="appointment-card">

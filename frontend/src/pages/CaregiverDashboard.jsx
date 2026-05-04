@@ -4,7 +4,7 @@ import { api, formatAUD, formatAUD2 } from "@/lib/api";
 import StreamProgress from "@/components/StreamProgress";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
-    Crown, Lock, Calendar,
+    Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -121,6 +121,55 @@ export default function CaregiverDashboard() {
 
             {!isFree && budget && (
                 <>
+                    {/* Quick-glance stat cards */}
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="dashboard-stats">
+                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="stat-spent">
+                            <div className="flex items-center gap-2 text-muted-k">
+                                <TrendingUp className="h-4 w-4" />
+                                <span className="overline">This quarter</span>
+                            </div>
+                            <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">
+                                {formatAUD(budget.streams.reduce((a, s) => a + s.spent, 0))}
+                            </div>
+                            <div className="text-xs text-muted-k mt-0.5">
+                                of {formatAUD(budget.quarterly_total)} ·
+                                <span className="text-sage"> {formatAUD(budget.quarterly_total - budget.streams.reduce((a, s) => a + s.spent, 0))} left</span>
+                            </div>
+                        </div>
+                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="stat-anomalies">
+                            <div className="flex items-center gap-2 text-muted-k">
+                                <Bell className="h-4 w-4" />
+                                <span className="overline">Alerts</span>
+                            </div>
+                            <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">
+                                {allAnomalies.length}
+                            </div>
+                            <div className="text-xs text-muted-k mt-0.5">
+                                {allAnomalies.length === 0 ? "Nothing unusual" : "Things to review"}
+                            </div>
+                        </div>
+                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="stat-statements">
+                            <div className="flex items-center gap-2 text-muted-k">
+                                <FileText className="h-4 w-4" />
+                                <span className="overline">Statements</span>
+                            </div>
+                            <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">{statements.length}</div>
+                            <div className="text-xs text-muted-k mt-0.5">
+                                {statements[0] ? `Latest ${new Date(statements[0].uploaded_at || statements[0].created_at || Date.now()).toLocaleDateString()}` : "None yet"}
+                            </div>
+                        </div>
+                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="stat-cap">
+                            <div className="flex items-center gap-2 text-muted-k">
+                                <CheckCircle2 className="h-4 w-4" />
+                                <span className="overline">Lifetime cap</span>
+                            </div>
+                            <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">
+                                {budget.lifetime_pct.toFixed(1)}<span className="text-base text-muted-k">%</span>
+                            </div>
+                            <div className="text-xs text-muted-k mt-0.5">used of {formatAUD(budget.lifetime_cap)}</div>
+                        </div>
+                    </div>
+
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {budget.streams.map((s) => (
                             <StreamProgress key={s.stream} stream={s} />

@@ -1394,40 +1394,6 @@ async def public_email_result(body: EmailResultBody, request: Request):
 
 
 # ---------------------------------------------------------------------------
-# Plan enforcement (Solo+ public tools)
-# ---------------------------------------------------------------------------
-SOLO_PLUS = {"solo", "family"}
-
-
-async def _user_from_request(request: Request) -> Optional[dict]:
-    """Best-effort: return the calling user from Bearer JWT, else None."""
-    auth = request.headers.get("authorization") or ""
-    if not auth.lower().startswith("bearer "):
-        return None
-    token = auth.split(" ", 1)[1].strip()
-    try:
-        from auth import decode_token
-        uid = decode_token(token)
-        return await db.users.find_one({"id": uid}, {"_id": 0})
-    except Exception:
-        return None
-
-
-async def _require_solo_plus(request: Request, tool_label: str):
-    user = await _user_from_request(request)
-    if not user or user.get("plan") not in SOLO_PLUS:
-        raise HTTPException(
-            status_code=402,
-            detail={
-                "code": "plan_required",
-                "tool": tool_label,
-                "message": f"{tool_label} is part of the Solo and Family plans. Start a 14-day free trial — no card needed.",
-                "upgrade_url": "/signup?plan=family",
-            },
-        )
-
-
-# ---------------------------------------------------------------------------
 # Stripe billing
 # ---------------------------------------------------------------------------
 PLAN_PRICES = {

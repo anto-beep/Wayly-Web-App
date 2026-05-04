@@ -5,6 +5,7 @@ import { HeartHandshake, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import PasswordStrength, { evaluatePassword } from "@/components/PasswordStrength";
 
 const PLANS = [
     {
@@ -62,6 +63,11 @@ export default function Signup() {
 
     const submit = async (e) => {
         e.preventDefault();
+        const pw = evaluatePassword(form.password, { email: form.email, name: form.name });
+        if (!pw.valid) {
+            toast.error(pw.containsIdentity ? "Password shouldn't include your name or email" : "Password needs 8+ chars with upper, lower, number, and symbol");
+            return;
+        }
         setSubmitting(true);
         try {
             const u = await signup(form);
@@ -201,7 +207,7 @@ export default function Signup() {
                                     />
                                 </label>
                                 <label className="block">
-                                    <span className="text-sm text-muted-k">Password (min 8 chars)</span>
+                                    <span className="text-sm text-muted-k">Password</span>
                                     <input
                                         type="password"
                                         value={form.password}
@@ -211,6 +217,7 @@ export default function Signup() {
                                         data-testid="signup-password-input"
                                         className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 text-base focus:outline-none focus:ring-2 ring-primary-k"
                                     />
+                                    <PasswordStrength password={form.password} email={form.email} name={form.name} />
                                 </label>
                                 <fieldset>
                                     <span className="text-sm text-muted-k">I am the…</span>

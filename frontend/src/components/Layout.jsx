@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut, HeartHandshake, UserCircle2 } from "lucide-react";
+import { LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut, HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles } from "lucide-react";
 
 const navItems = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -9,6 +9,11 @@ const navItems = [
     { to: "/app/chat", label: "Ask Kindred", icon: MessageCircle },
     { to: "/app/family", label: "Family thread", icon: Users },
     { to: "/app/audit", label: "Audit log", icon: ScrollText },
+];
+
+const secondaryItems = [
+    { to: "/ai-tools", label: "AI Tools", icon: Sparkles },
+    { to: "/settings/profile", label: "Settings", icon: SettingsIcon },
 ];
 
 export default function Layout({ children }) {
@@ -42,10 +47,10 @@ export default function Layout({ children }) {
                         )}
                         {user && (
                             <Link
-                                to="/pricing"
+                                to="/settings/billing"
                                 data-testid="layout-plan-badge"
                                 className="hidden md:inline-flex items-center gap-2 rounded-full bg-surface-2 border border-kindred px-3 py-1.5 text-xs hover:bg-surface transition-colors"
-                                title="Change plan"
+                                title="Manage plan"
                             >
                                 <span className="font-medium text-primary-k uppercase tracking-wider">{user.plan || "free"}</span>
                                 <span className="text-muted-k">plan</span>
@@ -89,6 +94,25 @@ export default function Layout({ children }) {
                                 <span>{item.label}</span>
                             </NavLink>
                         ))}
+                        <div className="md:pt-3 md:mt-3 md:border-t md:border-kindred flex md:flex-col gap-1">
+                            {secondaryItems.map((item) => (
+                                <NavLink
+                                    key={item.to}
+                                    to={item.to}
+                                    data-testid={`nav-${item.label.toLowerCase().replace(/\s/g, "-")}`}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                                            isActive
+                                                ? "bg-primary-k text-white"
+                                                : "text-muted-k hover:bg-surface-2 hover:text-primary-k"
+                                        }`
+                                    }
+                                >
+                                    <item.icon className="h-4 w-4" />
+                                    <span>{item.label}</span>
+                                </NavLink>
+                            ))}
+                        </div>
                     </nav>
                 </aside>
                 <main className="flex-1 min-w-0">{children}</main>

@@ -71,6 +71,9 @@ export default function Login() {
                                 data-testid="login-password-input"
                                 className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 text-base focus:outline-none focus:ring-2 ring-primary-k"
                             />
+                            <Link to="/forgot" data-testid="login-forgot-link" className="mt-1 inline-block text-xs text-primary-k hover:underline">
+                                Forgot password?
+                            </Link>
                         </label>
                         <button
                             type="submit"
