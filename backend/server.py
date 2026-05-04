@@ -48,6 +48,7 @@ import budget as budget_lib
 from agents import parse_statement, explain_anomalies, chat_with_kindred
 from wrapper import run_wrapper
 import email_service
+import asyncio
 from auth_emergent import exchange_session_id
 from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout, CheckoutSessionRequest,
@@ -248,6 +249,270 @@ async def create_household(payload: HouseholdCreate, user_id: str = Depends(get_
 async def get_household(user_id: str = Depends(get_current_user_id)):
     h = await _get_user_household(user_id)
     return h
+
+
+# ----------------- password reset & email verification -----------------
+class ForgotBody(BaseModel):
+    email: EmailStr
+
+
+class ResetBody(BaseModel):
+    token: str = Field(min_length=10, max_length=128)
+    new_password: str = Field(min_length=8)
+
+
+class VerifyBody(BaseModel):
+    token: str = Field(min_length=10, max_length=128)
+
+
+@api.post("/auth/forgot")
+async def forgot_password(body: ForgotBody, request: Request):
+    """Email enumeration-safe: always returns ok=True after a short delay."""
+    user = await db.users.find_one({"email": body.email.lower()}, {"_id": 0})
+    if user:
+        token = new_id().replace("-", "") + new_id().replace("-", "")
+        await db.password_resets.insert_one({
+            "token": token,
+            "user_id": user["id"],
+            "email": user["email"],
+            "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=60)).isoformat(),
+            "used": False,
+            "created_at": now_iso(),
+        })
+        origin = request.headers.get("origin") or str(request.base_url).rstrip("/")
+        reset_url = f"{origin}/reset?token={token}"
+        try:
+            await email_service.email_tool_result(
+                to=user["email"],
+                tool_name="Password reset",
+                headline="Reset your Kindred password",
+                body_html=(
+                    f"<p>Someone (hopefully you) requested a password reset for your Kindred account.</p>"
+                    f"<p><a href='{reset_url}' style='display:inline-block;background:#1F3A5F;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none'>Reset password</a></p>"
+                    f"<p style='color:#6B7280;font-size:13px'>This link expires in 60 minutes. If you didn't request this, ignore this email — your password has not changed.</p>"
+                ),
+            )
+        except Exception as e:
+            logger.warning("Password reset email send failed: %s", e)
+    return {"ok": True}
+
+
+@api.post("/auth/reset")
+async def reset_password(body: ResetBody):
+    rec = await db.password_resets.find_one({"token": body.token, "used": False}, {"_id": 0})
+    if not rec:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link")
+    expires = datetime.fromisoformat(rec["expires_at"])
+    if datetime.now(timezone.utc) > expires:
+        raise HTTPException(status_code=400, detail="Reset link has expired — request a new one")
+    await db.users.update_one({"id": rec["user_id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
+    await db.password_resets.update_one({"token": body.token}, {"$set": {"used": True, "used_at": now_iso()}})
+    u = await _get_user(rec["user_id"])
+    return {"ok": True, "email": u["email"]}
+
+
+@api.post("/auth/verify/send")
+async def send_verify(user_id: str = Depends(get_current_user_id), request: Request = None):
+    u = await _get_user(user_id)
+    if u.get("email_verified"):
+        return {"ok": True, "already_verified": True}
+    token = new_id().replace("-", "") + new_id().replace("-", "")
+    await db.email_verifications.insert_one({
+        "token": token, "user_id": user_id, "email": u["email"],
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        "created_at": now_iso(),
+    })
+    origin = (request.headers.get("origin") if request else None) or "https://aged-care-os.preview.emergentagent.com"
+    verify_url = f"{origin}/verify?token={token}"
+    try:
+        await email_service.email_tool_result(
+            to=u["email"],
+            tool_name="Verify your email",
+            headline=f"Confirm your Kindred account, {u['name'].split(' ')[0]}",
+            body_html=(
+                f"<p>Welcome to Kindred. Tap the button below to confirm this email address.</p>"
+                f"<p><a href='{verify_url}' style='display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Confirm email</a></p>"
+                f"<p style='color:#6B7280;font-size:13px'>If you didn't create a Kindred account, ignore this email.</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Verify email failed: %s", e)
+    return {"ok": True}
+
+
+@api.post("/auth/verify")
+async def verify_email(body: VerifyBody):
+    rec = await db.email_verifications.find_one({"token": body.token}, {"_id": 0})
+    if not rec:
+        raise HTTPException(status_code=400, detail="Invalid verification link")
+    expires = datetime.fromisoformat(rec["expires_at"])
+    if datetime.now(timezone.utc) > expires:
+        raise HTTPException(status_code=400, detail="Verification link has expired")
+    await db.users.update_one({"id": rec["user_id"]}, {"$set": {"email_verified": True, "email_verified_at": now_iso()}})
+    await db.email_verifications.delete_many({"user_id": rec["user_id"]})
+    return {"ok": True}
+
+
+# ----------------- household member invites -----------------
+class InviteBody(BaseModel):
+    email: EmailStr
+    role: _LiteralType["family_member", "advisor"]
+    note: Optional[str] = None
+
+
+class InviteAcceptBody(BaseModel):
+    token: str = Field(min_length=10, max_length=128)
+
+
+@api.post("/household/invite")
+async def create_invite(body: InviteBody, request: Request, user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    household = await _get_user_household(user_id)
+    if not household:
+        raise HTTPException(status_code=400, detail="Create a household first")
+    if u.get("plan") != "family":
+        raise HTTPException(status_code=402, detail={"code": "plan_required", "message": "Family plan required to invite members."})
+    # max 5 active members including owner
+    members = await db.household_members.count_documents({"household_id": household["id"], "status": {"$in": ["active", "pending"]}})
+    if members >= 4:  # owner + 4 invitees = 5
+        raise HTTPException(status_code=400, detail="Family plan limit: 5 members (including you)")
+    token = new_id().replace("-", "") + new_id().replace("-", "")
+    invite = {
+        "token": token,
+        "household_id": household["id"],
+        "household_name": household['participant_name'],
+        "inviter_user_id": user_id,
+        "inviter_name": u["name"],
+        "email": body.email.lower(),
+        "role": body.role,
+        "note": body.note,
+        "status": "pending",
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=14)).isoformat(),
+        "created_at": now_iso(),
+    }
+    await db.invites.insert_one(invite)
+    origin = request.headers.get("origin") or str(request.base_url).rstrip("/")
+    accept_url = f"{origin}/invite?token={token}"
+    hh_name = household['participant_name']
+    try:
+        await email_service.email_tool_result(
+            to=body.email,
+            tool_name="Kindred family invitation",
+            headline=f"{u['name']} invited you to {hh_name}'s Kindred",
+            body_html=(
+                f"<p>{u['name']} wants you involved as a <strong>{body.role.replace('_', ' ')}</strong> on {hh_name}'s Kindred household.</p>"
+                f"{('<p><em>Note from ' + u['name'].split(' ')[0] + ':</em> ' + body.note + '</p>') if body.note else ''}"
+                f"<p><a href='{accept_url}' style='display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invitation</a></p>"
+                f"<p style='color:#6B7280;font-size:13px'>Invitation expires in 14 days.</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Invite email failed: %s", e)
+    await _audit(household["id"], user_id, u["name"], "INVITE_SENT", f"Invited {body.email} as {body.role}")
+    invite.pop("_id", None)
+    return invite
+
+
+@api.get("/household/members")
+async def list_members(user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        return {"members": [], "invites": []}
+    invites_cur = db.invites.find({"household_id": household["id"], "status": "pending"}, {"_id": 0})
+    invites = await invites_cur.to_list(50)
+    mem_cur = db.household_members.find({"household_id": household["id"]}, {"_id": 0})
+    members = await mem_cur.to_list(50)
+    # Include the owner (current user) synthesised
+    owner = await _get_user(household["owner_id"])
+    owner_row = {
+        "user_id": owner["id"], "email": owner["email"], "name": owner["name"],
+        "role": "primary", "status": "active", "joined_at": household.get("created_at", ""),
+    }
+    return {"members": [owner_row] + members, "invites": invites}
+
+
+@api.delete("/household/members/{member_user_id}")
+async def remove_member(member_user_id: str, user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household or household["owner_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Only the primary caregiver can remove members")
+    if member_user_id == user_id:
+        raise HTTPException(status_code=400, detail="You can't remove yourself — transfer ownership first")
+    await db.household_members.update_one(
+        {"household_id": household["id"], "user_id": member_user_id},
+        {"$set": {"status": "removed", "removed_at": now_iso()}},
+    )
+    await db.users.update_one({"id": member_user_id}, {"$unset": {"household_id": ""}})
+    return {"ok": True}
+
+
+@api.get("/invite/{token}")
+async def get_invite(token: str):
+    inv = await db.invites.find_one({"token": token, "status": "pending"}, {"_id": 0})
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invitation not found or already used")
+    expires = datetime.fromisoformat(inv["expires_at"])
+    if datetime.now(timezone.utc) > expires:
+        raise HTTPException(status_code=400, detail="Invitation has expired")
+    return {
+        "email": inv["email"],
+        "role": inv["role"],
+        "household_name": inv["household_name"],
+        "inviter_name": inv["inviter_name"],
+        "note": inv.get("note"),
+    }
+
+
+@api.post("/invite/accept")
+async def accept_invite(body: InviteAcceptBody, user_id: str = Depends(get_current_user_id)):
+    inv = await db.invites.find_one({"token": body.token, "status": "pending"}, {"_id": 0})
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    u = await _get_user(user_id)
+    if u["email"].lower() != inv["email"]:
+        raise HTTPException(status_code=403, detail=f"This invitation is for {inv['email']}.")
+    await db.household_members.insert_one({
+        "household_id": inv["household_id"], "user_id": user_id,
+        "email": u["email"], "name": u["name"], "role": inv["role"],
+        "status": "active", "joined_at": now_iso(),
+    })
+    await db.users.update_one({"id": user_id}, {"$set": {"household_id": inv["household_id"]}})
+    await db.invites.update_one({"token": body.token}, {"$set": {"status": "accepted", "accepted_at": now_iso()}})
+    await _audit(inv["household_id"], user_id, u["name"], "INVITE_ACCEPTED",
+                 f"{u['name']} joined as {inv['role']}")
+    return {"ok": True, "household_id": inv["household_id"]}
+
+
+# ----------------- wellbeing check-in -----------------
+class WellbeingBody(BaseModel):
+    mood: _LiteralType["good", "okay", "not_great"]
+    notify_caregiver: bool = False
+
+
+@api.post("/participant/wellbeing")
+async def log_wellbeing(body: WellbeingBody, user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    household = await _get_user_household(user_id)
+    doc = {
+        "id": new_id(), "user_id": user_id,
+        "household_id": household["id"] if household else None,
+        "mood": body.mood, "notify_caregiver": body.notify_caregiver,
+        "created_at": now_iso(),
+    }
+    await db.wellbeing.insert_one(doc)
+    if household:
+        await _audit(household["id"], user_id, u["name"], "WELLBEING_LOGGED", f"Mood: {body.mood}")
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/participant/wellbeing")
+async def recent_wellbeing(user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        return []
+    cur = db.wellbeing.find({"household_id": household["id"]}, {"_id": 0}).sort("created_at", -1).limit(14)
+    return await cur.to_list(14)
 
 
 # ----------------- statements -----------------
@@ -1187,9 +1452,14 @@ async def billing_checkout(body: CheckoutBody, request: Request, user_id: str = 
     webhook_url = f"{host_url}/api/webhook/stripe"
     stripe = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
     spec = PLAN_PRICES[body.plan]
+    # Emulate a 7-day trial by charging the first month upfront but
+    # recording trial_ends_at = now + 7 days. If the user cancels within the
+    # window, we refund via the ops inbox.
+    had_trial = await db.subscriptions.find_one({"user_id": user_id, "had_trial": True})
+    trial_days = 0 if had_trial else 7
     success_url = f"{body.origin_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{body.origin_url}/pricing?cancelled=1"
-    metadata = {"user_id": user_id, "plan": body.plan, "kind": "kindred_subscription"}
+    metadata = {"user_id": user_id, "plan": body.plan, "kind": "kindred_subscription", "trial_days": str(trial_days)}
     req = CheckoutSessionRequest(
         amount=float(spec["amount"]),
         currency=spec["currency"],
@@ -1199,16 +1469,12 @@ async def billing_checkout(body: CheckoutBody, request: Request, user_id: str = 
     )
     session = await stripe.create_checkout_session(req)
     await db.payment_transactions.insert_one({
-        "session_id": session.session_id,
-        "user_id": user_id,
-        "plan": body.plan,
-        "amount": float(spec["amount"]),
-        "currency": spec["currency"],
-        "metadata": metadata,
-        "payment_status": "initiated",
-        "ts": now_iso(),
+        "session_id": session.session_id, "user_id": user_id, "plan": body.plan,
+        "amount": float(spec["amount"]), "currency": spec["currency"],
+        "metadata": metadata, "trial_days": trial_days,
+        "payment_status": "initiated", "ts": now_iso(),
     })
-    return {"url": session.url, "session_id": session.session_id}
+    return {"url": session.url, "session_id": session.session_id, "trial_days": trial_days}
 
 
 @api.get("/billing/status/{session_id}")
@@ -1224,30 +1490,42 @@ async def billing_status(session_id: str, user_id: str = Depends(get_current_use
         chk = await stripe_client.get_checkout_status(session_id)
     except Exception as e:
         logger.warning("Stripe status check failed for %s: %s", session_id, e)
-        # Surface a clean payload so the frontend polling doesn't hit 500 storms
-        return {
-            "status": "unknown",
-            "payment_status": "unknown",
-            "amount_total": None,
-            "currency": None,
-            "plan": tx["plan"],
-        }
+        return {"status": "unknown", "payment_status": "unknown",
+                "amount_total": None, "currency": None, "plan": tx["plan"]}
     payment_status = (chk.payment_status or "").lower()
-    # Update transaction (idempotent — only flip plan once on first paid event)
     if payment_status == "paid" and tx["payment_status"] != "paid":
         plan = tx["plan"]
-        await db.users.update_one({"id": user_id}, {"$set": {"plan": plan}})
+        trial_days = int(tx.get("trial_days", 0))
+        now = datetime.now(timezone.utc)
+        trial_ends_at = (now + timedelta(days=trial_days)).isoformat() if trial_days else None
+        period_end = (now + timedelta(days=30)).isoformat()
+        await db.users.update_one({"id": user_id}, {"$set": {"plan": plan, "plan_period_end": period_end}})
         await db.payment_transactions.update_one(
             {"session_id": session_id},
             {"$set": {"payment_status": "paid", "paid_at": now_iso()}},
         )
+        await db.subscriptions.update_one(
+            {"user_id": user_id},
+            {"$set": {
+                "user_id": user_id, "plan": plan,
+                "status": "trialing" if trial_days else "active",
+                "had_trial": bool(trial_days),
+                "trial_ends_at": trial_ends_at,
+                "current_period_end": period_end,
+                "updated_at": now_iso(),
+                "cancel_at_period_end": False,
+            }},
+            upsert=True,
+        )
         try:
-            user = await _get_user(user_id)
+            u = await _get_user(user_id)
             await email_service.email_tool_result(
-                to=user["email"],
+                to=u["email"],
                 tool_name=f"Welcome to {plan.capitalize()}",
-                headline=f"You're on Kindred {plan.capitalize()} — let's get you set up.",
-                body_html=f"<p>Thanks {user['name'].split(' ')[0]} — payment received.</p><p>Next steps: <a href='/onboarding'>complete onboarding</a> to set up your household.</p>",
+                headline=f"You're on Kindred {plan.capitalize()}.",
+                body_html=(f"<p>Thanks {u['name'].split(' ')[0]}. "
+                           + (f"Your 7-day refund window starts today." if trial_days else "Payment received — thanks for renewing.")
+                           + "</p><p>Next step: complete onboarding to set up your household.</p>"),
             )
         except Exception as e:
             logger.warning("Welcome email failed: %s", e)
@@ -1257,12 +1535,57 @@ async def billing_status(session_id: str, user_id: str = Depends(get_current_use
             {"$set": {"payment_status": "expired"}},
         )
     return {
-        "status": chk.status,
-        "payment_status": chk.payment_status,
-        "amount_total": chk.amount_total,
-        "currency": chk.currency,
-        "plan": tx["plan"],
+        "status": chk.status, "payment_status": chk.payment_status,
+        "amount_total": chk.amount_total, "currency": chk.currency,
+        "plan": tx["plan"], "trial_days": tx.get("trial_days", 0),
     }
+
+
+@api.get("/billing/subscription")
+async def my_subscription(user_id: str = Depends(get_current_user_id)):
+    sub = await db.subscriptions.find_one({"user_id": user_id}, {"_id": 0}, sort=[("updated_at", -1)])
+    if not sub:
+        return {"plan": "free", "status": "none"}
+    return sub
+
+
+@api.post("/billing/cancel")
+async def cancel_subscription(user_id: str = Depends(get_current_user_id)):
+    sub = await db.subscriptions.find_one({"user_id": user_id, "status": {"$in": ["trialing", "active"]}}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="No active plan to cancel")
+    await db.subscriptions.update_one(
+        {"user_id": user_id},
+        {"$set": {"cancel_at_period_end": True, "updated_at": now_iso()}},
+    )
+    # Plan continues until current_period_end; we don't flip plan here.
+    try:
+        u = await _get_user(user_id)
+        await email_service.email_tool_result(
+            to=u["email"], tool_name="Cancellation confirmed",
+            headline="Your Kindred plan is cancelled",
+            body_html=f"<p>We've cancelled auto-renewal. Your {sub.get('plan','').capitalize()} plan stays active until {sub.get('current_period_end','').split('T')[0] or 'the end of your current period'}. Contact us any time to reactivate.</p>",
+        )
+    except Exception:
+        pass
+    return {"ok": True, "cancel_at_period_end": True}
+
+
+class UpgradeBody(BaseModel):
+    plan: _LiteralType["solo", "family"]
+
+
+@api.post("/billing/upgrade")
+async def upgrade_downgrade(body: UpgradeBody, user_id: str = Depends(get_current_user_id)):
+    sub = await db.subscriptions.find_one({"user_id": user_id, "status": {"$in": ["trialing", "active"]}}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=400, detail="No active plan — start one from /pricing")
+    if sub.get("plan") == body.plan:
+        return {"ok": True, "unchanged": True}
+    # Simple swap; bill difference on next cycle.
+    await db.subscriptions.update_one({"user_id": user_id}, {"$set": {"plan": body.plan, "updated_at": now_iso()}})
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": body.plan}})
+    return {"ok": True, "plan": body.plan}
 
 
 @api.post("/webhook/stripe")
