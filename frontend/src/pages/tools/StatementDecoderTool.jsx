@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { api } from "@/lib/api";
-import { Upload, Loader2, AlertTriangle, Check, ArrowRight, Sparkles, Clock } from "lucide-react";
+import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock } from "lucide-react";
 import EmailResultButton from "@/components/EmailResultButton";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
+import DecoderResultView from "@/components/DecoderResultView";
 
 const SAMPLE = `BlueBerry Care — Monthly Statement
 For: Dorothy Anderson · April 2026
@@ -139,7 +140,7 @@ export default function StatementDecoderTool() {
                         className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                        {loading ? "Decoding…" : "Decode this statement"}
+                        {loading ? "Reading your statement… (up to 30s)" : "Decode this statement"}
                     </button>
 
                     {limitInfo && !isPaidUser && (
@@ -168,56 +169,10 @@ export default function StatementDecoderTool() {
                     )}
 
                     {result && (
-                        <div className="mt-6 space-y-5 animate-fade-up" data-testid="decoder-result">
-                            {result.summary && (
-                                <div>
-                                    <div className="overline">In plain English</div>
-                                    <p className="mt-2 text-primary-k leading-relaxed">{result.summary}</p>
-                                </div>
-                            )}
+                        <div className="mt-6 animate-fade-up" data-testid="decoder-result">
+                            <DecoderResultView result={result} />
 
-                            {result.line_items?.length > 0 && (
-                                <div>
-                                    <div className="overline">Line items by stream</div>
-                                    <div className="mt-3 grid grid-cols-3 gap-3">
-                                        {["Clinical", "Independence", "Everyday Living"].map((s) => {
-                                            const items = result.line_items.filter((li) => li.stream === s);
-                                            const total = items.reduce((acc, li) => acc + (li.total || 0), 0);
-                                            return (
-                                                <div key={s} className="rounded-md bg-surface-2 p-4">
-                                                    <div className="text-[0.65rem] uppercase tracking-wider text-muted-k">{s}</div>
-                                                    <div className="mt-1 font-heading text-xl text-primary-k tabular-nums">${total.toFixed(2)}</div>
-                                                    <div className="text-xs text-muted-k">{items.length} item{items.length === 1 ? "" : "s"}</div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-
-                            {result.anomalies?.length > 0 ? (
-                                <div>
-                                    <div className="overline">Things to know</div>
-                                    <ul className="mt-3 space-y-3">
-                                        {result.anomalies.map((a) => (
-                                            <li key={a.id} className="flex items-start gap-3 border-b border-kindred pb-3 last:border-0">
-                                                <AlertTriangle className="h-4 w-4 text-terracotta mt-0.5 flex-shrink-0" />
-                                                <div className="flex-1">
-                                                    <div className="font-medium text-primary-k">{a.title}</div>
-                                                    <div className="text-sm text-muted-k mt-0.5">{a.detail}</div>
-                                                    {a.suggested_action && <div className="text-sm text-primary-k mt-1.5 italic">→ {a.suggested_action}</div>}
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ) : (
-                                <div className="flex items-start gap-2 text-sm text-sage">
-                                    <Check className="h-4 w-4 mt-0.5" /><span>Nothing unusual flagged on this statement.</span>
-                                </div>
-                            )}
-
-                            <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
+                            <div className="bg-surface-2 rounded-xl p-5 border border-kindred mt-6">
                                 <div className="font-medium text-primary-k">Want this every month, automatically?</div>
                                 <p className="text-sm text-muted-k mt-1">Kindred watches every statement, alerts you when something's off, and tracks your quarterly budget across all three streams.</p>
                                 <div className="mt-3 flex items-center gap-3 flex-wrap">
@@ -232,7 +187,7 @@ export default function StatementDecoderTool() {
                                     <EmailResultButton
                                         tool="Statement Decoder"
                                         headline={result.summary?.slice(0, 200) || "Your statement, decoded"}
-                                        bodyHtml={`<h3 style="font-family:Georgia,serif;color:#1F3A5F">Plain-English summary</h3><p>${(result.summary || "").replace(/</g, "&lt;")}</p><h3 style="font-family:Georgia,serif;color:#1F3A5F;margin-top:24px">Line items</h3><ul>${(result.line_items || []).map(li => `<li>${li.date} — ${li.service_name} (${li.stream}) — $${(li.total || 0).toFixed(2)}</li>`).join("")}</ul>${(result.anomalies || []).length ? `<h3 style="font-family:Georgia,serif;color:#C5734D;margin-top:24px">Things to check</h3><ul>${(result.anomalies || []).map(a => `<li><strong>${a.title}</strong> — ${a.detail}${a.suggested_action ? ` → <em>${a.suggested_action}</em>` : ""}</li>`).join("")}</ul>` : ""}`}
+                                        bodyHtml={`<h3 style="font-family:Georgia,serif;color:#1F3A5F">Plain-English summary</h3><p>${(result.summary || "").replace(/</g, "&lt;")}</p><h3 style="font-family:Georgia,serif;color:#1F3A5F;margin-top:24px">Line items</h3><ul>${(result.line_items || []).map(li => `<li>${li.date} — ${li.service_name} (${li.stream}) — $${(li.total || 0).toFixed(2)}</li>`).join("")}</ul>${(result.anomalies || []).length ? `<h3 style="font-family:Georgia,serif;color:#C5734D;margin-top:24px">Things to check</h3><ul>${(result.anomalies || []).map(a => `<li><strong>${a.headline || a.title}</strong> — ${a.detail || ""}${a.suggested_action ? ` → <em>${a.suggested_action}</em>` : ""}</li>`).join("")}</ul>` : ""}`}
                                     />
                                 </div>
                             </div>

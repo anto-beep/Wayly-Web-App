@@ -1,0 +1,52 @@
+{
+  "summary": "Iter13 backend two-pass Statement Decoder pipeline is functionally correct (9/9 pytest assertions PASS against local backend with the Margaret Kowalski fixture). However a CRITICAL deployment issue blocks end-users: the public preview gateway terminates the connection at ~60s with HTTP 502, while the two sequential LLM calls (Haiku extract ~8s + Sonnet 4.5 audit 50-180s) routinely exceed that. Frontend correctly calls the endpoint and shows a red 'Could not decode the statement.' error — so the new DecoderResultView is NEVER rendered in production for normal-sized statements. Backend assertions verified via cached local-backend response: 4 HIGH (RULE_1 care-mgmt cap, RULE_3 duplicate, RULE_4 ATHM contribution>0, RULE_7 hospital no RCP) + 2 MEDIUM + 3 LOW = 9 anomalies; total_gross $2429.49; care_management_fee $1236.59; all 5 streams (Clinical/Independence/EverydayLiving/ATHM/CareMgmt) present with correct counts; AT- grab rail is recoded ATHM; CareMgmt has its own line; cancelled item present with gross 0. Regression: /ai-tools/budget-calculator still shows tool-gate for unauth (confirmed). _empty_audit fallback path and KINDRED_AUDITOR_MODEL env override exist in agents.py.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/public/decode-statement-text", "issue": "Public preview gateway returns HTTP 502 after ~60s. Sonnet 4.5 audit pass alone routinely takes 50-110s + Haiku 8-15s, so wall-clock exceeds the gateway timeout. Backend completes the request successfully (200 logged) but client never sees it. End-user impact: Statement Decoder is broken in production for any non-trivial statement. RCA: response is buffered, not streamed; gateway has fixed 60s read timeout.", "priority": "CRITICAL"}
+    ],
+    "minor": [
+      {"endpoint": "POST /api/public/decode-statement-text", "issue": "Public 5/hr per-IP rate limit observed firing after a handful of dev-test calls — fine for production but makes iterative testing painful. Consider exempting requests bearing a dev cookie."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "StatementDecoderTool", "issue": "Because of the 502 gateway timeout (see backend critical), the new <DecoderResultView/> is unreachable from the public URL. UI correctly shows fallback error 'Could not decode the statement.' Suggest one of: (a) move the call to a streaming endpoint with periodic keepalive frames, (b) split into background job + polling (POST returns job_id, GET /api/public/decode-statement-text/{id} polls), (c) lift gateway timeout for /api/public/decode-statement-text route, (d) drop Pass 2 to Haiku 4.5 (much faster) or use parallel model calls.", "selector": "[data-testid=decoder-result-v2]", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Statement Decoder unauth submit", "issue": "Frontend → backend integration round-trip exceeds 60s gateway window for ~70% of decode runs. UI never reaches success path.", "affected_selectors": ["[data-testid=decoder-result-v2]", "[data-testid=decoder-summary-banner]", "[data-testid=anomaly-card-0]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter13_decoder.py",
+    "/app/test_reports/pytest/iter13_results.xml",
+    "/tmp/decoded_local.json"
+  ],
+  "action_items": [
+    "URGENT: fix gateway timeout for POST /api/public/decode-statement-text — without this the new Statement Decoder UI is dead in production. Recommended: switch to a job-queue + polling pattern, or stream a heartbeat from the endpoint, or move to Haiku-only audit (<60s).",
+    "Consider lowering AUDITOR_MODEL to claude-haiku-4-5-20251001 as a temporary workaround — Haiku alone returns the audit in ~8-15s, well inside the 60s window. Quality of 10-rule application would need spot-check but is likely acceptable.",
+    "Add a frontend 'still working…' progress indicator that survives 60s+ wait and shows 'this is taking longer than usual' guidance, in case backend latency improves.",
+    "Verify the _empty_audit/_audit_error fallback by setting KINDRED_AUDITOR_MODEL=claude-bogus and restarting backend (skipped here per the request — code path verified statically)."
+  ],
+  "critical_code_review_comments": [
+    "agents.py lines 369-400: extract_statement catches all exceptions and silently returns an empty schema. This makes Pass 2 audit impossible to debug — log the offending raw response (truncated) before swallowing. Same for audit_statement (435).",
+    "agents.py: AUDITOR_SYSTEM is large (~80 lines, ~3.5KB tokens). With the 24KB statement payload + ~6KB extracted JSON, every call sends ~13KB just in system+user prompt. Trim AUDITOR_SYSTEM (or move to LLM tool-call schema) to shave ~3-5s/call.",
+    "agents.py:420 audit payload truncated to 40000 chars but extracted JSON is under 10KB for typical statement; truncation can never be hit. Fine, just dead code.",
+    "DecoderResultView.jsx line 83: condition `(summary.care_management_fee || summary.rollover_applied)` won't render the lifetime_cap_remaining strip when both the fee and rollover are zero — works for Margaret but is fragile. Better: gate each chip independently.",
+    "DecoderResultView.jsx top-banner severity logic is correct (terracotta if high, gold if medium, sage if low/none) and matches the spec.",
+    "server.py _run_public_decode (per spec) appears to chain extract → audit sequentially, doubling wall time. Consider running the local fallback _empty_audit() in parallel via asyncio.create_task so even on gateway timeout, the persisted response is full-quality."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter13_decoder.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 pytest pass; pipeline correctness verified end-to-end against local backend)",
+    "frontend": "0% on critical happy-path (decoder-result-v2 never appears via public URL due to 502); regression flows (tool-gate on /ai-tools/budget-calculator) still pass."
+  },
+  "test_credentials": "Did not need cathy@example.com — testing was unauth public endpoint only.",
+  "seed_data_creation": "/tmp/margaret_stmt.txt (3.3KB Margaret Kowalski April 2026 fixture). /tmp/decoded_local.json (cached successful 200 response from localhost:8001 for offline test re-runs).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend pipeline shape and content are CORRECT. The blocker is environmental: ingress proxy 60s read-timeout vs LLM wall-time of ~60-130s. To re-run pytest assertions cheaply, the fixture caches at /tmp/decoded_local.json (set DECODER_USE_CACHE=0 to force live). To validate frontend, you must FIRST shrink pipeline runtime under 60s — easiest is `export KINDRED_AUDITOR_MODEL=claude-haiku-4-5-20251001 && sudo supervisorctl restart backend`. After that, the Playwright happy-path (textarea → submit → wait_for_selector decoder-result-v2 timeout=120000) should land inside ~12-20s and all 4 sections (decoder-summary-banner, decoder-anomaly-panel, decoder-stream-breakdown, decoder-full-table) plus stream-card-{Clinical,Independence,EverydayLiving,ATHM,CareMgmt} and anomaly-card-{0..N} will render. Top-banner CSS class includes 'terracotta' when high>0 (spec confirmed). Cookie 24h limit fires correctly: 1st 200, 2nd 429 from same browser cookie (visible in backend.out.log). Public 5/hr per-IP rate limit also confirmed via test runner IP.",
+  "rca of the issue": "ROOT CAUSE of frontend failure: The Kubernetes ingress / preview gateway in front of the backend has a hard ~60-second response-read timeout. _run_public_decode awaits Pass 1 (Haiku, ~5-15s) then Pass 2 (Sonnet 4.5, ~50-110s) sequentially. The combined wall time exceeds 60s on ~70% of runs, so the gateway closes the upstream connection and returns 502 to the browser even though the backend log shows the request completing 200 a minute later. Reproduction: curl --max-time 180 -X POST https://aged-care-os.preview.emergentagent.com/api/public/decode-statement-text -d @margaret.json → returns HTTP 502 in ~60s. Same call against http://localhost:8001 returns HTTP 200 with 9 correct anomalies in ~135s. Mitigations (in order of preference): (1) flip AUDITOR_MODEL to Haiku 4.5 — drops total wall time below 30s; (2) switch endpoint to background job pattern (return 202+job_id immediately, poll); (3) stream SSE keep-alives from FastAPI to keep gateway happy; (4) raise gateway timeout (infra change). Statement Decoder is the highest-value free funnel — fixing this is iter13's actual deliverable."
+}

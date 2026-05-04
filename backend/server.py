@@ -1103,33 +1103,65 @@ PRICE_BENCHMARKS = {
 
 
 async def _run_public_decode(text: str) -> dict:
-    parsed = await parse_statement(text, household_id="public")
-    line_items_in: List[dict] = parsed.get("line_items", []) or []
-    coerced: List[dict] = []
-    for li in line_items_in:
+    """Two-pass statement decoder.
+    Pass 1 (Haiku 4.5): extract every line item with the full Kindred schema.
+    Pass 2 (Sonnet 4.6): audit the extraction against the 10 anomaly rules.
+    Both passes must complete before the response is returned.
+    """
+    from agents import extract_statement, audit_statement
+    extracted = await extract_statement(text, household_id="public")
+    audit = await audit_statement(extracted, household_id="public")
+    # Build a period_label for the frontend's existing header while keeping
+    # the new structured payload alongside the legacy shape.
+    period_label = extracted.get("statement_period") or audit.get("statement_summary", {}).get("period") or None
+    # Legacy shape pieces for the old Statement Decoder result view
+    legacy_items: List[dict] = []
+    for li in extracted.get("line_items", []) or []:
+        if li.get("is_cancellation"):
+            continue
+        stream = li.get("stream") or "Everyday Living"
+        # Map new stream codes back to legacy labels the old UI expects
+        legacy_stream = {
+            "Clinical": "Clinical",
+            "Independence": "Independence",
+            "EverydayLiving": "Everyday Living",
+            "ATHM": "AT-HM",
+            "CareMgmt": "Care Management",
+        }.get(stream, stream)
         try:
-            obj = StatementLineItem(
-                date=str(li.get("date", "1970-01-01"))[:10],
-                service_code=li.get("service_code"),
-                service_name=str(li.get("service_name") or "Service"),
-                stream=li.get("stream") if li.get("stream") in ("Clinical", "Independence", "Everyday Living") else "Everyday Living",
-                units=float(li.get("units") or 0),
-                unit_price=float(li.get("unit_price") or 0),
-                total=float(li.get("total") or 0),
-                contribution_paid=float(li.get("contribution_paid") or 0),
-                government_paid=float(li.get("government_paid") or 0),
-                confidence=float(li.get("confidence") or 0.8),
-            )
-            coerced.append(obj.model_dump())
+            legacy_items.append({
+                "date": str(li.get("date", "1970-01-01"))[:10],
+                "service_code": li.get("service_code"),
+                "service_name": li.get("service_description") or "Service",
+                "stream": legacy_stream,
+                "units": float(li.get("hours") or 0),
+                "unit_price": float(li.get("unit_rate") or 0),
+                "total": float(li.get("gross") or 0),
+                "contribution_paid": float(li.get("participant_contribution") or 0),
+                "government_paid": float(li.get("government_paid") or 0),
+                "confidence": 0.9,
+            })
         except Exception as e:
-            logger.warning("public decode skipped line: %s", e)
-    raw_anoms = _detect_anomalies(coerced, [], provider_published={})
-    explained = await explain_anomalies(raw_anoms, "public")
+            logger.warning("public decode skipped line item: %s", e)
+
+    # A short plain-English summary for the legacy summary field
+    summary = extracted.get("summary") or (
+        f"{extracted.get('participant_name') or 'Participant'}'s {period_label or 'statement'} from "
+        f"{extracted.get('provider_name') or 'the provider'}: {audit['statement_summary'].get('total_line_items', 0)} line items, "
+        f"${audit['statement_summary'].get('total_gross', 0):,.2f} gross, "
+        f"${audit['statement_summary'].get('total_participant_contribution', 0):,.2f} your contribution."
+    ) if audit.get("statement_summary") else None
+
     return {
-        "summary": parsed.get("summary"),
-        "period_label": parsed.get("period_label"),
-        "line_items": coerced,
-        "anomalies": explained,
+        # Legacy top-level fields (still used by the existing result view)
+        "summary": summary,
+        "period_label": period_label,
+        "line_items": legacy_items,
+        "anomalies": audit.get("anomalies", []),
+        # New two-pass payload for the richer UI
+        "extracted": extracted,
+        "audit": audit,
+        "partial_result": bool(extracted.get("_extraction_error")) or bool(audit.get("_audit_error")),
     }
 
 
