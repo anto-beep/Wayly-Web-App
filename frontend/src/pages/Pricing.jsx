@@ -78,7 +78,7 @@ const FAQ = [
     { q: "Can I deduct Kindred from my parent's Support at Home funding?", a: "No — Kindred is software for the family, not a Support at Home service. Paid by the family directly." },
     { q: "Refund policy?", a: "30-day full refund, no questions." },
     { q: "What happens if my parent moves to residential care?", a: "We pause billing immediately and give you a transition guide." },
-    { q: "Free trial?", a: "Yes — 14 days on Solo or Family, no card needed." },
+    { q: "Free trial?", a: "Yes — 7 days on Solo or Family, no card needed." },
 ];
 
 function Cell({ v }) {

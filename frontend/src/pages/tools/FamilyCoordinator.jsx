@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
-import UpgradeGate from "@/components/UpgradeGate";
-import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
 
@@ -15,7 +13,6 @@ const SUGGESTIONS = [
 ];
 
 export default function FamilyCoordinator() {
-    const { user } = useAuth();
     const [msgs, setMsgs] = useState([]);
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
@@ -44,13 +41,12 @@ export default function FamilyCoordinator() {
             <MarketingHeader />
             <section className="mx-auto max-w-3xl px-6 pt-12 pb-6 w-full">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
-                <span className="overline mt-6 block">Solo plan · 14‑day free trial</span>
+                <span className="overline mt-6 block">Free tool · 5 uses per hour</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Family Care Coordinator</h1>
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">Ask anything about Australia's aged-care system. Answers grounded in the Aged Care Act 2024, the Support at Home program manual, and the National Quality Standards.</p>
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-12 w-full flex-1 flex flex-col" data-testid="family-coordinator">
-                {!user && <UpgradeGate toolName="The Family Care Coordinator chat" />}
                 <div ref={ref} className="flex-1 min-h-[400px] overflow-y-auto bg-surface border border-kindred rounded-2xl p-5 space-y-4">
                     {msgs.length === 0 && !busy && (
                         <div className="h-full flex flex-col items-center justify-center text-center text-muted-k px-4 py-10">

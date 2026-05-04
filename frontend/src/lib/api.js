@@ -1,9 +1,31 @@
 import axios from "axios";
+import { toast } from "sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
 
 export const api = axios.create({ baseURL: API });
+
+// Global error interceptor — maps backend error codes to friendly toasts.
+// Individual call sites can still catch and override.
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const status = error?.response?.status;
+        const detail = error?.response?.data?.detail;
+        const detailMsg = typeof detail === "string" ? detail : detail?.message;
+        // Don't double-toast on auth probe calls
+        const isAuthMe = error?.config?.url?.includes("/auth/me");
+        if (status === 429) {
+            toast.warning(detailMsg || "You've reached the usage limit. Sign up free for more.");
+        } else if (status === 503) {
+            toast.error(detailMsg || "Our AI is taking a short break. Try again in a few minutes.");
+        } else if (status === 401 && !isAuthMe) {
+            // Let individual forms show the field-level error for login 401s
+        }
+        return Promise.reject(error);
+    }
+);
 
 export function setAuthToken(token) {
     if (token) {

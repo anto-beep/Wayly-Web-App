@@ -136,7 +136,7 @@ export default function Features() {
                 </div>
             </div>
 
-            <Section id="tools" eyebrow="AI Tools" title="Free for everyone. The basics, decoded." sub="Two tools are free and need no signup. The other six are part of any paid plan — no card needed for the 14‑day trial.">
+            <Section id="tools" eyebrow="AI Tools" title="Free for everyone. The basics, decoded." sub="Two tools are free and need no signup. The other six are part of any paid plan — no card needed for the 7-day trial.">
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {TOOLS.map((t) => (
                         <Link key={t.slug} to={`/ai-tools/${t.slug}`} className="block">
@@ -210,7 +210,7 @@ export default function Features() {
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-14 text-center">
                     <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Ready when you are.</h2>
-                    <p className="mt-4 text-white/80 max-w-xl mx-auto">Start the free 14‑day trial — no card needed — or book a 20‑minute call with a real person on our team.</p>
+                    <p className="mt-4 text-white/80 max-w-xl mx-auto">Start the free 7-day trial — no card needed — or book a 20‑minute call with a real person on our team.</p>
                     <div className="mt-7 flex flex-wrap gap-3 justify-center">
                         <Link to="/signup" className="inline-flex items-center gap-2 bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f]" data-testid="features-bottom-cta-trial">
                             Start free trial <ArrowRight className="h-4 w-4" />

@@ -114,7 +114,7 @@ export default function Signup() {
                             What does your trial unlock?
                         </h1>
                         <p className="mt-2 text-sm text-muted-k max-w-md leading-relaxed">
-                            Solo and Family give you the full app for 14 days, no card needed. Switch or downgrade any time.
+                            Solo and Family give you the full app for 7 days, no card needed. Switch or downgrade any time.
                         </p>
 
                         <div className="mt-5 space-y-3">
@@ -238,7 +238,7 @@ export default function Signup() {
                                 </fieldset>
                                 <div className="text-xs text-muted-k bg-surface-2 rounded-lg p-3" data-testid="signup-plan-summary">
                                     Selected plan: <span className="font-medium text-primary-k">{PLANS.find((p) => p.v === form.plan)?.title}</span>
-                                    {form.plan !== "free" && <span> · 14-day free trial · cancel any time</span>}
+                                    {form.plan !== "free" && <span> · 7-day free trial · cancel any time</span>}
                                 </div>
                                 <button
                                     type="submit"

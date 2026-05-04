@@ -178,7 +178,7 @@ export default function Landing() {
                             data-testid="big-number-cta"
                             className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f] transition-colors"
                         >
-                            Start free for 30 days
+                            Start free for 7 days
                         </Link>
                         <Link to="/ai-tools/budget-calculator" className="text-white underline">
                             Or estimate your own budget →
@@ -320,7 +320,7 @@ export default function Landing() {
                 <div className="mx-auto max-w-4xl px-6 py-16 text-center">
                     <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Ready when you are.</h2>
                     <p className="mt-4 text-white/80 max-w-xl mx-auto">
-                        Try Kindred free for 30 days. Cancel anytime. No card required for the trial.
+                        Try Kindred free for 7 days. Cancel anytime. No card required for the trial.
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
                         <Link to="/signup" data-testid="final-cta-signup" className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f] transition-colors">

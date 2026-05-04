@@ -619,7 +619,7 @@ async def flag_concern(payload: ConcernCreate, user_id: str = Depends(get_curren
 
 # ----------------- public AI tools (no auth, IP rate-limited) -----------------
 RATE_LIMIT_BUCKET: dict[str, list[datetime]] = defaultdict(list)
-RATE_LIMIT_WINDOW = timedelta(days=30)
+RATE_LIMIT_WINDOW = timedelta(hours=1)
 RATE_LIMIT_MAX = 5
 
 
@@ -636,7 +636,10 @@ def _check_rate_limit(ip: str) -> None:
     if len(RATE_LIMIT_BUCKET[ip]) >= RATE_LIMIT_MAX:
         raise HTTPException(
             status_code=429,
-            detail="You've reached the free-tool limit (5 uses per month). Sign up to keep going.",
+            detail={
+                "error": "rate_limit",
+                "message": "You've used this tool 5 times in the last hour. Create a free account for unlimited access.",
+            },
         )
     RATE_LIMIT_BUCKET[ip].append(now)
 
@@ -774,7 +777,6 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request):
 
 @api.post("/public/price-check")
 async def public_price_check(body: PublicPriceBody, request: Request):
-    await _require_solo_plus(request, "Provider Price Checker")
     _check_rate_limit(_client_ip(request))
     bench = PRICE_BENCHMARKS.get(body.service, {"median": body.rate, "cap": body.rate})
     median = bench["median"]
@@ -830,7 +832,6 @@ class PublicClassificationBody(BaseModel):
 
 @api.post("/public/classification-check")
 async def public_classification_check(body: PublicClassificationBody, request: Request):
-    await _require_solo_plus(request, "Classification Self-Check")
     _check_rate_limit(_client_ip(request))
     if not all(0 <= a <= 4 for a in body.answers):
         raise HTTPException(status_code=400, detail="Each answer must be 0–4")
@@ -880,7 +881,6 @@ class PublicReassessmentBody(BaseModel):
 
 @api.post("/public/reassessment-letter")
 async def public_reassessment_letter(body: PublicReassessmentBody, request: Request):
-    await _require_solo_plus(request, "Reassessment Letter Drafter")
     _check_rate_limit(_client_ip(request))
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
@@ -938,7 +938,6 @@ class PublicContributionBody(BaseModel):
 
 @api.post("/public/contribution-estimator")
 async def public_contribution_estimator(body: PublicContributionBody, request: Request):
-    await _require_solo_plus(request, "Contribution Estimator")
     _check_rate_limit(_client_ip(request))
     total_pct = body.expected_mix_clinical_pct + body.expected_mix_independence_pct + body.expected_mix_everyday_pct
     if total_pct < 95 or total_pct > 105:
@@ -978,7 +977,6 @@ class PublicCarePlanBody(BaseModel):
 
 @api.post("/public/care-plan-review")
 async def public_care_plan_review(body: PublicCarePlanBody, request: Request):
-    await _require_solo_plus(request, "Care Plan Reviewer")
     _check_rate_limit(_client_ip(request))
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
@@ -1223,7 +1221,18 @@ async def billing_status(session_id: str, user_id: str = Depends(get_current_use
     if not tx:
         raise HTTPException(status_code=404, detail="Session not found")
     stripe_client = StripeCheckout(api_key=api_key, webhook_url="")
-    chk = await stripe_client.get_checkout_status(session_id)
+    try:
+        chk = await stripe_client.get_checkout_status(session_id)
+    except Exception as e:
+        logger.warning("Stripe status check failed for %s: %s", session_id, e)
+        # Surface a clean payload so the frontend polling doesn't hit 500 storms
+        return {
+            "status": "unknown",
+            "payment_status": "unknown",
+            "amount_total": None,
+            "currency": None,
+            "plan": tx["plan"],
+        }
     payment_status = (chk.payment_status or "").lower()
     # Update transaction (idempotent — only flip plan once on first paid event)
     if payment_status == "paid" and tx["payment_status"] != "paid":

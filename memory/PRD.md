@@ -71,6 +71,21 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Iteration 4: 17/18 backend (1 critical wrapper-not-wired bug → fixed in iteration 5). Frontend 100%.
 - Iteration 5: 4/4 critical-path backend tests pass after the wrapper fix.
 
+## Implemented (Iteration 6 — Feb 2026 · Resend live, Stripe, Google Auth, enforcement, 7-day trial rename)
+- **Resend is LIVE** (key `re_id4ou1R9_…`) — contact-form notifications + `/api/public/email-result` now deliver real email. Resend account is in verified-email-only test mode; all sends go to `a.chiware2@gmail.com`. To send to anyone, verify a sender domain at resend.com.
+- **Stripe billing** wired end-to-end with the pod's `STRIPE_API_KEY=sk_test_emergent`. New endpoints: `POST /api/billing/checkout` (creates Stripe Checkout session for the picked plan), `GET /api/billing/status/{session_id}` (idempotent; flips `user.plan` on first `paid` event + fires welcome email), `POST /api/webhook/stripe` (same plan-flip logic via webhook), `BillingSuccess` page polls status for 6 × 2.5s. Frontend `/signup?plan=solo|family` now redirects to Stripe Checkout after account creation; Free plan goes straight to `/app`.
+- **Emergent-managed Google sign-in**: new `POST /api/auth/google-session` (exchanges `session_id` with demobackend.emergentagent.com, creates/updates user with `auth_method='google'`, sets httpOnly `session_token` cookie), `POST /api/auth/logout`, `AuthCallback` component with **synchronous hash detection** in `App.js` root (per spec — never hardcode the URL, never add fallbacks), `GoogleSignInButton` on Login + Signup.
+- **Billing/status 500 fixed** (iteration_6 bug) — now returns `{status:'unknown', payment_status:'unknown'}` gracefully on any Stripe error instead of crashing.
+- **Section 10 — 402 on public AI tools REMOVED** (this resolved the user-facing blocker). All 8 AI tools now open to anonymous visitors, rate-limited at **5 uses per IP per hour** (previously 5 per 30 days). New rate-limit body: `{error:'rate_limit', message:'…Create a free account for unlimited access.'}`.
+- **Global axios error interceptor** in `/app/frontend/src/lib/api.js` — 429 → warning toast, 503 → error toast, auth probes (`/auth/me`) pass through silently. No more raw 402 errors surfacing.
+- **Trial rename** across site: every `14-day` / `30-day` / `30 days` reference → `7-day` / `7 days` (Landing, Pricing FAQ, Signup, StatementDecoder upgrade CTA, Features hero sub, UpgradeGate).
+- **Tool overlines cleaned** — the 6 "Solo+" tools no longer show the paid overline or `UpgradeGate` (since they're now free-tool rate-limited per Section 10). AIToolsIndex shows `FREE` badge on all 8 cards.
+
+## Test status
+- Iterations 1–5 covered earlier (see sections above).
+- Iteration 6: 18/19 backend + 100% frontend; minor billing/status 500 fixed in this iteration.
+- Iteration 7 (this): public tool endpoints now 200 for anonymous; rate-limit body verified.
+
 ## Backlog (P0/P1)
 - P0: Wire the **Public Tool Wrapper** (Claude Haiku 4.5) in front of every public tool endpoint — PII redaction, abuse/distress check, route classification. Spec lives in `/app/memory/EMERGENT_PROMPT.md` §4.
 - P0: Refactor each public tool prompt to the v2 spec in `EMERGENT_PROMPT.md` §5 (output structure, refusal rules, conversion CTA, inclusive language).

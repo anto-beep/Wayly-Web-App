@@ -175,7 +175,7 @@ export default function StatementDecoderTool() {
                                 <p className="text-sm text-muted-k mt-1">Kindred watches every statement, alerts you when something's off, and tracks your quarterly budget across all three streams.</p>
                                 <div className="mt-3 flex items-center gap-3 flex-wrap">
                                     <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]" data-testid="decoder-upgrade">
-                                        Start free 14-day trial
+                                        Start 7-day free trial
                                     </Link>
                                     <Link to="/ai-tools/budget-calculator" className="text-sm text-primary-k underline inline-flex items-center gap-1">
                                         Calculate your budget <ArrowRight className="h-3.5 w-3.5" />

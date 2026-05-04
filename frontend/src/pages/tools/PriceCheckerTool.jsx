@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
-import UpgradeGate from "@/components/UpgradeGate";
-import { useAuth } from "@/context/AuthContext";
 import { api, formatAUD2 } from "@/lib/api";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
@@ -21,7 +19,6 @@ const SERVICES = [
 ];
 
 export default function PriceCheckerTool() {
-    const { user } = useAuth();
     const [service, setService] = useState(SERVICES[0]);
     const [rate, setRate] = useState("");
     const [postcode, setPostcode] = useState("");
@@ -61,7 +58,7 @@ export default function PriceCheckerTool() {
             <MarketingHeader />
             <section className="mx-auto max-w-4xl px-6 pt-12 pb-6">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
-                <span className="overline mt-6 block">Solo plan · 14‑day free trial</span>
+                <span className="overline mt-6 block">Free tool · 5 uses per hour</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Provider Price Checker</h1>
                 <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
                     Tell us what you're being charged. We'll compare it against the published median price for that service and (after 1 July 2026) the government cap — so you know whether to ask questions.
@@ -69,7 +66,6 @@ export default function PriceCheckerTool() {
             </section>
 
             <section className="mx-auto max-w-4xl px-6 pb-20">
-                {!user && <UpgradeGate toolName="The Provider Price Checker" />}
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="price-checker">
                     <label className="block">
                         <span className="text-sm text-muted-k">Service</span>

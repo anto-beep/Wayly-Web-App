@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
-import UpgradeGate from "@/components/UpgradeGate";
-import { useAuth } from "@/context/AuthContext";
 import { api, formatAUD2, formatAUD } from "@/lib/api";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
@@ -14,7 +12,6 @@ const PENSION = [
 ];
 
 export default function ContributionEstimator() {
-    const { user } = useAuth();
     const [form, setForm] = useState({
         classification: 4,
         pension_status: "full",
@@ -39,13 +36,12 @@ export default function ContributionEstimator() {
             <MarketingHeader />
             <section className="mx-auto max-w-3xl px-6 pt-12 pb-6">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
-                <span className="overline mt-6 block">Solo plan · 14‑day free trial</span>
+                <span className="overline mt-6 block">Free tool · 5 uses per hour</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Contribution Estimator</h1>
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">How much will the participant actually pay each quarter under Support at Home? Enter the situation and see a clear breakdown.</p>
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
-                {!user && <UpgradeGate toolName="The Contribution Estimator" />}
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="contribution-form">
                     <label className="block"><span className="text-sm text-muted-k">Classification</span>
                         <select value={form.classification} onChange={(e) => setForm((f) => ({ ...f, classification: parseInt(e.target.value) }))} data-testid="ce-class" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5">
