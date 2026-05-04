@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { api } from "@/lib/api";
 
-export default function NotificationsBell() {
+export default function NotificationsBell({ tone = "dark" }) {
     const [items, setItems] = useState([]);
     const [unread, setUnread] = useState(0);
     const [open, setOpen] = useState(false);
@@ -22,7 +22,8 @@ export default function NotificationsBell() {
 
     useEffect(() => {
         load();
-        const id = setInterval(load, 60_000); // poll every 60s (cheap SSE stand-in)
+        // Poll every 60s, pause when tab is hidden
+        const id = setInterval(() => { if (!document.hidden) load(); }, 60_000);
         return () => clearInterval(id);
     }, [load]);
 
@@ -40,12 +41,16 @@ export default function NotificationsBell() {
         } catch {/* ignore */}
     };
 
+    const btnTextCls = tone === "dark"
+        ? "text-white/80 hover:text-white"
+        : "text-[#1F3A5F]/70 hover:text-[#1F3A5F]";
+
     return (
         <div className="relative" ref={ref}>
             <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
-                className="relative text-white/80 hover:text-white transition-colors p-2"
+                className={`relative transition-colors p-2 ${btnTextCls}`}
                 aria-label={`Notifications${unread ? ` (${unread} unread)` : ""}`}
                 data-testid="nav-bell"
             >

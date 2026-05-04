@@ -62,7 +62,7 @@ function SignedInControls({ user }) {
 
     return (
         <div className="flex items-center gap-3" ref={menuRef}>
-            <NotificationsBell />
+            <NotificationsBell tone="dark" />
             <PlanBadge plan={user.plan || "free"} />
             <div className="relative">
                 <div className="flex items-center gap-1">

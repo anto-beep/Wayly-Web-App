@@ -2,6 +2,7 @@ import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut, HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import NotificationsBell from "@/components/NotificationsBell";
 
 const navItems = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -39,6 +40,7 @@ export default function Layout({ children }) {
                         </div>
                     </Link>
                     <div className="flex items-center gap-3">
+                        {user && <NotificationsBell tone="light" />}
                         {household && (
                             <div className="hidden sm:flex flex-col text-right">
                                 <span className="text-sm font-medium text-primary-k">{household.participant_name}</span>

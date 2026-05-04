@@ -373,11 +373,12 @@ class InviteAcceptBody(BaseModel):
 @api.post("/household/invite")
 async def create_invite(body: InviteBody, request: Request, user_id: str = Depends(get_current_user_id)):
     u = await _get_user(user_id)
+    # Plan gate first (clearer 402 for Solo/Free users)
+    if u.get("plan") != "family":
+        raise HTTPException(status_code=402, detail={"code": "plan_required", "message": "Family plan required to invite members."})
     household = await _get_user_household(user_id)
     if not household:
         raise HTTPException(status_code=400, detail="Create a household first")
-    if u.get("plan") != "family":
-        raise HTTPException(status_code=402, detail={"code": "plan_required", "message": "Family plan required to invite members."})
     # max 5 active members including owner
     members = await db.household_members.count_documents({"household_id": household["id"], "status": {"$in": ["active", "pending"]}})
     if members >= (HOUSEHOLD_MAX_MEMBERS - 1):  # owner + up to MAX-1 invitees
