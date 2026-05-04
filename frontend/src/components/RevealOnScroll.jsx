@@ -22,10 +22,14 @@ export default function RevealOnScroll({ children, mode = "fade", rotate = 0, de
             ([entry]) => {
                 if (entry.isIntersecting) { setShown(true); obs.disconnect(); }
             },
-            { threshold: 0.2 },
+            { threshold: 0.05, rootMargin: "0px 0px -10% 0px" },
         );
         obs.observe(el);
-        return () => obs.disconnect();
+        // Safety fallback — if the observer hasn't fired within 1.2s
+        // (e.g. element already in view at mount, or layout shifted),
+        // reveal anyway so content never silently stays hidden.
+        const fallback = setTimeout(() => setShown(true), 1200);
+        return () => { obs.disconnect(); clearTimeout(fallback); };
     }, []);
 
     const baseStyle = {

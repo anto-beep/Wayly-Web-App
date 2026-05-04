@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { HeartHandshake, Phone } from "lucide-react";
+import AppStoreBadges from "@/components/AppStoreBadges";
 
 const CRISIS_LINES = [
     { name: "1800ELDERHelp", number: "1800 353 374", desc: "Free elder abuse helpline (Compass)" },
@@ -75,6 +76,10 @@ export default function Footer() {
                     <p className="text-sm text-muted-k mt-4 leading-relaxed">
                         The AI co-pilot for Australia's Support at Home program. Built for families. Independent. Australian-hosted.
                     </p>
+                    <div className="mt-6">
+                        <div className="overline mb-2.5">Get the app</div>
+                        <AppStoreBadges align="start" />
+                    </div>
                 </div>
 
                 {[

@@ -2,14 +2,19 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Lock, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { BrowserFrame } from "@/components/Screenshots";
+import LivePreviewLoop from "@/components/LivePreviewLoop";
 
 /**
  * Page-level access gate for the 7 paid AI tools.
  * - Variant A: unauthenticated visitor → trial CTA + sign-in + SD escape hatch
  * - Variant B: authenticated Free user → in-app upgrade CTAs
- * Below the card: blurred preview screenshot (passed in via children).
+ * Below the card: an auto-playing 6-second preview loop of a real result —
+ * line items fade in, then an anomaly card flashes in. This is more visceral
+ * than a static blurred screenshot — visitors see the product actually doing
+ * the thing they'd pay for.
  */
-export default function ToolGate({ toolName, children: blurredPreview }) {
+export default function ToolGate({ toolName }) {
     const { user } = useAuth();
     const variantB = !!user; // logged-in but on Free plan
     return (
@@ -84,23 +89,17 @@ export default function ToolGate({ toolName, children: blurredPreview }) {
                 )}
             </div>
 
-            {blurredPreview && (
-                <div className="mt-12 relative">
-                    <div className="text-center text-[11px] uppercase tracking-[0.18em] text-muted-k mb-4">
-                        Preview · {toolName}
-                    </div>
-                    <div className="relative max-w-3xl mx-auto" aria-hidden="true">
-                        <div style={{ filter: "blur(6px)", pointerEvents: "none", userSelect: "none" }}>
-                            {blurredPreview}
-                        </div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="bg-primary-k/90 text-white text-xs font-medium uppercase tracking-wider rounded-full px-4 py-2 shadow-lg">
-                                Sign in to see your results
-                            </span>
-                        </div>
-                    </div>
+            {/* Auto-playing preview loop — replaces the static blurred screenshot. */}
+            <div className="mt-12">
+                <div className="text-center text-[11px] uppercase tracking-[0.18em] text-muted-k mb-4" data-testid="tool-gate-preview-label">
+                    Here's what happens 90 seconds after you sign up
                 </div>
-            )}
+                <div className="max-w-3xl mx-auto" data-testid="tool-gate-live-preview">
+                    <BrowserFrame url={`app.kindred.au/${toolName.toLowerCase().replace(/\s+/g, "-")}`} scale={0.9} label={`Live preview loop: ${toolName} result`}>
+                        <LivePreviewLoop />
+                    </BrowserFrame>
+                </div>
+            </div>
         </div>
     );
 }

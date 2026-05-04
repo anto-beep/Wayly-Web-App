@@ -133,3 +133,35 @@ html.theme-dark .text-\[\#1F3A5F\] { color: #F1E9DA !important; }
 html.theme-dark .bg-\[\#1F3A5F\] { background-color: #16213A !important; }
 html.theme-dark .bg-\[\#FAF7F2\] { background-color: var(--kindred-bg) !important; }
 html.theme-dark .bg-\[#16294a\] { background-color: #0a1020 !important; }
+
+/* ---- LivePreviewLoop animations (gate page conversion teaser) ---------- */
+@keyframes kindred-fadein-loop {
+    0%   { opacity: 0; transform: translateY(8px); }
+    8%   { opacity: 1; transform: translateY(0); }
+    72%  { opacity: 1; transform: translateY(0); }
+    82%  { opacity: 0; transform: translateY(-4px); }
+    100% { opacity: 0; transform: translateY(8px); }
+}
+@keyframes kindred-anomaly-flash {
+    0%, 35% { opacity: 0; transform: translateY(12px); }
+    45%     { opacity: 1; transform: translateY(0); box-shadow: 0 4px 18px rgba(197,115,77,0.4); }
+    55%     { opacity: 1; box-shadow: 0 2px 12px rgba(197,115,77,0.18); }
+    78%     { opacity: 1; transform: translateY(0); }
+    88%     { opacity: 0; transform: translateY(-4px); }
+    100%    { opacity: 0; }
+}
+.kindred-fadein {
+    opacity: 0;
+    animation: kindred-fadein-loop 7s ease-out infinite;
+}
+.kindred-anomaly-flash {
+    opacity: 0;
+    animation: kindred-anomaly-flash 7s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .kindred-fadein, .kindred-anomaly-flash {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}

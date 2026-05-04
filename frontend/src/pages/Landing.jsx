@@ -267,7 +267,7 @@ export default function Landing() {
                     <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">One calm dashboard for everything.</h2>
                 </div>
                 <div className="mt-10 max-w-5xl mx-auto hidden sm:block">
-                    <RevealOnScroll mode="wipe">
+                    <RevealOnScroll>
                         <BrowserFrame url="app.kindred.au/dashboard" scale={0.9} label="Caregiver dashboard with stat cards, anomalies, and latest statement">
                             <ScreenshotDashboard />
                         </BrowserFrame>

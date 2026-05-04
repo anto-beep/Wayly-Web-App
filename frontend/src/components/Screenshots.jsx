@@ -9,7 +9,7 @@ import { Phone, MessageCircle, Calendar, AlertTriangle, ArrowRight, CheckCircle2
 
 export function BrowserFrame({ url = "app.kindred.au", scale = 0.85, className = "", children, label }) {
     return (
-        <div role="img" aria-label={label} className={`inline-block max-w-full ${className}`}>
+        <div role="img" aria-label={label} className={`block max-w-full ${className}`}>
             <div className="rounded-[10px] overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.15)] border border-[#E2E2E2] bg-[#F5F5F5]">
                 <div className="h-7 bg-[#F5F5F5] flex items-center gap-1.5 px-3 border-b border-[#E2E2E2]">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
