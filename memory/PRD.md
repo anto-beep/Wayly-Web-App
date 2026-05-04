@@ -100,8 +100,38 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - **Dead code cleanup**: Removed orphan `_require_solo_plus` function + its "14-day" string (last stale-copy reference in the codebase).
 
 ## Test status
-- Iterations 1–7 covered earlier (see sections above).
-- Iteration 8: 15/15 backend pytest pass (1 non-critical skip for household create route test scaffolding) · 100% frontend flows verified (12/12 scoped flows in `/app/backend/tests/test_iter8.py`). Cathy regression flow green. All new endpoints verified healthy. Iter7 regression confirmed fixed (family-coordinator-chat anonymous 200).
+- Iterations 1–8 covered earlier.
+- Iteration 9: 18/18 backend + 9/10 frontend (NotificationsBell missing on auth Layout — fixed in iter10).
+- Iteration 10 (retest): 8/8 backend + 100% frontend. All three iter9 fixes verified (bell on auth Layout, invite plan-gate ordering, CommandDialog a11y title).
+
+## Implemented (Iteration 11 — Feb 2026 · AI tools gating, Lifetime sweep, product screenshots)
+
+### AI Tools access gating (Section 1)
+- **Statement Decoder** — 1 free use per 24h via HttpOnly fingerprint cookie `kindred_sd_used` (NOT IP). Logged-in Solo/Family/Advisor/active-trial users bypass entirely. Returns 429 with `next_available_at` ISO timestamp on the 2nd attempt.
+- **All 7 OTHER tools** (`/api/public/budget-calc`, `price-check`, `classification-check`, `reassessment-letter`, `contribution-estimator`, `care-plan-review`, `family-coordinator-chat`) now require a paid plan — 401 unauthenticated, 403 Free/expired-trial. Trial users (`trial_ends_at` in the future) count as Solo-level access. New helpers: `_require_paid_plan()`, `_enforce_statement_decoder_limit()`, `_trial_active()`. `PAID_PLANS = {solo, family, advisor, advisor_pro}`.
+- **Frontend page-level gates**: New `<ToolGate>` component renders **before** the tool form is mounted (not greyed-out — entirely replaced). Variant A (unauth): "Start free 7-day trial" gold CTA, sign-in link, and a Statement-Decoder escape hatch. Variant B (Free user): two stacked upgrade buttons that route to `/settings/billing` (in-app modal). Both variants show a blurred preview screenshot below with "Sign in to see your results" overlay.
+- **Statement Decoder daily-limit UX**: tool form stays rendered, submit button disabled, inline panel appears with countdown ("Next free use in: 14h 23m"), Start trial / Sign in CTAs.
+- **Post-result conversion panel** (Section 1.4): full-bleed navy panel below the result for unauthenticated free use — gold full-width CTA, 4 ✦ feature bullets, "No card required" reassurance.
+- **AI tools index badges**: Statement Decoder = "Free — 1 use/day" sage; all 7 others = "Solo & Family" navy with "7-day free trial" subtext.
+
+### Lifetime tier purge (Section 2)
+- Removed Lifetime $799 card from Landing homepage pricing strip (now shows Free / Solo / Family).
+- All remaining "Lifetime" mentions are the Support-at-Home **lifetime cap** product concept (Budget & Lifetime Cap Calculator, Lifetime cap tracker), which is legitimate domain content.
+
+### Product screenshots (Section 3)
+- New `/app/frontend/src/components/Screenshots.jsx` with 6 React-rendered UI mockups — `ScreenshotDashboard`, `ScreenshotStatement`, `ScreenshotBudget`, `ScreenshotFamilyThread`, `ScreenshotParticipant`, `ScreenshotAnomaly`. They use the same Tailwind tokens as the real app, so they always match the design system. ARIA-labelled.
+- Two frame wrappers: `<BrowserFrame url="..." scale={...}>` (3-dot light-grey browser chrome) and `<PhoneFrame>` (iPhone-style with notch).
+- New `<RevealOnScroll>` IntersectionObserver wrapper supports `mode="fade"` and `mode="wipe"`, respects `prefers-reduced-motion`.
+- **Placement**:
+  - Landing → "How it works" 3-step section with screenshots alternating left/right, each with a slight rotation for "real laptop screenshot" feel.
+  - Landing → full-width "See the dashboard" strip with `mode="wipe"` reveal.
+  - Statement Decoder → "What you'll see after a decode" tour with positioned annotation labels (Stream breakdown / Anomaly flag / Contribution amount).
+  - All 7 paid tool gates → blurred preview screenshot below the gate card.
+  - Pricing → 3-device strip (PhoneFrame + BrowserFrame + PhoneFrame) captioned "Built for the whole family."
+  - ForAdvisors → 2-up Budget + Dashboard browser frames.
+
+## Test status
+- Iteration 11: 9/9 backend pytest + 100% frontend Playwright. Acceptance criteria curl-verified during build (401 unauth / 403 Free / 200 Family / 429 SD-with-cookie). Cathy regression flow green.
 
 ## Implemented (Iteration 9 — Feb 2026 · Family Digest, Notifications, Settings hub, ⌘K, dark mode, constants)
 
