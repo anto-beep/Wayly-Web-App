@@ -8,6 +8,7 @@ import EmailResultButton from "@/components/EmailResultButton";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
 import DecoderResultView from "@/components/DecoderResultView";
+import DecoderProgress from "@/components/DecoderProgress";
 
 const SAMPLE = `BlueBerry Care — Monthly Statement
 For: Dorothy Anderson · April 2026
@@ -140,8 +141,10 @@ export default function StatementDecoderTool() {
                         className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                        {loading ? "Reading your statement… (up to 30s)" : "Decode this statement"}
+                        {loading ? "Reading your statement…" : "Decode this statement"}
                     </button>
+
+                    {loading && <DecoderProgress active={loading} />}
 
                     {limitInfo && !isPaidUser && (
                         <div className="mt-4 rounded-xl border border-gold/40 bg-gold/10 p-5" data-testid="sd-daily-limit">

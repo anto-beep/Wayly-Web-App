@@ -4,11 +4,12 @@
 - AnomalyExplainerAgent: turn rule-based anomalies into plain-English alerts.
 - KindredChatAgent: caregiver Q&A with statement+budget context.
 """
+import asyncio
 import json
 import os
 import re
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 logger = logging.getLogger(__name__)
@@ -243,6 +244,127 @@ Rules:
 - Return only valid JSON. No prose before or after the JSON."""
 
 
+# ---------------------------------------------------------------------------
+# Chunked extraction prompts — each chunk targets a slice of the schema so a
+# single LLM call can never exceed its output-token budget. All chunks see
+# the full statement text so they don't miss items mis-placed in the source.
+# ---------------------------------------------------------------------------
+
+HEADER_EXTRACTOR_SYSTEM = """You are a data extraction engine for Australian Support at Home statements. Extract ONLY the header / budget metadata. Do not extract line items.
+
+Return STRICT JSON only:
+{
+  "participant_name": "",
+  "mac_id": "",
+  "statement_period": "",
+  "provider_name": "",
+  "classification": "",
+  "quarterly_budget_total": 0.00,
+  "care_management_deducted": 0.00,
+  "care_management_rate_pct": 0.00,
+  "service_budget_available": 0.00,
+  "rollover_from_prior_quarter": 0.00,
+  "lifetime_cap_total": 0.00,
+  "lifetime_contributions_to_date": 0.00,
+  "direct_debit_amount": 0.00,
+  "direct_debit_date": ""
+}
+
+Rules:
+- If a value is not in the statement, use "" for strings and 0.00 for numbers.
+- Calculate care_management_rate_pct as care_management_deducted / quarterly_budget_total * 100, rounded to 2dp, OR copy the percentage if the statement states it explicitly (e.g. "Care management deducted (11%)").
+- Return only the JSON object. No prose."""
+
+
+def _stream_extractor_system(stream_name: str, stream_description: str) -> str:
+    return f"""You are a data extraction engine for Australian Support at Home statements. Extract EVERY line item belonging to the {stream_name} stream. Do not skip any item. Do not merge any items. Do not summarise.
+
+{stream_description}
+
+CRITICAL — COMPLETENESS:
+- Scan the ENTIRE statement from top to bottom. List every {stream_name} line item you find — there are typically multiple personal care visits, multiple cleaning visits, multiple nursing visits across the month.
+- Repeat-occurrence services (e.g. weekly Personal Care, weekly Cleaning, weekly Nursing) MUST each get their own entry — never collapse them.
+- Cancelled items in this stream MUST also be included with is_cancellation: true and gross: 0.00.
+- Items with weekend / after-hours / substitute-worker variations are still {stream_name} items — include them too.
+
+Return STRICT JSON only:
+{{
+  "line_items": [
+    {{
+      "date": "",
+      "service_description": "",
+      "service_code": "",
+      "stream": "{stream_name}",
+      "hours": 0.00,
+      "unit_rate": 0.00,
+      "gross": 0.00,
+      "participant_contribution": 0.00,
+      "government_paid": 0.00,
+      "is_cancellation": false,
+      "worker_name": "",
+      "is_brokered": false,
+      "provider_notes": "",
+      "flags_in_original": ""
+    }}
+  ]
+}}
+
+Rules:
+- Preserve the date format as it appears in the source statement (do not reformat to ISO unless the source already is ISO).
+- Copy any asterisk note or "**" remark verbatim into flags_in_original.
+- worker_name is the person delivering the service when listed; otherwise "".
+- Return only valid JSON. No prose."""
+
+
+CLINICAL_DESCRIPTION = """The Clinical stream covers nursing visits, allied health (occupational therapy, physiotherapy, podiatry, dietetics, speech, social work, psychology), wound care, continence support. Service codes typically begin NU-, OT-, PT-, PD-, AH-, WC-."""
+
+INDEPENDENCE_DESCRIPTION = """The Independence stream covers personal care (showering, grooming, toileting), respite care, social support, transport (community access, medical appointments, hospital). Service codes typically begin PC-, RES-, SS-, TR-. Include transport items even if they have a "stream query" note."""
+
+EVERYDAY_DESCRIPTION = """The Everyday Living stream covers domestic assistance (cleaning, laundry), home maintenance/gardening, meal preparation, shopping. Service codes typically begin DA-, GM-, ML-, SH-.
+
+ALSO include AT-HM (Assistive Technology / Home Modifications) items in your output — but recode their stream to "ATHM" (NOT "EverydayLiving"), even if the source statement places them in Everyday Living. AT-HM service codes typically begin AT-."""
+
+CLINICAL_EXTRACTOR_SYSTEM = _stream_extractor_system("Clinical", CLINICAL_DESCRIPTION)
+INDEPENDENCE_EXTRACTOR_SYSTEM = _stream_extractor_system("Independence", INDEPENDENCE_DESCRIPTION)
+EVERYDAY_EXTRACTOR_SYSTEM = _stream_extractor_system("EverydayLiving", EVERYDAY_DESCRIPTION).replace(
+    '"stream": "EverydayLiving"',
+    '"stream": "EverydayLiving" | "ATHM"',
+)
+
+
+ADJUSTMENTS_EXTRACTOR_SYSTEM = """You are a data extraction engine for Australian Support at Home statements. Extract ONLY (a) the Care Management fee line item and (b) the previous-period-adjustments array. Skip every other line item.
+
+Return STRICT JSON only:
+{
+  "care_management_line_items": [
+    {
+      "date": "",
+      "service_description": "",
+      "service_code": "",
+      "stream": "CareMgmt",
+      "hours": 0.00,
+      "unit_rate": 0.00,
+      "gross": 0.00,
+      "participant_contribution": 0.00,
+      "government_paid": 0.00,
+      "is_cancellation": false,
+      "worker_name": "",
+      "is_brokered": false,
+      "provider_notes": "",
+      "flags_in_original": ""
+    }
+  ],
+  "previous_period_adjustments": [
+    {"ref": "", "description": "", "credit_amount": 0.00}
+  ]
+}
+
+Rules:
+- Care management fee usually has service code CM-01 or description containing "Care management". Always coded stream: "CareMgmt".
+- Previous-period adjustments are listed in a separate "PREVIOUS PERIOD ADJUSTMENTS" or similar section — they are credits/refunds for prior months, NOT line items.
+- Return only valid JSON. No prose."""
+
+
 AUDITOR_SYSTEM = """You are an anomaly detection engine for Australian Support at Home statements. You receive structured JSON extracted from a monthly statement. Your job is to find every problem, discrepancy, and missed entitlement.
 
 Check every one of the following rules. For each rule that fails, add an anomaly to the output array. If a rule passes, do not mention it.
@@ -371,55 +493,250 @@ def _empty_audit(extracted: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
-    """Pass 1 — Claude Haiku 4.5 extracts every line item into strict JSON.
+def _try_json_repair(text: str) -> Optional[Any]:
+    """Attempt to fix mildly truncated JSON (unbalanced braces / trailing commas).
 
-    Returns the full structured schema defined in EXTRACTOR_SYSTEM. On
-    parse failure returns a minimal shape with line_items=[] so Pass 2 and
-    the caller can still render something.
+    Returns the parsed object or None if repair fails. Conservative — only
+    handles the common case where the model ran out of output tokens mid-array.
     """
+    if not text:
+        return None
+    s = text.strip()
+    # Try once as-is
+    try:
+        return json.loads(s)
+    except Exception:
+        pass
+    # Strip trailing comma + close any unterminated string
+    # Heuristic: walk the string tracking brackets + string state. When we hit
+    # the end without closing, append the missing close characters.
+    stack: list[str] = []
+    in_str = False
+    escape = False
+    last_complete_idx = -1
+    for i, ch in enumerate(s):
+        if escape:
+            escape = False
+            continue
+        if ch == "\\" and in_str:
+            escape = True
+            continue
+        if ch == '"':
+            in_str = not in_str
+            continue
+        if in_str:
+            continue
+        if ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]":
+            if stack and stack[-1] == ch:
+                stack.pop()
+                if not stack:
+                    last_complete_idx = i
+    candidate = s[: last_complete_idx + 1] if last_complete_idx >= 0 else s
+    if last_complete_idx < 0:
+        # Try closing what's open
+        # First close any open string
+        if in_str:
+            candidate = s + '"'
+        else:
+            candidate = s
+        # Drop dangling trailing comma
+        candidate = re.sub(r",\s*$", "", candidate)
+        # Append closing brackets in reverse stack order
+        candidate = candidate + "".join(reversed(stack))
+    try:
+        return json.loads(candidate)
+    except Exception:
+        # Final fallback: aggressively trim the last incomplete element
+        # and close brackets
+        trimmed = re.sub(r",\s*[^,\}\]]*$", "", s)
+        trimmed = re.sub(r",\s*$", "", trimmed)
+        # Recount stack on trimmed
+        stack2: list[str] = []
+        in_str2 = False
+        esc2 = False
+        for ch in trimmed:
+            if esc2:
+                esc2 = False
+                continue
+            if ch == "\\" and in_str2:
+                esc2 = True
+                continue
+            if ch == '"':
+                in_str2 = not in_str2
+                continue
+            if in_str2:
+                continue
+            if ch in "{[":
+                stack2.append("}" if ch == "{" else "]")
+            elif ch in "}]":
+                if stack2 and stack2[-1] == ch:
+                    stack2.pop()
+        if in_str2:
+            trimmed += '"'
+        trimmed += "".join(reversed(stack2))
+        try:
+            return json.loads(trimmed)
+        except Exception:
+            return None
+
+
+def _safe_json_load(raw: Optional[str]) -> Optional[Any]:
+    """Try strict parse, then repair. Returns None on total failure."""
+    if not raw:
+        return None
+    payload = _strip_json(raw)
+    try:
+        return json.loads(payload)
+    except Exception:
+        repaired = _try_json_repair(payload)
+        if repaired is not None:
+            logger.info("JSON repair succeeded after strict parse failed")
+        return repaired
+
+
+async def _llm_chunk_call(
+    system_message: str,
+    user_text: str,
+    session_id: str,
+    max_tokens: int,
+) -> Optional[Any]:
+    """Run a single chunked extraction call. Returns parsed JSON or None."""
     key = _key()
     if not key:
         raise RuntimeError("EMERGENT_LLM_KEY not configured")
     chat = LlmChat(
         api_key=key,
-        session_id=f"extract-{household_id}",
-        system_message=EXTRACTOR_SYSTEM,
-    ).with_model(MODEL_PROVIDER, EXTRACTOR_MODEL)
-    msg = UserMessage(text=f"Extract this Support at Home statement exactly:\n\n{text[:24000]}")
+        session_id=session_id,
+        system_message=system_message,
+    ).with_model(MODEL_PROVIDER, EXTRACTOR_MODEL).with_params(max_tokens=max_tokens)
+    raw = None
     try:
-        raw = await chat.send_message(msg)
-        return json.loads(_strip_json(raw))
-    except json.JSONDecodeError as e:
-        logger.warning("Extractor Pass 1 JSON parse failed: %s | raw[:500]=%r", e, str(raw)[:500] if 'raw' in dir() else "(no response)")
-        return {
-            "participant_name": "", "mac_id": "", "statement_period": "",
-            "provider_name": "", "classification": "",
-            "quarterly_budget_total": 0.0, "care_management_deducted": 0.0,
-            "care_management_rate_pct": 0.0, "service_budget_available": 0.0,
-            "rollover_from_prior_quarter": 0.0,
-            "line_items": [], "previous_period_adjustments": [],
-            "lifetime_cap_total": 0.0, "lifetime_contributions_to_date": 0.0,
-            "direct_debit_amount": 0.0, "direct_debit_date": "",
-            "_extraction_error": f"json_parse: {e}",
-        }
+        raw = await chat.send_message(UserMessage(text=user_text))
     except Exception as e:
-        logger.warning("Extractor Pass 1 failed: %s", e)
-        return {
-            "participant_name": "", "mac_id": "", "statement_period": "",
-            "provider_name": "", "classification": "",
-            "quarterly_budget_total": 0.0, "care_management_deducted": 0.0,
-            "care_management_rate_pct": 0.0, "service_budget_available": 0.0,
-            "rollover_from_prior_quarter": 0.0,
-            "line_items": [], "previous_period_adjustments": [],
-            "lifetime_cap_total": 0.0, "lifetime_contributions_to_date": 0.0,
-            "direct_debit_amount": 0.0, "direct_debit_date": "",
-            "_extraction_error": str(e),
-        }
+        logger.warning("Chunk call %s failed: %s", session_id, e)
+        return None
+    parsed = _safe_json_load(raw)
+    if parsed is None:
+        logger.warning("Chunk %s returned unparseable JSON | raw[:300]=%r", session_id, str(raw)[:300])
+    return parsed
+
+
+_HEADER_DEFAULTS = {
+    "participant_name": "", "mac_id": "", "statement_period": "",
+    "provider_name": "", "classification": "",
+    "quarterly_budget_total": 0.0, "care_management_deducted": 0.0,
+    "care_management_rate_pct": 0.0, "service_budget_available": 0.0,
+    "rollover_from_prior_quarter": 0.0,
+    "lifetime_cap_total": 0.0, "lifetime_contributions_to_date": 0.0,
+    "direct_debit_amount": 0.0, "direct_debit_date": "",
+}
+
+
+def _empty_extracted() -> Dict[str, Any]:
+    return {
+        **_HEADER_DEFAULTS,
+        "line_items": [],
+        "previous_period_adjustments": [],
+    }
+
+
+async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
+    """Pass 1 — Chunked parallel extraction.
+
+    Splits extraction across 5 parallel LLM calls so no single call hits the
+    output-token limit on long statements:
+      1. Header / budget metadata
+      2. Clinical stream line items
+      3. Independence stream line items
+      4. Everyday Living + AT-HM line items
+      5. Care management fee + previous-period adjustments
+
+    All chunks see the full statement text. Each chunk has its own bounded
+    output budget. JSON repair is applied to each chunk's response. The five
+    sub-results are assembled into the unified extraction schema.
+    """
+    key = _key()
+    if not key:
+        raise RuntimeError("EMERGENT_LLM_KEY not configured")
+    payload = text[:24000]
+    user_msg = f"STATEMENT TEXT:\n\n{payload}"
+
+    tasks = [
+        _llm_chunk_call(HEADER_EXTRACTOR_SYSTEM, user_msg, f"extract-header-{household_id}", max_tokens=800),
+        _llm_chunk_call(CLINICAL_EXTRACTOR_SYSTEM, user_msg, f"extract-clin-{household_id}", max_tokens=2500),
+        _llm_chunk_call(INDEPENDENCE_EXTRACTOR_SYSTEM, user_msg, f"extract-indep-{household_id}", max_tokens=2500),
+        _llm_chunk_call(EVERYDAY_EXTRACTOR_SYSTEM, user_msg, f"extract-everyday-{household_id}", max_tokens=2500),
+        _llm_chunk_call(ADJUSTMENTS_EXTRACTOR_SYSTEM, user_msg, f"extract-adj-{household_id}", max_tokens=800),
+    ]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    header_res, clin_res, indep_res, every_res, adj_res = [
+        r if not isinstance(r, BaseException) else None for r in results
+    ]
+
+    assembled: Dict[str, Any] = _empty_extracted()
+
+    # Merge header
+    if isinstance(header_res, dict):
+        for k, default in _HEADER_DEFAULTS.items():
+            v = header_res.get(k, default)
+            if isinstance(default, float):
+                try:
+                    assembled[k] = float(v) if v not in (None, "") else 0.0
+                except Exception:
+                    assembled[k] = 0.0
+            else:
+                assembled[k] = "" if v is None else str(v)
+
+    # Merge stream line items
+    line_items: list[dict] = []
+    for chunk_name, chunk_res, fallback_stream in [
+        ("clinical", clin_res, "Clinical"),
+        ("independence", indep_res, "Independence"),
+        ("everyday", every_res, "EverydayLiving"),
+    ]:
+        if isinstance(chunk_res, dict):
+            items = chunk_res.get("line_items") or []
+            for it in items:
+                if not isinstance(it, dict):
+                    continue
+                # Force AT- service codes onto ATHM stream defensively
+                code = (it.get("service_code") or "").upper()
+                if code.startswith("AT-"):
+                    it["stream"] = "ATHM"
+                elif not it.get("stream"):
+                    it["stream"] = fallback_stream
+                line_items.append(it)
+
+    # Merge care-mgmt + adjustments
+    if isinstance(adj_res, dict):
+        for it in (adj_res.get("care_management_line_items") or []):
+            if isinstance(it, dict):
+                it["stream"] = "CareMgmt"
+                line_items.append(it)
+        adj_list = adj_res.get("previous_period_adjustments") or []
+        if isinstance(adj_list, list):
+            assembled["previous_period_adjustments"] = [a for a in adj_list if isinstance(a, dict)]
+
+    # Sort line items by date string (ISO-ish or "DD MMM" — best-effort lexical)
+    assembled["line_items"] = line_items
+
+    # Capture failure metadata so the caller can know which chunks fell over
+    failures = []
+    for name, res in [("header", header_res), ("clinical", clin_res), ("independence", indep_res), ("everyday", every_res), ("adjustments", adj_res)]:
+        if res is None:
+            failures.append(name)
+    if failures:
+        assembled["_chunk_failures"] = failures
+    if not line_items and failures:
+        # Total failure — surface the original error code so the audit fallback fires
+        assembled["_extraction_error"] = f"chunk_failures: {','.join(failures)}"
+    return assembled
 
 
 async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[str, Any]:
-    """Pass 2 — Claude Sonnet 4.6 applies the 10-rule anomaly audit against
+    """Pass 2 — Claude Haiku 4.5 applies the 10-rule anomaly audit against
     the structured extraction from Pass 1. Returns statement_summary +
     stream_breakdown + anomalies + anomaly_count.
 
@@ -434,13 +751,15 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
         api_key=key,
         session_id=f"audit-{household_id}",
         system_message=AUDITOR_SYSTEM,
-    ).with_model(MODEL_PROVIDER, AUDITOR_MODEL)
+    ).with_model(MODEL_PROVIDER, AUDITOR_MODEL).with_params(max_tokens=4000)
     payload = json.dumps(extracted, separators=(",", ":"))[:40000]
     msg = UserMessage(text=f"Audit this extracted statement:\n\n{payload}")
     raw = None
     try:
         raw = await chat.send_message(msg)
-        result = json.loads(_strip_json(raw))
+        result = _safe_json_load(raw)
+        if result is None:
+            raise json.JSONDecodeError("repair failed", raw or "", 0)
         # Normalise anomaly_count if the model forgot it
         anoms = result.get("anomalies", []) or []
         counts = {"high": 0, "medium": 0, "low": 0}

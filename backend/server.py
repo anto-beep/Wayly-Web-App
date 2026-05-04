@@ -1168,7 +1168,10 @@ async def _run_public_decode(text: str) -> dict:
 @api.post("/public/decode-statement-text")
 async def public_decode_text(body: PublicTextBody, request: Request, response: Response):
     await _enforce_statement_decoder_limit(request, response)
-    wrapped = await run_wrapper(body.text)
+    # PII redaction is OFF for the Statement Decoder — the visitor is uploading
+    # their own statement and needs to see their own name in the result.
+    # Abuse / distress / manipulation checks still run.
+    wrapped = await run_wrapper(body.text, pii_redact=False)
     if wrapped["abuse_flag"]:
         return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
     result = await _run_public_decode(wrapped["redacted_input"])
@@ -1189,7 +1192,7 @@ async def public_decode_file(request: Request, response: Response, file: UploadF
     text = _extract_text(file.filename, raw)
     if not text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from file")
-    wrapped = await run_wrapper(text)
+    wrapped = await run_wrapper(text, pii_redact=False)
     if wrapped["abuse_flag"]:
         return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
     result = await _run_public_decode(wrapped["redacted_input"])
