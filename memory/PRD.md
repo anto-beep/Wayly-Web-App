@@ -133,6 +133,39 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 ## Test status
 - Iteration 11: 9/9 backend pytest + 100% frontend Playwright. Acceptance criteria curl-verified during build (401 unauth / 403 Free / 200 Family / 429 SD-with-cookie). Cathy regression flow green.
 
+## Implemented (Iteration 12 — Feb 2026 · Live preview loop, App store badges, Dashboard strip fix)
+
+### Live preview loop on tool gates (the conversion improvement)
+- New `LivePreviewLoop` component with 6-second auto-playing CSS keyframes:
+  - 3 stream cards fade in one at a time (`kindred-fadein-loop`, staggered delays 0s/0.6s/1.2s)
+  - Anomaly card flashes in at 35-45% with shadow pulse (`kindred-anomaly-flash`)
+  - Both restart every 7s in an infinite loop
+- Replaces the previous static blurred-screenshot teaser on all 7 paid tool gates.
+- Wrapped in `<BrowserFrame>` with the tool-specific URL (`app.kindred.au/{tool-slug}`) for context.
+- New gate label: **"Here's what happens 90 seconds after you sign up"** (data-testid `tool-gate-preview-label`).
+- Respects `prefers-reduced-motion` — animations disabled, content shown statically.
+
+### App Store + Google Play badges (Footer)
+- New `AppStoreBadges` component using inline SVG (no image downloads, brand-correct).
+- Smart device detection via `navigator.userAgent`:
+  - iOS device → Apple App Store badge only
+  - Android → Google Play badge only
+  - Desktop / other → both badges side-by-side
+- Placed in the footer's brand column under "Get the app" overline.
+- Real store URLs (`apps.apple.com/app/kindred-aged-care/id000000000`, `play.google.com/store/apps/details?id=au.kindred.app`) — placeholder IDs to be swapped at app launch.
+
+### Landing dashboard strip fix
+- The `RevealOnScroll mode="wipe"` (clip-path inset 0 100% 0 0) was leaving the strip permanently hidden when the IntersectionObserver didn't fire (e.g., element below the fold + slow scroll didn't trigger).
+- Fix: switched to default fade mode + added a 1.2s setTimeout fallback in `RevealOnScroll` so content always reveals even if IO silently fails.
+- Also tightened `BrowserFrame` from `inline-block` to `block` so it respects parent `mx-auto` centering.
+
+### SEO polish
+- Updated document title from "Emergent | Fullstack App" to **"Kindred — Aged-care concierge for Australian families"**
+- Added meta description, OpenGraph + Twitter card metadata.
+
+## Test status
+- Iteration 12: 100% frontend (7/7 acceptance items via Playwright). Backend skipped (no backend changes). Iter 11 + earlier regression: cathy login, ⌘K palette, Statement Decoder no-gate path, /pricing devices strip — all green.
+
 ## Implemented (Iteration 9 — Feb 2026 · Family Digest, Notifications, Settings hub, ⌘K, dark mode, constants)
 
 ### Family Weekly Digest (the **emotional hook** for the Family plan)
