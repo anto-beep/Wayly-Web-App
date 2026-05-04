@@ -103,6 +103,49 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Iterations 1–7 covered earlier (see sections above).
 - Iteration 8: 15/15 backend pytest pass (1 non-critical skip for household create route test scaffolding) · 100% frontend flows verified (12/12 scoped flows in `/app/backend/tests/test_iter8.py`). Cathy regression flow green. All new endpoints verified healthy. Iter7 regression confirmed fixed (family-coordinator-chat anonymous 200).
 
+## Implemented (Iteration 9 — Feb 2026 · Family Digest, Notifications, Settings hub, ⌘K, dark mode, constants)
+
+### Family Weekly Digest (the **emotional hook** for the Family plan)
+A short brand-styled email summarising what the primary caregiver paid attention to this week so siblings stay in the loop **without ever opening the app**.
+- `digest_service.build_digest()` aggregates: wellbeing mood pills (good/okay/not_great), top 3 anomalies, statements uploaded count + new spend, family-thread last 3 posts, caregiver chat-questions count.
+- `digest_service.render_digest_html()` renders the email — wellbeing block first (mood pills with colour coding), then money & alerts, then thread, then chat hint. Brand navy header, gold CTA.
+- New endpoints: `GET /api/digest/preview`, `POST /api/digest/send` (Family plan only — 402 otherwise; respects `notification_prefs.weekly_digest`), `GET /api/digest/history` (last 12 sends).
+- Settings → **Weekly digest** tab (`/settings/digest`): in-app preview card with the same shape as the email, "Send this digest now" button, recent-sends history.
+
+### Notifications system (P1)
+- Backend: `db.notifications` collection + `create_notification()` helper (respects user prefs). Endpoints: `GET /api/notifications`, `POST /api/notifications/read` (all or specific ids), `GET/PUT /api/notifications/prefs`.
+- Hook-ins: anomaly-laden statement upload, participant `not_great` wellbeing check-in (notifies the primary caregiver), invite acceptance (notifies inviter), digest send (notifies sender).
+- Frontend: `NotificationsBell` component mounted in **both** headers (MarketingHeader for public pages with `tone='dark'`, Layout for authenticated pages with `tone='light'`). Polls every 60s, pauses when tab hidden. Shows unread count badge, "Mark all read", links to `/settings/notifications`.
+- Settings → **Notifications** tab: 5 toggle rows (anomaly_alerts, wellbeing_concerns, family_messages, weekly_digest, product_updates) with descriptive copy + persistent prefs.
+
+### Settings hub — extended (P1)
+Added 5 new tabs (now 9 total): Profile, Plan & Billing, Family members, **Weekly digest**, **Notifications**, **Appearance**, **Usage**, Security, **Danger zone**.
+- **Appearance**: light/dark theme toggle, applies `theme-dark` class to `<html>`, persists in `localStorage.kindred_theme`. Dark mode is implemented as a CSS-variable swap (no Tailwind variant rewrite) so every existing `bg-surface`/`text-primary-k` adapts automatically.
+- **Usage**: `GET /api/usage` returns 6 counters (chat_questions, statements_uploaded, family_messages, wellbeing_checkins, digest_sends, tool_emails_sent). UI grid with tabular-nums.
+- **Danger zone**: `DELETE /api/auth/account` soft-deletes (anonymises email/name, cancels subscription, removes from household, ends sessions). Requires literal `delete my account` confirm string.
+
+### ⌘K command palette (P1)
+- `CommandPalette` mounted globally (App.js root). Listens for `Cmd/Ctrl+K`. Built on shadcn `cmdk` `CommandDialog` with `sr-only` DialogTitle+Description for Radix a11y compliance.
+- Groups: App (auth-only), Settings (auth-only), AI tools, Resources & marketing.
+
+### Dashboard skeleton + small polish
+- `CaregiverDashboard` now shows a 4-card animated skeleton while the stats load (replaces "Loading…" text).
+
+### Constants & cleanup (P2 partial)
+- New `/app/backend/constants.py` exports `TRIAL_DAYS=7`, `HOUSEHOLD_MAX_MEMBERS=5`, `RATE_LIMIT_WINDOW_HOURS=1`, `RATE_LIMIT_MAX_PER_IP=5`, `INVITE_EXPIRY_DAYS=14`, `PASSWORD_RESET_EXPIRY_MINUTES=60`, `NOTIFICATION_CATEGORIES`, `DEFAULT_NOTIFICATION_PREFS`. All hardcoded magic numbers in `server.py` now reference these. Final stale "14-day" string in `email_service.py` swapped to "7-day".
+- POST `/api/household/invite`: plan gate now runs **before** the household-required check, so Solo/Free users get a clean 402.
+
+### Deliberately deferred (do not pick up without scope reset)
+- **Real calendar agent** (Section 12) — requires Google Calendar OAuth integration; defer until product validates the wedge.
+- **Redis** for `RATE_LIMIT_BUCKET` — no Redis service in the cluster; in-memory dict + the constant is acceptable for MVP/single-pod.
+- **`server.py` router split** — high regression risk; do as a dedicated PR with its own full test pass.
+- **i18next scaffolding** — empty translation files would be tech debt; revisit when first non-English content piece lands.
+
+## Test status
+- Iterations 1–8 covered earlier.
+- Iteration 9: 18/18 backend + 9/10 frontend (NotificationsBell missing on auth Layout — fixed in iter10).
+- Iteration 10 (retest): 8/8 backend + 100% frontend. All three iter9 fixes verified (bell on auth Layout, invite plan-gate ordering, CommandDialog a11y title).
+
 ## Backlog (P0/P1)
 - P0: Wire the **Public Tool Wrapper** (Claude Haiku 4.5) in front of every public tool endpoint — PII redaction, abuse/distress check, route classification. Spec lives in `/app/memory/EMERGENT_PROMPT.md` §4.
 - P0: Refactor each public tool prompt to the v2 spec in `EMERGENT_PROMPT.md` §5 (output structure, refusal rules, conversion CTA, inclusive language).
