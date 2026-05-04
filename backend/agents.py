@@ -23,7 +23,12 @@ MODEL_NAME = "claude-sonnet-4-5-20250929"
 #     performs the 10-rule audit equivalently. Flip back to 4.6 once capacity
 #     is consistent by setting KINDRED_AUDITOR_MODEL env to "claude-sonnet-4-6".
 EXTRACTOR_MODEL = os.environ.get("KINDRED_EXTRACTOR_MODEL", "claude-haiku-4-5-20251001")
-AUDITOR_MODEL = os.environ.get("KINDRED_AUDITOR_MODEL", "claude-sonnet-4-5-20250929")
+# Default auditor is Haiku 4.5 — total two-pass pipeline stays under ~25s,
+# well inside the 60s Kubernetes ingress read timeout on the preview/prod
+# gateway. Sonnet 4.5 is higher quality but routinely takes 50-110s on its
+# own which causes 502s upstream. Flip to sonnet by exporting
+# KINDRED_AUDITOR_MODEL=claude-sonnet-4-5-20250929 once infra is tuned.
+AUDITOR_MODEL = os.environ.get("KINDRED_AUDITOR_MODEL", "claude-haiku-4-5-20251001")
 
 
 def _key() -> str:
@@ -385,6 +390,19 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
     try:
         raw = await chat.send_message(msg)
         return json.loads(_strip_json(raw))
+    except json.JSONDecodeError as e:
+        logger.warning("Extractor Pass 1 JSON parse failed: %s | raw[:500]=%r", e, str(raw)[:500] if 'raw' in dir() else "(no response)")
+        return {
+            "participant_name": "", "mac_id": "", "statement_period": "",
+            "provider_name": "", "classification": "",
+            "quarterly_budget_total": 0.0, "care_management_deducted": 0.0,
+            "care_management_rate_pct": 0.0, "service_budget_available": 0.0,
+            "rollover_from_prior_quarter": 0.0,
+            "line_items": [], "previous_period_adjustments": [],
+            "lifetime_cap_total": 0.0, "lifetime_contributions_to_date": 0.0,
+            "direct_debit_amount": 0.0, "direct_debit_date": "",
+            "_extraction_error": f"json_parse: {e}",
+        }
     except Exception as e:
         logger.warning("Extractor Pass 1 failed: %s", e)
         return {
@@ -419,6 +437,7 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
     ).with_model(MODEL_PROVIDER, AUDITOR_MODEL)
     payload = json.dumps(extracted, separators=(",", ":"))[:40000]
     msg = UserMessage(text=f"Audit this extracted statement:\n\n{payload}")
+    raw = None
     try:
         raw = await chat.send_message(msg)
         result = json.loads(_strip_json(raw))
@@ -431,6 +450,11 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
                 counts[sev] += 1
         result["anomaly_count"] = counts
         return result
+    except json.JSONDecodeError as e:
+        logger.warning("Auditor Pass 2 JSON parse failed: %s | raw[:500]=%r", e, str(raw)[:500])
+        fallback = _empty_audit(extracted)
+        fallback["_audit_error"] = f"json_parse: {e}"
+        return fallback
     except Exception as e:
         logger.warning("Auditor Pass 2 failed: %s", e)
         fallback = _empty_audit(extracted)

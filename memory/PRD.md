@@ -166,6 +166,34 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 ## Test status
 - Iteration 12: 100% frontend (7/7 acceptance items via Playwright). Backend skipped (no backend changes). Iter 11 + earlier regression: cathy login, ⌘K palette, Statement Decoder no-gate path, /pricing devices strip — all green.
 
+## Implemented (Iteration 13 — Feb 2026 · Two-pass Statement Decoder pipeline)
+
+The single-pass decoder was producing summaries but missing anomalies. Replaced with a structured two-pass pipeline:
+
+### Pass 1 — Extraction (`extract_statement` in `agents.py`)
+- Claude Haiku 4.5 — fast, cheap, great at strict-schema JSON output.
+- System prompt locks the model into a 16-field schema covering participant_name, MAC ID, period, classification, quarterly_budget_total, care_management_rate_pct, every line_item with stream codes (Clinical / Independence / EverydayLiving / **ATHM** / **CareMgmt**), worker_name, is_brokered, flags_in_original, previous_period_adjustments, lifetime_cap_total, direct_debit_amount.
+- Cancelled services included with `is_cancellation: true, gross: 0`.
+- AT-HM items always recoded to `stream: "ATHM"` even if the source statement misplaces them.
+
+### Pass 2 — Audit (`audit_statement` in `agents.py`)
+- Claude Haiku 4.5 (default) applies 10 named rules. Sonnet 4.5/4.6 selectable via `KINDRED_AUDITOR_MODEL` env var when latency budget allows.
+- Rules: care-mgmt cap, weekend rate, duplicates, AT-HM miscoding, stream misclassification, worker substitution, hospital + no RCP missed entitlement, transport-on-hospital-day, contribution arithmetic, period adjustments.
+- Output: `statement_summary` + `stream_breakdown` + `anomalies[]` + `anomaly_count`.
+- `_empty_audit()` fallback computes summary + stream breakdown from Pass 1 locally if Pass 2 fails.
+
+### Frontend `<DecoderResultView>`
+1. **Summary banner** — navy block, 4-stat grid, sub-chips for care fee / rollover / lifetime cap (each rendered independently).
+2. **Anomaly panel** — severity rollup banner (terracotta high / gold medium / sage low) + per-rule cards with severity badge, R-rule code, detail, dollar_impact, evidence bullets, suggested action.
+3. **Stream breakdown** — expandable cards per stream (Clinical / Independence / EverydayLiving / ATHM / CareMgmt).
+4. **Full line-item table** — collapsed by default; cancelled rows italicised with strike-through gross.
+
+### Key fix that made this ship-able
+Default auditor is Haiku 4.5, not Sonnet 4.6. Sonnet 4.6 was released Feb 17 2026 and hits capacity 502s — sequential Haiku+Sonnet wall time was ~130s vs the 60s K8s ingress read timeout. Haiku+Haiku stays at ~25-45s end-to-end. All 4 expected HIGH anomalies still fire on the Margaret Kowalski test fixture.
+
+## Test status iter 13
+- Backend two-pass pipeline curl-verified end-to-end against the **public preview URL** in 44s, returning exactly the expected anomaly set (4 HIGH / 3 MEDIUM / 3 LOW). Frontend DecoderResultView visually verified — all 4 sections render correctly with terracotta high-priority rollup banner, per-rule anomaly cards with evidence bullets and suggested actions. Margaret Kowalski statement is the canonical regression fixture at `/tmp/margaret_stmt.txt`.
+
 ## Implemented (Iteration 9 — Feb 2026 · Family Digest, Notifications, Settings hub, ⌘K, dark mode, constants)
 
 ### Family Weekly Digest (the **emotional hook** for the Family plan)

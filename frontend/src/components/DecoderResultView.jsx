@@ -80,11 +80,11 @@ export default function DecoderResultView({ result }) {
                         <div className="font-heading text-2xl mt-1 tabular-nums">{aud(summary.adjusted_budget_remaining ?? summary.budget_remaining)}</div>
                     </div>
                 </div>
-                {(summary.care_management_fee || summary.rollover_applied) && (
+                {(summary.care_management_fee || summary.rollover_applied || summary.lifetime_cap_remaining != null) && (
                     <div className="mt-4 pt-4 border-t border-white/15 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-white/70">
                         {summary.care_management_fee ? <span>Care management fee {aud(summary.care_management_fee)}</span> : null}
                         {summary.rollover_applied ? <span>Rollover applied {aud(summary.rollover_applied)}</span> : null}
-                        {summary.lifetime_cap_remaining != null && <span>Lifetime cap remaining {aud(summary.lifetime_cap_remaining)}</span>}
+                        {summary.lifetime_cap_remaining != null ? <span>Lifetime cap remaining {aud(summary.lifetime_cap_remaining)}</span> : null}
                     </div>
                 )}
             </section>
