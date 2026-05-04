@@ -53,6 +53,12 @@ from auth_emergent import exchange_session_id
 from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout, CheckoutSessionRequest,
 )
+from constants import (
+    TRIAL_DAYS, HOUSEHOLD_MAX_MEMBERS, RATE_LIMIT_WINDOW_HOURS, RATE_LIMIT_MAX_PER_IP,
+    PASSWORD_RESET_EXPIRY_MINUTES, INVITE_EXPIRY_DAYS, NOTIFICATION_CATEGORIES,
+    DEFAULT_NOTIFICATION_PREFS, DIGEST_FREQUENCY_DEFAULT,
+)
+import digest_service
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
@@ -275,7 +281,7 @@ async def forgot_password(body: ForgotBody, request: Request):
             "token": token,
             "user_id": user["id"],
             "email": user["email"],
-            "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=60)).isoformat(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=PASSWORD_RESET_EXPIRY_MINUTES)).isoformat(),
             "used": False,
             "created_at": now_iso(),
         })
@@ -374,8 +380,8 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
         raise HTTPException(status_code=402, detail={"code": "plan_required", "message": "Family plan required to invite members."})
     # max 5 active members including owner
     members = await db.household_members.count_documents({"household_id": household["id"], "status": {"$in": ["active", "pending"]}})
-    if members >= 4:  # owner + 4 invitees = 5
-        raise HTTPException(status_code=400, detail="Family plan limit: 5 members (including you)")
+    if members >= (HOUSEHOLD_MAX_MEMBERS - 1):  # owner + up to MAX-1 invitees
+        raise HTTPException(status_code=400, detail=f"Family plan limit: {HOUSEHOLD_MAX_MEMBERS} members (including you)")
     token = new_id().replace("-", "") + new_id().replace("-", "")
     invite = {
         "token": token,
@@ -387,7 +393,7 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
         "role": body.role,
         "note": body.note,
         "status": "pending",
-        "expires_at": (datetime.now(timezone.utc) + timedelta(days=14)).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=INVITE_EXPIRY_DAYS)).isoformat(),
         "created_at": now_iso(),
     }
     await db.invites.insert_one(invite)
@@ -403,7 +409,7 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
                 f"<p>{u['name']} wants you involved as a <strong>{body.role.replace('_', ' ')}</strong> on {hh_name}'s Kindred household.</p>"
                 f"{('<p><em>Note from ' + u['name'].split(' ')[0] + ':</em> ' + body.note + '</p>') if body.note else ''}"
                 f"<p><a href='{accept_url}' style='display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invitation</a></p>"
-                f"<p style='color:#6B7280;font-size:13px'>Invitation expires in 14 days.</p>"
+                f"<p style='color:#6B7280;font-size:13px'>Invitation expires in {INVITE_EXPIRY_DAYS} days.</p>"
             ),
         )
     except Exception as e:
@@ -480,6 +486,17 @@ async def accept_invite(body: InviteAcceptBody, user_id: str = Depends(get_curre
     await db.invites.update_one({"token": body.token}, {"$set": {"status": "accepted", "accepted_at": now_iso()}})
     await _audit(inv["household_id"], user_id, u["name"], "INVITE_ACCEPTED",
                  f"{u['name']} joined as {inv['role']}")
+    # Notify the inviter
+    try:
+        await create_notification(
+            inv["inviter_user_id"],
+            "family_messages",
+            f"{u['name']} joined your household",
+            f"They're now on the Kindred household as {inv['role'].replace('_', ' ')}.",
+            "/settings/members",
+        )
+    except Exception:
+        pass
     return {"ok": True, "household_id": inv["household_id"]}
 
 
@@ -502,6 +519,18 @@ async def log_wellbeing(body: WellbeingBody, user_id: str = Depends(get_current_
     await db.wellbeing.insert_one(doc)
     if household:
         await _audit(household["id"], user_id, u["name"], "WELLBEING_LOGGED", f"Mood: {body.mood}")
+        # Notify primary caregiver when participant flags "not_great"
+        if body.mood == "not_great" and body.notify_caregiver and household.get("owner_id") and household["owner_id"] != user_id:
+            try:
+                await create_notification(
+                    household["owner_id"],
+                    "wellbeing_concerns",
+                    f"{u['name']} flagged a hard day",
+                    "Your participant marked today as not great. Worth checking in.",
+                    "/participant",
+                )
+            except Exception:
+                pass
     doc.pop("_id", None)
     return doc
 
@@ -668,6 +697,18 @@ async def upload_statement(
         h["id"], user_id, user["name"], "STATEMENT_UPLOADED",
         f"Uploaded {file.filename} — {len(line_items)} line items, {len(anomalies)} alerts",
     )
+    # In-app notification for the owner when anomalies are detected
+    if anomalies:
+        try:
+            await create_notification(
+                user_id,
+                "anomaly_alerts",
+                f"{len(anomalies)} alert{'s' if len(anomalies) != 1 else ''} in {file.filename}",
+                f"Kindred flagged {len(anomalies)} thing{'s' if len(anomalies) != 1 else ''} worth a look in the latest statement.",
+                f"/app/statements/{statement.id}",
+            )
+        except Exception:
+            pass
     return statement
 
 
@@ -884,8 +925,8 @@ async def flag_concern(payload: ConcernCreate, user_id: str = Depends(get_curren
 
 # ----------------- public AI tools (no auth, IP rate-limited) -----------------
 RATE_LIMIT_BUCKET: dict[str, list[datetime]] = defaultdict(list)
-RATE_LIMIT_WINDOW = timedelta(hours=1)
-RATE_LIMIT_MAX = 5
+RATE_LIMIT_WINDOW = timedelta(hours=RATE_LIMIT_WINDOW_HOURS)
+RATE_LIMIT_MAX = RATE_LIMIT_MAX_PER_IP
 
 
 def _client_ip(request: Request) -> str:
@@ -1394,6 +1435,172 @@ async def public_email_result(body: EmailResultBody, request: Request):
 
 
 # ---------------------------------------------------------------------------
+# Notifications
+# ---------------------------------------------------------------------------
+async def create_notification(user_id: str, category: str, title: str, body: str, link: Optional[str] = None) -> None:
+    """Respectful notification helper — checks user prefs before inserting."""
+    u = await db.users.find_one({"id": user_id}, {"_id": 0, "notification_prefs": 1})
+    prefs = (u or {}).get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS
+    if not prefs.get(category, True):
+        return
+    await db.notifications.insert_one({
+        "id": new_id(),
+        "user_id": user_id,
+        "category": category,
+        "title": title,
+        "body": body,
+        "link": link,
+        "read": False,
+        "created_at": now_iso(),
+    })
+
+
+@api.get("/notifications")
+async def list_notifications(user_id: str = Depends(get_current_user_id)):
+    cur = db.notifications.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(30)
+    items = await cur.to_list(30)
+    unread = await db.notifications.count_documents({"user_id": user_id, "read": False})
+    return {"items": items, "unread": unread}
+
+
+class NotificationReadBody(BaseModel):
+    ids: List[str] = Field(default_factory=list)
+
+
+@api.post("/notifications/read")
+async def mark_notifications_read(body: NotificationReadBody, user_id: str = Depends(get_current_user_id)):
+    query: dict = {"user_id": user_id}
+    if body.ids:
+        query["id"] = {"$in": body.ids}
+    res = await db.notifications.update_many(query, {"$set": {"read": True, "read_at": now_iso()}})
+    return {"ok": True, "modified": res.modified_count}
+
+
+class NotificationPrefsBody(BaseModel):
+    prefs: dict = Field(default_factory=dict)
+
+
+@api.get("/notifications/prefs")
+async def get_notification_prefs(user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    prefs = u.get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS
+    return {"prefs": {c: bool(prefs.get(c, True)) for c in NOTIFICATION_CATEGORIES}}
+
+
+@api.put("/notifications/prefs")
+async def put_notification_prefs(body: NotificationPrefsBody, user_id: str = Depends(get_current_user_id)):
+    clean = {c: bool(body.prefs.get(c, True)) for c in NOTIFICATION_CATEGORIES}
+    await db.users.update_one({"id": user_id}, {"$set": {"notification_prefs": clean}})
+    return {"ok": True, "prefs": clean}
+
+
+# ---------------------------------------------------------------------------
+# Family weekly digest
+# ---------------------------------------------------------------------------
+@api.get("/digest/preview")
+async def digest_preview(user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        raise HTTPException(status_code=400, detail="Create a household first")
+    return await digest_service.build_digest(db, household)
+
+
+@api.post("/digest/send")
+async def digest_send(user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    if u.get("plan") != "family":
+        raise HTTPException(status_code=402, detail={"code": "plan_required", "message": "Family plan required to send digests."})
+    household = await _get_user_household(user_id)
+    if not household:
+        raise HTTPException(status_code=400, detail="Create a household first")
+    recipients: List[str] = []
+    owner = await _get_user(household["owner_id"])
+    if (owner.get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS).get("weekly_digest", True):
+        recipients.append(owner["email"])
+    mem_cur = db.household_members.find({"household_id": household["id"], "status": "active"}, {"_id": 0})
+    async for m in mem_cur:
+        member_user = await db.users.find_one({"id": m.get("user_id")}, {"_id": 0}) if m.get("user_id") else None
+        if member_user:
+            if (member_user.get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS).get("weekly_digest", True):
+                recipients.append(member_user["email"])
+        elif m.get("email"):
+            recipients.append(m["email"])
+    seen = set()
+    recipients = [r for r in recipients if not (r in seen or seen.add(r))]
+    if not recipients:
+        return {"ok": False, "reason": "No recipients opted in"}
+    digest = await digest_service.build_digest(db, household)
+    res = await digest_service.send_digest_to_members(db, household, recipients, digest)
+    await _audit(household["id"], user_id, u["name"], "DIGEST_SENT", f"Sent to {len(recipients)} recipient(s)")
+    try:
+        await create_notification(user_id, "weekly_digest", "Weekly digest sent", f"Sent to {len(recipients)} people.", "/settings/members")
+    except Exception:
+        pass
+    return {"ok": True, "recipients": recipients, "summary": res.get("results")}
+
+
+@api.get("/digest/history")
+async def digest_history(user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        return {"items": []}
+    cur = db.digest_sends.find({"household_id": household["id"]}, {"_id": 0}).sort("sent_at", -1).limit(12)
+    items = await cur.to_list(12)
+    return {"items": items}
+
+
+# ---------------------------------------------------------------------------
+# Usage stats
+# ---------------------------------------------------------------------------
+@api.get("/usage")
+async def my_usage(user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    household = await _get_user_household(user_id)
+    counts = {
+        "chat_questions": 0, "statements_uploaded": 0, "family_messages": 0,
+        "wellbeing_checkins": 0, "tool_emails_sent": 0, "digest_sends": 0,
+    }
+    if household:
+        hid = household["id"]
+        counts["chat_questions"] = await db.chat_turns.count_documents({"household_id": hid, "role": "user"})
+        counts["statements_uploaded"] = await db.statements.count_documents({"household_id": hid})
+        counts["family_messages"] = await db.family_messages.count_documents({"household_id": hid})
+        counts["wellbeing_checkins"] = await db.wellbeing.count_documents({"household_id": hid})
+        counts["digest_sends"] = await db.digest_sends.count_documents({"household_id": hid})
+    counts["tool_emails_sent"] = await db.tool_email_log.count_documents({"email": u["email"], "ok": True})
+    return {"plan": u.get("plan", "free"), "since": u.get("created_at"), "counts": counts}
+
+
+# ---------------------------------------------------------------------------
+# Danger Zone — soft-delete account
+# ---------------------------------------------------------------------------
+class AccountDeleteBody(BaseModel):
+    confirm: str = Field(min_length=1)
+
+
+@api.delete("/auth/account")
+async def delete_account(body: AccountDeleteBody, user_id: str = Depends(get_current_user_id)):
+    if body.confirm != "delete my account":
+        raise HTTPException(status_code=400, detail="Type 'delete my account' to confirm")
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "email": f"deleted+{user_id}@kindred.local",
+            "name": "Deleted user",
+            "password_hash": "",
+            "deleted_at": now_iso(),
+            "plan": "free",
+            "household_id": None,
+        }},
+    )
+    await db.subscriptions.update_many({"user_id": user_id}, {"$set": {"status": "cancelled", "cancel_at_period_end": True}})
+    await db.household_members.update_many({"user_id": user_id}, {"$set": {"status": "removed", "removed_at": now_iso()}})
+    await db.user_sessions.delete_many({"user_id": user_id})
+    return {"ok": True}
+
+
+
+# ---------------------------------------------------------------------------
 # Stripe billing
 # ---------------------------------------------------------------------------
 PLAN_PRICES = {
@@ -1422,7 +1629,7 @@ async def billing_checkout(body: CheckoutBody, request: Request, user_id: str = 
     # recording trial_ends_at = now + 7 days. If the user cancels within the
     # window, we refund via the ops inbox.
     had_trial = await db.subscriptions.find_one({"user_id": user_id, "had_trial": True})
-    trial_days = 0 if had_trial else 7
+    trial_days = 0 if had_trial else TRIAL_DAYS
     success_url = f"{body.origin_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{body.origin_url}/pricing?cancelled=1"
     metadata = {"user_id": user_id, "plan": body.plan, "kind": "kindred_subscription", "trial_days": str(trial_days)}
@@ -1490,7 +1697,7 @@ async def billing_status(session_id: str, user_id: str = Depends(get_current_use
                 tool_name=f"Welcome to {plan.capitalize()}",
                 headline=f"You're on Kindred {plan.capitalize()}.",
                 body_html=(f"<p>Thanks {u['name'].split(' ')[0]}. "
-                           + (f"Your 7-day refund window starts today." if trial_days else "Payment received — thanks for renewing.")
+                           + (f"Your {TRIAL_DAYS}-day refund window starts today." if trial_days else "Payment received — thanks for renewing.")
                            + "</p><p>Next step: complete onboarding to set up your household.</p>"),
             )
         except Exception as e:

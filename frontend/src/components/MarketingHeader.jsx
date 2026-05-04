@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { HeartHandshake, Menu, X, Bell, ChevronDown, LogOut, User, CreditCard, Users, Settings, HelpCircle } from "lucide-react";
+import { HeartHandshake, Menu, X, ChevronDown, LogOut, User, CreditCard, Users, Settings, HelpCircle } from "lucide-react";
+import NotificationsBell from "@/components/NotificationsBell";
 
 const NAV = [
     { to: "/features", label: "Features" },
@@ -61,9 +62,7 @@ function SignedInControls({ user }) {
 
     return (
         <div className="flex items-center gap-3" ref={menuRef}>
-            <button type="button" className="text-white/80 hover:text-white transition-colors p-2" aria-label="Notifications" data-testid="nav-bell">
-                <Bell className="h-5 w-5" />
-            </button>
+            <NotificationsBell />
             <PlanBadge plan={user.plan || "free"} />
             <div className="relative">
                 <div className="flex items-center gap-1">

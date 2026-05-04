@@ -114,7 +114,17 @@ export default function CaregiverDashboard() {
                 )}
             </div>
 
-            {loading && <div className="text-muted-k">Loading…</div>}
+            {loading && (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse" data-testid="dashboard-skeleton">
+                    {[0, 1, 2, 3].map((i) => (
+                        <div key={i} className="bg-surface-2 border border-kindred rounded-xl p-5 h-[110px]">
+                            <div className="h-3 w-16 bg-surface rounded" />
+                            <div className="mt-3 h-6 w-24 bg-surface rounded" />
+                            <div className="mt-2 h-3 w-32 bg-surface rounded" />
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Free plan: show paywall, hide all tracked household sections */}
             {isFree && !loading && <FreePlanLimitCard />}

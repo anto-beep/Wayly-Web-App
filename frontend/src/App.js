@@ -43,6 +43,7 @@ import BillingSuccess from "@/pages/BillingSuccess";
 import { ForgotPassword, ResetPassword } from "@/pages/PasswordReset";
 import Settings from "@/pages/Settings";
 import InviteAccept from "@/pages/InviteAccept";
+import CommandPalette from "@/components/CommandPalette";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -69,6 +70,12 @@ function PublicAuthOnly({ children }) {
 }
 
 function App() {
+    // Apply saved theme preference on first render
+    if (typeof window !== "undefined") {
+        const savedTheme = localStorage.getItem("kindred_theme");
+        if (savedTheme === "dark") document.documentElement.classList.add("theme-dark");
+        else document.documentElement.classList.remove("theme-dark");
+    }
     // CRITICAL: Detect Emergent OAuth callback synchronously, before any router
     // logic runs. The session_id arrives in the URL fragment and must be
     // exchanged before AuthProvider hits /auth/me (which would 401).
@@ -86,6 +93,7 @@ function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Toaster richColors position="top-right" />
+                <CommandPalette />
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />

@@ -111,7 +111,7 @@ async def email_tool_result(
       <h2 style="margin:0 0 12px;font-family:Georgia,serif;color:#1F3A5F">{_html_escape(headline)}</h2>
       <div style="font-size:14px;line-height:1.6;color:#1F3A5F">{body_html}</div>
       <hr style="border:0;border-top:1px solid #e5dfd2;margin:24px 0" />
-      <p style="margin:0;font-size:13px;color:#555">Want Kindred to do this every month, automatically? <a href="https://kindred.au/signup" style="color:#1F3A5F;font-weight:600">Start a free 14-day trial</a> — no card needed.</p>
+      <p style="margin:0;font-size:13px;color:#555">Want Kindred to do this every month, automatically? <a href="https://kindred.au/signup" style="color:#1F3A5F;font-weight:600">Start a free 7-day trial</a> — no card needed.</p>
     </td></tr>
     <tr><td style="padding:16px 28px;background:#F0EBE0;color:#888;font-size:11px">
       You received this because you requested it from a public tool on kindred.au. We didn't add you to any list.
