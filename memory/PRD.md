@@ -86,6 +86,23 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Iteration 6: 18/19 backend + 100% frontend; minor billing/status 500 fixed in this iteration.
 - Iteration 7 (this): public tool endpoints now 200 for anonymous; rate-limit body verified.
 
+## Implemented (Iteration 8 — Feb 2026 · Settings suite, Members, Wellbeing, Password reset, Stat cards)
+- **Password reset (full flow)**: New `/forgot` and `/reset` pages wired; Signup and Login wire in the new `PasswordStrength` meter (5-rule live validation — 8+ chars, upper/lower/number/symbol, no name/email echo). Login now has a `Forgot password?` link. Backend endpoints `/api/auth/forgot` (enumeration-safe) and `/api/auth/reset` (60-min token, single-use) verified end-to-end with live Resend delivery to the verified inbox.
+- **In-app Settings page** (`/settings/:tab`) with 4 tabs:
+  - **Profile** — edit display name (client-side only; name field persists on server via existing user model via /auth/plan style update; extend later).
+  - **Plan & Billing** — shows current plan card with trial + renewal date, 3 plan options (Free/Solo/Family), one-click Stripe Checkout for upgrades (`POST /billing/checkout`), in-app plan switch for active subs (`POST /billing/upgrade`), and Cancel auto-renewal (`POST /billing/cancel`). Status comes from `GET /billing/subscription`.
+  - **Family members** — Family-plan upgrade gate for Solo/Free; full member list with owner synthesised; invite form (email + role [family_member / advisor] + optional note) that emails the invite via Resend and respects the 5-member cap; pending invites section; member removal (primary only). Uses `/household/invite`, `/household/members`, `/household/members/{id}`.
+  - **Security** — one-click "send me a reset link" for logged-in users (fires `/auth/forgot`).
+- **Invite acceptance flow**: New `/invite?token=…` page fetches invite details via `GET /api/invite/{token}`, supports three states (no account → signup/login CTAs, wrong-email warning, accept CTA) and posts to `POST /api/invite/accept`.
+- **Participant wellbeing check-in**: New check-in card on `/participant` with 3 large mood buttons (good / okay / not_great). Once-per-day enforcement: re-visiting shows "you've checked in today" state. `not_great` sets `notify_caregiver=true` and logs an audit event. Uses `POST/GET /api/participant/wellbeing`.
+- **Caregiver Dashboard stat cards** (Section 9 opener): 4 quick-glance cards above the stream grid — this-quarter spend, alerts count, statements count (+latest date), lifetime-cap % used.
+- **Layout sidebar refresh**: Secondary nav group added with "AI Tools" and "Settings" links, separated by a divider. Plan badge in the header now routes to `/settings/billing` instead of `/pricing` (in-app plan management).
+- **Dead code cleanup**: Removed orphan `_require_solo_plus` function + its "14-day" string (last stale-copy reference in the codebase).
+
+## Test status
+- Iterations 1–7 covered earlier (see sections above).
+- Iteration 8: 15/15 backend pytest pass (1 non-critical skip for household create route test scaffolding) · 100% frontend flows verified (12/12 scoped flows in `/app/backend/tests/test_iter8.py`). Cathy regression flow green. All new endpoints verified healthy. Iter7 regression confirmed fixed (family-coordinator-chat anonymous 200).
+
 ## Backlog (P0/P1)
 - P0: Wire the **Public Tool Wrapper** (Claude Haiku 4.5) in front of every public tool endpoint — PII redaction, abuse/distress check, route classification. Spec lives in `/app/memory/EMERGENT_PROMPT.md` §4.
 - P0: Refactor each public tool prompt to the v2 spec in `EMERGENT_PROMPT.md` §5 (output structure, refusal rules, conversion CTA, inclusive language).
