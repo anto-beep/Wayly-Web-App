@@ -32,7 +32,12 @@ export default function StatementDecoderEmbed({ compact = false }) {
             const { data } = await api.post("/public/decode-statement-text", { text });
             setResult(data);
         } catch (err) {
-            setError(err?.response?.data?.detail || "Could not decode the statement.");
+            const detail = err?.response?.data?.detail;
+            if (detail && typeof detail === "object" && detail.error === "daily_limit") {
+                setError("You've used your free decode for today. Come back tomorrow — or sign up for unlimited access.");
+            } else {
+                setError(typeof detail === "string" ? detail : detail?.message || "Could not decode the statement.");
+            }
         } finally {
             setLoading(false);
         }
