@@ -27,7 +27,6 @@ const LEGAL_COMPANY = [
     { to: "/legal/accessibility", label: "Accessibility Statement" },
     { to: "/legal/cookies", label: "Cookie Policy" },
     { to: "/trust", label: "Trust & Security" },
-    { to: "/about", label: "About" },
     { to: "/contact", label: "Contact" },
     { to: "/press", label: "Press" },
 ];
@@ -130,7 +129,7 @@ export default function Footer() {
                             <a
                                 href={`tel:${c.number.replace(/\s/g, "")}`}
                                 className="hover:text-white transition-colors"
-                                data-testid={`footer-crisis-${c.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                                data-testid={`footer-crisis-${c.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "")}`}
                             >
                                 {c.name}: <span className="tabular-nums whitespace-nowrap">{c.number}</span>
                             </a>

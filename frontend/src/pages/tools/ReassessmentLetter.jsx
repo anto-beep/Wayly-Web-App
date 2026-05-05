@@ -47,7 +47,7 @@ export default function ReassessmentLetter() {
     };
 
     if (access === "loading") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
-    if (access === "blocked") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><ToolGate toolName="Reassessment Letter Drafter"><ScreenshotStatement /></ToolGate><Footer /></div>);
+    if (access === "blocked") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["reassessment-letter"]} /></section><ToolGate toolName="Reassessment Letter Drafter"><ScreenshotStatement /></ToolGate><Footer /></div>);
 
     return (
         <div className="min-h-screen bg-kindred">

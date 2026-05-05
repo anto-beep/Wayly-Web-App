@@ -57,6 +57,9 @@ export default function BudgetCalculatorTool() {
         return (
             <div className="min-h-screen bg-kindred">
                 <MarketingHeader />
+                <section className="mx-auto max-w-4xl px-6 pt-8">
+                    <AIAccuracyBanner text={TOOL_DISCLAIMERS["budget-calculator"]} />
+                </section>
                 <ToolGate toolName="Budget Calculator">
                     <ScreenshotBudget />
                 </ToolGate>
