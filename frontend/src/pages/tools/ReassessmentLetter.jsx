@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import { api, extractErrorMessage } from "@/lib/api";
 import { Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -59,6 +60,7 @@ export default function ReassessmentLetter() {
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
+                <AIAccuracyBanner text={TOOL_DISCLAIMERS["reassessment-letter"]} className="mb-4" />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="reassessment-form">
                     <div className="grid sm:grid-cols-2 gap-4">
                         <label className="block"><span className="text-sm text-muted-k">Participant name</span>

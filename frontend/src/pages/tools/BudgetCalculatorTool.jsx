@@ -7,6 +7,7 @@ import { Loader2, ArrowRight, Sparkles } from "lucide-react";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotBudget } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 
 const CLASSIFICATIONS = [
     { v: 1, annual: 10731 },
@@ -76,6 +77,7 @@ export default function BudgetCalculatorTool() {
             </section>
 
             <section className="mx-auto max-w-4xl px-6 pb-20">
+                <AIAccuracyBanner text={TOOL_DISCLAIMERS["budget-calculator"]} className="mb-4" />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="budget-calculator">
                     <div>
                         <span className="text-sm text-muted-k">Support at Home classification</span>

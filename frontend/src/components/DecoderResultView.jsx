@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Shield, ShieldAlert, ShieldCheck, AlertOctagon } from "lucide-react";
+import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 
 function aud(n) {
     if (n == null) return "—";
@@ -134,6 +135,9 @@ export default function DecoderResultView({ result }) {
                                                     → {a.suggested_action}
                                                 </div>
                                             )}
+                                            <div className="mt-3">
+                                                <AIAccuracyBanner variant="anomaly" />
+                                            </div>
                                         </div>
                                     </div>
                                 </li>

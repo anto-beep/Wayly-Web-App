@@ -1,0 +1,46 @@
+{
+  "summary": "Iter 18 Phase 1 (Footer + AIAccuracyBanner + 6 legal pages + redirects) frontend testing. 22/22 public pages render Footer with crisis hotlines + legal disclaimer. Footer correctly hidden on /login, /signup, /forgot, /reset. All 5 crisis hotline tel: links work. All 6 legal pages render with correct titles & substantive bodies. All 4 footer redirects (/resources/blog, /resources/guides, /resources/webinars, /press) work. Statement Decoder happy-path produced 10 per-anomaly [data-testid=ai-anomaly-disclaimer] badges. AIAccuracyBanner is missing on the 7 paid AI tool pages for UNAUTHENTICATED users because the banner is rendered INSIDE the form section AFTER the ToolGate early-return — the spec explicitly required 'banner shows above the gate'.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Tool pages with ToolGate (BudgetCalculatorTool, PriceCheckerTool, ClassificationCheck, ReassessmentLetter, ContributionEstimator, CarePlanReviewer, FamilyCoordinator)",
+        "issue": "AIAccuracyBanner is rendered INSIDE the form section, AFTER the ToolGate's early-return for unauthenticated/free users. Result: on the 7 paid AI tool routes (/ai-tools/budget-calculator, /ai-tools/provider-price-checker, /ai-tools/classification-self-check, /ai-tools/reassessment-letter, /ai-tools/contribution-estimator, /ai-tools/care-plan-reviewer, /ai-tools/family-coordinator), the banner is NOT visible to logged-out visitors — the gate paywall is shown without any AI disclaimer above it. Spec required 'banner shows above the gate'. Move <AIAccuracyBanner ... /> above the `if (!access.allowed) return <ToolGate.../>` block (or render it both above the gate AND above the form).",
+        "selector": "[data-testid=ai-accuracy-banner]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Footer column 'Legal & Company'",
+        "issues": [
+          "/about route is not registered in App.js. Clicking the 'About' footer link falls through to the catch-all `*` -> Navigate to '/' (no real About page yet — likely deferred to Phase 2/3 but the link silently bounces back to the homepage which is confusing UX).",
+          "Crisis hotline data-testid for OPAN ends with a trailing hyphen: 'footer-crisis-opan-older-persons-advocacy-network-' (because the slugify regex generates a trailing hyphen from the closing parenthesis). Cosmetic only — tel: link itself works correctly."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "HIGH: Move AIAccuracyBanner above the ToolGate early-return in the 7 paid tools (BudgetCalculatorTool.jsx, PriceCheckerTool.jsx, ClassificationCheck.jsx, ReassessmentLetter.jsx, ContributionEstimator.jsx, CarePlanReviewer.jsx, FamilyCoordinator.jsx) so the disclaimer is visible to unauthenticated users seeing the gate screen. Suggested pattern: render <MarketingHeader /> + <section><AIAccuracyBanner .../></section> + ToolGate inside the gate-only branch.",
+    "LOW: Either register an /about route or remove the 'About' link from the footer until the page ships in Phase 2. Currently /about silently redirects to '/'.",
+    "LOW (cosmetic): Strip trailing hyphen from the OPAN crisis-hotline data-testid ('footer-crisis-opan-older-persons-advocacy-network-') by tightening the slugify regex in Footer.jsx (e.g. .replace(/[^a-z0-9]+/g,'-').replace(/-+$/,''))."
+  ],
+  "critical_code_review_comments": [
+    "Footer.jsx is clean (~144 lines), uses tel: links correctly, applies the brand navy #1F3A5F bg + gold #D4A24E divider per spec.",
+    "AIAccuracyBanner.jsx is well-structured with three variants (default/tool/anomaly) and the TOOL_DISCLAIMERS map covers all 8 tools.",
+    "LegalPage.jsx shared layout is reusable; all 6 legal pages use it consistently.",
+    "App.js correctly registers all /legal/* routes and the 4 redirect routes; auth pages (Login/Signup/PasswordReset) deliberately do not use the Footer per user choice — confirmed by inspection (no Footer import in those pages).",
+    "Bug: Banner placement after ToolGate in paid tools defeats the compliance requirement of showing the AI disclaimer to all visitors regardless of paywall state.",
+    "Note: The statement-decoder TOOL_DISCLAIMERS copy uses 'verified' (not 'verify'); the spec test 'contains \"verify\"' fails on this page only because of the substring match — semantically the page is compliant. Worth keeping in mind for any automated keyword test."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only iteration)", "frontend": "85% (footer 100%, legal pages 100%, redirects 100%, anomaly disclaimers 100%, AI banner on tools 22% — 2/9 visible to logged-out users)"},
+  "test_credentials": "cathy@example.com / testpass123 (not used — StatementDetail dashboard auth flow not exercised because public Statement Decoder tool already validated DecoderResultView per-anomaly disclaimers; the same component is used inside StatementDetail).",
+  "seed_data_creation": "None.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 1 frontend compliance roll-out. The ONLY blocker is AIAccuracyBanner placement on the 7 paid tools — it currently sits inside the form (after ToolGate early-return) instead of above the gate. After main agent moves the banner above the gate, retest by visiting all 7 paid tool URLs as a logged-out user and confirming [data-testid=ai-accuracy-banner] is visible. Also revisit /about route registration vs footer link.",
+  "rca_of_the_issue": "AIAccuracyBanner is imported in all 8 tool files but only rendered inside the post-gate form section. ToolGate component does an early `return <ToolGate>...</ToolGate>` when `useToolAccess()` denies access (unauthenticated / free-plan users on paid tools). Because the banner JSX sits AFTER that early return, it never reaches the DOM for gated visitors. Reproduction: visit https://aged-care-os.preview.emergentagent.com/ai-tools/budget-calculator in a logged-out browser — the upgrade gate is shown but no amber AIAccuracyBanner appears above or below it. Mitigation: in each of the 7 paid tool components, move the <AIAccuracyBanner text={TOOL_DISCLAIMERS[\"<slug>\"]} /> render call to a wrapper that runs BEFORE the gate check, e.g.: render MarketingHeader -> AIAccuracyBanner -> (access denied ? ToolGate : Form). Alternative: render the banner inside ToolGate itself."
+}

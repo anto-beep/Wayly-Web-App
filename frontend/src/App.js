@@ -44,6 +44,12 @@ import { ForgotPassword, ResetPassword } from "@/pages/PasswordReset";
 import Settings from "@/pages/Settings";
 import InviteAccept from "@/pages/InviteAccept";
 import CommandPalette from "@/components/CommandPalette";
+import Terms from "@/pages/legal/Terms";
+import Privacy from "@/pages/legal/Privacy";
+import AIDisclaimerPage from "@/pages/legal/AIDisclaimer";
+import AIIntent from "@/pages/legal/AIIntent";
+import Accessibility from "@/pages/legal/Accessibility";
+import CookiesPage from "@/pages/legal/Cookies";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -121,6 +127,20 @@ function App() {
                     <Route path="/ai-tools/contribution-estimator" element={<ContributionEstimator />} />
                     <Route path="/ai-tools/care-plan-reviewer" element={<CarePlanReviewer />} />
                     <Route path="/ai-tools/family-coordinator" element={<FamilyCoordinator />} />
+
+                    {/* Legal pages */}
+                    <Route path="/legal/terms" element={<Terms />} />
+                    <Route path="/legal/privacy" element={<Privacy />} />
+                    <Route path="/legal/ai-disclaimer" element={<AIDisclaimerPage />} />
+                    <Route path="/legal/ai-intent" element={<AIIntent />} />
+                    <Route path="/legal/accessibility" element={<Accessibility />} />
+                    <Route path="/legal/cookies" element={<CookiesPage />} />
+
+                    {/* Resource sub-pages — redirect placeholders to the resources index for now */}
+                    <Route path="/resources/blog" element={<Navigate to="/resources/articles" replace />} />
+                    <Route path="/resources/guides" element={<Navigate to="/resources" replace />} />
+                    <Route path="/resources/webinars" element={<Navigate to="/resources" replace />} />
+                    <Route path="/press" element={<Navigate to="/contact" replace />} />
 
                     {/* Auth pages */}
                     <Route path="/login" element={<PublicAuthOnly><Login /></PublicAuthOnly>} />

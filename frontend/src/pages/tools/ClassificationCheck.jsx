@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import { api, formatAUD } from "@/lib/api";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
@@ -70,6 +71,7 @@ export default function ClassificationCheck() {
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
+                <AIAccuracyBanner text={TOOL_DISCLAIMERS["classification-self-check"]} className="mb-4" />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-6" data-testid="classification-quiz">
                     {QUESTIONS.map((q, i) => (
                         <div key={i}>

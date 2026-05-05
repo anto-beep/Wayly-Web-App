@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { ArrowRight, FileSearch, Wallet, BarChart3, ListChecks, FileEdit, Receipt, ClipboardCheck, MessageCircle } from "lucide-react";
+import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 
 const TOOLS = [
     {
@@ -93,6 +94,7 @@ export default function AIToolsIndex() {
                 </p>
             </section>
             <section className="mx-auto max-w-7xl px-6 pb-20">
+                <AIAccuracyBanner className="mb-6" />
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="ai-tools-grid">
                     {TOOLS.map((t) => (
                         <div

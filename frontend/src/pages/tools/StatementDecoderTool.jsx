@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
 import DecoderResultView from "@/components/DecoderResultView";
 import DecoderProgress from "@/components/DecoderProgress";
+import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 
 const SAMPLE = `BlueBerry Care — Monthly Statement
 For: Dorothy Anderson · April 2026
@@ -120,6 +121,10 @@ export default function StatementDecoderTool() {
             </section>
 
             <section className="mx-auto max-w-4xl px-6 pb-20" data-testid="statement-decoder-tool">
+                <AIAccuracyBanner
+                    text={TOOL_DISCLAIMERS["statement-decoder"]}
+                    className="mb-4"
+                />
                 <div className="bg-surface border border-kindred rounded-2xl p-6">
                     <div className="flex gap-2" role="tablist">
                         {[

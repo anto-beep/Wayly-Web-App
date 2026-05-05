@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api, formatAUD2 } from "@/lib/api";
 import { AlertTriangle, ArrowLeft, MessageCircle } from "lucide-react";
+import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 
 const STREAM_BADGE = {
     Clinical: "bg-[#3A5A40] text-white",
@@ -47,6 +48,10 @@ export default function StatementDetail() {
             </div>
 
             {stmt.summary && (
+                <AIAccuracyBanner className="mb-2" />
+            )}
+
+            {stmt.summary && (
                 <div className="bg-surface-2 rounded-xl p-6 border border-kindred" data-testid="summary-card">
                     <span className="overline">In plain English</span>
                     <p className="mt-3 text-primary-k leading-relaxed">{stmt.summary}</p>
@@ -66,6 +71,9 @@ export default function StatementDetail() {
                                     {a.suggested_action && (
                                         <div className="text-xs text-primary-k mt-1.5 italic">→ {a.suggested_action}</div>
                                     )}
+                                    <div className="mt-2">
+                                        <AIAccuracyBanner variant="anomaly" />
+                                    </div>
                                 </div>
                             </li>
                         ))}

@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import { api, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
@@ -73,6 +74,7 @@ export default function PriceCheckerTool() {
             </section>
 
             <section className="mx-auto max-w-4xl px-6 pb-20">
+                <AIAccuracyBanner text={TOOL_DISCLAIMERS["provider-price-checker"]} className="mb-4" />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="price-checker">
                     <label className="block">
                         <span className="text-sm text-muted-k">Service</span>

@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotFamilyThread } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import { api, extractErrorMessage } from "@/lib/api";
 import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
 
@@ -54,6 +55,7 @@ export default function FamilyCoordinator() {
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-12 w-full flex-1 flex flex-col" data-testid="family-coordinator">
+                <AIAccuracyBanner text={TOOL_DISCLAIMERS["family-coordinator"]} className="mb-4" />
                 <div ref={ref} className="flex-1 min-h-[400px] overflow-y-auto bg-surface border border-kindred rounded-2xl p-5 space-y-4">
                     {msgs.length === 0 && !busy && (
                         <div className="h-full flex flex-col items-center justify-center text-center text-muted-k px-4 py-10">

@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import { api } from "@/lib/api";
 import { Loader2, Sparkles, Check, X } from "lucide-react";
 
@@ -37,6 +38,7 @@ export default function CarePlanReviewer() {
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
+                <AIAccuracyBanner text={TOOL_DISCLAIMERS["care-plan-reviewer"]} className="mb-4" />
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="care-plan-form">
                     <textarea value={text} onChange={(e) => setText(e.target.value)} rows={12} placeholder="Paste the full text of the care plan here…" data-testid="cp-text" className="w-full rounded-md border border-kindred bg-surface-2 p-3 text-sm focus:outline-none focus:ring-2 ring-primary-k" />
                     <button onClick={submit} disabled={loading || text.length < 50} data-testid="cp-submit" className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2">
