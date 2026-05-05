@@ -3,6 +3,7 @@ import os
 import io
 import csv
 import logging
+import re
 import statistics
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -643,11 +644,16 @@ def _detect_anomalies(
     return alerts
 
 
-@api.post("/statements/upload", response_model=Statement)
+@api.post("/statements/upload")
 async def upload_statement(
     file: UploadFile = File(...),
     user_id: str = Depends(get_current_user_id),
 ):
+    """Async upload — kicks off the chunked-parallel decode pipeline as a
+    background task and returns {job_id} immediately. The frontend polls
+    GET /statements/upload-job/{job_id} for progress + final statement.
+    Solves the K8s ingress 60s timeout that was 502'ing long statements.
+    """
     h = await _require_household(user_id)
     user = await _get_user(user_id)
     raw = await file.read()
@@ -655,71 +661,26 @@ async def upload_statement(
         raise HTTPException(status_code=400, detail="Empty file")
     if len(raw) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File too large (max 10 MB)")
-
     text = _extract_text(file.filename, raw)
     if not text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from file")
+    job_id = _submit_upload_job(text, file.filename, h["id"], user_id, user["name"])
+    return {"job_id": job_id, "status": "pending"}
 
-    parsed = await parse_statement(text, h["id"])
 
-    # Coerce line items into model
-    line_items: List[StatementLineItem] = []
-    for li in parsed.get("line_items", []) or []:
-        try:
-            li_obj = StatementLineItem(
-                date=str(li.get("date", "1970-01-01"))[:10],
-                service_code=li.get("service_code"),
-                service_name=str(li.get("service_name") or "Service"),
-                stream=li.get("stream") if li.get("stream") in ("Clinical", "Independence", "Everyday Living") else "Everyday Living",
-                units=float(li.get("units") or 0),
-                unit_price=float(li.get("unit_price") or 0),
-                total=float(li.get("total") or 0),
-                contribution_paid=float(li.get("contribution_paid") or 0),
-                government_paid=float(li.get("government_paid") or 0),
-                confidence=float(li.get("confidence") or 0.8),
-            )
-            line_items.append(li_obj)
-        except Exception as e:
-            logger.warning("Skipping bad line item: %s — %s", li, e)
-
-    # Historical line items for anomaly baseline
-    prior_statements = await db.statements.find({"household_id": h["id"]}, {"_id": 0}).to_list(50)
-    historical_items: List[dict] = []
-    for s in prior_statements:
-        historical_items.extend(s.get("line_items", []))
-
-    new_items_dicts = [li.model_dump() for li in line_items]
-    raw_anoms = _detect_anomalies(new_items_dicts, historical_items, provider_published={})
-    explained = await explain_anomalies(raw_anoms, h["id"])
-    anomalies = [Anomaly(**a) for a in explained]
-
-    statement = Statement(
-        household_id=h["id"],
-        filename=file.filename,
-        period_label=parsed.get("period_label"),
-        line_items=line_items,
-        summary=parsed.get("summary"),
-        anomalies=anomalies,
-        raw_text_preview=text[:1500],
-    )
-    await db.statements.insert_one(statement.model_dump())
-    await _audit(
-        h["id"], user_id, user["name"], "STATEMENT_UPLOADED",
-        f"Uploaded {file.filename} — {len(line_items)} line items, {len(anomalies)} alerts",
-    )
-    # In-app notification for the owner when anomalies are detected
-    if anomalies:
-        try:
-            await create_notification(
-                user_id,
-                "anomaly_alerts",
-                f"{len(anomalies)} alert{'s' if len(anomalies) != 1 else ''} in {file.filename}",
-                f"Kindred flagged {len(anomalies)} thing{'s' if len(anomalies) != 1 else ''} worth a look in the latest statement.",
-                f"/app/statements/{statement.id}",
-            )
-        except Exception:
-            pass
-    return statement
+@api.get("/statements/upload-job/{job_id}")
+async def upload_statement_job(job_id: str, user_id: str = Depends(get_current_user_id)):
+    job = UPLOAD_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+    if job.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+    out = {"status": job["status"], "phase": job.get("phase", job["status"])}
+    if job["status"] == "done":
+        out["statement_id"] = job.get("statement_id")
+    elif job["status"] == "error":
+        out["error"] = job.get("error") or "decode failed"
+    return out
 
 
 @api.get("/statements", response_model=List[Statement])
@@ -1182,6 +1143,25 @@ def _build_decode_payload(extracted: dict, audit: dict) -> dict:
 DECODE_JOBS: Dict[str, dict] = {}  # job_id → {"status": "pending|running|done|error", "result": dict | None, "error": str | None, "created_at": float}
 _DECODE_JOB_TTL = 600  # 10 minutes
 
+# Authenticated dashboard upload jobs — same async pattern, scoped per-user.
+UPLOAD_JOBS: Dict[str, dict] = {}
+_UPLOAD_JOB_TTL = 1800  # 30 minutes
+
+_STREAM_DISPLAY_MAP = {
+    "Clinical": "Clinical",
+    "Independence": "Independence",
+    "EverydayLiving": "Everyday Living",
+    "Everyday Living": "Everyday Living",
+    "ATHM": "Everyday Living",
+    "CareMgmt": "Everyday Living",
+}
+
+_SEVERITY_DISPLAY_MAP = {
+    "high": "alert",
+    "medium": "warning",
+    "low": "info",
+}
+
 
 def _new_job_id() -> str:
     import uuid
@@ -1231,6 +1211,134 @@ def _submit_decode_job(text: str) -> str:
         "created_at": time.time(),
     }
     asyncio.create_task(_run_decode_job(job_id, text))
+    return job_id
+
+
+def _prune_upload_jobs() -> None:
+    import time
+    cutoff = time.time() - _UPLOAD_JOB_TTL
+    stale = [jid for jid, job in UPLOAD_JOBS.items() if job.get("created_at", 0) < cutoff]
+    for jid in stale:
+        UPLOAD_JOBS.pop(jid, None)
+
+
+async def _run_upload_job(
+    job_id: str,
+    text: str,
+    filename: str,
+    household_id: str,
+    user_id: str,
+    user_name: str,
+) -> None:
+    """Background runner for the dashboard statement upload — uses the same
+    chunked-parallel extraction + audit pipeline as the public Statement
+    Decoder, then persists a Statement document for the household."""
+    from agents import extract_statement, audit_statement
+    job = UPLOAD_JOBS.get(job_id)
+    if job is None:
+        return
+    try:
+        job["status"] = "running"
+        job["phase"] = "extract"
+        extracted = await extract_statement(text, household_id=household_id)
+        job["phase"] = "audit"
+        audit = await audit_statement(extracted, household_id=household_id)
+
+        # Map chunked-extraction line items into the dashboard's StatementLineItem shape.
+        line_items: List[StatementLineItem] = []
+        for li in (extracted.get("line_items") or []):
+            if not isinstance(li, dict):
+                continue
+            try:
+                stream_raw = (li.get("stream") or "Everyday Living").strip()
+                stream_disp = _STREAM_DISPLAY_MAP.get(stream_raw, "Everyday Living")
+                date_str = str(li.get("date") or "1970-01-01")[:10]
+                # If date isn't ISO, leave a safe placeholder
+                if not re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
+                    date_str = "1970-01-01"
+                line_items.append(StatementLineItem(
+                    date=date_str,
+                    service_code=li.get("service_code") or None,
+                    service_name=str(li.get("service_description") or li.get("service_name") or "Service"),
+                    stream=stream_disp,
+                    units=float(li.get("hours") or li.get("units") or 0),
+                    unit_price=float(li.get("unit_rate") or li.get("unit_price") or 0),
+                    total=float(li.get("gross") or li.get("total") or 0),
+                    contribution_paid=float(li.get("participant_contribution") or li.get("contribution_paid") or 0),
+                    government_paid=float(li.get("government_paid") or 0),
+                    confidence=0.9,
+                ))
+            except Exception as e:
+                logger.warning("Skipping bad line item: %s — %s", li, e)
+
+        # Map audit anomalies to the existing Anomaly model.
+        anomalies: List[Anomaly] = []
+        for a in (audit.get("anomalies") or []):
+            if not isinstance(a, dict):
+                continue
+            sev = _SEVERITY_DISPLAY_MAP.get((a.get("severity") or "").lower(), "info")
+            anomalies.append(Anomaly(
+                severity=sev,
+                title=str(a.get("headline") or a.get("title") or "Item flagged"),
+                detail=str(a.get("detail") or ""),
+                suggested_action=a.get("suggested_action"),
+            ))
+
+        summary_text = audit.get("statement_summary", {}).get("period") or extracted.get("statement_period") or ""
+        period_label = extracted.get("statement_period") or None
+
+        statement = Statement(
+            household_id=household_id,
+            filename=filename,
+            period_label=period_label,
+            line_items=line_items,
+            summary=summary_text or None,
+            anomalies=anomalies,
+            raw_text_preview=text[:1500],
+        )
+        await db.statements.insert_one(statement.model_dump())
+        await _audit(
+            household_id, user_id, user_name, "STATEMENT_UPLOADED",
+            f"Uploaded {filename} — {len(line_items)} line items, {len(anomalies)} alerts",
+        )
+        if anomalies:
+            try:
+                await create_notification(
+                    user_id,
+                    "anomaly_alerts",
+                    f"{len(anomalies)} alert{'s' if len(anomalies) != 1 else ''} in {filename}",
+                    f"Kindred flagged {len(anomalies)} thing{'s' if len(anomalies) != 1 else ''} worth a look in the latest statement.",
+                    f"/app/statements/{statement.id}",
+                )
+            except Exception:
+                pass
+
+        job["statement_id"] = statement.id
+        job["status"] = "done"
+        job["phase"] = "done"
+    except Exception as e:
+        logger.exception("upload job %s failed", job_id)
+        job["status"] = "error"
+        job["error"] = str(e)
+
+
+def _submit_upload_job(
+    text: str, filename: str, household_id: str, user_id: str, user_name: str
+) -> str:
+    import time
+    _prune_upload_jobs()
+    job_id = _new_job_id()
+    UPLOAD_JOBS[job_id] = {
+        "status": "pending",
+        "phase": "pending",
+        "statement_id": None,
+        "error": None,
+        "user_id": user_id,
+        "created_at": time.time(),
+    }
+    asyncio.create_task(
+        _run_upload_job(job_id, text, filename, household_id, user_id, user_name)
+    )
     return job_id
 
 

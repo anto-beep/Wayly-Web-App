@@ -23,8 +23,37 @@ export default function StatementUpload() {
             const { data } = await api.post("/statements/upload", fd, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
+            const jobId = data?.job_id;
+            if (!jobId) {
+                throw new Error("No job_id returned");
+            }
+            // Poll every 2s for up to 5 minutes (covers chunked extract + audit + buffer).
+            // Network blips at the K8s ingress are tolerated — we keep polling until
+            // we either see status=done/error or exhaust the budget.
+            let statementId = null;
+            for (let i = 0; i < 150; i++) {
+                await new Promise((r) => setTimeout(r, 2000));
+                let st;
+                try {
+                    const res = await api.get(`/statements/upload-job/${jobId}`);
+                    st = res.data;
+                } catch (pollErr) {
+                    // Treat a transient error as "still running" and retry next tick.
+                    continue;
+                }
+                if (st.status === "done") {
+                    statementId = st.statement_id;
+                    break;
+                }
+                if (st.status === "error") {
+                    throw new Error(st.error || "Decode failed");
+                }
+            }
+            if (!statementId) {
+                throw new Error("Decode is still running. Try refreshing the statements list in a minute.");
+            }
             toast.success("Statement processed");
-            nav(`/app/statements/${data.id}`);
+            nav(`/app/statements/${statementId}`);
         } catch (err) {
             toast.error(extractErrorMessage(err, "Upload failed"));
         } finally {

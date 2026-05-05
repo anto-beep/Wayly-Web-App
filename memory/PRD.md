@@ -404,6 +404,35 @@ After extraction, sum the gross of each stream's line items and compare against 
 - Backend 16/16 pytest pass on Beverley May fixture (~76s through chunked-extract + audit). Iter15/16 in-process logic tests still green; iter17 Okafor regression unaffected (rule-engine changes are purely additive plus the timing window on Rule 13).
 
 
+## Implemented (Iteration 22 — Feb 2026 · Dashboard upload async — 502 fix)
+
+### What broke
+The user uploaded Beverley's 19KB May statement through the **dashboard** upload (`/api/statements/upload`, the authenticated path). That endpoint was still using the legacy single-pass `parse_statement` LLM call which takes 40–90s on a long statement. The K8s ingress times out at 60s → 502 Bad Gateway.
+
+### Fix — same async job pattern as the public Statement Decoder
+- `POST /api/statements/upload` now returns `{job_id}` immediately (<1s); the chunked-parallel `extract_statement` + `audit_statement` pipeline runs as `asyncio.create_task` in the background.
+- New `GET /api/statements/upload-job/{job_id}` returns `{status, phase, statement_id|error}`. Per-user scoped via the JWT — users can't poll someone else's job.
+- New process-local `UPLOAD_JOBS` dict with 30-min TTL prune.
+- Backend maps the chunked-extraction shape (`service_description`, `gross`, `participant_contribution`, etc.) to the existing `StatementLineItem` shape (`service_name`, `total`, `contribution_paid`) so the rest of the dashboard (Statement detail, budget burn, audit log, anomaly notifications) keeps working unchanged.
+- Audit anomaly severities mapped: `high → alert`, `medium → warning`, `low → info`. Stream codes `ATHM` and `CareMgmt` displayed as `Everyday Living` to fit the existing 3-stream `Literal` schema (extending the model is a separate task).
+
+### Frontend — `StatementUpload.jsx`
+- After the POST, the page now polls `/statements/upload-job/{job_id}` every 2s for up to 5 minutes.
+- Transient network errors (K8s ingress flaking under load) are tolerated — the loop continues on `catch` and only gives up on explicit `status: error` from the backend.
+- On `status: done`, the existing `nav(/app/statements/{id})` runs and the dashboard view renders the full Statement.
+
+### Verification
+- Live end-to-end test against the preview URL (Cathy's Family-plan account) with the 19KB Beverley fixture:
+  - POST returns job_id in <1s.
+  - Total time to status=done: ~77s (extract ~40s + audit ~30s + assembly ~7s).
+  - Result: 33 line items, 15 anomalies, all 5 expected `alert`-severity issues fire (2 brokered premiums, 1 duplicate transport, etc.).
+  - **No 502.**
+
+### Files changed
+- `/app/backend/server.py` — replaced `upload_statement` with the async job version, added `_run_upload_job` / `_submit_upload_job` / `_prune_upload_jobs` helpers, added `_STREAM_DISPLAY_MAP` + `_SEVERITY_DISPLAY_MAP` mappers, added `re` import.
+- `/app/frontend/src/pages/StatementUpload.jsx` — converted to job-poll flow with transient-error tolerance.
+
+
 ## Implemented (Iteration 13 — Feb 2026 · Two-pass Statement Decoder pipeline)
 
 The single-pass decoder was producing summaries but missing anomalies. Replaced with a structured two-pass pipeline:
