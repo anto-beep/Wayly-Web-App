@@ -57,12 +57,29 @@ export default function StatementDecoderTool() {
         setLoading(true);
         try {
             let initial;
-            if (mode === "file" && file) {
-                const fd = new FormData();
-                fd.append("file", file);
-                ({ data: initial } = await api.post("/public/decode-statement", fd, { headers: { "Content-Type": "multipart/form-data" } }));
-            } else {
-                ({ data: initial } = await api.post("/public/decode-statement-text", { text }));
+            // POST with retry on transient ingress errors (502/503/504/network).
+            let postAttempt = 0;
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                try {
+                    if (mode === "file" && file) {
+                        const fd = new FormData();
+                        fd.append("file", file);
+                        ({ data: initial } = await api.post("/public/decode-statement", fd, { headers: { "Content-Type": "multipart/form-data" }, timeout: 90_000 }));
+                    } else {
+                        ({ data: initial } = await api.post("/public/decode-statement-text", { text }, { timeout: 90_000 }));
+                    }
+                    break;
+                } catch (postErr) {
+                    const code = postErr?.response?.status;
+                    const isTransient = !code || code === 502 || code === 503 || code === 504;
+                    if (isTransient && postAttempt < 2) {
+                        postAttempt += 1;
+                        await new Promise((r) => setTimeout(r, 3000 * postAttempt));
+                        continue;
+                    }
+                    throw postErr;
+                }
             }
             // Abuse-flag short-circuit (no job)
             if (initial.abuse_flag) {
@@ -74,25 +91,32 @@ export default function StatementDecoderTool() {
                 setResult(initial);
                 return;
             }
-            // Poll for job completion — the decode pipeline takes ~45-70s
+            // Poll for job completion — the decode pipeline takes ~45-70s.
+            // Transient 502/503/504s and network blips at the K8s ingress are
+            // tolerated — we keep polling until we either see status=done/error
+            // or hit the deadline.
             const deadline = Date.now() + 180_000; // 3-minute cap
             let final = null;
             while (Date.now() < deadline) {
                 await new Promise((r) => setTimeout(r, 2000));
+                let status;
                 try {
-                    const { data: status } = await api.get(`/public/decode-job/${jobId}`);
-                    if (status.status === "done") { final = status.result; break; }
-                    if (status.status === "error") { throw new Error(status.error || "Decode failed."); }
+                    ({ data: status } = await api.get(`/public/decode-job/${jobId}`));
                 } catch (pollErr) {
-                    if (pollErr?.response?.status === 404) { throw new Error("Decode job expired. Please try again."); }
-                    throw pollErr;
+                    const code = pollErr?.response?.status;
+                    if (code === 404) { throw new Error("Decode job expired. Please try again."); }
+                    // 502/503/504 from ingress, axios timeout, or network blip — retry
+                    continue;
                 }
+                if (status.status === "done") { final = status.result; break; }
+                if (status.status === "error") { throw new Error(status.error || "Decode failed."); }
             }
             if (!final) throw new Error("Decode timed out. Please try again with a shorter statement.");
             if (initial.redaction_notice) {
                 final.redaction_notice = initial.redaction_notice;
                 final.redaction_count = initial.redaction_count;
             }
+            // abuse_flag (if any) is now inside the polled result; setResult passes through.
             setResult(final);
         } catch (err) {
             const detail = err?.response?.data?.detail;

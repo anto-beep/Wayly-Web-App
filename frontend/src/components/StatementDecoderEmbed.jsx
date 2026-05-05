@@ -29,7 +29,25 @@ export default function StatementDecoderEmbed({ compact = false }) {
         setError(null);
         setResult(null);
         try {
-            const { data: initial } = await api.post("/public/decode-statement-text", { text });
+            // POST with retry on transient ingress errors (502/503/504/network).
+            let initial;
+            let postAttempt = 0;
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                try {
+                    ({ data: initial } = await api.post("/public/decode-statement-text", { text }, { timeout: 90_000 }));
+                    break;
+                } catch (postErr) {
+                    const code = postErr?.response?.status;
+                    const isTransient = !code || code === 502 || code === 503 || code === 504;
+                    if (isTransient && postAttempt < 2) {
+                        postAttempt += 1;
+                        await new Promise((r) => setTimeout(r, 3000 * postAttempt));
+                        continue;
+                    }
+                    throw postErr;
+                }
+            }
             if (initial.abuse_flag) { setResult(initial); return; }
             const jobId = initial.job_id;
             if (!jobId) { setResult(initial); return; }
@@ -37,7 +55,14 @@ export default function StatementDecoderEmbed({ compact = false }) {
             let final = null;
             while (Date.now() < deadline) {
                 await new Promise((r) => setTimeout(r, 2000));
-                const { data: status } = await api.get(`/public/decode-job/${jobId}`);
+                let status;
+                try {
+                    ({ data: status } = await api.get(`/public/decode-job/${jobId}`));
+                } catch (pollErr) {
+                    const code = pollErr?.response?.status;
+                    if (code === 404) { throw new Error("Decode job expired. Please try again."); }
+                    continue;
+                }
                 if (status.status === "done") { final = status.result; break; }
                 if (status.status === "error") { throw new Error(status.error || "Decode failed."); }
             }

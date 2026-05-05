@@ -20,9 +20,29 @@ export default function StatementUpload() {
         try {
             const fd = new FormData();
             fd.append("file", file);
-            const { data } = await api.post("/statements/upload", fd, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
+            // POST with retry on transient ingress errors (502/503/504/network).
+            let data;
+            let postAttempt = 0;
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                try {
+                    const res = await api.post("/statements/upload", fd, {
+                        headers: { "Content-Type": "multipart/form-data" },
+                        timeout: 90_000,
+                    });
+                    data = res.data;
+                    break;
+                } catch (postErr) {
+                    const code = postErr?.response?.status;
+                    const isTransient = !code || code === 502 || code === 503 || code === 504;
+                    if (isTransient && postAttempt < 2) {
+                        postAttempt += 1;
+                        await new Promise((r) => setTimeout(r, 3000 * postAttempt));
+                        continue;
+                    }
+                    throw postErr;
+                }
+            }
             const jobId = data?.job_id;
             if (!jobId) {
                 throw new Error("No job_id returned");

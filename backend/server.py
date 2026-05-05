@@ -1177,18 +1177,41 @@ def _prune_decode_jobs() -> None:
 
 
 async def _run_decode_job(job_id: str, text: str) -> None:
-    """Background runner. Updates DECODE_JOBS[job_id] as it progresses."""
+    """Background runner. Updates DECODE_JOBS[job_id] as it progresses.
+    Runs the wrapper (PII bypass + abuse classifier) FIRST so the POST handler
+    can return a job_id instantly without any LLM dependency on the synchronous
+    request path."""
     from agents import extract_statement, audit_statement
+    from wrapper import run_wrapper
     job = DECODE_JOBS.get(job_id)
     if job is None:
         return
     try:
         job["status"] = "running"
+        job["phase"] = "wrapper"
+        # PII redaction is OFF for the Statement Decoder — the visitor is uploading
+        # their own statement and needs to see their own name in the result.
+        # Abuse / distress / manipulation checks still run.
+        wrapped = await run_wrapper(text, pii_redact=False)
+        if wrapped.get("abuse_flag"):
+            # Surface the abuse response as the final result so the frontend can render it.
+            job["result"] = {
+                "abuse_flag": wrapped["abuse_flag"],
+                "abuse_response": wrapped["abuse_response"],
+            }
+            job["status"] = "done"
+            job["phase"] = "done"
+            return
+        decode_text = wrapped.get("redacted_input") or text
         job["phase"] = "extract"
-        extracted = await extract_statement(text, household_id="public")
+        extracted = await extract_statement(decode_text, household_id="public")
         job["phase"] = "audit"
         audit = await audit_statement(extracted, household_id="public")
-        job["result"] = _build_decode_payload(extracted, audit)
+        result = _build_decode_payload(extracted, audit)
+        if wrapped.get("redaction_notice"):
+            result["redaction_notice"] = wrapped["redaction_notice"]
+            result["redaction_count"] = wrapped["redaction_count"]
+        job["result"] = result
         job["status"] = "done"
         job["phase"] = "done"
     except Exception as e:
@@ -1358,20 +1381,11 @@ async def public_decode_job_status(job_id: str):
 @api.post("/public/decode-statement-text")
 async def public_decode_text(body: PublicTextBody, request: Request, response: Response):
     await _enforce_statement_decoder_limit(request, response)
-    # PII redaction is OFF for the Statement Decoder — the visitor is uploading
-    # their own statement and needs to see their own name in the result.
-    # Abuse / distress / manipulation checks still run.
-    wrapped = await run_wrapper(body.text, pii_redact=False)
-    if wrapped["abuse_flag"]:
-        return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
-    # Submit as a background job — the full pipeline can take 40-70s, exceeding
-    # the 60s K8s ingress timeout. The frontend polls /api/public/decode-job/{id}.
-    job_id = _submit_decode_job(wrapped["redacted_input"])
-    out = {"job_id": job_id, "status": "pending"}
-    if wrapped["redaction_notice"]:
-        out["redaction_notice"] = wrapped["redaction_notice"]
-        out["redaction_count"] = wrapped["redaction_count"]
-    return out
+    # Submit immediately as a background job — wrapper + chunked extract + audit
+    # all run async. The POST returns instantly with the job_id so the K8s
+    # ingress (60s read timeout) never times out on the synchronous request.
+    job_id = _submit_decode_job(body.text)
+    return {"job_id": job_id, "status": "pending"}
 
 
 @api.post("/public/decode-statement")
@@ -1385,15 +1399,8 @@ async def public_decode_file(request: Request, response: Response, file: UploadF
     text = _extract_text(file.filename, raw)
     if not text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from file")
-    wrapped = await run_wrapper(text, pii_redact=False)
-    if wrapped["abuse_flag"]:
-        return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
-    job_id = _submit_decode_job(wrapped["redacted_input"])
-    out = {"job_id": job_id, "status": "pending"}
-    if wrapped["redaction_notice"]:
-        out["redaction_notice"] = wrapped["redaction_notice"]
-        out["redaction_count"] = wrapped["redaction_count"]
-    return out
+    job_id = _submit_decode_job(text)
+    return {"job_id": job_id, "status": "pending"}
 
 
 @api.post("/public/budget-calc")
