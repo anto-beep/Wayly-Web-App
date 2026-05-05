@@ -252,6 +252,57 @@ The iter13 two-pass decoder still occasionally truncated long statements when Pa
 ## Test status iter 16
 - Backend 25/25 pytest pass (10 iter16 + 15 iter15 regression). Frontend 100% — login, all 5 Settings tabs render, NotificationsBell + dropdown + localStorage dedupe verified, ⌘K palette intact, 0 JS errors.
 
+## Implemented (Iteration 17 — Feb 2026 · Pension-aware audit, provider notes, async job pattern)
+
+### Pension status lookup (eliminates Rule 9 false positives)
+- New `pension_status` field on the header extraction (`full_age_pension` / `part_age_pension` / `self_funded` / `unknown`).
+- LLM detects from the contribution-rate percentages in the SERVICE STREAM ALLOCATIONS section (Independence 5%/17.5%/50% × Everyday Living 17.5%/50%/80% triangulates the status).
+- **Rule 9 is now FULLY DETERMINISTIC** — `_PENSION_RATES` table + `_add_parse_warnings()`. LLM is told 'DO NOT EMIT RULE 9'. 
+- If `pension_status == "unknown"` Rule 9 emits ONE LOW informational flag and runs no per-line math.
+- Variance threshold $0.10 — eliminates the iter16 false positive where correct part-age 50% Everyday Living rates (Meal Prep, Domestic, Social Support) were being flagged.
+
+### Provider notes raw extraction
+- New 6th parallel chunk: `PROVIDER_NOTES_EXTRACTOR_SYSTEM` populates `provider_notes_raw[]` (free-form notes section at the bottom of statements).
+- Rule 11 (brokered rate premium) now scans 3 sources: line item flags, provider_notes_raw, and is_brokered+unit_rate comparisons.
+
+### Assembly hardening — dedup + subtotal stripping
+- `_is_subtotal_row()` filters out summary rows (description containing "subtotal" / "total" / "balance" / "summary", or empty-date headings).
+- `_dedupe_line_items()` drops duplicates by (date, service_code, gross, worker, is_cancellation) signature. Empty-signature artifacts removed.
+
+### Reported-total display override
+- `_apply_reported_totals()` overrides `audit.statement_summary.total_gross/total_participant_contribution/total_government_paid` with the statement's printed `reported_total_*` values. UI now shows the statement's bottom-line total exactly. Rule 15 still fires separately as a soft warning when sums don't reconcile.
+
+### Async job pattern (solves the 60s K8s ingress timeout)
+- POST `/api/public/decode-statement-text` and `/decode-statement` now return `{job_id, status:"pending"}` immediately (<1s).
+- Pipeline runs as `asyncio.create_task` background; status stored in process-local `DECODE_JOBS` dict with 600s TTL prune.
+- New GET `/api/public/decode-job/{job_id}` returns `{status, phase, result|error}`.
+- Frontend `StatementDecoderTool.jsx` and `StatementDecoderEmbed.jsx` poll every 2s up to 180s.
+- `<DecoderProgress>` updated: 7 steps now (added "Reading provider notes") with audit doneAt 75s.
+
+### Rule 13 threshold relaxed
+- Was `>15%` of quarterly_total. Now `>=10% OR >=$500` absolute. Catches smaller underspends still worth surfacing.
+
+### Robert Okafor March 2026 fixture (canonical regression)
+- New `/app/backend/tests/fixtures/robert_okafor_mar.txt` (the user-provided spec). Margaret + Robert-Q1 fixtures also moved from `/tmp` to `/app/backend/tests/fixtures/` for persistence.
+- New `/app/backend/tests/test_iter17_okafor.py` — 16 tests, all pass on live LLM (~64s).
+- New `/app/backend/tests/test_iter17_async_job.py` — 7 tests for async-job pattern + Rule 9 deterministic helper unit tests.
+- Total: **48/48 backend pytest** across iter15 + 16 + 17.
+
+### Acceptance — Robert Okafor QA criteria
+- ✅ pension_status: `part_age_pension` (correctly detected from 17.5%/50% rates)
+- ✅ No false positive on Meal Prep 7-Mar / 21-Mar (50% is correct; Rule 9 doesn't fire)
+- ✅ Brokered AHA premium: $20.25 (exactly $4.50/hr × 4.5 hrs)
+- ✅ Q1 underspend flagged: $640.70 / 13% (LOW informational, within rollover cap)
+- ✅ AT-HM unclaimed flagged ($85.00 bathroom mat)
+- ✅ Display total_gross: $2,077.33 (matches statement)
+- ✅ Display participant contribution: $530.71 (matches)
+- ✅ Statement period: "1 March 2026 – 31 March 2026" (single month, not quarter)
+- ✅ Provider notes raw captured (4 notes)
+- ✅ 3 interstate charges, care plan violation (gardening), worker substitution, previous-period adjustment all surfaced
+
+## Test status iter 17
+- Backend 48/48 pytest pass (16 iter17 okafor + 7 iter17 async + 10 iter16 + 15 iter15). Live remote Okafor flow 70s end-to-end through K8s ingress, all 16 QA assertions matching. Frontend smoke 0 React/console errors.
+
 
 ## Implemented (Iteration 13 — Feb 2026 · Two-pass Statement Decoder pipeline)
 
