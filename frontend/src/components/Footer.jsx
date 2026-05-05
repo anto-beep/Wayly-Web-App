@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { HeartHandshake } from "lucide-react";
+import AppStoreBadges from "@/components/AppStoreBadges";
 
 const PRODUCT = [
     { to: "/features", label: "Features" },
@@ -58,7 +59,10 @@ export default function Footer() {
                     <p className="text-sm text-white/80 mt-4 leading-relaxed">
                         Support at Home, finally explained.
                     </p>
-                    <p className="text-xs text-white/60 mt-4">ABN: [ABN placeholder]</p>
+                    <div className="mt-5">
+                        <AppStoreBadges align="start" />
+                    </div>
+                    <p className="text-xs text-white/60 mt-5">ABN: [ABN placeholder]</p>
                     <p className="text-xs text-white/60 mt-1">© 2026 Kindred Pty Ltd. All rights reserved.</p>
                 </div>
 

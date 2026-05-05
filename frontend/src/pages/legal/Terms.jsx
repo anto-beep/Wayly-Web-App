@@ -34,8 +34,8 @@ export default function Terms() {
 
             <h2>5. Subscriptions and cancellation</h2>
             <p>
-                Plans are billed monthly or annually. Cancel anytime with one click. 30-day full refund on
-                any paid plan. Trials are free, no card required, one per person.
+                Plans are billed monthly or annually. Cancel anytime with one click. Trials are free,
+                no card required, one per person.
             </p>
 
             <h2>6. Changes to these terms</h2>

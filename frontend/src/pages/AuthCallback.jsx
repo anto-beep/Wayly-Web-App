@@ -31,16 +31,21 @@ export default function AuthCallback() {
             .then((user) => {
                 // Clear the hash so refresh doesn't replay
                 window.history.replaceState(null, "", window.location.pathname);
-                if (user.role === "participant") {
-                    nav("/participant", { replace: true });
-                } else if (user.plan === "free") {
-                    nav("/app", { replace: true });
-                } else {
-                    nav("/onboarding", { replace: true });
-                }
+                // Resolve destination from user shape
+                let target = "/onboarding";
+                if (user?.role === "participant") target = "/participant";
+                else if (user?.plan === "free") target = "/app";
+                // Use window.location.replace rather than React Router nav() —
+                // the destination's auth guard reads `user` from context, and
+                // nav() can fire before React commits the setUser update,
+                // causing the guard to bounce back here. A hard replace
+                // guarantees the destination boots with the persisted token
+                // already in localStorage and the AuthProvider re-bootstraps
+                // cleanly. See user-reported bug: "endless Signing you in".
+                window.location.replace(target);
             })
             .catch((e) => {
-                setError(e?.response?.data?.detail || "Could not complete sign-in.");
+                setError(e?.response?.data?.detail || e?.message || "Could not complete sign-in.");
             });
     }, [completeGoogleAuth, nav]);
 

@@ -107,7 +107,7 @@ export default function Features() {
             <section className="mx-auto max-w-7xl px-6 pt-14 pb-8" data-testid="features-hero">
                 <span className="overline">Everything Kindred does</span>
                 <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4 leading-tight max-w-3xl">
-                    Eight free AI tools, plus a connected co‑pilot for the whole household.
+                    Eight AI tools, plus a connected co‑pilot for the whole household.
                 </h1>
                 <p className="mt-5 text-lg text-muted-k max-w-2xl leading-relaxed">
                     Kindred sits on top of Australia's Support at Home program. It reads the statements, watches the budget, drafts the letters,

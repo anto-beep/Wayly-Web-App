@@ -89,9 +89,6 @@ export default function AIToolsIndex() {
                 <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4 leading-tight max-w-3xl">
                     Eight tools. No signup. Built for Australian families.
                 </h1>
-                <p className="mt-5 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    Every tool is free to use with a 5-uses-per-hour limit per IP. Create a free account for unlimited access. Australian-hosted, never sold.
-                </p>
             </section>
             <section className="mx-auto max-w-7xl px-6 pb-20">
                 <AIAccuracyBanner className="mb-6" />

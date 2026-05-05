@@ -41,6 +41,11 @@ class UserPublic(BaseModel):
     plan: Literal["free", "solo", "family"] = "free"
     household_id: Optional[str] = None
     created_at: str
+    # Subscription summary (optional — populated only on /auth/me, /auth/login,
+    # /auth/signup, /auth/google-session responses).
+    subscription_status: Optional[str] = None  # "trialing" | "active" | "cancelled" | None
+    trial_ends_at: Optional[str] = None        # ISO datetime when trial expires (if trialing)
+    cancel_at_period_end: Optional[bool] = None
 
 
 class PlanUpdate(BaseModel):

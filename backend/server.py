@@ -108,7 +108,7 @@ async def _audit(household_id: str, actor_id: str, actor_name: str, action: str,
     await db.audit_events.insert_one(evt.model_dump())
 
 
-def _user_public(u: dict) -> UserPublic:
+def _user_public(u: dict, sub: Optional[dict] = None) -> UserPublic:
     return UserPublic(
         id=u["id"],
         email=u["email"],
@@ -117,7 +117,16 @@ def _user_public(u: dict) -> UserPublic:
         plan=u.get("plan", "free"),
         household_id=u.get("household_id"),
         created_at=u["created_at"],
+        subscription_status=(sub or {}).get("status"),
+        trial_ends_at=(sub or {}).get("trial_ends_at"),
+        cancel_at_period_end=(sub or {}).get("cancel_at_period_end"),
     )
+
+
+async def _user_public_with_sub(u: dict) -> UserPublic:
+    """Fetch the subscription doc and build a UserPublic with trial info."""
+    sub = await db.subscriptions.find_one({"user_id": u["id"]}, {"_id": 0})
+    return _user_public(u, sub)
 
 
 # ----------------- auth -----------------
@@ -153,7 +162,7 @@ async def login(payload: LoginRequest):
 @api.get("/auth/me", response_model=UserPublic)
 async def me(user_id: str = Depends(get_current_user_id)):
     u = await _get_user(user_id)
-    return _user_public(u)
+    return await _user_public_with_sub(u)
 
 
 @api.put("/auth/plan", response_model=UserPublic)
