@@ -345,6 +345,65 @@ This is **Phase 1** of a 3-phase content roll-out per the user's pages spec. Pha
 - Iter17 backend regression suite still passes; no backend changes this iteration.
 
 
+## Implemented (Iteration 20 — Feb 2026 · Auth blocker fix)
+- `/api/auth/login`, `/api/auth/signup`, `/api/auth/google-session`, and `/api/auth/plan` now return `subscription_status`, `trial_ends_at`, and `cancel_at_period_end` on the user payload (previously only `/api/auth/me` did). Trial Countdown Banner now renders immediately on login without requiring a hard refresh. Verified live via curl on `cathy@example.com`.
+
+## Implemented (Iteration 21 — Feb 2026 · Beverley Nguyen May fixture · 6 audit-rule fixes)
+
+### FIX 1 — Underspend timing (Rule 13)
+Quarterly underspend forfeiture alert now only fires when `period_end` falls in a quarter-final month (March / June / September / December). Mid-quarter months emit a soft LOW informational note **only** when used-to-date < 60% of the quarterly budget AND > 1 month remains: `"Mid-quarter update: $X remains in the quarterly budget with [X] month(s) still to run. No action needed yet."` New rule key `RULE_13_MID_QUARTER_UPDATE`.
+
+### FIX 2 — Rule 16 stream subtotal vs header discrepancy (NEW)
+After extraction, sum the gross of each stream's line items and compare against the per-stream "Used This Month" figure in the budget summary header. Differences > $5 fire a MEDIUM anomaly per stream (`RULE_16_STREAM_DISCREPANCY`) with the exact $X / $Y figures and the dollar gap. Runs deterministically on Clinical, Independence, and EverydayLiving independently.
+
+### FIX 3 — Provider notes anomalies (NEW Rules 17 & 18)
+- **`RULE_17_CARE_PLAN_REVIEW_DUE`** (LOW) — fires on `provider_notes_raw` matching any of: `care plan review`, `plan review due`, `review scheduled`, `review in [month]`, `last reviewed [date]`. Detail copies the verbatim sentence.
+- **`RULE_18_SERVICE_INCREASE`** (LOW) — fires on `will increase`, `additional visits`, `more frequent`, `weekly from`, `twice weekly`, etc. Best-effort dollar-impact estimate when rate + frequency + hours can be regex-extracted from the note.
+
+### FIX 4 — Rule 19 large AT-HM claim (NEW)
+`RULE_19_AT_HM_LARGE_CLAIM` (LOW) — when an `at_hm_commitments[]` entry has `amount_approved` > $1,500 AND `amount_claimed` ≥ 90% of approved. Suggests retaining the invoice and obtaining one comparative quote. Reasonable-cost-assessment language.
+
+### FIX 5 — Rule 20 ABN format validation (NEW)
+`RULE_20_ABN_FORMAT` (MEDIUM) — extracted `provider_abn` validated to contain exactly 11 digits (after stripping spaces). Anything else (letters, wrong count) fires the rule with the literal extracted value and a pointer to abr.business.gov.au.
+
+### FIX 6 — AT-HM included in gross + dedicated stream card
+- New `at_hm_line_items_this_period[]` field in the adjustments-extractor output. AT-HM commitments claimed in the current period are emitted as line items with `stream: "ATHM"` and merged into `line_items[]`.
+- New `_recompute_stream_breakdown()` helper always rebuilds `audit.stream_breakdown` deterministically from line items so the **AT-HM card is always present** when there's any AT-HM activity. Replaces whatever the LLM auditor returned (which sometimes omitted ATHM).
+- Stream display order: Clinical → Independence → EverydayLiving → ATHM → CareMgmt.
+- `_apply_reported_totals()` still overrides summary totals with the statement's printed `reported_total_*` figures, so $7,591.75 / $1,413.18 match the bottom-line total exactly.
+
+### Other reliability improvements
+- **Rule 10 (Previous Period Adjustments) is now deterministic** as a backstop — LLM was inconsistently emitting it. Fires LOW when `previous_period_adjustments[]` is non-empty. No double-counting (skipped if LLM already emitted).
+- **`provider_abn`** added to header extraction schema with verbatim-preserve guidance.
+- **`stream_used_this_month`** added to header schema, with explicit prompt language to read from the SERVICE STREAM ALLOCATIONS / "Used [Month] (this statement)" field — NOT the line-item subtotals (those are intentionally compared by Rule 16).
+- AUDITOR_SYSTEM updated: Rules 16-20 marked as deterministic-only; LLM is told to skip them to avoid double-counting.
+
+### Test fixture
+- `/app/backend/tests/fixtures/beverley_nguyen_may.txt` — Beverley Anne Nguyen, Class 7 (self-funded), May 2026, Golden Years Home Care. ABN typo (`44 619 morse 774 331`), duplicate transport on 05-May, brokered podiatry/OT premiums, Everyday Living header-vs-subtotal mismatch ($455 vs $526), full $2,500 AT-HM ramp claim, care plan review note, planned nursing increase, $89 previous-period adjustment.
+- `/app/backend/tests/test_iter21_beverley_may.py` — 16 assertions, all pass on live LLM (~76s end-to-end).
+
+### Acceptance — Beverley May QA criteria
+- ✅ No underspend forfeiture alert (May is mid-quarter, not final month)
+- ✅ Duplicate transport (05-May, $89 × 2) — RULE_3 fires
+- ✅ Podiatry brokered premium ($7/hr) — RULE_11 fires
+- ✅ OT brokered premium ($3/hr) — RULE_11 fires
+- ✅ Nurse substitution 18-May, PC substitution 13-May — RULE_6 fires (×2)
+- ✅ Previous period adjustment ($89 PT credit) — RULE_10 fires
+- ✅ AT-HM grab rails remaining balance ($212.50) — RULE_12 fires
+- ✅ Everyday Living stream discrepancy ($526 vs $455) — RULE_16 fires
+- ✅ Large AT-HM ramp claim ($2,500 / 100% of cap) — RULE_19 fires
+- ✅ Care plan review due (Note 4) — RULE_17 fires
+- ✅ Nursing frequency increase (Note 2) — RULE_18 fires
+- ✅ ABN format error (`44 619 morse 774 331`) — RULE_20 fires
+- ✅ Gross total: $7,591.75 (matches statement)
+- ✅ Participant contribution: $1,413.18 (matches)
+- ✅ AT-HM stream card present with $2,500 / 1 item
+- ✅ No "Decoded total doesn't match" Rule 15 spurious warning when totals reconcile (Rule 15 still fires when sum gap > $5 — Beverley statement has internal arithmetic gaps in stream subtotals which Rule 16 surfaces correctly)
+
+## Test status iter 21
+- Backend 16/16 pytest pass on Beverley May fixture (~76s through chunked-extract + audit). Iter15/16 in-process logic tests still green; iter17 Okafor regression unaffected (rule-engine changes are purely additive plus the timing window on Rule 13).
+
+
 ## Implemented (Iteration 13 — Feb 2026 · Two-pass Statement Decoder pipeline)
 
 The single-pass decoder was producing summaries but missing anomalies. Replaced with a structured two-pass pipeline:

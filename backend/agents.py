@@ -260,6 +260,7 @@ Return STRICT JSON only:
   "period_start": "",
   "period_end": "",
   "provider_name": "",
+  "provider_abn": "",
   "classification": "",
   "pension_status": "",
   "quarterly_budget_total": 0.00,
@@ -271,6 +272,11 @@ Return STRICT JSON only:
   "reported_total_gross": 0.00,
   "reported_total_participant_contribution": 0.00,
   "reported_total_government_paid": 0.00,
+  "stream_used_this_month": {
+    "Clinical": 0.00,
+    "Independence": 0.00,
+    "EverydayLiving": 0.00
+  },
   "lifetime_cap_total": 0.00,
   "lifetime_contributions_to_date": 0.00,
   "direct_debit_amount": 0.00,
@@ -285,6 +291,8 @@ Rules:
 - reported_total_gross is the statement's own "Total gross billed" / "Total this month" / "TOTAL" figure under the statement-totals section (the provider's stated total, including ALL streams + care management + previous-period adjustments — i.e. the bottom-line monthly TOTAL row).
 - reported_total_participant_contribution / reported_total_government_paid are the matching totals if listed.
 - budget_remaining_at_quarter_end is the statement's stated remaining quarterly service budget (post all line items), if shown.
+- provider_abn is the provider's Australian Business Number as it appears on the statement header (e.g. "12 345 678 901" or "12345678901"). Copy it verbatim including any spaces. If absent, "".
+- stream_used_this_month is the per-stream "Used [current month] (this statement)" / "Used This Month" / "Spent This Month" / "This Month Total" figures from the QUARTERLY BUDGET SUMMARY or BUDGET TRACKING or "SERVICE STREAM ALLOCATIONS" header sections. Match the provider's value for the CURRENT statement month — typically labelled "Used [Month] (this statement): $XX.XX" inside each stream's allocation block. CRITICAL: this must be the value from the header / allocations block, NOT the "Stream X Subtotal" line printed inside the ITEMISED SERVICES tables. Those two figures may legitimately differ (and a discrepancy is itself a flagged anomaly), so it is essential you extract the HEADER value here, not the subtotal. If the header value is absent or unclear, use 0.00 for that stream. Only fill the three keys (Clinical, Independence, EverydayLiving). Use 0.00 when not present.
 
 PENSION STATUS — read this from the SERVICE STREAM ALLOCATIONS section by looking at the Independence and Everyday Living "Participant Contribution Rate" percentages:
   - Independence 5% AND Everyday Living 17.5% → "full_age_pension"
@@ -352,7 +360,7 @@ EVERYDAY_EXTRACTOR_SYSTEM = _stream_extractor_system("EverydayLiving", EVERYDAY_
 )
 
 
-ADJUSTMENTS_EXTRACTOR_SYSTEM = """You are a data extraction engine for Australian Support at Home statements. Extract ONLY (a) the Care Management fee line item, (b) the previous-period-adjustments array, and (c) the AT-HM commitments / outstanding-orders register. Skip every other line item.
+ADJUSTMENTS_EXTRACTOR_SYSTEM = """You are a data extraction engine for Australian Support at Home statements. Extract ONLY (a) the Care Management fee line item, (b) the previous-period-adjustments array, (c) the AT-HM commitments / outstanding-orders register, and (d) AT-HM items that were claimed/charged in the CURRENT statement period. Skip every other line item.
 
 Return STRICT JSON only:
 {
@@ -386,7 +394,26 @@ Return STRICT JSON only:
       "amount_approved": 0.00,
       "amount_claimed": 0.00,
       "amount_remaining": 0.00,
+      "amount_claimed_this_period": 0.00,
       "status": ""
+    }
+  ],
+  "at_hm_line_items_this_period": [
+    {
+      "date": "",
+      "service_description": "",
+      "service_code": "",
+      "stream": "ATHM",
+      "hours": 0.00,
+      "unit_rate": 0.00,
+      "gross": 0.00,
+      "participant_contribution": 0.00,
+      "government_paid": 0.00,
+      "is_cancellation": false,
+      "worker_name": "",
+      "is_brokered": false,
+      "provider_notes": "",
+      "flags_in_original": ""
     }
   ]
 }
@@ -394,9 +421,10 @@ Return STRICT JSON only:
 Rules:
 - Care management fee usually has service code CM-01 or description containing "Care management". Always coded stream: "CareMgmt". For statements that apportion a quarterly care-management fee across months, extract ONLY the portion attributed to the current statement period (e.g. if the statement says "March portion (this statement): $160.83", that $160.83 is the line item). Do NOT include prior-month portions or the quarterly-total figure.
 - Previous-period adjustments are listed in a separate "PREVIOUS PERIOD ADJUSTMENTS" or similar section — they are credits/refunds for prior months, NOT line items. Credit amounts are positive numbers (the dollar value of the credit), even if the source uses a leading minus sign for display.
-- AT-HM commitments come from sections titled "AT-HM Commitments", "Outstanding Orders", "Approved Items Pending Delivery", or similar. They represent assistive-tech / home-modification items that were APPROVED but have not yet been delivered/installed/claimed.
-- For each AT-HM commitment include: a reference number (ref), item description, approval_date (ISO if possible), expiry_date (ISO if possible), amount_approved, amount_claimed (default 0.00 if not stated), amount_remaining (default amount_approved - amount_claimed if not stated explicitly), and a short status string ("approved", "in progress", "delivered", etc).
-- If the statement has no AT-HM commitments section, return an empty at_hm_commitments array.
+- AT-HM commitments come from sections titled "AT-HM Commitments", "Outstanding Orders", "Approved Items Pending Delivery", or similar. They represent assistive-tech / home-modification items that were APPROVED (with a spend-limit) but may or may not yet have been delivered/installed/claimed.
+- For each AT-HM commitment include: a reference number (ref), item description, approval_date (ISO if possible), expiry_date (ISO if possible), amount_approved, amount_claimed (cumulative — default 0.00 if not stated), amount_remaining (default amount_approved - amount_claimed if not stated explicitly), amount_claimed_this_period (the portion claimed in the CURRENT statement period only — use phrases like "claimed this period", "amount this month", "claimed in May", invoice dates inside the current period to detect this; default 0.00 if you can't tell), and a short status string ("approved", "in progress", "delivered", etc).
+- at_hm_line_items_this_period: If an AT-HM commitment was claimed/charged in the CURRENT statement period (i.e. amount_claimed_this_period > 0), ALSO emit it as a line item in this array, using the commitment ref as service_code (e.g. "ATHM-2026-0118"), the item_description, gross = amount_claimed_this_period, participant_contribution = 0.00, government_paid = amount_claimed_this_period, stream = "ATHM", and the invoice date as the date if visible (otherwise the statement period_end). This ensures AT-HM costs appear in the per-stream breakdown and the gross total reconciles with the statement's printed total.
+- If the statement has no AT-HM commitments section, return an empty at_hm_commitments and an empty at_hm_line_items_this_period array.
 - Dates should be ISO (YYYY-MM-DD) when the source allows; otherwise copy verbatim.
 - Return only valid JSON. No prose."""
 
@@ -509,6 +537,21 @@ RULE 15 — GROSS TOTAL VALIDATION (parsing warning)
 Compute extracted_total = sum(line_item.gross for line_item where is_cancellation=false) - sum(prev_period_adjustment.credit_amount).
 Compare extracted_total against reported_total_gross from the header.
 DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit check is performed in code (rule key "RULE_15_GROSS_TOTAL_PARSE_WARNING") which fires when the difference is > $5.00. Skip this rule entirely in your output to avoid double-counting.
+
+RULE 16 — STREAM SUBTOTAL vs HEADER DISCREPANCY
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check (rule key "RULE_16_STREAM_DISCREPANCY") compares each stream's summed line-item gross against the header's "Used This Month" figure for that stream and emits a MEDIUM anomaly if they differ by more than $5.
+
+RULE 17 — CARE PLAN REVIEW DUE (provider notes pattern)
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check (rule key "RULE_17_CARE_PLAN_REVIEW_DUE") scans provider_notes_raw for review-due phrases and emits a LOW anomaly.
+
+RULE 18 — PLANNED SERVICE INCREASE (provider notes pattern)
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check (rule key "RULE_18_SERVICE_INCREASE") scans provider_notes_raw for frequency-increase phrases and emits a LOW anomaly.
+
+RULE 19 — LARGE AT-HM CLAIM
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check (rule key "RULE_19_AT_HM_LARGE_CLAIM") fires when an AT-HM commitment with amount_approved > $1,500 has amount_claimed >= 90% of approved.
+
+RULE 20 — PROVIDER ABN FORMAT
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check (rule key "RULE_20_ABN_FORMAT") validates the provider_abn header field against the 11-digit ABN format.
 
 OUTPUT FORMAT — return ONLY valid JSON, no prose:
 
@@ -744,7 +787,7 @@ async def _llm_chunk_call(
 _HEADER_DEFAULTS = {
     "participant_name": "", "mac_id": "", "statement_period": "",
     "period_start": "", "period_end": "",
-    "provider_name": "", "classification": "",
+    "provider_name": "", "provider_abn": "", "classification": "",
     "pension_status": "",
     "quarterly_budget_total": 0.0, "care_management_deducted": 0.0,
     "care_management_rate_pct": 0.0, "service_budget_available": 0.0,
@@ -757,10 +800,15 @@ _HEADER_DEFAULTS = {
     "direct_debit_amount": 0.0, "direct_debit_date": "",
 }
 
+_HEADER_DICT_DEFAULTS = {
+    "stream_used_this_month": {"Clinical": 0.0, "Independence": 0.0, "EverydayLiving": 0.0},
+}
+
 
 def _empty_extracted() -> Dict[str, Any]:
     return {
         **_HEADER_DEFAULTS,
+        **{k: dict(v) for k, v in _HEADER_DICT_DEFAULTS.items()},
         "line_items": [],
         "previous_period_adjustments": [],
         "at_hm_commitments": [],
@@ -859,6 +907,16 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
                     assembled[k] = 0.0
             else:
                 assembled[k] = "" if v is None else str(v)
+        # Merge dict-typed header fields (e.g. stream_used_this_month)
+        sutm = header_res.get("stream_used_this_month")
+        if isinstance(sutm, dict):
+            cleaned = {}
+            for stream_key in ("Clinical", "Independence", "EverydayLiving"):
+                try:
+                    cleaned[stream_key] = float(sutm.get(stream_key) or 0.0)
+                except Exception:
+                    cleaned[stream_key] = 0.0
+            assembled["stream_used_this_month"] = cleaned
         # Normalise pension_status to one of the canonical values
         ps = (assembled.get("pension_status") or "").strip().lower().replace("-", "_").replace(" ", "_")
         if "self" in ps and "fund" in ps:
@@ -906,6 +964,19 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
         commitments = adj_res.get("at_hm_commitments") or []
         if isinstance(commitments, list):
             assembled["at_hm_commitments"] = [c for c in commitments if isinstance(c, dict)]
+        # AT-HM items claimed this period — append to line_items so they appear
+        # in the stream breakdown and feed the gross total reconciliation.
+        for it in (adj_res.get("at_hm_line_items_this_period") or []):
+            if not isinstance(it, dict):
+                continue
+            try:
+                gross = float(it.get("gross") or 0.0)
+            except Exception:
+                gross = 0.0
+            if gross <= 0:
+                continue
+            it["stream"] = "ATHM"
+            line_items.append(it)
 
     # Provider notes
     if isinstance(notes_res, dict):
@@ -951,7 +1022,10 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
     """
     key = _key()
     if not key:
-        return _add_parse_warnings(_empty_audit(extracted), extracted)
+        fallback = _add_parse_warnings(_empty_audit(extracted), extracted)
+        _apply_reported_totals(fallback, extracted)
+        _recompute_stream_breakdown(fallback, extracted)
+        return fallback
     chat = LlmChat(
         api_key=key,
         session_id=f"audit-{household_id}",
@@ -969,6 +1043,8 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
         result = _add_parse_warnings(result, extracted)
         # If the statement reports explicit totals, prefer those for display
         _apply_reported_totals(result, extracted)
+        # Always recompute stream_breakdown deterministically so AT-HM card is present
+        _recompute_stream_breakdown(result, extracted)
         # Normalise anomaly_count if the model forgot it
         anoms = result.get("anomalies", []) or []
         counts = {"high": 0, "medium": 0, "low": 0}
@@ -982,12 +1058,14 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
         logger.warning("Auditor Pass 2 JSON parse failed: %s | raw[:500]=%r", e, str(raw)[:500])
         fallback = _add_parse_warnings(_empty_audit(extracted), extracted)
         _apply_reported_totals(fallback, extracted)
+        _recompute_stream_breakdown(fallback, extracted)
         fallback["_audit_error"] = f"json_parse: {e}"
         return fallback
     except Exception as e:
         logger.warning("Auditor Pass 2 failed: %s", e)
         fallback = _add_parse_warnings(_empty_audit(extracted), extracted)
         _apply_reported_totals(fallback, extracted)
+        _recompute_stream_breakdown(fallback, extracted)
         fallback["_audit_error"] = str(e)
         return fallback
 
@@ -1014,6 +1092,45 @@ def _apply_reported_totals(audit_result: Dict[str, Any], extracted: Dict[str, An
     if reported_gov > 0:
         summary["total_government_paid"] = round(reported_gov, 2)
     audit_result["statement_summary"] = summary
+
+
+def _recompute_stream_breakdown(audit_result: Dict[str, Any], extracted: Dict[str, Any]) -> None:
+    """Always recompute the stream_breakdown array deterministically from the
+    extracted line items. Replaces whatever the LLM auditor returned (which
+    sometimes omits AT-HM or merges streams). Guarantees the UI gets a card
+    for every stream that has at least one non-cancelled line item — including
+    AT-HM (assistive tech / home modifications)."""
+    items = extracted.get("line_items") or []
+    by_stream: Dict[str, Dict[str, float]] = {}
+    # Stable display order — AT-HM card sits between Everyday Living and Care Mgmt.
+    ORDER = ["Clinical", "Independence", "EverydayLiving", "ATHM", "CareMgmt"]
+    for li in items:
+        if not isinstance(li, dict) or li.get("is_cancellation"):
+            continue
+        stream = (li.get("stream") or "Unknown").strip() or "Unknown"
+        b = by_stream.setdefault(stream, {
+            "line_item_count": 0,
+            "gross_total": 0.0,
+            "participant_contribution": 0.0,
+            "government_paid": 0.0,
+        })
+        b["line_item_count"] += 1
+        try:
+            b["gross_total"] += float(li.get("gross") or 0.0)
+            b["participant_contribution"] += float(li.get("participant_contribution") or 0.0)
+            b["government_paid"] += float(li.get("government_paid") or 0.0)
+        except Exception:
+            pass
+    out: list[dict] = []
+    for s in ORDER:
+        if s in by_stream:
+            v = by_stream.pop(s)
+            out.append({"stream": s, **{k: round(val, 2) if isinstance(val, float) else val for k, val in v.items()}})
+    # Any remaining (unknown) streams append in alpha order
+    for s in sorted(by_stream.keys()):
+        v = by_stream[s]
+        out.append({"stream": s, **{k: round(val, 2) if isinstance(val, float) else val for k, val in v.items()}})
+    audit_result["stream_breakdown"] = out
 
 
 # ---------------------------------------------------------------------------
@@ -1148,17 +1265,23 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     ),
                 })
 
-    # Rule 13 — Quarterly underspend pattern (deterministic)
-    if "RULE_13_QUARTERLY_UNDERSPEND" not in existing_rules:
+    # Rule 13 — Quarterly underspend pattern (deterministic, period-aware)
+    # Only fire the full forfeiture alert when the statement period_end falls
+    # in the FINAL month of the quarter (March / June / September / December).
+    # In mid-quarter months, emit a soft LOW informational note only.
+    if "RULE_13_QUARTERLY_UNDERSPEND" not in existing_rules and "RULE_13_MID_QUARTER_UPDATE" not in existing_rules:
         try:
             quarterly_total = float(extracted.get("quarterly_budget_total") or 0.0)
             remaining = float(extracted.get("budget_remaining_at_quarter_end") or 0.0)
         except Exception:
             quarterly_total = remaining = 0.0
-        # Fire when there's a meaningful underspend: either >10% of quarterly budget
-        # OR >$500 in absolute dollars (whichever comes first). Rollover-within-cap
-        # stays LOW (informational); over-cap fires MEDIUM (forfeit risk).
-        if quarterly_total > 0 and remaining > 0:
+        QUARTER_FINAL_MONTHS = {3, 6, 9, 12}
+        period_end = _parse_iso_date(extracted.get("period_end"))
+        period_month = period_end.month if period_end else None
+        is_final_month = period_month in QUARTER_FINAL_MONTHS
+
+        if is_final_month and quarterly_total > 0 and remaining > 0:
+            # Final month of the quarter — fire the full forfeiture alert
             remaining_pct = remaining / quarterly_total * 100
             rollover_cap = max(1000.00, 0.10 * quarterly_total)
             if remaining_pct >= 10 or remaining >= 500:
@@ -1190,8 +1313,52 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                         f"budget_remaining_at_quarter_end: ${remaining:,.2f}",
                         f"remaining_pct: {remaining_pct:.2f}%",
                         f"rollover_cap: ${rollover_cap:,.2f}",
+                        f"period_end_month: {period_month}",
                     ],
                     "suggested_action": "Schedule a care-plan review with the provider before quarter end. Identify services the participant qualifies for but isn't currently using.",
+                })
+        elif period_month is not None and not is_final_month and quarterly_total > 0:
+            # Mid-quarter month — only emit a LOW informational note when
+            # less than 60% of the quarterly budget has been used so far AND
+            # more than one month remains in the quarter.
+            # Compute used-to-date from line items (fallback if remaining is 0).
+            used_to_date = 0.0
+            for li in (extracted.get("line_items") or []):
+                if isinstance(li, dict) and not li.get("is_cancellation"):
+                    try:
+                        used_to_date += float(li.get("gross") or 0.0)
+                    except Exception:
+                        pass
+            # If remaining is reported, prefer (quarterly - remaining) as used-to-date
+            if remaining > 0:
+                used_to_date = max(used_to_date, quarterly_total - remaining)
+            used_pct = (used_to_date / quarterly_total * 100) if quarterly_total > 0 else 0.0
+            # Months remaining in the quarter (1 = period_month is mid-quarter mid, etc)
+            # Quarters: Q1=Jan/Feb/Mar, Q2=Apr/May/Jun, Q3=Jul/Aug/Sep, Q4=Oct/Nov/Dec.
+            # Final-month is the 3rd month. Mid-quarter months remaining_after = (3 - position).
+            quarter_position = ((period_month - 1) % 3) + 1  # 1, 2, or 3
+            months_remaining = 3 - quarter_position  # 2 (1st month), 1 (2nd month), 0 (final)
+            qtr_remaining_dollars = max(0.0, quarterly_total - used_to_date)
+            if used_pct < 60.0 and months_remaining > 0:
+                anomalies.append({
+                    "severity": "low",
+                    "rule": "RULE_13_MID_QUARTER_UPDATE",
+                    "headline": f"Mid-quarter update: ${qtr_remaining_dollars:,.2f} remains in the quarterly budget with {months_remaining} month{'s' if months_remaining != 1 else ''} still to run. No action needed yet.",
+                    "detail": (
+                        f"This statement covers a mid-quarter month, so the underspend forfeiture risk doesn't apply yet. "
+                        f"About {used_pct:.0f}% of the ${quarterly_total:,.2f} quarterly budget has been used — "
+                        f"${qtr_remaining_dollars:,.2f} remains with {months_remaining} month{'s' if months_remaining != 1 else ''} left in the quarter."
+                    ),
+                    "dollar_impact": 0.0,
+                    "evidence": [
+                        f"period_end_month: {period_month}",
+                        f"quarter_position: {quarter_position} of 3",
+                        f"months_remaining: {months_remaining}",
+                        f"used_to_date: ${used_to_date:,.2f}",
+                        f"used_pct: {used_pct:.1f}%",
+                        f"quarterly_budget_total: ${quarterly_total:,.2f}",
+                    ],
+                    "suggested_action": "No action required this month. We'll re-check at the end of the quarter.",
                 })
 
     # Rule 14 — period span > 35 days
@@ -1259,6 +1426,230 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                         f"statement reported total: ${reported:,.2f}",
                     ],
                     "suggested_action": "Open the original statement and check whether any line items are missing from the decoded view above.",
+                })
+
+    # Rule 16 — Stream subtotal vs header "Used This Month" discrepancy (deterministic)
+    if "RULE_16_STREAM_DISCREPANCY" not in existing_rules:
+        sutm = extracted.get("stream_used_this_month") or {}
+        if isinstance(sutm, dict):
+            STREAM_LABEL = {"Clinical": "Clinical", "Independence": "Independence", "EverydayLiving": "Everyday Living"}
+            for stream_key, header_value in sutm.items():
+                if stream_key not in STREAM_LABEL:
+                    continue
+                try:
+                    header_val = float(header_value or 0.0)
+                except Exception:
+                    continue
+                if header_val <= 0:
+                    continue
+                computed = 0.0
+                for li in (extracted.get("line_items") or []):
+                    if not isinstance(li, dict) or li.get("is_cancellation"):
+                        continue
+                    if (li.get("stream") or "") != stream_key:
+                        continue
+                    try:
+                        computed += float(li.get("gross") or 0.0)
+                    except Exception:
+                        continue
+                diff = abs(computed - header_val)
+                if diff > 5.0:
+                    label = STREAM_LABEL[stream_key]
+                    anomalies.append({
+                        "severity": "medium",
+                        "rule": "RULE_16_STREAM_DISCREPANCY",
+                        "headline": f"{label} total doesn't add up — reconciliation needed",
+                        "detail": (
+                            f"The {label} line items on this statement total ${computed:,.2f}, "
+                            f"but the budget summary shows ${header_val:,.2f} used for {label} this month. "
+                            f"The ${diff:,.2f} difference has no explanation on the statement."
+                        ),
+                        "dollar_impact": round(diff, 2),
+                        "evidence": [
+                            f"stream: {stream_key}",
+                            f"sum of {label} line items: ${computed:,.2f}",
+                            f"header 'Used This Month' for {label}: ${header_val:,.2f}",
+                        ],
+                        "suggested_action": f"Ask your provider to reconcile the {label} total before your next statement.",
+                    })
+
+    # Rule 17 / 18 — Provider notes pattern matching (deterministic)
+    notes_raw = extracted.get("provider_notes_raw") or []
+    if isinstance(notes_raw, list) and notes_raw:
+        # Pattern A — Care plan review due
+        if "RULE_17_CARE_PLAN_REVIEW_DUE" not in existing_rules:
+            review_patterns = [
+                "care plan review", "plan review due", "review scheduled",
+                "review in ", "last reviewed",
+            ]
+            for note in notes_raw:
+                if not isinstance(note, str):
+                    continue
+                lower = note.lower()
+                if any(p in lower for p in review_patterns):
+                    anomalies.append({
+                        "severity": "low",
+                        "rule": "RULE_17_CARE_PLAN_REVIEW_DUE",
+                        "headline": "Care plan review is due",
+                        "detail": note.strip(),
+                        "dollar_impact": 0.0,
+                        "evidence": [f"provider note: {note.strip()[:240]}"],
+                        "suggested_action": (
+                            "Confirm the review date with your care manager and ensure any recent health "
+                            "changes (such as medication adjustments or new diagnoses) are included in the "
+                            "updated plan."
+                        ),
+                    })
+                    break  # one flag is enough
+
+        # Pattern B — Service frequency increasing
+        if "RULE_18_SERVICE_INCREASE" not in existing_rules:
+            increase_patterns = [
+                "will increase", "additional visits", "more frequent",
+                "weekly from", "twice weekly", "increasing frequency",
+                "frequency will increase", "stepping up",
+            ]
+            for note in notes_raw:
+                if not isinstance(note, str):
+                    continue
+                lower = note.lower()
+                if any(p in lower for p in increase_patterns):
+                    # Best-effort stream guess from keywords in the note
+                    n = lower
+                    if any(w in n for w in ("nurs", "wound", "clinical", "podiatry", "ot ", "physio")):
+                        stream_label = "Clinical"
+                    elif any(w in n for w in ("personal care", "respite", "social", "transport")):
+                        stream_label = "Independence"
+                    elif any(w in n for w in ("clean", "domestic", "garden", "meal", "shopping")):
+                        stream_label = "EverydayLiving"
+                    else:
+                        stream_label = ""
+                    impact = 0.0
+                    # Try to estimate dollar impact: pick a $rate/hr and frequency from the note
+                    import re as _re
+                    rate_match = _re.search(r"\$(\d+(?:\.\d{1,2})?)", note)
+                    freq_match = _re.search(r"(\d+)\s*(?:per\s+week|/\s*week|x\s*per\s*week|weekly)", lower)
+                    hours_match = _re.search(r"(\d+(?:\.\d{1,2})?)\s*hour", lower)
+                    if rate_match and freq_match:
+                        try:
+                            rate = float(rate_match.group(1))
+                            visits_per_week = float(freq_match.group(1))
+                            hours_per_visit = float(hours_match.group(1)) if hours_match else 1.0
+                            # Project ~4.33 weeks/month
+                            impact = round(rate * hours_per_visit * visits_per_week * 4.33, 2)
+                        except Exception:
+                            impact = 0.0
+                    advisory_stream = stream_label or "current stream"
+                    anomalies.append({
+                        "severity": "low",
+                        "rule": "RULE_18_SERVICE_INCREASE",
+                        "headline": "Planned service increase may affect your budget",
+                        "detail": note.strip(),
+                        "dollar_impact": impact,
+                        "evidence": [f"provider note: {note.strip()[:240]}"],
+                        "suggested_action": (
+                            f"Check with your care manager that your {advisory_stream} allocation is sufficient "
+                            f"to cover the increased visits through the end of the quarter."
+                        ),
+                    })
+                    break
+
+    # Rule 19 — Large AT-HM claim (worth keeping the invoice)
+    if "RULE_19_AT_HM_LARGE_CLAIM" not in existing_rules:
+        for c in (extracted.get("at_hm_commitments") or []):
+            if not isinstance(c, dict):
+                continue
+            try:
+                approved = float(c.get("amount_approved") or 0.0)
+                claimed = float(c.get("amount_claimed") or 0.0)
+            except Exception:
+                continue
+            if approved <= 1500.0:
+                continue
+            if approved <= 0:
+                continue
+            # Claimed at or near the full spend limit (>= 90%)
+            if claimed >= 0.90 * approved:
+                desc = (c.get("item_description") or "AT-HM item").strip()
+                anomalies.append({
+                    "severity": "low",
+                    "rule": "RULE_19_AT_HM_LARGE_CLAIM",
+                    "headline": "Large AT-HM claim — worth keeping your invoice",
+                    "detail": (
+                        f"The full AT-HM allowance of ${approved:,.2f} for {desc} was claimed this month. "
+                        f"AT-HM Tier 2 claims are subject to reasonable cost assessment. Retain the invoice "
+                        f"from the supplier in case of query."
+                    ),
+                    "dollar_impact": round(claimed, 2),
+                    "evidence": [
+                        f"item: {desc}",
+                        f"approved: ${approved:,.2f}",
+                        f"claimed: ${claimed:,.2f}",
+                        f"ref: {c.get('ref') or ''}",
+                    ],
+                    "suggested_action": "Keep the original invoice. If possible, obtain one comparative quote for your records.",
+                })
+
+    # Rule 20 — Provider ABN format validation
+    if "RULE_20_ABN_FORMAT" not in existing_rules:
+        abn_raw = (extracted.get("provider_abn") or "").strip()
+        if abn_raw:
+            # Strip spaces only — anything else is suspect.
+            abn_no_spaces = abn_raw.replace(" ", "")
+            invalid = (not abn_no_spaces.isdigit()) or (len(abn_no_spaces) != 11)
+            if invalid:
+                anomalies.append({
+                    "severity": "medium",
+                    "rule": "RULE_20_ABN_FORMAT",
+                    "headline": "Provider ABN appears to contain a formatting error",
+                    "detail": (
+                        f"The ABN on this statement reads '{abn_raw}' which does not appear to be a valid "
+                        f"Australian Business Number. A valid ABN contains 11 digits."
+                    ),
+                    "dollar_impact": 0.0,
+                    "evidence": [
+                        f"extracted ABN: {abn_raw}",
+                        f"digits-only length: {len(abn_no_spaces)}",
+                    ],
+                    "suggested_action": (
+                        "Verify this provider's ABN at abr.business.gov.au before making any payments. "
+                        "An incorrect ABN on a statement may indicate a data entry error."
+                    ),
+                })
+
+    # Rule 10 — Previous period adjustments (deterministic backstop — LLM is
+    # inconsistent at emitting this even when adjustments are clearly present).
+    if "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS" not in existing_rules:
+        adjs = extracted.get("previous_period_adjustments") or []
+        adjs = [a for a in adjs if isinstance(a, dict)]
+        if adjs:
+            total_credit = 0.0
+            descriptions: list[str] = []
+            for a in adjs:
+                try:
+                    total_credit += float(a.get("credit_amount") or 0.0)
+                except Exception:
+                    pass
+                desc = (a.get("description") or "").strip()
+                ref = (a.get("ref") or "").strip()
+                if desc:
+                    descriptions.append(f"{ref}: {desc}" if ref else desc)
+            if total_credit > 0 or descriptions:
+                anomalies.append({
+                    "severity": "low",
+                    "rule": "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS",
+                    "headline": (
+                        f"{len(adjs)} previous-period adjustment{'s' if len(adjs) != 1 else ''} "
+                        f"applied — total credit ${total_credit:,.2f}."
+                    ),
+                    "detail": (
+                        "These corrections relate to a prior month's services. "
+                        "Confirm the credit was applied to the government share, not your participant contribution."
+                        + (" Adjustment summary: " + " · ".join(descriptions[:3]) if descriptions else "")
+                    ),
+                    "dollar_impact": round(total_credit, 2),
+                    "evidence": [f"adjustments: {len(adjs)}", f"total_credit: ${total_credit:,.2f}"],
+                    "suggested_action": "Verify the credit shows on your next direct debit statement.",
                 })
 
     audit_result["anomalies"] = anomalies
