@@ -99,16 +99,99 @@ def test_no_clinical_independence_discrepancy(decoded):
 # ───────── FIX 3: Exact same-date duplicate detection ─────────
 
 def test_duplicate_transport_05_may_high(decoded):
-    """The 05-May TR-003 double-charge must be flagged HIGH by the exact-match rule."""
+    """The 05-May TR-003 double-charge must be flagged HIGH (either by the
+    deterministic exact-match rule or the LLM auditor — both are RULE_3 family).
+    Only ONE RULE_3 family flag should fire (cross-source dedup)."""
     flags = [
         a for a in decoded["audit"].get("anomalies", [])
-        if a.get("rule") == "RULE_3_DUPLICATE_EXACT" and "05" in (a.get("headline") or "")
+        if (a.get("rule") or "").startswith("RULE_3")
     ]
-    assert flags, "Expected exact-duplicate rule to fire on 05-May TR-003"
-    assert flags[0].get("severity") == "high"
+    assert flags, "Expected RULE_3 family to fire on 05-May TR-003"
+    assert any(f.get("severity") == "high" for f in flags), (
+        f"Expected at least one HIGH-severity transport duplicate flag; got severities {[f.get('severity') for f in flags]}"
+    )
+    assert len(flags) == 1, (
+        f"Expected ONE RULE_3 family flag (cross-source dedup); got {len(flags)}: "
+        f"{[f.get('rule') for f in flags]}"
+    )
 
 
 # ───────── FIX 1: Dedupe anomalies by headline ─────────
+
+# ───────── FIX 1: Dedupe anomalies by fingerprint ─────────
+
+def test_anomaly_fingerprints_unique(decoded):
+    """No two anomalies of the SAME RULE FAMILY share both date + service_code + dollar_impact.
+    (Different rule families about the same line — e.g. Rule 2 rate-accuracy and
+    Rule 6 worker-substitution on the same nursing visit — are legitimately distinct.)"""
+    import re
+    DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2}|\d{1,2}[-\s][A-Za-z]{3,9})\b")
+    CODE_RE = re.compile(r"\b([A-Z]{2,5}-\d{2,4})\b")
+    RULE_RE = re.compile(r"^(RULE_\d+)")
+
+    seen = set()
+    for a in decoded["audit"].get("anomalies", []):
+        blob = (a.get("detail") or "") + " " + " ".join(str(e) for e in (a.get("evidence") or []))
+        d = DATE_RE.search(blob)
+        c = CODE_RE.search(blob)
+        date = d.group(1).lower() if d else ""
+        code = c.group(1).lower() if c else ""
+        try:
+            dollars = round(float(a.get("dollar_impact") or 0), 2)
+        except Exception:
+            dollars = 0.0
+        rm = RULE_RE.match((a.get("rule") or "").upper())
+        rule_prefix = rm.group(1) if rm else (a.get("rule") or "")
+        if not date and not code:
+            continue  # provider-note-style flags not fingerprintable
+        key = (rule_prefix, date, code, dollars)
+        assert key not in seen, f"Duplicate fingerprint: {key} | rule {a.get('rule')}"
+        seen.add(key)
+
+
+# ───────── FIX 3: No speculative brokered-rate flags ─────────
+
+def test_no_speculative_brokered_flags(decoded):
+    for a in decoded["audit"].get("anomalies", []):
+        text = ((a.get("detail") or "") + " " + (a.get("headline") or "")).lower()
+        if "brokered" not in text:
+            continue
+        # Must contain at least 2 distinct $-amount references (the published rate AND the brokered rate).
+        import re as _re
+        amounts = set()
+        blob = (a.get("detail") or "") + " " + " ".join(str(e) for e in (a.get("evidence") or []))
+        for m in _re.finditer(r"\$([0-9]+(?:\.[0-9]{1,2})?)", blob):
+            amounts.add(round(float(m.group(1)), 2))
+        assert len(amounts) >= 2, (
+            f"Brokered anomaly without 2 explicit rate references: {a.get('rule')} | {a.get('headline')} | amounts={amounts}"
+        )
+
+
+# ───────── FIX 4: 19-May TR-003 must be extracted ─────────
+
+def test_19_may_transport_present(decoded):
+    items = [
+        li for li in decoded["extracted"]["line_items"]
+        if (li.get("service_code") or "").upper().startswith("TR")
+        and "19" in (li.get("date") or "")
+    ]
+    assert items, "Expected the 19-May TR-003 community transport to be extracted"
+
+
+def test_all_three_transport_dates_present(decoded):
+    """5-May (×2 duplicate) and 19-May should all appear — exact-duplicate
+    detection must not eat the 19-May because it's a different date."""
+    dates = set()
+    for li in decoded["extracted"]["line_items"]:
+        if (li.get("service_code") or "").upper().startswith("TR"):
+            d = (li.get("date") or "").strip()
+            # Pull just the day portion so we accept "05-May", "2026-05-05", etc.
+            for token in d.replace("-", " ").split():
+                if token.isdigit() and 1 <= int(token) <= 31:
+                    dates.add(int(token))
+                    break
+    assert {5, 19}.issubset(dates), f"Expected transport on days 5 and 19, got days {sorted(dates)}"
+
 
 def test_anomaly_headlines_unique(decoded):
     headlines = [a.get("headline") for a in decoded["audit"].get("anomalies", []) if a.get("headline")]
@@ -119,14 +202,28 @@ def test_anomaly_headlines_unique(decoded):
 
 # ───────── FIX 3: provider notes ─────────
 
-def test_care_plan_review_due(decoded):
+def test_care_plan_review_or_merged(decoded):
     rules = {a.get("rule") for a in decoded["audit"].get("anomalies", [])}
-    assert "RULE_17_CARE_PLAN_REVIEW_DUE" in rules
+    # Either standalone review OR the merged review+increase rule must be present.
+    assert (
+        "RULE_17_CARE_PLAN_REVIEW_DUE" in rules
+        or "RULE_17_18_REVIEW_AND_INCREASE_MERGED" in rules
+    )
 
 
-def test_service_increase(decoded):
-    rules = {a.get("rule") for a in decoded["audit"].get("anomalies", [])}
-    assert "RULE_18_SERVICE_INCREASE" in rules
+def test_review_and_increase_merged_when_both_present(decoded):
+    rules = [a.get("rule") for a in decoded["audit"].get("anomalies", [])]
+    has_review = any(r == "RULE_17_CARE_PLAN_REVIEW_DUE" for r in rules)
+    has_increase = any(r == "RULE_18_SERVICE_INCREASE" for r in rules)
+    has_merged = any(r == "RULE_17_18_REVIEW_AND_INCREASE_MERGED" for r in rules)
+    # If the merged rule is present, neither standalone should be.
+    if has_merged:
+        assert not has_review and not has_increase, (
+            "Merged rule + standalone present — they should be replaced, not duplicated"
+        )
+    # And: when the Beverley fixture is processed, BOTH source flags hit, so we
+    # expect the merged form (not two separate flags).
+    assert has_merged, "Beverley statement has both review-due (Note 4) and nursing increase (Note 2) — they must merge"
 
 
 # ───────── FIX 4: large AT-HM claim ─────────

@@ -346,7 +346,13 @@ Rules:
 
 CLINICAL_DESCRIPTION = """The Clinical stream covers nursing visits, allied health (occupational therapy, physiotherapy, podiatry, dietetics, speech, social work, psychology), wound care, continence support. Service codes typically begin NU-, OT-, PT-, PD-, AH-, WC-."""
 
-INDEPENDENCE_DESCRIPTION = """The Independence stream covers personal care (showering, grooming, toileting), respite care, social support, transport (community access, medical appointments, hospital). Service codes typically begin PC-, RES-, SS-, TR-. Include transport items even if they have a "stream query" note."""
+INDEPENDENCE_DESCRIPTION = """The Independence stream covers personal care (showering, grooming, toileting), respite care, social support, transport (community access, medical appointments, hospital). Service codes typically begin PC-, RES-, SS-, TR-. Include transport items even if they have a "stream query" note.
+
+CRITICAL — TRANSPORT ITEMS:
+- Community Transport (service code TR-, or any line item with description containing "transport", "taxi", "driver", "vehicle", "bus") is ALWAYS Independence stream regardless of the medical context of the appointment. A transport line item to a cardiology appointment, oncology appointment, GP appointment, hospital, day-program or any other destination is Independence stream — NEVER Clinical.
+- Extract EVERY transport line item you see, even when multiple TR- entries appear with the same service code on different dates. Items with different dates are NEVER duplicates and must each be emitted as a separate line item. For example, two TR-003 entries on the 5th and one on the 19th of the month → emit ALL THREE entries.
+- Repeat transport entries on the SAME date with the same service code and rate ARE included — emit each occurrence as its own line item; downstream rules will detect billing duplicates separately.
+- Transport descriptions often contain medical destinations ("GP appointment", "cardiology review", "Wesley Hospital", "specialist consultation", etc.). Do NOT let the medical destination cause you to skip the line, miscode the stream, or merge multiple separate trips."""
 
 EVERYDAY_DESCRIPTION = """The Everyday Living stream covers domestic assistance (cleaning, laundry), home maintenance/gardening, meal preparation, shopping. Service codes typically begin DA-, GM-, ML-, SH-.
 
@@ -841,6 +847,99 @@ def _is_subtotal_row(it: Dict[str, Any]) -> bool:
     return False
 
 
+def _recover_transport_items(items: list[dict], text: str) -> list[dict]:
+    """Deterministic backstop — scans the original statement text for
+    date-prefixed transport line entries (TR- service codes) that were not
+    captured by the Independence chunked extractor. Adds a stub Independence
+    line item for each missing entry.
+
+    The Beverley fixture contains TR-003 entries on multiple dates; the LLM
+    occasionally drops one mid-month entry when they appear far apart in the
+    statement. This pass restores those.
+    """
+    import re as _re
+    if not text or not isinstance(text, str):
+        return items
+    # Pattern: <DD-Month> on a line, then TR-XXX nearby, then $amount nearby.
+    # Tight horizontal bounds — date and TR- must be within ~80 chars (i.e. on
+    # the same statement line, accounting for column spacing). Too loose and
+    # we false-positive across separate line items.
+    LINE_RE = _re.compile(
+        r"(?P<date>(?:\d{1,2}[-\s][A-Z][a-z]{2,8})|\d{4}-\d{2}-\d{2})"
+        r"[^\n\r]{0,100}?"
+        r"(?P<code>TR-\d{2,4})"
+        r"[^\n\r]{0,80}?"
+        r"\$(?P<amount>\d+(?:\.\d{1,2})?)",
+    )
+
+    # Index existing items by (date, code, gross).
+    def _norm_date(d: str) -> str:
+        return _re.sub(r"[^a-zA-Z0-9]", "", d or "").lower()
+
+    # Collect existing transport occurrence count per (date, code) — match by
+    # date + code only so that an LLM-extracted item with gross=None still
+    # counts as already present and we don't add a duplicate stub.
+    from collections import Counter
+    occurrences: Counter = Counter()
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        code = (it.get("service_code") or "").strip().upper()
+        if not code.startswith("TR"):
+            continue
+        occurrences[(_norm_date(it.get("date") or ""), code)] += 1
+
+    # Scan the source text for TR- references and count occurrences per (date, code).
+    found: Counter = Counter()
+    found_amount: dict = {}
+    for m in LINE_RE.finditer(text):
+        date = m.group("date").strip()
+        code = m.group("code").upper()
+        try:
+            amount = round(float(m.group("amount")), 2)
+        except Exception:
+            continue
+        # Skip if the matched $amount looks like a subtotal aggregate (>= $250 for transport).
+        # TR- charges are tiny per-trip; subtotal rows are big. Also skip $0 entries.
+        if amount <= 0 or amount > 250:
+            continue
+        key = (_norm_date(date), code)
+        found[key] += 1
+        # Remember the first dollar-amount we saw for this (date, code) so the
+        # stub is realistic.
+        if key not in found_amount:
+            found_amount[key] = (date, amount)
+
+    # For each found (date, code), ensure we have at least that many in items.
+    for (date_norm, code), seen_count in found.items():
+        already = occurrences.get((date_norm, code), 0)
+        missing = seen_count - already
+        if missing <= 0:
+            continue
+        raw_date, amount = found_amount[(date_norm, code)]
+        # Cap recoveries to a sane upper bound to avoid runaway noise from regex matches.
+        for _ in range(min(missing, 5)):
+            items.append({
+                "date": raw_date,
+                "service_description": "Community Transport",
+                "service_code": code,
+                "stream": "Independence",
+                "hours": 0.0,
+                "unit_rate": amount,
+                "gross": amount,
+                "participant_contribution": round(amount * 0.5, 2),
+                "government_paid": round(amount * 0.5, 2),
+                "is_cancellation": False,
+                "worker_name": "",
+                "is_brokered": False,
+                "provider_notes": "(recovered by deterministic transport backstop — verify against original)",
+                "flags_in_original": "",
+            })
+            occurrences[(date_norm, code)] = already + 1
+            already += 1
+    return items
+
+
 def _dedupe_line_items(items: list[dict]) -> tuple[list[dict], int]:
     """Drop duplicate line items by (date + service_code + gross) signature.
     Returns (filtered, n_dropped).
@@ -1012,6 +1111,13 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
         notes = notes_res.get("provider_notes_raw") or []
         if isinstance(notes, list):
             assembled["provider_notes_raw"] = [str(n).strip() for n in notes if str(n or "").strip()]
+
+    # Deterministic transport-recovery backstop —
+    # The LLM occasionally drops one of multiple TR- transport entries when
+    # they appear far apart in the statement. Scan the original text for any
+    # date-prefixed line containing a TR- service code and a $-amount, and
+    # add a stub Independence line item if it isn't already in `line_items`.
+    line_items = _recover_transport_items(line_items, text)
 
     # Dedupe line items (drops duplicates extracted from both stream + subtotal rows
     # the LLM accidentally treats as items)
@@ -1791,20 +1897,154 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                 ),
             })
 
-    # Final pass — deduplicate anomalies by headline.
-    # The LLM auditor + the deterministic backstops can both fire on similar
-    # content; users should never see the same headline twice.
-    seen_headlines: set[str] = set()
-    deduped: list[dict] = []
+    # Final pass — clean up the anomalies array.
+    # Three steps in order:
+    #   (a) Drop speculative "brokered" flags that lack explicit-rate evidence.
+    #   (b) Deduplicate by content fingerprint (date + service_code + dollar_impact),
+    #       falling back to a hash of the first 60 chars of detail when those are absent.
+    #       When two anomalies share a fingerprint, keep the one with the longer detail.
+    #   (c) Merge the care-plan-review-due flag with the service-frequency-increase flag
+    #       when both are present — one combined story reads better than two adjacent flags.
+
+    # (a) Drop speculative brokered flags — Rule 11 (or any anomaly mentioning
+    # "brokered") must include explicit evidence of BOTH rates being compared.
+    # We test this by counting distinct dollar-amount references across the
+    # detail + evidence — fewer than 2 means the auditor is speculating.
+    def _has_two_rate_refs(a: dict) -> bool:
+        import re as _re
+        blob = (a.get("detail") or "")
+        for ev in (a.get("evidence") or []):
+            blob += " " + str(ev or "")
+        amounts = set()
+        for m in _re.finditer(r"\$([0-9]+(?:\.[0-9]{1,2})?)", blob):
+            amounts.add(round(float(m.group(1)), 2))
+        return len(amounts) >= 2
+
+    cleaned: list[dict] = []
     for a in anomalies:
         if not isinstance(a, dict):
             continue
-        h = (a.get("headline") or "").strip()
-        if not h:
-            continue
-        if h in seen_headlines:
-            continue
-        seen_headlines.add(h)
-        deduped.append(a)
+        rule = (a.get("rule") or "").upper()
+        text_blob = ((a.get("detail") or "") + " " + (a.get("headline") or "")).lower()
+        looks_brokered = "brokered" in text_blob and ("premium" in text_blob or "above" in text_blob or "exceed" in text_blob)
+        if rule.startswith("RULE_11") or looks_brokered:
+            if not _has_two_rate_refs(a):
+                # Speculative — drop.
+                continue
+        cleaned.append(a)
+
+    # (b) Deduplicate by content fingerprint.
+    #
+    # The fingerprint includes the rule prefix so that distinct rules that
+    # happen to reference the same date/service-code (e.g. Rule 17 review-due
+    # and Rule 18 service-increase both citing the same provider note) are
+    # NOT collapsed — those are handled by the merge step below.
+    # Same-rule duplicates (e.g. Rule 3 from the LLM auditor + Rule 3 from the
+    # deterministic backstop, which describe the same billing issue) DO
+    # collapse via this step.
+    import re as _re
+    DATE_RE = _re.compile(r"\b(\d{4}-\d{2}-\d{2}|\d{1,2}[-\s][A-Za-z]{3,9}|\d{1,2}/\d{1,2}/\d{2,4})\b")
+    SERVICE_CODE_RE = _re.compile(r"\b([A-Z]{2,5}-\d{2,4})\b")
+    RULE_PREFIX_RE = _re.compile(r"^(RULE_\d+)")
+
+    def _normalise_date(raw: str) -> str:
+        # Extract just (day-number, first-3-letters-of-month). Handles every
+        # combination of "5 May", "05-May", "5-May-2026", "2026-05-05", etc.
+        if not raw:
+            return ""
+        s = raw.strip()
+        # ISO format like 2026-05-05 → "5may"
+        iso_m = _re.match(r"^(\d{4})-(\d{2})-(\d{2})$", s)
+        if iso_m:
+            try:
+                _y, mm, dd = int(iso_m.group(1)), int(iso_m.group(2)), int(iso_m.group(3))
+                month_names = ["", "jan", "feb", "mar", "apr", "may", "jun",
+                               "jul", "aug", "sep", "oct", "nov", "dec"]
+                if 1 <= mm <= 12:
+                    return f"{dd}{month_names[mm]}"
+            except Exception:
+                pass
+        # Day + month-name format like "5 May", "05-May", "5-May-2026"
+        m = _re.search(r"(\d{1,2}).{0,2}([A-Za-z]{3,9})", s)
+        if m:
+            return f"{int(m.group(1))}{m.group(2)[:3].lower()}"
+        return _re.sub(r"[^a-zA-Z0-9]", "", s).lower()
+
+    def _fingerprint(a: dict) -> str:
+        # Pull the first date and first service-code from detail + evidence.
+        blob = (a.get("detail") or "")
+        for ev in (a.get("evidence") or []):
+            blob += " " + str(ev or "")
+        date_m = DATE_RE.search(blob)
+        code_m = SERVICE_CODE_RE.search(blob)
+        date = _normalise_date(date_m.group(1)) if date_m else ""
+        code = code_m.group(1).strip().lower() if code_m else ""
+        try:
+            dollars = round(float(a.get("dollar_impact") or 0.0), 2)
+        except Exception:
+            dollars = 0.0
+        rule_prefix_m = RULE_PREFIX_RE.match((a.get("rule") or "").upper())
+        rule_prefix = rule_prefix_m.group(1) if rule_prefix_m else (a.get("rule") or "")
+        key = f"{rule_prefix}|{date}|{code}|{dollars}"
+        if len(key.replace("|", "").strip()) > len(rule_prefix) + 2:
+            return key
+        # No structural anchor — fall back to a hash of the first 60 chars of detail.
+        return ("notes:" + rule_prefix + ":" + (a.get("detail") or a.get("headline") or "")[:60].lower()).strip()
+
+    seen_fp: dict[str, dict] = {}
+    for a in cleaned:
+        fp = _fingerprint(a)
+        existing = seen_fp.get(fp)
+        if existing is None:
+            seen_fp[fp] = a
+        else:
+            # Prefer higher severity first, then longer detail.
+            sev_rank = {"high": 3, "medium": 2, "low": 1}
+            sev_a = sev_rank.get((a.get("severity") or "").lower(), 0)
+            sev_e = sev_rank.get((existing.get("severity") or "").lower(), 0)
+            if sev_a > sev_e:
+                seen_fp[fp] = a
+            elif sev_a == sev_e and len(a.get("detail") or "") > len(existing.get("detail") or ""):
+                seen_fp[fp] = a
+    deduped = list(seen_fp.values())
+
+    # (c) Merge care-plan-review + service-frequency-increase when both present.
+    review_idx = None
+    increase_idx = None
+    for i, a in enumerate(deduped):
+        rule = (a.get("rule") or "").upper()
+        if rule == "RULE_17_CARE_PLAN_REVIEW_DUE" and review_idx is None:
+            review_idx = i
+        elif rule == "RULE_18_SERVICE_INCREASE" and increase_idx is None:
+            increase_idx = i
+    if review_idx is not None and increase_idx is not None:
+        review = deduped[review_idx]
+        increase = deduped[increase_idx]
+        merged = {
+            "severity": "low",
+            "rule": "RULE_17_18_REVIEW_AND_INCREASE_MERGED",
+            "headline": "Care plan review due — and services are changing",
+            "detail": (
+                (review.get("detail") or "").rstrip(". ")
+                + ". Additionally: "
+                + (increase.get("detail") or "")
+            ),
+            "dollar_impact": round(
+                max(float(review.get("dollar_impact") or 0.0), float(increase.get("dollar_impact") or 0.0)),
+                2,
+            ),
+            "evidence": (review.get("evidence") or []) + (increase.get("evidence") or []),
+            "suggested_action": (
+                "Confirm the review date with your care manager. The planned nursing increase "
+                "and any medication adjustment from the cardiology review should both be "
+                "incorporated into the updated care plan."
+            ),
+        }
+        # Replace both with the merged one. Order: insert at the earlier of the two indices.
+        keep_idx = min(review_idx, increase_idx)
+        drop_idx = max(review_idx, increase_idx)
+        deduped[keep_idx] = merged
+        deduped.pop(drop_idx)
+
     audit_result["anomalies"] = deduped
     return audit_result

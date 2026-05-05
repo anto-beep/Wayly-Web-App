@@ -419,6 +419,35 @@ Rule 17 trigger phrases extended: `plan review`, `review due`, `6-monthly review
 
 ### Test status iter 23
 - **19/19** Beverley May regression assertions pass (~71s total live decode).
+
+
+## Implemented (Iteration 24 — Feb 2026 · Final 4 Beverley May fixes)
+
+### FIX 1 — Fingerprint-based dedup (replaces headline-based)
+The dedup pass now uses a content fingerprint = `(rule_prefix, normalised_date, service_code, dollar_impact)`. Cross-source duplicates (LLM RULE_3 + deterministic RULE_3_DUPLICATE_EXACT, both about the same line) collapse to one. Date normalisation handles "5 May", "05-May", "5-May-2026", and ISO `2026-05-05` so they all hash to "5may". Severity-ranked tie-break: HIGH wins over MEDIUM wins over LOW; ties broken by longer detail.
+
+Rule prefix is included in the fingerprint so legitimately-different rules about the same line item (e.g. RULE_2 rate-accuracy + RULE_6 worker-substitution about a single nursing visit) survive intact instead of being eaten as duplicates.
+
+### FIX 2 — Merge care-plan-review + service-frequency-increase
+After dedup, when both `RULE_17_CARE_PLAN_REVIEW_DUE` and `RULE_18_SERVICE_INCREASE` are present, they merge into a single `RULE_17_18_REVIEW_AND_INCREASE_MERGED` LOW flag with combined detail (`"<review detail>. Additionally: <increase detail>."`) and a unified suggested-action that addresses both.
+
+### FIX 3 — Brokered-rate flags require explicit two-rate evidence
+Speculative brokered-rate flags are dropped at the end of `_add_parse_warnings`. If an anomaly mentions "brokered" + "premium"/"above"/"exceed" but doesn't include at least 2 distinct dollar-amount references in `detail` + `evidence`, it is silently filtered out. Eliminates the "Physiotherapy brokered rate may exceed published rate" speculation that was firing without any rate disclosure on the statement.
+
+### FIX 4 — Deterministic transport-recovery backstop
+New `_recover_transport_items()` in `agents.py`. After the LLM chunks merge, scans the original statement text with a tight regex (`<DD-Month> ... TR-XXX ... $amount` within ~80 chars) for transport entries. Counts source occurrences vs extracted occurrences per `(date, service_code)` and adds Independence-stream stub items for any missing — capped at 5/group, $250 max amount to skip subtotal rows. Stub items are tagged `provider_notes: "(recovered by deterministic transport backstop — verify against original)"`.
+
+Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transport (TR-) is ALWAYS Independence regardless of medical context. Items with different dates are NEVER duplicates and must each be emitted."
+
+### Test status iter 24
+- **23/23** Beverley May regression assertions pass live (~75s).
+- All four user-specified QA criteria green:
+  - ✅ No speculative brokered flags
+  - ✅ Transport duplicate flagged HIGH exactly once (LLM RULE_3 wins on severity tie-break)
+  - ✅ Care plan + service increase merged into single flag
+  - ✅ 19-May transport present in Independence line items (LLM extracted directly OR deterministic backstop recovers)
+  - ✅ Gross $7,591.75 / Contribution $1,413.18 match statement exactly
+- Anomaly fingerprints unique within rule family.
 - All four fixes verified deterministically:
   - Headlines all unique ✅
   - Only Everyday Living stream discrepancy fires (Clinical/Independence suppressed) ✅
