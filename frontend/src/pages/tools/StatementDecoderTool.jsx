@@ -55,22 +55,51 @@ export default function StatementDecoderTool() {
         setLimitInfo(null);
         setLoading(true);
         try {
-            let data;
+            let initial;
             if (mode === "file" && file) {
                 const fd = new FormData();
                 fd.append("file", file);
-                ({ data } = await api.post("/public/decode-statement", fd, { headers: { "Content-Type": "multipart/form-data" } }));
+                ({ data: initial } = await api.post("/public/decode-statement", fd, { headers: { "Content-Type": "multipart/form-data" } }));
             } else {
-                ({ data } = await api.post("/public/decode-statement-text", { text }));
+                ({ data: initial } = await api.post("/public/decode-statement-text", { text }));
             }
-            setResult(data);
+            // Abuse-flag short-circuit (no job)
+            if (initial.abuse_flag) {
+                setResult(initial);
+                return;
+            }
+            const jobId = initial.job_id;
+            if (!jobId) {
+                setResult(initial);
+                return;
+            }
+            // Poll for job completion — the decode pipeline takes ~45-70s
+            const deadline = Date.now() + 180_000; // 3-minute cap
+            let final = null;
+            while (Date.now() < deadline) {
+                await new Promise((r) => setTimeout(r, 2000));
+                try {
+                    const { data: status } = await api.get(`/public/decode-job/${jobId}`);
+                    if (status.status === "done") { final = status.result; break; }
+                    if (status.status === "error") { throw new Error(status.error || "Decode failed."); }
+                } catch (pollErr) {
+                    if (pollErr?.response?.status === 404) { throw new Error("Decode job expired. Please try again."); }
+                    throw pollErr;
+                }
+            }
+            if (!final) throw new Error("Decode timed out. Please try again with a shorter statement.");
+            if (initial.redaction_notice) {
+                final.redaction_notice = initial.redaction_notice;
+                final.redaction_count = initial.redaction_count;
+            }
+            setResult(final);
         } catch (err) {
             const detail = err?.response?.data?.detail;
             if (detail && typeof detail === "object" && detail.error === "daily_limit") {
                 setLimitInfo(detail);
                 setError(detail.message);
             } else {
-                setError(typeof detail === "string" ? detail : detail?.message || "Could not decode the statement.");
+                setError(typeof detail === "string" ? detail : detail?.message || err?.message || "Could not decode the statement.");
             }
         } finally {
             setLoading(false);

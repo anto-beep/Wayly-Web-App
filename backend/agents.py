@@ -261,6 +261,7 @@ Return STRICT JSON only:
   "period_end": "",
   "provider_name": "",
   "classification": "",
+  "pension_status": "",
   "quarterly_budget_total": 0.00,
   "care_management_deducted": 0.00,
   "care_management_rate_pct": 0.00,
@@ -281,9 +282,17 @@ Rules:
 - Calculate care_management_rate_pct as care_management_deducted / quarterly_budget_total * 100, rounded to 2dp, OR copy the percentage if the statement states it explicitly (e.g. "Care management deducted (11%)").
 - statement_period is the value from the explicit "STATEMENT PERIOD" / "Statement Period" header — NOT the quarterly-budget-summary date range. A monthly statement covers a single calendar month even if the budget summary references a 3-month quarter.
 - period_start and period_end should be ISO dates (YYYY-MM-DD) parsed from statement_period when possible, otherwise "".
-- reported_total_gross is the statement's own "Total gross billed" / "Total this month" figure (the provider's stated total).
+- reported_total_gross is the statement's own "Total gross billed" / "Total this month" / "TOTAL" figure under the statement-totals section (the provider's stated total, including ALL streams + care management + previous-period adjustments — i.e. the bottom-line monthly TOTAL row).
 - reported_total_participant_contribution / reported_total_government_paid are the matching totals if listed.
 - budget_remaining_at_quarter_end is the statement's stated remaining quarterly service budget (post all line items), if shown.
+
+PENSION STATUS — read this from the SERVICE STREAM ALLOCATIONS section by looking at the Independence and Everyday Living "Participant Contribution Rate" percentages:
+  - Independence 5% AND Everyday Living 17.5% → "full_age_pension"
+  - Independence 17.5% AND Everyday Living 50% → "part_age_pension"
+  - Independence 50% AND Everyday Living 80% → "self_funded"
+  - Rates absent or any other combination → "unknown"
+  Also accept explicit text in the statement such as "(part Age Pension)" / "(full Age Pension)" / "(self-funded)" appended to a contribution-rate label, and use that to set pension_status accordingly.
+
 - Return only the JSON object. No prose."""
 
 
@@ -383,12 +392,35 @@ Return STRICT JSON only:
 }
 
 Rules:
-- Care management fee usually has service code CM-01 or description containing "Care management". Always coded stream: "CareMgmt".
-- Previous-period adjustments are listed in a separate "PREVIOUS PERIOD ADJUSTMENTS" or similar section — they are credits/refunds for prior months, NOT line items.
+- Care management fee usually has service code CM-01 or description containing "Care management". Always coded stream: "CareMgmt". For statements that apportion a quarterly care-management fee across months, extract ONLY the portion attributed to the current statement period (e.g. if the statement says "March portion (this statement): $160.83", that $160.83 is the line item). Do NOT include prior-month portions or the quarterly-total figure.
+- Previous-period adjustments are listed in a separate "PREVIOUS PERIOD ADJUSTMENTS" or similar section — they are credits/refunds for prior months, NOT line items. Credit amounts are positive numbers (the dollar value of the credit), even if the source uses a leading minus sign for display.
 - AT-HM commitments come from sections titled "AT-HM Commitments", "Outstanding Orders", "Approved Items Pending Delivery", or similar. They represent assistive-tech / home-modification items that were APPROVED but have not yet been delivered/installed/claimed.
 - For each AT-HM commitment include: a reference number (ref), item description, approval_date (ISO if possible), expiry_date (ISO if possible), amount_approved, amount_claimed (default 0.00 if not stated), amount_remaining (default amount_approved - amount_claimed if not stated explicitly), and a short status string ("approved", "in progress", "delivered", etc).
 - If the statement has no AT-HM commitments section, return an empty at_hm_commitments array.
 - Dates should be ISO (YYYY-MM-DD) when the source allows; otherwise copy verbatim.
+- Return only valid JSON. No prose."""
+
+
+# Provider-notes chunk — extracts the free-form "PROVIDER NOTES" / "ADDITIONAL NOTES"
+# section at the bottom of statements. These often contain disclosures (brokered
+# rate premiums, care plan issues, upcoming changes) that line items don't carry.
+PROVIDER_NOTES_EXTRACTOR_SYSTEM = """You are a data extraction engine for Australian Support at Home statements. Extract ONLY the free-form notes section(s) — typically found under headings like "PROVIDER NOTES", "ADDITIONAL NOTES", "ADVISORY NOTES", "REMARKS", or similar at the bottom of the statement.
+
+Return STRICT JSON only:
+{
+  "provider_notes_raw": [
+    "Note 1 full text",
+    "Note 2 full text"
+  ]
+}
+
+Rules:
+- Each numbered or bulleted note becomes ONE entry in the array, with its full prose preserved. Do NOT summarise. Do NOT paraphrase.
+- Strip leading numbering / bullet characters ("1.", "•", "-") but keep the full sentence(s).
+- If a note spans multiple lines, join the lines with single spaces and keep the entry as one string.
+- DO NOT include sub-line "NOTE:" comments that are attached to specific service line items in the itemised services tables — those are line-item flags, not provider notes.
+- DO include notes from any section explicitly titled "PROVIDER NOTES", "ADDITIONAL NOTES", "ADVISORY NOTES", "REMARKS", "STATEMENT NOTES", or similar.
+- If no such section exists, return an empty array.
 - Return only valid JSON. No prose."""
 
 
@@ -425,17 +457,36 @@ Check line_items for any cancelled service with a note referencing "hospital" or
 RULE 8 — TRANSPORT STREAM QUERY
 If any transport line item (service_code beginning "TR-") is on the same date as a hospital admission cancellation or has flags_in_original mentioning "hospital" or "emergency": flag as LOW severity.
 
-RULE 9 — CONTRIBUTION ARITHMETIC CHECK
-For each line item where is_cancellation is false, verify: participant_contribution = gross × expected_contribution_rate. Expected rates (full Age Pension): Clinical 0%, Independence 5%, EverydayLiving 17.5%, ATHM 0%. If any item's contribution is off by more than $0.10: flag as MEDIUM.
-Dollar impact: abs(charged_contribution - correct_contribution)
+RULE 9 — CONTRIBUTION ARITHMETIC CHECK (PENSION-AWARE)
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check is performed in code (rule keys "RULE_9_CONTRIBUTION_MISMATCH" or "RULE_9_PENSION_STATUS_UNKNOWN") which:
+  - Reads pension_status from the extracted header.
+  - If pension_status is "unknown": emits ONE LOW-severity flag advising the user that contribution checks were skipped (and runs no per-line math).
+  - Otherwise: looks up the correct rate per stream from the table below and validates each non-cancelled line item's participant_contribution against (gross × expected_rate). Only flags a line where the variance exceeds $0.10.
+
+  Contribution rate table:
+    full_age_pension  → Clinical 0%, Independence 5%,    EverydayLiving 17.5%, ATHM 0%
+    part_age_pension  → Clinical 0%, Independence 17.5%, EverydayLiving 50%,   ATHM 0%
+    self_funded       → Clinical 0%, Independence 50%,   EverydayLiving 80%,   ATHM 0%
+
+You MUST skip Rule 9 entirely in your output. Emitting Rule 9 in your JSON will cause double-counting and is treated as a hallucination.
 
 RULE 10 — PREVIOUS PERIOD ADJUSTMENTS
 If adjustments array is non-empty: flag as LOW severity (informational). Summarise what was corrected and confirm the credit was applied to government_paid not participant_contribution.
 
 RULE 11 — BROKERED RATE PREMIUM
-Scan provider_notes and flags_in_original on every line item for any disclosure that a brokered rate exceeds the provider's own published rate for an equivalent service (look for phrases like "brokered rate", "external provider rate", "subcontracted", "premium rate applies", "above usual rate due to brokering").
-Also: if a line item has is_brokered=true, compare its unit_rate against any published rate mentioned elsewhere in the statement for the same service_code. If the brokered rate exceeds the published rate by more than $0.50: flag as MEDIUM severity.
-Dollar impact: (brokered_rate - published_rate) * hours * occurrences_this_month for the affected service.
+Scan THREE input sources:
+  (1) provider_notes and flags_in_original on every line item, AND
+  (2) the provider_notes_raw[] array (free-form notes section at the bottom of the statement), AND
+  (3) is_brokered flags + unit_rate values across line items.
+
+Look for any disclosure of two rates being compared (e.g. "$89.00/hr" and "$84.50/hr", "brokered rate", "contracted rate", "published rate", "premium", "rate difference", "pass-through"). Also look for any sentence pattern like "X is brokered through ... at $A. Hillview's own published rate is $B" — extract both numbers.
+
+If a brokered rate exceeds a published rate by more than $0.50/hr (or by any explicit dollar premium stated in a note):
+  - Compute hours_this_month = sum of hours across all non-cancelled brokered line items of the same service code.
+  - Dollar impact = (brokered_rate - published_rate) × hours_this_month.
+  - Flag as MEDIUM severity, rule "RULE_11_BROKERED_PREMIUM".
+  - Detail must include both rates, the per-hour premium, the total hours this month, and the dollar impact.
+
 Suggested action: "Ask your provider whether the brokered rate premium can be absorbed by the provider rather than your budget. Providers are not required to pass brokered rate premiums to participants."
 
 RULE 12 — UNCLAIMED AT-HM COMMITMENTS
@@ -694,6 +745,7 @@ _HEADER_DEFAULTS = {
     "participant_name": "", "mac_id": "", "statement_period": "",
     "period_start": "", "period_end": "",
     "provider_name": "", "classification": "",
+    "pension_status": "",
     "quarterly_budget_total": 0.0, "care_management_deducted": 0.0,
     "care_management_rate_pct": 0.0, "service_budget_available": 0.0,
     "rollover_from_prior_quarter": 0.0,
@@ -712,7 +764,52 @@ def _empty_extracted() -> Dict[str, Any]:
         "line_items": [],
         "previous_period_adjustments": [],
         "at_hm_commitments": [],
+        "provider_notes_raw": [],
     }
+
+
+def _is_subtotal_row(it: Dict[str, Any]) -> bool:
+    """Return True if a 'line item' is actually a subtotal/summary row that
+    should not be counted alongside individual service items.
+    """
+    desc = (it.get("service_description") or "").lower()
+    code = (it.get("service_code") or "").lower()
+    if any(w in desc for w in ("subtotal", "sub total", "sub-total", " total", "balance forward", "running total")):
+        return True
+    # Pure heading rows that lack a date are also summaries
+    if not (it.get("date") or "").strip() and any(w in desc for w in ("total", "summary")):
+        return True
+    if code in {"subtotal", "total", "sum", "balance"}:
+        return True
+    return False
+
+
+def _dedupe_line_items(items: list[dict]) -> tuple[list[dict], int]:
+    """Drop duplicate line items by (date + service_code + gross) signature.
+    Returns (filtered, n_dropped).
+    """
+    seen: set[tuple] = set()
+    out: list[dict] = []
+    dropped = 0
+    for it in items:
+        sig = (
+            (it.get("date") or "").strip().lower(),
+            (it.get("service_code") or "").strip().upper(),
+            round(float(it.get("gross") or 0.0), 2),
+            (it.get("worker_name") or "").strip().lower(),
+            bool(it.get("is_cancellation")),
+        )
+        # Empty-signature items (no date AND no code AND zero gross) are likely
+        # parsing artifacts — drop them quietly without counting as duplicates.
+        if not sig[0] and not sig[1] and sig[2] == 0.0:
+            dropped += 1
+            continue
+        if sig in seen:
+            dropped += 1
+            continue
+        seen.add(sig)
+        out.append(it)
+    return out, dropped
 
 
 async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
@@ -737,14 +834,15 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
     user_msg = f"STATEMENT TEXT:\n\n{payload}"
 
     tasks = [
-        _llm_chunk_call(HEADER_EXTRACTOR_SYSTEM, user_msg, f"extract-header-{household_id}", max_tokens=800),
+        _llm_chunk_call(HEADER_EXTRACTOR_SYSTEM, user_msg, f"extract-header-{household_id}", max_tokens=1000),
         _llm_chunk_call(CLINICAL_EXTRACTOR_SYSTEM, user_msg, f"extract-clin-{household_id}", max_tokens=2500),
         _llm_chunk_call(INDEPENDENCE_EXTRACTOR_SYSTEM, user_msg, f"extract-indep-{household_id}", max_tokens=2500),
         _llm_chunk_call(EVERYDAY_EXTRACTOR_SYSTEM, user_msg, f"extract-everyday-{household_id}", max_tokens=2500),
-        _llm_chunk_call(ADJUSTMENTS_EXTRACTOR_SYSTEM, user_msg, f"extract-adj-{household_id}", max_tokens=800),
+        _llm_chunk_call(ADJUSTMENTS_EXTRACTOR_SYSTEM, user_msg, f"extract-adj-{household_id}", max_tokens=1200),
+        _llm_chunk_call(PROVIDER_NOTES_EXTRACTOR_SYSTEM, user_msg, f"extract-notes-{household_id}", max_tokens=1500),
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    header_res, clin_res, indep_res, every_res, adj_res = [
+    header_res, clin_res, indep_res, every_res, adj_res, notes_res = [
         r if not isinstance(r, BaseException) else None for r in results
     ]
 
@@ -761,6 +859,18 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
                     assembled[k] = 0.0
             else:
                 assembled[k] = "" if v is None else str(v)
+        # Normalise pension_status to one of the canonical values
+        ps = (assembled.get("pension_status") or "").strip().lower().replace("-", "_").replace(" ", "_")
+        if "self" in ps and "fund" in ps:
+            assembled["pension_status"] = "self_funded"
+        elif "part" in ps and "pension" in ps:
+            assembled["pension_status"] = "part_age_pension"
+        elif "full" in ps and "pension" in ps:
+            assembled["pension_status"] = "full_age_pension"
+        elif ps in {"full_age_pension", "part_age_pension", "self_funded", "unknown"}:
+            assembled["pension_status"] = ps
+        else:
+            assembled["pension_status"] = "unknown"
 
     # Merge stream line items
     line_items: list[dict] = []
@@ -774,6 +884,8 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
             for it in items:
                 if not isinstance(it, dict):
                     continue
+                if _is_subtotal_row(it):
+                    continue
                 # Force AT- service codes onto ATHM stream defensively
                 code = (it.get("service_code") or "").upper()
                 if code.startswith("AT-"):
@@ -785,7 +897,7 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
     # Merge care-mgmt + adjustments + AT-HM commitments
     if isinstance(adj_res, dict):
         for it in (adj_res.get("care_management_line_items") or []):
-            if isinstance(it, dict):
+            if isinstance(it, dict) and not _is_subtotal_row(it):
                 it["stream"] = "CareMgmt"
                 line_items.append(it)
         adj_list = adj_res.get("previous_period_adjustments") or []
@@ -795,12 +907,29 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
         if isinstance(commitments, list):
             assembled["at_hm_commitments"] = [c for c in commitments if isinstance(c, dict)]
 
-    # Sort line items by date string (ISO-ish or "DD MMM" — best-effort lexical)
+    # Provider notes
+    if isinstance(notes_res, dict):
+        notes = notes_res.get("provider_notes_raw") or []
+        if isinstance(notes, list):
+            assembled["provider_notes_raw"] = [str(n).strip() for n in notes if str(n or "").strip()]
+
+    # Dedupe line items (drops duplicates extracted from both stream + subtotal rows
+    # the LLM accidentally treats as items)
+    line_items, n_dropped = _dedupe_line_items(line_items)
     assembled["line_items"] = line_items
+    if n_dropped:
+        assembled["_dedupe_dropped"] = n_dropped
 
     # Capture failure metadata so the caller can know which chunks fell over
     failures = []
-    for name, res in [("header", header_res), ("clinical", clin_res), ("independence", indep_res), ("everyday", every_res), ("adjustments", adj_res)]:
+    for name, res in [
+        ("header", header_res),
+        ("clinical", clin_res),
+        ("independence", indep_res),
+        ("everyday", every_res),
+        ("adjustments", adj_res),
+        ("provider_notes", notes_res),
+    ]:
         if res is None:
             failures.append(name)
     if failures:
@@ -836,8 +965,10 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
         result = _safe_json_load(raw)
         if result is None:
             raise json.JSONDecodeError("repair failed", raw or "", 0)
-        # Append deterministic parse warnings (rules 14 & 15) and re-tally
+        # Append deterministic parse warnings (Rules 9, 13, 14 & 15) and re-tally
         result = _add_parse_warnings(result, extracted)
+        # If the statement reports explicit totals, prefer those for display
+        _apply_reported_totals(result, extracted)
         # Normalise anomaly_count if the model forgot it
         anoms = result.get("anomalies", []) or []
         counts = {"high": 0, "medium": 0, "low": 0}
@@ -850,13 +981,39 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
     except json.JSONDecodeError as e:
         logger.warning("Auditor Pass 2 JSON parse failed: %s | raw[:500]=%r", e, str(raw)[:500])
         fallback = _add_parse_warnings(_empty_audit(extracted), extracted)
+        _apply_reported_totals(fallback, extracted)
         fallback["_audit_error"] = f"json_parse: {e}"
         return fallback
     except Exception as e:
         logger.warning("Auditor Pass 2 failed: %s", e)
         fallback = _add_parse_warnings(_empty_audit(extracted), extracted)
+        _apply_reported_totals(fallback, extracted)
         fallback["_audit_error"] = str(e)
         return fallback
+
+
+def _apply_reported_totals(audit_result: Dict[str, Any], extracted: Dict[str, Any]) -> None:
+    """If the statement explicitly reports its own totals, prefer those for
+    the display layer (UI `statement_summary`). This makes the decoded figure
+    match the statement's printed bottom-line total exactly, instead of
+    summing (sometimes inconsistent) extracted line items. A parsing
+    warning is still raised separately by Rule 15 when they don't reconcile.
+    """
+    try:
+        reported_gross = float(extracted.get("reported_total_gross") or 0.0)
+        reported_contrib = float(extracted.get("reported_total_participant_contribution") or 0.0)
+        reported_gov = float(extracted.get("reported_total_government_paid") or 0.0)
+    except Exception:
+        return
+    summary = audit_result.setdefault("statement_summary", {}) or {}
+    if reported_gross > 0:
+        summary["total_gross"] = round(reported_gross, 2)
+        summary["net_budget_impact"] = round(reported_gross, 2)
+    if reported_contrib > 0:
+        summary["total_participant_contribution"] = round(reported_contrib, 2)
+    if reported_gov > 0:
+        summary["total_government_paid"] = round(reported_gov, 2)
+    audit_result["statement_summary"] = summary
 
 
 # ---------------------------------------------------------------------------
@@ -886,13 +1043,110 @@ def _parse_iso_date(value: Any):
     return None
 
 
+# Pension-aware contribution rate table for Rule 9 deterministic check.
+# Maps pension_status → stream → expected contribution rate (decimal).
+_PENSION_RATES = {
+    "full_age_pension": {"Clinical": 0.0,    "Independence": 0.05,  "EverydayLiving": 0.175, "ATHM": 0.0, "CareMgmt": 0.0},
+    "part_age_pension": {"Clinical": 0.0,    "Independence": 0.175, "EverydayLiving": 0.5,   "ATHM": 0.0, "CareMgmt": 0.0},
+    "self_funded":      {"Clinical": 0.0,    "Independence": 0.5,   "EverydayLiving": 0.8,   "ATHM": 0.0, "CareMgmt": 0.0},
+}
+
+
 def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any]) -> Dict[str, Any]:
-    """Append deterministic parsing warnings (Rules 13, 14 & 15) if conditions
+    """Append deterministic parsing warnings (Rules 9, 13, 14 & 15) if conditions
     are met and the LLM hasn't already flagged the same rule. Returns the
     mutated audit_result for chaining.
     """
     anomalies = audit_result.setdefault("anomalies", []) or []
+
+    # Drop malformed anomalies (missing rule key, missing severity, or empty headline)
+    anomalies = [
+        a for a in anomalies
+        if isinstance(a, dict)
+        and (a.get("rule") or "").strip()
+        and (a.get("severity") or "").strip()
+        and not (a.get("rule") or "").strip().lower().endswith("_")  # e.g. "RULE_:" stub
+    ]
+    audit_result["anomalies"] = anomalies
+
     existing_rules = {(a.get("rule") or "").upper() for a in anomalies if isinstance(a, dict)}
+
+    # Rule 9 — Pension-aware contribution arithmetic (deterministic)
+    rule_9_keys = {"RULE_9_CONTRIBUTION_MISMATCH", "RULE_9_PENSION_STATUS_UNKNOWN"}
+    if not (existing_rules & rule_9_keys):
+        pension_status = (extracted.get("pension_status") or "unknown").strip().lower()
+        if pension_status not in _PENSION_RATES:
+            anomalies.append({
+                "severity": "low",
+                "rule": "RULE_9_PENSION_STATUS_UNKNOWN",
+                "headline": "We couldn't confirm this participant's pension status from the statement.",
+                "detail": "Contribution rate checks have been skipped because pension status is unclear. Verify your contribution rates directly with your provider — the correct rates depend on whether the participant receives the full Age Pension, part Age Pension, or is self-funded.",
+                "dollar_impact": 0.0,
+                "evidence": [f"pension_status: {pension_status or 'unknown'}"],
+                "suggested_action": "Phone your provider's billing line and ask them to confirm the participant's recorded pension status, then reconcile your contribution rates against the published Support at Home rate table.",
+            })
+        else:
+            rates = _PENSION_RATES[pension_status]
+            mismatches: list[dict] = []
+            for li in (extracted.get("line_items") or []):
+                if not isinstance(li, dict):
+                    continue
+                if li.get("is_cancellation"):
+                    continue
+                stream = (li.get("stream") or "").strip()
+                expected_rate = rates.get(stream)
+                if expected_rate is None:
+                    continue
+                try:
+                    gross = float(li.get("gross") or 0.0)
+                    contrib = float(li.get("participant_contribution") or 0.0)
+                except Exception:
+                    continue
+                if gross <= 0:
+                    continue
+                expected_dollars = round(gross * expected_rate, 2)
+                variance = round(abs(contrib - expected_dollars), 2)
+                if variance > 0.10:
+                    mismatches.append({
+                        "date": li.get("date") or "",
+                        "service_code": li.get("service_code") or "",
+                        "service_description": li.get("service_description") or "",
+                        "stream": stream,
+                        "gross": gross,
+                        "charged_contribution": round(contrib, 2),
+                        "expected_contribution": expected_dollars,
+                        "expected_rate_pct": round(expected_rate * 100, 2),
+                        "variance": variance,
+                    })
+            for m in mismatches:
+                anomalies.append({
+                    "severity": "medium",
+                    "rule": "RULE_9_CONTRIBUTION_MISMATCH",
+                    "headline": (
+                        f"{m['service_description'] or m['service_code'] or m['stream']} "
+                        f"on {m['date']} contribution doesn't match the expected "
+                        f"{m['expected_rate_pct']}% rate for {pension_status.replace('_', ' ')}."
+                    ),
+                    "detail": (
+                        f"For a {pension_status.replace('_', ' ')} participant, the {m['stream']} stream "
+                        f"contribution rate is {m['expected_rate_pct']}%. On gross ${m['gross']:,.2f} the expected "
+                        f"contribution is ${m['expected_contribution']:,.2f}, but the statement charged "
+                        f"${m['charged_contribution']:,.2f} — a variance of ${m['variance']:,.2f}."
+                    ),
+                    "dollar_impact": m["variance"],
+                    "evidence": [
+                        f"pension_status: {pension_status}",
+                        f"stream: {m['stream']}",
+                        f"gross: ${m['gross']:,.2f}",
+                        f"charged contribution: ${m['charged_contribution']:,.2f}",
+                        f"expected contribution: ${m['expected_contribution']:,.2f}",
+                    ],
+                    "suggested_action": (
+                        f"Ask your provider to confirm the contribution rate applied to "
+                        f"{m['service_code'] or m['service_description']} on {m['date']}, and to refund the "
+                        f"variance if it was charged in error."
+                    ),
+                })
 
     # Rule 13 — Quarterly underspend pattern (deterministic)
     if "RULE_13_QUARTERLY_UNDERSPEND" not in existing_rules:
@@ -901,10 +1155,13 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             remaining = float(extracted.get("budget_remaining_at_quarter_end") or 0.0)
         except Exception:
             quarterly_total = remaining = 0.0
+        # Fire when there's a meaningful underspend: either >10% of quarterly budget
+        # OR >$500 in absolute dollars (whichever comes first). Rollover-within-cap
+        # stays LOW (informational); over-cap fires MEDIUM (forfeit risk).
         if quarterly_total > 0 and remaining > 0:
             remaining_pct = remaining / quarterly_total * 100
             rollover_cap = max(1000.00, 0.10 * quarterly_total)
-            if remaining_pct > 15:
+            if remaining_pct >= 10 or remaining >= 500:
                 participant = extracted.get("participant_name") or "The participant"
                 forfeit = max(0.0, remaining - rollover_cap)
                 if remaining > rollover_cap:
@@ -915,7 +1172,10 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     )
                 else:
                     severity = "low"
-                    closing = f" The full amount will roll over to next quarter (within the ${rollover_cap:,.2f} rollover cap)."
+                    closing = (
+                        f" The full ${remaining:,.2f} will roll over to next quarter (within the "
+                        f"${rollover_cap:,.2f} rollover cap)."
+                    )
                 anomalies.append({
                     "severity": severity,
                     "rule": "RULE_13_QUARTERLY_UNDERSPEND",

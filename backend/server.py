@@ -6,7 +6,7 @@ import logging
 import statistics
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 from typing import Literal as _LiteralType  # noqa: F401
 
 from collections import defaultdict
@@ -1111,16 +1111,17 @@ async def _run_public_decode(text: str) -> dict:
     from agents import extract_statement, audit_statement
     extracted = await extract_statement(text, household_id="public")
     audit = await audit_statement(extracted, household_id="public")
-    # Build a period_label for the frontend's existing header while keeping
-    # the new structured payload alongside the legacy shape.
+    return _build_decode_payload(extracted, audit)
+
+
+def _build_decode_payload(extracted: dict, audit: dict) -> dict:
+    """Shape the extract + audit pair into the UI response payload."""
     period_label = extracted.get("statement_period") or audit.get("statement_summary", {}).get("period") or None
-    # Legacy shape pieces for the old Statement Decoder result view
     legacy_items: List[dict] = []
     for li in extracted.get("line_items", []) or []:
         if li.get("is_cancellation"):
             continue
         stream = li.get("stream") or "Everyday Living"
-        # Map new stream codes back to legacy labels the old UI expects
         legacy_stream = {
             "Clinical": "Clinical",
             "Independence": "Independence",
@@ -1144,7 +1145,6 @@ async def _run_public_decode(text: str) -> dict:
         except Exception as e:
             logger.warning("public decode skipped line item: %s", e)
 
-    # A short plain-English summary for the legacy summary field
     summary = extracted.get("summary") or (
         f"{extracted.get('participant_name') or 'Participant'}'s {period_label or 'statement'} from "
         f"{extracted.get('provider_name') or 'the provider'}: {audit['statement_summary'].get('total_line_items', 0)} line items, "
@@ -1153,16 +1153,89 @@ async def _run_public_decode(text: str) -> dict:
     ) if audit.get("statement_summary") else None
 
     return {
-        # Legacy top-level fields (still used by the existing result view)
         "summary": summary,
         "period_label": period_label,
         "line_items": legacy_items,
         "anomalies": audit.get("anomalies", []),
-        # New two-pass payload for the richer UI
         "extracted": extracted,
         "audit": audit,
         "partial_result": bool(extracted.get("_extraction_error")) or bool(audit.get("_audit_error")),
     }
+
+
+# ---------------------------------------------------------------------------
+# Async job pattern for the public Statement Decoder.
+# The LLM pipeline can take 40-70s for long statements, exceeding the 60s
+# K8s ingress timeout. We return a job_id immediately and run the pipeline
+# as a background task; the frontend polls /api/public/decode-job/{job_id}.
+# ---------------------------------------------------------------------------
+
+DECODE_JOBS: Dict[str, dict] = {}  # job_id → {"status": "pending|running|done|error", "result": dict | None, "error": str | None, "created_at": float}
+_DECODE_JOB_TTL = 600  # 10 minutes
+
+
+def _new_job_id() -> str:
+    import uuid
+    return uuid.uuid4().hex[:20]
+
+
+def _prune_decode_jobs() -> None:
+    import time
+    cutoff = time.time() - _DECODE_JOB_TTL
+    stale = [jid for jid, job in DECODE_JOBS.items() if job.get("created_at", 0) < cutoff]
+    for jid in stale:
+        DECODE_JOBS.pop(jid, None)
+
+
+async def _run_decode_job(job_id: str, text: str) -> None:
+    """Background runner. Updates DECODE_JOBS[job_id] as it progresses."""
+    from agents import extract_statement, audit_statement
+    job = DECODE_JOBS.get(job_id)
+    if job is None:
+        return
+    try:
+        job["status"] = "running"
+        job["phase"] = "extract"
+        extracted = await extract_statement(text, household_id="public")
+        job["phase"] = "audit"
+        audit = await audit_statement(extracted, household_id="public")
+        job["result"] = _build_decode_payload(extracted, audit)
+        job["status"] = "done"
+        job["phase"] = "done"
+    except Exception as e:
+        logger.exception("decode job %s failed", job_id)
+        job["status"] = "error"
+        job["error"] = str(e)
+
+
+def _submit_decode_job(text: str) -> str:
+    """Submit a decode job. Returns the job_id. Runs the pipeline as a
+    fire-and-forget asyncio task."""
+    import time
+    _prune_decode_jobs()
+    job_id = _new_job_id()
+    DECODE_JOBS[job_id] = {
+        "status": "pending",
+        "phase": "pending",
+        "result": None,
+        "error": None,
+        "created_at": time.time(),
+    }
+    asyncio.create_task(_run_decode_job(job_id, text))
+    return job_id
+
+
+@api.get("/public/decode-job/{job_id}")
+async def public_decode_job_status(job_id: str):
+    job = DECODE_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+    out = {"status": job["status"], "phase": job.get("phase", job["status"])}
+    if job["status"] == "done":
+        out["result"] = job["result"]
+    elif job["status"] == "error":
+        out["error"] = job["error"] or "decode failed"
+    return out
 
 
 @api.post("/public/decode-statement-text")
@@ -1174,11 +1247,14 @@ async def public_decode_text(body: PublicTextBody, request: Request, response: R
     wrapped = await run_wrapper(body.text, pii_redact=False)
     if wrapped["abuse_flag"]:
         return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
-    result = await _run_public_decode(wrapped["redacted_input"])
+    # Submit as a background job — the full pipeline can take 40-70s, exceeding
+    # the 60s K8s ingress timeout. The frontend polls /api/public/decode-job/{id}.
+    job_id = _submit_decode_job(wrapped["redacted_input"])
+    out = {"job_id": job_id, "status": "pending"}
     if wrapped["redaction_notice"]:
-        result["redaction_notice"] = wrapped["redaction_notice"]
-        result["redaction_count"] = wrapped["redaction_count"]
-    return result
+        out["redaction_notice"] = wrapped["redaction_notice"]
+        out["redaction_count"] = wrapped["redaction_count"]
+    return out
 
 
 @api.post("/public/decode-statement")
@@ -1195,11 +1271,12 @@ async def public_decode_file(request: Request, response: Response, file: UploadF
     wrapped = await run_wrapper(text, pii_redact=False)
     if wrapped["abuse_flag"]:
         return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
-    result = await _run_public_decode(wrapped["redacted_input"])
+    job_id = _submit_decode_job(wrapped["redacted_input"])
+    out = {"job_id": job_id, "status": "pending"}
     if wrapped["redaction_notice"]:
-        result["redaction_notice"] = wrapped["redaction_notice"]
-        result["redaction_count"] = wrapped["redaction_count"]
-    return result
+        out["redaction_notice"] = wrapped["redaction_notice"]
+        out["redaction_count"] = wrapped["redaction_count"]
+    return out
 
 
 @api.post("/public/budget-calc")

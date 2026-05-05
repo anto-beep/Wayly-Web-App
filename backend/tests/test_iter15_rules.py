@@ -20,7 +20,7 @@ BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://aged-care-os.preview
 ENDPOINT = f"{BASE_URL}/api/public/decode-statement-text"
 CACHE = "/tmp/decoded_public_iter15.json"
 
-with open("/tmp/margaret_stmt.txt", "r") as f:
+with open("/app/backend/tests/fixtures/margaret_stmt.txt", "r") as f:
     MARGARET_STMT = f.read()
 
 
@@ -35,13 +35,29 @@ def decoded():
             return data
     s = requests.Session()
     t0 = time.time()
-    r = s.post(ENDPOINT, json={"text": MARGARET_STMT}, timeout=90)
-    elapsed = time.time() - t0
+    # Endpoint now returns a job_id immediately and runs the pipeline async
+    r = s.post(ENDPOINT, json={"text": MARGARET_STMT}, timeout=15)
     if r.status_code == 429:
         pytest.skip(f"Rate limited by daily limit cookie: {r.text[:200]}")
-    assert r.status_code == 200, f"decode failed {r.status_code}: {r.text[:500]}"
-    assert elapsed < 60, f"wall-clock {elapsed:.1f}s exceeded 60s gateway timeout"
-    data = r.json()
+    assert r.status_code == 200, f"submit failed {r.status_code}: {r.text[:500]}"
+    submit = r.json()
+    job_id = submit.get("job_id")
+    assert job_id, f"no job_id in submit response: {submit}"
+    # Poll up to 180s
+    data = None
+    for _ in range(90):
+        time.sleep(2)
+        r2 = s.get(f"{BASE_URL}/api/public/decode-job/{job_id}", timeout=10)
+        if r2.status_code != 200:
+            continue
+        body = r2.json()
+        if body.get("status") == "done":
+            data = body.get("result")
+            break
+        if body.get("status") == "error":
+            raise AssertionError(f"job error: {body.get('error')}")
+    elapsed = time.time() - t0
+    assert data is not None, f"decode timed out after {elapsed:.0f}s"
     data["_elapsed_s"] = elapsed
     with open(CACHE, "w") as f:
         json.dump(data, f)

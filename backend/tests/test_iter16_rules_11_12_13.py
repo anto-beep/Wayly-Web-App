@@ -22,8 +22,8 @@ load_dotenv("/app/backend/.env")
 
 from agents import extract_statement, audit_statement  # noqa: E402
 
-FIXTURE_PATH = "/tmp/robert_q1_underspend.txt"
-CACHE_PATH = "/tmp/robert_q1_decoded.json"
+FIXTURE_PATH = "/app/backend/tests/fixtures/robert_q1_underspend.txt"
+CACHE_PATH = "/app/backend/tests/fixtures/_robert_q1_decoded.json"
 
 with open(FIXTURE_PATH, "r") as f:
     ROBERT_STMT = f.read()

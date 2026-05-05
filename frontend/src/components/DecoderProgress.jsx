@@ -14,12 +14,13 @@ import { Check, Loader2, Circle } from "lucide-react";
  *   - active: boolean — true while the decode request is in-flight
  */
 const STEPS = [
-    { key: "header", label: "Reading header", detail: "participant, classification, budget", startAt: 0, doneAt: 11 },
-    { key: "clinical", label: "Extracting Clinical", detail: "nursing, allied health", startAt: 0, doneAt: 12 },
-    { key: "independence", label: "Extracting Independence", detail: "personal care, transport", startAt: 0, doneAt: 12 },
-    { key: "everyday", label: "Extracting Everyday Living", detail: "domestic, AT-HM", startAt: 0, doneAt: 13 },
-    { key: "adjustments", label: "Care management & adjustments", detail: "fees, prior-period credits", startAt: 0, doneAt: 14 },
-    { key: "audit", label: "Running anomaly audit", detail: "10-rule check across the statement", startAt: 14, doneAt: 60 },
+    { key: "header", label: "Reading header", detail: "participant, pension status, budget", startAt: 0, doneAt: 18 },
+    { key: "clinical", label: "Extracting Clinical", detail: "nursing, allied health", startAt: 0, doneAt: 22 },
+    { key: "independence", label: "Extracting Independence", detail: "personal care, transport", startAt: 0, doneAt: 24 },
+    { key: "everyday", label: "Extracting Everyday Living", detail: "domestic, AT-HM", startAt: 0, doneAt: 26 },
+    { key: "adjustments", label: "Care management & adjustments", detail: "fees, prior-period credits", startAt: 0, doneAt: 28 },
+    { key: "notes", label: "Reading provider notes", detail: "free-form disclosures", startAt: 0, doneAt: 30 },
+    { key: "audit", label: "Running anomaly audit", detail: "13 pension-aware checks", startAt: 30, doneAt: 75 },
 ];
 
 function stateAt(seconds, step, isActive) {
@@ -47,7 +48,7 @@ export default function DecoderProgress({ active }) {
                 <div>
                     <div className="font-medium text-primary-k">Decoding your statement…</div>
                     <p className="text-xs text-muted-k mt-0.5">
-                        {seconds < 14 ? "Running 5 extraction passes in parallel." : "Auditing extracted data against 10 anomaly rules."}
+                        {seconds < 30 ? "Running 6 extraction passes in parallel." : "Auditing extracted data with pension-aware contribution rules."}
                     </p>
                 </div>
                 <div className="text-xs tabular-nums text-muted-k" data-testid="decoder-progress-elapsed">

@@ -29,14 +29,26 @@ export default function StatementDecoderEmbed({ compact = false }) {
         setError(null);
         setResult(null);
         try {
-            const { data } = await api.post("/public/decode-statement-text", { text });
-            setResult(data);
+            const { data: initial } = await api.post("/public/decode-statement-text", { text });
+            if (initial.abuse_flag) { setResult(initial); return; }
+            const jobId = initial.job_id;
+            if (!jobId) { setResult(initial); return; }
+            const deadline = Date.now() + 180_000;
+            let final = null;
+            while (Date.now() < deadline) {
+                await new Promise((r) => setTimeout(r, 2000));
+                const { data: status } = await api.get(`/public/decode-job/${jobId}`);
+                if (status.status === "done") { final = status.result; break; }
+                if (status.status === "error") { throw new Error(status.error || "Decode failed."); }
+            }
+            if (!final) throw new Error("Decode timed out — try a shorter statement.");
+            setResult(final);
         } catch (err) {
             const detail = err?.response?.data?.detail;
             if (detail && typeof detail === "object" && detail.error === "daily_limit") {
                 setError("You've used your free decode for today. Come back tomorrow — or sign up for unlimited access.");
             } else {
-                setError(typeof detail === "string" ? detail : detail?.message || "Could not decode the statement.");
+                setError(typeof detail === "string" ? detail : detail?.message || err?.message || "Could not decode the statement.");
             }
         } finally {
             setLoading(false);

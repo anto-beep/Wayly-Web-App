@@ -1,0 +1,320 @@
+{
+  "extracted": {
+    "participant_name": "Robert Anderson",
+    "mac_id": "MAC-2025-22817",
+    "statement_period": "1 March 2026 \u2013 31 March 2026",
+    "period_start": "2026-03-01",
+    "period_end": "2026-03-31",
+    "provider_name": "Daybreak Community Care",
+    "classification": "Level 4 (Standard)",
+    "pension_status": "unknown",
+    "quarterly_budget_total": 7424.0,
+    "care_management_deducted": 742.4,
+    "care_management_rate_pct": 10.0,
+    "service_budget_available": 6681.6,
+    "rollover_from_prior_quarter": 0.0,
+    "budget_remaining_at_quarter_end": 2150.0,
+    "reported_total_gross": 1452.9,
+    "reported_total_participant_contribution": 67.4,
+    "reported_total_government_paid": 1385.5,
+    "lifetime_cap_total": 135318.69,
+    "lifetime_contributions_to_date": 1820.0,
+    "direct_debit_amount": 67.4,
+    "direct_debit_date": "2026-04-10",
+    "line_items": [
+      {
+        "date": "12 Mar",
+        "service_description": "Nursing \u2014 diabetes review",
+        "service_code": "NU-01",
+        "stream": "Clinical",
+        "hours": 0.5,
+        "unit_rate": 165.0,
+        "gross": 82.5,
+        "participant_contribution": 0.0,
+        "government_paid": 82.5,
+        "is_cancellation": false,
+        "worker_name": "RN K. Holt",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "04 Mar",
+        "service_description": "Personal care \u2014 shower",
+        "service_code": "PC-01",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 85.0,
+        "gross": 85.0,
+        "participant_contribution": 4.25,
+        "government_paid": 80.75,
+        "is_cancellation": false,
+        "worker_name": "L. Phan",
+        "is_brokered": true,
+        "provider_notes": "brokered: subcontracted to Bright Care; brokered rate $85/hr; published Daybreak rate $78/hr",
+        "flags_in_original": ""
+      },
+      {
+        "date": "11 Mar",
+        "service_description": "Personal care \u2014 shower",
+        "service_code": "PC-01",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 85.0,
+        "gross": 85.0,
+        "participant_contribution": 4.25,
+        "government_paid": 80.75,
+        "is_cancellation": false,
+        "worker_name": "L. Phan",
+        "is_brokered": true,
+        "provider_notes": "brokered: subcontracted to Bright Care; brokered rate $85/hr; published Daybreak rate $78/hr",
+        "flags_in_original": ""
+      },
+      {
+        "date": "18 Mar",
+        "service_description": "Personal care \u2014 shower",
+        "service_code": "PC-01",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 85.0,
+        "gross": 85.0,
+        "participant_contribution": 4.25,
+        "government_paid": 80.75,
+        "is_cancellation": false,
+        "worker_name": "L. Phan",
+        "is_brokered": true,
+        "provider_notes": "brokered: subcontracted to Bright Care; brokered rate $85/hr; published Daybreak rate $78/hr",
+        "flags_in_original": ""
+      },
+      {
+        "date": "25 Mar",
+        "service_description": "Personal care \u2014 shower",
+        "service_code": "PC-01",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 85.0,
+        "gross": 85.0,
+        "participant_contribution": 4.25,
+        "government_paid": 80.75,
+        "is_cancellation": false,
+        "worker_name": "L. Phan",
+        "is_brokered": true,
+        "provider_notes": "brokered: subcontracted to Bright Care; brokered rate $85/hr; published Daybreak rate $78/hr",
+        "flags_in_original": ""
+      },
+      {
+        "date": "06 Mar",
+        "service_description": "Domestic assistance \u2014 cleaning",
+        "service_code": "DA-01",
+        "stream": "EverydayLiving",
+        "hours": 2.0,
+        "unit_rate": 72.0,
+        "gross": 144.0,
+        "participant_contribution": 25.2,
+        "government_paid": 118.8,
+        "is_cancellation": false,
+        "worker_name": "M. Rivera",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "20 Mar",
+        "service_description": "Domestic assistance \u2014 cleaning",
+        "service_code": "DA-01",
+        "stream": "EverydayLiving",
+        "hours": 2.0,
+        "unit_rate": 72.0,
+        "gross": 144.0,
+        "participant_contribution": 25.2,
+        "government_paid": 118.8,
+        "is_cancellation": false,
+        "worker_name": "M. Rivera",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "2026-03-31",
+        "service_description": "Care management fee",
+        "service_code": "CM-01",
+        "stream": "CareMgmt",
+        "hours": 0.0,
+        "unit_rate": 0.0,
+        "gross": 742.4,
+        "participant_contribution": 0.0,
+        "government_paid": 742.4,
+        "is_cancellation": false,
+        "worker_name": "",
+        "is_brokered": false,
+        "provider_notes": "10% of quarterly budget",
+        "flags_in_original": ""
+      }
+    ],
+    "previous_period_adjustments": [],
+    "at_hm_commitments": [
+      {
+        "ref": "ATHM-2025-088",
+        "item_description": "Bathroom grab rail bundle",
+        "approval_date": "2025-09-15",
+        "expiry_date": "2026-09-15",
+        "amount_approved": 420.0,
+        "amount_claimed": 0.0,
+        "amount_remaining": 420.0,
+        "status": "Approved (awaiting installer)"
+      },
+      {
+        "ref": "ATHM-2025-101",
+        "item_description": "Mobility ramp \u2014 front entrance",
+        "approval_date": "2025-08-02",
+        "expiry_date": "2026-08-02",
+        "amount_approved": 1180.0,
+        "amount_claimed": 0.0,
+        "amount_remaining": 1180.0,
+        "status": "Approved (no installer assigned)"
+      },
+      {
+        "ref": "ATHM-2025-145",
+        "item_description": "Shower stool \u2014 height adjustable",
+        "approval_date": "2025-11-30",
+        "expiry_date": "2026-11-30",
+        "amount_approved": 180.0,
+        "amount_claimed": 180.0,
+        "amount_remaining": 0.0,
+        "status": "Delivered"
+      },
+      {
+        "ref": "ATHM-2026-014",
+        "item_description": "Bedside commode chair",
+        "approval_date": "2025-08-22",
+        "expiry_date": "2026-08-22",
+        "amount_approved": 260.0,
+        "amount_claimed": 60.0,
+        "amount_remaining": 200.0,
+        "status": "Partial \u2014 extra accessory pending"
+      }
+    ],
+    "provider_notes_raw": []
+  },
+  "audit": {
+    "statement_summary": {
+      "participant_name": "Robert Anderson",
+      "period": "1 March 2026 \u2013 31 March 2026",
+      "provider": "Daybreak Community Care",
+      "classification": "Level 4 (Standard)",
+      "total_line_items": 7,
+      "total_gross": 1452.9,
+      "total_participant_contribution": 67.4,
+      "total_government_paid": 1385.5,
+      "care_management_fee": 742.4,
+      "net_budget_impact": 1452.9,
+      "budget_remaining": 2150.0,
+      "rollover_applied": 0.0,
+      "adjusted_budget_remaining": 2150.0,
+      "lifetime_contributions_to_date": 1820.0,
+      "lifetime_cap_remaining": null
+    },
+    "stream_breakdown": [
+      {
+        "stream": "Clinical",
+        "line_item_count": 1,
+        "gross_total": 82.5,
+        "participant_contribution": 0.0,
+        "government_paid": 82.5
+      },
+      {
+        "stream": "Independence",
+        "line_item_count": 4,
+        "gross_total": 340.0,
+        "participant_contribution": 17.0,
+        "government_paid": 323.0
+      },
+      {
+        "stream": "EverydayLiving",
+        "line_item_count": 2,
+        "gross_total": 288.0,
+        "participant_contribution": 50.4,
+        "government_paid": 237.6
+      },
+      {
+        "stream": "CareMgmt",
+        "line_item_count": 1,
+        "gross_total": 742.4,
+        "participant_contribution": 0.0,
+        "government_paid": 742.4
+      }
+    ],
+    "anomalies": [
+      {
+        "severity": "low",
+        "rule": "RULE_9_PENSION_STATUS_UNKNOWN",
+        "headline": "Pension status unknown; contribution validation skipped.",
+        "detail": "The extracted pension_status field is 'unknown', which prevents deterministic validation of participant contribution amounts against the correct rate tables (full age pension, part age pension, or self-funded). Contribution checks have been skipped for this statement. Ask your provider to confirm your pension status so that future statements can be fully audited.",
+        "dollar_impact": 0.0,
+        "evidence": [
+          "pension_status: 'unknown'"
+        ],
+        "suggested_action": "Contact your provider to confirm your pension status (full age pension, part age pension, or self-funded) and request a corrected statement if needed."
+      },
+      {
+        "severity": "medium",
+        "rule": "RULE_11_BROKERED_PREMIUM",
+        "headline": "Brokered rate premium on PC-01 (Personal care\u2014shower) exceeds published rate by $7.00/hr.",
+        "detail": "Four Personal care\u2014shower (PC-01) line items were provided by Bright Care at a brokered rate of $85.00/hr. Daybreak Community Care's published rate for this service is $78.00/hr, a difference of $7.00 per hour. Across 4.0 hours this month, the premium cost is $28.00, charged entirely to your service budget. Providers are not required to absorb brokered rate premiums; however, you may negotiate this with your provider.",
+        "dollar_impact": 28.0,
+        "evidence": [
+          "service_code PC-01, dates 04 Mar, 11 Mar, 18 Mar, 25 Mar",
+          "brokered rate $85/hr; published Daybreak rate $78/hr",
+          "4 line items \u00d7 1.0 hour each = 4.0 hours total",
+          "$7.00/hr premium \u00d7 4.0 hours = $28.00 impact"
+        ],
+        "suggested_action": "Ask your provider whether the brokered rate premium of $7.00/hr can be absorbed by the provider rather than your budget. Providers are not required to pass brokered rate premiums to participants."
+      },
+      {
+        "severity": "low",
+        "rule": "RULE_12_UNCLAIMED_AT_HM_COMMITMENTS",
+        "headline": "Two AT-HM commitments remain unclaimed and are approaching or have passed the 30-day approval window.",
+        "detail": "ATHM-2025-088 (Bathroom grab rail bundle): approved 15 September 2025, $420.00 remaining, expires 15 September 2026. Status: 'Approved (awaiting installer)'. ATHM-2025-101 (Mobility ramp\u2014front entrance): approved 02 August 2025, $1,180.00 remaining, expires 02 August 2026. Status: 'Approved (no installer assigned)'. Both commitments have been approved for over 30 days with zero claimed amount. Follow up with your care manager to assign an installer and schedule delivery before these commitments expire.",
+        "dollar_impact": 0.0,
+        "evidence": [
+          "ATHM-2025-088: approval_date 2025-09-15, amount_claimed 0.00, days_since_approval > 150",
+          "ATHM-2025-101: approval_date 2025-08-02, amount_claimed 0.00, days_since_approval > 200",
+          "status fields indicate installation is pending"
+        ],
+        "suggested_action": "Follow up with your care manager to arrange delivery/installation before these commitments expire. Contact Daybreak Community Care to confirm the installer assignment for both items."
+      },
+      {
+        "severity": "low",
+        "rule": "RULE_12_UNCLAIMED_AT_HM_COMMITMENTS",
+        "headline": "One AT-HM commitment (ATHM-2026-014) has partial claim with balance remaining and approaching the 180-day threshold.",
+        "detail": "ATHM-2026-014 (Bedside commode chair): approved 22 August 2025, $200.00 remaining, expires 22 August 2026. Status: 'Partial\u2014extra accessory pending'. Partial claim of $60.00 has been made, leaving $200.00 unclaimed. The commitment is now approaching the 180-day mark since approval. Follow up with your care manager to confirm delivery of the pending accessory before the commitment expires.",
+        "dollar_impact": 0.0,
+        "evidence": [
+          "ATHM-2026-014: approval_date 2025-08-22, amount_claimed 60.00, amount_remaining 200.00, days_since_approval > 180",
+          "status: 'Partial\u2014extra accessory pending'"
+        ],
+        "suggested_action": "Follow up with your care manager to arrange delivery/installation of the pending accessory before this commitment expires."
+      },
+      {
+        "severity": "medium",
+        "rule": "RULE_13_QUARTERLY_UNDERSPEND",
+        "headline": "Robert Anderson ended the quarter with $2,150.00 unspent \u2014 about 29% of the quarterly budget.",
+        "detail": "Quarterly budget was $7,424.00; $2,150.00 (29.0%) remains at quarter end. Unspent funding above the rollover cap ($1,000.00) is forfeited permanently \u2014 about $1,150.00 is at risk. A care plan review might help ensure the full budget is being used for services Robert Anderson needs.",
+        "dollar_impact": 1150.0,
+        "evidence": [
+          "quarterly_budget_total: $7,424.00",
+          "budget_remaining_at_quarter_end: $2,150.00",
+          "remaining_pct: 28.96%",
+          "rollover_cap: $1,000.00"
+        ],
+        "suggested_action": "Schedule a care-plan review with the provider before quarter end. Identify services the participant qualifies for but isn't currently using."
+      }
+    ],
+    "anomaly_count": {
+      "high": 0,
+      "medium": 2,
+      "low": 3
+    }
+  },
+  "_elapsed": 31.447639226913452
+}
