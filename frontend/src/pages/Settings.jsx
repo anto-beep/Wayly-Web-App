@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { api } from "@/lib/api";
+import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import {
     User, CreditCard, Users, Shield, Loader2, Check, X, Crown, Mail, ArrowUpRight, Trash2,
@@ -92,20 +92,20 @@ function BillingTab() {
     const startCheckout = async (plan) => {
         setBusy(true);
         try { const { data } = await api.post("/billing/checkout", { plan, origin_url: window.location.origin }); if (data?.url) { window.location.href = data.url; return; } }
-        catch (err) { toast.error(err?.response?.data?.detail || "Could not start checkout"); }
+        catch (err) { toast.error(extractErrorMessage(err, "Could not start checkout")); }
         finally { setBusy(false); }
     };
     const changePlan = async (plan) => {
         setBusy(true);
         try { const { data } = await api.post("/billing/upgrade", { plan }); if (data?.ok) { toast.success(`Plan changed to ${PLANS[plan].name}`); await refreshUser(); await load(); } }
-        catch (err) { toast.error(err?.response?.data?.detail || "Could not change plan"); }
+        catch (err) { toast.error(extractErrorMessage(err, "Could not change plan")); }
         finally { setBusy(false); }
     };
     const cancel = async () => {
         if (!window.confirm("Cancel auto-renewal? Your plan stays active until the end of the current billing period.")) return;
         setBusy(true);
         try { await api.post("/billing/cancel"); toast.success("Auto-renewal cancelled"); await load(); }
-        catch (err) { toast.error(err?.response?.data?.detail || "Could not cancel"); }
+        catch (err) { toast.error(extractErrorMessage(err, "Could not cancel")); }
         finally { setBusy(false); }
     };
     const currentPlan = user?.plan || "free";
@@ -159,10 +159,10 @@ function MembersTab() {
     const invite = async (e) => {
         e.preventDefault(); setSending(true);
         try { await api.post("/household/invite", form); toast.success(`Invitation sent to ${form.email}`); setForm({ email: "", role: "family_member", note: "" }); await load(); }
-        catch (err) { const detail = err?.response?.data?.detail; toast.error(typeof detail === "string" ? detail : detail?.message || "Could not send invite"); }
+        catch (err) { toast.error(extractErrorMessage(err, "Could not send invite")); }
         finally { setSending(false); }
     };
-    const remove = async (uid) => { if (!window.confirm("Remove this member?")) return; try { await api.delete(`/household/members/${uid}`); toast.success("Member removed"); await load(); } catch (err) { toast.error(err?.response?.data?.detail || "Could not remove"); } };
+    const remove = async (uid) => { if (!window.confirm("Remove this member?")) return; try { await api.delete(`/household/members/${uid}`); toast.success("Member removed"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not remove")); } };
     const onFamily = user?.plan === "family";
     return (
         <div className="space-y-6" data-testid="settings-members">
@@ -230,8 +230,7 @@ function DigestTab() {
             else toast.error(data.reason || "Not sent");
             await load();
         } catch (err) {
-            const detail = err?.response?.data?.detail;
-            toast.error(typeof detail === "string" ? detail : detail?.message || "Could not send digest");
+            toast.error(extractErrorMessage(err, "Could not send digest"));
         } finally { setSending(false); }
     };
 
@@ -440,7 +439,7 @@ function UsageTab() {
 function SecurityTab() {
     const { user } = useAuth();
     const [sending, setSending] = useState(false);
-    const sendReset = async () => { setSending(true); try { await api.post("/auth/forgot", { email: user.email }); toast.success("Password reset link sent."); } catch (err) { toast.error(err?.response?.data?.detail || "Could not send reset link"); } finally { setSending(false); } };
+    const sendReset = async () => { setSending(true); try { await api.post("/auth/forgot", { email: user.email }); toast.success("Password reset link sent."); } catch (err) { toast.error(extractErrorMessage(err, "Could not send reset link")); } finally { setSending(false); } };
     return (
         <div className="space-y-6" data-testid="settings-security">
             <div><h2 className="font-heading text-2xl text-primary-k tracking-tight">Security</h2><p className="text-sm text-muted-k mt-1">Manage your password and sign-in options.</p></div>
@@ -468,7 +467,7 @@ function DangerTab() {
             toast.success("Account deleted");
             await logout();
             nav("/");
-        } catch (err) { toast.error(err?.response?.data?.detail || "Could not delete"); }
+        } catch (err) { toast.error(extractErrorMessage(err, "Could not delete")); }
         finally { setBusy(false); }
     };
     return (

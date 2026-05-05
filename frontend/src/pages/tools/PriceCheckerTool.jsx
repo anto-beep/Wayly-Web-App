@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
-import { api, formatAUD2 } from "@/lib/api";
+import { api, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
 const SERVICES = [
@@ -44,7 +44,7 @@ export default function PriceCheckerTool() {
             });
             setResult(data);
         } catch (err) {
-            setError(err?.response?.data?.detail || "Could not check price.");
+            setError(extractErrorMessage(err, "Could not check price."));
         } finally {
             setLoading(false);
         }

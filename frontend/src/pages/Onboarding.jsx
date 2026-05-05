@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, formatAUD } from "@/lib/api";
+import { api, formatAUD, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { HeartHandshake } from "lucide-react";
@@ -37,7 +37,7 @@ export default function Onboarding() {
             toast.success("Household set up");
             nav(user?.role === "participant" ? "/participant" : "/app");
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not set up household");
+            toast.error(extractErrorMessage(err, "Could not set up household"));
         } finally {
             setSubmitting(false);
         }

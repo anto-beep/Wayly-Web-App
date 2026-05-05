@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { HeartHandshake } from "lucide-react";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function Login() {
@@ -20,7 +21,7 @@ export default function Login() {
             toast.success(`Welcome back, ${u.name}`);
             nav(u.role === "participant" ? "/participant" : "/app");
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not sign in");
+            toast.error(extractErrorMessage(err, "Could not sign in"));
         } finally {
             setSubmitting(false);
         }

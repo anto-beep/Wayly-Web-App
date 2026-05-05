@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { api } from "@/lib/api";
+import { api, extractErrorMessage } from "@/lib/api";
 import { Mail, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,7 +31,7 @@ export default function EmailResultButton({ tool, headline, bodyHtml }) {
             setDone(true);
             toast.success("Sent. Check your inbox in a minute.");
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not send. Try again.");
+            toast.error(extractErrorMessage(err, "Could not send. Try again."));
         } finally {
             setBusy(false);
         }

@@ -257,6 +257,8 @@ Return STRICT JSON only:
   "participant_name": "",
   "mac_id": "",
   "statement_period": "",
+  "period_start": "",
+  "period_end": "",
   "provider_name": "",
   "classification": "",
   "quarterly_budget_total": 0.00,
@@ -264,6 +266,10 @@ Return STRICT JSON only:
   "care_management_rate_pct": 0.00,
   "service_budget_available": 0.00,
   "rollover_from_prior_quarter": 0.00,
+  "budget_remaining_at_quarter_end": 0.00,
+  "reported_total_gross": 0.00,
+  "reported_total_participant_contribution": 0.00,
+  "reported_total_government_paid": 0.00,
   "lifetime_cap_total": 0.00,
   "lifetime_contributions_to_date": 0.00,
   "direct_debit_amount": 0.00,
@@ -273,6 +279,11 @@ Return STRICT JSON only:
 Rules:
 - If a value is not in the statement, use "" for strings and 0.00 for numbers.
 - Calculate care_management_rate_pct as care_management_deducted / quarterly_budget_total * 100, rounded to 2dp, OR copy the percentage if the statement states it explicitly (e.g. "Care management deducted (11%)").
+- statement_period is the value from the explicit "STATEMENT PERIOD" / "Statement Period" header — NOT the quarterly-budget-summary date range. A monthly statement covers a single calendar month even if the budget summary references a 3-month quarter.
+- period_start and period_end should be ISO dates (YYYY-MM-DD) parsed from statement_period when possible, otherwise "".
+- reported_total_gross is the statement's own "Total gross billed" / "Total this month" figure (the provider's stated total).
+- reported_total_participant_contribution / reported_total_government_paid are the matching totals if listed.
+- budget_remaining_at_quarter_end is the statement's stated remaining quarterly service budget (post all line items), if shown.
 - Return only the JSON object. No prose."""
 
 
@@ -332,7 +343,7 @@ EVERYDAY_EXTRACTOR_SYSTEM = _stream_extractor_system("EverydayLiving", EVERYDAY_
 )
 
 
-ADJUSTMENTS_EXTRACTOR_SYSTEM = """You are a data extraction engine for Australian Support at Home statements. Extract ONLY (a) the Care Management fee line item and (b) the previous-period-adjustments array. Skip every other line item.
+ADJUSTMENTS_EXTRACTOR_SYSTEM = """You are a data extraction engine for Australian Support at Home statements. Extract ONLY (a) the Care Management fee line item, (b) the previous-period-adjustments array, and (c) the AT-HM commitments / outstanding-orders register. Skip every other line item.
 
 Return STRICT JSON only:
 {
@@ -356,12 +367,28 @@ Return STRICT JSON only:
   ],
   "previous_period_adjustments": [
     {"ref": "", "description": "", "credit_amount": 0.00}
+  ],
+  "at_hm_commitments": [
+    {
+      "ref": "",
+      "item_description": "",
+      "approval_date": "",
+      "expiry_date": "",
+      "amount_approved": 0.00,
+      "amount_claimed": 0.00,
+      "amount_remaining": 0.00,
+      "status": ""
+    }
   ]
 }
 
 Rules:
 - Care management fee usually has service code CM-01 or description containing "Care management". Always coded stream: "CareMgmt".
 - Previous-period adjustments are listed in a separate "PREVIOUS PERIOD ADJUSTMENTS" or similar section — they are credits/refunds for prior months, NOT line items.
+- AT-HM commitments come from sections titled "AT-HM Commitments", "Outstanding Orders", "Approved Items Pending Delivery", or similar. They represent assistive-tech / home-modification items that were APPROVED but have not yet been delivered/installed/claimed.
+- For each AT-HM commitment include: a reference number (ref), item description, approval_date (ISO if possible), expiry_date (ISO if possible), amount_approved, amount_claimed (default 0.00 if not stated), amount_remaining (default amount_approved - amount_claimed if not stated explicitly), and a short status string ("approved", "in progress", "delivered", etc).
+- If the statement has no AT-HM commitments section, return an empty at_hm_commitments array.
+- Dates should be ISO (YYYY-MM-DD) when the source allows; otherwise copy verbatim.
 - Return only valid JSON. No prose."""
 
 
@@ -404,6 +431,43 @@ Dollar impact: abs(charged_contribution - correct_contribution)
 
 RULE 10 — PREVIOUS PERIOD ADJUSTMENTS
 If adjustments array is non-empty: flag as LOW severity (informational). Summarise what was corrected and confirm the credit was applied to government_paid not participant_contribution.
+
+RULE 11 — BROKERED RATE PREMIUM
+Scan provider_notes and flags_in_original on every line item for any disclosure that a brokered rate exceeds the provider's own published rate for an equivalent service (look for phrases like "brokered rate", "external provider rate", "subcontracted", "premium rate applies", "above usual rate due to brokering").
+Also: if a line item has is_brokered=true, compare its unit_rate against any published rate mentioned elsewhere in the statement for the same service_code. If the brokered rate exceeds the published rate by more than $0.50: flag as MEDIUM severity.
+Dollar impact: (brokered_rate - published_rate) * hours * occurrences_this_month for the affected service.
+Suggested action: "Ask your provider whether the brokered rate premium can be absorbed by the provider rather than your budget. Providers are not required to pass brokered rate premiums to participants."
+
+RULE 12 — UNCLAIMED AT-HM COMMITMENTS
+Inspect the at_hm_commitments array (each entry has ref, item_description, approval_date, expiry_date, amount_approved, amount_claimed, amount_remaining, status).
+Reference today's date relative to the statement period_end. If period_end is missing, use the last day of the statement_period text. Compute days_since_approval = period_end - approval_date.
+- If amount_claimed = 0.00 AND days_since_approval > 30: flag as LOW severity. Detail must include the commitment ref, item_description, amount_remaining, expiry_date.
+- If amount_claimed > 0 AND amount_remaining > 0 AND days_since_approval > 180: flag as LOW severity (prompt to use remaining balance). Detail must include the same fields.
+Suggested action for both sub-cases: "Follow up with your care manager to arrange delivery/installation before this commitment expires."
+If the at_hm_commitments array is empty, do NOT emit this rule.
+
+RULE 13 — QUARTERLY UNDERSPEND PATTERN
+Use budget_remaining_at_quarter_end (or service_budget_available - sum of non-cancelled gross if remaining isn't directly given) and quarterly_budget_total.
+Compute remaining_pct = budget_remaining_at_quarter_end / quarterly_budget_total * 100.
+Compute rollover_cap = max(1000.00, 0.10 * quarterly_budget_total).
+- If remaining_pct > 15 AND budget_remaining_at_quarter_end <= rollover_cap: flag as LOW severity (the full amount will roll over — positive outcome but worth noting).
+- If remaining_pct > 15 AND budget_remaining_at_quarter_end > rollover_cap: flag as MEDIUM severity (excess above rollover cap will be forfeited).
+Headline copy template: "{participant_name} ended the quarter with ${budget_remaining_at_quarter_end:,.2f} unspent — about {remaining_pct:.0f}% of the quarterly budget. Unspent funding above the rollover cap (${rollover_cap:,.2f}) is forfeited permanently. A care plan review might help ensure the full budget is being used."
+If budget_remaining_at_quarter_end <= 0 or quarterly_budget_total <= 0: do NOT emit this rule.
+
+RULE 14 — STATEMENT PERIOD ACCURACY (parsing warning)
+Verify the extracted statement_period (and period_start/period_end if present) match the explicit "STATEMENT PERIOD" header in the source — NOT the quarterly-budget-summary date range.
+- If you can compute (period_end - period_start) and that span exceeds 35 days for what looks like a monthly statement: flag as LOW severity with rule "RULE_14_PERIOD_PARSE_WARNING" and headline "Statement period may be incorrectly extracted — verify dates."
+- Detail should include the extracted period_start, period_end, and the literal statement_period string.
+- Suggested action: "Open the original statement and confirm the dates match. If they don't, this decode may be reading from the quarterly summary by mistake."
+
+RULE 15 — GROSS TOTAL VALIDATION (parsing warning)
+Compute extracted_total = sum(line_item.gross for line_item where is_cancellation=false) - sum(prev_period_adjustment.credit_amount).
+Compare extracted_total against reported_total_gross from the header.
+- If reported_total_gross > 0 AND abs(extracted_total - reported_total_gross) > 5.00: flag as LOW severity with rule "RULE_15_GROSS_TOTAL_PARSE_WARNING".
+- Detail copy: "Extracted total ($X.XX) differs from the statement's reported total ($Y.YY). Some line items may not have been extracted. Review the full statement manually."
+- Suggested action: "Open the original statement and check whether any line items are missing from the decoded view above."
+- If reported_total_gross is 0 (not present in the source): do NOT emit this rule.
 
 OUTPUT FORMAT — return ONLY valid JSON, no prose:
 
@@ -638,10 +702,15 @@ async def _llm_chunk_call(
 
 _HEADER_DEFAULTS = {
     "participant_name": "", "mac_id": "", "statement_period": "",
+    "period_start": "", "period_end": "",
     "provider_name": "", "classification": "",
     "quarterly_budget_total": 0.0, "care_management_deducted": 0.0,
     "care_management_rate_pct": 0.0, "service_budget_available": 0.0,
     "rollover_from_prior_quarter": 0.0,
+    "budget_remaining_at_quarter_end": 0.0,
+    "reported_total_gross": 0.0,
+    "reported_total_participant_contribution": 0.0,
+    "reported_total_government_paid": 0.0,
     "lifetime_cap_total": 0.0, "lifetime_contributions_to_date": 0.0,
     "direct_debit_amount": 0.0, "direct_debit_date": "",
 }
@@ -652,6 +721,7 @@ def _empty_extracted() -> Dict[str, Any]:
         **_HEADER_DEFAULTS,
         "line_items": [],
         "previous_period_adjustments": [],
+        "at_hm_commitments": [],
     }
 
 
@@ -722,7 +792,7 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
                     it["stream"] = fallback_stream
                 line_items.append(it)
 
-    # Merge care-mgmt + adjustments
+    # Merge care-mgmt + adjustments + AT-HM commitments
     if isinstance(adj_res, dict):
         for it in (adj_res.get("care_management_line_items") or []):
             if isinstance(it, dict):
@@ -731,6 +801,9 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
         adj_list = adj_res.get("previous_period_adjustments") or []
         if isinstance(adj_list, list):
             assembled["previous_period_adjustments"] = [a for a in adj_list if isinstance(a, dict)]
+        commitments = adj_res.get("at_hm_commitments") or []
+        if isinstance(commitments, list):
+            assembled["at_hm_commitments"] = [c for c in commitments if isinstance(c, dict)]
 
     # Sort line items by date string (ISO-ish or "DD MMM" — best-effort lexical)
     assembled["line_items"] = line_items
@@ -759,7 +832,7 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
     """
     key = _key()
     if not key:
-        return _empty_audit(extracted)
+        return _add_parse_warnings(_empty_audit(extracted), extracted)
     chat = LlmChat(
         api_key=key,
         session_id=f"audit-{household_id}",
@@ -773,6 +846,8 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
         result = _safe_json_load(raw)
         if result is None:
             raise json.JSONDecodeError("repair failed", raw or "", 0)
+        # Append deterministic parse warnings (rules 14 & 15) and re-tally
+        result = _add_parse_warnings(result, extracted)
         # Normalise anomaly_count if the model forgot it
         anoms = result.get("anomalies", []) or []
         counts = {"high": 0, "medium": 0, "low": 0}
@@ -784,11 +859,117 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
         return result
     except json.JSONDecodeError as e:
         logger.warning("Auditor Pass 2 JSON parse failed: %s | raw[:500]=%r", e, str(raw)[:500])
-        fallback = _empty_audit(extracted)
+        fallback = _add_parse_warnings(_empty_audit(extracted), extracted)
         fallback["_audit_error"] = f"json_parse: {e}"
         return fallback
     except Exception as e:
         logger.warning("Auditor Pass 2 failed: %s", e)
-        fallback = _empty_audit(extracted)
+        fallback = _add_parse_warnings(_empty_audit(extracted), extracted)
         fallback["_audit_error"] = str(e)
         return fallback
+
+
+# ---------------------------------------------------------------------------
+# Deterministic parse-warning helpers (Rules 14 & 15)
+# ---------------------------------------------------------------------------
+
+def _parse_iso_date(value: Any):
+    """Best-effort parse of a date string into a datetime.date.
+    Returns None on failure.
+    """
+    import datetime as _dt
+    if not value or not isinstance(value, str):
+        return None
+    s = value.strip()
+    # Try ISO formats first
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+        try:
+            return _dt.datetime.strptime(s, fmt).date()
+        except ValueError:
+            pass
+    # Try DD MMM YYYY / D MMM YYYY
+    for fmt in ("%d %b %Y", "%d %B %Y", "%d/%m/%Y", "%d-%m-%Y"):
+        try:
+            return _dt.datetime.strptime(s, fmt).date()
+        except ValueError:
+            pass
+    return None
+
+
+def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any]) -> Dict[str, Any]:
+    """Append deterministic parsing warnings (Rules 14 & 15) if conditions
+    are met and the LLM hasn't already flagged the same rule. Returns the
+    mutated audit_result for chaining.
+    """
+    anomalies = audit_result.setdefault("anomalies", []) or []
+    existing_rules = {(a.get("rule") or "").upper() for a in anomalies if isinstance(a, dict)}
+
+    # Rule 14 — period span > 35 days
+    if "RULE_14_PERIOD_PARSE_WARNING" not in existing_rules:
+        ps = _parse_iso_date(extracted.get("period_start"))
+        pe = _parse_iso_date(extracted.get("period_end"))
+        if ps and pe:
+            span = (pe - ps).days
+            if span > 35:
+                anomalies.append({
+                    "severity": "low",
+                    "rule": "RULE_14_PERIOD_PARSE_WARNING",
+                    "headline": "Statement period may be incorrectly extracted — verify dates.",
+                    "detail": (
+                        f"Extracted period {ps.isoformat()} → {pe.isoformat()} spans {span} days, "
+                        f"which is longer than a typical monthly statement. The literal statement_period "
+                        f"on the source was: \"{extracted.get('statement_period') or ''}\"."
+                    ),
+                    "dollar_impact": 0.0,
+                    "evidence": [
+                        f"period_start: {ps.isoformat()}",
+                        f"period_end: {pe.isoformat()}",
+                        f"statement_period text: {extracted.get('statement_period') or ''}",
+                    ],
+                    "suggested_action": "Open the original statement and confirm the dates match. If they don't, this decode may be reading from the quarterly summary by mistake.",
+                })
+
+    # Rule 15 — extracted gross vs reported gross
+    if "RULE_15_GROSS_TOTAL_PARSE_WARNING" not in existing_rules:
+        try:
+            reported = float(extracted.get("reported_total_gross") or 0.0)
+        except Exception:
+            reported = 0.0
+        if reported > 0:
+            extracted_total = 0.0
+            for li in extracted.get("line_items", []) or []:
+                if li.get("is_cancellation"):
+                    continue
+                try:
+                    extracted_total += float(li.get("gross") or 0)
+                except Exception:
+                    continue
+            adj_credit = 0.0
+            for adj in extracted.get("previous_period_adjustments", []) or []:
+                try:
+                    adj_credit += float(adj.get("credit_amount") or 0)
+                except Exception:
+                    continue
+            net_extracted = extracted_total - adj_credit
+            if abs(net_extracted - reported) > 5.0:
+                anomalies.append({
+                    "severity": "low",
+                    "rule": "RULE_15_GROSS_TOTAL_PARSE_WARNING",
+                    "headline": "Decoded total doesn't match the statement's reported total.",
+                    "detail": (
+                        f"Extracted total (${net_extracted:,.2f}) differs from the statement's reported "
+                        f"total (${reported:,.2f}). Some line items may not have been extracted. "
+                        f"Review the full statement manually."
+                    ),
+                    "dollar_impact": round(abs(net_extracted - reported), 2),
+                    "evidence": [
+                        f"sum of non-cancelled line item gross: ${extracted_total:,.2f}",
+                        f"previous-period adjustment credits: ${adj_credit:,.2f}",
+                        f"net extracted: ${net_extracted:,.2f}",
+                        f"statement reported total: ${reported:,.2f}",
+                    ],
+                    "suggested_action": "Open the original statement and check whether any line items are missing from the decoded view above.",
+                })
+
+    audit_result["anomalies"] = anomalies
+    return audit_result

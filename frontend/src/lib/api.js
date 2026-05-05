@@ -6,14 +6,31 @@ export const API = `${BACKEND_URL}/api`;
 
 export const api = axios.create({ baseURL: API });
 
+/**
+ * Safely extract a human-readable string from an axios error response.
+ * FastAPI raises HTTPException with `detail` that may be either a plain
+ * string OR a structured object (e.g. {error, message, next_available_at}).
+ * Rendering the object directly into JSX crashes React, so every call site
+ * MUST go through this helper.
+ */
+export function extractErrorMessage(err, fallback = "Something went wrong. Try again.") {
+    const detail = err?.response?.data?.detail;
+    if (typeof detail === "string") return detail;
+    if (detail && typeof detail === "object" && typeof detail.message === "string") {
+        return detail.message;
+    }
+    const msg = err?.response?.data?.message;
+    if (typeof msg === "string") return msg;
+    return fallback;
+}
+
 // Global error interceptor — maps backend error codes to friendly toasts.
 // Individual call sites can still catch and override.
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         const status = error?.response?.status;
-        const detail = error?.response?.data?.detail;
-        const detailMsg = typeof detail === "string" ? detail : detail?.message;
+        const detailMsg = extractErrorMessage(error, "");
         // Don't double-toast on auth probe calls
         const isAuthMe = error?.config?.url?.includes("/auth/me");
         if (status === 429) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, formatAUD } from "@/lib/api";
+import { api, formatAUD, extractErrorMessage } from "@/lib/api";
 import { Phone, AlertOctagon, Clock, ArrowLeft, Smile, Meh, Frown } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,7 +41,7 @@ export default function ParticipantView() {
             setCheckedIn(mood);
             toast.success(mood === "not_great" ? "We've let your family know." : "Thanks — noted for today.");
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not save");
+            toast.error(extractErrorMessage(err, "Could not save"));
         } finally {
             setLoggingMood(false);
         }

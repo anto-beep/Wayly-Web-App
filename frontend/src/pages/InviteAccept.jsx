@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import { api } from "@/lib/api";
+import { api, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { HeartHandshake, Loader2, Check, Users } from "lucide-react";
@@ -26,7 +26,7 @@ export default function InviteAccept() {
                 const { data } = await api.get(`/invite/${token}`);
                 setInvite(data);
             } catch (err) {
-                setError(err?.response?.data?.detail || "Invitation not found or expired.");
+                setError(extractErrorMessage(err, "Invitation not found or expired."));
             } finally {
                 setLoading(false);
             }
@@ -40,7 +40,7 @@ export default function InviteAccept() {
             toast.success("You've joined the household");
             nav("/app");
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not accept invitation");
+            toast.error(extractErrorMessage(err, "Could not accept invitation"));
         } finally {
             setAccepting(false);
         }

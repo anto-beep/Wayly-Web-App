@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
-import { api } from "@/lib/api";
+import { api, extractErrorMessage } from "@/lib/api";
 import { Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import EmailResultButton from "@/components/EmailResultButton";
@@ -32,7 +32,7 @@ export default function ReassessmentLetter() {
             const { data } = await api.post("/public/reassessment-letter", form);
             setLetter(data.letter);
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not draft letter.");
+            toast.error(extractErrorMessage(err, "Could not draft letter."));
         } finally {
             setLoading(false);
         }

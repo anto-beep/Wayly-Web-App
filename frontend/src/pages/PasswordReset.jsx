@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { api } from "@/lib/api";
+import { api, extractErrorMessage } from "@/lib/api";
 import { HeartHandshake, ArrowLeft, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import PasswordStrength, { evaluatePassword } from "@/components/PasswordStrength";
@@ -25,7 +25,7 @@ export function ForgotPassword() {
             setSent(true);
             setCooldown(60);
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not send reset link");
+            toast.error(extractErrorMessage(err, "Could not send reset link"));
         } finally {
             setSubmitting(false);
         }
@@ -108,7 +108,7 @@ export function ResetPassword() {
             toast.success("Password updated");
             setTimeout(() => nav("/login"), 1500);
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not update password");
+            toast.error(extractErrorMessage(err, "Could not update password"));
         } finally {
             setSubmitting(false);
         }

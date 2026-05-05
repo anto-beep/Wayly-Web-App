@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "@/lib/api";
+import { api, extractErrorMessage } from "@/lib/api";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -26,7 +26,7 @@ export default function StatementUpload() {
             toast.success("Statement processed");
             nav(`/app/statements/${data.id}`);
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Upload failed");
+            toast.error(extractErrorMessage(err, "Upload failed"));
         } finally {
             setBusy(false);
         }

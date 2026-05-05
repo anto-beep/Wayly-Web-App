@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotFamilyThread } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
-import { api } from "@/lib/api";
+import { api, extractErrorMessage } from "@/lib/api";
 import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
 
 const SUGGESTIONS = [
@@ -36,7 +36,7 @@ export default function FamilyCoordinator() {
             setSessionId(data.session_id);
             setMsgs((x) => [...x, { id: `a-${Date.now()}`, role: "assistant", content: data.reply }]);
         } catch (err) {
-            setMsgs((x) => [...x, { id: `e-${Date.now()}`, role: "assistant", content: err?.response?.data?.detail || "Sorry — couldn't reach the assistant." }]);
+            setMsgs((x) => [...x, { id: `e-${Date.now()}`, role: "assistant", content: extractErrorMessage(err, "Sorry — couldn't reach the assistant.") }]);
         } finally { setBusy(false); }
     };
 

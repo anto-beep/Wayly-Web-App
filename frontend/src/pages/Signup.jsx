@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { HeartHandshake, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api, extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import PasswordStrength, { evaluatePassword } from "@/components/PasswordStrength";
 
@@ -87,14 +87,14 @@ export default function Signup() {
                     toast.error("Could not start checkout — redirecting to onboarding.");
                     nav("/onboarding");
                 } catch (err) {
-                    toast.error(err?.response?.data?.detail || "Could not start checkout.");
+                    toast.error(extractErrorMessage(err, "Could not start checkout."));
                     nav("/onboarding");
                 }
             } else {
                 nav("/app");
             }
         } catch (err) {
-            toast.error(err?.response?.data?.detail || "Could not create account");
+            toast.error(extractErrorMessage(err, "Could not create account"));
         } finally {
             setSubmitting(false);
         }
