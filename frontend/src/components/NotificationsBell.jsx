@@ -1,7 +1,23 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
+
+const SEEN_IDS_KEY = "kindred_notif_seen_ids";
+
+function loadSeenIds() {
+    try {
+        const raw = localStorage.getItem(SEEN_IDS_KEY);
+        return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch { return new Set(); }
+}
+
+function saveSeenIds(ids) {
+    try {
+        localStorage.setItem(SEEN_IDS_KEY, JSON.stringify(Array.from(ids).slice(-200)));
+    } catch { /* quota — ignore */ }
+}
 
 export default function NotificationsBell({ tone = "dark" }) {
     const [items, setItems] = useState([]);
@@ -9,12 +25,35 @@ export default function NotificationsBell({ tone = "dark" }) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const ref = useRef(null);
+    const seenIdsRef = useRef(loadSeenIds());
+    const firstLoadRef = useRef(true);
 
     const load = useCallback(async () => {
         setLoading(true);
         try {
             const { data } = await api.get("/notifications");
-            setItems(data.items || []);
+            const fresh = data.items || [];
+            // On the very first load, treat everything as already seen so the
+            // user isn't toast-spammed with their entire backlog.
+            if (firstLoadRef.current) {
+                fresh.forEach((n) => seenIdsRef.current.add(n.id));
+                saveSeenIds(seenIdsRef.current);
+                firstLoadRef.current = false;
+            } else {
+                // Surface the most recent unread notification we haven't toasted yet
+                const newOnes = fresh.filter((n) => !n.read && !seenIdsRef.current.has(n.id));
+                if (newOnes.length > 0) {
+                    const top = newOnes[0];
+                    toast.info(top.title || "New notification", {
+                        description: top.body,
+                        duration: 8000,
+                        action: top.link ? { label: "View", onClick: () => { window.location.assign(top.link); } } : undefined,
+                    });
+                    newOnes.forEach((n) => seenIdsRef.current.add(n.id));
+                    saveSeenIds(seenIdsRef.current);
+                }
+            }
+            setItems(fresh);
             setUnread(data.unread || 0);
         } catch {/* ignore */}
         finally { setLoading(false); }

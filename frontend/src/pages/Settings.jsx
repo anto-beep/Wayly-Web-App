@@ -7,6 +7,7 @@ import {
     User, CreditCard, Users, Shield, Loader2, Check, X, Crown, Mail, ArrowUpRight, Trash2,
     Bell, Moon, Sun, Gauge, AlertTriangle, Mailbox, Send, Eye,
 } from "lucide-react";
+import Skeleton from "@/components/Skeleton";
 
 const TABS = [
     { id: "profile", label: "Profile", icon: User },
@@ -118,7 +119,10 @@ function BillingTab() {
                 <p className="text-sm text-muted-k mt-1">Upgrade, downgrade or cancel — all inside the app.</p>
             </div>
             {loading ? (
-                <div className="flex items-center gap-2 text-sm text-muted-k"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
+                <div className="space-y-4">
+                    <Skeleton variant="card" rows={3} />
+                    <Skeleton variant="grid" count={3} />
+                </div>
             ) : (<>
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="current-plan-card">
                     <div className="flex items-start justify-between flex-wrap gap-4">
@@ -188,7 +192,7 @@ function MembersTab() {
                 </div>
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="members-list-card">
                     <h3 className="font-heading text-lg text-primary-k">Active members</h3>
-                    {loading ? (<div className="mt-4 text-sm text-muted-k flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>) : (
+                    {loading ? (<div className="mt-4"><Skeleton variant="list" rows={3} /></div>) : (
                         <ul className="mt-4 space-y-2">
                             {data.members.map((m) => (<li key={m.user_id || m.email} className="flex items-center justify-between rounded-lg p-3 bg-surface-2" data-testid={`member-row-${m.email}`}><div><div className="text-sm font-medium text-primary-k">{m.name} <span className="text-xs text-muted-k capitalize ml-2">{m.role?.replace("_", " ")}</span></div><div className="text-xs text-muted-k">{m.email}</div></div>{m.role !== "primary" && (<button onClick={() => remove(m.user_id)} data-testid={`member-remove-${m.email}`} className="text-xs text-terracotta hover:underline inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Remove</button>)}</li>))}
                         </ul>
@@ -253,7 +257,7 @@ function DigestTab() {
             )}
 
             {loading ? (
-                <div className="flex items-center gap-2 text-sm text-muted-k"><Loader2 className="h-4 w-4 animate-spin" /> Building this week's preview…</div>
+                <Skeleton variant="card" rows={5} />
             ) : !digest ? (
                 <div className="bg-surface border border-kindred rounded-2xl p-6 text-sm text-muted-k">Create a household first to preview the digest.</div>
             ) : (<>
@@ -351,7 +355,7 @@ function NotificationsTab() {
                 <h2 className="font-heading text-2xl text-primary-k tracking-tight">Notifications</h2>
                 <p className="text-sm text-muted-k mt-1">You decide what's worth an email and an in-app bell.</p>
             </div>
-            {loading ? (<div className="text-sm text-muted-k"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />Loading…</div>) : (
+            {loading ? (<Skeleton variant="list" rows={5} />) : (
                 <div className="bg-surface border border-kindred rounded-2xl divide-y divide-kindred">
                     {Object.entries(NOTIF_LABELS).map(([key, meta]) => (
                         <div key={key} className="flex items-start justify-between gap-4 p-5" data-testid={`notif-row-${key}`}>
@@ -418,7 +422,11 @@ function UsageTab() {
                 <h2 className="font-heading text-2xl text-primary-k tracking-tight">Your usage</h2>
                 <p className="text-sm text-muted-k mt-1">Everything Kindred has done for you since you joined.</p>
             </div>
-            {loading ? (<div className="text-sm text-muted-k"><Loader2 className="inline h-4 w-4 animate-spin mr-2" /> Loading…</div>) : !data ? null : (
+            {loading ? (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="usage-skeleton">
+                    {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} variant="stat" />)}
+                </div>
+            ) : !data ? null : (
                 <>
                     <p className="text-sm text-muted-k">On the <span className="font-medium capitalize text-primary-k">{data.plan}</span> plan since {data.since ? new Date(data.since).toLocaleDateString() : "recently"}.</p>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="usage-grid">

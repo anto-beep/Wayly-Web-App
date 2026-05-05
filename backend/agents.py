@@ -448,12 +448,7 @@ If the at_hm_commitments array is empty, do NOT emit this rule.
 
 RULE 13 — QUARTERLY UNDERSPEND PATTERN
 Use budget_remaining_at_quarter_end (or service_budget_available - sum of non-cancelled gross if remaining isn't directly given) and quarterly_budget_total.
-Compute remaining_pct = budget_remaining_at_quarter_end / quarterly_budget_total * 100.
-Compute rollover_cap = max(1000.00, 0.10 * quarterly_budget_total).
-- If remaining_pct > 15 AND budget_remaining_at_quarter_end <= rollover_cap: flag as LOW severity (the full amount will roll over — positive outcome but worth noting).
-- If remaining_pct > 15 AND budget_remaining_at_quarter_end > rollover_cap: flag as MEDIUM severity (excess above rollover cap will be forfeited).
-Headline copy template: "{participant_name} ended the quarter with ${budget_remaining_at_quarter_end:,.2f} unspent — about {remaining_pct:.0f}% of the quarterly budget. Unspent funding above the rollover cap (${rollover_cap:,.2f}) is forfeited permanently. A care plan review might help ensure the full budget is being used."
-If budget_remaining_at_quarter_end <= 0 or quarterly_budget_total <= 0: do NOT emit this rule.
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit check is performed in code (rule key "RULE_13_QUARTERLY_UNDERSPEND") that compares budget_remaining_at_quarter_end against the rollover cap and emits LOW or MEDIUM as appropriate. Skip this rule entirely in your output to avoid double-counting.
 
 RULE 14 — STATEMENT PERIOD ACCURACY (parsing warning)
 Verify the extracted statement_period (and period_start/period_end if present) match the explicit "STATEMENT PERIOD" header in the source — NOT the quarterly-budget-summary date range.
@@ -892,12 +887,52 @@ def _parse_iso_date(value: Any):
 
 
 def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any]) -> Dict[str, Any]:
-    """Append deterministic parsing warnings (Rules 14 & 15) if conditions
+    """Append deterministic parsing warnings (Rules 13, 14 & 15) if conditions
     are met and the LLM hasn't already flagged the same rule. Returns the
     mutated audit_result for chaining.
     """
     anomalies = audit_result.setdefault("anomalies", []) or []
     existing_rules = {(a.get("rule") or "").upper() for a in anomalies if isinstance(a, dict)}
+
+    # Rule 13 — Quarterly underspend pattern (deterministic)
+    if "RULE_13_QUARTERLY_UNDERSPEND" not in existing_rules:
+        try:
+            quarterly_total = float(extracted.get("quarterly_budget_total") or 0.0)
+            remaining = float(extracted.get("budget_remaining_at_quarter_end") or 0.0)
+        except Exception:
+            quarterly_total = remaining = 0.0
+        if quarterly_total > 0 and remaining > 0:
+            remaining_pct = remaining / quarterly_total * 100
+            rollover_cap = max(1000.00, 0.10 * quarterly_total)
+            if remaining_pct > 15:
+                participant = extracted.get("participant_name") or "The participant"
+                forfeit = max(0.0, remaining - rollover_cap)
+                if remaining > rollover_cap:
+                    severity = "medium"
+                    closing = (
+                        f" Unspent funding above the rollover cap (${rollover_cap:,.2f}) is forfeited permanently — "
+                        f"about ${forfeit:,.2f} is at risk."
+                    )
+                else:
+                    severity = "low"
+                    closing = f" The full amount will roll over to next quarter (within the ${rollover_cap:,.2f} rollover cap)."
+                anomalies.append({
+                    "severity": severity,
+                    "rule": "RULE_13_QUARTERLY_UNDERSPEND",
+                    "headline": f"{participant} ended the quarter with ${remaining:,.2f} unspent — about {remaining_pct:.0f}% of the quarterly budget.",
+                    "detail": (
+                        f"Quarterly budget was ${quarterly_total:,.2f}; ${remaining:,.2f} ({remaining_pct:.1f}%) remains at quarter end."
+                        f"{closing} A care plan review might help ensure the full budget is being used for services {participant} needs."
+                    ),
+                    "dollar_impact": round(forfeit if remaining > rollover_cap else 0.0, 2),
+                    "evidence": [
+                        f"quarterly_budget_total: ${quarterly_total:,.2f}",
+                        f"budget_remaining_at_quarter_end: ${remaining:,.2f}",
+                        f"remaining_pct: {remaining_pct:.2f}%",
+                        f"rollover_cap: ${rollover_cap:,.2f}",
+                    ],
+                    "suggested_action": "Schedule a care-plan review with the provider before quarter end. Identify services the participant qualifies for but isn't currently using.",
+                })
 
     # Rule 14 — period span > 35 days
     if "RULE_14_PERIOD_PARSE_WARNING" not in existing_rules:
