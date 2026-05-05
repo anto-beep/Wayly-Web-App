@@ -193,6 +193,80 @@ def test_all_three_transport_dates_present(decoded):
     assert {5, 19}.issubset(dates), f"Expected transport on days 5 and 19, got days {sorted(dates)}"
 
 
+# ───────── FIX 1 (iter 25): No PT speculation, no hedge language ─────────
+
+def test_no_pt_speculation(decoded):
+    """Physiotherapy must never appear in a brokered-rate flag (PT statements
+    don't disclose published rate, so any flag would be speculation)."""
+    for a in decoded["audit"].get("anomalies", []):
+        if (a.get("rule") or "").startswith("RULE_11"):
+            blob = ((a.get("detail") or "") + " " + (a.get("headline") or "")).lower()
+            assert "physiotherapy" not in blob and "pt-" not in blob, (
+                f"Brokered flag mentions PT but the statement doesn't disclose PT rates: {a.get('headline')}"
+            )
+
+
+def test_no_hedge_language_in_brokered_flags(decoded):
+    """Brokered flags must not contain estimation/inference language."""
+    forbidden = (
+        "approximately", "may exceed", "could indicate", "likely premium",
+        "appears to exceed", "cannot be calculated", "partially disclosed",
+        "potential premium", "hidden premium", "consistent with",
+    )
+    for a in decoded["audit"].get("anomalies", []):
+        blob = ((a.get("detail") or "") + " " + (a.get("headline") or "")).lower()
+        if "brokered" not in blob:
+            continue
+        for f in forbidden:
+            assert f not in blob, (
+                f"Brokered flag contains forbidden hedge phrase '{f}': {a.get('headline')}"
+            )
+
+
+# ───────── FIX 2 (iter 25): No false-positive RCP ─────────
+
+def test_no_rcp_false_positive(decoded):
+    """Beverley's only hospital reference is an outpatient cardiology REVIEW,
+    not an inpatient admission. RCP rule must not fire."""
+    for a in decoded["audit"].get("anomalies", []):
+        rule = (a.get("rule") or "").upper()
+        assert not rule.startswith("RULE_7"), (
+            f"RCP/Rule 7 fired without inpatient admission evidence: {a.get('headline')}"
+        )
+
+
+# ───────── FIX 4 (iter 25): No no-anomaly commentary ─────────
+
+def test_no_no_anomaly_commentary(decoded):
+    """User-facing anomalies must never describe what they DIDN'T find."""
+    forbidden_phrases = (
+        "no anomaly", "no issue found", "no issue identified", "no concerns",
+        "standard rate applies", "weekday rate is correct",
+        "is a friday", "is a weekday", "no premium applies", "no flag required",
+    )
+    for a in decoded["audit"].get("anomalies", []):
+        blob = ((a.get("detail") or "") + " " + (a.get("headline") or "")).lower()
+        for f in forbidden_phrases:
+            assert f not in blob, (
+                f"Anomaly contains no-anomaly commentary '{f}': {a.get('headline')}"
+            )
+
+
+# ───────── FIX 3 (iter 25): Merged flag has no duplicated sentences ─────────
+
+def test_merged_flag_no_duplicate_sentences(decoded):
+    for a in decoded["audit"].get("anomalies", []):
+        if (a.get("rule") or "") != "RULE_17_18_REVIEW_AND_INCREASE_MERGED":
+            continue
+        # Split detail into sentences and check each first-40-char prefix is unique.
+        import re
+        parts = [p.strip() for p in re.split(r"[.!?]+", a.get("detail") or "") if len(p.strip()) > 10]
+        prefixes = [p[:40].lower() for p in parts]
+        assert len(prefixes) == len(set(prefixes)), (
+            f"Merged flag has duplicate sentence prefixes: {prefixes}"
+        )
+
+
 def test_anomaly_headlines_unique(decoded):
     headlines = [a.get("headline") for a in decoded["audit"].get("anomalies", []) if a.get("headline")]
     assert len(headlines) == len(set(headlines)), (

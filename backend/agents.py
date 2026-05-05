@@ -348,11 +348,12 @@ CLINICAL_DESCRIPTION = """The Clinical stream covers nursing visits, allied heal
 
 INDEPENDENCE_DESCRIPTION = """The Independence stream covers personal care (showering, grooming, toileting), respite care, social support, transport (community access, medical appointments, hospital). Service codes typically begin PC-, RES-, SS-, TR-. Include transport items even if they have a "stream query" note.
 
-CRITICAL — TRANSPORT ITEMS:
-- Community Transport (service code TR-, or any line item with description containing "transport", "taxi", "driver", "vehicle", "bus") is ALWAYS Independence stream regardless of the medical context of the appointment. A transport line item to a cardiology appointment, oncology appointment, GP appointment, hospital, day-program or any other destination is Independence stream — NEVER Clinical.
-- Extract EVERY transport line item you see, even when multiple TR- entries appear with the same service code on different dates. Items with different dates are NEVER duplicates and must each be emitted as a separate line item. For example, two TR-003 entries on the 5th and one on the 19th of the month → emit ALL THREE entries.
-- Repeat transport entries on the SAME date with the same service code and rate ARE included — emit each occurrence as its own line item; downstream rules will detect billing duplicates separately.
-- Transport descriptions often contain medical destinations ("GP appointment", "cardiology review", "Wesley Hospital", "specialist consultation", etc.). Do NOT let the medical destination cause you to skip the line, miscode the stream, or merge multiple separate trips."""
+CRITICAL — TRANSPORT ITEMS (read carefully — historical errors here):
+- Extract EVERY transport line item individually. Do NOT deduplicate transport items even if they share the same service code and rate. Each transport entry on a different date is a separate service that MUST appear in your output.
+- Specifically: if the statement contains transport entries on 05-May (two entries) AND a transport entry on 19-May, ALL THREE must appear in your line_items output. The 05-May entries are the same date and may be a duplicate billing — but they must both be extracted; the duplicate-detection rule downstream handles them. The 19-May entry is a different date and must always be extracted independently.
+- Transport to a cardiology appointment, oncology appointment, GP appointment, hospital, day-program, specialist consultation, Wesley Hospital, or any other destination is ALWAYS Independence stream — NEVER Clinical, regardless of the medical context of the destination.
+- Service codes starting with "TR-" or descriptions containing "transport", "taxi", "driver", "vehicle", "bus" are ALWAYS Independence.
+- If you see N transport entries in the source text, you MUST emit N transport line items. Never skip one because it "looks like a duplicate" or because it is to a medical destination."""
 
 EVERYDAY_DESCRIPTION = """The Everyday Living stream covers domestic assistance (cleaning, laundry), home maintenance/gardening, meal preparation, shopping. Service codes typically begin DA-, GM-, ML-, SH-.
 
@@ -486,10 +487,26 @@ RULE 6 — WORKER SUBSTITUTION WITHOUT NOTICE
 If provider_notes or flags_in_original contain phrases like "no prior notice", "worker substitution", "usual worker on leave": flag as LOW severity. This is a Statement of Rights issue (right to continuity of care and advance notice of changes).
 
 RULE 7 — HOSPITAL ADMISSION + NO RESTORATIVE CARE PATHWAY
-Check line_items for any cancelled service with a note referencing "hospital" or "hospitalised". If found, check whether any line item has service_code beginning "RCP-" or description containing "Restorative". If hospital admission is present but no Restorative Care Pathway item exists: flag as HIGH severity. This is a missed entitlement.
+ONLY trigger this rule when there is unambiguous evidence of an INPATIENT hospital admission. An inpatient admission means the participant stayed in hospital overnight or longer — never a clinic visit, specialist review, day procedure, or outpatient appointment.
+
+REQUIRED EVIDENCE — at least ONE of the following MUST appear in line-item notes/flags/cancellations or in provider_notes_raw:
+  (a) A cancelled service with notes containing "hospitalised", "hospital admission", "admitted to hospital", "admitted overnight", "inpatient", "days in hospital", "stayed overnight", or "discharged from hospital".
+  (b) A line item for hospital transport on a date followed by cancelled services on subsequent days.
+  (c) Provider notes explicitly stating "hospital admission" or "admitted" together with a duration of at least one night.
+
+EVIDENCE THAT MUST NOT TRIGGER THIS RULE:
+  - Outpatient appointment ("review", "assessment", "clinic", "consultation").
+  - "Cardiology review" / "specialist review" without explicit admission language.
+  - Single-day transport to a hospital without subsequent service cancellations.
+  - Any note containing "review" or "appointment" without "admitted" or "hospitalised".
+
+If the inpatient evidence is present AND no line item has service_code beginning "RCP-" or description containing "Restorative": flag as HIGH severity. Otherwise DO NOT EMIT THIS RULE under any circumstances.
 
 RULE 8 — TRANSPORT STREAM QUERY
 If any transport line item (service_code beginning "TR-") is on the same date as a hospital admission cancellation or has flags_in_original mentioning "hospital" or "emergency": flag as LOW severity.
+
+GLOBAL RULE — NO NO-ANOMALY COMMENTARY
+Never emit anomaly objects whose detail says "no anomaly", "no issue found", "standard rate applies", "Friday is a weekday", "weekday rate is correct", "this is consistent with", or any equivalent phrase that explains why a rule did NOT fire. The anomalies array contains only positive findings. If a rule check produces "no anomaly", emit nothing — silence is the correct output.
 
 RULE 9 — CONTRIBUTION ARITHMETIC CHECK (PENSION-AWARE)
 DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check is performed in code (rule keys "RULE_9_CONTRIBUTION_MISMATCH" or "RULE_9_PENSION_STATUS_UNKNOWN") which:
@@ -507,19 +524,20 @@ You MUST skip Rule 9 entirely in your output. Emitting Rule 9 in your JSON will 
 RULE 10 — PREVIOUS PERIOD ADJUSTMENTS
 If adjustments array is non-empty: flag as LOW severity (informational). Summarise what was corrected and confirm the credit was applied to government_paid not participant_contribution.
 
-RULE 11 — BROKERED RATE PREMIUM
-Scan THREE input sources:
-  (1) provider_notes and flags_in_original on every line item, AND
-  (2) the provider_notes_raw[] array (free-form notes section at the bottom of the statement), AND
-  (3) is_brokered flags + unit_rate values across line items.
+RULE 11 — BROKERED RATE PREMIUM (HARD EVIDENCE GATE)
+HARD GATE — emit this rule ONLY when BOTH of these are EXPLICITLY stated as numeric dollar values in the source statement for the SAME service code:
+  (a) the provider's published rate, AND
+  (b) the brokered provider's rate.
 
-Look for any disclosure of two rates being compared (e.g. "$89.00/hr" and "$84.50/hr", "brokered rate", "contracted rate", "published rate", "premium", "rate difference", "pass-through"). Also look for any sentence pattern like "X is brokered through ... at $A. Hillview's own published rate is $B" — extract both numbers.
+If either rate is missing, partial, paraphrased, or "implied", DO NOT EMIT THIS RULE. There is no "partially disclosed" or "estimated premium" category. The flag is either backed by both numeric rates or it does not exist.
 
-If a brokered rate exceeds a published rate by more than $0.50/hr (or by any explicit dollar premium stated in a note):
+The following words and phrases MUST NOT appear anywhere in the detail or suggested_action of a Rule 11 flag: "approximately", "suggests", "consistent with", "potential", "hidden", "likely premium", "cannot be calculated", "may exceed", "could indicate", "appears to", "partially disclosed". If you cannot state the rate difference as a specific confirmed dollar figure (e.g. "$7.00/hr above the published rate of $135.00/hr"), DO NOT create a flag.
+
+When the gate passes:
   - Compute hours_this_month = sum of hours across all non-cancelled brokered line items of the same service code.
   - Dollar impact = (brokered_rate - published_rate) × hours_this_month.
   - Flag as MEDIUM severity, rule "RULE_11_BROKERED_PREMIUM".
-  - Detail must include both rates, the per-hour premium, the total hours this month, and the dollar impact.
+  - Detail MUST contain both numeric rates verbatim, the per-hour premium, the total hours this month, and the dollar impact.
 
 Suggested action: "Ask your provider whether the brokered rate premium can be absorbed by the provider rather than your budget. Providers are not required to pass brokered rate premiums to participants."
 
@@ -1897,21 +1915,124 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                 ),
             })
 
-    # Final pass — clean up the anomalies array.
-    # Three steps in order:
-    #   (a) Drop speculative "brokered" flags that lack explicit-rate evidence.
-    #   (b) Deduplicate by content fingerprint (date + service_code + dollar_impact),
-    #       falling back to a hash of the first 60 chars of detail when those are absent.
-    #       When two anomalies share a fingerprint, keep the one with the longer detail.
-    #   (c) Merge the care-plan-review-due flag with the service-frequency-increase flag
-    #       when both are present — one combined story reads better than two adjacent flags.
+    # Rule 11 (deterministic) — Brokered rate premium.
+    # Hard-evidence backstop. Fires only when provider_notes_raw or
+    # line-item flags contain BOTH a brokered rate AND a published rate as
+    # explicit numeric $-per-hour values. The LLM auditor is intentionally
+    # conservative; this catches the common "Service X brokered at $A/hr;
+    # published rate $B/hr; premium $C/hr" pattern, even when the comparison
+    # is split across sentences.
+    if not any((a.get("rule") or "").upper().startswith("RULE_11") for a in anomalies if isinstance(a, dict)):
+        notes_blob_full = " ".join(
+            (n or "") for n in (extracted.get("provider_notes_raw") or [])
+            if isinstance(n, str)
+        )
+        # Also include line-item flags + provider_notes (some statements put
+        # the brokered/published comparison inline with the line item).
+        for li in (extracted.get("line_items") or []):
+            if isinstance(li, dict):
+                notes_blob_full += " " + (li.get("provider_notes") or "")
+                notes_blob_full += " " + (li.get("flags_in_original") or "")
 
-    # (a) Drop speculative brokered flags — Rule 11 (or any anomaly mentioning
-    # "brokered") must include explicit evidence of BOTH rates being compared.
-    # We test this by counting distinct dollar-amount references across the
-    # detail + evidence — fewer than 2 means the auditor is speculating.
+        import re as __re
+        # Search for "Service X is brokered ... published rate $A/hr ... premium $B/hr"
+        # — three sub-patterns within ~400 chars of each other.
+        # We require: (1) "brokered" word, (2) "published" or "premium" word with $-amount,
+        # (3) the brokered rate $-amount, (4) the published rate $-amount, all in proximity.
+        # Approach: scan paragraph-sized windows for a brokered rate and a published rate.
+
+        # Slide a window paragraph-by-paragraph (split on double newline / period+newline).
+        windows = __re.split(r"\n\s*\n|(?<=\.)\s*\n", notes_blob_full)
+        # Also include the full blob as a single fallback window for short-paragraph notes.
+        if notes_blob_full not in windows:
+            windows.append(notes_blob_full)
+
+        for win in windows:
+            w_lower = win.lower()
+            if "brokered" not in w_lower or "published" not in w_lower:
+                continue
+            brokered_m = __re.search(r"brokered[^$]{0,200}\$([0-9]+(?:\.[0-9]{2})?)", w_lower)
+            published_m = __re.search(r"published[^$]{0,200}\$([0-9]+(?:\.[0-9]{2})?)", w_lower)
+            if not (brokered_m and published_m):
+                # Try inverse order: "published rate ... brokered rate $X"
+                m1 = __re.search(r"published[^$]{0,200}\$([0-9]+(?:\.[0-9]{2})?)", w_lower)
+                m2 = __re.search(r"\$([0-9]+(?:\.[0-9]{2})?)[^$]{0,80}brokered", w_lower)
+                if m1 and m2:
+                    published_m = m1
+                    brokered_m = m2
+                else:
+                    continue
+            try:
+                brokered_rate = round(float(brokered_m.group(1)), 2)
+                published_rate = round(float(published_m.group(1)), 2)
+            except Exception:
+                continue
+            premium = round(brokered_rate - published_rate, 2)
+            if premium <= 0.50:
+                continue
+            # Try to identify the service code being discussed.
+            code_match = __re.search(r"([A-Z]{2,5}-\d{2,4})", win)
+            service_code = code_match.group(1) if code_match else ""
+            # Service description — look for capitalised words preceding "brokered".
+            descr_match = __re.search(r"\b((?:[A-Z][a-zA-Z]+ ?){1,4})(?:\s+(?:is|are|programme|services|service))?[^.]{0,80}brokered", win)
+            service_label = descr_match.group(1).strip() if descr_match else ""
+            label = service_label or service_code or "service"
+            # Sum hours across all non-cancelled brokered line items of this code.
+            hours = 0.0
+            if service_code:
+                for li in (extracted.get("line_items") or []):
+                    if not isinstance(li, dict) or li.get("is_cancellation"):
+                        continue
+                    if (li.get("service_code") or "").upper() == service_code.upper():
+                        try:
+                            hours += float(li.get("hours") or 0.0)
+                        except Exception:
+                            pass
+            dollar_impact = round(premium * hours, 2) if hours > 0 else round(premium, 2)
+            anomalies.append({
+                "severity": "medium",
+                "rule": "RULE_11_BROKERED_PREMIUM",
+                "headline": f"{label} brokered rate premium of ${premium:.2f}/hr above published rate.",
+                "detail": (
+                    f"The brokered rate for {label} is ${brokered_rate:.2f}/hr; "
+                    f"the published rate is ${published_rate:.2f}/hr — a premium of ${premium:.2f}/hr."
+                    + (f" Across {hours:.1f} hours this month the premium totals ${dollar_impact:,.2f}."
+                       if hours > 0 else "")
+                ),
+                "dollar_impact": dollar_impact,
+                "evidence": [
+                    f"published rate: ${published_rate:.2f}/hr",
+                    f"brokered rate: ${brokered_rate:.2f}/hr",
+                    f"premium: ${premium:.2f}/hr",
+                    f"hours this month: {hours:.1f}",
+                    f"service_code: {service_code or '(unspecified)'}",
+                ],
+                "suggested_action": (
+                    "Ask your provider whether the brokered rate premium can be absorbed by the "
+                    "provider rather than your budget. Providers are not required to pass "
+                    "brokered rate premiums to participants."
+                ),
+            })
+            break  # one deterministic Rule 11 is enough
+
+    # Final pass — clean up the anomalies array.
+    # Five steps in order:
+    #   (a) Drop speculative-language anomalies (Fix 4 + Fix 1) — anomalies that
+    #       describe what they didn't find, or that hedge with words like
+    #       "approximately"/"may exceed"/"likely"/"suggests" without a confirmed
+    #       dollar figure.
+    #   (b) Drop brokered-rate flags that lack explicit two-rate evidence
+    #       (HARD GATE — both rates must appear as numeric $-amounts).
+    #   (c) Drop Rule 7 (Restorative Care Pathway) flags that lack explicit
+    #       INPATIENT admission evidence — outpatient reviews must not trigger.
+    #   (d) Deduplicate by content fingerprint.
+    #   (e) Merge the care-plan-review-due flag with the service-frequency-increase
+    #       flag when both are present, with sentence-level dedup of detail.
+
+    import re as _re
+
     def _has_two_rate_refs(a: dict) -> bool:
-        import re as _re
+        """Returns True iff the anomaly cites at least two distinct dollar-amount values."""
         blob = (a.get("detail") or "")
         for ev in (a.get("evidence") or []):
             blob += " " + str(ev or "")
@@ -1920,17 +2041,76 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             amounts.add(round(float(m.group(1)), 2))
         return len(amounts) >= 2
 
+    SPECULATIVE_PHRASES = (
+        "no anomaly", "no issue found", "no issue identified", "no concerns",
+        "standard rate applies", "weekday rate is correct", "weekday rate applies",
+        "is a weekday", "is a friday", "is a monday", "is a tuesday",
+        "is a wednesday", "is a thursday", "no further action required",
+        "appears correct", "is consistent with", "no flag required",
+        "no anomaly detected", "no issue detected", "no premium applies",
+    )
+    HEDGE_PHRASES = (
+        "approximately", "may exceed", "could indicate", "likely premium",
+        "appears to exceed", "appears to be a premium", "cannot be calculated",
+        "partially disclosed", "potential premium", "hidden premium",
+        "may include a premium", "consistent with a premium",
+        "may be a premium", "looks like a premium", "consistent with a brokered premium",
+    )
+
     cleaned: list[dict] = []
     for a in anomalies:
         if not isinstance(a, dict):
             continue
         rule = (a.get("rule") or "").upper()
         text_blob = ((a.get("detail") or "") + " " + (a.get("headline") or "")).lower()
-        looks_brokered = "brokered" in text_blob and ("premium" in text_blob or "above" in text_blob or "exceed" in text_blob)
+
+        # (a) Speculative / no-anomaly commentary — never user-facing.
+        if any(phrase in text_blob for phrase in SPECULATIVE_PHRASES):
+            continue
+
+        # (b) Brokered flag without explicit two-rate evidence.
+        looks_brokered = ("brokered" in text_blob or rule.startswith("RULE_11")) and (
+            "premium" in text_blob or "above" in text_blob or "exceed" in text_blob or rule.startswith("RULE_11")
+        )
         if rule.startswith("RULE_11") or looks_brokered:
             if not _has_two_rate_refs(a):
-                # Speculative — drop.
                 continue
+            # Hedge language not allowed in confirmed brokered flags either.
+            if any(h in text_blob for h in HEDGE_PHRASES):
+                continue
+
+        # (c) Rule 7 — RCP / hospital admission must have inpatient evidence.
+        if rule.startswith("RULE_7"):
+            inpatient_words = (
+                "hospitalised", "hospitalized", "hospital admission",
+                "admitted to hospital", "admitted overnight", "inpatient",
+                "days in hospital", "stayed overnight", "discharged from hospital",
+            )
+            outpatient_words = (
+                "review", "appointment", "clinic", "consultation",
+                "specialist visit", "day procedure",
+            )
+            evidence_blob = ((a.get("detail") or "") + " "
+                             + " ".join(str(e) for e in (a.get("evidence") or []))).lower()
+            # Also scan extracted notes + line-item flags for inpatient evidence.
+            notes_blob = " ".join(
+                (n or "").lower() for n in (extracted.get("provider_notes_raw") or [])
+                if isinstance(n, str)
+            )
+            for li in (extracted.get("line_items") or []):
+                if isinstance(li, dict):
+                    notes_blob += " " + (li.get("provider_notes") or "").lower()
+                    notes_blob += " " + (li.get("flags_in_original") or "").lower()
+            has_inpatient = any(w in evidence_blob or w in notes_blob for w in inpatient_words)
+            if not has_inpatient:
+                continue
+            # Also reject if the cited evidence is ONLY outpatient language.
+            if (
+                any(w in evidence_blob for w in outpatient_words)
+                and not any(w in evidence_blob for w in inpatient_words)
+            ):
+                continue
+
         cleaned.append(a)
 
     # (b) Deduplicate by content fingerprint.
@@ -1942,7 +2122,6 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
     # Same-rule duplicates (e.g. Rule 3 from the LLM auditor + Rule 3 from the
     # deterministic backstop, which describe the same billing issue) DO
     # collapse via this step.
-    import re as _re
     DATE_RE = _re.compile(r"\b(\d{4}-\d{2}-\d{2}|\d{1,2}[-\s][A-Za-z]{3,9}|\d{1,2}/\d{1,2}/\d{2,4})\b")
     SERVICE_CODE_RE = _re.compile(r"\b([A-Z]{2,5}-\d{2,4})\b")
     RULE_PREFIX_RE = _re.compile(r"^(RULE_\d+)")
@@ -2008,7 +2187,7 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                 seen_fp[fp] = a
     deduped = list(seen_fp.values())
 
-    # (c) Merge care-plan-review + service-frequency-increase when both present.
+    # (e) Merge care-plan-review + service-frequency-increase when both present.
     review_idx = None
     increase_idx = None
     for i, a in enumerate(deduped):
@@ -2020,24 +2199,36 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
     if review_idx is not None and increase_idx is not None:
         review = deduped[review_idx]
         increase = deduped[increase_idx]
+
+        def _split_sentences(s: str) -> list[str]:
+            parts = _re.split(r"[.!?]+", s or "")
+            return [p.strip() for p in parts if len(p.strip()) > 10]
+
+        sentences_a = _split_sentences(review.get("detail") or "")
+        sentences_b = _split_sentences(increase.get("detail") or "")
+        # Keep only B-sentences whose first 40 chars don't substantially appear
+        # in any A-sentence — eliminates near-duplicate provider-note sentences.
+        a_prefixes = {sa[:40].lower() for sa in sentences_a}
+        unique_b = [sb for sb in sentences_b if sb[:40].lower() not in a_prefixes]
+        if unique_b:
+            merged_detail = ". ".join(sentences_a + ["Additionally"] + unique_b) + "."
+        else:
+            merged_detail = ". ".join(sentences_a) + "."
+
         merged = {
             "severity": "low",
             "rule": "RULE_17_18_REVIEW_AND_INCREASE_MERGED",
             "headline": "Care plan review due — and services are changing",
-            "detail": (
-                (review.get("detail") or "").rstrip(". ")
-                + ". Additionally: "
-                + (increase.get("detail") or "")
-            ),
+            "detail": merged_detail,
             "dollar_impact": round(
                 max(float(review.get("dollar_impact") or 0.0), float(increase.get("dollar_impact") or 0.0)),
                 2,
             ),
             "evidence": (review.get("evidence") or []) + (increase.get("evidence") or []),
             "suggested_action": (
-                "Confirm the review date with your care manager. The planned nursing increase "
-                "and any medication adjustment from the cardiology review should both be "
-                "incorporated into the updated care plan."
+                "Confirm the review date with your care manager. Bring notes on recent "
+                "health changes including the medication adjustment, planned nursing increase, "
+                "and any changes in daily ability since the last review."
             ),
         }
         # Replace both with the merged one. Order: insert at the earlier of the two indices.

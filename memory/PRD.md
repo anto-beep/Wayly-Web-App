@@ -441,6 +441,46 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 
 ### Test status iter 24
 - **23/23** Beverley May regression assertions pass live (~75s).
+
+
+## Implemented (Iteration 25 — Feb 2026 · Production-readiness 5 fixes)
+
+### FIX 1 — PT speculation hard-blocked
+- AUDITOR_SYSTEM Rule 11 prompt rewritten as a HARD GATE: emit only when BOTH rates are explicit numeric $/hr values for the SAME service code.
+- Forbidden-language list expanded (`approximately`, `may exceed`, `could indicate`, `likely premium`, `appears to exceed`, `cannot be calculated`, `partially disclosed`, `potential premium`, `hidden premium`, `consistent with a premium` — note "consistent with" alone is NOT blocked because it appears legitimately in source quotes).
+- Post-process filter drops any RULE_11 (or anomaly mentioning "brokered" + "premium/above/exceed") that:
+  - Lacks 2 distinct $-amount references in detail+evidence, OR
+  - Contains any hedge phrase from the forbidden list.
+- "Partially disclosed" category eliminated entirely.
+
+### FIX 2 — Rule 7 Restorative Care Pathway requires INPATIENT evidence
+- AUDITOR_SYSTEM Rule 7 prompt rewritten with explicit inpatient-only trigger words and explicit outpatient-exclusion list.
+- Post-process filter drops RULE_7 anomalies unless one of `hospitalised`, `hospitalized`, `hospital admission`, `admitted to hospital`, `admitted overnight`, `inpatient`, `days in hospital`, `stayed overnight`, `discharged from hospital` appears in detail/evidence/extracted notes/line-item flags.
+- Also drops if cited evidence is purely outpatient (`review`, `appointment`, `clinic`, `consultation`).
+
+### FIX 3 — Merged Rule 17+18 flag now sentence-deduplicated
+- `mergeAnomalies()` logic now splits both detail strings into > 10-char sentences, compares first-40-char prefixes case-insensitively, and only includes B-sentences whose prefix doesn't match any A-sentence prefix.
+- Final detail format: `"<A sentences>. Additionally. <unique B sentences>."` (drops the "Additionally:" prefix when no unique B-sentences exist).
+- Updated suggested_action: "Confirm the review date with your care manager. Bring notes on recent health changes including the medication adjustment, planned nursing increase, and any changes in daily ability since the last review."
+
+### FIX 4 — No no-anomaly commentary
+- AUDITOR_SYSTEM gains a GLOBAL RULE: "Never emit anomaly objects whose detail says 'no anomaly', 'no issue found', 'standard rate applies', 'Friday is a weekday', etc."
+- Post-process filter drops anomalies whose detail/headline contains any of: `no anomaly`, `no issue found`, `no issue identified`, `no concerns`, `standard rate applies`, `weekday rate is correct`, `is a friday/monday/...`, `appears correct`, `is consistent with`, `no flag required`, etc.
+
+### FIX 5 — 19-May TR-003 force-extracted
+- INDEPENDENCE_DESCRIPTION extractor prompt rewritten with stronger "extract EVERY transport item, never deduplicate by code/rate, items on different dates are NEVER duplicates" language, plus explicit Beverley example (3 transport entries, 2 on 05-May + 1 on 19-May).
+- Existing deterministic `_recover_transport_items()` backstop catches the LLM dropping a transport entry by scanning source text with regex.
+
+### Bonus — Rule 11 deterministic backstop
+- New deterministic Rule 11 fires when provider notes contain BOTH a brokered rate AND a published rate as explicit $/hr values (multi-sentence aware — slides paragraph windows to catch comparisons split across sentences). Catches the Okafor AHA case where the LLM was inconsistent. Service code is auto-detected from the surrounding context; hours-this-month summed from non-cancelled line items of that code; dollar_impact = premium × hours.
+
+### Verified
+- **23/23** Beverley assertions pass with 12 unique anomalies, totals $7,591.75 / $1,413.18 exact, single merged Rule 17+18 with no duplicate sentences, no PT/RCP false positives, no no-anomaly commentary.
+- **16/16** Okafor regression pass — Part Age Pension contribution rates intact (50% Everyday Living), no false RCP on outpatient cardiology review, RULE_11 brokered AHA premium fires reliably (LLM + deterministic backstop double-ensure).
+- **Total 44/44 across both regression suites** (~135s combined live time).
+
+### Remaining behaviour notes
+- `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 - All four user-specified QA criteria green:
   - ✅ No speculative brokered flags
   - ✅ Transport duplicate flagged HIGH exactly once (LLM RULE_3 wins on severity tie-break)
