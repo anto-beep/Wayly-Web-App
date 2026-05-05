@@ -749,10 +749,12 @@ async def _llm_chunk_call(
     user_text: str,
     session_id: str,
     max_tokens: int,
+    is_valid=None,
 ) -> Optional[Any]:
     """Run a single chunked extraction call with one retry. Returns parsed
-    JSON or None. Retries once on transport / parse failure to ride through
-    the rare flaky Haiku response.
+    JSON or None. Retries once on transport / parse failure or, when an
+    `is_valid` callable is provided, when the parsed result fails validation
+    (e.g. all fields empty — a known LLM hiccup mode for the header chunk).
     """
     key = _key()
     if not key:
@@ -775,6 +777,13 @@ async def _llm_chunk_call(
                 "Chunk %s attempt %d returned unparseable JSON | raw[:300]=%r",
                 session_id, attempt, str(raw)[:300],
             )
+            return None
+        if is_valid is not None and not is_valid(parsed):
+            logger.warning(
+                "Chunk %s attempt %d returned invalid/empty result — retrying. snapshot=%r",
+                session_id, attempt, str(parsed)[:300],
+            )
+            return None
         return parsed
 
     result = await _attempt(1)
@@ -881,8 +890,28 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
     payload = text[:24000]
     user_msg = f"STATEMENT TEXT:\n\n{payload}"
 
+    def _header_is_valid(parsed):
+        if not isinstance(parsed, dict):
+            return False
+        # Accept the result if at least ONE of the headline fields populated.
+        if (parsed.get("participant_name") or "").strip():
+            return True
+        if (parsed.get("statement_period") or "").strip() or (parsed.get("period_end") or "").strip():
+            return True
+        try:
+            if float(parsed.get("quarterly_budget_total") or 0) > 0:
+                return True
+        except Exception:
+            pass
+        try:
+            if float(parsed.get("reported_total_gross") or 0) > 0:
+                return True
+        except Exception:
+            pass
+        return False
+
     tasks = [
-        _llm_chunk_call(HEADER_EXTRACTOR_SYSTEM, user_msg, f"extract-header-{household_id}", max_tokens=1000),
+        _llm_chunk_call(HEADER_EXTRACTOR_SYSTEM, user_msg, f"extract-header-{household_id}", max_tokens=1000, is_valid=_header_is_valid),
         _llm_chunk_call(CLINICAL_EXTRACTOR_SYSTEM, user_msg, f"extract-clin-{household_id}", max_tokens=2500),
         _llm_chunk_call(INDEPENDENCE_EXTRACTOR_SYSTEM, user_msg, f"extract-indep-{household_id}", max_tokens=2500),
         _llm_chunk_call(EVERYDAY_EXTRACTOR_SYSTEM, user_msg, f"extract-everyday-{household_id}", max_tokens=2500),
@@ -1428,16 +1457,24 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     "suggested_action": "Open the original statement and check whether any line items are missing from the decoded view above.",
                 })
 
-    # Rule 16 — Stream subtotal vs header "Used This Month" discrepancy (deterministic)
+    # Rule 16 — Stream subtotal vs header "Used This Month" discrepancy
+    # (deterministic, EVERYDAY LIVING ONLY)
+    #
+    # Rationale: Clinical and Independence false-positive easily because the
+    # LLM occasionally misses one or two line items (transport on a different
+    # page, weekend variants, etc.) — that variance fires the rule even though
+    # the actual statement is fine. We restrict the user-facing check to
+    # Everyday Living, the smallest stream, where a discrepancy is most likely
+    # to be a real provider error rather than an extraction blip.
+    # Internal parsing warnings are still recorded for Clinical/Independence
+    # when their extraction-vs-header confidence is low (< 0.92).
     if "RULE_16_STREAM_DISCREPANCY" not in existing_rules:
         sutm = extracted.get("stream_used_this_month") or {}
         if isinstance(sutm, dict):
-            STREAM_LABEL = {"Clinical": "Clinical", "Independence": "Independence", "EverydayLiving": "Everyday Living"}
-            for stream_key, header_value in sutm.items():
-                if stream_key not in STREAM_LABEL:
-                    continue
+            parsing_warnings: list[str] = []
+            for stream_key in ("Clinical", "Independence", "EverydayLiving"):
                 try:
-                    header_val = float(header_value or 0.0)
+                    header_val = float(sutm.get(stream_key) or 0.0)
                 except Exception:
                     continue
                 if header_val <= 0:
@@ -1453,34 +1490,52 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     except Exception:
                         continue
                 diff = abs(computed - header_val)
-                if diff > 5.0:
-                    label = STREAM_LABEL[stream_key]
-                    anomalies.append({
-                        "severity": "medium",
-                        "rule": "RULE_16_STREAM_DISCREPANCY",
-                        "headline": f"{label} total doesn't add up — reconciliation needed",
-                        "detail": (
-                            f"The {label} line items on this statement total ${computed:,.2f}, "
-                            f"but the budget summary shows ${header_val:,.2f} used for {label} this month. "
-                            f"The ${diff:,.2f} difference has no explanation on the statement."
-                        ),
-                        "dollar_impact": round(diff, 2),
-                        "evidence": [
-                            f"stream: {stream_key}",
-                            f"sum of {label} line items: ${computed:,.2f}",
-                            f"header 'Used This Month' for {label}: ${header_val:,.2f}",
-                        ],
-                        "suggested_action": f"Ask your provider to reconcile the {label} total before your next statement.",
-                    })
+                confidence = 1.0 - (diff / header_val) if header_val > 0 else 1.0
+
+                if stream_key in ("Clinical", "Independence"):
+                    # Never user-facing. Just record an internal parsing warning when confidence is low.
+                    if confidence < 0.92:
+                        parsing_warnings.append(
+                            f"{stream_key} extraction confidence low ({confidence:.2f}) — stream discrepancy check suppressed."
+                        )
+                    continue
+
+                # Everyday Living — flag whenever diff > $5.
+                if diff <= 5.0:
+                    continue
+                anomalies.append({
+                    "severity": "medium",
+                    "rule": "RULE_16_STREAM_DISCREPANCY",
+                    "headline": "Everyday Living total doesn't add up — reconciliation needed",
+                    "detail": (
+                        f"The Everyday Living line items on this statement total ${computed:,.2f}, "
+                        f"but the budget summary shows ${header_val:,.2f} used for Everyday Living this month. "
+                        f"The ${diff:,.2f} difference has no explanation on the statement. "
+                        f"Note: this discrepancy is based on AI extraction which may not have captured every line item. "
+                        f"Review your original statement to confirm."
+                    ),
+                    "dollar_impact": round(diff, 2),
+                    "evidence": [
+                        "stream: EverydayLiving",
+                        f"sum of Everyday Living line items: ${computed:,.2f}",
+                        f"header 'Used This Month' for Everyday Living: ${header_val:,.2f}",
+                        f"extraction_confidence: {confidence:.3f}",
+                    ],
+                    "suggested_action": "Ask your provider to reconcile the Everyday Living total before your next statement.",
+                })
+            if parsing_warnings:
+                audit_result.setdefault("_parsing_warnings", []).extend(parsing_warnings)
 
     # Rule 17 / 18 — Provider notes pattern matching (deterministic)
     notes_raw = extracted.get("provider_notes_raw") or []
     if isinstance(notes_raw, list) and notes_raw:
-        # Pattern A — Care plan review due
+        # Pattern A — Care plan review due (broadened pattern set)
         if "RULE_17_CARE_PLAN_REVIEW_DUE" not in existing_rules:
             review_patterns = [
-                "care plan review", "plan review due", "review scheduled",
-                "review in ", "last reviewed",
+                "care plan review", "plan review", "review due",
+                "review scheduled", "review in ", "last reviewed",
+                "6-monthly review", "six-monthly review", "annual review",
+                "plan is due",
             ]
             for note in notes_raw:
                 if not isinstance(note, str):
@@ -1490,14 +1545,18 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     anomalies.append({
                         "severity": "low",
                         "rule": "RULE_17_CARE_PLAN_REVIEW_DUE",
-                        "headline": "Care plan review is due",
-                        "detail": note.strip(),
+                        "headline": "Care plan review is due or upcoming",
+                        "detail": (
+                            note.strip()
+                            + " A care plan review is an opportunity to ensure services match current "
+                            "needs — particularly important if there have been recent health changes."
+                        ),
                         "dollar_impact": 0.0,
                         "evidence": [f"provider note: {note.strip()[:240]}"],
                         "suggested_action": (
-                            "Confirm the review date with your care manager and ensure any recent health "
-                            "changes (such as medication adjustments or new diagnoses) are included in the "
-                            "updated plan."
+                            "Confirm the review date with your care manager. Bring notes on any changes "
+                            "since the last review — new diagnoses, medication changes, falls, or changes "
+                            "in daily ability."
                         ),
                     })
                     break  # one flag is enough
@@ -1652,5 +1711,100 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     "suggested_action": "Verify the credit shows on your next direct debit statement.",
                 })
 
-    audit_result["anomalies"] = anomalies
+    # Rule 3 (deterministic) — Exact same-date duplicate detection.
+    # Runs as a backstop to the LLM Rule 3 fuzzy check. A pair of line items
+    # that share date + service_code + unit_rate (within $0.01) and are not
+    # cancellations is almost certainly a billing duplicate — flag HIGH.
+    if "RULE_3_DUPLICATE_EXACT" not in existing_rules:
+        items_for_dup = [
+            li for li in (extracted.get("line_items") or [])
+            if isinstance(li, dict) and not li.get("is_cancellation")
+        ]
+        # Group by (normalised_date, service_code, rounded_unit_rate)
+        groups: Dict[tuple, list[dict]] = {}
+        for li in items_for_dup:
+            date = (li.get("date") or "").strip()
+            code = (li.get("service_code") or "").strip().upper()
+            try:
+                rate = round(float(li.get("unit_rate") or 0.0), 2)
+            except Exception:
+                rate = 0.0
+            if not date or not code:
+                continue
+            groups.setdefault((date, code, rate), []).append(li)
+
+        # Read provider notes once for the "return trip" hint.
+        notes_blob = " ".join(
+            (n or "").lower() for n in (extracted.get("provider_notes_raw") or [])
+            if isinstance(n, str)
+        )
+        # Also scan inline provider_notes / flags_in_original on the matched items.
+        for (date, code, rate), members in groups.items():
+            if len(members) < 2:
+                continue
+            first = members[0]
+            desc = (first.get("service_description") or first.get("service_name") or code or "service").strip()
+            try:
+                gross = float(first.get("gross") or 0.0)
+            except Exception:
+                gross = 0.0
+            extra = ""
+            inline_notes = " ".join(
+                ((m.get("provider_notes") or "") + " " + (m.get("flags_in_original") or "")).lower()
+                for m in members
+            )
+            looks_like_return_trip = (
+                "return" in (desc or "").lower()
+                and (
+                    "per return trip" in notes_blob
+                    or "return trip inclusive" in notes_blob
+                    or "return trip" in inline_notes
+                )
+            )
+            if looks_like_return_trip:
+                extra = (
+                    " The provider's published rate describes this service as a return trip — "
+                    "charging it twice may mean you have been billed for two return trips instead of one."
+                )
+            anomalies.append({
+                "severity": "high",
+                "rule": "RULE_3_DUPLICATE_EXACT",
+                "headline": f"Possible duplicate charge — {len(members)} identical {desc} services on {date}",
+                "detail": (
+                    f"{len(members)} {code} line items appear on {date} with the same rate of "
+                    f"${rate:,.2f}. This may be a duplicate billing error.{extra}"
+                ),
+                "dollar_impact": round(gross * (len(members) - 1), 2),
+                "evidence": [
+                    f"date: {date}",
+                    f"service_code: {code}",
+                    f"unit_rate: ${rate:,.2f}",
+                    f"occurrences: {len(members)}",
+                ] + [
+                    f"item {i+1}: gross ${float(m.get('gross') or 0):,.2f} worker '{m.get('worker_name') or ''}'"
+                    for i, m in enumerate(members[:3])
+                ],
+                "suggested_action": (
+                    f"Ask your provider to confirm whether {len(members)} separate {desc} services "
+                    f"genuinely occurred on {date}. If only one occurred, request a credit of "
+                    f"${gross:,.2f}."
+                ),
+            })
+
+    # Final pass — deduplicate anomalies by headline.
+    # The LLM auditor + the deterministic backstops can both fire on similar
+    # content; users should never see the same headline twice.
+    seen_headlines: set[str] = set()
+    deduped: list[dict] = []
+    for a in anomalies:
+        if not isinstance(a, dict):
+            continue
+        h = (a.get("headline") or "").strip()
+        if not h:
+            continue
+        if h in seen_headlines:
+            continue
+        seen_headlines.add(h)
+        deduped.append(a)
+    audit_result["anomalies"] = deduped
     return audit_result

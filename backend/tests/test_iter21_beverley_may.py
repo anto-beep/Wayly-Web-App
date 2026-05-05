@@ -75,12 +75,46 @@ def test_no_forfeit_alert_in_may(decoded):
     )
 
 
-# ───────── FIX 2: stream subtotal discrepancy ─────────
+# ───────── FIX 2: Stream discrepancy now ONLY EverydayLiving ─────────
 
 def test_stream_discrepancy_everyday(decoded):
     flags = [a for a in decoded["audit"].get("anomalies", []) if a.get("rule") == "RULE_16_STREAM_DISCREPANCY"]
     assert flags, "Expected RULE_16 to flag Everyday Living $526 vs $455"
-    assert any("Everyday" in (f.get("headline") or "") for f in flags)
+    # Only Everyday Living should be flagged — never Clinical or Independence.
+    for f in flags:
+        assert "Everyday Living" in (f.get("headline") or ""), (
+            f"Rule 16 should only flag Everyday Living; got headline: {f.get('headline')}"
+        )
+
+
+def test_no_clinical_independence_discrepancy(decoded):
+    """Clinical and Independence stream discrepancies must not fire (they
+    false-positive on extraction imprecision)."""
+    flags = [a for a in decoded["audit"].get("anomalies", []) if a.get("rule") == "RULE_16_STREAM_DISCREPANCY"]
+    headlines = [(f.get("headline") or "") for f in flags]
+    assert not any("Clinical total" in h for h in headlines)
+    assert not any("Independence total" in h for h in headlines)
+
+
+# ───────── FIX 3: Exact same-date duplicate detection ─────────
+
+def test_duplicate_transport_05_may_high(decoded):
+    """The 05-May TR-003 double-charge must be flagged HIGH by the exact-match rule."""
+    flags = [
+        a for a in decoded["audit"].get("anomalies", [])
+        if a.get("rule") == "RULE_3_DUPLICATE_EXACT" and "05" in (a.get("headline") or "")
+    ]
+    assert flags, "Expected exact-duplicate rule to fire on 05-May TR-003"
+    assert flags[0].get("severity") == "high"
+
+
+# ───────── FIX 1: Dedupe anomalies by headline ─────────
+
+def test_anomaly_headlines_unique(decoded):
+    headlines = [a.get("headline") for a in decoded["audit"].get("anomalies", []) if a.get("headline")]
+    assert len(headlines) == len(set(headlines)), (
+        f"Duplicate headlines found: {[h for h in headlines if headlines.count(h) > 1]}"
+    )
 
 
 # ───────── FIX 3: provider notes ─────────

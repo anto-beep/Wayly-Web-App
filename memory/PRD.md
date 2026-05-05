@@ -400,6 +400,32 @@ After extraction, sum the gross of each stream's line items and compare against 
 - ✅ AT-HM stream card present with $2,500 / 1 item
 - ✅ No "Decoded total doesn't match" Rule 15 spurious warning when totals reconcile (Rule 15 still fires when sum gap > $5 — Beverley statement has internal arithmetic gaps in stream subtotals which Rule 16 surfaces correctly)
 
+## Implemented (Iteration 23 — Feb 2026 · 4 targeted Beverley May v3 fixes)
+
+### FIX 1 — Anomaly dedup by headline
+End of `_add_parse_warnings` now runs a final pass that drops any anomaly whose `headline` is already present. The LLM auditor and the deterministic backstops can both fire on similar content (e.g. provider-notes service-increase repeated across notes). Users now never see the same headline twice.
+
+### FIX 2 — Rule 16 narrowed to Everyday Living only
+Clinical and Independence stream discrepancies are no longer user-facing — they false-positive on extraction blips (an LLM occasionally drops one weekend transport line, which fires the rule even though the statement is fine). When confidence < 0.92 we record an internal `_parsing_warnings[]` entry on the audit result for diagnostics. Everyday Living is the smallest, highest-signal stream and still flags any > $5 mismatch with a "this is based on AI extraction" caveat in the detail copy.
+
+### FIX 3 — Deterministic exact same-date duplicate (RULE_3_DUPLICATE_EXACT)
+New deterministic backstop: groups line items by `(date, service_code, unit_rate)` and flags HIGH whenever a group has ≥ 2 non-cancellation members. Catches the 05-May TR-003 duplicate transport that the LLM Rule 3 was missing. Detail copy auto-detects a "return trip inclusive" pattern in `provider_notes_raw` and adds a contextual sentence.
+
+### FIX 4 — Broadened care-plan-review patterns
+Rule 17 trigger phrases extended: `plan review`, `review due`, `6-monthly review`, `six-monthly review`, `annual review`, `plan is due`. Headline updated to "Care plan review is due or upcoming". Suggested action expanded with concrete prep guidance (recent diagnoses, medication changes, falls, daily-ability changes).
+
+### Header reliability — bonus fix
+`_llm_chunk_call()` now accepts an `is_valid` callable. The header chunk passes a validator that requires at least ONE of `participant_name`/`statement_period`/`period_end`/`quarterly_budget_total>0`/`reported_total_gross>0` to be populated — otherwise the chunk is retried (fresh session id). Eliminates the failure mode where Haiku returned an all-empty header object on flaky responses.
+
+### Test status iter 23
+- **19/19** Beverley May regression assertions pass (~71s total live decode).
+- All four fixes verified deterministically:
+  - Headlines all unique ✅
+  - Only Everyday Living stream discrepancy fires (Clinical/Independence suppressed) ✅
+  - RULE_3_DUPLICATE_EXACT fires HIGH on 05-May transport ✅
+  - RULE_17 fires on broader patterns ✅
+
+
 ## Test status iter 21
 - Backend 16/16 pytest pass on Beverley May fixture (~76s through chunked-extract + audit). Iter15/16 in-process logic tests still green; iter17 Okafor regression unaffected (rule-engine changes are purely additive plus the timing window on Rule 13).
 
