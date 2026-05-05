@@ -233,6 +233,25 @@ The iter13 two-pass decoder still occasionally truncated long statements when Pa
 ## Test status iter 15
 - Backend 15/15 pytest pass · Frontend 100% (embed daily-limit no-crash + Login 401 friendly toast both green) · LLM variance acknowledged (anomaly_count == anomalies length contract holds).
 
+## Implemented (Iteration 16 — Feb 2026 · Rules 11/12/13 functional pytest, Notifications toast, Settings skeletons)
+
+### Functional pytest for Rules 11/12/13
+- New canonical fixture `/tmp/robert_q1_underspend.txt` — Robert Anderson Q1 statement with: 4 brokered PC visits ($85 brokered vs $78 published), 4 AT-HM commitments (3 unclaimed/partial > 30 or 180 days old + 1 fully claimed), and quarterly underspend signal (`budget_remaining_at_quarter_end=$2,150` of $7,424 = 29% > 15% threshold AND > $1k rollover cap → MEDIUM forfeit).
+- New `/app/backend/tests/test_iter16_rules_11_12_13.py` — 10 tests covering extraction shape (participant, period dates, AT-HM commitments array, budget_remaining, reported_total) and rule firing (RULE_11 brokered premium, RULE_12 unclaimed AT-HM, RULE_13 quarterly underspend). Cached at `/tmp/robert_q1_decoded.json` so re-runs cost nothing.
+- **Rule 13 promoted to deterministic Python check** in `_add_parse_warnings()` (was LLM-driven, now uses the same approach as Rules 14 & 15 for stable behaviour). Computes `rollover_cap = max($1000, 10% × quarterly_total)` and emits LOW (within rollover) or MEDIUM (forfeit) with calculated dollar_impact.
+
+### Notifications polish — toast on new
+- `NotificationsBell` now shows a sonner `toast.info(title, {description, action: 'View'})` when poll diff returns a previously-unseen unread notification.
+- `localStorage.kindred_notif_seen_ids` (capped at 200 ids) deduplicates so users aren't re-toasted for items they've already seen across page reloads.
+- First mount pre-marks the entire current backlog as seen — prevents toast-spam on login.
+
+### Settings tab loading skeletons
+- New `/app/frontend/src/components/Skeleton.jsx` — 4 variants (`card` / `list` / `grid` / `stat`) with shimmering `animate-pulse` bars matching brand tokens.
+- Wired into 5 Settings tabs (Billing → card+grid, Members → list, Digest → card, Notifications → list, Usage → 6× stat) replacing prior `Loader2` spinners. Non-breaking visual swap.
+
+## Test status iter 16
+- Backend 25/25 pytest pass (10 iter16 + 15 iter15 regression). Frontend 100% — login, all 5 Settings tabs render, NotificationsBell + dropdown + localStorage dedupe verified, ⌘K palette intact, 0 JS errors.
+
 
 ## Implemented (Iteration 13 — Feb 2026 · Two-pass Statement Decoder pipeline)
 
