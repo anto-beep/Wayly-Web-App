@@ -457,17 +457,12 @@ If budget_remaining_at_quarter_end <= 0 or quarterly_budget_total <= 0: do NOT e
 
 RULE 14 — STATEMENT PERIOD ACCURACY (parsing warning)
 Verify the extracted statement_period (and period_start/period_end if present) match the explicit "STATEMENT PERIOD" header in the source — NOT the quarterly-budget-summary date range.
-- If you can compute (period_end - period_start) and that span exceeds 35 days for what looks like a monthly statement: flag as LOW severity with rule "RULE_14_PERIOD_PARSE_WARNING" and headline "Statement period may be incorrectly extracted — verify dates."
-- Detail should include the extracted period_start, period_end, and the literal statement_period string.
-- Suggested action: "Open the original statement and confirm the dates match. If they don't, this decode may be reading from the quarterly summary by mistake."
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit check is performed in code (rule key "RULE_14_PERIOD_PARSE_WARNING") which fires only when the period span exceeds 35 days. Skip this rule entirely in your output to avoid double-counting.
 
 RULE 15 — GROSS TOTAL VALIDATION (parsing warning)
 Compute extracted_total = sum(line_item.gross for line_item where is_cancellation=false) - sum(prev_period_adjustment.credit_amount).
 Compare extracted_total against reported_total_gross from the header.
-- If reported_total_gross > 0 AND abs(extracted_total - reported_total_gross) > 5.00: flag as LOW severity with rule "RULE_15_GROSS_TOTAL_PARSE_WARNING".
-- Detail copy: "Extracted total ($X.XX) differs from the statement's reported total ($Y.YY). Some line items may not have been extracted. Review the full statement manually."
-- Suggested action: "Open the original statement and check whether any line items are missing from the decoded view above."
-- If reported_total_gross is 0 (not present in the source): do NOT emit this rule.
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit check is performed in code (rule key "RULE_15_GROSS_TOTAL_PARSE_WARNING") which fires when the difference is > $5.00. Skip this rule entirely in your output to avoid double-counting.
 
 OUTPUT FORMAT — return ONLY valid JSON, no prose:
 

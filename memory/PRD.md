@@ -203,6 +203,36 @@ The iter13 two-pass decoder still occasionally truncated long statements when Pa
 ## Test status iter 14
 - Backend 11/11 pytest pass; Playwright frontend 100% happy-path; iter13 502 gateway-timeout regression fully resolved; daily-limit cookie + paid-tool gating regressions both green.
 
+## Implemented (Iteration 15 — Feb 2026 · Defensive error rendering, 5 new audit rules)
+
+### Defensive error message extraction (frontend)
+- Iter 14 had a React crash on the Statement Decoder embed when the daily-limit endpoint returned `detail` as an object `{error, message, next_available_at, used_at}`. Root cause: `setError(err?.response?.data?.detail)` set state to the raw object, then JSX rendered `{error}` and crashed.
+- New `extractErrorMessage(err, fallback)` helper exported from `/app/frontend/src/lib/api.js`:
+  - Returns `detail` if it's a string.
+  - Returns `detail.message` if `detail` is an object with a `.message` string.
+  - Returns `data.message` as a secondary fallback.
+  - Returns `fallback` otherwise. Never returns an object.
+- All 14 call sites updated: Login, Signup, PasswordReset (forgot + reset), Onboarding, ParticipantView, StatementUpload, InviteAccept, Settings (8 occurrences), PriceCheckerTool, ReassessmentLetter, FamilyCoordinator, EmailResultButton, StatementDecoderEmbed.
+- The global axios interceptor in `/api.js` also routes through the same helper.
+
+### Statement Decoder — Rules 11-15 added to Pass 2 audit
+- **RULE_11 — Brokered Rate Premium** (LLM-driven, MEDIUM): scans `is_brokered=true` line items + provider notes for brokered-rate disclosures. Dollar impact = (brokered_rate - published_rate) × hours × occurrences.
+- **RULE_12 — Unclaimed AT-HM Commitments** (LLM-driven, LOW): inspects new `at_hm_commitments[]` array. Two sub-cases: amount_claimed=0 + >30 days old, OR amount_claimed>0 + remaining>0 + >180 days old. Detail includes ref, item description, remaining, expiry.
+- **RULE_13 — Quarterly Underspend Pattern** (LLM-driven, LOW or MEDIUM): uses new `budget_remaining_at_quarter_end`. LOW if remaining ≤ rollover cap (rolls over fine), MEDIUM if > cap (forfeited). Rollover cap = max($1000, 10% × quarterly_budget_total).
+- **RULE_14 — Statement Period Parse Warning** (deterministic Python, LOW): fires when `period_end - period_start > 35 days`. Removed from LLM prompt to avoid LLM-side false positives. Implemented in `_add_parse_warnings`.
+- **RULE_15 — Gross Total Parse Warning** (deterministic Python, LOW): fires when `abs(sum(non-cancelled line gross) - prev-period adjustment credits - reported_total_gross) > $5.00`. Removed from LLM prompt; implemented in `_add_parse_warnings`. Catches missed line items.
+
+### New extraction fields
+- Header chunk: `period_start`, `period_end`, `reported_total_gross`, `reported_total_participant_contribution`, `reported_total_government_paid`, `budget_remaining_at_quarter_end`.
+- Adjustments chunk: `at_hm_commitments[]` with ref/item_description/approval_date/expiry_date/amount_approved/amount_claimed/amount_remaining/status.
+
+### Wall-clock & acceptance
+- 41-50s end-to-end (well inside 60s gateway).
+- Margaret Kowalski fixture: 12 line items, 4H/3M/4L = 11 anomalies, all 4 expected HIGH rules fire (1, 3, 4, 7), RULE_15 correctly added (deterministic), RULE_14 correctly NOT added (30-day span).
+
+## Test status iter 15
+- Backend 15/15 pytest pass · Frontend 100% (embed daily-limit no-crash + Login 401 friendly toast both green) · LLM variance acknowledged (anomaly_count == anomalies length contract holds).
+
 
 ## Implemented (Iteration 13 — Feb 2026 · Two-pass Statement Decoder pipeline)
 
