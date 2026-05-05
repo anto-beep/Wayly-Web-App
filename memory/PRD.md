@@ -303,6 +303,47 @@ The iter13 two-pass decoder still occasionally truncated long statements when Pa
 ## Test status iter 17
 - Backend 48/48 pytest pass (16 iter17 okafor + 7 iter17 async + 10 iter16 + 15 iter15). Live remote Okafor flow 70s end-to-end through K8s ingress, all 16 QA assertions matching. Frontend smoke 0 React/console errors.
 
+## Implemented (Iteration 18-19 — Feb 2026 · Compliance footer + AI accuracy banner + 6 legal pages)
+
+This is **Phase 1** of a 3-phase content roll-out per the user's pages spec. Phases 2 (homepage / faq / trust / press / about / contact updated copy) and 3 (resources sub-pages, demo upgrade, verify-email) are queued.
+
+### Global Footer rewrite (`/app/frontend/src/components/Footer.jsx`)
+- 4 columns on desktop (Brand / Product / Resources / Legal & Company), stacks on mobile.
+- Navy `#1F3A5F` bg, gold `#D4A24E` divider line, white text.
+- Brand column: Kindred wordmark + tagline + ABN placeholder + © 2026 Kindred Pty Ltd.
+- Below the columns: full legal disclaimer (centred, 13px) — "Kindred is not a registered Support at Home provider, financial adviser…"
+- 5 mandatory crisis hotlines as `tel:` links (centred, 13px, gold "Support lines:" label):
+  - My Aged Care 1800 200 422
+  - OPAN 1800 700 600
+  - 1800ELDERHelp 1800 353 374
+  - Lifeline 13 11 14
+  - Beyond Blue 1300 22 4636
+- Per user choice, footer is NOT rendered on auth pages (login/signup/password-reset).
+- All footer column links resolve (legal pages + redirects for /resources/blog → /resources/articles, /resources/guides → /resources, /resources/webinars → /resources, /press → /contact).
+
+### `<AIAccuracyBanner>` component (`/app/frontend/src/components/AIAccuracyBanner.jsx`)
+- Amber `#FEF3C7` bg with `#F59E0B` border, AlertTriangle icon, dark amber text.
+- Default copy is the 4-sentence spec text; tool-specific overrides exported as `TOOL_DISCLAIMERS` map (statement-decoder, budget-calculator, provider-price-checker, classification-self-check, reassessment-letter, contribution-estimator, care-plan-reviewer, family-coordinator).
+- `variant="anomaly"` renders an inline 1-line "AI-generated. May be incorrect. Verify before acting." badge.
+- Wired into all 8 AI tool pages (banner above the input AND above the ToolGate for unauthenticated users), the `/ai-tools` index page, and the `StatementDetail` dashboard view (above summary + on each anomaly card).
+- Wired into `DecoderResultView` so every anomaly card carries the inline badge.
+
+### 6 new legal pages (shared `LegalPage` layout)
+- `/legal/terms` — Terms of Service (7 sections: what Kindred is/isn't, agreement, AI accuracy + liability cap, data, billing, change notice, governing law).
+- `/legal/privacy` — Privacy Policy (10 sections covering APP-compliant disclosures + cross-border AI processing disclosure).
+- `/legal/ai-disclaimer` — AI Accuracy Disclaimer (covers what tools do, what they can't guarantee, what users should always do, what Kindred is NOT, Voluntary AI Safety Standard adoption).
+- `/legal/ai-intent` — Statement of Intent for AI Errors (errors@kindred.au reporting flow + 5-point commitment).
+- `/legal/accessibility` — WCAG 2.2 AA / AAA targets, features, feedback.
+- `/legal/cookies` — Essential / Analytics / Preference cookie breakdown.
+- All routes registered in `App.js`. Each page uses `<Link>` to navigate without reload.
+
+### Test status iter 18-19
+- 100% retest pass after iteration 18 surfaced 3 minor gate/footer issues:
+  - **HIGH-fixed**: AIAccuracyBanner now renders above the ToolGate on all 7 paid AI tools (verified via bounding-box ordering).
+  - **LOW-fixed**: Removed `/about` footer link (route doesn't exist yet — Phase 2).
+  - **LOW-fixed**: Trailing hyphens stripped from `footer-crisis-*` testid slugify.
+- Iter17 backend regression suite still passes; no backend changes this iteration.
+
 
 ## Implemented (Iteration 13 — Feb 2026 · Two-pass Statement Decoder pipeline)
 
