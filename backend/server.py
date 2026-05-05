@@ -147,7 +147,7 @@ async def signup(payload: SignupRequest):
     }
     await db.users.insert_one(user_doc)
     token = create_token(user_doc["id"])
-    return TokenResponse(token=token, user=_user_public(user_doc))
+    return TokenResponse(token=token, user=await _user_public_with_sub(user_doc))
 
 
 @api.post("/auth/login", response_model=TokenResponse)
@@ -156,7 +156,7 @@ async def login(payload: LoginRequest):
     if not user or not verify_password(payload.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = create_token(user["id"])
-    return TokenResponse(token=token, user=_user_public(user))
+    return TokenResponse(token=token, user=await _user_public_with_sub(user))
 
 
 @api.get("/auth/me", response_model=UserPublic)
@@ -169,7 +169,7 @@ async def me(user_id: str = Depends(get_current_user_id)):
 async def update_plan(payload: PlanUpdate, user_id: str = Depends(get_current_user_id)):
     await db.users.update_one({"id": user_id}, {"$set": {"plan": payload.plan}})
     u = await _get_user(user_id)
-    return _user_public(u)
+    return await _user_public_with_sub(u)
 
 
 # ----------------- emergent google auth -----------------
@@ -236,7 +236,7 @@ async def google_session(body: GoogleSessionBody, response: Response):
             samesite="none",
         )
     token = create_token(user["id"])
-    return TokenResponse(token=token, user=_user_public(user))
+    return TokenResponse(token=token, user=await _user_public_with_sub(user))
 
 
 @api.post("/auth/logout")
