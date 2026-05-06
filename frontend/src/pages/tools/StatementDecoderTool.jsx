@@ -3,13 +3,16 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { api } from "@/lib/api";
-import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock } from "lucide-react";
+import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, Mail, ChevronDown } from "lucide-react";
 import EmailResultButton from "@/components/EmailResultButton";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
 import DecoderResultView from "@/components/DecoderResultView";
 import DecoderProgress from "@/components/DecoderProgress";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
+import AcceptedFormatsPanel from "@/components/AcceptedFormatsPanel";
+import PhotoTipsAccordion from "@/components/PhotoTipsAccordion";
+import FilePreviewPanel from "@/components/FilePreviewPanel";
 
 const SAMPLE = `BlueBerry Care — Monthly Statement
 For: Dorothy Anderson · April 2026
@@ -24,7 +27,7 @@ Date         Service                              Stream             Units  Rate
 export default function StatementDecoderTool() {
     const { user } = useAuth();
     const isPaidUser = user && ["solo", "family", "advisor", "advisor_pro"].includes((user.plan || "").toLowerCase());
-    const [mode, setMode] = useState("text");  // "text" | "file"
+    const [mode, setMode] = useState("text");  // "text" | "file" | "email"
     const [text, setText] = useState(SAMPLE);
     const [file, setFile] = useState(null);
     const [active, setActive] = useState(false);
@@ -140,7 +143,9 @@ export default function StatementDecoderTool() {
                 <span className="overline mt-6 block">Free tool · No signup · Australian-hosted</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Statement Decoder</h1>
                 <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    Paste your parent's monthly Support at Home statement, or upload the PDF. We'll extract every line item, write a plain-English summary, and flag anything that looks unusual.
+                    Upload, photograph, or paste any Support at Home monthly statement.
+                    We accept PDF, Word, photos, and more. Get a plain-English breakdown
+                    in under 2 minutes.
                 </p>
             </section>
 
@@ -150,10 +155,11 @@ export default function StatementDecoderTool() {
                     className="mb-4"
                 />
                 <div className="bg-surface border border-kindred rounded-2xl p-6">
-                    <div className="flex gap-2" role="tablist">
+                    <div className="flex gap-2 flex-wrap" role="tablist">
                         {[
                             { v: "text", label: "Paste text" },
-                            { v: "file", label: "Upload PDF / CSV" },
+                            { v: "file", label: "Upload file or photo" },
+                            { v: "email", label: "Forward by email" },
                         ].map((m) => (
                             <button
                                 key={m.v}
@@ -168,33 +174,78 @@ export default function StatementDecoderTool() {
                         ))}
                     </div>
 
-                    {mode === "text" ? (
-                        <textarea
-                            value={text}
-                            onChange={(e) => setText(e.target.value)}
-                            rows={12}
-                            data-testid="decoder-textarea"
-                            className="mt-4 w-full font-mono text-xs leading-relaxed rounded-md border border-kindred bg-surface-2 p-3 focus:outline-none focus:ring-2 ring-primary-k"
-                        />
-                    ) : (
-                        <div
-                            className={`dropzone mt-4 rounded-xl border-2 border-dashed border-kindred bg-surface-2 p-10 text-center cursor-pointer ${active ? "active" : ""}`}
-                            onDragOver={(e) => { e.preventDefault(); setActive(true); }}
-                            onDragLeave={() => setActive(false)}
-                            onDrop={(e) => { e.preventDefault(); setActive(false); setFile(e.dataTransfer.files?.[0] || null); }}
-                            onClick={() => fileRef.current?.click()}
-                            data-testid="decoder-dropzone"
-                        >
-                            <input ref={fileRef} type="file" accept=".pdf,.csv,.txt" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-                            <Upload className="h-8 w-8 text-primary-k mx-auto" />
-                            <div className="font-heading text-lg text-primary-k mt-2">{file ? file.name : "Drop a file or click to browse"}</div>
-                            <div className="text-xs text-muted-k mt-1">PDF, CSV, or TXT up to 10 MB</div>
+                    {mode === "text" && (
+                        <>
+                            <textarea
+                                value={text}
+                                onChange={(e) => setText(e.target.value)}
+                                rows={12}
+                                placeholder="Paste your statement text here..."
+                                data-testid="decoder-textarea"
+                                className="mt-4 w-full font-mono text-xs leading-relaxed rounded-md border border-kindred bg-surface-2 p-3 focus:outline-none focus:ring-2 ring-primary-k"
+                            />
+                            <AcceptedFormatsPanel />
+                        </>
+                    )}
+
+                    {mode === "file" && (
+                        <>
+                            {!file ? (
+                                <div
+                                    className={`mt-4 rounded-xl border-2 border-dashed bg-surface-2 p-10 text-center cursor-pointer transition-all ${active ? "border-gold bg-surface scale-[1.01]" : "border-kindred hover:bg-surface"}`}
+                                    onDragOver={(e) => { e.preventDefault(); setActive(true); }}
+                                    onDragLeave={() => setActive(false)}
+                                    onDrop={(e) => { e.preventDefault(); setActive(false); setFile(e.dataTransfer.files?.[0] || null); }}
+                                    onClick={() => fileRef.current?.click()}
+                                    data-testid="decoder-dropzone"
+                                >
+                                    <input
+                                        ref={fileRef}
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.heic,.heif,.webp"
+                                        className="hidden"
+                                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                    />
+                                    <Upload className={`h-12 w-12 mx-auto text-primary-k transition-transform ${active ? "scale-110" : ""}`} />
+                                    <div className="font-heading text-xl text-primary-k mt-3">Drag your statement here</div>
+                                    <div className="text-sm text-muted-k mt-1">or click to browse files</div>
+                                    <div className="text-xs text-muted-k mt-3">PDF · Word · TXT · JPG · PNG · HEIC · WEBP</div>
+                                </div>
+                            ) : (
+                                <div className="mt-4">
+                                    <FilePreviewPanel file={file} onClear={() => { setFile(null); fileRef.current && (fileRef.current.value = ""); }} />
+                                </div>
+                            )}
+                            <AcceptedFormatsPanel defaultOpen={!file} />
+                            <PhotoTipsAccordion />
+                        </>
+                    )}
+
+                    {mode === "email" && (
+                        <div className="mt-4 rounded-xl border-2 border-dashed border-kindred bg-surface-2 p-8 text-center" data-testid="decoder-email-tab">
+                            <Mail className="h-10 w-10 text-muted-k mx-auto" />
+                            <div className="font-heading text-xl text-primary-k mt-3">Email forwarding — coming soon</div>
+                            <p className="text-sm text-muted-k mt-2 max-w-md mx-auto">
+                                Forward your statement email directly to your unique Kindred address.
+                                Set up a forwarding rule once and every monthly statement arrives automatically.
+                            </p>
+                            <p className="text-xs text-muted-k mt-3">
+                                We'll let you know the moment this is live.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setMode("file")}
+                                className="mt-4 inline-flex items-center gap-1 text-sm text-primary-k underline"
+                                data-testid="decoder-email-fallback"
+                            >
+                                Upload a file instead <ArrowRight className="h-3.5 w-3.5" />
+                            </button>
                         </div>
                     )}
 
                     <button
                         onClick={submit}
-                        disabled={loading || !!limitInfo || (mode === "file" && !file) || (mode === "text" && !text.trim())}
+                        disabled={loading || !!limitInfo || mode === "email" || (mode === "file" && !file) || (mode === "text" && !text.trim())}
                         data-testid="decoder-submit"
                         className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                     >

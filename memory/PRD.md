@@ -483,6 +483,56 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 27 — Feb 2026 · Multi-format Statement Decoder — Phase 1)
+
+### Backend — `/app/backend/document_extract.py` (new, ~280 lines)
+Single entry point `extract_document(filename, raw)` returns `(text, input_method, page_count, parsing_warnings)`. Supports:
+- **PDF (selectable text)** via pdfplumber + pypdf fallback. Detects scanned PDFs by checking for keyword signal in extracted text.
+- **PDF (scanned)** via `pdf2image` → Claude vision per-page (limit 8 pages).
+- **DOCX** via python-docx (paragraphs + tables flattened tab-separated to preserve column structure).
+- **TXT / CSV** with multi-encoding fallback (utf-8-sig / utf-8 / latin-1 / cp1252).
+- **JPG / PNG / WEBP** normalised to JPEG via Pillow → Claude vision.
+- **HEIC / HEIF** via `pillow-heif` → JPEG → Claude vision.
+- **DOC** (legacy) currently rejected with friendly "save as .docx" message — Phase 2.
+
+Validation: typed exceptions (`UnsupportedFormatError`, `FileTooLargeError`, `CorruptFileError`, `PasswordProtectedError`) with magic-byte verification (PDF `%PDF`, JPEG `FF D8`, PNG `89 50 4E 47…`, ZIP/DOCX `PK`, OLE/DOC `D0 CF 11 E0 A1 B1 1A E1`, HEIF `ftyp` at byte 4, WebP `RIFF…WEBP`). Format-specific size limits (PDF 20 MB · DOCX/images 10 MB · TXT 5 MB).
+
+Vision prompt (`VISION_EXTRACTION_PROMPT`) instructs Claude Sonnet 4.5 to read tables column-by-column, transcribe dollar figures precisely, mark `[unclear]` regions, prefix `[HANDWRITTEN]:` lines, and return statement-shaped plain text — not JSON. The downstream Pass-1 chunked extractors then run on that text exactly as if it were pasted.
+
+### Backend — server endpoints
+- `POST /api/public/decode-statement` (file) and `POST /api/statements/upload` (dashboard) now both call `extract_document()`. Both surface format-specific HTTP errors with helpful copy.
+- New job-tracking fields threaded through: `_submit_decode_job(text, input_method, document_pages, parsing_warnings, original_filename)` → result includes `input_method`, `document_pages`, `original_filename`, `parsing_warnings`.
+
+### Frontend — Statement Decoder UI rebuild
+- `StatementDecoderTool.jsx` — three-tab input selector (Paste text / Upload file or photo / Forward by email).
+- New components:
+  - **`AcceptedFormatsPanel.jsx`** — full 8-row accepted-formats table with size limits + "Not accepted" list + Excel/password-PDF guidance.
+  - **`PhotoTipsAccordion.jsx`** — collapsed 7-tip panel for photographing paper statements.
+  - **`FilePreviewPanel.jsx`** — adaptive preview for PDF / Word / TXT (first-5-line preview) / images (thumbnail with object URL). Format-specific size-limit warning. "Change" button to reselect.
+- Drag-and-drop zone with `border-dashed`, gold-on-dragover, scaling icon. Native file picker filtered to `.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.heic,.heif,.webp`.
+- Email-forward tab: "Coming soon" placeholder with mail icon + "Upload a file instead" link.
+- `DecoderResultView.jsx` gains:
+  - **`InputMethodBadge`** — small gold pill in the summary banner showing "From PDF (text)" / "From Word document" / "From Photo" / etc.
+  - **`InputMethodAccuracyNote`** — amber disclaimer block shown for `image_vision` / `pdf_scanned` / `word_document` results, plus a list of any `parsing_warnings`.
+- Updated subtitle copy: "Upload, photograph, or paste any Support at Home monthly statement. We accept PDF, Word, photos, and more."
+
+### Verified end-to-end
+- DOCX upload of Beverley fixture: `input_method: "word_document"`, `total_gross: $7,591.75`, 12 anomalies, 0 false positives. POST returns job_id in 0.79s.
+- 3-tab UI screenshot confirms drag-zone, format list, photo tips, and email "Coming soon" all render correctly.
+
+### Phase 2 (deferred)
+- DOC legacy (LibreOffice headless install)
+- OpenCV image quality assessment (brightness/blur/skew detection)
+- Multi-page PDF page classification (Haiku tagger then per-page targeted extraction)
+- Email-forward ingest pipeline (SMTP/IMAP infra + DNS)
+- Low/unreadable confidence UI + manual `help@kindred.au` escalation path
+
+### Files changed
+- New: `/app/backend/document_extract.py`, `/app/frontend/src/components/AcceptedFormatsPanel.jsx`, `/app/frontend/src/components/PhotoTipsAccordion.jsx`, `/app/frontend/src/components/FilePreviewPanel.jsx`
+- Modified: `/app/backend/server.py` (decode endpoints + job pass-through), `/app/frontend/src/pages/tools/StatementDecoderTool.jsx`, `/app/frontend/src/components/DecoderResultView.jsx`, `/app/memory/PRD.md`
+- New deps: `python-docx`, `pillow-heif`, `python-magic` + `libmagic1` system pkg.
+
+
 ## Implemented (Iteration 26 — Feb 2026 · Statement file storage + downloads)
 
 ### Original-file re-download (dashboard)

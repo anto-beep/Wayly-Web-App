@@ -659,11 +659,23 @@ async def upload_statement(
     raw = await file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty file")
-    if len(raw) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large (max 10 MB)")
-    text = _extract_text(file.filename, raw)
+    from document_extract import (
+        extract_document, UnsupportedFormatError, FileTooLargeError,
+        CorruptFileError, PasswordProtectedError,
+    )
+    try:
+        text, input_method, page_count, parse_warnings = await extract_document(file.filename or "", raw)
+    except UnsupportedFormatError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileTooLargeError as e:
+        mb = e.limit_bytes // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"This {e.ext} file exceeds the {mb} MB limit. Try compressing it or splitting into smaller parts.")
+    except PasswordProtectedError:
+        raise HTTPException(status_code=400, detail="This PDF is password-protected. Open it in your PDF viewer, remove the password, save a new copy, and upload that file.")
+    except CorruptFileError as e:
+        raise HTTPException(status_code=400, detail=f"This file appears to be damaged or unreadable: {e}")
     if not text.strip():
-        raise HTTPException(status_code=400, detail="Could not extract text from file")
+        raise HTTPException(status_code=400, detail="Could not extract text from file. Try a clearer photo or paste the text directly.")
     # Stash the original bytes so the user can re-download the source PDF / CSV / TXT later.
     import base64 as _b64
     file_b64 = _b64.b64encode(raw).decode("ascii")
@@ -1219,7 +1231,13 @@ def _prune_decode_jobs() -> None:
         DECODE_JOBS.pop(jid, None)
 
 
-async def _run_decode_job(job_id: str, text: str) -> None:
+async def _run_decode_job(
+    job_id: str, text: str,
+    input_method: str = "text_paste",
+    document_pages: int = 1,
+    parsing_warnings: Optional[list] = None,
+    original_filename: Optional[str] = None,
+) -> None:
     """Background runner. Updates DECODE_JOBS[job_id] as it progresses.
     Runs the wrapper (PII bypass + abuse classifier) FIRST so the POST handler
     can return a job_id instantly without any LLM dependency on the synchronous
@@ -1251,6 +1269,11 @@ async def _run_decode_job(job_id: str, text: str) -> None:
         job["phase"] = "audit"
         audit = await audit_statement(extracted, household_id="public")
         result = _build_decode_payload(extracted, audit)
+        result["input_method"] = input_method
+        result["document_pages"] = document_pages
+        result["original_filename"] = original_filename
+        if parsing_warnings:
+            result["parsing_warnings"] = list(parsing_warnings)
         if wrapped.get("redaction_notice"):
             result["redaction_notice"] = wrapped["redaction_notice"]
             result["redaction_count"] = wrapped["redaction_count"]
@@ -1263,7 +1286,13 @@ async def _run_decode_job(job_id: str, text: str) -> None:
         job["error"] = str(e)
 
 
-def _submit_decode_job(text: str) -> str:
+def _submit_decode_job(
+    text: str,
+    input_method: str = "text_paste",
+    document_pages: int = 1,
+    parsing_warnings: Optional[list] = None,
+    original_filename: Optional[str] = None,
+) -> str:
     """Submit a decode job. Returns the job_id. Runs the pipeline as a
     fire-and-forget asyncio task."""
     import time
@@ -1276,7 +1305,13 @@ def _submit_decode_job(text: str) -> str:
         "error": None,
         "created_at": time.time(),
     }
-    asyncio.create_task(_run_decode_job(job_id, text))
+    asyncio.create_task(_run_decode_job(
+        job_id, text,
+        input_method=input_method,
+        document_pages=document_pages,
+        parsing_warnings=parsing_warnings,
+        original_filename=original_filename,
+    ))
     return job_id
 
 
@@ -1435,10 +1470,7 @@ async def public_decode_job_status(job_id: str):
 @api.post("/public/decode-statement-text")
 async def public_decode_text(body: PublicTextBody, request: Request, response: Response):
     await _enforce_statement_decoder_limit(request, response)
-    # Submit immediately as a background job — wrapper + chunked extract + audit
-    # all run async. The POST returns instantly with the job_id so the K8s
-    # ingress (60s read timeout) never times out on the synchronous request.
-    job_id = _submit_decode_job(body.text)
+    job_id = _submit_decode_job(body.text, input_method="text_paste", document_pages=1, parsing_warnings=[])
     return {"job_id": job_id, "status": "pending"}
 
 
@@ -1448,12 +1480,27 @@ async def public_decode_file(request: Request, response: Response, file: UploadF
     raw = await file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty file")
-    if len(raw) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large (max 10 MB)")
-    text = _extract_text(file.filename, raw)
+    from document_extract import (
+        extract_document, UnsupportedFormatError, FileTooLargeError,
+        CorruptFileError, PasswordProtectedError,
+    )
+    try:
+        text, input_method, page_count, parse_warnings = await extract_document(file.filename or "", raw)
+    except UnsupportedFormatError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileTooLargeError as e:
+        mb = e.limit_bytes // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"This {e.ext} file exceeds the {mb} MB limit. Try compressing it or splitting into smaller parts.")
+    except PasswordProtectedError:
+        raise HTTPException(status_code=400, detail="This PDF is password-protected. Open it in your PDF viewer, remove the password (File → Properties → Security), save a new copy, and upload the new file.")
+    except CorruptFileError as e:
+        raise HTTPException(status_code=400, detail=f"This file appears to be damaged or unreadable: {e}")
     if not text.strip():
-        raise HTTPException(status_code=400, detail="Could not extract text from file")
-    job_id = _submit_decode_job(text)
+        raise HTTPException(status_code=400, detail="Could not extract text from file. Try a clearer photo or paste the text directly.")
+    job_id = _submit_decode_job(
+        text, input_method=input_method, document_pages=page_count,
+        parsing_warnings=parse_warnings, original_filename=file.filename,
+    )
     return {"job_id": job_id, "status": "pending"}
 
 

@@ -79,9 +79,12 @@ export default function DecoderResultView({ result }) {
                 </div>
             )}
 
+            <InputMethodAccuracyNote method={result.input_method} parsingWarnings={result.parsing_warnings} />
+
             {/* SECTION 1 — Summary banner */}
-            <section className="bg-primary-k text-white rounded-2xl p-6" data-testid="decoder-summary-banner">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-gold">
+            <section className="bg-primary-k text-white rounded-2xl p-6 relative" data-testid="decoder-summary-banner">
+                <InputMethodBadge method={result.input_method} />
+                <div className="text-[11px] uppercase tracking-[0.18em] text-gold pr-32">
                     {summary.period || "Statement"}
                     {summary.participant_name ? ` · ${summary.participant_name}` : ""}
                     {summary.classification ? ` · ${summary.classification}` : ""}
@@ -272,6 +275,51 @@ export default function DecoderResultView({ result }) {
                         </div>
                     )}
                 </section>
+            )}
+        </div>
+    );
+}
+
+const METHOD_LABELS = {
+    text_paste: "Pasted text",
+    text_file: "Text file",
+    word_document: "Word document",
+    pdf_text: "PDF (text)",
+    pdf_scanned: "PDF (scanned)",
+    image_vision: "Photo",
+    email_attachment: "Email attachment",
+};
+
+function InputMethodBadge({ method }) {
+    if (!method) return null;
+    const label = METHOD_LABELS[method] || method;
+    return (
+        <span
+            className="absolute top-4 right-4 inline-flex items-center bg-gold/20 text-gold border border-gold/40 rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider"
+            data-testid="decoder-input-method-badge"
+            title={`Decoded from ${label}`}
+        >
+            From {label}
+        </span>
+    );
+}
+
+function InputMethodAccuracyNote({ method, parsingWarnings }) {
+    if (!method) return null;
+    let body = null;
+    if (method === "image_vision" || method === "pdf_scanned") {
+        body = "This statement was read from a photograph or scanned document. Image-based processing is less accurate than text-based processing. Dollar figures in particular should be carefully verified against your original statement — the AI can misread shadows, low-contrast figures, or unusual fonts.";
+    } else if (method === "word_document") {
+        body = "This statement was read from a Word document. Table formatting in Word files can sometimes cause data to be extracted in the wrong order. Verify line items against the original document if anything looks out of place.";
+    }
+    if (!body && !(parsingWarnings && parsingWarnings.length)) return null;
+    return (
+        <div className="rounded-lg border border-gold/40 bg-gold/10 p-4 text-sm text-primary-k space-y-2" data-testid="decoder-format-disclaimer">
+            {body && <p>{body}</p>}
+            {parsingWarnings && parsingWarnings.length > 0 && (
+                <ul className="text-xs text-muted-k list-disc pl-4">
+                    {parsingWarnings.map((w, i) => <li key={i}>{w}</li>)}
+                </ul>
             )}
         </div>
     );
