@@ -483,6 +483,36 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 28 — Feb 2026 · Statement Decoder Phase 2 — Image quality + parallel multi-page PDF)
+
+### OpenCV image quality assessment
+- New `assess_image_quality(pil_img)` in `/app/backend/document_extract.py` returns brightness, blur score (Laplacian variance), skew angle, resolution + a rating (`good` / `fair` / `poor` / `blank` / `unknown`) and a list of human-friendly warnings.
+- Thresholds: brightness 60–245, blur Laplacian variance > 150 (good) / > 60 (fair), skew warn ≥ 4°, skew correct ≥ 1°, low-res short-side < 600 px = poor, < 900 px = fair, blank = std < 8 AND brightness > 200.
+- Skew detection uses HoughLinesP on Canny edges + median angle filtering — robust against axis-aligned table rows that fooled the prior `minAreaRect` approach (which returned -90° on horizontal table lines).
+- `auto_rotate(pil_img, angle)` applies `cv2.warpAffine` to upright skewed photos (≥ 1°) before sending to Claude vision.
+- `_prepare_image_for_vision(pil_img)` is the single entry point — assess, then rotate if needed, returning the prepared image plus the quality dict.
+
+### EXIF orientation handling
+- `_image_to_base64_jpeg()` now applies `PIL.ImageOps.exif_transpose()` so portrait phone photos with EXIF orientation flags are uprighted before quality assessment / vision. Returns `(base64_jpeg, quality_dict)`.
+
+### Parallel multi-page PDF vision
+- `_pdf_to_image_pages_b64()` now returns `[{b64, quality, page_num, skipped}]` records — blank pages are skipped automatically with a count reported in `parsing_warnings`.
+- Scanned-PDF path in `extract_document()` runs all visible pages through Claude vision **in parallel** via `asyncio.gather` with `Semaphore(4)` bounded concurrency. Wall-clock for an 8-page scan drops from ~80s sequential to ~25-35s parallel.
+- Per-page quality warnings (with page number) flow into the result's `parsing_warnings[]` and are surfaced via the existing `<InputMethodAccuracyNote>` panel.
+- Standalone-image path also surfaces quality warnings + an extra "overall photo quality is poor" hint when rating == poor.
+
+### Tests
+- `/app/backend/tests/test_iter28_image_quality.py` — 9 deterministic pytest cases (good / blank / dark / blurry / skewed + auto-rotate / low-res / `_prepare_for_vision` shape / corrects skew / `_image_to_base64_jpeg` returns quality). All 9 pass in ~1s.
+
+### Files changed
+- `/app/backend/document_extract.py` — new quality module, refactored image and PDF paths, parallel multi-page vision, EXIF orientation.
+- `/app/backend/requirements.txt` — added `opencv-python-headless==4.10.0.84`.
+- `/app/backend/tests/test_iter28_image_quality.py` — new (9 tests).
+
+### Phase 2 still deferred
+- Email forwarding ingest (the "Forward by email" tab is still stubbed "Coming soon" per Phase 1 user choice).
+- Legacy `.doc` (LibreOffice headless) — still rejected with friendly "save as .docx" message.
+
 ## Implemented (Iteration 27 — Feb 2026 · Multi-format Statement Decoder — Phase 1)
 
 ### Backend — `/app/backend/document_extract.py` (new, ~280 lines)
