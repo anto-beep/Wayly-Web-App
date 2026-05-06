@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api, formatAUD2 } from "@/lib/api";
-import { AlertTriangle, ArrowLeft, MessageCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, FileDown, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
+import { downloadDecodedAsCsv, downloadDecodedAsPdf } from "@/lib/decoderExport";
 
 const STREAM_BADGE = {
     Clinical: "bg-[#3A5A40] text-white",
@@ -37,14 +39,60 @@ export default function StatementDetail() {
             <Link to="/app/statements" className="inline-flex items-center gap-1.5 text-sm text-muted-k hover:text-primary-k">
                 <ArrowLeft className="h-4 w-4" /> Back to statements
             </Link>
-            <div>
-                <span className="overline">Statement</span>
-                <h1 className="font-heading text-3xl sm:text-4xl text-primary-k tracking-tight mt-2">
-                    {stmt.period_label || stmt.filename}
-                </h1>
-                <p className="text-muted-k mt-1 text-sm">
-                    {(stmt.line_items || []).length} line items · {formatAUD2(total)} total · {formatAUD2(totalContribution)} contribution
-                </p>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <span className="overline">Statement</span>
+                    <h1 className="font-heading text-3xl sm:text-4xl text-primary-k tracking-tight mt-2">
+                        {stmt.period_label || stmt.filename}
+                    </h1>
+                    <p className="text-muted-k mt-1 text-sm">
+                        {(stmt.line_items || []).length} line items · {formatAUD2(total)} total · {formatAUD2(totalContribution)} contribution
+                    </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                    {stmt.file_b64 !== false && (
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                try {
+                                    const resp = await api.get(`/statements/${stmt.id}/download`, { responseType: "blob" });
+                                    const blob = resp.data;
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = stmt.filename || "statement";
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    a.remove();
+                                    URL.revokeObjectURL(url);
+                                } catch {
+                                    toast.error("Original file isn't available for this statement.");
+                                }
+                            }}
+                            className="inline-flex items-center gap-1.5 text-sm border border-kindred rounded-md px-3 py-1.5 hover:bg-surface-2 text-primary-k"
+                            data-testid="statement-download-original-btn"
+                            title="Download the original file you uploaded"
+                        >
+                            <Download className="h-3.5 w-3.5" /> Original ({(stmt.filename || "").split(".").pop().toUpperCase() || "file"})
+                        </button>
+                    )}
+                    <button
+                        onClick={() => downloadDecodedAsCsv(stmt, "statement")}
+                        className="inline-flex items-center gap-1.5 text-sm border border-kindred rounded-md px-3 py-1.5 hover:bg-surface-2 text-primary-k"
+                        data-testid="statement-download-csv-btn"
+                        title="Download decoded line items as CSV"
+                    >
+                        <FileDown className="h-3.5 w-3.5" /> Decoded CSV
+                    </button>
+                    <button
+                        onClick={() => downloadDecodedAsPdf(stmt, "statement")}
+                        className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#16294a]"
+                        data-testid="statement-download-pdf-btn"
+                        title="Download decoded summary as PDF"
+                    >
+                        <FileDown className="h-3.5 w-3.5" /> Decoded PDF
+                    </button>
+                </div>
             </div>
 
             {stmt.summary && (

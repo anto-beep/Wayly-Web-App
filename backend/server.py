@@ -664,8 +664,48 @@ async def upload_statement(
     text = _extract_text(file.filename, raw)
     if not text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from file")
-    job_id = _submit_upload_job(text, file.filename, h["id"], user_id, user["name"])
+    # Stash the original bytes so the user can re-download the source PDF / CSV / TXT later.
+    import base64 as _b64
+    file_b64 = _b64.b64encode(raw).decode("ascii")
+    mime = file.content_type or _guess_statement_mime(file.filename)
+    job_id = _submit_upload_job(
+        text, file.filename, h["id"], user_id, user["name"],
+        file_b64=file_b64, file_mimetype=mime, file_size=len(raw),
+    )
     return {"job_id": job_id, "status": "pending"}
+
+
+def _guess_statement_mime(filename: str) -> str:
+    name = (filename or "").lower()
+    if name.endswith(".pdf"):
+        return "application/pdf"
+    if name.endswith(".csv"):
+        return "text/csv"
+    return "text/plain"
+
+
+@api.get("/statements/{statement_id}/download")
+async def download_statement_original(statement_id: str, user_id: str = Depends(get_current_user_id)):
+    """Stream back the original uploaded statement file (PDF / CSV / TXT)."""
+    h = await _require_household(user_id)
+    s = await db.statements.find_one({"id": statement_id, "household_id": h["id"]}, {"_id": 0})
+    if not s:
+        raise HTTPException(status_code=404, detail="Statement not found")
+    b64 = s.get("file_b64")
+    if not b64:
+        raise HTTPException(status_code=404, detail="Original file is not available for this statement")
+    import base64 as _b64
+    try:
+        data = _b64.b64decode(b64)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Stored file is corrupt")
+    mime = s.get("file_mimetype") or _guess_statement_mime(s.get("filename") or "")
+    filename = s.get("filename") or "statement"
+    return Response(
+        content=data,
+        media_type=mime,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @api.get("/statements/upload-job/{job_id}")
@@ -688,7 +728,7 @@ async def list_statements(user_id: str = Depends(get_current_user_id)):
     h = await _require_household(user_id)
     docs = (
         await db.statements
-        .find({"household_id": h["id"]}, {"_id": 0})
+        .find({"household_id": h["id"]}, {"_id": 0, "file_b64": 0})
         .sort("uploaded_at", -1)
         .to_list(100)
     )
@@ -698,7 +738,10 @@ async def list_statements(user_id: str = Depends(get_current_user_id)):
 @api.get("/statements/{statement_id}", response_model=Statement)
 async def get_statement(statement_id: str, user_id: str = Depends(get_current_user_id)):
     h = await _require_household(user_id)
-    doc = await db.statements.find_one({"id": statement_id, "household_id": h["id"]}, {"_id": 0})
+    doc = await db.statements.find_one(
+        {"id": statement_id, "household_id": h["id"]},
+        {"_id": 0, "file_b64": 0},
+    )
     if not doc:
         raise HTTPException(status_code=404, detail="Statement not found")
     return Statement(**doc)
@@ -1252,6 +1295,9 @@ async def _run_upload_job(
     household_id: str,
     user_id: str,
     user_name: str,
+    file_b64: Optional[str] = None,
+    file_mimetype: Optional[str] = None,
+    file_size: Optional[int] = None,
 ) -> None:
     """Background runner for the dashboard statement upload — uses the same
     chunked-parallel extraction + audit pipeline as the public Statement
@@ -1318,6 +1364,9 @@ async def _run_upload_job(
             summary=summary_text or None,
             anomalies=anomalies,
             raw_text_preview=text[:1500],
+            file_mimetype=file_mimetype,
+            file_size_bytes=file_size,
+            file_b64=file_b64,
         )
         await db.statements.insert_one(statement.model_dump())
         await _audit(
@@ -1346,7 +1395,9 @@ async def _run_upload_job(
 
 
 def _submit_upload_job(
-    text: str, filename: str, household_id: str, user_id: str, user_name: str
+    text: str, filename: str, household_id: str, user_id: str, user_name: str,
+    file_b64: Optional[str] = None, file_mimetype: Optional[str] = None,
+    file_size: Optional[int] = None,
 ) -> str:
     import time
     _prune_upload_jobs()
@@ -1360,7 +1411,10 @@ def _submit_upload_job(
         "created_at": time.time(),
     }
     asyncio.create_task(
-        _run_upload_job(job_id, text, filename, household_id, user_id, user_name)
+        _run_upload_job(
+            job_id, text, filename, household_id, user_id, user_name,
+            file_b64=file_b64, file_mimetype=file_mimetype, file_size=file_size,
+        )
     )
     return job_id
 

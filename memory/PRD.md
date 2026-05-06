@@ -481,6 +481,38 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 
 ### Remaining behaviour notes
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
+
+
+## Implemented (Iteration 26 — Feb 2026 · Statement file storage + downloads)
+
+### Original-file re-download (dashboard)
+- `Statement` model gains `file_mimetype`, `file_size_bytes`, `file_b64` fields.
+- `POST /api/statements/upload` now base64-encodes the original raw bytes (PDF / CSV / TXT) and threads them through the async upload job into the persisted Statement document.
+- New `GET /api/statements/{id}/download` endpoint streams the original bytes back with proper `Content-Type` + `Content-Disposition: attachment` headers.
+- `GET /api/statements` and `GET /api/statements/{id}` projections explicitly **exclude** `file_b64` so list/detail responses stay light (the heavy bytes only ride on the dedicated download endpoint).
+- Verified live: 23,959-byte upload → SHA-256 match on re-download (`b19d547739ea87e8…` in == out).
+
+### Decoded-statement export — CSV + PDF
+- New `/app/frontend/src/lib/decoderExport.js` provides `downloadDecodedAsCsv()` + `downloadDecodedAsPdf()`. Works against both shapes:
+  - Public Statement Decoder result (`{extracted, audit}`)
+  - Dashboard Statement object (`{line_items, anomalies, ...}`)
+- **CSV** — full export: header summary block + line items (12 columns) + anomalies block. UTF-8 BOM-free, RFC 4180 quoting.
+- **PDF** — opens a styled HTML report in a new tab and auto-triggers `window.print()`. User picks "Save as PDF" in the browser's print dialog. Includes summary banner (gross / contribution / government), full line-item table, and severity-coloured anomaly cards. Branded header + AI-accuracy footer.
+- Both formats include the AI-accuracy disclaimer in their footer copy.
+
+### UI wiring
+- `StatementDetail.jsx` (dashboard): three buttons in the header — **Original (PDF/TXT/CSV)**, **Decoded CSV**, **Decoded PDF**. The "Original" button calls the new download endpoint and triggers a browser save; the decoded buttons run client-side.
+- `DecoderResultView.jsx` (public decoder): a download bar at the top of the result view with **Download CSV** + **Download PDF** buttons.
+
+### Cancel-plan note
+The user asked for a Cancel Plan option for Solo and Family. This was already wired in iter 9 (Settings → Plan & Billing tab → "Cancel auto-renewal" button → `POST /api/billing/cancel`). Confirmed working — no changes needed.
+
+### Files changed
+- `/app/backend/models.py` — `Statement` model gains 3 file-storage fields.
+- `/app/backend/server.py` — `upload_statement` stashes base64; `_run_upload_job` + `_submit_upload_job` thread file bytes; new `/statements/{id}/download` endpoint; list/detail projections exclude `file_b64`.
+- `/app/frontend/src/lib/decoderExport.js` — new (CSV + PDF export helpers).
+- `/app/frontend/src/components/DecoderResultView.jsx` — download bar.
+- `/app/frontend/src/pages/StatementDetail.jsx` — three download buttons in header.
 - All four user-specified QA criteria green:
   - ✅ No speculative brokered flags
   - ✅ Transport duplicate flagged HIGH exactly once (LLM RULE_3 wins on severity tie-break)

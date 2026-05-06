@@ -100,6 +100,10 @@ class Statement(BaseModel):
     summary: Optional[str] = None
     anomalies: List["Anomaly"] = Field(default_factory=list)
     raw_text_preview: Optional[str] = None
+    # Original-file storage for re-download. Stored as base64 to avoid binary in JSON.
+    file_mimetype: Optional[str] = None
+    file_size_bytes: Optional[int] = None
+    file_b64: Optional[str] = None  # original bytes, base64-encoded
 
 
 class Anomaly(BaseModel):

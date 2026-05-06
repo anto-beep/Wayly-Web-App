@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Shield, ShieldAlert, ShieldCheck, AlertOctagon } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Shield, ShieldAlert, ShieldCheck, AlertOctagon, FileDown } from "lucide-react";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
+import { downloadDecodedAsCsv, downloadDecodedAsPdf } from "@/lib/decoderExport";
 
 function aud(n) {
     if (n == null) return "—";
@@ -48,6 +49,29 @@ export default function DecoderResultView({ result }) {
 
     return (
         <div className="space-y-6" data-testid="decoder-result-v2">
+            {/* Download bar — sits above the rich result so users always see it. */}
+            <div className="flex items-center justify-between flex-wrap gap-3 bg-surface-2 border border-kindred rounded-lg px-4 py-3" data-testid="decoder-download-bar">
+                <div className="text-sm text-muted-k">
+                    Save a copy of this decoded statement for your records.
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => downloadDecodedAsCsv(result, "decoded-statement")}
+                        className="inline-flex items-center gap-1.5 text-sm border border-kindred rounded-md px-3 py-1.5 hover:bg-surface text-primary-k"
+                        data-testid="decoder-download-csv-btn"
+                    >
+                        <FileDown className="h-3.5 w-3.5" /> Download CSV
+                    </button>
+                    <button
+                        onClick={() => downloadDecodedAsPdf(result, "decoded-statement")}
+                        className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#16294a]"
+                        data-testid="decoder-download-pdf-btn"
+                    >
+                        <FileDown className="h-3.5 w-3.5" /> Download PDF
+                    </button>
+                </div>
+            </div>
+
             {result.partial_result && (
                 <div className="bg-gold/15 border border-gold/40 rounded-lg p-4 text-sm text-primary-k" data-testid="decoder-partial-warning">
                     <div className="font-medium">Partial result</div>
