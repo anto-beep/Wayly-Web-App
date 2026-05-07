@@ -50,13 +50,17 @@ export default function StatementDetail() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                    {stmt.file_b64 !== false && (
+                    {stmt.has_original_file && (
                         <button
                             type="button"
                             onClick={async () => {
                                 try {
                                     const resp = await api.get(`/statements/${stmt.id}/download`, { responseType: "blob" });
                                     const blob = resp.data;
+                                    if (!blob || blob.size === 0) {
+                                        toast.error("Original file isn't available for this statement.");
+                                        return;
+                                    }
                                     const url = URL.createObjectURL(blob);
                                     const a = document.createElement("a");
                                     a.href = url;
@@ -65,8 +69,13 @@ export default function StatementDetail() {
                                     a.click();
                                     a.remove();
                                     URL.revokeObjectURL(url);
-                                } catch {
-                                    toast.error("Original file isn't available for this statement.");
+                                } catch (err) {
+                                    const status = err?.response?.status;
+                                    if (status === 404) {
+                                        toast.error("Original file isn't available for this statement.");
+                                    } else {
+                                        toast.error("Couldn't download the original file. Please try again.");
+                                    }
                                 }
                             }}
                             className="inline-flex items-center gap-1.5 text-sm border border-kindred rounded-md px-3 py-1.5 hover:bg-surface-2 text-primary-k"

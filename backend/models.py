@@ -104,6 +104,7 @@ class Statement(BaseModel):
     file_mimetype: Optional[str] = None
     file_size_bytes: Optional[int] = None
     file_b64: Optional[str] = None  # original bytes, base64-encoded
+    has_original_file: bool = False  # surfaced on list/detail endpoints (file_b64 itself is excluded)
 
 
 class Anomaly(BaseModel):

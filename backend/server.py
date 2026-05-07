@@ -740,11 +740,16 @@ async def list_statements(user_id: str = Depends(get_current_user_id)):
     h = await _require_household(user_id)
     docs = (
         await db.statements
-        .find({"household_id": h["id"]}, {"_id": 0, "file_b64": 0})
+        .find({"household_id": h["id"]}, {"_id": 0, "file_b64": 1, "id": 1, "household_id": 1, "filename": 1, "period_label": 1, "uploaded_at": 1, "line_items": 1, "summary": 1, "anomalies": 1, "raw_text_preview": 1, "file_mimetype": 1, "file_size_bytes": 1})
         .sort("uploaded_at", -1)
         .to_list(100)
     )
-    return [Statement(**d) for d in docs]
+    out: List[Statement] = []
+    for d in docs:
+        d["has_original_file"] = bool(d.get("file_b64"))
+        d.pop("file_b64", None)
+        out.append(Statement(**d))
+    return out
 
 
 @api.get("/statements/{statement_id}", response_model=Statement)
@@ -752,10 +757,12 @@ async def get_statement(statement_id: str, user_id: str = Depends(get_current_us
     h = await _require_household(user_id)
     doc = await db.statements.find_one(
         {"id": statement_id, "household_id": h["id"]},
-        {"_id": 0, "file_b64": 0},
+        {"_id": 0},
     )
     if not doc:
         raise HTTPException(status_code=404, detail="Statement not found")
+    doc["has_original_file"] = bool(doc.get("file_b64"))
+    doc.pop("file_b64", None)
     return Statement(**doc)
 
 
@@ -1826,6 +1833,101 @@ async def root():
 
 
 # ---------------------------------------------------------------------------
+# Public Help Chat — anonymous floating help-bot for every visitor
+# ---------------------------------------------------------------------------
+class HelpChatBody(BaseModel):
+    message: str = Field(min_length=1, max_length=2000)
+    session_id: Optional[str] = None
+    page_path: Optional[str] = None  # current URL the user is on, for context
+
+
+HELP_CHAT_SYSTEM = (
+    "You are Kindred's friendly help bot, available on every page of kindred.au. "
+    "You answer site-visitor questions about Kindred itself — pricing, plans, AI tools, "
+    "the Support at Home program, and how to use the product. Keep replies short: "
+    "1-3 sentences ideally, max 80 words. Use Australian English and a calm, plain tone.\n\n"
+    "WHAT KINDRED IS\n"
+    "Kindred is an aged-care concierge for Australian families navigating the Support at "
+    "Home program (effective 1 Nov 2025). It is provider-agnostic — never takes commissions, "
+    "never sells data. The primary user is the adult-child caregiver; the participant is "
+    "the older parent.\n\n"
+    "PLANS\n"
+    "- Free $0/mo: 1 free Statement Decoder use per day. No card required.\n"
+    "- Solo $19/mo: unlimited use of all 8 AI tools, dashboard, statement uploads.\n"
+    "- Family $39/mo (most popular): everything in Solo + up to 5 household members + "
+    "weekly digest + concierge support.\n"
+    "- Advisor plans for financial advisors at $299 and $999. New paid users get a "
+    "7-day free trial — no card required for the trial.\n\n"
+    "AI TOOLS (8 total)\n"
+    "1. Statement Decoder (free, 1/day) — upload, photograph or paste a Support at Home "
+    "monthly statement; get plain-English breakdown + anomaly flags. Accepts PDF, Word, "
+    "TXT, and photos (JPG/PNG/HEIC/WEBP).\n"
+    "2. Budget & Lifetime Cap Calculator (Solo+).\n"
+    "3. Provider Price Checker (Solo+).\n"
+    "4. Classification Self-Check (Solo+).\n"
+    "5. Reassessment Letter Generator (Solo+).\n"
+    "6. Contribution Estimator (Solo+).\n"
+    "7. Care Plan Reviewer (Solo+).\n"
+    "8. Family Care Coordinator chat (Solo+).\n\n"
+    "KEY FEATURES\n"
+    "- Caregiver dashboard: per-stream budget cards, lifetime cap progress, anomaly alerts.\n"
+    "- Participant view: huge text, voice-first, single-action UX with wellbeing check-in.\n"
+    "- Family thread + immutable audit log (Family plan).\n"
+    "- Resources hub: glossary (37 terms), templates, articles.\n"
+    "- Statement Decoder anomaly engine: ~20 named rules including duplicate detection, "
+    "weekend-rate checks, brokered-rate premiums, AT-HM commitment tracking.\n\n"
+    "BOUNDARIES (HARD RULES)\n"
+    "- Never give clinical or financial-product advice. Redirect to a GP / FAAA-registered "
+    "adviser / My Aged Care on 1800 200 422.\n"
+    "- Never recommend a specific provider.\n"
+    "- Never invent dollar figures, dates, section numbers, or URLs. If unsure say "
+    "'I'm not sure — the best place to confirm is My Aged Care on 1800 200 422'.\n"
+    "- For account-specific questions (billing, password reset) point users to "
+    "Settings → Plan & Billing or Sign in.\n"
+    "- For crisis / distress: 1800ELDERHelp 1800 353 374, OPAN 1800 700 600, "
+    "Lifeline 13 11 14, Beyond Blue 1300 22 4636.\n\n"
+    "TONE\n"
+    "Lead with the answer. One soft next step at the end where helpful (e.g. "
+    "'Try the Statement Decoder free at /ai-tools/statement-decoder' or 'See plans at "
+    "/pricing'). Use gender-neutral language; never default to 'Mum'."
+)
+
+
+@api.post("/public/help-chat")
+async def public_help_chat(body: HelpChatBody, request: Request, response: Response):
+    """Anonymous help bot for every site visitor. Rate-limited per IP."""
+    _check_rate_limit(_client_ip(request))
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "Help chat is temporarily unavailable. Try again in a moment."})
+    wrapped = await run_wrapper(body.message)
+    sid = body.session_id or f"help-{_client_ip(request)}"
+    if wrapped.get("abuse_flag"):
+        return {
+            "reply": wrapped.get("abuse_response") or "I can only help with questions about Kindred and Support at Home.",
+            "session_id": sid,
+            "abuse_flag": True,
+        }
+    page_hint = ""
+    if body.page_path:
+        page_hint = f"\n\n[The user is currently on the page: {body.page_path[:200]}]"
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    chat = LlmChat(
+        api_key=key, session_id=sid,
+        system_message=HELP_CHAT_SYSTEM + page_hint,
+    ).with_model("anthropic", "claude-haiku-4-5-20251001").with_params(max_tokens=400)
+    try:
+        reply = await chat.send_message(UserMessage(text=wrapped.get("redacted_input") or body.message))
+    except Exception as e:
+        logger.warning("Help chat LLM call failed: %s", e)
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "I'm having trouble right now. Try again in a moment, or email help@kindred.au."})
+    out: dict = {"reply": str(reply or ""), "session_id": sid}
+    if wrapped.get("redaction_notice"):
+        out["redaction_notice"] = wrapped["redaction_notice"]
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Contact / Book a demo
 # ---------------------------------------------------------------------------
 class ContactBody(BaseModel):
@@ -2199,6 +2301,40 @@ async def cancel_subscription(user_id: str = Depends(get_current_user_id)):
     return {"ok": True, "cancel_at_period_end": True}
 
 
+@api.post("/billing/downgrade-to-free")
+async def downgrade_to_free(user_id: str = Depends(get_current_user_id)):
+    """Immediate downgrade to the Free plan. Marks subscription as canceled
+    right now (no end-of-period grace) and flips user.plan to 'free' so the
+    UI updates the moment the user reloads or refreshUser() runs."""
+    u = await _get_user(user_id)
+    prev_plan = u.get("plan") or "free"
+    if prev_plan == "free":
+        return {"ok": True, "unchanged": True, "plan": "free"}
+    sub = await db.subscriptions.find_one({"user_id": user_id}, {"_id": 0}, sort=[("updated_at", -1)])
+    now = now_iso()
+    if sub:
+        await db.subscriptions.update_one(
+            {"user_id": user_id, "id": sub.get("id")} if sub.get("id") else {"user_id": user_id},
+            {"$set": {"status": "canceled", "cancel_at_period_end": True, "canceled_at": now, "updated_at": now}},
+        )
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": "free"}})
+    try:
+        await email_service.email_tool_result(
+            to=u["email"], tool_name="Plan changed to Free",
+            headline="You're now on the Free plan",
+            body_html=(
+                f"<p>Hi {u.get('name') or ''},</p>"
+                f"<p>You've been downgraded from <strong>{prev_plan.capitalize()}</strong> to the <strong>Free</strong> plan, effective immediately.</p>"
+                "<p><strong>What changes:</strong> the Statement Decoder remains free with one use per day. The other 7 AI tools, family members, weekly digest, and concierge support are no longer available on your account.</p>"
+                "<p>You can re-subscribe any time from <em>Settings → Plan & Billing</em>. Any household data, statements, and audit log entries you've already saved are kept and become available again as soon as you upgrade.</p>"
+                "<p>— The Kindred team</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Plan-change email failed: %s", e)
+    return {"ok": True, "plan": "free", "previous_plan": prev_plan}
+
+
 class UpgradeBody(BaseModel):
     plan: _LiteralType["solo", "family"]
 
@@ -2210,10 +2346,31 @@ async def upgrade_downgrade(body: UpgradeBody, user_id: str = Depends(get_curren
         raise HTTPException(status_code=400, detail="No active plan — start one from /pricing")
     if sub.get("plan") == body.plan:
         return {"ok": True, "unchanged": True}
+    prev_plan = sub.get("plan") or "free"
     # Simple swap; bill difference on next cycle.
     await db.subscriptions.update_one({"user_id": user_id}, {"$set": {"plan": body.plan, "updated_at": now_iso()}})
     await db.users.update_one({"id": user_id}, {"$set": {"plan": body.plan}})
-    return {"ok": True, "plan": body.plan}
+    try:
+        u = await _get_user(user_id)
+        direction = "upgraded" if (prev_plan == "solo" and body.plan == "family") else "switched"
+        await email_service.email_tool_result(
+            to=u["email"], tool_name=f"Plan {direction} to {body.plan.capitalize()}",
+            headline=f"Your plan is now {body.plan.capitalize()}",
+            body_html=(
+                f"<p>Hi {u.get('name') or ''},</p>"
+                f"<p>You've {direction} from <strong>{prev_plan.capitalize()}</strong> to <strong>{body.plan.capitalize()}</strong>, effective immediately.</p>"
+                + (
+                    "<p>The Family plan unlocks up to 5 household members, the weekly digest, and concierge support. Add family from <em>Settings → Family members</em>.</p>"
+                    if body.plan == "family"
+                    else "<p>The Solo plan keeps your full Statement Decoder, AI tools, and dashboard active for one caregiver.</p>"
+                )
+                + "<p>The price difference is reflected on your next billing cycle. Manage your plan any time at <em>Settings → Plan & Billing</em>.</p>"
+                "<p>— The Kindred team</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Plan-change email failed: %s", e)
+    return {"ok": True, "plan": body.plan, "previous_plan": prev_plan}
 
 
 @api.post("/webhook/stripe")

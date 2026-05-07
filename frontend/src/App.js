@@ -44,6 +44,7 @@ import { ForgotPassword, ResetPassword } from "@/pages/PasswordReset";
 import Settings from "@/pages/Settings";
 import InviteAccept from "@/pages/InviteAccept";
 import CommandPalette from "@/components/CommandPalette";
+import FloatingHelpChat from "@/components/FloatingHelpChat";
 import Terms from "@/pages/legal/Terms";
 import Privacy from "@/pages/legal/Privacy";
 import AIDisclaimerPage from "@/pages/legal/AIDisclaimer";
@@ -100,6 +101,7 @@ function App() {
             <BrowserRouter>
                 <Toaster richColors position="top-right" />
                 <CommandPalette />
+                <FloatingHelpChat />
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />

@@ -483,6 +483,31 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 29 — Feb 2026 · Floating help chat · Plan management · Statement download fix)
+
+### Floating "Kindred Help" chat (every public page)
+- New `/app/frontend/src/components/FloatingHelpChat.jsx` — bottom-right launcher pill that opens a 380×560 chat panel. Persists transcript and session_id in `localStorage` so the conversation survives navigation. Hidden on auth pages (login/signup/forgot/reset/auth-callback/billing/success/invite). Mounted globally in `App.js` so it renders on every other route — landing, pricing, AI tools, dashboard, settings, etc.
+- Suggested-question quick-starts on first open ("What's included in the Family plan?", "How does the Statement Decoder work?", "Do I need to sign up to try it?", "What is the Support at Home program?").
+- New backend endpoint `POST /api/public/help-chat` — anonymous, IP rate-limited via the same `_check_rate_limit()` helper used by the other public tools. Runs through the abuse/PII wrapper. Uses Claude Haiku 4.5 via `EMERGENT_LLM_KEY` (cheap + fast).
+- `HELP_CHAT_SYSTEM` prompt grounds the bot in Kindred's facts (plans, 8 AI tools, Support at Home program, key features) and hard rules (never invent dollar figures, never recommend providers, never give clinical/financial advice, redirect distress to the 4 crisis hotlines).
+- Page-aware: every request includes the user's current `page_path` so the bot can give context-relevant answers.
+- Verified: anonymous question → 200 reply in ~3-5s; multi-turn session_id continuity confirmed (asked "and how much does it cost?" after Statement Decoder question → bot answered with full plan breakdown, no context loss).
+
+### Plan management — immediate downgrade to Free + change-confirmation emails
+- New endpoint `POST /api/billing/downgrade-to-free` — flips `user.plan` to `free` immediately, marks subscription `status="canceled"`, sends a Resend confirmation email. Distinct from `POST /api/billing/cancel` (which keeps the plan active until period end via `cancel_at_period_end=true`).
+- `POST /api/billing/upgrade` (Solo↔Family switch) now also fires a Resend confirmation email summarising the previous plan, new plan, and what changes.
+- Settings → Plan & Billing UI: the "Free" plan card now shows a distinct **Downgrade to Free** button (terracotta accent, with `window.confirm` warning) for users on a paid plan. Existing **Cancel auto-renewal** flow preserved as a separate option for users who want to keep their plan until end-of-period. After downgrade, `refreshUser()` runs and the plan-conditional dashboard auto-flips to the Free experience.
+- Email body templates surface the previous plan, new plan, and a "Manage your plan any time at Settings → Plan & Billing" CTA. Failures are logged but never block the API response.
+
+### Original-statement download bug fix
+- **Root cause**: the `Statement` Mongo projection excluded `file_b64` for list/detail responses (correct — heavy bytes shouldn't ride on every list call), but the frontend rendered the "Download original" button on `stmt.file_b64 !== false`. With the field excluded, `file_b64 === undefined !== false` → button always rendered → click → 404 from the backend on old statements that were uploaded before iter 26 (which actually have no `file_b64` stored).
+- **Fix**: `Statement` model gains a new `has_original_file: bool = False` field. `GET /statements` and `GET /statements/{id}` now compute it from the document's `file_b64` presence and strip the heavy field before responding. Frontend now renders the download button conditionally on `stmt.has_original_file === true`. Old statements no longer show the button at all.
+- Click handler also hardened: empty-blob guard, status-aware error toast (404 → "Original file isn't available", anything else → "Couldn't download — try again"). Eliminates the dev-mode "Script error" overlay reported by the user.
+
+### Files changed
+- New: `/app/frontend/src/components/FloatingHelpChat.jsx`
+- Modified: `/app/backend/server.py` (new help-chat + downgrade-to-free endpoints, upgrade email), `/app/backend/models.py` (`has_original_file` field), `/app/frontend/src/App.js` (mount FloatingHelpChat), `/app/frontend/src/pages/Settings.jsx` (Downgrade to Free button + handler), `/app/frontend/src/pages/StatementDetail.jsx` (button gating + click handler hardening).
+
 ## Implemented (Iteration 28 — Feb 2026 · Statement Decoder Phase 2 — Image quality + parallel multi-page PDF)
 
 ### OpenCV image quality assessment

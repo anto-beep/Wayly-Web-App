@@ -109,6 +109,19 @@ function BillingTab() {
         catch (err) { toast.error(extractErrorMessage(err, "Could not cancel")); }
         finally { setBusy(false); }
     };
+    const downgradeToFree = async () => {
+        if (!window.confirm("Downgrade to the Free plan now? You'll lose access to the 7 paid AI tools, family members, weekly digest and concierge support immediately. We'll email you a confirmation.")) return;
+        setBusy(true);
+        try {
+            const { data } = await api.post("/billing/downgrade-to-free");
+            if (data?.ok) {
+                toast.success("You're now on the Free plan");
+                await refreshUser();
+                await load();
+            }
+        } catch (err) { toast.error(extractErrorMessage(err, "Could not downgrade")); }
+        finally { setBusy(false); }
+    };
     const currentPlan = user?.plan || "free";
     const activeSub = sub && sub.status && sub.status !== "none";
 
@@ -141,7 +154,7 @@ function BillingTab() {
                         return (
                             <div key={p} className={`rounded-2xl border p-5 ${isCurrent ? "border-primary-k ring-2 ring-primary-k/20 bg-surface" : "border-kindred bg-surface"}`} data-testid={`billing-plan-${p}`}>
                                 <div className="flex items-baseline justify-between"><span className="font-heading text-xl text-primary-k">{PLANS[p].name}</span><span className="text-sm text-muted-k">{PLANS[p].price}{PLANS[p].period}</span></div>
-                                {isCurrent ? (<div className="mt-4 inline-flex items-center gap-1 text-xs text-sage"><Check className="h-3.5 w-3.5" /> Current</div>) : p === "free" && activeSub ? (<button onClick={cancel} disabled={busy} data-testid={`billing-downgrade-${p}`} className="mt-4 w-full text-sm border border-kindred rounded-md py-2 text-primary-k hover:bg-surface-2 disabled:opacity-60">Downgrade (cancel)</button>) : activeSub ? (<button onClick={() => changePlan(p)} disabled={busy} data-testid={`billing-switch-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#16294a] disabled:opacity-60">Switch to {PLANS[p].name}</button>) : p === "free" ? null : (<button onClick={() => startCheckout(p)} disabled={busy} data-testid={`billing-start-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2">Start {PLANS[p].name} <ArrowUpRight className="h-3.5 w-3.5" /></button>)}
+                                {isCurrent ? (<div className="mt-4 inline-flex items-center gap-1 text-xs text-sage"><Check className="h-3.5 w-3.5" /> Current</div>) : p === "free" && currentPlan !== "free" ? (<button onClick={downgradeToFree} disabled={busy} data-testid={`billing-downgrade-${p}`} className="mt-4 w-full text-sm border border-terracotta text-terracotta rounded-md py-2 hover:bg-terracotta hover:text-white disabled:opacity-60">Downgrade to Free</button>) : activeSub ? (<button onClick={() => changePlan(p)} disabled={busy} data-testid={`billing-switch-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#16294a] disabled:opacity-60">Switch to {PLANS[p].name}</button>) : p === "free" ? null : (<button onClick={() => startCheckout(p)} disabled={busy} data-testid={`billing-start-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2">Start {PLANS[p].name} <ArrowUpRight className="h-3.5 w-3.5" /></button>)}
                             </div>
                         );
                     })}
