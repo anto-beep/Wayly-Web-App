@@ -483,6 +483,34 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 30 — Feb 2026 · Help chat fixes · Authenticated personal-context bot)
+
+### Launcher always visible (the click-not-working fix)
+- **Root cause**: the launcher was at `bottom-5 right-5 z-50`, where it was being intercepted by the platform's "Made with Emergent" badge (`#emergent-badge`, fixed bottom-right with high z-index). Playwright explicitly reported: `<a id="emergent-badge"> subtree intercepts pointer events`.
+- **Fix**: launcher repositioned to `bottom-20 right-5 z-[60]` (above the Emergent badge); panel repositioned to `bottom-28 right-5 z-[60]`. Both layered over any other fixed UI.
+- **Persistent launcher**: refactored `FloatingHelpChat.jsx` so the launcher stays mounted whether the panel is open or closed — when open, the icon swaps from `MessageCircle` to `X` and width collapses to a circle; click toggles open/close. Users can always find their way back to the chat.
+- Verified live via Playwright: `Launcher count: 1`, `Launcher visible after open: True`, `Panel visible: True`, `Message count: 2` (user message + LLM reply round-tripped end to end).
+
+### Authenticated `/api/help-chat` — personal context awareness
+- New endpoint `POST /api/help-chat` (auth-required) that injects a compact USER CONTEXT block built by `_build_user_context(user_id)`:
+  - Caregiver name, email, plan
+  - Household: participant name, classification, provider, grandfathered flag
+  - Current quarter budget snapshot: per-stream spent / allocated / remaining / %, lifetime cap usage, contributions total
+  - Latest 3 statements: period label, gross, line-item count, anomaly counts (alert/warning/info)
+  - Top 3 anomalies on the most recent statement (severity + title + first 200 chars of detail)
+- New system prompt `HELP_CHAT_AUTHED_SYSTEM` is grounded HARD on this context: "Use ONLY the numbers from the USER CONTEXT block. NEVER invent dollar figures, dates, line items, or anomalies." Same boundaries as the public bot (no clinical/financial advice, no provider recommendations, crisis-line redirects). End every reply with one soft next step (specific page URL like `/app/statements`, `/app/audit`, `/settings/billing`).
+- Live-tested with Cathy's account:
+  - "What's my biggest anomaly this quarter?" → bot answered with **exact** $10,551.00 / $1,670.40 (632% Everyday Living overspend), then listed her 3 alert-severity flags from her May statement (duplicate transport on 05-May, brokered podiatry premium, brokered OT premium). Reply ended with `/app/statements` and `/app/audit` next-step links.
+  - "How much have I spent on Independence?" → bot answered with **exact** $369.00 of $2,338.56 (16% used) for the current Apr-Jun 2026 quarter, with full remaining figure.
+
+### Frontend — endpoint switching + suggestions
+- `FloatingHelpChat` now reads `useAuth().user`; switches `endpoint` to `/help-chat` for authenticated users and `/public/help-chat` for anonymous visitors. Suggested-question quick-starts also swap based on auth state — public users see "What's included in the Family plan?" while logged-in users see "What's my biggest anomaly this quarter?".
+- Header text changes too: "Kindred Help" (public) vs "Your Kindred assistant" (authenticated). Greeting uses the user's first name when logged in.
+
+### Files changed
+- `/app/frontend/src/components/FloatingHelpChat.jsx` — full refactor: persistent launcher, useAuth integration, endpoint-switching, app-context suggestions.
+- `/app/backend/server.py` — `_build_user_context()`, `HELP_CHAT_AUTHED_SYSTEM`, `POST /api/help-chat` endpoint.
+
 ## Implemented (Iteration 29 — Feb 2026 · Floating help chat · Plan management · Statement download fix)
 
 ### Floating "Kindred Help" chat (every public page)

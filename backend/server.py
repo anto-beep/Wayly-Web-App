@@ -1928,6 +1928,168 @@ async def public_help_chat(body: HelpChatBody, request: Request, response: Respo
 
 
 # ---------------------------------------------------------------------------
+# Authenticated Help Chat — same widget, but injected with the user's actual
+# household context (classification, budget burn, recent anomalies, statements)
+# so it can answer "what's my biggest anomaly this quarter?" with real data.
+# ---------------------------------------------------------------------------
+async def _build_user_context(user_id: str) -> str:
+    """Returns a compact plain-text snapshot of the user's current Kindred state
+    for inclusion in the help-chat system prompt. Skips silently if no household."""
+    try:
+        u = await _get_user(user_id)
+    except Exception:
+        return ""
+    lines: list[str] = []
+    name = (u.get("name") or "").split(" ")[0] or "the caregiver"
+    lines.append(f"USER: {name} ({u.get('email','')}). Plan: {u.get('plan','free')}.")
+
+    h = await _get_user_household(user_id)
+    if not h:
+        lines.append("HOUSEHOLD: not yet set up — direct user to /onboarding when relevant.")
+        return "\n".join(lines)
+
+    classification = h.get("classification")
+    participant_name = h.get("participant_name") or "the participant"
+    provider = h.get("provider_name") or "their provider"
+    grandfathered = h.get("is_grandfathered", False)
+    lines.append(
+        f"HOUSEHOLD: caring for {participant_name}, Classification {classification} "
+        f"({budget_lib.CLASSIFICATIONS.get(classification, {}).get('label','')}), "
+        f"provider {provider}, grandfathered={grandfathered}."
+    )
+
+    # Budget snapshot (current quarter)
+    try:
+        q_start, q_end, q_label = budget_lib.get_quarter_window()
+        allocations = budget_lib.stream_allocations(classification)
+        quarterly_total = budget_lib.quarterly_budget(classification)
+        docs = await db.statements.find({"household_id": h["id"]}, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1).to_list(50)
+        all_items: list[dict] = []
+        for s in docs:
+            all_items.extend(s.get("line_items", []))
+        burn = budget_lib.compute_burn(all_items, q_start, q_end)
+        cap_amount = budget_lib.lifetime_cap(grandfathered)
+        contributions_total = budget_lib.compute_contributions(all_items)
+        lines.append(f"CURRENT QUARTER ({q_label}): quarterly budget ${quarterly_total:,.2f}.")
+        for s in budget_lib.STREAMS:
+            spent = burn.get(s, 0.0)
+            cap = allocations[s]
+            pct = (spent / cap * 100) if cap else 0
+            lines.append(f"  - {s}: spent ${spent:,.2f} of ${cap:,.2f} ({pct:.0f}%, ${max(cap - spent,0):,.2f} remaining)")
+        lifetime_pct = (contributions_total / cap_amount * 100) if cap_amount else 0
+        lines.append(
+            f"LIFETIME CAP: ${contributions_total:,.2f} of ${cap_amount:,.2f} contributed "
+            f"({lifetime_pct:.1f}% used)."
+        )
+    except Exception as e:
+        logger.warning("help-chat budget context failed: %s", e)
+
+    # Statements (latest 3)
+    try:
+        recent = await db.statements.find(
+            {"household_id": h["id"]},
+            {"_id": 0, "id": 1, "filename": 1, "period_label": 1, "uploaded_at": 1, "summary": 1, "anomalies": 1, "line_items": 1},
+        ).sort("uploaded_at", -1).to_list(3)
+        if recent:
+            lines.append(f"RECENT STATEMENTS ({len(recent)}):")
+            for s in recent:
+                gross = sum((li.get("total") or 0) for li in (s.get("line_items") or []))
+                anomalies = s.get("anomalies") or []
+                alerts = sum(1 for a in anomalies if (a.get("severity") or "").lower() == "alert")
+                warns = sum(1 for a in anomalies if (a.get("severity") or "").lower() == "warning")
+                infos = sum(1 for a in anomalies if (a.get("severity") or "").lower() == "info")
+                lines.append(
+                    f"  - {s.get('period_label') or s.get('filename')}: ${gross:,.2f} gross, "
+                    f"{len(s.get('line_items') or [])} line items, "
+                    f"anomalies {alerts}H/{warns}M/{infos}L."
+                )
+                # Top 3 anomalies for the most recent statement only
+                if s is recent[0] and anomalies:
+                    sorted_an = sorted(
+                        anomalies,
+                        key=lambda a: {"alert": 0, "warning": 1, "info": 2}.get((a.get("severity") or "").lower(), 3),
+                    )
+                    lines.append("    Top anomalies on the latest statement:")
+                    for a in sorted_an[:3]:
+                        sev = (a.get("severity") or "").upper()
+                        title = a.get("title") or ""
+                        detail = (a.get("detail") or "")[:200]
+                        lines.append(f"      • [{sev}] {title} — {detail}")
+        else:
+            lines.append("STATEMENTS: none uploaded yet.")
+    except Exception as e:
+        logger.warning("help-chat statements context failed: %s", e)
+
+    return "\n".join(lines)
+
+
+HELP_CHAT_AUTHED_SYSTEM = (
+    "You are Kindred's personal aged-care assistant for a logged-in caregiver. "
+    "You combine knowledge of the Australian Support at Home program with the user's "
+    "ACTUAL data (statements, budget, anomalies) which is provided below. Tone: the "
+    "friendliest, most patient, most well-informed niece in Australia — calm, specific, "
+    "never breathless. Australian English. Use gender-neutral language; never default to 'Mum'.\n\n"
+    "REPLY STYLE\n"
+    "- Lead with the answer in 1-2 sentences using their actual numbers when available.\n"
+    "- Cite the source (e.g. 'on your latest statement', 'this quarter so far').\n"
+    "- Keep replies under 120 words by default; up to 220 only if absolutely needed.\n"
+    "- End with one soft next step (a relevant page or action: '/app/statements', "
+    "'/app/audit', /settings/billing, /ai-tools/budget-calculator, etc.).\n\n"
+    "GROUNDING (HARD)\n"
+    "- Use ONLY the numbers from the USER CONTEXT block. NEVER invent dollar figures, "
+    "dates, line items, or anomalies. If the answer isn't in the context, say so plainly "
+    "('I don't see that on your latest statement — could you upload the most recent one?').\n"
+    "- NEVER give clinical or financial-product advice; redirect to a GP or "
+    "FAAA-registered adviser.\n"
+    "- NEVER recommend a specific provider.\n"
+    "- For crisis / distress mention: 1800ELDERHelp 1800 353 374, OPAN 1800 700 600, "
+    "Lifeline 13 11 14, Beyond Blue 1300 22 4636.\n\n"
+    "Reference info: ~20 anomaly rules cover duplicates, weekend rates, brokered-rate "
+    "premiums, AT-HM commitments, pension-status contribution checks, quarterly underspend "
+    "patterns, and care-plan review reminders. The 'lifetime cap' is the participant's "
+    "lifetime contribution cap under Support at Home. Streams: Clinical, Independence, "
+    "Everyday Living, ATHM (assistive technology / home modifications), CareMgmt.\n\n"
+    "USER CONTEXT (verbatim — never invent beyond this):\n"
+    "==========\n"
+    "{user_context}\n"
+    "=========="
+)
+
+
+@api.post("/help-chat")
+async def authed_help_chat(body: HelpChatBody, request: Request, user_id: str = Depends(get_current_user_id)):
+    """Authenticated help chat — same UX as the public bot, but with the
+    user's household + statement + budget context injected so it can answer
+    real questions about their data."""
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "The assistant is temporarily unavailable. Try again in a moment."})
+    wrapped = await run_wrapper(body.message, pii_redact=False)
+    sid = body.session_id or f"app-help-{user_id}"
+    if wrapped.get("abuse_flag"):
+        return {
+            "reply": wrapped.get("abuse_response") or "I can only help with questions about your Kindred account and Support at Home.",
+            "session_id": sid,
+            "abuse_flag": True,
+        }
+
+    user_context = await _build_user_context(user_id)
+    page_hint = f"\n\n[The user is currently on the page: {(body.page_path or '/app')[:200]}]"
+    system = HELP_CHAT_AUTHED_SYSTEM.format(user_context=user_context or "(no context available)") + page_hint
+
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    chat = LlmChat(
+        api_key=key, session_id=sid, system_message=system,
+    ).with_model("anthropic", "claude-haiku-4-5-20251001").with_params(max_tokens=600)
+    try:
+        reply = await chat.send_message(UserMessage(text=body.message))
+    except Exception as e:
+        logger.warning("Authed help chat LLM call failed: %s", e)
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "I'm having trouble right now. Try again in a moment."})
+    return {"reply": str(reply or ""), "session_id": sid}
+
+
+# ---------------------------------------------------------------------------
 # Contact / Book a demo
 # ---------------------------------------------------------------------------
 class ContactBody(BaseModel):

@@ -2,15 +2,23 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { MessageCircle, X, Send, Loader2, Sparkles } from "lucide-react";
 import { api, extractErrorMessage } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const STORAGE_KEY = "kindred_help_chat_v1";
 const SESSION_KEY = "kindred_help_chat_session_v1";
 
-const SUGGESTED_QUESTIONS = [
+const PUBLIC_SUGGESTIONS = [
     "What's included in the Family plan?",
     "How does the Statement Decoder work?",
     "Do I need to sign up to try it?",
     "What is the Support at Home program?",
+];
+
+const APP_SUGGESTIONS = [
+    "What's my biggest anomaly this quarter?",
+    "How much have I spent on Independence?",
+    "Am I close to my lifetime cap?",
+    "What does my latest statement say?",
 ];
 
 const HIDE_ON_PATHS = [
@@ -19,12 +27,14 @@ const HIDE_ON_PATHS = [
     "/forgot",
     "/reset",
     "/auth-callback",
+    "/auth/callback",
     "/billing/success",
     "/invite",
 ];
 
 export default function FloatingHelpChat() {
     const location = useLocation();
+    const { user } = useAuth();
     const [open, setOpen] = useState(false);
     const [unread, setUnread] = useState(false);
     const [messages, setMessages] = useState(() => {
@@ -63,9 +73,15 @@ export default function FloatingHelpChat() {
         }
     }, [open]);
 
-    // Hide on auth/post-auth pages
     const path = location?.pathname || "/";
     const hidden = HIDE_ON_PATHS.some((p) => path === p || path.startsWith(p + "/"));
+
+    const isAuthed = !!user;
+    const endpoint = isAuthed ? "/help-chat" : "/public/help-chat";
+    const suggestions = isAuthed ? APP_SUGGESTIONS : PUBLIC_SUGGESTIONS;
+    const headerSubtitle = isAuthed
+        ? "Ask about your statements, budget, anomalies — anything."
+        : "Plain-English answers about Kindred & Support at Home.";
 
     const send = useCallback(
         async (text) => {
@@ -75,7 +91,7 @@ export default function FloatingHelpChat() {
             setMessages((prev) => [...prev, { role: "user", text: message, ts: Date.now() }]);
             setSending(true);
             try {
-                const { data } = await api.post("/public/help-chat", {
+                const { data } = await api.post(endpoint, {
                     message,
                     session_id: sessionIdRef.current || undefined,
                     page_path: path,
@@ -93,7 +109,7 @@ export default function FloatingHelpChat() {
                 setSending(false);
             }
         },
-        [input, sending, open, path]
+        [input, sending, open, path, endpoint]
     );
 
     const onKeyDown = (e) => {
@@ -118,30 +134,13 @@ export default function FloatingHelpChat() {
 
     return (
         <>
-            {/* Launcher */}
-            {!open && (
-                <button
-                    type="button"
-                    onClick={() => setOpen(true)}
-                    aria-label="Open help chat"
-                    data-testid="help-chat-launcher"
-                    className="fixed bottom-20 right-5 z-50 inline-flex items-center gap-2 rounded-full bg-primary-k text-white px-4 py-3 shadow-xl hover:bg-[#16294a] transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
-                >
-                    <MessageCircle className="h-5 w-5" />
-                    <span className="hidden sm:inline text-sm font-medium">Help</span>
-                    {unread && (
-                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-gold border-2 border-white" />
-                    )}
-                </button>
-            )}
-
-            {/* Chat panel */}
+            {/* Chat panel — renders above the launcher when open */}
             {open && (
                 <div
                     role="dialog"
                     aria-label="Kindred help chat"
                     data-testid="help-chat-panel"
-                    className="fixed bottom-20 right-5 z-50 w-[min(380px,calc(100vw-2.5rem))] h-[min(560px,calc(100vh-6rem))] bg-surface border border-kindred rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                    className="fixed bottom-28 right-5 z-[60] w-[min(380px,calc(100vw-2.5rem))] h-[min(540px,calc(100vh-9rem))] bg-surface border border-kindred rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                     style={{ animation: "kindred-fadein-loop 240ms ease-out both" }}
                 >
                     {/* Header */}
@@ -149,9 +148,9 @@ export default function FloatingHelpChat() {
                         <div>
                             <div className="flex items-center gap-2">
                                 <Sparkles className="h-4 w-4 text-gold" />
-                                <span className="font-heading text-base">Kindred Help</span>
+                                <span className="font-heading text-base">{isAuthed ? "Your Kindred assistant" : "Kindred Help"}</span>
                             </div>
-                            <p className="text-[11px] text-white/70 mt-0.5">Plain-English answers about Kindred & Support at Home.</p>
+                            <p className="text-[11px] text-white/70 mt-0.5">{headerSubtitle}</p>
                         </div>
                         <button
                             type="button"
@@ -168,8 +167,12 @@ export default function FloatingHelpChat() {
                     <div ref={scrollerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-surface" data-testid="help-chat-messages">
                         {messages.length === 0 && (
                             <div className="rounded-xl bg-surface-2 border border-kindred/40 p-3 text-sm text-primary-k">
-                                <p className="font-medium">Hi! I'm here to help.</p>
-                                <p className="text-muted-k text-xs mt-1">Ask about plans, the Statement Decoder, the Support at Home program, or anything else about Kindred.</p>
+                                <p className="font-medium">{isAuthed ? `Hi ${(user?.name || "").split(" ")[0] || "there"}!` : "Hi! I'm here to help."}</p>
+                                <p className="text-muted-k text-xs mt-1">
+                                    {isAuthed
+                                        ? "I can answer questions about your statements, budget, anomalies, and the Support at Home program."
+                                        : "Ask about plans, the Statement Decoder, the Support at Home program, or anything else about Kindred."}
+                                </p>
                             </div>
                         )}
                         {messages.map((m, i) => (
@@ -178,13 +181,13 @@ export default function FloatingHelpChat() {
                         {sending && (
                             <div className="flex items-center gap-2 text-xs text-muted-k pl-1" data-testid="help-chat-typing">
                                 <Loader2 className="h-3 w-3 animate-spin" />
-                                Kindred Help is thinking…
+                                Kindred is thinking…
                             </div>
                         )}
                         {showSuggestions && (
                             <div className="space-y-2 pt-1">
                                 <p className="text-[11px] uppercase tracking-wider text-muted-k pl-1">Try asking</p>
-                                {SUGGESTED_QUESTIONS.map((q) => (
+                                {suggestions.map((q) => (
                                     <button
                                         key={q}
                                         type="button"
@@ -240,6 +243,34 @@ export default function FloatingHelpChat() {
                     </div>
                 </div>
             )}
+
+            {/* Launcher — always visible, toggles open/close */}
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                aria-label={open ? "Close help chat" : "Open help chat"}
+                aria-expanded={open}
+                data-testid="help-chat-launcher"
+                className="fixed bottom-20 right-5 z-[60] inline-flex items-center justify-center gap-2 rounded-full bg-primary-k text-white shadow-xl hover:bg-[#16294a] transition-all focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
+                style={{
+                    width: open ? "3rem" : "auto",
+                    height: "3rem",
+                    paddingLeft: open ? "0" : "1.1rem",
+                    paddingRight: open ? "0" : "1.1rem",
+                }}
+            >
+                {open ? (
+                    <X className="h-5 w-5" />
+                ) : (
+                    <>
+                        <MessageCircle className="h-5 w-5" />
+                        <span className="hidden sm:inline text-sm font-medium pr-1">Help</span>
+                    </>
+                )}
+                {!open && unread && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-gold border-2 border-white" />
+                )}
+            </button>
         </>
     );
 }
