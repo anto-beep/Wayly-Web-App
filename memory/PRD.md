@@ -483,6 +483,19 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 31 — Feb 2026 · Help chat invisible-panel root cause fix)
+
+### The "panel auto-closes" bug
+- **Symptom**: user clicked the launcher, the panel briefly flashed open then disappeared. Functionally my Playwright tests reported `Panel visible: True, Message count: 2`, but the panel was **invisible to the user**.
+- **Root cause**: I had styled the panel with `style={{ animation: "kindred-fadein-loop 240ms ease-out both" }}`. That keyframe (`@keyframes kindred-fadein-loop` in `index.css`) was actually built for the LivePreviewLoop teaser — it is a **7-second loop that fades IN at 8% then fades back OUT at 82%, ending at opacity 0**. Combined with `both` fill mode, the panel ended up holding `opacity: 0` after 240ms — DOM-visible but pixel-invisible. The launcher continued to toggle `open` correctly; only the panel's CSS made it look like nothing happened.
+- Confirmed via Playwright `getComputedStyle`: `{opacity: '0', visibility: 'visible', display: 'flex'}` — exactly the symptom.
+- **Fix**: new dedicated `@keyframes kindred-help-chat-in` (one-shot, ends at opacity 1 + scale 1), applied via the new `.animate-help-chat-in` utility class. Respects `prefers-reduced-motion`.
+- Re-verified: panel renders fully visible with all controls (header, welcome text, suggested questions, input field, footer). Suggestion-click → 8s → LLM reply renders inline. Both chat bubbles visible.
+
+### Files changed
+- `/app/frontend/src/components/FloatingHelpChat.jsx` — replaced inline `style.animation` with `animate-help-chat-in` class.
+- `/app/frontend/src/index.css` — added `@keyframes kindred-help-chat-in` + `.animate-help-chat-in` utility (with `prefers-reduced-motion` fallback).
+
 ## Implemented (Iteration 30 — Feb 2026 · Help chat fixes · Authenticated personal-context bot)
 
 ### Launcher always visible (the click-not-working fix)

@@ -158,6 +158,18 @@ html.theme-dark .bg-\[#16294a\] { background-color: #0a1020 !important; }
     opacity: 0;
     animation: kindred-anomaly-flash 7s ease-out infinite;
 }
+
+/* ---- Help chat panel entrance (one-shot, ends at opacity 1) ----------- */
+@keyframes kindred-help-chat-in {
+    0%   { opacity: 0; transform: translateY(8px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-help-chat-in {
+    animation: kindred-help-chat-in 220ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+    .animate-help-chat-in { animation: none; }
+}
 @media (prefers-reduced-motion: reduce) {
     .kindred-fadein, .kindred-anomaly-flash {
         animation: none !important;

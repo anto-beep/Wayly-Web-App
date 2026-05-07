@@ -140,8 +140,8 @@ export default function FloatingHelpChat() {
                     role="dialog"
                     aria-label="Kindred help chat"
                     data-testid="help-chat-panel"
-                    className="fixed bottom-28 right-5 z-[60] w-[min(380px,calc(100vw-2.5rem))] h-[min(540px,calc(100vh-9rem))] bg-surface border border-kindred rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-                    style={{ animation: "kindred-fadein-loop 240ms ease-out both" }}
+                    className="fixed bottom-28 right-5 z-[60] w-[min(380px,calc(100vw-2.5rem))] h-[min(540px,calc(100vh-9rem))] bg-surface border border-kindred rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-help-chat-in"
+                    style={{}}
                 >
                     {/* Header */}
                     <div className="bg-primary-k text-white px-4 py-3 flex items-start justify-between gap-2">
