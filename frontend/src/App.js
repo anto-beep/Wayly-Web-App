@@ -45,6 +45,7 @@ import Settings from "@/pages/Settings";
 import InviteAccept from "@/pages/InviteAccept";
 import CommandPalette from "@/components/CommandPalette";
 import FloatingHelpChat from "@/components/FloatingHelpChat";
+import TrialEndingModal from "@/components/TrialEndingModal";
 import Terms from "@/pages/legal/Terms";
 import Privacy from "@/pages/legal/Privacy";
 import AIDisclaimerPage from "@/pages/legal/AIDisclaimer";
@@ -102,6 +103,7 @@ function App() {
                 <Toaster richColors position="top-right" />
                 <CommandPalette />
                 <FloatingHelpChat />
+                <TrialEndingModal />
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />

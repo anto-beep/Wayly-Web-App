@@ -766,6 +766,248 @@ async def get_statement(statement_id: str, user_id: str = Depends(get_current_us
     return Statement(**doc)
 
 
+# ----------------- email forwarding (inbound statements) -----------------
+import secrets as _secrets
+
+
+def _generate_inbound_token() -> str:
+    """Returns a URL-safe, 14-char token for the user's forwarding alias."""
+    return "kndrd_" + _secrets.token_urlsafe(10)[:10].lower().replace("_", "x").replace("-", "x")
+
+
+def _inbound_domain() -> str:
+    """Domain the inbound webhook accepts mail at. Configure via env."""
+    return os.environ.get("KINDRED_INBOUND_DOMAIN", "inbound.kindred.au")
+
+
+async def _ensure_inbound_token(user_id: str) -> str:
+    """Lazily mint an inbound token for the user on first read."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "inbound_token": 1, "email": 1})
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    token = user.get("inbound_token")
+    if token:
+        return token
+    # Mint until we get a unique one (collisions extremely unlikely)
+    for _ in range(5):
+        candidate = _generate_inbound_token()
+        existing = await db.users.find_one({"inbound_token": candidate}, {"_id": 0, "id": 1})
+        if not existing:
+            await db.users.update_one({"id": user_id}, {"$set": {"inbound_token": candidate}})
+            return candidate
+    raise HTTPException(status_code=500, detail="Could not generate inbound address — please retry.")
+
+
+@api.get("/inbound/my-address")
+async def get_my_inbound_address(user_id: str = Depends(get_current_user_id)):
+    """Returns the user's unique forwarding email address + setup status."""
+    token = await _ensure_inbound_token(user_id)
+    domain = _inbound_domain()
+    address = f"statements+{token}@{domain}"
+    # Recent statements ingested via email
+    h = await _get_user_household(user_id)
+    recent = []
+    if h:
+        cursor = db.statements.find(
+            {"household_id": h["id"], "input_method": "email_forward"},
+            {"_id": 0, "id": 1, "filename": 1, "uploaded_at": 1, "period_label": 1, "received_from": 1},
+        ).sort("uploaded_at", -1).limit(10)
+        recent = await cursor.to_list(10)
+    return {
+        "address": address,
+        "domain": domain,
+        "token": token,
+        "recent_inbound": recent,
+        "ready": True,
+    }
+
+
+class InboundEmailAttachment(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: Optional[str] = Field(default=None, max_length=200)
+    content_base64: str = Field(min_length=4)
+
+
+class InboundEmailPayload(BaseModel):
+    """Mirrors the shape of common inbound email webhooks (Resend, Postmark,
+    SendGrid). Required fields are normalised by the email provider before they
+    POST to us."""
+    to: str = Field(min_length=3, max_length=400)
+    from_email: EmailStr = Field(alias="from")
+    subject: Optional[str] = Field(default="", max_length=400)
+    text: Optional[str] = Field(default="", max_length=200_000)
+    html: Optional[str] = Field(default="", max_length=400_000)
+    attachments: List[InboundEmailAttachment] = Field(default_factory=list)
+
+    class Config:
+        populate_by_name = True
+
+
+def _extract_token_from_address(addr: str) -> Optional[str]:
+    """Pull out the kndrd_xxx token from an address like
+    `statements+kndrd_xxx@inbound.kindred.au` or `kndrd_xxx@inbound.kindred.au`."""
+    addr = addr.strip().lower()
+    # Strip enclosing <...>
+    if "<" in addr and ">" in addr:
+        addr = addr[addr.find("<") + 1 : addr.rfind(">")]
+    # Plus-addressing form
+    m = re.search(r"\+([a-z0-9_]{6,40})@", addr)
+    if m:
+        return m.group(1)
+    # Direct local-part form
+    m = re.search(r"^([a-z0-9_]{6,40})@", addr)
+    if m:
+        return m.group(1)
+    return None
+
+
+@app.post("/api/inbound/email-statement")
+async def inbound_email_webhook(payload: InboundEmailPayload, request: Request):
+    """Public inbound webhook. Auth via shared secret in the
+    X-Inbound-Webhook-Token header (set on the email provider's webhook config).
+    Identifies the recipient user via the `to` address, ingests the first
+    statement-shaped attachment, and runs it through the decoder pipeline as
+    an async job."""
+    expected = os.environ.get("INBOUND_WEBHOOK_TOKEN")
+    if expected:
+        provided = request.headers.get("X-Inbound-Webhook-Token", "")
+        if provided != expected:
+            raise HTTPException(status_code=403, detail="forbidden")
+
+    token = _extract_token_from_address(payload.to)
+    if not token:
+        logger.warning("Inbound email rejected — no token in address: %s", payload.to)
+        raise HTTPException(status_code=400, detail="Could not parse forwarding address")
+
+    user = await db.users.find_one({"inbound_token": token}, {"_id": 0})
+    if not user:
+        logger.warning("Inbound email rejected — unknown token: %s", token)
+        raise HTTPException(status_code=404, detail="Unknown forwarding address")
+
+    h = await _get_user_household(user["id"])
+    if not h:
+        logger.info("Inbound email rejected — user %s has no household", user["id"])
+        try:
+            await email_service.email_tool_result(
+                to=str(payload.from_email), tool_name="Couldn't import your statement",
+                headline="We received your email, but your Kindred household isn't set up yet",
+                body_html="<p>Please complete onboarding at <a href='https://kindred.au/onboarding'>kindred.au/onboarding</a> before forwarding statements.</p>",
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail="No household configured for this user")
+
+    # Pick the first attachment that looks like a statement
+    accepted_exts = (".pdf", ".docx", ".doc", ".txt", ".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp")
+    attachment = None
+    for a in payload.attachments:
+        ext = "." + a.filename.rsplit(".", 1)[-1].lower() if "." in a.filename else ""
+        if ext in accepted_exts:
+            attachment = a
+            break
+
+    if not attachment:
+        # No usable attachment — try inline text body
+        body_text = (payload.text or "").strip()
+        if len(body_text) > 200:
+            job_id = _submit_upload_job(
+                body_text,
+                f"email-{(payload.subject or 'statement')[:80]}.txt",
+                h["id"],
+                user["id"],
+                user.get("name") or "",
+                file_b64=None,
+                file_mimetype="text/plain",
+                file_size=len(body_text.encode("utf-8")),
+            )
+            try:
+                await email_service.email_tool_result(
+                    to=str(payload.from_email),
+                    tool_name="Statement received — decoding now",
+                    headline="We've received your statement and started decoding",
+                    body_html=f"<p>Your forwarded email arrived safely. We're decoding it now and will save it to your dashboard within ~30 seconds.</p><p>Job ID: <code>{job_id}</code></p><p>— Kindred</p>",
+                )
+            except Exception:
+                pass
+            return {"ok": True, "job_id": job_id, "method": "email_forward_body"}
+        try:
+            await email_service.email_tool_result(
+                to=str(payload.from_email), tool_name="Couldn't find a statement to decode",
+                headline="We didn't find a statement attachment in your email",
+                body_html=(
+                    "<p>We received your email, but it didn't contain a PDF, Word doc, photo, or readable statement text.</p>"
+                    "<p>Please forward the original email <em>with</em> the attachment, or upload the file directly at "
+                    "<a href='https://kindred.au/ai-tools/statement-decoder'>kindred.au/ai-tools/statement-decoder</a>.</p>"
+                ),
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail="No usable statement attachment or text body")
+
+    # Decode the attachment via the document_extract pipeline
+    import base64 as _b64
+    try:
+        raw = _b64.b64decode(attachment.content_base64)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Attachment base64 was malformed")
+    from document_extract import (
+        extract_document as _extract_doc,
+        UnsupportedFormatError as _UnsupportedFmt,
+        FileTooLargeError as _FileTooLarge,
+        CorruptFileError as _CorruptFile,
+        PasswordProtectedError as _PwdProtected,
+    )
+
+    try:
+        text, _input_method, _page_count, _parse_warnings = await _extract_doc(attachment.filename, raw)
+    except _UnsupportedFmt as e:
+        try:
+            await email_service.email_tool_result(
+                to=str(payload.from_email), tool_name="Couldn't read the attachment",
+                headline="That attachment format isn't supported yet",
+                body_html=f"<p>We couldn't read <strong>{attachment.filename}</strong>: {e}.</p><p>Try forwarding as PDF or photo instead.</p>",
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail=str(e))
+    except _FileTooLarge as e:
+        mb = e.limit_bytes // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"Attachment exceeds the {mb} MB limit.")
+    except (_PwdProtected, _CorruptFile) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Attachment contained no extractable text")
+
+    job_id = _submit_upload_job(
+        text,
+        attachment.filename,
+        h["id"],
+        user["id"],
+        user.get("name") or "",
+        file_b64=attachment.content_base64,
+        file_mimetype=attachment.content_type or "application/octet-stream",
+        file_size=len(raw),
+    )
+
+    try:
+        await email_service.email_tool_result(
+            to=str(payload.from_email),
+            tool_name="Statement received — decoding now",
+            headline="We've received your statement and started decoding",
+            body_html=(
+                f"<p>Your forwarded statement <strong>{attachment.filename}</strong> arrived safely. "
+                "We're decoding it now and will save it to your dashboard within ~30 seconds.</p>"
+                f"<p>Sign in at <a href='https://kindred.au/app/statements'>kindred.au/app/statements</a> to see the decoded result.</p>"
+                f"<p>Job ID: <code>{job_id}</code></p>"
+                "<p>— Kindred</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Inbound confirmation email failed: %s", e)
+
+    return {"ok": True, "job_id": job_id, "method": "email_forward", "filename": attachment.filename}
+
+
 # ----------------- budget -----------------
 @api.get("/budget/current")
 async def current_budget(user_id: str = Depends(get_current_user_id)):
@@ -2660,6 +2902,157 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# Trial lifecycle scheduler — sends T-1 reminder + auto-downgrades on expiry.
+# Runs every 30 minutes. Idempotent via subscription doc flags.
+# ---------------------------------------------------------------------------
+import asyncio as _asyncio
+
+
+async def _process_trial_reminders_once() -> dict:
+    """Idempotent pass over trialing subscriptions:
+       - 24h-from-end: send reminder email, mark `trial_reminder_sent_at`.
+       - past-end: flip user.plan to 'free', mark sub status 'expired', send
+         expiry email, mark `trial_expired_handled_at`.
+    Returns {reminders_sent, expired_handled}."""
+    now = datetime.now(timezone.utc)
+    in_24h = now + timedelta(hours=24)
+    reminders_sent = 0
+    expired_handled = 0
+
+    def _sub_match(sub: dict) -> dict:
+        """Build a unique match filter for a sub doc — prefer `id`, fall back
+        to `user_id` for legacy records that don't have an `id`."""
+        return {"id": sub["id"]} if sub.get("id") else {"user_id": sub["user_id"], "status": sub.get("status")}
+
+    # Trial nudges — within 24h, not yet reminded
+    cursor = db.subscriptions.find(
+        {
+            "status": "trialing",
+            "trial_ends_at": {"$gte": now.isoformat(), "$lte": in_24h.isoformat()},
+            "trial_reminder_sent_at": {"$exists": False},
+        },
+        {"_id": 0},
+    )
+    async for sub in cursor:
+        try:
+            user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
+            if not user:
+                continue
+            plan = sub.get("plan", "solo")
+            label = PLAN_PRICES.get(plan, {}).get("label", plan.capitalize())
+            amount = PLAN_PRICES.get(plan, {}).get("amount", 0)
+            ends = sub.get("trial_ends_at", "")
+            ends_label = ends.split("T")[0] if ends else "tomorrow"
+            await email_service.email_tool_result(
+                to=user["email"],
+                tool_name="Your free trial ends tomorrow",
+                headline="Your free trial ends in 24 hours",
+                body_html=(
+                    f"<p>Hi {user.get('name') or ''},</p>"
+                    f"<p>Your free 7-day {label} trial ends on <strong>{ends_label}</strong>. "
+                    "Add a card now and you won't lose access to:</p>"
+                    "<ul>"
+                    "<li>All 8 AI tools (Statement Decoder, Budget Calculator, Reassessment Letter, and 5 more)</li>"
+                    "<li>Unlimited statement decoding (PDF, Word, photos)</li>"
+                    "<li>Caregiver dashboard with stream-by-stream budget burn</li>"
+                    "<li>Anomaly alerts on every statement you upload</li>"
+                    + ("<li>Up to 5 family seats and the weekly Sunday digest</li>" if plan == "family" else "")
+                    + "</ul>"
+                    f"<p><strong>Continue your {label} plan</strong> at <strong>${amount:.2f}/month</strong> — "
+                    "<a href='https://kindred.au/settings/billing'>Settings → Plan & Billing</a>.</p>"
+                    "<p>If you don't add a card, your account will move to the Free plan automatically tomorrow. "
+                    "Your statements, household details, and audit log all stay safe — you'll just lose access to "
+                    "the paid tools.</p>"
+                    "<p>Questions? Just reply to this email.</p>"
+                    "<p>— The Kindred team</p>"
+                ),
+            )
+            await db.subscriptions.update_one(
+                _sub_match(sub),
+                {"$set": {"trial_reminder_sent_at": now.isoformat()}},
+            )
+            reminders_sent += 1
+        except Exception as e:
+            logger.warning("Trial reminder failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
+
+    # Trial expiries — past trial_ends_at, still status=trialing, not handled
+    cursor2 = db.subscriptions.find(
+        {
+            "status": "trialing",
+            "trial_ends_at": {"$lte": now.isoformat()},
+            "trial_expired_handled_at": {"$exists": False},
+        },
+        {"_id": 0},
+    )
+    async for sub in cursor2:
+        try:
+            user_id = sub["user_id"]
+            user = await db.users.find_one({"id": user_id}, {"_id": 0})
+            await db.subscriptions.update_one(
+                _sub_match(sub),
+                {"$set": {"status": "expired", "trial_expired_handled_at": now.isoformat(), "updated_at": now.isoformat()}},
+            )
+            await db.users.update_one({"id": user_id}, {"$set": {"plan": "free"}})
+            if user:
+                plan = sub.get("plan", "solo")
+                label = PLAN_PRICES.get(plan, {}).get("label", plan.capitalize())
+                amount = PLAN_PRICES.get(plan, {}).get("amount", 0)
+                try:
+                    await email_service.email_tool_result(
+                        to=user["email"],
+                        tool_name="Your free trial has ended",
+                        headline="Your free trial is over — you're now on Free",
+                        body_html=(
+                            f"<p>Hi {user.get('name') or ''},</p>"
+                            f"<p>Your free trial of {label} has ended and your account has moved to the Free plan. "
+                            "Your statements, household setup, and audit log are all safe — they're just on standby "
+                            "until you upgrade.</p>"
+                            f"<p>Ready to continue? Pick {label} at <strong>${amount:.2f}/month</strong> at "
+                            "<a href='https://kindred.au/settings/billing'>Settings → Plan & Billing</a> — "
+                            "you'll be back to full access in under a minute.</p>"
+                            "<p>— The Kindred team</p>"
+                        ),
+                    )
+                except Exception as e:
+                    logger.warning("Trial-expired email failed: %s", e)
+            expired_handled += 1
+        except Exception as e:
+            logger.warning("Trial expiry handling failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
+
+    return {"reminders_sent": reminders_sent, "expired_handled": expired_handled}
+
+
+async def _trial_scheduler_loop():
+    """Runs every 30 minutes for the lifetime of the process."""
+    while True:
+        try:
+            res = await _process_trial_reminders_once()
+            if res["reminders_sent"] or res["expired_handled"]:
+                logger.info("Trial scheduler pass: %s", res)
+        except Exception as e:
+            logger.warning("Trial scheduler pass error: %s", e)
+        await _asyncio.sleep(30 * 60)
+
+
+@app.on_event("startup")
+async def _start_trial_scheduler():
+    _asyncio.create_task(_trial_scheduler_loop())
+
+
+# Manual trigger for testing/debugging.
+@app.post("/api/internal/trial-tick")
+async def trial_tick_manual(request: Request):
+    """Internal endpoint to fire the trial pass on demand. Gated behind
+    `INTERNAL_TICK_TOKEN` env var when set (otherwise open in dev)."""
+    expected = os.environ.get("INTERNAL_TICK_TOKEN")
+    if expected:
+        provided = request.headers.get("X-Internal-Token", "")
+        if provided != expected:
+            raise HTTPException(status_code=403, detail="forbidden")
+    return await _process_trial_reminders_once()
 
 
 @app.on_event("shutdown")

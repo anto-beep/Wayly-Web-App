@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { api } from "@/lib/api";
-import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, Mail, ChevronDown } from "lucide-react";
+import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, ChevronDown } from "lucide-react";
 import EmailResultButton from "@/components/EmailResultButton";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
@@ -12,6 +12,7 @@ import DecoderProgress from "@/components/DecoderProgress";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import AcceptedFormatsPanel from "@/components/AcceptedFormatsPanel";
 import PhotoTipsAccordion from "@/components/PhotoTipsAccordion";
+import EmailForwardingPanel from "@/components/EmailForwardingPanel";
 import FilePreviewPanel from "@/components/FilePreviewPanel";
 
 const SAMPLE = `BlueBerry Care — Monthly Statement
@@ -222,25 +223,7 @@ export default function StatementDecoderTool() {
                     )}
 
                     {mode === "email" && (
-                        <div className="mt-4 rounded-xl border-2 border-dashed border-kindred bg-surface-2 p-8 text-center" data-testid="decoder-email-tab">
-                            <Mail className="h-10 w-10 text-muted-k mx-auto" />
-                            <div className="font-heading text-xl text-primary-k mt-3">Email forwarding — coming soon</div>
-                            <p className="text-sm text-muted-k mt-2 max-w-md mx-auto">
-                                Forward your statement email directly to your unique Kindred address.
-                                Set up a forwarding rule once and every monthly statement arrives automatically.
-                            </p>
-                            <p className="text-xs text-muted-k mt-3">
-                                We'll let you know the moment this is live.
-                            </p>
-                            <button
-                                type="button"
-                                onClick={() => setMode("file")}
-                                className="mt-4 inline-flex items-center gap-1 text-sm text-primary-k underline"
-                                data-testid="decoder-email-fallback"
-                            >
-                                Upload a file instead <ArrowRight className="h-3.5 w-3.5" />
-                            </button>
-                        </div>
+                        <EmailForwardingPanel onSwitchToFile={() => setMode("file")} />
                     )}
 
                     <button

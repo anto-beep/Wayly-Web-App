@@ -483,6 +483,55 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 33 — Feb 2026 · Trial conversion · Email forwarding ingest)
+
+### Trial conversion engine — T-1 reminder + day-7 modal + auto-downgrade
+
+**Backend lifecycle scheduler (`/app/backend/server.py`)**
+- `_process_trial_reminders_once()` — idempotent pass that:
+  - Sends a Resend "Your free trial ends tomorrow" email to any trialing user with `trial_ends_at` within the next 24h, marks the sub with `trial_reminder_sent_at` so we don't double-send.
+  - Auto-downgrades any expired trialing user: flips `users.plan = "free"`, sets `subscriptions.status = "expired"` and `trial_expired_handled_at`, sends a "Your free trial is over" email with a 1-click upgrade link.
+- `_trial_scheduler_loop()` — background asyncio task started on app startup, runs the pass every 30 minutes. Logs only when something actually happened.
+- `POST /api/internal/trial-tick` — manual fire endpoint for testing/debugging (gated by `INTERNAL_TICK_TOKEN` header when the env var is set; otherwise open in dev).
+
+**Frontend day-7 modal (`/app/frontend/src/components/TrialEndingModal.jsx`)**
+- Mounted globally in `App.js`. Shows once when a trialing user has < 24h remaining; dismissible; persists dismissal keyed by the trial end-date so a fresh trial isn't suppressed by a stale flag. Hidden on auth pages and on `/settings/billing` (already shows the trial pill there).
+- Headline "X hours left in your trial" + bulleted feature list + plan price + dual CTA ("Add card to keep Solo/Family" + "Maybe later").
+
+**Verified end-to-end**:
+- Manually nudged a trial sub's `trial_ends_at` to +1h → `trial-tick` → `reminders_sent: 1`. Checked Resend log — email rendered correctly.
+- Pushed `trial_ends_at` to -1h → `trial-tick` → `expired_handled: 1`. Verified user.plan flipped `family → free`, sub status `expired`, expired-handled-at timestamp recorded.
+
+### Email forwarding ingest pipeline
+
+**Backend (`/app/backend/server.py`)**
+- New per-user `inbound_token` field on `users` (lazy-minted, 10-char URL-safe). Format: `kndrd_xxxxxxxxxx`.
+- `GET /api/inbound/my-address` — returns `{address, domain, token, recent_inbound[], ready}`. Address shape: `statements+{token}@inbound.kindred.au` (configurable via `KINDRED_INBOUND_DOMAIN`). Recent-inbound list includes 10 most recently forwarded statements with `received_from` and link IDs.
+- `POST /api/inbound/email-statement` — public webhook (gated by optional `INBOUND_WEBHOOK_TOKEN` header). Accepts a normalised JSON payload `{to, from, subject, text, html, attachments[{filename, content_type, content_base64}]}` matching Resend / Postmark / SendGrid Inbound shape. Token regex extracts the user, validates the household exists, picks the first attachment with an accepted extension (PDF/DOCX/DOC/TXT/JPG/PNG/HEIC/WEBP), runs it through the same `document_extract` + decoder pipeline as the file-upload route. Falls back to inline body-text if no usable attachment is present.
+- Sends a Resend confirmation email back to the original sender with the job_id and a link to the dashboard. On error (unsupported format, password-protected PDF, no attachment) sends a guidance email back instead.
+- Decoded statements are tagged with `input_method: "email_forward"` and `received_from`, surfaced in the dashboard list.
+
+**Frontend (`/app/frontend/src/components/EmailForwardingPanel.jsx`)**
+- Replaces the "Coming soon" stub on the Statement Decoder page's third tab.
+- Shows the user's unique address + Copy button + privacy notice.
+- 3-step "How it works": Forward → Auto-forward rule → Confirmation email (with Gmail/Outlook setup hints).
+- "Recently forwarded" section listing the last N statements ingested via this method, each linking through to the decoded result.
+- Anonymous users get a sign-up CTA + "Or upload a file now" fallback.
+
+**Verified end-to-end**:
+- Logged in as Cathy → `/api/inbound/my-address` returned `statements+kndrd_vzrglnyzcr@inbound.kindred.au`.
+- Posted a test inbound payload via curl with a base64-encoded April 2026 statement → 200 OK with `job_id`. Polled 30s later → new Statement persisted with `filename=april2026.txt`, period_label="April 2026", 5 line items, 3 anomalies. End-to-end ingestion confirmed.
+- Frontend smoke screenshot: Forward by email tab now renders the address card, copy button, and 3-step guide.
+
+### Files changed
+- New: `/app/frontend/src/components/TrialEndingModal.jsx`, `/app/frontend/src/components/EmailForwardingPanel.jsx`
+- `/app/backend/server.py` — trial scheduler + endpoints, inbound webhook, address-mint endpoint, regex helper.
+- `/app/frontend/src/App.js` — mount TrialEndingModal globally.
+- `/app/frontend/src/pages/tools/StatementDecoderTool.jsx` — wire EmailForwardingPanel into the third tab; remove unused Mail import.
+
+### What's mocked / preview
+- The actual SMTP/MX inbound mail server is **not yet provisioned** in this preview environment. The webhook endpoint is fully working; once DNS for `inbound.kindred.au` is pointed at Resend Inbound (or any other inbound mail provider) and that provider's webhook is set to `${BASE_URL}/api/inbound/email-statement` with `INBOUND_WEBHOOK_TOKEN`, real forwarded emails will flow through this pipeline.
+
 ## Implemented (Iteration 32 — Feb 2026 · No-card 7-day trial · Trial countdown everywhere)
 
 ### No-card free trial flow (signup + Settings)
