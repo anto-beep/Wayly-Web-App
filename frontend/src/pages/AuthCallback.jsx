@@ -28,13 +28,32 @@ export default function AuthCallback() {
         const sessionId = decodeURIComponent(m[1]);
 
         completeGoogleAuth(sessionId)
-            .then((user) => {
+            .then(async (user) => {
                 // Clear the hash so refresh doesn't replay
                 window.history.replaceState(null, "", window.location.pathname);
+
+                // Resume any pre-OAuth plan intent — start a free trial if the user
+                // chose Solo/Family before clicking the Google button on /signup.
+                let planIntent = null;
+                try {
+                    planIntent = localStorage.getItem("kindred_plan_intent");
+                    localStorage.removeItem("kindred_plan_intent");
+                } catch {}
+                if (planIntent === "solo" || planIntent === "family") {
+                    if ((user?.plan || "free") === "free") {
+                        try {
+                            const { api } = await import("@/lib/api");
+                            await api.post("/billing/start-trial", { plan: planIntent });
+                        } catch {
+                            // Trial may have been used already — silently fall through to onboarding.
+                        }
+                    }
+                }
+
                 // Resolve destination from user shape
                 let target = "/onboarding";
                 if (user?.role === "participant") target = "/participant";
-                else if (user?.plan === "free") target = "/app";
+                else if (user?.plan === "free" && !planIntent) target = "/app";
                 // Use window.location.replace rather than React Router nav() —
                 // the destination's auth guard reads `user` from context, and
                 // nav() can fire before React commits the setUser update,

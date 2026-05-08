@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut, HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
+import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 
 const navItems = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -117,7 +118,10 @@ export default function Layout({ children }) {
                         </div>
                     </nav>
                 </aside>
-                <main className="flex-1 min-w-0">{children}</main>
+                <main className="flex-1 min-w-0">
+                    <TrialCountdownBanner className="mb-5" />
+                    {children}
+                </main>
             </div>
         </div>
     );

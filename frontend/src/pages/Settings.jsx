@@ -92,7 +92,30 @@ function BillingTab() {
     useEffect(() => { load(); }, [load]);
     const startCheckout = async (plan) => {
         setBusy(true);
-        try { const { data } = await api.post("/billing/checkout", { plan, origin_url: window.location.origin }); if (data?.url) { window.location.href = data.url; return; } }
+        try {
+            // Try the free 7-day trial first. Falls back to Stripe Checkout when
+            // the user has already used their trial.
+            try {
+                const { data } = await api.post("/billing/start-trial", { plan });
+                if (data?.ok) {
+                    toast.success(`Your free 7-day ${PLANS[plan].name} trial is active.`);
+                    await refreshUser();
+                    await load();
+                    return;
+                }
+            } catch (errTrial) {
+                const det = errTrial?.response?.data?.detail;
+                const trialUsed = det && typeof det === "object" && det.error === "trial_used";
+                if (!trialUsed) {
+                    // Real error — surface it and stop.
+                    toast.error(extractErrorMessage(errTrial, "Could not start trial"));
+                    return;
+                }
+                // Trial already used → continue to Stripe.
+            }
+            const { data } = await api.post("/billing/checkout", { plan, origin_url: window.location.origin });
+            if (data?.url) { window.location.href = data.url; return; }
+        }
         catch (err) { toast.error(extractErrorMessage(err, "Could not start checkout")); }
         finally { setBusy(false); }
     };
@@ -142,8 +165,19 @@ function BillingTab() {
                         <div>
                             <div className="flex items-center gap-2"><Crown className="h-4 w-4 text-gold" /><span className="overline">Current plan</span></div>
                             <div className="mt-2 font-heading text-2xl text-primary-k">{PLANS[currentPlan]?.name} <span className="text-base font-sans text-muted-k">{PLANS[currentPlan]?.price}{PLANS[currentPlan]?.period}</span></div>
-                            {activeSub && sub.trial_ends_at && sub.status === "trialing" && (<p className="text-sm text-muted-k mt-2">7-day trial ends {new Date(sub.trial_ends_at).toLocaleDateString()}.</p>)}
-                            {activeSub && sub.current_period_end && (<p className="text-sm text-muted-k mt-1">{sub.cancel_at_period_end ? "Ends" : "Renews"} {new Date(sub.current_period_end).toLocaleDateString()}.</p>)}
+                            {activeSub && sub.trial_ends_at && sub.status === "trialing" && (() => {
+                                const ms = new Date(sub.trial_ends_at).getTime() - Date.now();
+                                const days = Math.max(0, Math.ceil(ms / 86_400_000));
+                                return (
+                                    <p className="text-sm mt-2" data-testid="billing-trial-remaining">
+                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gold/15 text-primary-k border border-gold/40 text-xs">
+                                            Free trial · {days} day{days === 1 ? "" : "s"} left
+                                        </span>
+                                        <span className="text-muted-k ml-2">ends {new Date(sub.trial_ends_at).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })}</span>
+                                    </p>
+                                );
+                            })()}
+                            {activeSub && sub.current_period_end && sub.status !== "trialing" && (<p className="text-sm text-muted-k mt-1">{sub.cancel_at_period_end ? "Ends" : "Renews"} {new Date(sub.current_period_end).toLocaleDateString()}.</p>)}
                         </div>
                         {activeSub && !sub.cancel_at_period_end && (<button onClick={cancel} disabled={busy} data-testid="cancel-plan-btn" className="inline-flex items-center gap-2 text-sm text-terracotta hover:underline"><X className="h-3.5 w-3.5" /> Cancel auto-renewal</button>)}
                     </div>

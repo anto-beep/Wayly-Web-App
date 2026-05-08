@@ -2333,6 +2333,98 @@ class CheckoutBody(BaseModel):
     origin_url: str = Field(min_length=8, max_length=200)
 
 
+class StartTrialBody(BaseModel):
+    plan: _LiteralType["solo", "family"]
+
+
+async def _user_had_trial(user_id: str) -> bool:
+    """Returns True if the user has previously started or completed a trial OR
+    has an existing paid Stripe subscription. Free-plan users with no history
+    are eligible for the 7-day trial."""
+    sub = await db.subscriptions.find_one(
+        {"user_id": user_id, "$or": [{"had_trial": True}, {"trial_ends_at": {"$ne": None}}]},
+        {"_id": 0, "id": 1},
+    )
+    return bool(sub)
+
+
+@api.get("/billing/trial-eligibility")
+async def trial_eligibility(user_id: str = Depends(get_current_user_id)):
+    """Fast lookup: is this user eligible for a free trial right now?"""
+    used = await _user_had_trial(user_id)
+    return {"eligible": not used, "trial_days": TRIAL_DAYS}
+
+
+@api.post("/billing/start-trial")
+async def start_trial(body: StartTrialBody, user_id: str = Depends(get_current_user_id)):
+    """Start a 7-day free trial for the requested plan WITHOUT charging the
+    user. Eligibility: the user must never have started a trial before (no
+    `had_trial=True` subscription record). After the trial ends, the user
+    falls back to Free unless they upgrade via /billing/checkout."""
+    if body.plan not in PLAN_PRICES:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    if await _user_had_trial(user_id):
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "trial_used", "message": "You've already used your free trial. Subscribe via Stripe Checkout to continue."},
+        )
+    now = datetime.now(timezone.utc)
+    trial_ends = now + timedelta(days=TRIAL_DAYS)
+    sub_doc = {
+        "id": new_id(),
+        "user_id": user_id,
+        "plan": body.plan,
+        "status": "trialing",
+        "had_trial": True,
+        "trial_ends_at": trial_ends.isoformat(),
+        "current_period_end": trial_ends.isoformat(),
+        "cancel_at_period_end": False,
+        "stripe_session_id": None,
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+    }
+    await db.subscriptions.insert_one(sub_doc)
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": body.plan}})
+    try:
+        u = await _get_user(user_id)
+        plan_label = PLAN_PRICES[body.plan]["label"]
+        amount = PLAN_PRICES[body.plan]["amount"]
+        await email_service.email_tool_result(
+            to=u["email"], tool_name=f"Your {TRIAL_DAYS}-day {plan_label} trial has started",
+            headline=f"Welcome to your free {plan_label} trial",
+            body_html=(
+                f"<p>Hi {u.get('name') or ''},</p>"
+                f"<p>Your <strong>{TRIAL_DAYS}-day free trial</strong> of {plan_label} is now active. "
+                f"You have full access to every feature in the {body.plan.capitalize()} plan until "
+                f"<strong>{trial_ends.date().isoformat()}</strong>.</p>"
+                "<p><strong>What's included:</strong></p>"
+                "<ul>"
+                "<li>Unlimited Statement Decoder uses (PDF, Word, photos, paste)</li>"
+                "<li>All 8 AI tools — budget calculator, price checker, reassessment letter, family coordinator chat and more</li>"
+                "<li>Caregiver dashboard with stream-by-stream budget burn and lifetime cap tracker</li>"
+                + ("<li>Up to 5 family members + weekly Sunday digest + concierge support</li>" if body.plan == "family" else "")
+                + "</ul>"
+                f"<p>No payment required during the trial. After {trial_ends.date().isoformat()}, your account "
+                f"reverts to the Free plan unless you choose to subscribe at "
+                f"<strong>${amount:.2f}/month</strong> from <em>Settings → Plan & Billing</em>.</p>"
+                "<p><strong>Get started:</strong> upload your latest Support at Home statement at "
+                "<a href='https://kindred.au/app/statements/upload'>app/statements/upload</a> "
+                "and we'll decode it for you.</p>"
+                "<p>Questions? Just reply to this email.</p>"
+                "<p>— The Kindred team</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Trial-start email failed: %s", e)
+    return {
+        "ok": True,
+        "plan": body.plan,
+        "trial_days": TRIAL_DAYS,
+        "trial_ends_at": trial_ends.isoformat(),
+        "subscription_status": "trialing",
+    }
+
+
 @api.post("/billing/checkout")
 async def billing_checkout(body: CheckoutBody, request: Request, user_id: str = Depends(get_current_user_id)):
     if body.plan not in PLAN_PRICES:

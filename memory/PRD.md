@@ -483,6 +483,36 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 32 — Feb 2026 · No-card 7-day trial · Trial countdown everywhere)
+
+### No-card free trial flow (signup + Settings)
+- New backend `POST /api/billing/start-trial` endpoint creates a `subscriptions` record with `status="trialing"`, `had_trial=true`, `trial_ends_at = now + 7 days` and flips `user.plan` to the requested plan — **without** any Stripe interaction. Sends a Resend email confirming the trial start, end date, plan benefits, and "no payment required".
+- Eligibility helper `_user_had_trial(user_id)` checks for any prior subscription with `had_trial=True` or any `trial_ends_at` set. Companion `GET /api/billing/trial-eligibility` lets the frontend pre-flight-check.
+- Repeat trial attempts return `400 {error: "trial_used"}` so the frontend can fall back to Stripe checkout.
+
+### Frontend flow rewrites
+- `Signup.jsx` now calls `/billing/start-trial` for Solo/Family signups instead of redirecting to Stripe Checkout. On `trial_used` it transparently falls back to Stripe. Submit button now reads **"Start 7-day free trial"** (replacing "Pay $19 & start"). Google CTA copy updated to "After Google sign-in your free 7-day trial starts immediately — no card needed."
+- `GoogleSignInButton.jsx` accepts a new `planIntent` prop and stashes it in `localStorage("kindred_plan_intent")` before the OAuth redirect. `AuthCallback.jsx` reads it after sign-in and silently fires `/billing/start-trial` so the Google round-trip lands the user straight on a trialing Solo/Family account.
+- `Settings.jsx` Plan & Billing tab: `startCheckout()` now always tries `/billing/start-trial` first; only falls back to Stripe Checkout when the user has already used their trial. Same UX for both paths from the user's perspective.
+
+### Trial countdown visible everywhere
+- `TrialCountdownBanner` moved from `CaregiverDashboard` into the global `Layout` so trialing users see "Free trial: X days, Y hours remaining · trial ends [date]" on **every** authenticated page (dashboard, statements, settings, onboarding, audit log, family thread). Auto-updates every minute, switches to terracotta when < 24h remain.
+- `Settings → Plan & Billing` "Current plan" card now shows a dedicated gold pill: **"Free trial · N days left"** with the trial end date. Replaces the prior plain "7-day trial ends X" sentence.
+
+### Verified end-to-end
+- Curl: new free user → `eligible=true`. Trial start → 200 with `subscription_status=trialing` and `trial_ends_at` set. `/auth/me` returns full trial fields. Repeat attempt → `400 trial_used`. Eligibility flips to `false`.
+- Playwright on Settings → Plan & Billing: Banner shows "6 days, 23 hours remaining · trial ends Fri, 15 May". Plan card shows "Free trial · 7 days left" pill.
+- Signup page: button now reads "Start 7-day free trial" with "Selected plan: Solo · 7-day free trial · cancel any time" reassurance.
+
+### Files changed
+- `/app/backend/server.py` — `_user_had_trial()`, `GET /billing/trial-eligibility`, `POST /billing/start-trial`, plus existing `/billing/checkout` unchanged for renewals.
+- `/app/frontend/src/pages/Signup.jsx` — trial-first signup flow + new submit-button copy.
+- `/app/frontend/src/components/GoogleSignInButton.jsx` — `planIntent` prop + localStorage handoff.
+- `/app/frontend/src/pages/AuthCallback.jsx` — resume plan-intent post-OAuth.
+- `/app/frontend/src/pages/Settings.jsx` — trial-first `startCheckout()` + new "N days left" pill.
+- `/app/frontend/src/components/Layout.jsx` — global TrialCountdownBanner mount.
+- `/app/frontend/src/pages/CaregiverDashboard.jsx` — removed dup banner (now in Layout).
+
 ## Implemented (Iteration 31 — Feb 2026 · Help chat invisible-panel root cause fix)
 
 ### The "panel auto-closes" bug

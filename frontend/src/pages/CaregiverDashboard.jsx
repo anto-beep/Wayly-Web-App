@@ -7,7 +7,6 @@ import {
     Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 
 const PLAN_LABELS = {
     free: { label: "Free plan", tone: "bg-sage/15 text-[#3A5A40]", desc: "2 of 8 AI tools · no household tracking" },
@@ -89,7 +88,6 @@ export default function CaregiverDashboard() {
 
     return (
         <div className="space-y-8" data-testid="caregiver-dashboard">
-            <TrialCountdownBanner />
             <div className="flex items-end justify-between flex-wrap gap-3">
                 <div>
                     <div className="flex items-center gap-3 flex-wrap">

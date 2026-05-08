@@ -71,26 +71,31 @@ export default function Signup() {
         setSubmitting(true);
         try {
             const u = await signup(form);
-            const verb = form.plan === "free" ? "Welcome" : "Account ready";
-            toast.success(`${verb}, ${u.name.split(" ")[0]}`);
-            // Paid plans → Stripe Checkout. Free → straight to onboarding.
+            // Paid plans → start free 7-day trial (no payment). Free → straight to onboarding.
             if (form.plan === "solo" || form.plan === "family") {
                 try {
-                    const { data } = await api.post("/billing/checkout", {
-                        plan: form.plan,
-                        origin_url: window.location.origin,
-                    });
-                    if (data.url) {
-                        window.location.href = data.url;
-                        return;
-                    }
-                    toast.error("Could not start checkout — redirecting to onboarding.");
+                    await api.post("/billing/start-trial", { plan: form.plan });
+                    toast.success(`Your free ${form.plan === "family" ? "Family" : "Solo"} trial is active for 7 days, ${u.name.split(" ")[0]}.`);
                     nav("/onboarding");
                 } catch (err) {
-                    toast.error(extractErrorMessage(err, "Could not start checkout."));
+                    // If the user already used their trial, fall back to Stripe Checkout for an immediate paid signup.
+                    const detailErr = err?.response?.data?.detail;
+                    const trialUsed = detailErr && typeof detailErr === "object" && detailErr.error === "trial_used";
+                    if (trialUsed) {
+                        toast.message("You've used your free trial — redirecting to checkout.");
+                        try {
+                            const { data } = await api.post("/billing/checkout", { plan: form.plan, origin_url: window.location.origin });
+                            if (data?.url) { window.location.href = data.url; return; }
+                        } catch (e2) {
+                            toast.error(extractErrorMessage(e2, "Could not start checkout."));
+                        }
+                    } else {
+                        toast.error(extractErrorMessage(err, "Could not start your trial."));
+                    }
                     nav("/onboarding");
                 }
             } else {
+                toast.success(`Welcome, ${u.name.split(" ")[0]}`);
                 nav("/app");
             }
         } catch (err) {
@@ -170,11 +175,11 @@ export default function Signup() {
                             </h2>
 
                             <div className="mt-5">
-                                <GoogleSignInButton testid="signup-google" label={form.plan === "free" ? "Continue with Google" : "Sign up with Google"} />
+                                <GoogleSignInButton testid="signup-google" planIntent={form.plan === "free" ? null : form.plan} label={form.plan === "free" ? "Continue with Google" : "Sign up with Google"} />
                                 <p className="mt-2 text-xs text-muted-k">
                                     {form.plan === "free"
                                         ? "Quick start — we'll create your account from your Google profile."
-                                        : "After Google sign-in we'll redirect you to Stripe to complete the trial setup."}
+                                        : "After Google sign-in your free 7-day trial starts immediately — no card needed."}
                                 </p>
                             </div>
 
@@ -254,7 +259,7 @@ export default function Signup() {
                                     className="w-full bg-primary-k text-white rounded-md py-3 text-base hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                                 >
                                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                                    {submitting ? "Working…" : (form.plan === "free" ? "Create account" : `Pay $${form.plan === "solo" ? "19" : "39"} & start`)}
+                                    {submitting ? "Working…" : (form.plan === "free" ? "Create account" : "Start 7-day free trial")}
                                 </button>
                             </form>
                             <p className="mt-5 text-sm text-muted-k">

@@ -5,8 +5,12 @@ import React from "react";
  * REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS,
  * THIS BREAKS THE AUTH.
  */
-export default function GoogleSignInButton({ label = "Continue with Google", testid = "google-signin" }) {
+export default function GoogleSignInButton({ label = "Continue with Google", testid = "google-signin", planIntent = null }) {
     const onClick = () => {
+        // Persist the user's plan intent so we can resume after the OAuth round-trip.
+        if (planIntent && ["solo", "family"].includes(planIntent)) {
+            try { localStorage.setItem("kindred_plan_intent", planIntent); } catch {}
+        }
         // Derive the redirect URL dynamically — never hardcode.
         const redirectUrl = window.location.origin + "/auth/callback";
         window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
