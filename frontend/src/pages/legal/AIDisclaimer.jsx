@@ -6,7 +6,7 @@ export default function AIDisclaimer() {
         <LegalPage title="AI Accuracy Disclaimer" lastUpdated="February 2026">
             <h2>What our AI tools do</h2>
             <p>
-                Kindred's AI tools use large language models to read, interpret, and summarise Support at
+                Wayly's AI tools use large language models to read, interpret, and summarise Support at
                 Home monthly statements and related documents. They are designed to help Australian families
                 understand complex aged-care information more easily.
             </p>
@@ -25,7 +25,7 @@ export default function AIDisclaimer() {
             </ul>
 
             <h2>What you should always do</h2>
-            <p>Before taking any action based on a Kindred AI output:</p>
+            <p>Before taking any action based on a Wayly AI output:</p>
             <ol>
                 <li>Compare the output against your original statement</li>
                 <li>Verify dollar figures directly with your provider</li>
@@ -33,18 +33,18 @@ export default function AIDisclaimer() {
                 <li>Speak to a qualified professional for advice on your specific situation</li>
             </ol>
 
-            <h2>What Kindred is not</h2>
+            <h2>What Wayly is not</h2>
             <ul>
-                <li>Kindred is not a registered Support at Home provider.</li>
-                <li>Kindred is not a financial adviser or financial services licensee.</li>
-                <li>Kindred is not a legal services provider.</li>
-                <li>Kindred is not a healthcare or clinical services provider.</li>
+                <li>Wayly is not a registered Support at Home provider.</li>
+                <li>Wayly is not a financial adviser or financial services licensee.</li>
+                <li>Wayly is not a legal services provider.</li>
+                <li>Wayly is not a healthcare or clinical services provider.</li>
             </ul>
-            <p>Nothing produced by Kindred's tools is financial, legal, or clinical advice.</p>
+            <p>Nothing produced by Wayly's tools is financial, legal, or clinical advice.</p>
 
             <h2>Voluntary AI Safety Standard</h2>
             <p>
-                Kindred has adopted Australia's Voluntary AI Safety Standard (2024). We are committed to
+                Wayly has adopted Australia's Voluntary AI Safety Standard (2024). We are committed to
                 transparency about AI capabilities and limitations, human oversight of AI outputs, and
                 ongoing improvement of our tools.
             </p>

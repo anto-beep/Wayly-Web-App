@@ -68,7 +68,7 @@ export default function Onboarding() {
                         <div className="h-8 w-8 rounded-full bg-primary-k flex items-center justify-center">
                             <HeartHandshake className="h-4 w-4 text-white" />
                         </div>
-                        <span className="font-heading text-base md:text-lg text-primary-k">Kindred</span>
+                        <span className="font-heading text-base md:text-lg text-primary-k">Wayly</span>
                     </div>
                     <button
                         type="button"
@@ -257,7 +257,7 @@ function StepEmailForwarding({ onNext, onBack }) {
                 <div>
                     <h1 className="font-heading text-2xl md:text-3xl text-primary-k tracking-tight">Set up auto-forwarding</h1>
                     <p className="text-muted-k mt-2 text-sm leading-relaxed">
-                        Forward your provider's monthly statement email to your private Kindred address. We'll decode it the moment it arrives.
+                        Forward your provider's monthly statement email to your private Wayly address. We'll decode it the moment it arrives.
                     </p>
                 </div>
             </div>
@@ -289,7 +289,7 @@ function StepEmailForwarding({ onNext, onBack }) {
                         <p className="font-medium mb-2">Quick set-up (Gmail):</p>
                         <ol className="list-decimal pl-5 space-y-1 text-muted-k">
                             <li>Open the most recent statement email from your provider.</li>
-                            <li>Settings → <em>Forwarding and POP/IMAP → Add a forwarding address</em>, paste your Kindred address.</li>
+                            <li>Settings → <em>Forwarding and POP/IMAP → Add a forwarding address</em>, paste your Wayly address.</li>
                             <li>Confirm via the email we send, then create a filter that matches the provider's "From" address.</li>
                         </ol>
                         <p className="mt-3 text-xs text-muted-k">Outlook? Settings → Mail → Rules → Add new rule. Apple Mail? Mail → Settings → Rules.</p>

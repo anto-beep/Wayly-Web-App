@@ -182,7 +182,7 @@ export default function StatementDetail() {
                     data-testid="ask-kindred-cta"
                     className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90"
                 >
-                    <MessageCircle className="h-4 w-4" /> Ask Kindred about this
+                    <MessageCircle className="h-4 w-4" /> Ask Wayly about this
                 </Link>
             </div>
         </div>

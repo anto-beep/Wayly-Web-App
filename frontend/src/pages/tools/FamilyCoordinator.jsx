@@ -83,7 +83,7 @@ export default function FamilyCoordinator() {
 
                 {msgs.length >= 6 && (
                     <div className="mt-4 bg-surface-2 rounded-xl p-4 border border-kindred text-sm text-primary-k">
-                        Want Kindred to do this for your specific household — with your statements, budget, and care plan in context? <Link to="/signup" className="underline font-medium">Start free trial</Link>
+                        Want Wayly to do this for your specific household — with your statements, budget, and care plan in context? <Link to="/signup" className="underline font-medium">Start free trial</Link>
                     </div>
                 )}
             </section>

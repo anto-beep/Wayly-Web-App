@@ -28,7 +28,7 @@ const TOOLS = [
 ];
 
 const WEDGE = [
-    { icon: FileSearch, title: "Statement Auto‑Decode", body: "Forward the participant's statement to a private Kindred email; you'll have a Sunday digest by Monday morning." },
+    { icon: FileSearch, title: "Statement Auto‑Decode", body: "Forward the participant's statement to a private Wayly email; you'll have a Sunday digest by Monday morning." },
     { icon: AlertTriangle, title: "Anomaly Watch", body: "Rate spikes, duplicates, missing entitlements — flagged the day they show up, not the month after." },
     { icon: Wallet, title: "Budget Tracker", body: "Live position across Clinical · Independence · Everyday Living. Knows about rollover and the 10% care‑management deduction." },
     { icon: BarChart3, title: "Lifetime Cap Forecast", body: "Where you are vs. the $135,318.69 cap (or $84,571.66 grandfathered). Projected years, not just numbers." },
@@ -105,12 +105,12 @@ export default function Features() {
 
             {/* HERO */}
             <section className="mx-auto max-w-7xl px-6 pt-14 pb-8" data-testid="features-hero">
-                <span className="overline">Everything Kindred does</span>
+                <span className="overline">Everything Wayly does</span>
                 <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4 leading-tight max-w-3xl">
                     Eight AI tools, plus a connected co‑pilot for the whole household.
                 </h1>
                 <p className="mt-5 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    Kindred sits on top of Australia's Support at Home program. It reads the statements, watches the budget, drafts the letters,
+                    Wayly sits on top of Australia's Support at Home program. It reads the statements, watches the budget, drafts the letters,
                     and makes sure no one in the family is the only one paying attention.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
@@ -146,13 +146,13 @@ export default function Features() {
                 </div>
             </Section>
 
-            <Section id="wedge" eyebrow="The Wedge" title="Forward your statement. Sleep through Sunday." sub="The paid product turns Kindred from a calculator into a co‑pilot. It watches every statement, every charge, every plan, every week.">
+            <Section id="wedge" eyebrow="The Wedge" title="Forward your statement. Sleep through Sunday." sub="The paid product turns Wayly from a calculator into a co‑pilot. It watches every statement, every charge, every plan, every week.">
                 <div className="grid sm:grid-cols-2 gap-5">
                     {WEDGE.map((w) => <Card key={w.title} {...w} />)}
                 </div>
             </Section>
 
-            <Section id="caregiver" eyebrow="For the primary caregiver" title="Thirty‑second oversight. Everything else when you want it." sub="You're working, parenting, sleeping. Kindred is your second brain for the parts of caregiving that don't fit in a Google calendar.">
+            <Section id="caregiver" eyebrow="For the primary caregiver" title="Thirty‑second oversight. Everything else when you want it." sub="You're working, parenting, sleeping. Wayly is your second brain for the parts of caregiving that don't fit in a Google calendar.">
                 <div className="grid sm:grid-cols-2 gap-5">
                     {CAREGIVER.map((w) => <Card key={w.title} {...w} />)}
                 </div>

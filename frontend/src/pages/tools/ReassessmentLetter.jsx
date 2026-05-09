@@ -103,7 +103,7 @@ export default function ReassessmentLetter() {
                         <div className="bg-surface border border-kindred rounded-xl p-6 whitespace-pre-wrap text-sm text-primary-k leading-relaxed font-mono">{letter}</div>
                         <p className="text-xs text-muted-k italic">Always review before sending. Remove anything that doesn't sound like you, add anything missing.</p>
                         <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
-                            <div className="font-medium text-primary-k">Want Kindred to track the response?</div>
+                            <div className="font-medium text-primary-k">Want Wayly to track the response?</div>
                             <p className="text-sm text-muted-k mt-1">Paid plans watch for the My Aged Care reply, log it to your audit trail, and walk you through the next steps.</p>
                             <div className="mt-3 flex items-center gap-3 flex-wrap">
                                 <Link to="/signup" className="inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>

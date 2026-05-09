@@ -75,7 +75,7 @@ export default function Contact() {
                 </h1>
                 <p className="mt-5 text-lg text-muted-k max-w-2xl leading-relaxed">
                     {isDemo
-                        ? "We'll show you how Kindred decodes statements, watches the budget, and keeps the whole family on the same page — using a sample household so you can see it work end‑to‑end. No card, no commitment."
+                        ? "We'll show you how Wayly decodes statements, watches the budget, and keeps the whole family on the same page — using a sample household so you can see it work end‑to‑end. No card, no commitment."
                         : "Whether you want a guided product walkthrough, a partnership conversation, or just a question answered — fill in the form and we'll respond within one business day."}
                 </p>
             </section>
@@ -226,7 +226,7 @@ export default function Contact() {
                             )}
 
                             <p className="text-xs text-muted-k">
-                                By submitting, you consent to Kindred contacting you about this enquiry. We don't add you to any list. Australian‑hosted, never sold.
+                                By submitting, you consent to Wayly contacting you about this enquiry. We don't add you to any list. Australian‑hosted, never sold.
                             </p>
 
                             <button
@@ -246,7 +246,7 @@ export default function Contact() {
                     <div className="bg-surface border border-kindred rounded-xl p-5">
                         <Mail className="h-5 w-5 text-primary-k" />
                         <div className="overline mt-3">Email</div>
-                        <a href="mailto:hello@kindred.au" className="block mt-1 text-primary-k">hello@kindred.au</a>
+                        <a href="mailto:hello@wayly.com.au" className="block mt-1 text-primary-k">hello@wayly.com.au</a>
                     </div>
                     <div className="bg-surface border border-kindred rounded-xl p-5">
                         <MapPin className="h-5 w-5 text-primary-k" />

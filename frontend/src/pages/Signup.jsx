@@ -114,7 +114,7 @@ export default function Signup() {
                     <div className="h-8 w-8 rounded-full bg-primary-k flex items-center justify-center">
                         <HeartHandshake className="h-4 w-4 text-white" />
                     </div>
-                    <span className="font-heading text-lg text-primary-k">Kindred</span>
+                    <span className="font-heading text-lg text-primary-k">Wayly</span>
                 </Link>
 
                 <div className="grid lg:grid-cols-5 gap-8">

@@ -1,7 +1,7 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 
-const DEFAULT_TEXT = "Kindred's AI tools are designed to help you understand your Support at Home funding — but they are not always accurate. Results may contain errors, omissions, or misinterpretations. Always verify important figures with your provider or My Aged Care before taking action. This is not financial, legal, or clinical advice.";
+const DEFAULT_TEXT = "Wayly's AI tools are designed to help you understand your Support at Home funding — but they are not always accurate. Results may contain errors, omissions, or misinterpretations. Always verify important figures with your provider or My Aged Care before taking action. This is not financial, legal, or clinical advice.";
 
 /**
  * AIAccuracyBanner
@@ -50,7 +50,7 @@ export const TOOL_DISCLAIMERS = {
     "budget-calculator": "This calculator produces estimates based on current Support at Home program rates. Figures are indicative only and may not reflect your exact entitlements. Verify with your provider or My Aged Care. Not financial advice.",
     "provider-price-checker": "Price comparisons are based on available published data and may not reflect a provider's most current price schedule. Prices listed are indicative. Contact your provider directly to confirm current rates. Not financial advice.",
     "classification-self-check": "This tool provides an indicative classification estimate only. Only My Aged Care and the Independent Assessment Tool can assign a formal classification. This tool does not replace an official assessment. Results are for information purposes only.",
-    "reassessment-letter": "This tool drafts letters for your review. Always read the full draft before sending. The AI may make errors — check all dates, names, and facts against your own records. Sending a letter is your decision. Kindred does not send anything on your behalf without your explicit review and action.",
+    "reassessment-letter": "This tool drafts letters for your review. Always read the full draft before sending. The AI may make errors — check all dates, names, and facts against your own records. Sending a letter is your decision. Wayly does not send anything on your behalf without your explicit review and action.",
     "contribution-estimator": "Contribution estimates are based on current program rates and the pension status you have entered. Your actual contribution depends on your exact income assessment, which only Services Australia can determine. These figures are indicative only. Not financial advice.",
     "care-plan-reviewer": "This tool checks your care plan against program guidelines and is for information only. It does not constitute clinical advice. Decisions about your care should be made in consultation with your care manager and healthcare providers.",
     "family-coordinator": "This AI assistant answers questions about the Support at Home program based on publicly available information. It may make errors or be out of date. For urgent issues contact My Aged Care on 1800 200 422. For advocacy support contact OPAN on 1800 700 600. This is not legal, financial, or clinical advice.",

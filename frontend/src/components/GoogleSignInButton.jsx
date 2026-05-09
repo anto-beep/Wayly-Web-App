@@ -9,7 +9,7 @@ export default function GoogleSignInButton({ label = "Continue with Google", tes
     const onClick = () => {
         // Persist the user's plan intent so we can resume after the OAuth round-trip.
         if (planIntent && ["solo", "family"].includes(planIntent)) {
-            try { localStorage.setItem("kindred_plan_intent", planIntent); } catch {}
+            try { localStorage.setItem("wayly_plan_intent", planIntent); } catch {}
         }
         // Derive the redirect URL dynamically — never hardcode.
         const redirectUrl = window.location.origin + "/auth/callback";

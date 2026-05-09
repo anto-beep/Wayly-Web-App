@@ -4,8 +4,8 @@ import { MessageCircle, X, Send, Loader2, Sparkles } from "lucide-react";
 import { api, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
-const STORAGE_KEY = "kindred_help_chat_v1";
-const SESSION_KEY = "kindred_help_chat_session_v1";
+const STORAGE_KEY = "wayly_help_chat_v1";
+const SESSION_KEY = "wayly_help_chat_session_v1";
 
 const PUBLIC_SUGGESTIONS = [
     "What's included in the Family plan?",
@@ -81,7 +81,7 @@ export default function FloatingHelpChat() {
     const suggestions = isAuthed ? APP_SUGGESTIONS : PUBLIC_SUGGESTIONS;
     const headerSubtitle = isAuthed
         ? "Ask about your statements, budget, anomalies — anything."
-        : "Plain-English answers about Kindred & Support at Home.";
+        : "Plain-English answers about Wayly & Support at Home.";
 
     const send = useCallback(
         async (text) => {
@@ -103,7 +103,7 @@ export default function FloatingHelpChat() {
                 setMessages((prev) => [...prev, { role: "assistant", text: data?.reply || "Sorry, I had trouble with that.", ts: Date.now() }]);
                 if (!open) setUnread(true);
             } catch (err) {
-                const msg = extractErrorMessage(err, "I'm having trouble right now. Try again in a moment, or email help@kindred.au.");
+                const msg = extractErrorMessage(err, "I'm having trouble right now. Try again in a moment, or email help@wayly.com.au.");
                 setMessages((prev) => [...prev, { role: "assistant", text: msg, ts: Date.now(), error: true }]);
             } finally {
                 setSending(false);
@@ -138,7 +138,7 @@ export default function FloatingHelpChat() {
             {open && (
                 <div
                     role="dialog"
-                    aria-label="Kindred help chat"
+                    aria-label="Wayly help chat"
                     data-testid="help-chat-panel"
                     className="fixed bottom-24 md:bottom-28 right-3 md:right-5 z-[60] w-[min(380px,calc(100vw-1.5rem))] h-[min(540px,calc(100vh-12rem))] md:h-[min(540px,calc(100vh-9rem))] bg-surface border border-kindred rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-help-chat-in"
                     style={{}}
@@ -148,7 +148,7 @@ export default function FloatingHelpChat() {
                         <div>
                             <div className="flex items-center gap-2">
                                 <Sparkles className="h-4 w-4 text-gold" />
-                                <span className="font-heading text-base">{isAuthed ? "Your Kindred assistant" : "Kindred Help"}</span>
+                                <span className="font-heading text-base">{isAuthed ? "Your Wayly assistant" : "Wayly Help"}</span>
                             </div>
                             <p className="text-[11px] text-white/70 mt-0.5">{headerSubtitle}</p>
                         </div>
@@ -171,7 +171,7 @@ export default function FloatingHelpChat() {
                                 <p className="text-muted-k text-xs mt-1">
                                     {isAuthed
                                         ? "I can answer questions about your statements, budget, anomalies, and the Support at Home program."
-                                        : "Ask about plans, the Statement Decoder, the Support at Home program, or anything else about Kindred."}
+                                        : "Ask about plans, the Statement Decoder, the Support at Home program, or anything else about Wayly."}
                                 </p>
                             </div>
                         )}
@@ -181,7 +181,7 @@ export default function FloatingHelpChat() {
                         {sending && (
                             <div className="flex items-center gap-2 text-xs text-muted-k pl-1" data-testid="help-chat-typing">
                                 <Loader2 className="h-3 w-3 animate-spin" />
-                                Kindred is thinking…
+                                Wayly is thinking…
                             </div>
                         )}
                         {showSuggestions && (

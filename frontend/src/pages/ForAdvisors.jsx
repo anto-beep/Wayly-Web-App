@@ -42,7 +42,7 @@ export default function ForAdvisors() {
                     <div className="bg-surface border border-kindred rounded-2xl p-8">
                         <span className="overline">A real example</span>
                         <p className="mt-3 text-primary-k leading-relaxed">
-                            "We were spending three hours per client meeting building the aged-care position by hand. Kindred's review pack cuts that to twenty minutes — and the lifetime-cap forecasts have made a planning conversation possible that didn't exist before."
+                            "We were spending three hours per client meeting building the aged-care position by hand. Wayly's review pack cuts that to twenty minutes — and the lifetime-cap forecasts have made a planning conversation possible that didn't exist before."
                         </p>
                         <div className="mt-5 text-sm text-muted-k">— Director, Geelong-based wealth firm (anonymised pending case study consent)</div>
                     </div>
@@ -73,10 +73,10 @@ export default function ForAdvisors() {
                     <h2 className="font-heading text-3xl text-primary-k mt-3 tracking-tight">The two screens you'll spend most of your day on.</h2>
                 </div>
                 <div className="mt-10 grid lg:grid-cols-2 gap-6 hidden md:grid">
-                    <BrowserFrame url="app.kindred.au/clients/budget" scale={0.7} label="Budget and lifetime cap forecasting view">
+                    <BrowserFrame url="app.wayly.com.au/clients/budget" scale={0.7} label="Budget and lifetime cap forecasting view">
                         <ScreenshotBudget />
                     </BrowserFrame>
-                    <BrowserFrame url="app.kindred.au/clients/dashboard" scale={0.7} label="Client overview dashboard">
+                    <BrowserFrame url="app.wayly.com.au/clients/dashboard" scale={0.7} label="Client overview dashboard">
                         <ScreenshotDashboard />
                     </BrowserFrame>
                 </div>

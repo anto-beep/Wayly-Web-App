@@ -36,7 +36,7 @@ const ANOMALY = {
 const FAMILY = [
     { who: "Cathy", when: "Sat 9:14am", body: "Just saw the OT report from last week — Priya thinks we should put a handrail in the laundry. Anyone got opinions?" },
     { who: "Karen", when: "Sat 11:02am", body: "Yes please — she's been complaining about that step for months. Can we use AT-HM funding for it?" },
-    { who: "Kindred", when: "Sat 11:04am", body: "Hand rails are eligible under AT-HM Tier 1. Dorothy's tier was assessed Tier 1 in November. Estimated cost $200–$450 in Geelong. Want me to draft a request to Bluebell?" },
+    { who: "Wayly", when: "Sat 11:04am", body: "Hand rails are eligible under AT-HM Tier 1. Dorothy's tier was assessed Tier 1 in November. Estimated cost $200–$450 in Geelong. Want me to draft a request to Bluebell?" },
     { who: "Cathy", when: "Sat 12:30pm", body: "Yes please. Get a non-Bluebell quote too so we can compare." },
 ];
 
@@ -187,7 +187,7 @@ export default function Demo() {
                 <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
                     Dorothy is 79, lives alone in Geelong, on Classification 4. Her daughter Cathy runs her care from Melbourne. Her sister Karen lives in Sydney. Their advisor Mark sees only the financial picture. Toggle between their views.
                 </p>
-                <p className="mt-3 text-sm text-muted-k italic">All data on this page is fabricated. Dorothy isn't a real person, the provider isn't a real provider — but the experience is exactly what real Kindred families see.</p>
+                <p className="mt-3 text-sm text-muted-k italic">All data on this page is fabricated. Dorothy isn't a real person, the provider isn't a real provider — but the experience is exactly what real Wayly families see.</p>
             </section>
 
             <section className="mx-auto max-w-6xl px-6 pb-4">

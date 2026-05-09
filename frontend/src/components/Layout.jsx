@@ -11,7 +11,7 @@ import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 const primaryNav = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, mobile: true },
     { to: "/app/statements", label: "Statements", icon: FileText, mobile: true },
-    { to: "/app/chat", label: "Ask Kindred", icon: MessageCircle, mobile: true },
+    { to: "/app/chat", label: "Ask Wayly", icon: MessageCircle, mobile: true },
     { to: "/app/family", label: "Family", icon: Users },
     { to: "/app/audit", label: "Audit log", icon: ScrollText },
 ];
@@ -51,7 +51,7 @@ export default function Layout({ children }) {
                             <HeartHandshake className="h-4 w-4 md:h-5 md:w-5 text-white" />
                         </div>
                         <div className="leading-tight min-w-0">
-                            <div className="font-heading text-base md:text-lg font-medium tracking-tight text-primary-k truncate">Kindred</div>
+                            <div className="font-heading text-base md:text-lg font-medium tracking-tight text-primary-k truncate">Wayly</div>
                             <div className="overline hidden md:block">Support at Home, in plain English</div>
                         </div>
                     </Link>

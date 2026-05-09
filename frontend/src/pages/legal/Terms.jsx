@@ -4,22 +4,22 @@ import LegalPage from "./LegalPage";
 export default function Terms() {
     return (
         <LegalPage title="Terms of Service" lastUpdated="February 2026">
-            <h2>1. What Kindred is and is not</h2>
+            <h2>1. What Wayly is and is not</h2>
             <p>
-                Kindred is an information tool. It is not a registered aged-care provider, financial adviser,
-                legal adviser, or healthcare provider. Nothing on Kindred is advice of any kind. AI outputs
+                Wayly is an information tool. It is not a registered aged-care provider, financial adviser,
+                legal adviser, or healthcare provider. Nothing on Wayly is advice of any kind. AI outputs
                 may contain errors. Always verify before acting.
             </p>
 
             <h2>2. What you are agreeing to</h2>
             <p>
-                By using Kindred you agree to use it only for lawful purposes, not to share your account,
+                By using Wayly you agree to use it only for lawful purposes, not to share your account,
                 and to verify AI outputs before acting on them.
             </p>
 
             <h2>3. AI accuracy and limitation of liability</h2>
             <p>
-                Kindred's AI tools may produce incorrect results. Kindred is not responsible for losses
+                Wayly's AI tools may produce incorrect results. Wayly is not responsible for losses
                 arising from reliance on AI-generated outputs. Our liability to you is capped at the amount
                 you paid us in the 12 months before any claim. We are not liable for consequential or
                 indirect losses.

@@ -5,7 +5,7 @@ export default function Cookies() {
     return (
         <LegalPage title="Cookie Policy" lastUpdated="February 2026">
             <p>
-                Kindred uses a small number of cookies to make the product work. We do not use advertising
+                Wayly uses a small number of cookies to make the product work. We do not use advertising
                 cookies or tracking cookies for third-party advertising purposes.
             </p>
 
@@ -37,7 +37,7 @@ export default function Cookies() {
 
             <h2>How to disable</h2>
             <p>
-                Manage cookies in your browser settings. Disabling essential cookies will prevent Kindred
+                Manage cookies in your browser settings. Disabling essential cookies will prevent Wayly
                 from working correctly.
             </p>
         </LegalPage>

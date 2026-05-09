@@ -75,7 +75,7 @@ export default function DecoderResultView({ result }) {
             {result.partial_result && (
                 <div className="bg-gold/15 border border-gold/40 rounded-lg p-4 text-sm text-primary-k" data-testid="decoder-partial-warning">
                     <div className="font-medium">Partial result</div>
-                    We had trouble reading parts of this statement. Here's what we could extract — a Kindred team member will review the rest within a few hours.
+                    We had trouble reading parts of this statement. Here's what we could extract — a Wayly team member will review the rest within a few hours.
                 </div>
             )}
 

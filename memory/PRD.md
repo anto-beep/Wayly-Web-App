@@ -483,6 +483,43 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 36 — Feb 2026 · Wayly rebrand · Share dashboard with family)
+
+### Brand: Kindred → Wayly
+- Bulk-replaced every user-visible "Kindred" → "Wayly" across the codebase via word-boundary `sed` so only standalone occurrences flip (CSS class names like `bg-kindred` and CSS variables like `--kindred-primary` are intentionally left as internal tokens — renaming them would touch 57+ files for zero user-visible benefit).
+- Replaced every `kindred.au` URL → `wayly.com.au` in JS/JSX/HTML/JSON/Python.
+- Renamed inbound mail domain default: `inbound.kindred.au` → `inbound.wayly.com.au`.
+- Renamed localStorage keys: `kindred_help_chat` → `wayly_help_chat`, `kindred_trial_ending_dismissed` → `wayly_trial_ending_dismissed`, `kindred_a2hs_dismissed` → `wayly_a2hs_dismissed`, `kindred_plan_intent` → `wayly_plan_intent`.
+- Updated `manifest.json` (`name`, `short_name`, `description`), `index.html` `<title>`, `<meta apple-mobile-web-app-title>`, `<meta description>`.
+- Updated `backend/.env`: `SENDER_EMAIL=Wayly <onboarding@resend.dev>` (the from-name visible in subscriber inboxes; the email address itself stays on Resend's sandbox until the Wayly domain is verified post-registration).
+- Verified: `grep -rn "Kindred" frontend/src backend` returns 0 hits; landing-page title is `Wayly — Aged-care concierge for Australian families` and body text contains "Wayly" not "Kindred".
+
+### "Share dashboard with family" feature
+- New backend endpoint `POST /api/dashboard/share` in `/app/backend/server.py`:
+  - Auto-includes every active household member + every pending invite as recipients.
+  - Accepts `extra_emails: List[EmailStr]` (max 10) and an optional 600-char `note`.
+  - Computes the current-quarter snapshot (per-stream burn, lifetime cap, top 5 anomalies sorted by severity from the latest 3 statements).
+  - Renders a Wayly-branded HTML email body with:
+    - Stream table (Spent / Cap / %)
+    - Lifetime contribution cap row
+    - Top 5 anomalies styled with severity tags
+    - Optional personal note in a gold-bordered blockquote
+    - Caregiver attribution + "View full dashboard at wayly.com.au/app"
+  - Sends via the existing `email_service.email_tool_result()` (Resend pipeline). Returns `{sent_to, failures, count}`.
+- New frontend `<ShareDashboardButton />` in `/app/frontend/src/components/ShareDashboardButton.jsx` — pill button + modal with extra-recipient rows (1-10), 600-char personal note + counter, sends and toasts the result.
+- Wired into `/app/frontend/src/pages/CaregiverDashboard.jsx` next to the "Upload a statement" CTA. Hidden on the Free plan.
+- Live verified: `POST /api/dashboard/share` with Cathy's account → sent to 6 recipients (5 existing family + 1 extra), zero failures.
+
+### Files changed
+- New: `/app/frontend/src/components/ShareDashboardButton.jsx`
+- `/app/backend/server.py` — added `ShareDashboardBody` model + `POST /api/dashboard/share` endpoint.
+- `/app/frontend/src/pages/CaregiverDashboard.jsx` — wired Share button into header.
+- 50+ files touched by global Wayly rebrand (sed across `frontend/src`, `backend/`, `frontend/public/`, top-level `README`).
+
+### Mobile Agent + custom domain — guidance only
+- The user is about to start a Mobile Agent project. The existing FastAPI backend stays on this project. Mobile Agent project will hit it via `REACT_NATIVE_API_URL`. Full step-by-step provided via support agent (Home → Agent dropdown → "Mobile" → new task; provide API base URL + endpoints list + brand colours on day 1).
+- For `wayly.com.au` custom domain: Home → app → Link domain → Entri → enter `wayly.com.au` → follow Entri DNS instructions at registrar (remove existing A records first, add CNAME / A pointed to Emergent). SSL automatic, propagation 5-15 minutes typical.
+
 ## Implemented (Iteration 35 — Feb 2026 · Onboarding wizard · Dashboard insights · Day-3 nudge · A2HS prompt · Emergent badge removed)
 
 ### Onboarding flow rewrite (4-step wizard)

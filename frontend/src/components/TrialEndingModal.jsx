@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
  * free trial. Dismissible. Persists dismissal so we don't nag every page-view.
  */
 
-const DISMISS_KEY = "kindred_trial_ending_dismissed_v1";
+const DISMISS_KEY = "wayly_trial_ending_dismissed_v1";
 
 const HIDE_ON_PATHS = [
     "/login", "/signup", "/forgot", "/reset",

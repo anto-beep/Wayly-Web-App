@@ -36,8 +36,8 @@ export default function AuthCallback() {
                 // chose Solo/Family before clicking the Google button on /signup.
                 let planIntent = null;
                 try {
-                    planIntent = localStorage.getItem("kindred_plan_intent");
-                    localStorage.removeItem("kindred_plan_intent");
+                    planIntent = localStorage.getItem("wayly_plan_intent");
+                    localStorage.removeItem("wayly_plan_intent");
                 } catch {}
                 if (planIntent === "solo" || planIntent === "family") {
                     if ((user?.plan || "free") === "free") {

@@ -58,7 +58,7 @@ export default function Trust() {
                 <span className="overline">Trust &amp; privacy</span>
                 <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4 leading-tight">Built for the most vulnerable data of all.</h1>
                 <p className="mt-5 text-lg text-muted-k leading-relaxed">
-                    Kindred handles health information for older Australians and detailed financial information for their families. We treat that responsibility as the entire product, not a footer link.
+                    Wayly handles health information for older Australians and detailed financial information for their families. We treat that responsibility as the entire product, not a footer link.
                 </p>
             </section>
 

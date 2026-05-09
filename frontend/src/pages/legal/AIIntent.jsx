@@ -13,8 +13,8 @@ export default function AIIntent() {
 
             <h3>1. We will listen</h3>
             <p>
-                If you contact us because a Kindred AI output produced an error that caused you a problem,
-                we will take it seriously. Contact: <a href="mailto:errors@kindred.au">errors@kindred.au</a>{" "}
+                If you contact us because a Wayly AI output produced an error that caused you a problem,
+                we will take it seriously. Contact: <a href="mailto:errors@wayly.com.au">errors@wayly.com.au</a>{" "}
                 with the subject line "AI Error Report". We will acknowledge your report within 2 business
                 days.
             </p>
@@ -34,7 +34,7 @@ export default function AIIntent() {
 
             <h3>4. We will act</h3>
             <p>
-                Where a Kindred AI error directly caused you a verifiable financial loss, we will work with
+                Where a Wayly AI error directly caused you a verifiable financial loss, we will work with
                 you to understand the impact and determine an appropriate response. This may include a
                 refund, a credit, or other remedy depending on the circumstances.
             </p>
@@ -51,7 +51,7 @@ export default function AIIntent() {
 
             <h2>How to report an AI error</h2>
             <p>
-                Email: <a href="mailto:errors@kindred.au">errors@kindred.au</a><br />
+                Email: <a href="mailto:errors@wayly.com.au">errors@wayly.com.au</a><br />
                 Subject: AI Error Report<br />
                 Include: your account email, the date of the output, a description of the error, and what
                 happened as a result.
@@ -70,7 +70,7 @@ export default function AIIntent() {
                 dispute about a charge), and you are now uncertain whether the AI was correct, the best
                 next step is to verify directly with My Aged Care (1800 200 422) or your provider before
                 escalating further. We are always available to help you understand what the AI output meant:{" "}
-                <a href="mailto:hello@kindred.au">hello@kindred.au</a>.
+                <a href="mailto:hello@wayly.com.au">hello@wayly.com.au</a>.
             </p>
         </LegalPage>
     );

@@ -1,4 +1,4 @@
-"""Pydantic models for Kindred."""
+"""Pydantic models for Wayly."""
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from typing import List, Optional, Literal
 from datetime import datetime, timezone

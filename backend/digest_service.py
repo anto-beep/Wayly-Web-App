@@ -21,7 +21,7 @@ MOOD_COLOUR = {"good": "#7A9B7E", "okay": "#D4A24E", "not_great": "#C5734D"}
 
 
 async def build_digest(db, household: Dict[str, Any], since_days: int = 7) -> Dict[str, Any]:
-    """Aggregate a week's worth of Kindred activity into a JSON digest."""
+    """Aggregate a week's worth of Wayly activity into a JSON digest."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=since_days)
     cutoff_iso = cutoff.isoformat()
     hid = household["id"]
@@ -188,7 +188,7 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
     if chat_q > 0:
         chat_block = (
             f"<p style='margin:20px 0 0;color:#5C6878;font-size:13px;font-style:italic'>"
-            f"{first_name} asked Kindred <strong>{chat_q}</strong> question{'s' if chat_q != 1 else ''} this week. "
+            f"{first_name} asked Wayly <strong>{chat_q}</strong> question{'s' if chat_q != 1 else ''} this week. "
             f"You can see the full history in the app.</p>"
         )
 
@@ -196,7 +196,7 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
 <html><body style="margin:0;background:#FAF7F2;font-family:Helvetica,Arial,sans-serif;color:#1F3A5F">
   <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #e5dfd2;overflow:hidden;margin:24px auto">
     <tr><td style="padding:24px 28px;background:#1F3A5F;color:#fff">
-      <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-.01em">Kindred — the week at {participant}'s</div>
+      <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-.01em">Wayly — the week at {participant}'s</div>
       <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-top:6px">{week}</div>
     </td></tr>
 
@@ -215,11 +215,11 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
     </td></tr>
 
     <tr><td style="padding:16px 28px 28px">
-      <a href="https://kindred.au/app" style="display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 22px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px">Open Kindred</a>
+      <a href="https://wayly.com.au/app" style="display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 22px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px">Open Wayly</a>
     </td></tr>
 
     <tr><td style="padding:16px 28px;background:#F0EBE0;color:#888;font-size:11px;line-height:1.5">
-      You're getting this digest because you're on {participant}'s Family plan. <a href="https://kindred.au/settings/notifications" style="color:#1F3A5F">Change what you get</a> · <a href="https://kindred.au/trust" style="color:#1F3A5F">Privacy</a> · Crisis: Lifeline 13 11 14 · 1800ELDERHelp 1800 353 374.
+      You're getting this digest because you're on {participant}'s Family plan. <a href="https://wayly.com.au/settings/notifications" style="color:#1F3A5F">Change what you get</a> · <a href="https://wayly.com.au/trust" style="color:#1F3A5F">Privacy</a> · Crisis: Lifeline 13 11 14 · 1800ELDERHelp 1800 353 374.
     </td></tr>
   </table>
 </body></html>"""
@@ -236,7 +236,7 @@ async def send_digest_to_members(db, household: Dict[str, Any], recipients: List
             res = await email_service._send({
                 "from": email_service._sender(),
                 "to": [to],
-                "subject": f"Kindred — {digest.get('household_name')}'s week ({digest.get('week_label')})",
+                "subject": f"Wayly — {digest.get('household_name')}'s week ({digest.get('week_label')})",
                 "html": html,
             })
             sent.append({"to": to, **res})

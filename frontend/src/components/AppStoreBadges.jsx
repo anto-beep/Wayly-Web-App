@@ -27,7 +27,7 @@ function AppleBadge({ className = "" }) {
         <a
             href={APP_STORE_URL}
             data-testid="app-store-badge"
-            aria-label="Download Kindred on the App Store"
+            aria-label="Download Wayly on the App Store"
             className={`inline-flex items-center gap-2.5 bg-black text-white rounded-lg px-4 py-2.5 hover:bg-[#1a1a1a] transition-colors ${className}`}
         >
             <svg viewBox="0 0 24 24" className="h-7 w-7 flex-shrink-0" fill="currentColor" aria-hidden="true">
@@ -46,7 +46,7 @@ function GooglePlayBadge({ className = "" }) {
         <a
             href={PLAY_STORE_URL}
             data-testid="play-store-badge"
-            aria-label="Get Kindred on Google Play"
+            aria-label="Get Wayly on Google Play"
             className={`inline-flex items-center gap-2.5 bg-black text-white rounded-lg px-4 py-2.5 hover:bg-[#1a1a1a] transition-colors ${className}`}
         >
             <svg viewBox="0 0 24 24" className="h-7 w-7 flex-shrink-0" aria-hidden="true">

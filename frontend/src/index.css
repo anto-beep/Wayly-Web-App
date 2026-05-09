@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 :root {
-    /* Kindred brand tokens — Warm navy + gold */
+    /* Wayly brand tokens — Warm navy + gold */
     --kindred-bg: #FAF7F2;
     --kindred-surface: #FFFFFF;
     --kindred-surface-2: #F2EEE5;

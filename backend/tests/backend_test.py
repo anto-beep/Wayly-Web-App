@@ -1,4 +1,4 @@
-"""Backend tests for Kindred — Support at Home concierge.
+"""Backend tests for Wayly — Support at Home concierge.
 
 Covers:
 - Auth (signup/login/me)

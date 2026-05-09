@@ -172,7 +172,7 @@ export default function PriceCheckerTool() {
 
                         <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
                             <div className="font-medium text-primary-k">Want every charge checked automatically?</div>
-                            <p className="text-sm text-muted-k mt-1">Kindred compares every line on every statement against published prices and our anonymised network — and tells you the moment something looks off.</p>
+                            <p className="text-sm text-muted-k mt-1">Wayly compares every line on every statement against published prices and our anonymised network — and tells you the moment something looks off.</p>
                             <div className="mt-3 flex items-center gap-3 flex-wrap">
                                 <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
                                 <Link to="/ai-tools/statement-decoder" className="text-sm text-primary-k underline inline-flex items-center gap-1">
@@ -186,7 +186,7 @@ export default function PriceCheckerTool() {
                 <div className="mt-8 bg-surface border border-kindred rounded-xl p-5 text-sm text-muted-k">
                     <div className="overline">How this works</div>
                     <p className="mt-2 leading-relaxed">
-                        Median prices are derived from public provider price lists and anonymised aggregate data from Kindred users (we never share an individual provider's specific data). Government price caps from 1 July 2026 reflect the published draft cap schedule and will be updated on launch.
+                        Median prices are derived from public provider price lists and anonymised aggregate data from Wayly users (we never share an individual provider's specific data). Government price caps from 1 July 2026 reflect the published draft cap schedule and will be updated on launch.
                     </p>
                 </div>
             </section>

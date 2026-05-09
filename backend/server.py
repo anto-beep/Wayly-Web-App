@@ -1,4 +1,4 @@
-"""Kindred — backend API."""
+"""Wayly — backend API."""
 import os
 import io
 import csv
@@ -71,7 +71,7 @@ mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ["DB_NAME"]]
 
-app = FastAPI(title="Kindred API")
+app = FastAPI(title="Wayly API")
 api = APIRouter(prefix="/api")
 
 
@@ -301,9 +301,9 @@ async def forgot_password(body: ForgotBody, request: Request):
             await email_service.email_tool_result(
                 to=user["email"],
                 tool_name="Password reset",
-                headline="Reset your Kindred password",
+                headline="Reset your Wayly password",
                 body_html=(
-                    f"<p>Someone (hopefully you) requested a password reset for your Kindred account.</p>"
+                    f"<p>Someone (hopefully you) requested a password reset for your Wayly account.</p>"
                     f"<p><a href='{reset_url}' style='display:inline-block;background:#1F3A5F;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none'>Reset password</a></p>"
                     f"<p style='color:#6B7280;font-size:13px'>This link expires in 60 minutes. If you didn't request this, ignore this email — your password has not changed.</p>"
                 ),
@@ -344,11 +344,11 @@ async def send_verify(user_id: str = Depends(get_current_user_id), request: Requ
         await email_service.email_tool_result(
             to=u["email"],
             tool_name="Verify your email",
-            headline=f"Confirm your Kindred account, {u['name'].split(' ')[0]}",
+            headline=f"Confirm your Wayly account, {u['name'].split(' ')[0]}",
             body_html=(
-                f"<p>Welcome to Kindred. Tap the button below to confirm this email address.</p>"
+                f"<p>Welcome to Wayly. Tap the button below to confirm this email address.</p>"
                 f"<p><a href='{verify_url}' style='display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Confirm email</a></p>"
-                f"<p style='color:#6B7280;font-size:13px'>If you didn't create a Kindred account, ignore this email.</p>"
+                f"<p style='color:#6B7280;font-size:13px'>If you didn't create a Wayly account, ignore this email.</p>"
             ),
         )
     except Exception as e:
@@ -414,10 +414,10 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
     try:
         await email_service.email_tool_result(
             to=body.email,
-            tool_name="Kindred family invitation",
-            headline=f"{u['name']} invited you to {hh_name}'s Kindred",
+            tool_name="Wayly family invitation",
+            headline=f"{u['name']} invited you to {hh_name}'s Wayly",
             body_html=(
-                f"<p>{u['name']} wants you involved as a <strong>{body.role.replace('_', ' ')}</strong> on {hh_name}'s Kindred household.</p>"
+                f"<p>{u['name']} wants you involved as a <strong>{body.role.replace('_', ' ')}</strong> on {hh_name}'s Wayly household.</p>"
                 f"{('<p><em>Note from ' + u['name'].split(' ')[0] + ':</em> ' + body.note + '</p>') if body.note else ''}"
                 f"<p><a href='{accept_url}' style='display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invitation</a></p>"
                 f"<p style='color:#6B7280;font-size:13px'>Invitation expires in {INVITE_EXPIRY_DAYS} days.</p>"
@@ -446,6 +446,141 @@ async def list_members(user_id: str = Depends(get_current_user_id)):
         "role": "primary", "status": "active", "joined_at": household.get("created_at", ""),
     }
     return {"members": [owner_row] + members, "invites": invites}
+
+
+# -- Share dashboard: email a snapshot to all family members or a custom list --
+class ShareDashboardBody(BaseModel):
+    extra_emails: List[EmailStr] = Field(default_factory=list, max_length=10)
+    note: Optional[str] = Field(default="", max_length=600)
+
+
+@api.post("/dashboard/share")
+async def share_dashboard(body: ShareDashboardBody, user_id: str = Depends(get_current_user_id)):
+    """Email an HTML snapshot of the current quarter dashboard to:
+       - all active household members + pending invites
+       - PLUS any extra recipients the caller supplied.
+    Uses the same Resend pipeline as the weekly digest.
+    Returns {sent_to: [emails], failures: [emails]}."""
+    h = await _require_household(user_id)
+    sender = await _get_user(user_id)
+    # Build recipient list (deduped).
+    recips: list[str] = []
+    members = await db.household_members.find({"household_id": h["id"], "status": "active"}, {"_id": 0, "email": 1}).to_list(20)
+    invites = await db.invites.find({"household_id": h["id"], "status": "pending"}, {"_id": 0, "email": 1}).to_list(20)
+    for r in [*members, *invites]:
+        em = (r.get("email") or "").strip().lower()
+        if em and em not in recips:
+            recips.append(em)
+    for em in body.extra_emails:
+        em = str(em).strip().lower()
+        if em and em not in recips:
+            recips.append(em)
+    if not recips:
+        raise HTTPException(status_code=400, detail="No recipients — invite family or add an email address.")
+    if len(recips) > 15:
+        raise HTTPException(status_code=400, detail="Too many recipients in a single send (max 15).")
+
+    # Compute current-quarter snapshot (reuses budget logic)
+    docs = await db.statements.find({"household_id": h["id"]}, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1).to_list(50)
+    all_items: list[dict] = []
+    for s in docs:
+        all_items.extend(s.get("line_items", []))
+    q_start, q_end, q_label = budget_lib.get_quarter_window()
+    burn = budget_lib.compute_burn(all_items, q_start, q_end)
+    allocations = budget_lib.stream_allocations(h.get("classification") or 4)
+    quarterly_total = budget_lib.quarterly_budget(h.get("classification") or 4)
+    cap_amount = budget_lib.lifetime_cap(h.get("is_grandfathered", False))
+    contributions_total = budget_lib.compute_contributions(all_items)
+    # Top 5 anomalies across recent statements
+    recent_anoms: list[dict] = []
+    for s in docs[:3]:
+        for a in s.get("anomalies") or []:
+            recent_anoms.append({**a, "_period": s.get("period_label") or s.get("filename")})
+    recent_anoms.sort(key=lambda a: {"alert": 0, "warning": 1, "info": 2}.get((a.get("severity") or "").lower(), 3))
+    top_anoms = recent_anoms[:5]
+
+    def fmt(n):
+        try:
+            return f"${float(n):,.2f}"
+        except Exception:
+            return "$0.00"
+
+    streams_html = ""
+    for s in budget_lib.STREAMS:
+        spent = burn.get(s, 0.0)
+        cap = allocations.get(s, 0.0)
+        pct = (spent / cap * 100) if cap else 0
+        streams_html += (
+            f"<tr><td style='padding:6px 8px;'>{s}</td>"
+            f"<td style='padding:6px 8px;text-align:right;'>{fmt(spent)} / {fmt(cap)}</td>"
+            f"<td style='padding:6px 8px;text-align:right;color:{'#A0522D' if pct > 100 else '#1F3A5F'};'>{pct:.0f}%</td></tr>"
+        )
+
+    anom_html = "".join(
+        f"<li><strong>[{(a.get('severity') or 'info').upper()}]</strong> {a.get('title','')}<br>"
+        f"<span style='color:#5A6470;font-size:13px;'>{(a.get('detail') or '')[:200]}{'…' if len(a.get('detail') or '') > 200 else ''}"
+        f" <em style='color:#9aa3b0'>(from {a.get('_period','')})</em></span></li>"
+        for a in top_anoms
+    ) or "<li style='color:#5A6470;'>No anomalies caught this quarter — looking good!</li>"
+
+    note_block = (
+        f"<blockquote style='border-left:3px solid #D4A574;margin:12px 0;padding:6px 12px;color:#1F3A5F;background:#fdf6ec;'>"
+        f"{(body.note or '').replace('<', '&lt;').replace('>', '&gt;')}</blockquote>"
+        if body.note and body.note.strip() else ""
+    )
+
+    body_html = f"""
+        <p>Hi,</p>
+        <p>{sender.get('name') or 'Your family caregiver'} is sharing this Wayly dashboard snapshot for <strong>{h.get('participant_name','')}</strong> ({q_label}).</p>
+        {note_block}
+        <h3 style='font-family:Georgia,serif;color:#1F3A5F;margin-top:24px;'>Budget this quarter</h3>
+        <table style='border-collapse:collapse;width:100%;font-size:14px;'>
+            <thead>
+                <tr style='background:#F5F1EA;color:#5A6470;text-align:left;'>
+                    <th style='padding:6px 8px;'>Stream</th>
+                    <th style='padding:6px 8px;text-align:right;'>Spent / Cap</th>
+                    <th style='padding:6px 8px;text-align:right;'>%</th>
+                </tr>
+            </thead>
+            <tbody>{streams_html}</tbody>
+            <tfoot>
+                <tr style='border-top:1px solid #d6c9b3;font-weight:600;'>
+                    <td style='padding:8px;'>Quarterly budget</td>
+                    <td style='padding:8px;text-align:right;'>{fmt(quarterly_total)}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <h3 style='font-family:Georgia,serif;color:#1F3A5F;margin-top:24px;'>Lifetime contribution cap</h3>
+        <p>{fmt(contributions_total)} of {fmt(cap_amount)} ({(contributions_total / cap_amount * 100) if cap_amount else 0:.2f}% used)</p>
+        <h3 style='font-family:Georgia,serif;color:#1F3A5F;margin-top:24px;'>Top anomalies to know</h3>
+        <ul style='font-size:14px;line-height:1.55;color:#1F3A5F;'>{anom_html}</ul>
+        <p style='margin-top:28px;color:#5A6470;font-size:13px;'>
+            View the full dashboard at <a href='https://wayly.com.au/app'>wayly.com.au/app</a>.
+            Forwarded by {sender.get('name','')} ({sender.get('email','')}).
+        </p>
+        <p style='color:#9aa3b0;font-size:11px;margin-top:24px;'>
+            You're receiving this because you're part of the Wayly household for {h.get('participant_name','')}.
+            To stop sharing, ask the primary caregiver to remove you from <em>Settings → Family members</em>.
+        </p>
+    """
+
+    sent: list[str] = []
+    failures: list[str] = []
+    for em in recips:
+        try:
+            await email_service.email_tool_result(
+                to=em,
+                tool_name=f"Wayly snapshot: {h.get('participant_name','')} · {q_label}",
+                headline=f"Dashboard for {h.get('participant_name','')} · {q_label}",
+                body_html=body_html,
+            )
+            sent.append(em)
+        except Exception as e:
+            logger.warning("share_dashboard send failed to %s: %s", em, e)
+            failures.append(em)
+
+    return {"sent_to": sent, "failures": failures, "count": len(sent)}
 
 
 @api.delete("/household/members/{member_user_id}")
@@ -503,7 +638,7 @@ async def accept_invite(body: InviteAcceptBody, user_id: str = Depends(get_curre
             inv["inviter_user_id"],
             "family_messages",
             f"{u['name']} joined your household",
-            f"They're now on the Kindred household as {inv['role'].replace('_', ' ')}.",
+            f"They're now on the Wayly household as {inv['role'].replace('_', ' ')}.",
             "/settings/members",
         )
     except Exception:
@@ -777,7 +912,7 @@ def _generate_inbound_token() -> str:
 
 def _inbound_domain() -> str:
     """Domain the inbound webhook accepts mail at. Configure via env."""
-    return os.environ.get("KINDRED_INBOUND_DOMAIN", "inbound.kindred.au")
+    return os.environ.get("KINDRED_INBOUND_DOMAIN", "inbound.wayly.com.au")
 
 
 async def _ensure_inbound_token(user_id: str) -> str:
@@ -845,7 +980,7 @@ class InboundEmailPayload(BaseModel):
 
 def _extract_token_from_address(addr: str) -> Optional[str]:
     """Pull out the kndrd_xxx token from an address like
-    `statements+kndrd_xxx@inbound.kindred.au` or `kndrd_xxx@inbound.kindred.au`."""
+    `statements+kndrd_xxx@inbound.wayly.com.au` or `kndrd_xxx@inbound.wayly.com.au`."""
     addr = addr.strip().lower()
     # Strip enclosing <...>
     if "<" in addr and ">" in addr:
@@ -890,8 +1025,8 @@ async def inbound_email_webhook(payload: InboundEmailPayload, request: Request):
         try:
             await email_service.email_tool_result(
                 to=str(payload.from_email), tool_name="Couldn't import your statement",
-                headline="We received your email, but your Kindred household isn't set up yet",
-                body_html="<p>Please complete onboarding at <a href='https://kindred.au/onboarding'>kindred.au/onboarding</a> before forwarding statements.</p>",
+                headline="We received your email, but your Wayly household isn't set up yet",
+                body_html="<p>Please complete onboarding at <a href='https://wayly.com.au/onboarding'>wayly.com.au/onboarding</a> before forwarding statements.</p>",
             )
         except Exception:
             pass
@@ -925,7 +1060,7 @@ async def inbound_email_webhook(payload: InboundEmailPayload, request: Request):
                     to=str(payload.from_email),
                     tool_name="Statement received — decoding now",
                     headline="We've received your statement and started decoding",
-                    body_html=f"<p>Your forwarded email arrived safely. We're decoding it now and will save it to your dashboard within ~30 seconds.</p><p>Job ID: <code>{job_id}</code></p><p>— Kindred</p>",
+                    body_html=f"<p>Your forwarded email arrived safely. We're decoding it now and will save it to your dashboard within ~30 seconds.</p><p>Job ID: <code>{job_id}</code></p><p>— Wayly</p>",
                 )
             except Exception:
                 pass
@@ -937,7 +1072,7 @@ async def inbound_email_webhook(payload: InboundEmailPayload, request: Request):
                 body_html=(
                     "<p>We received your email, but it didn't contain a PDF, Word doc, photo, or readable statement text.</p>"
                     "<p>Please forward the original email <em>with</em> the attachment, or upload the file directly at "
-                    "<a href='https://kindred.au/ai-tools/statement-decoder'>kindred.au/ai-tools/statement-decoder</a>.</p>"
+                    "<a href='https://wayly.com.au/ai-tools/statement-decoder'>wayly.com.au/ai-tools/statement-decoder</a>.</p>"
                 ),
             )
         except Exception:
@@ -997,9 +1132,9 @@ async def inbound_email_webhook(payload: InboundEmailPayload, request: Request):
             body_html=(
                 f"<p>Your forwarded statement <strong>{attachment.filename}</strong> arrived safely. "
                 "We're decoding it now and will save it to your dashboard within ~30 seconds.</p>"
-                f"<p>Sign in at <a href='https://kindred.au/app/statements'>kindred.au/app/statements</a> to see the decoded result.</p>"
+                f"<p>Sign in at <a href='https://wayly.com.au/app/statements'>wayly.com.au/app/statements</a> to see the decoded result.</p>"
                 f"<p>Job ID: <code>{job_id}</code></p>"
-                "<p>— Kindred</p>"
+                "<p>— Wayly</p>"
             ),
         )
     except Exception as e:
@@ -1378,7 +1513,7 @@ PRICE_BENCHMARKS = {
 
 async def _run_public_decode(text: str) -> dict:
     """Two-pass statement decoder.
-    Pass 1 (Haiku 4.5): extract every line item with the full Kindred schema.
+    Pass 1 (Haiku 4.5): extract every line item with the full Wayly schema.
     Pass 2 (Sonnet 4.6): audit the extraction against the 10 anomaly rules.
     Both passes must complete before the response is returned.
     """
@@ -1663,7 +1798,7 @@ async def _run_upload_job(
                     user_id,
                     "anomaly_alerts",
                     f"{len(anomalies)} alert{'s' if len(anomalies) != 1 else ''} in {filename}",
-                    f"Kindred flagged {len(anomalies)} thing{'s' if len(anomalies) != 1 else ''} worth a look in the latest statement.",
+                    f"Wayly flagged {len(anomalies)} thing{'s' if len(anomalies) != 1 else ''} worth a look in the latest statement.",
                     f"/app/statements/{statement.id}",
                 )
             except Exception:
@@ -2043,7 +2178,7 @@ async def public_family_coordinator(body: PublicChatBody, request: Request, resp
         }
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     system = (
-        "You are Kindred's Family Care Coordinator — a friendly, expert chat assistant for "
+        "You are Wayly's Family Care Coordinator — a friendly, expert chat assistant for "
         "Australian families navigating the Support at Home program. Tone: the friendliest, "
         "most patient, most well‑informed niece in Australia — calm, specific, never "
         "breathless. Ground answers in: Aged Care Act 2024, Support at Home program manual, "
@@ -2054,7 +2189,7 @@ async def public_family_coordinator(body: PublicChatBody, request: Request, resp
         "dates, or section numbers — say 'I don't have a current figure for that — the "
         "authoritative source is My Aged Care on 1800 200 422'. NEVER give clinical or "
         "financial‑product advice; redirect to the GP / a FAAA‑registered advisor. NEVER "
-        "recommend a specific provider. If asked, you are Kindred's AI; offer human handoff "
+        "recommend a specific provider. If asked, you are Wayly's AI; offer human handoff "
         "with 'type human and I'll connect you'. Keep responses 50–150 words by default, "
         "up to 250 only if needed. End with one soft next step (a relevant tool or guide)."
     )
@@ -2084,12 +2219,12 @@ class HelpChatBody(BaseModel):
 
 
 HELP_CHAT_SYSTEM = (
-    "You are Kindred's friendly help bot, available on every page of kindred.au. "
-    "You answer site-visitor questions about Kindred itself — pricing, plans, AI tools, "
+    "You are Wayly's friendly help bot, available on every page of wayly.com.au. "
+    "You answer site-visitor questions about Wayly itself — pricing, plans, AI tools, "
     "the Support at Home program, and how to use the product. Keep replies short: "
     "1-3 sentences ideally, max 80 words. Use Australian English and a calm, plain tone.\n\n"
     "WHAT KINDRED IS\n"
-    "Kindred is an aged-care concierge for Australian families navigating the Support at "
+    "Wayly is an aged-care concierge for Australian families navigating the Support at "
     "Home program (effective 1 Nov 2025). It is provider-agnostic — never takes commissions, "
     "never sells data. The primary user is the adult-child caregiver; the participant is "
     "the older parent.\n\n"
@@ -2146,7 +2281,7 @@ async def public_help_chat(body: HelpChatBody, request: Request, response: Respo
     sid = body.session_id or f"help-{_client_ip(request)}"
     if wrapped.get("abuse_flag"):
         return {
-            "reply": wrapped.get("abuse_response") or "I can only help with questions about Kindred and Support at Home.",
+            "reply": wrapped.get("abuse_response") or "I can only help with questions about Wayly and Support at Home.",
             "session_id": sid,
             "abuse_flag": True,
         }
@@ -2162,7 +2297,7 @@ async def public_help_chat(body: HelpChatBody, request: Request, response: Respo
         reply = await chat.send_message(UserMessage(text=wrapped.get("redacted_input") or body.message))
     except Exception as e:
         logger.warning("Help chat LLM call failed: %s", e)
-        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "I'm having trouble right now. Try again in a moment, or email help@kindred.au."})
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "I'm having trouble right now. Try again in a moment, or email help@wayly.com.au."})
     out: dict = {"reply": str(reply or ""), "session_id": sid}
     if wrapped.get("redaction_notice"):
         out["redaction_notice"] = wrapped["redaction_notice"]
@@ -2175,7 +2310,7 @@ async def public_help_chat(body: HelpChatBody, request: Request, response: Respo
 # so it can answer "what's my biggest anomaly this quarter?" with real data.
 # ---------------------------------------------------------------------------
 async def _build_user_context(user_id: str) -> str:
-    """Returns a compact plain-text snapshot of the user's current Kindred state
+    """Returns a compact plain-text snapshot of the user's current Wayly state
     for inclusion in the help-chat system prompt. Skips silently if no household."""
     try:
         u = await _get_user(user_id)
@@ -2266,7 +2401,7 @@ async def _build_user_context(user_id: str) -> str:
 
 
 HELP_CHAT_AUTHED_SYSTEM = (
-    "You are Kindred's personal aged-care assistant for a logged-in caregiver. "
+    "You are Wayly's personal aged-care assistant for a logged-in caregiver. "
     "You combine knowledge of the Australian Support at Home program with the user's "
     "ACTUAL data (statements, budget, anomalies) which is provided below. Tone: the "
     "friendliest, most patient, most well-informed niece in Australia — calm, specific, "
@@ -2310,7 +2445,7 @@ async def authed_help_chat(body: HelpChatBody, request: Request, user_id: str = 
     sid = body.session_id or f"app-help-{user_id}"
     if wrapped.get("abuse_flag"):
         return {
-            "reply": wrapped.get("abuse_response") or "I can only help with questions about your Kindred account and Support at Home.",
+            "reply": wrapped.get("abuse_response") or "I can only help with questions about your Wayly account and Support at Home.",
             "session_id": sid,
             "abuse_flag": True,
         }
@@ -2565,8 +2700,8 @@ async def delete_account(body: AccountDeleteBody, user_id: str = Depends(get_cur
 # Stripe billing
 # ---------------------------------------------------------------------------
 PLAN_PRICES = {
-    "solo": {"amount": 19.00, "currency": "aud", "label": "Kindred Solo"},
-    "family": {"amount": 39.00, "currency": "aud", "label": "Kindred Family"},
+    "solo": {"amount": 19.00, "currency": "aud", "label": "Wayly Solo"},
+    "family": {"amount": 39.00, "currency": "aud", "label": "Wayly Family"},
 }
 
 
@@ -2650,10 +2785,10 @@ async def start_trial(body: StartTrialBody, user_id: str = Depends(get_current_u
                 f"reverts to the Free plan unless you choose to subscribe at "
                 f"<strong>${amount:.2f}/month</strong> from <em>Settings → Plan & Billing</em>.</p>"
                 "<p><strong>Get started:</strong> upload your latest Support at Home statement at "
-                "<a href='https://kindred.au/app/statements/upload'>app/statements/upload</a> "
+                "<a href='https://wayly.com.au/app/statements/upload'>app/statements/upload</a> "
                 "and we'll decode it for you.</p>"
                 "<p>Questions? Just reply to this email.</p>"
-                "<p>— The Kindred team</p>"
+                "<p>— The Wayly team</p>"
             ),
         )
     except Exception as e:
@@ -2748,7 +2883,7 @@ async def billing_status(session_id: str, user_id: str = Depends(get_current_use
             await email_service.email_tool_result(
                 to=u["email"],
                 tool_name=f"Welcome to {plan.capitalize()}",
-                headline=f"You're on Kindred {plan.capitalize()}.",
+                headline=f"You're on Wayly {plan.capitalize()}.",
                 body_html=(f"<p>Thanks {u['name'].split(' ')[0]}. "
                            + (f"Your {TRIAL_DAYS}-day refund window starts today." if trial_days else "Payment received — thanks for renewing.")
                            + "</p><p>Next step: complete onboarding to set up your household.</p>"),
@@ -2789,7 +2924,7 @@ async def cancel_subscription(user_id: str = Depends(get_current_user_id)):
         u = await _get_user(user_id)
         await email_service.email_tool_result(
             to=u["email"], tool_name="Cancellation confirmed",
-            headline="Your Kindred plan is cancelled",
+            headline="Your Wayly plan is cancelled",
             body_html=f"<p>We've cancelled auto-renewal. Your {sub.get('plan','').capitalize()} plan stays active until {sub.get('current_period_end','').split('T')[0] or 'the end of your current period'}. Contact us any time to reactivate.</p>",
         )
     except Exception:
@@ -2823,7 +2958,7 @@ async def downgrade_to_free(user_id: str = Depends(get_current_user_id)):
                 f"<p>You've been downgraded from <strong>{prev_plan.capitalize()}</strong> to the <strong>Free</strong> plan, effective immediately.</p>"
                 "<p><strong>What changes:</strong> the Statement Decoder remains free with one use per day. The other 7 AI tools, family members, weekly digest, and concierge support are no longer available on your account.</p>"
                 "<p>You can re-subscribe any time from <em>Settings → Plan & Billing</em>. Any household data, statements, and audit log entries you've already saved are kept and become available again as soon as you upgrade.</p>"
-                "<p>— The Kindred team</p>"
+                "<p>— The Wayly team</p>"
             ),
         )
     except Exception as e:
@@ -2861,7 +2996,7 @@ async def upgrade_downgrade(body: UpgradeBody, user_id: str = Depends(get_curren
                     else "<p>The Solo plan keeps your full Statement Decoder, AI tools, and dashboard active for one caregiver.</p>"
                 )
                 + "<p>The price difference is reflected on your next billing cycle. Manage your plan any time at <em>Settings → Plan & Billing</em>.</p>"
-                "<p>— The Kindred team</p>"
+                "<p>— The Wayly team</p>"
             ),
         )
     except Exception as e:
@@ -2960,7 +3095,7 @@ async def _process_trial_reminders_once() -> dict:
             await email_service.email_tool_result(
                 to=user["email"],
                 tool_name=f"You're halfway through your {label} trial",
-                headline="Halfway there — here's what Kindred has done for you",
+                headline="Halfway there — here's what Wayly has done for you",
                 body_html=(
                     f"<p>Hi {user.get('name') or ''},</p>"
                     f"<p>You're halfway through your free 7-day {label} trial (ends <strong>{ends}</strong>). "
@@ -2970,7 +3105,7 @@ async def _process_trial_reminders_once() -> dict:
                     f"<li><strong>{anomaly_count}</strong> anomaly flag{'s' if anomaly_count != 1 else ''} caught for review</li>"
                     "</ul>"
                     + ("<p>If you haven't decoded a statement yet, here's the 30-second version: "
-                       "<a href='https://kindred.au/ai-tools/statement-decoder'>paste, upload or photograph</a> any "
+                       "<a href='https://wayly.com.au/ai-tools/statement-decoder'>paste, upload or photograph</a> any "
                        "monthly Support at Home statement and we'll explain what every line means.</p>"
                        if stmt_count == 0 else
                        "<p>Want to use the rest of your trial? Try one of these:</p>"
@@ -2980,9 +3115,9 @@ async def _process_trial_reminders_once() -> dict:
                        "<li><strong>Family Care Coordinator chat</strong> — ask anything about your statements, budget or anomalies</li>"
                        "</ul>")
                     + f"<p>After your trial, {label} is <strong>${amount:.2f}/month</strong> — cancel any time. "
-                    "Add a card any time at <a href='https://kindred.au/settings/billing'>Settings → Plan & Billing</a>.</p>"
+                    "Add a card any time at <a href='https://wayly.com.au/settings/billing'>Settings → Plan & Billing</a>.</p>"
                     "<p>Questions? Just reply to this email.</p>"
-                    "<p>— The Kindred team</p>"
+                    "<p>— The Wayly team</p>"
                 ),
             )
             await db.subscriptions.update_one(
@@ -3028,12 +3163,12 @@ async def _process_trial_reminders_once() -> dict:
                     + ("<li>Up to 5 family seats and the weekly Sunday digest</li>" if plan == "family" else "")
                     + "</ul>"
                     f"<p><strong>Continue your {label} plan</strong> at <strong>${amount:.2f}/month</strong> — "
-                    "<a href='https://kindred.au/settings/billing'>Settings → Plan & Billing</a>.</p>"
+                    "<a href='https://wayly.com.au/settings/billing'>Settings → Plan & Billing</a>.</p>"
                     "<p>If you don't add a card, your account will move to the Free plan automatically tomorrow. "
                     "Your statements, household details, and audit log all stay safe — you'll just lose access to "
                     "the paid tools.</p>"
                     "<p>Questions? Just reply to this email.</p>"
-                    "<p>— The Kindred team</p>"
+                    "<p>— The Wayly team</p>"
                 ),
             )
             await db.subscriptions.update_one(
@@ -3077,9 +3212,9 @@ async def _process_trial_reminders_once() -> dict:
                             "Your statements, household setup, and audit log are all safe — they're just on standby "
                             "until you upgrade.</p>"
                             f"<p>Ready to continue? Pick {label} at <strong>${amount:.2f}/month</strong> at "
-                            "<a href='https://kindred.au/settings/billing'>Settings → Plan & Billing</a> — "
+                            "<a href='https://wayly.com.au/settings/billing'>Settings → Plan & Billing</a> — "
                             "you'll be back to full access in under a minute.</p>"
-                            "<p>— The Kindred team</p>"
+                            "<p>— The Wayly team</p>"
                         ),
                     )
                 except Exception as e:

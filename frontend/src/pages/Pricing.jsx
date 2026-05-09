@@ -73,10 +73,10 @@ const FEATURE_ROWS = [
 
 const FAQ = [
     { q: "What counts as one household?", a: "One participant + their family. Two parents both on Support at Home = two households (we offer 30% off the second)." },
-    { q: "Free vs Solo — what's the real difference?", a: "Free = 2 public AI tools, occasional use. Solo = all 8 tools + Kindred actively watches your statements, budget, and care every day and alerts you when something needs attention." },
+    { q: "Free vs Solo — what's the real difference?", a: "Free = 2 public AI tools, occasional use. Solo = all 8 tools + Wayly actively watches your statements, budget, and care every day and alerts you when something needs attention." },
     { q: "Why is Family $39 if Solo is $19?", a: "Family adds: up to 5 seats, role permissions, Sunday digest, decision log, advisor read-only sharing. Most households use Family." },
     { q: "Pensioner discount?", a: "Yes — 50% off Solo and Family with verified full-pension status." },
-    { q: "Can I deduct Kindred from my parent's Support at Home funding?", a: "No — Kindred is software for the family, not a Support at Home service. Paid by the family directly." },
+    { q: "Can I deduct Wayly from my parent's Support at Home funding?", a: "No — Wayly is software for the family, not a Support at Home service. Paid by the family directly." },
     { q: "Refund policy?", a: "30-day full refund, no questions." },
     { q: "What happens if my parent moves to residential care?", a: "We pause billing immediately and give you a transition guide." },
     { q: "Free trial?", a: "Yes — 7 days on Solo or Family, no card needed." },
@@ -95,7 +95,7 @@ export default function Pricing() {
 
             <section className="mx-auto max-w-7xl px-6 pt-12 pb-8 text-center">
                 <span className="overline">Pricing</span>
-                <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4">Choose how Kindred helps your family.</h1>
+                <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4">Choose how Wayly helps your family.</h1>
                 <p className="mt-5 text-lg text-muted-k max-w-2xl mx-auto leading-relaxed">
                     No card required for the trial. Cancel anytime. Pensioner discount available. Australian-hosted, never sells your data, never accepts commissions from providers.
                 </p>
@@ -168,7 +168,7 @@ export default function Pricing() {
                         <div className="mt-3 text-xs text-muted-k">Simple view for Mum</div>
                     </div>
                     <div className="text-center">
-                        <BrowserFrame url="app.kindred.au/dashboard" scale={0.55} label="Caregiver dashboard on MacBook">
+                        <BrowserFrame url="app.wayly.com.au/dashboard" scale={0.55} label="Caregiver dashboard on MacBook">
                             <ScreenshotDashboard />
                         </BrowserFrame>
                         <div className="mt-3 text-xs text-muted-k">Full dashboard for you</div>

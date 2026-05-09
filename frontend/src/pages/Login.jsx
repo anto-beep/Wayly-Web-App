@@ -34,7 +34,7 @@ export default function Login() {
                     <div className="h-8 w-8 rounded-full bg-primary-k flex items-center justify-center">
                         <HeartHandshake className="h-4 w-4 text-white" />
                     </div>
-                    <span className="font-heading text-lg text-primary-k">Kindred</span>
+                    <span className="font-heading text-lg text-primary-k">Wayly</span>
                 </Link>
                 <div className="bg-surface border border-kindred rounded-2xl p-8">
                     <span className="overline">Sign in</span>

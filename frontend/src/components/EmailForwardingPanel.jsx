@@ -46,7 +46,7 @@ export default function EmailForwardingPanel({ onSwitchToFile }) {
         return (
             <div className="mt-4 rounded-xl border-2 border-dashed border-kindred bg-surface-2 p-8" data-testid="decoder-email-tab-anon">
                 <Mail className="h-10 w-10 text-muted-k mx-auto" />
-                <div className="font-heading text-xl text-primary-k mt-3 text-center">Forward statements straight to Kindred</div>
+                <div className="font-heading text-xl text-primary-k mt-3 text-center">Forward statements straight to Wayly</div>
                 <p className="text-sm text-muted-k mt-2 max-w-md mx-auto text-center">
                     Sign in to get your unique forwarding address. Set up an auto-forward rule once, and every monthly
                     statement arrives in your dashboard automatically — no uploads, no copying.

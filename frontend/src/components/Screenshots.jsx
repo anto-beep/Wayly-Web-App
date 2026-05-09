@@ -7,7 +7,7 @@ import { Phone, MessageCircle, Calendar, AlertTriangle, ArrowRight, CheckCircle2
  * All wrapped in <BrowserFrame> or <PhoneFrame>.
  */
 
-export function BrowserFrame({ url = "app.kindred.au", scale = 0.85, className = "", children, label }) {
+export function BrowserFrame({ url = "app.wayly.com.au", scale = 0.85, className = "", children, label }) {
     return (
         <div role="img" aria-label={label} className={`block max-w-full ${className}`}>
             <div className="rounded-[10px] overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.15)] border border-[#E2E2E2] bg-[#F5F5F5]">
@@ -44,14 +44,14 @@ export function PhoneFrame({ scale = 0.55, className = "", children, label }) {
 
 /* ------------------------------- Screenshots ------------------------------ */
 
-const NAV_ITEMS = ["Dashboard", "Statements", "Ask Kindred", "Family thread", "Audit log"];
+const NAV_ITEMS = ["Dashboard", "Statements", "Ask Wayly", "Family thread", "Audit log"];
 
 function MiniSidebar({ active = "Dashboard" }) {
     return (
         <aside className="w-44 flex-shrink-0 pt-6 px-3">
             <div className="flex items-center gap-2 mb-6 px-2">
                 <div className="h-7 w-7 rounded-md bg-[#1F3A5F] flex items-center justify-center text-white font-heading text-sm">K</div>
-                <span className="font-heading text-[15px] text-[#1F3A5F]">Kindred</span>
+                <span className="font-heading text-[15px] text-[#1F3A5F]">Wayly</span>
             </div>
             <ul className="space-y-1 text-[13px]">
                 {NAV_ITEMS.map((n) => (
@@ -248,7 +248,7 @@ export function ScreenshotFamilyThread() {
                 <div className="flex items-start gap-3">
                     <div className="h-9 w-9 rounded-full bg-[#1F3A5F] text-[#D4A24E] text-[13px] font-heading flex items-center justify-center">K</div>
                     <div className="bg-[#1F3A5F] text-white rounded-2xl rounded-tl-sm p-3 max-w-[80%]">
-                        <div className="text-[10px] text-[#D4A24E] uppercase tracking-wider">Kindred · Mon 11:15am</div>
+                        <div className="text-[10px] text-[#D4A24E] uppercase tracking-wider">Wayly · Mon 11:15am</div>
                         <div className="text-[13px] mt-1">Hand rails are eligible under AT-HM Tier 1. Estimated cost $200–450 installed in Geelong. Want me to draft the request to Bluebell?</div>
                         <div className="mt-3 flex gap-2">
                             <button className="text-[11px] bg-[#D4A24E] text-[#1F3A5F] rounded px-3 py-1.5 font-semibold">Yes, draft it</button>
@@ -293,7 +293,7 @@ export function ScreenshotParticipant() {
             <div className="mt-4 grid grid-cols-2 gap-3">
                 {[
                     { l: "Call Cathy", Icon: Phone, c: "bg-[#1F3A5F] text-white" },
-                    { l: "Ask Kindred", Icon: MessageCircle, c: "bg-white text-[#1F3A5F] border border-[#E8E2D6]" },
+                    { l: "Ask Wayly", Icon: MessageCircle, c: "bg-white text-[#1F3A5F] border border-[#E8E2D6]" },
                     { l: "Appointments", Icon: Calendar, c: "bg-white text-[#1F3A5F] border border-[#E8E2D6]" },
                     { l: "I need help", Icon: AlertTriangle, c: "bg-[#C5734D] text-white" },
                 ].map((b) => (

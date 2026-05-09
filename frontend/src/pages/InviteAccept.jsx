@@ -59,7 +59,7 @@ export default function InviteAccept() {
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
                     <div className="h-8 w-8 rounded-md bg-[#1F3A5F] flex items-center justify-center"><HeartHandshake className="h-4 w-4 text-white" /></div>
-                    <span className="font-heading text-lg text-[#1F3A5F]">Kindred</span>
+                    <span className="font-heading text-lg text-[#1F3A5F]">Wayly</span>
                 </Link>
                 <div className="bg-white border border-[#E8E2D9] rounded-2xl p-8">
                     {error ? (
@@ -75,7 +75,7 @@ export default function InviteAccept() {
                                 {invite.inviter_name} invited you
                             </h1>
                             <p className="mt-2 text-sm text-muted-k leading-relaxed">
-                                You're being added as a <span className="font-medium text-primary-k capitalize">{invite.role?.replace("_", " ")}</span> on <span className="font-medium text-primary-k">{invite.household_name}</span>'s Kindred.
+                                You're being added as a <span className="font-medium text-primary-k capitalize">{invite.role?.replace("_", " ")}</span> on <span className="font-medium text-primary-k">{invite.household_name}</span>'s Wayly.
                             </p>
                             {invite.note && (
                                 <blockquote className="mt-4 bg-surface-2 border-l-4 border-gold p-3 text-sm text-primary-k italic rounded-r-md">
@@ -85,7 +85,7 @@ export default function InviteAccept() {
 
                             {!user ? (
                                 <div className="mt-6 text-sm text-muted-k">
-                                    <p>To accept, you need a Kindred account using <span className="font-medium text-primary-k">{invite.email}</span>.</p>
+                                    <p>To accept, you need a Wayly account using <span className="font-medium text-primary-k">{invite.email}</span>.</p>
                                     <div className="mt-4 flex gap-2">
                                         <Link to={`/signup?plan=free&invite=${token}`} data-testid="invite-signup-link" className="text-sm bg-primary-k text-white rounded-md px-4 py-2 hover:bg-[#16294a]">Create account</Link>
                                         <Link to={`/login?invite=${token}`} data-testid="invite-login-link" className="text-sm border border-kindred rounded-md px-4 py-2 text-primary-k hover:bg-surface-2">Sign in</Link>

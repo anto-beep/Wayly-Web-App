@@ -54,7 +54,7 @@ function ProfileTab() {
         <div className="space-y-6" data-testid="settings-profile">
             <div>
                 <h2 className="font-heading text-2xl text-primary-k tracking-tight">Your profile</h2>
-                <p className="text-sm text-muted-k mt-1">How Kindred greets you across the app.</p>
+                <p className="text-sm text-muted-k mt-1">How Wayly greets you across the app.</p>
             </div>
             <div className="space-y-4 max-w-md">
                 <label className="block">
@@ -310,7 +310,7 @@ function DigestTab() {
             ) : (<>
                 <div className="bg-surface border border-kindred rounded-2xl overflow-hidden" data-testid="digest-preview-card">
                     <div className="bg-primary-k text-white px-6 py-4">
-                        <div className="font-heading text-xl">Kindred — the week at {digest.household_name}'s</div>
+                        <div className="font-heading text-xl">Wayly — the week at {digest.household_name}'s</div>
                         <div className="text-xs uppercase tracking-widest opacity-80 mt-1">{digest.week_label}</div>
                     </div>
                     <div className="p-6 space-y-5">
@@ -347,7 +347,7 @@ function DigestTab() {
                             )}
                         </section>
                         {digest.family_thread_recent?.length > 0 && (<><hr className="border-kindred" /><section><h3 className="font-heading text-lg text-primary-k">Family thread</h3><ul className="mt-3 space-y-2">{digest.family_thread_recent.map((m, i) => (<li key={i} className="p-3 bg-surface-2 rounded"><div className="text-xs text-muted-k uppercase tracking-wider">{m.author}</div><div className="text-sm text-primary-k mt-0.5">{m.body}</div></li>))}</ul></section></>)}
-                        {digest.chat_questions_asked > 0 && (<p className="text-xs text-muted-k italic">{digest.caregiver_first_name} asked Kindred <strong>{digest.chat_questions_asked}</strong> question{digest.chat_questions_asked !== 1 ? "s" : ""} this week.</p>)}
+                        {digest.chat_questions_asked > 0 && (<p className="text-xs text-muted-k italic">{digest.caregiver_first_name} asked Wayly <strong>{digest.chat_questions_asked}</strong> question{digest.chat_questions_asked !== 1 ? "s" : ""} this week.</p>)}
                     </div>
                 </div>
 
@@ -379,7 +379,7 @@ function DigestTab() {
 
 /* ----------------------------- Notifications ------------------------------ */
 const NOTIF_LABELS = {
-    anomaly_alerts: { label: "Anomaly alerts", desc: "When Kindred flags unusual charges on a new statement." },
+    anomaly_alerts: { label: "Anomaly alerts", desc: "When Wayly flags unusual charges on a new statement." },
     wellbeing_concerns: { label: "Wellbeing concerns", desc: "When the participant marks a hard day." },
     family_messages: { label: "Family & invites", desc: "Member joined, family thread replies." },
     weekly_digest: { label: "Weekly digest", desc: "Your Sunday summary email." },
@@ -439,7 +439,7 @@ function AppearanceTab() {
                 <p className="text-sm text-muted-k mt-1">Pick the mode that's easier on your eyes, especially at night.</p>
             </div>
             <div className="grid sm:grid-cols-2 gap-4 max-w-xl">
-                {[{ v: "light", l: "Light", Icon: Sun, desc: "Kindred's default warm palette." },
+                {[{ v: "light", l: "Light", Icon: Sun, desc: "Wayly's default warm palette." },
                   { v: "dark", l: "Dark", Icon: Moon, desc: "Lower contrast for late-night reviewing." }].map((o) => (
                     <button key={o.v} onClick={() => setTheme(o.v)} data-testid={`theme-${o.v}`} className={`text-left rounded-2xl border p-5 transition-all ${theme === o.v ? "border-primary-k ring-2 ring-primary-k/20 bg-surface" : "border-kindred bg-surface hover:bg-surface-2"}`}>
                         <o.Icon className="h-5 w-5 text-primary-k" />
@@ -467,7 +467,7 @@ function UsageTab() {
         <div className="space-y-6" data-testid="settings-usage">
             <div>
                 <h2 className="font-heading text-2xl text-primary-k tracking-tight">Your usage</h2>
-                <p className="text-sm text-muted-k mt-1">Everything Kindred has done for you since you joined.</p>
+                <p className="text-sm text-muted-k mt-1">Everything Wayly has done for you since you joined.</p>
             </div>
             {loading ? (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="usage-skeleton">

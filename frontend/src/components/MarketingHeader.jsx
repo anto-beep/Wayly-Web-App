@@ -139,7 +139,7 @@ export default function MarketingHeader() {
                     <div className="h-7 w-7 rounded-md bg-[#D4A24E] inline-flex items-center justify-center">
                         <HeartHandshake className="h-4 w-4 text-[#1F3A5F]" />
                     </div>
-                    <span className="font-heading text-[22px] text-white tracking-tight">Kindred</span>
+                    <span className="font-heading text-[22px] text-white tracking-tight">Wayly</span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-8">
                     {NAV.map((n) => (

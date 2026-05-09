@@ -9,7 +9,7 @@ const ACCEPTED = [
     { ext: "PNG", icon: "🖼", body: "Screenshot of a digital statement. Full-page screenshots work best. Max size: 10MB" },
     { ext: "HEIC / HEIF", icon: "📱", body: "Default photo format on iPhone and iPad. Upload directly — no conversion needed. Max size: 10MB" },
     { ext: "WEBP", icon: "🌐", body: "Web image format from browser screenshots. Max size: 10MB" },
-    { ext: "Email forward", icon: "✉", body: "Forward your statement email to your unique Kindred address. Coming soon." },
+    { ext: "Email forward", icon: "✉", body: "Forward your statement email to your unique Wayly address. Coming soon." },
 ];
 
 const NOT_ACCEPTED = [

@@ -54,7 +54,7 @@ export default function Footer() {
                         <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center">
                             <HeartHandshake className="h-5 w-5 text-white" />
                         </div>
-                        <span className="font-heading text-xl text-white">Kindred</span>
+                        <span className="font-heading text-xl text-white">Wayly</span>
                     </Link>
                     <p className="text-sm text-white/80 mt-4 leading-relaxed">
                         Support at Home, finally explained.
@@ -63,7 +63,7 @@ export default function Footer() {
                         <AppStoreBadges align="start" />
                     </div>
                     <p className="text-xs text-white/60 mt-5">ABN: [ABN placeholder]</p>
-                    <p className="text-xs text-white/60 mt-1">© 2026 Kindred Pty Ltd. All rights reserved.</p>
+                    <p className="text-xs text-white/60 mt-1">© 2026 Wayly Pty Ltd. All rights reserved.</p>
                 </div>
 
                 {/* Column 2 — Product */}
@@ -119,7 +119,7 @@ export default function Footer() {
                     style={{ fontSize: "13px" }}
                     data-testid="footer-legal-disclaimer"
                 >
-                    Kindred is not a registered Support at Home provider, financial adviser, legal adviser, or healthcare provider. All AI-generated content is for information purposes only and may contain errors. Always verify important information with your provider, My Aged Care, or a qualified professional before taking action. Nothing on this site constitutes financial, legal, or clinical advice.
+                    Wayly is not a registered Support at Home provider, financial adviser, legal adviser, or healthcare provider. All AI-generated content is for information purposes only and may contain errors. Always verify important information with your provider, My Aged Care, or a qualified professional before taking action. Nothing on this site constitutes financial, legal, or clinical advice.
                 </p>
 
                 <div

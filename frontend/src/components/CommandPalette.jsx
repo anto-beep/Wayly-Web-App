@@ -34,7 +34,7 @@ export default function CommandPalette() {
         { label: "Dashboard", to: "/app", icon: LayoutDashboard, shortcut: "G D" },
         { label: "Statements", to: "/app/statements", icon: FileText, shortcut: "G S" },
         { label: "Upload statement", to: "/app/statements/upload", icon: FileText },
-        { label: "Ask Kindred", to: "/app/chat", icon: MessageCircle, shortcut: "G C" },
+        { label: "Ask Wayly", to: "/app/chat", icon: MessageCircle, shortcut: "G C" },
         { label: "Family thread", to: "/app/family", icon: Users },
         { label: "Audit log", to: "/app/audit", icon: ScrollText },
     ];
@@ -67,7 +67,7 @@ export default function CommandPalette() {
 
     return (
         <CommandDialog open={open} onOpenChange={setOpen} data-testid="command-palette">
-            <CommandInput placeholder="Search Kindred…" data-testid="command-input" />
+            <CommandInput placeholder="Search Wayly…" data-testid="command-input" />
             <CommandList>
                 <CommandEmpty>Nothing matches that.</CommandEmpty>
                 {user && (

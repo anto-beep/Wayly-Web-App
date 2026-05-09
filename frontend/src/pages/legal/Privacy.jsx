@@ -6,7 +6,7 @@ export default function Privacy() {
         <LegalPage title="Privacy Policy" lastUpdated="February 2026">
             <h2>1. Who we are</h2>
             <p>
-                Kindred Pty Ltd (ABN: [ABN placeholder]). Privacy Officer: <a href="mailto:privacy@kindred.au">privacy@kindred.au</a>.
+                Wayly Pty Ltd (ABN: [ABN placeholder]). Privacy Officer: <a href="mailto:privacy@wayly.com.au">privacy@wayly.com.au</a>.
             </p>
 
             <h2>2. What information we collect</h2>
@@ -22,7 +22,7 @@ export default function Privacy() {
 
             <h2>3. Why we collect it</h2>
             <ul>
-                <li>To provide the Kindred service</li>
+                <li>To provide the Wayly service</li>
                 <li>To process payments</li>
                 <li>To send you notifications you have opted into</li>
                 <li>To improve the product (using anonymised, aggregated data)</li>
@@ -31,7 +31,7 @@ export default function Privacy() {
 
             <h2>4. How we use AI</h2>
             <p>
-                When you use Kindred's AI tools, the text you submit is sent to Anthropic's Claude API for
+                When you use Wayly's AI tools, the text you submit is sent to Anthropic's Claude API for
                 processing. Anthropic is located in the United States. This is a cross-border disclosure
                 under APP 8. Anthropic's data handling terms apply to this processing. We send only the
                 minimum data necessary for the task. We do not use your personal data to train AI models
@@ -65,14 +65,14 @@ export default function Privacy() {
 
             <h2>9. Children</h2>
             <p>
-                Kindred is not intended for use by people under 18. We do not knowingly collect data from
+                Wayly is not intended for use by people under 18. We do not knowingly collect data from
                 children.
             </p>
 
             <h2>10. Complaints</h2>
             <p>
                 If you believe we have breached your privacy, contact us at{" "}
-                <a href="mailto:privacy@kindred.au">privacy@kindred.au</a>. If unsatisfied with our response,
+                <a href="mailto:privacy@wayly.com.au">privacy@wayly.com.au</a>. If unsatisfied with our response,
                 you may complain to the Office of the Australian Information Commissioner at{" "}
                 <a href="https://oaic.gov.au" target="_blank" rel="noreferrer">oaic.gov.au</a>.
             </p>

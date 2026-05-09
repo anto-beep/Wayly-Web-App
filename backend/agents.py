@@ -2,7 +2,7 @@
 
 - StatementParserAgent: extract structured line items from statement text.
 - AnomalyExplainerAgent: turn rule-based anomalies into plain-English alerts.
-- KindredChatAgent: caregiver Q&A with statement+budget context.
+- WaylyChatAgent: caregiver Q&A with statement+budget context.
 """
 import asyncio
 import json
@@ -92,7 +92,7 @@ Output STRICT JSON only — no markdown, no commentary. Schema:
 If a field is unknown set numeric fields to 0 and string fields to null. Always include every line item even if confidence is low."""
 
 
-ANOMALY_SYSTEM = """You are Kindred's anomaly explainer. You receive a list of detected anomalies (rule-based flags)
+ANOMALY_SYSTEM = """You are Wayly's anomaly explainer. You receive a list of detected anomalies (rule-based flags)
 and turn each into a calm, plain-English alert for an adult-child caregiver. Australian English.
 For each anomaly, write:
 - title: 6–10 words, neutral
@@ -101,7 +101,7 @@ For each anomaly, write:
 Output STRICT JSON: {"explained": [{"id":"...","title":"...","detail":"...","suggested_action":"..."}]}"""
 
 
-CHAT_SYSTEM_TEMPLATE = """You are Kindred — a calm, precise concierge that helps Australian families navigate the Support at Home program.
+CHAT_SYSTEM_TEMPLATE = """You are Wayly — a calm, precise concierge that helps Australian families navigate the Support at Home program.
 You are speaking with {caregiver_name}, the family caregiver for {participant_name}.
 
 Household context:

@@ -80,7 +80,7 @@ export default function CarePlanReviewer() {
                         )}
 
                         <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
-                            <div className="font-medium text-primary-k">Want Kindred to watch divergence between this plan and what's actually delivered?</div>
+                            <div className="font-medium text-primary-k">Want Wayly to watch divergence between this plan and what's actually delivered?</div>
                             <Link to="/signup" className="mt-3 inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
                         </div>
                     </div>

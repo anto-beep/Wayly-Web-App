@@ -44,14 +44,14 @@ const FEATURES = [
 ];
 
 const FAQ = [
-    { q: "Are you a Support at Home provider?", a: "No. We're independent software. Your registered provider stays whoever you've chosen — Kindred sits on top of them." },
-    { q: "Do I need to switch providers to use Kindred?", a: "No. Kindred works with any registered Support at Home provider." },
+    { q: "Are you a Support at Home provider?", a: "No. We're independent software. Your registered provider stays whoever you've chosen — Wayly sits on top of them." },
+    { q: "Do I need to switch providers to use Wayly?", a: "No. Wayly works with any registered Support at Home provider." },
     { q: "How much does it cost?", a: "Free tier with all 8 AI tools (5 uses per month each). Paid plans start at $19/month. 50% off for full-pension households." },
     { q: "Does my parent need to use it?", a: "Not at all. Most households are run by an adult-child caregiver. Your parent has their own simplified view but doesn't need to log in if they don't want to." },
     { q: "What about privacy?", a: "Australian-hosted, encrypted with per-household keys, never sold, never used to train AI without consent. Read more on our Trust page." },
-    { q: "Will Kindred ever recommend a provider?", a: "We show provider prices and quality signals neutrally. We never accept commissions from providers, ever." },
+    { q: "Will Wayly ever recommend a provider?", a: "We show provider prices and quality signals neutrally. We never accept commissions from providers, ever." },
     { q: "Can multiple family members share one account?", a: "Yes — that's the Family plan. Up to 5 family members, each with their own role-based view." },
-    { q: "Does Kindred give clinical or financial advice?", a: "No. We help you understand the system. Clinical advice comes from your care team; financial advice from a licensed advisor." },
+    { q: "Does Wayly give clinical or financial advice?", a: "No. We help you understand the system. Clinical advice comes from your care team; financial advice from a licensed advisor." },
     { q: "What if my parent moves to residential care?", a: "We pause billing immediately and provide a transition guide." },
     { q: "Can I try it with sample data first?", a: "Yes — the /demo page walks you through a sample household with no signup. Or paste a statement into the decoder above right now." },
 ];
@@ -179,14 +179,14 @@ export default function Landing() {
                 {/* Step 1 — screenshot LEFT, copy RIGHT */}
                 <div className="mt-14 grid lg:grid-cols-2 gap-10 items-center">
                     <RevealOnScroll rotate={-1.5} className="hidden sm:block">
-                        <BrowserFrame url="app.kindred.au/decode" scale={0.78} label="Statement decoder result">
+                        <BrowserFrame url="app.wayly.com.au/decode" scale={0.78} label="Statement decoder result">
                             <ScreenshotStatement />
                         </BrowserFrame>
                     </RevealOnScroll>
                     <div>
                         <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 01</div>
                         <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Forward your statement. Get plain English in 90 seconds.</h3>
-                        <p className="mt-4 text-muted-k leading-relaxed max-w-md">Drop in your provider's monthly PDF, CSV or pasted text. Kindred extracts every line item, breaks it down by stream, and explains it like a friend who's been through this before.</p>
+                        <p className="mt-4 text-muted-k leading-relaxed max-w-md">Drop in your provider's monthly PDF, CSV or pasted text. Wayly extracts every line item, breaks it down by stream, and explains it like a friend who's been through this before.</p>
                     </div>
                 </div>
 
@@ -194,11 +194,11 @@ export default function Landing() {
                 <div className="mt-20 grid lg:grid-cols-2 gap-10 items-center">
                     <div className="lg:order-1 order-2">
                         <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 02</div>
-                        <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Kindred watches for anything unusual — so you don't have to.</h3>
+                        <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Wayly watches for anything unusual — so you don't have to.</h3>
                         <p className="mt-4 text-muted-k leading-relaxed max-w-md">Rate increases. Duplicate visits. Rollover risk. Lifetime cap creep. We compare every charge against the published price and flag what doesn't add up — with the receipts.</p>
                     </div>
                     <RevealOnScroll rotate={1} className="lg:order-2 order-1 hidden sm:block">
-                        <BrowserFrame url="app.kindred.au/anomalies" scale={0.78} label="Anomaly alert detail">
+                        <BrowserFrame url="app.wayly.com.au/anomalies" scale={0.78} label="Anomaly alert detail">
                             <ScreenshotAnomaly />
                         </BrowserFrame>
                     </RevealOnScroll>
@@ -207,14 +207,14 @@ export default function Landing() {
                 {/* Step 3 — screenshot LEFT, copy RIGHT */}
                 <div className="mt-20 grid lg:grid-cols-2 gap-10 items-center">
                     <RevealOnScroll rotate={-1}>
-                        <BrowserFrame url="app.kindred.au/family" scale={0.78} label="Family thread chat">
+                        <BrowserFrame url="app.wayly.com.au/family" scale={0.78} label="Family thread chat">
                             <ScreenshotFamilyThread />
                         </BrowserFrame>
                     </RevealOnScroll>
                     <div>
                         <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 03</div>
                         <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Your whole family, on the same page.</h3>
-                        <p className="mt-4 text-muted-k leading-relaxed max-w-md">Loop in siblings, advisors, and even your parent's GP. Kindred answers the practical questions ("is a handrail covered?") so the conversation stays on what really matters.</p>
+                        <p className="mt-4 text-muted-k leading-relaxed max-w-md">Loop in siblings, advisors, and even your parent's GP. Wayly answers the practical questions ("is a handrail covered?") so the conversation stays on what really matters.</p>
                     </div>
                 </div>
             </section>
@@ -222,9 +222,9 @@ export default function Landing() {
             {/* BIG NUMBER */}
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20 text-center">
-                    <span className="overline" style={{ color: "rgba(255,255,255,0.6)" }}>The Kindred difference</span>
+                    <span className="overline" style={{ color: "rgba(255,255,255,0.6)" }}>The Wayly difference</span>
                     <h2 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-white mt-4 leading-tight tracking-tight max-w-4xl mx-auto">
-                        The average Kindred household spots <span className="text-gold">$1,847/year</span> in incorrect charges and unused funding.
+                        The average Wayly household spots <span className="text-gold">$1,847/year</span> in incorrect charges and unused funding.
                     </h2>
                     <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
                         <Link
@@ -243,7 +243,7 @@ export default function Landing() {
 
             {/* FEATURE GRID */}
             <section className="mx-auto max-w-7xl px-6 py-16">
-                <span className="overline">What Kindred does</span>
+                <span className="overline">What Wayly does</span>
                 <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">
                     Eight quiet AI agents, one calm dashboard.
                 </h2>
@@ -268,7 +268,7 @@ export default function Landing() {
                 </div>
                 <div className="mt-10 max-w-5xl mx-auto hidden sm:block">
                     <RevealOnScroll>
-                        <BrowserFrame url="app.kindred.au/dashboard" scale={0.9} label="Caregiver dashboard with stat cards, anomalies, and latest statement">
+                        <BrowserFrame url="app.wayly.com.au/dashboard" scale={0.9} label="Caregiver dashboard with stat cards, anomalies, and latest statement">
                             <ScreenshotDashboard />
                         </BrowserFrame>
                     </RevealOnScroll>
@@ -315,7 +315,7 @@ export default function Landing() {
                     <div>
                         <span className="overline">Free AI tools</span>
                         <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight max-w-2xl">
-                            Try Kindred without signing up.
+                            Try Wayly without signing up.
                         </h2>
                     </div>
                     <Link to="/ai-tools" className="text-primary-k underline text-sm">See all 8 tools →</Link>
@@ -343,7 +343,7 @@ export default function Landing() {
                     <div className="text-center">
                         <span className="overline">Pricing</span>
                         <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
-                            Choose how Kindred helps your family.
+                            Choose how Wayly helps your family.
                         </h2>
                     </div>
                     <div className="mt-10 grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
@@ -394,7 +394,7 @@ export default function Landing() {
                 <div className="mx-auto max-w-4xl px-6 py-16 text-center">
                     <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Ready when you are.</h2>
                     <p className="mt-4 text-white/80 max-w-xl mx-auto">
-                        Try Kindred free for 7 days. Cancel anytime. No card required for the trial.
+                        Try Wayly free for 7 days. Cancel anytime. No card required for the trial.
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
                         <Link to="/signup" data-testid="final-cta-signup" className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f] transition-colors">

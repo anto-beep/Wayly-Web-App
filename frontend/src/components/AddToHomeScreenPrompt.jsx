@@ -5,7 +5,7 @@ import { Download, X, Smartphone } from "lucide-react";
 /**
  * AddToHomeScreenPrompt
  * Shows a non-intrusive bottom-bar prompt encouraging mobile visitors to install
- * Kindred as a PWA. Two paths:
+ * Wayly as a PWA. Two paths:
  *   - Android/Chromium: hooks the `beforeinstallprompt` event and triggers the
  *     native install dialog.
  *   - iOS Safari: shows a hint with the Share → Add to Home Screen instruction
@@ -15,8 +15,8 @@ import { Download, X, Smartphone } from "lucide-react";
  * after the user dismisses, and after a full install.
  */
 
-const DISMISS_KEY = "kindred_a2hs_dismissed_v1";
-const SEEN_KEY = "kindred_a2hs_seen_at";
+const DISMISS_KEY = "wayly_a2hs_dismissed_v1";
+const SEEN_KEY = "wayly_a2hs_seen_at";
 
 const HIDE_ON = ["/login", "/signup", "/forgot", "/reset", "/auth/callback", "/auth-callback", "/billing/success", "/invite", "/onboarding"];
 
@@ -115,14 +115,14 @@ export default function AddToHomeScreenPrompt() {
             data-testid="a2hs-prompt"
             className="fixed bottom-20 md:bottom-5 left-3 right-3 md:left-auto md:right-5 md:w-[380px] z-[55] rounded-xl border border-kindred bg-surface shadow-2xl p-4 animate-help-chat-in"
             role="dialog"
-            aria-label="Install Kindred"
+            aria-label="Install Wayly"
         >
             <div className="flex items-start gap-3">
                 <div className="flex-none h-10 w-10 rounded-lg bg-primary-k flex items-center justify-center">
                     <Smartphone className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <div className="font-heading text-base text-primary-k">Install Kindred</div>
+                    <div className="font-heading text-base text-primary-k">Install Wayly</div>
                     {ios ? (
                         <p className="text-xs text-muted-k mt-1 leading-relaxed">
                             For an app-like experience, tap <strong>Share</strong>{" "}

@@ -36,7 +36,7 @@ export function ForgotPassword() {
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
                     <div className="h-8 w-8 rounded-md bg-[#1F3A5F] flex items-center justify-center"><HeartHandshake className="h-4 w-4 text-white" /></div>
-                    <span className="font-heading text-lg text-[#1F3A5F]">Kindred</span>
+                    <span className="font-heading text-lg text-[#1F3A5F]">Wayly</span>
                 </Link>
                 <div className="bg-white border border-[#E8E2D9] rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
                     <Link to="/login" className="text-xs text-[#6B7280] inline-flex items-center gap-1 mb-4"><ArrowLeft className="h-3 w-3" /> Back to sign in</Link>
@@ -119,7 +119,7 @@ export function ResetPassword() {
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
                     <div className="h-8 w-8 rounded-md bg-[#1F3A5F] flex items-center justify-center"><HeartHandshake className="h-4 w-4 text-white" /></div>
-                    <span className="font-heading text-lg text-[#1F3A5F]">Kindred</span>
+                    <span className="font-heading text-lg text-[#1F3A5F]">Wayly</span>
                 </Link>
                 <div className="bg-white border border-[#E8E2D9] rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
                     <h1 className="font-heading text-2xl text-[#1F3A5F] tracking-tight" data-testid="reset-title">Choose a new password</h1>

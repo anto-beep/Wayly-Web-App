@@ -5,7 +5,7 @@ export default function Accessibility() {
     return (
         <LegalPage title="Accessibility Statement" lastUpdated="February 2026">
             <p>
-                Kindred is committed to making our product accessible to all Australians, including older
+                Wayly is committed to making our product accessible to all Australians, including older
                 adults and people with disability.
             </p>
 
@@ -35,7 +35,7 @@ export default function Accessibility() {
             <h2>Feedback</h2>
             <p>
                 If you experience an accessibility barrier, please contact us at{" "}
-                <a href="mailto:accessibility@kindred.au">accessibility@kindred.au</a>. We will work to
+                <a href="mailto:accessibility@wayly.com.au">accessibility@wayly.com.au</a>. We will work to
                 resolve it.
             </p>
 

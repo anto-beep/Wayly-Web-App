@@ -211,7 +211,7 @@ export default function BudgetCalculatorTool() {
 
                         <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
                             <div className="font-medium text-primary-k">Want this updating live?</div>
-                            <p className="text-sm text-muted-k mt-1">Kindred tracks your real spend against this budget every day, alerts you to rollover risk, and watches your lifetime cap.</p>
+                            <p className="text-sm text-muted-k mt-1">Wayly tracks your real spend against this budget every day, alerts you to rollover risk, and watches your lifetime cap.</p>
                             <div className="mt-3 flex items-center gap-3 flex-wrap">
                                 <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
                                 <Link to="/ai-tools/statement-decoder" className="text-sm text-primary-k underline inline-flex items-center gap-1">

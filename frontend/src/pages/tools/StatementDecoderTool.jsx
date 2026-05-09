@@ -269,7 +269,7 @@ export default function StatementDecoderTool() {
 
                             <div className="bg-surface-2 rounded-xl p-5 border border-kindred mt-6">
                                 <div className="font-medium text-primary-k">Want this every month, automatically?</div>
-                                <p className="text-sm text-muted-k mt-1">Kindred watches every statement, alerts you when something's off, and tracks your quarterly budget across all three streams.</p>
+                                <p className="text-sm text-muted-k mt-1">Wayly watches every statement, alerts you when something's off, and tracks your quarterly budget across all three streams.</p>
                                 <div className="mt-3 flex items-center gap-3 flex-wrap">
                                     <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]" data-testid="decoder-upgrade">
                                         Start 7-day free trial
@@ -291,7 +291,7 @@ export default function StatementDecoderTool() {
                                 <div className="bg-primary-k text-white rounded-2xl p-7 mt-6" data-testid="sd-conversion-panel">
                                     <p className="text-[11px] uppercase tracking-[0.18em] text-gold">Your free use for today</p>
                                     <h3 className="font-heading text-2xl mt-2 leading-snug">That was your free Statement Decoder use for today.</h3>
-                                    <p className="mt-3 text-white/85 leading-relaxed">On a Solo or Family plan, Kindred watches every statement automatically — and alerts you the moment something looks wrong.</p>
+                                    <p className="mt-3 text-white/85 leading-relaxed">On a Solo or Family plan, Wayly watches every statement automatically — and alerts you the moment something looks wrong.</p>
                                     <ul className="mt-5 space-y-2 text-sm text-white/90">
                                         <li className="flex items-start gap-2"><span className="text-gold">✦</span> All 8 AI tools, unlimited</li>
                                         <li className="flex items-start gap-2"><span className="text-gold">✦</span> Anomaly detection on every statement</li>
@@ -315,7 +315,7 @@ export default function StatementDecoderTool() {
                         <h2 className="font-heading text-3xl text-primary-k tracking-tight mt-3">Plain English. Numbers that add up. Anomalies you can act on.</h2>
                     </div>
                     <div className="mt-10 relative max-w-4xl mx-auto">
-                        <BrowserFrame url="app.kindred.au/statements/april-2026" scale={0.85} label="Statement decoder result preview">
+                        <BrowserFrame url="app.wayly.com.au/statements/april-2026" scale={0.85} label="Statement decoder result preview">
                             <ScreenshotStatement />
                         </BrowserFrame>
                         {/* Annotations — positioned absolutely */}

@@ -1,4 +1,4 @@
-"""JWT authentication utilities for Kindred."""
+"""JWT authentication utilities for Wayly."""
 import os
 import bcrypt
 import jwt

@@ -65,9 +65,9 @@ export default function BillingSuccess() {
                             <Check className="h-6 w-6 text-white" />
                         </div>
                         <h1 className="font-heading text-4xl text-primary-k tracking-tight mt-6" data-testid="billing-success-heading">
-                            You're on Kindred {plan === "family" ? "Family" : "Solo"}.
+                            You're on Wayly {plan === "family" ? "Family" : "Solo"}.
                         </h1>
-                        <p className="mt-3 text-muted-k">Welcome aboard. Let's set up your household so Kindred can start watching the statements.</p>
+                        <p className="mt-3 text-muted-k">Welcome aboard. Let's set up your household so Wayly can start watching the statements.</p>
                         <button
                             onClick={() => nav("/onboarding")}
                             data-testid="billing-success-continue"

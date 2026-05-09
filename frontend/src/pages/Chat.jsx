@@ -62,7 +62,7 @@ export default function Chat() {
     return (
         <div className="flex flex-col h-[calc(100vh-180px)]" data-testid="chat-page">
             <div className="mb-4">
-                <span className="overline">Ask Kindred</span>
+                <span className="overline">Ask Wayly</span>
                 <h1 className="font-heading text-3xl text-primary-k tracking-tight mt-2">What would you like to know?</h1>
             </div>
 
@@ -104,7 +104,7 @@ export default function Chat() {
                 ))}
                 {busy && (
                     <div className="flex items-center gap-2 text-muted-k text-sm">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Kindred is thinking…
+                        <Loader2 className="h-4 w-4 animate-spin" /> Wayly is thinking…
                     </div>
                 )}
             </div>

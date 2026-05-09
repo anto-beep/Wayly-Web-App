@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { Stethoscope, Clock, Heart, Mail, ArrowRight } from "lucide-react";
 
 const POINTS = [
-    { icon: Clock, title: "Save 4 calls a week", body: "Most GPs in retirement-heavy postcodes spend 30+ min/week explaining aged care. Kindred handles the explanation." },
+    { icon: Clock, title: "Save 4 calls a week", body: "Most GPs in retirement-heavy postcodes spend 30+ min/week explaining aged care. Wayly handles the explanation." },
     { icon: Heart, title: "Better-prepared appointments", body: "Patients arrive with their care plan, statement, and budget already in shape. You spend the consult on medicine." },
     { icon: Stethoscope, title: "Discharge handoffs that work", body: "Hospital admission triggers a Restorative Care Pathway draft for the family — automatically." },
 ];
@@ -23,7 +23,7 @@ export default function ForGPs() {
                             Save four calls a week. Help your aged patients get the care they're entitled to.
                         </h1>
                         <p className="mt-5 text-lg text-muted-k leading-relaxed">
-                            Free Kindred for your own elderly parents. Free referral cards for your waiting room. A simple way to refer a family to a tool that will actually help.
+                            Free Wayly for your own elderly parents. Free referral cards for your waiting room. A simple way to refer a family to a tool that will actually help.
                         </p>
                         <div className="mt-7 flex items-center gap-3 flex-wrap">
                             <Link to="/contact" data-testid="gp-book-call" className="bg-primary-k text-white rounded-full px-6 py-3 hover:bg-[#16294a] transition-colors">
@@ -36,7 +36,7 @@ export default function ForGPs() {
                         <Mail className="h-6 w-6 text-primary-k" />
                         <h3 className="font-heading text-2xl text-primary-k mt-3">A small kindness from us to you</h3>
                         <p className="mt-3 text-primary-k leading-relaxed">
-                            Every participating GP gets free Family-tier Kindred for their own parent (or in-law) for as long as they keep the referral cards on the desk. That's roughly $470/year of value, on us, for the small loyalty of remembering us when a family looks lost.
+                            Every participating GP gets free Family-tier Wayly for their own parent (or in-law) for as long as they keep the referral cards on the desk. That's roughly $470/year of value, on us, for the small loyalty of remembering us when a family looks lost.
                         </p>
                     </div>
                 </div>

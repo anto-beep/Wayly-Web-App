@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api, formatAUD, formatAUD2 } from "@/lib/api";
 import StreamProgress from "@/components/StreamProgress";
 import DashboardInsights from "@/components/DashboardInsights";
+import ShareDashboardButton from "@/components/ShareDashboardButton";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
     Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2,
@@ -105,13 +106,16 @@ export default function CaregiverDashboard() {
                     )}
                 </div>
                 {!isFree && (
-                    <Link
-                        to="/app/statements/upload"
-                        data-testid="dashboard-upload-cta"
-                        className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90 transition-colors"
-                    >
-                        <FileText className="h-4 w-4" /> Upload a statement
-                    </Link>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <ShareDashboardButton />
+                        <Link
+                            to="/app/statements/upload"
+                            data-testid="dashboard-upload-cta"
+                            className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90 transition-colors"
+                        >
+                            <FileText className="h-4 w-4" /> Upload a statement
+                        </Link>
+                    </div>
                 )}
             </div>
 
@@ -294,13 +298,13 @@ export default function CaregiverDashboard() {
                         </div>
                         {chatHistory.length === 0 ? (
                             <div className="mt-4 text-sm text-muted-k">
-                                No chat yet. Ask Kindred anything about {household?.participant_name || "the participant"}'s budget, statement, or care plan. <Link to="/app/chat" className="text-primary-k underline">Start a chat</Link>.
+                                No chat yet. Ask Wayly anything about {household?.participant_name || "the participant"}'s budget, statement, or care plan. <Link to="/app/chat" className="text-primary-k underline">Start a chat</Link>.
                             </div>
                         ) : (
                             <ul className="mt-4 space-y-3">
                                 {chatHistory.slice(-3).map((m) => (
                                     <li key={m.id} className="text-sm">
-                                        <div className="text-[10px] uppercase tracking-wider text-muted-k">{m.role === "user" ? "You" : "Kindred"} · {new Date(m.created_at).toLocaleString()}</div>
+                                        <div className="text-[10px] uppercase tracking-wider text-muted-k">{m.role === "user" ? "You" : "Wayly"} · {new Date(m.created_at).toLocaleString()}</div>
                                         <div className="text-primary-k mt-0.5 line-clamp-2">{m.content}</div>
                                     </li>
                                 ))}

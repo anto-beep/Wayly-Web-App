@@ -1,5 +1,5 @@
 /**
- * Static content registry for the Kindred Resources hub.
+ * Static content registry for the Wayly Resources hub.
  * Editorial team can add to this without backend changes.
  */
 
@@ -40,7 +40,7 @@ export const GLOSSARY = [
     { term: "Statement of Rights", def: "The 14 rights of every participant under the Aged Care Act 2024 — dignity, autonomy, information, choice, refusal, complaint, and others." },
     { term: "Stream", def: "One of three buckets (Clinical, Independence, Everyday Living) that services are categorised into. Streams cannot cross-subsidise." },
     { term: "Support at Home", def: "The federal program (effective 1 November 2025) that replaced Home Care Packages." },
-    { term: "Wedge", def: "Industry term for the entry product that gets a customer in the door — for Kindred, the Statement Decoder is the wedge." },
+    { term: "Wedge", def: "Industry term for the entry product that gets a customer in the door — for Wayly, the Statement Decoder is the wedge." },
 ];
 
 export const TEMPLATES = [
@@ -192,7 +192,7 @@ export const ARTICLES = [
     {
         slug: "voice-first-for-the-participant",
         title: "Designing for the participant — what voice-first really means",
-        excerpt: "The participant view in Kindred is voice-first. Here's why that matters and what we got wrong on the first version.",
+        excerpt: "The participant view in Wayly is voice-first. Here's why that matters and what we got wrong on the first version.",
         body: [
             "Voice-first means: the participant should be able to do the most important thing without reading. The most important thing is usually 'tell my caregiver something is wrong'.",
             "We started with menus. We thought a participant would navigate to find what they needed. They didn't.",
@@ -203,7 +203,7 @@ export const ARTICLES = [
     },
     {
         slug: "what-kindred-doesnt-do",
-        title: "What Kindred doesn't do — and why that matters",
+        title: "What Wayly doesn't do — and why that matters",
         excerpt: "We're independent software. We don't deliver care, we don't take commissions, we don't recommend providers. Here's why.",
         body: [
             "We don't deliver care. We're not a Support at Home provider. Your registered provider is whoever you've chosen.",

@@ -18,7 +18,7 @@ MODEL_PROVIDER = "anthropic"
 MODEL_NAME = "claude-haiku-4-5-20251001"
 
 
-WRAPPER_SYSTEM = """You are the Public Tool Wrapper for Kindred. You run BEFORE every public AI tool.
+WRAPPER_SYSTEM = """You are the Public Tool Wrapper for Wayly. You run BEFORE every public AI tool.
 Your job has three parts.
 
 1) PII REDACTION
@@ -45,7 +45,7 @@ Return STRICT JSON only:
 {
   "redacted_input": "...",
   "redaction_count": 0,
-  "redaction_notice": null | "I noticed some personal details in what you shared. I've redacted them before processing - Kindred doesn't store or use personal information from public tool sessions.",
+  "redaction_notice": null | "I noticed some personal details in what you shared. I've redacted them before processing - Wayly doesn't store or use personal information from public tool sessions.",
   "abuse_flag": null | "clinical" | "financial" | "distress" | "manipulation",
   "abuse_response": null | "...",
   "route_to_tool": "..."
@@ -75,7 +75,7 @@ def _strip_json(text: str) -> str:
 
 _REDACTION_NOTICE = (
     "I noticed some personal details in what you shared. I've redacted them before processing "
-    "— Kindred doesn't store or use personal information from public tool sessions."
+    "— Wayly doesn't store or use personal information from public tool sessions."
 )
 
 

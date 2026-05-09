@@ -95,7 +95,7 @@ export default function ToolGate({ toolName }) {
                     Here's what happens 90 seconds after you sign up
                 </div>
                 <div className="max-w-3xl mx-auto" data-testid="tool-gate-live-preview">
-                    <BrowserFrame url={`app.kindred.au/${toolName.toLowerCase().replace(/\s+/g, "-")}`} scale={0.9} label={`Live preview loop: ${toolName} result`}>
+                    <BrowserFrame url={`app.wayly.com.au/${toolName.toLowerCase().replace(/\s+/g, "-")}`} scale={0.9} label={`Live preview loop: ${toolName} result`}>
                         <LivePreviewLoop />
                     </BrowserFrame>
                 </div>

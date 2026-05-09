@@ -21,7 +21,7 @@ export default function UpgradeGate({ toolName }) {
                     {toolName} is part of the paid plan.
                 </h3>
                 <p className="mt-2 text-sm text-muted-k leading-relaxed">
-                    Start a 7-day free trial — no card needed. Or sign in if you already have a Kindred account.
+                    Start a 7-day free trial — no card needed. Or sign in if you already have a Wayly account.
                 </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">

@@ -30,11 +30,11 @@ def _is_live() -> bool:
 
 
 def _sender() -> str:
-    return os.environ.get("SENDER_EMAIL", "Kindred <onboarding@resend.dev>")
+    return os.environ.get("SENDER_EMAIL", "Wayly <onboarding@resend.dev>")
 
 
 def _team_inbox() -> str:
-    return os.environ.get("TEAM_INBOX", "hello@kindred.au")
+    return os.environ.get("TEAM_INBOX", "hello@wayly.com.au")
 
 
 async def _send(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -58,7 +58,7 @@ async def _send(params: Dict[str, Any]) -> Dict[str, Any]:
 # Public helpers
 # ---------------------------------------------------------------------------
 async def notify_team_contact(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Notify the Kindred team inbox when someone submits /api/contact."""
+    """Notify the Wayly team inbox when someone submits /api/contact."""
     intent = (payload.get("intent") or "general").upper()
     name = payload.get("name", "(no name)")
     email = payload.get("email", "(no email)")
@@ -80,14 +80,14 @@ async def notify_team_contact(payload: Dict[str, Any]) -> Dict[str, Any]:
     <tr><td style="padding:6px 12px;color:#555;text-transform:uppercase;font-size:11px;letter-spacing:.05em">role</td><td style="padding:6px 12px;color:#1F3A5F">{_html_escape(role)}</td></tr>
     {rows_html}
   </table>
-  <p style="margin-top:24px;color:#888;font-size:12px">Sent automatically from Kindred · /api/contact</p>
+  <p style="margin-top:24px;color:#888;font-size:12px">Sent automatically from Wayly · /api/contact</p>
 </body></html>"""
 
     return await _send({
         "from": _sender(),
         "to": [_team_inbox()],
         "reply_to": email,
-        "subject": f"[Kindred · {intent}] {name} ({role})",
+        "subject": f"[Wayly · {intent}] {name} ({role})",
         "html": html,
     })
 
@@ -104,17 +104,17 @@ async def email_tool_result(
 <html><body style="font-family:Helvetica,Arial,sans-serif;background:#FAF7F2;padding:24px;color:#1F3A5F">
   <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #e5dfd2;overflow:hidden">
     <tr><td style="padding:20px 28px;background:#1F3A5F;color:#fff">
-      <div style="font-family:Georgia,serif;font-size:22px">Kindred</div>
+      <div style="font-family:Georgia,serif;font-size:22px">Wayly</div>
       <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-top:4px">{_html_escape(tool_name)}</div>
     </td></tr>
     <tr><td style="padding:24px 28px">
       <h2 style="margin:0 0 12px;font-family:Georgia,serif;color:#1F3A5F">{_html_escape(headline)}</h2>
       <div style="font-size:14px;line-height:1.6;color:#1F3A5F">{body_html}</div>
       <hr style="border:0;border-top:1px solid #e5dfd2;margin:24px 0" />
-      <p style="margin:0;font-size:13px;color:#555">Want Kindred to do this every month, automatically? <a href="https://kindred.au/signup" style="color:#1F3A5F;font-weight:600">Start a free 7-day trial</a> — no card needed.</p>
+      <p style="margin:0;font-size:13px;color:#555">Want Wayly to do this every month, automatically? <a href="https://wayly.com.au/signup" style="color:#1F3A5F;font-weight:600">Start a free 7-day trial</a> — no card needed.</p>
     </td></tr>
     <tr><td style="padding:16px 28px;background:#F0EBE0;color:#888;font-size:11px">
-      You received this because you requested it from a public tool on kindred.au. We didn't add you to any list.
+      You received this because you requested it from a public tool on wayly.com.au. We didn't add you to any list.
       Crisis support: Lifeline 13 11 14 · 1800ELDERHelp 1800 353 374.
     </td></tr>
   </table>
@@ -123,7 +123,7 @@ async def email_tool_result(
     return await _send({
         "from": _sender(),
         "to": [to],
-        "subject": f"Your Kindred {tool_name} result",
+        "subject": f"Your Wayly {tool_name} result",
         "html": html,
     })
 

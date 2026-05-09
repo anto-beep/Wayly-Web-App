@@ -13,7 +13,7 @@ export default function LegalPage({ title, lastUpdated, children }) {
             <MarketingHeader />
             <main className="mx-auto max-w-3xl px-6 py-16">
                 <div className="mb-8 pb-6 border-b border-kindred">
-                    <Link to="/" className="text-sm text-muted-k hover:text-primary-k">← Back to Kindred</Link>
+                    <Link to="/" className="text-sm text-muted-k hover:text-primary-k">← Back to Wayly</Link>
                     <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-4" data-testid="legal-page-title">
                         {title}
                     </h1>
