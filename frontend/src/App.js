@@ -46,6 +46,7 @@ import InviteAccept from "@/pages/InviteAccept";
 import CommandPalette from "@/components/CommandPalette";
 import FloatingHelpChat from "@/components/FloatingHelpChat";
 import TrialEndingModal from "@/components/TrialEndingModal";
+import AddToHomeScreenPrompt from "@/components/AddToHomeScreenPrompt";
 import Terms from "@/pages/legal/Terms";
 import Privacy from "@/pages/legal/Privacy";
 import AIDisclaimerPage from "@/pages/legal/AIDisclaimer";
@@ -104,6 +105,7 @@ function App() {
                 <CommandPalette />
                 <FloatingHelpChat />
                 <TrialEndingModal />
+                <AddToHomeScreenPrompt />
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />

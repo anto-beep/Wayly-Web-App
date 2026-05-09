@@ -2913,12 +2913,16 @@ import asyncio as _asyncio
 
 async def _process_trial_reminders_once() -> dict:
     """Idempotent pass over trialing subscriptions:
+       - day-4 (~3 days remaining): send mid-trial nudge with usage stats.
        - 24h-from-end: send reminder email, mark `trial_reminder_sent_at`.
        - past-end: flip user.plan to 'free', mark sub status 'expired', send
          expiry email, mark `trial_expired_handled_at`.
-    Returns {reminders_sent, expired_handled}."""
+    Returns {midtrial_sent, reminders_sent, expired_handled}."""
     now = datetime.now(timezone.utc)
     in_24h = now + timedelta(hours=24)
+    in_4d = now + timedelta(days=4)
+    in_2d = now + timedelta(days=2)
+    midtrial_sent = 0
     reminders_sent = 0
     expired_handled = 0
 
@@ -2926,6 +2930,68 @@ async def _process_trial_reminders_once() -> dict:
         """Build a unique match filter for a sub doc — prefer `id`, fall back
         to `user_id` for legacy records that don't have an `id`."""
         return {"id": sub["id"]} if sub.get("id") else {"user_id": sub["user_id"], "status": sub.get("status")}
+
+    # Mid-trial nudge — between 2 and 4 days remaining, not yet sent.
+    cursor_mid = db.subscriptions.find(
+        {
+            "status": "trialing",
+            "trial_ends_at": {"$gte": in_2d.isoformat(), "$lte": in_4d.isoformat()},
+            "trial_midtrial_sent_at": {"$exists": False},
+        },
+        {"_id": 0},
+    )
+    async for sub in cursor_mid:
+        try:
+            user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
+            if not user:
+                continue
+            plan = sub.get("plan", "solo")
+            label = PLAN_PRICES.get(plan, {}).get("label", plan.capitalize())
+            amount = PLAN_PRICES.get(plan, {}).get("amount", 0)
+            ends = (sub.get("trial_ends_at") or "").split("T")[0]
+            # Pull usage stats
+            household = await db.households.find_one({"id": user.get("household_id")}, {"_id": 0, "id": 1}) if user.get("household_id") else None
+            stmt_count = await db.statements.count_documents({"household_id": household["id"]}) if household else 0
+            anomaly_count = 0
+            if household:
+                cur = db.statements.find({"household_id": household["id"]}, {"_id": 0, "anomalies": 1})
+                async for s in cur:
+                    anomaly_count += len(s.get("anomalies") or [])
+            await email_service.email_tool_result(
+                to=user["email"],
+                tool_name=f"You're halfway through your {label} trial",
+                headline="Halfway there — here's what Kindred has done for you",
+                body_html=(
+                    f"<p>Hi {user.get('name') or ''},</p>"
+                    f"<p>You're halfway through your free 7-day {label} trial (ends <strong>{ends}</strong>). "
+                    "Quick recap of what's happened so far:</p>"
+                    "<ul>"
+                    f"<li><strong>{stmt_count}</strong> statement{'s' if stmt_count != 1 else ''} decoded</li>"
+                    f"<li><strong>{anomaly_count}</strong> anomaly flag{'s' if anomaly_count != 1 else ''} caught for review</li>"
+                    "</ul>"
+                    + ("<p>If you haven't decoded a statement yet, here's the 30-second version: "
+                       "<a href='https://kindred.au/ai-tools/statement-decoder'>paste, upload or photograph</a> any "
+                       "monthly Support at Home statement and we'll explain what every line means.</p>"
+                       if stmt_count == 0 else
+                       "<p>Want to use the rest of your trial? Try one of these:</p>"
+                       "<ul>"
+                       "<li><strong>Provider Price Checker</strong> — see if your provider's rates are above the median (most users find at least one item that's overcharged)</li>"
+                       "<li><strong>Reassessment Letter Generator</strong> — produce a polished letter to MyAgedCare asking for a higher classification</li>"
+                       "<li><strong>Family Care Coordinator chat</strong> — ask anything about your statements, budget or anomalies</li>"
+                       "</ul>")
+                    + f"<p>After your trial, {label} is <strong>${amount:.2f}/month</strong> — cancel any time. "
+                    "Add a card any time at <a href='https://kindred.au/settings/billing'>Settings → Plan & Billing</a>.</p>"
+                    "<p>Questions? Just reply to this email.</p>"
+                    "<p>— The Kindred team</p>"
+                ),
+            )
+            await db.subscriptions.update_one(
+                _sub_match(sub),
+                {"$set": {"trial_midtrial_sent_at": now.isoformat()}},
+            )
+            midtrial_sent += 1
+        except Exception as e:
+            logger.warning("Mid-trial nudge failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
 
     # Trial nudges — within 24h, not yet reminded
     cursor = db.subscriptions.find(
@@ -3022,7 +3088,7 @@ async def _process_trial_reminders_once() -> dict:
         except Exception as e:
             logger.warning("Trial expiry handling failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
 
-    return {"reminders_sent": reminders_sent, "expired_handled": expired_handled}
+    return {"midtrial_sent": midtrial_sent, "reminders_sent": reminders_sent, "expired_handled": expired_handled}
 
 
 async def _trial_scheduler_loop():

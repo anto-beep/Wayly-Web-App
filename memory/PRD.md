@@ -483,6 +483,51 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 35 — Feb 2026 · Onboarding wizard · Dashboard insights · Day-3 nudge · A2HS prompt · Emergent badge removed)
+
+### Onboarding flow rewrite (4-step wizard)
+- `/app/frontend/src/pages/Onboarding.jsx` — full rewrite from a single-step household form into a 4-step wizard:
+  1. **Household details** (existing): participant name, classification grid (1-8 with annual budget), provider, grandfathered toggle.
+  2. **Email forwarding** (new): shows the user's `kndrd_xxxx` forwarding address with a one-click copy, plus quick-set-up steps for Gmail/Outlook/Apple Mail.
+  3. **Family invites** (new): inline 1-5 row form for invitee email + relationship dropdown. Calls `/household/invite` for each and surfaces toasts. Falls back to a "Family invites are part of the Family plan" upsell card for Solo users.
+  4. **First statement** (new): 2-card choice between "Upload a file or photo" and "Paste statement text", plus a "Take me to my dashboard" CTA.
+- Mobile-first stepper at top: collapses to "Step N of 4 · Label" on small screens. Skip-step / Skip-all controls. Auto-advances past Step 1 when household already exists.
+
+### Dashboard rework — DashboardInsights component
+- New `/app/frontend/src/components/DashboardInsights.jsx` — adds two panels under the per-stream progress cards:
+  - **Monthly spend bar chart** (last 6 statements): bar height = gross spend, hover-tooltip shows gross + co-payment, formatted short-label values ($7.3k, $765, etc.).
+  - **Anomaly severity timeline** (last 8 statements): each column is a stacked bar (terracotta=alerts, gold=warnings, sage=infos) with the total count above and statement period below. Side legend totals the counts across the strip.
+- Both panels skip rendering when there are no statements (zero-state safe). Mobile-aware with overflow-x-auto for narrow viewports.
+
+### Mid-trial day-3 nudge email
+- `_process_trial_reminders_once()` in `/app/backend/server.py` now runs THREE idempotent passes per tick:
+  1. **Mid-trial nudge** (2-4 days remaining, not yet sent) — pulls user's actual usage stats (`db.statements.count` + total anomaly count), sends a "halfway through your trial — here's what we've done for you" email with personalised content (different copy if they haven't decoded a statement yet vs power users).
+  2. **T-1 reminder** (existing): "ends in 24 hours".
+  3. **Auto-downgrade** (existing): expires trial → free.
+- New `trial_midtrial_sent_at` field on subscriptions, prevents dupes.
+- Live verified: pushed a trial to +3 days remaining → tick → `midtrial_sent: 1`.
+
+### Add-to-Home-Screen prompt
+- New `/app/frontend/src/components/AddToHomeScreenPrompt.jsx` — non-intrusive bottom-bar prompt for mobile visitors, mounted globally in `App.js`.
+  - **Android/Chromium**: hooks `beforeinstallprompt`, fires native install dialog.
+  - **iOS Safari**: shows "tap Share → Add to Home Screen" hint (Apple doesn't expose programmatic install).
+  - Suppressed when already standalone, on auth pages, after dismiss, after install (`appinstalled` listener).
+  - Defers 5s after page-load so it doesn't fight entrance animations.
+
+### Emergent badge removed
+- Removed the entire `<a id="emergent-badge">` block from `/app/frontend/public/index.html` per user request. No longer appears on any device, any page, in any environment.
+
+### Files changed
+- New: `/app/frontend/src/components/DashboardInsights.jsx`, `/app/frontend/src/components/AddToHomeScreenPrompt.jsx`
+- `/app/frontend/src/pages/Onboarding.jsx` — full rewrite (4-step wizard).
+- `/app/frontend/src/pages/CaregiverDashboard.jsx` — added `<DashboardInsights>` between stream cards and lifetime cap.
+- `/app/backend/server.py` — mid-trial nudge in `_process_trial_reminders_once()`, new `trial_midtrial_sent_at` flag.
+- `/app/frontend/src/App.js` — mounted `<AddToHomeScreenPrompt />` globally.
+- `/app/frontend/public/index.html` — Emergent badge removed.
+
+### Deferred to a future run (per remaining tasks)
+- **e. Refactor `server.py` (3000+ lines) into APIRouters**: deferred to keep this iteration's diff small and verifiable. Should be the focus of a dedicated maintenance iteration.
+
 ## Implemented (Iteration 34 — Feb 2026 · Mobile-first responsive overhaul · PWA installable)
 
 ### PWA installability

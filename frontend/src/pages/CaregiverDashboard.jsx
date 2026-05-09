@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatAUD, formatAUD2 } from "@/lib/api";
 import StreamProgress from "@/components/StreamProgress";
+import DashboardInsights from "@/components/DashboardInsights";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
     Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2,
@@ -185,6 +186,8 @@ export default function CaregiverDashboard() {
                             <StreamProgress key={s.stream} stream={s} />
                         ))}
                     </div>
+
+                    <DashboardInsights statements={statements} />
 
                     <div className="bg-surface border border-kindred rounded-xl p-6" data-testid="lifetime-cap-card">
                         <div className="flex items-baseline justify-between">
