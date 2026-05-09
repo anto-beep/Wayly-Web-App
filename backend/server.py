@@ -72,6 +72,10 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ["DB_NAME"]]
 
 app = FastAPI(title="Wayly API")
+APP_STARTED_AT = datetime.now(timezone.utc)
+APP_BUILD_VERSION = os.environ.get("APP_BUILD_VERSION", "iter38-2026-02")
+ANOMALY_ENGINE_VERSION = "v3.4-iter27"
+DOCUMENT_EXTRACT_VERSION = "v2.1-iter28"
 api = APIRouter(prefix="/api")
 
 
@@ -2206,7 +2210,109 @@ async def public_family_coordinator(body: PublicChatBody, request: Request, resp
 
 @api.get("/")
 async def root():
-    return {"service": "kindred", "ok": True}
+    return {"service": "wayly", "ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Public status — uptime, last ingestion, model versions, dependency health.
+# Intentionally public + cache-friendly; safe values only.
+# ---------------------------------------------------------------------------
+def _human_uptime(seconds: int) -> str:
+    if seconds < 60:
+        return f"{seconds}s"
+    if seconds < 3600:
+        return f"{seconds // 60}m"
+    if seconds < 86400:
+        h = seconds // 3600
+        m = (seconds % 3600) // 60
+        return f"{h}h {m}m" if m else f"{h}h"
+    d = seconds // 86400
+    h = (seconds % 86400) // 3600
+    return f"{d}d {h}h" if h else f"{d}d"
+
+
+@api.get("/status")
+async def public_status():
+    now = datetime.now(timezone.utc)
+    uptime_seconds = int((now - APP_STARTED_AT).total_seconds())
+
+    mongo_ok = True
+    try:
+        await client.admin.command("ping")
+    except Exception as e:
+        logger.warning("Status mongo ping failed: %s", e)
+        mongo_ok = False
+
+    last_ingest_iso: Optional[str] = None
+    last_ingest_method: Optional[str] = None
+    try:
+        latest = await db.statements.find_one(
+            {},
+            {"_id": 0, "uploaded_at": 1, "input_method": 1},
+            sort=[("uploaded_at", -1)],
+        )
+        if latest:
+            last_ingest_iso = latest.get("uploaded_at")
+            last_ingest_method = latest.get("input_method")
+    except Exception as e:
+        logger.warning("Status last-ingestion lookup failed: %s", e)
+
+    def _round_bucket(n: int) -> int:
+        if n < 10:
+            return n
+        if n < 100:
+            return (n // 10) * 10
+        return (n // 100) * 100
+
+    try:
+        total_statements = await db.statements.estimated_document_count()
+        total_households = await db.households.estimated_document_count()
+    except Exception:
+        total_statements = 0
+        total_households = 0
+
+    llm_key_configured = bool(os.environ.get("EMERGENT_LLM_KEY"))
+    resend_configured = bool(os.environ.get("RESEND_API_KEY"))
+    stripe_configured = bool(os.environ.get("STRIPE_SECRET_KEY"))
+
+    components = {
+        "mongo": "ok" if mongo_ok else "down",
+        "llm": "ok" if llm_key_configured else "not_configured",
+        "email": "ok" if resend_configured else "not_configured",
+        "billing": "ok" if stripe_configured else "not_configured",
+    }
+    overall = "ok" if mongo_ok and llm_key_configured else ("down" if not mongo_ok else "degraded")
+
+    recent_24h = 0
+    try:
+        cutoff = (now - timedelta(hours=24)).isoformat()
+        recent_24h = await db.statements.count_documents({"uploaded_at": {"$gte": cutoff}})
+    except Exception:
+        pass
+
+    return {
+        "service": "wayly",
+        "status": overall,
+        "components": components,
+        "uptime_seconds": uptime_seconds,
+        "uptime_human": _human_uptime(uptime_seconds),
+        "last_ingestion_at": last_ingest_iso,
+        "last_ingestion_method": last_ingest_method,
+        "ingestion_24h": recent_24h,
+        "totals": {
+            "statements": _round_bucket(total_statements),
+            "households": _round_bucket(total_households),
+        },
+        "versions": {
+            "build": APP_BUILD_VERSION,
+            "anomaly_engine": ANOMALY_ENGINE_VERSION,
+            "document_extract": DOCUMENT_EXTRACT_VERSION,
+            "claude_extractor": os.environ.get("KINDRED_EXTRACTOR_MODEL", "claude-haiku-4-5-20251001"),
+            "claude_auditor": os.environ.get("KINDRED_AUDITOR_MODEL", "claude-haiku-4-5-20251001"),
+            "claude_chat": "claude-sonnet-4-5-20250929",
+        },
+        "checked_at": now.isoformat(),
+    }
 
 
 # ---------------------------------------------------------------------------
