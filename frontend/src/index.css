@@ -170,6 +170,50 @@ html.theme-dark .bg-\[#16294a\] { background-color: #0a1020 !important; }
 @media (prefers-reduced-motion: reduce) {
     .animate-help-chat-in { animation: none; }
 }
+
+/* ---- iOS safe-area-inset support for installed PWA / standalone mode ---- */
+@supports (padding: env(safe-area-inset-top)) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+}
+.safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.safe-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+/* ---- Mobile bottom-nav spacer so fixed nav doesn't cover content ------- */
+.has-bottom-nav main {
+    padding-bottom: 5rem;
+}
+@media (min-width: 768px) {
+    .has-bottom-nav main {
+        padding-bottom: 0;
+    }
+}
+
+/* ---- Hide horizontal scrollbar utility (used on mobile tab strips) ----- */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* ---- Tap target minimum 44px for accessibility on touch devices -------- */
+@media (pointer: coarse) {
+    button, a[role="button"], .tap-target {
+        min-height: 44px;
+    }
+}
+
+/* ---- Disable iOS auto-zoom on inputs by ensuring 16px font ------------- */
+@media screen and (max-width: 767px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}
 @media (prefers-reduced-motion: reduce) {
     .kindred-fadein, .kindred-anomaly-flash {
         animation: none !important;

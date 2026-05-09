@@ -483,6 +483,46 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 34 — Feb 2026 · Mobile-first responsive overhaul · PWA installable)
+
+### PWA installability
+- New `/app/frontend/public/manifest.json` — name, short name, description, `start_url=/`, `scope=/`, `display=standalone`, `orientation=portrait-primary`, theme `#1F3A5F` (Kindred navy), background `#F5F1EA`. Includes 3 SVG icons (192/512/maskable) and 2 app shortcuts ("Statement Decoder" → `/ai-tools/statement-decoder`, "Dashboard" → `/app`).
+- New SVG icons: `/icon-192.svg`, `/icon-512.svg`, `/icon-maskable.svg` — Kindred-branded heart on navy.
+- Updated `/app/frontend/public/index.html`:
+  - `viewport` upgraded to include `viewport-fit=cover` (iOS notch support).
+  - `theme-color` updated from `#000000` to Kindred navy `#1F3A5F`.
+  - Added `<link rel="manifest">`, `<link rel="apple-touch-icon">`, and Apple-specific PWA meta tags (`apple-mobile-web-app-capable`, `apple-mobile-web-app-title="Kindred"`, `apple-mobile-web-app-status-bar-style`, `format-detection=telephone=no`).
+- Verified: `curl /manifest.json` returns the JSON cleanly; icon SVGs serve at 200 with correct `image/svg+xml` content-type. Users can now "Add to Home Screen" on iOS and "Install app" prompts on Android/Chrome/Edge.
+
+### Mobile-first Layout refactor
+- **Compact header**: hides the "Support at Home, in plain English" tagline below `md`. Logout label collapses to icon-only on `md`. `lg` shows full name + household participant + classification context. Plan badge & Participant-view shortcut hidden on small screens (still in drawer).
+- **Bottom nav** (fixed, mobile-only): 4 tap targets (Dashboard, Statements, Ask Kindred, More). Active item gets a gold icon + navy label. Honours `safe-area-inset-bottom` so it doesn't sit under the iPhone home indicator. Behind a CSS class `.has-bottom-nav` that adds `padding-bottom: 5rem` to `<main>` so content doesn't sit underneath.
+- **Slide-out drawer** (mobile, opens via header hamburger or "More" in bottom nav): user name + plan badge, household context, all 7 nav items, plus Plan & billing / Switch to participant view / Sign out. Closes on overlay click and route change. Animates in via the existing `kindred-help-chat-in` keyframe.
+- **Sidebar** (md+): unchanged 7-item vertical nav. Hidden on mobile.
+- Tested live: 390×844 (iPhone 14) shows clean header + bottom nav + dashboard cards; 768×1024 (iPad) shows full sidebar + 2-col card grid.
+
+### Mobile UX polish
+- New CSS utilities in `/app/frontend/src/index.css`:
+  - `.safe-top` / `.safe-bottom` — `env(safe-area-inset-*)` padding for notched/home-indicator devices.
+  - `.has-bottom-nav main` — adds bottom padding only on mobile so the bottom-nav doesn't cover content.
+  - `.no-scrollbar` — utility for hiding scrollbars on horizontal tab strips.
+  - `.tap-target` — minimum 44×44px tap area on touch devices (`@media (pointer: coarse)`).
+  - `@media (max-width: 767px) input/select/textarea` — forces `font-size: 16px` to disable iOS auto-zoom on input focus.
+- **Help chat launcher** repositioned to `bottom-16 md:bottom-20 right-3 md:right-5` so it sits cleanly above the new mobile bottom-nav AND the Emergent preview badge.
+- **Help chat panel** width/height now adapts: full-bleed minus `1.5rem` padding on mobile, max 380px on desktop. Height capped to `calc(100vh-12rem)` on mobile (accounts for bottom-nav + safe areas).
+
+### Verified end-to-end
+- iPhone 14 (390×844): dashboard renders compact header + clean stat cards + bottom nav + help launcher. Drawer opens via hamburger, shows all nav items + household context.
+- iPad portrait (768×1024): sidebar shows all 7 items, 2-col stat grid, plan badge in header, no bottom nav.
+- Pricing public page (390 wide): zero horizontal overflow, hamburger menu, all plan cards stack vertically.
+
+### Files changed
+- New: `/app/frontend/public/manifest.json`, `/app/frontend/public/icon-192.svg`, `/app/frontend/public/icon-512.svg`, `/app/frontend/public/icon-maskable.svg`
+- `/app/frontend/public/index.html` — manifest + iOS PWA meta tags, `viewport-fit=cover`.
+- `/app/frontend/src/components/Layout.jsx` — full rewrite: compact header, bottom nav, slide-out drawer, mobile-aware sidebar visibility.
+- `/app/frontend/src/components/FloatingHelpChat.jsx` — mobile-aware launcher + panel positioning.
+- `/app/frontend/src/index.css` — safe-area utilities, tap targets, iOS auto-zoom fix, has-bottom-nav class.
+
 ## Implemented (Iteration 33 — Feb 2026 · Trial conversion · Email forwarding ingest)
 
 ### Trial conversion engine — T-1 reminder + day-7 modal + auto-downgrade

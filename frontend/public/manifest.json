@@ -1,0 +1,50 @@
+{
+    "name": "Kindred — Aged-care concierge",
+    "short_name": "Kindred",
+    "description": "Decode Support at Home statements, track budgets, catch anomalies. For Australian families.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "theme_color": "#1F3A5F",
+    "background_color": "#F5F1EA",
+    "categories": ["finance", "health", "lifestyle", "productivity"],
+    "lang": "en-AU",
+    "dir": "ltr",
+    "icons": [
+        {
+            "src": "/icon-192.svg",
+            "type": "image/svg+xml",
+            "sizes": "192x192",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-512.svg",
+            "type": "image/svg+xml",
+            "sizes": "512x512",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-maskable.svg",
+            "type": "image/svg+xml",
+            "sizes": "512x512",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Statement Decoder",
+            "short_name": "Decode",
+            "description": "Decode a Support at Home statement",
+            "url": "/ai-tools/statement-decoder",
+            "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+        },
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "Open your caregiver dashboard",
+            "url": "/app",
+            "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+        }
+    ]
+}

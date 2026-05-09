@@ -140,7 +140,7 @@ export default function FloatingHelpChat() {
                     role="dialog"
                     aria-label="Kindred help chat"
                     data-testid="help-chat-panel"
-                    className="fixed bottom-28 right-5 z-[60] w-[min(380px,calc(100vw-2.5rem))] h-[min(540px,calc(100vh-9rem))] bg-surface border border-kindred rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-help-chat-in"
+                    className="fixed bottom-24 md:bottom-28 right-3 md:right-5 z-[60] w-[min(380px,calc(100vw-1.5rem))] h-[min(540px,calc(100vh-12rem))] md:h-[min(540px,calc(100vh-9rem))] bg-surface border border-kindred rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-help-chat-in"
                     style={{}}
                 >
                     {/* Header */}
@@ -251,7 +251,7 @@ export default function FloatingHelpChat() {
                 aria-label={open ? "Close help chat" : "Open help chat"}
                 aria-expanded={open}
                 data-testid="help-chat-launcher"
-                className="fixed bottom-20 right-5 z-[60] inline-flex items-center justify-center gap-2 rounded-full bg-primary-k text-white shadow-xl hover:bg-[#16294a] transition-all focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
+                className="fixed bottom-16 md:bottom-20 right-3 md:right-5 z-[60] inline-flex items-center justify-center gap-2 rounded-full bg-primary-k text-white shadow-xl hover:bg-[#16294a] transition-all focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
                 style={{
                     width: open ? "3rem" : "auto",
                     height: "3rem",
