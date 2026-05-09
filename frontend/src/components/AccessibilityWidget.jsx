@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Accessibility, X, Plus, Minus, Type, Eye, Link2, RotateCcw, Sun, Moon } from "lucide-react";
+import { Accessibility, X, Plus, Minus, Type, Eye, Link2, RotateCcw, Sun, Moon, Volume2, Pause, Play, Square } from "lucide-react";
 
 /**
  * AccessibilityWidget
@@ -52,14 +52,67 @@ export function bootAccessibilityPrefs() {
 export default function AccessibilityWidget() {
     const [open, setOpen] = useState(false);
     const [prefs, setPrefs] = useState(loadPrefs);
+    const [readState, setReadState] = useState("idle"); // idle | speaking | paused
+    const [supportsSpeech] = useState(() =>
+        typeof window !== "undefined" && "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance !== "undefined"
+    );
 
     useEffect(() => {
         applyPrefs(prefs);
         savePrefs(prefs);
     }, [prefs]);
 
+    // Stop any ongoing speech when widget unmounts (route change)
+    useEffect(() => {
+        return () => {
+            if (supportsSpeech) window.speechSynthesis?.cancel();
+        };
+    }, [supportsSpeech]);
+
     const update = useCallback((patch) => setPrefs((p) => ({ ...p, ...patch })), []);
     const reset = useCallback(() => setPrefs(defaultPrefs()), []);
+
+    const readPage = useCallback(() => {
+        if (!supportsSpeech) return;
+        const synth = window.speechSynthesis;
+        synth.cancel(); // stop any ongoing utterance
+        // Prefer current selection; fall back to <main> text or <body> text
+        const sel = window.getSelection?.()?.toString().trim();
+        let text = sel;
+        if (!text) {
+            const main = document.querySelector("main") || document.body;
+            text = (main?.innerText || "").trim();
+        }
+        if (!text) return;
+        // Cap length so we don't read 10 000 words by accident
+        const clipped = text.length > 4000 ? text.slice(0, 4000) + "… that's the first part. Select less to read further." : text;
+        const u = new SpeechSynthesisUtterance(clipped);
+        u.lang = "en-AU";
+        u.rate = 1.0;
+        u.pitch = 1.0;
+        u.onend = () => setReadState("idle");
+        u.onerror = () => setReadState("idle");
+        synth.speak(u);
+        setReadState("speaking");
+    }, [supportsSpeech]);
+
+    const pauseResume = useCallback(() => {
+        if (!supportsSpeech) return;
+        const synth = window.speechSynthesis;
+        if (synth.speaking && !synth.paused) {
+            synth.pause();
+            setReadState("paused");
+        } else if (synth.paused) {
+            synth.resume();
+            setReadState("speaking");
+        }
+    }, [supportsSpeech]);
+
+    const stopRead = useCallback(() => {
+        if (!supportsSpeech) return;
+        window.speechSynthesis.cancel();
+        setReadState("idle");
+    }, [supportsSpeech]);
 
     return (
         <>
@@ -182,6 +235,54 @@ export default function AccessibilityWidget() {
                                 testid="a11y-reduce-motion"
                             />
                         </div>
+
+                        {/* Read aloud */}
+                        {supportsSpeech && (
+                            <div className="rounded-lg border border-kindred bg-surface-2 p-3" data-testid="a11y-read-aloud-section">
+                                <div className="flex items-start gap-3">
+                                    <Volume2 className="h-4 w-4 text-primary-k mt-0.5 flex-none" />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm text-primary-k font-medium">Read aloud</div>
+                                        <p className="text-[11px] text-muted-k mt-0.5">
+                                            Reads selected text — or the whole page if nothing is selected.
+                                        </p>
+                                        <div className="mt-2.5 flex items-center gap-2">
+                                            {readState === "idle" && (
+                                                <button
+                                                    type="button"
+                                                    onClick={readPage}
+                                                    data-testid="a11y-read-start"
+                                                    className="tap-target inline-flex items-center gap-1.5 rounded-md bg-primary-k text-white px-3 py-1.5 text-sm hover:bg-[#16294a]"
+                                                >
+                                                    <Play className="h-3.5 w-3.5" /> Start reading
+                                                </button>
+                                            )}
+                                            {readState !== "idle" && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={pauseResume}
+                                                        data-testid="a11y-read-pause"
+                                                        className="tap-target inline-flex items-center gap-1.5 rounded-md border border-kindred bg-surface text-primary-k px-3 py-1.5 text-sm hover:bg-surface-2"
+                                                    >
+                                                        {readState === "speaking" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                                                        {readState === "speaking" ? "Pause" : "Resume"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={stopRead}
+                                                        data-testid="a11y-read-stop"
+                                                        className="tap-target inline-flex items-center gap-1.5 rounded-md border border-kindred bg-surface text-primary-k px-3 py-1.5 text-sm hover:bg-surface-2"
+                                                    >
+                                                        <Square className="h-3.5 w-3.5" /> Stop
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             type="button"

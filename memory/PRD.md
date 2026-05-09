@@ -483,6 +483,33 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 38 — Feb 2026 · Read-aloud accessibility · GitHub guidance for Mobile Agent)
+
+### Read-aloud (browser SpeechSynthesis, no API cost)
+- Extended `/app/frontend/src/components/AccessibilityWidget.jsx` with a **Read aloud** section using the browser's native `SpeechSynthesis` API.
+- UX:
+  - **Start reading** — reads the user's current text selection if any, otherwise reads `<main>` (or `<body>` fallback). Capped at 4000 characters with a polite "select less to read further" message if longer.
+  - **Pause / Resume** + **Stop** controls when speaking is active.
+  - Voice locale set to `en-AU` for Australian pronunciation.
+  - Auto-stops on widget unmount (route change) so audio doesn't bleed across pages.
+  - Hides the entire section when SpeechSynthesis isn't supported (older Android WebViews / Edge legacy).
+- Live verified: section visible in the panel, "Start reading" CTA renders correctly, button-state machine wired up.
+
+### GitHub repo guidance (delivered via support agent)
+- The user has not yet pushed to GitHub. To bridge their web codebase into a Mobile Agent project they need to:
+  1. Click **"Save to GitHub"** in the chat input bar of this Emergent project — creates a private GitHub repo by default.
+  2. Connect their GitHub account (one-time OAuth) when prompted.
+  3. Start a new Mobile Agent project on Emergent and import that GitHub repo so the Mobile Agent has full context (API routes, data models, brand tokens, copy strings).
+  4. Most useful files to highlight for the Mobile Agent in the initial prompt:
+     - `/backend/server.py` — every API endpoint signature and response shape
+     - `/backend/models.py` — the Pydantic models the mobile app should mirror
+     - `/frontend/src/index.css` — brand tokens (`--kindred-primary`, `--kindred-gold`, etc.)
+     - `/frontend/src/pages/*.jsx` — copy strings + UX patterns to preserve
+     - `/frontend/public/og-image.png` — brand visual reference
+
+### Files changed
+- `/app/frontend/src/components/AccessibilityWidget.jsx` — added SpeechSynthesis-backed Read-aloud control with play/pause/stop state machine.
+
 ## Implemented (Iteration 37 — Feb 2026 · Dark mode contrast · Accessibility widget · OG/Twitter cards)
 
 ### Dark mode contrast fix (cream text + gold headings on dark navy)
