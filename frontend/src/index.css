@@ -116,23 +116,83 @@ html.theme-dark {
     --kindred-bg: #0E1626;
     --kindred-surface: #16213A;
     --kindred-surface-2: #1F2B47;
-    --kindred-primary: #D4A24E;       /* gold becomes the accent */
-    --kindred-primary-fg: #0E1626;
-    --kindred-gold: #F0C67A;
+    --kindred-primary: #1A3457;       /* keep navy for buttons/CTAs (readable on dark) */
+    --kindred-primary-fg: #F1E9DA;
+    --kindred-gold: #E5BC79;          /* slightly brighter gold for accent on dark */
     --kindred-sage: #9EC4A2;
     --kindred-terracotta: #E08B66;
-    --kindred-text: #F1E9DA;
-    --kindred-muted: #93A1BA;
-    --kindred-border: #243154;
+    --kindred-text: #F1E9DA;          /* cream/white — high-contrast body text */
+    --kindred-muted: #A8B5C8;         /* muted but readable */
+    --kindred-border: #2A3658;
     color-scheme: dark;
 }
 html.theme-dark body { background-color: var(--kindred-bg); color: var(--kindred-text); }
-html.theme-dark .bg-white { background-color: var(--kindred-surface) !important; }
+
+/* Brand-utility overrides for dark mode — body text uses cream, headings use gold */
+html.theme-dark .text-primary-k { color: var(--kindred-text); }
+html.theme-dark .text-muted-k { color: var(--kindred-muted); }
+html.theme-dark h1.font-heading,
+html.theme-dark h2.font-heading,
+html.theme-dark h3.font-heading,
+html.theme-dark .font-heading { color: var(--kindred-gold); }
+
+/* Inline hex overrides used in marketing components */
+html.theme-dark .bg-white { background-color: var(--kindred-surface) !important; color: var(--kindred-text); }
 html.theme-dark .bg-white\/75 { background-color: rgba(22, 33, 58, 0.75) !important; }
-html.theme-dark .text-\[\#1F3A5F\] { color: #F1E9DA !important; }
-html.theme-dark .bg-\[\#1F3A5F\] { background-color: #16213A !important; }
+html.theme-dark .bg-white\/80 { background-color: rgba(22, 33, 58, 0.85) !important; }
+html.theme-dark .bg-white\/95 { background-color: rgba(22, 33, 58, 0.92) !important; }
+html.theme-dark .text-\[\#1F3A5F\] { color: var(--kindred-text) !important; }
+html.theme-dark .bg-\[\#1F3A5F\] { background-color: #16213A !important; color: var(--kindred-text) !important; }
 html.theme-dark .bg-\[\#FAF7F2\] { background-color: var(--kindred-bg) !important; }
-html.theme-dark .bg-\[#16294a\] { background-color: #0a1020 !important; }
+html.theme-dark .bg-\[#16294a\] { background-color: #0F1A30 !important; }
+html.theme-dark .bg-\[\#F5F1EA\] { background-color: var(--kindred-surface-2) !important; }
+html.theme-dark .bg-\[\#fdf6ec\] { background-color: var(--kindred-surface-2) !important; }
+
+/* ---- Accessibility user-controlled font-size scaling ---- */
+html[data-font-scale="0"] { font-size: 14px; }
+html[data-font-scale="1"] { font-size: 16px; } /* default */
+html[data-font-scale="2"] { font-size: 18px; }
+html[data-font-scale="3"] { font-size: 20px; }
+html[data-font-scale="4"] { font-size: 22px; }
+
+/* ---- High-contrast mode (opt-in via accessibility widget) ---- */
+html.theme-high-contrast {
+    --kindred-text: #000000;
+    --kindred-muted: #1a1a1a;
+    --kindred-bg: #FFFFFF;
+    --kindred-surface: #FFFFFF;
+    --kindred-surface-2: #FAFAFA;
+    --kindred-primary: #000000;
+    --kindred-primary-fg: #FFFFFF;
+    --kindred-gold: #B8860B;
+    --kindred-border: #000000;
+}
+html.theme-high-contrast.theme-dark {
+    --kindred-text: #FFFFFF;
+    --kindred-muted: #E8E8E8;
+    --kindred-bg: #000000;
+    --kindred-surface: #0A0A0A;
+    --kindred-surface-2: #1A1A1A;
+    --kindred-primary: #FFFFFF;
+    --kindred-primary-fg: #000000;
+    --kindred-gold: #FFD700;
+    --kindred-border: #FFFFFF;
+}
+html.theme-high-contrast button,
+html.theme-high-contrast a,
+html.theme-high-contrast input,
+html.theme-high-contrast textarea,
+html.theme-high-contrast select { outline: 1px solid currentColor; }
+
+/* ---- Underlined links (opt-in via accessibility widget) ---- */
+html.a11y-underline-links a { text-decoration: underline !important; }
+
+/* ---- Reduce motion (opt-in via accessibility widget — hard switch) ---- */
+html.a11y-reduce-motion *, html.a11y-reduce-motion *::before, html.a11y-reduce-motion *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+}
 
 /* ---- LivePreviewLoop animations (gate page conversion teaser) ---------- */
 @keyframes kindred-fadein-loop {

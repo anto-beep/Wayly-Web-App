@@ -47,6 +47,7 @@ import CommandPalette from "@/components/CommandPalette";
 import FloatingHelpChat from "@/components/FloatingHelpChat";
 import TrialEndingModal from "@/components/TrialEndingModal";
 import AddToHomeScreenPrompt from "@/components/AddToHomeScreenPrompt";
+import AccessibilityWidget, { bootAccessibilityPrefs } from "@/components/AccessibilityWidget";
 import Terms from "@/pages/legal/Terms";
 import Privacy from "@/pages/legal/Privacy";
 import AIDisclaimerPage from "@/pages/legal/AIDisclaimer";
@@ -79,11 +80,9 @@ function PublicAuthOnly({ children }) {
 }
 
 function App() {
-    // Apply saved theme preference on first render
+    // Boot accessibility prefs (font size, dark, contrast, etc) BEFORE first paint
     if (typeof window !== "undefined") {
-        const savedTheme = localStorage.getItem("kindred_theme");
-        if (savedTheme === "dark") document.documentElement.classList.add("theme-dark");
-        else document.documentElement.classList.remove("theme-dark");
+        bootAccessibilityPrefs();
     }
     // CRITICAL: Detect Emergent OAuth callback synchronously, before any router
     // logic runs. The session_id arrives in the URL fragment and must be
@@ -106,6 +105,7 @@ function App() {
                 <FloatingHelpChat />
                 <TrialEndingModal />
                 <AddToHomeScreenPrompt />
+                <AccessibilityWidget />
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />

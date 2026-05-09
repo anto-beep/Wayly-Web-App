@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1F3A5F"/>
+      <stop offset="100%" stop-color="#16294A"/>
+    </linearGradient>
+    <linearGradient id="cardgrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FAF7F2"/>
+    </linearGradient>
+    <filter id="cardshadow" x="-2%" y="-2%" width="106%" height="110%">
+      <feDropShadow dx="0" dy="14" stdDeviation="22" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Backdrop -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle decorative dots -->
+  <g fill="#D4A24E" opacity="0.18">
+    <circle cx="80" cy="100" r="3"/>
+    <circle cx="160" cy="540" r="4"/>
+    <circle cx="1120" cy="80" r="3"/>
+    <circle cx="1080" cy="560" r="5"/>
+    <circle cx="60" cy="350" r="2.5"/>
+  </g>
+
+  <!-- Brand mark + name (top-left) -->
+  <g transform="translate(60, 60)">
+    <circle cx="22" cy="22" r="22" fill="#D4A24E"/>
+    <path d="M11 17 C 11 11, 17 11, 19 14 C 21 11, 27 11, 27 17 C 27 23, 19 30, 19 30 C 19 30, 11 23, 11 17 Z" transform="translate(2 2)" fill="#1F3A5F"/>
+    <text x="58" y="20" font-family="Georgia, serif" font-size="22" font-weight="500" fill="#FFFFFF">Wayly</text>
+    <text x="58" y="38" font-family="-apple-system, sans-serif" font-size="13" fill="#A8B5C8" letter-spacing="0.05em">Aged-care concierge</text>
+  </g>
+
+  <!-- Headline (left column) -->
+  <g transform="translate(60, 180)">
+    <text font-family="Georgia, serif" font-size="62" font-weight="500" fill="#FFFFFF">
+      <tspan x="0" y="0">Support at Home,</tspan>
+      <tspan x="0" y="76">finally explained.</tspan>
+    </text>
+    <text x="0" y="170" font-family="-apple-system, sans-serif" font-size="22" fill="#E8E2D6" letter-spacing="0.01em">
+      <tspan x="0" dy="0">Decode any monthly statement in 30 seconds.</tspan>
+      <tspan x="0" dy="32">Catch overcharges. Keep your whole family</tspan>
+      <tspan x="0" dy="32">in the loop. Built for Australian caregivers.</tspan>
+    </text>
+    <g transform="translate(0, 320)">
+      <rect x="0" y="0" width="220" height="48" rx="24" fill="#D4A24E"/>
+      <text x="110" y="31" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="16" font-weight="600" fill="#1F3A5F">Try free at wayly.com.au</text>
+    </g>
+  </g>
+
+  <!-- Mock decoded-statement card (right column) -->
+  <g transform="translate(700, 130)" filter="url(#cardshadow)">
+    <rect x="0" y="0" width="440" height="380" rx="18" fill="url(#cardgrad)"/>
+
+    <!-- Card header -->
+    <text x="24" y="36" font-family="Georgia, serif" font-size="18" font-weight="600" fill="#1F3A5F">May 2026 statement</text>
+    <text x="24" y="55" font-family="-apple-system, sans-serif" font-size="11" fill="#5C6878" letter-spacing="0.12em">DECODED · 3 ALERTS · 2 WARNINGS</text>
+
+    <!-- Stream rows -->
+    <g transform="translate(24, 80)">
+      <text x="0" y="14" font-family="-apple-system, sans-serif" font-size="12" fill="#5C6878">Clinical</text>
+      <text x="392" y="14" text-anchor="end" font-family="-apple-system, sans-serif" font-size="13" font-weight="600" fill="#1F3A5F">$540 / $1,818</text>
+      <rect x="0" y="22" width="392" height="6" rx="3" fill="#E8E2D6"/>
+      <rect x="0" y="22" width="116" height="6" rx="3" fill="#7A9B7E"/>
+    </g>
+    <g transform="translate(24, 132)">
+      <text x="0" y="14" font-family="-apple-system, sans-serif" font-size="12" fill="#5C6878">Independence</text>
+      <text x="392" y="14" text-anchor="end" font-family="-apple-system, sans-serif" font-size="13" font-weight="600" fill="#1F3A5F">$369 / $2,338</text>
+      <rect x="0" y="22" width="392" height="6" rx="3" fill="#E8E2D6"/>
+      <rect x="0" y="22" width="62" height="6" rx="3" fill="#7A9B7E"/>
+    </g>
+    <g transform="translate(24, 184)">
+      <text x="0" y="14" font-family="-apple-system, sans-serif" font-size="12" fill="#5C6878">Everyday Living</text>
+      <text x="392" y="14" text-anchor="end" font-family="-apple-system, sans-serif" font-size="13" font-weight="600" fill="#C5734D">$10,551 / $1,670</text>
+      <rect x="0" y="22" width="392" height="6" rx="3" fill="#E8E2D6"/>
+      <rect x="0" y="22" width="392" height="6" rx="3" fill="#C5734D"/>
+    </g>
+
+    <!-- Anomaly alert chip -->
+    <g transform="translate(24, 240)">
+      <rect x="0" y="0" width="392" height="60" rx="10" fill="#FBEDE5" stroke="#C5734D" stroke-width="1"/>
+      <circle cx="20" cy="30" r="7" fill="#C5734D"/>
+      <text x="20" y="34" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">!</text>
+      <text x="38" y="22" font-family="-apple-system, sans-serif" font-size="13" font-weight="600" fill="#1F3A5F">Duplicate transport — $89.00 on 19 May</text>
+      <text x="38" y="42" font-family="-apple-system, sans-serif" font-size="11" fill="#5C6878">Same provider, exact-match line item appeared twice.</text>
+    </g>
+
+    <!-- Footer hint -->
+    <g transform="translate(24, 326)">
+      <text x="0" y="14" font-family="-apple-system, sans-serif" font-size="11" fill="#5C6878">+ 4 more anomalies caught this month</text>
+      <text x="392" y="14" text-anchor="end" font-family="-apple-system, sans-serif" font-size="11" fill="#1F3A5F" font-weight="600">View dashboard →</text>
+    </g>
+  </g>
+
+  <!-- Bottom strip: trust badges -->
+  <g transform="translate(60, 560)" font-family="-apple-system, sans-serif" font-size="13" fill="#A8B5C8">
+    <text x="0" y="0">★ Provider-agnostic · No commissions</text>
+    <text x="320" y="0">🇦🇺 Built for Australian families</text>
+    <text x="640" y="0">⏱ Decoded in ~30 seconds</text>
+  </g>
+</svg>
