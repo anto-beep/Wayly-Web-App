@@ -1,3 +1,42 @@
+## Iteration 44 (Feb 2026) — Admin Phase D: Support Tickets + Communications
+
+### Backend (`/app/backend/admin_phase_d.py`, new, ~570 LOC)
+- **Tickets** — user-side: `POST/GET /api/tickets`, `GET /api/tickets/{id}` (only non-internal-notes), `POST /api/tickets/{id}/messages`.
+- **Tickets** — admin-side: `GET /admin/tickets` (filters: status/priority/category/unassigned/mine + pagination), `GET /admin/tickets/{id}` (incl. internal notes), `PUT /admin/tickets/{id}`, `POST /admin/tickets/{id}/messages` (with `is_internal_note` flag — admin reply auto-flips status to waiting_on_user + emails the user via Resend).
+- **Ticket reports** — `GET /admin/ticket-reports` (status counts, open_p1, opened_7d, resolved_7d, oldest_unresolved).
+- **Macros** — full CRUD: `GET/POST /admin/macros`, `PUT/DELETE /admin/macros/{id}`.
+- **Campaigns** — `GET/POST /admin/campaigns`, `POST /admin/campaigns/{id}/send` (iterates Mongo users by audience, calls email_service per recipient, logs to db.notification_log, double-send guard).
+- **Audience builder** — `POST /admin/campaigns/preview-audience` supports 5 types: all / plan / trial_expiring / churned / never_decoded.
+- **Email templates** — `GET /admin/email-templates` returns 11 system templates + custom array (edit-in-place deferred).
+- **Notification log** — `GET /admin/notification-log` (filters + last-hour aggregates).
+- **Newsletter subscribers** — `GET /admin/newsletter-subscribers`.
+
+### Frontend (`/app/frontend/src/pages/admin/AdminPhaseD.jsx`, new, ~520 LOC)
+- `AdminTickets` — stat cards + 3 filter selects + table with row→detail navigation.
+- `AdminTicketDetail` — 2-column layout: thread + reply composer (macro dropdown, internal-note toggle, Send/Add note) on the left; priority/status/assignment metadata on the right.
+- `AdminMacros` — full CRUD inline form + table.
+- `AdminCampaigns` + `CampaignBuilder` — 3-step wizard (name+audience+preview / subject+html / preview+save), table with one-click Send.
+- `AdminEmailTemplates`, `AdminNotificationLog` (with last-hour stat cards), `AdminSubscribers`.
+- All routes wired in `AdminApp.jsx` under `/admin/{tickets,tickets/:id,macros,campaigns,email-templates,notifications,newsletter-subscribers}`.
+- Sidebar groups: Support (Tickets, Macros), Communications (Campaigns, Templates, Notification Log).
+
+### Verified by testing agent (iter 24)
+- **36/36 backend pytest pass** — admin TOTP login, RBAC, all 7 endpoint groups (incl. validation rejects + double-send guard), audit log emission.
+- **Frontend Playwright 100%** — admin login + 2FA, all 5 Phase D nav testids, ticket reply auto-flips status, priority PUT works, campaign builder navigates all 3 steps to save-draft, all 16 ticket/campaign testids present. Regression Phase A/B/C pages render without page errors.
+
+### Deferred (Phase E)
+- **Server-side impersonation read-block** — still client-side only (admins can mutate via raw curl during impersonation; all actions audited).
+- **Background queue for campaign send** — currently fans out synchronously in-process (fine for low volume, OK for now).
+- **Email-template edit-in-place** + version history.
+- Sections 8–13 (Content CMS, Analytics funnels, Compliance UI, System mgmt, Admin CRUD, full Cmd+K search).
+
+### Files
+- New: `/app/backend/admin_phase_d.py`, `/app/frontend/src/pages/admin/AdminPhaseD.jsx`, `/app/backend/tests/test_admin_phase_d.py`.
+- Edited: `/app/backend/server.py` (router mounting), `/app/frontend/src/pages/admin/AdminApp.jsx` (routes + sidebar nav).
+
+---
+
+
 ## Iteration 43 (Feb 2026) — Admin Phase C: AI logs + Billing depth + MRR chart
 
 ### Backend (`/app/backend/admin_routes.py` Phase C block, +260 LOC)
