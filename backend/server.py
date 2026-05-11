@@ -3141,6 +3141,21 @@ async def stripe_webhook(request: Request):
                 {"session_id": ev.session_id},
                 {"$set": {"payment_status": "paid", "paid_at": now_iso(), "webhook_event": ev.event_type}},
             )
+    # Mobile push trigger — failed payment
+    if (ev.payment_status or "").lower() in ("failed", "unpaid", "requires_payment_method") and ev.session_id:
+        tx = await db.payment_transactions.find_one({"session_id": ev.session_id}) or {}
+        try:
+            import asyncio as _asyncio
+            import push_service as _push
+            user = await db.users.find_one({"id": tx.get("user_id")}, {"_id": 0, "email": 1}) or {}
+            _asyncio.create_task(_push.notify_role(
+                "payment_failed",
+                title="💳 Payment failed",
+                body=f"{user.get('email') or 'A customer'} — ${tx.get('amount', '')} {tx.get('currency', 'AUD').upper()}",
+                data={"type": "payment_failed", "session_id": ev.session_id, "user_id": tx.get("user_id")},
+            ))
+        except Exception:
+            pass
     return {"ok": True}
 
 
@@ -3149,6 +3164,7 @@ from admin_auth import router as admin_auth_router
 from admin_phase_d import phase_d_admin, phase_d_user
 from admin_phase_e import phase_e, phase_e_public, phase_e_invite_public
 from admin_phase_e2 import cms_admin, cms_public
+from admin_devices import devices_router as admin_devices_router
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -3158,6 +3174,7 @@ api.include_router(phase_e_public)
 api.include_router(phase_e_invite_public)
 api.include_router(cms_admin)
 api.include_router(cms_public)
+api.include_router(admin_devices_router)
 
 app.include_router(api)
 

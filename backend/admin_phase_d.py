@@ -99,6 +99,18 @@ async def user_create_ticket(body: TicketCreate, user_id: str = Depends(get_curr
         "is_internal_note": False,
         "ts": now,
     })
+    # Mobile push trigger — P1 tickets only (don't spam phones for low-priority).
+    if body.priority == "P1":
+        try:
+            import asyncio, push_service
+            asyncio.create_task(push_service.notify_role(
+                "ticket_p1",
+                title=f"🚨 New P1 ticket — {user['email']}",
+                body=body.subject[:140],
+                data={"type": "ticket_p1", "ticket_id": tid},
+            ))
+        except Exception:
+            pass
     return {"ok": True, "ticket": _strip(ticket)}
 
 

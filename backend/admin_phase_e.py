@@ -377,6 +377,18 @@ async def submit_data_request(body: DataRequestCreate, request: Request):
         "history": [{"status": "received", "ts": _now(), "by": "user"}],
     }
     await db.data_requests.insert_one(rec)
+    # Mobile push — notify support / ops admins of new privacy request
+    try:
+        import asyncio
+        import push_service
+        asyncio.create_task(push_service.notify_role(
+            "data_request",
+            title="New privacy data request",
+            body=f"{body.request_type.capitalize()} requested by {body.user_email}",
+            data={"type": "data_request", "request_id": rid},
+        ))
+    except Exception:
+        pass
     return {"ok": True, "request_id": rid}
 
 

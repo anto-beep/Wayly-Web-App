@@ -1,3 +1,65 @@
+## Iteration 47 (Feb 2026) — Admin mobile push: device registration + FCM/Expo send helper
+
+### New `/app/backend/push_service.py` (~140 LOC)
+- `notify_admin(admin_id, title, body, data)` — push to one admin's devices.
+- `notify_role(role_key, title, body, data)` — fan-out to all admins in the role
+  bucket. Pre-configured buckets: `ticket_p1` (super/ops/support),
+  `payment_failed` (super/ops), `data_request` (super/ops/support),
+  `system_health` (super/ops).
+- Provider-aware: routes Expo tokens to `https://exp.host/--/api/v2/push/send`
+  (no creds needed) and FCM tokens to the FCM HTTP API (requires
+  `FCM_SERVER_KEY` env var — falls back to mock + log if absent).
+- All sends are fire-and-forget; failures never raise to the caller. Each send
+  is logged to `db.push_log` with the response status.
+
+### New `/app/backend/admin_devices.py` (~110 LOC)
+- `POST /api/admin/devices` — register/refresh a push token (idempotent on
+  `admin_id + token`). Tracks platform / provider / app_version / device_name /
+  last_seen_at. Audit-logged.
+- `GET /api/admin/devices` — list this admin's devices (tokens **not** returned
+  to client — security-sensitive).
+- `DELETE /api/admin/devices/{id}` — soft-unregister (sets `active=false`).
+- `POST /api/admin/devices/test-push` — fires a test push to all this admin's
+  active devices. Used by the mobile agent to verify wiring on first install.
+
+### Push triggers wired into existing flows
+- `admin_phase_d.py POST /api/tickets` — when a user creates a P1 ticket,
+  `notify_role("ticket_p1", ...)` fires asynchronously with `data: {type, ticket_id}`.
+- `admin_phase_e.py POST /api/public/data-request` — when anyone submits a
+  Privacy Act data request, `notify_role("data_request", ...)` fires.
+- `server.py POST /api/webhook/stripe` — when Stripe sends a `failed` /
+  `unpaid` / `requires_payment_method` event, `notify_role("payment_failed", ...)`
+  fires with `data: {session_id, user_id}`.
+
+All triggers wrapped in `try/except` + `asyncio.create_task` so they NEVER
+block the originating request. Push delivery failures are logged but invisible
+to the user-facing flow.
+
+### Verified live (smoke test)
+- Register Expo token → 200, `refreshed:false`.
+- Re-register same token → 200, `refreshed:true`.
+- List devices → token NOT returned to client (verified).
+- `POST /admin/devices/test-push` → Expo API returns 200 (real delivery
+  attempted), FCM gracefully mocked (no creds set).
+- Unregister → 200; soft-disable persisted.
+- 103/104 prior pytest still pass (one CMS test failed due to a transient
+  network timeout in the test environment, not a code regression).
+
+### Mobile handoff doc updated
+- `/app/memory/MOBILE_AGENT_HANDOFF.md` extended with Section 10 — full admin
+  mobile spec covering TOTP auth, device registration endpoints, 6 priority
+  screens, push payload schemas, RBAC matrix, and dark-slate design tokens.
+
+### Files
+- New: `/app/backend/push_service.py`, `/app/backend/admin_devices.py`.
+- Edited: `/app/backend/server.py` (mounted devices router + Stripe failed-payment
+  push trigger), `/app/backend/admin_phase_d.py` (P1 ticket push trigger),
+  `/app/backend/admin_phase_e.py` (data-request push trigger),
+  `/app/memory/MOBILE_AGENT_HANDOFF.md` (Section 10 added).
+
+---
+
+
 ## Iteration 46 (Feb 2026) — Phase E2 Content CMS · Admin invite flow · ReDoS fix · Password visibility toggle
 
 ### Backend (`/app/backend/admin_phase_e2.py`, new ~460 LOC + additions to `admin_phase_e.py`)
