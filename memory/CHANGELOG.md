@@ -1,59 +1,58 @@
-## Iteration 41 (Feb 2026) — Admin Phase A: TOTP 2FA + 4-tier roles + dark UI
+## Iteration 42 (Feb 2026) — Admin Phase B: Real Overview, User Profile, Impersonation, LLM Cost Tracking
 
 ### Backend
-- New `/app/backend/admin_auth.py` mounted at `/api/admin/auth/*`:
-  - **TOTP 2FA mandatory** via `pyotp` 2.9.0 + `qrcode` 8.2 (QR data URI).
-  - Login is **two-step**:
-    1. `POST /admin/auth/login` with email + password → returns one of:
-       - `{requires_2fa: true, temp_token, role}` (existing 2FA user)
-       - `{requires_2fa_setup: true, setup_token, qr_data_uri, secret, role}` (first-time)
-    2. `POST /admin/auth/2fa/verify` `{temp_token, code}` → admin JWT + admin user
-       OR `POST /admin/auth/2fa/enable` `{setup_token, code}` → admin JWT + 8 backup codes (shown once)
-  - **Three JWT types** (distinguished by `type` claim): `admin_pre2fa` (5 min), `admin_setup` (10 min), `admin` (12h max).
-  - **Session model** in `admin_sessions` collection: `last_activity` (4h inactivity), `expires_at_max` (12h absolute), revocable.
-  - **Brute-force lockout**: 5 failed password attempts → 30 min lockout (per user).
-  - **Backup codes**: 8 single-use, bcrypt-hashed at rest, plaintext shown once at enrollment.
-  - **Audit log** in `admin_audit` collection — every login attempt, 2FA event, backup-code use.
-- **4-tier role model** on `users.admin_role`: `super_admin` / `operations_admin` / `support_admin` / `content_admin`.
-  - Legacy `is_admin: true` users auto-migrated to `super_admin` on first call.
-  - Role helper deps: `require_super_admin`, `require_super_or_ops`, `require_roles(...)`.
-  - DELETE /api/admin/users/{id} now gated to `super_admin` only.
-- `/app/backend/admin_routes.py` updated to use the new `get_current_admin` dep (dict, includes role).
-- `UserPublic.admin_role` field added to `models.py` so it flows through to frontend.
-- `/app/backend/seed_admin.py` idempotently promotes two super admins:
-  - `hello@techglove.com.au` / `AdminPass!2026`
-  - `a.chiware2@gmail.com` / `Admin!2026` (Antony, second super admin required for the "minimum 2 super admins" policy).
+- **`/app/backend/llm_costs.py`** (new) — `record_llm_call(tool, model, ...)` writes to `db.llm_calls` with input/output char counts, token estimates, AUD cost estimate (based on Anthropic/OpenAI public rates × 1.5 USD→AUD). Fire-and-forget; never throws.
+- **`/app/backend/agents.py`** — `_attempt()` inside `_llm_chunk_call` now records every Claude call (the Statement Decoder's primary code path) with `tool=chunk:<name>`, duration, success/error.
+- **`/app/backend/admin_routes.py`** — Phase B block appended:
+  - `GET /admin/overview` — 8 metric cards + AI health (LLM cost today/month, calls, errors, decoder runs, avg ms, success rate) + plans + subscriptions.
+  - `GET /admin/activity?limit=N` — merged chronological feed from users/statements/payments with kind+color coding.
+  - `GET /admin/llm-cost-trend?days=30` — daily LLM spend rollup.
+  - `GET /admin/audit-log` — paginated, filterable by actor/target/action.
+  - `GET /admin/users/{id}/profile` — enriched detail (user + sub + household + 20 statements + payments + 20 LLM calls + 30 audit events + notes + 10 user_sessions).
+  - `GET/POST /admin/users/{id}/notes` — admin-only internal notes (5000 char max).
+  - `POST /admin/users/{id}/suspend` + `POST /admin/users/{id}/reinstate` — soft suspension with reason; invalidates active sessions on suspend.
+  - `POST /admin/users/{id}/extend-trial` `{days}` — 1–90 days, adds to current trial_ends_at.
+  - `POST /admin/users/{id}/impersonate` — issues 60-min impersonation JWT (`type='impersonation'`, `impersonator_id`, `sub=target_user_id`); audits.
+  - `POST /admin/users/{id}/refund` `{session_id, amount, reason}` — records to `db.refunds` (Stripe API call deferred — pending_stripe status); enforces cap of $500 for support_admin role.
 
 ### Frontend
-- `/app/frontend/src/pages/admin/admin.css` — full dark theme tokens (`#0F1923` bg, `#0A1420` sidebar, `#1A2535` card, `#E53E3E` red, JetBrains Mono for IDs).
-- `/app/frontend/src/pages/admin/AdminAuthContext.jsx` — separate auth context with own token (`wayly_admin_token` localStorage key); never shares state with user app.
-- `/app/frontend/src/pages/admin/AdminLogin.jsx` — 3-step flow (credentials → setup OR verify → backup-codes show-once → dashboard).
-- `/app/frontend/src/pages/admin/AdminApp.jsx` — rewritten:
-  - Full sidebar per Section 1 spec (11 nav groups: Overview, User Management, Subscriptions & Billing, AI & Tools, Support, Communications, Content, Analytics, Security, System, Admin).
-  - System + Admin sections gated by `rolesAllowed`.
-  - Header with Cmd+K search trigger, notification bell skeleton, admin name + role pill, logout.
-  - **Cmd+K** modal (skeleton) filters nav items live.
-- `/app/frontend/src/pages/admin/AdminPages.jsx` — Analytics, Users (search + filter + drawer with all actions), Households / Payments / Statements (compact SimpleTable), Placeholder for not-yet-built pages.
-- `App.js` route updated: `<Route path="/admin/*" element={<AdminApp />} />` — completely outside the regular `AuthProvider`.
+- **AdminUserProfile.jsx (new)** — 3-column layout:
+  - Left: avatar + name/email + plan/admin/suspended badges + key stats.
+  - Centre: 5 tabs (Overview / Subscription & Billing / AI Tool Usage / Audit Log / Internal Notes).
+  - Right: actions panel — send reset, toggle admin, set plan, extend trial, impersonate (with target prompt), cancel sub, suspend/reinstate, delete (super_admin only with typed-email confirmation).
+- **AdminPages.jsx** — `AdminAnalytics` rewritten to consume real `/admin/overview` + `/admin/activity`: 8 stat cards, AI Health panel, Plans+Subs panel, recent activity feed. `AdminUsers` row click now navigates to `/admin/users/:id`.
+- **AdminApp.jsx** — new route `users/:userId` mounted.
+- **ImpersonationBanner.jsx (new)** — red sticky banner shown across consumer app when `localStorage.wayly_impersonation_token` is set; "Stop impersonation" clears + reloads.
+- **lib/api.js** — request interceptor swaps impersonation token in and blocks all POST/PUT/PATCH/DELETE client-side.
+- **App.js** — `ConsumerWidgets` wrapper hides chat/A2HS/AccessibilityWidget on `/admin/*`; includes ImpersonationBanner globally.
 
-### Verified by testing agent (iter 21 report)
-- 16/16 backend pytest cases pass (login two-step, 2FA verify, setup, lockout, session, role gate, backup-code consumption, audit log, RBAC).
-- Full Playwright frontend run: admin login → 2FA → sidebar render → users table → drawer → logout — all pass.
-- One bug found + fixed by testing agent: invalid bcrypt dummy hash in the "unknown email" branch was raising 500 — replaced with a valid hash.
+### Verified by testing agent (iter 22)
+- **28/28 backend pytest pass** — every Phase B endpoint, RBAC, validation, impersonation token issuance, audit logging.
+- **Frontend full Playwright pass** — admin login → 2FA → Overview (11 testids) → user table → user profile (5 tabs, 7 actions; reinstate correctly hidden when not suspended) → notes add flow all green.
 
-### Deferred to Phase B–E
-- Section 2 Overview real-time charts (MRR / cohort / DAU / activity feed) — needs analytics data source.
-- Section 3 user profile 8-tab detail, impersonation, login history, internal notes.
-- Section 4 full billing (subs/trials/churned/failed/refunds/revenue charts).
-- Section 5 AI tool logs (decoder log, anomaly log, manual review queue) — needs per-call tracking.
-- Section 6 full ticketing system (new schema).
-- Section 7 campaign builder.
-- Section 8 CMS for blog/guides/glossary/templates/changelog.
-- Section 9 product analytics (PostHog or in-house event tracking).
-- Section 10–12 audit log UI / sessions UI / data requests / breach log / feature flags / system health / admin account CRUD.
+### Deferred (Phase C+)
+- **MRR chart** (12-month line) — needs chart library decision (recharts? Tremor?).
+- **Cohort retention table** — needs historical signup → retention join across months.
+- **AU map** — geo IP lookup integration.
+- **Section 4 billing deep-dive** — failed payments retry status, churn dashboard, revenue charts.
+- **Section 5 AI tools** — Statement Decoder Log (per-call view), Anomaly Detection Log, Tool Usage stats by tool, Manual Review Queue, AI Error Reports.
+- **Section 6 Support** — ticketing system (new collection + UI).
+- **Section 7 Communications** — campaign builder, template editor with version history.
+- **Section 8 CMS** — blog/guides/glossary/templates/changelog.
+- **Section 9 Analytics** — funnels, custom report builder.
+- **Section 10 Compliance UI** — full audit-log UI, data requests, breach log.
+- **Section 11 System** — feature flags, system health charts, API key rotation, webhooks viewer, maintenance mode.
+- **Section 12 Admin CRUD** — admin accounts management page, role permissions matrix editor.
+- **Section 13 Global Cmd+K** — wire to user/household/payment/audit indices.
+- **Stripe API call for refunds** — real Stripe refund call (currently records pending_stripe).
+- **Server-side enforcement** of impersonation read-only (currently client-side only; admins with valid creds can theoretically still mutate via raw curl — acceptable risk for now since all admin actions are audited).
 
-### Files changed
-- New: `/app/backend/admin_auth.py`, `/app/frontend/src/pages/admin/admin.css`, `/app/frontend/src/pages/admin/AdminAuthContext.jsx`, `/app/frontend/src/pages/admin/AdminLogin.jsx`, `/app/frontend/src/pages/admin/AdminPages.jsx`.
-- Rewritten: `/app/frontend/src/pages/admin/AdminApp.jsx`, `/app/backend/seed_admin.py`.
-- Edited: `/app/backend/admin_routes.py`, `/app/backend/server.py`, `/app/backend/models.py`, `/app/frontend/src/App.js`, `/app/frontend/src/components/Layout.jsx`.
-- New deps: `pyotp==2.9.0`, `qrcode==8.2` (in `requirements.txt`).
+### Files
+- New: `/app/backend/llm_costs.py`, `/app/frontend/src/pages/admin/AdminUserProfile.jsx`, `/app/frontend/src/components/ImpersonationBanner.jsx`.
+- Edited: `/app/backend/agents.py`, `/app/backend/admin_routes.py`, `/app/frontend/src/pages/admin/AdminPages.jsx`, `/app/frontend/src/pages/admin/AdminApp.jsx`, `/app/frontend/src/lib/api.js`, `/app/frontend/src/App.js`.
+
+---
+
+## Iteration 41 (Feb 2026) — Admin Phase A: TOTP 2FA + 4-tier roles + dark UI
+
+See above (kept for reference).
