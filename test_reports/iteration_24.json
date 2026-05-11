@@ -1,0 +1,38 @@
+{
+  "summary": "Phase D (Support tickets + Communications) backend + frontend smoke testing. Backend: 36/36 pytest passed including all required Phase D scenarios. Frontend: all 6 Phase D admin pages render with expected data-testids; campaign wizard opens; ticket reply submit wired (couldn't fully assert thread render because seed tickets were cleaned up by pytest fixture before the smoke run).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin shell (any page)", "issues": ["React console warning observed during navigation: 'Cannot update a component while rendering a different component'. Non-blocking but should be cleaned up (likely a setState during another component's render in the admin layout/router)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_phase_d.py",
+    "/app/test_reports/pytest/iter24_admin_phaseD.xml"
+  ],
+  "action_items": [
+    "Investigate the React 'setState during render' warning surfaced in /admin pages (low priority but recurring).",
+    "Optional: surface stat-card text more deterministically (the inner_text search for 'Open P1' / 'Opened 7d' / 'Resolved 7d' did not match — may indicate localized/abbreviated labels or that cards only render once tickets exist; worth confirming the empty-state still shows the 4 stat cards as spec'd)."
+  ],
+  "critical_code_review_comments": [
+    "admin_phase_d.py: _audience_query handles 'never_decoded' by iterating `db.statements.distinct('uploaded_by')` via async-for; pymongo's distinct returns a coroutine on motor, so iterating with async for likely yields nothing. Recommend `await db.statements.distinct('uploaded_by')` then loop over the list. (Audience type 'never_decoded' not exercised in tests so may silently no-op.)",
+    "admin_phase_d.py: send_campaign loops recipients in-process and awaits Resend per recipient — fine for small audiences; for >50 users this will block the request. Move to a background task (BackgroundTasks or a queue) for production.",
+    "admin_phase_d.py: TicketUpdate.assigned_admin_id uses `body.assigned_admin_id is not None` to allow clearing — but the OpenAPI default of Optional[str]=None means you cannot distinguish 'omit' vs 'set null'. Consider a sentinel or a separate /assign endpoint.",
+    "admin_phase_d.py: html_body in campaign is min_length=10 only — no HTML sanitisation. Admin-only so low risk, but worth a sanitiser or at least an explicit comment."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_phase_d.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "~95%"},
+  "test_credentials": "Used hello@techglove.com.au / AdminPass!2026 with TOTP from db.users.totp_secret; user cathy@example.com / testpass123 from /app/memory/test_credentials.md.",
+  "seed_data_creation": "Test tickets/macros/campaigns created with TEST_ prefix and cleaned up via session-scoped pytest fixture. notification_log rows for test campaign also purged.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase D backend test file is /app/backend/tests/test_admin_phase_d.py (36 tests, all passing). It follows the same TOTP login pattern as test_admin_phase_c.py. Frontend Phase D pages all have data-testid prefixes: admin-tickets, admin-ticket-detail, ticket-reply-form, ticket-thread, ticket-priority-select, ticket-status-select, ticket-assign-me, ticket-internal-checkbox, ticket-reply-body, ticket-reply-submit, admin-macros, admin-campaigns, new-campaign-btn, campaign-builder, campaign-name, campaign-audience, campaign-preview-btn, campaign-next-1, campaign-subject, campaign-html, campaign-next-2, campaign-save-draft, admin-email-templates, admin-notification-log, admin-subscribers. The audience='never_decoded' branch may be buggy (motor.distinct usage) but is not covered by the required test scenarios.",
+  "rca of the issue": "N/A — all required Phase D scenarios PASS."
+}

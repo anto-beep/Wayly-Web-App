@@ -47,6 +47,7 @@ const NAV = [
         section: "Support",
         items: [
             { to: "/admin/tickets", label: "Tickets", icon: Headphones, testid: "admin-nav-tickets" },
+            { to: "/admin/macros", label: "Macros", icon: FileText, testid: "admin-nav-macros" },
         ],
     },
     {
@@ -255,6 +256,10 @@ import {
     AdminDecoderLog, AdminAnomalyLog, AdminToolStats, AdminSubscriptions,
     AdminFailedPayments, AdminRefunds, AdminRevenue,
 } from "./AdminPhaseC";
+import {
+    AdminTickets, AdminTicketDetail, AdminMacros, AdminCampaigns,
+    AdminEmailTemplates, AdminNotificationLog, AdminSubscribers,
+} from "./AdminPhaseD";
 
 function AdminRoutes() {
     return (
@@ -273,6 +278,14 @@ function AdminRoutes() {
                 <Route path="subscriptions" element={<AdminSubscriptions defaultStatus="active" label="Active Subscriptions" testid="admin-subs" />} />
                 <Route path="refunds" element={<AdminRefunds />} />
                 <Route path="revenue" element={<AdminRevenue />} />
+                {/* Phase D */}
+                <Route path="tickets" element={<AdminTickets />} />
+                <Route path="tickets/:ticketId" element={<AdminTicketDetail />} />
+                <Route path="macros" element={<AdminMacros />} />
+                <Route path="campaigns" element={<AdminCampaigns />} />
+                <Route path="email-templates" element={<AdminEmailTemplates />} />
+                <Route path="notifications" element={<AdminNotificationLog />} />
+                <Route path="newsletter-subscribers" element={<AdminSubscribers />} />
                 {/* Fallback placeholders for not-yet-built sections */}
                 {NAV.flatMap((s) => s.items).map((it) => {
                     const path = it.to.replace("/admin/", "").replace("/admin", "");
@@ -281,6 +294,8 @@ function AdminRoutes() {
                         "users", "households", "payments", "statements",
                         "decoder-log", "anomaly-log", "tool-stats",
                         "subscriptions", "refunds", "revenue",
+                        "tickets", "macros", "campaigns",
+                        "email-templates", "notifications", "newsletter-subscribers",
                     ].includes(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}

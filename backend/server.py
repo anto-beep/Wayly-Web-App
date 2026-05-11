@@ -3146,8 +3146,11 @@ async def stripe_webhook(request: Request):
 
 from admin_routes import admin as admin_router
 from admin_auth import router as admin_auth_router
+from admin_phase_d import phase_d_admin, phase_d_user
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
+api.include_router(phase_d_admin)
+api.include_router(phase_d_user)
 
 app.include_router(api)
 
