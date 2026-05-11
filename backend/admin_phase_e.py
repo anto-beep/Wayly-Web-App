@@ -297,6 +297,26 @@ async def toggle_maintenance(body: dict, admin: dict = Depends(require_super_adm
 
 
 # ============================================================================
+# SECTION 11 — Health Watchdog introspection
+# ============================================================================
+
+@phase_e.get("/health-watchdog/state")
+async def watchdog_state(_: dict = Depends(get_current_admin)):
+    import health_watchdog
+    return await health_watchdog.current_state()
+
+
+@phase_e.post("/health-watchdog/check-now")
+async def watchdog_check_now(admin: dict = Depends(require_super_admin)):
+    """Manually trigger one round of probes (super_admin only).
+    Useful for verifying push delivery without waiting 60s."""
+    import health_watchdog
+    state = await health_watchdog.force_check()
+    await audit_log(admin["id"], "watchdog_manual_check")
+    return state
+
+
+# ============================================================================
 # SECTION 13 — Global Cmd+K search
 # ============================================================================
 
@@ -473,6 +493,7 @@ async def audit_log_export(
 # SECTION 11 — Public maintenance status (no auth)
 # ============================================================================
 
+# Public read endpoint — frontends can poll to show banner / lock-out screen
 @phase_e_public.get("/maintenance-status")
 async def public_maintenance_status():
     rec = await db.system_state.find_one({"key": "maintenance_mode"}, {"_id": 0}) or {}

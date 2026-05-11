@@ -1,3 +1,56 @@
+## Iteration 48 (Feb 2026) — System Health Watchdog (auto-paging admin on outages)
+
+### New `/app/backend/health_watchdog.py` (~210 LOC)
+- Background `asyncio` task started in FastAPI `startup` hook. Polls every 60s
+  (configurable via `WATCHDOG_POLL_INTERVAL` env var; disabled via
+  `WATCHDOG_ENABLED=0`).
+- **Probes 4 services:**
+  - `mongodb` — live `db.command("ping")` (most likely real outage signal).
+  - `llm` — rolling 5-min error rate from `db.llm_calls`. Flags DOWN if
+    error rate >50% **and** sample size ≥5 (avoids false-flagging idle periods).
+  - `resend` — rolling 30-min failed-send count from `db.notification_log`.
+    Threshold = 5 failures. Demo/test keys report UP (`"test/demo key — mocked sends"`)
+    so dev environments don't spam alerts.
+  - `stripe` — env-var presence check (real failures cascade into LLM/Resend
+    error rates which the other probes will catch).
+- **State machine** persisted in `db.health_state`. Only alerts on
+  transitions (UP→DOWN, DOWN→UP). 5-min cooldown per service prevents flap-spam.
+  First-boot has no alert (avoid noise on restart).
+- **Push delivery via `push_service.notify_role("system_health", ...)`** — fans
+  out to all `super_admin` + `operations_admin` registered mobile devices.
+
+### Admin introspection endpoints (`admin_phase_e.py`)
+- `GET /api/admin/health-watchdog/state` — current state of all 4 probes
+  (service / status / detail / last_check / last_change / last_alert_at).
+- `POST /api/admin/health-watchdog/check-now` (super_admin only) — manually
+  triggers one round of probes. Useful for verifying push delivery without
+  waiting 60s.
+
+### Live verification
+- Watchdog confirmed running in supervisor logs:
+  `INFO - Health watchdog started (interval=60s)`.
+- **End-to-end alert path verified:** seeded 10 failed notification_log entries
+  → force-check → resend probe transitioned `up→down` → alert fired (verified
+  in `db.push_log`: `🔥 RESEND is DOWN · 10 failed sends last 30m`) →
+  cleanup seeded data → force-check → `down→up` transition fires recovery
+  alert. Per-service cooldown verified by repeated calls.
+
+### Files
+- New: `/app/backend/health_watchdog.py`.
+- Edited: `/app/backend/server.py` (startup + shutdown hooks),
+  `/app/backend/admin_phase_e.py` (2 introspection endpoints).
+
+### Mobile-side payload shape (for the mobile agent)
+```js
+// data field on push notification
+{ type: 'system_health', service: 'mongodb'|'llm'|'resend'|'stripe', status: 'up'|'down' }
+```
+Mobile app should deep-link these notifications to `/admin/health` screen and
+optionally play a distinctive alert sound (this is a P0 page-the-on-call signal).
+
+---
+
+
 ## Iteration 47 (Feb 2026) — Admin mobile push: device registration + FCM/Expo send helper
 
 ### New `/app/backend/push_service.py` (~140 LOC)

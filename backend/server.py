@@ -3391,6 +3391,12 @@ async def _start_trial_scheduler():
     _asyncio.create_task(_trial_scheduler_loop())
 
 
+@app.on_event("startup")
+async def _start_health_watchdog():
+    import health_watchdog
+    await health_watchdog.start()
+
+
 # Manual trigger for testing/debugging.
 @app.post("/api/internal/trial-tick")
 async def trial_tick_manual(request: Request):
@@ -3406,4 +3412,6 @@ async def trial_tick_manual(request: Request):
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    import health_watchdog
+    await health_watchdog.stop()
     client.close()
