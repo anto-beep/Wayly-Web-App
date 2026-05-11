@@ -302,8 +302,10 @@ async def toggle_maintenance(body: dict, admin: dict = Depends(require_super_adm
 
 @phase_e.get("/search")
 async def global_search(q: str = Query(min_length=2, max_length=100), _: dict = Depends(get_current_admin)):
+    import re as _re
     q_str = q.strip()
-    regex = {"$regex": q_str, "$options": "i"}
+    safe = _re.escape(q_str)
+    regex = {"$regex": safe, "$options": "i"}
 
     # Users
     users = []
@@ -511,3 +513,231 @@ async def admin_login_history(user_id: str, days: int = 30, _: dict = Depends(re
     ).sort("ts", -1).limit(200):
         rows.append(e)
     return {"events": rows, "total": len(rows), "days": days}
+
+
+
+# ============================================================================
+# SECTION 12.2 — Admin Invite Flow (magic-link onboarding)
+# ============================================================================
+
+from pydantic import EmailStr as _Email  # noqa: E402
+from auth import hash_password as _hash_pw  # noqa: E402
+
+
+class AdminInviteBody(BaseModel):
+    email: _Email
+    name: str = Field(min_length=2, max_length=120)
+    admin_role: str = Field(pattern=r"^(super_admin|operations_admin|support_admin|content_admin)$")
+    expires_hours: int = Field(default=72, ge=1, le=336)
+
+
+class AdminAcceptBody(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+    password: str = Field(min_length=8, max_length=128)
+
+
+@phase_e.post("/admins/invite")
+async def invite_admin(body: AdminInviteBody, admin: dict = Depends(require_super_admin)):
+    """Create a pending admin invite and email a magic link.
+
+    No password is set yet — recipient sets it via /admin/accept-invite.
+    """
+    email = body.email.lower().strip()
+    if body.admin_role not in ALL_ROLES:
+        raise HTTPException(400, f"admin_role must be one of {ALL_ROLES}")
+
+    # Already an admin?
+    existing = await db.users.find_one({"email": email}, {"_id": 0, "id": 1, "admin_role": 1})
+    if existing and existing.get("admin_role"):
+        raise HTTPException(409, "This email is already an admin")
+
+    # Existing pending invite?
+    pending = await db.admin_invites.find_one(
+        {"email": email, "status": "pending"}, {"_id": 0, "id": 1},
+    )
+    if pending:
+        # Allow re-issuing — invalidate the old one
+        await db.admin_invites.update_one(
+            {"id": pending["id"]},
+            {"$set": {"status": "superseded", "superseded_at": _now()}},
+        )
+
+    token = secrets.token_urlsafe(32)
+    expires = (datetime.now(timezone.utc) + timedelta(hours=body.expires_hours)).isoformat()
+    inv = {
+        "id": secrets.token_urlsafe(8),
+        "token": token,
+        "email": email,
+        "name": body.name,
+        "admin_role": body.admin_role,
+        "invited_by": admin["id"],
+        "invited_by_email": admin.get("email"),
+        "promote_existing_user": bool(existing),  # if a regular user already exists, promote on accept
+        "existing_user_id": existing["id"] if existing else None,
+        "status": "pending",
+        "created_at": _now(),
+        "expires_at": expires,
+    }
+    await db.admin_invites.insert_one(inv)
+
+    # Build accept URL — frontend will read REACT_APP_BACKEND_URL counterpart
+    base = os.environ.get("PUBLIC_APP_URL") or "https://wayly.com.au"
+    accept_url = f"{base}/admin/accept-invite?token={token}"
+
+    # Fire email (best-effort)
+    try:
+        import email_service
+        html = (
+            f"<p>Hi {body.name},</p>"
+            f"<p>{admin.get('name') or 'A Wayly super admin'} has invited you to join the Wayly admin team as "
+            f"<strong>{body.admin_role.replace('_', ' ')}</strong>.</p>"
+            f"<p>Click the link below to set your password and complete sign-up. The link expires in "
+            f"{body.expires_hours} hours.</p>"
+            f"<p><a href='{accept_url}' style='background:#D4A24E;color:#1F3A5F;padding:12px 24px;"
+            f"border-radius:8px;font-weight:600;text-decoration:none;display:inline-block'>"
+            f"Accept invite</a></p>"
+            f"<p style='font-size:12px;color:#666'>Or paste this link into your browser:<br>{accept_url}</p>"
+            f"<p style='font-size:12px;color:#666'>If you weren't expecting this, you can safely ignore the email.</p>"
+        )
+        await email_service.email_tool_result(
+            to=email,
+            tool_name="Wayly admin invite",
+            headline=f"You've been invited to the Wayly admin team",
+            body_html=html,
+        )
+        mailed = True
+    except Exception:
+        mailed = False
+
+    await audit_log(admin["id"], "admin_invited", target_id=inv["id"],
+                    detail={"email": email, "admin_role": body.admin_role, "mailed": mailed})
+
+    return {
+        "ok": True, "invite_id": inv["id"],
+        "accept_url": accept_url, "mailed": mailed,
+        "expires_at": expires,
+    }
+
+
+@phase_e.get("/admins/invites")
+async def list_invites(status: Optional[str] = None, admin: dict = Depends(require_super_admin)):
+    filt: dict = {}
+    if status:
+        filt["status"] = status
+    rows = []
+    async for inv in db.admin_invites.find(
+        filt, {"_id": 0, "token": 0},
+    ).sort("created_at", -1).limit(200):
+        rows.append(inv)
+    return {"invites": rows, "total": len(rows)}
+
+
+@phase_e.delete("/admins/invites/{invite_id}")
+async def revoke_invite(invite_id: str, admin: dict = Depends(require_super_admin)):
+    res = await db.admin_invites.update_one(
+        {"id": invite_id, "status": "pending"},
+        {"$set": {"status": "revoked", "revoked_at": _now(), "revoked_by": admin["id"]}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "Pending invite not found")
+    await audit_log(admin["id"], "admin_invite_revoked", target_id=invite_id)
+    return {"ok": True}
+
+
+# ---------- PUBLIC accept endpoints (no auth) ----------
+
+phase_e_invite_public = APIRouter(prefix="/admin/invite", tags=["admin-invite-public"])
+
+
+@phase_e_invite_public.get("/{token}")
+async def fetch_invite(token: str):
+    inv = await db.admin_invites.find_one({"token": token}, {"_id": 0})
+    if not inv:
+        raise HTTPException(404, "Invite not found")
+    # Don't leak token + invited_by to the world
+    if inv.get("status") != "pending":
+        return {"status": inv["status"], "expired": False}
+    try:
+        if datetime.fromisoformat(inv["expires_at"]) < datetime.now(timezone.utc):
+            return {"status": "pending", "expired": True}
+    except Exception:
+        pass
+    return {
+        "status": "pending",
+        "expired": False,
+        "email": inv["email"],
+        "name": inv["name"],
+        "admin_role": inv["admin_role"],
+        "invited_by_email": inv.get("invited_by_email"),
+        "expires_at": inv["expires_at"],
+    }
+
+
+@phase_e_invite_public.post("/accept")
+async def accept_invite(body: AdminAcceptBody):
+    inv = await db.admin_invites.find_one({"token": body.token}, {"_id": 0})
+    if not inv:
+        raise HTTPException(404, "Invite not found")
+    if inv.get("status") != "pending":
+        raise HTTPException(400, f"Invite is {inv.get('status')}, not pending")
+    try:
+        if datetime.fromisoformat(inv["expires_at"]) < datetime.now(timezone.utc):
+            await db.admin_invites.update_one({"id": inv["id"]}, {"$set": {"status": "expired"}})
+            raise HTTPException(400, "Invite has expired")
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
+    # Password rules: 8+ chars (matches the existing /api/auth flow)
+    pw = body.password
+    if len(pw) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters")
+
+    pw_hash = _hash_pw(pw)
+    now = _now()
+
+    if inv.get("existing_user_id"):
+        # Promote existing user — keep their user record, set admin_role + password
+        await db.users.update_one(
+            {"id": inv["existing_user_id"]},
+            {"$set": {
+                "admin_role": inv["admin_role"], "is_admin": True,
+                "name": inv["name"], "password_hash": pw_hash,
+                "promoted_to_admin_at": now, "promoted_by_invite": inv["id"],
+            }},
+        )
+        new_id = inv["existing_user_id"]
+        existing = True
+    else:
+        new_id = secrets.token_urlsafe(12)
+        await db.users.insert_one({
+            "id": new_id,
+            "email": inv["email"],
+            "password_hash": pw_hash,
+            "name": inv["name"],
+            "role": "caregiver",
+            "plan": "family",
+            "household_id": None,
+            "is_admin": True,
+            "admin_role": inv["admin_role"],
+            "totp_enabled": False,
+            "failed_login_count": 0,
+            "auth_method": "password",
+            "created_at": now,
+            "created_by_invite": inv["id"],
+        })
+        existing = False
+
+    await db.admin_invites.update_one(
+        {"id": inv["id"]},
+        {"$set": {"status": "accepted", "accepted_at": now, "accepted_user_id": new_id}},
+    )
+    await audit_log(inv["invited_by"], "admin_invite_accepted", target_id=new_id,
+                    detail={"invite_id": inv["id"], "email": inv["email"]})
+
+    return {
+        "ok": True,
+        "promoted_existing": existing,
+        "next": "Sign in at /admin/login. You'll set up two-factor authentication on first sign-in.",
+    }

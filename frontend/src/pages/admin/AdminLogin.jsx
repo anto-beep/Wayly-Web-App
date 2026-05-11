@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import { adminApi, useAdminAuth } from "./AdminAuthContext";
 
 const STEP = { CREDENTIALS: 0, SETUP: 1, VERIFY: 2 };
@@ -17,6 +18,7 @@ export default function AdminLogin() {
     const [tempToken, setTempToken] = useState(null);
     const [setupData, setSetupData] = useState(null); // {setup_token, qr_data_uri, secret}
     const [backupCodes, setBackupCodes] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // If already logged in, bounce to /admin
     if (admin) {
@@ -106,8 +108,21 @@ export default function AdminLogin() {
                         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus
                             className="admin-input" data-testid="admin-login-email" />
                         <label style={{ ...lab, marginTop: 16 }}>Password</label>
-                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
-                            className="admin-input" data-testid="admin-login-password" />
+                        <div style={{ position: "relative" }}>
+                            <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
+                                className="admin-input" style={{ paddingRight: 40 }} data-testid="admin-login-password" />
+                            <button type="button" onClick={() => setShowPassword((v) => !v)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                title={showPassword ? "Hide password" : "Show password"}
+                                style={{
+                                    position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                                    background: "transparent", border: 0, color: "var(--admin-muted)",
+                                    cursor: "pointer", padding: 6, display: "inline-flex", alignItems: "center",
+                                }}
+                                data-testid="admin-login-toggle-password">
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                         <button type="submit" disabled={busy} className="admin-btn" style={{ width: "100%", marginTop: 24 }}
                             data-testid="admin-login-submit">
                             {busy ? "Signing in…" : "Continue"}

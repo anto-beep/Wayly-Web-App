@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { adminApi, useAdminAuth } from "./AdminAuthContext";
+import { AdminInvitesPanel } from "./AdminPhaseE2";
 
 const fmtDate = (iso) => { if (!iso) return "—"; try { return new Date(iso).toLocaleString("en-AU", { day: "2-digit", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" }); } catch { return iso; } };
 const extractMsg = (e, f = "Error") => { const d = e?.response?.data?.detail; if (typeof d === "string") return d; if (d?.message) return d.message; return f; };
@@ -516,6 +517,7 @@ export function AdminAccounts() {
                     </tbody>
                 </table>
             </div>
+            <AdminInvitesPanel />
         </div>
     );
 }

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { AdminAuthProvider, useAdminAuth, adminApi } from "./AdminAuthContext";
 import AdminLogin from "./AdminLogin";
+import AdminAcceptInvite from "./AdminAcceptInvite";
 
 // ---------- Sidebar nav model (Section 1) ----------
 
@@ -264,6 +265,9 @@ import {
     AdminAuditLog, AdminSessions, AdminDataRequests,
     AdminFeatureFlags, AdminSystemHealth, AdminAccounts,
 } from "./AdminPhaseE";
+import {
+    AdminArticles, AdminGlossary, AdminTemplatesLibrary, AdminChangelog,
+} from "./AdminPhaseE2";
 
 function AdminRoutes() {
     return (
@@ -298,6 +302,11 @@ function AdminRoutes() {
                 <Route path="health" element={<AdminSystemHealth />} />
                 <Route path="maintenance" element={<AdminSystemHealth />} />
                 <Route path="admins" element={<AdminAccounts />} />
+                {/* Phase E2 — Content CMS */}
+                <Route path="blog" element={<AdminArticles />} />
+                <Route path="glossary" element={<AdminGlossary />} />
+                <Route path="templates-library" element={<AdminTemplatesLibrary />} />
+                <Route path="changelog" element={<AdminChangelog />} />
                 {/* Fallback placeholders for not-yet-built sections */}
                 {NAV.flatMap((s) => s.items).map((it) => {
                     const path = it.to.replace("/admin/", "").replace("/admin", "");
@@ -310,6 +319,7 @@ function AdminRoutes() {
                         "email-templates", "notifications", "newsletter-subscribers",
                         "audit-log", "sessions", "data-requests",
                         "feature-flags", "health", "maintenance", "admins",
+                        "blog", "glossary", "templates-library", "changelog",
                     ].includes(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}
@@ -325,6 +335,7 @@ export default function AdminApp() {
         <AdminAuthProvider>
             <Routes>
                 <Route path="login" element={<AdminLogin />} />
+                <Route path="accept-invite" element={<AdminAcceptInvite />} />
                 <Route path="*" element={<RequireAdmin><AdminRoutes /></RequireAdmin>} />
             </Routes>
         </AdminAuthProvider>
