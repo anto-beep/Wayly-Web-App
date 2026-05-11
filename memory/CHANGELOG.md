@@ -1,3 +1,43 @@
+## Iteration 45 (Feb 2026) — Admin Phase E1: Security UI + System + Admin CRUD
+
+### Backend (`/app/backend/admin_phase_e.py`, ~480 LOC — was a stub from earlier session, now finished + wired)
+- **Audit Log export** — `GET /admin/audit-log/export` returns text/csv with `Content-Disposition: attachment` (filters action/actor_id/target_id; configurable `days` 1-365; 10k row cap).
+- **Admin Sessions** — `GET /admin/sessions` (last-30d list with admin_email/admin_role enrichment + active flag + active_count). `DELETE /admin/sessions/{id}` (super_admin only) revokes a session.
+- **Data Requests (Privacy Act)** — public `POST /api/public/data-request` (no auth, intake), `GET /admin/data-requests` (status/type filters + pagination), `PUT /admin/data-requests/{id}` (pushes a history entry; audit-logged).
+- **Feature Flags** — `GET /admin/feature-flags`, `POST /admin/feature-flags` (super_admin only), `PUT /admin/feature-flags/{name}` (any admin), `DELETE /admin/feature-flags/{name}` (super_admin only). Fields: enabled, rollout_percent, allowed_plans, allowed_emails.
+- **System Health** — `GET /admin/system-health` returns services (MongoDB / Stripe / Resend / Emergent LLM / Maintenance) + collection counts + llm_errors_24h.
+- **Maintenance Mode** — `GET /admin/maintenance`, `POST /admin/maintenance` (super_admin only); public `GET /api/public/maintenance-status` for frontends to poll.
+- **Admin Accounts CRUD** (super_admin only) — `GET /admin/admins` (with last_login_ts), `POST /admin/admins` (creates new OR promotes existing user), `PUT /admin/admins/{id}/role` (2-super-admin minimum + self-demote prevention), `DELETE /admin/admins/{id}` (removes admin role; 2-super minimum), `POST /admin/admins/{id}/reset-2fa` (clears TOTP + revokes sessions; not self), `GET /admin/admins/{id}/login-history` (30-day audit slice).
+- **Global Cmd+K search** — `GET /admin/search?q=...` already present (users / households / tickets / payments by session_id).
+
+### Frontend (`/app/frontend/src/pages/admin/AdminPhaseE.jsx`, new ~510 LOC)
+- `AdminAuditLog` — table + 3 filter inputs + Export CSV link.
+- `AdminSessions` — active/all toggle + table with one-click revoke (super_admin only).
+- `AdminDataRequests` — status chip filters + table with Start / Complete / Reject action buttons.
+- `AdminFeatureFlags` — table + inline editor card (FlagEditor), super-admin-gated create/delete.
+- `AdminSystemHealth` — maintenance card with super-only toggle, services grid (5 cards), DB counts grid, LLM errors stat. Auto-refreshes every 60s.
+- `AdminAccounts` — table with History / Role / Reset 2FA / Remove per row (self row hides destructive actions); inline create form; slide-out login history drawer.
+
+### Routes wired in `AdminApp.jsx`
+- `/admin/audit-log`, `/admin/sessions`, `/admin/data-requests`, `/admin/feature-flags`, `/admin/health`, `/admin/maintenance` (alias of /health), `/admin/admins`. Sidebar System section visible to super + ops; Admin section visible to super only.
+
+### Verified by testing agent (iter 25)
+- **31/31 backend pytest pass** after one HIGH fix (POST /admin/feature-flags now requires super_admin, matching DELETE).
+- **Frontend Playwright 100%** — all 6 Phase E pages render with correct root + child testids; CSV export href correct; feature-flag create→row→edit flow works; maintenance toggle persists; admins page hides destructive actions on self row; login-history drawer opens. Regression Phase A/B/C/D pages render with 0 page errors.
+
+### Known gaps (deferred to Phase E2)
+- `global_search` does not `re.escape` the regex input — potential catastrophic-backtracking on hostile admin input. Worth fixing alongside E2.
+- Email-template edit-in-place + version history.
+- Background queue for campaign send.
+- Server-side enforcement of impersonation read-block.
+
+### Files
+- New: `/app/frontend/src/pages/admin/AdminPhaseE.jsx`, `/app/backend/tests/test_admin_phase_e.py`.
+- Edited: `/app/backend/admin_phase_e.py` (added data-requests + audit export + GET /maintenance + 2FA reset/login history; tightened POST /feature-flags to super_admin), `/app/backend/server.py` (mounted phase_e + phase_e_public), `/app/frontend/src/pages/admin/AdminApp.jsx` (Phase E1 routes wired).
+
+---
+
+
 ## Iteration 44 (Feb 2026) — Admin Phase D: Support Tickets + Communications
 
 ### Backend (`/app/backend/admin_phase_d.py`, new, ~570 LOC)

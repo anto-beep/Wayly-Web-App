@@ -184,7 +184,7 @@ async def list_flags(_: dict = Depends(get_current_admin)):
 
 
 @phase_e.post("/feature-flags")
-async def create_flag(body: FlagBody, admin: dict = Depends(get_current_admin)):
+async def create_flag(body: FlagBody, admin: dict = Depends(require_super_admin)):
     if await db.feature_flags.find_one({"name": body.name}):
         raise HTTPException(400, "Flag with that name already exists")
     flag = body.dict() | {"created_at": _now(), "created_by": admin["id"], "updated_at": _now()}
