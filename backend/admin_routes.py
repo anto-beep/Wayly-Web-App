@@ -1,5 +1,5 @@
 """Admin-only routes for Wayly. Mounted at /api/admin/*.
-Every endpoint here is gated by `get_current_admin_id`."""
+Every endpoint here is gated by `get_current_admin` (admin_auth)."""
 import os
 import csv
 import io
@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from motor.motor_asyncio import AsyncIOMotorClient
-from auth import get_current_admin_id
+from admin_auth import get_current_admin, require_super_admin, audit_log
 
 admin = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -38,7 +38,7 @@ async def list_users(
     is_admin: Optional[bool] = None,
     page: int = 1,
     page_size: int = 50,
-    _: str = Depends(get_current_admin_id),
+    _: dict = Depends(get_current_admin),
 ):
     """Paginated, searchable user list. `q` matches email or name (case-insensitive)."""
     query: dict = {}
@@ -72,7 +72,7 @@ async def list_users(
 
 
 @admin.get("/users/{user_id}")
-async def user_detail(user_id: str, _: str = Depends(get_current_admin_id)):
+async def user_detail(user_id: str, _: dict = Depends(get_current_admin)):
     user = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
     if not user:
         raise HTTPException(404, "User not found")
@@ -105,7 +105,8 @@ async def user_detail(user_id: str, _: str = Depends(get_current_admin_id)):
 
 
 @admin.put("/users/{user_id}/admin")
-async def toggle_admin(user_id: str, body: dict, admin_id: str = Depends(get_current_admin_id)):
+async def toggle_admin(user_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    admin_id = admin["id"]
     if user_id == admin_id and body.get("is_admin") is False:
         raise HTTPException(400, "You cannot remove your own admin flag")
     target = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1})
@@ -117,7 +118,7 @@ async def toggle_admin(user_id: str, body: dict, admin_id: str = Depends(get_cur
 
 
 @admin.put("/users/{user_id}/plan")
-async def admin_set_plan(user_id: str, body: dict, _: str = Depends(get_current_admin_id)):
+async def admin_set_plan(user_id: str, body: dict, _: dict = Depends(get_current_admin)):
     plan = body.get("plan")
     if plan not in {"free", "solo", "family"}:
         raise HTTPException(400, "Invalid plan")
@@ -128,7 +129,7 @@ async def admin_set_plan(user_id: str, body: dict, _: str = Depends(get_current_
 
 
 @admin.post("/users/{user_id}/reset-password")
-async def admin_send_reset(user_id: str, _: str = Depends(get_current_admin_id)):
+async def admin_send_reset(user_id: str, _: dict = Depends(get_current_admin)):
     import email_service
     user = await db.users.find_one({"id": user_id}, {"_id": 0, "email": 1, "name": 1})
     if not user:
@@ -162,7 +163,7 @@ async def admin_send_reset(user_id: str, _: str = Depends(get_current_admin_id))
 
 
 @admin.post("/users/{user_id}/cancel-subscription")
-async def admin_cancel(user_id: str, _: str = Depends(get_current_admin_id)):
+async def admin_cancel(user_id: str, _: dict = Depends(get_current_admin)):
     res = await db.subscriptions.update_one(
         {"user_id": user_id, "status": {"$in": ["trialing", "active"]}},
         {"$set": {"status": "cancelled", "cancel_at_period_end": True, "cancelled_at": _now_iso()}},
@@ -174,7 +175,8 @@ async def admin_cancel(user_id: str, _: str = Depends(get_current_admin_id)):
 
 
 @admin.delete("/users/{user_id}")
-async def admin_delete_user(user_id: str, admin_id: str = Depends(get_current_admin_id)):
+async def admin_delete_user(user_id: str, admin: dict = Depends(require_super_admin)):
+    admin_id = admin["id"]
     if user_id == admin_id:
         raise HTTPException(400, "You cannot delete your own account")
     user = await db.users.find_one({"id": user_id}, {"_id": 0, "household_id": 1})
@@ -202,7 +204,7 @@ async def list_households(
     q: Optional[str] = None,
     page: int = 1,
     page_size: int = 50,
-    _: str = Depends(get_current_admin_id),
+    _: dict = Depends(get_current_admin),
 ):
     query: dict = {}
     if q:
@@ -234,7 +236,7 @@ async def list_payments(
     status_filter: Optional[str] = Query(None, alias="status"),
     page: int = 1,
     page_size: int = 50,
-    _: str = Depends(get_current_admin_id),
+    _: dict = Depends(get_current_admin),
 ):
     query: dict = {}
     if status_filter:
@@ -266,7 +268,7 @@ async def list_statements(
     q: Optional[str] = None,
     page: int = 1,
     page_size: int = 50,
-    _: str = Depends(get_current_admin_id),
+    _: dict = Depends(get_current_admin),
 ):
     query: dict = {}
     if q:
@@ -288,7 +290,7 @@ async def list_statements(
 # ---------------------- ANALYTICS ----------------------
 
 @admin.get("/analytics")
-async def analytics(_: str = Depends(get_current_admin_id)):
+async def analytics(_: dict = Depends(get_current_admin)):
     now = datetime.now(timezone.utc)
     week_ago = (now - timedelta(days=7)).isoformat()
     month_ago = (now - timedelta(days=30)).isoformat()
@@ -376,7 +378,7 @@ async def _csv_response(rows: List[dict], filename: str) -> Response:
 
 
 @admin.get("/export/users.csv")
-async def export_users(_: str = Depends(get_current_admin_id)):
+async def export_users(_: dict = Depends(get_current_admin)):
     rows = []
     async for u in db.users.find({}, {"_id": 0, "password_hash": 0}):
         rows.append(u)
@@ -384,7 +386,7 @@ async def export_users(_: str = Depends(get_current_admin_id)):
 
 
 @admin.get("/export/payments.csv")
-async def export_payments(_: str = Depends(get_current_admin_id)):
+async def export_payments(_: dict = Depends(get_current_admin)):
     rows = []
     async for p in db.payment_transactions.find({}, {"_id": 0}):
         rows.append(p)
@@ -392,7 +394,7 @@ async def export_payments(_: str = Depends(get_current_admin_id)):
 
 
 @admin.get("/export/statements.csv")
-async def export_statements(_: str = Depends(get_current_admin_id)):
+async def export_statements(_: dict = Depends(get_current_admin)):
     projection = {"_id": 0, "file_b64": 0, "raw_text": 0, "audit": 0, "line_items": 0}
     rows = []
     async for s in db.statements.find({}, projection):

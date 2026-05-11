@@ -42,6 +42,7 @@ class UserPublic(BaseModel):
     household_id: Optional[str] = None
     created_at: str
     is_admin: bool = False
+    admin_role: Optional[Literal["super_admin", "operations_admin", "support_admin", "content_admin"]] = None
     # Subscription summary (optional — populated only on /auth/me, /auth/login,
     # /auth/signup, /auth/google-session responses).
     subscription_status: Optional[str] = None  # "trialing" | "active" | "cancelled" | None

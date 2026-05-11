@@ -170,8 +170,9 @@ function App() {
                     <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />
 
-                    {/* Admin (system owner). Gated client-side via RequireAdmin AND server-side via is_admin flag. */}
-                    <Route path="/admin/*" element={<RequireAuth requireHousehold={false}><AdminApp /></RequireAuth>} />
+                    {/* Admin — completely separate auth system (TOTP 2FA, role-based).
+                        AdminApp manages its own auth via AdminAuthContext. */}
+                    <Route path="/admin/*" element={<AdminApp />} />
 
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

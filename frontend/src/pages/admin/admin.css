@@ -1,0 +1,187 @@
+/* Wayly Admin — dark theme tokens.
+   Loaded only inside /admin/* via the AdminApp component.
+   Distinct from the consumer product (navy bg) so admins never confuse
+   the two surfaces.
+*/
+:root {
+    /* Admin palette */
+    --admin-bg:          #0F1923;
+    --admin-sidebar:     #0A1420;
+    --admin-card:        #1A2535;
+    --admin-card-alt:    #1F2D42;
+    --admin-border:      #2E3D52;
+    --admin-text:        #F0EDE8;
+    --admin-muted:       #8B9AB5;
+    --admin-red:         #E53E3E;
+    --admin-success:     #48BB78;
+    --admin-warning:     #F6AD55;
+    --admin-info:        #63B3ED;
+    --admin-critical:    #FC8181;
+}
+
+.admin-root {
+    background-color: var(--admin-bg);
+    color: var(--admin-text);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+}
+
+.admin-root * { box-sizing: border-box; }
+
+.admin-mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 13px; }
+
+.admin-card {
+    background-color: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+}
+
+.admin-input {
+    background-color: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100%;
+}
+.admin-input:focus { outline: none; border-color: var(--admin-info); }
+
+.admin-btn {
+    background-color: var(--admin-red);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    border: 0;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.admin-btn:hover { opacity: 0.9; }
+.admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.admin-btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text);
+}
+
+/* Table */
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th {
+    background-color: var(--admin-bg);
+    color: var(--admin-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--admin-border);
+}
+.admin-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--admin-border);
+}
+.admin-table tr:nth-child(odd) td { background-color: var(--admin-card); }
+.admin-table tr:nth-child(even) td { background-color: var(--admin-card-alt); }
+.admin-table tr:hover td { background-color: #25344B; }
+
+/* Badges */
+.admin-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.admin-badge-active   { background: rgba(72,187,120,0.15); color: var(--admin-success); }
+.admin-badge-trial    { background: rgba(246,173,85,0.15); color: var(--admin-warning); }
+.admin-badge-suspended{ background: rgba(252,129,129,0.15); color: var(--admin-critical); }
+.admin-badge-info     { background: rgba(99,179,237,0.15); color: var(--admin-info); }
+.admin-badge-muted    { background: rgba(139,154,181,0.15); color: var(--admin-muted); }
+.admin-badge-red      { background: rgba(229,62,62,0.15);  color: var(--admin-red); }
+
+/* Sidebar */
+.admin-sidebar {
+    background-color: var(--admin-sidebar);
+    border-right: 1px solid var(--admin-border);
+}
+.admin-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px;
+    color: var(--admin-muted);
+    border-left: 3px solid transparent;
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.15s;
+    border-radius: 0 6px 6px 0;
+}
+.admin-nav-item:hover { background-color: var(--admin-card); color: var(--admin-text); }
+.admin-nav-item.active {
+    background-color: var(--admin-card);
+    color: var(--admin-text);
+    border-left-color: var(--admin-red);
+    font-weight: 600;
+}
+.admin-nav-section {
+    color: var(--admin-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 10px;
+    padding: 14px 14px 4px;
+    font-weight: 700;
+}
+
+/* Top header */
+.admin-header {
+    background-color: var(--admin-sidebar);
+    border-bottom: 1px solid var(--admin-border);
+    height: 56px;
+}
+
+/* Cmd-K modal */
+.admin-cmdk-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 50; display: flex; align-items: flex-start; justify-content: center;
+    padding-top: 100px;
+}
+.admin-cmdk {
+    background-color: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    width: 100%; max-width: 600px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+}
+
+/* Stat cards */
+.admin-stat {
+    background-color: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    padding: 16px;
+}
+.admin-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--admin-muted);
+    font-weight: 600;
+}
+.admin-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 6px;
+    color: var(--admin-text);
+}
+.admin-stat-sub {
+    font-size: 12px;
+    color: var(--admin-muted);
+    margin-top: 4px;
+}
+.admin-stat-up   { color: var(--admin-success); }
+.admin-stat-down { color: var(--admin-critical); }

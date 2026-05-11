@@ -116,7 +116,7 @@ export default function Layout({ children }) {
                                 <NavItem key={item.to} item={item} />
                             ))}
                             {user?.is_admin && (
-                                <NavItem item={{ to: "/admin", label: "Admin", icon: ShieldCheck }} />
+                                <NavItem item={{ to: "/admin/login", label: "Admin", icon: ShieldCheck }} />
                             )}
                         </div>
                     </nav>
