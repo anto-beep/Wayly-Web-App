@@ -54,7 +54,7 @@ export function AdminDecoderLog() {
                             : data.rows.map((s) => (
                                 <tr key={s.id}>
                                     <td className="admin-mono" style={{ fontSize: 11 }}>{fmtDate(s.uploaded_at)}</td>
-                                    <td><Link to={`/admin/users/${s.uploaded_by}`} style={{ color: "var(--admin-info)" }}>{s.participant_name || "—"}</Link></td>
+                                    <td>{s.uploaded_by ? <Link to={`/admin/users/${s.uploaded_by}`} style={{ color: "var(--admin-info)" }}>{s.participant_name || "—"}</Link> : (s.participant_name || "—")}</td>
                                     <td>{s.provider_name || "—"}</td>
                                     <td style={{ textAlign: "center" }}>{s.classification ?? "—"}</td>
                                     <td style={{ textAlign: "right" }}>{fmtMoney(s.reported_total_gross)}</td>

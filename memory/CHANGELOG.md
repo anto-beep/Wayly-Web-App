@@ -1,3 +1,46 @@
+## Iteration 43 (Feb 2026) — Admin Phase C: AI logs + Billing depth + MRR chart
+
+### Backend (`/app/backend/admin_routes.py` Phase C block, +260 LOC)
+- `GET /admin/decoder-log` — paginated statement summaries with anomaly_summary (H/M/L counts) + line_items_count; file_b64/raw_text/audit/line_items withheld.
+- `GET /admin/decoder-log/{statement_id}` — full statement detail + linked llm_calls (up to 10 from same household).
+- `GET /admin/anomaly-log` — Mongo aggregation $unwind across all statement.anomalies. Severity filterable. Returns rows + stats_30d {by_severity counts, total_impact_aud}.
+- `GET /admin/tool-stats` — today / week / month buckets per tool with calls, cost_aud, errors, avg_ms (from db.llm_calls).
+- `GET /admin/subscriptions?status=` — filterable by active / trialing / cancelled / expired with user_email/user_name enrichment.
+- `GET /admin/failed-payments?days=30` — failed transactions over a configurable window.
+- `GET /admin/refunds?status=` — list refund records (records-only; actual Stripe call deferred to a later iteration).
+- `POST /admin/refunds/{refund_id}/mark-processed` — flip pending_stripe → processed (admin manually issued refund in Stripe dashboard); audited.
+- `GET /admin/mrr-trend?months=12` — monthly MRR rollup (1–36 month clamp). Sums active subs × plan price per month.
+
+### Frontend (`/app/frontend/src/pages/admin/AdminPhaseC.jsx`, new — single file)
+- `AdminDecoderLog` — statement table with H/M/L anomaly count pills; row links to user profile (guards against missing uploaded_by).
+- `AdminAnomalyLog` — 4 stat cards (High/Medium/Low/Impact 30d) + severity filter chips + table.
+- `AdminToolStats` — today/week/month nested table with cost + errors per tool; friendly empty-state when no LLM activity recorded yet.
+- `AdminSubscriptions` — status filter buttons (Active/Trialing/Cancelled/Expired) + table with user link.
+- `AdminFailedPayments` — 30-day failed payments table with celebratory empty state.
+- `AdminRefunds` — info banner explaining manual Stripe workflow + table with "Mark processed" action.
+- `AdminRevenue` — 3 stat cards (Current MRR, Δ vs last month, Projected ARR) + **recharts** 12-month MRR line chart (gold #D4A24E line on dark theme).
+
+### Routes wired in AdminApp.jsx
+- `/admin/decoder-log`, `/admin/anomaly-log`, `/admin/tool-stats`, `/admin/subscriptions`, `/admin/refunds`, `/admin/revenue` all live.
+
+### Verified by testing agent (iter 23)
+- 28/28 backend pytest pass — every endpoint, RBAC, filters, pagination, mark-processed.
+- 8/8 frontend Playwright checks pass — all 6 Phase C pages render with correct testids, recharts line chart visible.
+- One cosmetic bug fixed inline: decoder-log row Link guards against missing uploaded_by.
+
+### Deferred (Phase D/E)
+- **Stripe API call** for refunds (still records-only).
+- **Server-side impersonation write-block** (still client-side).
+- **Per-statement decoder-log detail page** in frontend (backend endpoint exists, no UI yet).
+- **Manual Review Queue** (Section 5.5) — needs new workflow + collection.
+- Sections 6–13 (ticketing, campaigns, CMS, analytics deep, compliance UI, system management, admin CRUD, full Cmd+K search).
+
+### Files
+- New: `/app/frontend/src/pages/admin/AdminPhaseC.jsx`.
+- Edited: `/app/backend/admin_routes.py` (Phase C block appended), `/app/frontend/src/pages/admin/AdminApp.jsx` (routes wired), `/app/frontend/package.json` (recharts added).
+
+---
+
 ## Iteration 42 (Feb 2026) — Admin Phase B: Real Overview, User Profile, Impersonation, LLM Cost Tracking
 
 ### Backend
