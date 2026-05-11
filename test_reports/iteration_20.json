@@ -1,0 +1,41 @@
+{
+  "summary": "Iter 20 — Full backend + frontend verification of the new Wayly Admin suite (/api/admin/* + /admin/* routes). 27/27 pytest cases pass: admin login returns is_admin=true, analytics shape correct, users list + search + detail + 404, households/payments/statements lists (no file_b64/raw_text/_id leakage), 3 CSV exports, admin self-protection (cannot demote self → 400, cannot delete self → 400), toggle-admin and set-plan persist via GET re-fetch, invalid plan → 400. RBAC verified: unauthenticated → 401 on /api/admin/analytics; non-admin (cathy) → 403 on all 8 admin paths tested. Frontend Playwright: admin login lands on /app with Admin sidebar nav-admin link visible, /admin Overview renders admin-analytics container with 7 stat panels and all expected section labels (Total users / Households / Statements decoded / Revenue / Plans / Subscriptions / Top active households). Users tab shows 25 rows, search 'cathy' narrows to 1, user drawer opens with all 4 admin-action testids present, CSV export links rendered. Households / Payments / Statements tabs each render their respective testid container with their export link. Non-admin (cathy) sidebar lacks nav-admin link and /admin navigation redirects to /app with the 'Admin access required' sonner toast (observed twice — once per nav). After re-login as admin, nav-admin link reappears. No backend mutations leaked; cleanup restored target user's plan and is_admin flag.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/app dashboard (not Admin)", "issues": ["React console warning: 'Encountered two children with the same key' fires multiple times (~25) when /app Dashboard mounts. Not from AdminApp.jsx — admin tables all key on unique IDs. Likely from an array-mapped component on Dashboard/Layout. Non-blocking for admin functionality but worth fixing to avoid noise."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_suite.py",
+    "/app/test_reports/pytest/iter20_admin.xml"
+  ],
+  "action_items": [
+    "(Optional) Track down the duplicate-key React warning that fires on the /app Dashboard mount — not in AdminApp.jsx; likely a sibling component rendered before Admin nav (Settings/Layout/Dashboard panels). Doesn't affect admin behaviour."
+  ],
+  "critical_code_review_comments": [
+    "admin_routes.py is clean: every endpoint depends on get_current_admin_id, _id is always projected out, password_hash is stripped from both list+detail and CSV export. Heavy fields (file_b64, raw_text, audit, line_items) projected out of statements list. Good.",
+    "Self-protection guards are correctly placed in toggle_admin and admin_delete_user (compare user_id == admin_id BEFORE any DB write). Verified by tests.",
+    "auth.py get_current_admin_id creates a new AsyncIOMotorClient per request (lines 72-73). This works but is sub-optimal — each admin call opens a fresh Mongo connection pool. Recommend lazy-cache a module-level client. Not blocking, but will matter under load.",
+    "AdminApp.jsx (~600 lines, single file) is OK as a route module today, but if Households/Payments/Statements grow detail-drawers or filters, this file will pass the 700-line guideline. Consider splitting per-route components into separate files once any one grows beyond ~200 lines.",
+    "AdminUsers' UserDetailDrawer.act() optimistically re-fetches detail + calls onMutate (parent re-list). Good — no stale UI after toggle-admin/set-plan/cancel.",
+    "Drawer 'Delete user' click uses window.confirm — fine for an internal admin tool but consider replacing with the AlertDialog shadcn primitive for visual consistency with the rest of Wayly.",
+    "Layout.jsx renders the admin sidebar item only when user.is_admin is truthy (line 118-120). Confirmed by Playwright: cathy lacks the link, admin sees it.",
+    "RequireAdmin in AdminApp.jsx waits for AuthContext.loading before deciding — prevents flicker. Good. Toast 'Admin access required' fires inside useEffect — observed twice in our test (React StrictMode double-invoke in dev). Harmless but ToastService dedup could be considered."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_suite.py (new)"
+  ],
+  "success_rate": {"backend": "100% (27/27 admin endpoint tests pass)", "frontend": "100% on admin suite — login, all 5 tabs, drawer, CSV links, RBAC redirect with toast, sidebar visibility all verified"},
+  "test_credentials": "Admin: hello@techglove.com.au / AdminPass!2026 (promoted via seed_admin.py — re-ran to ensure flag); Non-admin: cathy@example.com / testpass123",
+  "seed_data_creation": "Re-ran /app/backend/seed_admin.py once at start to ensure hello@techglove.com.au has is_admin=true. Script is idempotent (output: 'Existing user … promoted to admin.'). No other seed data created. test_toggle_admin_on_another_user and test_set_plan_valid_and_persists mutate the cathy@example.com record but both restore the original values in a finally/cleanup block.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Admin suite is fully live and passing. Reusable test files: /app/backend/tests/test_admin_suite.py (pytest, 27 cases, ~3s). To re-run: cd /app/backend && python -m pytest tests/test_admin_suite.py -v. For frontend, hit /admin while logged in as hello@techglove.com.au; testids follow the pattern admin-analytics, admin-users, admin-user-row-{id}, admin-user-drawer, admin-action-{reset-password|toggle-admin|set-plan|cancel-sub|delete-user}, admin-export-{users|payments|statements}-csv, admin-nav-{analytics|users|households|payments|statements}, and nav-admin on the main Layout sidebar. The seed_admin.py script is safe to re-run any time. AdminApp.jsx lives at /app/frontend/src/pages/admin/AdminApp.jsx; backend admin code at /app/backend/admin_routes.py.",
+  "rca_of_the_issue": "N/A — no issues found in this iteration."
+}

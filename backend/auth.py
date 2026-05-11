@@ -5,7 +5,6 @@ import jwt
 from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret")
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 TOKEN_TTL_HOURS = 24 * 30  # 30 days
@@ -53,3 +52,26 @@ async def get_current_user_id(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return decode_token(creds.credentials)
+
+
+async def get_current_admin_id(
+    creds: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> str:
+    """Resolve the JWT and verify the user has `is_admin=True` in the DB.
+    Importing the Mongo client lazily here to avoid circular imports."""
+    if creds is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user_id = decode_token(creds.credentials)
+    from motor.motor_asyncio import AsyncIOMotorClient
+    mongo_url = os.environ.get("MONGO_URL")
+    db_name = os.environ.get("DB_NAME")
+    client = AsyncIOMotorClient(mongo_url)
+    db = client[db_name]
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "is_admin": 1})
+    if not user or not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user_id

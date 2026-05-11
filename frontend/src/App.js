@@ -54,6 +54,7 @@ import AIDisclaimerPage from "@/pages/legal/AIDisclaimer";
 import AIIntent from "@/pages/legal/AIIntent";
 import Accessibility from "@/pages/legal/Accessibility";
 import CookiesPage from "@/pages/legal/Cookies";
+import AdminApp from "@/pages/admin/AdminApp";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -168,6 +169,9 @@ function App() {
                     <Route path="/settings" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />
+
+                    {/* Admin (system owner). Gated client-side via RequireAdmin AND server-side via is_admin flag. */}
+                    <Route path="/admin/*" element={<RequireAuth requireHousehold={false}><AdminApp /></RequireAuth>} />
 
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

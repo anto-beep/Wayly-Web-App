@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
     LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut,
     HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
+    ShieldCheck,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import TrialCountdownBanner from "@/components/TrialCountdownBanner";
@@ -114,6 +115,9 @@ export default function Layout({ children }) {
                             {secondaryNav.map((item) => (
                                 <NavItem key={item.to} item={item} />
                             ))}
+                            {user?.is_admin && (
+                                <NavItem item={{ to: "/admin", label: "Admin", icon: ShieldCheck }} />
+                            )}
                         </div>
                     </nav>
                 </aside>

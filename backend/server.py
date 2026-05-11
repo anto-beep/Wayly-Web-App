@@ -122,6 +122,7 @@ def _user_public(u: dict, sub: Optional[dict] = None) -> UserPublic:
         plan=u.get("plan", "free"),
         household_id=u.get("household_id"),
         created_at=u["created_at"],
+        is_admin=bool(u.get("is_admin", False)),
         subscription_status=(sub or {}).get("status"),
         trial_ends_at=(sub or {}).get("trial_ends_at"),
         cancel_at_period_end=(sub or {}).get("cancel_at_period_end"),
@@ -3141,6 +3142,9 @@ async def stripe_webhook(request: Request):
             )
     return {"ok": True}
 
+
+from admin_routes import admin as admin_router
+api.include_router(admin_router)
 
 app.include_router(api)
 

@@ -41,6 +41,7 @@ class UserPublic(BaseModel):
     plan: Literal["free", "solo", "family"] = "free"
     household_id: Optional[str] = None
     created_at: str
+    is_admin: bool = False
     # Subscription summary (optional — populated only on /auth/me, /auth/login,
     # /auth/signup, /auth/google-session responses).
     subscription_status: Optional[str] = None  # "trialing" | "active" | "cancelled" | None
