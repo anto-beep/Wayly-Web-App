@@ -251,6 +251,10 @@ function CmdK({ onClose }) {
 
 import { AdminAnalytics, AdminUsers, AdminHouseholds, AdminPayments, AdminStatements, Placeholder } from "./AdminPages";
 import AdminUserProfile from "./AdminUserProfile";
+import {
+    AdminDecoderLog, AdminAnomalyLog, AdminToolStats, AdminSubscriptions,
+    AdminFailedPayments, AdminRefunds, AdminRevenue,
+} from "./AdminPhaseC";
 
 function AdminRoutes() {
     return (
@@ -262,11 +266,22 @@ function AdminRoutes() {
                 <Route path="households" element={<AdminHouseholds />} />
                 <Route path="payments" element={<AdminPayments />} />
                 <Route path="statements" element={<AdminStatements />} />
-                {/* All other Section-1 routes render a Placeholder with their label so nav works end-to-end */}
+                {/* Phase C */}
+                <Route path="decoder-log" element={<AdminDecoderLog />} />
+                <Route path="anomaly-log" element={<AdminAnomalyLog />} />
+                <Route path="tool-stats" element={<AdminToolStats />} />
+                <Route path="subscriptions" element={<AdminSubscriptions defaultStatus="active" label="Active Subscriptions" testid="admin-subs" />} />
+                <Route path="refunds" element={<AdminRefunds />} />
+                <Route path="revenue" element={<AdminRevenue />} />
+                {/* Fallback placeholders for not-yet-built sections */}
                 {NAV.flatMap((s) => s.items).map((it) => {
                     const path = it.to.replace("/admin/", "").replace("/admin", "");
                     if (!path) return null;
-                    if (["users", "households", "payments", "statements"].includes(path)) return null;
+                    if ([
+                        "users", "households", "payments", "statements",
+                        "decoder-log", "anomaly-log", "tool-stats",
+                        "subscriptions", "refunds", "revenue",
+                    ].includes(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}
             </Routes>

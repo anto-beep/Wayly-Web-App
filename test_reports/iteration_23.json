@@ -1,0 +1,50 @@
+{
+  "summary": "Phase C admin (AI logs + billing depth + MRR) — backend 28/28 passing, frontend 8/8 page checks passing. One minor frontend bug: decoder-log row click navigates to /admin/users/undefined because statement docs lack uploaded_by/participant_name; the Link target should be conditional or resolved via household_id.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminDecoderLog",
+        "issue": "Participant column always renders a <Link to=/admin/users/${s.uploaded_by}>; statement documents in DB have uploaded_by=null and participant_name=null, so clicking lands on /admin/users/undefined which 404s. Either render plain text when uploaded_by is null, OR have the backend resolve uploaded_by from household_id→primary user, OR hydrate participant_name from the linked household.",
+        "selector": "[data-testid='admin-decoder-log'] table a[href*='/admin/users/']",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Admin (global)",
+        "issues": ["Non-fatal React warning observed at login: 'Cannot update a component while rendering a different component' — likely a setState-during-render in AdminAuthContext or the login form; doesn't break flow but worth fixing for cleanliness."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_phase_c.py",
+    "/app/test_reports/pytest/iter23_admin_phaseC.xml"
+  ],
+  "action_items": [
+    "Fix AdminDecoderLog participant link: skip <Link> wrapper when s.uploaded_by is falsy, OR backfill statements with uploaded_by/participant_name, OR resolve via household primary user in backend.",
+    "Investigate React setState-in-render warning during admin login (AdminAuthContext / AdminLogin) — cosmetic."
+  ],
+  "critical_code_review_comments": [
+    "decoder-log endpoint correctly drops file_b64/raw_text/audit/line_items in list projection — good.",
+    "anomaly-log $facet pipeline correctly returns unwound rows + total + stats_30d — clean implementation.",
+    "mrr-trend uses 30-day stride (target = now - 30*i days) — labels may drift over long windows (e.g. month boundaries) but acceptable for an approximate trend chart.",
+    "mark-refund-processed correctly returns 404 for unknown/already-processed refunds and writes an audit_log entry — matches spec.",
+    "_enrich_with_user does N+1 user lookups per row; fine at current scale (≤page_size=50) but consider a single $in lookup if pagination grows.",
+    "Refunds collection 'Stripe call deferred' is documented in the UI banner — MOCKED behaviour clearly disclosed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_phase_c.py (new)"
+  ],
+  "success_rate": {"backend": "100% (28/28)", "frontend": "100% page render + 1 minor link bug"},
+  "test_credentials": "Admin: hello@techglove.com.au / AdminPass!2026 + TOTP from db.users.totp_secret. User: cathy@example.com / testpass123.",
+  "seed_data_creation": "Test inserted one transient db.refunds doc with id prefix TEST_ for mark-processed flow; cleaned up in teardown_module. No persistent seed data created. db.llm_calls untouched (tool-stats showed empty buckets as expected).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase C suite at /app/backend/tests/test_admin_phase_c.py covers all 7 Phase C endpoints + auth gating (28 tests). Admin TOTP secret read live from db.users.totp_secret via pyotp. Teardown resets failed_login_count + removes TEST_ refunds. For UI, the decoder-log row navigation currently produces /admin/users/undefined — fix is on main agent.",
+  "rca of the issue": "AdminDecoderLog row click → 404: <Link to={`/admin/users/${s.uploaded_by}`}> is rendered unconditionally. Statement documents in test DB have uploaded_by=null (legacy seed data predating the field). Frontend should guard the Link with `s.uploaded_by ? <Link…> : <span>…</span>`, or backend decoder-log should populate uploaded_by from household_id→primary user lookup."
+}

@@ -681,6 +681,281 @@ async def impersonate(user_id: str, admin: dict = Depends(get_current_admin)):
 
 # ----------------------------- Refund -----------------------------
 
+
+
+# ============================================================================
+# PHASE C — AI logs, billing depth, MRR trend, refund processing.
+# ============================================================================
+
+# ---------- AI: Decoder Log ----------
+
+@admin.get("/decoder-log")
+async def decoder_log(
+    page: int = 1,
+    page_size: int = 50,
+    confidence_min: Optional[float] = None,
+    user_id: Optional[str] = None,
+    _: dict = Depends(get_current_admin),
+):
+    q: dict = {}
+    if user_id:
+        q["uploaded_by"] = user_id
+    if confidence_min is not None:
+        q["parse_confidence"] = {"$gte": confidence_min}
+    total = await db.statements.count_documents(q)
+    projection = {"_id": 0, "file_b64": 0, "raw_text": 0, "audit": 0, "line_items": 0}
+    rows = []
+    cursor = (
+        db.statements.find(q, projection)
+        .sort("uploaded_at", -1)
+        .skip((page - 1) * page_size)
+        .limit(page_size)
+    )
+    async for s in cursor:
+        anomalies = s.get("anomalies") or []
+        high = sum(1 for a in anomalies if (a or {}).get("severity") == "HIGH")
+        med = sum(1 for a in anomalies if (a or {}).get("severity") == "MEDIUM")
+        low = sum(1 for a in anomalies if (a or {}).get("severity") == "LOW")
+        s["anomaly_summary"] = {"high": high, "medium": med, "low": low, "total": high + med + low}
+        s["line_items_count"] = s.get("line_items_count") or len(s.get("line_items") or [])
+        s.pop("anomalies", None)
+        rows.append(s)
+    return {"rows": rows, "total": total, "page": page, "page_size": page_size}
+
+
+@admin.get("/decoder-log/{statement_id}")
+async def decoder_log_detail(statement_id: str, _: dict = Depends(get_current_admin)):
+    s = await db.statements.find_one(
+        {"id": statement_id},
+        {"_id": 0, "file_b64": 0},  # withhold file bytes
+    )
+    if not s:
+        raise HTTPException(404, "Statement not found")
+    # Pull llm_call rows for this statement's household (best-effort link)
+    calls = []
+    if s.get("household_id"):
+        async for c in db.llm_calls.find({"household_id": s["household_id"]}, {"_id": 0}).sort("ts", -1).limit(10):
+            calls.append(c)
+    return {"statement": s, "llm_calls": calls}
+
+
+# ---------- AI: Anomaly Log ----------
+
+@admin.get("/anomaly-log")
+async def anomaly_log(
+    severity: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 50,
+    _: dict = Depends(get_current_admin),
+):
+    match: dict = {"anomalies": {"$exists": True, "$ne": []}}
+    pipeline = [
+        {"$match": match},
+        {"$project": {
+            "_id": 0, "statement_id": "$id", "household_id": 1, "participant_name": 1,
+            "provider_name": 1, "uploaded_at": 1, "uploaded_by": 1, "anomalies": 1,
+        }},
+        {"$unwind": "$anomalies"},
+    ]
+    if severity:
+        pipeline.append({"$match": {"anomalies.severity": severity}})
+    pipeline.extend([
+        {"$sort": {"uploaded_at": -1}},
+        {"$facet": {
+            "rows": [{"$skip": (page - 1) * page_size}, {"$limit": page_size}],
+            "count": [{"$count": "n"}],
+        }},
+    ])
+    cursor = db.statements.aggregate(pipeline)
+    out_rows: List[dict] = []
+    total = 0
+    async for chunk in cursor:
+        for r in chunk.get("rows", []):
+            a = r.pop("anomalies", {}) or {}
+            r["severity"] = a.get("severity")
+            r["category"] = a.get("category") or a.get("rule")
+            r["headline"] = a.get("headline")
+            r["dollar_impact"] = a.get("dollar_impact")
+            r["suggested_action"] = a.get("suggested_action")
+            out_rows.append(r)
+        if chunk.get("count"):
+            total = chunk["count"][0]["n"]
+
+    # Aggregate stats this month
+    month_iso = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+    by_sev = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    total_impact = 0.0
+    month_pipeline = [
+        {"$match": {"uploaded_at": {"$gte": month_iso}, "anomalies.0": {"$exists": True}}},
+        {"$unwind": "$anomalies"},
+        {"$group": {
+            "_id": "$anomalies.severity",
+            "n": {"$sum": 1},
+            "impact": {"$sum": {"$ifNull": ["$anomalies.dollar_impact", 0]}},
+        }},
+    ]
+    async for r in db.statements.aggregate(month_pipeline):
+        sev = r.get("_id") or "LOW"
+        if sev in by_sev:
+            by_sev[sev] = r.get("n", 0)
+        total_impact += float(r.get("impact") or 0)
+
+    return {
+        "rows": out_rows, "total": total, "page": page, "page_size": page_size,
+        "stats_30d": {"by_severity": by_sev, "total_impact_aud": round(total_impact, 2)},
+    }
+
+
+# ---------- AI: Tool Stats ----------
+
+@admin.get("/tool-stats")
+async def tool_stats(_: dict = Depends(get_current_admin)):
+    now = datetime.now(timezone.utc)
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    week = (now - timedelta(days=7)).isoformat()
+    month = (now - timedelta(days=30)).isoformat()
+
+    async def bucket(start_iso):
+        out = {}
+        async for r in db.llm_calls.aggregate([
+            {"$match": {"ts": {"$gte": start_iso}}},
+            {"$group": {
+                "_id": "$tool",
+                "n": {"$sum": 1},
+                "cost": {"$sum": "$cost_aud_est"},
+                "errors": {"$sum": {"$cond": ["$success", 0, 1]}},
+                "avg_ms": {"$avg": "$duration_ms"},
+            }},
+        ]):
+            out[r["_id"]] = {
+                "calls": r["n"],
+                "cost_aud": round(r["cost"] or 0, 4),
+                "errors": r["errors"],
+                "avg_ms": int(r["avg_ms"] or 0),
+            }
+        return out
+
+    return {
+        "today": await bucket(today),
+        "week": await bucket(week),
+        "month": await bucket(month),
+    }
+
+
+# ---------- Billing: Subscriptions filter ----------
+
+async def _enrich_with_user(rows):
+    out = []
+    for s in rows:
+        if s.get("user_id"):
+            u = await db.users.find_one({"id": s["user_id"]}, {"_id": 0, "email": 1, "name": 1, "plan": 1})
+            if u:
+                s["user_email"] = u.get("email")
+                s["user_name"] = u.get("name")
+        out.append(s)
+    return out
+
+
+@admin.get("/subscriptions")
+async def list_subscriptions(
+    status: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 50,
+    _: dict = Depends(get_current_admin),
+):
+    q: dict = {}
+    if status:
+        q["status"] = status
+    total = await db.subscriptions.count_documents(q)
+    rows = []
+    cursor = db.subscriptions.find(q, {"_id": 0}).sort("created_at", -1).skip((page - 1) * page_size).limit(page_size)
+    async for s in cursor:
+        rows.append(s)
+    rows = await _enrich_with_user(rows)
+    return {"rows": rows, "total": total, "page": page, "page_size": page_size}
+
+
+# ---------- Billing: Failed payments ----------
+
+@admin.get("/failed-payments")
+async def list_failed(
+    days: int = 30, page: int = 1, page_size: int = 50,
+    _: dict = Depends(get_current_admin),
+):
+    days = max(1, min(180, days))
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    q = {"payment_status": "failed", "ts": {"$gte": since}}
+    total = await db.payment_transactions.count_documents(q)
+    rows = []
+    async for p in db.payment_transactions.find(q, {"_id": 0}).sort("ts", -1).skip((page - 1) * page_size).limit(page_size):
+        rows.append(p)
+    rows = await _enrich_with_user(rows)
+    return {"rows": rows, "total": total, "page": page, "page_size": page_size}
+
+
+# ---------- Billing: Refunds list + process ----------
+
+@admin.get("/refunds")
+async def list_refunds(
+    status: Optional[str] = None,
+    page: int = 1, page_size: int = 50,
+    _: dict = Depends(get_current_admin),
+):
+    q: dict = {}
+    if status:
+        q["status"] = status
+    total = await db.refunds.count_documents(q)
+    rows = []
+    async for r in db.refunds.find(q, {"_id": 0}).sort("ts", -1).skip((page - 1) * page_size).limit(page_size):
+        rows.append(r)
+    rows = await _enrich_with_user(rows)
+    return {"rows": rows, "total": total, "page": page, "page_size": page_size}
+
+
+@admin.post("/refunds/{refund_id}/mark-processed")
+async def mark_refund_processed(refund_id: str, admin: dict = Depends(get_current_admin)):
+    """Manually mark a refund as processed (e.g. after issuing in Stripe dashboard).
+    The actual Stripe API call is deferred to Phase D when full Stripe SDK integration lands."""
+    res = await db.refunds.update_one(
+        {"id": refund_id, "status": "pending_stripe"},
+        {"$set": {"status": "processed", "processed_at": _now_iso()}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "Refund not found or already processed")
+    await audit_log(admin["id"], "refund_marked_processed", target_id=refund_id)
+    return {"ok": True}
+
+
+# ---------- Billing: MRR trend (monthly) ----------
+
+@admin.get("/mrr-trend")
+async def mrr_trend(months: int = 12, _: dict = Depends(get_current_admin)):
+    """Approximate monthly MRR: count of active subs at each month-end × plan price."""
+    months = max(1, min(36, months))
+    now = datetime.now(timezone.utc)
+    points = []
+    for i in range(months - 1, -1, -1):
+        # End of month i months ago
+        target = now - timedelta(days=30 * i)
+        cutoff = target.isoformat()
+        cutoff_label = target.strftime("%b %Y")
+        # MRR at that point = sum of subs created before cutoff and not cancelled before cutoff
+        pipeline = [
+            {"$match": {
+                "created_at": {"$lte": cutoff},
+                "$or": [
+                    {"status": "active"},
+                    {"cancelled_at": {"$gt": cutoff}},
+                ],
+            }},
+            {"$group": {"_id": "$plan", "n": {"$sum": 1}}},
+        ]
+        mrr = 0.0
+        async for row in db.subscriptions.aggregate(pipeline):
+            mrr += PLAN_PRICES_AUD.get(row["_id"], 0) * row["n"]
+        points.append({"label": cutoff_label, "mrr_aud": round(mrr, 2), "date": cutoff[:10]})
+    return {"points": points}
+
 @admin.post("/users/{user_id}/refund")
 async def refund(user_id: str, body: dict, admin: dict = Depends(get_current_admin)):
     """Refund a Stripe payment. Caps non-super-admin refunds at AUD 500."""
