@@ -1,0 +1,37 @@
+{
+  "summary": "Phase E1 (Sections 10-12) end-to-end testing. 30/31 backend pytest passing. 1 backend gap found: POST /api/admin/feature-flags uses get_current_admin instead of require_super_admin — the review_request explicitly says only super_admin should be able to create flags (and that non-super should 403 on create/delete). Current code allows any admin (e.g., support_admin) to create flags; only DELETE is gated to super. All other RBAC checks (sessions revoke, maintenance toggle, admin CRUD, feature-flag DELETE) correctly enforce super_admin. Frontend: admin TOTP login OK, all 6 Phase E pages render with their root testids (admin-audit-log, admin-sessions, admin-data-requests, admin-feature-flags, admin-system-health, admin-accounts), all filter / editor / row / button testids present, CSV export href correctly points to /api/admin/audit-log/export, feature-flag create→row→edit flow works, health page shows 5 service cards + maintenance-toggle, login-history-drawer opens on admin History click. Regression Phase A/B/C/D pages (/admin, /admin/users, /admin/decoder-log, /admin/tickets, /admin/campaigns, /admin/notifications) all render with 0 pageerrors.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/admin/feature-flags", "issue": "Uses Depends(get_current_admin) instead of Depends(require_super_admin). Per the review_request, non-super admins should receive 403 on create. Confirmed by test_create_forbidden_for_non_super failing (got 200 with synthesised support_admin token). Fix: change line 187 of /app/backend/admin_phase_e.py from `admin: dict = Depends(get_current_admin)` to `admin: dict = Depends(require_super_admin)`.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_admin_phase_e.py",
+    "/app/test_reports/pytest/iter25_phase_e.xml"
+  ],
+  "action_items": [
+    "Change POST /api/admin/feature-flags handler in /app/backend/admin_phase_e.py:187 to use require_super_admin so non-super admins receive 403 (consistent with the DELETE route and with the spec). After the fix, re-run pytest tests/test_admin_phase_e.py::TestFlags::test_create_forbidden_for_non_super to verify."
+  ],
+  "critical_code_review_comments": [
+    "/api/admin/feature-flags POST RBAC mismatch with spec & with DELETE route — only super_admin should be allowed to create flags (see HIGH item above).",
+    "admin_phase_e.py at ~510 lines is fine but mixes 7 distinct feature surfaces (sessions, admin CRUD, flags, health, maintenance, search, data requests, audit-export). When Phase E2 (content + analytics deep) lands, consider splitting into admin_phase_e_security.py / _system.py / _admins.py modules.",
+    "global_search uses raw user input as a regex without escaping (`{'\\$regex': q_str, '\\$options': 'i'}`). Malicious admin input like `.*.*.*.*` could create catastrophic backtracking on large collections. Recommend re.escape(q_str) before passing to Mongo.",
+    "Two-super-admin minimum policy is correctly enforced for both demote (PUT /admins/{id}/role) and delete (DELETE /admins/{id}) — verified by test_demote_self_400 which returns 400 with the policy message.",
+    "TOTP reset correctly clears totp_secret + totp_enabled and revokes any active sessions on the target — verified by test_reset_2fa_other.",
+    "Maintenance public endpoint (GET /api/public/maintenance-status) correctly reflects toggle within the same request cycle — no caching issues.",
+    "Audit-log CSV export header `ts,actor_id,actor_email,action,target_id,ip,result,detail` has 8 columns and rows preserve column count via comma-stripping in detail field — good.",
+    "phase_e.put('/feature-flags/{name}') intentionally uses get_current_admin per spec ('PUT is allowed for any admin') — verified passing as support_admin."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_phase_e.py (new)"
+  ],
+  "success_rate": {"backend": "97% (30/31)", "frontend": "100% (all Phase E1 testids + regression OK)"},
+  "test_credentials": "Admin super_admin: hello@techglove.com.au / AdminPass!2026 + TOTP secret CYB5PKTKR4F2JM4ACWIFTY2C67RUVUTI (pyotp.TOTP(secret).now()). User caregiver: cathy@example.com / testpass123. Both confirmed working in iter25.",
+  "seed_data_creation": "Fixtures create+cleanup TEST_-prefixed feature flags, data requests, admin users, and admin_sessions. UI smoke creates one TEST_e2e_ui_flag and cleans via direct Mongo delete. Maintenance mode is toggled on→off within the same test and restored to off in cleanup. cathy's temporary admin promotion (from test_create_existing_promotes) is reverted in the same test.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase E1 is largely green. The one remaining backend gap is the POST /api/admin/feature-flags RBAC (HIGH). After main agent applies the 1-line fix (Depends(require_super_admin)), re-run `cd /app/backend && pytest tests/test_admin_phase_e.py -v --junitxml=/app/test_reports/pytest/iter25_phase_e_retest.xml` and expect 31/31. The synthetic support_admin token pattern (lines 60-95 of test_admin_phase_e.py) is reusable for any future RBAC tests — it forges a session row in admin_sessions then signs a JWT with the JWT_SECRET from auth.py. Frontend Phase E testids confirmed: admin-audit-log, admin-sessions, admin-data-requests, admin-feature-flags, admin-system-health, admin-accounts; audit-filter-action/actor/target/apply, audit-export-csv; sessions-filter-active/all, revoke-session-{id}; dr-filter-all/received/in_progress/completed/rejected; ff-new-btn, ff-editor, ff-name, ff-description, ff-enabled, ff-rollout, ff-save, ff-row-{name}, ff-edit-{name}; health-* (5 cards), maintenance-toggle; admins-new-btn, admin-row-{id}, admin-history-{id}, login-history-drawer.",
+  "rca of the issue": "POST /api/admin/feature-flags uses Depends(get_current_admin) at admin_phase_e.py:187. get_current_admin returns any admin (super/operations/support/content); the spec says only super_admin should mutate feature flags via POST/DELETE. DELETE is correctly gated (line 208 uses require_super_admin) but POST was missed. Repro: synthesise a support_admin JWT (see test_admin_phase_e.py support_admin_token fixture) and POST /api/admin/feature-flags — returns 200 instead of 403. Fix: change the dep on line 187 to require_super_admin."
+}

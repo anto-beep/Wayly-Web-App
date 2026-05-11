@@ -260,6 +260,10 @@ import {
     AdminTickets, AdminTicketDetail, AdminMacros, AdminCampaigns,
     AdminEmailTemplates, AdminNotificationLog, AdminSubscribers,
 } from "./AdminPhaseD";
+import {
+    AdminAuditLog, AdminSessions, AdminDataRequests,
+    AdminFeatureFlags, AdminSystemHealth, AdminAccounts,
+} from "./AdminPhaseE";
 
 function AdminRoutes() {
     return (
@@ -286,6 +290,14 @@ function AdminRoutes() {
                 <Route path="email-templates" element={<AdminEmailTemplates />} />
                 <Route path="notifications" element={<AdminNotificationLog />} />
                 <Route path="newsletter-subscribers" element={<AdminSubscribers />} />
+                {/* Phase E1 — Security / System / Admin CRUD */}
+                <Route path="audit-log" element={<AdminAuditLog />} />
+                <Route path="sessions" element={<AdminSessions />} />
+                <Route path="data-requests" element={<AdminDataRequests />} />
+                <Route path="feature-flags" element={<AdminFeatureFlags />} />
+                <Route path="health" element={<AdminSystemHealth />} />
+                <Route path="maintenance" element={<AdminSystemHealth />} />
+                <Route path="admins" element={<AdminAccounts />} />
                 {/* Fallback placeholders for not-yet-built sections */}
                 {NAV.flatMap((s) => s.items).map((it) => {
                     const path = it.to.replace("/admin/", "").replace("/admin", "");
@@ -296,6 +308,8 @@ function AdminRoutes() {
                         "subscriptions", "refunds", "revenue",
                         "tickets", "macros", "campaigns",
                         "email-templates", "notifications", "newsletter-subscribers",
+                        "audit-log", "sessions", "data-requests",
+                        "feature-flags", "health", "maintenance", "admins",
                     ].includes(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}
