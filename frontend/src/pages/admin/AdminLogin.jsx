@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
@@ -20,12 +20,14 @@ export default function AdminLogin() {
     const [backupCodes, setBackupCodes] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
 
-    // If already logged in, bounce to /admin
-    if (admin) {
-        const dest = loc.state?.from || "/admin";
-        nav(dest, { replace: true });
-        return null;
-    }
+    // If already logged in, bounce to /admin (in an effect to avoid render-time setState)
+    useEffect(() => {
+        if (admin) {
+            const dest = loc.state?.from || "/admin";
+            nav(dest, { replace: true });
+        }
+    }, [admin, loc.state, nav]);
+    if (admin) return null;
 
     const submitCreds = async (e) => {
         e.preventDefault();

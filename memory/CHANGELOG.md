@@ -1,3 +1,45 @@
+## Iteration 46 (Feb 2026) — Phase E2 Content CMS · Admin invite flow · ReDoS fix · Password visibility toggle
+
+### Backend (`/app/backend/admin_phase_e2.py`, new ~460 LOC + additions to `admin_phase_e.py`)
+- **Content CMS** — full admin CRUD + public read for 4 collections:
+  - `cms_articles` (slug, title, excerpt, body_md, tags, published, published_at) — `GET/POST /admin/cms/articles`, `GET/PUT/DELETE /admin/cms/articles/{slug}`. Public `GET /public/cms/articles` returns published only; `GET /public/cms/articles/{slug}` 404s on draft.
+  - `cms_glossary` (id, term, definition, published) — full CRUD + bulk-import endpoint (`POST /admin/cms/glossary/bulk-import` — case-insensitive duplicate skip).
+  - `cms_templates` (slug, title, description, cta_label, cta_href, body_md, published).
+  - `cms_changelog` (id, version, title, body_md, tags, release_date, published).
+- **Admin invite flow** — magic-link onboarding (replaces password-prompt admin creation as the primary path):
+  - `POST /admin/admins/invite` (super_admin only) creates `db.admin_invites` record + emails magic link via Resend. Supersedes any prior pending invite for the same email; 409 if already an admin.
+  - `GET /admin/admins/invites` lists; `DELETE /admin/admins/invites/{id}` revokes pending.
+  - Public `GET /api/admin/invite/{token}` returns invite metadata (status / email / role / expires).
+  - Public `POST /api/admin/invite/accept` {token, password>=8} creates new admin or promotes existing user. Flips invite to `accepted`. Subsequent accept attempts 400.
+- **ReDoS fix** — `/admin/search?q=` now `re.escape()`s the query before passing to Mongo `$regex`. Verified safe on `.*`, `(a+)+b`, etc.
+
+### Frontend (`/app/frontend/src/pages/admin/AdminPhaseE2.jsx`, new ~700 LOC + `AdminAcceptInvite.jsx`, new ~120 LOC)
+- 4 CMS management pages — `AdminArticles`, `AdminGlossary` (with bulk-import importer), `AdminTemplatesLibrary`, `AdminChangelog`. Each: list table + inline editor card + delete confirm.
+- `AdminInvitesPanel` (rendered inside `AdminAccounts`) — invites table + Invite form modal with auto-mailed magic link (fallback: shows the URL + copy-to-clipboard if email delivery failed).
+- `/admin/accept-invite?token=...` — standalone public page (registered before `RequireAdmin`); 4 states: loading, invalid/expired card, password+confirm form, success card with "Sign in" CTA.
+- **Admin login password visibility toggle** — Eye/EyeOff icon button inside password input (aria-labelled, data-testid `admin-login-toggle-password`). Also fixed React setState-in-render warning by moving the "already logged in" redirect into `useEffect`.
+
+### Routes wired in `AdminApp.jsx`
+- `/admin/blog`, `/admin/glossary`, `/admin/templates-library`, `/admin/changelog` (existing sidebar nav now resolves).
+- `/admin/accept-invite` route registered ahead of the auth-guarded catch-all.
+
+### Verified by testing agent (iter 26)
+- **37/37 backend pytest pass** — CMS CRUD (incl. 409 dup, 404 on draft), bulk-import idempotency, full invite happy-path (invite → public fetch → accept → first login with TOTP setup offered), ReDoS safety, RBAC (super-only on invite create/revoke).
+- **Frontend Playwright 100%** — all CMS testids present, password toggle flips `type=password`↔`type=text`, accept-invite page renders all 3 states correctly, invite panel inside AdminAccounts works end-to-end.
+
+### Deferred (Iteration B+)
+- Phase E2 Analytics deep (Funnels, Cohorts, Product analytics events).
+- Refactor `server.py` into routers/ modules.
+- Switch public `/resources/{articles,glossary,templates}` consumer pages from static `resources.js` to DB-backed CMS reads (currently the DB is empty by default; readers still use static).
+- Markdown rendering on consumer Article pages (currently only excerpt is displayed; full body_md needs a renderer).
+
+### Files
+- New: `/app/backend/admin_phase_e2.py`, `/app/frontend/src/pages/admin/AdminPhaseE2.jsx`, `/app/frontend/src/pages/admin/AdminAcceptInvite.jsx`, `/app/backend/tests/test_iter26_cms_invite.py`.
+- Edited: `/app/backend/admin_phase_e.py` (invite endpoints + `re.escape` on search), `/app/backend/server.py` (mounted cms_admin / cms_public / phase_e_invite_public), `/app/frontend/src/pages/admin/AdminApp.jsx` (CMS routes + accept-invite route), `/app/frontend/src/pages/admin/AdminPhaseE.jsx` (`<AdminInvitesPanel />` mounted under AdminAccounts), `/app/frontend/src/pages/admin/AdminLogin.jsx` (Eye toggle + useEffect redirect).
+
+---
+
+
 ## Iteration 45 (Feb 2026) — Admin Phase E1: Security UI + System + Admin CRUD
 
 ### Backend (`/app/backend/admin_phase_e.py`, ~480 LOC — was a stub from earlier session, now finished + wired)
