@@ -1,7 +1,7 @@
 import React from "react";
 import "@/App.css";
 import "@/index.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Toaster } from "sonner";
 
@@ -48,6 +48,7 @@ import FloatingHelpChat from "@/components/FloatingHelpChat";
 import TrialEndingModal from "@/components/TrialEndingModal";
 import AddToHomeScreenPrompt from "@/components/AddToHomeScreenPrompt";
 import AccessibilityWidget, { bootAccessibilityPrefs } from "@/components/AccessibilityWidget";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
 import Terms from "@/pages/legal/Terms";
 import Privacy from "@/pages/legal/Privacy";
 import AIDisclaimerPage from "@/pages/legal/AIDisclaimer";
@@ -80,6 +81,24 @@ function PublicAuthOnly({ children }) {
     return children;
 }
 
+// Render consumer-only widgets on all routes EXCEPT /admin/* — the admin
+// surface (dark theme) owns its own UI chrome and shouldn't show the
+// floating help chat, A2HS prompt, or consumer accessibility widget.
+function ConsumerWidgets() {
+    const { pathname } = useLocation();
+    if (pathname.startsWith("/admin")) return null;
+    return (
+        <>
+            <ImpersonationBanner />
+            <CommandPalette />
+            <FloatingHelpChat />
+            <TrialEndingModal />
+            <AddToHomeScreenPrompt />
+            <AccessibilityWidget />
+        </>
+    );
+}
+
 function App() {
     // Boot accessibility prefs (font size, dark, contrast, etc) BEFORE first paint
     if (typeof window !== "undefined") {
@@ -102,11 +121,7 @@ function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Toaster richColors position="top-right" />
-                <CommandPalette />
-                <FloatingHelpChat />
-                <TrialEndingModal />
-                <AddToHomeScreenPrompt />
-                <AccessibilityWidget />
+                <ConsumerWidgets />
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />

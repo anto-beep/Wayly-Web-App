@@ -250,6 +250,7 @@ function CmdK({ onClose }) {
 // ---------- Pages (Overview, Users, Statements/Households/Payments imported below) ----------
 
 import { AdminAnalytics, AdminUsers, AdminHouseholds, AdminPayments, AdminStatements, Placeholder } from "./AdminPages";
+import AdminUserProfile from "./AdminUserProfile";
 
 function AdminRoutes() {
     return (
@@ -257,6 +258,7 @@ function AdminRoutes() {
             <Routes>
                 <Route index element={<AdminAnalytics />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="users/:userId" element={<AdminUserProfile />} />
                 <Route path="households" element={<AdminHouseholds />} />
                 <Route path="payments" element={<AdminPayments />} />
                 <Route path="statements" element={<AdminStatements />} />

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { adminApi, useAdminAuth } from "./AdminAuthContext";
 
@@ -47,58 +48,113 @@ export function Placeholder({ label }) {
     );
 }
 
-// ---------- Analytics (Overview) ----------
+// ---------- Analytics (Overview) — Phase B real data ----------
 
 export function AdminAnalytics() {
     const [data, setData] = useState(null);
+    const [activity, setActivity] = useState([]);
     const [err, setErr] = useState(null);
     useEffect(() => {
-        adminApi.get("/admin/analytics")
-            .then((r) => setData(r.data))
-            .catch((e) => setErr(extractMsg(e)));
+        Promise.all([
+            adminApi.get("/admin/overview").then((r) => setData(r.data)),
+            adminApi.get("/admin/activity?limit=30").then((r) => setActivity(r.data.events)),
+        ]).catch((e) => setErr(extractMsg(e)));
     }, []);
     if (err) return <p style={{ color: "var(--admin-critical)" }} data-testid="admin-analytics-error">{err}</p>;
     if (!data) return <p style={{ color: "var(--admin-muted)" }}>Loading…</p>;
+
+    const c = data.cards, h = data.ai_health;
+    const evtColor = {
+        green: "var(--admin-success)",
+        blue: "var(--admin-info)",
+        amber: "var(--admin-warning)",
+        red: "var(--admin-critical)",
+        grey: "var(--admin-muted)",
+    };
     return (
         <div data-testid="admin-analytics">
             <h1 style={{ fontSize: 28, fontWeight: 600, marginBottom: 24 }}>Overview</h1>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 24 }}>
-                <div className="admin-stat"><div className="admin-stat-label">Total users</div><div className="admin-stat-value">{data.users.total}</div><div className="admin-stat-sub admin-stat-up">+{data.users.last_7d} this week</div></div>
-                <div className="admin-stat"><div className="admin-stat-label">Households</div><div className="admin-stat-value">{data.households.total}</div></div>
-                <div className="admin-stat"><div className="admin-stat-label">Statements</div><div className="admin-stat-value">{data.statements.total}</div><div className="admin-stat-sub">+{data.statements.last_7d} this week</div></div>
-                <div className="admin-stat"><div className="admin-stat-label">Revenue (paid)</div><div className="admin-stat-value">{fmtMoney(data.payments.revenue_total)}</div><div className="admin-stat-sub">{data.payments.paid_count} transactions</div></div>
+
+            {/* 8 metric cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 24 }}>
+                <StatCard label="Total users" value={c.total_users} sub={`+${c.signups_today} today`} testid="card-total-users" />
+                <StatCard label="MRR (AUD)" value={fmtMoney(c.mrr_aud)} testid="card-mrr" />
+                <StatCard label="Active trials" value={c.active_trials} testid="card-trials" />
+                <StatCard label="Paid subscribers" value={c.paid_subscribers} testid="card-paid" />
+                <StatCard label="Statements today" value={c.statements_today} testid="card-statements" />
+                <StatCard label="Churn (30d)" value={c.churn_30d} tone={c.churn_30d > 0 ? "down" : null} testid="card-churn" />
+                <StatCard label="Open tickets" value={c.open_tickets} tone={c.open_tickets > 5 ? "down" : null} testid="card-tickets" />
+                <StatCard label="Signups today" value={c.signups_today} tone={c.signups_today > 0 ? "up" : null} testid="card-signups" />
             </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-                <div className="admin-card" style={{ padding: 16 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-muted)" }}>Plans</h3>
-                    {Object.entries(data.plans).map(([k, v]) => (
-                        <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13 }}>
-                            <span style={{ textTransform: "capitalize" }}>{k}</span>
-                            <span style={{ fontWeight: 600 }}>{v}</span>
-                        </div>
-                    ))}
-                </div>
-                <div className="admin-card" style={{ padding: 16 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-muted)" }}>Subscriptions</h3>
-                    {Object.entries(data.subscriptions).map(([k, v]) => (
-                        <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13 }}>
-                            <span style={{ textTransform: "capitalize" }}>{k}</span>
-                            <span style={{ fontWeight: 600 }}>{v}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className="admin-card" style={{ padding: 16 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-muted)" }}>Top active households</h3>
-                {data.top_active_households?.length ? (
-                    <table className="admin-table">
-                        <thead><tr><th>Participant</th><th>Owner</th><th style={{ textAlign: "right" }}>Statements</th></tr></thead>
-                        <tbody>{data.top_active_households.map((h, i) => (
-                            <tr key={i}><td>{h.participant}</td><td>{h.owner_name} <span style={{ color: "var(--admin-muted)" }}>({h.owner_email})</span></td><td style={{ textAlign: "right", fontWeight: 600 }}>{h.statement_count}</td></tr>
-                        ))}</tbody>
+                {/* AI Health */}
+                <div className="admin-card" style={{ padding: 16 }} data-testid="ai-health-panel">
+                    <h3 style={{ fontSize: 12, fontWeight: 700, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-muted)" }}>AI System Health (24h)</h3>
+                    <table style={{ width: "100%", fontSize: 13 }}>
+                        <tbody>
+                            <tr><td style={{ color: "var(--admin-muted)" }}>LLM cost today</td><td style={{ textAlign: "right", fontWeight: 600 }}>{fmtMoney(h.llm_cost_today_aud)}</td></tr>
+                            <tr><td style={{ color: "var(--admin-muted)" }}>LLM cost month</td><td style={{ textAlign: "right", fontWeight: 600 }}>{fmtMoney(h.llm_cost_month_aud)}</td></tr>
+                            <tr><td style={{ color: "var(--admin-muted)" }}>LLM calls today</td><td style={{ textAlign: "right" }}>{h.llm_calls_today}</td></tr>
+                            <tr><td style={{ color: "var(--admin-muted)" }}>Errors today</td><td style={{ textAlign: "right", color: h.llm_errors_today > 0 ? "var(--admin-critical)" : "inherit" }}>{h.llm_errors_today}</td></tr>
+                            <tr><td style={{ color: "var(--admin-muted)" }}>Decoder runs (24h)</td><td style={{ textAlign: "right" }}>{h.decoder_runs_24h}</td></tr>
+                            <tr><td style={{ color: "var(--admin-muted)" }}>Decoder avg</td><td style={{ textAlign: "right" }}>{h.decoder_avg_ms ? `${h.decoder_avg_ms}ms` : "—"}</td></tr>
+                            <tr><td style={{ color: "var(--admin-muted)" }}>Success rate</td><td style={{ textAlign: "right", color: h.decoder_success_rate_pct != null && h.decoder_success_rate_pct < 95 ? "var(--admin-warning)" : "var(--admin-success)" }}>{h.decoder_success_rate_pct != null ? `${h.decoder_success_rate_pct}%` : "—"}</td></tr>
+                        </tbody>
                     </table>
-                ) : <p style={{ color: "var(--admin-muted)", fontSize: 13, margin: 0 }}>No data yet.</p>}
+                </div>
+
+                {/* Plans + Subscriptions */}
+                <div className="admin-card" style={{ padding: 16 }} data-testid="plans-panel">
+                    <h3 style={{ fontSize: 12, fontWeight: 700, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-muted)" }}>Plans & subscriptions</h3>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                        <div>
+                            <div style={{ fontSize: 10, color: "var(--admin-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Plans</div>
+                            {Object.entries(data.plans).map(([k, v]) => (
+                                <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13 }}>
+                                    <span style={{ textTransform: "capitalize" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div>
+                            <div style={{ fontSize: 10, color: "var(--admin-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Subs</div>
+                            {Object.entries(data.subscriptions).map(([k, v]) => (
+                                <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13 }}>
+                                    <span style={{ textTransform: "capitalize" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            {/* Activity feed */}
+            <div className="admin-card" style={{ padding: 16 }} data-testid="activity-feed">
+                <h3 style={{ fontSize: 12, fontWeight: 700, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-muted)" }}>Recent activity</h3>
+                {activity.length === 0 ? <p style={{ color: "var(--admin-muted)", fontSize: 13 }}>No recent events.</p> : (
+                    <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                        {activity.map((e, i) => (
+                            <li key={i} style={{ padding: "8px 0", borderBottom: i === activity.length - 1 ? 0 : "1px solid var(--admin-border)", display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13 }}>
+                                <span style={{ width: 8, height: 8, borderRadius: "50%", background: evtColor[e.color] || "var(--admin-muted)", marginTop: 6, flexShrink: 0 }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div>{e.summary}</div>
+                                    <div className="admin-mono" style={{ fontSize: 11, color: "var(--admin-muted)", marginTop: 2 }}>{fmtDate(e.ts)}</div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function StatCard({ label, value, sub, tone, testid }) {
+    return (
+        <div className="admin-stat" data-testid={testid}>
+            <div className="admin-stat-label">{label}</div>
+            <div className="admin-stat-value">{value}</div>
+            {sub && <div className={`admin-stat-sub ${tone === "up" ? "admin-stat-up" : tone === "down" ? "admin-stat-down" : ""}`}>{sub}</div>}
         </div>
     );
 }
@@ -106,11 +162,11 @@ export function AdminAnalytics() {
 // ---------- Users ----------
 
 export function AdminUsers() {
+    const nav = useNavigate();
     const [q, setQ] = useState("");
     const [planFilter, setPlanFilter] = useState("");
     const [data, setData] = useState(null);
     const [page, setPage] = useState(1);
-    const [selectedId, setSelectedId] = useState(null);
     const PAGE_SIZE = 25;
 
     const load = useCallback(async () => {
@@ -151,7 +207,7 @@ export function AdminUsers() {
                             {data?.users.length === 0 ? (
                                 <tr><td colSpan={6} style={{ textAlign: "center", padding: 24, color: "var(--admin-muted)" }}>No users match.</td></tr>
                             ) : data?.users.map((u) => (
-                                <tr key={u.id} onClick={() => setSelectedId(u.id)} style={{ cursor: "pointer" }} data-testid={`admin-user-row-${u.id}`}>
+                                <tr key={u.id} onClick={() => nav(`/admin/users/${u.id}`)} style={{ cursor: "pointer" }} data-testid={`admin-user-row-${u.id}`}>
                                     <td><div>{u.email}</div>{u.admin_role && <Badge tone="red">{u.admin_role.replace("_", " ")}</Badge>}</td>
                                     <td>{u.name}</td>
                                     <td><Badge tone={planTone(u.plan)}>{u.plan}</Badge></td>
@@ -171,7 +227,6 @@ export function AdminUsers() {
                     <button disabled={page * PAGE_SIZE >= data.total} onClick={() => setPage((p) => p + 1)} className="admin-btn admin-btn-secondary">Next →</button>
                 </div>
             )}
-            {selectedId && <UserDrawer userId={selectedId} onClose={() => setSelectedId(null)} onMutate={load} />}
         </div>
     );
 }

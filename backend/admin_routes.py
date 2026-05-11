@@ -400,3 +400,415 @@ async def export_statements(_: dict = Depends(get_current_admin)):
     async for s in db.statements.find({}, projection):
         rows.append(s)
     return await _csv_response(rows, "wayly_statements.csv")
+
+
+
+# ============================================================================
+# PHASE B — Real Overview metrics, Activity Feed, Impersonation, Notes,
+#           Suspend/Reinstate, Refund, Extend Trial, LLM cost stats.
+# ============================================================================
+
+PLAN_PRICES_AUD = {"solo": 19.00, "family": 39.00, "advisor": 299.00, "advisor_pro": 999.00}
+
+
+@admin.get("/overview")
+async def overview(_: dict = Depends(get_current_admin)):
+    """Rich overview matching Section 2 spec.
+    Returns 8 metric cards + LLM cost panels + recent activity."""
+    now = datetime.now(timezone.utc)
+    today_iso = (now - timedelta(days=1)).isoformat()
+    month_iso = (now - timedelta(days=30)).isoformat()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    total_users = await db.users.count_documents({})
+    signups_today = await db.users.count_documents({"created_at": {"$gte": today_start}})
+    paid_subs = await db.subscriptions.count_documents({"status": "active"})
+    trialing = await db.subscriptions.count_documents({"status": "trialing"})
+    statements_today = await db.statements.count_documents({"uploaded_at": {"$gte": today_start}})
+    churn_30d = await db.subscriptions.count_documents({
+        "status": "cancelled", "cancelled_at": {"$gte": month_iso}
+    })
+
+    # MRR (AUD): sum of active subscriptions × plan price
+    mrr = 0.0
+    async for s in db.subscriptions.find({"status": "active"}, {"_id": 0, "plan": 1}):
+        mrr += PLAN_PRICES_AUD.get(s.get("plan"), 0)
+
+    # LLM cost panels
+    llm_cost_today = 0.0
+    llm_cost_month = 0.0
+    llm_calls_today = 0
+    llm_errors_today = 0
+    async for row in db.llm_calls.aggregate([
+        {"$match": {"ts": {"$gte": today_start}}},
+        {"$group": {"_id": None, "cost": {"$sum": "$cost_aud_est"}, "n": {"$sum": 1},
+                    "errs": {"$sum": {"$cond": ["$success", 0, 1]}}}},
+    ]):
+        llm_cost_today = float(row.get("cost") or 0)
+        llm_calls_today = int(row.get("n") or 0)
+        llm_errors_today = int(row.get("errs") or 0)
+    async for row in db.llm_calls.aggregate([
+        {"$match": {"ts": {"$gte": month_iso}}},
+        {"$group": {"_id": None, "cost": {"$sum": "$cost_aud_est"}}},
+    ]):
+        llm_cost_month = float(row.get("cost") or 0)
+
+    # Recent statement-decoder activity (last 24h success rate / avg duration)
+    decoder_runs_24h = 0
+    decoder_duration_total = 0
+    decoder_errors_24h = 0
+    async for row in db.llm_calls.aggregate([
+        {"$match": {"ts": {"$gte": today_iso}, "tool": {"$regex": "^chunk:"}}},
+        {"$group": {"_id": None, "n": {"$sum": 1},
+                    "dur": {"$sum": "$duration_ms"},
+                    "err": {"$sum": {"$cond": ["$success", 0, 1]}}}},
+    ]):
+        decoder_runs_24h = int(row.get("n") or 0)
+        decoder_duration_total = int(row.get("dur") or 0)
+        decoder_errors_24h = int(row.get("err") or 0)
+    decoder_avg_ms = int(decoder_duration_total / decoder_runs_24h) if decoder_runs_24h else 0
+    decoder_success_rate = (
+        round(100 * (decoder_runs_24h - decoder_errors_24h) / decoder_runs_24h, 1)
+        if decoder_runs_24h else None
+    )
+
+    # Plans donut + subscription distribution
+    plan_counts = {p: await db.users.count_documents({"plan": p}) for p in ("free", "solo", "family")}
+    sub_counts = {s: await db.subscriptions.count_documents({"status": s})
+                  for s in ("trialing", "active", "cancelled", "expired")}
+
+    # Open tickets (placeholder — Phase D builds tickets)
+    open_tickets = await db.support_tickets.count_documents({"status": {"$in": ["open", "in_progress"]}})
+
+    return {
+        "cards": {
+            "total_users": total_users,
+            "signups_today": signups_today,
+            "paid_subscribers": paid_subs,
+            "active_trials": trialing,
+            "mrr_aud": round(mrr, 2),
+            "statements_today": statements_today,
+            "churn_30d": churn_30d,
+            "open_tickets": open_tickets,
+        },
+        "ai_health": {
+            "llm_cost_today_aud": round(llm_cost_today, 4),
+            "llm_cost_month_aud": round(llm_cost_month, 2),
+            "llm_calls_today": llm_calls_today,
+            "llm_errors_today": llm_errors_today,
+            "decoder_runs_24h": decoder_runs_24h,
+            "decoder_avg_ms": decoder_avg_ms,
+            "decoder_success_rate_pct": decoder_success_rate,
+        },
+        "plans": plan_counts,
+        "subscriptions": sub_counts,
+    }
+
+
+@admin.get("/activity")
+async def activity_feed(_: dict = Depends(get_current_admin), limit: int = 50):
+    """Merge recent events from users / statements / payments / audit log
+    into a single chronological feed."""
+    events: List[dict] = []
+
+    async for u in db.users.find({}, {"_id": 0, "id": 1, "email": 1, "name": 1, "created_at": 1}).sort("created_at", -1).limit(20):
+        events.append({
+            "ts": u["created_at"], "kind": "signup", "color": "green",
+            "actor_email": u["email"], "actor_id": u["id"],
+            "summary": f"New signup: {u.get('name') or u['email']}",
+        })
+
+    async for s in db.statements.find({}, {"_id": 0, "id": 1, "household_id": 1, "uploaded_at": 1, "participant_name": 1, "uploaded_by": 1, "provider_name": 1, "classification": 1}).sort("uploaded_at", -1).limit(20):
+        uploaded_by = s.get("uploaded_by")
+        u = await db.users.find_one({"id": uploaded_by}, {"_id": 0, "email": 1}) if uploaded_by else None
+        events.append({
+            "ts": s["uploaded_at"], "kind": "statement_decoded", "color": "blue",
+            "actor_email": (u or {}).get("email"), "actor_id": uploaded_by,
+            "summary": f"Statement decoded for {s.get('participant_name', 'household')} (Class {s.get('classification', '?')}, {s.get('provider_name', 'provider')})",
+            "target_id": s["id"],
+        })
+
+    async for p in db.payment_transactions.find({}, {"_id": 0}).sort("ts", -1).limit(20):
+        status = p.get("payment_status")
+        if status == "paid":
+            color = "green"; verb = "upgraded"
+        elif status == "failed":
+            color = "red"; verb = "failed payment"
+        else:
+            color = "grey"; verb = "checkout started"
+        u = await db.users.find_one({"id": p.get("user_id")}, {"_id": 0, "email": 1}) if p.get("user_id") else None
+        events.append({
+            "ts": p.get("ts"), "kind": "payment", "color": color,
+            "actor_email": (u or {}).get("email"), "actor_id": p.get("user_id"),
+            "summary": f"{(u or {}).get('email', 'unknown')} {verb} {p.get('plan', '')} ({p.get('currency', 'AUD')} {p.get('amount')})",
+        })
+
+    # Sort by ts desc, take limit
+    events = sorted(events, key=lambda e: e.get("ts") or "", reverse=True)[:limit]
+    return {"events": events}
+
+
+@admin.get("/llm-cost-trend")
+async def llm_cost_trend(_: dict = Depends(get_current_admin), days: int = 30):
+    """Daily LLM spend in AUD over the last N days."""
+    days = max(1, min(90, days))
+    start_iso = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    rows = []
+    async for row in db.llm_calls.aggregate([
+        {"$match": {"ts": {"$gte": start_iso}}},
+        {"$group": {
+            "_id": {"$substr": ["$ts", 0, 10]},
+            "cost": {"$sum": "$cost_aud_est"},
+            "calls": {"$sum": 1},
+            "errors": {"$sum": {"$cond": ["$success", 0, 1]}},
+        }},
+        {"$sort": {"_id": 1}},
+    ]):
+        rows.append({"date": row["_id"], "cost_aud": round(row["cost"], 4),
+                     "calls": row["calls"], "errors": row["errors"]})
+    return {"days": rows}
+
+
+# ----------------------------- User notes -----------------------------
+
+@admin.get("/users/{user_id}/notes")
+async def list_notes(user_id: str, _: dict = Depends(get_current_admin)):
+    notes = []
+    async for n in db.admin_user_notes.find({"target_user_id": user_id}, {"_id": 0}).sort("ts", -1):
+        notes.append(n)
+    return {"notes": notes}
+
+
+@admin.post("/users/{user_id}/notes")
+async def add_note(user_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    text = (body.get("text") or "").strip()
+    if not text:
+        raise HTTPException(400, "Note text required")
+    if len(text) > 5000:
+        raise HTTPException(400, "Note too long (max 5000 chars)")
+    note = {
+        "id": __import__("secrets").token_urlsafe(8),
+        "target_user_id": user_id,
+        "actor_id": admin["id"],
+        "actor_email": admin.get("email"),
+        "text": text,
+        "ts": _now_iso(),
+    }
+    await db.admin_user_notes.insert_one(note)
+    await audit_log(admin["id"], "user_note_added", target_id=user_id,
+                    detail={"chars": len(text)})
+    return {"ok": True, "note": {k: v for k, v in note.items() if k != "_id"}}
+
+
+# ----------------------------- Suspend / reinstate -----------------------------
+
+@admin.post("/users/{user_id}/suspend")
+async def suspend(user_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    if user_id == admin["id"]:
+        raise HTTPException(400, "You cannot suspend yourself")
+    reason = (body.get("reason") or "").strip() or "Unspecified"
+    await db.users.update_one({"id": user_id}, {"$set": {
+        "suspended": True,
+        "suspended_at": _now_iso(),
+        "suspended_by": admin["id"],
+        "suspended_reason": reason,
+    }})
+    # Invalidate any active sessions
+    await db.user_sessions.delete_many({"user_id": user_id})
+    await audit_log(admin["id"], "user_suspended", target_id=user_id, detail={"reason": reason})
+    return {"ok": True}
+
+
+@admin.post("/users/{user_id}/reinstate")
+async def reinstate(user_id: str, admin: dict = Depends(get_current_admin)):
+    await db.users.update_one({"id": user_id}, {"$set": {"suspended": False},
+                                                "$unset": {"suspended_at": "", "suspended_by": "", "suspended_reason": ""}})
+    await audit_log(admin["id"], "user_reinstated", target_id=user_id)
+    return {"ok": True}
+
+
+# ----------------------------- Extend trial -----------------------------
+
+@admin.post("/users/{user_id}/extend-trial")
+async def extend_trial(user_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    days = int(body.get("days") or 0)
+    if days < 1 or days > 90:
+        raise HTTPException(400, "days must be between 1 and 90")
+    sub = await db.subscriptions.find_one({"user_id": user_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(404, "No subscription found")
+    try:
+        current = datetime.fromisoformat(sub.get("trial_ends_at") or _now_iso())
+    except Exception:
+        current = datetime.now(timezone.utc)
+    new_end = max(current, datetime.now(timezone.utc)) + timedelta(days=days)
+    await db.subscriptions.update_one({"user_id": user_id}, {"$set": {
+        "trial_ends_at": new_end.isoformat(),
+        "status": "trialing",
+    }})
+    await audit_log(admin["id"], "trial_extended", target_id=user_id, detail={"days": days})
+    return {"ok": True, "trial_ends_at": new_end.isoformat()}
+
+
+# ----------------------------- Impersonation -----------------------------
+
+@admin.post("/users/{user_id}/impersonate")
+async def impersonate(user_id: str, admin: dict = Depends(get_current_admin)):
+    """Issue a read-only impersonation token (60 min, type='impersonation').
+    The frontend will show a red 'ADMIN VIEW' banner and disable all mutations
+    while this token is active. Every impersonation is audited."""
+    import jwt
+    from auth import JWT_SECRET, JWT_ALGORITHM
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "email": 1})
+    if not target:
+        raise HTTPException(404, "User not found")
+    token = jwt.encode({
+        "sub": user_id,
+        "type": "impersonation",
+        "impersonator_id": admin["id"],
+        "impersonator_email": admin.get("email"),
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=60),
+    }, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    await audit_log(admin["id"], "impersonation_start", target_id=user_id,
+                    detail={"target_email": target.get("email")})
+    return {
+        "token": token,
+        "target_email": target.get("email"),
+        "expires_in_minutes": 60,
+        "warning": "Read-only. All actions disabled. Every keystroke is logged.",
+    }
+
+
+# ----------------------------- Refund -----------------------------
+
+@admin.post("/users/{user_id}/refund")
+async def refund(user_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    """Refund a Stripe payment. Caps non-super-admin refunds at AUD 500."""
+    session_id = body.get("session_id")
+    amount = body.get("amount")  # AUD float
+    reason = (body.get("reason") or "").strip() or "requested_by_customer"
+    if not session_id or not amount:
+        raise HTTPException(400, "session_id and amount required")
+    try:
+        amount = float(amount)
+    except Exception:
+        raise HTTPException(400, "amount must be a number")
+    if amount <= 0:
+        raise HTTPException(400, "amount must be positive")
+    if admin.get("admin_role") == "support_admin" and amount > 500:
+        raise HTTPException(403, "Refunds over $500 require Operations or Super Admin")
+
+    txn = await db.payment_transactions.find_one(
+        {"user_id": user_id, "session_id": session_id}, {"_id": 0}
+    )
+    if not txn:
+        raise HTTPException(404, "Transaction not found")
+    if txn.get("payment_status") != "paid":
+        raise HTTPException(400, "Only paid transactions can be refunded")
+    if amount > float(txn.get("amount", 0)):
+        raise HTTPException(400, "Refund cannot exceed original charge")
+
+    # Record refund request — actual Stripe call deferred (out of scope this iter)
+    record = {
+        "id": __import__("secrets").token_urlsafe(8),
+        "ts": _now_iso(),
+        "user_id": user_id,
+        "session_id": session_id,
+        "amount_aud": amount,
+        "reason": reason,
+        "processed_by": admin["id"],
+        "processed_by_email": admin.get("email"),
+        "status": "pending_stripe",
+        "note": body.get("note", "")[:1000],
+    }
+    await db.refunds.insert_one(record)
+    await audit_log(admin["id"], "refund_recorded", target_id=user_id,
+                    detail={"amount": amount, "reason": reason})
+    return {"ok": True, "refund": {k: v for k, v in record.items() if k != "_id"}}
+
+
+# ----------------------------- Audit log query -----------------------------
+
+@admin.get("/audit-log")
+async def audit_log_query(
+    actor_id: Optional[str] = None,
+    target_id: Optional[str] = None,
+    action: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 50,
+    _: dict = Depends(get_current_admin),
+):
+    q: dict = {}
+    if actor_id: q["actor_id"] = actor_id
+    if target_id: q["target_id"] = target_id
+    if action: q["action"] = {"$regex": action, "$options": "i"}
+    total = await db.admin_audit.count_documents(q)
+    rows = []
+    cursor = db.admin_audit.find(q, {"_id": 0}).sort("ts", -1).skip((page - 1) * page_size).limit(page_size)
+    async for r in cursor:
+        if r.get("actor_id"):
+            u = await db.users.find_one({"id": r["actor_id"]}, {"_id": 0, "email": 1})
+            r["actor_email"] = (u or {}).get("email")
+        rows.append(r)
+    return {"events": rows, "total": total, "page": page, "page_size": page_size}
+
+
+# ----------------------------- Enhanced user detail -----------------------------
+
+@admin.get("/users/{user_id}/profile")
+async def user_profile(user_id: str, _: dict = Depends(get_current_admin)):
+    """Phase-B enriched user detail: subscription history, login history,
+    LLM tool usage by this user, audit log, notes."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0, "totp_secret": 0, "totp_backup_codes": 0})
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    sub = await db.subscriptions.find_one({"user_id": user_id}, {"_id": 0})
+    household = None
+    if user.get("household_id"):
+        household = await db.households.find_one({"id": user["household_id"]}, {"_id": 0})
+
+    statements = []
+    if household:
+        async for s in db.statements.find(
+            {"household_id": household["id"]},
+            {"_id": 0, "file_b64": 0, "raw_text": 0, "audit": 0, "line_items": 0},
+        ).sort("uploaded_at", -1).limit(20):
+            statements.append(s)
+
+    payments = []
+    async for p in db.payment_transactions.find({"user_id": user_id}, {"_id": 0}).sort("ts", -1):
+        payments.append(p)
+
+    # Activity from llm_calls
+    llm_usage = []
+    cursor = db.llm_calls.find({"user_id": user_id}, {"_id": 0}).sort("ts", -1).limit(20)
+    async for c in cursor:
+        llm_usage.append(c)
+
+    # Audit log entries where this user was the actor OR target
+    actor_events = []
+    async for e in db.admin_audit.find(
+        {"$or": [{"actor_id": user_id}, {"target_id": user_id}]}, {"_id": 0}
+    ).sort("ts", -1).limit(30):
+        actor_events.append(e)
+
+    notes = []
+    async for n in db.admin_user_notes.find({"target_user_id": user_id}, {"_id": 0}).sort("ts", -1):
+        notes.append(n)
+
+    sessions = []
+    async for s in db.user_sessions.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(10):
+        sessions.append(s)
+
+    return {
+        "user": user,
+        "subscription": _strip_id(sub) if sub else None,
+        "household": household,
+        "statements": statements,
+        "payments": payments,
+        "llm_usage": llm_usage,
+        "audit_events": actor_events,
+        "notes": notes,
+        "sessions": sessions,
+    }

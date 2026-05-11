@@ -54,6 +54,23 @@ export function setAuthToken(token) {
     }
 }
 
+// Impersonation — if an admin started a read-only impersonation session
+// (admin panel → User Profile → "Impersonate"), the impersonation JWT
+// overrides the normal user token. All mutations are blocked client-side.
+api.interceptors.request.use((cfg) => {
+    const imp = localStorage.getItem("wayly_impersonation_token");
+    if (imp) {
+        cfg.headers = cfg.headers || {};
+        cfg.headers.Authorization = `Bearer ${imp}`;
+        const method = (cfg.method || "get").toLowerCase();
+        if (["post", "put", "patch", "delete"].includes(method)) {
+            // Allow auth/me probes — they're GETs so this branch never hits anyway.
+            return Promise.reject(new Error("Impersonation is read-only — all writes are disabled."));
+        }
+    }
+    return cfg;
+});
+
 const stored = localStorage.getItem("kindred_token");
 if (stored) {
     api.defaults.headers.common.Authorization = `Bearer ${stored}`;

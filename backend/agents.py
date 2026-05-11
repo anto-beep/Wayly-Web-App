@@ -785,16 +785,30 @@ async def _llm_chunk_call(
         raise RuntimeError("EMERGENT_LLM_KEY not configured")
 
     async def _attempt(attempt: int) -> Optional[Any]:
+        import time
+        from llm_costs import record_llm_call
         chat = LlmChat(
             api_key=key,
             session_id=f"{session_id}-a{attempt}",
             system_message=system_message,
         ).with_model(MODEL_PROVIDER, EXTRACTOR_MODEL).with_params(max_tokens=max_tokens)
+        t0 = time.time()
         try:
             raw = await chat.send_message(UserMessage(text=user_text))
         except Exception as e:
             logger.warning("Chunk call %s attempt %d failed: %s", session_id, attempt, e)
+            await record_llm_call(
+                tool=f"chunk:{session_id.split('-')[0]}", model=EXTRACTOR_MODEL,
+                input_text=user_text, output_text="",
+                duration_ms=int((time.time() - t0) * 1000),
+                success=False, error=str(e)[:200],
+            )
             return None
+        await record_llm_call(
+            tool=f"chunk:{session_id.split('-')[0]}", model=EXTRACTOR_MODEL,
+            input_text=user_text, output_text=str(raw or ""),
+            duration_ms=int((time.time() - t0) * 1000), success=True,
+        )
         parsed = _safe_json_load(raw)
         if parsed is None:
             logger.warning(
