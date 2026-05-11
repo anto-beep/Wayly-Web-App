@@ -2927,12 +2927,20 @@ async def billing_checkout(body: CheckoutBody, request: Request, user_id: str = 
     success_url = f"{body.origin_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{body.origin_url}/pricing?cancelled=1"
     metadata = {"user_id": user_id, "plan": body.plan, "kind": "kindred_subscription", "trial_days": str(trial_days)}
+    # Payment methods: "card" auto-enables Apple Pay (Safari iOS/macOS) and
+    # Google Pay (Chrome/Android) wallets on Stripe-hosted Checkout. PayPal
+    # must be turned on in the Stripe Dashboard (Settings → Payment methods
+    # → PayPal); flip ENABLE_PAYPAL=true in backend/.env once activated.
+    payment_methods = ["card"]
+    if os.environ.get("ENABLE_PAYPAL", "").lower() in ("1", "true", "yes"):
+        payment_methods.append("paypal")
     req = CheckoutSessionRequest(
         amount=float(spec["amount"]),
         currency=spec["currency"],
         success_url=success_url,
         cancel_url=cancel_url,
         metadata=metadata,
+        payment_methods=payment_methods,
     )
     session = await stripe.create_checkout_session(req)
     await db.payment_transactions.insert_one({

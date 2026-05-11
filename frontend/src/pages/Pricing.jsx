@@ -99,6 +99,25 @@ export default function Pricing() {
                 <p className="mt-5 text-lg text-muted-k max-w-2xl mx-auto leading-relaxed">
                     No card required for the trial. Cancel anytime. Pensioner discount available. Australian-hosted, never sells your data, never accepts commissions from providers.
                 </p>
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5" data-testid="pricing-payment-methods">
+                    <span className="text-xs uppercase tracking-wider text-muted-k font-medium">Pay with</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1 text-xs font-medium text-primary-k" data-testid="pay-method-card">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
+                        Card
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1 text-xs font-medium text-primary-k" data-testid="pay-method-applepay">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.05 12.04c-.03-2.92 2.38-4.32 2.49-4.39-1.36-1.99-3.48-2.27-4.23-2.3-1.8-.18-3.51 1.06-4.42 1.06-.92 0-2.32-1.04-3.82-1.01-1.96.03-3.78 1.14-4.79 2.89-2.05 3.55-.52 8.81 1.47 11.69.97 1.41 2.13 2.99 3.65 2.94 1.47-.06 2.02-.95 3.79-.95 1.77 0 2.27.95 3.82.92 1.58-.03 2.58-1.43 3.54-2.85 1.12-1.63 1.58-3.22 1.61-3.31-.04-.02-3.09-1.19-3.12-4.69zM14.16 3.42c.81-.98 1.36-2.34 1.21-3.7-1.17.05-2.59.78-3.43 1.76-.75.87-1.4 2.27-1.22 3.6 1.3.1 2.63-.66 3.44-1.66z"/></svg>
+                        Apple Pay
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1 text-xs font-medium text-primary-k" data-testid="pay-method-googlepay">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 11.05v2.1h5.06c-.22 1.22-.91 2.27-1.94 2.97v2.46h3.13C20.07 16.95 21 14.7 21 12c0-.6-.05-1.18-.16-1.74H12v.79zm0 9.95c2.43 0 4.47-.81 5.96-2.18l-2.9-2.25c-.81.55-1.85.88-3.06.88-2.36 0-4.36-1.59-5.07-3.73H3.93v2.34A8.99 8.99 0 0 0 12 21z"/></svg>
+                        Google Pay
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1 text-xs font-medium text-primary-k" data-testid="pay-method-paypal">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7.5 22h-3l1.4-9h3.6c2.6 0 4.3-.8 5.2-2.4.4-.7.6-1.4.6-2.1 0-.5-.1-1-.3-1.4.4.2.7.5 1 .8.6.8.9 1.8.8 3-.2 2-1.2 3.5-2.9 4.4-1.5.7-3.4.8-5.1.7zM18.2 5.4c-.2-.3-.5-.5-.8-.7-1-.6-2.4-.7-4.1-.7H8.5c-.4 0-.7.3-.8.7l-2 12.7c-.1.3.2.6.5.6h3.4l.9-5.6h2.3c4.2 0 6.6-2 7.2-5.5.2-.5.2-1 .2-1.5z"/></svg>
+                        PayPal
+                    </span>
+                </div>
             </section>
 
             {/* CONSUMER TIERS */}
