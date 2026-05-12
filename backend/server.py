@@ -3165,6 +3165,7 @@ from admin_phase_d import phase_d_admin, phase_d_user
 from admin_phase_e import phase_e, phase_e_public, phase_e_invite_public
 from admin_phase_e2 import cms_admin, cms_public
 from admin_devices import devices_router as admin_devices_router
+from seo_routes import seo_public as seo_public_router
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -3175,6 +3176,7 @@ api.include_router(phase_e_invite_public)
 api.include_router(cms_admin)
 api.include_router(cms_public)
 api.include_router(admin_devices_router)
+api.include_router(seo_public_router)
 
 app.include_router(api)
 
@@ -3237,7 +3239,7 @@ async def _process_trial_reminders_once() -> dict:
             stmt_count = await db.statements.count_documents({"household_id": household["id"]}) if household else 0
             anomaly_count = 0
             if household:
-                cur = db.statements.find({"household_id": household["id"]}, {"_id": 0, "anomalies": 1})
+                cur = db.statements.find({"household_id": household["id"]}, {"_id": 0, "anomalies": 1}).limit(50)
                 async for s in cur:
                     anomaly_count += len(s.get("anomalies") or [])
             await email_service.email_tool_result(

@@ -4,6 +4,8 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { Lock, Server, Eye, FileText, ShieldCheck, Phone, AlertCircle, ScrollText } from "lucide-react";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const SECTIONS = [
     {
         icon: Server,
@@ -52,6 +54,7 @@ const CRISIS = [
 export default function Trust() {
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.trust} />
             <MarketingHeader />
 
             <section className="mx-auto max-w-4xl px-6 pt-12 pb-8">

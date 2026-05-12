@@ -6,6 +6,8 @@ import { Mail, MapPin, Phone, Send, Check, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const ROLES = [
     { v: "family", label: "Family caregiver" },
     { v: "participant", label: "Participant" },
@@ -67,6 +69,7 @@ export default function Contact() {
 
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.contact} />
             <MarketingHeader />
             <section className="mx-auto max-w-4xl px-6 pt-12 pb-8" data-testid="contact-page">
                 <span className="overline">{isDemo ? "Book a demo" : "Contact"}</span>

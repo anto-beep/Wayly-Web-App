@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import { formatAUD, formatAUD2 } from "@/lib/api";
 import { ArrowRight, Phone, AlertOctagon, Clock, AlertTriangle, Check, Wallet, FileText, MessageCircle } from "lucide-react";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const ROLES = [
     { v: "primary", label: "Cathy (Primary caregiver)" },
     { v: "participant", label: "Dorothy (Participant)" },
@@ -180,6 +182,7 @@ export default function Demo() {
 
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.demo} />
             <MarketingHeader />
             <section className="mx-auto max-w-6xl px-6 pt-12 pb-6" data-testid="demo-page">
                 <span className="overline">Interactive sample household</span>

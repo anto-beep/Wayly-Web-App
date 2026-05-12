@@ -1,0 +1,28 @@
+# robots.txt — Wayly
+# https://wayly.com.au/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /admin
+Disallow: /app/
+Disallow: /app
+Disallow: /api/
+Disallow: /onboarding
+Disallow: /settings
+Disallow: /billing/success
+Disallow: /reset
+Disallow: /forgot
+Disallow: /invite
+
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /app/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /admin/
+Disallow: /app/
+
+Sitemap: https://wayly.com.au/sitemap.xml

@@ -7,6 +7,8 @@ import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
 import { BrowserFrame, ScreenshotStatement, ScreenshotDashboard, ScreenshotFamilyThread, ScreenshotAnomaly } from "@/components/Screenshots";
 import RevealOnScroll from "@/components/RevealOnScroll";
 
+import SeoHead, { organizationLd, websiteLd } from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const PERSONAS = [
     {
         id: "caregiver",
@@ -75,6 +77,7 @@ export default function Landing() {
 
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.home} jsonLd={[organizationLd(), websiteLd()]} />
             <MarketingHeader />
 
             {/* HERO */}

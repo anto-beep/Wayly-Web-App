@@ -2,6 +2,7 @@ import React from "react";
 import "@/App.css";
 import "@/index.css";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Toaster } from "sonner";
 
@@ -109,17 +110,20 @@ function App() {
     // exchanged before AuthProvider hits /auth/me (which would 401).
     if (typeof window !== "undefined" && window.location.hash?.includes("session_id=")) {
         return (
-            <AuthProvider>
-                <Toaster richColors position="top-right" />
-                <BrowserRouter>
-                    <AuthCallback />
-                </BrowserRouter>
-            </AuthProvider>
+            <HelmetProvider>
+                <AuthProvider>
+                    <Toaster richColors position="top-right" />
+                    <BrowserRouter>
+                        <AuthCallback />
+                    </BrowserRouter>
+                </AuthProvider>
+            </HelmetProvider>
         );
     }
     return (
-        <AuthProvider>
-            <BrowserRouter>
+        <HelmetProvider>
+            <AuthProvider>
+                <BrowserRouter>
                 <Toaster richColors position="top-right" />
                 <ConsumerWidgets />
                 <Routes>
@@ -192,7 +196,8 @@ function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </BrowserRouter>
-        </AuthProvider>
+            </AuthProvider>
+        </HelmetProvider>
     );
 }
 

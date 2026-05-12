@@ -11,6 +11,25 @@ import { Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import EmailResultButton from "@/components/EmailResultButton";
 
+import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
+
+const _toolJsonLd = (cfg) => {
+    const blocks = [softwareApplicationLd({
+        name: cfg.toolName,
+        description: cfg.toolDesc,
+        url: `https://wayly.com.au${cfg.path}`,
+    })];
+    if (cfg.howTo) blocks.push(howToLd(cfg.howTo));
+    if (cfg.faqs) blocks.push(faqLd(cfg.faqs));
+    blocks.push(breadcrumbLd([
+        { name: "Home", url: "/" },
+        { name: "AI Tools", url: "/ai-tools" },
+        { name: cfg.toolName, url: cfg.path },
+    ]));
+    return blocks;
+};
+
 export default function ReassessmentLetter() {
     const access = useToolAccess();
     const [form, setForm] = useState({
@@ -46,7 +65,8 @@ export default function ReassessmentLetter() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    if (access === "loading") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
+    if (access === "loading") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolReassessment} jsonLd={_toolJsonLd(SEO.toolReassessment)} />
+            <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
     if (access === "blocked") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["reassessment-letter"]} /></section><ToolGate toolName="Reassessment Letter Drafter"><ScreenshotStatement /></ToolGate><Footer /></div>);
 
     return (

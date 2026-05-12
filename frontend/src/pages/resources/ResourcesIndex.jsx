@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import { ARTICLES, GLOSSARY, TEMPLATES } from "@/data/resources";
 import { ArrowRight, BookOpen, FileText, ListOrdered } from "lucide-react";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const Card = ({ icon: Icon, title, body, href, count, testId }) => (
     <Link to={href} className="block bg-surface border border-kindred rounded-2xl p-6 hover:-translate-y-1 hover:shadow-md transition-all" data-testid={testId}>
         <div className="flex items-start gap-4">
@@ -26,6 +28,7 @@ const Card = ({ icon: Icon, title, body, href, count, testId }) => (
 export default function ResourcesIndex() {
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.resources} />
             <MarketingHeader />
             <section className="mx-auto max-w-7xl px-6 pt-12 pb-8" data-testid="resources-hero">
                 <span className="overline">Resources hub</span>

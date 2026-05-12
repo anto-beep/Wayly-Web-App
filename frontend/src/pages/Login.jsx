@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 export default function Login() {
     const { login } = useAuth();
     const nav = useNavigate();
@@ -29,6 +31,7 @@ export default function Login() {
 
     return (
         <div className="min-h-screen bg-kindred flex items-center justify-center px-6">
+            <SeoHead {...SEO.login} noindex />
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
                     <div className="h-8 w-8 rounded-full bg-primary-k flex items-center justify-center">

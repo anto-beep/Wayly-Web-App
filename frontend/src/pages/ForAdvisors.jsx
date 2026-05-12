@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import { TrendingUp, Users, FileText, Briefcase, Check, ArrowRight } from "lucide-react";
 import { BrowserFrame, ScreenshotDashboard, ScreenshotBudget } from "@/components/Screenshots";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const FEATURES = [
     { icon: Users, title: "Client roster", body: "All your aged-care clients on one screen — classification, quarterly burn, lifetime-cap progress." },
     { icon: TrendingUp, title: "Lifetime-cap forecasting", body: "Project when each client hits the cap under different care-need scenarios." },
@@ -20,6 +22,7 @@ const TIERS = [
 export default function ForAdvisors() {
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.forAdvisors} />
             <MarketingHeader />
 
             <section className="mx-auto max-w-7xl px-6 pt-12 pb-16">

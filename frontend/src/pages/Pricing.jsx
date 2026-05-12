@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import { Check, Minus, ShieldCheck } from "lucide-react";
 import { BrowserFrame, PhoneFrame, ScreenshotDashboard, ScreenshotParticipant, ScreenshotFamilyThread } from "@/components/Screenshots";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const TIERS = [
     {
         name: "Free",
@@ -91,6 +93,7 @@ function Cell({ v }) {
 export default function Pricing() {
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.pricing} />
             <MarketingHeader />
 
             <section className="mx-auto max-w-7xl px-6 pt-12 pb-8 text-center">

@@ -9,6 +9,25 @@ import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanne
 import { api, extractErrorMessage } from "@/lib/api";
 import { Send, Loader2, Sparkles, MessageCircle } from "lucide-react";
 
+import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
+
+const _toolJsonLd = (cfg) => {
+    const blocks = [softwareApplicationLd({
+        name: cfg.toolName,
+        description: cfg.toolDesc,
+        url: `https://wayly.com.au${cfg.path}`,
+    })];
+    if (cfg.howTo) blocks.push(howToLd(cfg.howTo));
+    if (cfg.faqs) blocks.push(faqLd(cfg.faqs));
+    blocks.push(breadcrumbLd([
+        { name: "Home", url: "/" },
+        { name: "AI Tools", url: "/ai-tools" },
+        { name: cfg.toolName, url: cfg.path },
+    ]));
+    return blocks;
+};
+
 const SUGGESTIONS = [
     "What is Support at Home and how is it different from Home Care Packages?",
     "What's the lifetime contribution cap and who does it apply to?",
@@ -41,7 +60,8 @@ export default function FamilyCoordinator() {
         } finally { setBusy(false); }
     };
 
-    if (access === "loading") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
+    if (access === "loading") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolFamilyCoordinator} jsonLd={_toolJsonLd(SEO.toolFamilyCoordinator)} />
+            <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
     if (access === "blocked") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["family-coordinator"]} /></section><ToolGate toolName="Family Care Coordinator"><ScreenshotFamilyThread /></ToolGate><Footer /></div>);
 
     return (

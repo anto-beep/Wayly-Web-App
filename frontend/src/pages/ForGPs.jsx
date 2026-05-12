@@ -4,6 +4,8 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { Stethoscope, Clock, Heart, Mail, ArrowRight } from "lucide-react";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const POINTS = [
     { icon: Clock, title: "Save 4 calls a week", body: "Most GPs in retirement-heavy postcodes spend 30+ min/week explaining aged care. Wayly handles the explanation." },
     { icon: Heart, title: "Better-prepared appointments", body: "Patients arrive with their care plan, statement, and budget already in shape. You spend the consult on medicine." },
@@ -13,6 +15,7 @@ const POINTS = [
 export default function ForGPs() {
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.forGPs} />
             <MarketingHeader />
 
             <section className="mx-auto max-w-7xl px-6 pt-12 pb-16">

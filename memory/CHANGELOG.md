@@ -1,3 +1,57 @@
+## Iteration 49 (Feb 2026) — SEO Build Spec (Iteration A, in-stack)
+
+### Frontend SEO infrastructure (~720 LOC new code)
+- **`react-helmet-async` + `react-markdown` added** (no SSR migration — works inside CRA).
+- **`/src/seo/SeoHead.jsx`** — universal SEO component. Per-page: title (≤60 chars enforced), meta description (≤160 chars enforced), canonical URL, Open Graph (`og:*`), Twitter Card, `noindex` toggle, `article:*` time properties, and JSON-LD blocks. Helpers exported: `organizationLd`, `websiteLd`, `softwareApplicationLd`, `faqLd`, `howToLd`, `articleLd` (full E-E-A-T fields incl. `author`, `reviewedBy`, `citation`), `breadcrumbLd`, `canonicalFor`.
+- **`/src/seo/pageConfig.js`** — single source of truth for 22 page configs (titles + descriptions + paths + per-tool `softwareApplication`/`howTo`/`faqs` blocks).
+- **23 public pages now have full SEO + JSON-LD**: Landing (Organization + WebSite), Features, Pricing, Trust, Demo, Contact, ForAdvisors, ForGPs, AIToolsIndex, Resources/Articles/Glossary/Templates, all 8 `/ai-tools/*` (with SoftwareApplication + HowTo + FAQPage + Breadcrumb), Login (`noindex`), Signup. Wired via build-time injection script.
+- **Stripped duplicate per-page tags from `public/index.html`** so Helmet is authoritative. Verified live: each article now has exactly 1 `<meta name="description">` with article-specific copy.
+
+### Backend SEO endpoints (`/app/backend/seo_routes.py`, new ~140 LOC)
+- `GET /api/public/seo/sitemap.xml` — dynamic sitemap with 27 static pages + every published CMS article + latest changelog page. `lastmod` per article, priorities + changefreq tuned per page type.
+- `GET /api/public/seo/robots.txt` — full crawl policy (Disallow `/admin`, `/app`, `/api`, auth/onboarding paths; explicit allow for GPTBot + anthropic-ai; Sitemap directive).
+- `public/sitemap.xml` is a **sitemap-index** referencing the dynamic backend URL — Google-supported pattern. Static `public/robots.txt` mirrors policy + points to the sitemap.
+
+### CMS extension for YMYL E-E-A-T (`/app/backend/admin_phase_e2.py`)
+- New collection `cms_reviewers` — name, role, qualifications, bio, photo_url, `sameAs` (LinkedIn / professional registry URLs), `is_author` / `is_reviewer` flags. Full CRUD via `/api/admin/cms/reviewers`. 409 on delete if any article references the reviewer.
+- `cms_articles` extended with `author_id`, `reviewer_id`, `reviewed_at`, `citations[]` (title/url/publisher), `is_draft_needs_review` flag.
+- Public `/api/public/cms/articles/{slug}` now **enriches** with full author + reviewer records so the consumer page can render the E-E-A-T meta and JSON-LD `reviewedBy` block.
+
+### Consumer Article reader (CMS-backed with markdown rendering)
+- **`/resources/articles`** — list now reads from `/api/public/cms/articles`, falls back to static `resources.js` if DB empty.
+- **`/resources/articles/:slug`** — full DB-backed reader with `<ReactMarkdown>`, prose styling, **DRAFT — NEEDS REVIEW** banner (yellow card with health.gov.au link) for unreviewed articles, **Written by · Reviewed by · last-reviewed-date** E-E-A-T attribution row, **Sources** citation block at bottom. Falls back to static `resources.js` if DB lookup 404s.
+- **`/resources/glossary`** + **`/resources/templates`** — both now CMS-aware with static fallback.
+
+### Backend perf fix
+- `server.py:3240` — added `.limit(50)` to the trial-scheduler statements query flagged by the deployment health check.
+
+### Seed content (`/app/backend/seed_cms_content.py`, runnable)
+- 2 **bridging draft articles** auto-published with full citations + DRAFT banner:
+  1. *"Home Care Package to Support at Home: what actually changes for families"* — covers the 1 Nov 2025 transition, levels→classifications, annual→quarterly budgets, rollover rules, important dates table (1 Jul 2026 caps, 1 Oct 2026 free personal care, CHSP transition not before 1 Jul 2027).
+  2. *"Support at Home price caps: what families need to know before 1 July 2026"* — covers capped services list, region-specific caps, how to check provider rates now, what to do if cap is breached, ACQSC + OPAN contact details.
+- 16 **key glossary terms** seeded (Support at Home, HCP, Classification, ACAT, Quarterly budget, Rollover, Care management, Price cap, Personal care, Means-tested contribution, OPAN, ACQSC, No detriment rule, CHSP, Reassessment, Statement).
+- 1 placeholder reviewer record ("Wayly Editorial Team — Awaiting credentialed reviewer onboarding") flagged as `is_reviewer=false` so the DRAFT banner stays visible until a real expert is onboarded.
+
+### Verified live
+- Article page rendering: 1 description meta (article-specific, 160 char), 1 og:title (article-specific), canonical = `https://wayly.com.au/resources/articles/...`, 2 JSON-LD scripts (Article schema with author + citations array + Breadcrumb schema), DRAFT banner rendering, E-E-A-T attribution row visible, Sources section with 3 cited URLs (health.gov.au, myagedcare.gov.au, opan.org.au).
+- Sitemap: 29 URLs (27 static + 2 articles) all with correct lastmod + priority + changefreq.
+- robots.txt served at `/robots.txt` (static) + `/api/public/seo/robots.txt` (dynamic).
+- Backend regression: 103/104 pytest pass (1 transient network flake; re-ran 1/1 pass).
+
+### Files
+- New: `/app/frontend/src/seo/SeoHead.jsx`, `/app/frontend/src/seo/pageConfig.js`, `/app/backend/seo_routes.py`, `/app/backend/seed_cms_content.py`, `/app/frontend/public/sitemap.xml`, `/app/frontend/public/robots.txt` (rewritten).
+- Edited: `/app/backend/server.py` (mounted seo_public router + .limit(50) perf fix), `/app/backend/admin_phase_e2.py` (reviewer CRUD + article E-E-A-T fields + public-read enrichment), `/app/frontend/src/App.js` (wrapped in `<HelmetProvider>`), `/app/frontend/public/index.html` (stripped duplicate per-page SEO so Helmet is authoritative), `/app/frontend/package.json` (added react-helmet-async + react-markdown), `/app/frontend/src/pages/resources/Articles.jsx` (CMS-backed reader with Markdown + E-E-A-T + DRAFT banner), `/app/frontend/src/pages/resources/Glossary.jsx`, `/app/frontend/src/pages/resources/Templates.jsx`, and 21 public pages (Landing, Features, Pricing, Trust, Demo, Contact, ForAdvisors, ForGPs, AIToolsIndex, Login, Signup, ResourcesIndex, all 8 tools/*) auto-patched with `<SeoHead>` + per-tool JSON-LD blocks.
+
+### Deferred to next iteration
+- Admin UI for reviewers + author/reviewer/citations picker in article editor (backend ready, admin UI still uses old article fields).
+- Backend `data_md` field exposed as `body_md` in some old draft articles — confirmed working but worth schema review.
+- Real credentialed reviewer recruitment (replace the "Wayly Editorial Team" placeholder).
+- Phase E2 Analytics deep (funnels / cohorts / product analytics).
+- Refactor `server.py` into routers/ modules.
+
+---
+
+
 ## Iteration 48 (Feb 2026) — System Health Watchdog (auto-paging admin on outages)
 
 ### New `/app/backend/health_watchdog.py` (~210 LOC)

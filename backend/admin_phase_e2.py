@@ -46,6 +46,12 @@ def _slugify(s: str) -> str:
 # ARTICLES
 # ============================================================================
 
+class CitationModel(BaseModel):
+    title: str = Field(min_length=2, max_length=200)
+    url: str = Field(min_length=8, max_length=500)
+    publisher: Optional[str] = Field(None, max_length=120)
+
+
 class ArticleBody(BaseModel):
     slug: Optional[str] = Field(None, max_length=80)
     title: str = Field(min_length=3, max_length=200)
@@ -53,6 +59,12 @@ class ArticleBody(BaseModel):
     body_md: str = Field(min_length=20, max_length=50000)
     tags: Optional[List[str]] = None
     published: bool = False
+    # YMYL E-E-A-T fields
+    author_id: Optional[str] = None
+    reviewer_id: Optional[str] = None
+    reviewed_at: Optional[str] = None  # ISO date
+    citations: Optional[List[CitationModel]] = None
+    is_draft_needs_review: Optional[bool] = False  # show "DRAFT — NEEDS REVIEW" banner
 
 
 @cms_admin.get("/articles")
@@ -103,6 +115,11 @@ async def create_article(body: ArticleBody, admin: dict = Depends(get_current_ad
         "tags": body.tags or [],
         "published": bool(body.published),
         "published_at": _now() if body.published else None,
+        "author_id": body.author_id,
+        "reviewer_id": body.reviewer_id,
+        "reviewed_at": body.reviewed_at,
+        "citations": [c.model_dump() for c in (body.citations or [])],
+        "is_draft_needs_review": bool(body.is_draft_needs_review),
         "created_at": _now(),
         "created_by": admin["id"],
         "updated_at": _now(),
@@ -125,6 +142,11 @@ async def update_article(slug: str, body: ArticleBody, admin: dict = Depends(get
         "body_md": body.body_md,
         "tags": body.tags or [],
         "published": bool(body.published),
+        "author_id": body.author_id,
+        "reviewer_id": body.reviewer_id,
+        "reviewed_at": body.reviewed_at,
+        "citations": [c.model_dump() for c in (body.citations or [])],
+        "is_draft_needs_review": bool(body.is_draft_needs_review),
         "updated_at": _now(),
         "updated_by": admin["id"],
     }
@@ -164,7 +186,90 @@ async def public_get_article(slug: str):
                                        {"_id": 0, "created_by": 0, "updated_by": 0})
     if not a:
         raise HTTPException(404, "Article not found")
+    # Enrich author + reviewer for E-E-A-T signals
+    if a.get("author_id"):
+        author = await db.cms_reviewers.find_one({"id": a["author_id"]}, {"_id": 0})
+        if author:
+            a["author"] = author
+    if a.get("reviewer_id"):
+        rev = await db.cms_reviewers.find_one({"id": a["reviewer_id"]}, {"_id": 0})
+        if rev:
+            a["reviewer"] = rev
     return a
+
+
+# ============================================================================
+# CMS REVIEWERS — named expert reviewers/authors for YMYL E-E-A-T
+# ============================================================================
+
+class ReviewerBody(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    role: str = Field(min_length=2, max_length=200)  # e.g. "Aged Care Financial Adviser"
+    qualifications: Optional[str] = Field(None, max_length=400)  # "BCom, ASIC AR No. 12345"
+    bio: Optional[str] = Field(None, max_length=2000)
+    photo_url: Optional[str] = Field(None, max_length=500)
+    sameAs: Optional[List[str]] = None  # LinkedIn, professional registry URLs
+    is_author: bool = True   # can be assigned as author
+    is_reviewer: bool = True  # can be assigned as reviewer
+
+
+@cms_admin.get("/reviewers")
+async def list_reviewers(_: dict = Depends(get_current_admin)):
+    rows = []
+    async for r in db.cms_reviewers.find({}, {"_id": 0}).sort("name", 1):
+        rows.append(r)
+    return {"reviewers": rows, "total": len(rows)}
+
+
+@cms_admin.post("/reviewers")
+async def create_reviewer(body: ReviewerBody, admin: dict = Depends(get_current_admin)):
+    rec = {
+        "id": secrets.token_urlsafe(8),
+        **body.model_dump(),
+        "created_at": _now(),
+        "created_by": admin["id"],
+        "updated_at": _now(),
+    }
+    await db.cms_reviewers.insert_one(rec)
+    await audit_log(admin["id"], "cms_reviewer_created", target_id=rec["id"],
+                    detail={"name": body.name})
+    return {"ok": True, "reviewer": _strip(rec)}
+
+
+@cms_admin.put("/reviewers/{reviewer_id}")
+async def update_reviewer(reviewer_id: str, body: ReviewerBody, admin: dict = Depends(get_current_admin)):
+    res = await db.cms_reviewers.update_one(
+        {"id": reviewer_id},
+        {"$set": {**body.model_dump(), "updated_at": _now(), "updated_by": admin["id"]}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "Reviewer not found")
+    await audit_log(admin["id"], "cms_reviewer_updated", target_id=reviewer_id)
+    return {"ok": True}
+
+
+@cms_admin.delete("/reviewers/{reviewer_id}")
+async def delete_reviewer(reviewer_id: str, admin: dict = Depends(get_current_admin)):
+    # Don't allow deleting a reviewer that's currently referenced
+    count = await db.cms_articles.count_documents(
+        {"$or": [{"author_id": reviewer_id}, {"reviewer_id": reviewer_id}]}
+    )
+    if count > 0:
+        raise HTTPException(409, f"Cannot delete — {count} article(s) reference this reviewer")
+    res = await db.cms_reviewers.delete_one({"id": reviewer_id})
+    if res.deleted_count == 0:
+        raise HTTPException(404, "Reviewer not found")
+    await audit_log(admin["id"], "cms_reviewer_deleted", target_id=reviewer_id)
+    return {"ok": True}
+
+
+# Public list — used to render an Authors page if you want one
+@cms_public.get("/reviewers")
+async def public_reviewers():
+    rows = []
+    async for r in db.cms_reviewers.find({}, {"_id": 0, "created_by": 0, "updated_by": 0}).sort("name", 1):
+        rows.append(r)
+    return {"reviewers": rows}
 
 
 # ============================================================================

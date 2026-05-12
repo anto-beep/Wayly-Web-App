@@ -9,6 +9,25 @@ import { ScreenshotBudget } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 
+import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
+
+const _toolJsonLd = (cfg) => {
+    const blocks = [softwareApplicationLd({
+        name: cfg.toolName,
+        description: cfg.toolDesc,
+        url: `https://wayly.com.au${cfg.path}`,
+    })];
+    if (cfg.howTo) blocks.push(howToLd(cfg.howTo));
+    if (cfg.faqs) blocks.push(faqLd(cfg.faqs));
+    blocks.push(breadcrumbLd([
+        { name: "Home", url: "/" },
+        { name: "AI Tools", url: "/ai-tools" },
+        { name: cfg.toolName, url: cfg.path },
+    ]));
+    return blocks;
+};
+
 const CLASSIFICATIONS = [
     { v: 1, annual: 10731 },
     { v: 2, annual: 15910 },
@@ -47,7 +66,8 @@ export default function BudgetCalculatorTool() {
     if (access === "loading") {
         return (
             <div className="min-h-screen bg-kindred">
-                <MarketingHeader />
+                <SeoHead {...SEO.toolBudgetCalculator} jsonLd={_toolJsonLd(SEO.toolBudgetCalculator)} />
+            <MarketingHeader />
                 <div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div>
                 <Footer />
             </div>

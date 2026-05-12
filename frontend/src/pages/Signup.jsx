@@ -7,6 +7,8 @@ import { api, extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import PasswordStrength, { evaluatePassword } from "@/components/PasswordStrength";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const PLANS = [
     {
         v: "free",
@@ -109,6 +111,7 @@ export default function Signup() {
 
     return (
         <div className="min-h-screen bg-kindred px-6 py-10">
+            <SeoHead {...SEO.signup} />
             <div className="mx-auto max-w-5xl">
                 <Link to="/" className="flex items-center gap-2 mb-8">
                     <div className="h-8 w-8 rounded-full bg-primary-k flex items-center justify-center">

@@ -2,6 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 import {
     ArrowRight, FileSearch, Wallet, BarChart3, ListChecks, FileEdit, Receipt, ClipboardCheck,
     MessageCircle, Users2, AlertTriangle, Calendar, Mic, ShieldCheck, Check, FileText, Lock,
@@ -101,6 +103,7 @@ const Card = ({ icon: Icon, title, body, plan }) => (
 export default function Features() {
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.features} />
             <MarketingHeader />
 
             {/* HERO */}

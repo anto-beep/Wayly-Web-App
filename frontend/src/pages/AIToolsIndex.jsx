@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import { ArrowRight, FileSearch, Wallet, BarChart3, ListChecks, FileEdit, Receipt, ClipboardCheck, MessageCircle } from "lucide-react";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 
+import SeoHead from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
 const TOOLS = [
     {
         slug: "statement-decoder",
@@ -83,6 +85,7 @@ const TOOLS = [
 export default function AIToolsIndex() {
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.aiTools} />
             <MarketingHeader />
             <section className="mx-auto max-w-7xl px-6 pt-12 pb-8">
                 <span className="overline">Free AI tools</span>

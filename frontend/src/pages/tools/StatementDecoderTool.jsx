@@ -15,6 +15,25 @@ import PhotoTipsAccordion from "@/components/PhotoTipsAccordion";
 import EmailForwardingPanel from "@/components/EmailForwardingPanel";
 import FilePreviewPanel from "@/components/FilePreviewPanel";
 
+import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
+
+const _toolJsonLd = (cfg) => {
+    const blocks = [softwareApplicationLd({
+        name: cfg.toolName,
+        description: cfg.toolDesc,
+        url: `https://wayly.com.au${cfg.path}`,
+    })];
+    if (cfg.howTo) blocks.push(howToLd(cfg.howTo));
+    if (cfg.faqs) blocks.push(faqLd(cfg.faqs));
+    blocks.push(breadcrumbLd([
+        { name: "Home", url: "/" },
+        { name: "AI Tools", url: "/ai-tools" },
+        { name: cfg.toolName, url: cfg.path },
+    ]));
+    return blocks;
+};
+
 const SAMPLE = `BlueBerry Care — Monthly Statement
 For: Dorothy Anderson · April 2026
 
@@ -137,6 +156,7 @@ export default function StatementDecoderTool() {
 
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.toolStatementDecoder} jsonLd={_toolJsonLd(SEO.toolStatementDecoder)} />
             <MarketingHeader />
 
             <section className="mx-auto max-w-4xl px-6 pt-12 pb-6">
