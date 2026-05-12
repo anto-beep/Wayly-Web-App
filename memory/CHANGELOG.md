@@ -1,3 +1,54 @@
+## Iteration 50 (Feb 2026) — All articles published · per-term Glossary URLs · time-pegged content queue
+
+### Articles — all published, all reviewed by Antony Chiware (Aged Care Financial Adviser)
+Seven articles now live at `/resources/articles/{slug}` — every one credited to Antony Chiware as both author and reviewer, with `is_draft_needs_review=false`, full citations to health.gov.au + myagedcare.gov.au + opan.org.au, and Article + Breadcrumb JSON-LD:
+
+1. **home-care-package-to-support-at-home-what-changes-2025** (evergreen bridging)
+2. **support-at-home-price-caps-july-2026** (time-pegged: 1 July 2026)
+3. **understanding-your-first-support-at-home-statement** (evergreen, high-intent)
+4. **support-at-home-means-test-contributions-explained** (evergreen, transactional)
+5. **personal-care-becomes-free-1-october-2026** (time-pegged: 1 October 2026)
+6. **reassessment-requests-how-and-when** (evergreen, mid-intent)
+7. **what-changes-for-hcp-families-july-2026** (time-pegged: 1 July 2026, ex-HCP-focused)
+
+Each article has a `publish_date` field allowing future scheduled releases. The placeholder "Wayly Editorial Team" reviewer record was deleted and any references migrated to Antony Chiware.
+
+### Glossary — each of the 16 terms now has its own URL
+- Added `slug` field to `cms_glossary` records (auto-generated from term via `_slugify`).
+- New backend endpoint: `GET /api/public/cms/glossary/{slug}` returns the term + 6 related terms (computed cheaply by shared-word overlap with other terms' definitions).
+- New frontend route `/resources/glossary/:slug` → `GlossaryTerm.jsx` (new ~140 LOC).
+- Per-term SEO:
+  - Title: `What is {Term}? · Wayly Aged Care Glossary` (≤60 chars enforced)
+  - Description: definition truncated to 157 chars + ellipsis
+  - **JSON-LD `DefinedTerm`** schema with `inDefinedTermSet` link to glossary index
+  - `BreadcrumbList` (Home › Resources › Glossary › Term)
+- Glossary index page now links each row to its individual term URL.
+- Sitemap now includes all 16 glossary terms — total URLs: **50** (27 static + 7 articles + 16 glossary).
+
+### Verified live
+- `personal-care-becomes-free-1-october-2026`: DRAFT banner GONE, "Written by Antony Chiware · Reviewed by Antony Chiware on 12 May 2026" attribution visible, Markdown renders properly (h2/h3/bold/lists), citations section shows 3 sources, 2 JSON-LD blocks injected.
+- `/resources/glossary/support-at-home`: title = "What is Support at Home? · Wayly Aged Care Glossary", description shows the actual definition, 6 related terms surfaced (Home Care Package, Classification, ACAT, Quarterly budget, Care management, Price cap), JSON-LD blocks = DefinedTerm + BreadcrumbList.
+- Sitemap returns 50 URLs.
+
+### Files
+- New: `/app/frontend/src/pages/resources/GlossaryTerm.jsx`.
+- Edited:
+  - `/app/backend/admin_phase_e2.py` — added `slug` to GlossaryBody + create endpoint, new `GET /public/cms/glossary/{slug}` endpoint with related-term lookup.
+  - `/app/backend/seo_routes.py` — sitemap now includes glossary terms.
+  - `/app/backend/seed_cms_content.py` — Antony Chiware reviewer record, 7 articles (all reviewed, all published), 16 glossary terms with slugs.
+  - `/app/frontend/src/App.js` — route + import for GlossaryTerm.
+  - `/app/frontend/src/pages/resources/Glossary.jsx` — index now links rows to per-term pages.
+
+### Deferred / Next
+- **P0 — Submit `https://wayly.com.au/sitemap.xml` to Google Search Console** (waiting on user — DNS-blocked).
+- **P0 — Admin UI for reviewers CRUD + article author/reviewer/citations picker** (backend ready since iter 49).
+- **P0 — Phase E2 Analytics deep** (funnels / cohorts).
+- **P1 — Refactor `server.py`** (3300 LOC) into routers/.
+- More time-pegged articles before each event (currently 3 time-pegged + 4 evergreen — sufficient for launch).
+
+---
+
+
 ## Iteration 49 (Feb 2026) — SEO Build Spec (Iteration A, in-stack)
 
 ### Frontend SEO infrastructure (~720 LOC new code)

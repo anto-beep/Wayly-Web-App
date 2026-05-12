@@ -279,6 +279,7 @@ async def public_reviewers():
 class GlossaryBody(BaseModel):
     term: str = Field(min_length=1, max_length=120)
     definition: str = Field(min_length=3, max_length=2000)
+    slug: Optional[str] = Field(None, max_length=80)
     published: bool = True
 
 
@@ -313,6 +314,7 @@ async def create_glossary(body: GlossaryBody, admin: dict = Depends(get_current_
         raise HTTPException(409, f"Term '{existing['term']}' already exists")
     rec = {
         "id": secrets.token_urlsafe(6),
+        "slug": (body.slug or _slugify(body.term)),
         "term": term,
         "definition": body.definition.strip(),
         "published": bool(body.published),
@@ -391,6 +393,32 @@ async def public_glossary():
     ).sort("term", 1).limit(2000):
         rows.append(r)
     return {"terms": rows}
+
+
+@cms_public.get("/glossary/{slug}")
+async def public_glossary_term(slug: str):
+    """Single glossary term by slug — used for /resources/glossary/{slug} pages."""
+    rec = await db.cms_glossary.find_one(
+        {"slug": slug, "published": True},
+        {"_id": 0, "created_by": 0, "updated_by": 0},
+    )
+    if not rec:
+        raise HTTPException(404, "Glossary term not found")
+
+    # Related: other terms with overlapping words in their definition
+    related = []
+    term_words = set(rec["term"].lower().split())
+    async for r in db.cms_glossary.find(
+        {"published": True, "slug": {"$ne": slug}},
+        {"_id": 0, "slug": 1, "term": 1, "definition": 1},
+    ).limit(200):
+        # Cheap relatedness: shared significant words OR mention of this term
+        if any(w in r.get("definition", "").lower() for w in term_words if len(w) > 3):
+            related.append({"slug": r.get("slug"), "term": r["term"]})
+        if len(related) >= 6:
+            break
+    rec["related"] = related
+    return rec
 
 
 # ============================================================================

@@ -72,6 +72,19 @@ async def _build_sitemap_xml() -> str:
             f"<changefreq>monthly</changefreq><priority>0.7</priority></url>"
         )
 
+    # CMS glossary terms — each has its own URL for SEO
+    async for g in db.cms_glossary.find(
+        {"published": True}, {"_id": 0, "slug": 1, "updated_at": 1},
+    ):
+        slug = g.get("slug")
+        if not slug: continue
+        lastmod = (g.get("updated_at") or today)[:10]
+        out.append(
+            f"  <url><loc>{SITE_DOMAIN}/resources/glossary/{slug}</loc>"
+            f"<lastmod>{lastmod}</lastmod>"
+            f"<changefreq>monthly</changefreq><priority>0.6</priority></url>"
+        )
+
     # Changelog entries (single page deep-linked by anchor — represent the
     # changelog page itself with most recent release as lastmod)
     latest_release = None

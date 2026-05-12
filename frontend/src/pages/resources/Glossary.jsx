@@ -16,9 +16,9 @@ export default function Glossary() {
         axios.get(`${API}/public/cms/glossary`)
             .then((r) => {
                 const cms = r.data.terms || [];
-                if (cms.length) {
-                    // Normalise CMS shape ({term, definition}) to static shape ({term, def})
-                    setTerms(cms.map((t) => ({ term: t.term, def: t.definition })));
+                    if (cms.length) {
+                    // Normalise CMS shape ({term, definition, slug}) to display shape ({term, def, slug})
+                    setTerms(cms.map((t) => ({ term: t.term, def: t.definition, slug: t.slug })));
                 }
             })
             .catch(() => {});
@@ -60,8 +60,17 @@ export default function Glossary() {
                 <ul className="divide-y divide-kindred bg-surface border border-kindred rounded-2xl" data-testid="glossary-list">
                     {filtered.map((g) => (
                         <li key={g.term} className="p-5">
-                            <dt className="font-heading text-lg text-primary-k">{g.term}</dt>
-                            <dd className="mt-1.5 text-sm text-muted-k leading-relaxed">{g.def}</dd>
+                            {g.slug ? (
+                                <Link to={`/resources/glossary/${g.slug}`} className="block group" data-testid={`glossary-link-${g.slug}`}>
+                                    <dt className="font-heading text-lg text-primary-k group-hover:underline">{g.term}</dt>
+                                    <dd className="mt-1.5 text-sm text-muted-k leading-relaxed">{g.def}</dd>
+                                </Link>
+                            ) : (
+                                <>
+                                    <dt className="font-heading text-lg text-primary-k">{g.term}</dt>
+                                    <dd className="mt-1.5 text-sm text-muted-k leading-relaxed">{g.def}</dd>
+                                </>
+                            )}
                         </li>
                     ))}
                     {filtered.length === 0 && (

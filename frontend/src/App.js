@@ -37,6 +37,7 @@ import ForAdvisors from "@/pages/ForAdvisors";
 import ForGPs from "@/pages/ForGPs";
 import ResourcesIndex from "@/pages/resources/ResourcesIndex";
 import Glossary from "@/pages/resources/Glossary";
+import GlossaryTerm from "@/pages/resources/GlossaryTerm";
 import Templates from "@/pages/resources/Templates";
 import ArticlesIndex, { ArticleDetail } from "@/pages/resources/Articles";
 import AuthCallback from "@/pages/AuthCallback";
@@ -141,6 +142,7 @@ function App() {
                     <Route path="/for-gps" element={<ForGPs />} />
                     <Route path="/resources" element={<ResourcesIndex />} />
                     <Route path="/resources/glossary" element={<Glossary />} />
+                    <Route path="/resources/glossary/:slug" element={<GlossaryTerm />} />
                     <Route path="/resources/templates" element={<Templates />} />
                     <Route path="/resources/articles" element={<ArticlesIndex />} />
                     <Route path="/resources/articles/:slug" element={<ArticleDetail />} />
