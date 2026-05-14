@@ -19,7 +19,7 @@ class SignupRequest(BaseModel):
     password: str = Field(min_length=8)
     name: str
     role: Literal["caregiver", "participant"] = "caregiver"
-    plan: Literal["free", "solo", "family"] = "free"
+    plan: Literal["free", "solo", "family", "adviser"] = "free"
 
 
 class LoginRequest(BaseModel):
@@ -38,7 +38,7 @@ class UserPublic(BaseModel):
     email: EmailStr
     name: str
     role: Literal["caregiver", "participant"]
-    plan: Literal["free", "solo", "family"] = "free"
+    plan: Literal["free", "solo", "family", "adviser"] = "free"
     household_id: Optional[str] = None
     created_at: str
     is_admin: bool = False
@@ -51,7 +51,7 @@ class UserPublic(BaseModel):
 
 
 class PlanUpdate(BaseModel):
-    plan: Literal["free", "solo", "family"]
+    plan: Literal["free", "solo", "family", "adviser"]
 
 
 # ---------- Household & Participant ----------

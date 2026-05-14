@@ -40,18 +40,20 @@ const TIERS = [
 
 const ADVISOR = [
     {
-        name: "Advisor",
+        name: "Adviser",
         price: "$299",
         period: "per month",
-        desc: "Up to 50 clients. Lifetime-cap tracker, forecasting, review-pack export, email + priority support.",
-        cta: "Book a demo",
+        desc: "Up to 25 clients. Lifetime-cap tracker, forecasting, review-pack export, email + priority support. 7-day free trial.",
+        cta: "Start free trial",
+        href: "/signup?plan=adviser",
     },
     {
-        name: "Advisor Pro",
+        name: "Adviser Pro",
         price: "$999",
         period: "per month",
-        desc: "Up to 200 clients. White-label, custom domain, multi-advisor team, dedicated CS manager, API access.",
+        desc: "Up to 200 clients. White-label, custom domain, multi-adviser team, dedicated CS manager, API access.",
         cta: "Book a demo",
+        href: "/for-advisors",
     },
 ];
 
@@ -168,7 +170,7 @@ export default function Pricing() {
                             <div className="mt-2 font-heading text-4xl text-primary-k tabular-nums">{t.price}</div>
                             <div className="text-sm text-muted-k">{t.period}</div>
                             <p className="mt-4 text-sm text-muted-k leading-relaxed">{t.desc}</p>
-                            <Link to="/for-advisors" className="mt-6 inline-block text-center rounded-full py-2.5 px-5 text-sm font-medium bg-primary-k text-white hover:bg-[#16294a]">
+                            <Link to={t.href} className="mt-6 inline-block text-center rounded-full py-2.5 px-5 text-sm font-medium bg-primary-k text-white hover:bg-[#16294a]">
                                 {t.cta}
                             </Link>
                         </div>

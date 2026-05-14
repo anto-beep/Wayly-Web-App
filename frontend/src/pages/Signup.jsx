@@ -45,7 +45,21 @@ const PLANS = [
             "Everything in Solo",
             "Up to 5 family seats",
             "Sunday digest emails",
-            "Advisor & GP role-based sharing",
+            "Adviser & GP role-based sharing",
+        ],
+    },
+    {
+        v: "adviser",
+        title: "Adviser",
+        price: "$299",
+        period: "per month",
+        featured: false,
+        badge: "For advisors",
+        bullets: [
+            "Multi-client portal — up to 25 clients",
+            "Lifetime-cap tracker + forecasting",
+            "Review-pack export, priority support",
+            "7-day free trial, no card needed",
         ],
     },
 ];
@@ -59,7 +73,7 @@ export default function Signup() {
         email: "",
         password: "",
         role: "caregiver",
-        plan: params.get("plan") && ["free", "solo", "family"].includes(params.get("plan")) ? params.get("plan") : "family",
+        plan: params.get("plan") && ["free", "solo", "family", "adviser"].includes(params.get("plan")) ? params.get("plan") : "family",
     });
     const [submitting, setSubmitting] = useState(false);
 
@@ -74,11 +88,12 @@ export default function Signup() {
         try {
             const u = await signup(form);
             // Paid plans → start free 7-day trial (no payment). Free → straight to onboarding.
-            if (form.plan === "solo" || form.plan === "family") {
+            if (form.plan === "solo" || form.plan === "family" || form.plan === "adviser") {
                 try {
                     await api.post("/billing/start-trial", { plan: form.plan });
-                    toast.success(`Your free ${form.plan === "family" ? "Family" : "Solo"} trial is active for 7 days, ${u.name.split(" ")[0]}.`);
-                    nav("/onboarding");
+                    const planLabel = form.plan === "family" ? "Family" : form.plan === "adviser" ? "Adviser" : "Solo";
+                    toast.success(`Your free ${planLabel} trial is active for 7 days, ${u.name.split(" ")[0]}.`);
+                    nav(form.plan === "adviser" ? "/adviser" : "/onboarding");
                 } catch (err) {
                     // If the user already used their trial, fall back to Stripe Checkout for an immediate paid signup.
                     const detailErr = err?.response?.data?.detail;

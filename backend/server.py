@@ -1371,7 +1371,10 @@ def _check_rate_limit(ip: str) -> None:
 # ---------------------------------------------------------------------------
 SD_COOKIE_NAME = "kindred_sd_used"
 SD_WINDOW_SECONDS = 24 * 60 * 60  # 24 hours
-PAID_PLANS = {"solo", "family", "advisor", "advisor_pro"}
+# Includes legacy "advisor"/"advisor_pro" plus current "adviser" (AU spelling).
+PAID_PLANS = {"solo", "family", "adviser", "advisor", "advisor_pro"}
+ADVISER_PLANS = {"adviser", "advisor", "advisor_pro"}
+ADVISER_MAX_CLIENTS = {"adviser": 25, "advisor": 25, "advisor_pro": 200}
 
 
 def _trial_active(u: dict) -> bool:
@@ -1423,6 +1426,40 @@ async def _require_paid_plan(request: Request, response: Response, tool_label: s
             "redirect": "/pricing",
         },
     )
+
+
+def require_plan(*allowed: str, feature_label: str = "This feature"):
+    """Factory: FastAPI dependency that hard-gates a route to the listed plans.
+
+    Usage: `user: dict = Depends(require_plan("adviser"))`. Returns 401 for
+    unauthenticated callers, 403 for users on the wrong plan. Active 7-day
+    trial users count as their trial plan.
+    """
+    allowed_set = {p.lower() for p in allowed}
+
+    async def _dep(request: Request) -> dict:
+        user = await _user_from_request(request)
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail={"error": "unauthenticated", "message": "Sign in required.", "redirect": "/login"},
+            )
+        plan = (user.get("plan") or "free").lower()
+        if plan in allowed_set:
+            return user
+        # An active trial counts as the trial's plan — we already flip user.plan on trial start.
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "plan_required",
+                "message": f"{feature_label} requires a {' or '.join(sorted(allowed_set))} plan.",
+                "current_plan": plan,
+                "required_plans": sorted(allowed_set),
+                "redirect": "/pricing",
+            },
+        )
+
+    return _dep
 
 
 def _sd_cookie_used_recently(request: Request) -> Optional[datetime]:
@@ -2810,16 +2847,17 @@ async def delete_account(body: AccountDeleteBody, user_id: str = Depends(get_cur
 PLAN_PRICES = {
     "solo": {"amount": 19.00, "currency": "aud", "label": "Wayly Solo"},
     "family": {"amount": 39.00, "currency": "aud", "label": "Wayly Family"},
+    "adviser": {"amount": 299.00, "currency": "aud", "label": "Wayly Adviser"},
 }
 
 
 class CheckoutBody(BaseModel):
-    plan: _LiteralType["solo", "family"]
+    plan: _LiteralType["solo", "family", "adviser"]
     origin_url: str = Field(min_length=8, max_length=200)
 
 
 class StartTrialBody(BaseModel):
-    plan: _LiteralType["solo", "family"]
+    plan: _LiteralType["solo", "family", "adviser"]
 
 
 async def _user_had_trial(user_id: str) -> bool:
@@ -2888,6 +2926,7 @@ async def start_trial(body: StartTrialBody, user_id: str = Depends(get_current_u
                 "<li>All 8 AI tools — budget calculator, price checker, reassessment letter, family coordinator chat and more</li>"
                 "<li>Caregiver dashboard with stream-by-stream budget burn and lifetime cap tracker</li>"
                 + ("<li>Up to 5 family members + weekly Sunday digest + concierge support</li>" if body.plan == "family" else "")
+                + ("<li>Multi-client portal — manage up to 25 clients, review-pack export, priority support</li>" if body.plan == "adviser" else "")
                 + "</ul>"
                 f"<p>No payment required during the trial. After {trial_ends.date().isoformat()}, your account "
                 f"reverts to the Free plan unless you choose to subscribe at "
@@ -3083,7 +3122,7 @@ async def downgrade_to_free(user_id: str = Depends(get_current_user_id)):
 
 
 class UpgradeBody(BaseModel):
-    plan: _LiteralType["solo", "family"]
+    plan: _LiteralType["solo", "family", "adviser"]
 
 
 @api.post("/billing/upgrade")
@@ -3166,6 +3205,12 @@ from admin_phase_e import phase_e, phase_e_public, phase_e_invite_public
 from admin_phase_e2 import cms_admin, cms_public
 from admin_devices import devices_router as admin_devices_router
 from seo_routes import seo_public as seo_public_router
+from adviser_routes import adviser_router, init_adviser_routes
+init_adviser_routes(
+    db=db,
+    require_adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
+    max_clients_for=lambda plan: ADVISER_MAX_CLIENTS.get((plan or "").lower(), 0),
+)
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -3177,6 +3222,7 @@ api.include_router(cms_admin)
 api.include_router(cms_public)
 api.include_router(admin_devices_router)
 api.include_router(seo_public_router)
+api.include_router(adviser_router)
 
 app.include_router(api)
 

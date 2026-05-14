@@ -58,6 +58,7 @@ import AIIntent from "@/pages/legal/AIIntent";
 import Accessibility from "@/pages/legal/Accessibility";
 import CookiesPage from "@/pages/legal/Cookies";
 import AdminApp from "@/pages/admin/AdminApp";
+import AdviserPortal from "@/pages/AdviserPortal";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -68,7 +69,8 @@ function RequireAuth({ children, requireHousehold = true }) {
     if (loading) return <Loading />;
     if (!user) return <Navigate to="/login" replace />;
     // Free plan users don't need household tracking — they see a paywall in /app instead.
-    if (requireHousehold && !household && user.plan !== "free") return <Navigate to="/onboarding" replace />;
+    // Adviser plan users don't run a household at all — they live in /adviser.
+    if (requireHousehold && !household && user.plan !== "free" && user.plan !== "adviser") return <Navigate to="/onboarding" replace />;
     return children;
 }
 
@@ -77,6 +79,7 @@ function PublicAuthOnly({ children }) {
     const { user, household, loading } = useAuth();
     if (loading) return <Loading />;
     if (user) {
+        if (user.plan === "adviser") return <Navigate to="/adviser" replace />;
         if (!household && user.plan !== "free") return <Navigate to="/onboarding" replace />;
         return <Navigate to={user.role === "participant" ? "/participant" : "/app"} replace />;
     }
@@ -190,6 +193,9 @@ function App() {
                     <Route path="/settings" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />
+
+                    {/* Adviser plan portal — multi-client list view */}
+                    <Route path="/adviser" element={<RequireAuth requireHousehold={false}><AdviserPortal /></RequireAuth>} />
 
                     {/* Admin — completely separate auth system (TOTP 2FA, role-based).
                         AdminApp manages its own auth via AdminAuthContext. */}
