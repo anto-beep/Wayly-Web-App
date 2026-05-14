@@ -21,7 +21,11 @@ export default function Login() {
         try {
             const u = await login(email, password);
             toast.success(`Welcome back, ${u.name}`);
-            nav(u.role === "participant" ? "/participant" : "/app");
+            if (u.plan === "adviser") {
+                nav("/adviser");
+            } else {
+                nav(u.role === "participant" ? "/participant" : "/app");
+            }
         } catch (err) {
             toast.error(extractErrorMessage(err, "Could not sign in"));
         } finally {

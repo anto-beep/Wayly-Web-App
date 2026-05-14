@@ -1080,3 +1080,27 @@ Added 5 new tabs (now 9 total): Profile, Plan & Billing, Family members, **Weekl
 - Landing social proof counters (2,847 households / 127 advisor practices / $2.4M flagged) — STATIC.
 - `PRICE_BENCHMARKS` — hard-coded medians for 10 services (real medians come from accumulated user data).
 - `/api/participant/today` appointment — static Sarah-at-10am sample.
+
+
+## Implemented (Iteration 27 — Feb 2026 · Adviser plan + plan-gating + portal)
+- **Stripe Adviser plan** added at `$299 AUD/month`, 7-day free trial, max 25 clients (`PLAN_PRICES['adviser']`). `/api/billing/start-trial`, `/api/billing/checkout`, `/api/billing/upgrade` all accept `plan='adviser'` (Pydantic `Literal["solo","family","adviser"]`).
+- **Plan-gating helper**: new `require_plan(*plans, feature_label)` dependency factory in `server.py` — returns 401 unauthenticated / 403 `plan_required` with `{current_plan, required_plans, redirect:'/pricing'}`. `PAID_PLANS` now includes legacy `advisor`/`advisor_pro` + new `adviser`.
+- **Adviser portal API** (`/app/backend/adviser_routes.py`): `GET /api/adviser/summary`, `GET /api/adviser/clients`, `POST /api/adviser/clients` (auto-links to existing Wayly user by email), `PATCH /api/adviser/clients/{id}`, `DELETE /api/adviser/clients/{id}`. Cap enforced at 25 clients per Adviser.
+- **Models extension**: `SignupRequest`, `UserPublic`, `PlanUpdate` all extended to `Literal["free","solo","family","adviser"]`.
+- **Frontend portal** at `/adviser` (`AdviserPortal.jsx`): locked upgrade card for non-adviser users, summary cards (active/invited/seats remaining), add-client form, sortable client table with status pills, "Coming next" roadmap card. Adviser users skip household onboarding.
+- **Signup + Pricing**: `Signup.jsx` PLANS array now lists Adviser ($299, 25 clients, 7-day trial) with URL param support `/signup?plan=adviser`. `Pricing.jsx` Adviser tier CTA now links to `/signup?plan=adviser` instead of book-a-demo (Adviser Pro still routes to /for-advisors).
+- **Login routing**: Adviser-plan users redirect to `/adviser` on login (PublicAuthOnly + Login.jsx).
+
+## Test status — Iteration 27
+- Backend: 20/20 pytest pass (`/app/backend/tests/test_iter27_adviser.py`) — covers trial start, Stripe checkout for all 3 paid plans, gating 401/403, full CRUD on adviser_clients, soft-link, 25-client cap, duplicate-email 409.
+- Frontend: 5/5 flows verified — `/signup?plan=adviser` → trial → `/adviser`; non-adviser locked card; CRUD via UI; Pricing tier; login redirect.
+
+## Carried forward / Next iteration (P1)
+- Feature 1 — Document Vault (storage schema, upload, decoder integration).
+- Feature 2 — Conversation & Concern Log (immutable + PDF export).
+- Feature 3 — Care Team Directory.
+- P2 backlog: Features 4–13 (Visit Calendar, Budget Alerts, Provider Switching, Reports, AT-HM Tracker, Global Search, Correspondence Tracker, Referrals, Offline Mode, Private Ratings).
+- Deferred (no longer blocking): `server.py` was already at the deployment-safe limits — the `.limit(50)` concern from iter 26 was verified resolved (line ~3242 already paginated).
+
+## Test credentials added
+- `mark.adviser@example.com` / `AdviserPass1!` — Adviser-plan test account.
