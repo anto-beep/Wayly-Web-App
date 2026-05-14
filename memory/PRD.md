@@ -1104,3 +1104,16 @@ Added 5 new tabs (now 9 total): Profile, Plan & Billing, Family members, **Weekl
 
 ## Test credentials added
 - `mark.adviser@example.com` / `AdviserPass1!` — Adviser-plan test account.
+
+## Implemented (Iteration 28 — Feb 2026 · Adviser per-client read-only access + PDF review pack)
+- **Auto-link hooks** in `signup`, `google_session`, and `household` creation flows call `link_client_by_email` / `link_client_household` (in `adviser_routes.py`). Idempotent — only flip rows where `linked_user_id` / `linked_household_id` is null.
+- **POST /api/adviser/clients** now sets `linked_household_id` immediately if the email matches an existing Wayly user who already has a household (was only setting `linked_user_id` before).
+- **GET /api/adviser/clients/{cid}/snapshot** — read-only JSON for the linked household: client meta, household (participant, classification, provider), aggregate metrics (statements, line items, anomalies, total spent AUD), recent 6 statements, flagged anomaly sample, member count. Also stamps `last_seen_at` on the adviser_clients row. Returns 404 (not on adviser's roster), 409 (`client_not_linked`), 401/403 as expected.
+- **GET /api/adviser/clients/{cid}/review-pack.pdf** — single-page A4 PDF (reportlab) with: Wayly heading, Client section, Household section, At-a-glance metrics row, Recent statements table, Flagged anomalies sample, confidentiality footer. Returns `application/pdf` + `attachment` `Content-Disposition` with filename `wayly-review-pack-<name>-<YYYYMMDD>.pdf`.
+- **AdviserPortal.jsx** — new `Linked` column with green `Household linked` pill; per-row `Snapshot` (navy) + `Review pack` (gold) buttons enabled only when `linked_household_id` is set; new `SnapshotModal` component showing participant/classification/provider chips, 4-stat metric strip (Statements / Line items / Anomalies / Spent), recent statements table, in-modal `Download review pack PDF` action. Modal dismisses on overlay click or close icon.
+- **reportlab==4.5.1** added to backend dependencies.
+
+## Test status — Iteration 28
+- Backend: 17/17 pytest pass (`/app/backend/tests/test_iter28_adviser_snapshot.py`). Covers auto-link on signup + household, immediate-link on POST, snapshot 200/401/403/404/409, PDF 200 + %PDF- magic bytes + content-disposition + size > 1.5 KB, cross-adviser isolation (404), last_seen_at update.
+- Frontend: 100% on tested flows — Linked column, disabled→enabled button states, modal open with data, in-modal PDF download, modal close.
+
