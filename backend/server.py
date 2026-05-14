@@ -153,6 +153,12 @@ async def signup(payload: SignupRequest):
         "created_at": now_iso(),
     }
     await db.users.insert_one(user_doc)
+    # Adviser-portal auto-link: if any adviser invited this email, mark linked.
+    try:
+        from adviser_routes import link_client_by_email
+        await link_client_by_email(user_doc["id"], user_doc["email"])
+    except Exception as _e:
+        logger.warning("adviser auto-link (signup) failed: %s", _e)
     token = create_token(user_doc["id"])
     return TokenResponse(token=token, user=await _user_public_with_sub(user_doc))
 
@@ -220,6 +226,12 @@ async def google_session(body: GoogleSessionBody, response: Response):
             "created_at": now_iso(),
         }
         await db.users.insert_one(user)
+        # Adviser-portal auto-link for first-time Google sign-ups.
+        try:
+            from adviser_routes import link_client_by_email
+            await link_client_by_email(user["id"], email)
+        except Exception as _e:
+            logger.warning("adviser auto-link (google) failed: %s", _e)
 
     if session_token:
         await db.user_sessions.update_one(
@@ -262,6 +274,12 @@ async def create_household(payload: HouseholdCreate, user_id: str = Depends(get_
     h = Household(owner_id=user_id, **payload.model_dump())
     await db.households.insert_one(h.model_dump())
     await db.users.update_one({"id": user_id}, {"$set": {"household_id": h.id}})
+    # Adviser-portal: now that the household exists, wire it into any linked roster row.
+    try:
+        from adviser_routes import link_client_household
+        await link_client_household(user_id, h.id)
+    except Exception as _e:
+        logger.warning("adviser household-link failed: %s", _e)
     await _audit(h.id, user_id, user["name"], "HOUSEHOLD_CREATED",
                  f"Set up household for {payload.participant_name} (Classification {payload.classification})")
     return h
