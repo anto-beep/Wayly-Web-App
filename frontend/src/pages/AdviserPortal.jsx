@@ -460,6 +460,10 @@ export default function AdviserPortal() {
                                                         <span data-testid={`adviser-linked-${c.id}`} className="inline-flex items-center gap-1 text-xs text-sage">
                                                             <Link2 className="h-3.5 w-3.5" /> Household linked
                                                         </span>
+                                                    ) : c.linked_user_id ? (
+                                                        <span data-testid={`adviser-invite-state-${c.id}`} className="text-xs text-muted-k">
+                                                            User linked · household pending
+                                                        </span>
                                                     ) : (
                                                         <span data-testid={`adviser-invite-state-${c.id}`} className="text-xs text-muted-k">
                                                             {c.invite_sent_at ? `Invite sent ${(c.invite_sent_at || "").split("T")[0]}` : "Invite pending"}
@@ -491,15 +495,17 @@ export default function AdviserPortal() {
                                                             </button>
                                                         </>
                                                     ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => resendInvite(c)}
-                                                            data-testid={`adviser-client-resend-${c.id}`}
-                                                            className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 bg-gold text-primary-k hover:brightness-95"
-                                                            title="Re-send invitation email"
-                                                        >
-                                                            <Mail className="h-3.5 w-3.5" /> Resend invite
-                                                        </button>
+                                                        !c.linked_user_id && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => resendInvite(c)}
+                                                                data-testid={`adviser-client-resend-${c.id}`}
+                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 bg-gold text-primary-k hover:brightness-95"
+                                                                title="Re-send invitation email"
+                                                            >
+                                                                <Mail className="h-3.5 w-3.5" /> Resend invite
+                                                            </button>
+                                                        )
                                                     )}
                                                     <button
                                                         type="button"

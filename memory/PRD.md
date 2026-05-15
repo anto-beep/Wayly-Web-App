@@ -1117,3 +1117,28 @@ Added 5 new tabs (now 9 total): Profile, Plan & Billing, Family members, **Weekl
 - Backend: 17/17 pytest pass (`/app/backend/tests/test_iter28_adviser_snapshot.py`). Covers auto-link on signup + household, immediate-link on POST, snapshot 200/401/403/404/409, PDF 200 + %PDF- magic bytes + content-disposition + size > 1.5 KB, cross-adviser isolation (404), last_seen_at update.
 - Frontend: 100% on tested flows — Linked column, disabled→enabled button states, modal open with data, in-modal PDF download, modal close.
 
+
+## Implemented (Iteration 29 — Feb 2026 · Adviser invite emails + Document Vault)
+- **Adviser invite-by-email** wired end-to-end. POST `/api/adviser/clients` now generates a `secrets.token_urlsafe(24)` invite token, persists `invite_token` + `invite_sent_at`, and calls `email_service.email_adviser_invite` (branded Resend template with adviser name, optional notes, and a CTA button linking to `/signup?plan=family&invite=<token>`).
+  - Public preview endpoint: `GET /api/public/adviser/invite/{token}` → `{client_name, client_email, adviser_name, notes}`. Returns 404 unknown / 409 `already_accepted`.
+  - Resend endpoint: `POST /api/adviser/clients/{cid}/resend-invite` rotates the token (revokes the old link) and re-sends the email. 409 `already_linked` if accepted.
+  - Signup auto-link: `SignupRequest.invite` field added; `link_client_by_invite_token` runs during `/api/auth/signup` and flips the matching roster row to `status='active'` + sets `linked_user_id`. Household-link hook (already in place) then wires `linked_household_id` once onboarding completes.
+- **Signup invite banner** (`data-testid='signup-invite-banner'`) renders adviser name + optional notes, pre-fills name + email from the invite, and submits the token alongside the signup payload.
+- **Adviser portal copy** now differentiates three states: "Invite pending / Invite sent <date>" (no user), "User linked · household pending" (signed up, not yet onboarded), "Household linked" (active). Resend button only appears when no `linked_user_id`.
+- **Document Vault** — household-scoped file storage (`/app/backend/documents_routes.py`):
+  - Endpoints: `GET /api/documents` (list + limits + categories), `POST /api/documents` (multipart upload), `GET /api/documents/{id}`, `GET /api/documents/{id}/download`, `PATCH /api/documents/{id}` (title/category/notes), `DELETE /api/documents/{id}`, `POST /api/documents/{id}/send-to-decoder` (only for `category=='statement'`, kicks the existing `_submit_upload_job` pipeline and returns `{job_id}`).
+  - Categories: `assessment, statement, care_plan, medical, financial, legal, other`.
+  - Caps: 10 MB per file, 100 MB per vault. 413 on overflow with structured detail.
+  - **Adviser read-only**: every GET endpoint accepts `?as_client_id=<adviser_client_id>` — adviser-plan only, scoped to the adviser's linked clients, returns 403/404 on mismatch.
+- **Document Vault page** at `/app/documents` (`DocumentVault.jsx`) — category-for-next-upload metadata strip, 8 category filter pills (All + 7), search box (title/filename/notes), vault-usage strip, card grid with category badge + size + title + filename + notes + actions (Download / Edit / Decode for statements / Delete). Edit modal for inline updates.
+- **Sidebar nav** in `Layout.jsx` now includes "Documents" link with `FolderArchive` icon.
+- New backend module: `reportlab==4.5.1` was added in iter28 — no further deps added this iteration.
+
+## Test status — Iteration 29
+- Backend: 22/22 pytest pass (`/app/backend/tests/test_iter29_docvault_invite.py`) — invite token CRUD, public preview, resend rotation, signup auto-link, full Document Vault CRUD, send-to-decoder happy path (job polling resolves to `done` in ~15 s), adviser read-only scoping, cross-adviser isolation.
+- Frontend: 100% on listed acceptance criteria — signup banner, invite-state pill copy, resend button, /app/documents page with category pills, upload, edit modal, sidebar link.
+
+## Known minor follow-ups
+- React duplicate-key warning on `/app/documents` (pre-existing month-string key collision elsewhere on the dashboard — not introduced by this iteration). Low priority.
+- `PUBLIC_APP_ORIGIN` env-var is unset on the preview backend, so invite links in test emails point to `https://wayly.com.au` rather than the preview URL. Set it in `backend/.env` on preview if you want clickable invite links from preview-env test emails.
+
