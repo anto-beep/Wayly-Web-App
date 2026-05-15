@@ -128,5 +128,71 @@ async def email_tool_result(
     })
 
 
+async def email_adviser_invite(
+    *,
+    to: str,
+    client_name: str,
+    adviser_name: str,
+    invite_url: str,
+    adviser_notes: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Send a branded invitation email from an Adviser to their prospective client.
+    Click-through lands on /signup?plan=family&invite=<token> so auto-link kicks
+    in the moment they finish onboarding."""
+    notes_block = ""
+    if adviser_notes:
+        notes_block = (
+            f"<div style='margin-top:12px;padding:12px 14px;background:#FAF7F2;"
+            f"border-left:3px solid #D4A24E;color:#1F3A5F;font-size:13px;line-height:1.6'>"
+            f"<strong style='display:block;margin-bottom:4px'>Note from {_html_escape(adviser_name)}:</strong>"
+            f"{_html_escape(adviser_notes)}</div>"
+        )
+    html = f"""<!doctype html>
+<html><body style="font-family:Helvetica,Arial,sans-serif;background:#FAF7F2;padding:24px;color:#1F3A5F">
+  <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #e5dfd2;overflow:hidden">
+    <tr><td style="padding:24px 28px;background:#1F3A5F;color:#fff">
+      <div style="font-family:Georgia,serif;font-size:24px">Wayly</div>
+      <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-top:4px">An invitation from your financial adviser</div>
+    </td></tr>
+    <tr><td style="padding:28px">
+      <h2 style="margin:0 0 8px;font-family:Georgia,serif;color:#1F3A5F;font-size:22px">Hi {_html_escape(client_name.split(' ')[0])},</h2>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.6">
+        <strong>{_html_escape(adviser_name)}</strong> has invited you to set up a Wayly account so they can help you stay on top of your <strong>Support at Home</strong> statements, budget, and care.
+      </p>
+      <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:#555">
+        Wayly is the AI operating system for Australian families navigating Support at Home. We decode confusing aged-care statements, flag overcharges, and track your lifetime budget — so you and your adviser never have to chase paperwork again.
+      </p>
+      {notes_block}
+      <table style="margin:24px 0" cellpadding="0" cellspacing="0">
+        <tr><td style="background:#D4A24E;border-radius:999px">
+          <a href="{_html_escape(invite_url)}" style="display:inline-block;padding:12px 28px;color:#1F3A5F;font-weight:700;font-size:14px;text-decoration:none">Accept invitation & start free trial →</a>
+        </td></tr>
+      </table>
+      <ul style="margin:12px 0 0;padding-left:18px;color:#555;font-size:13px;line-height:1.8">
+        <li>7-day free trial · no card required</li>
+        <li>Your data is yours — share back to your adviser any time, revoke any time</li>
+        <li>Australian-hosted, encrypted, never sold</li>
+      </ul>
+      <hr style="border:0;border-top:1px solid #e5dfd2;margin:24px 0" />
+      <p style="margin:0;font-size:12px;color:#888;line-height:1.6">
+        If the button doesn't work, copy this link: <a href="{_html_escape(invite_url)}" style="color:#1F3A5F;word-break:break-all">{_html_escape(invite_url)}</a>
+      </p>
+    </td></tr>
+    <tr><td style="padding:16px 28px;background:#F0EBE0;color:#888;font-size:11px;line-height:1.6">
+      You received this because {_html_escape(adviser_name)} entered your email on their Wayly Adviser dashboard. If this wasn't expected, you can ignore this message — no account has been created for you.
+      Crisis support: Lifeline 13 11 14 · 1800ELDERHelp 1800 353 374.
+    </td></tr>
+  </table>
+</body></html>"""
+    return await _send({
+        "from": _sender(),
+        "to": [to],
+        "reply_to": _team_inbox(),
+        "subject": f"{adviser_name} invited you to Wayly",
+        "html": html,
+    })
+
+
+
 def _html_escape(s: str) -> str:
     return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")

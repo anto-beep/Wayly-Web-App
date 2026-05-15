@@ -59,6 +59,7 @@ import Accessibility from "@/pages/legal/Accessibility";
 import CookiesPage from "@/pages/legal/Cookies";
 import AdminApp from "@/pages/admin/AdminApp";
 import AdviserPortal from "@/pages/AdviserPortal";
+import DocumentVault from "@/pages/DocumentVault";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -190,6 +191,7 @@ function App() {
                     <Route path="/app/chat" element={<RequireAuth><Layout><Chat /></Layout></RequireAuth>} />
                     <Route path="/app/family" element={<RequireAuth><Layout><FamilyThread /></Layout></RequireAuth>} />
                     <Route path="/app/audit" element={<RequireAuth><Layout><AuditLog /></Layout></RequireAuth>} />
+                    <Route path="/app/documents" element={<RequireAuth><Layout><DocumentVault /></Layout></RequireAuth>} />
                     <Route path="/settings" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />

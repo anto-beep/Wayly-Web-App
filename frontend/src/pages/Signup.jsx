@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { HeartHandshake, Check, Loader2 } from "lucide-react";
+import { HeartHandshake, Check, Loader2, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
@@ -68,6 +68,8 @@ export default function Signup() {
     const { signup } = useAuth();
     const nav = useNavigate();
     const [params] = useSearchParams();
+    const inviteToken = params.get("invite") || null;
+    const [invite, setInvite] = useState(null); // {client_name, client_email, adviser_name, notes}
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -76,6 +78,33 @@ export default function Signup() {
         plan: params.get("plan") && ["free", "solo", "family", "adviser"].includes(params.get("plan")) ? params.get("plan") : "family",
     });
     const [submitting, setSubmitting] = useState(false);
+
+    // Pre-fill name + email when an adviser-invite token is present.
+    useEffect(() => {
+        if (!inviteToken) return;
+        let alive = true;
+        (async () => {
+            try {
+                const { data } = await api.get(`/public/adviser/invite/${inviteToken}`);
+                if (!alive) return;
+                setInvite(data);
+                setForm((f) => ({
+                    ...f,
+                    name: f.name || data.client_name || "",
+                    email: f.email || data.client_email || "",
+                }));
+            } catch (err) {
+                if (!alive) return;
+                const errCode = err?.response?.data?.detail?.error;
+                if (errCode === "already_accepted") {
+                    toast.message("This invitation has already been accepted — please sign in instead.");
+                } else if (errCode === "invite_not_found") {
+                    toast.message("That invitation link is no longer valid. You can still sign up below.");
+                }
+            }
+        })();
+        return () => { alive = false; };
+    }, [inviteToken]);
 
     const submit = async (e) => {
         e.preventDefault();
@@ -86,7 +115,7 @@ export default function Signup() {
         }
         setSubmitting(true);
         try {
-            const u = await signup(form);
+            const u = await signup({ ...form, invite: inviteToken || undefined });
             // Paid plans → start free 7-day trial (no payment). Free → straight to onboarding.
             if (form.plan === "solo" || form.plan === "family" || form.plan === "adviser") {
                 try {
@@ -134,6 +163,26 @@ export default function Signup() {
                     </div>
                     <span className="font-heading text-lg text-primary-k">Wayly</span>
                 </Link>
+
+                {invite && (
+                    <div data-testid="signup-invite-banner" className="mb-6 bg-primary-k text-white rounded-2xl p-5 flex items-start gap-4">
+                        <div className="h-10 w-10 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
+                            <Briefcase className="h-5 w-5 text-gold" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="text-xs uppercase tracking-wider text-white/70">Adviser invitation</div>
+                            <h2 className="font-heading text-xl mt-0.5">
+                                {invite.adviser_name} invited you to Wayly
+                            </h2>
+                            <p className="mt-1 text-sm text-white/85 leading-relaxed">
+                                Your account will link to {invite.adviser_name.split(" ")[0]}'s adviser dashboard so they can help you stay on top of your Support at Home statements and budget. You can revoke access any time from Settings.
+                            </p>
+                            {invite.notes && (
+                                <p className="mt-2 text-sm italic text-white/70">"{invite.notes}"</p>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid lg:grid-cols-5 gap-8">
                     {/* PLAN PICKER (3 of 5 cols) */}

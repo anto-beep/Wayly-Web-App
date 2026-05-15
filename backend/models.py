@@ -20,6 +20,7 @@ class SignupRequest(BaseModel):
     name: str
     role: Literal["caregiver", "participant"] = "caregiver"
     plan: Literal["free", "solo", "family", "adviser"] = "free"
+    invite: Optional[str] = Field(default=None, max_length=64)
 
 
 class LoginRequest(BaseModel):

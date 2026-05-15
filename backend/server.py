@@ -155,8 +155,10 @@ async def signup(payload: SignupRequest):
     await db.users.insert_one(user_doc)
     # Adviser-portal auto-link: if any adviser invited this email, mark linked.
     try:
-        from adviser_routes import link_client_by_email
+        from adviser_routes import link_client_by_email, link_client_by_invite_token
         await link_client_by_email(user_doc["id"], user_doc["email"])
+        if payload.invite:
+            await link_client_by_invite_token(user_doc["id"], payload.invite)
     except Exception as _e:
         logger.warning("adviser auto-link (signup) failed: %s", _e)
     token = create_token(user_doc["id"])
@@ -1420,6 +1422,17 @@ async def _user_from_request(request: Request) -> Optional[dict]:
         return await db.users.find_one({"id": uid}, {"_id": 0})
     except Exception:
         return None
+
+
+async def _user_from_request_required(request: Request) -> dict:
+    """Strict: 401 if no Bearer JWT or token doesn't resolve to a user."""
+    user = await _user_from_request(request)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail={"error": "unauthenticated", "message": "Sign in required."},
+        )
+    return user
 
 
 async def _require_paid_plan(request: Request, response: Response, tool_label: str = "This tool") -> dict:
@@ -3223,11 +3236,54 @@ from admin_phase_e import phase_e, phase_e_public, phase_e_invite_public
 from admin_phase_e2 import cms_admin, cms_public
 from admin_devices import devices_router as admin_devices_router
 from seo_routes import seo_public as seo_public_router
-from adviser_routes import adviser_router, init_adviser_routes
+from adviser_routes import adviser_router, adviser_public_router, init_adviser_routes
+from documents_routes import documents_router, init_documents_routes
 init_adviser_routes(
     db=db,
     require_adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
     max_clients_for=lambda plan: ADVISER_MAX_CLIENTS.get((plan or "").lower(), 0),
+)
+
+
+async def _docvault_decode_statement(
+    *, household_id: str, owner_user_id: str, file_bytes: bytes,
+    filename: str, mimetype: str, source_document_id: str,
+):
+    """Bridge: when a vault doc with category='statement' is sent to the
+    decoder, run the same pipeline /api/statements/upload uses and return
+    the resulting job_id. The frontend polls /api/statements/upload-job/{id}
+    just like the normal upload path."""
+    import base64 as _b64
+    from document_extract import (
+        extract_document, UnsupportedFormatError, FileTooLargeError,
+        CorruptFileError, PasswordProtectedError,
+    )
+    try:
+        text, _input_method, _page_count, _warnings = await extract_document(filename or "", file_bytes)
+    except UnsupportedFormatError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileTooLargeError as e:
+        mb = e.limit_bytes // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"This {e.ext} file exceeds the {mb} MB limit.")
+    except PasswordProtectedError:
+        raise HTTPException(status_code=400, detail="This PDF is password-protected.")
+    except CorruptFileError as e:
+        raise HTTPException(status_code=400, detail=f"File appears damaged: {e}")
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract text from file.")
+    owner = await _get_user(owner_user_id)
+    file_b64 = _b64.b64encode(file_bytes).decode("ascii")
+    job_id = _submit_upload_job(
+        text, filename, household_id, owner_user_id, owner["name"],
+        file_b64=file_b64, file_mimetype=mimetype, file_size=len(file_bytes),
+    )
+    return {"job_id": job_id, "status": "pending", "source_document_id": source_document_id}
+
+
+init_documents_routes(
+    db=db,
+    user_dep=_user_from_request_required,
+    decode_statement=_docvault_decode_statement,
 )
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
@@ -3241,6 +3297,8 @@ api.include_router(cms_public)
 api.include_router(admin_devices_router)
 api.include_router(seo_public_router)
 api.include_router(adviser_router)
+api.include_router(adviser_public_router)
+api.include_router(documents_router)
 
 app.include_router(api)
 

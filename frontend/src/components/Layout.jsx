@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
     LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut,
     HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
-    ShieldCheck,
+    ShieldCheck, FolderArchive,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import TrialCountdownBanner from "@/components/TrialCountdownBanner";
@@ -12,6 +12,7 @@ import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 const primaryNav = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, mobile: true },
     { to: "/app/statements", label: "Statements", icon: FileText, mobile: true },
+    { to: "/app/documents", label: "Documents", icon: FolderArchive },
     { to: "/app/chat", label: "Ask Wayly", icon: MessageCircle, mobile: true },
     { to: "/app/family", label: "Family", icon: Users },
     { to: "/app/audit", label: "Audit log", icon: ScrollText },

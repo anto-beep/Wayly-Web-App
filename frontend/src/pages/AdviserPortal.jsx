@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
-import { Briefcase, Users, UserPlus, Trash2, Loader2, ShieldCheck, ArrowUpRight, FileText, Eye, Link2, X, AlertCircle } from "lucide-react";
+import { Briefcase, Users, UserPlus, Trash2, Loader2, ShieldCheck, ArrowUpRight, FileText, Eye, Link2, X, AlertCircle, Mail } from "lucide-react";
 
 import SeoHead from "@/seo/SeoHead";
 
@@ -287,6 +287,18 @@ export default function AdviserPortal() {
         }
     };
 
+    const resendInvite = async (client) => {
+        try {
+            const { data } = await api.post(`/adviser/clients/${client.id}/resend-invite`);
+            const mocked = data?.email_result?.mocked;
+            toast.success(mocked
+                ? `Invite re-queued for ${client.client_name} (mock — Resend not in live mode)`
+                : `Invite re-sent to ${client.client_email}`);
+        } catch (err) {
+            toast.error(extractErrorMessage(err, "Could not resend invitation."));
+        }
+    };
+
     return (
         <div className="min-h-screen bg-kindred">
             <SeoHead title="Adviser portal — Wayly" description="Manage your aged-care clients in one place." canonical="/adviser" noindex />
@@ -449,39 +461,46 @@ export default function AdviserPortal() {
                                                             <Link2 className="h-3.5 w-3.5" /> Household linked
                                                         </span>
                                                     ) : (
-                                                        <span className="text-xs text-muted-k">—</span>
+                                                        <span data-testid={`adviser-invite-state-${c.id}`} className="text-xs text-muted-k">
+                                                            {c.invite_sent_at ? `Invite sent ${(c.invite_sent_at || "").split("T")[0]}` : "Invite pending"}
+                                                        </span>
                                                     )}
                                                 </td>
                                                 <td className="px-5 py-3 text-right whitespace-nowrap">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setOpenClient(c)}
-                                                        disabled={!linked}
-                                                        data-testid={`adviser-client-snapshot-${c.id}`}
-                                                        className={`inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-1.5 ${
-                                                            linked
-                                                                ? "bg-primary-k text-white hover:bg-[#16294a]"
-                                                                : "bg-surface-2 text-muted-k cursor-not-allowed"
-                                                        }`}
-                                                        title={linked ? "Open snapshot" : "Client hasn't signed up yet"}
-                                                    >
-                                                        <Eye className="h-3.5 w-3.5" /> Snapshot
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => downloadPdf(c)}
-                                                        disabled={!linked || downloadingPdfFor === c.id}
-                                                        data-testid={`adviser-client-pdf-${c.id}`}
-                                                        className={`inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 ${
-                                                            linked
-                                                                ? "bg-gold text-primary-k hover:brightness-95"
-                                                                : "bg-surface-2 text-muted-k cursor-not-allowed"
-                                                        }`}
-                                                        title={linked ? "Download review pack PDF" : "Client hasn't signed up yet"}
-                                                    >
-                                                        {downloadingPdfFor === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-                                                        Review pack
-                                                    </button>
+                                                    {linked ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setOpenClient(c)}
+                                                                data-testid={`adviser-client-snapshot-${c.id}`}
+                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-1.5 bg-primary-k text-white hover:bg-[#16294a]"
+                                                                title="Open snapshot"
+                                                            >
+                                                                <Eye className="h-3.5 w-3.5" /> Snapshot
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => downloadPdf(c)}
+                                                                disabled={downloadingPdfFor === c.id}
+                                                                data-testid={`adviser-client-pdf-${c.id}`}
+                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 bg-gold text-primary-k hover:brightness-95"
+                                                                title="Download review pack PDF"
+                                                            >
+                                                                {downloadingPdfFor === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                                                                Review pack
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => resendInvite(c)}
+                                                            data-testid={`adviser-client-resend-${c.id}`}
+                                                            className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 bg-gold text-primary-k hover:brightness-95"
+                                                            title="Re-send invitation email"
+                                                        >
+                                                            <Mail className="h-3.5 w-3.5" /> Resend invite
+                                                        </button>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         onClick={() => removeClient(c.id, c.client_name)}

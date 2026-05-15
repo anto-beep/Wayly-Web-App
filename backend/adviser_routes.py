@@ -5,25 +5,26 @@ Endpoints (all prefixed by `/api` via the parent router include):
   POST   /adviser/clients          — add a client (invite-by-email; soft-create stub)
   PATCH  /adviser/clients/{cid}    — edit name/notes/status
   DELETE /adviser/clients/{cid}    — remove a client from the adviser's roster
+  POST   /adviser/clients/{cid}/resend-invite — re-send the invitation email
   GET    /adviser/summary          — quick stats card for the portal landing
   GET    /adviser/clients/{cid}/snapshot       — read-only household snapshot (JSON)
   GET    /adviser/clients/{cid}/review-pack.pdf — one-click PDF review pack
+  GET    /public/adviser/invite/{token}        — public preview of an invite (used by Signup)
 
 Auto-link hook (called from server.py):
   link_client_by_email(user_id, email)              — flips status to active + sets linked_user_id when client signs up.
+  link_client_by_invite_token(user_id, token)       — same, but matches a one-time invite token.
   link_client_household(user_id, household_id)      — wires the household_id once onboarding completes.
 
 Storage: `adviser_clients` collection. Each doc:
   { id, adviser_user_id, client_name, client_email, status, notes,
-    linked_user_id, linked_household_id,
+    linked_user_id, linked_household_id, invite_token, invite_sent_at,
     invited_at, last_seen_at, created_at, updated_at }
-
-This is a stub workspace — when the linked client signs up with the same
-email later, we'll match them by lower-cased email and surface a "linked"
-badge. The Adviser can then open the snapshot + PDF review pack one-click.
 """
 from __future__ import annotations
 import io
+import os
+import secrets
 from datetime import datetime
 from typing import Optional
 
@@ -31,9 +32,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, EmailStr, Field
 
+import email_service
 from models import new_id, now_iso
 
 adviser_router = APIRouter(prefix="/adviser", tags=["adviser"])
+adviser_public_router = APIRouter(prefix="/public/adviser", tags=["adviser-public"])
 
 
 # --- shared deps (injected from server.py at registration time) ---
@@ -65,6 +68,25 @@ async def link_client_by_email(user_id: str, email: str) -> int:
     return res.modified_count
 
 
+async def link_client_by_invite_token(user_id: str, token: str) -> Optional[dict]:
+    """Hook: called from /api/auth/signup when ?invite=<token> is provided.
+    Marks the matching adviser_clients row as linked to this user. Returns
+    the matched row (without _id) so the caller can surface the adviser
+    name in the UI, or None if no match."""
+    if _db is None or not token:
+        return None
+    row = await _db.adviser_clients.find_one(
+        {"invite_token": token, "linked_user_id": None}, {"_id": 0},
+    )
+    if not row:
+        return None
+    await _db.adviser_clients.update_one(
+        {"id": row["id"]},
+        {"$set": {"linked_user_id": user_id, "status": "active", "updated_at": now_iso()}},
+    )
+    return row
+
+
 async def link_client_household(user_id: str, household_id: str) -> int:
     """Hook: called after household creation. Wires linked_household_id
     into any adviser_clients row already linked to this user. Returns
@@ -77,6 +99,24 @@ async def link_client_household(user_id: str, household_id: str) -> int:
         {"$set": {"linked_household_id": household_id, "updated_at": now_iso()}},
     )
     return res.modified_count
+
+
+def _public_origin() -> str:
+    """Best-effort origin for the deep-link in the invite email. Prefers
+    PUBLIC_APP_ORIGIN env, falls back to https://wayly.com.au."""
+    return os.environ.get("PUBLIC_APP_ORIGIN", "https://wayly.com.au").rstrip("/")
+
+
+async def _send_invite_email(row: dict, adviser_name: str) -> dict:
+    """Fire-and-log helper — never raises. Returns the email_service result."""
+    invite_url = f"{_public_origin()}/signup?plan=family&invite={row['invite_token']}"
+    return await email_service.email_adviser_invite(
+        to=row["client_email"],
+        client_name=row["client_name"],
+        adviser_name=adviser_name or "Your Wayly adviser",
+        invite_url=invite_url,
+        adviser_notes=row.get("notes"),
+    )
 
 
 class ClientCreate(BaseModel):
@@ -149,6 +189,7 @@ async def add_client(body: ClientCreate, request: Request):
     # Soft-link: if a user with this email exists, link them + their household.
     linked = await _db.users.find_one({"email": email_lc}, {"_id": 0, "id": 1, "household_id": 1})
     now = now_iso()
+    invite_token = secrets.token_urlsafe(24)
     doc = {
         "id": new_id(),
         "adviser_user_id": user["id"],
@@ -158,6 +199,8 @@ async def add_client(body: ClientCreate, request: Request):
         "linked_household_id": linked.get("household_id") if linked else None,
         "status": "active" if linked else "invited",
         "notes": (body.notes or "").strip() or None,
+        "invite_token": invite_token,
+        "invite_sent_at": None,
         "invited_at": now,
         "last_seen_at": None,
         "created_at": now,
@@ -165,7 +208,67 @@ async def add_client(body: ClientCreate, request: Request):
     }
     await _db.adviser_clients.insert_one(doc)
     doc.pop("_id", None)
-    return doc
+    # Fire the invite email only when the client is NOT already a Wayly user.
+    # If they're already on Wayly we already have everything we need.
+    email_result = {"ok": True, "skipped": True}
+    if not linked:
+        try:
+            email_result = await _send_invite_email(doc, user.get("name") or user.get("email") or "Your adviser")
+            if email_result.get("ok"):
+                await _db.adviser_clients.update_one(
+                    {"id": doc["id"]},
+                    {"$set": {"invite_sent_at": now_iso()}},
+                )
+                doc["invite_sent_at"] = now_iso()
+        except Exception as e:
+            email_result = {"ok": False, "reason": str(e)}
+    return {**doc, "email_result": email_result}
+
+
+@adviser_router.post("/clients/{cid}/resend-invite")
+async def resend_invite(cid: str, request: Request):
+    user = await _user_dep(request)
+    row = await _db.adviser_clients.find_one(
+        {"id": cid, "adviser_user_id": user["id"]}, {"_id": 0},
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Client not found")
+    if row.get("linked_user_id"):
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "already_linked", "message": "This client has already accepted the invitation."},
+        )
+    # Rotate the token so old links die — small but meaningful security win.
+    new_token = secrets.token_urlsafe(24)
+    await _db.adviser_clients.update_one(
+        {"id": cid, "adviser_user_id": user["id"]},
+        {"$set": {"invite_token": new_token, "updated_at": now_iso()}},
+    )
+    row["invite_token"] = new_token
+    email_result = await _send_invite_email(row, user.get("name") or user.get("email") or "Your adviser")
+    if email_result.get("ok"):
+        await _db.adviser_clients.update_one(
+            {"id": cid, "adviser_user_id": user["id"]},
+            {"$set": {"invite_sent_at": now_iso()}},
+        )
+    return {"ok": True, "email_result": email_result}
+
+
+@adviser_public_router.get("/invite/{token}")
+async def preview_invite(token: str):
+    """Public-safe preview used by the signup page when ?invite=<token> is set."""
+    row = await _db.adviser_clients.find_one({"invite_token": token}, {"_id": 0})
+    if not row:
+        raise HTTPException(status_code=404, detail={"error": "invite_not_found"})
+    if row.get("linked_user_id"):
+        raise HTTPException(status_code=409, detail={"error": "already_accepted"})
+    adviser = await _db.users.find_one({"id": row["adviser_user_id"]}, {"_id": 0, "name": 1, "email": 1})
+    return {
+        "client_name": row.get("client_name"),
+        "client_email": row.get("client_email"),
+        "adviser_name": (adviser or {}).get("name") or "Your adviser",
+        "notes": row.get("notes"),
+    }
 
 
 @adviser_router.patch("/clients/{cid}")
