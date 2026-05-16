@@ -3238,6 +3238,7 @@ from admin_devices import devices_router as admin_devices_router
 from seo_routes import seo_public as seo_public_router
 from adviser_routes import adviser_router, adviser_public_router, init_adviser_routes
 from documents_routes import documents_router, init_documents_routes
+from extended_routes import extended_router, init_extended_routes
 init_adviser_routes(
     db=db,
     require_adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
@@ -3285,6 +3286,7 @@ init_documents_routes(
     user_dep=_user_from_request_required,
     decode_statement=_docvault_decode_statement,
 )
+init_extended_routes(db=db, user_dep=_user_from_request_required)
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -3299,6 +3301,7 @@ api.include_router(seo_public_router)
 api.include_router(adviser_router)
 api.include_router(adviser_public_router)
 api.include_router(documents_router)
+api.include_router(extended_router)
 
 app.include_router(api)
 

@@ -60,6 +60,15 @@ import CookiesPage from "@/pages/legal/Cookies";
 import AdminApp from "@/pages/admin/AdminApp";
 import AdviserPortal from "@/pages/AdviserPortal";
 import DocumentVault from "@/pages/DocumentVault";
+import VisitCalendar from "@/pages/extended/VisitCalendar";
+import BudgetAlerts from "@/pages/extended/BudgetAlerts";
+import ProviderSwitch from "@/pages/extended/ProviderSwitch";
+import AthmTracker from "@/pages/extended/AthmTracker";
+import Correspondence from "@/pages/extended/Correspondence";
+import Referrals from "@/pages/extended/Referrals";
+import ProviderRatings from "@/pages/extended/ProviderRatings";
+import SummaryReports from "@/pages/extended/SummaryReports";
+import OfflineIndicator from "@/components/OfflineIndicator";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -131,6 +140,7 @@ function App() {
                 <BrowserRouter>
                 <Toaster richColors position="top-right" />
                 <ConsumerWidgets />
+                <OfflineIndicator />
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />
@@ -192,6 +202,14 @@ function App() {
                     <Route path="/app/family" element={<RequireAuth><Layout><FamilyThread /></Layout></RequireAuth>} />
                     <Route path="/app/audit" element={<RequireAuth><Layout><AuditLog /></Layout></RequireAuth>} />
                     <Route path="/app/documents" element={<RequireAuth><Layout><DocumentVault /></Layout></RequireAuth>} />
+                    <Route path="/app/calendar" element={<RequireAuth><Layout><VisitCalendar /></Layout></RequireAuth>} />
+                    <Route path="/app/budget-alerts" element={<RequireAuth><Layout><BudgetAlerts /></Layout></RequireAuth>} />
+                    <Route path="/app/provider-switch" element={<RequireAuth><Layout><ProviderSwitch /></Layout></RequireAuth>} />
+                    <Route path="/app/at-hm" element={<RequireAuth><Layout><AthmTracker /></Layout></RequireAuth>} />
+                    <Route path="/app/correspondence" element={<RequireAuth><Layout><Correspondence /></Layout></RequireAuth>} />
+                    <Route path="/app/referrals" element={<RequireAuth><Layout><Referrals /></Layout></RequireAuth>} />
+                    <Route path="/app/ratings" element={<RequireAuth><Layout><ProviderRatings /></Layout></RequireAuth>} />
+                    <Route path="/app/reports" element={<RequireAuth><Layout><SummaryReports /></Layout></RequireAuth>} />
                     <Route path="/settings" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />

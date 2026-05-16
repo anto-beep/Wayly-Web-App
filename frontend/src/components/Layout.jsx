@@ -4,17 +4,26 @@ import { useAuth } from "@/context/AuthContext";
 import {
     LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut,
     HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
-    ShieldCheck, FolderArchive,
+    ShieldCheck, FolderArchive, Calendar, Bell, Repeat, Wrench, Mail, Share2, Star, FileBarChart,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import TrialCountdownBanner from "@/components/TrialCountdownBanner";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const primaryNav = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, mobile: true },
     { to: "/app/statements", label: "Statements", icon: FileText, mobile: true },
     { to: "/app/documents", label: "Documents", icon: FolderArchive },
+    { to: "/app/calendar", label: "Calendar", icon: Calendar },
     { to: "/app/chat", label: "Ask Wayly", icon: MessageCircle, mobile: true },
     { to: "/app/family", label: "Family", icon: Users },
+    { to: "/app/correspondence", label: "Correspondence", icon: Mail },
+    { to: "/app/referrals", label: "Referrals", icon: Share2 },
+    { to: "/app/at-hm", label: "AT & HM", icon: Wrench },
+    { to: "/app/provider-switch", label: "Switch provider", icon: Repeat },
+    { to: "/app/ratings", label: "Ratings", icon: Star },
+    { to: "/app/budget-alerts", label: "Budget alerts", icon: Bell },
+    { to: "/app/reports", label: "Reports", icon: FileBarChart },
     { to: "/app/audit", label: "Audit log", icon: ScrollText },
 ];
 
@@ -58,6 +67,7 @@ export default function Layout({ children }) {
                         </div>
                     </Link>
                     <div className="flex items-center gap-1.5 md:gap-3 min-w-0">
+                        {user && <div className="hidden md:block"><GlobalSearch /></div>}
                         {user && <NotificationsBell tone="light" />}
                         {household && (
                             <div className="hidden lg:flex flex-col text-right min-w-0">
