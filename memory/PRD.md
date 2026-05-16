@@ -1142,3 +1142,49 @@ Added 5 new tabs (now 9 total): Profile, Plan & Billing, Family members, **Weekl
 - React duplicate-key warning on `/app/documents` (pre-existing month-string key collision elsewhere on the dashboard — not introduced by this iteration). Low priority.
 - `PUBLIC_APP_ORIGIN` env-var is unset on the preview backend, so invite links in test emails point to `https://wayly.com.au` rather than the preview URL. Set it in `backend/.env` on preview if you want clickable invite links from preview-env test emails.
 
+
+## Implemented (Iteration 30 — Feb 2026 · Features 4–13 MVP stubs)
+User explicitly chose **option (a)** — ship all 10 as MVP stubs in a single iteration. No bonus concern-log-on-adviser-view (deferred).
+
+### New backend file: `/app/backend/extended_routes.py`
+Single consolidated router that exposes:
+- **Visits** — `GET/POST/PATCH/DELETE /api/visits` (household-scoped, with `?upcoming_only=true`)
+- **Budget Alerts** — `GET/POST/PATCH/DELETE /api/budget-alerts` (stream + threshold % + email toggle)
+- **Provider Switch** — `GET /api/provider-switch`, `POST /api/provider-switch` (single workflow per household), `PATCH /api/provider-switch/{sid}` (stage + checklist merge + notes)
+- **AT-HM Tracker** — `GET/POST/PATCH/DELETE /api/athm` (kind=AT/HM, status proposed→installed, cost/supplier)
+- **Correspondence** — `GET/POST/PATCH/DELETE /api/correspondence` (direction in/out, channel, counterparty, subject, body, occurred_at)
+- **Referrals** — `GET/POST/PATCH/DELETE /api/referrals` (kind, status, referred_at)
+- **Provider Ratings** — `GET/POST/PATCH/DELETE /api/provider-ratings` (USER-scoped, 1-5 stars, comment, would_recommend)
+- **Global Search** — `GET /api/search?q=` — cross-resource regex search across 6 collections (statements, documents, family_messages, visits, correspondence, referrals)
+- **Summary Reports** — `GET /api/reports/summary.pdf?period=quarter|all` — reportlab-generated single-page PDF with household + at-a-glance metrics + recent decisions
+
+### New frontend pages (under `/app/frontend/src/pages/extended/`)
+- `_shared.jsx` — reusable PageShell/EmptyCard + `safeGet/safePost/safePatch/safeDelete` wrappers (toast-on-error)
+- `VisitCalendar.jsx` → `/app/calendar`
+- `BudgetAlerts.jsx` → `/app/budget-alerts`
+- `ProviderSwitch.jsx` → `/app/provider-switch` (stage tracker + 7-item checklist)
+- `AthmTracker.jsx` → `/app/at-hm`
+- `Correspondence.jsx` → `/app/correspondence` (timeline view)
+- `Referrals.jsx` → `/app/referrals`
+- `ProviderRatings.jsx` → `/app/ratings` (1–5 star picker)
+- `SummaryReports.jsx` → `/app/reports` (PDF download + period selector)
+
+### New global UI components
+- `components/GlobalSearch.jsx` — header `Search ⌘K` trigger + modal with debounced search + result type icons (Feature 9).
+- `components/OfflineIndicator.jsx` + `public/sw.js` — Service worker (production-only register) + offline banner when `navigator.onLine=false` (Feature 12, MVP cache-fallback strategy).
+
+### Layout & routing
+- `Layout.jsx` `primaryNav` extended to 14 items (Calendar, Documents, Correspondence, Referrals, AT & HM, Switch provider, Ratings, Budget alerts, Reports + existing 5).
+- `App.js` registers 9 new `/app/*` routes inside `RequireAuth + Layout` and mounts `<OfflineIndicator />` once near the BrowserRouter root.
+
+## Test status — Iteration 30
+- Backend: **25/25 pytest pass** (`/app/backend/tests/test_iter30_extended.py`). Covers CRUD on every endpoint, validation (422), no-household 409, USER-scoped isolation on ratings, search empty-state, summary PDF magic-bytes.
+- Frontend: 9/9 routes resolve with the right testid'd PageShell; 9/9 sidebar nav links present; Global Search ⌘K modal opens, debounces, returns results, navigates on click.
+
+## Known follow-ups (low priority, not iter30 blockers)
+- PATCH endpoints in `extended_routes.py` currently require the full BodyModel — frontend always sends full rows so no UX bug today, but a future API consumer wanting true partial updates would hit 422. Refactor to dedicated `*Update` models with all-Optional fields when needed.
+- Search index does NOT include AT-HM items or provider ratings (intentional — those are private/user-scoped).
+- Provider Switch is single-row-per-household. Multiple historical switches not yet supported.
+- Pre-existing `MonthlySpend` chart React duplicate-key warning (`May`/`Apr` collision) — unrelated to iter30 scope.
+- Offline mode: service worker is registration-gated to `NODE_ENV=production`; preview env will not register. For a deeper offline experience (mutations queue + IndexedDB sync) plan a dedicated iteration.
+
