@@ -450,6 +450,140 @@ export const adminColors = {
 
 ---
 
+## 10. New features added in iter27–30 (Feb 2026) — mobile parity guide
 
+This block was added after the original handoff. Treat this as the **delta** the mobile agent must support to reach feature-parity with web.
 
-_Last updated: Feb 2026 · iter 38_
+### 10.1 Adviser plan (`adviser` · $299 AUD/mo · 25 clients · 7-day trial)
+A new pricing tier for **financial advisers** managing many clients. Plan literal is now `Literal["free","solo","family","adviser"]` everywhere.
+
+- **Billing**:
+  - `POST /api/billing/start-trial` body `{plan: "adviser"}` → 7-day trial.
+  - `POST /api/billing/checkout` body `{plan: "adviser", origin_url}` → Stripe Checkout.
+  - `POST /api/billing/upgrade` body `{plan: "adviser"}` → in-app upgrade.
+- **Routing**: After login an adviser-plan user does NOT have a household — route them to the **Adviser Portal** screen, not the consumer dashboard.
+- **Plan-gating helper** on backend: `require_plan("adviser", feature_label=...)` returns 401/403 with `{error:"plan_required", current_plan, required_plans, redirect:"/pricing"}`. Mobile should display the message and offer an in-app deep link to upgrade.
+
+### 10.2 Adviser Portal endpoints
+All require `plan="adviser"` (otherwise 403). Mobile should expose this as a tab in the bottom nav when `user.plan === "adviser"`.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/adviser/summary` | Quick stats: `{plan, max_clients, clients_total, clients_active, clients_invited, seats_remaining}` |
+| GET | `/api/adviser/clients` | Roster (up to 500). Each row: `{id, client_name, client_email, status, notes, linked_user_id, linked_household_id, invite_token, invite_sent_at, created_at, updated_at}` |
+| POST | `/api/adviser/clients` | Body `{client_name, client_email, notes?}`. Generates `invite_token`, fires branded **Resend** email with `/signup?plan=family&invite=<token>` CTA. Auto-links if email already exists. 409 on duplicate. 403 `client_cap_reached` at 25 clients. |
+| PATCH | `/api/adviser/clients/{cid}` | Update `client_name / notes / status` (`invited / active / inactive / archived`) |
+| DELETE | `/api/adviser/clients/{cid}` | Remove from roster (does NOT delete client's data) |
+| POST | `/api/adviser/clients/{cid}/resend-invite` | Rotates token + re-sends email. 409 `already_linked` if accepted. |
+| GET | `/api/adviser/clients/{cid}/snapshot` | Per-client read-only JSON: `{client, household:{participant_name, classification, provider_name, grandfathered}, metrics:{statements_count, line_items_total, anomalies_total, spent_total_aud, flagged_sample[]}, recent_statements[], members_count}`. 409 `client_not_linked` if not yet linked. |
+| GET | `/api/adviser/clients/{cid}/review-pack.pdf` | Returns a single-page A4 **PDF review pack** (Content-Type: application/pdf, Content-Disposition attachment). Render natively via `expo-sharing` + `expo-file-system`. |
+| GET | `/api/public/adviser/invite/{token}` | **Public**, no auth — used by the signup deep-link to fetch `{client_name, client_email, adviser_name, notes}`. 404 unknown / 409 `already_accepted`. |
+
+### 10.3 Adviser-invite deep link handling
+- The Resend email points to `https://wayly.com.au/signup?plan=family&invite=<token>`.
+- **Mobile must register a Universal Link / App Link** for `/signup` and read the `invite=` query param. If present:
+  1. `GET /api/public/adviser/invite/<token>` to preview `{adviser_name, client_name, client_email, notes}`.
+  2. Pre-fill name + email on the signup form.
+  3. Pass `invite` field through to `POST /api/auth/signup` body.
+  4. Backend auto-flips the matching adviser_clients row to `linked_user_id=<new_user.id>`, status=`active`.
+
+### 10.4 Signup body — new optional field
+```ts
+type SignupRequest = {
+  email: string;
+  password: string;     // 8+ chars, mixed case + number + symbol; cannot include name/email
+  name: string;
+  role?: "caregiver" | "participant";
+  plan?: "free" | "solo" | "family" | "adviser";
+  invite?: string;      // ← NEW: adviser invite token (24-char url-safe)
+}
+```
+
+### 10.5 Document Vault (`/api/documents`)
+Household-scoped file storage. **Caps: 10 MB per file, 100 MB per vault.**
+
+Categories enum: `assessment | statement | care_plan | medical | financial | legal | other`.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/documents` | `{documents[], scope: "owner"\|"adviser", limits:{max_file_bytes, max_vault_bytes, vault_used_bytes, vault_remaining_bytes}, categories[]}`. Optional `?category=` filter. |
+| POST | `/api/documents` | **multipart/form-data**: `file`, `category`, `title?`, `notes?`. Mobile: use `expo-document-picker` + `expo-image-picker` (camera scan!). 413 with `error:"file_too_large"` or `"vault_full"`. |
+| GET | `/api/documents/{id}` | Metadata only (no file bytes). |
+| GET | `/api/documents/{id}/download` | Binary stream — save to device with `expo-file-system` and open with `expo-sharing`. |
+| PATCH | `/api/documents/{id}` | Update title / category / notes. |
+| DELETE | `/api/documents/{id}` | Remove. |
+| POST | `/api/documents/{id}/send-to-decoder` | Only for `category="statement"`. Returns `{job_id, status:"pending"}` — poll `/api/statements/upload-job/{job_id}` until `status="done"`. |
+| GET | `/api/documents?as_client_id=<cid>` | **Adviser read-only** — same shape but `scope:"adviser"`. Plan-gated to adviser. Same for `GET /{id}` and `/{id}/download`. POST/PATCH/DELETE are owner-only. |
+
+**Mobile UX recommendation**: The mobile app's killer feature here is **camera-scan a paper statement → upload → auto-decode**. Combine `expo-camera` + the existing OCR pipeline (which already handles JPEG/PNG/HEIC/PDF).
+
+### 10.6 Extended Functionality Build (Features 4–13)
+
+All household-scoped except provider-ratings (user-scoped). All CRUD endpoints follow the same pattern — body validation maps to FastAPI 422; missing household → 409 `no_household`.
+
+| Resource | Base path | Body / fields | Notes |
+|---|---|---|---|
+| **Visits** | `/api/visits` | `title`, `starts_at` (ISO), `duration_minutes`, `location?`, `provider?`, `notes?`, `kind: appointment\|home_visit\|telehealth\|assessment\|other` | `?upcoming_only=true` filter |
+| **Budget Alerts** | `/api/budget-alerts` | `stream: Clinical\|Independence\|Everyday Living\|lifetime\|all`, `threshold_pct: 10-100`, `notify_email`, `active` | Worker for actual fire is **NOT YET wired** — alerts persist but don't trigger emails yet. |
+| **Provider Switch** | `/api/provider-switch` | `current_provider`, `target_provider?`, `reason?`, `stage: considering\|comparing\|notice_given\|transition\|complete`, `checklist: {7 boolean keys}`, `notes?` | **Single workflow per household**. PATCH supports stage + checklist merge. |
+| **AT-HM Tracker** | `/api/athm` | `kind: AT\|HM`, `name`, `status: proposed\|approved\|ordered\|installed\|declined`, `cost_aud?`, `supplier?`, `notes?` | |
+| **Correspondence** | `/api/correspondence` | `direction: in\|out`, `channel: email\|letter\|phone\|sms\|in_person`, `counterparty`, `subject`, `body_summary?`, `occurred_at` (ISO), `follow_up_at?`, `attachment_doc_id?` | |
+| **Referrals** | `/api/referrals` | `referred_to`, `kind: GP\|specialist\|allied_health\|support_service\|other`, `contact?`, `reason?`, `status: open\|in_progress\|completed\|declined`, `referred_at`, `completed_at?`, `notes?` | |
+| **Provider Ratings** | `/api/provider-ratings` | `provider_name`, `stars: 1-5`, `comment?`, `would_recommend?` | **USER-scoped** (not household). Each user's private list. |
+
+### 10.7 Global Search
+`GET /api/search?q=<2-200 chars>` returns `{q, count, results[]}`. Each result:
+```ts
+type SearchResult = {
+  type: "statement" | "document" | "family_message" | "visit" | "correspondence" | "referral";
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;  // web path — map to native screen in mobile
+};
+```
+Mobile: implement as a global "Search" tab or a header magnifying-glass icon. Debounce 250 ms. Results without a household → empty (200).
+
+### 10.8 Summary Reports
+`GET /api/reports/summary.pdf?period=quarter|all` — one-page A4 PDF (reportlab) covering household + at-a-glance metrics + recent decisions. Same download pattern as the adviser review pack.
+
+### 10.9 Offline mode (web service worker — mobile equivalent)
+Web has a minimal service worker (`/sw.js`) + an `OfflineIndicator` banner. **For mobile, the same UX should use React Native's NetInfo + a queue:**
+- Detect `NetInfo.useNetInfo().isConnected === false` → show a sticky banner ("You're offline; new uploads will retry when you're back").
+- Persist pending mutations in `AsyncStorage`/SQLite and replay them on reconnect. (Web has this on the roadmap — mobile is the better surface for a true offline-first build.)
+
+### 10.10 New / updated frontend routes (for parity mapping)
+| Web route | Suggested mobile screen | Min plan |
+|---|---|---|
+| `/adviser` | AdviserPortalScreen | adviser |
+| `/app/documents` | DocumentVaultScreen | any household user |
+| `/app/calendar` | VisitCalendarScreen | any household user |
+| `/app/budget-alerts` | BudgetAlertsScreen | any household user |
+| `/app/provider-switch` | ProviderSwitchScreen | any household user |
+| `/app/at-hm` | AthmTrackerScreen | any household user |
+| `/app/correspondence` | CorrespondenceScreen | any household user |
+| `/app/referrals` | ReferralsScreen | any household user |
+| `/app/ratings` | ProviderRatingsScreen | any user |
+| `/app/reports` | SummaryReportsScreen | any household user |
+| `/signup?plan=adviser` | SignupScreen (plan picker) | — |
+| `/signup?invite=<token>` | SignupScreen (preview banner) | — |
+
+### 10.11 Test accounts (already provisioned in the shared DB)
+| Email | Password | Plan | Use case |
+|---|---|---|---|
+| `cathy@example.com` | `testpass123` | family | Caregiver with a real household + statements + family chat |
+| `mark.adviser@example.com` | `AdviserPass1!` | adviser | Roster + linked client (Cathy can be added) |
+| `hello@techglove.com.au` | `AdminPass!2026` | super-admin | Admin Dashboard (requires TOTP — see `test_credentials.md`) |
+
+### 10.12 What to give the mobile agent
+Hand the mobile agent **all four** of these files (in this order):
+1. This file (`MOBILE_AGENT_HANDOFF.md`) — full API + UX contract
+2. `/app/memory/PRD.md` — product context + every feature shipped so far
+3. `/app/memory/test_credentials.md` — accounts they can sign in with
+4. The screenshot or Figma/Plain text design of the consumer dashboard so they can replicate visual brand (cream `#FAF7F2`, navy `#1F3A5F`, gold `#D4A24E`, sage `#7BA28F`, terra `#B7553A`)
+
+Plus this one-paragraph onboarding prompt:
+
+> **Mobile Agent prompt** — "Build a React Native (Expo SDK 51+) iOS/Android client for Wayly, an Australian Support-at-Home aged-care SaaS. The backend already exists — read `MOBILE_AGENT_HANDOFF.md` cover-to-cover before writing a single line of code. Base URL comes from `EXPO_PUBLIC_API_URL`. Auth is JWT bearer via `expo-secure-store`. Use React Navigation v6 (bottom tabs + native stack). Required v1 surface: Auth (email + Google + biometric unlock), Dashboard, Statements (with camera-scan upload via expo-camera), Document Vault, Visit Calendar, Family chat, Ask Wayly chat, Notifications bell, Settings/Billing (deep-link to web for Stripe). Required v1.5: Adviser portal screen (only when `user.plan === 'adviser'`) with snapshot + PDF review pack. Required v2: the rest of Features 4–13. Use the Wayly brand tokens listed in section 8. Push notifications via FCM/APNs registering with `POST /api/admin/devices`. Treat the web app as the source of truth for UX flows — when in doubt, mirror it. NEVER reimplement business logic; always call existing API endpoints."
+
+_Last updated: Feb 2026 · iter 30 (Adviser plan + Document Vault + Features 4–13)_
