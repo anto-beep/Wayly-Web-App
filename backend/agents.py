@@ -315,6 +315,13 @@ CRITICAL — COMPLETENESS:
 - Cancelled items in this stream MUST also be included with is_cancellation: true and gross: 0.00.
 - Items with weekend / after-hours / substitute-worker variations are still {stream_name} items — include them too.
 
+CRITICAL — NEVER EXTRACT BUDGET SUMMARY FIGURES AS LINE ITEMS:
+- The quarterly budget summary table at the top of the statement (showing Budget / Spent / Remaining / Used columns by stream) contains CUMULATIVE QUARTERLY figures, NOT current-period line items. NEVER extract any figure from the quarterly budget summary as a service line item.
+- Similarly, the AT-HM allocation summary (showing approved amount, spent, remaining) is reference data — only extract individual AT-HM claims for THIS statement period as line items.
+- Skip any row labelled or appearing under headers like: "Budget", "Spent", "Remaining", "Allocated", "Q1 Total", "Q2 Total", "Quarterly", "Quarterly Summary", "Stream Allocation", "Remaining Balance", "Available Balance".
+- If a row has no date in the current statement period, it is almost certainly a summary figure — do NOT emit it as a line item.
+- Every line item you emit MUST have a service date that falls within the statement period (look at the statement_period header). If you cannot identify a date for a row, do NOT emit it.
+
 Return STRICT JSON only:
 {{
   "line_items": [
@@ -349,8 +356,11 @@ CLINICAL_DESCRIPTION = """The Clinical stream covers nursing visits, allied heal
 INDEPENDENCE_DESCRIPTION = """The Independence stream covers personal care (showering, grooming, toileting), respite care, social support, transport (community access, medical appointments, hospital). Service codes typically begin PC-, RES-, SS-, TR-. Include transport items even if they have a "stream query" note.
 
 CRITICAL — TRANSPORT ITEMS (read carefully — historical errors here):
-- Extract EVERY transport line item individually. Do NOT deduplicate transport items even if they share the same service code and rate. Each transport entry on a different date is a separate service that MUST appear in your output.
+- Extract EVERY transport line item as a completely separate object. Never collapse or merge transport entries even if they share the same date, service code (e.g. TR-003), rate, or destination.
+- If two TR-003 entries appear on the same date with identical amounts, extract BOTH as separate line items. Do NOT merge them into a single line with quantity 2. The anomaly detector handles duplicate detection — extraction never does.
+- After extracting all Independence stream items, mentally count the number of TR-003 (or any TR-*) entries you produced. If that count is lower than the number of distinct transport rows visible in the statement text, add the missing entries before returning your JSON.
 - Specifically: if the statement contains transport entries on 05-May (two entries) AND a transport entry on 19-May, ALL THREE must appear in your line_items output. The 05-May entries are the same date and may be a duplicate billing — but they must both be extracted; the duplicate-detection rule downstream handles them. The 19-May entry is a different date and must always be extracted independently.
+- The provider's own notes may flag a transport pair as "possible duplicate" — this does NOT mean you should merge them. Both entries must appear in extraction and the anomaly detector decides if it is a duplicate.
 - Transport to a cardiology appointment, oncology appointment, GP appointment, hospital, day-program, specialist consultation, Wesley Hospital, or any other destination is ALWAYS Independence stream — NEVER Clinical, regardless of the medical context of the destination.
 - Service codes starting with "TR-" or descriptions containing "transport", "taxi", "driver", "vehicle", "bus" are ALWAYS Independence.
 - If you see N transport entries in the source text, you MUST emit N transport line items. Never skip one because it "looks like a duplicate" or because it is to a medical destination."""
@@ -464,10 +474,11 @@ AUDITOR_SYSTEM = """You are an anomaly detection engine for Australian Support a
 Check every one of the following rules. For each rule that fails, add an anomaly to the output array. If a rule passes, do not mention it.
 
 RULE 1 — CARE MANAGEMENT CAP
-Care management must not exceed 10% of the quarterly budget total.
-Calculate: care_management_rate_pct from the JSON.
-If > 10.0: flag as HIGH severity.
-Dollar impact: (actual_rate/100 - 0.10) × quarterly_budget_total
+The QUARTERLY care management charge must not exceed 10% of the quarterly budget total.
+Calculate: care_management_rate_pct from the JSON. This represents THIS MONTH'S fee as a percentage of the quarterly budget — so on a single-month statement it should be ≤ 3.34% (since 10% spread across 3 months = ~3.33% per month).
+If care_management_rate_pct > 10.0 (a runaway quarterly overcharge on a single statement): flag as HIGH severity.
+Dollar impact: (actual_rate/100 - 0.10) × quarterly_budget_total.
+Do NOT emit a "passes the cap" flag for this rule. If the quarterly figure is fine, simply do not emit anything for Rule 1. A separate deterministic check (RULE_1B) flags monthly-methodology overcharges where the provider charges 11% of monthly gross instead of 10% of quarterly — you do not need to handle that case yourself.
 
 RULE 2 — WEEKEND / AFTER-HOURS RATE ACCURACY
 If any line item's unit_rate exceeds the provider's published weekday rate for that service code, check whether a weekend or after-hours rate was legitimately applied. If the charged rate exceeds the provider's published weekend rate (where visible in the statement): flag as MEDIUM severity.
@@ -484,7 +495,8 @@ Check flags_in_original for any provider notes questioning the stream assignment
 Dollar impact: the participant contribution amount on that item.
 
 RULE 6 — WORKER SUBSTITUTION WITHOUT NOTICE
-If provider_notes or flags_in_original contain phrases like "no prior notice", "worker substitution", "usual worker on leave": flag as LOW severity. This is a Statement of Rights issue (right to continuity of care and advance notice of changes).
+HANDLED BY DETERMINISTIC POST-PASS — DO NOT EMIT.
+A deterministic Python scanner runs after your audit and scans EVERY line item's notes and EVERY provider_notes_raw paragraph for substitution phrases ("replacement worker", "usual worker on leave", "same morning", "less than 24 hours notice", "replaced by", "substitute"). It emits ONE flag per (date, service_code) pair so multiple substitutions across streams all surface. If you emit RULE_6 here you will create duplicates. Skip this rule.
 
 RULE 7 — HOSPITAL ADMISSION + NO RESTORATIVE CARE PATHWAY
 ONLY trigger this rule when there is unambiguous evidence of an INPATIENT hospital admission. An inpatient admission means the participant stayed in hospital overnight or longer — never a clinic visit, specialist review, day procedure, or outpatient appointment.
@@ -972,17 +984,66 @@ def _recover_transport_items(items: list[dict], text: str) -> list[dict]:
     return items
 
 
+def _strip_summary_artifacts(items: list[dict]) -> list[dict]:
+    """Drop line items that look like budget-summary table rows rather than
+    real service items. Recognisable signatures:
+      • description contains summary keywords ("budget", "spent", "remaining",
+        "allocated", "balance", "stream subtotal", "total this", "total q",
+        "available")
+      • OR no date AND no service_code AND a non-zero gross (almost always a
+        summary aggregate)
+    Keeps everything else untouched.
+    """
+    summary_kw = (
+        "spent this quarter", "remaining this quarter", "quarterly total",
+        "allocated", "available balance", "remaining balance",
+        "budget remaining", "stream subtotal", "subtotal this", "total this",
+        "total q1", "total q2", "total q3", "total q4",
+        "approved amount", "approved balance",
+    )
+    out: list[dict] = []
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        desc = (it.get("description") or "").strip().lower()
+        date = (it.get("date") or "").strip()
+        code = (it.get("service_code") or "").strip()
+        try:
+            gross = float(it.get("gross") or 0.0)
+        except Exception:
+            gross = 0.0
+        # Drop obvious summary keyword hits.
+        if any(kw in desc for kw in summary_kw):
+            continue
+        # Drop no-date AND no-code rows with a non-zero gross — that pattern
+        # is overwhelmingly a summary aggregate row.
+        if not date and not code and gross > 0:
+            continue
+        out.append(it)
+    return out
+
+
 def _dedupe_line_items(items: list[dict]) -> tuple[list[dict], int]:
     """Drop duplicate line items by (date + service_code + gross) signature.
     Returns (filtered, n_dropped).
+
+    Transport items (TR-*) are intentionally EXCLUDED from dedupe — two
+    same-date TR-* entries with identical amount are exactly the duplicate-
+    billing case we need RULE_3_DUPLICATE_EXACT to see and flag. Removing
+    them here would silently suppress the anomaly.
     """
     seen: set[tuple] = set()
     out: list[dict] = []
     dropped = 0
     for it in items:
+        code = (it.get("service_code") or "").strip().upper()
+        # Skip dedupe for transport items — duplicates here are anomalies.
+        if code.startswith("TR-") or code.startswith("TR"):
+            out.append(it)
+            continue
         sig = (
             (it.get("date") or "").strip().lower(),
-            (it.get("service_code") or "").strip().upper(),
+            code,
             round(float(it.get("gross") or 0.0), 2),
             (it.get("worker_name") or "").strip().lower(),
             bool(it.get("is_cancellation")),
@@ -1150,6 +1211,11 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
     # date-prefixed line containing a TR- service code and a $-amount, and
     # add a stub Independence line item if it isn't already in `line_items`.
     line_items = _recover_transport_items(line_items, text)
+
+    # Fix 5 — Strip "budget summary" figures that the LLM occasionally
+    # extracts as line items (recognisable by absent date OR description
+    # matching summary-table keywords).
+    line_items = _strip_summary_artifacts(line_items)
 
     # Dedupe line items (drops duplicates extracted from both stream + subtotal rows
     # the LLM accidentally treats as items)
@@ -1814,39 +1880,79 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     ),
                 })
 
-    # Rule 10 — Previous period adjustments (deterministic backstop — LLM is
-    # inconsistent at emitting this even when adjustments are clearly present).
+    # Rule 10 — Previous period adjustments (deterministic).
+    #
+    # Updated policy: only emit a flag when arithmetic is wrong or the credit
+    # was applied to the wrong column (participant contribution instead of
+    # government share, or vice versa). Correctly-applied adjustments are
+    # silent — a false positive here erodes user trust.
     if "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS" not in existing_rules:
         adjs = extracted.get("previous_period_adjustments") or []
         adjs = [a for a in adjs if isinstance(a, dict)]
         if adjs:
+            issues: list[str] = []
             total_credit = 0.0
             descriptions: list[str] = []
             for a in adjs:
                 try:
-                    total_credit += float(a.get("credit_amount") or 0.0)
+                    credit = float(a.get("credit_amount") or 0.0)
+                    original = float(a.get("original_charge") or 0.0)
+                    corrected = float(a.get("corrected_charge") or 0.0)
                 except Exception:
-                    pass
+                    credit = original = corrected = 0.0
+                total_credit += credit
                 desc = (a.get("description") or "").strip()
                 ref = (a.get("ref") or "").strip()
                 if desc:
                     descriptions.append(f"{ref}: {desc}" if ref else desc)
-            if total_credit > 0 or descriptions:
+                # Arithmetic check: original - corrected ≈ credit (within $0.50).
+                if original > 0 and corrected >= 0:
+                    expected = round(original - corrected, 2)
+                    if abs(expected - credit) > 0.50:
+                        issues.append(
+                            f"adjustment {ref or desc[:40]}: original ${original:,.2f} − corrected "
+                            f"${corrected:,.2f} = ${expected:,.2f}, but statement shows credit "
+                            f"${credit:,.2f}"
+                        )
+                # Credit direction check: explicit credited_to field if present.
+                credited_to = (a.get("credit_applied_to") or a.get("credited_to") or "").strip().lower()
+                original_paid_by = (a.get("original_paid_by") or "").strip().lower()
+                if credited_to and original_paid_by and credited_to != original_paid_by:
+                    issues.append(
+                        f"adjustment {ref or desc[:40]}: original was paid by {original_paid_by} "
+                        f"but credit applied to {credited_to}"
+                    )
+            if issues:
+                # Something is wrong — emit a real MEDIUM flag.
                 anomalies.append({
-                    "severity": "low",
+                    "severity": "medium",
                     "rule": "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS",
-                    "headline": (
-                        f"{len(adjs)} previous-period adjustment{'s' if len(adjs) != 1 else ''} "
-                        f"applied — total credit ${total_credit:,.2f}."
-                    ),
+                    "headline": f"Previous-period adjustment appears incorrect ({len(issues)} issue{'s' if len(issues) != 1 else ''}).",
                     "detail": (
-                        "These corrections relate to a prior month's services. "
-                        "Confirm the credit was applied to the government share, not your participant contribution."
-                        + (" Adjustment summary: " + " · ".join(descriptions[:3]) if descriptions else "")
+                        "A previous-period adjustment on this statement did not pass the verification "
+                        "checks. Please review the original charge, corrected charge, and credit amount."
                     ),
                     "dollar_impact": round(total_credit, 2),
-                    "evidence": [f"adjustments: {len(adjs)}", f"total_credit: ${total_credit:,.2f}"],
-                    "suggested_action": "Verify the credit shows on your next direct debit statement.",
+                    "evidence": issues[:4],
+                    "suggested_action": (
+                        "Ask the provider for a written breakdown of the original charge, the corrected charge, "
+                        "and which column (government share vs participant contribution) each credit was applied to."
+                    ),
+                })
+            elif total_credit > 0 or descriptions:
+                # Arithmetic correct — record as an INFORMATIONAL note on the
+                # audit, NOT as an anomaly flag. Frontend can render this as a
+                # neutral "passed check" if it wants to surface it.
+                info_notes = audit_result.setdefault("informational_notes", [])
+                info_notes.append({
+                    "kind": "previous_period_adjustment",
+                    "summary": (
+                        f"{len(adjs)} previous-period adjustment{'s' if len(adjs) != 1 else ''} "
+                        f"applied — total credit ${total_credit:,.2f}. Arithmetic verified."
+                        + (" Items: " + " · ".join(descriptions[:3]) if descriptions else "")
+                    ),
+                    "total_credit": round(total_credit, 2),
+                    "count": len(adjs),
                 })
 
     # Rule 3 (deterministic) — Exact same-date duplicate detection.
@@ -1904,14 +2010,36 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     " The provider's published rate describes this service as a return trip — "
                     "charging it twice may mean you have been billed for two return trips instead of one."
                 )
+            # If this is a TR-* transport duplicate, use the QA-spec headline.
+            is_transport = code.startswith("TR-") or code.startswith("TR")
+            if is_transport:
+                headline = f"Two transport charges on {date} — possible duplicate"
+                detail = (
+                    f"Two identical community transport charges of ${rate:,.2f} each appear on {date}, "
+                    f"both described as {desc}. The provider's published rate covers a return trip "
+                    f"inclusive — a return trip should be one charge. If confirmed as a duplicate, "
+                    f"the second charge of ${rate:,.2f} should be credited.{extra}"
+                )
+                action = (
+                    f"Contact your provider's billing team to confirm whether two separate trips occurred "
+                    f"on {date} or whether this is a duplicate entry. Request a written response."
+                )
+            else:
+                headline = f"Possible duplicate charge — {len(members)} identical {desc} services on {date}"
+                detail = (
+                    f"{len(members)} {code} line items appear on {date} with the same rate of "
+                    f"${rate:,.2f}. This may be a duplicate billing error.{extra}"
+                )
+                action = (
+                    f"Ask your provider to confirm whether {len(members)} separate {desc} services "
+                    f"genuinely occurred on {date}. If only one occurred, request a credit of "
+                    f"${gross:,.2f}."
+                )
             anomalies.append({
                 "severity": "high",
                 "rule": "RULE_3_DUPLICATE_EXACT",
-                "headline": f"Possible duplicate charge — {len(members)} identical {desc} services on {date}",
-                "detail": (
-                    f"{len(members)} {code} line items appear on {date} with the same rate of "
-                    f"${rate:,.2f}. This may be a duplicate billing error.{extra}"
-                ),
+                "headline": headline,
+                "detail": detail,
                 "dollar_impact": round(gross * (len(members) - 1), 2),
                 "evidence": [
                     f"date: {date}",
@@ -1922,12 +2050,200 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     f"item {i+1}: gross ${float(m.get('gross') or 0):,.2f} worker '{m.get('worker_name') or ''}'"
                     for i, m in enumerate(members[:3])
                 ],
+                "suggested_action": action,
+            })
+
+    # Rule 6 (deterministic) — Worker substitution scanner.
+    #
+    # The LLM auditor was previously responsible for Rule 6 but tended to
+    # emit only the first substitution mention. We scan all streams here
+    # and emit one separate flag per distinct (date, service_code) pair.
+    if not any((a.get("rule") or "").upper().startswith("RULE_6") for a in anomalies if isinstance(a, dict)):
+        import re as _re6
+        # Phrase patterns that indicate substitution.
+        sub_indicators = [
+            r"replacement worker",
+            r"replacement arranged",
+            r"usual worker.*?(?:on leave|unavailable|sick|absent|illness)",
+            r"(?:on leave|unavailable|sick|absent|illness).*?replacement",
+            r"substitute(?:d)?(?:\s+worker)?",
+            r"replaced by",
+            r"covered by",
+            r"\bstand-in\b",
+        ]
+        # Notice indicators — used to set severity.
+        no_notice_patterns = [
+            r"no prior notice",
+            r"no notice given",
+            r"same morning",
+            r"same day",
+            r"less than 24\s*hours? notice",
+            r"<\s*24\s*hours",
+            r"short notice",
+        ]
+        sub_re = _re6.compile("|".join(f"(?:{p})" for p in sub_indicators), _re6.IGNORECASE)
+        no_notice_re = _re6.compile("|".join(no_notice_patterns), _re6.IGNORECASE)
+
+        seen_keys: set[tuple] = set()
+        sub_flags: list[dict] = []
+
+        def _emit_sub_flag(date: str, service_code: str, stream: str, note_text: str, usual: str = "", replacement: str = ""):
+            key = ((date or "").lower().strip(), (service_code or "").upper().strip())
+            if key in seen_keys:
+                return
+            seen_keys.add(key)
+            no_notice = bool(no_notice_re.search(note_text))
+            severity = "medium" if no_notice else "low"
+            who = ""
+            if usual and replacement:
+                who = f" {usual} was replaced by {replacement}."
+            elif replacement:
+                who = f" Replacement worker: {replacement}."
+            notice_phrase = " The provider gave less than 24 hours notice." if no_notice else ""
+            stream_label = {
+                "Clinical": "Clinical (nursing/health)",
+                "Independence": "Independence (personal care / mobility)",
+                "EverydayLiving": "Everyday Living (domestic / meals)",
+            }.get(stream, stream or "Service")
+            headline = (
+                f"Worker substitution on {date or 'this period'}"
+                + (f" — {service_code}" if service_code else "")
+                + (" — short notice" if no_notice else "")
+            )
+            sub_flags.append({
+                "severity": severity,
+                "rule": "RULE_6_WORKER_SUBSTITUTION",
+                "headline": headline,
+                "detail": (
+                    f"{stream_label}: a worker substitution occurred"
+                    + (f" on {date}" if date else "")
+                    + (f" for {service_code}" if service_code else "")
+                    + f".{who}{notice_phrase} The Statement of Rights guarantees continuity of care "
+                    f"and reasonable notice of changes to your care team."
+                ),
+                "dollar_impact": 0.0,
+                "evidence": [e for e in [
+                    f"date: {date}" if date else "",
+                    f"service_code: {service_code}" if service_code else "",
+                    f"stream: {stream}" if stream else "",
+                    f"note: {note_text[:200]}" if note_text else "",
+                ] if e],
                 "suggested_action": (
-                    f"Ask your provider to confirm whether {len(members)} separate {desc} services "
-                    f"genuinely occurred on {date}. If only one occurred, request a credit of "
-                    f"${gross:,.2f}."
+                    "Ask your provider how they will minimise short-notice substitutions and ensure your "
+                    "preferred workers are scheduled. You can request that a substitution policy be added "
+                    "to your service agreement."
                 ),
             })
+
+        # Try to pull "usual X replaced by Y" pairs out of the note.
+        def _extract_names(note_text: str) -> tuple[str, str]:
+            m = _re6.search(r"(?:usual worker\s+)?([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})\s+(?:was\s+)?replaced by\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})", note_text)
+            if m:
+                return m.group(1).strip(), m.group(2).strip()
+            return "", ""
+
+        # Scan per-line-item notes first (date + stream + code already known).
+        for li in (extracted.get("line_items") or []):
+            if not isinstance(li, dict) or li.get("is_cancellation"):
+                continue
+            note = (li.get("provider_notes") or "") + " " + (li.get("flags_in_original") or "")
+            if sub_re.search(note):
+                usual, replacement = _extract_names(note)
+                _emit_sub_flag(
+                    date=(li.get("date") or "").strip(),
+                    service_code=(li.get("service_code") or "").strip(),
+                    stream=(li.get("stream") or "").strip(),
+                    note_text=note,
+                    usual=usual,
+                    replacement=replacement,
+                )
+
+        # Then scan provider_notes_raw paragraphs (date and code best-effort).
+        for raw_note in (extracted.get("provider_notes_raw") or []):
+            if not isinstance(raw_note, str) or not sub_re.search(raw_note):
+                continue
+            # Date best-effort
+            date_m = _re6.search(r"(\d{1,2}\s+[A-Za-z]{3,9}(?:\s+\d{4})?|\d{4}-\d{2}-\d{2})", raw_note)
+            code_m = _re6.search(r"\b((?:PC|RN|DC|HM|TR|GM|SC|MA|ME|DM|LA|SH|AT|CM)-\d{2,4})\b", raw_note, _re6.IGNORECASE)
+            stream_guess = ""
+            note_lower = raw_note.lower()
+            if any(w in note_lower for w in ("nurse", "nursing", "clinical", "medication", "rn-", "rn ")):
+                stream_guess = "Clinical"
+            elif any(w in note_lower for w in ("personal care", "shower", "mobility", "pc-", "transport", "tr-")):
+                stream_guess = "Independence"
+            elif any(w in note_lower for w in ("cleaning", "meal", "domestic", "gm-", "dc-", "hm-")):
+                stream_guess = "EverydayLiving"
+            usual, replacement = _extract_names(raw_note)
+            _emit_sub_flag(
+                date=(date_m.group(1) if date_m else "").strip(),
+                service_code=(code_m.group(1).upper() if code_m else "").strip(),
+                stream=stream_guess,
+                note_text=raw_note,
+                usual=usual,
+                replacement=replacement,
+            )
+
+        anomalies.extend(sub_flags)
+
+    # Rule 1B (deterministic) — Care management monthly methodology overcharge.
+    #
+    # The LLM Rule 1 check looks at quarterly cap compliance. This deterministic
+    # check additionally verifies that the THIS-MONTH care management fee does
+    # not exceed (quarterly_cap / 3). Providers sometimes charge 11% of monthly
+    # gross services instead of 10% of the quarterly budget — that "averages
+    # out" over a quarter but produces a real overcharge on individual months.
+    if not any((a.get("rule") or "").upper() == "RULE_1B_CARE_MGMT_MONTHLY" for a in anomalies if isinstance(a, dict)):
+        try:
+            quarterly_total = float(extracted.get("quarterly_budget_total") or 0.0)
+            care_mgmt_deducted = float(extracted.get("care_management_deducted") or 0.0)
+        except Exception:
+            quarterly_total = care_mgmt_deducted = 0.0
+        # care_management_deducted in extraction is THIS MONTH'S fee.
+        if quarterly_total > 0 and care_mgmt_deducted > 0:
+            correct_monthly_fee = round(quarterly_total * 0.10 / 3.0, 2)
+            excess = round(care_mgmt_deducted - correct_monthly_fee, 2)
+            # Tolerate $1 rounding noise.
+            if excess > 1.00:
+                # Read provider notes for the explicit "11% of monthly gross" pattern.
+                import re as _re1b
+                notes_blob_cm = " ".join(
+                    (n or "") for n in (extracted.get("provider_notes_raw") or [])
+                    if isinstance(n, str)
+                )
+                pct_match = _re1b.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%\s*(?:of\s+)?(?:monthly\s+gross|services)?", notes_blob_cm, _re1b.IGNORECASE)
+                pct_used = pct_match.group(1) if pct_match else ""
+                gross_match = _re1b.search(r"\$([\d,]+(?:\.\d{2})?)\s+(?:on|of)\s+(?:monthly\s+)?(?:gross\s+)?services?", notes_blob_cm, _re1b.IGNORECASE)
+                monthly_gross = gross_match.group(1) if gross_match else ""
+
+                anomalies.append({
+                    "severity": "medium",
+                    "rule": "RULE_1B_CARE_MGMT_MONTHLY",
+                    "headline": "Care management fee calculated incorrectly this month",
+                    "detail": (
+                        (f"Your provider's notes state this month's care management was calculated at "
+                         f"{pct_used}% of monthly gross services"
+                         + (f" (${care_mgmt_deducted:,.2f} on ${monthly_gross} of services)" if monthly_gross else f" — ${care_mgmt_deducted:,.2f}")
+                         + ". " if pct_used else
+                         f"This month's care management fee is ${care_mgmt_deducted:,.2f}. ")
+                        + f"The correct methodology is 10% of the quarterly budget "
+                        f"(${quarterly_total * 0.10:,.2f}), which equates to approximately "
+                        f"${correct_monthly_fee:,.2f} per month. The excess this month is "
+                        f"${excess:,.2f}. Even if the provider plans to reconcile at quarter end, the "
+                        f"excess sits on this statement now and reduces your available budget."
+                    ),
+                    "dollar_impact": excess,
+                    "evidence": [
+                        f"quarterly_budget_total: ${quarterly_total:,.2f}",
+                        f"correct monthly fee (cap/3): ${correct_monthly_fee:,.2f}",
+                        f"this month charged: ${care_mgmt_deducted:,.2f}",
+                        f"excess: ${excess:,.2f}",
+                    ],
+                    "suggested_action": (
+                        "Request a written confirmation from your provider showing exactly how the "
+                        "Q-end total care management charge was calculated, and ask them to credit any "
+                        "excess on the next statement rather than waiting until quarter end."
+                    ),
+                })
 
     # Rule 11 (deterministic) — Brokered rate premium.
     # Hard-evidence backstop. Fires only when provider_notes_raw or
