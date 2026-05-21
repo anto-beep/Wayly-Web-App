@@ -2081,6 +2081,16 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             r"<\s*24\s*hours",
             r"short notice",
         ]
+        # Exclusion patterns — if any of these appear in the note, do NOT treat
+        # as a worker substitution. These phrases refer to BILLING / DUPLICATE
+        # CHARGES, not worker changes. Fixes the false-positive on transport
+        # duplicate notes that say "two identical transport charges".
+        billing_context_re = _re6.compile(
+            r"(?:two identical|duplicate|pending verification|please verify|duplicate entry|"
+            r"billing query|invoice query|charge query|same .{0,30}charge|"
+            r"two .{0,40}charge|both entries|may be a duplicate)",
+            _re6.IGNORECASE,
+        )
         sub_re = _re6.compile("|".join(f"(?:{p})" for p in sub_indicators), _re6.IGNORECASE)
         no_notice_re = _re6.compile("|".join(no_notice_patterns), _re6.IGNORECASE)
 
@@ -2147,20 +2157,33 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             if not isinstance(li, dict) or li.get("is_cancellation"):
                 continue
             note = (li.get("provider_notes") or "") + " " + (li.get("flags_in_original") or "")
-            if sub_re.search(note):
-                usual, replacement = _extract_names(note)
-                _emit_sub_flag(
-                    date=(li.get("date") or "").strip(),
-                    service_code=(li.get("service_code") or "").strip(),
-                    stream=(li.get("stream") or "").strip(),
-                    note_text=note,
-                    usual=usual,
-                    replacement=replacement,
-                )
+            # SKIP transport line items entirely — duplicates here are billing
+            # disputes, not worker substitutions. The duplicate-transport
+            # detector (RULE_3_DUPLICATE_EXACT) handles them.
+            code_li = (li.get("service_code") or "").upper().strip()
+            if code_li.startswith("TR-") or code_li.startswith("TR"):
+                continue
+            if not sub_re.search(note):
+                continue
+            # Skip if the note is talking about billing, not workers.
+            if billing_context_re.search(note):
+                continue
+            usual, replacement = _extract_names(note)
+            _emit_sub_flag(
+                date=(li.get("date") or "").strip(),
+                service_code=(li.get("service_code") or "").strip(),
+                stream=(li.get("stream") or "").strip(),
+                note_text=note,
+                usual=usual,
+                replacement=replacement,
+            )
 
         # Then scan provider_notes_raw paragraphs (date and code best-effort).
         for raw_note in (extracted.get("provider_notes_raw") or []):
             if not isinstance(raw_note, str) or not sub_re.search(raw_note):
+                continue
+            # Skip if the paragraph is a billing/duplicate query, not a worker change.
+            if billing_context_re.search(raw_note):
                 continue
             # Date best-effort
             date_m = _re6.search(r"(\d{1,2}\s+[A-Za-z]{3,9}(?:\s+\d{4})?|\d{4}-\d{2}-\d{2})", raw_note)
