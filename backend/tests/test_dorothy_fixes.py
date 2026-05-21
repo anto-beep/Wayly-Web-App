@@ -152,6 +152,15 @@ def _build_extracted() -> dict:
                 "original_paid_by": "government",
                 "credit_applied_to": "government",
             },
+            {
+                "ref": "ADJ-2026-05-003-CONTRIB",
+                "description": "Participant contribution refund for 28 May personal care adjustment",
+                "original_charge": 4.73,
+                "corrected_charge": 3.15,
+                "credit_amount": 1.58,
+                "original_paid_by": "participant",
+                "credit_applied_to": "participant",
+            },
         ],
         "provider_notes_raw": [
             "Care management this month: 11.0% of monthly gross services ($268.29 on $2,438.00 of services). Will be reconciled at quarter end.",
@@ -258,6 +267,27 @@ def test_dorothy_round2():
     ok_cm = (len(cm_flags) == 1) and abs(float(cm_flags[0].get("dollar_impact") or 0) - 20.82) < 0.10
     cm_val = cm_flags[0].get("dollar_impact") if cm_flags else None
     results.append(("Fix 5 — Care mgmt excess = $20.82 (±$0.10)", ok_cm, f"got ${cm_val}"))
+
+    # FIX 5b (Round 3) — Care mgmt flag must use MONTHLY GROSS ($2,237.00), not quarterly budget.
+    cm_detail = (cm_flags[0].get("detail") or "") if cm_flags else ""
+    cm_uses_monthly_gross = "$2,237.00" in cm_detail
+    cm_uses_quarterly_budget_base = "of quarterly budget" in cm_detail.lower() or "of the quarterly budget total" in cm_detail.lower()
+    results.append((
+        "Fix 5 (R3) — Care mgmt uses $2,237.00 monthly gross as base",
+        cm_uses_monthly_gross and not cm_uses_quarterly_budget_base,
+        f"uses_monthly_gross={cm_uses_monthly_gross} uses_quarterly_base={cm_uses_quarterly_budget_base}",
+    ))
+
+    # FIX 5c (Round 3) — No competing RULE_1 (quarterly-cap framed) anomaly survives.
+    rule1_quarterly = [
+        a for a in anomalies
+        if (a.get("rule") or "").upper() == "RULE_1_CARE_MGMT_CAP"
+    ]
+    results.append((
+        "Fix 5 (R3) — No competing RULE_1 quarterly-cap flag",
+        len(rule1_quarterly) == 0,
+        f"{len(rule1_quarterly)} competing RULE_1 anomaly",
+    ))
 
     # FIX 7 — PPA NOT in anomalies, but IS in informational_notes.
     rule10_anom = by_rule.get("RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS", [])

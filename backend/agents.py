@@ -492,11 +492,15 @@ AUDITOR_SYSTEM = """You are an anomaly detection engine for Australian Support a
 Check every one of the following rules. For each rule that fails, add an anomaly to the output array. If a rule passes, do not mention it.
 
 RULE 1 — CARE MANAGEMENT CAP
-The QUARTERLY care management charge must not exceed 10% of the quarterly budget total.
-Calculate: care_management_rate_pct from the JSON. This represents THIS MONTH'S fee as a percentage of the quarterly budget — so on a single-month statement it should be ≤ 3.34% (since 10% spread across 3 months = ~3.33% per month).
-If care_management_rate_pct > 10.0 (a runaway quarterly overcharge on a single statement): flag as HIGH severity.
-Dollar impact: (actual_rate/100 - 0.10) × quarterly_budget_total.
-Do NOT emit a "passes the cap" flag for this rule. If the quarterly figure is fine, simply do not emit anything for Rule 1. A separate deterministic check (RULE_1B) flags monthly-methodology overcharges where the provider charges 11% of monthly gross instead of 10% of quarterly — you do not need to handle that case yourself.
+HANDLED BY DETERMINISTIC POST-PASS — DO NOT EMIT.
+
+A deterministic Python check (rule key "RULE_1B_CARE_MGMT_MONTHLY") computes
+the correct excess as: (this-month care-management fee) − (quarterly_budget × 10% / 3).
+The base for the provider's percentage is THIS-MONTH SERVICE GROSS, never the
+quarterly budget total. Do NOT emit any Rule 1 / quarterly-cap framed flag here.
+Specifically: any anomaly mentioning "11% of quarterly budget" or
+"$7,424 quarterly cap" as the percentage base is forbidden — that is not how
+care management is actually calculated.
 
 RULE 2 — WEEKEND / AFTER-HOURS RATE ACCURACY
 If any line item's unit_rate exceeds the provider's published weekday rate for that service code, check whether a weekend or after-hours rate was legitimately applied. If the charged rate exceeds the provider's published weekend rate (where visible in the statement): flag as MEDIUM severity.
@@ -1215,6 +1219,75 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
                 continue
             it["stream"] = "ATHM"
             line_items.append(it)
+
+    # FIX 2 (Round 3) — HARD AT-HM source-text validation.
+    #
+    # The LLM occasionally fabricates parallel AT-HM entries (e.g. an
+    # "AT-001" line that doesn't exist alongside a real "ATHM-2026-0041"
+    # entry), then the auditor hallucinates a "coding mismatch" anomaly
+    # based on the fabricated row. To prevent this regardless of prompt
+    # discipline, validate every AT-HM commitment AND every AT-HM line
+    # item against the original source text:
+    #
+    #   • Reference number must appear in source text (case-insensitive).
+    #   • For line items, the gross amount must also appear in source.
+    #
+    # Anything that fails this check is silently dropped from extraction.
+    source_text_lower = (text or "").lower()
+
+    def _amount_in_text(amount: float) -> bool:
+        if amount <= 0:
+            return False
+        # Look for "$480", "$480.00", "480.00" or "480" near the amount.
+        candidates = [
+            f"${amount:,.2f}",
+            f"${amount:.2f}",
+            f"${int(amount):,}",
+            f"${int(amount)}",
+            f"{amount:,.2f}",
+            f"{amount:.2f}",
+        ]
+        return any(c.lower() in source_text_lower for c in candidates)
+
+    validated_commitments: list[dict] = []
+    valid_refs: set[str] = set()
+    for c in assembled.get("at_hm_commitments") or []:
+        if not isinstance(c, dict):
+            continue
+        ref = (c.get("ref") or "").strip()
+        if not ref:
+            continue
+        if ref.lower() not in source_text_lower:
+            # Reference number isn't in the original statement → fabricated.
+            continue
+        validated_commitments.append(c)
+        valid_refs.add(ref.upper())
+    assembled["at_hm_commitments"] = validated_commitments
+
+    # Drop any AT-HM line items whose service_code isn't a validated commitment ref.
+    filtered_line_items: list[dict] = []
+    for it in line_items:
+        if not isinstance(it, dict):
+            filtered_line_items.append(it)
+            continue
+        stream = (it.get("stream") or "").strip()
+        code = (it.get("service_code") or "").strip().upper()
+        is_athm = stream == "ATHM" or code.startswith("AT-") or code.startswith("ATHM")
+        if is_athm:
+            # AT-HM line item must:
+            #   (a) have its code in the validated commitment refs, AND
+            #   (b) have its gross amount appear in the source text.
+            try:
+                gross_val = float(it.get("gross") or 0.0)
+            except Exception:
+                gross_val = 0.0
+            if code not in valid_refs:
+                # Code wasn't validated against source → likely fabricated.
+                continue
+            if not _amount_in_text(gross_val):
+                continue
+        filtered_line_items.append(it)
+    line_items = filtered_line_items
 
     # Provider notes
     if isinstance(notes_res, dict):
@@ -2080,25 +2153,25 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             # If this is a TR-* transport duplicate, use the QA-spec headline.
             is_transport = code.startswith("TR-") or code.startswith("TR")
             if is_transport:
-                headline = f"Two transport charges on {date} — possible duplicate"
+                headline = f"Two transport charges on {date} — possible duplicate ({code})"
                 detail = (
-                    f"Two identical community transport charges of ${rate:,.2f} each appear on {date}, "
-                    f"both described as {desc}. The provider's published rate covers a return trip "
-                    f"inclusive — a return trip should be one charge. If confirmed as a duplicate, "
-                    f"the second charge of ${rate:,.2f} should be credited.{extra}"
+                    f"Two identical community transport charges of ${rate:,.2f} each appear on {date} "
+                    f"for service code {code}, both described as {desc}. The provider's published rate "
+                    f"covers a return trip inclusive — a return trip should be one charge. If confirmed "
+                    f"as a duplicate, the second charge of ${rate:,.2f} should be credited.{extra}"
                 )
                 action = (
                     f"Contact your provider's billing team to confirm whether two separate trips occurred "
                     f"on {date} or whether this is a duplicate entry. Request a written response."
                 )
             else:
-                headline = f"Possible duplicate charge — {len(members)} identical {desc} services on {date}"
+                headline = f"Possible duplicate charge — {len(members)} identical {code} ({desc}) services on {date}"
                 detail = (
                     f"{len(members)} {code} line items appear on {date} with the same rate of "
                     f"${rate:,.2f}. This may be a duplicate billing error.{extra}"
                 )
                 action = (
-                    f"Ask your provider to confirm whether {len(members)} separate {desc} services "
+                    f"Ask your provider to confirm whether {len(members)} separate {code} ({desc}) services "
                     f"genuinely occurred on {date}. If only one occurred, request a credit of "
                     f"${gross:,.2f}."
                 )
@@ -2341,8 +2414,6 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                 )
                 pct_match = _re1b.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%\s*(?:of\s+)?(?:monthly\s+gross|services)?", notes_blob_cm, _re1b.IGNORECASE)
                 pct_used = pct_match.group(1) if pct_match else ""
-                gross_match = _re1b.search(r"\$([\d,]+(?:\.\d{2})?)\s+(?:on|of)\s+(?:monthly\s+)?(?:gross\s+)?services?", notes_blob_cm, _re1b.IGNORECASE)
-                monthly_gross_disp = gross_match.group(1) if gross_match else ""
                 # Compute monthly gross services from extracted line items as a
                 # fallback when the provider notes don't disclose it directly.
                 # Per Fix 5 spec: sum of Clinical + Independence + EverydayLiving
@@ -2361,36 +2432,67 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     except Exception:
                         pass
                 computed_monthly_gross = round(computed_monthly_gross, 2)
-                # Compute provider's apparent percentage (CHARGED / monthly_gross).
+
+                # FIX 3 (Round 3) — Preferred MONTHLY_GROSS_SERVICES source.
+                # When the statement reports its own gross total, back-compute
+                # the service-only base by subtracting care management and
+                # AT-HM and adding back any previous-period adjustment
+                # credits. This is the figure the provider's percentage was
+                # calculated against. For Dorothy June 2026:
+                #   $2,952.21 − $268.29 − $480.00 + $33.08 = $2,237.00
+                try:
+                    reported_gross = float(extracted.get("reported_total_gross") or 0.0)
+                except Exception:
+                    reported_gross = 0.0
+                athm_total = 0.0
+                for li in (extracted.get("line_items") or []):
+                    if not isinstance(li, dict):
+                        continue
+                    if li.get("is_cancellation"):
+                        continue
+                    if (li.get("stream") or "").strip() == "ATHM":
+                        try:
+                            athm_total += float(li.get("gross") or 0.0)
+                        except Exception:
+                            pass
+                ppa_credit = 0.0
+                for adj in (extracted.get("previous_period_adjustments") or []):
+                    if isinstance(adj, dict):
+                        try:
+                            ppa_credit += float(adj.get("credit_amount") or 0.0)
+                        except Exception:
+                            pass
+                back_computed = round(reported_gross - care_mgmt_deducted - athm_total + ppa_credit, 2)
+                # Prefer back-computed if reported_gross is present, else use sum of line items.
+                monthly_gross_used = back_computed if reported_gross > 0 else computed_monthly_gross
+                # Provider's apparent percentage uses the same base.
                 provider_pct = ""
-                if computed_monthly_gross > 0:
-                    provider_pct = f"{(care_mgmt_deducted / computed_monthly_gross) * 100:.1f}"
+                if monthly_gross_used > 0:
+                    provider_pct = f"{(care_mgmt_deducted / monthly_gross_used) * 100:.1f}"
 
                 anomalies.append({
                     "severity": "medium",
                     "rule": "RULE_1B_CARE_MGMT_MONTHLY",
                     "headline": f"Care management fee exceeds the correct monthly allocation by ${excess:,.2f}",
                     "detail": (
-                        (f"Your provider calculated this month's care management fee at "
-                         f"{pct_used or provider_pct}% of monthly gross services"
-                         + (f" (${monthly_gross_disp})" if monthly_gross_disp else (f" (${computed_monthly_gross:,.2f})" if computed_monthly_gross > 0 else ""))
-                         + f", totalling ${care_mgmt_deducted:,.2f}. ")
-                        + f"The correct methodology is 10% of the quarterly budget "
+                        f"Your provider calculated this month's care management fee at "
+                        f"{pct_used or provider_pct}% of monthly gross services "
+                        f"(${monthly_gross_used:,.2f}), totalling ${care_mgmt_deducted:,.2f}. "
+                        f"The correct methodology is 10% of the quarterly budget "
                         f"(${quarterly_cap:,.2f}) divided across 3 months = "
                         f"${correct_monthly_fee:,.2f} per month. The excess on this statement is "
-                        f"${excess:,.2f}. Even if the provider reconciles at quarter end, the excess "
-                        f"sits on this statement now and reduces your available budget. Request "
-                        f"written confirmation that the quarterly total care management charge does "
-                        f"not exceed ${quarterly_cap:,.2f}."
+                        f"${excess:,.2f}. The provider notes reconciliation at quarter end — request "
+                        f"written confirmation that the Q4 total care management charge does not "
+                        f"exceed ${quarterly_cap:,.2f}."
                     ),
                     "dollar_impact": excess,
                     "evidence": [
-                        f"quarterly_budget_total: ${quarterly_total:,.2f}",
+                        f"monthly_gross_services: ${monthly_gross_used:,.2f}",
                         f"quarterly cap (10%): ${quarterly_cap:,.2f}",
                         f"correct monthly fee (cap/3): ${correct_monthly_fee:,.2f}",
                         f"this month charged: ${care_mgmt_deducted:,.2f}",
                         f"excess: ${excess:,.2f}",
-                    ] + ([f"monthly_gross_services (computed): ${computed_monthly_gross:,.2f}"] if computed_monthly_gross > 0 else []),
+                    ],
                     "suggested_action": (
                         "Request a written confirmation from your provider showing exactly how the "
                         "Q-end total care management charge was calculated, and ask them to credit any "
@@ -2648,6 +2750,22 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             ):
                 continue
 
+        # FIX 3 (Round 3) — Strip any LLM-emitted Rule 1 / care-management
+        # flag that uses the quarterly budget as the percentage base. The
+        # correct base is monthly gross services; RULE_1B handles this
+        # correctly. The LLM occasionally still emits the wrong-base flag
+        # despite the prompt disabling it.
+        if rule == "RULE_1_CARE_MGMT_CAP" or rule.startswith("RULE_1") and not rule.startswith("RULE_1B"):
+            wrong_base_phrases = (
+                "of quarterly budget",
+                "of the quarterly budget",
+                "quarterly_budget_total",
+                "exceeds quarterly cap",
+                "exceeds the quarterly cap",
+            )
+            if any(p in evidence_full_blob for p in wrong_base_phrases):
+                continue
+
         # Fix 3 — AT-HM coding / hallucination guard.
         # RULE_4 (AT-HM stream miscoding) anomalies must cite a service_code
         # that actually exists in the extracted line_items. If the LLM
@@ -2715,8 +2833,8 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
         return _re.sub(r"[^a-zA-Z0-9]", "", s).lower()
 
     def _fingerprint(a: dict) -> str:
-        # Pull the first date and first service-code from detail + evidence.
-        blob = (a.get("detail") or "")
+        # Pull the first date and first service-code from headline + detail + evidence.
+        blob = (a.get("headline") or "") + " " + (a.get("detail") or "")
         for ev in (a.get("evidence") or []):
             blob += " " + str(ev or "")
         date_m = DATE_RE.search(blob)
@@ -2802,5 +2920,36 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
         deduped[keep_idx] = merged
         deduped.pop(drop_idx)
 
-    audit_result["anomalies"] = deduped
+    # FIX 1 (Round 3) — FINAL GUARANTEED DEDUPLICATION PASS.
+    #
+    # Runs as the unequivocal last step before returning. Uses the simple
+    # spec key: rule_prefix + date + service_code. A single incident → a
+    # single flag, regardless of how many code paths emitted it.
+    #
+    # For date-independent rules (care management overcharge, quarterly
+    # underspend, ABN format, period-parse), date and code fields will both
+    # be empty — they correctly collapse on rule_prefix alone.
+    final_seen: dict[str, dict] = {}
+    final_deduped: list[dict] = []
+    for a in deduped:
+        if not isinstance(a, dict):
+            final_deduped.append(a)
+            continue
+        rule_prefix_m = RULE_PREFIX_RE.match((a.get("rule") or "").upper())
+        rule_prefix = rule_prefix_m.group(1) if rule_prefix_m else (a.get("rule") or "UNKNOWN").upper()
+        blob = (a.get("headline") or "") + " " + (a.get("detail") or "")
+        for ev in (a.get("evidence") or []):
+            blob += " " + str(ev or "")
+        date_m = DATE_RE.search(blob)
+        code_m = SERVICE_CODE_RE.search(blob)
+        date_key = _normalise_date(date_m.group(1)) if date_m else ""
+        code_key = code_m.group(1).strip().lower() if code_m else ""
+        final_key = f"{rule_prefix}|{date_key}|{code_key}"
+        if final_key in final_seen:
+            # Already have a flag for this (rule_prefix, date, code) — silently drop.
+            continue
+        final_seen[final_key] = a
+        final_deduped.append(a)
+
+    audit_result["anomalies"] = final_deduped
     return audit_result

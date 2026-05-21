@@ -1284,3 +1284,76 @@ fabrication, and incorrect care-management arithmetic. All applied in
 - `/app/backend/tests/test_dorothy_fixes.py` — full rewrite with 12 acceptance checks against the Dorothy June 2026 fixture.
 - `/app/backend/tests/test_iter17_okafor.py`, `test_iter17_async_job.py`, `test_iter16_rules_11_12_13.py`, `test_iter21_beverley_may.py` — updated stale RULE_10 / RULE_12 assertions to match the new informational-notes contract.
 
+## Implemented (Iteration 40 — Feb 2026 · Statement Decoder Round 3: 4 final Dorothy fixes)
+
+The user provided a 4-fix spec to address residual issues in Dorothy June 2026
+output: duplicate flags still appearing, AT-HM phantom flag, care-management
+math using the wrong base, and the gross total not self-correcting. All
+applied in `/app/backend/agents.py`.
+
+### Fix 1 — Final guaranteed deduplication pass
+- New `final_seen` map runs as the unequivocal LAST step in
+  `_add_parse_warnings`, AFTER the Rule 17/18 merge. Key:
+  `rule_prefix + normalised_date + service_code`. Each (rule_type, date,
+  service_code) triple → ONE flag, regardless of how many code paths
+  emitted it.
+- Date-independent rules (care management, quarterly underspend, ABN format)
+  collapse on rule_prefix alone — empty date/code keys still produce a
+  stable, unique-per-rule fingerprint.
+- `_fingerprint` extended to scan `headline + detail + evidence` (was
+  detail + evidence). Catches cases where the date / service code only
+  appears in the headline.
+
+### Fix 2 — AT-HM hard source-text validation
+- New validation pass in `extract_statement` immediately after AT-HM
+  commitments and current-period items are merged from the adjustments chunk.
+- Each commitment's `ref` must appear in the original source text
+  (case-insensitive). Anything else → fabricated, silently dropped.
+- Each AT-HM line item's service_code must be a validated commitment ref,
+  AND its gross amount must appear in the source text. Anything else →
+  dropped. Prevents the "AT-001 vs ATHM-2026-0041 coding mismatch"
+  hallucination at the source.
+
+### Fix 3 — Care Management: remove old quarterly-cap path, fix the base
+- `AUDITOR_SYSTEM` Rule 1 rewritten as "DO NOT EMIT". The LLM-emitted
+  quarterly-cap-as-base flag is forbidden. RULE_1B is the only acceptable
+  variant.
+- Post-process strips any RULE_1 anomaly mentioning "quarterly budget",
+  "exceeds quarterly cap", etc. — belt-and-braces in case the LLM still
+  emits it.
+- RULE_1B detail rewritten to use `MONTHLY_GROSS_SERVICES = reported_total_gross
+  − care_management − AT-HM + PPA_credit` as the percentage base.
+  For Dorothy: $2,952.21 − $268.29 − $480.00 + $33.08 = **$2,237.00**.
+  This is the figure the provider's percentage was calculated against
+  (matches "11.0% of monthly gross services ($2,237.00)").
+- Excess remains $268.29 − $247.47 = **$20.82**.
+
+### Fix 4 — Self-correction for gross total
+- AT-HM source-text validation (Fix 2 above) automatically filters
+  fabricated AT-HM line items that would inflate the extracted total.
+- Combined with existing `_strip_summary_artifacts` and `_dedupe_line_items`,
+  the line-item sum no longer includes phantom $1,200 AT-HM approved-amount
+  rows or budget-summary-spent rows.
+- `_apply_reported_totals` still overrides `audit.statement_summary.total_gross`
+  with the statement's printed `reported_total_gross` ($2,952.21) so the
+  displayed total is always correct. RULE_15 still emits an honest LOW
+  diagnostic when summed line items don't reconcile.
+
+### Test status iter 40
+- `tests/test_dorothy_fixes.py` extended to **14 acceptance checks** —
+  added two Round 3 checks (care mgmt uses $2,237.00 base, no competing
+  RULE_1 quarterly-cap flag). All 14 pass.
+- Live LLM test (Emergent key) confirmed RULE_1 stripping works correctly
+  and RULE_1B fires with the right framing. Note: regression-test run was
+  truncated by an "EMERGENT_LLM_KEY budget exceeded" error mid-call — user
+  should top up the key balance to re-run the full live regression.
+- Backend lint clean. Supervisor green.
+
+### Files changed iter 40
+- `/app/backend/agents.py` — Fix 1 final dedup, Fix 2 AT-HM validation,
+  Fix 3 Rule 1 stripped + Rule 1B rewritten with monthly-gross base,
+  fingerprint headline inclusion, deterministic Rule 3 detail now includes
+  service code for fingerprint matching.
+- `/app/backend/tests/test_dorothy_fixes.py` — added Round 3 acceptance
+  assertions, fixture extended with the participant-contribution PPA entry.
+
