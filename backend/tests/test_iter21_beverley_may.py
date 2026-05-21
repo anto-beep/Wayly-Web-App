@@ -349,5 +349,11 @@ def test_duplicate_transport_extracted(decoded):
 
 
 def test_previous_period_adjustments(decoded):
-    rules = {a.get("rule") for a in decoded["audit"].get("anomalies", [])}
-    assert any(r and "RULE_10" in r for r in rules)
+    """Round 2 Fix 7: correctly-applied previous-period adjustments must NOT
+    appear in the anomalies array. They live in informational_notes only."""
+    anom_rules = {a.get("rule") for a in decoded["audit"].get("anomalies", [])}
+    rule10_in_anom = any(r and "RULE_10" in r for r in anom_rules)
+    info_kinds = {n.get("kind") for n in (decoded["audit"].get("informational_notes") or [])}
+    has_ppa_note = "previous_period_adjustment" in info_kinds
+    assert not rule10_in_anom, f"RULE_10 must NOT appear in anomalies (Fix 7); got {anom_rules}"
+    assert has_ppa_note, f"PPA must be in informational_notes; got kinds={info_kinds}"

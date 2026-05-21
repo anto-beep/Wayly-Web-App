@@ -126,13 +126,20 @@ def test_rule_11_brokered_aha_premium(decoded):
 
 
 def test_rule_12_unclaimed_at_hm(decoded):
-    """ATHM-2026-0071 (non-slip mat, $85 unclaimed, 31 days post-approval)
-    must be flagged."""
-    anoms = decoded["audit"].get("anomalies", [])
-    rule_12 = [a for a in anoms if (a.get("rule") or "").upper() == "RULE_12_UNCLAIMED_AT_HM_COMMITMENTS"]
-    assert rule_12, "Expected RULE_12 for ATHM-2026-0071"
-    combined = " ".join((a.get("headline", "") + " " + a.get("detail", "")) for a in rule_12).lower()
-    assert "0071" in combined or "bathroom mat" in combined or "non-slip" in combined
+    """Round 2 Fix 4: AT-HM commitments are surfaced as informational notes,
+    NOT anomalies. Active commitments (e.g. ATHM-2026-0071 non-slip mat,
+    $85 unclaimed) should appear in `informational_notes` with the active
+    commitment kind."""
+    info_notes = decoded["audit"].get("informational_notes") or []
+    active_notes = [
+        n for n in info_notes
+        if isinstance(n, dict) and n.get("kind") == "at_hm_active_commitment"
+    ]
+    assert active_notes, f"Expected at least one at_hm_active_commitment note; got {info_notes}"
+    combined = " ".join((n.get("summary") or "") + " " + (n.get("ref") or "") for n in active_notes).lower()
+    assert "0071" in combined or "bathroom mat" in combined or "non-slip" in combined, (
+        f"Expected ATHM-2026-0071 reference in informational notes; got {combined}"
+    )
 
 
 def test_rule_13_quarterly_underspend(decoded):
@@ -158,8 +165,16 @@ def test_rule_5_or_6_care_plan_violation(decoded):
 
 
 def test_rule_10_previous_adjustment(decoded):
+    """Round 2 Fix 7: correctly-applied previous-period adjustments must NOT
+    appear in the anomalies array. They live in informational_notes only."""
     rules = [(a.get("rule") or "").upper() for a in decoded["audit"].get("anomalies", [])]
-    assert "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS" in rules
+    assert "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS" not in rules, (
+        f"RULE_10 must NOT appear in anomalies (Fix 7); got {rules}"
+    )
+    info_kinds = {n.get("kind") for n in (decoded["audit"].get("informational_notes") or []) if isinstance(n, dict)}
+    assert "previous_period_adjustment" in info_kinds, (
+        f"PPA must be in informational_notes; got kinds={info_kinds}"
+    )
 
 
 # ---------- Sanity ----------------------------------------------------

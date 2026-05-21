@@ -92,11 +92,15 @@ def test_okafor_async_job_flow():
     assert extracted.get("reported_total_gross") == pytest.approx(2077.33, abs=0.5)
     assert (audit.get("statement_summary") or {}).get("total_gross") == pytest.approx(2077.33, abs=0.5)
     rules = [(a.get("rule") or "").upper() for a in audit.get("anomalies", [])]
+    info_kinds = {n.get("kind") for n in (audit.get("informational_notes") or []) if isinstance(n, dict)}
     assert "RULE_9_CONTRIBUTION_MISMATCH" not in rules
     assert "RULE_11_BROKERED_PREMIUM" in rules
-    assert "RULE_12_UNCLAIMED_AT_HM_COMMITMENTS" in rules
+    # Round 2 Fix 4: AT-HM commitments are informational only, not anomalies.
+    assert "at_hm_active_commitment" in info_kinds
     assert "RULE_13_QUARTERLY_UNDERSPEND" in rules
-    assert "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS" in rules
+    # Round 2 Fix 7: correctly-applied PPAs are informational only, not anomalies.
+    assert "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS" not in rules
+    assert "previous_period_adjustment" in info_kinds
 
 
 def test_async_submit_returns_quickly_and_returns_job_id():

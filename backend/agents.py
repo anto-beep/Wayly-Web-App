@@ -285,10 +285,25 @@ Return STRICT JSON only:
 
 Rules:
 - If a value is not in the statement, use "" for strings and 0.00 for numbers.
-- Calculate care_management_rate_pct as care_management_deducted / quarterly_budget_total * 100, rounded to 2dp, OR copy the percentage if the statement states it explicitly (e.g. "Care management deducted (11%)").
 - statement_period is the value from the explicit "STATEMENT PERIOD" / "Statement Period" header — NOT the quarterly-budget-summary date range. A monthly statement covers a single calendar month even if the budget summary references a 3-month quarter.
 - period_start and period_end should be ISO dates (YYYY-MM-DD) parsed from statement_period when possible, otherwise "".
-- reported_total_gross is the statement's own "Total gross billed" / "Total this month" / "TOTAL" figure under the statement-totals section (the provider's stated total, including ALL streams + care management + previous-period adjustments — i.e. the bottom-line monthly TOTAL row).
+
+CARE MANAGEMENT EXTRACTION — PERMITTED SOURCES ONLY
+- care_management_deducted is THIS MONTH'S care management FEE CHARGED (the dollar amount the provider deducted from this statement). It is found ONLY in the dedicated "CARE MANAGEMENT" section / line — typically labelled "Care management fee (Month): $X.XX" or "Care management billed: $X.XX" or "Care management (this period): $X.XX".
+- NEVER read care_management_deducted from the QUARTERLY BUDGET SUMMARY table (the "Budget / Spent / Remaining" row labelled "Care Management"). Those columns are quarterly budget figures, NOT the current-month fee, and using them will produce wrong arithmetic downstream.
+- For Dorothy's June 2026 statement: the correct value is the "Care management fee (June): $268.29" line, NOT the "Care Management Budget $742.40" quarterly figure.
+- Calculate care_management_rate_pct as care_management_deducted / monthly_gross_services * 100 if the statement states a percentage explicitly (e.g. "11.0% of monthly gross services"), otherwise care_management_deducted / quarterly_budget_total * 100, rounded to 2dp.
+
+GROSS TOTAL CALCULATION — PERMITTED SOURCES ONLY
+- reported_total_gross is the statement's printed BOTTOM-LINE TOTAL row in the "STATEMENT SUMMARY" / "TOTAL" section (the single number that sums Clinical + Independence + Everyday Living + Care Management + AT-HM current-period + Previous-period adjustments).
+- FORBIDDEN SOURCES — do NOT use any figure from:
+    (a) the quarterly budget summary table (Budget / Spent / Remaining columns)
+    (b) the participant contribution summary section
+    (c) the "Amount due" / "Previously billed" / direct-debit lines
+    (d) the lifetime cap section
+    (e) any per-stream "Total" or "Subtotal" line in the itemised tables IN ADDITION to extracting the individual line items from that same section (using both would double-count)
+- VERIFY: compute Clinical_total + Independence_total + EverydayLiving_total + CareManagement_fee + ATHM_current_period − Previous_period_adjustments. If that calculation differs from the figure you are about to emit by more than $5, re-check the source: you almost certainly read a budget-summary column instead of the TOTAL row.
+- For Dorothy June 2026 the correct figure is $2,952.21 (not $3,327.79, not $7,424.00, not $742.40).
 - reported_total_participant_contribution / reported_total_government_paid are the matching totals if listed.
 - budget_remaining_at_quarter_end is the statement's stated remaining quarterly service budget (post all line items), if shown.
 - provider_abn is the provider's Australian Business Number as it appears on the statement header (e.g. "12 345 678 901" or "12345678901"). Copy it verbatim including any spaces. If absent, "".
@@ -436,11 +451,14 @@ Return STRICT JSON only:
 }
 
 Rules:
-- Care management fee usually has service code CM-01 or description containing "Care management". Always coded stream: "CareMgmt". For statements that apportion a quarterly care-management fee across months, extract ONLY the portion attributed to the current statement period (e.g. if the statement says "March portion (this statement): $160.83", that $160.83 is the line item). Do NOT include prior-month portions or the quarterly-total figure.
+- Care management fee usually has service code CM-01 or description containing "Care management". Always coded stream: "CareMgmt". Extract ONLY the explicit current-period fee line (e.g. "Care management fee (June): $268.29"). Do NOT extract the quarterly-budget figure from the QUARTERLY BUDGET SUMMARY table as the line item — those columns are budget reference data, NOT a current charge. The gross of the care-management line item must equal the current-period fee.
+- For statements that apportion a quarterly care-management fee across months, extract ONLY the portion attributed to the current statement period (e.g. if the statement says "March portion (this statement): $160.83", that $160.83 is the line item). Do NOT include prior-month portions or the quarterly-total figure.
 - Previous-period adjustments are listed in a separate "PREVIOUS PERIOD ADJUSTMENTS" or similar section — they are credits/refunds for prior months, NOT line items. Credit amounts are positive numbers (the dollar value of the credit), even if the source uses a leading minus sign for display.
 - AT-HM commitments come from sections titled "AT-HM Commitments", "Outstanding Orders", "Approved Items Pending Delivery", or similar. They represent assistive-tech / home-modification items that were APPROVED (with a spend-limit) but may or may not yet have been delivered/installed/claimed.
-- For each AT-HM commitment include: a reference number (ref), item description, approval_date (ISO if possible), expiry_date (ISO if possible), amount_approved, amount_claimed (cumulative — default 0.00 if not stated), amount_remaining (default amount_approved - amount_claimed if not stated explicitly), amount_claimed_this_period (the portion claimed in the CURRENT statement period only — use phrases like "claimed this period", "amount this month", "claimed in May", invoice dates inside the current period to detect this; default 0.00 if you can't tell), and a short status string ("approved", "in progress", "delivered", etc).
-- at_hm_line_items_this_period: If an AT-HM commitment was claimed/charged in the CURRENT statement period (i.e. amount_claimed_this_period > 0), ALSO emit it as a line item in this array, using the commitment ref as service_code (e.g. "ATHM-2026-0118"), the item_description, gross = amount_claimed_this_period, participant_contribution = 0.00, government_paid = amount_claimed_this_period, stream = "ATHM", and the invoice date as the date if visible (otherwise the statement period_end). This ensures AT-HM costs appear in the per-stream breakdown and the gross total reconciles with the statement's printed total.
+- For each AT-HM commitment include: a reference number (ref), item description, approval_date (ISO if possible), expiry_date (ISO if possible), amount_approved, amount_claimed (cumulative — default 0.00 if not stated), amount_remaining (default amount_approved - amount_claimed if not stated explicitly), amount_claimed_this_period (the portion claimed in the CURRENT statement period only — use phrases like "claimed this period", "amount this month", "claimed in May", invoice dates inside the current period to detect this; default 0.00 if you can't tell), and a short status string ("approved", "in progress", "delivered", "completed", "active", etc).
+- AT-HM HALLUCINATION RULE — do NOT fabricate AT-HM entries that are not literally present in the statement text. If a commitment reference number (e.g. ATHM-2026-0041) appears as the service code for an AT-HM entry, extract it EXACTLY as shown. Do NOT generate a second line item with a different / standard service code (e.g. AT-001) unless that code appears separately as its own row in the statement text. Each AT-HM commitment row in the source produces AT MOST ONE entry in at_hm_commitments[] and AT MOST ONE entry in at_hm_line_items_this_period[] (only if amount_claimed_this_period > 0).
+- COMPLETED COMMITMENTS — if the source statement marks a commitment as "COMPLETED", "Fully claimed", "Closed", or shows amount_remaining = $0 with amount_claimed = amount_approved, set status to "completed" and amount_remaining to 0.00 (treat any missing approval_date or expiry_date as expected — completed commitments are reference-only and should NOT produce any anomaly downstream).
+- at_hm_line_items_this_period: If an AT-HM commitment was claimed/charged in the CURRENT statement period (i.e. amount_claimed_this_period > 0), ALSO emit it as a line item in this array, using the commitment ref as service_code (e.g. "ATHM-2026-0118"), the item_description, gross = amount_claimed_this_period, participant_contribution = 0.00, government_paid = amount_claimed_this_period, stream = "ATHM", and the invoice date as the date if visible (otherwise the statement period_end). This ensures AT-HM costs appear in the per-stream breakdown and the gross total reconciles with the statement's printed total. Do NOT emit a current-period line item for a completed commitment that was NOT claimed in this statement period (e.g. a "Shown for reference only" line is not a current-period claim).
 - If the statement has no AT-HM commitments section, return an empty at_hm_commitments and an empty at_hm_line_items_this_period array.
 - Dates should be ISO (YYYY-MM-DD) when the source allows; otherwise copy verbatim.
 - Return only valid JSON. No prose."""
@@ -489,6 +507,7 @@ Check for any two line items with the same service_code within 7 calendar days o
 
 RULE 4 — AT-HM STREAM MISCODING
 Any line item with service_code beginning "AT-" should be stream: "ATHM". If it appears in EverydayLiving or any other stream: flag as MEDIUM. AT-HM items are fully government funded — participant_contribution should be 0.00 for all AT-HM items. If participant_contribution > 0 on an AT-HM item: flag as HIGH.
+AT-HM HALLUCINATION RULE — emit AT-HM coding anomalies ONLY against service codes that are LITERALLY PRESENT in the extracted line_items array. Do NOT invent a parallel "AT-001" line or any other AT-HM line item to flag. If you cannot point to a specific line_item by its exact service_code as shown in the extracted JSON, DO NOT emit the rule. The deterministic post-pass will silently strip any anomaly whose cited service_code is not present in line_items.
 
 RULE 5 — STREAM MISCLASSIFICATION RISK
 Check flags_in_original for any provider notes questioning the stream assignment (e.g. "may qualify as Clinical", "confirm stream", "query"). Flag as MEDIUM severity with the provider's own note as evidence.
@@ -534,7 +553,10 @@ DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check 
 You MUST skip Rule 9 entirely in your output. Emitting Rule 9 in your JSON will cause double-counting and is treated as a hallucination.
 
 RULE 10 — PREVIOUS PERIOD ADJUSTMENTS
-If adjustments array is non-empty: flag as LOW severity (informational). Summarise what was corrected and confirm the credit was applied to government_paid not participant_contribution.
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check (rule key "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS") handles this. The deterministic check ONLY emits an anomaly when the adjustment arithmetic is WRONG (original - corrected ≠ credit) OR the credit was applied to the wrong column. Correctly-applied adjustments are silently recorded as a neutral informational note (NOT as an anomaly) — never as a severity-tagged flag. Skip this rule entirely in your output. Any RULE_10 anomaly you emit will be stripped by the post-pass.
+
+RULE 12 — UNCLAIMED AT-HM COMMITMENTS
+HANDLED BY DETERMINISTIC POST-PASS — do NOT emit. The deterministic check only fires for ACTIVE commitments (amount_remaining > 0 and status not in {completed, closed, fully claimed}). Commitments shown for reference (completed, amount_remaining = 0) MUST NOT produce ANY anomaly or informational note — they are reference-only.
 
 RULE 11 — BROKERED RATE PREMIUM (HARD EVIDENCE GATE)
 HARD GATE — emit this rule ONLY when BOTH of these are EXPLICITLY stated as numeric dollar values in the source statement for the SAME service code:
@@ -553,13 +575,8 @@ When the gate passes:
 
 Suggested action: "Ask your provider whether the brokered rate premium can be absorbed by the provider rather than your budget. Providers are not required to pass brokered rate premiums to participants."
 
-RULE 12 — UNCLAIMED AT-HM COMMITMENTS
-Inspect the at_hm_commitments array (each entry has ref, item_description, approval_date, expiry_date, amount_approved, amount_claimed, amount_remaining, status).
-Reference today's date relative to the statement period_end. If period_end is missing, use the last day of the statement_period text. Compute days_since_approval = period_end - approval_date.
-- If amount_claimed = 0.00 AND days_since_approval > 30: flag as LOW severity. Detail must include the commitment ref, item_description, amount_remaining, expiry_date.
-- If amount_claimed > 0 AND amount_remaining > 0 AND days_since_approval > 180: flag as LOW severity (prompt to use remaining balance). Detail must include the same fields.
-Suggested action for both sub-cases: "Follow up with your care manager to arrange delivery/installation before this commitment expires."
-If the at_hm_commitments array is empty, do NOT emit this rule.
+RULE 12 — UNCLAIMED AT-HM COMMITMENTS (REFERENCED ABOVE)
+See the deterministic-post-pass note above. Do NOT emit.
 
 RULE 13 — QUARTERLY UNDERSPEND PATTERN
 Use budget_remaining_at_quarter_end (or service_budget_available - sum of non-cancelled gross if remaining isn't directly given) and quarterly_budget_total.
@@ -1817,10 +1834,60 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     })
                     break
 
+    # Rule 12 — Active AT-HM commitments (informational notes only).
+    # Per Fix 4 spec: completed commitments produce NO notice. Active
+    # commitments with remaining balance produce a neutral informational note
+    # (NOT an anomaly). This is the deterministic replacement for the
+    # previously LLM-driven Rule 12.
+    if "RULE_12_AT_HM_ACTIVE" not in {(n.get("kind") or "").upper() for n in (audit_result.get("informational_notes") or []) if isinstance(n, dict)}:
+        for c in (extracted.get("at_hm_commitments") or []):
+            if not isinstance(c, dict):
+                continue
+            status = (c.get("status") or "").strip().lower()
+            try:
+                approved = float(c.get("amount_approved") or 0.0)
+                remaining = float(c.get("amount_remaining") or 0.0)
+            except Exception:
+                continue
+            # Skip completed / closed / fully-claimed and zero-remaining.
+            if status in {"completed", "complete", "closed", "fully claimed", "finalised", "finalized"} or remaining <= 0.01:
+                continue
+            ref = (c.get("ref") or "").strip()
+            desc = (c.get("item_description") or "AT-HM item").strip()
+            expiry = (c.get("expiry_date") or "").strip()
+            info_notes = audit_result.setdefault("informational_notes", [])
+            summary = (
+                f"AT-HM {desc} — ${remaining:,.2f} remaining"
+                + (f" — expires {expiry}" if expiry else "")
+                + (f" (ref {ref})." if ref else ".")
+            )
+            info_notes.append({
+                "kind": "at_hm_active_commitment",
+                "summary": summary,
+                "ref": ref,
+                "amount_remaining": round(remaining, 2),
+                "amount_approved": round(approved, 2),
+                "expiry_date": expiry,
+            })
+
     # Rule 19 — Large AT-HM claim (worth keeping the invoice)
     if "RULE_19_AT_HM_LARGE_CLAIM" not in existing_rules:
         for c in (extracted.get("at_hm_commitments") or []):
             if not isinstance(c, dict):
+                continue
+            # Fix 4 — skip ONLY commitments completed in a PRIOR period (no
+            # current-period claim). Items fully claimed THIS period are
+            # exactly what Rule 19 is for ("large claim worth keeping invoice").
+            status = (c.get("status") or "").strip().lower()
+            try:
+                claimed_this = float(c.get("amount_claimed_this_period") or 0.0)
+            except Exception:
+                claimed_this = 0.0
+            is_prior_completed = (
+                status in {"completed", "complete", "closed", "fully claimed", "finalised", "finalized"}
+                and claimed_this <= 0.01
+            )
+            if is_prior_completed:
                 continue
             try:
                 approved = float(c.get("amount_approved") or 0.0)
@@ -2095,13 +2162,25 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
         no_notice_re = _re6.compile("|".join(no_notice_patterns), _re6.IGNORECASE)
 
         seen_keys: set[tuple] = set()
+        seen_workers: set[tuple] = set()
         sub_flags: list[dict] = []
 
         def _emit_sub_flag(date: str, service_code: str, stream: str, note_text: str, usual: str = "", replacement: str = ""):
             key = ((date or "").lower().strip(), (service_code or "").upper().strip())
             if key in seen_keys:
                 return
+            # Also dedupe by (usual_worker, replacement_worker) — when the
+            # provider-notes-raw scan re-mentions a substitution already
+            # captured at line-item level, skip the second flag.
+            worker_key = (
+                (usual or "").lower().strip(),
+                (replacement or "").lower().strip(),
+            )
+            if usual and replacement and worker_key in seen_workers:
+                return
             seen_keys.add(key)
+            if usual and replacement:
+                seen_workers.add(worker_key)
             no_notice = bool(no_notice_re.search(note_text))
             severity = "medium" if no_notice else "low"
             who = ""
@@ -2146,11 +2225,37 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             })
 
         # Try to pull "usual X replaced by Y" pairs out of the note.
+        # Handles multiple phrasings:
+        #   - "Nurse Kaur was replaced by Nurse David Obi"
+        #   - "usual worker Linda Caruso on leave — replacement Yuki Matsuda"
+        #   - "Linda Caruso on annual leave. Replacement worker Yuki Matsuda attended"
         def _extract_names(note_text: str) -> tuple[str, str]:
-            m = _re6.search(r"(?:usual worker\s+)?([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})\s+(?:was\s+)?replaced by\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})", note_text)
+            if not note_text:
+                return "", ""
+            usual = replacement = ""
+            # Pattern A — "X replaced by Y"
+            m = _re6.search(
+                r"([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})\s+(?:was\s+)?replaced\s+by\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})",
+                note_text,
+            )
             if m:
                 return m.group(1).strip(), m.group(2).strip()
-            return "", ""
+            # Pattern B — "X on (annual )?leave"
+            mu = _re6.search(
+                r"([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){1,2})\s+(?:was\s+)?(?:on\s+(?:approved\s+)?(?:annual\s+)?leave|on\s+leave|unavailable|absent|sick|out)",
+                note_text,
+            )
+            if mu:
+                usual = mu.group(1).strip()
+            # Pattern C — "Replacement worker Y" / "replacement arranged — Y" / "Replacement Y attended"
+            mr = _re6.search(
+                r"replacement(?:\s+worker)?\s+(?:arranged\s+[—\-:]?\s*)?([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2})",
+                note_text,
+                _re6.IGNORECASE,
+            )
+            if mr:
+                replacement = mr.group(1).strip()
+            return usual, replacement
 
         # Scan per-line-item notes first (date + stream + code already known).
         for li in (extracted.get("line_items") or []):
@@ -2223,7 +2328,8 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             quarterly_total = care_mgmt_deducted = 0.0
         # care_management_deducted in extraction is THIS MONTH'S fee.
         if quarterly_total > 0 and care_mgmt_deducted > 0:
-            correct_monthly_fee = round(quarterly_total * 0.10 / 3.0, 2)
+            quarterly_cap = round(quarterly_total * 0.10, 2)
+            correct_monthly_fee = round(quarterly_cap / 3.0, 2)
             excess = round(care_mgmt_deducted - correct_monthly_fee, 2)
             # Tolerate $1 rounding noise.
             if excess > 1.00:
@@ -2236,31 +2342,55 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                 pct_match = _re1b.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%\s*(?:of\s+)?(?:monthly\s+gross|services)?", notes_blob_cm, _re1b.IGNORECASE)
                 pct_used = pct_match.group(1) if pct_match else ""
                 gross_match = _re1b.search(r"\$([\d,]+(?:\.\d{2})?)\s+(?:on|of)\s+(?:monthly\s+)?(?:gross\s+)?services?", notes_blob_cm, _re1b.IGNORECASE)
-                monthly_gross = gross_match.group(1) if gross_match else ""
+                monthly_gross_disp = gross_match.group(1) if gross_match else ""
+                # Compute monthly gross services from extracted line items as a
+                # fallback when the provider notes don't disclose it directly.
+                # Per Fix 5 spec: sum of Clinical + Independence + EverydayLiving
+                # line items excluding care management and AT-HM.
+                computed_monthly_gross = 0.0
+                for li in (extracted.get("line_items") or []):
+                    if not isinstance(li, dict):
+                        continue
+                    if li.get("is_cancellation"):
+                        continue
+                    stream = (li.get("stream") or "").strip()
+                    if stream in {"CareMgmt", "ATHM"}:
+                        continue
+                    try:
+                        computed_monthly_gross += float(li.get("gross") or 0.0)
+                    except Exception:
+                        pass
+                computed_monthly_gross = round(computed_monthly_gross, 2)
+                # Compute provider's apparent percentage (CHARGED / monthly_gross).
+                provider_pct = ""
+                if computed_monthly_gross > 0:
+                    provider_pct = f"{(care_mgmt_deducted / computed_monthly_gross) * 100:.1f}"
 
                 anomalies.append({
                     "severity": "medium",
                     "rule": "RULE_1B_CARE_MGMT_MONTHLY",
-                    "headline": "Care management fee calculated incorrectly this month",
+                    "headline": f"Care management fee exceeds the correct monthly allocation by ${excess:,.2f}",
                     "detail": (
-                        (f"Your provider's notes state this month's care management was calculated at "
-                         f"{pct_used}% of monthly gross services"
-                         + (f" (${care_mgmt_deducted:,.2f} on ${monthly_gross} of services)" if monthly_gross else f" — ${care_mgmt_deducted:,.2f}")
-                         + ". " if pct_used else
-                         f"This month's care management fee is ${care_mgmt_deducted:,.2f}. ")
+                        (f"Your provider calculated this month's care management fee at "
+                         f"{pct_used or provider_pct}% of monthly gross services"
+                         + (f" (${monthly_gross_disp})" if monthly_gross_disp else (f" (${computed_monthly_gross:,.2f})" if computed_monthly_gross > 0 else ""))
+                         + f", totalling ${care_mgmt_deducted:,.2f}. ")
                         + f"The correct methodology is 10% of the quarterly budget "
-                        f"(${quarterly_total * 0.10:,.2f}), which equates to approximately "
-                        f"${correct_monthly_fee:,.2f} per month. The excess this month is "
-                        f"${excess:,.2f}. Even if the provider plans to reconcile at quarter end, the "
-                        f"excess sits on this statement now and reduces your available budget."
+                        f"(${quarterly_cap:,.2f}) divided across 3 months = "
+                        f"${correct_monthly_fee:,.2f} per month. The excess on this statement is "
+                        f"${excess:,.2f}. Even if the provider reconciles at quarter end, the excess "
+                        f"sits on this statement now and reduces your available budget. Request "
+                        f"written confirmation that the quarterly total care management charge does "
+                        f"not exceed ${quarterly_cap:,.2f}."
                     ),
                     "dollar_impact": excess,
                     "evidence": [
                         f"quarterly_budget_total: ${quarterly_total:,.2f}",
+                        f"quarterly cap (10%): ${quarterly_cap:,.2f}",
                         f"correct monthly fee (cap/3): ${correct_monthly_fee:,.2f}",
                         f"this month charged: ${care_mgmt_deducted:,.2f}",
                         f"excess: ${excess:,.2f}",
-                    ],
+                    ] + ([f"monthly_gross_services (computed): ${computed_monthly_gross:,.2f}"] if computed_monthly_gross > 0 else []),
                     "suggested_action": (
                         "Request a written confirmation from your provider showing exactly how the "
                         "Q-end total care management charge was calculated, and ask them to credit any "
@@ -2410,12 +2540,66 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
         "may be a premium", "looks like a premium", "consistent with a brokered premium",
     )
 
+    # Pre-compile the date / service-code / rule-prefix regexes once so that
+    # both the cleaned-loop hallucination guard and the downstream
+    # fingerprint-dedup pass can share the exact same compiled patterns.
+    DATE_RE = _re.compile(
+        r"\b("
+        r"\d{4}-\d{2}-\d{2}"  # ISO 2026-05-05
+        r"|"
+        r"\d{1,2}[-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:[a-z]{0,6})?"
+        r"|"
+        r"\d{1,2}/\d{1,2}/\d{2,4}"
+        r")\b",
+        _re.IGNORECASE,
+    )
+    SERVICE_CODE_RE = _re.compile(r"\b([A-Z]{2,5}-\d{2,4})\b")
+    RULE_PREFIX_RE = _re.compile(r"^(RULE_\d+)")
+
     cleaned: list[dict] = []
+    # Fix 3 / Fix 4 — build helper sets:
+    #   • known_service_codes — every service_code that actually appears in the
+    #     extracted line_items. Used to strip RULE_4 / AT-HM coding flags that
+    #     cite a code the LLM hallucinated.
+    #   • completed_athm_refs — every AT-HM commitment whose status is completed
+    #     / closed / fully claimed AND amount_remaining is 0. Anomalies that
+    #     mention these refs are reference-only and must NOT surface.
+    known_service_codes: set[str] = set()
+    for li in (extracted.get("line_items") or []):
+        if not isinstance(li, dict):
+            continue
+        sc = (li.get("service_code") or "").strip().upper()
+        if sc:
+            known_service_codes.add(sc)
+    completed_athm_refs: set[str] = set()
+    for c in (extracted.get("at_hm_commitments") or []):
+        if not isinstance(c, dict):
+            continue
+        status = (c.get("status") or "").strip().lower()
+        try:
+            remaining = float(c.get("amount_remaining") or 0.0)
+            claimed_this = float(c.get("amount_claimed_this_period") or 0.0)
+        except Exception:
+            remaining = 0.0
+            claimed_this = 0.0
+        # Only treat as "prior-period completed" (reference-only) when there
+        # is NO current-period claim. A commitment fully claimed THIS period
+        # is legitimately the subject of Rule 19, so don't strip its flags.
+        is_prior_completed = (
+            (status in {"completed", "complete", "closed", "fully claimed", "finalised", "finalized"} or remaining <= 0.01)
+            and claimed_this <= 0.01
+        )
+        if is_prior_completed:
+            ref = (c.get("ref") or "").strip().upper()
+            if ref:
+                completed_athm_refs.add(ref)
+
     for a in anomalies:
         if not isinstance(a, dict):
             continue
         rule = (a.get("rule") or "").upper()
         text_blob = ((a.get("detail") or "") + " " + (a.get("headline") or "")).lower()
+        evidence_full_blob = text_blob + " " + " ".join(str(e or "").lower() for e in (a.get("evidence") or []))
 
         # (a) Speculative / no-anomaly commentary — never user-facing.
         if any(phrase in text_blob for phrase in SPECULATIVE_PHRASES):
@@ -2464,6 +2648,37 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
             ):
                 continue
 
+        # Fix 3 — AT-HM coding / hallucination guard.
+        # RULE_4 (AT-HM stream miscoding) anomalies must cite a service_code
+        # that actually exists in the extracted line_items. If the LLM
+        # invented a parallel "AT-001" or similar code that isn't present,
+        # silently strip the flag.
+        if rule.startswith("RULE_4"):
+            cited_codes = SERVICE_CODE_RE.findall(evidence_full_blob.upper())
+            cited_athm = [c for c in cited_codes if c.upper().startswith("AT-") or c.upper().startswith("ATHM")]
+            if cited_athm and not any(c.upper() in known_service_codes for c in cited_athm):
+                continue
+            # Also drop if the flag's headline/detail describes a "duplicate"
+            # / "coding mismatch" between two AT-HM codes but the line_items
+            # array has zero AT- entries (pure hallucination case).
+            if ("coding mismatch" in text_blob or "duplicate at-hm" in text_blob) and not any(
+                sc.upper().startswith("AT-") or sc.upper().startswith("ATHM") for sc in known_service_codes
+            ):
+                continue
+
+        # Fix 4 — Drop any anomaly that references a COMPLETED AT-HM
+        # commitment ref (status completed / amount_remaining = 0). Completed
+        # commitments are reference-only and must NEVER produce a flag or
+        # informational note — including the LLM's "missing approval_date /
+        # expiry_date metadata" hallucination on the shower chair.
+        if completed_athm_refs:
+            mentioned_refs = set()
+            # Match commitment refs like ATHM-2026-0039 in any case.
+            for ref_m in _re.finditer(r"\bATHM[\-\s]?\d{4}[\-\s]?\d{3,5}\b", evidence_full_blob, _re.IGNORECASE):
+                mentioned_refs.add(ref_m.group(0).upper().replace(" ", "-"))
+            if mentioned_refs & completed_athm_refs:
+                continue
+
         cleaned.append(a)
 
     # (b) Deduplicate by content fingerprint.
@@ -2475,9 +2690,6 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
     # Same-rule duplicates (e.g. Rule 3 from the LLM auditor + Rule 3 from the
     # deterministic backstop, which describe the same billing issue) DO
     # collapse via this step.
-    DATE_RE = _re.compile(r"\b(\d{4}-\d{2}-\d{2}|\d{1,2}[-\s][A-Za-z]{3,9}|\d{1,2}/\d{1,2}/\d{2,4})\b")
-    SERVICE_CODE_RE = _re.compile(r"\b([A-Z]{2,5}-\d{2,4})\b")
-    RULE_PREFIX_RE = _re.compile(r"^(RULE_\d+)")
 
     def _normalise_date(raw: str) -> str:
         # Extract just (day-number, first-3-letters-of-month). Handles every
@@ -2511,13 +2723,13 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
         code_m = SERVICE_CODE_RE.search(blob)
         date = _normalise_date(date_m.group(1)) if date_m else ""
         code = code_m.group(1).strip().lower() if code_m else ""
-        try:
-            dollars = round(float(a.get("dollar_impact") or 0.0), 2)
-        except Exception:
-            dollars = 0.0
         rule_prefix_m = RULE_PREFIX_RE.match((a.get("rule") or "").upper())
         rule_prefix = rule_prefix_m.group(1) if rule_prefix_m else (a.get("rule") or "")
-        key = f"{rule_prefix}|{date}|{code}|{dollars}"
+        # Fix 1 (Round 2) — dedup by (rule_prefix, date, service_code) ONLY.
+        # Dollar impact is intentionally excluded so that an LLM-emitted
+        # variant with $0 and a deterministic emitter with the exact dollar
+        # collapse into one flag. A single incident → a single flag.
+        key = f"{rule_prefix}|{date}|{code}"
         if len(key.replace("|", "").strip()) > len(rule_prefix) + 2:
             return key
         # No structural anchor — fall back to a hash of the first 60 chars of detail.

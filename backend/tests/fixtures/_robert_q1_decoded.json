@@ -6,6 +6,7 @@
     "period_start": "2026-03-01",
     "period_end": "2026-03-31",
     "provider_name": "Daybreak Community Care",
+    "provider_abn": "",
     "classification": "Level 4 (Standard)",
     "pension_status": "unknown",
     "quarterly_budget_total": 7424.0,
@@ -21,6 +22,11 @@
     "lifetime_contributions_to_date": 1820.0,
     "direct_debit_amount": 67.4,
     "direct_debit_date": "2026-04-10",
+    "stream_used_this_month": {
+      "Clinical": 82.5,
+      "Independence": 340.0,
+      "EverydayLiving": 288.0
+    },
     "line_items": [
       {
         "date": "12 Mar",
@@ -161,7 +167,8 @@
         "amount_approved": 420.0,
         "amount_claimed": 0.0,
         "amount_remaining": 420.0,
-        "status": "Approved (awaiting installer)"
+        "amount_claimed_this_period": 0.0,
+        "status": "approved"
       },
       {
         "ref": "ATHM-2025-101",
@@ -171,7 +178,8 @@
         "amount_approved": 1180.0,
         "amount_claimed": 0.0,
         "amount_remaining": 1180.0,
-        "status": "Approved (no installer assigned)"
+        "amount_claimed_this_period": 0.0,
+        "status": "approved"
       },
       {
         "ref": "ATHM-2025-145",
@@ -181,7 +189,8 @@
         "amount_approved": 180.0,
         "amount_claimed": 180.0,
         "amount_remaining": 0.0,
-        "status": "Delivered"
+        "amount_claimed_this_period": 0.0,
+        "status": "completed"
       },
       {
         "ref": "ATHM-2026-014",
@@ -191,7 +200,8 @@
         "amount_approved": 260.0,
         "amount_claimed": 60.0,
         "amount_remaining": 200.0,
-        "status": "Partial \u2014 extra accessory pending"
+        "amount_claimed_this_period": 0.0,
+        "status": "in progress"
       }
     ],
     "provider_notes_raw": []
@@ -202,7 +212,7 @@
       "period": "1 March 2026 \u2013 31 March 2026",
       "provider": "Daybreak Community Care",
       "classification": "Level 4 (Standard)",
-      "total_line_items": 7,
+      "total_line_items": 8,
       "total_gross": 1452.9,
       "total_participant_contribution": 67.4,
       "total_government_paid": 1385.5,
@@ -246,54 +256,30 @@
     ],
     "anomalies": [
       {
-        "severity": "low",
-        "rule": "RULE_9_PENSION_STATUS_UNKNOWN",
-        "headline": "Pension status unknown; contribution validation skipped.",
-        "detail": "The extracted pension_status field is 'unknown', which prevents deterministic validation of participant contribution amounts against the correct rate tables (full age pension, part age pension, or self-funded). Contribution checks have been skipped for this statement. Ask your provider to confirm your pension status so that future statements can be fully audited.",
-        "dollar_impact": 0.0,
-        "evidence": [
-          "pension_status: 'unknown'"
-        ],
-        "suggested_action": "Contact your provider to confirm your pension status (full age pension, part age pension, or self-funded) and request a corrected statement if needed."
-      },
-      {
         "severity": "medium",
         "rule": "RULE_11_BROKERED_PREMIUM",
-        "headline": "Brokered rate premium on PC-01 (Personal care\u2014shower) exceeds published rate by $7.00/hr.",
-        "detail": "Four Personal care\u2014shower (PC-01) line items were provided by Bright Care at a brokered rate of $85.00/hr. Daybreak Community Care's published rate for this service is $78.00/hr, a difference of $7.00 per hour. Across 4.0 hours this month, the premium cost is $28.00, charged entirely to your service budget. Providers are not required to absorb brokered rate premiums; however, you may negotiate this with your provider.",
+        "headline": "Brokered rate premium on Personal care \u2014 shower (PC-01) exceeds published provider rate.",
+        "detail": "Daybreak Community Care subcontracted PC-01 services to Bright Care at $85/hr (brokered rate) versus Daybreak's published rate of $78/hr. This is a $7.00/hr premium. Across 4 hours of brokered PC-01 services in March, the total premium cost to the participant's budget is $28.00.",
         "dollar_impact": 28.0,
         "evidence": [
-          "service_code PC-01, dates 04 Mar, 11 Mar, 18 Mar, 25 Mar",
-          "brokered rate $85/hr; published Daybreak rate $78/hr",
-          "4 line items \u00d7 1.0 hour each = 4.0 hours total",
-          "$7.00/hr premium \u00d7 4.0 hours = $28.00 impact"
+          "04 Mar: PC-01 brokered at $85/hr; published Daybreak rate $78/hr",
+          "11 Mar: PC-01 brokered at $85/hr; published Daybreak rate $78/hr",
+          "18 Mar: PC-01 brokered at $85/hr; published Daybreak rate $78/hr",
+          "25 Mar: PC-01 brokered at $85/hr; published Daybreak rate $78/hr",
+          "Total brokered hours: 4.0"
         ],
-        "suggested_action": "Ask your provider whether the brokered rate premium of $7.00/hr can be absorbed by the provider rather than your budget. Providers are not required to pass brokered rate premiums to participants."
+        "suggested_action": "Ask your provider whether the brokered rate premium can be absorbed by the provider rather than your budget. Providers are not required to pass brokered rate premiums to participants."
       },
       {
         "severity": "low",
-        "rule": "RULE_12_UNCLAIMED_AT_HM_COMMITMENTS",
-        "headline": "Two AT-HM commitments remain unclaimed and are approaching or have passed the 30-day approval window.",
-        "detail": "ATHM-2025-088 (Bathroom grab rail bundle): approved 15 September 2025, $420.00 remaining, expires 15 September 2026. Status: 'Approved (awaiting installer)'. ATHM-2025-101 (Mobility ramp\u2014front entrance): approved 02 August 2025, $1,180.00 remaining, expires 02 August 2026. Status: 'Approved (no installer assigned)'. Both commitments have been approved for over 30 days with zero claimed amount. Follow up with your care manager to assign an installer and schedule delivery before these commitments expire.",
+        "rule": "RULE_9_PENSION_STATUS_UNKNOWN",
+        "headline": "We couldn't confirm this participant's pension status from the statement.",
+        "detail": "Contribution rate checks have been skipped because pension status is unclear. Verify your contribution rates directly with your provider \u2014 the correct rates depend on whether the participant receives the full Age Pension, part Age Pension, or is self-funded.",
         "dollar_impact": 0.0,
         "evidence": [
-          "ATHM-2025-088: approval_date 2025-09-15, amount_claimed 0.00, days_since_approval > 150",
-          "ATHM-2025-101: approval_date 2025-08-02, amount_claimed 0.00, days_since_approval > 200",
-          "status fields indicate installation is pending"
+          "pension_status: unknown"
         ],
-        "suggested_action": "Follow up with your care manager to arrange delivery/installation before these commitments expire. Contact Daybreak Community Care to confirm the installer assignment for both items."
-      },
-      {
-        "severity": "low",
-        "rule": "RULE_12_UNCLAIMED_AT_HM_COMMITMENTS",
-        "headline": "One AT-HM commitment (ATHM-2026-014) has partial claim with balance remaining and approaching the 180-day threshold.",
-        "detail": "ATHM-2026-014 (Bedside commode chair): approved 22 August 2025, $200.00 remaining, expires 22 August 2026. Status: 'Partial\u2014extra accessory pending'. Partial claim of $60.00 has been made, leaving $200.00 unclaimed. The commitment is now approaching the 180-day mark since approval. Follow up with your care manager to confirm delivery of the pending accessory before the commitment expires.",
-        "dollar_impact": 0.0,
-        "evidence": [
-          "ATHM-2026-014: approval_date 2025-08-22, amount_claimed 60.00, amount_remaining 200.00, days_since_approval > 180",
-          "status: 'Partial\u2014extra accessory pending'"
-        ],
-        "suggested_action": "Follow up with your care manager to arrange delivery/installation of the pending accessory before this commitment expires."
+        "suggested_action": "Phone your provider's billing line and ask them to confirm the participant's recorded pension status, then reconcile your contribution rates against the published Support at Home rate table."
       },
       {
         "severity": "medium",
@@ -305,16 +291,59 @@
           "quarterly_budget_total: $7,424.00",
           "budget_remaining_at_quarter_end: $2,150.00",
           "remaining_pct: 28.96%",
-          "rollover_cap: $1,000.00"
+          "rollover_cap: $1,000.00",
+          "period_end_month: 3"
         ],
         "suggested_action": "Schedule a care-plan review with the provider before quarter end. Identify services the participant qualifies for but isn't currently using."
+      },
+      {
+        "severity": "medium",
+        "rule": "RULE_1B_CARE_MGMT_MONTHLY",
+        "headline": "Care management fee exceeds the correct monthly allocation by $494.93",
+        "detail": "Your provider calculated this month's care management fee at 104.5% of monthly gross services ($710.50), totalling $742.40. The correct methodology is 10% of the quarterly budget ($742.40) divided across 3 months = $247.47 per month. The excess on this statement is $494.93. Even if the provider reconciles at quarter end, the excess sits on this statement now and reduces your available budget. Request written confirmation that the quarterly total care management charge does not exceed $742.40.",
+        "dollar_impact": 494.93,
+        "evidence": [
+          "quarterly_budget_total: $7,424.00",
+          "quarterly cap (10%): $742.40",
+          "correct monthly fee (cap/3): $247.47",
+          "this month charged: $742.40",
+          "excess: $494.93",
+          "monthly_gross_services (computed): $710.50"
+        ],
+        "suggested_action": "Request a written confirmation from your provider showing exactly how the Q-end total care management charge was calculated, and ask them to credit any excess on the next statement rather than waiting until quarter end."
       }
     ],
     "anomaly_count": {
       "high": 0,
-      "medium": 2,
-      "low": 3
-    }
+      "medium": 3,
+      "low": 1
+    },
+    "informational_notes": [
+      {
+        "kind": "at_hm_active_commitment",
+        "summary": "AT-HM Bathroom grab rail bundle \u2014 $420.00 remaining \u2014 expires 2026-09-15 (ref ATHM-2025-088).",
+        "ref": "ATHM-2025-088",
+        "amount_remaining": 420.0,
+        "amount_approved": 420.0,
+        "expiry_date": "2026-09-15"
+      },
+      {
+        "kind": "at_hm_active_commitment",
+        "summary": "AT-HM Mobility ramp \u2014 front entrance \u2014 $1,180.00 remaining \u2014 expires 2026-08-02 (ref ATHM-2025-101).",
+        "ref": "ATHM-2025-101",
+        "amount_remaining": 1180.0,
+        "amount_approved": 1180.0,
+        "expiry_date": "2026-08-02"
+      },
+      {
+        "kind": "at_hm_active_commitment",
+        "summary": "AT-HM Bedside commode chair \u2014 $200.00 remaining \u2014 expires 2026-08-22 (ref ATHM-2026-014).",
+        "ref": "ATHM-2026-014",
+        "amount_remaining": 200.0,
+        "amount_approved": 260.0,
+        "expiry_date": "2026-08-22"
+      }
+    ]
   },
-  "_elapsed": 31.447639226913452
+  "_elapsed": 26.26714825630188
 }

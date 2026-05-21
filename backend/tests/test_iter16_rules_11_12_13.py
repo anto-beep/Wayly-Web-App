@@ -95,9 +95,14 @@ def test_rule_11_brokered_premium(decoded):
 # -------------------- Rule 12 — Unclaimed AT-HM Commitments ----------------
 
 def test_rule_12_unclaimed_at_hm(decoded):
-    rules = [a.get("rule") for a in decoded["audit"].get("anomalies", [])]
-    matching = [r for r in rules if r and "12" in r and ("AT" in r.upper() or "COMMITMENT" in r.upper())]
-    assert matching, f"Expected RULE 12 (unclaimed AT-HM) to fire. Got rules: {rules}"
+    """Round 2 Fix 4: AT-HM commitments are informational only, not anomalies.
+    Active commitments with remaining balance must appear in informational_notes."""
+    info_notes = decoded["audit"].get("informational_notes") or []
+    active_notes = [
+        n for n in info_notes
+        if isinstance(n, dict) and n.get("kind") == "at_hm_active_commitment"
+    ]
+    assert active_notes, f"Expected at_hm_active_commitment informational note; got notes={info_notes}"
 
 
 # -------------------- Rule 13 — Quarterly Underspend ----------------------

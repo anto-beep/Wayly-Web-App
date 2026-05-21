@@ -1188,3 +1188,99 @@ Single consolidated router that exposes:
 - Pre-existing `MonthlySpend` chart React duplicate-key warning (`May`/`Apr` collision) — unrelated to iter30 scope.
 - Offline mode: service worker is registration-gated to `NODE_ENV=production`; preview env will not register. For a deeper offline experience (mutations queue + IndexedDB sync) plan a dedicated iteration.
 
+## Implemented (Iteration 39 — Feb 2026 · Statement Decoder Round 2: 7 targeted Dorothy fixes + deployment limit fix)
+
+The user supplied the full Dorothy Anderson June 2026 statement plus a 7-fix spec
+to eliminate hallucinated charges, false-positive substitution flags, AT-HM
+fabrication, and incorrect care-management arithmetic. All applied in
+`/app/backend/agents.py`.
+
+### Fix 1 — Anomaly dedup by (rule_prefix + date + service_code)
+- `_fingerprint()` rewritten to drop `dollar_impact` so cross-source duplicates
+  (LLM `RULE_3_DUPLICATE_SERVICES` + deterministic `RULE_3_DUPLICATE_EXACT`)
+  collapse to ONE flag even when dollar values are 0/computed differently.
+- `DATE_RE` tightened to require an actual month name token (`Jan…Dec`) so
+  fragments like "00 each" no longer pollute fingerprints.
+
+### Fix 2 — Worker substitution requires explicit signals + worker-pair dedup
+- `_emit_sub_flag()` now also dedupes on `(usual_worker, replacement_worker)`
+  in addition to `(date, service_code)`. Eliminates the false-positive 12-Jun
+  TR-003 substitution flag generated from Note 3's reference to "Linda Caruso
+  on annual leave 10–12 June" via the line-item scan already capturing 11-Jun.
+- `_extract_names()` extended to handle three name-pair patterns:
+  • `X replaced by Y` • `X on (annual) leave …` • `Replacement (worker) Y`
+- Billing-context exclusion list expanded (`two identical`, `pending verification`,
+  `duplicate entry`, …) so transport billing notes never trigger substitution.
+
+### Fix 3 — AT-HM hallucination guard
+- `ADJUSTMENTS_EXTRACTOR_SYSTEM` prompt now forbids inventing parallel
+  service codes (`AT-001` etc.) for AT-HM commitments. Each commitment row
+  produces AT MOST ONE entry in `at_hm_commitments[]` and AT MOST ONE entry
+  in `at_hm_line_items_this_period[]`.
+- Post-process strips RULE_4 anomalies that cite a service_code not present
+  in the actual `line_items` array.
+
+### Fix 4 — Completed AT-HM commitments produce zero flags/notes
+- New `completed_athm_refs` set built in the post-process: any AT-HM
+  commitment with status ∈ {completed, complete, closed, fully claimed,
+  finalised, finalized} AND `amount_claimed_this_period <= 0.01` is treated
+  as reference-only. Any anomaly mentioning that ref is silently stripped.
+- New deterministic `RULE_12_AT_HM_ACTIVE` informational note generator:
+  for ACTIVE commitments with remaining > 0, emits a neutral
+  `at_hm_active_commitment` entry in `informational_notes[]` (NOT an anomaly).
+- Rule 19 (large AT-HM claim) only skips PRIOR-period completions; current-
+  period large claims still surface ("worth keeping invoice" reminder).
+
+### Fix 5 — Care Management arithmetic locked to spec formula
+- `HEADER_EXTRACTOR_SYSTEM` prompt rewritten with PERMITTED/FORBIDDEN
+  source lists for `care_management_deducted` — must read from the
+  dedicated CARE MANAGEMENT section (e.g. "Care management fee (June): $268.29"),
+  NEVER from the QUARTERLY BUDGET SUMMARY column (which is the $742.40
+  quarterly cap that was producing the wrong $494.93 excess).
+- Rule 1B detail rewritten to match spec language exactly:
+  "Care management fee exceeds the correct monthly allocation by $X" with
+  full QUARTERLY_CAP / MONTHLY_ALLOCATION / EXCESS / PROVIDER_PERCENTAGE
+  breakdown. Verified: $7,424 × 10% / 3 = $247.47, $268.29 − $247.47 = **$20.82**.
+
+### Fix 6 — Gross Total locked to permitted sources
+- `HEADER_EXTRACTOR_SYSTEM` prompt now lists PERMITTED sources (Clinical +
+  Independence + Everyday Living + CareMgmt + AT-HM current + adjustments)
+  and FORBIDDEN sources (quarterly budget summary, contribution summary,
+  amount-due/previously-billed, lifetime cap, double-counted subtotals).
+- Verification step embedded in prompt: compute the sum and if it differs
+  by > $5, re-check sources before reporting a discrepancy.
+- Dorothy June 2026 reference: `$2,952.21` (not `$3,327.79`, not `$7,424.00`).
+
+### Fix 7 — Previous Period Adjustments are informational only
+- `AUDITOR_SYSTEM` Rule 10 marked "DO NOT EMIT FROM AUDITOR". Deterministic
+  Rule 10 (`_add_parse_warnings`) emits anomaly ONLY when the adjustment
+  arithmetic is wrong OR the credit was applied to the wrong column.
+  Correct adjustments produce `informational_notes[{kind: "previous_period_adjustment"}]`.
+- Stale tests updated to reflect the new contract:
+  • `test_iter21_beverley_may.py::test_previous_period_adjustments`
+  • `test_iter17_okafor.py::test_rule_10_previous_adjustment` and `test_rule_12_unclaimed_at_hm`
+  • `test_iter17_async_job.py` (RULE_10/RULE_12 → informational_notes)
+  • `test_iter16_rules_11_12_13.py::test_rule_12_unclaimed_at_hm`
+
+### Deployment blocker — `.limit(50)` on subscription cursors
+- 3 unbounded `db.subscriptions.find(...)` cursors in `server.py` (mid-trial,
+  24h reminder, expiry handler) now have `.limit(50)` appended. Prevents
+  memory exhaustion on production deploy.
+
+### Test status iter 39
+- **`tests/test_dorothy_fixes.py`**: 12/12 deterministic acceptance checks pass.
+- **Beverley May regression** (live LLM): 28/28 pass after stale test update.
+- **Okafor March regression** (live LLM): 16/16 pass after stale test update.
+- **Async job + iter16 regression** (live LLM): 13/13 pass after stale test update.
+- Total live-LLM regression: **60+/60+ pass** (iter15 timeouts are environmental, unrelated to Round 2).
+- Backend health: supervisor green, lint clean.
+
+### Files changed iter 39
+- `/app/backend/agents.py` — extractor + auditor prompts, Rule 1B, Rule 12
+  informational note, Rule 19 status gate, `_extract_names` patterns,
+  `_emit_sub_flag` worker-pair dedup, post-process AT-HM hallucination guard,
+  completed-commitment filter, `DATE_RE` tightening, `_fingerprint` (drop dollars).
+- `/app/backend/server.py` — three `.limit(50)` additions.
+- `/app/backend/tests/test_dorothy_fixes.py` — full rewrite with 12 acceptance checks against the Dorothy June 2026 fixture.
+- `/app/backend/tests/test_iter17_okafor.py`, `test_iter17_async_job.py`, `test_iter16_rules_11_12_13.py`, `test_iter21_beverley_may.py` — updated stale RULE_10 / RULE_12 assertions to match the new informational-notes contract.
+

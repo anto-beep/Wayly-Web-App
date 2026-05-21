@@ -3349,7 +3349,7 @@ async def _process_trial_reminders_once() -> dict:
             "trial_midtrial_sent_at": {"$exists": False},
         },
         {"_id": 0},
-    )
+    ).limit(50)
     async for sub in cursor_mid:
         try:
             user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
@@ -3411,7 +3411,7 @@ async def _process_trial_reminders_once() -> dict:
             "trial_reminder_sent_at": {"$exists": False},
         },
         {"_id": 0},
-    )
+    ).limit(50)
     async for sub in cursor:
         try:
             user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
@@ -3462,7 +3462,7 @@ async def _process_trial_reminders_once() -> dict:
             "trial_expired_handled_at": {"$exists": False},
         },
         {"_id": 0},
-    )
+    ).limit(50)
     async for sub in cursor2:
         try:
             user_id = sub["user_id"]
