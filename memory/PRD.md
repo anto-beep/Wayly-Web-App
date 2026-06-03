@@ -486,6 +486,67 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 ## Implemented (Iteration 34 — Feb 2026 · 4 sidebar/UX fixes + complete Reports module)
 
 ### Sidebar / UX P0-P1 batch (4 items)
+- **Edit Participants + Make Primary** (already shipped): Edit modal in `Participants.jsx`; `Make primary` button posts `/participants/{id}/promote`.
+- **Provider dropdown with 'Add new'** (already shipped): `ProviderPicker` combobox + "Add a different provider" toggle.
+- **AI Tools routed inside dashboard when logged in**: new `<AIToolsRoute>` wrapper in `/app/frontend/src/App.js` wraps every `/ai-tools/*` route in the dashboard `Layout` for authed non-adviser users.
+- **Sidebar grouped into 5 collapsible sections**: `<NavGroup>` in `/app/frontend/src/components/Layout.jsx` with per-group `sessionStorage` persistence (`wayly_nav_group_{key}`).
+
+### Reports — complete rebuild (8 report types)
+- PDF rendering via headless Chrome CLI (same Chromium engine as Puppeteer), Jinja2 HTML templates with Wayly brand tokens, Inter font, A4 page size, repeating footer + page numbers via CSS @page.
+- Mongo collections: `generated_reports`, `report_sections`, `report_download_tokens` (15-min TTL — mocks S3 presigned URLs until iter 35 when the real path was wired).
+- Async generation pipeline: POST `/api/reports/generate` returns `GENERATING`; background asyncio task runs builder + Jinja render + Chrome PDF + Mongo update; notification fires on READY.
+- AI executive summary via Claude Haiku (emergentintegrations), cached in `report_sections.section_data_json`.
+- **Endpoints**: POST `/api/reports/generate`, GET `/api/reports?participant_id=…`, GET `/api/reports/{id}`, GET `/api/reports/{id}/data`, GET `/api/reports/{id}/download`, GET `/api/reports/file/{token}`, DELETE `/api/reports/{id}`.
+- **8 report types implemented**: HOUSEHOLD_SUMMARY, QUARTERLY_BUDGET, ANNUAL_FINANCIAL, ANOMALY_SAVINGS, PROVIDER_PERFORMANCE (with letter-grade A/B/C/D + locked state), COMPLAINT_DOSSIER (formal cover page + concerns + correspondence + evidence), CARE_TIMELINE (landscape PDF + colour-coded events), STATEMENT_DIGEST (summary + full-detail levels).
+- Frontend `/app/frontend/src/pages/Reports.jsx`: 2-column report cards + history table + generation modal with rotating progress messages + config modal for params + rich in-app preview (sectioned cards + tables + bars — not raw JSON).
+
+### Test status iter 34
+- Backend **33/33 pytest pass**, Frontend **100%**. Zero bugs.
+
+
+## Implemented (Iteration 35 — Feb 2026 · participant-switch fix + auto-gen cron + S3 path + SSE notifications)
+
+### Critical bug: dashboard didn't refetch on participant switch
+- **Root cause**: `CaregiverDashboard.jsx` had `useEffect(..., [])` — never re-ran when the active participant changed. The axios interceptor injected the right `X-Participant-Id` header, but the page never re-fired the requests.
+- **Fix**: Added `key={activeParticipant?.id || "no-participant"}` to `<main>` in `/app/frontend/src/components/Layout.jsx` — forces a full unmount/remount of every dashboard child page on participant change. Every mount-time `useEffect` re-runs, including the heavy `Promise.all([...])` data fetch in `CaregiverDashboard`. Also gave the dashboard a local `cancelled` flag so a fast double-switch doesn't race.
+- Layout right-side header + mobile drawer "Caring for" block now read `activeParticipant.first_name / last_name / classification / provider_name` first, falling back to the household snapshot.
+- Verified by testing agent: switching to Lebron triggers 3 fresh API calls (`/budget/current`, `/statements`, `/family-thread`), header swaps, and `/app/reports` rescopes to "Reports · Lebron" with the Provider Performance card showing the "Needs 3 more decoded statements" locked state for the new participant.
+
+### Auto-generation cron — `/app/backend/reports_scheduler.py`
+- New background task started at server boot via `@app.on_event("startup")`, stopped on shutdown.
+- Walks every active participant every 6 hours (configurable via `REPORTS_SCHED_INTERVAL_SEC`).
+- **Quarterly Budget**: auto-enqueued 7–14 days after each Australian-FY quarter end (Q1=30 Sep, Q2=31 Dec, Q3=31 Mar, Q4=30 Jun). 7-day grace window guarantees the cron fires even if missed for a few days.
+- **Annual Financial**: auto-enqueued 14–21 days after 30 Jun, only if ≥6 decoded statements exist in the FY.
+- Idempotent dedupe key: `(report_type, participant_id, params.range_start, params.range_end)` with `auto=true` flag. Re-running the cron is a no-op.
+- Auto-reports are tagged on the owner so the existing notification pipeline fires "Your [Report] is ready" to the household.
+
+### S3 PDF storage — configurable production path
+- `/app/backend/reports_routes.py` now reads `REPORTS_S3_BUCKET`, `AWS_REGION`, `REPORTS_S3_PREFIX` from env. When `REPORTS_S3_BUCKET` is set, generated PDFs are uploaded to S3 after rendering and the `storage_path` field holds the `s3://bucket/key` URI; the `s3_key` field stores the object key.
+- `GET /api/reports/{id}/download` now returns a real S3 presigned URL (15-min expiry via `generate_presigned_url`) when `s3_key` is present. Otherwise, falls back transparently to the existing local-disk token endpoint at `/api/reports/file/{token}`.
+- `DELETE /api/reports/{id}` also removes the object from S3 when `s3_key` is set.
+- `boto3` is already installed in `requirements.txt`. The S3 path is a verified integration seam — flip the env vars in production and storage moves to S3 with no code changes.
+
+### Real-time notifications — Server-Sent Events
+- New endpoint `GET /api/notifications/stream?token={jwt}` (server.py around line 2891) returns `text/event-stream`.
+- Emits `event: snapshot` with `{unread: N}` immediately on connect; then `event: notification` for each newly inserted row; `event: heartbeat` every 25s to keep proxies happy.
+- Accepts the JWT via the `?token=` query param because `EventSource` cannot set custom Authorization headers. Documented trade-off (token may appear in proxy logs).
+- `/app/frontend/src/components/NotificationsBell.jsx` adds an `EventSource` subscription alongside the existing 60s poll fallback. When a new notification arrives, the bell badge increments instantly, the dropdown list prepends, and a `sonner` toast fires with the title/body + "View" action.
+
+### Test status iter 35
+- Backend **18/18 pytest pass** (`/app/backend/tests/test_iter35_dashboard_sse_scheduler.py`): quarter-window math, FY-window math, scheduler `_task` lifecycle, SSE endpoint shape + 401 + insert-to-stream delivery, all 8 report types still READY end-to-end, S3 fallback to local URL.
+- Frontend **100% pass**: multi-participant switch triggers fresh API calls + UI swap; header + Reports rescope; Provider Performance locked-state for the new participant.
+
+### Files changed
+- New: `/app/backend/reports_scheduler.py`, `/app/backend/tests/test_iter35_dashboard_sse_scheduler.py`.
+- `/app/backend/server.py` — `import json`, SSE `/api/notifications/stream`, scheduler startup/shutdown hooks.
+- `/app/backend/reports_routes.py` — `_get_s3`, `_upload_to_s3`, `_presign_s3` helpers; generation pipeline + download endpoint + delete endpoint updated.
+- `/app/frontend/src/components/Layout.jsx` — `key={activeParticipant?.id}` on `<main>`; header reads active participant.
+- `/app/frontend/src/pages/CaregiverDashboard.jsx` — `useEffect` deps include `activeParticipant?.id`; `cancelled` race guard; `displayName`/`displayProvider` from active participant.
+- `/app/frontend/src/components/NotificationsBell.jsx` — `EventSource` SSE subscription.
+
+
+
+### Sidebar / UX P0-P1 batch (4 items)
 - **Edit Participants + Make Primary** (verified — already shipped in prior iter): Edit modal in `Participants.jsx` with first name, last name, classification, provider; `Make primary` button on non-primary cards posts `/participants/{id}/promote`.
 - **Provider dropdown with 'Add new'** (verified — already shipped): `ProviderPicker` combobox on the Add Participant form lists existing providers + "Add a different provider" toggle that flips to free-text input.
 - **AI Tools routed inside dashboard when logged in**: new `<AIToolsRoute>` wrapper in `/app/frontend/src/App.js` conditionally wraps every `/ai-tools/*` route in the dashboard `Layout` (sidebar + participant switcher + header) for authenticated non-adviser users, while keeping the marketing surface for visitors.
