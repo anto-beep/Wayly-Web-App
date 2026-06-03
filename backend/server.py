@@ -50,6 +50,7 @@ from agents import parse_statement, explain_anomalies, chat_with_kindred
 from wrapper import run_wrapper
 import email_service
 import asyncio
+import json
 from auth_emergent import exchange_session_id
 from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout, CheckoutSessionRequest,
@@ -2882,6 +2883,72 @@ async def put_notification_prefs(body: NotificationPrefsBody, user_id: str = Dep
     return {"ok": True, "prefs": clean}
 
 
+@api.get("/notifications/stream")
+async def stream_notifications(request: Request, token: Optional[str] = None):
+    """Server-Sent Events stream for real-time bell updates.
+
+    EventSource cannot send custom Authorization headers, so we accept the JWT
+    via the ``?token=`` query string. The stream emits one ``notification``
+    event per newly inserted row and a ``heartbeat`` every 25 seconds so
+    proxies don't close the connection.
+    """
+    from fastapi.responses import StreamingResponse
+    # Resolve user from query token or Authorization header
+    auth_header = request.headers.get("authorization", "")
+    jwt_str = None
+    if token:
+        jwt_str = token
+    elif auth_header.lower().startswith("bearer "):
+        jwt_str = auth_header.split(" ", 1)[1]
+    if not jwt_str:
+        raise HTTPException(status_code=401, detail="Missing token")
+    try:
+        from auth import decode_token
+        user_id = decode_token(jwt_str)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    async def event_stream():
+        # Track last-seen created_at so we only send genuinely new rows.
+        last_ts = datetime.now(timezone.utc).isoformat()
+        # Send an initial unread count so the bell badge reconciles immediately.
+        unread = await db.notifications.count_documents({"user_id": user_id, "read": False})
+        yield f"event: snapshot\ndata: {json.dumps({'unread': unread})}\n\n"
+        heartbeat = 0
+        while True:
+            if await request.is_disconnected():
+                return
+            try:
+                cur = db.notifications.find(
+                    {"user_id": user_id, "created_at": {"$gt": last_ts}},
+                    {"_id": 0},
+                ).sort("created_at", 1)
+                docs = await cur.to_list(20)
+                for doc in docs:
+                    last_ts = doc.get("created_at", last_ts)
+                    yield f"event: notification\ndata: {json.dumps(doc)}\n\n"
+                heartbeat += 1
+                if heartbeat % 25 == 0:
+                    yield "event: heartbeat\ndata: {}\n\n"
+            except Exception as e:
+                logger.warning(f"SSE tick error: {e}")
+            await asyncio.sleep(1)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
 # ---------------------------------------------------------------------------
 # Family weekly digest
 # ---------------------------------------------------------------------------
@@ -3677,6 +3744,15 @@ async def _start_health_watchdog():
 
 
 @app.on_event("startup")
+async def _start_reports_scheduler():
+    try:
+        import reports_scheduler
+        await reports_scheduler.start()
+    except Exception as e:
+        logger.warning(f"reports_scheduler failed to start: {e}")
+
+
+@app.on_event("startup")
 async def _start_batch2_migration():
     """One-time idempotent migration: ensure every legacy household has a
     primary participant row. Safe to call repeatedly — no-ops if already done."""
@@ -3724,4 +3800,9 @@ async def trial_tick_manual(request: Request):
 async def shutdown_db_client():
     import health_watchdog
     await health_watchdog.stop()
+    try:
+        import reports_scheduler
+        await reports_scheduler.stop()
+    except Exception:
+        pass
     client.close()

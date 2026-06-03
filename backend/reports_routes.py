@@ -38,6 +38,57 @@ db = _client[os.environ["DB_NAME"]]
 STORAGE_DIR = Path("/app/backend/storage/reports")
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
+# Optional S3 upload — activates when REPORTS_S3_BUCKET is set in the env.
+# When inactive, the existing token-signed local endpoint serves the PDF.
+S3_BUCKET = os.environ.get("REPORTS_S3_BUCKET")
+S3_REGION = os.environ.get("AWS_REGION") or os.environ.get("REPORTS_S3_REGION")
+S3_PREFIX = os.environ.get("REPORTS_S3_PREFIX", "reports/")
+_s3_client = None
+
+
+def _get_s3():
+    """Lazy boto3 client. Returns None if boto3 is not installed or env not set."""
+    global _s3_client
+    if not S3_BUCKET:
+        return None
+    if _s3_client is not None:
+        return _s3_client
+    try:
+        import boto3  # type: ignore
+        _s3_client = boto3.client("s3", region_name=S3_REGION) if S3_REGION else boto3.client("s3")
+        return _s3_client
+    except Exception as e:
+        logger.warning(f"S3 client unavailable, falling back to local storage: {e}")
+        return None
+
+
+def _upload_to_s3(pdf_path: Path, key: str) -> Optional[str]:
+    """Upload the local PDF to S3 and return the S3 URI (s3://bucket/key) or None on failure."""
+    s3 = _get_s3()
+    if not s3:
+        return None
+    try:
+        s3.upload_file(str(pdf_path), S3_BUCKET, key, ExtraArgs={"ContentType": "application/pdf"})
+        return f"s3://{S3_BUCKET}/{key}"
+    except Exception as e:
+        logger.warning(f"S3 upload failed: {e}")
+        return None
+
+
+def _presign_s3(key: str, expires_in: int = 900) -> Optional[str]:
+    s3 = _get_s3()
+    if not s3:
+        return None
+    try:
+        return s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": S3_BUCKET, "Key": key},
+            ExpiresIn=expires_in,
+        )
+    except Exception as e:
+        logger.warning(f"S3 presign failed: {e}")
+        return None
+
 REPORT_TYPES = {
     "HOUSEHOLD_SUMMARY": "Household Summary",
     "QUARTERLY_BUDGET": "Quarterly Budget Report",
@@ -1055,11 +1106,17 @@ async def _generate_report(report_id: str) -> None:
         await _render_pdf(html_path, pdf_path, landscape=landscape)
 
         size = pdf_path.stat().st_size
+        # Optionally upload to S3 (no-op when REPORTS_S3_BUCKET is unset)
+        s3_key = f"{S3_PREFIX}{report_id}.pdf"
+        s3_uri = _upload_to_s3(pdf_path, s3_key)
+        storage_path = s3_uri or str(pdf_path)
+
         await db.generated_reports.update_one(
             {"id": report_id},
             {"$set": {
                 "status": "READY",
-                "storage_path": str(pdf_path),
+                "storage_path": storage_path,
+                "s3_key": s3_key if s3_uri else None,
                 "file_size_bytes": size,
                 "updated_at": _now().isoformat(),
             }},
@@ -1205,7 +1262,12 @@ async def download_report(rid: str, user_id: str = Depends(get_current_user_id))
         raise HTTPException(status_code=404, detail="Not found")
     if r.get("status") != "READY":
         raise HTTPException(status_code=409, detail=f"Report {r.get('status')}")
-    # Issue a short-lived token (mock S3 presigned URL)
+    # If the PDF lives in S3, return a real presigned URL directly to the client.
+    if r.get("s3_key"):
+        url = _presign_s3(r["s3_key"], expires_in=900)
+        if url:
+            return {"url": url, "expires_in_seconds": 900}
+    # Fallback: local disk via short-lived token (mocks S3 presigned URLs).
     token = _new_id()
     await db.report_download_tokens.insert_one({
         "token": token,
@@ -1248,10 +1310,17 @@ async def delete_report(rid: str, user_id: str = Depends(get_current_user_id)):
         {"id": rid},
         {"$set": {"status": "DELETED", "deleted_at": _now().isoformat(), "purge_at": (_now() + timedelta(hours=24)).isoformat()}},
     )
-    # Best-effort: remove file immediately
+    # Best-effort: remove file immediately (local + S3)
     try:
-        if r.get("storage_path"):
-            Path(r["storage_path"]).unlink(missing_ok=True)
+        if r.get("s3_key"):
+            s3 = _get_s3()
+            if s3:
+                try:
+                    s3.delete_object(Bucket=S3_BUCKET, Key=r["s3_key"])
+                except Exception:
+                    pass
+        local = STORAGE_DIR / f"{rid}.pdf"
+        local.unlink(missing_ok=True)
         html_path = STORAGE_DIR / f"{rid}.html"
         html_path.unlink(missing_ok=True)
     except Exception:

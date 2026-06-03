@@ -182,7 +182,7 @@ export default function Layout({ children }) {
                         </div>
                     </nav>
                 </aside>
-                <main className="flex-1 min-w-0">
+                <main className="flex-1 min-w-0" key={activeParticipant?.id || "no-participant"}>
                     <TrialCountdownBanner className="mb-4 md:mb-5" />
                     {children}
                 </main>

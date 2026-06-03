@@ -71,6 +71,8 @@ export default function CaregiverDashboard() {
     const isFamily = plan === "family";
 
     useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
         (async () => {
             try {
                 const [b, s, f, a, c] = await Promise.all([
@@ -80,16 +82,18 @@ export default function CaregiverDashboard() {
                     api.get("/audit-log").catch(() => ({ data: [] })),
                     api.get("/chat/history").catch(() => ({ data: [] })),
                 ]);
+                if (cancelled) return;
                 setBudget(b.data);
                 setStatements(s.data || []);
                 setFamilyMsgs(f.data || []);
                 setAudit(a.data || []);
                 setChatHistory(c.data || []);
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         })();
-    }, []);
+        return () => { cancelled = true; };
+    }, [activeParticipant?.id]);
 
     const latest = statements[0];
     const allAnomalies = statements.flatMap((s) =>

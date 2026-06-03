@@ -61,10 +61,43 @@ export default function NotificationsBell({ tone = "dark" }) {
 
     useEffect(() => {
         load();
-        // Poll every 60s, pause when tab is hidden
+        // Poll every 60s as a fallback, pause when tab is hidden
         const id = setInterval(() => { if (!document.hidden) load(); }, 60_000);
         return () => clearInterval(id);
     }, [load]);
+
+    // Server-Sent Events — instant push for new notifications. Falls back
+    // gracefully to the 60s poll above if the browser/proxy doesn't support SSE.
+    useEffect(() => {
+        const token = localStorage.getItem("kindred_token") || localStorage.getItem("wayly_token") || localStorage.getItem("token");
+        if (!token) return undefined;
+        const base = process.env.REACT_APP_BACKEND_URL || "";
+        let es;
+        try {
+            es = new EventSource(`${base}/api/notifications/stream?token=${encodeURIComponent(token)}`);
+        } catch { return undefined; }
+        es.addEventListener("snapshot", (e) => {
+            try { const d = JSON.parse(e.data); if (typeof d.unread === "number") setUnread(d.unread); } catch { /* ignore */ }
+        });
+        es.addEventListener("notification", (e) => {
+            try {
+                const n = JSON.parse(e.data);
+                setItems((prev) => [n, ...prev.filter((p) => p.id !== n.id)].slice(0, 30));
+                if (!n.read) setUnread((u) => u + 1);
+                if (!seenIdsRef.current.has(n.id)) {
+                    seenIdsRef.current.add(n.id);
+                    saveSeenIds(seenIdsRef.current);
+                    toast.info(n.title || "New notification", {
+                        description: n.body,
+                        duration: 8000,
+                        action: n.link ? { label: "View", onClick: () => { window.location.assign(n.link); } } : undefined,
+                    });
+                }
+            } catch { /* ignore */ }
+        });
+        es.onerror = () => { /* poll fallback handles errors */ };
+        return () => { try { es.close(); } catch { /* ignore */ } };
+    }, []);
 
     useEffect(() => {
         const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
