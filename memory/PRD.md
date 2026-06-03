@@ -483,6 +483,64 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - `RULE_15_GROSS_TOTAL_PARSE_WARNING` still fires LOW when LLM-extracted line items don't sum exactly to the reported total. User QA explicitly allows this when `Rule 16 Clinical/Independence false flags are absent` — which they are.
 
 
+## Implemented (Iteration 34 — Feb 2026 · 4 sidebar/UX fixes + complete Reports module)
+
+### Sidebar / UX P0-P1 batch (4 items)
+- **Edit Participants + Make Primary** (verified — already shipped in prior iter): Edit modal in `Participants.jsx` with first name, last name, classification, provider; `Make primary` button on non-primary cards posts `/participants/{id}/promote`.
+- **Provider dropdown with 'Add new'** (verified — already shipped): `ProviderPicker` combobox on the Add Participant form lists existing providers + "Add a different provider" toggle that flips to free-text input.
+- **AI Tools routed inside dashboard when logged in**: new `<AIToolsRoute>` wrapper in `/app/frontend/src/App.js` conditionally wraps every `/ai-tools/*` route in the dashboard `Layout` (sidebar + participant switcher + header) for authenticated non-adviser users, while keeping the marketing surface for visitors.
+- **Sidebar grouped into 5 collapsible sections**: `/app/frontend/src/components/Layout.jsx` now renders the ~20 nav items as five named groups (Today / Money & statements / Their care / Providers & paperwork / Your account) using a new `<NavGroup>` component with per-group `sessionStorage` persistence (`wayly_nav_group_{key}`). Each group has `data-testid="nav-group-toggle-{key}"` and ChevronDown/ChevronRight indicator.
+
+### Reports — complete rebuild (8 report types)
+
+#### Infrastructure (`/app/backend/reports_routes.py`)
+- **PDF rendering** via headless Chrome CLI (`google-chrome --headless --print-to-pdf`) — same Chromium engine as Puppeteer, no extra deps. Async via `asyncio.create_subprocess_exec` with 45s timeout.
+- **Jinja2 HTML templates** at `/app/backend/report_templates/` (base + 8 report-specific + generic fallback). All templates extend `base.html` with brand tokens (navy `#1F3A5F`, gold `#C8A968`, cream `#FAF6F0`), Inter font, A4 page size, repeating footer with timestamp + AI disclaimer, page numbers via CSS `@page`.
+- **Mongo collections**: `generated_reports`, `report_sections`, `report_download_tokens` (15-min TTL, mocks S3 presigned URLs).
+- **Storage**: `/app/backend/storage/reports/{id}.pdf` (local disk; S3 contract preserved via the token endpoint).
+- **AI executive summary**: Claude Haiku via `emergentintegrations` with a strict prompt (warm, plain English, 3–5 sentences, no markdown, no em-dashes) — cached in `report_sections.section_data_json` so re-downloads don't re-prompt the LLM.
+- **Traffic-light logic**: `_traffic(pct, kind)` returns `green / amber / red` for budget, care management, AT-HM expiry, correspondence overdue.
+- **Async generation pipeline**: POST `/api/reports/generate` returns immediately with `report_id, status:GENERATING`; background `asyncio.create_task` runs the builder + Jinja render + Chrome PDF + Mongo update; notification inserted on READY.
+
+#### 8 report types — endpoints + builders
+- `POST /api/reports/generate` (body `{report_type, participant_id?, parameters?}`)
+- `GET /api/reports?participant_id=…`
+- `GET /api/reports/{id}` (full record)
+- `GET /api/reports/{id}/data` (section JSON for in-app preview)
+- `GET /api/reports/{id}/download` (issues short-lived token)
+- `GET /api/reports/file/{token}` (FileResponse, 15-min token)
+- `DELETE /api/reports/{id}` (soft delete + schedule purge)
+
+Report types implemented end-to-end (each with dedicated builder + HTML template):
+1. **HOUSEHOLD_SUMMARY** — 4 stat cards, exec summary, active services + care team table, upcoming visit + AT-HM expiry, recent concerns, hospitalisation (last 12 months).
+2. **QUARTERLY_BUDGET** — overview bar, rollover alert (red when >$500 above cap), per-stream bars (Clinical/Independence/Everyday Living), month-by-month table, care management cap, AT-HM commitments, anomalies table, rollover projection.
+3. **ANNUAL_FINANCIAL** — 6-stat year-in-numbers grid, monthly contributions table, by-stream breakdown, lifetime cap bar + projection, gold-bordered accountant reference box.
+4. **ANOMALY_SAVINGS** — gold hero showing total/resolved/outstanding dollar values (the "share-with-family" page), exec summary, anomalies-by-type table, full chronological timeline, outstanding-items red card, subscription ROI gold card with "Wayly has paid for itself N×" once resolved > cost.
+5. **PROVIDER_PERFORMANCE** — persistent privacy banner ("not visible to your provider"), large letter grade A/B/C/D with calculation per spec, exec summary, service delivery breakdown, billing accuracy with per-statement table, correspondence response rate, private ratings, OPAN/ACQSC contact section. Locked state ("requires 3 statements") shipped.
+6. **COMPLAINT_DOSSIER** — formal document style with cover page (participant + provider IDs, "Prepared for submission to: OPAN/ACQSC/Provider"), table of contents, concerns detailed with what-happened + resolution, correspondence history with response status, billing anomaly evidence, non-deliveries.
+7. **CARE_TIMELINE** — vertical chronological event cards with colour-coded dots (navy/gold/teal/red/purple/green), legend, renders landscape A4. Aggregates hospitalisations, AT-HM installations, HIGH-severity concerns, care plan amendments.
+8. **STATEMENT_DIGEST** — cover totals (statements/gross/contributions/anomalies), summary table with HIGH/MEDIUM/LOW badges, two detail levels: "summary only" (compact per-statement block) or "full detail" (every line item table + anomalies, page break per statement).
+
+#### Frontend (`/app/frontend/src/pages/Reports.jsx`)
+- New `/app/reports` page replaces the prior single-PDF `SummaryReports`. Legacy still mounted at `/app/reports-legacy`.
+- Two sections: **Generate a report** (8 cards in 2-col grid, each with icon + name + description + "Best for" + Generate button) and **Your reports** (history table with View/Download/Delete actions).
+- **Generation modal** with rotating progress messages ("Gathering your data… Calculating spending by stream… Writing your summary… Building your PDF… Almost done…"). Polls `/api/reports/{id}` every 2.5s up to 30 tries; transitions to READY with View + Download buttons.
+- **Config modal** for the 4 reports needing params (Quarterly Budget — Q + FY; Annual Financial — FY; Complaint Dossier — days + addressed-to; Statement Digest — days + detail level).
+- **In-app preview** — sticky back + download header, exec summary panel, full JSON section view. Polished PDF is the canonical artefact; in-app view is for quick verification.
+- Provider Performance card shows "Needs N more decoded statements to unlock" when statement count < 3.
+
+### Test status iter 34
+- Backend **33/33 pytest pass** (new `test_iter34_reports.py` covers all 8 report types end-to-end + auth + soft-delete + token download + Anomaly hero data shape + Provider locked path code review).
+- Frontend **100% pass** — login, sidebar collapsible groups (all 5), Reports page renders all 8 cards, HOUSEHOLD_SUMMARY end-to-end (modal → READY → View → preview), config modal for QUARTERLY_BUDGET, /ai-tools/statement-decoder wraps in Layout when logged in, Participants Edit modal + ProviderPicker dropdown verified.
+- Zero React errors; zero console errors from Wayly code.
+
+### Files changed
+- New: `/app/backend/reports_routes.py`, `/app/backend/report_templates/{base,household_summary,quarterly_budget,annual_financial,anomaly_savings,provider_performance,complaint_dossier,care_timeline,statement_digest,generic}.html`, `/app/frontend/src/pages/Reports.jsx`, `/app/backend/tests/test_iter34_reports.py`.
+- `/app/backend/server.py` — included `reports_router` after `batch3_billing_router`.
+- `/app/frontend/src/App.js` — added `<AIToolsRoute>` wrapper, mapped 9 `/ai-tools/*` routes through it, imported `Reports`, routed `/app/reports` → `Reports`, moved old SummaryReports to `/app/reports-legacy`.
+- `/app/frontend/src/components/Layout.jsx` — converted flat sidebar to 5 collapsible `<NavGroup>` sections with sessionStorage persistence.
+
+
 ## Implemented (Iteration 38 — Feb 2026 · Read-aloud accessibility · GitHub guidance for Mobile Agent)
 
 ### Read-aloud (browser SpeechSynthesis, no API cost)
