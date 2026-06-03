@@ -6,6 +6,21 @@ export const API = `${BACKEND_URL}/api`;
 
 export const api = axios.create({ baseURL: API });
 
+// Auto-inject the active participant id on every request so the backend can
+// scope statements / documents / calendar / digest etc. to the participant the
+// caregiver is currently looking at. Read from the same key the
+// ParticipantsContext writes to.
+api.interceptors.request.use((config) => {
+    try {
+        const pid = window.localStorage.getItem("wayly_active_participant_id");
+        if (pid) {
+            config.headers = config.headers || {};
+            config.headers["X-Participant-Id"] = pid;
+        }
+    } catch { /* ignore */ }
+    return config;
+});
+
 /**
  * Safely extract a human-readable string from an axios error response.
  * FastAPI raises HTTPException with `detail` that may be either a plain

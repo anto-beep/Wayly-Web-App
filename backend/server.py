@@ -7,7 +7,7 @@ import re
 import statistics
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from typing import Literal as _LiteralType  # noqa: F401
 
 from collections import defaultdict
@@ -100,6 +100,49 @@ async def _require_household(user_id: str) -> dict:
     if not h:
         raise HTTPException(status_code=400, detail="No household configured. Complete onboarding first.")
     return h
+
+
+async def _resolve_active_participant(user_id: str, request: Request) -> Optional[dict]:
+    """Reads the `X-Participant-Id` header and validates it belongs to the
+    user's account. Falls back to the household's primary participant when
+    the header is missing or invalid. Returns None for legacy users with no
+    participant rows."""
+    pid = request.headers.get("x-participant-id")
+    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "household_id": 1})
+    hid = (user_doc or {}).get("household_id")
+    if not hid:
+        return None
+    if pid:
+        acct = await db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0, "id": 1})
+        if acct:
+            p = await db.participants.find_one(
+                {"id": pid, "account_id": acct["id"], "status": "ACTIVE"}, {"_id": 0}
+            )
+            if p:
+                return p
+    return await db.participants.find_one(
+        {"household_id": hid, "is_primary": True, "status": {"$ne": "REMOVED"}}, {"_id": 0}
+    ) or await db.participants.find_one({"household_id": hid, "status": {"$ne": "REMOVED"}}, {"_id": 0})
+
+
+async def _scope_query_to_participant(user_id: str, request: Request, base_q: Dict[str, Any]) -> Dict[str, Any]:
+    """Tighten `base_q` to the active participant. Legacy docs (no
+    participant_id) are treated as belonging to the household's primary
+    participant — so existing data continues to surface for that person
+    until a background backfill runs."""
+    p = await _resolve_active_participant(user_id, request)
+    if not p:
+        return base_q
+    q = dict(base_q)
+    if p.get("is_primary"):
+        q["$or"] = [
+            {"participant_id": p["id"]},
+            {"participant_id": None},
+            {"participant_id": {"$exists": False}},
+        ]
+    else:
+        q["participant_id"] = p["id"]
+    return q
 
 
 async def _audit(household_id: str, actor_id: str, actor_name: str, action: str, detail: str) -> None:
@@ -807,6 +850,7 @@ def _detect_anomalies(
 
 @api.post("/statements/upload")
 async def upload_statement(
+    request: Request,
     file: UploadFile = File(...),
     user_id: str = Depends(get_current_user_id),
 ):
@@ -817,6 +861,9 @@ async def upload_statement(
     """
     h = await _require_household(user_id)
     user = await _get_user(user_id)
+    # Resolve the active participant so this statement is correctly scoped.
+    active_p = await _resolve_active_participant(user_id, request)
+    participant_id = active_p["id"] if active_p else None
     raw = await file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty file")
@@ -844,6 +891,7 @@ async def upload_statement(
     job_id = _submit_upload_job(
         text, file.filename, h["id"], user_id, user["name"],
         file_b64=file_b64, file_mimetype=mime, file_size=len(raw),
+        participant_id=participant_id,
     )
     return {"job_id": job_id, "status": "pending"}
 
@@ -897,11 +945,12 @@ async def upload_statement_job(job_id: str, user_id: str = Depends(get_current_u
 
 
 @api.get("/statements", response_model=List[Statement])
-async def list_statements(user_id: str = Depends(get_current_user_id)):
+async def list_statements(request: Request, user_id: str = Depends(get_current_user_id)):
     h = await _require_household(user_id)
+    q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
     docs = (
         await db.statements
-        .find({"household_id": h["id"]}, {"_id": 0, "file_b64": 1, "id": 1, "household_id": 1, "filename": 1, "period_label": 1, "uploaded_at": 1, "line_items": 1, "summary": 1, "anomalies": 1, "raw_text_preview": 1, "file_mimetype": 1, "file_size_bytes": 1})
+        .find(q, {"_id": 0, "file_b64": 1, "id": 1, "household_id": 1, "filename": 1, "period_label": 1, "uploaded_at": 1, "line_items": 1, "summary": 1, "anomalies": 1, "raw_text_preview": 1, "file_mimetype": 1, "file_size_bytes": 1})
         .sort("uploaded_at", -1)
         .to_list(100)
     )
@@ -1171,14 +1220,18 @@ async def inbound_email_webhook(payload: InboundEmailPayload, request: Request):
 
 # ----------------- budget -----------------
 @api.get("/budget/current")
-async def current_budget(user_id: str = Depends(get_current_user_id)):
+async def current_budget(request: Request, user_id: str = Depends(get_current_user_id)):
     h = await _require_household(user_id)
-    classification = h["classification"]
+    # Honour the active participant — their classification overrides the
+    # household-level one so budget views actually swap when caregivers switch.
+    p = await _resolve_active_participant(user_id, request)
+    classification = (p or {}).get("classification") or h["classification"]
     q_start, q_end, q_label = budget_lib.get_quarter_window()
     allocations = budget_lib.stream_allocations(classification)
     quarterly_total = budget_lib.quarterly_budget(classification)
 
-    docs = await db.statements.find({"household_id": h["id"]}, {"_id": 0}).to_list(200)
+    q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+    docs = await db.statements.find(q, {"_id": 0}).to_list(200)
     all_items: List[dict] = []
     for s in docs:
         all_items.extend(s.get("line_items", []))
@@ -1216,19 +1269,51 @@ async def current_budget(user_id: str = Depends(get_current_user_id)):
 
 
 # ----------------- chat -----------------
+def _humanize_assistant_reply(text: str) -> str:
+    """Strip the visual tells that make assistant copy feel robotic:
+
+      * markdown bold/italic asterisks (``**foo**`` → ``foo``, ``*foo*`` → ``foo``)
+      * em / en / horizontal-bar dashes → ", " (or a sentence break when alone on a line)
+      * stray header markers (``### Heading`` → ``Heading``)
+      * runs of more than two newlines compressed to two
+
+    Keeps content intact — only the visual jaggedness is sanded down.
+    """
+    if not text:
+        return text
+    import re as _re
+    t = text
+    # Bold then italic — order matters
+    t = _re.sub(r"\*\*(.+?)\*\*", r"\1", t)
+    t = _re.sub(r"(?<!\*)\*(?!\s)([^*\n]+?)\*(?!\*)", r"\1", t)
+    # Heading markers
+    t = _re.sub(r"^\s{0,3}#{1,6}\s+", "", t, flags=_re.M)
+    # Em/en/hyphen-bar variants → comma+space, but as a sentence break if line-leading
+    t = _re.sub(r"\s*[—–―]\s*", ", ", t)
+    # Two or more dashes used as a separator
+    t = _re.sub(r"\s*-{2,}\s*", ", ", t)
+    # Collapse paragraph breaks
+    t = _re.sub(r"\n{3,}", "\n\n", t)
+    return t.strip()
+
+
 @api.post("/chat")
-async def chat(payload: ChatRequest, user_id: str = Depends(get_current_user_id)):
+async def chat(payload: ChatRequest, request: Request, user_id: str = Depends(get_current_user_id)):
     h = await _require_household(user_id)
     user = await _get_user(user_id)
-    classification = h["classification"]
+    # Honour the active participant — classification + provider follow them
+    p = await _resolve_active_participant(user_id, request)
+    classification = (p or {}).get("classification") or h["classification"]
+    participant_name = (p or {}).get("first_name") or h.get("participant_name")
+    provider_name = (p or {}).get("provider_name") or h.get("provider_name")
     q_start, q_end, q_label = budget_lib.get_quarter_window()
 
-    # Latest statement summary
-    latest = await db.statements.find({"household_id": h["id"]}, {"_id": 0}) \
+    base_q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+    latest = await db.statements.find(base_q, {"_id": 0}) \
         .sort("uploaded_at", -1).limit(1).to_list(1)
     latest_summary = latest[0].get("summary") if latest else "No statements uploaded yet."
 
-    docs = await db.statements.find({"household_id": h["id"]}, {"_id": 0}).to_list(200)
+    docs = await db.statements.find(base_q, {"_id": 0}).to_list(200)
     items: List[dict] = []
     for s in docs:
         items.extend(s.get("line_items", []))
@@ -1239,33 +1324,60 @@ async def chat(payload: ChatRequest, user_id: str = Depends(get_current_user_id)
     burn_str = ", ".join(f"{k}: ${v:,.2f}" for k, v in burn.items())
     context = {
         "caregiver_name": user["name"],
-        "participant_name": h["participant_name"],
+        "participant_name": participant_name,
         "classification": budget_lib.CLASSIFICATIONS[classification]["label"],
         "annual": budget_lib.CLASSIFICATIONS[classification]["annual"],
         "quarterly": budget_lib.quarterly_budget(classification),
-        "provider": h["provider_name"],
+        "provider": provider_name,
         "quarter_label": q_label,
         "burn": burn_str or "no spend recorded yet",
         "contributions_total": contributions_total,
         "cap": cap_amount,
         "statement_summary": latest_summary or "No statements uploaded yet.",
     }
-    session_id = payload.session_id or f"chat-{h['id']}"
+    pid_part = (p or {}).get("id") or "default"
+    session_id = payload.session_id or f"chat-{h['id']}-{pid_part}"
     reply_text = await chat_with_kindred(payload.message, session_id, context)
+    reply_text = _humanize_assistant_reply(reply_text)
 
     # persist
     user_turn = ChatTurn(household_id=h["id"], role="user", content=payload.message)
     asst_turn = ChatTurn(household_id=h["id"], role="assistant", content=reply_text)
-    await db.chat_turns.insert_many([user_turn.model_dump(), asst_turn.model_dump()])
+    await db.chat_turns.insert_many([
+        {**user_turn.model_dump(), "participant_id": pid_part if p else None},
+        {**asst_turn.model_dump(), "participant_id": pid_part if p else None},
+    ])
     return {"reply": reply_text, "session_id": session_id}
 
 
 @api.get("/chat/history")
-async def chat_history(user_id: str = Depends(get_current_user_id)):
+async def chat_history(request: Request, user_id: str = Depends(get_current_user_id)):
     h = await _require_household(user_id)
-    docs = await db.chat_turns.find({"household_id": h["id"]}, {"_id": 0}) \
+    p = await _resolve_active_participant(user_id, request)
+    q: Dict[str, Any] = {"household_id": h["id"]}
+    if p:
+        if p.get("is_primary"):
+            q["$or"] = [{"participant_id": p["id"]}, {"participant_id": None}, {"participant_id": {"$exists": False}}]
+        else:
+            q["participant_id"] = p["id"]
+    docs = await db.chat_turns.find(q, {"_id": 0}) \
         .sort("created_at", 1).to_list(500)
     return docs
+
+
+@api.delete("/chat/history")
+async def clear_chat_history(request: Request, user_id: str = Depends(get_current_user_id)):
+    """Start a fresh Ask Wayly conversation. Scoped to the active participant
+    so swapping participants leaves the other's chat untouched."""
+    h = await _require_household(user_id)
+    p = await _resolve_active_participant(user_id, request)
+    q: Dict[str, Any] = {"household_id": h["id"]}
+    if p and not p.get("is_primary"):
+        q["participant_id"] = p["id"]
+    elif p and p.get("is_primary"):
+        q["$or"] = [{"participant_id": p["id"]}, {"participant_id": None}, {"participant_id": {"$exists": False}}]
+    res = await db.chat_turns.delete_many(q)
+    return {"ok": True, "deleted": res.deleted_count}
 
 
 # ----------------- family thread -----------------
@@ -1796,6 +1908,7 @@ async def _run_upload_job(
     file_b64: Optional[str] = None,
     file_mimetype: Optional[str] = None,
     file_size: Optional[int] = None,
+    participant_id: Optional[str] = None,
 ) -> None:
     """Background runner for the dashboard statement upload — uses the same
     chunked-parallel extraction + audit pipeline as the public Statement
@@ -1866,7 +1979,7 @@ async def _run_upload_job(
             file_size_bytes=file_size,
             file_b64=file_b64,
         )
-        await db.statements.insert_one(statement.model_dump())
+        await db.statements.insert_one({**statement.model_dump(), "participant_id": participant_id})
         await _audit(
             household_id, user_id, user_name, "STATEMENT_UPLOADED",
             f"Uploaded {filename} — {len(line_items)} line items, {len(anomalies)} alerts",
@@ -1896,6 +2009,7 @@ def _submit_upload_job(
     text: str, filename: str, household_id: str, user_id: str, user_name: str,
     file_b64: Optional[str] = None, file_mimetype: Optional[str] = None,
     file_size: Optional[int] = None,
+    participant_id: Optional[str] = None,
 ) -> str:
     import time
     _prune_upload_jobs()
@@ -1912,6 +2026,7 @@ def _submit_upload_job(
         _run_upload_job(
             job_id, text, filename, household_id, user_id, user_name,
             file_b64=file_b64, file_mimetype=file_mimetype, file_size=file_size,
+            participant_id=participant_id,
         )
     )
     return job_id
@@ -2400,26 +2515,25 @@ class HelpChatBody(BaseModel):
 
 
 HELP_CHAT_SYSTEM = (
-    "You are Wayly's friendly help bot, available on every page of wayly.com.au. "
-    "You answer site-visitor questions about Wayly itself — pricing, plans, AI tools, "
-    "the Support at Home program, and how to use the product. Keep replies short: "
-    "1-3 sentences ideally, max 80 words. Use Australian English and a calm, plain tone.\n\n"
-    "WHAT KINDRED IS\n"
-    "Wayly is an aged-care concierge for Australian families navigating the Support at "
-    "Home program (effective 1 Nov 2025). It is provider-agnostic — never takes commissions, "
-    "never sells data. The primary user is the adult-child caregiver; the participant is "
-    "the older parent.\n\n"
+    "You are Wayly's help chat, sitting in the corner of every page on wayly.com.au. "
+    "You are speaking with a family caregiver who is trying to figure out aged care while also living a full life. "
+    "Be warm and direct — like a friend who actually knows this stuff, not a support bot. "
+    "Plain Australian English. Two or three sentences is usually enough, never more than about 80 words. "
+    "Do NOT use em-dashes, en-dashes, double asterisks, headings, or any markdown formatting. Plain sentences only.\n\n"
+    "WHAT WAYLY IS\n"
+    "Wayly is for the daughter or son who suddenly has to read their parent's monthly Support at Home statement and "
+    "make sense of it. Provider-agnostic, never takes commissions, never sells data. We work alongside the caregiver, "
+    "not on behalf of the provider.\n\n"
     "PLANS\n"
-    "- Free $0/mo: 1 free Statement Decoder use per day. No card required.\n"
-    "- Solo $19/mo: unlimited use of all 8 AI tools, dashboard, statement uploads.\n"
-    "- Family $39/mo (most popular): everything in Solo + up to 5 household members + "
-    "weekly digest + concierge support.\n"
-    "- Advisor plans for financial advisors at $299 and $999. New paid users get a "
-    "7-day free trial — no card required for the trial.\n\n"
+    "- Free $0/mo: 1 Statement Decoder use per calendar month. No card required.\n"
+    "- Solo $19/mo: unlimited tools, dashboard, statement uploads, 1 participant, 1 caregiver seat.\n"
+    "- Family $39/mo (most popular): everything in Solo + 2 participants included + 3 caregiver seats + priority support.\n"
+    "- Add extra participants on Family for $19/month each, billed separately, cancel anytime.\n"
+    "- Adviser $299/mo: up to 20 client households, 3 caregiver seats, scenario modeller, branded PDFs, priority support, offline mode.\n"
+    "- Adviser Pro $3500/mo: unlimited clients, white-label, custom domain, multi-advisor team.\n"
+    "- Paid plans get a 7-day free trial, 14 days with a referral code.\n\n"
     "AI TOOLS (8 total)\n"
-    "1. Statement Decoder (free, 1/day) — upload, photograph or paste a Support at Home "
-    "monthly statement; get plain-English breakdown + anomaly flags. Accepts PDF, Word, "
-    "TXT, and photos (JPG/PNG/HEIC/WEBP).\n"
+    "1. Statement Decoder (free 1/month, unlimited on paid). Upload PDF, Word, photo (JPG/PNG/HEIC/WEBP), or paste text.\n"
     "2. Budget & Lifetime Cap Calculator (Solo+).\n"
     "3. Provider Price Checker (Solo+).\n"
     "4. Classification Self-Check (Solo+).\n"
@@ -2428,18 +2542,15 @@ HELP_CHAT_SYSTEM = (
     "7. Care Plan Reviewer (Solo+).\n"
     "8. Family Care Coordinator chat (Solo+).\n\n"
     "KEY FEATURES\n"
-    "- Caregiver dashboard: per-stream budget cards, lifetime cap progress, anomaly alerts.\n"
-    "- Participant view: huge text, voice-first, single-action UX with wellbeing check-in.\n"
-    "- Family thread + immutable audit log (Family plan).\n"
-    "- Resources hub: glossary (37 terms), templates, articles.\n"
-    "- Statement Decoder anomaly engine: ~20 named rules including duplicate detection, "
-    "weekend-rate checks, brokered-rate premiums, AT-HM commitment tracking.\n\n"
-    "BOUNDARIES (HARD RULES)\n"
-    "- Never give clinical or financial-product advice. Redirect to a GP / FAAA-registered "
-    "adviser / My Aged Care on 1800 200 422.\n"
-    "- Never recommend a specific provider.\n"
-    "- Never invent dollar figures, dates, section numbers, or URLs. If unsure say "
-    "'I'm not sure — the best place to confirm is My Aged Care on 1800 200 422'.\n"
+    "Caregiver dashboard with per-stream budget cards, lifetime cap progress, anomaly alerts. "
+    "Participant view designed for an older parent (huge text, voice-first, single-action UX). "
+    "Family thread plus immutable audit log on Family. Resources hub with glossary, templates, and articles. "
+    "Statement Decoder anomaly engine covers around 20 named rules including duplicates, weekend rates, brokered-rate premiums, and AT-HM tracking.\n\n"
+    "WHAT YOU NEVER DO\n"
+    "Never give clinical or financial advice. If a clinical question comes up, point them at their GP. "
+    "If a financial-product question comes up, point them at a FAAA-registered adviser or My Aged Care on 1800 200 422. "
+    "Never recommend a specific provider. Never invent dollar figures, dates, section numbers, or URLs. "
+    "If you genuinely don't know, say so and point them at My Aged Care on 1800 200 422.\n"
     "- For account-specific questions (billing, password reset) point users to "
     "Settings → Plan & Billing or Sign in.\n"
     "- For crisis / distress: 1800ELDERHelp 1800 353 374, OPAN 1800 700 600, "
@@ -2479,7 +2590,7 @@ async def public_help_chat(body: HelpChatBody, request: Request, response: Respo
     except Exception as e:
         logger.warning("Help chat LLM call failed: %s", e)
         raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "I'm having trouble right now. Try again in a moment, or email help@wayly.com.au."})
-    out: dict = {"reply": str(reply or ""), "session_id": sid}
+    out: dict = {"reply": _humanize_assistant_reply(str(reply or "")), "session_id": sid}
     if wrapped.get("redaction_notice"):
         out["redaction_notice"] = wrapped["redaction_notice"]
     return out
@@ -2644,7 +2755,7 @@ async def authed_help_chat(body: HelpChatBody, request: Request, user_id: str = 
     except Exception as e:
         logger.warning("Authed help chat LLM call failed: %s", e)
         raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "I'm having trouble right now. Try again in a moment."})
-    return {"reply": str(reply or ""), "session_id": sid}
+    return {"reply": _humanize_assistant_reply(str(reply or "")), "session_id": sid}
 
 
 # ---------------------------------------------------------------------------

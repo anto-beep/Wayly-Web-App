@@ -5,33 +5,71 @@ import {
     LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut,
     HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
     ShieldCheck, FolderArchive, Calendar, Bell, Repeat, Wrench, Mail, Share2, Star, FileBarChart,
-    HeartPulse, Heart, FilePenLine, UserPlus,
+    HeartPulse, Heart, FilePenLine, UserPlus, ChevronDown, ChevronRight, Wallet,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 import GlobalSearch from "@/components/GlobalSearch";
 import ParticipantSwitcher from "@/components/ParticipantSwitcher";
 
-const primaryNav = [
-    { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, mobile: true },
-    { to: "/app/wall", label: "Family wall", icon: Heart, mobile: true },
-    { to: "/app/statements", label: "Statements", icon: FileText, mobile: true },
-    { to: "/app/documents", label: "Documents", icon: FolderArchive },
-    { to: "/app/calendar", label: "Calendar", icon: Calendar },
-    { to: "/app/chat", label: "Ask Wayly", icon: MessageCircle },
-    { to: "/app/family", label: "Family", icon: Users },
-    { to: "/app/hospital", label: "Hospital mode", icon: HeartPulse },
-    { to: "/app/amendments", label: "Amendments", icon: FilePenLine },
-    { to: "/app/participants", label: "Participants", icon: UserPlus },
-    { to: "/app/correspondence", label: "Correspondence", icon: Mail },
-    { to: "/app/referrals", label: "Referrals", icon: Share2 },
-    { to: "/app/at-hm", label: "AT & HM", icon: Wrench },
-    { to: "/app/provider-switch", label: "Switch provider", icon: Repeat },
-    { to: "/app/ratings", label: "Ratings", icon: Star },
-    { to: "/app/budget-alerts", label: "Budget alerts", icon: Bell },
-    { to: "/app/reports", label: "Reports", icon: FileBarChart },
-    { to: "/app/audit", label: "Audit log", icon: ScrollText },
+/**
+ * Grouped nav. Keep the dashboard sidebar visually calm by clustering the
+ * 20+ modules into ~5 named groups. Each group is collapsible and remembers
+ * its open state across page navigations (sessionStorage).
+ */
+const navGroups = [
+    {
+        key: "today",
+        label: "Today",
+        items: [
+            { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, mobile: true },
+            { to: "/app/wall", label: "Family wall", icon: Heart, mobile: true },
+            { to: "/app/chat", label: "Ask Wayly", icon: MessageCircle },
+        ],
+    },
+    {
+        key: "money",
+        label: "Money & statements",
+        items: [
+            { to: "/app/statements", label: "Statements", icon: FileText, mobile: true },
+            { to: "/app/budget-alerts", label: "Budget alerts", icon: Bell },
+            { to: "/app/reports", label: "Reports", icon: FileBarChart },
+        ],
+    },
+    {
+        key: "care",
+        label: "Their care",
+        items: [
+            { to: "/app/family", label: "Care team", icon: Users },
+            { to: "/app/calendar", label: "Calendar", icon: Calendar },
+            { to: "/app/hospital", label: "Hospital mode", icon: HeartPulse },
+            { to: "/app/at-hm", label: "AT & HM", icon: Wrench },
+            { to: "/app/amendments", label: "Care-plan changes", icon: FilePenLine },
+        ],
+    },
+    {
+        key: "providers",
+        label: "Providers & paperwork",
+        items: [
+            { to: "/app/documents", label: "Documents", icon: FolderArchive },
+            { to: "/app/correspondence", label: "Correspondence", icon: Mail },
+            { to: "/app/provider-switch", label: "Switch provider", icon: Repeat },
+            { to: "/app/ratings", label: "Ratings", icon: Star },
+        ],
+    },
+    {
+        key: "account",
+        label: "Your account",
+        items: [
+            { to: "/app/participants", label: "Participants", icon: UserPlus },
+            { to: "/app/referrals", label: "Referrals", icon: Share2 },
+            { to: "/app/audit", label: "Audit log", icon: ScrollText },
+        ],
+    },
 ];
+
+// Flattened version still used by mobile bottom nav + drawer
+const primaryNav = navGroups.flatMap((g) => g.items);
 
 const secondaryNav = [
     { to: "/ai-tools", label: "AI Tools", icon: Sparkles },

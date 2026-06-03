@@ -17,11 +17,63 @@ import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import {
     Users, Plus, Star, Trash2, Copy, X, ArrowUpRight, RotateCcw, AlertTriangle,
-    Mail as MailIcon, Crown, CheckCircle2,
+    Mail as MailIcon, Crown, CheckCircle2, Edit3,
 } from "lucide-react";
 import { useParticipants } from "@/context/ParticipantsContext";
 
 const COLOR_SWATCHES = ["#1F3A5F", "#D4A24E", "#7C9B82", "#C76B5A", "#5F4E76"];
+
+function ProviderPicker({ value, onChange, existing, testId }) {
+    // Deduplicate and surface previously-used providers from sibling participants.
+    const uniq = Array.from(new Set((existing || []).filter(Boolean)));
+    const [mode, setMode] = useState(uniq.length > 0 && (!value || uniq.includes(value)) ? "pick" : "type");
+    if (uniq.length === 0) {
+        return <input value={value || ""} onChange={(e) => onChange(e.target.value)} className="w-full mt-1 rounded-md border border-kindred px-3 py-2" data-testid={testId} />;
+    }
+    return (
+        <div className="mt-1 space-y-2">
+            {mode === "pick" ? (
+                <>
+                    <select
+                        value={uniq.includes(value) ? value : ""}
+                        onChange={(e) => onChange(e.target.value)}
+                        data-testid={`${testId}-select`}
+                        className="w-full rounded-md border border-kindred px-3 py-2"
+                    >
+                        <option value="">Choose a provider</option>
+                        {uniq.map((p) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                    <button
+                        type="button"
+                        onClick={() => { setMode("type"); onChange(""); }}
+                        className="text-xs text-primary-k hover:underline inline-flex items-center gap-1"
+                        data-testid={`${testId}-add-new`}
+                    >
+                        <Plus className="h-3 w-3" /> Add a different provider
+                    </button>
+                </>
+            ) : (
+                <>
+                    <input
+                        value={value || ""}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder="Provider name"
+                        autoFocus
+                        data-testid={testId}
+                        className="w-full rounded-md border border-kindred px-3 py-2"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setMode("pick")}
+                        className="text-xs text-primary-k hover:underline"
+                    >
+                        ← Pick from {uniq.length === 1 ? "the existing provider" : "existing providers"}
+                    </button>
+                </>
+            )}
+        </div>
+    );
+}
 
 const EMPTY_FORM = {
     first_name: "", last_name: "", date_of_birth: "",
@@ -44,6 +96,9 @@ export default function ParticipantsPage() {
 
     const [removeTarget, setRemoveTarget] = useState(null);
     const [removeChoice, setRemoveChoice] = useState("stay"); // stay | downgrade
+    const [editTarget, setEditTarget] = useState(null);
+    const [editForm, setEditForm] = useState({ first_name: "", last_name: "", classification: "", provider_name: "" });
+    const [editSaving, setEditSaving] = useState(false);
 
     const loadAll = useCallback(async () => {
         setLoading(true);
@@ -230,7 +285,35 @@ export default function ParticipantsPage() {
                                         </button>
                                     </div>
                                 )}
-                                <div className="flex gap-2 pt-1">
+                                <div className="flex gap-2 pt-1 items-center flex-wrap">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setEditTarget(p); setEditForm({ first_name: p.first_name || "", last_name: p.last_name || "", classification: p.classification || "", provider_name: p.provider_name || "" }); }}
+                                        data-testid={`participant-edit-${p.id}`}
+                                        className="text-xs text-primary-k hover:underline inline-flex items-center gap-1"
+                                    >
+                                        <Edit3 className="h-3 w-3" /> Edit details
+                                    </button>
+                                    {!p.is_primary && (
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                if (!window.confirm(`Set ${p.first_name} as the primary participant?`)) return;
+                                                try {
+                                                    await api.post(`/participants/${p.id}/promote`);
+                                                    toast.success(`${p.first_name} is now the primary participant`);
+                                                    await loadAll();
+                                                    await refresh();
+                                                } catch (e) {
+                                                    toast.error(extractErrorMessage(e, "Could not promote"));
+                                                }
+                                            }}
+                                            data-testid={`participant-promote-${p.id}`}
+                                            className="text-xs text-primary-k hover:underline inline-flex items-center gap-1"
+                                        >
+                                            <Crown className="h-3 w-3" /> Make primary
+                                        </button>
+                                    )}
                                     {!p.is_primary && (
                                         <button onClick={() => setRemoveTarget(p)} data-testid={`participant-remove-${p.id}`} className="text-xs text-terracotta hover:underline inline-flex items-center gap-1">
                                             <Trash2 className="h-3 w-3" /> Remove
@@ -397,7 +480,12 @@ export default function ParticipantsPage() {
                                 </div>
                                 <div>
                                     <label className="text-xs text-muted-k">Provider</label>
-                                    <input value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} className="w-full mt-1 rounded-md border border-kindred px-3 py-2" data-testid="form-provider" />
+                                    <ProviderPicker
+                                        value={form.provider_name}
+                                        onChange={(v) => setForm({ ...form, provider_name: v })}
+                                        existing={active.map((p) => p.provider_name).filter(Boolean)}
+                                        testId="form-provider"
+                                    />
                                 </div>
                                 <div>
                                     <label className="text-xs text-muted-k">Statement delivery</label>
@@ -452,6 +540,74 @@ export default function ParticipantsPage() {
                                 <button onClick={closeAdd} className="w-full bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]">Done</button>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* EDIT modal */}
+            {editTarget && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" data-testid="edit-participant-modal">
+                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl">
+                        <div className="px-5 py-3 border-b border-kindred flex items-center justify-between">
+                            <h2 className="font-heading text-lg text-primary-k">Edit {editTarget.first_name}</h2>
+                            <button onClick={() => setEditTarget(null)} className="text-muted-k hover:text-primary-k"><X className="h-4 w-4" /></button>
+                        </div>
+                        <div className="p-5 space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-xs text-muted-k">First name</label>
+                                    <input value={editForm.first_name} onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })} className="w-full mt-1 rounded-md border border-kindred px-3 py-2" data-testid="edit-first-name" />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-muted-k">Last name</label>
+                                    <input value={editForm.last_name} onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })} className="w-full mt-1 rounded-md border border-kindred px-3 py-2" data-testid="edit-last-name" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-muted-k">Classification</label>
+                                <select value={editForm.classification} onChange={(e) => setEditForm({ ...editForm, classification: e.target.value })} className="w-full mt-1 rounded-md border border-kindred px-3 py-2" data-testid="edit-classification">
+                                    <option value="">Not sure yet</option>
+                                    {[1,2,3,4,5,6,7,8].map((n) => <option key={n} value={n}>Class {n}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs text-muted-k">Provider</label>
+                                <ProviderPicker
+                                    value={editForm.provider_name}
+                                    onChange={(v) => setEditForm({ ...editForm, provider_name: v })}
+                                    existing={active.filter((p) => p.id !== editTarget.id).map((p) => p.provider_name).filter(Boolean)}
+                                    testId="edit-provider"
+                                />
+                            </div>
+                        </div>
+                        <div className="px-5 py-3 border-t border-kindred flex justify-end gap-2">
+                            <button onClick={() => setEditTarget(null)} className="px-4 py-2 text-sm text-muted-k hover:text-primary-k">Cancel</button>
+                            <button
+                                onClick={async () => {
+                                    if (!editForm.first_name.trim()) { toast.error("First name is required"); return; }
+                                    setEditSaving(true);
+                                    try {
+                                        await api.patch(`/v2/participants/${editTarget.id}`, {
+                                            first_name: editForm.first_name.trim(),
+                                            last_name: editForm.last_name.trim(),
+                                            classification: editForm.classification ? Number(editForm.classification) : undefined,
+                                            provider_name: editForm.provider_name.trim() || undefined,
+                                        });
+                                        toast.success("Saved");
+                                        setEditTarget(null);
+                                        await loadAll();
+                                        await refresh();
+                                    } catch (e) {
+                                        toast.error(extractErrorMessage(e, "Could not save"));
+                                    } finally { setEditSaving(false); }
+                                }}
+                                disabled={editSaving}
+                                data-testid="edit-save-btn"
+                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60"
+                            >
+                                {editSaving ? "Saving…" : "Save"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

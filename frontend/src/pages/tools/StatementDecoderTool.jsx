@@ -291,10 +291,10 @@ export default function StatementDecoderTool() {
                             <div className="flex items-start gap-3">
                                 <Clock className="h-5 w-5 text-primary-k mt-0.5 flex-shrink-0" />
                                 <div className="flex-1">
-                                    <div className="font-medium text-primary-k">You've used your free decode for today.</div>
-                                    <p className="text-sm text-muted-k mt-1">Come back tomorrow for another free use — or sign up to decode as many as you need.</p>
+                                    <div className="font-medium text-primary-k">You've used your free decode for this month.</div>
+                                    <p className="text-sm text-muted-k mt-1">Your next free decode opens on the 1st of next month — or sign up for unlimited.</p>
                                     {countdown && (
-                                        <p className="text-xs text-muted-k mt-2 tabular-nums">Next free use in: <span className="font-semibold text-primary-k">{countdown}</span></p>
+                                        <p className="text-xs text-muted-k mt-2 tabular-nums">Resets in: <span className="font-semibold text-primary-k">{countdown}</span></p>
                                     )}
                                     <div className="mt-4 flex flex-wrap gap-2">
                                         <Link to="/signup?plan=solo" data-testid="sd-limit-trial" className="text-sm bg-gold text-primary-k font-semibold rounded-md px-4 py-2 hover:brightness-95">Start free trial →</Link>

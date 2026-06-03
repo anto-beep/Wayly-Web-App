@@ -236,7 +236,7 @@ export default function FloatingHelpChat() {
                                     className="text-[10px] text-muted-k hover:text-primary-k underline"
                                     data-testid="help-chat-clear"
                                 >
-                                    Clear chat
+                                    Start fresh chat
                                 </button>
                             )}
                         </div>

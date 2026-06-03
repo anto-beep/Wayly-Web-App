@@ -77,6 +77,7 @@ import AdviserScenarios from "@/pages/AdviserScenarios";
 import AdviserAlerts from "@/pages/AdviserAlerts";
 import { ParticipantsProvider } from "@/context/ParticipantsContext";
 import OfflineIndicator from "@/components/OfflineIndicator";
+import ScrollToTop from "@/components/ScrollToTop";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -149,6 +150,7 @@ function App() {
             <AuthProvider>
                 <ParticipantsProvider>
                 <BrowserRouter>
+                <ScrollToTop />
                 <Toaster richColors position="top-right" />
                 <ConsumerWidgets />
                 <OfflineIndicator />

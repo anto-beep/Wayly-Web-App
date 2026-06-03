@@ -610,6 +610,29 @@ async def get_free_tool_usage(request: Request, tool: str = Query(default="STATE
 
 
 
+class _V2PatchBody(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    classification: Optional[int] = None
+    provider_name: Optional[str] = None
+    date_of_birth: Optional[str] = None
+
+
+@batch3_router.patch("/v2/participants/{pid}")
+async def patch_v2_participant(pid: str, body: _V2PatchBody, request: Request):
+    user = await _user_dep(request)
+    acct = await _require_owner(user)
+    p = await _db.participants.find_one({"id": pid, "account_id": acct["id"]}, {"_id": 0})
+    if not p:
+        raise HTTPException(status_code=404, detail="Participant not found")
+    patch = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
+    if not patch:
+        return p
+    patch["updated_at"] = _now_iso()
+    await _db.participants.update_one({"id": pid}, {"$set": patch})
+    return await _db.participants.find_one({"id": pid}, {"_id": 0})
+
+
 # ============================================================================
 # INBOUND MAIL WEBHOOK — `<firstname>-<shortcode>@in.wayly.com.au`
 # ============================================================================

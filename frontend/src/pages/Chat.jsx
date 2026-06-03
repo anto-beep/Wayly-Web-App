@@ -66,9 +66,29 @@ export default function Chat() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-180px)]" data-testid="chat-page">
-            <div className="mb-4">
-                <span className="overline">Ask Wayly</span>
-                <h1 className="font-heading text-3xl text-primary-k tracking-tight mt-2">What would you like to know?</h1>
+            <div className="mb-4 flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                    <span className="overline">Ask Wayly</span>
+                    <h1 className="font-heading text-3xl text-primary-k tracking-tight mt-2">What would you like to know?</h1>
+                </div>
+                <button
+                    type="button"
+                    onClick={async () => {
+                        if (!window.confirm("Start a fresh chat? Your conversation history with Wayly for the active participant will be cleared.")) return;
+                        try {
+                            await api.delete("/chat/history");
+                            setMsgs([]);
+                            setInput("");
+                            toast.success("Fresh chat started.");
+                        } catch {
+                            toast.error("Could not start a fresh chat.");
+                        }
+                    }}
+                    data-testid="chat-fresh-btn"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface text-primary-k text-xs font-medium px-3 py-1.5 hover:bg-surface-2"
+                >
+                    <RotateCcw className="h-3.5 w-3.5" /> Start fresh chat
+                </button>
             </div>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto bg-surface border border-kindred rounded-2xl p-4 sm:p-6 space-y-4">

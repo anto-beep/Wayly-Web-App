@@ -15,8 +15,8 @@ const FEATURES = [
 ];
 
 const TIERS = [
-    { name: "Advisor", price: "$299", clients: "Up to 50 clients", desc: "Lifetime-cap tracker, forecasting, review-pack export, email + priority support.", featured: false },
-    { name: "Advisor Pro", price: "$999", clients: "Up to 200 clients", desc: "White-label, custom domain, multi-advisor team, dedicated CS manager, API access.", featured: true },
+    { name: "Advisor", price: "$299", clients: "Up to 20 clients", desc: "Lifetime-cap tracker, forecasting, review-pack export, email + priority support.", featured: false },
+    { name: "Advisor Pro", price: "$3500", clients: "Unlimited clients", desc: "White-label, custom domain, multi-advisor team, dedicated CS manager, API access.", featured: true },
 ];
 
 export default function ForAdvisors() {

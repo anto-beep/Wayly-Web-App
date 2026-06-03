@@ -13,7 +13,7 @@ const TOOLS = [
         title: "Statement Decoder",
         body: "Paste any Support at Home monthly statement and get a plain-English explanation in 60 seconds.",
         icon: FileSearch,
-        plan: "Free — 1 use/day",
+        plan: "Free — 1 use/month",
         planTone: "free",
         planSub: "No signup required",
     },
