@@ -3447,6 +3447,14 @@ api.include_router(batch2_router)
 api.include_router(batch3_router)
 api.include_router(batch3_billing_router)
 
+# Reports — 8 PDF reports + in-app preview
+try:
+    from reports_routes import router as reports_router
+    api.include_router(reports_router)
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"reports_routes failed to load: {_e}")
+
 app.include_router(api)
 
 app.add_middleware(

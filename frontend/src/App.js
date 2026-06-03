@@ -68,6 +68,7 @@ import Correspondence from "@/pages/extended/Correspondence";
 import Referrals from "@/pages/extended/Referrals";
 import ProviderRatings from "@/pages/extended/ProviderRatings";
 import SummaryReports from "@/pages/extended/SummaryReports";
+import Reports from "@/pages/Reports";
 import ParticipantsPage from "@/pages/extended/Participants";
 import HospitalLiaison from "@/pages/extended/HospitalLiaison";
 import FamilyWall from "@/pages/extended/FamilyWall";
@@ -101,6 +102,16 @@ function PublicAuthOnly({ children }) {
         if (user.plan === "adviser") return <Navigate to="/adviser" replace />;
         if (!household && user.plan !== "free") return <Navigate to="/onboarding" replace />;
         return <Navigate to={user.role === "participant" ? "/participant" : "/app"} replace />;
+    }
+    return children;
+}
+
+function AIToolsRoute({ children }) {
+    /** AI Tools pages — wrap in the dashboard Layout for logged-in users (so the sidebar + participant switcher stay visible), or render bare for visitors. */
+    const { user, loading } = useAuth();
+    if (loading) return <Loading />;
+    if (user && user.plan !== "adviser") {
+        return <Layout>{children}</Layout>;
     }
     return children;
 }
@@ -173,15 +184,15 @@ function App() {
                     <Route path="/resources/templates" element={<Templates />} />
                     <Route path="/resources/articles" element={<ArticlesIndex />} />
                     <Route path="/resources/articles/:slug" element={<ArticleDetail />} />
-                    <Route path="/ai-tools" element={<AIToolsIndex />} />
-                    <Route path="/ai-tools/statement-decoder" element={<StatementDecoderTool />} />
-                    <Route path="/ai-tools/budget-calculator" element={<BudgetCalculatorTool />} />
-                    <Route path="/ai-tools/provider-price-checker" element={<PriceCheckerTool />} />
-                    <Route path="/ai-tools/classification-self-check" element={<ClassificationCheck />} />
-                    <Route path="/ai-tools/reassessment-letter" element={<ReassessmentLetter />} />
-                    <Route path="/ai-tools/contribution-estimator" element={<ContributionEstimator />} />
-                    <Route path="/ai-tools/care-plan-reviewer" element={<CarePlanReviewer />} />
-                    <Route path="/ai-tools/family-coordinator" element={<FamilyCoordinator />} />
+                    <Route path="/ai-tools" element={<AIToolsRoute><AIToolsIndex /></AIToolsRoute>} />
+                    <Route path="/ai-tools/statement-decoder" element={<AIToolsRoute><StatementDecoderTool /></AIToolsRoute>} />
+                    <Route path="/ai-tools/budget-calculator" element={<AIToolsRoute><BudgetCalculatorTool /></AIToolsRoute>} />
+                    <Route path="/ai-tools/provider-price-checker" element={<AIToolsRoute><PriceCheckerTool /></AIToolsRoute>} />
+                    <Route path="/ai-tools/classification-self-check" element={<AIToolsRoute><ClassificationCheck /></AIToolsRoute>} />
+                    <Route path="/ai-tools/reassessment-letter" element={<AIToolsRoute><ReassessmentLetter /></AIToolsRoute>} />
+                    <Route path="/ai-tools/contribution-estimator" element={<AIToolsRoute><ContributionEstimator /></AIToolsRoute>} />
+                    <Route path="/ai-tools/care-plan-reviewer" element={<AIToolsRoute><CarePlanReviewer /></AIToolsRoute>} />
+                    <Route path="/ai-tools/family-coordinator" element={<AIToolsRoute><FamilyCoordinator /></AIToolsRoute>} />
 
                     {/* Legal pages */}
                     <Route path="/legal/terms" element={<Terms />} />
@@ -222,7 +233,8 @@ function App() {
                     <Route path="/app/correspondence" element={<RequireAuth><Layout><Correspondence /></Layout></RequireAuth>} />
                     <Route path="/app/referrals" element={<RequireAuth><Layout><Referrals /></Layout></RequireAuth>} />
                     <Route path="/app/ratings" element={<RequireAuth><Layout><ProviderRatings /></Layout></RequireAuth>} />
-                    <Route path="/app/reports" element={<RequireAuth><Layout><SummaryReports /></Layout></RequireAuth>} />
+                    <Route path="/app/reports" element={<RequireAuth><Layout><Reports /></Layout></RequireAuth>} />
+                    <Route path="/app/reports-legacy" element={<RequireAuth><Layout><SummaryReports /></Layout></RequireAuth>} />
                     <Route path="/app/participants" element={<RequireAuth><Layout><ParticipantsPage /></Layout></RequireAuth>} />
                     <Route path="/app/hospital" element={<RequireAuth><Layout><HospitalLiaison /></Layout></RequireAuth>} />
                     <Route path="/app/wall" element={<RequireAuth><Layout><FamilyWall /></Layout></RequireAuth>} />

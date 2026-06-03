@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+{% set q = data.quarter %}
+{% set stats = data.stats %}
+<div class="stat-grid">
+  <div class="stat"><div class="stat-label">Budget used · {{ q.label }}</div><div class="stat-value">{{ q.pct }}%</div><div class="muted">{{ q.spent|money }} of {{ q.budget|money }}</div></div>
+  <div class="stat"><div class="stat-label">Services this quarter</div><div class="stat-value">{{ stats.services_count }}</div></div>
+  <div class="stat"><div class="stat-label">Anomalies flagged</div><div class="stat-value">{{ stats.anomalies_count }}</div><div><span class="badge {% if stats.anomalies_severity == 'HIGH' %}red{% elif stats.anomalies_severity == 'MEDIUM' %}amber{% else %}green{% endif %}">{{ stats.anomalies_severity }}</span></div></div>
+  <div class="stat"><div class="stat-label">Open concerns</div><div class="stat-value" style="color: {% if stats.open_concerns > 0 %}#C2533D{% else %}#1F3A5F{% endif %};">{{ stats.open_concerns }}</div></div>
+</div>
+
+{% if data.exec_summary %}
+<div class="cream-card section">
+  <h3>Summary</h3>
+  <p>{{ data.exec_summary }}</p>
+</div>
+{% endif %}
+
+<div class="cols-2">
+  <div>
+    <h2>Active services</h2>
+    <table>
+      <thead><tr><th>Service</th><th>Worker</th><th>Stream</th><th>Rate</th></tr></thead>
+      <tbody>
+        {% for s in data.active_services %}
+        <tr><td>{{ s.service }}</td><td>{{ s.worker or '—' }}</td><td>{{ s.stream or '—' }}</td><td>{{ s.rate|money if s.rate else '—' }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">No active services recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h2>Care team</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Role</th><th>Phone</th></tr></thead>
+      <tbody>
+        {% for m in data.care_team %}
+        <tr><td>{{ m.name }}{% if m.is_emergency %} <span class="badge red">EMERGENCY</span>{% endif %}</td><td>{{ m.role or '—' }}</td><td>{{ m.phone or '—' }}</td></tr>
+        {% else %}
+        <tr><td colspan="3" class="muted">No care team members recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h2>Upcoming</h2>
+<div class="cream-card">
+  <p>Next scheduled visit: {% if data.next_visit %}{{ data.next_visit.starts_at|niceDate }} · {{ data.next_visit.service or '—' }} · {{ data.next_visit.worker or '—' }}{% else %}<span class="muted">No upcoming visits in the calendar.</span>{% endif %}</p>
+  <p>Next AT-HM expiry: {% if data.next_athm %}{{ data.next_athm.item_description }} · expires {{ data.next_athm.expires_at|niceDate }} · {{ (data.next_athm.amount_remaining or 0)|money }} remaining{% else %}<span class="muted">No AT-HM commitments recorded.</span>{% endif %}</p>
+  <p>Next care plan review: <span class="muted">Not recorded</span></p>
+</div>
+
+<h2>Recent concerns</h2>
+{% if data.recent_concerns %}
+<table>
+  <thead><tr><th>Date</th><th>Type</th><th>Headline</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for c in data.recent_concerns %}
+    <tr><td>{{ c.created_at|niceDate }}</td><td>{{ c.type or '—' }}</td><td>{{ c.title or c.headline or '—' }}</td><td><span class="badge {% if c.status == 'resolved' %}green{% elif c.status == 'escalated' %}red{% else %}amber{% endif %}">{{ c.status or 'open' }}</span></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No concerns recorded.</p>
+{% endif %}
+
+<h2>Hospitalisation (last 12 months)</h2>
+{% if data.hospitalisations %}
+<table>
+  <thead><tr><th>Admitted</th><th>Discharged</th><th>Hospital</th><th>Duration</th><th>RCP</th></tr></thead>
+  <tbody>
+    {% for hosp in data.hospitalisations %}
+    <tr><td>{{ hosp.admitted_at|niceDate }}</td><td>{{ hosp.discharged_at|niceDate }}</td><td>{{ hosp.hospital_name or '—' }}</td><td>{{ hosp.duration_days or '—' }} d</td><td>{{ 'yes' if hosp.rcp_requested else 'no' }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No hospitalisations recorded in the last 12 months.</p>
+{% endif %}
+{% endblock %}

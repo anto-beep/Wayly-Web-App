@@ -163,11 +163,9 @@ export default function Layout({ children }) {
             {/* ---- BODY: sidebar (md+) + main ---- */}
             <div className="mx-auto max-w-7xl flex flex-col md:flex-row gap-6 px-4 md:px-6 py-5 md:py-8">
                 <aside className="hidden md:block md:w-56 flex-shrink-0">
-                    <nav className="flex flex-col gap-1" data-testid="primary-nav">
-                        {primaryNav.map((item) => (
-                            <NavItem key={item.to} item={item} />
-                        ))}
-                        <div className="pt-3 mt-3 border-t border-kindred flex flex-col gap-1">
+                    <nav className="flex flex-col gap-3" data-testid="primary-nav">
+                        {navGroups.map((g) => <NavGroup key={g.key} group={g} />)}
+                        <div className="pt-3 mt-1 border-t border-kindred flex flex-col gap-1">
                             {secondaryNav.map((item) => (
                                 <NavItem key={item.to} item={item} />
                             ))}
@@ -335,5 +333,38 @@ function NavItem({ item }) {
             <item.icon className="h-4 w-4" />
             <span>{item.label}</span>
         </NavLink>
+    );
+}
+
+function NavGroup({ group }) {
+    const storageKey = `wayly_nav_group_${group.key}`;
+    const [open, setOpen] = useState(() => {
+        try { const v = sessionStorage.getItem(storageKey); return v === null ? true : v === "1"; } catch { return true; }
+    });
+    const toggle = () => {
+        setOpen((prev) => {
+            const next = !prev;
+            try { sessionStorage.setItem(storageKey, next ? "1" : "0"); } catch { /* ignore */ }
+            return next;
+        });
+    };
+    return (
+        <div data-testid={`nav-group-${group.key}`}>
+            <button
+                type="button"
+                onClick={toggle}
+                data-testid={`nav-group-toggle-${group.key}`}
+                className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-k hover:text-primary-k"
+                aria-expanded={open}
+            >
+                <span>{group.label}</span>
+                {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            </button>
+            {open && (
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                    {group.items.map((item) => <NavItem key={item.to} item={item} />)}
+                </div>
+            )}
+        </div>
     );
 }
