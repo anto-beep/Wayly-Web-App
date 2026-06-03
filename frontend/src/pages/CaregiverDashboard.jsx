@@ -9,6 +9,7 @@ import {
     Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useParticipants } from "@/context/ParticipantsContext";
 
 const PLAN_LABELS = {
     free: { label: "Free plan", tone: "bg-sage/15 text-[#3A5A40]", desc: "2 of 8 AI tools · no household tracking" },
@@ -51,6 +52,13 @@ function FreePlanLimitCard() {
 
 export default function CaregiverDashboard() {
     const { household, user } = useAuth();
+    const { active: activeParticipant } = useParticipants();
+    // When a non-primary participant is selected, prefer their fields over the
+    // household snapshot (the household record was created from the primary).
+    const displayName = activeParticipant
+        ? `${activeParticipant.first_name || ""} ${activeParticipant.last_name || ""}`.trim()
+        : (household?.participant_name || "");
+    const displayProvider = activeParticipant?.provider_name || household?.provider_name || "";
     const [budget, setBudget] = useState(null);
     const [statements, setStatements] = useState([]);
     const [familyMsgs, setFamilyMsgs] = useState([]);
@@ -97,11 +105,11 @@ export default function CaregiverDashboard() {
                         <PlanBadge plan={plan} />
                     </div>
                     <h1 className="font-heading text-3xl sm:text-4xl text-primary-k tracking-tight mt-2">
-                        {household?.participant_name ? `${household.participant_name}, this quarter` : "Your dashboard"}
+                        {displayName ? `${displayName}, this quarter` : "Your dashboard"}
                     </h1>
                     {budget && (
                         <p className="text-muted-k mt-2">
-                            {budget.quarter_label} · {budget.classification_label} · {formatAUD(budget.quarterly_total)} per quarter · Provider: {household?.provider_name}
+                            {budget.quarter_label} · {budget.classification_label} · {formatAUD(budget.quarterly_total)} per quarter{displayProvider ? ` · Provider: ${displayProvider}` : ""}
                         </p>
                     )}
                 </div>

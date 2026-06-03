@@ -11,6 +11,7 @@ import NotificationsBell from "@/components/NotificationsBell";
 import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 import GlobalSearch from "@/components/GlobalSearch";
 import ParticipantSwitcher from "@/components/ParticipantSwitcher";
+import { useParticipants } from "@/context/ParticipantsContext";
 
 /**
  * Grouped nav. Keep the dashboard sidebar visually calm by clustering the
@@ -81,6 +82,12 @@ const bottomNavItems = primaryNav.filter((n) => n.mobile);
 
 export default function Layout({ children }) {
     const { user, household, logout } = useAuth();
+    const { active: activeParticipant } = useParticipants();
+    const headerName = activeParticipant
+        ? `${activeParticipant.first_name || ""} ${activeParticipant.last_name || ""}`.trim()
+        : household?.participant_name;
+    const headerClass = activeParticipant?.classification ?? household?.classification;
+    const headerProvider = activeParticipant?.provider_name || household?.provider_name;
     const nav = useNavigate();
     const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -116,8 +123,8 @@ export default function Layout({ children }) {
                         {user && <ParticipantSwitcher tone="light" />}
                         {household && (
                             <div className="hidden lg:flex flex-col text-right min-w-0">
-                                <span className="text-sm font-medium text-primary-k truncate max-w-[180px]">{household.participant_name}</span>
-                                <span className="text-xs text-muted-k truncate max-w-[200px]">Classification {household.classification} · {household.provider_name}</span>
+                                <span className="text-sm font-medium text-primary-k truncate max-w-[180px]">{headerName}</span>
+                                <span className="text-xs text-muted-k truncate max-w-[200px]">{headerClass ? `Classification ${headerClass}` : ""}{headerProvider ? ` · ${headerProvider}` : ""}</span>
                             </div>
                         )}
                         {user && (
@@ -254,8 +261,8 @@ export default function Layout({ children }) {
                         {household && (
                             <div className="px-4 py-3 bg-surface-2 border-b border-kindred">
                                 <div className="text-xs uppercase tracking-wider text-muted-k">Caring for</div>
-                                <div className="text-sm font-medium text-primary-k mt-0.5">{household.participant_name}</div>
-                                <div className="text-xs text-muted-k">Classification {household.classification} · {household.provider_name}</div>
+                                <div className="text-sm font-medium text-primary-k mt-0.5">{headerName}</div>
+                                <div className="text-xs text-muted-k">{headerClass ? `Classification ${headerClass}` : ""}{headerProvider ? ` · ${headerProvider}` : ""}</div>
                             </div>
                         )}
                         <nav className="flex flex-col p-2 gap-1">
