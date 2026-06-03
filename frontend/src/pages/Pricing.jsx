@@ -195,6 +195,10 @@ const FAQS = [
       a: "The free plan includes 1 Statement Decoder use per calendar month. All other AI tools are available on paid plans only." },
     { q: "Can I use the Statement Decoder without creating an account?",
       a: "Yes. You can decode one statement per month without creating an account. The result is shown in full. Features that save or track your results require an account." },
+    { q: "How does the free Statement Decoder gate actually work?",
+      a: "Without an account, we use a server-side browser fingerprint (IP + user agent + accept-language) to count one decode per calendar month. With an account, the count is tied to your user ID. The counter resets on the 1st of every month." },
+    { q: "What happens if my payment fails?",
+      a: "We retry your payment for a few days and email you immediately. Your account stays active during the retry window. If the payment still hasn't gone through after the grace period, the plan moves to PAST_DUE and read-only access continues for 7 days so you don't lose data while you sort it out." },
 ];
 
 function Cell({ v }) {

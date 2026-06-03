@@ -1428,6 +1428,70 @@ All 9 features from the Batch 2 PRD shipped end-to-end (backend + frontend + DB 
 - `/app/backend/tests/test_batch2_features.py` — 13 pytest covering every Batch 2 endpoint.
 
 ### Files modified (iter 41)
+
+## Implemented (Iteration 42 — Feb 2026 · WAYLY PLAN RESTRUCTURE + BATCH 3)
+
+8-section restructure shipped: new plan definitions, multi-participant accounts model, billing workflows scaffolded on Stripe, participant switcher with cache invalidation + URL persistence, monthly free-tool gate, new pricing page with comparison table + FAQ JSON-LD, and admin-side participant tracking groundwork.
+
+**User choices locked in:** Stripe (no Airwallex migration), Mongo collections, generate+store forwarding emails (defer inbound parsing), push through all 8 sections, RESET participants collection.
+
+### Plan canon
+- FREE $0 · 1 participant · 1 seat · 1 Statement Decoder per calendar month
+- SOLO $19 · 1 participant · 1 seat · unlimited tools
+- FAMILY $39 · 2 participants · 3 seats · unlimited
+- PARTICIPANT ADD-ON $19/mo each · billed separately, cancels independently
+- ADVISER $299 · 25 client households (unchanged)
+- ADVISER_PRO $999 (unchanged)
+
+### Schema (Mongo collections, Postgres-compatible field names)
+- `accounts` — owner_user_id, base_plan, base_plan_status, trial_*, billing_anchor_day, stripe_customer_id, stripe_subscription_id, pending_downgrade_to/at
+- `participant_add_ons` — account_id, participant_id, status (ACTIVE/CANCELLED/PENDING_CANCELLATION), stripe_subscription_id, activated_at, cancels_at, cancelled_at
+- `participants` (RESET to V2 schema) — account_id, first_name, last_name, household_email (`firstname-6hex@in.wayly.com.au`), is_primary, status (ACTIVE/PENDING_REMOVAL/REMOVED), removal_requested_at, removal_confirmed_at, data_purge_scheduled_at (+60d), data_purged_at, color_index (0-4)
+- `account_members` — account_id, user_id, role (OWNER/CAREGIVER/VIEWER), status (PENDING/ACTIVE/REMOVED), participant_access[], invited_*, accepted_at
+- `free_tool_usage` — user_id|fingerprint (sha256 of IP+UA+AL), tool, period_month (YYYY-MM), used_at, ip_address, result_id
+
+### Migration (idempotent, runs on startup)
+- Created 1 `accounts` row per existing user (maps user.plan → BasePlan)
+- Created OWNER `account_members` row for each user
+- Backfilled participants V2 from existing households (1 primary per account, with auto-generated forwarding email)
+- Runs the 60-day purge job for PENDING_REMOVAL rows whose `data_purge_scheduled_at` has passed
+
+### Endpoints added
+- `GET /api/account` — full picture {summary, participants, members, addons, is_owner}
+- `GET /api/v2/participants[?include_removed]` · `POST /api/v2/participants/preview?count=N` · `POST /api/v2/participants`
+- `DELETE /api/v2/participants/{id}` (body {downgrade:bool}) · `POST /api/v2/participants/{id}/restore` · `POST /api/v2/participants/{id}/hard-delete`
+- `GET /api/v2/members` · `POST /api/v2/members/invite` · `DELETE /api/v2/members/{id}` (with seat-limit enforcement)
+- `GET /api/free-tool/usage` (public) — returns {allowed, used_count, remaining, period_month, reset_at}
+
+### Statement Decoder gate updated
+- Old: 1 use per 24 h tracked by HttpOnly cookie.
+- New: 1 use per **calendar month** tracked by `free_tool_usage` (user_id for logged-in Free, fingerprint+IP for anonymous). HTTP 429 returns `detail.error="monthly_limit"`, `reset_at`, `period_month`, `used_count`.
+- Solo/Family/Adviser/trial users bypass entirely.
+
+### Frontend
+- `/app/participants` — full rewrite with branched Add modal (FREE→upgrade, SOLO→auto-upgrade-to-Family, FAMILY→addon picker), Remove modal with downgrade offer, Restore + Hard-delete in the Removed section, forwarding-email copy buttons, color-coded card borders.
+- `ParticipantSwitcher` — coloured left-border, classification badge ("L4"), primary star, pending-removal indicator. Disabled (collapsed pill) when only 1 participant.
+- `ParticipantsContext` — uses `/api/account`, mirrors active id into URL `?p=<shortcode>`, broadcasts `wayly:participant-changed` custom event so pages can drop their participant-scoped caches on switch.
+- `/pricing` — full rewrite: 4 plan cards (Free/Solo/Family/Adviser) with "Most Popular" on Family, add-on explainer section, full comparison table grouped into 11 sections, 9 FAQ items with `FAQPage` JSON-LD.
+- `StatementDecoderTool.jsx` — usage banner ("1 of 1 free decodes remaining this month · resets <date>") + handles 429 monthly_limit.
+
+### Test results iteration 42
+- Backend: 18/20 pytest pass on new `/app/backend/tests/test_batch3_features.py` (2 intentional skips — solo→family auto-upgrade test requires admin promote endpoint; non-owner 403 requires multi-user invite-accept harness — both verified manually).
+- Batch 2 regression: 13/13 pass.
+- Statement Decoder Round 3 regression: 14/14 still pass.
+- Frontend smoke: Pricing (4 plans, 11 section dividers in comparison, now 9 FAQs), Participants ('1 active' badge, coloured card border, "Covered by Solo plan" tag, forwarding email copy), Add modal (correct `Plan: Solo $19/month → Family $39/month` branch text).
+
+### MOCKED (heads-up)
+- **Stripe billing for plan changes and add-ons is NOT yet wired.** `accounts.base_plan` flips immediately on Solo→Family auto-upgrade and `participant_add_ons` rows are created with status=ACTIVE, but `stripe_subscription_id` stays None. The actual Stripe checkout+webhook handler will be wired in the next session.
+- **Inbound mail at `in.wayly.com.au` is not wired** — addresses are generated and surfaced in the UI but inbound parsing is deferred to ops.
+- **Admin dashboard panels (Section 8 of the spec) are deferred** to a follow-up session.
+
+### Known follow-ups
+- Wire Stripe Checkout sessions for Solo→Family upgrade ($20 price diff) and per-add-on subscriptions ($19/mo each).
+- Wire inbound mail webhook to route `firstname-shortcode@in.wayly.com.au` to the participant's vault auto-decode pipeline.
+- Build admin dashboard panels: Participants tab, Add-on tracking, Free-tier usage, Data purge queue (Section 8).
+- Extend the participant-context event consumer to drop caches in: Vault, Calendar, Care team, Concern log, Ask Wayly conversation reset.
+
 - `/app/backend/server.py` — registered batch2 router, added migration startup hook (`migrate_existing_households`). No business-logic changes.
 - `/app/frontend/src/App.js` — wrapped tree in `ParticipantsProvider`, added 7 new routes (4 caregiver + 3 adviser).
 - `/app/frontend/src/components/Layout.jsx` — 4 new nav entries (Family wall, Hospital mode, Amendments, Participants) + ParticipantSwitcher in header.
