@@ -68,6 +68,14 @@ import Correspondence from "@/pages/extended/Correspondence";
 import Referrals from "@/pages/extended/Referrals";
 import ProviderRatings from "@/pages/extended/ProviderRatings";
 import SummaryReports from "@/pages/extended/SummaryReports";
+import ParticipantsPage from "@/pages/extended/Participants";
+import HospitalLiaison from "@/pages/extended/HospitalLiaison";
+import FamilyWall from "@/pages/extended/FamilyWall";
+import CarePlanAmendments from "@/pages/extended/CarePlanAmendments";
+import AdviserBrand from "@/pages/AdviserBrand";
+import AdviserScenarios from "@/pages/AdviserScenarios";
+import AdviserAlerts from "@/pages/AdviserAlerts";
+import { ParticipantsProvider } from "@/context/ParticipantsContext";
 import OfflineIndicator from "@/components/OfflineIndicator";
 
 function Loading() {
@@ -126,10 +134,12 @@ function App() {
         return (
             <HelmetProvider>
                 <AuthProvider>
-                    <Toaster richColors position="top-right" />
-                    <BrowserRouter>
-                        <AuthCallback />
-                    </BrowserRouter>
+                    <ParticipantsProvider>
+                        <Toaster richColors position="top-right" />
+                        <BrowserRouter>
+                            <AuthCallback />
+                        </BrowserRouter>
+                    </ParticipantsProvider>
                 </AuthProvider>
             </HelmetProvider>
         );
@@ -137,6 +147,7 @@ function App() {
     return (
         <HelmetProvider>
             <AuthProvider>
+                <ParticipantsProvider>
                 <BrowserRouter>
                 <Toaster richColors position="top-right" />
                 <ConsumerWidgets />
@@ -210,12 +221,19 @@ function App() {
                     <Route path="/app/referrals" element={<RequireAuth><Layout><Referrals /></Layout></RequireAuth>} />
                     <Route path="/app/ratings" element={<RequireAuth><Layout><ProviderRatings /></Layout></RequireAuth>} />
                     <Route path="/app/reports" element={<RequireAuth><Layout><SummaryReports /></Layout></RequireAuth>} />
+                    <Route path="/app/participants" element={<RequireAuth><Layout><ParticipantsPage /></Layout></RequireAuth>} />
+                    <Route path="/app/hospital" element={<RequireAuth><Layout><HospitalLiaison /></Layout></RequireAuth>} />
+                    <Route path="/app/wall" element={<RequireAuth><Layout><FamilyWall /></Layout></RequireAuth>} />
+                    <Route path="/app/amendments" element={<RequireAuth><Layout><CarePlanAmendments /></Layout></RequireAuth>} />
                     <Route path="/settings" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />
 
                     {/* Adviser plan portal — multi-client list view */}
                     <Route path="/adviser" element={<RequireAuth requireHousehold={false}><AdviserPortal /></RequireAuth>} />
+                    <Route path="/adviser/brand" element={<RequireAuth requireHousehold={false}><AdviserBrand /></RequireAuth>} />
+                    <Route path="/adviser/scenarios" element={<RequireAuth requireHousehold={false}><AdviserScenarios /></RequireAuth>} />
+                    <Route path="/adviser/alerts" element={<RequireAuth requireHousehold={false}><AdviserAlerts /></RequireAuth>} />
 
                     {/* Admin — completely separate auth system (TOTP 2FA, role-based).
                         AdminApp manages its own auth via AdminAuthContext. */}
@@ -224,6 +242,7 @@ function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </BrowserRouter>
+                </ParticipantsProvider>
             </AuthProvider>
         </HelmetProvider>
     );

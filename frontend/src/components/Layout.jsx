@@ -5,18 +5,24 @@ import {
     LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut,
     HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
     ShieldCheck, FolderArchive, Calendar, Bell, Repeat, Wrench, Mail, Share2, Star, FileBarChart,
+    HeartPulse, Heart, FilePenLine, UserPlus,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 import GlobalSearch from "@/components/GlobalSearch";
+import ParticipantSwitcher from "@/components/ParticipantSwitcher";
 
 const primaryNav = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, mobile: true },
+    { to: "/app/wall", label: "Family wall", icon: Heart, mobile: true },
     { to: "/app/statements", label: "Statements", icon: FileText, mobile: true },
     { to: "/app/documents", label: "Documents", icon: FolderArchive },
     { to: "/app/calendar", label: "Calendar", icon: Calendar },
-    { to: "/app/chat", label: "Ask Wayly", icon: MessageCircle, mobile: true },
+    { to: "/app/chat", label: "Ask Wayly", icon: MessageCircle },
     { to: "/app/family", label: "Family", icon: Users },
+    { to: "/app/hospital", label: "Hospital mode", icon: HeartPulse },
+    { to: "/app/amendments", label: "Amendments", icon: FilePenLine },
+    { to: "/app/participants", label: "Participants", icon: UserPlus },
     { to: "/app/correspondence", label: "Correspondence", icon: Mail },
     { to: "/app/referrals", label: "Referrals", icon: Share2 },
     { to: "/app/at-hm", label: "AT & HM", icon: Wrench },
@@ -69,6 +75,7 @@ export default function Layout({ children }) {
                     <div className="flex items-center gap-1.5 md:gap-3 min-w-0">
                         {user && <div className="hidden md:block"><GlobalSearch /></div>}
                         {user && <NotificationsBell tone="light" />}
+                        {user && <ParticipantSwitcher tone="light" />}
                         {household && (
                             <div className="hidden lg:flex flex-col text-right min-w-0">
                                 <span className="text-sm font-medium text-primary-k truncate max-w-[180px]">{household.participant_name}</span>

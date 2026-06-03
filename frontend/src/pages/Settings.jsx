@@ -5,14 +5,16 @@ import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import {
     User, CreditCard, Users, Shield, Loader2, Check, X, Crown, Mail, ArrowUpRight, Trash2,
-    Bell, Moon, Sun, Gauge, AlertTriangle, Mailbox, Send, Eye,
+    Bell, Moon, Sun, Gauge, AlertTriangle, Mailbox, Send, Eye, MessageSquare,
 } from "lucide-react";
 import Skeleton from "@/components/Skeleton";
+import SMSContactsTab from "@/pages/settings/SMSContactsTab";
 
 const TABS = [
     { id: "profile", label: "Profile", icon: User },
     { id: "billing", label: "Plan & Billing", icon: CreditCard },
     { id: "members", label: "Family members", icon: Users },
+    { id: "sms", label: "SMS alerts", icon: MessageSquare },
     { id: "digest", label: "Weekly digest", icon: Mailbox },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "appearance", label: "Appearance", icon: Moon },
@@ -554,6 +556,7 @@ export default function Settings() {
                 {active === "profile" && <ProfileTab />}
                 {active === "billing" && <BillingTab />}
                 {active === "members" && <MembersTab />}
+                {active === "sms" && <SMSContactsTab />}
                 {active === "digest" && <DigestTab />}
                 {active === "notifications" && <NotificationsTab />}
                 {active === "appearance" && <AppearanceTab />}

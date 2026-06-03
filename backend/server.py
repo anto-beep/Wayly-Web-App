@@ -3239,6 +3239,7 @@ from seo_routes import seo_public as seo_public_router
 from adviser_routes import adviser_router, adviser_public_router, init_adviser_routes
 from documents_routes import documents_router, init_documents_routes
 from extended_routes import extended_router, init_extended_routes
+from batch2_routes import batch2_router, init_batch2_routes, migrate_existing_households
 init_adviser_routes(
     db=db,
     require_adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
@@ -3287,6 +3288,12 @@ init_documents_routes(
     decode_statement=_docvault_decode_statement,
 )
 init_extended_routes(db=db, user_dep=_user_from_request_required)
+init_batch2_routes(
+    db=db,
+    user_dep=_user_from_request_required,
+    adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
+    audit_log=_audit,
+)
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -3302,6 +3309,7 @@ api.include_router(adviser_router)
 api.include_router(adviser_public_router)
 api.include_router(documents_router)
 api.include_router(extended_router)
+api.include_router(batch2_router)
 
 app.include_router(api)
 
@@ -3522,6 +3530,18 @@ async def _start_trial_scheduler():
 async def _start_health_watchdog():
     import health_watchdog
     await health_watchdog.start()
+
+
+@app.on_event("startup")
+async def _start_batch2_migration():
+    """One-time idempotent migration: ensure every legacy household has a
+    primary participant row. Safe to call repeatedly — no-ops if already done."""
+    try:
+        res = await migrate_existing_households()
+        if res.get("migrated"):
+            logger.info("Batch2 startup migration: %s", res)
+    except Exception as e:
+        logger.warning("Batch2 migration failed: %s", e)
 
 
 # Manual trigger for testing/debugging.

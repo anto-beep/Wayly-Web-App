@@ -315,6 +315,13 @@ export default function AdviserPortal() {
             </header>
 
             <main className="mx-auto max-w-7xl px-6 py-10">
+                {/* Sub-nav to Batch 2 adviser features */}
+                <nav className="mb-6 flex items-center gap-2 flex-wrap text-sm" data-testid="adviser-subnav">
+                    <span className="text-muted-k">Tools:</span>
+                    <Link to="/adviser/alerts" data-testid="adviser-subnav-alerts" className="rounded-full bg-surface border border-kindred px-3 py-1 text-primary-k hover:bg-surface-2">Global alerts</Link>
+                    <Link to="/adviser/scenarios" data-testid="adviser-subnav-scenarios" className="rounded-full bg-surface border border-kindred px-3 py-1 text-primary-k hover:bg-surface-2">Scenario modeller</Link>
+                    <Link to="/adviser/brand" data-testid="adviser-subnav-brand" className="rounded-full bg-surface border border-kindred px-3 py-1 text-primary-k hover:bg-surface-2">Branded PDF</Link>
+                </nav>
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
                         <span className="overline">Adviser portal</span>
