@@ -54,22 +54,35 @@ export default function StatementDecoderTool() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
-    const [limitInfo, setLimitInfo] = useState(null); // { next_available_at }
+    const [limitInfo, setLimitInfo] = useState(null); // { reset_at, period_month }
+    const [usage, setUsage] = useState(null); // { allowed, used_count, remaining, reset_at }
     const [countdown, setCountdown] = useState("");
     const fileRef = useRef(null);
 
-    // Countdown ticker for the daily limit gate
+    // Fetch monthly usage counter on mount (server-side fingerprint or user_id)
     useEffect(() => {
-        if (!limitInfo?.next_available_at) return;
+        let alive = true;
+        (async () => {
+            try {
+                const { data } = await api.get("/free-tool/usage?tool=STATEMENT_DECODER");
+                if (alive) setUsage(data);
+            } catch { /* ignore */ }
+        })();
+        return () => { alive = false; };
+    }, []);
+
+    // Countdown ticker for the monthly limit gate
+    useEffect(() => {
+        if (!limitInfo?.reset_at) return;
         const tick = () => {
-            const ms = new Date(limitInfo.next_available_at).getTime() - Date.now();
+            const ms = new Date(limitInfo.reset_at).getTime() - Date.now();
             if (ms <= 0) { setCountdown("Available now"); return; }
-            const h = Math.floor(ms / 3_600_000);
-            const m = Math.floor((ms % 3_600_000) / 60_000);
-            setCountdown(`${h}h ${m}m`);
+            const d = Math.floor(ms / 86_400_000);
+            const h = Math.floor((ms % 86_400_000) / 3_600_000);
+            setCountdown(d > 0 ? `${d}d ${h}h` : `${h}h`);
         };
         tick();
-        const id = setInterval(tick, 30_000);
+        const id = setInterval(tick, 60_000);
         return () => clearInterval(id);
     }, [limitInfo]);
 
@@ -143,9 +156,10 @@ export default function StatementDecoderTool() {
             setResult(final);
         } catch (err) {
             const detail = err?.response?.data?.detail;
-            if (detail && typeof detail === "object" && detail.error === "daily_limit") {
+            if (detail && typeof detail === "object" && (detail.error === "monthly_limit" || detail.error === "daily_limit")) {
                 setLimitInfo(detail);
                 setError(detail.message);
+                setUsage((u) => u ? { ...u, allowed: false, used_count: (detail.used_count ?? (u.used_count + 1)), remaining: 0 } : u);
             } else {
                 setError(typeof detail === "string" ? detail : detail?.message || err?.message || "Could not decode the statement.");
             }
@@ -175,6 +189,20 @@ export default function StatementDecoderTool() {
                     text={TOOL_DISCLAIMERS["statement-decoder"]}
                     className="mb-4"
                 />
+                {usage && !user && (
+                    <div className={`mb-4 rounded-xl border px-4 py-3 text-sm flex items-center justify-between gap-3 flex-wrap ${usage.remaining > 0 ? "bg-sage/10 border-sage/30 text-primary-k" : "bg-gold/10 border-gold/40 text-primary-k"}`} data-testid="usage-counter-banner">
+                        <div>
+                            <strong>{usage.remaining} of 1</strong> free decode{usage.remaining === 1 ? "" : "s"} remaining this month
+                            {usage.reset_at && ` · resets ${new Date(usage.reset_at).toLocaleDateString()}`}
+                        </div>
+                        {usage.remaining === 0 && (
+                            <div className="flex gap-2">
+                                <Link to="/login" className="text-xs underline">Sign in</Link>
+                                <Link to="/signup?plan=solo" className="text-xs font-semibold bg-primary-k text-white rounded-full px-3 py-1 hover:bg-[#16294a]" data-testid="usage-upgrade-btn">Upgrade · $19/mo</Link>
+                            </div>
+                        )}
+                    </div>
+                )}
                 <div className="bg-surface border border-kindred rounded-2xl p-6">
                     <div className="flex gap-2 flex-wrap" role="tablist">
                         {[

@@ -1,273 +1,338 @@
+/**
+ * Pricing page — Batch 3 update.
+ *
+ * 4 plan cards (Free / Solo / Family / Adviser), add-on explanation, full
+ * comparison table grouped by section, FAQ with JSON-LD.
+ */
 import React from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
-import { Check, Minus, ShieldCheck } from "lucide-react";
-import { BrowserFrame, PhoneFrame, ScreenshotDashboard, ScreenshotParticipant, ScreenshotFamilyThread } from "@/components/Screenshots";
-
+import { Check, Minus, Crown, Plus, Users, ArrowDown } from "lucide-react";
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
+
 const TIERS = [
     {
+        key: "free",
         name: "Free",
         price: "$0",
-        period: "forever",
-        desc: "Statement Decoder — 1 use per day, no signup. Newsletter. Public templates. Glossary.",
-        cta: "Get started",
+        cta: "Get started free",
         href: "/signup?plan=free",
-        featured: false,
+        highlights: [
+            "1 Statement Decoder use per calendar month",
+            "1 participant",
+            "Australian-hosted, fully secure",
+            "Upgrade anytime",
+        ],
     },
     {
+        key: "solo",
         name: "Solo",
         price: "$19",
-        period: "per month",
-        desc: "All 8 AI tools, unlimited statement parsing, daily anomaly alerts, 1 caregiver seat. 7-day free trial.",
-        cta: "Start free trial",
+        cta: "Start 7-day free trial",
         href: "/signup?plan=solo",
-        featured: false,
+        highlights: [
+            "Unlimited Statement Decoder",
+            "All 9 AI tools",
+            "1 participant · 1 caregiver seat",
+            "Document vault + budget tracking",
+        ],
     },
     {
+        key: "family",
         name: "Family",
         price: "$39",
-        period: "per month",
-        desc: "Everything Solo + up to 5 family seats, Sunday digest emails, decision log, role-based permissions, advisor read-only sharing.",
-        cta: "Start free trial",
+        cta: "Start 7-day free trial",
         href: "/signup?plan=family",
         featured: true,
         badge: "Most popular",
+        highlights: [
+            "2 participants included",
+            "3 caregiver seats",
+            "All AI tools + extended features",
+            "$19/month each for extras",
+        ],
     },
-];
-
-const ADVISOR = [
     {
+        key: "adviser",
         name: "Adviser",
         price: "$299",
-        period: "per month",
-        desc: "Up to 25 clients. Lifetime-cap tracker, forecasting, review-pack export, email + priority support. 7-day free trial.",
-        cta: "Start free trial",
-        href: "/signup?plan=adviser",
+        cta: "Contact us",
+        href: "/contact?intent=adviser",
+        highlights: [
+            "Up to 25 client households",
+            "Scenario modeller + branded PDFs",
+            "Global alert dashboard",
+            "Priority support",
+        ],
+    },
+];
+
+const SECTIONS = [
+    {
+        label: "Statement Decoder",
+        rows: [
+            ["Statement Decoder", "1 per month", "Unlimited", "Unlimited", "Unlimited"],
+            ["PDF, photo, DOCX, TXT formats", true, true, true, true],
+            ["Anomaly detection (15 rules)", "✓ on free decode", true, true, true],
+            ["Save decoded results to vault", false, true, true, true],
+            ["Share decoded results with family", false, true, true, true],
+            ["Hospitalisation charge detection", "✓ on free decode", true, true, true],
+        ],
     },
     {
-        name: "Adviser Pro",
-        price: "$999",
-        period: "per month",
-        desc: "Up to 200 clients. White-label, custom domain, multi-adviser team, dedicated CS manager, API access.",
-        cta: "Book a demo",
-        href: "/for-advisors",
+        label: "AI Tools",
+        rows: [
+            ["Budget Calculator", false, true, true, true],
+            ["Provider Price Checker", false, true, true, true],
+            ["Classification Self-Check", false, true, true, true],
+            ["Reassessment Letter Generator", false, true, true, true],
+            ["Contribution Estimator", false, true, true, true],
+            ["Care Plan Reviewer", false, true, true, true],
+            ["Family Coordinator", false, true, true, true],
+            ["Care Plan Amendment Generator", false, true, true, true],
+            ["Ask Wayly (AI chat)", false, true, true, true],
+        ],
+    },
+    {
+        label: "Participants & Caregivers",
+        rows: [
+            ["Participants included", "1", "1", "2", "Up to 25 clients"],
+            ["Additional participants", "—", "Upgrade to Family", "+$19/month each", "Included"],
+            ["Caregiver seats", "1", "1", "3", "Unlimited"],
+        ],
+    },
+    {
+        label: "Document Vault",
+        rows: [
+            ["Document vault", false, true, true, true],
+            ["9 document categories", false, true, true, true],
+            ["Version history", false, true, true, true],
+            ["Encrypted storage (AWS Sydney)", false, true, true, true],
+            ["Statement email forwarding", false, true, true, true],
+        ],
+    },
+    {
+        label: "Tracking & Management",
+        rows: [
+            ["Concern and conversation log", false, true, true, true],
+            ["Care team directory", false, true, true, true],
+            ["Visit and appointment calendar", false, true, true, true],
+            ["AT-HM commitment tracker", false, true, true, true],
+            ["Correspondence tracker", false, true, true, true],
+            ["Hospital liaison mode", false, true, true, true],
+            ["Provider switching workflow", false, true, true, true],
+        ],
+    },
+    {
+        label: "Alerts & Notifications",
+        rows: [
+            ["Budget threshold alerts", false, "Email only", "Push + email", true],
+            ["SMS and WhatsApp alerts", false, true, true, true],
+            ["AT-HM expiry reminders", false, true, true, true],
+            ["Statement arrival alerts", false, true, true, true],
+        ],
+    },
+    {
+        label: "Reports",
+        rows: [
+            ["Quarterly summary reports", false, true, true, true],
+            ["Annual financial year summaries", false, true, true, true],
+            ["Adviser-branded PDF reports", false, false, false, true],
+        ],
+    },
+    {
+        label: "Family & Participant Features",
+        rows: [
+            ["Family message wall (photos + voice)", false, true, true, false],
+            ["Participant view (simplified UI)", false, true, true, false],
+            ["Voice input for participants", false, true, true, false],
+            ["Referral program (14-day extended trial)", "As referrer", true, true, false],
+            ["Offline mode (mobile)", false, true, true, false],
+        ],
+    },
+    {
+        label: "Adviser Tools",
+        rows: [
+            ["Multi-household adviser dashboard", false, false, false, true],
+            ["Scenario modeller (means test)", false, false, false, true],
+            ["Client-branded PDF reports", false, false, false, true],
+            ["Read-only client household access", false, false, false, true],
+        ],
+    },
+    {
+        label: "Security & Privacy",
+        rows: [
+            ["Australian data hosting (AWS Sydney)", true, true, true, true],
+            ["AES-256 encryption at rest", true, true, true, true],
+            ["In-app account & data deletion", true, true, true, true],
+            ["Privacy Act 1988 compliant", true, true, true, true],
+        ],
+    },
+    {
+        label: "Support",
+        rows: [
+            ["Help centre access", true, true, true, true],
+            ["Email support", false, true, true, "Priority"],
+            ["Priority support", false, false, false, true],
+        ],
     },
 ];
 
-const FEATURE_ROWS = [
-    { feature: "Public AI tools", values: ["2 of 8", "All 8", "All 8"] },
-    { feature: "Statement parsing", values: ["5/mo", "Unlimited", "Unlimited"] },
-    { feature: "Anomaly alerts", values: [false, true, true] },
-    { feature: "Quarterly budget tracking", values: [false, true, true] },
-    { feature: "Lifetime cap tracking", values: [false, true, true] },
-    { feature: "AI chat", values: ["Limited", true, true] },
-    { feature: "Family seats", values: ["—", "1", "Up to 5"] },
-    { feature: "Sunday digest emails", values: [false, false, true] },
-    { feature: "Decision log", values: [false, false, true] },
-    { feature: "Audit log (immutable)", values: [false, true, true] },
-    { feature: "Advisor / GP read-only sharing", values: [false, false, true] },
-    { feature: "Role-based permissions", values: [false, false, true] },
-    { feature: "Voice for participant", values: [false, true, true] },
-    { feature: "Australian-hosted, encrypted", values: [true, true, true] },
-    { feature: "Priority support", values: [false, false, true] },
-];
-
-const FAQ = [
-    { q: "What counts as one household?", a: "One participant + their family. Two parents both on Support at Home = two households (we offer 30% off the second)." },
-    { q: "Free vs Solo — what's the real difference?", a: "Free = 2 public AI tools, occasional use. Solo = all 8 tools + Wayly actively watches your statements, budget, and care every day and alerts you when something needs attention." },
-    { q: "Why is Family $39 if Solo is $19?", a: "Family adds: up to 5 seats, role permissions, Sunday digest, decision log, advisor read-only sharing. Most households use Family." },
-    { q: "Pensioner discount?", a: "Yes — 50% off Solo and Family with verified full-pension status." },
-    { q: "Can I deduct Wayly from my parent's Support at Home funding?", a: "No — Wayly is software for the family, not a Support at Home service. Paid by the family directly." },
-    { q: "Refund policy?", a: "30-day full refund, no questions." },
-    { q: "What happens if my parent moves to residential care?", a: "We pause billing immediately and give you a transition guide." },
-    { q: "Free trial?", a: "Yes — 7 days on Solo or Family, no card needed." },
+const FAQS = [
+    { q: "What is the difference between a participant and a caregiver?",
+      a: "A participant is the person receiving Support at Home — the older person whose statements, budget and care are being managed. A caregiver is a family member or support person who uses Wayly to help manage the participant's care. Caregiver seats control who can log in and access the account." },
+    { q: "Can I add more than 2 participants?",
+      a: "Yes. The Family plan covers 2 participants. For each additional participant, you pay $19/month. They are added to your existing account and managed from the same dashboard — no new logins needed." },
+    { q: "What happens to my data if I remove a participant?",
+      a: "Their data is retained in your account for 60 days after removal. During this period you can export everything as a PDF, or permanently delete it immediately. After 60 days, data is automatically and permanently deleted." },
+    { q: "If I remove a participant mid-month, do I get a refund?",
+      a: "No. Participant add-on subscriptions cancel at the end of the current billing period. You will not be charged from the following month." },
+    { q: "Can I downgrade from Family to Solo?",
+      a: "Yes. If you remove your second participant, you'll be offered the option to downgrade. The downgrade takes effect at the end of your current billing period. Note that Solo includes 1 caregiver seat — if you have additional caregivers on your Family plan, you'll need to remove them before downgrading." },
+    { q: "Does the free plan include any AI tools?",
+      a: "The free plan includes 1 Statement Decoder use per calendar month. All other AI tools are available on paid plans only." },
+    { q: "Can I use the Statement Decoder without creating an account?",
+      a: "Yes. You can decode one statement per month without creating an account. The result is shown in full. Features that save or track your results require an account." },
 ];
 
 function Cell({ v }) {
-    if (v === true) return <Check className="h-4 w-4 text-sage mx-auto" />;
-    if (v === false) return <Minus className="h-4 w-4 text-muted-k mx-auto" />;
-    return <span className="text-sm text-primary-k">{v}</span>;
+    if (v === true) return <Check className="h-4 w-4 text-sage mx-auto" aria-label="Yes" />;
+    if (v === false) return <Minus className="h-4 w-4 text-muted-k mx-auto" aria-label="—" />;
+    return <span className="text-xs text-primary-k">{v}</span>;
 }
 
 export default function Pricing() {
+    const faqJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: FAQS.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+    };
     return (
         <div className="min-h-screen bg-kindred">
-            <SeoHead {...SEO.pricing} />
+            <SeoHead {...SEO.pricing} jsonLd={faqJsonLd} />
             <MarketingHeader />
-
-            <section className="mx-auto max-w-7xl px-6 pt-12 pb-8 text-center">
+            <section className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
                 <span className="overline">Pricing</span>
-                <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4">Choose how Wayly helps your family.</h1>
-                <p className="mt-5 text-lg text-muted-k max-w-2xl mx-auto leading-relaxed">
-                    No card required for the trial. Cancel anytime. Pensioner discount available. Australian-hosted, never sells your data, never accepts commissions from providers.
+                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">
+                    Simple, honest pricing.<br />Start free.
+                </h1>
+                <p className="mt-4 text-lg text-muted-k max-w-2xl mx-auto">
+                    All prices in AUD inc. GST. Cancel anytime. 7-day free trial on Solo & Family — no card required.
                 </p>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5" data-testid="pricing-payment-methods">
-                    <span className="text-xs uppercase tracking-wider text-muted-k font-medium">Pay with</span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1 text-xs font-medium text-primary-k" data-testid="pay-method-card">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
-                        Card
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1 text-xs font-medium text-primary-k" data-testid="pay-method-applepay">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.05 12.04c-.03-2.92 2.38-4.32 2.49-4.39-1.36-1.99-3.48-2.27-4.23-2.3-1.8-.18-3.51 1.06-4.42 1.06-.92 0-2.32-1.04-3.82-1.01-1.96.03-3.78 1.14-4.79 2.89-2.05 3.55-.52 8.81 1.47 11.69.97 1.41 2.13 2.99 3.65 2.94 1.47-.06 2.02-.95 3.79-.95 1.77 0 2.27.95 3.82.92 1.58-.03 2.58-1.43 3.54-2.85 1.12-1.63 1.58-3.22 1.61-3.31-.04-.02-3.09-1.19-3.12-4.69zM14.16 3.42c.81-.98 1.36-2.34 1.21-3.7-1.17.05-2.59.78-3.43 1.76-.75.87-1.4 2.27-1.22 3.6 1.3.1 2.63-.66 3.44-1.66z"/></svg>
-                        Apple Pay
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1 text-xs font-medium text-primary-k" data-testid="pay-method-googlepay">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 11.05v2.1h5.06c-.22 1.22-.91 2.27-1.94 2.97v2.46h3.13C20.07 16.95 21 14.7 21 12c0-.6-.05-1.18-.16-1.74H12v.79zm0 9.95c2.43 0 4.47-.81 5.96-2.18l-2.9-2.25c-.81.55-1.85.88-3.06.88-2.36 0-4.36-1.59-5.07-3.73H3.93v2.34A8.99 8.99 0 0 0 12 21z"/></svg>
-                        Google Pay
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1 text-xs font-medium text-primary-k" data-testid="pay-method-paypal">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7.5 22h-3l1.4-9h3.6c2.6 0 4.3-.8 5.2-2.4.4-.7.6-1.4.6-2.1 0-.5-.1-1-.3-1.4.4.2.7.5 1 .8.6.8.9 1.8.8 3-.2 2-1.2 3.5-2.9 4.4-1.5.7-3.4.8-5.1.7zM18.2 5.4c-.2-.3-.5-.5-.8-.7-1-.6-2.4-.7-4.1-.7H8.5c-.4 0-.7.3-.8.7l-2 12.7c-.1.3.2.6.5.6h3.4l.9-5.6h2.3c4.2 0 6.6-2 7.2-5.5.2-.5.2-1 .2-1.5z"/></svg>
-                        PayPal
-                    </span>
-                </div>
             </section>
 
-            {/* CONSUMER TIERS */}
-            <section className="mx-auto max-w-7xl px-6 pb-12">
-                <div className="grid sm:grid-cols-3 gap-5" data-testid="pricing-tiers">
+            <section className="mx-auto max-w-6xl px-6 pb-12" data-testid="pricing-cards">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {TIERS.map((t) => (
-                        <div
-                            key={t.name}
-                            data-testid={`pricing-tier-${t.name.toLowerCase()}`}
-                            className={`rounded-2xl p-6 border flex flex-col transition-all ${
-                                t.featured ? "bg-primary-k text-white border-primary-k -translate-y-1 shadow-lg" : "bg-surface border-kindred hover:-translate-y-1 hover:shadow-md"
-                            }`}
-                        >
+                        <div key={t.key} className={`relative rounded-2xl border p-6 ${t.featured ? "bg-primary-k text-white border-gold shadow-xl" : "bg-surface border-kindred"}`} data-testid={`tier-${t.key}`}>
                             {t.badge && (
-                                <span className="self-start bg-gold text-primary-k text-xs font-medium uppercase tracking-wider px-2 py-1 rounded-full mb-3">
+                                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-primary-k text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-semibold">
                                     {t.badge}
                                 </span>
                             )}
-                            <div className={`text-xs uppercase tracking-wider ${t.featured ? "text-white/70" : "text-muted-k"}`}>{t.name}</div>
-                            <div className={`mt-2 font-heading text-5xl ${t.featured ? "text-white" : "text-primary-k"} tabular-nums`}>{t.price}</div>
-                            <div className={`text-sm ${t.featured ? "text-white/70" : "text-muted-k"}`}>{t.period}</div>
-                            <p className={`mt-4 text-sm leading-relaxed ${t.featured ? "text-white/85" : "text-muted-k"}`}>{t.desc}</p>
-                            <Link
-                                to={t.href}
-                                data-testid={`pricing-cta-${t.name.toLowerCase()}`}
-                                className={`mt-6 text-center rounded-full py-2.5 text-sm font-medium transition-colors ${
-                                    t.featured ? "bg-gold text-primary-k hover:bg-[#c8973f]" : "bg-primary-k text-white hover:bg-[#16294a]"
-                                }`}
-                            >
+                            <h2 className={`font-heading text-2xl ${t.featured ? "text-white" : "text-primary-k"}`}>{t.name}</h2>
+                            <div className="mt-3 flex items-baseline gap-1">
+                                <span className="font-heading text-4xl">{t.price}</span>
+                                <span className={`text-sm ${t.featured ? "text-white/70" : "text-muted-k"}`}>/month</span>
+                            </div>
+                            <p className={`text-[11px] mt-1 ${t.featured ? "text-white/60" : "text-muted-k"}`}>Billed monthly · Cancel anytime · AUD inc. GST</p>
+                            <ul className="mt-4 space-y-2 text-sm">
+                                {t.highlights.map((h) => (
+                                    <li key={h} className="flex gap-2"><Check className={`h-4 w-4 mt-0.5 flex-none ${t.featured ? "text-gold" : "text-sage"}`} />{h}</li>
+                                ))}
+                            </ul>
+                            <Link to={t.href} data-testid={`tier-cta-${t.key}`} className={`mt-5 block text-center rounded-full px-4 py-2.5 text-sm font-semibold ${t.featured ? "bg-gold text-primary-k hover:brightness-95" : "bg-primary-k text-white hover:bg-[#16294a]"}`}>
                                 {t.cta}
                             </Link>
                         </div>
                     ))}
                 </div>
+
+                <div className="mt-4 text-center text-xs text-muted-k">
+                    Need more than 2 participants? <a href="#addons" className="underline text-primary-k">Add additional participants at $19/month each</a>
+                </div>
             </section>
 
-            {/* ADVISOR TIERS */}
-            <section className="mx-auto max-w-7xl px-6 py-12 border-t border-kindred">
-                <span className="overline">For financial advisors</span>
-                <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">Make aged-care planning a profit centre.</h2>
-                <div className="mt-8 grid sm:grid-cols-2 gap-5 max-w-4xl">
-                    {ADVISOR.map((t) => (
-                        <div key={t.name} className="rounded-2xl p-6 border bg-surface border-kindred" data-testid={`advisor-tier-${t.name.toLowerCase().replace(/\s/g, "-")}`}>
-                            <div className="text-xs uppercase tracking-wider text-muted-k">{t.name}</div>
-                            <div className="mt-2 font-heading text-4xl text-primary-k tabular-nums">{t.price}</div>
-                            <div className="text-sm text-muted-k">{t.period}</div>
-                            <p className="mt-4 text-sm text-muted-k leading-relaxed">{t.desc}</p>
-                            <Link to={t.href} className="mt-6 inline-block text-center rounded-full py-2.5 px-5 text-sm font-medium bg-primary-k text-white hover:bg-[#16294a]">
-                                {t.cta}
-                            </Link>
+            {/* Add-on explainer */}
+            <section id="addons" className="mx-auto max-w-6xl px-6 py-12 border-y border-kindred bg-surface" data-testid="addons-section">
+                <h2 className="font-heading text-2xl text-primary-k">Managing more than 2 participants?</h2>
+                <p className="text-sm text-muted-k mt-2">Add as many as you need at $19/month each.</p>
+                <div className="grid sm:grid-cols-3 gap-5 mt-6 text-sm">
+                    {[
+                        { icon: Plus, title: "Add from your account settings", body: "No new logins needed. Manage everyone from one dashboard." },
+                        { icon: Crown, title: "Billed separately, cancel independently", body: "Each add-on is its own subscription. No lock-in." },
+                        { icon: Users, title: "Shared caregiver seats & features", body: "All participants share the same 3 Family seats and the full feature set." },
+                    ].map((c) => (
+                        <div key={c.title} className="flex gap-3">
+                            <div className="h-9 w-9 flex-none rounded-full bg-gold/15 text-gold flex items-center justify-center"><c.icon className="h-4 w-4" /></div>
+                            <div>
+                                <div className="font-medium text-primary-k">{c.title}</div>
+                                <div className="text-muted-k text-xs mt-0.5">{c.body}</div>
+                            </div>
                         </div>
                     ))}
                 </div>
             </section>
 
-            {/* DEVICES STRIP — built for the whole family */}
-            <section className="mx-auto max-w-7xl px-6 py-12" data-testid="pricing-devices-strip">
-                <div className="text-center max-w-2xl mx-auto">
-                    <h3 className="font-heading text-2xl text-primary-k tracking-tight">Built for the whole family.</h3>
-                    <p className="text-sm text-muted-k mt-2">Same data. Three views — calibrated for the person using each one.</p>
-                </div>
-                <div className="mt-10 hidden md:flex items-end justify-center gap-6 overflow-x-auto">
-                    <div className="text-center">
-                        <PhoneFrame scale={0.5} label="Participant view on iPhone — Dorothy's screen">
-                            <ScreenshotParticipant />
-                        </PhoneFrame>
-                        <div className="mt-3 text-xs text-muted-k">Simple view for Mum</div>
-                    </div>
-                    <div className="text-center">
-                        <BrowserFrame url="app.wayly.com.au/dashboard" scale={0.55} label="Caregiver dashboard on MacBook">
-                            <ScreenshotDashboard />
-                        </BrowserFrame>
-                        <div className="mt-3 text-xs text-muted-k">Full dashboard for you</div>
-                    </div>
-                    <div className="text-center">
-                        <PhoneFrame scale={0.5} label="Family thread chat on iPhone">
-                            <ScreenshotFamilyThread />
-                        </PhoneFrame>
-                        <div className="mt-3 text-xs text-muted-k">Family in the loop</div>
-                    </div>
-                </div>
-            </section>
-
-            {/* COMPARISON TABLE */}
-            <section className="mx-auto max-w-7xl px-6 py-12 border-t border-kindred">
-                <span className="overline">Full feature comparison</span>
-                <h2 className="font-heading text-3xl text-primary-k mt-3 tracking-tight">What you get at every tier</h2>
-                <div className="mt-8 overflow-x-auto bg-surface border border-kindred rounded-xl">
+            {/* Feature comparison */}
+            <section className="mx-auto max-w-6xl px-6 py-16" data-testid="pricing-table">
+                <h2 className="font-heading text-3xl text-primary-k">Full feature comparison</h2>
+                <p className="text-sm text-muted-k mt-1 mb-6">Every feature, mapped to every plan.</p>
+                <div className="overflow-x-auto rounded-2xl border border-kindred bg-surface">
                     <table className="w-full text-sm">
-                        <thead className="bg-surface-2 text-muted-k">
+                        <thead className="bg-surface-2 sticky top-0">
                             <tr>
-                                <th className="text-left px-5 py-3 font-medium">Feature</th>
-                                {TIERS.map((t) => (
-                                    <th key={t.name} className="px-4 py-3 text-center font-medium">{t.name}</th>
+                                <th className="text-left px-4 py-3 font-medium text-primary-k">Feature</th>
+                                {["Free", "Solo", "Family", "Adviser"].map((h) => (
+                                    <th key={h} className="px-3 py-3 text-center font-medium text-primary-k">{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {FEATURE_ROWS.map((row, i) => (
-                                <tr key={i} className="border-t border-kindred">
-                                    <td className="px-5 py-3 text-primary-k">{row.feature}</td>
-                                    {row.values.map((v, j) => (
-                                        <td key={j} className="px-4 py-3 text-center"><Cell v={v} /></td>
+                            {SECTIONS.map((s) => (
+                                <React.Fragment key={s.label}>
+                                    <tr className="bg-primary-k/5">
+                                        <td colSpan={5} className="px-4 py-2 text-[11px] uppercase tracking-wider text-primary-k font-semibold">{s.label}</td>
+                                    </tr>
+                                    {s.rows.map(([label, ...vals], idx) => (
+                                        <tr key={`${s.label}-${idx}`} className="border-t border-kindred">
+                                            <td className="px-4 py-2.5 text-primary-k">{label}</td>
+                                            {vals.map((v, i) => (
+                                                <td key={i} className="px-3 py-2.5 text-center">
+                                                    <Cell v={v} />
+                                                </td>
+                                            ))}
+                                        </tr>
                                     ))}
-                                </tr>
+                                </React.Fragment>
                             ))}
                         </tbody>
                     </table>
                 </div>
+                <p className="text-xs text-muted-k mt-4 leading-relaxed">
+                    All prices in AUD including GST. 7-day free trial on Solo and Family plans — no card required.
+                    14-day free trial with a referral code. Cancel anytime; cancellations take effect at the end of
+                    the current billing period. Additional participants on the Family plan: $19/month each, billed separately,
+                    cancel independently.
+                </p>
             </section>
 
-            {/* PENSIONER NOTE */}
-            <section className="mx-auto max-w-7xl px-6 py-8">
-                <div className="bg-surface-2 border border-kindred rounded-xl p-5 flex items-start gap-3">
-                    <ShieldCheck className="h-5 w-5 text-sage mt-0.5 flex-shrink-0" />
-                    <div>
-                        <div className="font-medium text-primary-k">Pensioner discount — 50% off Solo and Family</div>
-                        <div className="text-sm text-muted-k mt-1">Verified by uploading a screenshot of your Centrelink pension card. We confirm and delete the image; we never retain it.</div>
-                    </div>
-                </div>
-            </section>
-
-            {/* FAQ */}
-            <section className="mx-auto max-w-4xl px-6 py-12">
-                <span className="overline">Pricing FAQ</span>
-                <h2 className="font-heading text-3xl text-primary-k mt-3 tracking-tight">Things people ask before signing up</h2>
-                <div className="mt-6 space-y-3" data-testid="pricing-faq">
-                    {FAQ.map((f, i) => (
-                        <details key={i} className="bg-surface rounded-xl border border-kindred p-5 group">
-                            <summary className="cursor-pointer font-medium text-primary-k flex items-center justify-between">
-                                {f.q}
-                                <span className="text-muted-k group-open:rotate-45 transition-transform">+</span>
-                            </summary>
-                            <p className="mt-3 text-sm text-muted-k leading-relaxed">{f.a}</p>
+            {/* FAQs */}
+            <section className="mx-auto max-w-3xl px-6 pb-20" data-testid="pricing-faqs">
+                <h2 className="font-heading text-3xl text-primary-k">Pricing questions</h2>
+                <div className="mt-6 space-y-3">
+                    {FAQS.map((f, i) => (
+                        <details key={i} className="bg-surface border border-kindred rounded-xl p-4" data-testid={`faq-${i}`}>
+                            <summary className="font-medium text-primary-k cursor-pointer">{f.q}</summary>
+                            <p className="text-sm text-muted-k mt-2 leading-relaxed">{f.a}</p>
                         </details>
                     ))}
-                </div>
-            </section>
-
-            <section className="bg-primary-k">
-                <div className="mx-auto max-w-4xl px-6 py-16 text-center">
-                    <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Start free — no card, no commitment.</h2>
-                    <Link to="/signup" className="mt-8 inline-block bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f]">
-                        Create your account
-                    </Link>
                 </div>
             </section>
 

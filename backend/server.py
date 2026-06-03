@@ -1523,31 +1523,36 @@ def _set_sd_cookie(response: Response) -> None:
 async def _enforce_statement_decoder_limit(request: Request, response: Response) -> dict:
     """Gating logic for the public Statement Decoder.
 
-    - Logged-in Solo/Family/trial users bypass entirely (no cookie touch).
-    - Logged-in Free users + unauthenticated visitors get 1 free decode per
-      24h, tracked via HttpOnly cookie.
-    - 429 with next_available_at when limit hit.
+    Batch3 update: 1 use per CALENDAR MONTH for non-logged-in and Free users
+    (was 1 per 24h previously). Solo/Family/Adviser/trial users bypass entirely.
+
+    - Logged-in Solo/Family/trial users: unlimited.
+    - Logged-in Free users: 1 decode per calendar month (tracked by user_id).
+    - Unauthenticated visitors: 1 decode per calendar month (tracked by
+      browser fingerprint + IP fallback).
     """
     user = await _user_from_request(request)
     if user:
         plan = (user.get("plan") or "free").lower()
         if plan in PAID_PLANS or _trial_active(user):
             return {"user": user, "is_free_use": False}
-    used_at = _sd_cookie_used_recently(request)
-    if used_at:
-        next_at = used_at + timedelta(seconds=SD_WINDOW_SECONDS)
+    user_id = user["id"] if user else None
+    usage = await check_free_tool_usage(request, tool="STATEMENT_DECODER", user_id=user_id)
+    if not usage["allowed"]:
         raise HTTPException(
             status_code=429,
             detail={
-                "error": "daily_limit",
-                "message": "You've used your free decode for today. Come back tomorrow — or sign up for unlimited access.",
-                "next_available_at": next_at.isoformat(),
-                "used_at": used_at.isoformat(),
+                "error": "monthly_limit",
+                "message": "You've used your free decode for this month. Sign up or upgrade for unlimited access.",
+                "reset_at": usage["reset_at"],
+                "period_month": usage["period_month"],
+                "used_count": usage["used_count"],
             },
         )
-    # First use today — also enforce the global IP rate limit as a soft cap
+    # First use this month — also enforce the global IP rate limit as a soft cap
     _check_rate_limit(_client_ip(request))
-    _set_sd_cookie(response)
+    # Record the usage immediately so concurrent requests don't slip past the gate
+    await record_free_tool_usage(request, tool="STATEMENT_DECODER", user_id=user_id)
     return {"user": user, "is_free_use": True}
 
 
@@ -3240,6 +3245,10 @@ from adviser_routes import adviser_router, adviser_public_router, init_adviser_r
 from documents_routes import documents_router, init_documents_routes
 from extended_routes import extended_router, init_extended_routes
 from batch2_routes import batch2_router, init_batch2_routes, migrate_existing_households
+from batch3_routes import (
+    batch3_router, init_batch3_routes, migrate_batch3, run_purge_job,
+    check_free_tool_usage, record_free_tool_usage,
+)
 init_adviser_routes(
     db=db,
     require_adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
@@ -3294,6 +3303,7 @@ init_batch2_routes(
     adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
     audit_log=_audit,
 )
+init_batch3_routes(db=db, user_dep=_user_from_request_required)
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -3310,6 +3320,7 @@ api.include_router(adviser_public_router)
 api.include_router(documents_router)
 api.include_router(extended_router)
 api.include_router(batch2_router)
+api.include_router(batch3_router)
 
 app.include_router(api)
 
@@ -3542,6 +3553,25 @@ async def _start_batch2_migration():
             logger.info("Batch2 startup migration: %s", res)
     except Exception as e:
         logger.warning("Batch2 migration failed: %s", e)
+
+
+@app.on_event("startup")
+async def _start_batch3_migration_and_purge():
+    """Batch3 idempotent migration: backfill accounts, account_members, and
+    rebuild participants v2 from existing households. Then run the
+    pending-removal purge job for participants whose 60-day window has expired."""
+    try:
+        res = await migrate_batch3()
+        if any(res.values()):
+            logger.info("Batch3 startup migration: %s", res)
+    except Exception as e:
+        logger.warning("Batch3 migration failed: %s", e)
+    try:
+        purge_res = await run_purge_job()
+        if purge_res.get("purged"):
+            logger.info("Batch3 purge job: %s", purge_res)
+    except Exception as e:
+        logger.warning("Batch3 purge job failed: %s", e)
 
 
 # Manual trigger for testing/debugging.
