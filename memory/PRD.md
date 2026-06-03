@@ -1357,3 +1357,89 @@ applied in `/app/backend/agents.py`.
 - `/app/backend/tests/test_dorothy_fixes.py` — added Round 3 acceptance
   assertions, fixture extended with the participant-contribution PPA entry.
 
+
+
+## Implemented (Iteration 41 — Feb 2026 · WAYLY EXTENDED FEATURES BUILD BATCH 2)
+
+All 9 features from the Batch 2 PRD shipped end-to-end (backend + frontend + DB schema). 13/13 backend pytest passed (`/app/backend/tests/test_batch2_features.py`).
+
+### F9 — Multi-participant household (data model foundation)
+- New `participants` collection: `{id, household_id, name, classification, provider_name, is_grandfathered, relationship, dob, is_primary, is_archived, created_at}`. Max 4 per household.
+- **Auto-migration on startup** — every legacy household gets one primary participant from `participant_name + classification + provider_name`. Ran cleanly: 10 households migrated.
+- Endpoints: `GET/POST /api/participants`, `PATCH/DELETE /api/participants/{id}`, `POST /api/participants/{id}/promote`.
+- UI: `ParticipantsProvider` context + `<ParticipantSwitcher />` dropdown in Layout header. New `/app/participants` management page.
+
+### F1 — Hospital Liaison Mode
+- New `hospital_admissions` collection with services-paused flag + RCP request flag.
+- Endpoints: `GET/POST /api/hospital/admissions`, `POST /api/hospital/admissions/{aid}/discharge`, `POST /api/hospital/admissions/{aid}/request-rcp`.
+- Best-effort team email on admission (Resend, no-op in mocked mode). Audit log entries for every action.
+- UI: `/app/hospital` page with Active / Past sections and modal form.
+
+### F4 — Voice Input for Participants
+- New reusable `<VoiceInput />` component using browser Web Speech API (Chrome, Edge, Safari iOS 14.5+, Android). Graceful no-render on Firefox.
+- Wired into Family Wall composer, Care Plan Amendment "Why this change?" reasons. Auto-fallback when not supported.
+
+### F6 — Family Photo & Message Wall
+- New `family_wall_posts` collection (kind=message|photo|voice, base64 image/audio, reactions dict).
+- Endpoints: `GET/POST /api/wall/posts`, `POST /api/wall/posts/{id}/react`, `DELETE /api/wall/posts/{id}`.
+- Photo upload via `<input type=file>` + base64 (2 MB cap). Voice notes recorded via MediaRecorder (60s auto-stop, 2 MB cap).
+- 5 emoji reactions (❤️ 👍 🙏 😊 😢) with toggle behaviour.
+
+### F3 — SMS / WhatsApp Alert Integration (scaffold)
+- New `sms_service.py` Twilio scaffold + `user_external_contacts` collection.
+- Feature flag `SMS_ENABLED` — off by default. With env unset, sends return `{ok:true, mocked:true}`. Flip + add `TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM_NUMBER` to go live with zero code change.
+- WhatsApp behind `WHATSAPP_ENABLED` flag (feature-flagged off — UI shows "coming soon").
+- E.164 normalizer for AU mobile (handles `04XX → +614XX`).
+- Endpoints: `GET/PUT /api/me/contacts`, `POST /api/sms/test`.
+- UI: New `SMSContactsTab` in `/settings/sms` with opt-in toggle and "Send test" button.
+
+### F8 — Care Plan Amendment Generator
+- New `care_plan_amendments` collection. Generates a formal letter to the provider with date, sender, change list and 14-day response request.
+- Endpoints: `POST /api/amendments/generate`, `GET /api/amendments`, `POST /api/amendments/{aid}/status` (draft → sent → accepted/rejected).
+- UI: `/app/amendments` page — multi-item builder with change-type picker (add/increase/decrease/remove/swap), Dictate button per reason, preview modal with Copy / Open-email / Mark-as-sent actions, plus past requests list.
+
+### F5 — Adviser Branded PDF
+- New `adviser_brand_profiles` collection (logo_b64, primary/secondary/accent colours, firm_name, tagline, footer_text).
+- Endpoints: `GET/PUT /api/adviser/brand` (adviser-plan gated).
+- UI: `/adviser/brand` — logo upload (800 KB cap, base64), 3 colour pickers, live PDF preview card on the right.
+
+### F2 — Adviser Scenario Modeller
+- New `adviser_scenarios` + `means_test_settings` collections. Hard-coded 2026-27 figures: basic daily fee $13.61, income-free area $198/wk, income taper 50¢/$, asset free $60k, asset taper 17.5%/yr, annual contribution cap $36,923.27, lifetime cap $135,318.69 (new entrant) / $84,571.66 (grandfathered).
+- Endpoints: `POST /api/adviser/scenarios/calc` (pure compute), `POST /api/adviser/scenarios` (persist), `GET/DELETE /api/adviser/scenarios`, `GET/PUT /api/adviser/means-test/settings`.
+- UI: `/adviser/scenarios` — live-recompute as inputs change (250 ms debounce), saved scenarios grid with one-click restore.
+
+### F7 — Adviser Multi-household Alert Dashboard
+- Endpoint: `GET /api/adviser/alerts/global` aggregates across every linked client:
+  - Statement anomalies (severity from existing decoder),
+  - Active hospital admissions (severity=alert),
+  - Open care-plan amendments in draft/sent (severity=warning).
+- Filters: `?type=anomaly|hospital|amendment` and `?severity=alert|warning|info`.
+- UI: `/adviser/alerts` with type + severity selects and timeline list.
+
+### Files added (iter 41)
+- `/app/backend/batch2_models.py` (211 lines) — all Pydantic models for the 9 features.
+- `/app/backend/batch2_routes.py` (~940 lines) — single APIRouter wired into server.py.
+- `/app/backend/sms_service.py` — Twilio scaffold.
+- `/app/frontend/src/context/ParticipantsContext.jsx` — global participant switcher state.
+- `/app/frontend/src/components/{VoiceInput,ParticipantSwitcher}.jsx`.
+- `/app/frontend/src/pages/extended/{Participants,HospitalLiaison,FamilyWall,CarePlanAmendments}.jsx`.
+- `/app/frontend/src/pages/{AdviserBrand,AdviserScenarios,AdviserAlerts}.jsx`.
+- `/app/frontend/src/pages/settings/SMSContactsTab.jsx`.
+- `/app/backend/tests/test_batch2_features.py` — 13 pytest covering every Batch 2 endpoint.
+
+### Files modified (iter 41)
+- `/app/backend/server.py` — registered batch2 router, added migration startup hook (`migrate_existing_households`). No business-logic changes.
+- `/app/frontend/src/App.js` — wrapped tree in `ParticipantsProvider`, added 7 new routes (4 caregiver + 3 adviser).
+- `/app/frontend/src/components/Layout.jsx` — 4 new nav entries (Family wall, Hospital mode, Amendments, Participants) + ParticipantSwitcher in header.
+- `/app/frontend/src/pages/AdviserPortal.jsx` — added Batch 2 sub-nav (alerts / scenarios / branded PDF).
+- `/app/frontend/src/pages/Settings.jsx` — added SMS alerts tab.
+
+### Test status iter 41
+- Backend: 13/13 pytest pass (batch2). Statement Decoder Round 3 tests still pass (14/14). Existing iter 1-40 regression unchanged.
+- Frontend: smoke-tested via screenshot — Participants, Hospital, Family Wall, Amendments and Adviser Scenarios all render and live-compute as expected.
+- SMS: mocked mode confirmed (`{ok:true,mocked:true}`). Live path will activate when env flag flips.
+
+### Known follow-ups / known issues
+- `batch2_routes.py` is ~940 lines housing 8 feature areas — should be split per feature in a future refactor (callout from testing agent code review).
+- Hospital admission email send is best-effort but synchronous — could move to `asyncio.create_task` to reduce admission-create latency.
+- 5 P2 items from prior code review still pending: `is` vs `==`, dynamic imports in admin_routes, array-index-as-key on stable lists, test files' hardcoded creds → env.
