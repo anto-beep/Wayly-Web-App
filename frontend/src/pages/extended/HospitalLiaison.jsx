@@ -6,6 +6,7 @@ import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { HeartPulse, Plus, Hospital, CalendarCheck2, AlertOctagon, CheckCircle2, X, FileText } from "lucide-react";
 import { useParticipants } from "@/context/ParticipantsContext";
+import useInvalidateOnParticipantChange from "@/hooks/useInvalidateOnParticipantChange";
 
 const EMPTY = {
     admission_date: new Date().toISOString().slice(0, 10),
@@ -40,6 +41,7 @@ export default function HospitalLiaison() {
     }, []);
 
     useEffect(() => { load(); }, [load]);
+    useInvalidateOnParticipantChange(() => { setAdmissions([]); load(); });
     useEffect(() => { if (active?.id && !participantId) setParticipantId(active.id); }, [active, participantId]);
 
     const save = async () => {

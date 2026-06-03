@@ -8,6 +8,7 @@ import { ImagePlus, Mic, Send, Trash2, MessageSquareText, Music2, Heart, Camera,
 import { useParticipants } from "@/context/ParticipantsContext";
 import { useAuth } from "@/context/AuthContext";
 import VoiceInput, { isVoiceInputSupported } from "@/components/VoiceInput";
+import useInvalidateOnParticipantChange from "@/hooks/useInvalidateOnParticipantChange";
 
 const REACT_EMOJIS = ["❤️", "👍", "🙏", "😊", "😢"];
 
@@ -50,6 +51,7 @@ export default function FamilyWall() {
     }, [active?.id]);
 
     useEffect(() => { load(); }, [load]);
+    useInvalidateOnParticipantChange(() => { setPosts([]); load(); });
 
     const postMessage = async () => {
         if (!body.trim()) return;

@@ -607,3 +607,227 @@ async def get_free_tool_usage(request: Request, tool: str = Query(default="STATE
         user = None
     user_id = user["id"] if user else None
     return await check_free_tool_usage(request, tool=tool, user_id=user_id)
+
+
+
+# ============================================================================
+# INBOUND MAIL WEBHOOK — `<firstname>-<shortcode>@in.wayly.com.au`
+# ============================================================================
+def _verify_inbound_token(request: Request) -> bool:
+    expected = os.environ.get("INBOUND_MAIL_TOKEN", "")
+    if not expected:
+        return True
+    provided = request.query_params.get("token", "")
+    return secrets.compare_digest(provided.encode(), expected.encode())
+
+
+@batch3_router.post("/inbound/mail")
+async def inbound_mail(request: Request):
+    """Receive a forwarded statement from `<participant>@in.wayly.com.au`.
+
+    Accepts Postmark-style or generic JSON payloads. Persists a
+    `statement_intake_queue` row keyed to the participant. Decode is fired
+    out-of-band so this endpoint stays snappy and idempotent.
+    """
+    if not _verify_inbound_token(request):
+        raise HTTPException(status_code=401, detail="Invalid inbound token")
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    to_addr = (
+        payload.get("to") or payload.get("To")
+        or (payload.get("ToFull") or [{}])[0].get("Email") or ""
+    ).lower().strip()
+    from_addr = (
+        payload.get("from_email") or payload.get("From")
+        or payload.get("FromFull", {}).get("Email") or ""
+    ).lower().strip()
+    subject = payload.get("subject") or payload.get("Subject") or ""
+    text_body = payload.get("text") or payload.get("TextBody") or ""
+    html_body = payload.get("html") or payload.get("HtmlBody") or ""
+    attachments = payload.get("attachments") or payload.get("Attachments") or []
+    if not to_addr:
+        raise HTTPException(status_code=400, detail="Missing 'to' address")
+    participant = await _db.participants.find_one(
+        {"household_email": to_addr, "status": "ACTIVE"}, {"_id": 0}
+    )
+    if not participant:
+        await _db.inbound_mail_unmatched.insert_one({
+            "id": _new_id(), "to": to_addr, "from": from_addr,
+            "subject": subject, "received_at": _now_iso(),
+        })
+        return {"ok": True, "matched": False}
+    intake = {
+        "id": _new_id(),
+        "account_id": participant["account_id"],
+        "participant_id": participant["id"],
+        "household_id": participant.get("household_id"),
+        "to": to_addr, "from": from_addr, "subject": subject,
+        "text_excerpt": (text_body or "")[:2000],
+        "has_attachments": bool(attachments),
+        "attachment_count": len(attachments or []),
+        "status": "received",
+        "received_at": _now_iso(),
+        "_text_full": (text_body or "")[:50000],
+        "_html_full": (html_body or "")[:50000],
+        "_attachments_meta": [
+            {"name": a.get("Name") or a.get("name"),
+             "mime": a.get("ContentType") or a.get("content_type"),
+             "size": a.get("ContentLength") or a.get("size") or len(a.get("Content", "") or "")}
+            for a in (attachments or [])
+        ],
+    }
+    await _db.statement_intake_queue.insert_one(intake)
+    return {
+        "ok": True, "matched": True, "intake_id": intake["id"],
+        "participant_id": participant["id"], "queued": True,
+    }
+
+
+@batch3_router.get("/inbound/mail/queue")
+async def inbound_mail_queue(request: Request, limit: int = Query(default=50, ge=1, le=200)):
+    """Owner-visible list of received statement intakes for any of their participants."""
+    user = await _user_dep(request)
+    acct = await _account_for_user(user)
+    cur = _db.statement_intake_queue.find(
+        {"account_id": acct["id"]},
+        {"_id": 0, "_text_full": 0, "_html_full": 0, "_attachments_meta": 0},
+    ).sort("received_at", -1).limit(limit)
+    return {"items": [d async for d in cur]}
+
+
+# ============================================================================
+# ADMIN PANELS — Section 8 of the PRD
+# ============================================================================
+async def _require_admin(request: Request) -> dict:
+    user = await _user_dep(request)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin only")
+    return user
+
+
+@batch3_router.get("/admin/v2/users/{user_id}/participants")
+async def admin_user_participants(user_id: str, request: Request):
+    """Section 8.1 — participants tab on the admin user profile."""
+    await _require_admin(request)
+    acct = await _db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0})
+    if not acct:
+        return {"items": [], "account": None, "addons": []}
+    cur = _db.participants.find({"account_id": acct["id"]}, {"_id": 0}).limit(50)
+    parts = [p async for p in cur]
+    addons = [a async for a in _db.participant_add_ons.find({"account_id": acct["id"]}, {"_id": 0}).limit(50)]
+    return {"account": acct, "items": parts, "addons": addons}
+
+
+@batch3_router.get("/admin/v2/addons")
+async def admin_addon_subscriptions(
+    request: Request,
+    status_filter: Optional[str] = Query(default=None, alias="status"),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    """Section 8.2 — add-on subscriptions table."""
+    await _require_admin(request)
+    q: Dict[str, Any] = {}
+    if status_filter in ("ACTIVE", "CANCELLED", "PENDING_CANCELLATION"):
+        q["status"] = status_filter
+    cur = _db.participant_add_ons.find(q, {"_id": 0}).sort("activated_at", -1).limit(limit)
+    items = [d async for d in cur]
+    account_ids = list({a["account_id"] for a in items})
+    accounts = {}
+    async for a in _db.accounts.find({"id": {"$in": account_ids}}, {"_id": 0}):
+        accounts[a["id"]] = a
+    participant_ids = list({a["participant_id"] for a in items})
+    parts = {}
+    async for p in _db.participants.find({"id": {"$in": participant_ids}}, {"_id": 0}):
+        parts[p["id"]] = p
+    user_ids = list({a.get("owner_user_id") for a in accounts.values() if a.get("owner_user_id")})
+    users = {}
+    async for u in _db.users.find({"id": {"$in": user_ids}}, {"_id": 0, "email": 1, "id": 1}):
+        users[u["id"]] = u
+    for a in items:
+        acct = accounts.get(a["account_id"], {})
+        a["account_owner_email"] = users.get(acct.get("owner_user_id"), {}).get("email")
+        p = parts.get(a["participant_id"], {})
+        a["participant_name"] = f"{p.get('first_name', '')} {p.get('last_name', '')}".strip() or None
+        a["monthly_value"] = 19.0
+    return {"items": items}
+
+
+@batch3_router.get("/admin/v2/free-tier/usage")
+async def admin_free_tier_usage(request: Request):
+    """Section 8.3 — free-tier monthly usage stats."""
+    await _require_admin(request)
+    period = datetime.now(timezone.utc).strftime("%Y-%m")
+    total = await _db.free_tool_usage.count_documents({"period_month": period})
+    logged_in = await _db.free_tool_usage.count_documents({"period_month": period, "user_id": {"$ne": None}})
+    anon = total - logged_in
+    fps = await _db.free_tool_usage.distinct("fingerprint", {"period_month": period, "user_id": None})
+    user_ids = await _db.free_tool_usage.distinct("user_id", {"period_month": period, "user_id": {"$ne": None}})
+    converted = 0
+    if user_ids:
+        cur = _db.accounts.find(
+            {"owner_user_id": {"$in": user_ids}, "base_plan": {"$ne": "FREE"}},
+            {"_id": 0, "owner_user_id": 1},
+        )
+        converted = len([a async for a in cur])
+    conv_rate = round(100 * converted / len(user_ids), 1) if user_ids else 0.0
+    return {
+        "period_month": period,
+        "total_uses": total,
+        "anonymous_uses": anon,
+        "logged_in_uses": logged_in,
+        "unique_fingerprints": len([f for f in fps if f]),
+        "unique_users": len(user_ids),
+        "conversions_to_paid": converted,
+        "conversion_rate_pct": conv_rate,
+    }
+
+
+@batch3_router.get("/admin/v2/purge-queue")
+async def admin_purge_queue(request: Request, status_filter: Optional[str] = Query(default=None, alias="status")):
+    """Section 8.4 — data purge queue."""
+    await _require_admin(request)
+    q: Dict[str, Any] = {"data_purge_scheduled_at": {"$ne": None}}
+    if status_filter == "SCHEDULED":
+        q["status"] = "PENDING_REMOVAL"
+        q["data_purged_at"] = None
+    elif status_filter == "COMPLETED":
+        q["data_purged_at"] = {"$ne": None}
+    cur = _db.participants.find(q, {"_id": 0}).sort("data_purge_scheduled_at", 1).limit(200)
+    items = []
+    now = datetime.now(timezone.utc)
+    async for p in cur:
+        days_remaining = None
+        try:
+            if p.get("data_purge_scheduled_at"):
+                purge_dt = datetime.fromisoformat(p["data_purge_scheduled_at"].replace("Z", "+00:00"))
+                days_remaining = max(0, (purge_dt - now).days)
+        except Exception:
+            pass
+        items.append({
+            "id": p["id"], "account_id": p.get("account_id"),
+            "first_name": p.get("first_name"), "last_name": p.get("last_name"),
+            "removed_at": p.get("removal_confirmed_at"),
+            "purge_at": p.get("data_purge_scheduled_at"),
+            "days_remaining": days_remaining,
+            "status": "COMPLETED" if p.get("data_purged_at") else "SCHEDULED",
+            "purged_at": p.get("data_purged_at"),
+        })
+    return {"items": items}
+
+
+@batch3_router.post("/admin/v2/purge-queue/{pid}/extend")
+async def admin_extend_purge(pid: str, request: Request):
+    """Super-admin only: extend the 60-day window by 30 days."""
+    user = await _require_admin(request)
+    p = await _db.participants.find_one({"id": pid, "status": "PENDING_REMOVAL"}, {"_id": 0})
+    if not p or not p.get("data_purge_scheduled_at"):
+        raise HTTPException(status_code=404, detail="Participant not found or no purge scheduled")
+    new_dt = (datetime.fromisoformat(p["data_purge_scheduled_at"].replace("Z", "+00:00")) + timedelta(days=30)).isoformat()
+    await _db.participants.update_one({"id": pid}, {"$set": {"data_purge_scheduled_at": new_dt}})
+    await _db.audit_events.insert_one({
+        "id": _new_id(), "actor_id": user["id"], "action": "PURGE_EXTENDED",
+        "target": pid, "detail": f"Extended purge by 30 days to {new_dt}", "at": _now_iso(),
+    })
+    return {"ok": True, "new_purge_at": new_dt}

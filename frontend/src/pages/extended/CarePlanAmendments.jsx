@@ -43,6 +43,7 @@ export default function CarePlanAmendments() {
     }, []);
 
     useEffect(() => { load(); }, [load]);
+    useInvalidateOnParticipantChange(() => { setHistory([]); setPreview(null); load(); });
     useEffect(() => { if (!participantId && active?.id) setParticipantId(active.id); }, [active, participantId]);
 
     const setItem = (idx, patch) => {

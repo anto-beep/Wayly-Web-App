@@ -61,10 +61,10 @@ const TIERS = [
         cta: "Contact us",
         href: "/contact?intent=adviser",
         highlights: [
-            "Up to 25 client households",
+            "Up to 20 client households",
+            "3 caregiver seats",
             "Scenario modeller + branded PDFs",
-            "Global alert dashboard",
-            "Priority support",
+            "Priority support + offline mode",
         ],
     },
 ];
@@ -98,9 +98,9 @@ const SECTIONS = [
     {
         label: "Participants & Caregivers",
         rows: [
-            ["Participants included", "1", "1", "2", "Up to 25 clients"],
-            ["Additional participants", "—", "Upgrade to Family", "+$19/month each", "Included"],
-            ["Caregiver seats", "1", "1", "3", "Unlimited"],
+            ["Participants included", "1", "1", "2", "Up to 20 clients"],
+            ["Additional participants", "—", "Upgrade to Family", "+$19/month each", "+$19/month each"],
+            ["Caregiver seats", "1", "1", "3", "3"],
         ],
     },
     {
@@ -149,7 +149,7 @@ const SECTIONS = [
             ["Participant view (simplified UI)", false, true, true, false],
             ["Voice input for participants", false, true, true, false],
             ["Referral program (14-day extended trial)", "As referrer", true, true, false],
-            ["Offline mode (mobile)", false, true, true, false],
+            ["Offline mode (mobile)", false, true, true, true],
         ],
     },
     {
@@ -175,7 +175,7 @@ const SECTIONS = [
         rows: [
             ["Help centre access", true, true, true, true],
             ["Email support", false, true, true, "Priority"],
-            ["Priority support", false, false, false, true],
+            ["Priority support", false, false, true, true],
         ],
     },
 ];

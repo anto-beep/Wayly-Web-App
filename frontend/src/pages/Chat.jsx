@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { Send, Loader2, Sparkles } from "lucide-react";
+import useInvalidateOnParticipantChange from "@/hooks/useInvalidateOnParticipantChange";
 
 const SUGGESTIONS = [
     "How much budget is left this quarter?",
@@ -23,6 +24,10 @@ export default function Chat() {
             } catch {}
         })();
     }, []);
+
+    // On participant switch, clear the conversation context entirely so the
+    // assistant never carries one participant's history into another.
+    useInvalidateOnParticipantChange(() => { setMsgs([]); setInput(""); setBusy(false); });
 
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });

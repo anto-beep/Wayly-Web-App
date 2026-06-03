@@ -1,22 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { api, formatAUD2 } from "@/lib/api";
 import { FileText, ArrowRight } from "lucide-react";
+import useInvalidateOnParticipantChange from "@/hooks/useInvalidateOnParticipantChange";
 
 export default function StatementsList() {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const { data } = await api.get("/statements");
-                setItems(data);
-            } finally {
-                setLoading(false);
-            }
-        })();
+    const load = useCallback(async () => {
+        setLoading(true);
+        try {
+            const { data } = await api.get("/statements");
+            setItems(data);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => { load(); }, [load]);
+    useInvalidateOnParticipantChange(() => { setItems([]); load(); });
 
     return (
         <div className="space-y-6" data-testid="statements-list-page">

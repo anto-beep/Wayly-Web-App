@@ -317,9 +317,28 @@ export default function ParticipantsPage() {
                                             <li>All features remain the same</li>
                                         </ul>
                                         <p className="text-xs text-muted-k">The $20/mo difference is charged at your next billing date. Your current billing cycle is not affected.</p>
-                                        <button onClick={() => setStep("form")} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]" data-testid="confirm-solo-to-family">
-                                            Confirm upgrade & add participant
-                                        </button>
+                                        <div className="flex gap-2 flex-wrap">
+                                            <button onClick={async () => {
+                                                try {
+                                                    const { data } = await api.post("/billing/v2/upgrade-checkout", {
+                                                        target_plan: "FAMILY",
+                                                        origin_url: window.location.origin,
+                                                        delta_only: true,
+                                                    });
+                                                    if (data.url) { window.location.href = data.url; return; }
+                                                    if (data.instant_upgrade) setStep("form");
+                                                } catch (e) {
+                                                    const msg = extractErrorMessage(e, "Could not start checkout");
+                                                    if (msg.includes("Billing unavailable")) setStep("form"); // fall back to immediate add
+                                                    else toast.error(msg);
+                                                }
+                                            }} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]" data-testid="confirm-solo-to-family">
+                                                Pay $20 & upgrade now
+                                            </button>
+                                            <button onClick={() => setStep("form")} className="text-sm text-muted-k hover:text-primary-k" data-testid="skip-checkout-solo-to-family">
+                                                Skip checkout (test mode)
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                                 {(addPreview.branch === "family_addons" || addPreview.branch === "covered_by_family") && (
@@ -410,6 +429,26 @@ export default function ParticipantsPage() {
                                     <button onClick={() => copyEmail(lastAdded.participant.household_email)} className="mt-2 text-xs text-primary-k underline">Copy</button>
                                 </div>
                                 <p className="text-sm text-muted-k text-center">Forward their monthly statements here and Wayly will decode them automatically.</p>
+                                {lastAdded.addon?.id && (
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const { data } = await api.post("/billing/v2/addon-checkout", {
+                                                    addon_id: lastAdded.addon.id,
+                                                    origin_url: window.location.origin,
+                                                });
+                                                if (data.url) { window.location.href = data.url; return; }
+                                                if (data.already_paid) toast.info("Add-on already paid");
+                                            } catch (e) {
+                                                toast.error(extractErrorMessage(e, "Could not start add-on checkout"));
+                                            }
+                                        }}
+                                        className="w-full bg-gold text-primary-k font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95"
+                                        data-testid="pay-addon-btn"
+                                    >
+                                        Pay $19/mo add-on now
+                                    </button>
+                                )}
                                 <button onClick={closeAdd} className="w-full bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]">Done</button>
                             </div>
                         )}

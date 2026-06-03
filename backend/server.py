@@ -3211,7 +3211,18 @@ async def stripe_webhook(request: Request):
     if (ev.payment_status or "").lower() == "paid" and ev.session_id:
         tx = await db.payment_transactions.find_one({"session_id": ev.session_id})
         if tx and tx.get("payment_status") != "paid":
-            await db.users.update_one({"id": tx["user_id"]}, {"$set": {"plan": tx["plan"]}})
+            # Batch-3 v2 transactions carry a metadata.kind that routes to dedicated handlers
+            tx_kind = (tx.get("kind") or "")
+            md = tx.get("metadata") or {}
+            if tx_kind in ("plan_upgrade", "participant_addon"):
+                from batch3_billing import handle_batch3_paid_event
+                try:
+                    await handle_batch3_paid_event(md, ev.session_id)
+                except Exception as e:
+                    logger.warning("Batch3 paid-event handler failed: %s", e)
+            else:
+                # Legacy single-plan checkout flow
+                await db.users.update_one({"id": tx["user_id"]}, {"$set": {"plan": tx["plan"]}})
             await db.payment_transactions.update_one(
                 {"session_id": ev.session_id},
                 {"$set": {"payment_status": "paid", "paid_at": now_iso(), "webhook_event": ev.event_type}},
@@ -3249,6 +3260,7 @@ from batch3_routes import (
     batch3_router, init_batch3_routes, migrate_batch3, run_purge_job,
     check_free_tool_usage, record_free_tool_usage,
 )
+from batch3_billing import billing_router as batch3_billing_router, init_billing_routes
 init_adviser_routes(
     db=db,
     require_adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
@@ -3304,6 +3316,7 @@ init_batch2_routes(
     audit_log=_audit,
 )
 init_batch3_routes(db=db, user_dep=_user_from_request_required)
+init_billing_routes(db=db, user_dep=_user_from_request_required)
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -3321,6 +3334,7 @@ api.include_router(documents_router)
 api.include_router(extended_router)
 api.include_router(batch2_router)
 api.include_router(batch3_router)
+api.include_router(batch3_billing_router)
 
 app.include_router(api)
 
