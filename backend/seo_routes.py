@@ -49,6 +49,15 @@ STATIC_PAGES = [
     ("/resources/articles/support-at-home-statement",         "0.8", "monthly"),
     ("/resources/articles/home-care-package-vs-support-at-home", "0.8", "monthly"),
     ("/resources/articles/support-at-home-costs-and-contributions", "0.8", "monthly"),
+    # SEO AI Tool articles (Feb 2026)
+    ("/resources/articles/wayly-statement-decoder-support-at-home-statement-explained", "0.8", "monthly"),
+    ("/resources/articles/wayly-budget-calculator-support-at-home-quarterly-budget", "0.8", "monthly"),
+    ("/resources/articles/wayly-provider-price-checker-support-at-home-prices", "0.8", "monthly"),
+    ("/resources/articles/wayly-classification-self-check-support-at-home-levels", "0.8", "monthly"),
+    ("/resources/articles/wayly-reassessment-letter-generator-support-at-home-reassessment", "0.8", "monthly"),
+    ("/resources/articles/wayly-contribution-estimator-support-at-home-fees", "0.8", "monthly"),
+    ("/resources/articles/wayly-care-plan-reviewer-support-at-home-care-plan", "0.8", "monthly"),
+    ("/resources/articles/wayly-family-coordinator-managing-parents-aged-care", "0.8", "monthly"),
 ]
 
 

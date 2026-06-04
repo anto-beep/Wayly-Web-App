@@ -113,7 +113,12 @@ If you would rather have those checks done for you every month, Wayly can read t
             { q: "What can I do if I think we have been overcharged?", a: "Raise it with the provider first. From May 2026 the Aged Care Quality and Safety Commission can order refunds where overcharging is found. You can also call the OPAN advocacy line on 1800 700 600." },
             { q: "How much unspent funding can roll over to the next quarter?", a: "You can carry over $1,000 or 10% of the quarterly budget, whichever is greater. Amounts above that do not carry over." },
         ],
-        related: ["home-care-package-vs-support-at-home", "support-at-home-costs-and-contributions"],
+        related: [
+            "wayly-statement-decoder-support-at-home-statement-explained",
+            "wayly-budget-calculator-support-at-home-quarterly-budget",
+            "home-care-package-vs-support-at-home",
+            "support-at-home-costs-and-contributions",
+        ],
     },
     {
         slug: "home-care-package-vs-support-at-home",
@@ -234,7 +239,12 @@ If that feels like a lot to stay on top of from a distance, Wayly can track the 
             { q: "Do the unspent Home Care Package funds disappear?", a: "No. Unspent funds held as at 31 October 2025 are kept in a separate pool with no carryover limit." },
             { q: "Are the Support at Home price caps still starting on 1 July 2026?", a: "No. The government deferred the caps in May 2026 with no new date set. Providers set their own published prices for now." },
         ],
-        related: ["support-at-home-statement", "support-at-home-costs-and-contributions"],
+        related: [
+            "wayly-provider-price-checker-support-at-home-prices",
+            "wayly-contribution-estimator-support-at-home-fees",
+            "support-at-home-statement",
+            "support-at-home-costs-and-contributions",
+        ],
     },
     {
         slug: "support-at-home-costs-and-contributions",
@@ -338,6 +348,12 @@ Start with the My Aged Care fee estimator to get a guide, then let Wayly keep tr
             { q: "Did the Support at Home price caps start on 1 July 2026?", a: "No. The government deferred the caps in May 2026 and has not set a new date. Providers set their own published prices for now." },
             { q: "Is there a limit on total contributions?", a: "Yes. There is a lifetime cap, set at $135,318.69 for new participants as at September 2025 and indexed twice a year. People protected by the no worse off rule have a lower cap of $84,571.66." },
         ],
-        related: ["support-at-home-statement", "home-care-package-vs-support-at-home"],
+        related: [
+            "wayly-budget-calculator-support-at-home-quarterly-budget",
+            "wayly-contribution-estimator-support-at-home-fees",
+            "wayly-care-plan-reviewer-support-at-home-care-plan",
+            "support-at-home-statement",
+            "home-care-package-vs-support-at-home",
+        ],
     },
 ];

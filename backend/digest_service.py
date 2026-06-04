@@ -20,15 +20,37 @@ MOOD_LABEL = {"good": "Good days", "okay": "OK days", "not_great": "Harder days"
 MOOD_COLOUR = {"good": "#7A9B7E", "okay": "#D4A24E", "not_great": "#C5734D"}
 
 
-async def build_digest(db, household: Dict[str, Any], since_days: int = 7) -> Dict[str, Any]:
-    """Aggregate a week's worth of Wayly activity into a JSON digest."""
+async def build_digest(db, household: Dict[str, Any], since_days: int = 7, participant: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Aggregate a week's worth of Wayly activity into a JSON digest.
+
+    When `participant` is supplied, results are scoped to that participant's
+    rows (statements, wellbeing check-ins, family-thread messages). Without a
+    participant, the digest falls back to the household-wide view (legacy
+    single-participant households)."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=since_days)
     cutoff_iso = cutoff.isoformat()
     hid = household["id"]
+    pid = (participant or {}).get("id")
+
+    # Build a participant-scoped filter. Legacy docs (no participant_id) are
+    # treated as belonging to the household's primary participant.
+    def scoped(base: Dict[str, Any]) -> Dict[str, Any]:
+        if not pid:
+            return base
+        q = dict(base)
+        if (participant or {}).get("is_primary"):
+            q["$or"] = [
+                {"participant_id": pid},
+                {"participant_id": None},
+                {"participant_id": {"$exists": False}},
+            ]
+        else:
+            q["participant_id"] = pid
+        return q
 
     # Wellbeing — lead with the emotional hook
     wellbeing_cur = db.wellbeing.find(
-        {"household_id": hid, "created_at": {"$gte": cutoff_iso}},
+        scoped({"household_id": hid, "created_at": {"$gte": cutoff_iso}}),
         {"_id": 0},
     )
     wellbeing = await wellbeing_cur.to_list(100)
@@ -44,7 +66,7 @@ async def build_digest(db, household: Dict[str, Any], since_days: int = 7) -> Di
             break
 
     # Anomalies — pull from statements uploaded this week
-    stmts_cur = db.statements.find({"household_id": hid, "uploaded_at": {"$gte": cutoff_iso}}, {"_id": 0})
+    stmts_cur = db.statements.find(scoped({"household_id": hid, "uploaded_at": {"$gte": cutoff_iso}}), {"_id": 0})
     statements = await stmts_cur.to_list(50)
     top_anomalies: List[Dict[str, Any]] = []
     total_new_spend = 0.0
@@ -65,14 +87,14 @@ async def build_digest(db, household: Dict[str, Any], since_days: int = 7) -> Di
 
     # Family thread — last 3 posts
     thread_cur = db.family_messages.find(
-        {"household_id": hid, "created_at": {"$gte": cutoff_iso}},
+        scoped({"household_id": hid, "created_at": {"$gte": cutoff_iso}}),
         {"_id": 0},
     ).sort("created_at", -1).limit(3)
     thread = await thread_cur.to_list(3)
 
     # Caregiver chat — questions asked (user turns)
     chat_count = await db.chat_turns.count_documents(
-        {"household_id": hid, "role": "user", "created_at": {"$gte": cutoff_iso}}
+        scoped({"household_id": hid, "role": "user", "created_at": {"$gte": cutoff_iso}})
     )
 
     # Caregiver identity — who did all this
@@ -83,7 +105,8 @@ async def build_digest(db, household: Dict[str, Any], since_days: int = 7) -> Di
 
     return {
         "household_id": hid,
-        "household_name": household.get("participant_name"),
+        "participant_id": pid,
+        "household_name": (participant or {}).get("first_name") or household.get("participant_name"),
         "caregiver_name": caregiver_name,
         "caregiver_first_name": first_name,
         "week_label": week_label,
@@ -225,10 +248,10 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
 </body></html>"""
 
 
-async def send_digest_to_members(db, household: Dict[str, Any], recipients: List[str], digest: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+async def send_digest_to_members(db, household: Dict[str, Any], recipients: List[str], digest: Optional[Dict[str, Any]] = None, participant: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Deliver the digest to all supplied emails. Records the send in `digest_sends`."""
     if digest is None:
-        digest = await build_digest(db, household)
+        digest = await build_digest(db, household, participant=participant)
     html = render_digest_html(digest)
     sent: List[Dict[str, Any]] = []
     for to in recipients:
@@ -245,6 +268,7 @@ async def send_digest_to_members(db, household: Dict[str, Any], recipients: List
             sent.append({"to": to, "ok": False, "reason": str(e)})
     await db.digest_sends.insert_one({
         "household_id": household["id"],
+        "participant_id": digest.get("participant_id"),
         "sent_at": datetime.now(timezone.utc).isoformat(),
         "recipients": recipients,
         "summary": {

@@ -2953,21 +2953,23 @@ async def stream_notifications(request: Request, token: Optional[str] = None):
 # Family weekly digest
 # ---------------------------------------------------------------------------
 @api.get("/digest/preview")
-async def digest_preview(user_id: str = Depends(get_current_user_id)):
+async def digest_preview(request: Request, user_id: str = Depends(get_current_user_id)):
     household = await _get_user_household(user_id)
     if not household:
         raise HTTPException(status_code=400, detail="Create a household first")
-    return await digest_service.build_digest(db, household)
+    participant = await _resolve_active_participant(user_id, request)
+    return await digest_service.build_digest(db, household, participant=participant)
 
 
 @api.post("/digest/send")
-async def digest_send(user_id: str = Depends(get_current_user_id)):
+async def digest_send(request: Request, user_id: str = Depends(get_current_user_id)):
     u = await _get_user(user_id)
     if u.get("plan") != "family":
         raise HTTPException(status_code=402, detail={"code": "plan_required", "message": "Family plan required to send digests."})
     household = await _get_user_household(user_id)
     if not household:
         raise HTTPException(status_code=400, detail="Create a household first")
+    participant = await _resolve_active_participant(user_id, request)
     recipients: List[str] = []
     owner = await _get_user(household["owner_id"])
     if (owner.get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS).get("weekly_digest", True):
@@ -2984,22 +2986,35 @@ async def digest_send(user_id: str = Depends(get_current_user_id)):
     recipients = [r for r in recipients if not (r in seen or seen.add(r))]
     if not recipients:
         return {"ok": False, "reason": "No recipients opted in"}
-    digest = await digest_service.build_digest(db, household)
-    res = await digest_service.send_digest_to_members(db, household, recipients, digest)
-    await _audit(household["id"], user_id, u["name"], "DIGEST_SENT", f"Sent to {len(recipients)} recipient(s)")
+    digest = await digest_service.build_digest(db, household, participant=participant)
+    res = await digest_service.send_digest_to_members(db, household, recipients, digest, participant=participant)
+    pname = (participant or {}).get("first_name") or household.get("participant_name") or "household"
+    await _audit(household["id"], user_id, u["name"], "DIGEST_SENT", f"Sent {pname}'s digest to {len(recipients)} recipient(s)")
     try:
-        await create_notification(user_id, "weekly_digest", "Weekly digest sent", f"Sent to {len(recipients)} people.", "/settings/members")
+        await create_notification(user_id, "weekly_digest", f"Weekly digest sent — {pname}", f"Sent to {len(recipients)} people.", "/settings/digest")
     except Exception:
         pass
-    return {"ok": True, "recipients": recipients, "summary": res.get("results")}
+    return {"ok": True, "recipients": recipients, "participant_id": (participant or {}).get("id"), "summary": res.get("results")}
 
 
 @api.get("/digest/history")
-async def digest_history(user_id: str = Depends(get_current_user_id)):
+async def digest_history(request: Request, user_id: str = Depends(get_current_user_id)):
     household = await _get_user_household(user_id)
     if not household:
         return {"items": []}
-    cur = db.digest_sends.find({"household_id": household["id"]}, {"_id": 0}).sort("sent_at", -1).limit(12)
+    participant = await _resolve_active_participant(user_id, request)
+    q: Dict[str, Any] = {"household_id": household["id"]}
+    if participant:
+        pid = participant["id"]
+        if participant.get("is_primary"):
+            q["$or"] = [
+                {"participant_id": pid},
+                {"participant_id": None},
+                {"participant_id": {"$exists": False}},
+            ]
+        else:
+            q["participant_id"] = pid
+    cur = db.digest_sends.find(q, {"_id": 0}).sort("sent_at", -1).limit(12)
     items = await cur.to_list(12)
     return {"items": items}
 

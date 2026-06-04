@@ -163,7 +163,7 @@ export default function CaregiverDashboard() {
                                 <span className="text-sage"> {formatAUD(budget.quarterly_total - budget.streams.reduce((a, s) => a + s.spent, 0))} left</span>
                             </div>
                         </div>
-                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="stat-anomalies">
+                        <Link to="/app/budget-alerts" className="bg-surface border border-kindred rounded-xl p-5 hover:border-primary-k hover:shadow-sm transition-all" data-testid="stat-anomalies">
                             <div className="flex items-center gap-2 text-muted-k">
                                 <Bell className="h-4 w-4" />
                                 <span className="overline">Alerts</span>
@@ -174,8 +174,8 @@ export default function CaregiverDashboard() {
                             <div className="text-xs text-muted-k mt-0.5">
                                 {allAnomalies.length === 0 ? "Nothing unusual" : "Things to review"}
                             </div>
-                        </div>
-                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="stat-statements">
+                        </Link>
+                        <Link to="/app/statements" className="bg-surface border border-kindred rounded-xl p-5 hover:border-primary-k hover:shadow-sm transition-all" data-testid="stat-statements">
                             <div className="flex items-center gap-2 text-muted-k">
                                 <FileText className="h-4 w-4" />
                                 <span className="overline">Statements</span>
@@ -184,8 +184,8 @@ export default function CaregiverDashboard() {
                             <div className="text-xs text-muted-k mt-0.5">
                                 {statements[0] ? `Latest ${new Date(statements[0].uploaded_at || statements[0].created_at || Date.now()).toLocaleDateString()}` : "None yet"}
                             </div>
-                        </div>
-                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="stat-cap">
+                        </Link>
+                        <Link to="/app/reports" className="bg-surface border border-kindred rounded-xl p-5 hover:border-primary-k hover:shadow-sm transition-all" data-testid="stat-cap">
                             <div className="flex items-center gap-2 text-muted-k">
                                 <CheckCircle2 className="h-4 w-4" />
                                 <span className="overline">Lifetime cap</span>
@@ -194,7 +194,7 @@ export default function CaregiverDashboard() {
                                 {budget.lifetime_pct.toFixed(1)}<span className="text-base text-muted-k">%</span>
                             </div>
                             <div className="text-xs text-muted-k mt-0.5">used of {formatAUD(budget.lifetime_cap)}</div>
-                        </div>
+                        </Link>
                     </div>
 
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

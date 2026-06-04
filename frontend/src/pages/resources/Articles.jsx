@@ -7,6 +7,7 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { ARTICLES as STATIC_ARTICLES } from "@/data/resources";
 import { SEO_ARTICLES_2026 } from "@/data/seoArticles2026";
+import { SEO_TOOL_ARTICLES } from "@/data/seoToolArticles";
 import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown, Twitter, Linkedin, Mail, Link2, Sparkles } from "lucide-react";
 
 import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
@@ -17,8 +18,12 @@ const fmtDate = (iso) => { if (!iso) return null; try { return new Date(iso).toL
 
 // Merge the structured 2026 SEO articles into the existing static catalog so
 // they appear on the index page and at /resources/articles/:slug.
-const ALL_STATIC_ARTICLES = [
+const STRUCTURED_SEO_ARTICLES = [
+    ...SEO_TOOL_ARTICLES,
     ...SEO_ARTICLES_2026,
+];
+const ALL_STATIC_ARTICLES = [
+    ...STRUCTURED_SEO_ARTICLES,
     ...STATIC_ARTICLES,
 ];
 
@@ -54,12 +59,12 @@ export default function ArticlesIndex() {
         axios.get(`${API}/public/cms/articles`)
             .then((r) => {
                 const cms = r.data.articles || [];
-                // Always include the SEO_ARTICLES_2026 first (newest), then CMS,
+                // Always include the structured SEO articles first (newest), then CMS,
                 // then the older static catalog as a fallback.
                 const cmsSlugs = new Set(cms.map((a) => a.slug));
-                const seo2026 = SEO_ARTICLES_2026.filter((a) => !cmsSlugs.has(a.slug));
-                const olderStatic = STATIC_ARTICLES.filter((a) => !cmsSlugs.has(a.slug) && !seo2026.find((s) => s.slug === a.slug));
-                setArticles([...seo2026, ...cms, ...olderStatic]);
+                const structured = STRUCTURED_SEO_ARTICLES.filter((a) => !cmsSlugs.has(a.slug));
+                const olderStatic = STATIC_ARTICLES.filter((a) => !cmsSlugs.has(a.slug) && !structured.find((s) => s.slug === a.slug));
+                setArticles([...structured, ...cms, ...olderStatic]);
             })
             .catch(() => setArticles(ALL_STATIC_ARTICLES));
     }, []);
@@ -99,9 +104,9 @@ export function ArticleDetail() {
 
     useEffect(() => {
         setArticle(undefined);
-        // Try the structured 2026 SEO article registry first (no API call needed,
+        // Try the structured SEO article registries first (no API call needed,
         // we control the layout end-to-end for these).
-        const seo = SEO_ARTICLES_2026.find((a) => a.slug === slug);
+        const seo = STRUCTURED_SEO_ARTICLES.find((a) => a.slug === slug);
         if (seo) { setArticle({ ...seo, structured: true }); return; }
         axios.get(`${API}/public/cms/articles/${slug}`)
             .then((r) => setArticle(r.data))
@@ -239,40 +244,56 @@ function StructuredArticle({ article, slug }) {
     );
     const relatedArticles = useMemo(
         () => (article.related || [])
-            .map((s) => SEO_ARTICLES_2026.find((a) => a.slug === s) || STATIC_ARTICLES.find((a) => a.slug === s))
+            .map((s) => STRUCTURED_SEO_ARTICLES.find((a) => a.slug === s) || STATIC_ARTICLES.find((a) => a.slug === s))
             .filter(Boolean),
         [article.related],
     );
 
+    const jsonLdGraph = [
+        {
+            "@type": "Article",
+            headline: article.title,
+            description: article.excerpt,
+            url,
+            mainEntityOfPage: { "@type": "WebPage", "@id": url },
+            datePublished: article.published_at,
+            dateModified: article.updated_at || article.published_at,
+            author: { "@type": "Person", name: article.author?.name || "Wayly editorial" },
+            publisher: {
+                "@type": "Organization",
+                name: "Wayly",
+                logo: { "@type": "ImageObject", url: canonicalFor("/icons/icon-512.png") },
+            },
+            image: canonicalFor(`/api/public/seo/og.png?title=${encodeURIComponent(article.title)}`),
+        },
+        faqLd(article.faqs),
+        {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: canonicalFor("/") },
+                { "@type": "ListItem", position: 2, name: "Articles", item: canonicalFor("/resources/articles") },
+                { "@type": "ListItem", position: 3, name: article.title, item: url },
+            ],
+        },
+    ];
+
+    if (article.howto?.steps?.length) {
+        jsonLdGraph.push({
+            "@type": "HowTo",
+            name: article.howto.name || article.title,
+            description: article.howto.description || article.excerpt,
+            step: article.howto.steps.map((s, i) => ({
+                "@type": "HowToStep",
+                position: i + 1,
+                name: s.name,
+                text: s.text,
+            })),
+        });
+    }
+
     const jsonLd = {
         "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "Article",
-                headline: article.title,
-                description: article.excerpt,
-                url,
-                mainEntityOfPage: { "@type": "WebPage", "@id": url },
-                datePublished: article.published_at,
-                dateModified: article.updated_at || article.published_at,
-                author: { "@type": "Person", name: article.author?.name || "Wayly editorial" },
-                publisher: {
-                    "@type": "Organization",
-                    name: "Wayly",
-                    logo: { "@type": "ImageObject", url: canonicalFor("/icons/icon-512.png") },
-                },
-                image: canonicalFor(`/api/public/seo/og.png?title=${encodeURIComponent(article.title)}`),
-            },
-            faqLd(article.faqs),
-            {
-                "@type": "BreadcrumbList",
-                itemListElement: [
-                    { "@type": "ListItem", position: 1, name: "Home", item: canonicalFor("/") },
-                    { "@type": "ListItem", position: 2, name: "Articles", item: canonicalFor("/resources/articles") },
-                    { "@type": "ListItem", position: 3, name: article.title, item: url },
-                ],
-            },
-        ],
+        "@graph": jsonLdGraph,
     };
 
     const handleCopyLink = () => {

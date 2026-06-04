@@ -83,13 +83,19 @@ const PLANS = { free: { name: "Free", price: "$0", period: "forever" }, solo: { 
 function BillingTab() {
     const { user, refreshUser } = useAuth();
     const [sub, setSub] = useState(null);
+    const [account, setAccount] = useState(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const load = useCallback(async () => {
         setLoading(true);
-        try { const { data } = await api.get("/billing/subscription"); setSub(data); }
-        catch { setSub({ plan: user?.plan || "free", status: "none" }); }
-        finally { setLoading(false); }
+        try {
+            const [subRes, acctRes] = await Promise.allSettled([
+                api.get("/billing/subscription"),
+                api.get("/account"),
+            ]);
+            setSub(subRes.status === "fulfilled" ? subRes.value.data : { plan: user?.plan || "free", status: "none" });
+            setAccount(acctRes.status === "fulfilled" ? acctRes.value.data : null);
+        } finally { setLoading(false); }
     }, [user?.plan]);
     useEffect(() => { load(); }, [load]);
     const startCheckout = async (plan) => {
@@ -122,6 +128,18 @@ function BillingTab() {
         finally { setBusy(false); }
     };
     const changePlan = async (plan) => {
+        // Family → Solo downgrade warning: block if >1 participant
+        if (plan === "solo" && (user?.plan === "family") && account) {
+            const activeCount = account?.summary?.participants_active ?? (account?.participants || []).filter((p) => p.status === "ACTIVE").length;
+            if (activeCount > 1) {
+                toast.error("Remove additional participants before downgrading", {
+                    description: `Solo includes 1 participant. You currently have ${activeCount}. Go to "Participants" and remove the extras (or downgrade individual add-ons) before switching to Solo.`,
+                    duration: 10_000,
+                    action: { label: "Manage participants", onClick: () => { window.location.assign("/app/participants"); } },
+                });
+                return;
+            }
+        }
         setBusy(true);
         try { const { data } = await api.post("/billing/upgrade", { plan }); if (data?.ok) { toast.success(`Plan changed to ${PLANS[plan].name}`); await refreshUser(); await load(); } }
         catch (err) { toast.error(extractErrorMessage(err, "Could not change plan")); }
@@ -184,6 +202,57 @@ function BillingTab() {
                         {activeSub && !sub.cancel_at_period_end && (<button onClick={cancel} disabled={busy} data-testid="cancel-plan-btn" className="inline-flex items-center gap-2 text-sm text-terracotta hover:underline"><X className="h-3.5 w-3.5" /> Cancel auto-renewal</button>)}
                     </div>
                 </div>
+
+                {/* Participants & add-ons summary — mirrors the Participants tab */}
+                {account?.summary && (
+                    <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-participants-card">
+                        <div className="flex items-start justify-between flex-wrap gap-4">
+                            <div>
+                                <div className="flex items-center gap-2"><Users className="h-4 w-4 text-primary-k" /><span className="overline">What you're paying for</span></div>
+                                <p className="mt-1 text-sm text-muted-k">Live view of participants and add-ons on this account.</p>
+                            </div>
+                            <Link to="/app/participants" className="text-sm text-primary-k hover:underline inline-flex items-center gap-1" data-testid="billing-manage-participants">Manage participants <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+                        </div>
+                        <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <div className="overline">Base plan</div>
+                                <div className="font-heading text-lg text-primary-k mt-1">{account.summary.base_plan}</div>
+                                <div className="text-xs text-muted-k mt-0.5">${Number(account.summary.base_price_monthly || 0).toFixed(2)}/mo</div>
+                            </div>
+                            <div>
+                                <div className="overline">Participants</div>
+                                <div className="font-heading text-lg text-primary-k mt-1" data-testid="billing-participants-count">{account.summary.participants_active} <span className="text-sm text-muted-k">/ {account.summary.participants_included} included</span></div>
+                                <div className="text-xs text-muted-k mt-0.5">Max {account.summary.participants_max}</div>
+                            </div>
+                            <div>
+                                <div className="overline">Add-ons</div>
+                                <div className="font-heading text-lg text-primary-k mt-1" data-testid="billing-addons-count">{account.summary.addon_count} <span className="text-sm text-muted-k">@ ${Number(account.summary.addon_price_monthly || 0).toFixed(2)}/mo each</span></div>
+                                <div className="text-xs text-muted-k mt-0.5">Subtotal ${Number(account.summary.addon_monthly_total || 0).toFixed(2)}/mo</div>
+                            </div>
+                            <div>
+                                <div className="overline">Monthly total</div>
+                                <div className="font-heading text-xl text-primary-k mt-1" data-testid="billing-monthly-total">${Number(account.summary.monthly_total || 0).toFixed(2)}</div>
+                                <div className="text-xs text-muted-k mt-0.5">excl. tax</div>
+                            </div>
+                        </div>
+                        {(account.participants || []).filter((p) => p.status === "ACTIVE").length > 0 && (
+                            <ul className="mt-5 divide-y divide-kindred border-t border-kindred" data-testid="billing-participants-list">
+                                {(account.participants || []).filter((p) => p.status === "ACTIVE").map((p) => {
+                                    const hasAddon = (account.addons || []).some((a) => a.status === "ACTIVE" && a.participant_id === p.id);
+                                    return (
+                                        <li key={p.id} className="py-3 flex items-center justify-between gap-3 text-sm" data-testid={`billing-participant-${p.id}`}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium text-primary-k">{p.first_name} {p.last_name}</span>
+                                                {p.is_primary && (<span className="text-[10px] uppercase tracking-wider bg-gold/20 text-primary-k border border-gold/40 rounded-full px-2 py-0.5">Primary</span>)}
+                                            </div>
+                                            <span className="text-xs text-muted-k">{hasAddon ? `+$${Number(account.summary.addon_price_monthly || 0).toFixed(2)}/mo add-on` : "Included in base plan"}</span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                    </div>
+                )}
                 <div className="grid md:grid-cols-3 gap-4">
                     {["free", "solo", "family"].map((p) => {
                         const isCurrent = p === currentPlan;

@@ -1132,7 +1132,7 @@ async def _generate_report(report_id: str) -> None:
                     "category": "report_ready",
                     "title": f"Your {REPORT_TYPES[rtype]} is ready",
                     "body": "Tap to view and download.",
-                    "url": f"/app/reports?report_id={report_id}",
+                    "link": f"/app/reports?report_id={report_id}",
                     "read": False,
                     "created_at": _now().isoformat(),
                 })
