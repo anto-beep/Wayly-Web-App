@@ -45,6 +45,10 @@ STATIC_PAGES = [
     ("/legal/ai-intent",           "0.3", "yearly"),
     ("/legal/accessibility",       "0.3", "yearly"),
     ("/legal/cookies",             "0.3", "yearly"),
+    # SEO articles (Nov 2026)
+    ("/resources/articles/support-at-home-statement",         "0.8", "monthly"),
+    ("/resources/articles/home-care-package-vs-support-at-home", "0.8", "monthly"),
+    ("/resources/articles/support-at-home-costs-and-contributions", "0.8", "monthly"),
 ]
 
 
