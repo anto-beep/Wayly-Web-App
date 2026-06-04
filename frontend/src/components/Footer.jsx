@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { HeartHandshake } from "lucide-react";
+import WaylyLogo from "@/components/WaylyLogo";
 import AppStoreBadges from "@/components/AppStoreBadges";
 
 const PRODUCT = [
@@ -51,9 +51,7 @@ export default function Footer() {
                 {/* Column 1 — Brand */}
                 <div>
                     <Link to="/" className="flex items-center gap-2.5" data-testid="footer-brand-link">
-                        <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center">
-                            <HeartHandshake className="h-5 w-5 text-white" />
-                        </div>
+                        <WaylyLogo size={36} className="rounded-lg" />
                         <span className="font-heading text-xl text-white">Wayly</span>
                     </Link>
                     <p className="text-sm text-white/80 mt-4 leading-relaxed">

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { HeartHandshake } from "lucide-react";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import WaylyLogo from "@/components/WaylyLogo";
 
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
@@ -38,9 +38,7 @@ export default function Login() {
             <SeoHead {...SEO.login} noindex />
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
-                    <div className="h-8 w-8 rounded-full bg-primary-k flex items-center justify-center">
-                        <HeartHandshake className="h-4 w-4 text-white" />
-                    </div>
+                    <WaylyLogo size={32} className="rounded-md" />
                     <span className="font-heading text-lg text-primary-k">Wayly</span>
                 </Link>
                 <div className="bg-surface border border-kindred rounded-2xl p-8">

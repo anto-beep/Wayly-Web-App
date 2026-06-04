@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { HeartHandshake, Menu, X, ChevronDown, LogOut, User, CreditCard, Users, Settings, HelpCircle } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut, User, CreditCard, Users, Settings, HelpCircle } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
+import WaylyLogo from "@/components/WaylyLogo";
 
 const NAV = [
     { to: "/features", label: "Features" },
@@ -136,9 +137,7 @@ export default function MarketingHeader() {
         <header className="sticky top-0 z-40 bg-[#1F3A5F] border-b border-[#16294a] h-16" data-testid="marketing-header">
             <div className="mx-auto max-w-7xl h-full flex items-center justify-between px-6">
                 <Link to="/" data-testid="nav-logo" className="flex items-center gap-2 group">
-                    <div className="h-7 w-7 rounded-md bg-[#D4A24E] inline-flex items-center justify-center">
-                        <HeartHandshake className="h-4 w-4 text-[#1F3A5F]" />
-                    </div>
+                    <WaylyLogo size={28} className="rounded-md" />
                     <span className="font-heading text-[22px] text-white tracking-tight">Wayly</span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-8">

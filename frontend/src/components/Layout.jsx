@@ -3,11 +3,12 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
     LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut,
-    HeartHandshake, UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
+    UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
     ShieldCheck, FolderArchive, Calendar, Bell, Repeat, Wrench, Mail, Share2, Star, FileBarChart,
     HeartPulse, Heart, FilePenLine, UserPlus, ChevronDown, ChevronRight, Wallet,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
+import WaylyLogo from "@/components/WaylyLogo";
 import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 import GlobalSearch from "@/components/GlobalSearch";
 import ParticipantSwitcher from "@/components/ParticipantSwitcher";
@@ -109,9 +110,7 @@ export default function Layout({ children }) {
             <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-kindred safe-top">
                 <div className="mx-auto max-w-7xl flex items-center justify-between px-4 md:px-6 py-3 md:py-4 gap-2">
                     <Link to="/app" className="flex items-center gap-2 min-w-0" data-testid="brand-link">
-                        <div className="h-8 w-8 md:h-9 md:w-9 flex-none rounded-full bg-primary-k flex items-center justify-center">
-                            <HeartHandshake className="h-4 w-4 md:h-5 md:w-5 text-white" />
-                        </div>
+                        <WaylyLogo size={36} className="h-8 w-8 md:h-9 md:w-9 flex-none rounded-lg" />
                         <div className="leading-tight min-w-0">
                             <div className="font-heading text-base md:text-lg font-medium tracking-tight text-primary-k truncate">Wayly</div>
                             <div className="overline hidden md:block">Support at Home, in plain English</div>

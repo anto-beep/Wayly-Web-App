@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
-import { HeartHandshake, ArrowLeft, Loader2, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Check } from "lucide-react";
+import WaylyLogo from "@/components/WaylyLogo";
 import { toast } from "sonner";
 import PasswordStrength, { evaluatePassword } from "@/components/PasswordStrength";
 
@@ -35,7 +36,7 @@ export function ForgotPassword() {
         <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center px-6">
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
-                    <div className="h-8 w-8 rounded-md bg-[#1F3A5F] flex items-center justify-center"><HeartHandshake className="h-4 w-4 text-white" /></div>
+                    <WaylyLogo size={32} className="rounded-md" />
                     <span className="font-heading text-lg text-[#1F3A5F]">Wayly</span>
                 </Link>
                 <div className="bg-white border border-[#E8E2D9] rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
@@ -118,7 +119,7 @@ export function ResetPassword() {
         <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center px-6">
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
-                    <div className="h-8 w-8 rounded-md bg-[#1F3A5F] flex items-center justify-center"><HeartHandshake className="h-4 w-4 text-white" /></div>
+                    <WaylyLogo size={32} className="rounded-md" />
                     <span className="font-heading text-lg text-[#1F3A5F]">Wayly</span>
                 </Link>
                 <div className="bg-white border border-[#E8E2D9] rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { HeartHandshake, Check, Loader2, Briefcase } from "lucide-react";
+import { Check, Loader2, Briefcase } from "lucide-react";
+import WaylyLogo from "@/components/WaylyLogo";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
@@ -158,9 +159,7 @@ export default function Signup() {
             <SeoHead {...SEO.signup} />
             <div className="mx-auto max-w-5xl">
                 <Link to="/" className="flex items-center gap-2 mb-8">
-                    <div className="h-8 w-8 rounded-full bg-primary-k flex items-center justify-center">
-                        <HeartHandshake className="h-4 w-4 text-white" />
-                    </div>
+                    <WaylyLogo size={32} className="rounded-md" />
                     <span className="font-heading text-lg text-primary-k">Wayly</span>
                 </Link>
 

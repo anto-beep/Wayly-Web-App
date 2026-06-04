@@ -13,20 +13,20 @@
     "dir": "ltr",
     "icons": [
         {
-            "src": "/icon-192.svg",
-            "type": "image/svg+xml",
+            "src": "/branding/png/wayly-mark-192.png",
+            "type": "image/png",
             "sizes": "192x192",
             "purpose": "any"
         },
         {
-            "src": "/icon-512.svg",
-            "type": "image/svg+xml",
+            "src": "/branding/png/wayly-mark-512.png",
+            "type": "image/png",
             "sizes": "512x512",
             "purpose": "any"
         },
         {
-            "src": "/icon-maskable.svg",
-            "type": "image/svg+xml",
+            "src": "/branding/png/wayly-mark-512.png",
+            "type": "image/png",
             "sizes": "512x512",
             "purpose": "maskable"
         }
@@ -37,14 +37,14 @@
             "short_name": "Decode",
             "description": "Decode a Support at Home statement",
             "url": "/ai-tools/statement-decoder",
-            "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+            "icons": [{ "src": "/branding/png/wayly-mark-192.png", "sizes": "192x192", "type": "image/png" }]
         },
         {
             "name": "Dashboard",
             "short_name": "Dashboard",
             "description": "Open your caregiver dashboard",
             "url": "/app",
-            "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+            "icons": [{ "src": "/branding/png/wayly-mark-192.png", "sizes": "192x192", "type": "image/png" }]
         }
     ]
 }

@@ -262,7 +262,7 @@ function StructuredArticle({ article, slug }) {
             publisher: {
                 "@type": "Organization",
                 name: "Wayly",
-                logo: { "@type": "ImageObject", url: canonicalFor("/icons/icon-512.png") },
+                logo: { "@type": "ImageObject", url: canonicalFor("/branding/png/wayly-mark-512.png") },
             },
             image: canonicalFor(`/api/public/seo/og.png?title=${encodeURIComponent(article.title)}`),
         },

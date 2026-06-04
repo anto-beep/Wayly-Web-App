@@ -3,7 +3,8 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { HeartHandshake, Loader2, Check, Users } from "lucide-react";
+import { Loader2, Check, Users } from "lucide-react";
+import WaylyLogo from "@/components/WaylyLogo";
 
 export default function InviteAccept() {
     const [params] = useSearchParams();
@@ -58,7 +59,7 @@ export default function InviteAccept() {
         <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center px-6" data-testid="invite-accept-page">
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
-                    <div className="h-8 w-8 rounded-md bg-[#1F3A5F] flex items-center justify-center"><HeartHandshake className="h-4 w-4 text-white" /></div>
+                    <WaylyLogo size={32} className="rounded-md" />
                     <span className="font-heading text-lg text-[#1F3A5F]">Wayly</span>
                 </Link>
                 <div className="bg-white border border-[#E8E2D9] rounded-2xl p-8">

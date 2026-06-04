@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2, HeartHandshake } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import WaylyLogo from "@/components/WaylyLogo";
 
 /**
  * Handles the redirect from Emergent OAuth:
@@ -71,9 +72,7 @@ export default function AuthCallback() {
     return (
         <div className="min-h-screen bg-kindred flex items-center justify-center px-6">
             <div className="text-center">
-                <div className="h-10 w-10 rounded-full bg-primary-k flex items-center justify-center mx-auto">
-                    <HeartHandshake className="h-5 w-5 text-white" />
-                </div>
+                <WaylyLogo size={48} className="mx-auto rounded-lg" />
                 {error ? (
                     <>
                         <h2 className="font-heading text-2xl text-primary-k mt-4">Sign-in didn't complete</h2>

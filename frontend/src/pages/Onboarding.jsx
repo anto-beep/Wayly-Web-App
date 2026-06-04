@@ -4,9 +4,10 @@ import { api, formatAUD, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import {
-    HeartHandshake, Check, ArrowRight, ArrowLeft, Mail, Copy, Users, Upload,
+    Check, ArrowRight, ArrowLeft, Mail, Copy, Users, Upload,
     Loader2, Sparkles, X,
 } from "lucide-react";
+import WaylyLogo from "@/components/WaylyLogo";
 
 const CLASSIFICATIONS = [
     { v: 1, annual: 10731 },
@@ -65,9 +66,7 @@ export default function Onboarding() {
             <header className="border-b border-kindred bg-white/80 backdrop-blur-xl sticky top-0 z-30 safe-top">
                 <div className="mx-auto max-w-3xl px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-primary-k flex items-center justify-center">
-                            <HeartHandshake className="h-4 w-4 text-white" />
-                        </div>
+                        <WaylyLogo size={32} className="rounded-md" />
                         <span className="font-heading text-base md:text-lg text-primary-k">Wayly</span>
                     </div>
                     <button

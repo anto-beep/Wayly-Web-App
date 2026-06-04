@@ -7,7 +7,7 @@
 */
 const SHELL_CACHE = 'wayly-shell-v1';
 const RUNTIME_CACHE = 'wayly-runtime-v1';
-const SHELL_ASSETS = ['/', '/index.html', '/favicon.ico'];
+const SHELL_ASSETS = ['/', '/index.html', '/branding/favicon/favicon.ico'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
