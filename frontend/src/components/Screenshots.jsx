@@ -1,5 +1,5 @@
 import React from "react";
-import { Phone, MessageCircle, Calendar, AlertTriangle, ArrowRight, CheckCircle2, Smile, Meh, Frown, BellRing, Cloud, FileText, TrendingUp } from "lucide-react";
+import { Phone, MessageCircle, Calendar, AlertTriangle, ArrowRight, CheckCircle2, Smile, Meh, Frown, BellRing, Cloud, FileText, TrendingUp, Bell, Download, Users, ChevronDown } from "lucide-react";
 
 /**
  * Live React UI mockups for marketing screenshots.
@@ -44,7 +44,7 @@ export function PhoneFrame({ scale = 0.55, className = "", children, label }) {
 
 /* ------------------------------- Screenshots ------------------------------ */
 
-const NAV_ITEMS = ["Dashboard", "Statements", "Ask Wayly", "Family thread", "Audit log"];
+const NAV_ITEMS = ["Dashboard", "Statements", "Reports", "Ask Wayly", "Family thread", "Audit log"];
 
 function MiniSidebar({ active = "Dashboard" }) {
     return (
@@ -67,16 +67,34 @@ export function ScreenshotDashboard() {
         <div className="bg-[#FAF7F2] flex w-[1100px]">
             <MiniSidebar active="Dashboard" />
             <main className="flex-1 px-8 py-7 min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-[#5C6878]">Wellbeing summary</div>
+                {/* Top bar: participant switcher + notifications bell */}
+                <div className="flex items-center justify-between gap-3">
+                    <div className="inline-flex items-center gap-2 bg-white border border-[#E8E2D6] rounded-full pl-1 pr-3 py-1">
+                        <div className="h-7 w-7 rounded-full bg-[#7A9B7E] text-white text-[11px] font-semibold flex items-center justify-center">D</div>
+                        <div className="leading-tight">
+                            <div className="text-[11px] font-medium text-[#1F3A5F]">Dorothy Anderson</div>
+                            <div className="text-[9px] text-[#5C6878] uppercase tracking-wider">Primary · 2 participants</div>
+                        </div>
+                        <ChevronDown className="h-3 w-3 text-[#5C6878] ml-1" />
+                    </div>
+                    <div className="inline-flex items-center gap-2">
+                        <button className="relative h-8 w-8 rounded-full bg-white border border-[#E8E2D6] flex items-center justify-center">
+                            <Bell className="h-3.5 w-3.5 text-[#1F3A5F]" />
+                            <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[#C5734D] text-white text-[9px] font-semibold flex items-center justify-center">3</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="text-[10px] uppercase tracking-[0.18em] text-[#5C6878] mt-4">Wellbeing summary</div>
                 <h1 className="font-heading text-[26px] text-[#1F3A5F] tracking-tight mt-1">Dorothy, this quarter</h1>
-                <p className="text-[12px] text-[#5C6878] mt-1">Q2 2026 · Classification 4 · $6,681 per quarter · Bluebell Care</p>
+                <p className="text-[12px] text-[#5C6878] mt-1">Q2 2026 · Classification 4 · $7,424/quarter · Bluebell Care</p>
 
                 <div className="grid grid-cols-4 gap-3 mt-5">
                     {[
-                        { l: "Budget remaining", v: "$3,810", sub: "57% of Q2 left", tone: "text-[#7A9B7E]" },
+                        { l: "Budget remaining", v: "$4,533", sub: "61% of Q2 left", tone: "text-[#7A9B7E]" },
                         { l: "This quarter", v: "$2,891", sub: "spent so far", tone: "text-[#1F3A5F]" },
                         { l: "Anomalies", v: "2", sub: "unreviewed", tone: "text-[#C5734D]" },
-                        { l: "Next visit", v: "Thu 8 May", sub: "Tom · personal care", tone: "text-[#1F3A5F]" },
+                        { l: "Lifetime cap", v: "0.36%", sub: "of $135,318.69", tone: "text-[#1F3A5F]" },
                     ].map((c) => (
                         <div key={c.l} className="bg-white border border-[#E8E2D6] rounded-xl p-4">
                             <div className="text-[9px] uppercase tracking-[0.18em] text-[#5C6878]">{c.l}</div>
@@ -95,35 +113,150 @@ export function ScreenshotDashboard() {
                         <div className="mt-3 flex items-start gap-3 border-b border-[#E8E2D6] pb-3">
                             <span className="h-2 w-2 rounded-full bg-[#C5734D] mt-1.5 flex-shrink-0" />
                             <div className="flex-1">
-                                <div className="text-[13px] font-medium text-[#1F3A5F]">Cleaning rate increased 11% — $14 extra this month</div>
+                                <div className="text-[13px] font-medium text-[#1F3A5F]">Cleaning rate increased 11%. Extra $14 this month.</div>
                                 <div className="text-[11px] text-[#5C6878] mt-0.5">Bluebell Care · 4 Nov + 11 Nov · Published rate $68 · Charged $75</div>
                             </div>
-                            <button className="text-[11px] text-[#1F3A5F] underline whitespace-nowrap">Review →</button>
+                            <button className="text-[11px] text-[#1F3A5F] underline whitespace-nowrap">Review</button>
                         </div>
                         <div className="mt-3 flex items-start gap-3">
                             <span className="h-2 w-2 rounded-full bg-[#D4A24E] mt-1.5 flex-shrink-0" />
                             <div className="flex-1">
-                                <div className="text-[13px] font-medium text-[#1F3A5F]">Possible duplicate visit — 22 Apr</div>
+                                <div className="text-[13px] font-medium text-[#1F3A5F]">Possible duplicate visit on 22 Apr.</div>
                                 <div className="text-[11px] text-[#5C6878] mt-0.5">Two personal-care charges, same day, same worker.</div>
                             </div>
-                            <button className="text-[11px] text-[#1F3A5F] underline whitespace-nowrap">Review →</button>
+                            <button className="text-[11px] text-[#1F3A5F] underline whitespace-nowrap">Review</button>
                         </div>
                     </div>
                     <div className="bg-white border border-[#E8E2D6] rounded-xl p-5">
-                        <span className="text-[10px] uppercase tracking-[0.18em] text-[#5C6878]">Latest statement</span>
-                        <div className="mt-3 flex items-start gap-2">
-                            <FileText className="h-4 w-4 text-[#1F3A5F] mt-0.5" />
-                            <div>
-                                <div className="text-[13px] font-medium text-[#1F3A5F]">April 2026 statement</div>
-                                <div className="text-[11px] text-[#5C6878]">Bluebell Care · Parsed ✓ · 2 anomalies</div>
-                            </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] uppercase tracking-[0.18em] text-[#5C6878]">Latest reports</span>
+                            <span className="text-[9px] text-[#7A9B7E] uppercase tracking-wider font-semibold">3 ready</span>
                         </div>
-                        <div className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[#5C6878]">Quarter spent</div>
-                        <div className="mt-1 h-2 w-full bg-[#F2EEE5] rounded-full overflow-hidden"><div className="h-full bg-[#7A9B7E]" style={{ width: "43%" }} /></div>
-                        <div className="text-[11px] text-[#5C6878] mt-1.5">$2,891 of $6,681</div>
+                        <div className="mt-3 space-y-2">
+                            {[
+                                { t: "Annual Financial Report", d: "Q1-Q2 2026 · 6 pp" },
+                                { t: "Statement Digest", d: "April 2026 · 2 pp" },
+                                { t: "Provider Performance", d: "Bluebell · A-" },
+                            ].map((r) => (
+                                <div key={r.t} className="flex items-start gap-2">
+                                    <FileText className="h-3.5 w-3.5 text-[#1F3A5F] mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-[12px] font-medium text-[#1F3A5F] truncate">{r.t}</div>
+                                        <div className="text-[10px] text-[#5C6878]">{r.d}</div>
+                                    </div>
+                                    <Download className="h-3 w-3 text-[#5C6878]" />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </main>
+        </div>
+    );
+}
+
+/**
+ * ScreenshotReportsHub — 8-PDF report library with Provider Performance grade.
+ * Used on Landing "Reports your accountant will love" strip.
+ */
+export function ScreenshotReportsHub() {
+    return (
+        <div className="bg-[#FAF7F2] p-7 w-[1000px]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[#5C6878]">Reports hub</div>
+            <div className="flex items-end justify-between gap-4 mt-1">
+                <h2 className="font-heading text-[24px] text-[#1F3A5F] tracking-tight">8 reports your accountant will love.</h2>
+                <span className="text-[11px] text-[#5C6878]">Auto-generated end of quarter · S3-backed</span>
+            </div>
+
+            <div className="mt-5 grid grid-cols-4 gap-3">
+                {[
+                    { t: "Annual Financial", d: "FY25-26", tag: "PDF · 6 pp", c: "#1F3A5F" },
+                    { t: "Statement Digest", d: "April 2026", tag: "PDF · 2 pp", c: "#7A9B7E" },
+                    { t: "Tax Summary", d: "FY25-26", tag: "PDF · 4 pp", c: "#D4A24E" },
+                    { t: "Lifetime Cap", d: "0.36% · $487", tag: "PDF · 3 pp", c: "#C5734D" },
+                    { t: "Budget Forecast", d: "Q3-Q4 outlook", tag: "PDF · 5 pp", c: "#1F3A5F" },
+                    { t: "Care Plan Diff", d: "v3 vs v4", tag: "PDF · 4 pp", c: "#7A9B7E" },
+                    { t: "Provider Performance", d: "Bluebell Care", tag: "Grade A-", c: "#D4A24E" },
+                    { t: "Concerns Log", d: "12 months", tag: "PDF · 8 pp", c: "#C5734D" },
+                ].map((r) => (
+                    <div key={r.t} className="bg-white border border-[#E8E2D6] rounded-xl p-3.5">
+                        <div className="flex items-center justify-between">
+                            <div className="h-7 w-7 rounded flex items-center justify-center" style={{ background: `${r.c}22` }}>
+                                <FileText className="h-3.5 w-3.5" style={{ color: r.c }} />
+                            </div>
+                            <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: r.c }}>{r.tag}</span>
+                        </div>
+                        <div className="text-[12px] font-medium text-[#1F3A5F] mt-3 leading-tight">{r.t}</div>
+                        <div className="text-[10px] text-[#5C6878] mt-0.5">{r.d}</div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-5 bg-white border-l-4 border-[#7A9B7E] rounded-r-xl rounded-l-md p-4 flex items-center gap-3">
+                <CheckCircle2 className="h-4 w-4 text-[#7A9B7E] flex-shrink-0" />
+                <div className="flex-1">
+                    <div className="text-[12px] font-medium text-[#1F3A5F]">Provider Performance: Bluebell Care · Grade A-</div>
+                    <div className="text-[11px] text-[#5C6878]">98% visit reliability · 1 substitution · 0 unjustified cancellations · Median rate 4% below network</div>
+                </div>
+                <button className="text-[11px] bg-[#1F3A5F] text-white rounded px-3 py-1.5 inline-flex items-center gap-1">Download PDF <Download className="h-3 w-3" /></button>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * ScreenshotMultiParticipant — participant switcher with 2 named participants
+ * + per-participant budget cards. Used on /features "One account, every parent" strip.
+ */
+export function ScreenshotMultiParticipant() {
+    return (
+        <div className="bg-[#FAF7F2] p-7 w-[1000px]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[#5C6878]">Participants</div>
+            <h2 className="font-heading text-[24px] text-[#1F3A5F] tracking-tight mt-1">One account. Every parent in one view.</h2>
+            <p className="text-[12px] text-[#5C6878] mt-1 max-w-xl">Switch between Dorothy and Robert in a tap. Budgets, statements and concerns stay strictly separated, with the same audit trail behind both.</p>
+
+            <div className="mt-5 grid grid-cols-2 gap-4">
+                {[
+                    { name: "Dorothy Anderson", initial: "D", role: "Mum", level: "Level 4 · Bluebell Care", spent: 2891, cap: 7424, alerts: 2, color: "#7A9B7E", primary: true },
+                    { name: "Robert Kowalski", initial: "R", role: "Dad", level: "Level 6 · Sunrise Community", spent: 4612, cap: 11020, alerts: 0, color: "#1F3A5F", primary: false },
+                ].map((p) => (
+                    <div key={p.name} className="bg-white border border-[#E8E2D6] rounded-xl p-5">
+                        <div className="flex items-start gap-3">
+                            <div className="h-10 w-10 rounded-full text-white font-semibold flex items-center justify-center text-[15px]" style={{ background: p.color }}>{p.initial}</div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-[14px] font-semibold text-[#1F3A5F] truncate">{p.name}</div>
+                                    {p.primary && <span className="text-[8px] uppercase tracking-wider bg-[#D4A24E]/30 text-[#1F3A5F] rounded-full px-2 py-0.5">Primary</span>}
+                                </div>
+                                <div className="text-[11px] text-[#5C6878] mt-0.5">{p.role} · {p.level}</div>
+                            </div>
+                            <button className="text-[10px] bg-[#1F3A5F] text-white rounded px-2.5 py-1">View</button>
+                        </div>
+                        <div className="mt-4">
+                            <div className="flex items-center justify-between text-[10px] text-[#5C6878] uppercase tracking-[0.16em]">
+                                <span>Q2 budget</span>
+                                <span className="tabular-nums">${p.spent.toLocaleString()} / ${p.cap.toLocaleString()}</span>
+                            </div>
+                            <div className="mt-1.5 h-1.5 w-full bg-[#F2EEE5] rounded-full overflow-hidden">
+                                <div className="h-full" style={{ width: `${(p.spent / p.cap) * 100}%`, background: p.color }} />
+                            </div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-3 text-[10px] text-[#5C6878]">
+                            <span className="inline-flex items-center gap-1">
+                                <span className={`h-1.5 w-1.5 rounded-full ${p.alerts ? "bg-[#C5734D]" : "bg-[#7A9B7E]"}`} />
+                                {p.alerts ? `${p.alerts} anomalies` : "All clear"}
+                            </span>
+                            <span>·</span>
+                            <span>Last statement 14 days ago</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-4 bg-[#1F3A5F]/5 border border-[#1F3A5F]/20 rounded-xl p-3 inline-flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-[#1F3A5F]" />
+                <span className="text-[11px] text-[#1F3A5F]">Family plan: up to 4 participants on one bill. Solo includes 1. Add a parent any time.</span>
+            </div>
         </div>
     );
 }

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check } from "lucide-react";
+import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check, CheckCircle2 } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
-import { BrowserFrame, ScreenshotStatement, ScreenshotDashboard, ScreenshotFamilyThread, ScreenshotAnomaly } from "@/components/Screenshots";
+import { BrowserFrame, ScreenshotStatement, ScreenshotDashboard, ScreenshotFamilyThread, ScreenshotAnomaly, ScreenshotReportsHub } from "@/components/Screenshots";
 import RevealOnScroll from "@/components/RevealOnScroll";
 
 import SeoHead, { organizationLd, websiteLd } from "@/seo/SeoHead";
@@ -282,6 +282,35 @@ export default function Landing() {
                     </Link>
                 </div>
             </section>
+
+            {/* REPORTS HUB STRIP — showcases the 8-PDF report library + provider grading */}
+            <section className="border-t border-kindred bg-surface-2" data-testid="reports-strip">
+                <div className="mx-auto max-w-7xl px-6 py-16 grid lg:grid-cols-12 gap-10 items-center">
+                    <div className="lg:col-span-5">
+                        <span className="overline">Reports</span>
+                        <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">Reports your accountant will love.</h2>
+                        <p className="mt-4 text-muted-k leading-relaxed">
+                            Eight ready-to-share PDFs auto-generated at the end of every quarter. Annual Financial. Statement Digest. Tax Summary. Lifetime Cap Tracker. Budget Forecast. Care Plan Diff. Provider Performance, with a letter grade. Concerns Log. One click, one PDF, no formatting fights.
+                        </p>
+                        <ul className="mt-5 space-y-2 text-sm text-muted-k">
+                            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary-k mt-0.5 flex-shrink-0" /> Branded, page-numbered PDFs stored in your encrypted vault</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary-k mt-0.5 flex-shrink-0" /> Provider Performance grading on visit reliability, substitutions, rate vs network</li>
+                            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary-k mt-0.5 flex-shrink-0" /> Share a presigned link with your accountant or a Centrelink officer</li>
+                        </ul>
+                        <Link to="/signup?plan=solo" data-testid="reports-strip-cta" className="mt-7 inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-primary-k/90">
+                            Try it free <ArrowRight className="h-4 w-4" />
+                        </Link>
+                    </div>
+                    <div className="lg:col-span-7">
+                        <RevealOnScroll>
+                            <BrowserFrame url="app.wayly.com.au/reports" scale={0.9} label="Reports hub showing eight auto-generated PDFs and a Provider Performance grade A minus">
+                                <ScreenshotReportsHub />
+                            </BrowserFrame>
+                        </RevealOnScroll>
+                    </div>
+                </div>
+            </section>
+
 
             {/* COUNTDOWN */}
             <section className="border-y border-kindred bg-surface-2">

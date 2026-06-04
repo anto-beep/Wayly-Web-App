@@ -9,7 +9,7 @@ import { FilePenLine, Plus, Trash2, Send, Copy, Mail, X } from "lucide-react";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { useAuth } from "@/context/AuthContext";
 import VoiceInput from "@/components/VoiceInput";
-
+import useInvalidateOnParticipantChange from "@/hooks/useInvalidateOnParticipantChange";
 const EMPTY_ITEM = { service_name: "", change_type: "increase", reason: "" };
 const CHANGE_LABELS = {
     add: "Add a new service",

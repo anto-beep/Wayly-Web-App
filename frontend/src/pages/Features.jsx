@@ -8,6 +8,7 @@ import {
     ArrowRight, FileSearch, Wallet, BarChart3, ListChecks, FileEdit, Receipt, ClipboardCheck,
     MessageCircle, Users2, AlertTriangle, Calendar, Mic, ShieldCheck, Check, FileText, Lock,
 } from "lucide-react";
+import { BrowserFrame, ScreenshotMultiParticipant } from "@/components/Screenshots";
 
 const TABS = [
     { id: "tools", label: "AI Tools" },
@@ -20,7 +21,7 @@ const TABS = [
 
 const TOOLS = [
     { slug: "statement-decoder", title: "Statement Decoder", body: "Paste any monthly statement; get a plain‑English breakdown in 60 seconds.", icon: FileSearch, plan: "Free" },
-    { slug: "budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual + quarterly + per‑stream budget, with a lifetime cap projection.", icon: Wallet, plan: "Free" },
+    { slug: "budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual + quarterly + per‑stream budget, with a lifetime cap projection.", icon: Wallet, plan: "Solo+" },
     { slug: "provider-price-checker", title: "Provider Price Checker", body: "Tell us the rate; we tell you whether it's fair against published medians.", icon: BarChart3, plan: "Solo+" },
     { slug: "classification-self-check", title: "Classification Self‑Check", body: "Twelve questions, one likely classification range, one clear next step.", icon: ListChecks, plan: "Solo+" },
     { slug: "reassessment-letter", title: "Reassessment Letter Drafter", body: "A polite, factual reassessment request, ready for My Aged Care.", icon: FileEdit, plan: "Solo+" },
@@ -138,7 +139,7 @@ export default function Features() {
                 </div>
             </div>
 
-            <Section id="tools" eyebrow="AI Tools" title="Free for everyone. The basics, decoded." sub="Two tools are free and need no signup. The other six are part of any paid plan — no card needed for the 7-day trial.">
+            <Section id="tools" eyebrow="AI Tools" title="One free tool. Seven on any paid plan." sub="The Statement Decoder is free for one decode per day with no signup. The other seven tools are part of Solo and Family. No card needed for the 7-day trial.">
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {TOOLS.map((t) => (
                         <Link key={t.slug} to={`/ai-tools/${t.slug}`} className="block">
@@ -166,9 +167,30 @@ export default function Features() {
                 </div>
             </Section>
 
-            <Section id="family" eyebrow="For the family" title="Everyone informed. The right person deciding." sub="Siblings, advisors, GPs all see what they need to — nothing more. The primary caregiver decides who sees what.">
+            <Section id="family" eyebrow="For the family" title="Everyone informed. The right person deciding." sub="Siblings, advisors, GPs all see what they need to. Nothing more. The primary caregiver decides who sees what.">
                 <div className="grid sm:grid-cols-3 gap-5">
                     {FAMILY.map((w) => <Card key={w.title} {...w} />)}
+                </div>
+
+                {/* Multi-participant visual — added Iter 38 */}
+                <div className="mt-12 grid lg:grid-cols-12 gap-10 items-center">
+                    <div className="lg:col-span-7 hidden sm:block">
+                        <BrowserFrame url="app.wayly.com.au/participants" scale={0.88} label="Participant switcher showing Dorothy and Robert with separate budgets">
+                            <ScreenshotMultiParticipant />
+                        </BrowserFrame>
+                    </div>
+                    <div className="lg:col-span-5">
+                        <span className="overline">Multi-participant</span>
+                        <h3 className="font-heading text-2xl sm:text-3xl text-primary-k mt-2 tracking-tight">One account. Every parent in one view.</h3>
+                        <p className="mt-3 text-muted-k leading-relaxed">
+                            Caring for both Mum and Dad? Add up to four participants on the Family plan. Their statements, budgets, concerns and family threads stay strictly separated, but you switch between them in a tap. The audit trail follows every action so siblings know who did what, when.
+                        </p>
+                        <ul className="mt-4 space-y-2 text-sm text-muted-k">
+                            <li>• Per-participant budgets and lifetime cap tracking</li>
+                            <li>• Notifications and the weekly digest are scoped to the participant you're viewing</li>
+                            <li>• Add or remove participants any time from Plan and Billing</li>
+                        </ul>
+                    </div>
                 </div>
             </Section>
 

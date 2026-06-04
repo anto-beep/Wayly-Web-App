@@ -291,10 +291,31 @@ def _classify_anomaly_status(a: dict) -> str:
 
 # ----- PDF rendering -------------------------------------------------------
 async def _render_pdf(html_path: Path, pdf_path: Path, *, landscape: bool = False) -> None:
-    """Run headless Chrome to print the HTML to PDF. Equivalent to Puppeteer."""
-    chrome = os.environ.get("CHROME_BIN") or "/usr/bin/google-chrome"
-    if not Path(chrome).exists():
-        chrome = "/root/bin/chromium"
+    """Run headless Chrome/Chromium to print the HTML to PDF. Auto-detects
+    the binary across container images: tries `CHROME_BIN` env first, then
+    `shutil.which()` against the common names. Raises a clear RuntimeError
+    when no binary is found instead of crashing with FileNotFoundError on
+    `_subprocess_exec`."""
+    import shutil
+    candidates = [
+        os.environ.get("CHROME_BIN"),
+        shutil.which("google-chrome"),
+        shutil.which("google-chrome-stable"),
+        shutil.which("chromium"),
+        shutil.which("chromium-browser"),
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+        "/root/bin/chromium",
+    ]
+    chrome = next((c for c in candidates if c and Path(c).exists()), None)
+    if not chrome:
+        raise RuntimeError(
+            "No Chrome/Chromium binary found for PDF rendering. Tried CHROME_BIN env, "
+            "PATH lookup, and standard /usr/bin paths. Set CHROME_BIN to the absolute "
+            "path of a Chrome/Chromium binary in the runtime environment."
+        )
     args = [
         chrome,
         "--headless=new",
