@@ -504,6 +504,30 @@ Also strengthened `INDEPENDENCE_DESCRIPTION` extractor prompt: "Community Transp
 - Backend **33/33 pytest pass**, Frontend **100%**. Zero bugs.
 
 
+## Implemented (Iteration 36 — Feb 2026 · 8 SEO tool articles + 5 UX fixes)
+
+### 8 new SEO/AEO AI Tool articles
+- New registry `/app/frontend/src/data/seoToolArticles.js` exporting `SEO_TOOL_ARTICLES` (8 entries: Statement Decoder, Budget Calculator, Provider Price Checker, Classification Self-Check, Reassessment Letter Generator, Contribution Estimator, Care Plan Reviewer, Family Coordinator).
+- Each article has: `slug, title, excerpt, meta, key_takeaways, intro_md, sections[], faqs[], related[]` plus optional `howto` (6 of 8 carry HowTo: statement-decoder, budget-calculator, classification-self-check, reassessment-letter, contribution-estimator, care-plan-reviewer).
+- `Articles.jsx` ArticleDetail resolver merged both registries (`STRUCTURED_SEO_ARTICLES = [...SEO_TOOL_ARTICLES, ...SEO_ARTICLES_2026]`). JSON-LD `@graph` now appends a HowTo node when `article.howto.steps` is supplied. Article + FAQPage + BreadcrumbList always emitted.
+- The 3 existing caregiver articles updated `related[]` arrays to cross-link to the new tool articles.
+- `/app/backend/seo_routes.py` adds the 8 new article URLs to `STATIC_PAGES` — verified live in the sitemap.
+- Editorial rules enforced (no author, no published date, no hero image, no reviewer line, no em/en-dashes).
+
+### UX refinements (5 items)
+- **Clickable notifications**: fixed `/app/backend/reports_routes.py` — report-ready notifications were writing the destination as `url`, but `NotificationsBell` reads `link`. Renamed key. All categories now route correctly via `<Link to={n.link}>`.
+- **Participant-specific Weekly Digest**: `digest_service.build_digest()` now accepts a `participant` arg and scopes wellbeing/statements/family_messages/chat_turns queries by `participant_id` ($or with legacy null rows when the participant is primary, equality otherwise). `digest_send` records `participant_id` in `digest_sends`. `digest_history` filters by active participant. Active participant is resolved through `_resolve_active_participant(user_id, request)` from the `X-Participant-Id` header.
+- **Plan & Billing ↔ Participants sync**: Settings BillingTab now fetches `/api/account` alongside `/billing/subscription` and renders a new "What you're paying for" card (testid `billing-participants-card`) showing base plan + price, active vs included participants, add-on count + subtotal, monthly total, and a list of `billing-participant-{id}` rows (with PRIMARY badges + add-on labels). "Manage participants" deep-link to `/app/participants`.
+- **Family → Solo downgrade warning**: client-side guard in BillingTab `changePlan(solo)` blocks the request when `participants_active > 1` and surfaces a toast with a "Manage participants" action. Defense-in-depth on backend: `POST /api/billing/upgrade` returns 409 `remove_participants_first` for the same condition.
+- **Clickable Dashboard graphics**: stat-anomalies, stat-statements, stat-cap cards are now `<Link>` elements routing to `/app/budget-alerts`, `/app/statements`, `/app/reports` respectively, with hover styles.
+
+### Minor
+- Silenced React duplicate-key warning in `DashboardInsights.jsx` (month bars now use `${label}-${idx}` keys).
+
+### Test status iter 36
+- Backend **4/4 pytest pass** (`/app/backend/tests/test_iter36_features.py`). Frontend 100% (9/9 UI/integration checks via Playwright). All 8 SEO articles render with the correct `@graph` schemas and editorial rules; clickable notifications + dashboard cards + billing card + downgrade guard all verified end-to-end with cathy@example.com.
+
+
 ## Implemented (Iteration 35 — Feb 2026 · participant-switch fix + auto-gen cron + S3 path + SSE notifications)
 
 ### Critical bug: dashboard didn't refetch on participant switch

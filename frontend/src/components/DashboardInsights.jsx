@@ -48,10 +48,10 @@ function BurnRateChart({ series }) {
                 </div>
             </div>
             <div className="mt-5 flex items-end gap-1.5 md:gap-2 h-32" aria-label="Monthly gross spend">
-                {series.map((p) => {
+                {series.map((p, idx) => {
                     const heightPct = Math.max(4, (p.gross / maxGross) * 100);
                     return (
-                        <div key={p.label} className="flex-1 flex flex-col items-center gap-1.5 group">
+                        <div key={`${p.label}-${idx}`} className="flex-1 flex flex-col items-center gap-1.5 group">
                             <div className="text-[10px] text-muted-k tabular-nums opacity-70 group-hover:opacity-100">
                                 {formatShort(p.gross)}
                             </div>

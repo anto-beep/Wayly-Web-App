@@ -3362,6 +3362,17 @@ async def upgrade_downgrade(body: UpgradeBody, user_id: str = Depends(get_curren
     if sub.get("plan") == body.plan:
         return {"ok": True, "unchanged": True}
     prev_plan = sub.get("plan") or "free"
+    # Defense in depth: block Family→Solo when account has >1 active participant.
+    if prev_plan == "family" and body.plan == "solo":
+        acct = await db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0, "id": 1})
+        if acct:
+            active_count = await db.participants.count_documents({"account_id": acct["id"], "status": "ACTIVE"})
+            if active_count > 1:
+                raise HTTPException(status_code=409, detail={
+                    "code": "remove_participants_first",
+                    "message": f"Solo includes 1 participant. You currently have {active_count}. Remove the extras (or downgrade add-ons) before switching to Solo.",
+                    "active_participants": active_count,
+                })
     # Simple swap; bill difference on next cycle.
     await db.subscriptions.update_one({"user_id": user_id}, {"$set": {"plan": body.plan, "updated_at": now_iso()}})
     await db.users.update_one({"id": user_id}, {"$set": {"plan": body.plan}})
