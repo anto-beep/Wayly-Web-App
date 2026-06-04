@@ -89,7 +89,7 @@ export default function PriceCheckerTool() {
                 <span className="overline mt-6 block">Free tool · 5 uses per hour</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Provider Price Checker</h1>
                 <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    Tell us what you're being charged. We'll compare it against the published median price for that service and (after 1 July 2026) the government cap — so you know whether to ask questions.
+                    Tell us what you're being charged. We compare your provider's rates against published prices and the Wayly Provider Quality Index, and flag brokered service premiums so you know whether to ask questions.
                 </p>
             </section>
 
@@ -166,7 +166,7 @@ export default function PriceCheckerTool() {
                             <p className="mt-2 text-primary-k leading-relaxed">{result.assessment}</p>
                         </div>
 
-                        <div className="grid sm:grid-cols-3 gap-3">
+                        <div className="grid sm:grid-cols-2 gap-3">
                             <div className="bg-surface border border-kindred rounded-xl p-4">
                                 <div className="text-xs uppercase tracking-wider text-muted-k">You're charged</div>
                                 <div className="mt-1 font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(result.charged)}</div>
@@ -174,10 +174,6 @@ export default function PriceCheckerTool() {
                             <div className="bg-surface border border-kindred rounded-xl p-4">
                                 <div className="text-xs uppercase tracking-wider text-muted-k">Network median</div>
                                 <div className="mt-1 font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(result.median)}</div>
-                            </div>
-                            <div className="bg-surface border border-kindred rounded-xl p-4">
-                                <div className="text-xs uppercase tracking-wider text-muted-k">1 Jul 2026 cap</div>
-                                <div className="mt-1 font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(result.cap)}</div>
                             </div>
                         </div>
 
@@ -206,7 +202,7 @@ export default function PriceCheckerTool() {
                 <div className="mt-8 bg-surface border border-kindred rounded-xl p-5 text-sm text-muted-k">
                     <div className="overline">How this works</div>
                     <p className="mt-2 leading-relaxed">
-                        Median prices are derived from public provider price lists and anonymised aggregate data from Wayly users (we never share an individual provider's specific data). Government price caps from 1 July 2026 reflect the published draft cap schedule and will be updated on launch.
+                        Median prices are derived from public provider price lists and anonymised aggregate data from Wayly users (we never share an individual provider's specific data). Results are weighted against the Wayly Provider Quality Index so you see value, not just the cheapest rate, and any brokered service premiums above the published rate are flagged.
                     </p>
                 </div>
             </section>

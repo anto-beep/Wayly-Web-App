@@ -72,7 +72,7 @@ function useCountdown(target) {
 }
 
 export default function Landing() {
-    const countdown = useCountdown(new Date("2026-07-01T00:00:00+10:00"));
+    const countdown = useCountdown(new Date("2026-10-01T00:00:00+10:00"));
     const [selectedPersona, setSelectedPersona] = useState("caregiver");
 
     return (
@@ -287,12 +287,12 @@ export default function Landing() {
             <section className="border-y border-kindred bg-surface-2">
                 <div className="mx-auto max-w-7xl px-6 py-12 grid lg:grid-cols-12 gap-8 items-center">
                     <div className="lg:col-span-7">
-                        <span className="overline">The 1 July 2026 moment</span>
+                        <span className="overline">The 1 October 2026 moment</span>
                         <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
-                            Government price caps land in <span className="text-gold tabular-nums">{countdown.days}</span> days.
+                            Personal care becomes fully funded in <span className="text-gold tabular-nums">{countdown.days}</span> days.
                         </h2>
                         <p className="mt-4 text-muted-k max-w-2xl leading-relaxed">
-                            Until then, providers can charge what they like. We benchmark every charge against the published price guide and our anonymised network data — so you know what's reasonable today, not after caps land.
+                            From 1 October 2026, showering, dressing and continence support move into Clinical Care under Support at Home, so families pay nothing for them. Until then, those visits still carry a contribution, and Wayly tracks every line so you know what should change on the day the rules do.
                         </p>
                     </div>
                     <div className="lg:col-span-5">

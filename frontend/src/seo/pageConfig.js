@@ -108,7 +108,7 @@ export const SEO = {
         faqs: [
             { q: "Does Wayly work with old Home Care Package statements?", a: "Yes. Wayly understands both legacy Home Care Package statements and the new Support at Home statements that replaced them on 1 November 2025." },
             { q: "Is my data shared with my provider?", a: "No. Your statements are private to you and anyone you invite to your Wayly household. Wayly does not share data with providers." },
-            { q: "What anomalies does Wayly flag?", a: "Wayly highlights duplicate charges, fees outside your classification budget, missing rollover credits, and charges that don't match Support at Home price caps." },
+            { q: "What anomalies does Wayly flag?", a: "Wayly highlights duplicate charges, fees outside your classification budget, missing rollover credits, services billed during a hospital stay, brokered service premiums, and care management above the 10 per cent quarterly cap." },
         ],
     },
     toolBudgetCalculator: {
@@ -136,13 +136,13 @@ export const SEO = {
     toolPriceChecker: {
         title: "Aged Care Provider Price Checker · Wayly",
         description:
-            "Compare your aged-care provider's prices against the Support at Home price caps coming 1 July 2026. Spot overcharges before they hit your budget.",
+            "Compare your aged-care provider's rates against published prices and the Wayly Provider Quality Index. Spot brokered service premiums before they hit your budget.",
         path: "/ai-tools/provider-price-checker",
         toolName: "Provider Price Checker",
         toolDesc:
-            "Check your provider's hourly rates against the Support at Home national price caps that take effect 1 July 2026.",
+            "Check your provider's hourly rates against published prices and the Wayly Provider Quality Index, and surface any brokered service premiums.",
         faqs: [
-            { q: "When do Support at Home price caps start?", a: "National price caps for Support at Home services start on 1 July 2026. Until then, providers set their own prices and Wayly's checker compares against draft cap ranges." },
+            { q: "How do I tell if my provider is charging a fair price?", a: "Wayly compares the rate against published provider price lists for your service and area, weighs it against the Wayly Provider Quality Index, and flags brokered service premiums above the published rate." },
         ],
     },
     toolClassification: {

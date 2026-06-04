@@ -29,7 +29,7 @@ const TOOLS = [
     {
         slug: "provider-price-checker",
         title: "Provider Price Checker",
-        body: "Tell us what you're being charged. We'll tell you whether it's fair against published medians and (after 1 Jul 2026) the cap.",
+        body: "Tell us what you're being charged. We compare it against published medians and the Wayly Provider Quality Index, and flag brokered service premiums.",
         icon: BarChart3,
         plan: "Solo & Family",
         planTone: "paid",
