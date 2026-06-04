@@ -79,9 +79,6 @@ export default function ArticlesIndex() {
             <section className="mx-auto max-w-5xl px-6 pb-20 grid sm:grid-cols-2 gap-5">
                 {list.map((a) => (
                     <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 hover:-translate-y-1 hover:shadow-md transition-all" data-testid={`articles-card-${a.slug}`}>
-                        {a.published_at && (
-                            <div className="text-xs uppercase tracking-wider text-muted-k mb-2">{fmtDate(a.published_at)}</div>
-                        )}
                         <h2 className="font-heading text-xl text-primary-k">{a.title}</h2>
                         <p className="mt-2 text-sm text-muted-k leading-relaxed">{a.excerpt}</p>
                         {a.is_draft_needs_review && (
@@ -203,19 +200,7 @@ export function ArticleDetail() {
                     </div>
                 )}
 
-                {(article.author || article.reviewer) && (
-                    <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted-k" data-testid="article-eeat">
-                        {article.author && (
-                            <span><strong className="text-primary-k">Written by</strong> {article.author.name}{article.author.qualifications && <span className="text-muted-k">, {article.author.qualifications}</span>}</span>
-                        )}
-                        {article.reviewer && (
-                            <span>· <strong className="text-primary-k">Reviewed by</strong> {article.reviewer.name}{article.reviewer.qualifications && <span className="text-muted-k">, {article.reviewer.qualifications}</span>}{article.reviewed_at && ` on ${fmtDate(article.reviewed_at)}`}</span>
-                        )}
-                        {!article.reviewer && article.published_at && (
-                            <span>· Published {fmtDate(article.published_at)}</span>
-                        )}
-                    </div>
-                )}
+                {/* Author + reviewer + published date intentionally hidden per editorial direction. */}
 
                 <div className="mt-8 prose prose-lg max-w-none text-primary-k leading-loose [&>h2]:font-heading [&>h2]:text-2xl [&>h2]:text-primary-k [&>h2]:mt-10 [&>h2]:mb-3 [&>h3]:font-heading [&>h3]:text-xl [&>h3]:mt-8 [&>h3]:mb-2 [&>p]:my-4 [&>ul]:list-disc [&>ul]:pl-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>li]:my-1 [&>a]:underline [&>a]:text-primary-k [&>blockquote]:border-l-4 [&>blockquote]:border-kindred [&>blockquote]:pl-4 [&>blockquote]:italic">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.body_md || ""}</ReactMarkdown>
@@ -316,26 +301,10 @@ function StructuredArticle({ article, slug }) {
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">{article.excerpt}</p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-k" data-testid="article-meta">
-                    <span><strong className="text-primary-k">Written by</strong> {article.author?.name}</span>
-                    <span>·</span>
-                    <span><strong className="text-primary-k">Reviewed by</strong> {article.reviewer?.name || "[Reviewed by: TBC]"}</span>
-                    <span>·</span>
-                    <span>Published {fmtDate(article.published_at)}</span>
-                    <span>·</span>
                     <span>{readingTime} min read</span>
                 </div>
 
                 <ShareButtons title={article.title} onCopyLink={handleCopyLink} />
-
-                {/* Hero image (uses dynamic OG so the article still has a visual when a hero asset isn't provided) */}
-                <div className="mt-8 rounded-2xl bg-surface border border-kindred aspect-[16/9] flex items-center justify-center overflow-hidden" data-testid="article-hero">
-                    <img
-                        src={`/api/public/seo/og.png?title=${encodeURIComponent(article.title)}`}
-                        alt={article.hero_alt}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    />
-                </div>
 
                 {/* Key takeaways callout */}
                 {article.key_takeaways?.length > 0 && (
