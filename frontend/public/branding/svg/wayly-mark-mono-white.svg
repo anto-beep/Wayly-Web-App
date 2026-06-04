@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wayly mark mono white">
+  <title>Wayly mark white mono</title>
+  <rect width="512" height="512" rx="112" fill="none"/>
+  <g transform="translate(256 268)" fill="#FFFFFF" stroke="#FFFFFF">
+    <path d="M -132 38 C -132 86, -78 130, 0 130 C 78 130, 132 86, 132 38" stroke-width="22" stroke-linecap="round" fill="none"/>
+    <path d="M 0 56 C -10 38, -34 18, -58 18 C -90 18, -110 44, -110 70 C -110 116, -52 152, 0 188 C 52 152, 110 116, 110 70 C 110 44, 90 18, 58 18 C 34 18, 10 38, 0 56 Z" stroke="none" transform="translate(0 -110) scale(0.74)"/>
+  </g>
+</svg>
