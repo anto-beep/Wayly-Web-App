@@ -33,6 +33,7 @@ export default function About() {
                 jsonLd={jsonLd}
             />
             <MarketingHeader />
+            <main id="main-content">
             <div className="mx-auto max-w-3xl px-6 pt-10 pb-16">
                 <span className="overline">About</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-[#0E2A47] mt-3 leading-tight tracking-tight" data-testid="about-h1">
@@ -71,7 +72,7 @@ export default function About() {
                         Wayly is built by a small Australian team led by Antony Chiware. The product, the editorial, and the support all run from Australia. We talk to family carers every week, listen to what is breaking, and ship fixes within hours.
                     </p>
                     <p className="mt-3 text-[#3C4A5E] leading-relaxed">
-                        If something on the site is wrong, email <a className="text-[#1E7BD9] underline" href="mailto:hello@wayly.com.au">hello@wayly.com.au</a>. A real person reads every message. We update content within 24 hours when the policy or the rules change.
+                        If something on the site is wrong, email <a className="text-[#1565B8] underline" href="mailto:hello@wayly.com.au">hello@wayly.com.au</a>. A real person reads every message. We update content within 24 hours when the policy or the rules change.
                     </p>
                 </section>
 
@@ -88,6 +89,7 @@ export default function About() {
                     </div>
                 </section>
             </div>
+            </main>
             <Footer />
         </div>
     );
@@ -96,7 +98,7 @@ export default function About() {
 function Pillar({ icon: Icon, title, body }) {
     return (
         <div className="rounded-2xl border border-[#CFE0F0] bg-white p-4">
-            <div className="h-9 w-9 rounded-lg bg-[#DCEBF7] inline-flex items-center justify-center text-[#1E7BD9]">
+            <div className="h-9 w-9 rounded-lg bg-[#DCEBF7] inline-flex items-center justify-center text-[#1565B8]">
                 <Icon className="h-5 w-5" aria-hidden />
             </div>
             <div className="mt-3 font-semibold text-[#0E2A47] text-sm">{title}</div>

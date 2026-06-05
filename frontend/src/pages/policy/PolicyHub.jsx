@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import SeoHubLinks from "@/components/SeoHubLinks";
 import SeoHead from "@/seo/SeoHead";
 import { POLICIES } from "@/data/policies";
 
@@ -33,6 +34,7 @@ export default function PolicyHub() {
                 jsonLd={jsonLd}
             />
             <MarketingHeader />
+            <main id="main-content">
             <div className="mx-auto max-w-4xl px-6 pt-10 pb-16">
                 <span className="overline">Policy explainers</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-[#0E2A47] mt-3 leading-tight tracking-tight" data-testid="policy-h1">
@@ -52,13 +54,15 @@ export default function PolicyHub() {
                             <div className="overline">{p.overline}</div>
                             <h2 className="font-heading text-xl text-[#0E2A47] mt-2 leading-tight">{p.h1}</h2>
                             <p className="mt-2 text-sm text-[#4A5A75] leading-relaxed">{p.description}</p>
-                            <div className="mt-3 text-sm font-medium text-[#1E7BD9] inline-flex items-center gap-1">
+                            <div className="mt-3 text-sm font-medium text-[#1565B8] inline-flex items-center gap-1">
                                 Read explainer <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                             </div>
                         </Link>
                     ))}
                 </div>
             </div>
+            </main>
+            <SeoHubLinks exclude="/policy" />
             <Footer />
         </div>
     );

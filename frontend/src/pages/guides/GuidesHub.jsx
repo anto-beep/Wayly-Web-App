@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import SeoHubLinks from "@/components/SeoHubLinks";
 import SeoHead from "@/seo/SeoHead";
 import { PROBLEM_GUIDES, EMOTIONAL_GUIDES } from "@/data/guides";
 
@@ -16,7 +17,7 @@ function GuideCard({ g }) {
             <div className="overline">{g.overline}</div>
             <h3 className="font-heading text-lg text-[#0E2A47] mt-2 leading-tight">{g.h1}</h3>
             <p className="mt-2 text-sm text-[#4A5A75] leading-relaxed line-clamp-3">{g.description}</p>
-            <div className="mt-3 text-sm font-medium text-[#1E7BD9] inline-flex items-center gap-1">
+            <div className="mt-3 text-sm font-medium text-[#1565B8] inline-flex items-center gap-1">
                 Read guide <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </div>
         </Link>
@@ -50,6 +51,7 @@ export default function GuidesHub() {
                 jsonLd={jsonLd}
             />
             <MarketingHeader />
+            <main id="main-content">
             <div className="mx-auto max-w-6xl px-6 pt-10 pb-16">
                 <span className="overline">Caregiver guides</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-[#0E2A47] mt-3 leading-tight tracking-tight" data-testid="guides-h1">
@@ -69,6 +71,8 @@ export default function GuidesHub() {
                     {EMOTIONAL_GUIDES.map((g) => <GuideCard key={g.slug} g={g} />)}
                 </div>
             </div>
+            </main>
+            <SeoHubLinks exclude="/guides" />
             <Footer />
         </div>
     );

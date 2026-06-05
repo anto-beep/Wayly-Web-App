@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
@@ -44,9 +45,11 @@ export default function CarePlanReviewer() {
     };
 
     if (access === "loading") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolCarePlan} jsonLd={_toolJsonLd(SEO.toolCarePlan)} />
-            <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
+            <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><ToolRelatedLinks slug="care-plan-reviewer" />
+            <Footer /></div>);
     if (access === "blocked") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolCarePlan} jsonLd={_toolJsonLd(SEO.toolCarePlan)} />
-    <MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["care-plan-reviewer"]} /></section><ToolGate toolName="Care Plan Reviewer"><ScreenshotStatement /></ToolGate><Footer /></div>);
+    <MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["care-plan-reviewer"]} /></section><ToolGate toolName="Care Plan Reviewer"><ScreenshotStatement /></ToolGate><ToolRelatedLinks slug="care-plan-reviewer" />
+            <Footer /></div>);
 
     return (
         <div className="min-h-screen bg-kindred">
@@ -108,6 +111,7 @@ export default function CarePlanReviewer() {
                     </div>
                 )}
             </section>
+            <ToolRelatedLinks slug="care-plan-reviewer" />
             <Footer />
         </div>
     );

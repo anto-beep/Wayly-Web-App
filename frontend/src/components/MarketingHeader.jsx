@@ -134,6 +134,15 @@ export default function MarketingHeader() {
     const { user } = useAuth();
     const [open, setOpen] = useState(false);
     return (
+        <>
+            {/* Skip to content link — visible only when keyboard-focused (Phase 6 a11y) */}
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-[#0E2A47] focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-[#2BC4D6]"
+                data-testid="skip-to-content"
+            >
+                Skip to main content
+            </a>
         <header className="sticky top-0 z-40 bg-[#0E2A47] border-b border-[#091D33] h-16" data-testid="marketing-header">
             <div className="mx-auto max-w-7xl h-full flex items-center justify-between px-6">
                 <Link to="/" data-testid="nav-logo" className="flex items-center gap-2 group">
@@ -199,5 +208,6 @@ export default function MarketingHeader() {
                 </div>
             )}
         </header>
+        </>
     );
 }

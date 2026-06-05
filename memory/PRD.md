@@ -1742,3 +1742,47 @@ Phase 4 is **COMPLETE**. All 38 missing pages identified in the baseline audit a
 - **Phase 6** — accessibility sweep (colour contrast, nested-interactive, ARIA labels) targeting WCAG 2.1 AA.
 - **Phase 7 deeper pass** — mobile LCP (font-display swap + subset, defer non-critical CSS).
 - **Phase 8 + 9** — broken-link sweep, GSC + Bing webmaster confirmation, analytics goal events.
+
+
+## Implemented (Iteration 44 — Jun 2026 · Phase 5 hub-and-spoke + Phase 6 WCAG 2.1 AA sweep)
+
+### Phase 5 — Internal linking hub-and-spoke
+- **`<ToolRelatedLinks slug=...>` component** (`/app/frontend/src/components/ToolRelatedLinks.jsx`) added to the bottom of every one of the 8 tool pages. Surfaces 3 cross-links: the deep guide article + one pillar page (service/policy/level) + one caregiver guide. Slug→links map kept in a single file for future-proof editorial updates.
+- **`<SeoHubLinks exclude=...>` component** (`/app/frontend/src/components/SeoHubLinks.jsx`) added to all 6 hubs (`/services`, `/policy`, `/guides`, `/faq`, `/ask-wayly`, `/support-at-home-levels`). Each hub now surfaces the other five hubs with a clean card strip.
+- **Article ↔ Phase 4 cross-link injection** in `/app/frontend/src/pages/resources/Articles.jsx`. Every tool article now renders a new "Pillars on Wayly" block underneath the existing "Related reading" block. Map lives in `/app/frontend/src/data/articlePillars.js` — eight articles, three pillar links each.
+- **Footer nav refresh** to feature /services, /policy, /guides, /faq, /ask-wayly, /support-at-home-levels, /about.
+
+### Phase 6 — WCAG 2.1 AA accessibility sweep
+- **Colour contrast (70 violations → 0)**:
+  - `--kindred-muted: #4A5A75 → #3F506B` for AA on white.
+  - `--wayly-blue: #1E7BD9 → #1565B8` for AA on small text.
+  - New `.text-accent-aa` (`#0A6E80`) and `.text-accent-aa-bold` (`#075866`, `font-semibold`) utilities for accent text on light backgrounds (the few `text-gold` text usages on light bg in Landing were converted).
+  - Screenshots mockup palette tightened: coral text `#E07A5F → #B0533C`, teal text `#3DB8A8 → #1F8674`, URL bar grey `#8c8d8e → #5A5A5A`.
+  - Hero on-dark-bg accents (`text-gold` on `bg-primary-k`) switched to bright mint `#6FE3DA` (Big Number + featured pricing card overline).
+- **Region / landmark-one-main / skip-link**: every marketing/SEO page now wraps body in `<main id="main-content">`. `<MarketingHeader>` exposes a focus-visible "Skip to main content" link.
+- **Label**: `decoder-textarea` got an `aria-label` and `placeholder`.
+- **Image-redundant-alt**: `<WaylyLogo>` is now decorative by default (`alt=""`, `aria-hidden="true"`) since it always sits next to the visible "Wayly" wordmark.
+- **Nested-interactive**: marketing screenshot mockups now render as `<figure aria-label="..."><div aria-hidden="true" inert={true}>` — focusable mockup descendants are removed from the accessibility tree.
+- **link-in-text-block**: every inline `<a>` and `<Link>` rendered by the small markdown parser in `<ContentPage>` now ships with a permanent `underline underline-offset-2 decoration-2 font-medium` and a darker `#075866` colour. Mailto link in the trust footer matched.
+- **landmark-complementary-is-top-level**: the "What this page covers" key takeaway changed from `<aside>` to `<div>` (it is part of the article, not a true complementary landmark).
+
+### axe-core scan results after the sweep
+- `/` → **0 violations** (was 5 distinct rules, 133 nodes)
+- `/services/personal-care` → **0 violations** (was 4 distinct rules, 29 nodes)
+- `/faq` → **0 violations**
+- `/guides/caregiver-guilt` → **0 violations**
+- `/policy/personal-care-free-1-october-2026` → **0 violations**
+
+### What's not in Phase 6 scope (intentional)
+- The decorative Screenshots mockup colours were only fixed where they appeared in actual text. The mockup bars, icons, dashboards remain in brand colours since they sit inside `aria-hidden inert` containers and never reach screen readers.
+- The Wayly accessibility widget itself (font-size + contrast toggles) was not touched. It already shipped passing AA in iter 28.
+
+### Test status iter 44
+- Five axe scans pass.
+- Smoke screenshots clean across all 5 pages.
+- No backend changes.
+- All Phase 5 cross-link components render without errors.
+
+### Next up
+- **Phase 7 deeper pass** — mobile LCP (font-display swap + subset, defer non-critical CSS, preload hero image).
+- **Phase 8 + 9** — broken-link sweep, 404/500 custom confirm, GSC + Bing webmaster verification, Plausible + PostHog goal events.

@@ -41,9 +41,9 @@ function renderInline(text) {
             const url = linkMatch[2];
             const internal = url.startsWith("/");
             parts.push(internal ? (
-                <Link key={key++} to={url} className="text-[#1E7BD9] hover:text-[#2BC4D6] underline underline-offset-2">{linkMatch[1]}</Link>
+                <Link key={key++} to={url} className="text-[#075866] font-medium underline underline-offset-2 decoration-2">{linkMatch[1]}</Link>
             ) : (
-                <a key={key++} href={url} target="_blank" rel="noreferrer noopener" className="text-[#1E7BD9] hover:text-[#2BC4D6] underline underline-offset-2">{linkMatch[1]}</a>
+                <a key={key++} href={url} target="_blank" rel="noreferrer noopener" className="text-[#075866] font-medium underline underline-offset-2 decoration-2">{linkMatch[1]}</a>
             ));
             remaining = remaining.slice(linkIdx + linkMatch[0].length);
         } else {
@@ -128,13 +128,14 @@ export default function ContentPage({
             <SeoHead title={title} description={description} canonical={`https://wayly.com.au${url}`} jsonLd={jsonLd} />
             <MarketingHeader />
 
+            <main id="main-content">
             <article className="mx-auto max-w-3xl px-6 pt-10 pb-16">
                 {breadcrumbs.length > 0 && (
                     <nav aria-label="Breadcrumb" className="text-xs text-[#4A5A75] flex flex-wrap items-center gap-1.5" data-testid="content-breadcrumbs">
                         {breadcrumbs.map((b, i) => (
                             <React.Fragment key={i}>
                                 {b.href ? (
-                                    <Link to={b.href} className="hover:text-[#1E7BD9]">{b.label}</Link>
+                                    <Link to={b.href} className="hover:text-[#1565B8]">{b.label}</Link>
                                 ) : (
                                     <span className="text-[#0E2A47]">{b.label}</span>
                                 )}
@@ -157,10 +158,10 @@ export default function ContentPage({
                 {intro && <Paragraph>{intro}</Paragraph>}
 
                 {keyTakeaways.length > 0 && (
-                    <aside className="mt-8 rounded-2xl border border-[#CFE0F0] bg-white p-5" data-testid="content-key-takeaways">
-                        <div className="text-[11px] uppercase tracking-wider text-[#1E7BD9] font-semibold">What this page covers</div>
+                    <div className="mt-8 rounded-2xl border border-[#CFE0F0] bg-white p-5" data-testid="content-key-takeaways">
+                        <div className="text-[11px] uppercase tracking-wider text-[#075866] font-semibold">What this page covers</div>
                         <BulletList items={keyTakeaways} />
-                    </aside>
+                    </div>
                 )}
 
                 {showAiBanner && (
@@ -216,7 +217,7 @@ export default function ContentPage({
                                         <div className="text-[#0E2A47] font-semibold text-sm">{r.label}</div>
                                         {r.sub && <div className="text-xs text-[#4A5A75] mt-1">{r.sub}</div>}
                                     </div>
-                                    <ArrowRight className="h-4 w-4 text-[#1E7BD9] mt-1 group-hover:translate-x-0.5 transition-transform" />
+                                    <ArrowRight className="h-4 w-4 text-[#1565B8] mt-1 group-hover:translate-x-0.5 transition-transform" />
                                 </Link>
                             ))}
                         </div>
@@ -224,9 +225,10 @@ export default function ContentPage({
                 )}
 
                 <footer className="mt-12 pt-6 border-t border-[#CFE0F0] text-xs text-[#4A5A75]" data-testid="content-trust">
-                    Written by Antony Chiware. Reviewed by: To be confirmed. Updated {updatedAt}. Spot something wrong? Email <a href="mailto:hello@wayly.com.au" className="text-[#1E7BD9] hover:underline">hello@wayly.com.au</a>.
+                    Written by Antony Chiware. Reviewed by: To be confirmed. Updated {updatedAt}. Spot something wrong? Email <a href="mailto:hello@wayly.com.au" className="text-[#075866] font-medium underline underline-offset-2">hello@wayly.com.au</a>.
                 </footer>
             </article>
+            </main>
 
             <Footer />
         </div>

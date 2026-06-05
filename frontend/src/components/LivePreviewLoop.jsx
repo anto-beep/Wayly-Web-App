@@ -12,7 +12,7 @@ import { AlertTriangle, ArrowRight } from "lucide-react";
 export default function LivePreviewLoop() {
     return (
         <div className="bg-[#EAF4FB] p-6 w-full max-w-3xl mx-auto" aria-hidden="true">
-            <div className="overline-tiny text-[10px] uppercase tracking-[0.18em] text-[#5C6878]">November 2025 statement</div>
+            <div className="overline-tiny text-[10px] uppercase tracking-[0.18em] text-[#3F506B]">November 2025 statement</div>
             <h3 className="font-heading text-[20px] text-[#0E2A47] tracking-tight mt-1">Bluebell Care · Dorothy</h3>
 
             <div className="grid grid-cols-3 gap-3 mt-4">
@@ -28,7 +28,7 @@ export default function LivePreviewLoop() {
                     >
                         <div className="flex items-center gap-1.5">
                             <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.c }} />
-                            <span className="text-[9px] uppercase tracking-[0.16em] text-[#5C6878]">{s.l}</span>
+                            <span className="text-[9px] uppercase tracking-[0.16em] text-[#3F506B]">{s.l}</span>
                         </div>
                         <div className="mt-1.5 font-heading text-[16px] text-[#0E2A47] tabular-nums">{s.t}</div>
                     </div>
@@ -43,7 +43,7 @@ export default function LivePreviewLoop() {
                     <div className="flex-1">
                         <div className="text-[9px] uppercase tracking-[0.16em] text-[#E07A5F] font-semibold">Anomaly · Possible overcharge</div>
                         <div className="text-[12px] text-[#0E2A47] font-medium mt-0.5">Cleaning charged at $75/hr — published price is $68/hr.</div>
-                        <div className="text-[10px] text-[#5C6878] mt-0.5">Possible overcharge: <span className="font-semibold text-[#0E2A47]">$14.00</span></div>
+                        <div className="text-[10px] text-[#3F506B] mt-0.5">Possible overcharge: <span className="font-semibold text-[#0E2A47]">$14.00</span></div>
                         <button type="button" tabIndex={-1} className="mt-2 text-[10px] bg-[#0E2A47] text-white rounded px-2.5 py-1 inline-flex items-center gap-1 pointer-events-none">
                             Draft a message <ArrowRight className="h-2.5 w-2.5" />
                         </button>

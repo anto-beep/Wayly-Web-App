@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import { api } from "@/lib/api";
 import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, ChevronDown } from "lucide-react";
 import EmailResultButton from "@/components/EmailResultButton";
@@ -393,6 +394,7 @@ export default function StatementDecoderTool() {
                     </Link>
                 </div>
             </section>
+            <ToolRelatedLinks slug="statement-decoder" />
             <Footer />
         </div>
     );

@@ -12,19 +12,24 @@ import React from "react";
  * The mark already includes its own rounded-square background, so no
  * surrounding box is needed.
  */
-export function WaylyLogo({ size = 28, variant = "default", className = "", title = "Wayly" }) {
+export function WaylyLogo({ size = 28, variant = "default", className = "", title = "", decorative = true }) {
     const src = {
         default: "/branding/svg/wayly-mark.svg",
         light: "/branding/svg/wayly-mark-light.svg",
         "mono-navy": "/branding/svg/wayly-mark-mono-navy.svg",
         "mono-white": "/branding/svg/wayly-mark-mono-white.svg",
     }[variant] || "/branding/svg/wayly-mark.svg";
+    // When the logo sits next to a visible "Wayly" wordmark (the common case),
+    // pass decorative=true (default) so the image is hidden from assistive tech
+    // and the wordmark provides the accessible name. Pass decorative={false}
+    // and a `title` to surface a stand-alone label.
     return (
         <img
             src={src}
             width={size}
             height={size}
-            alt={title}
+            alt={decorative ? "" : (title || "Wayly")}
+            aria-hidden={decorative || undefined}
             className={`inline-block shrink-0 select-none ${className}`}
             draggable={false}
         />

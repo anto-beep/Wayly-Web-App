@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import { api, formatAUD, formatAUD2 } from "@/lib/api";
 import { Loader2, ArrowRight, Sparkles } from "lucide-react";
 import ToolGate from "@/components/ToolGate";
@@ -69,7 +70,8 @@ export default function BudgetCalculatorTool() {
                 <SeoHead {...SEO.toolBudgetCalculator} jsonLd={_toolJsonLd(SEO.toolBudgetCalculator)} />
             <MarketingHeader />
                 <div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div>
-                <Footer />
+                <ToolRelatedLinks slug="budget-calculator" />
+            <Footer />
             </div>
         );
     }
@@ -84,7 +86,8 @@ export default function BudgetCalculatorTool() {
                 <ToolGate toolName="Budget Calculator">
                     <ScreenshotBudget />
                 </ToolGate>
-                <Footer />
+                <ToolRelatedLinks slug="budget-calculator" />
+            <Footer />
             </div>
         );
     }
@@ -244,6 +247,7 @@ export default function BudgetCalculatorTool() {
                     </div>
                 )}
             </section>
+            <ToolRelatedLinks slug="budget-calculator" />
             <Footer />
         </div>
     );

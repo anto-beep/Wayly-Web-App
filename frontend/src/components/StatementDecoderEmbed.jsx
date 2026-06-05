@@ -95,6 +95,8 @@ export default function StatementDecoderEmbed({ compact = false }) {
                 onChange={(e) => setText(e.target.value)}
                 rows={compact ? 4 : 7}
                 data-testid="decoder-textarea"
+                aria-label="Paste your Support at Home statement text"
+                placeholder="Paste your Support at Home statement text here"
                 className="mt-3 w-full font-mono text-xs leading-relaxed rounded-md border border-kindred bg-surface-2 p-3 focus:outline-none focus:ring-2 ring-primary-k"
             />
 

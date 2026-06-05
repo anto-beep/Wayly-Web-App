@@ -62,7 +62,7 @@ function DonutChart() {
                 />
                 <defs>
                     <linearGradient id="donutG" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#1E7BD9" />
+                        <stop offset="0%" stopColor="#1565B8" />
                         <stop offset="100%" stopColor="#2BC4D6" />
                     </linearGradient>
                 </defs>
@@ -95,7 +95,7 @@ function BudgetCard() {
                 </div>
             </div>
             <div className="mt-4 space-y-2">
-                <CategoryBar label="Personal Care" pct={62} colour="#1E7BD9" />
+                <CategoryBar label="Personal Care" pct={62} colour="#1565B8" />
                 <CategoryBar label="Domestic Assistance" pct={48} colour="#2BC4D6" />
                 <CategoryBar label="Transport" pct={28} colour="#8E7BE8" />
             </div>
@@ -157,7 +157,7 @@ export default function HeroSpotlight() {
 
                     {/* LANE 1 — copy block (cols 1-5) */}
                     <div className="lg:col-span-5 relative z-10 animate-fade-up self-center">
-                        <span className="inline-flex items-center gap-2 rounded-full bg-white border border-[#CFE0F0] px-3 py-1 text-[11px] uppercase tracking-wider text-[#1E7BD9]">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-white border border-[#CFE0F0] px-3 py-1 text-[11px] uppercase tracking-wider text-[#1565B8]">
                             For Australian families
                         </span>
                         <h1 className="font-heading mt-6 text-[44px] sm:text-[56px] lg:text-[64px] xl:text-[72px] leading-[1.04] tracking-tight text-[#0E2A47]">
@@ -178,7 +178,7 @@ export default function HeroSpotlight() {
                             <Link
                                 to="/ai-tools/statement-decoder"
                                 data-testid="hero-cta-secondary"
-                                className="inline-flex items-center gap-2 rounded-full bg-white text-[#0E2A47] border border-[#CFE0F0] px-6 py-3.5 text-sm font-semibold hover:border-[#2BC4D6] hover:text-[#1E7BD9] transition-colors"
+                                className="inline-flex items-center gap-2 rounded-full bg-white text-[#0E2A47] border border-[#CFE0F0] px-6 py-3.5 text-sm font-semibold hover:border-[#2BC4D6] hover:text-[#1565B8] transition-colors"
                             >
                                 Try the Statement Decoder
                             </Link>

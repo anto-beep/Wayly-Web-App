@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { ARTICLES as STATIC_ARTICLES } from "@/data/resources";
 import { SEO_ARTICLES_2026 } from "@/data/seoArticles2026";
 import { SEO_TOOL_ARTICLES } from "@/data/seoToolArticles";
+import { ARTICLE_PILLAR_MAP } from "@/data/articlePillars";
 import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown, Twitter, Linkedin, Mail, Link2, Sparkles } from "lucide-react";
 
 import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
@@ -388,6 +389,22 @@ function StructuredArticle({ article, slug }) {
                                     <h3 className="font-heading text-base text-primary-k">{r.title}</h3>
                                     <p className="mt-2 text-sm text-muted-k leading-relaxed">{r.excerpt}</p>
                                     <span className="mt-2 inline-flex items-center gap-1 text-sm text-primary-k">Read <ArrowRight className="h-3.5 w-3.5" /></span>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Phase 5 — pillar cross-links to /services/* /policy/* /guides/* and the tool itself. */}
+                {ARTICLE_PILLAR_MAP[article.slug] && (
+                    <section className="mt-10 pt-6 border-t border-kindred" data-testid="article-pillars">
+                        <h2 className="font-heading text-xl text-primary-k">Pillars on Wayly</h2>
+                        <div className="mt-4 grid sm:grid-cols-3 gap-4">
+                            {ARTICLE_PILLAR_MAP[article.slug].map((p) => (
+                                <Link key={p.href} to={p.href} className="block bg-surface border border-kindred rounded-2xl p-4 hover:-translate-y-0.5 hover:border-[#2BC4D6] transition-all" data-testid={`article-pillar-${p.href.replace(/[^a-z0-9]+/gi, "-")}`}>
+                                    <div className="font-heading text-base text-primary-k leading-snug">{p.label}</div>
+                                    <p className="mt-1 text-xs text-muted-k">{p.sub}</p>
+                                    <span className="mt-3 inline-flex items-center gap-1 text-sm text-[#1565B8]">Visit <ArrowRight className="h-3.5 w-3.5" /></span>
                                 </Link>
                             ))}
                         </div>

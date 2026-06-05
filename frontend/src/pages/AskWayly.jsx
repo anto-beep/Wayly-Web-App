@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, ShieldCheck, MessageCircle } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import SeoHubLinks from "@/components/SeoHubLinks";
 import SeoHead from "@/seo/SeoHead";
 
 const EXAMPLE_QUESTIONS = [
@@ -43,6 +44,7 @@ export default function AskWayly() {
                 jsonLd={jsonLd}
             />
             <MarketingHeader />
+            <main id="main-content">
             <div className="mx-auto max-w-3xl px-6 pt-10 pb-16">
                 <span className="overline">Ask Wayly</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-[#0E2A47] mt-3 leading-tight tracking-tight" data-testid="askwayly-h1">
@@ -59,7 +61,7 @@ export default function AskWayly() {
                 </div>
 
                 <div className="mt-10 rounded-2xl border border-[#CFE0F0] bg-white p-6" data-testid="askwayly-examples">
-                    <div className="text-[11px] uppercase tracking-wider text-[#1E7BD9] font-semibold">Example questions families ask</div>
+                    <div className="text-[11px] uppercase tracking-wider text-[#1565B8] font-semibold">Example questions families ask</div>
                     <ul className="mt-3 space-y-2 text-sm text-[#3C4A5E]">
                         {EXAMPLE_QUESTIONS.map((q, i) => (
                             <li key={i} className="flex items-start gap-2">
@@ -91,6 +93,8 @@ export default function AskWayly() {
                     Ask Wayly is an AI assistant. It is highly accurate on the public rules but always verify dollar figures, dates, and personal eligibility with your provider, your case manager, or My Aged Care on 1800 200 422.
                 </p>
             </div>
+            </main>
+            <SeoHubLinks exclude="/ask-wayly" />
             <Footer />
         </div>
     );
@@ -99,7 +103,7 @@ export default function AskWayly() {
 function Feature({ icon: Icon, title, body }) {
     return (
         <div className="rounded-2xl border border-[#CFE0F0] bg-white p-4">
-            <div className="h-9 w-9 rounded-lg bg-[#DCEBF7] inline-flex items-center justify-center text-[#1E7BD9]">
+            <div className="h-9 w-9 rounded-lg bg-[#DCEBF7] inline-flex items-center justify-center text-[#1565B8]">
                 <Icon className="h-5 w-5" aria-hidden />
             </div>
             <div className="mt-3 font-semibold text-[#0E2A47] text-sm">{title}</div>

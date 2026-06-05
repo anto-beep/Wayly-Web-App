@@ -81,6 +81,7 @@ export default function Landing() {
             <SeoHead {...SEO.home} />
             <MarketingHeader />
 
+            <main id="main-content">
             {/* HERO */}
             <HeroSpotlight />
 
@@ -181,7 +182,7 @@ export default function Landing() {
                         </BrowserFrame>
                     </RevealOnScroll>
                     <div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 01</div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-accent-aa-bold">Step 01</div>
                         <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Forward your statement. Get plain English in 90 seconds.</h3>
                         <p className="mt-4 text-muted-k leading-relaxed max-w-md">Drop in your provider's monthly PDF, CSV or pasted text. Wayly extracts every line item, breaks it down by stream, and explains it like a friend who's been through this before.</p>
                     </div>
@@ -190,7 +191,7 @@ export default function Landing() {
                 {/* Step 2 — copy LEFT, screenshot RIGHT */}
                 <div className="mt-20 grid lg:grid-cols-2 gap-10 items-center">
                     <div className="lg:order-1 order-2">
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 02</div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-accent-aa-bold">Step 02</div>
                         <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Wayly watches for anything unusual — so you don't have to.</h3>
                         <p className="mt-4 text-muted-k leading-relaxed max-w-md">Rate increases. Duplicate visits. Rollover risk. Lifetime cap creep. We compare every charge against the published price and flag what doesn't add up — with the receipts.</p>
                     </div>
@@ -209,7 +210,7 @@ export default function Landing() {
                         </BrowserFrame>
                     </RevealOnScroll>
                     <div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-gold font-semibold">Step 03</div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-accent-aa-bold">Step 03</div>
                         <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Your whole family, on the same page.</h3>
                         <p className="mt-4 text-muted-k leading-relaxed max-w-md">Loop in siblings, advisors, and even your parent's GP. Wayly answers the practical questions ("is a handrail covered?") so the conversation stays on what really matters.</p>
                     </div>
@@ -221,7 +222,7 @@ export default function Landing() {
                 <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20 text-center">
                     <span className="overline" style={{ color: "rgba(255,255,255,0.6)" }}>The Wayly difference</span>
                     <h2 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-white mt-4 leading-tight tracking-tight max-w-4xl mx-auto">
-                        The average Wayly household spots <span className="text-gold">$1,847/year</span> in incorrect charges and unused funding.
+                        The average Wayly household spots <span className="text-[#6FE3DA]">$1,847/year</span> in incorrect charges and unused funding.
                     </h2>
                     <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
                         <Link
@@ -312,7 +313,7 @@ export default function Landing() {
                     <div className="lg:col-span-7">
                         <span className="overline">The 1 October 2026 moment</span>
                         <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
-                            Personal care becomes fully funded in <span className="text-gold tabular-nums">{countdown.days}</span> days.
+                            Personal care becomes fully funded in <span className="text-accent-aa tabular-nums font-semibold">{countdown.days}</span> days.
                         </h2>
                         <p className="mt-4 text-muted-k max-w-2xl leading-relaxed">
                             From 1 October 2026, showering, dressing and continence support move into Clinical Care under Support at Home, so families pay nothing for them. Until then, those visits still carry a contribution, and Wayly tracks every line so you know what should change on the day the rules do.
@@ -382,7 +383,7 @@ export default function Landing() {
                                 key={t.name}
                                 className={`rounded-2xl p-6 border ${t.featured ? "bg-primary-k text-white border-primary-k" : "bg-surface border-kindred"}`}
                             >
-                                <div className={`text-xs uppercase tracking-wider ${t.featured ? "text-gold" : "text-muted-k"}`}>
+                                <div className={`text-xs uppercase tracking-wider ${t.featured ? "text-[#6FE3DA]" : "text-muted-k"}`}>
                                     {t.featured ? "Most popular" : t.name}
                                 </div>
                                 <div className={`mt-2 font-heading text-3xl ${t.featured ? "text-white" : "text-primary-k"}`}>{t.price}</div>
@@ -430,6 +431,7 @@ export default function Landing() {
                     </div>
                 </div>
             </section>
+            </main>
 
             <Footer />
         </div>

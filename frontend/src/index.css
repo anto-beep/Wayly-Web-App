@@ -11,17 +11,17 @@
     --kindred-surface-2: #DCEBF7;      /* pale blue surface */
     --kindred-primary: #0E2A47;        /* deep navy (gradient endpoint) */
     --kindred-primary-fg: #FFFFFF;
-    --kindred-gold: #2BC4D6;           /* cyan accent (replaces warm gold) */
+    --kindred-gold: #2BC4D6;           /* brand cyan accent (bg/icons/dark-bg text) */
     --kindred-sage: #3DB8A8;           /* mint-teal success */
     --kindred-terracotta: #E07A5F;     /* warm coral alert */
     --kindred-text: #0E1F35;           /* near-black with blue undertone */
-    --kindred-muted: #4A5A75;
+    --kindred-muted: #3F506B;
     --kindred-border: #CFE0F0;
     --kindred-success: #3DB8A8;
     --kindred-alert: #E07A5F;
 
     /* Extended palette for the gradient + lifestyle accents */
-    --wayly-blue: #1E7BD9;             /* royal blue (gradient start) */
+    --wayly-blue: #1565B8;             /* royal blue (gradient start) */
     --wayly-cyan: #2BC4D6;             /* cyan (gradient mid + accent) */
     --wayly-mint: #6FE3DA;             /* mint cyan (gradient end) */
     --wayly-sky: #BFE0F5;              /* pale sky tint */
@@ -314,3 +314,7 @@ html.a11y-reduce-motion *, html.a11y-reduce-motion *::before, html.a11y-reduce-m
 .wayly-card-shadow {
     box-shadow: 0 20px 50px -20px rgba(14, 42, 71, 0.18), 0 8px 24px -12px rgba(14, 42, 71, 0.12);
 }
+
+/* Phase 6 — accent text utility that passes WCAG AA on light backgrounds */
+.text-accent-aa { color: #0A6E80; }    /* 4.5:1 on white, 4.5:1 on #EAF4FB */
+.text-accent-aa-bold { color: #075866; font-weight: 600; }

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
+import SeoHubLinks from "@/components/SeoHubLinks";
 import SeoHead from "@/seo/SeoHead";
 import { SUPPORT_AT_HOME_LEVELS } from "@/data/supportAtHomeLevels";
 import { ArrowRight, Calculator, ClipboardCheck, FileSearch } from "lucide-react";
@@ -55,6 +56,7 @@ export default function SupportAtHomeLevels() {
                 jsonLd={[articleLd, itemList, faqLd]}
             />
             <MarketingHeader />
+            <main id="main-content">
             <main className="mx-auto max-w-5xl px-6 py-16">
                 <span className="overline">Support at Home</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Support at Home Levels — All 8 Classifications Explained</h1>
@@ -138,6 +140,8 @@ export default function SupportAtHomeLevels() {
                     <p>Sources: <a href="https://www.health.gov.au/our-work/support-at-home" className="underline" rel="noopener">health.gov.au — Support at Home</a> · <a href="https://www.myagedcare.gov.au/support-at-home" className="underline" rel="noopener">myagedcare.gov.au</a>. If you find an error, email <a href="mailto:hello@wayly.com.au" className="underline">hello@wayly.com.au</a>.</p>
                 </footer>
             </main>
+            </main>
+            <SeoHubLinks exclude="/support-at-home-levels" />
             <Footer />
         </div>
     );
