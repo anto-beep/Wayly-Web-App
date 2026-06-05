@@ -58,6 +58,16 @@ STATIC_PAGES = [
     ("/resources/articles/wayly-contribution-estimator-support-at-home-fees", "0.8", "monthly"),
     ("/resources/articles/wayly-care-plan-reviewer-support-at-home-care-plan", "0.8", "monthly"),
     ("/resources/articles/wayly-family-coordinator-managing-parents-aged-care", "0.8", "monthly"),
+    # Phase 4 Batch 1 — Support at Home levels hub + 8 level pages (Feb 2026)
+    ("/support-at-home-levels", "0.9", "monthly"),
+    ("/support-at-home-levels/level-1", "0.7", "monthly"),
+    ("/support-at-home-levels/level-2", "0.7", "monthly"),
+    ("/support-at-home-levels/level-3", "0.7", "monthly"),
+    ("/support-at-home-levels/level-4", "0.7", "monthly"),
+    ("/support-at-home-levels/level-5", "0.7", "monthly"),
+    ("/support-at-home-levels/level-6", "0.7", "monthly"),
+    ("/support-at-home-levels/level-7", "0.7", "monthly"),
+    ("/support-at-home-levels/level-8", "0.7", "monthly"),
 ]
 
 
@@ -77,7 +87,8 @@ async def _build_sitemap_xml() -> str:
     # CMS articles
     async for a in db.cms_articles.find({"published": True}, {"_id": 0, "slug": 1, "updated_at": 1, "published_at": 1}):
         slug = a.get("slug")
-        if not slug: continue
+        if not slug:
+            continue
         lastmod = (a.get("updated_at") or a.get("published_at") or today)[:10]
         out.append(
             f"  <url><loc>{SITE_DOMAIN}/resources/articles/{slug}</loc>"
@@ -90,7 +101,8 @@ async def _build_sitemap_xml() -> str:
         {"published": True}, {"_id": 0, "slug": 1, "updated_at": 1},
     ):
         slug = g.get("slug")
-        if not slug: continue
+        if not slug:
+            continue
         lastmod = (g.get("updated_at") or today)[:10]
         out.append(
             f"  <url><loc>{SITE_DOMAIN}/resources/glossary/{slug}</loc>"

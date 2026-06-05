@@ -80,6 +80,9 @@ const CarePlanAmendments = lazy(() => import("@/pages/extended/CarePlanAmendment
 const AdviserBrand = lazy(() => import("@/pages/AdviserBrand"));
 const AdviserScenarios = lazy(() => import("@/pages/AdviserScenarios"));
 const AdviserAlerts = lazy(() => import("@/pages/AdviserAlerts"));
+// Phase 4 Batch 1 — Support at Home levels hub + 8 level pages
+const SupportAtHomeLevels = lazy(() => import("@/pages/sah-levels/SupportAtHomeLevels"));
+const SupportAtHomeLevelDetail = lazy(() => import("@/pages/sah-levels/SupportAtHomeLevelDetail"));
 
 // Shared chrome stays eager.
 import CommandPalette from "@/components/CommandPalette";
@@ -91,6 +94,7 @@ import ImpersonationBanner from "@/components/ImpersonationBanner";
 import { ParticipantsProvider } from "@/context/ParticipantsContext";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import ScrollToTop from "@/components/ScrollToTop";
+import RouteSkeleton from "@/components/RouteSkeleton";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -177,7 +181,7 @@ function App() {
                 <Toaster richColors position="top-right" />
                 <ConsumerWidgets />
                 <OfflineIndicator />
-                <Suspense fallback={<Loading />}>
+                <Suspense fallback={<RouteSkeleton />}>
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />
@@ -186,6 +190,8 @@ function App() {
                     <Route path="/" element={<Landing />} />
                     <Route path="/features" element={<Features />} />
                     <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/support-at-home-levels" element={<SupportAtHomeLevels />} />
+                    <Route path="/support-at-home-levels/:slug" element={<SupportAtHomeLevelDetail />} />
                     <Route path="/trust" element={<Trust />} />
                     <Route path="/demo" element={<Demo />} />
                     <Route path="/contact" element={<Contact />} />
