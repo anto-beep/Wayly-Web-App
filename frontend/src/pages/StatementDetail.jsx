@@ -7,7 +7,7 @@ import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 import { downloadDecodedAsCsv, downloadDecodedAsPdf } from "@/lib/decoderExport";
 
 const STREAM_BADGE = {
-    Clinical: "bg-[#3A5A40] text-white",
+    Clinical: "bg-[#0F5648] text-white",
     Independence: "bg-[#8B9B82] text-white",
     "Everyday Living": "bg-[#A05545] text-white",
 };
@@ -95,7 +95,7 @@ export default function StatementDetail() {
                     </button>
                     <button
                         onClick={() => downloadDecodedAsPdf(stmt, "statement")}
-                        className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#16294a]"
+                        className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#091D33]"
                         data-testid="statement-download-pdf-btn"
                         title="Download decoded summary as PDF"
                     >

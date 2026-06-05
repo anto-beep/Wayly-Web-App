@@ -45,7 +45,7 @@ export default function ToolGate({ toolName }) {
                                 to="/settings/billing"
                                 state={{ plan: "family" }}
                                 data-testid="tool-gate-upgrade-family"
-                                className="bg-primary-k text-white rounded-md py-3 px-5 text-sm hover:bg-[#16294a] inline-flex items-center justify-center gap-2"
+                                className="bg-primary-k text-white rounded-md py-3 px-5 text-sm hover:bg-[#091D33] inline-flex items-center justify-center gap-2"
                             >
                                 Upgrade to Family — $39/mo <ArrowRight className="h-3.5 w-3.5" />
                             </Link>

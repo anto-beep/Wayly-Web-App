@@ -59,7 +59,7 @@ export default function ProviderRatings() {
                 <label className="inline-flex items-center gap-2 text-sm text-muted-k">
                     <input type="checkbox" checked={form.would_recommend} onChange={(e) => setForm({ ...form, would_recommend: e.target.checked })} /> Would recommend
                 </label>
-                <button type="submit" data-testid="ratings-form-submit" className="inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a]"><Plus className="h-4 w-4" /> Save</button>
+                <button type="submit" data-testid="ratings-form-submit" className="inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33]"><Plus className="h-4 w-4" /> Save</button>
                 <textarea value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} placeholder="Comment (what worked, what didn't)" rows={2} className="sm:col-span-6 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
             </form>
             {items.length === 0 ? (

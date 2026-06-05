@@ -1,7 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wayly mark (light)">
-  <title>Wayly mark light</title>
-  <rect width="512" height="512" rx="112" fill="#FAF7F2"/>
-  <g transform="translate(256 256)">
-    <path d="M 0 56 C -10 38, -34 18, -58 18 C -90 18, -110 44, -110 70 C -110 116, -52 152, 0 188 C 52 152, 110 116, 110 70 C 110 44, 90 18, 58 18 C 34 18, 10 38, 0 56 Z" fill="#D4A24E" transform="translate(0 -160) scale(1.2)"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wayly mark">
+  <title>Wayly mark</title>
+  <defs>
+    <linearGradient id="wgl-w-fill1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E7BD9"/>
+      <stop offset="100%" stop-color="#1456A3"/>
+    </linearGradient>
+    <linearGradient id="wgl-w-fill2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6FE3DA"/>
+      <stop offset="100%" stop-color="#2BC4D6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#EAF4FB"/>
+  <path d="M 92 128 L 168 128 L 232 384 L 188 384 Z" fill="url(#wgl-w-fill1)"/>
+  <path d="M 188 384 L 232 384 L 256 256 L 232 128 L 168 128 Z" fill="url(#wgl-w-fill2)" opacity="0.92"/>
+  <path d="M 420 128 L 344 128 L 280 384 L 324 384 Z" fill="url(#wgl-w-fill1)"/>
+  <path d="M 324 384 L 280 384 L 256 256 L 280 128 L 344 128 Z" fill="url(#wgl-w-fill2)" opacity="0.92"/>
 </svg>

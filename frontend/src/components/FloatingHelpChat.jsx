@@ -221,7 +221,7 @@ export default function FloatingHelpChat() {
                                 onClick={() => send()}
                                 disabled={!input.trim() || sending}
                                 aria-label="Send message"
-                                className="inline-flex items-center justify-center rounded-lg bg-primary-k text-white h-9 w-9 disabled:opacity-40 hover:bg-[#16294a] focus:outline-none focus:ring-2 focus:ring-gold"
+                                className="inline-flex items-center justify-center rounded-lg bg-primary-k text-white h-9 w-9 disabled:opacity-40 hover:bg-[#091D33] focus:outline-none focus:ring-2 focus:ring-gold"
                                 data-testid="help-chat-send"
                             >
                                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -251,7 +251,7 @@ export default function FloatingHelpChat() {
                 aria-label={open ? "Close help chat" : "Open help chat"}
                 aria-expanded={open}
                 data-testid="help-chat-launcher"
-                className="fixed bottom-16 md:bottom-20 right-3 md:right-5 z-[60] inline-flex items-center justify-center gap-2 rounded-full bg-primary-k text-white shadow-xl hover:bg-[#16294a] transition-all focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
+                className="fixed bottom-16 md:bottom-20 right-3 md:right-5 z-[60] inline-flex items-center justify-center gap-2 rounded-full bg-primary-k text-white shadow-xl hover:bg-[#091D33] transition-all focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
                 style={{
                     width: open ? "3rem" : "auto",
                     height: "3rem",

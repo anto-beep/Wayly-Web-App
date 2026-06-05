@@ -17,7 +17,7 @@ def _html_escape(s: str) -> str:
 
 
 MOOD_LABEL = {"good": "Good days", "okay": "OK days", "not_great": "Harder days"}
-MOOD_COLOUR = {"good": "#7A9B7E", "okay": "#D4A24E", "not_great": "#C5734D"}
+MOOD_COLOUR = {"good": "#3DB8A8", "okay": "#2BC4D6", "not_great": "#E07A5F"}
 
 
 async def build_digest(db, household: Dict[str, Any], since_days: int = 7, participant: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -156,9 +156,9 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
             )
         wellbeing_body = (
             f"<div>{mood_pills}</div>"
-            f"<p style='margin:12px 0 0;color:#1F3A5F;font-size:14px;line-height:1.55'>"
+            f"<p style='margin:12px 0 0;color:#0E2A47;font-size:14px;line-height:1.55'>"
             f"That's <strong>{total}</strong> check-in{'s' if total != 1 else ''} from {participant} this week."
-            + (" <strong style='color:#C5734D'>One hard day</strong> was flagged — {first_name} has been notified." if wb.get("counts", {}).get("not_great", 0) > 0 else "")
+            + (" <strong style='color:#E07A5F'>One hard day</strong> was flagged — {first_name} has been notified." if wb.get("counts", {}).get("not_great", 0) > 0 else "")
             + "</p>"
         ).replace("{first_name}", first_name)
 
@@ -168,24 +168,24 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
         anomalies_body = "<p style='margin:0;color:#5C6878'>No new statements this week — nothing to review.</p>"
     else:
         spend_line = (
-            f"<p style='margin:0 0 12px;color:#1F3A5F'><strong>${an.get('new_spend', 0):,.2f}</strong> "
+            f"<p style='margin:0 0 12px;color:#0E2A47'><strong>${an.get('new_spend', 0):,.2f}</strong> "
             f"across {an.get('statements_uploaded', 0)} new statement"
             f"{'s' if an.get('statements_uploaded', 0) != 1 else ''}.</p>"
         )
         if an.get("count", 0) == 0:
-            anomalies_body = spend_line + "<p style='margin:0;color:#7A9B7E;font-size:14px'>✓ Nothing unusual to flag.</p>"
+            anomalies_body = spend_line + "<p style='margin:0;color:#3DB8A8;font-size:14px'>✓ Nothing unusual to flag.</p>"
         else:
             items = ""
             for a in an.get("top", []):
                 sev = a.get("severity", "info")
-                badge_bg = "#C5734D" if sev == "alert" else "#D4A24E" if sev == "warning" else "#7A9B7E"
+                badge_bg = "#E07A5F" if sev == "alert" else "#2BC4D6" if sev == "warning" else "#3DB8A8"
                 items += (
-                    f"<li style='margin:0 0 10px;padding:12px 14px;background:#F2EEE5;border-left:3px solid {badge_bg};border-radius:4px;list-style:none'>"
-                    f"<div style='font-size:13px;color:#1F3A5F;font-weight:600'>{_html_escape(a.get('title', ''))}</div>"
+                    f"<li style='margin:0 0 10px;padding:12px 14px;background:#DCEBF7;border-left:3px solid {badge_bg};border-radius:4px;list-style:none'>"
+                    f"<div style='font-size:13px;color:#0E2A47;font-weight:600'>{_html_escape(a.get('title', ''))}</div>"
                     f"<div style='font-size:13px;color:#5C6878;margin-top:4px'>{_html_escape(a.get('detail', ''))}</div>"
                     f"</li>"
                 )
-            anomalies_body = spend_line + f"<p style='margin:0 0 8px;color:#1F3A5F;font-size:14px'>{first_name} flagged <strong>{an.get('count', 0)}</strong> thing{'s' if an.get('count', 0) != 1 else ''} worth a look:</p><ul style='margin:0;padding:0'>{items}</ul>"
+            anomalies_body = spend_line + f"<p style='margin:0 0 8px;color:#0E2A47;font-size:14px'>{first_name} flagged <strong>{an.get('count', 0)}</strong> thing{'s' if an.get('count', 0) != 1 else ''} worth a look:</p><ul style='margin:0;padding:0'>{items}</ul>"
 
     # --- Family thread block ---
     thread = d.get("family_thread_recent", [])
@@ -195,13 +195,13 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
         posts = ""
         for m in thread:
             posts += (
-                f"<div style='padding:12px 14px;background:#F2EEE5;border-radius:8px;margin-bottom:8px'>"
+                f"<div style='padding:12px 14px;background:#DCEBF7;border-radius:8px;margin-bottom:8px'>"
                 f"<div style='font-size:11px;color:#5C6878;letter-spacing:.06em;text-transform:uppercase'>{_html_escape(m.get('author', ''))}</div>"
-                f"<div style='margin-top:4px;font-size:14px;color:#1F3A5F'>{_html_escape(m.get('body', ''))}</div>"
+                f"<div style='margin-top:4px;font-size:14px;color:#0E2A47'>{_html_escape(m.get('body', ''))}</div>"
                 f"</div>"
             )
         thread_body = (
-            f"<h3 style='margin:28px 0 10px;font-family:Georgia,serif;color:#1F3A5F;font-size:18px'>Family thread</h3>"
+            f"<h3 style='margin:28px 0 10px;font-family:Georgia,serif;color:#0E2A47;font-size:18px'>Family thread</h3>"
             f"{posts}"
         )
 
@@ -216,21 +216,21 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
         )
 
     return f"""<!doctype html>
-<html><body style="margin:0;background:#FAF7F2;font-family:Helvetica,Arial,sans-serif;color:#1F3A5F">
-  <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #e5dfd2;overflow:hidden;margin:24px auto">
-    <tr><td style="padding:24px 28px;background:#1F3A5F;color:#fff">
+<html><body style="margin:0;background:#EAF4FB;font-family:Helvetica,Arial,sans-serif;color:#0E2A47">
+  <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #CFE0F0;overflow:hidden;margin:24px auto">
+    <tr><td style="padding:24px 28px;background:#0E2A47;color:#fff">
       <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-.01em">Wayly — the week at {participant}'s</div>
       <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-top:6px">{week}</div>
     </td></tr>
 
     <tr><td style="padding:28px 28px 8px">
-      <h2 style="margin:0 0 6px;font-family:Georgia,serif;color:#1F3A5F;font-size:22px">How {participant} has been</h2>
+      <h2 style="margin:0 0 6px;font-family:Georgia,serif;color:#0E2A47;font-size:22px">How {participant} has been</h2>
       <p style="margin:0 0 18px;color:#5C6878;font-size:13px">The emotional weather first.</p>
       {wellbeing_body}
     </td></tr>
 
     <tr><td style="padding:24px 28px 8px">
-      <h2 style="margin:0 0 6px;font-family:Georgia,serif;color:#1F3A5F;font-size:22px">Money & alerts</h2>
+      <h2 style="margin:0 0 6px;font-family:Georgia,serif;color:#0E2A47;font-size:22px">Money & alerts</h2>
       <p style="margin:0 0 18px;color:#5C6878;font-size:13px">What {first_name} paid attention to.</p>
       {anomalies_body}
       {thread_body}
@@ -238,11 +238,11 @@ def render_digest_html(digest: Dict[str, Any]) -> str:
     </td></tr>
 
     <tr><td style="padding:16px 28px 28px">
-      <a href="https://wayly.com.au/app" style="display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 22px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px">Open Wayly</a>
+      <a href="https://wayly.com.au/app" style="display:inline-block;background:#2BC4D6;color:#0E2A47;padding:10px 22px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px">Open Wayly</a>
     </td></tr>
 
     <tr><td style="padding:16px 28px;background:#F0EBE0;color:#888;font-size:11px;line-height:1.5">
-      You're getting this digest because you're on {participant}'s Family plan. <a href="https://wayly.com.au/settings/notifications" style="color:#1F3A5F">Change what you get</a> · <a href="https://wayly.com.au/trust" style="color:#1F3A5F">Privacy</a> · Crisis: Lifeline 13 11 14 · 1800ELDERHelp 1800 353 374.
+      You're getting this digest because you're on {participant}'s Family plan. <a href="https://wayly.com.au/settings/notifications" style="color:#0E2A47">Change what you get</a> · <a href="https://wayly.com.au/trust" style="color:#0E2A47">Privacy</a> · Crisis: Lifeline 13 11 14 · 1800ELDERHelp 1800 353 374.
     </td></tr>
   </table>
 </body></html>"""

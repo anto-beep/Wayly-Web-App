@@ -75,7 +75,7 @@ export default function EmailResultButton({ tool, headline, bodyHtml }) {
                 type="submit"
                 disabled={busy || !email}
                 data-testid="email-result-submit"
-                className="bg-primary-k text-white rounded-full px-5 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center gap-2"
+                className="bg-primary-k text-white rounded-full px-5 py-2 text-sm hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center gap-2"
             >
                 {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
                 Send

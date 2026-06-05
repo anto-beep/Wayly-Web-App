@@ -1,6 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wayly mark mono">
-  <title>Wayly mark navy mono</title>
-  <g transform="translate(256 256)">
-    <path d="M 0 56 C -10 38, -34 18, -58 18 C -90 18, -110 44, -110 70 C -110 116, -52 152, 0 188 C 52 152, 110 116, 110 70 C 110 44, 90 18, 58 18 C 34 18, 10 38, 0 56 Z" fill="#1F3A5F" transform="translate(0 -160) scale(1.2)"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wayly mark">
+  <title>Wayly mark</title>
+  <rect width="512" height="512" rx="112" fill="#0E2A47"/>
+  <path d="M 92 128 L 168 128 L 232 384 L 188 384 Z" fill="#FFFFFF"/>
+  <path d="M 188 384 L 232 384 L 256 256 L 232 128 L 168 128 Z" fill="#FFFFFF" opacity="0.8"/>
+  <path d="M 420 128 L 344 128 L 280 384 L 324 384 Z" fill="#FFFFFF"/>
+  <path d="M 324 384 L 280 384 L 256 256 L 280 128 L 344 128 Z" fill="#FFFFFF" opacity="0.8"/>
 </svg>

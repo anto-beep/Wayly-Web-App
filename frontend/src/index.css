@@ -5,43 +5,52 @@
 @tailwind utilities;
 
 :root {
-    /* Wayly brand tokens — Warm navy + gold */
-    --kindred-bg: #FAF7F2;
+    /* Wayly brand tokens — Sky blue + cyan + mint-teal (Jun 2026 rebrand) */
+    --kindred-bg: #EAF4FB;             /* soft sky background */
     --kindred-surface: #FFFFFF;
-    --kindred-surface-2: #F2EEE5;
-    --kindred-primary: #1F3A5F;       /* warm deep navy */
+    --kindred-surface-2: #DCEBF7;      /* pale blue surface */
+    --kindred-primary: #0E2A47;        /* deep navy (gradient endpoint) */
     --kindred-primary-fg: #FFFFFF;
-    --kindred-gold: #D4A24E;          /* warm gold accent */
-    --kindred-sage: #7A9B7E;          /* soft sage success */
-    --kindred-terracotta: #C5734D;    /* muted terracotta alert */
-    --kindred-text: #1A1A1A;
-    --kindred-muted: #5C6878;
-    --kindred-border: #E8E2D6;
-    --kindred-success: #7A9B7E;
-    --kindred-alert: #C5734D;
+    --kindred-gold: #2BC4D6;           /* cyan accent (replaces warm gold) */
+    --kindred-sage: #3DB8A8;           /* mint-teal success */
+    --kindred-terracotta: #E07A5F;     /* warm coral alert */
+    --kindred-text: #0E1F35;           /* near-black with blue undertone */
+    --kindred-muted: #4A5A75;
+    --kindred-border: #CFE0F0;
+    --kindred-success: #3DB8A8;
+    --kindred-alert: #E07A5F;
+
+    /* Extended palette for the gradient + lifestyle accents */
+    --wayly-blue: #1E7BD9;             /* royal blue (gradient start) */
+    --wayly-cyan: #2BC4D6;             /* cyan (gradient mid + accent) */
+    --wayly-mint: #6FE3DA;             /* mint cyan (gradient end) */
+    --wayly-sky: #BFE0F5;              /* pale sky tint */
+    --wayly-wave: #2E78C8;             /* footer wave mid-blue */
+    --wayly-indigo: #5A7BE8;           /* pill: independent */
+    --wayly-lavender: #8E7BE8;         /* pill: AI-powered */
 }
 
 @layer base {
     :root {
-        --background: 38 33% 97%;
-        --foreground: 0 0% 10%;
+        --background: 206 64% 95%;        /* sky #EAF4FB */
+        --foreground: 213 58% 13%;        /* #0E1F35 */
         --card: 0 0% 100%;
-        --card-foreground: 0 0% 10%;
+        --card-foreground: 213 58% 13%;
         --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 10%;
-        --primary: 213 51% 25%;
+        --popover-foreground: 213 58% 13%;
+        --primary: 211 67% 17%;           /* #0E2A47 */
         --primary-foreground: 0 0% 100%;
-        --secondary: 38 33% 92%;
-        --secondary-foreground: 213 51% 25%;
-        --muted: 38 33% 92%;
-        --muted-foreground: 213 14% 42%;
-        --accent: 39 60% 57%;
-        --accent-foreground: 0 0% 100%;
-        --destructive: 18 49% 54%;
+        --secondary: 206 64% 92%;
+        --secondary-foreground: 211 67% 17%;
+        --muted: 206 58% 90%;
+        --muted-foreground: 217 23% 38%;  /* #4A5A75 */
+        --accent: 187 67% 51%;            /* #2BC4D6 cyan */
+        --accent-foreground: 213 58% 13%;
+        --destructive: 13 67% 63%;        /* #E07A5F coral */
         --destructive-foreground: 0 0% 100%;
-        --border: 36 32% 87%;
-        --input: 36 32% 87%;
-        --ring: 213 51% 25%;
+        --border: 208 60% 88%;            /* #CFE0F0 */
+        --input: 208 60% 88%;
+        --ring: 187 67% 51%;
         --radius: 0.625rem;
     }
 }
@@ -113,17 +122,17 @@
 
 /* ---- Dark mode — swaps the core tokens, everything that uses var() adapts ---- */
 html.theme-dark {
-    --kindred-bg: #0E1626;
-    --kindred-surface: #16213A;
-    --kindred-surface-2: #1F2B47;
-    --kindred-primary: #1A3457;       /* keep navy for buttons/CTAs (readable on dark) */
-    --kindred-primary-fg: #F1E9DA;
-    --kindred-gold: #E5BC79;          /* slightly brighter gold for accent on dark */
-    --kindred-sage: #9EC4A2;
-    --kindred-terracotta: #E08B66;
-    --kindred-text: #F1E9DA;          /* cream/white — high-contrast body text */
-    --kindred-muted: #A8B5C8;         /* muted but readable */
-    --kindred-border: #2A3658;
+    --kindred-bg: #0A1626;
+    --kindred-surface: #121F36;
+    --kindred-surface-2: #1A2A44;
+    --kindred-primary: #1A3457;
+    --kindred-primary-fg: #E8F4FB;
+    --kindred-gold: #45D5E6;          /* brighter cyan on dark */
+    --kindred-sage: #5BD0BF;          /* brighter teal on dark */
+    --kindred-terracotta: #F09478;
+    --kindred-text: #E8F4FB;
+    --kindred-muted: #A8BCD6;
+    --kindred-border: #2A3D5E;
     color-scheme: dark;
 }
 html.theme-dark body { background-color: var(--kindred-bg); color: var(--kindred-text); }
@@ -141,12 +150,11 @@ html.theme-dark .bg-white { background-color: var(--kindred-surface) !important;
 html.theme-dark .bg-white\/75 { background-color: rgba(22, 33, 58, 0.75) !important; }
 html.theme-dark .bg-white\/80 { background-color: rgba(22, 33, 58, 0.85) !important; }
 html.theme-dark .bg-white\/95 { background-color: rgba(22, 33, 58, 0.92) !important; }
-html.theme-dark .text-\[\#1F3A5F\] { color: var(--kindred-text) !important; }
-html.theme-dark .bg-\[\#1F3A5F\] { background-color: #16213A !important; color: var(--kindred-text) !important; }
-html.theme-dark .bg-\[\#FAF7F2\] { background-color: var(--kindred-bg) !important; }
-html.theme-dark .bg-\[#16294a\] { background-color: #0F1A30 !important; }
-html.theme-dark .bg-\[\#F5F1EA\] { background-color: var(--kindred-surface-2) !important; }
-html.theme-dark .bg-\[\#fdf6ec\] { background-color: var(--kindred-surface-2) !important; }
+html.theme-dark .text-\[\#0E2A47\] { color: var(--kindred-text) !important; }
+html.theme-dark .bg-\[\#0E2A47\] { background-color: #0A1E36 !important; color: var(--kindred-text) !important; }
+html.theme-dark .bg-\[\#EAF4FB\] { background-color: var(--kindred-bg) !important; }
+html.theme-dark .bg-\[#0E2A47\] { background-color: #0A1E36 !important; }
+html.theme-dark .bg-\[\#DCEBF7\] { background-color: var(--kindred-surface-2) !important; }
 
 /* ---- Accessibility user-controlled font-size scaling ---- */
 html[data-font-scale="0"] { font-size: 14px; }
@@ -280,4 +288,29 @@ html.a11y-reduce-motion *, html.a11y-reduce-motion *::before, html.a11y-reduce-m
         opacity: 1 !important;
         transform: none !important;
     }
+}
+
+/* ---- Wayly brand gradient utilities (Jun 2026 rebrand) ----------------- */
+.wayly-gradient-text {
+    background: linear-gradient(95deg, var(--wayly-blue) 0%, var(--wayly-cyan) 55%, var(--wayly-mint) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+.wayly-gradient-bg {
+    background: linear-gradient(135deg, var(--wayly-blue) 0%, var(--wayly-cyan) 100%);
+}
+.wayly-hero-bg {
+    background:
+        radial-gradient(1100px 600px at 20% 0%, #FFFFFF 0%, rgba(255,255,255,0) 60%),
+        linear-gradient(180deg, #F4FAFE 0%, #E2EEF8 100%);
+}
+.wayly-wave-divider {
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: 100% auto;
+}
+.wayly-card-shadow {
+    box-shadow: 0 20px 50px -20px rgba(14, 42, 71, 0.18), 0 8px 24px -12px rgba(14, 42, 71, 0.12);
 }

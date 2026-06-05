@@ -11,7 +11,7 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 
 ## Architecture
 - React (CRA) + Tailwind + shadcn UI · FastAPI + MongoDB (motor) · JWT auth (bcrypt) · Claude Sonnet 4.5 via emergentintegrations (EMERGENT_LLM_KEY) · pypdf for PDF extraction.
-- Brand: warm navy `#1F3A5F` + gold `#D4A24E` + sage + terracotta on warm off-white `#FAF7F2`. Crimson Pro headings + IBM Plex Sans body.
+- Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 ## Implemented (Iteration 1 — May 2026)
 - Auth: signup with role select (caregiver/participant), login, me. JWT, bcrypt.
@@ -1650,3 +1650,40 @@ All 9 features from the Batch 2 PRD shipped end-to-end (backend + frontend + DB 
 - `batch2_routes.py` is ~940 lines housing 8 feature areas — should be split per feature in a future refactor (callout from testing agent code review).
 - Hospital admission email send is best-effort but synchronous — could move to `asyncio.create_task` to reduce admission-create latency.
 - 5 P2 items from prior code review still pending: `is` vs `==`, dynamic imports in admin_routes, array-index-as-key on stable lists, test files' hardcoded creds → env.
+
+
+## Implemented (Iteration 42 — Jun 2026 · Sitewide brand pivot to sky-blue / cyan / mint-teal)
+
+### New palette (user-approved 1c + 2c)
+- Deep navy `#0E2A47` (headlines, sidebar, primary CTAs)
+- Royal blue `#1E7BD9` → cyan `#2BC4D6` → mint `#6FE3DA` linear gradient (hero "explained" wordmark, donut chart, accent CTAs)
+- Mint-teal `#3DB8A8` (replaces sage as success colour)
+- Coral `#E07A5F` (replaces terracotta for warm alerts)
+- Soft sky `#EAF4FB` page background (replaces warm cream `#FAF7F2`)
+- Pale blue `#DCEBF7` surface-2 (replaces warm sand `#F2EEE5`)
+- Pill accents: teal `#3DB8A8` · cyan `#2BC4D6` · indigo `#5A7BE8` · lavender `#8E7BE8`
+- Wave footer mid-blue `#2E78C8`
+
+### Files touched
+- `/app/frontend/src/index.css` — every `--kindred-*` token swapped, shadcn HSL tokens rewritten, dark-mode swapped, new `--wayly-*` palette + `wayly-gradient-text`, `wayly-gradient-bg`, `wayly-hero-bg`, `wayly-card-shadow` utilities added.
+- `/app/frontend/tailwind.config.js` — `kindred.*` hex values swapped, new `wayly.*` token group added (navy / blue / cyan / mint / sky / wave / indigo / lavender / coral / teal).
+- `/app/frontend/public/branding/svg/*.svg` — new gradient `W` mark + light + mono variants. New `wayly-wave.svg` divider. Lockup + wordmark SVGs rebuilt.
+- `/app/frontend/public/branding/favicon/*` + `/public/favicon.ico` + `/public/apple-touch-icon.png` — regenerated from the new `W` mark via `cairosvg`.
+- `/app/frontend/public/manifest.json` — `theme_color` and `background_color` swapped; manifest mark PNGs regenerated.
+- `/app/frontend/public/index.html` — `<meta name="theme-color">` swapped to `#0E2A47`.
+- `/app/frontend/public/branding/hero-photo.{webp,jpg}` + portrait variants — new hero lifestyle photo (caregiver + parent reviewing tablet) cropped from user's reference image, served as webp (63 KB) + jpg fallback (101 KB).
+- `/app/frontend/src/components/HeroSpotlight.jsx` (**new**) — full hero rebuild matching the reference: W mark + wordmark + wayly.com.au + headline with gradient `explained` + subhead + two CTAs + 4 floating "Australian-hosted / Privacy-first / Independent / AI-powered" pill badges. Right column lifestyle photo with 3 overlapping live dashboard preview cards (Budget overview with donut chart, Recent statement with "Reviewed" badge, Care plan insights). Mobile-responsive single-card fallback. Wave divider at bottom.
+- `/app/frontend/src/pages/Landing.jsx` — old hero section replaced by `<HeroSpotlight />`. Persona on-ramp moved into a dedicated section below the new hero alongside the existing `<StatementDecoderEmbed compact />`.
+- 17 frontend `.jsx` files + every backend `.py`/`.html`/`.jinja` file (excluding `storage/reports/*.html` cache and `tests/fixtures/*`) had inline hex codes search-replaced in one pass (`#1F3A5F → #0E2A47`, `#D4A24E → #2BC4D6`, `#FAF7F2 → #EAF4FB`, `#7A9B7E → #3DB8A8`, `#C5734D → #E07A5F`, plus hover/border companion swaps).
+- Backend report templates (`/app/backend/report_templates/*.html`) and email templates updated automatically by the bulk replace — next-generated PDF reports + Resend emails will render in the new palette without code changes.
+
+### Smoke verified
+- Landing hero matches the reference image closely (logo, headline gradient, pills, photo, dashboard cards, wave).
+- Pricing page: cyan "MOST POPULAR" pill on deep-navy featured card, cyan free-trial CTA.
+- AI tools index: navy badges, sky-blue background, amber accuracy banner preserved.
+- Logged-in dashboard (cathy@example.com / Family plan): sidebar W mark in cyan, stat cards on white, stream cards in teal/coral semantics, bar charts in navy.
+
+### Test status iter 42
+- Visual smoke (4 screenshots) — Landing hero, Pricing, AI tools index, Caregiver Dashboard — all clean.
+- No behaviour changes (tokens-only swap). Iter 41 backend tests still pass.
+- Pending: regenerate cached `storage/reports/*.html` PDFs (left as-is — will pick up new palette on next user-triggered generate). User-action: any future custom branding screenshot capture should use the new W mark and palette.

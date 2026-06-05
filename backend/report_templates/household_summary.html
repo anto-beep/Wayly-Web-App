@@ -6,7 +6,7 @@
   <div class="stat"><div class="stat-label">Budget used · {{ q.label }}</div><div class="stat-value">{{ q.pct }}%</div><div class="muted">{{ q.spent|money }} of {{ q.budget|money }}</div></div>
   <div class="stat"><div class="stat-label">Services this quarter</div><div class="stat-value">{{ stats.services_count }}</div></div>
   <div class="stat"><div class="stat-label">Anomalies flagged</div><div class="stat-value">{{ stats.anomalies_count }}</div><div><span class="badge {% if stats.anomalies_severity == 'HIGH' %}red{% elif stats.anomalies_severity == 'MEDIUM' %}amber{% else %}green{% endif %}">{{ stats.anomalies_severity }}</span></div></div>
-  <div class="stat"><div class="stat-label">Open concerns</div><div class="stat-value" style="color: {% if stats.open_concerns > 0 %}#C2533D{% else %}#1F3A5F{% endif %};">{{ stats.open_concerns }}</div></div>
+  <div class="stat"><div class="stat-label">Open concerns</div><div class="stat-value" style="color: {% if stats.open_concerns > 0 %}#C2533D{% else %}#0E2A47{% endif %};">{{ stats.open_concerns }}</div></div>
 </div>
 
 {% if data.exec_summary %}

@@ -74,7 +74,7 @@
   <p>Anomalies identified: <strong>{{ data.hero.total_value|money }}</strong></p>
   <p>Anomalies resolved: <strong>{{ data.hero.resolved_value|money }}</strong></p>
   {% if data.hero.resolved_value > data.subscription.total %}
-  <p style="font-size: 14px; font-weight: 700; color: #1F3A5F; margin-top: 8px;">Wayly has more than paid for itself. {{ data.subscription.roi }}× return.</p>
+  <p style="font-size: 14px; font-weight: 700; color: #0E2A47; margin-top: 8px;">Wayly has more than paid for itself. {{ data.subscription.roi }}× return.</p>
   {% else %}
   <p>Keep decoding your monthly statements — each one is another chance to catch errors.</p>
   {% endif %}

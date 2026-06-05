@@ -262,7 +262,7 @@ async def admin_reply_ticket(ticket_id: str, body: TicketMessage, admin: dict = 
                 body_html=(
                     f"<p>Hi {t.get('user_name') or ''},</p>"
                     f"<p>{admin.get('name') or 'A Wayly admin'} replied to your ticket:</p>"
-                    f"<blockquote style='border-left:3px solid #D4A24E;padding-left:12px;color:#555'>"
+                    f"<blockquote style='border-left:3px solid #2BC4D6;padding-left:12px;color:#555'>"
                     f"{body.body.replace(chr(10), '<br>')}</blockquote>"
                     f"<p><a href='https://wayly.com.au/support/{ticket_id}'>View ticket</a></p>"
                 ),

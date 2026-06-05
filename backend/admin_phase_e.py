@@ -626,7 +626,7 @@ async def invite_admin(body: AdminInviteBody, admin: dict = Depends(require_supe
             f"<strong>{body.admin_role.replace('_', ' ')}</strong>.</p>"
             f"<p>Click the link below to set your password and complete sign-up. The link expires in "
             f"{body.expires_hours} hours.</p>"
-            f"<p><a href='{accept_url}' style='background:#D4A24E;color:#1F3A5F;padding:12px 24px;"
+            f"<p><a href='{accept_url}' style='background:#2BC4D6;color:#0E2A47;padding:12px 24px;"
             f"border-radius:8px;font-weight:600;text-decoration:none;display:inline-block'>"
             f"Accept invite</a></p>"
             f"<p style='font-size:12px;color:#666'>Or paste this link into your browser:<br>{accept_url}</p>"

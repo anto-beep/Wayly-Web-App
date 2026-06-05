@@ -47,7 +47,7 @@ export default function Referrals() {
                 </select>
                 <input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="Phone / email" className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 <input type="datetime-local" value={form.referred_at} onChange={(e) => setForm({ ...form, referred_at: e.target.value })} className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
-                <button type="submit" data-testid="ref-form-submit" className="inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a]"><Plus className="h-4 w-4" /> Add</button>
+                <button type="submit" data-testid="ref-form-submit" className="inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33]"><Plus className="h-4 w-4" /> Add</button>
                 <textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Reason" rows={2} className="sm:col-span-6 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
             </form>
             {items.length === 0 ? (

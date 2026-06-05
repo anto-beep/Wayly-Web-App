@@ -49,7 +49,7 @@ export default function Correspondence() {
                 <input required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Subject" data-testid="corr-form-subject" className="sm:col-span-2 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 <input required type="datetime-local" value={form.occurred_at} onChange={(e) => setForm({ ...form, occurred_at: e.target.value })} data-testid="corr-form-when" className="sm:col-span-2 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 <textarea value={form.body_summary} onChange={(e) => setForm({ ...form, body_summary: e.target.value })} placeholder="Summary or notes" rows={2} className="sm:col-span-3 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
-                <button type="submit" data-testid="corr-form-submit" className="sm:col-span-1 inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a]"><Plus className="h-4 w-4" /> Log</button>
+                <button type="submit" data-testid="corr-form-submit" className="sm:col-span-1 inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33]"><Plus className="h-4 w-4" /> Log</button>
             </form>
             {items.length === 0 ? (
                 <EmptyCard icon={Mail} title="No correspondence logged" body="Add your first call or letter — your future self will thank you when a review comes up." />

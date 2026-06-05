@@ -123,7 +123,7 @@ export default function AccessibilityWidget() {
                 aria-label={open ? "Close accessibility menu" : "Open accessibility menu"}
                 aria-expanded={open}
                 data-testid="a11y-launcher"
-                className="fixed bottom-16 md:bottom-5 left-3 md:left-5 z-[60] inline-flex items-center justify-center h-12 w-12 rounded-full bg-primary-k text-white shadow-xl hover:bg-[#16294a] transition-all focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
+                className="fixed bottom-16 md:bottom-5 left-3 md:left-5 z-[60] inline-flex items-center justify-center h-12 w-12 rounded-full bg-primary-k text-white shadow-xl hover:bg-[#091D33] transition-all focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2"
             >
                 {open ? <X className="h-5 w-5" /> : <Accessibility className="h-5 w-5" />}
             </button>
@@ -252,7 +252,7 @@ export default function AccessibilityWidget() {
                                                     type="button"
                                                     onClick={readPage}
                                                     data-testid="a11y-read-start"
-                                                    className="tap-target inline-flex items-center gap-1.5 rounded-md bg-primary-k text-white px-3 py-1.5 text-sm hover:bg-[#16294a]"
+                                                    className="tap-target inline-flex items-center gap-1.5 rounded-md bg-primary-k text-white px-3 py-1.5 text-sm hover:bg-[#091D33]"
                                                 >
                                                     <Play className="h-3.5 w-3.5" /> Start reading
                                                 </button>

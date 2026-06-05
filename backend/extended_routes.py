@@ -548,10 +548,10 @@ def _render_summary_pdf(*, user_name, household, statements, concerns, visits_co
     from reportlab.lib import colors
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
-    NAVY = colors.HexColor("#1F3A5F")
+    NAVY = colors.HexColor("#0E2A47")
     MUTED = colors.HexColor("#6F6A60")
     BORDER = colors.HexColor("#E6E1D6")
-    SAND = colors.HexColor("#FAF7F2")
+    SAND = colors.HexColor("#EAF4FB")
 
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=18*mm, rightMargin=18*mm, topMargin=18*mm, bottomMargin=18*mm)

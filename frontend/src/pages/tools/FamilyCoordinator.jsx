@@ -100,7 +100,7 @@ export default function FamilyCoordinator() {
 
                 <form onSubmit={(e) => { e.preventDefault(); send(); }} className="mt-4 flex items-center gap-2">
                     <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask anything…" data-testid="fc-input" className="flex-1 rounded-full border border-kindred bg-surface px-5 py-3 focus:outline-none focus:ring-2 ring-primary-k" />
-                    <button type="submit" disabled={busy || !input.trim()} data-testid="fc-send" className="bg-primary-k text-white rounded-full p-3 hover:bg-[#16294a] disabled:opacity-60"><Send className="h-4 w-4" /></button>
+                    <button type="submit" disabled={busy || !input.trim()} data-testid="fc-send" className="bg-primary-k text-white rounded-full p-3 hover:bg-[#091D33] disabled:opacity-60"><Send className="h-4 w-4" /></button>
                 </form>
 
                 {msgs.length >= 6 && (

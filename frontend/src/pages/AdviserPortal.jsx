@@ -334,7 +334,7 @@ export default function AdviserPortal() {
                         type="button"
                         data-testid="adviser-add-client-btn"
                         onClick={() => setShowAdd((s) => !s)}
-                        className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#16294a]"
+                        className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#091D33]"
                     >
                         <UserPlus className="h-4 w-4" /> Add client
                     </button>
@@ -409,7 +409,7 @@ export default function AdviserPortal() {
                                 type="submit"
                                 disabled={adding}
                                 data-testid="adviser-form-submit"
-                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a] inline-flex items-center gap-2 disabled:opacity-60"
+                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33] inline-flex items-center gap-2 disabled:opacity-60"
                             >
                                 {adding && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                                 {adding ? "Adding…" : "Add to roster"}
@@ -484,7 +484,7 @@ export default function AdviserPortal() {
                                                                 type="button"
                                                                 onClick={() => setOpenClient(c)}
                                                                 data-testid={`adviser-client-snapshot-${c.id}`}
-                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-1.5 bg-primary-k text-white hover:bg-[#16294a]"
+                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-1.5 bg-primary-k text-white hover:bg-[#091D33]"
                                                                 title="Open snapshot"
                                                             >
                                                                 <Eye className="h-3.5 w-3.5" /> Snapshot

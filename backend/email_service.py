@@ -69,15 +69,15 @@ async def notify_team_contact(payload: Dict[str, Any]) -> Dict[str, Any]:
             continue
         if v in (None, ""):
             continue
-        rows.append(f"<tr><td style='padding:6px 12px;color:#555;text-transform:uppercase;font-size:11px;letter-spacing:.05em'>{k}</td><td style='padding:6px 12px;color:#1F3A5F'>{_html_escape(str(v))}</td></tr>")
+        rows.append(f"<tr><td style='padding:6px 12px;color:#555;text-transform:uppercase;font-size:11px;letter-spacing:.05em'>{k}</td><td style='padding:6px 12px;color:#0E2A47'>{_html_escape(str(v))}</td></tr>")
     rows_html = "".join(rows)
 
     html = f"""<!doctype html>
-<html><body style="font-family:Helvetica,Arial,sans-serif;background:#FAF7F2;padding:24px;color:#1F3A5F">
+<html><body style="font-family:Helvetica,Arial,sans-serif;background:#EAF4FB;padding:24px;color:#0E2A47">
   <h2 style="margin:0 0 8px;font-family:Georgia,serif">New {intent} enquiry — {_html_escape(name)}</h2>
   <p style="margin:0 0 16px;color:#555">Reply to <a href="mailto:{_html_escape(email)}">{_html_escape(email)}</a></p>
-  <table style="border-collapse:collapse;background:#fff;border:1px solid #e5dfd2;border-radius:8px;overflow:hidden">
-    <tr><td style="padding:6px 12px;color:#555;text-transform:uppercase;font-size:11px;letter-spacing:.05em">role</td><td style="padding:6px 12px;color:#1F3A5F">{_html_escape(role)}</td></tr>
+  <table style="border-collapse:collapse;background:#fff;border:1px solid #CFE0F0;border-radius:8px;overflow:hidden">
+    <tr><td style="padding:6px 12px;color:#555;text-transform:uppercase;font-size:11px;letter-spacing:.05em">role</td><td style="padding:6px 12px;color:#0E2A47">{_html_escape(role)}</td></tr>
     {rows_html}
   </table>
   <p style="margin-top:24px;color:#888;font-size:12px">Sent automatically from Wayly · /api/contact</p>
@@ -101,17 +101,17 @@ async def email_tool_result(
 ) -> Dict[str, Any]:
     """Send a public-tool result to the user who requested it."""
     html = f"""<!doctype html>
-<html><body style="font-family:Helvetica,Arial,sans-serif;background:#FAF7F2;padding:24px;color:#1F3A5F">
-  <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #e5dfd2;overflow:hidden">
-    <tr><td style="padding:20px 28px;background:#1F3A5F;color:#fff">
+<html><body style="font-family:Helvetica,Arial,sans-serif;background:#EAF4FB;padding:24px;color:#0E2A47">
+  <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #CFE0F0;overflow:hidden">
+    <tr><td style="padding:20px 28px;background:#0E2A47;color:#fff">
       <div style="font-family:Georgia,serif;font-size:22px">Wayly</div>
       <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-top:4px">{_html_escape(tool_name)}</div>
     </td></tr>
     <tr><td style="padding:24px 28px">
-      <h2 style="margin:0 0 12px;font-family:Georgia,serif;color:#1F3A5F">{_html_escape(headline)}</h2>
-      <div style="font-size:14px;line-height:1.6;color:#1F3A5F">{body_html}</div>
-      <hr style="border:0;border-top:1px solid #e5dfd2;margin:24px 0" />
-      <p style="margin:0;font-size:13px;color:#555">Want Wayly to do this every month, automatically? <a href="https://wayly.com.au/signup" style="color:#1F3A5F;font-weight:600">Start a free 7-day trial</a> — no card needed.</p>
+      <h2 style="margin:0 0 12px;font-family:Georgia,serif;color:#0E2A47">{_html_escape(headline)}</h2>
+      <div style="font-size:14px;line-height:1.6;color:#0E2A47">{body_html}</div>
+      <hr style="border:0;border-top:1px solid #CFE0F0;margin:24px 0" />
+      <p style="margin:0;font-size:13px;color:#555">Want Wayly to do this every month, automatically? <a href="https://wayly.com.au/signup" style="color:#0E2A47;font-weight:600">Start a free 7-day trial</a> — no card needed.</p>
     </td></tr>
     <tr><td style="padding:16px 28px;background:#F0EBE0;color:#888;font-size:11px">
       You received this because you requested it from a public tool on wayly.com.au. We didn't add you to any list.
@@ -142,20 +142,20 @@ async def email_adviser_invite(
     notes_block = ""
     if adviser_notes:
         notes_block = (
-            f"<div style='margin-top:12px;padding:12px 14px;background:#FAF7F2;"
-            f"border-left:3px solid #D4A24E;color:#1F3A5F;font-size:13px;line-height:1.6'>"
+            f"<div style='margin-top:12px;padding:12px 14px;background:#EAF4FB;"
+            f"border-left:3px solid #2BC4D6;color:#0E2A47;font-size:13px;line-height:1.6'>"
             f"<strong style='display:block;margin-bottom:4px'>Note from {_html_escape(adviser_name)}:</strong>"
             f"{_html_escape(adviser_notes)}</div>"
         )
     html = f"""<!doctype html>
-<html><body style="font-family:Helvetica,Arial,sans-serif;background:#FAF7F2;padding:24px;color:#1F3A5F">
-  <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #e5dfd2;overflow:hidden">
-    <tr><td style="padding:24px 28px;background:#1F3A5F;color:#fff">
+<html><body style="font-family:Helvetica,Arial,sans-serif;background:#EAF4FB;padding:24px;color:#0E2A47">
+  <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #CFE0F0;overflow:hidden">
+    <tr><td style="padding:24px 28px;background:#0E2A47;color:#fff">
       <div style="font-family:Georgia,serif;font-size:24px">Wayly</div>
       <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-top:4px">An invitation from your financial adviser</div>
     </td></tr>
     <tr><td style="padding:28px">
-      <h2 style="margin:0 0 8px;font-family:Georgia,serif;color:#1F3A5F;font-size:22px">Hi {_html_escape(client_name.split(' ')[0])},</h2>
+      <h2 style="margin:0 0 8px;font-family:Georgia,serif;color:#0E2A47;font-size:22px">Hi {_html_escape(client_name.split(' ')[0])},</h2>
       <p style="margin:0 0 14px;font-size:15px;line-height:1.6">
         <strong>{_html_escape(adviser_name)}</strong> has invited you to set up a Wayly account so they can help you stay on top of your <strong>Support at Home</strong> statements, budget, and care.
       </p>
@@ -164,8 +164,8 @@ async def email_adviser_invite(
       </p>
       {notes_block}
       <table style="margin:24px 0" cellpadding="0" cellspacing="0">
-        <tr><td style="background:#D4A24E;border-radius:999px">
-          <a href="{_html_escape(invite_url)}" style="display:inline-block;padding:12px 28px;color:#1F3A5F;font-weight:700;font-size:14px;text-decoration:none">Accept invitation & start free trial →</a>
+        <tr><td style="background:#2BC4D6;border-radius:999px">
+          <a href="{_html_escape(invite_url)}" style="display:inline-block;padding:12px 28px;color:#0E2A47;font-weight:700;font-size:14px;text-decoration:none">Accept invitation & start free trial →</a>
         </td></tr>
       </table>
       <ul style="margin:12px 0 0;padding-left:18px;color:#555;font-size:13px;line-height:1.8">
@@ -173,9 +173,9 @@ async def email_adviser_invite(
         <li>Your data is yours — share back to your adviser any time, revoke any time</li>
         <li>Australian-hosted, encrypted, never sold</li>
       </ul>
-      <hr style="border:0;border-top:1px solid #e5dfd2;margin:24px 0" />
+      <hr style="border:0;border-top:1px solid #CFE0F0;margin:24px 0" />
       <p style="margin:0;font-size:12px;color:#888;line-height:1.6">
-        If the button doesn't work, copy this link: <a href="{_html_escape(invite_url)}" style="color:#1F3A5F;word-break:break-all">{_html_escape(invite_url)}</a>
+        If the button doesn't work, copy this link: <a href="{_html_escape(invite_url)}" style="color:#0E2A47;word-break:break-all">{_html_escape(invite_url)}</a>
       </p>
     </td></tr>
     <tr><td style="padding:16px 28px;background:#F0EBE0;color:#888;font-size:11px;line-height:1.6">

@@ -110,7 +110,7 @@ export default function ContributionEstimator() {
                         <input type="checkbox" checked={form.is_grandfathered} onChange={(e) => setForm((f) => ({ ...f, is_grandfathered: e.target.checked }))} data-testid="ce-grand" className="h-4 w-4 accent-[var(--kindred-primary)]" />
                         <span className="text-sm text-primary-k">Grandfathered (was on HCP before 1 Nov 2025)</span>
                     </label>
-                    <button onClick={submit} disabled={loading} data-testid="ce-submit" className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2">
+                    <button onClick={submit} disabled={loading} data-testid="ce-submit" className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2">
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Estimate contribution
                     </button>
                 </div>
@@ -145,7 +145,7 @@ export default function ContributionEstimator() {
                         )}
                         <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
                             <div className="font-medium text-primary-k">Want this updated automatically as charges come in?</div>
-                            <Link to="/signup" className="mt-3 inline-flex items-center gap-1 text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial <ArrowRight className="h-3.5 w-3.5" /></Link>
+                            <Link to="/signup" className="mt-3 inline-flex items-center gap-1 text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]">Start free trial <ArrowRight className="h-3.5 w-3.5" /></Link>
                         </div>
                     </div>
                 )}

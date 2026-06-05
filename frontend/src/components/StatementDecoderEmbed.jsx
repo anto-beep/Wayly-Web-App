@@ -111,7 +111,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
                     onClick={decode}
                     disabled={loading || !text.trim()}
                     data-testid="decoder-submit"
-                    className="bg-primary-k text-white rounded-full px-5 py-2 text-sm hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center gap-2"
+                    className="bg-primary-k text-white rounded-full px-5 py-2 text-sm hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center gap-2"
                 >
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     {loading ? "Decoding…" : "Decode this statement"}
@@ -178,7 +178,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
                         <a
                             href="/signup"
                             data-testid="decoder-upgrade-cta"
-                            className="text-sm bg-primary-k text-white rounded-full px-4 py-2 hover:bg-[#16294a]"
+                            className="text-sm bg-primary-k text-white rounded-full px-4 py-2 hover:bg-[#091D33]"
                         >
                             Start free trial
                         </a>

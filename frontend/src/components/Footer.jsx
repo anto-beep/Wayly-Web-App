@@ -44,7 +44,7 @@ export default function Footer() {
     return (
         <footer
             className="text-white"
-            style={{ backgroundColor: "#1F3A5F" }}
+            style={{ backgroundColor: "#0E2A47" }}
             data-testid="site-footer"
         >
             <div className="mx-auto max-w-7xl px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -108,7 +108,7 @@ export default function Footer() {
             </div>
 
             {/* Gold divider line */}
-            <div className="h-px w-full" style={{ backgroundColor: "#D4A24E" }} aria-hidden="true" />
+            <div className="h-px w-full" style={{ backgroundColor: "#2BC4D6" }} aria-hidden="true" />
 
             {/* Legal disclaimer + crisis support */}
             <div className="mx-auto max-w-7xl px-6 py-8 space-y-5">
@@ -125,7 +125,7 @@ export default function Footer() {
                     style={{ fontSize: "13px" }}
                     data-testid="footer-crisis-resources"
                 >
-                    <span className="font-medium" style={{ color: "#D4A24E" }}>Support lines:</span>
+                    <span className="font-medium" style={{ color: "#2BC4D6" }}>Support lines:</span>
                     {CRISIS_LINES.map((c, i) => (
                         <React.Fragment key={c.name}>
                             <a

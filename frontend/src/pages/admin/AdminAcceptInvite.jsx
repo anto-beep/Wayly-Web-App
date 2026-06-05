@@ -51,7 +51,7 @@ export default function AdminAcceptInvite() {
             <div style={cardStyle}>
                 <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 12 }}>Invite unavailable</h1>
                 <p style={{ color: "#94A3B8" }}>{loadErr}</p>
-                <button onClick={() => nav("/")} style={{ marginTop: 20, background: "#D4A24E", color: "#1F3A5F", border: 0, padding: "10px 18px", borderRadius: 6, fontWeight: 600, cursor: "pointer" }}>Go home</button>
+                <button onClick={() => nav("/")} style={{ marginTop: 20, background: "#2BC4D6", color: "#0E2A47", border: 0, padding: "10px 18px", borderRadius: 6, fontWeight: 600, cursor: "pointer" }}>Go home</button>
             </div>
         </div>
     );
@@ -69,7 +69,7 @@ export default function AdminAcceptInvite() {
             <div style={cardStyle}>
                 <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 12 }}>You're in 🎉</h1>
                 <p style={{ color: "#94A3B8", fontSize: 14, marginBottom: 16 }}>Your admin account is ready. Sign in below to set up two-factor authentication.</p>
-                <button onClick={() => nav("/admin/login")} style={{ width: "100%", background: "#D4A24E", color: "#1F3A5F", border: 0, padding: "12px 18px", borderRadius: 6, fontWeight: 600, cursor: "pointer" }} data-testid="accept-invite-signin">Sign in to admin</button>
+                <button onClick={() => nav("/admin/login")} style={{ width: "100%", background: "#2BC4D6", color: "#0E2A47", border: 0, padding: "12px 18px", borderRadius: 6, fontWeight: 600, cursor: "pointer" }} data-testid="accept-invite-signin">Sign in to admin</button>
             </div>
         </div>
     );
@@ -77,7 +77,7 @@ export default function AdminAcceptInvite() {
     return (
         <div style={wrapStyle}>
             <form onSubmit={submit} style={cardStyle} data-testid="accept-invite-form">
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "#D4A24E", marginBottom: 8 }}>Wayly admin · Accept invite</div>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "#2BC4D6", marginBottom: 8 }}>Wayly admin · Accept invite</div>
                 <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 6 }}>Welcome, {invite.name}</h1>
                 <p style={{ color: "#94A3B8", fontSize: 14, marginBottom: 20 }}>
                     {invite.invited_by_email || "A super admin"} has invited you as <strong style={{ color: "#E2E8F0" }}>{invite.admin_role.replace("_", " ")}</strong>.
@@ -97,7 +97,7 @@ export default function AdminAcceptInvite() {
                 <label style={{ ...lab, marginTop: 16 }}>Confirm password</label>
                 <input type={showPw ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={8} style={input} data-testid="accept-confirm" />
                 <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 12 }}>Minimum 8 characters. Use a strong, unique password.</p>
-                <button type="submit" disabled={busy} style={{ width: "100%", background: "#D4A24E", color: "#1F3A5F", border: 0, padding: "12px 18px", borderRadius: 6, fontWeight: 600, cursor: "pointer", marginTop: 20 }} data-testid="accept-submit">
+                <button type="submit" disabled={busy} style={{ width: "100%", background: "#2BC4D6", color: "#0E2A47", border: 0, padding: "12px 18px", borderRadius: 6, fontWeight: 600, cursor: "pointer", marginTop: 20 }} data-testid="accept-submit">
                     {busy ? "Creating your account…" : "Accept and create account"}
                 </button>
             </form>

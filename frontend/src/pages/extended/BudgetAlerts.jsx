@@ -50,7 +50,7 @@ export default function BudgetAlerts() {
                 <label className="inline-flex items-center gap-2 text-sm text-muted-k">
                     <input type="checkbox" checked={form.notify_email} onChange={(e) => setForm({ ...form, notify_email: e.target.checked })} /> Email me
                 </label>
-                <button type="submit" data-testid="alerts-form-submit" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a]"><Plus className="h-4 w-4" /> Add</button>
+                <button type="submit" data-testid="alerts-form-submit" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33]"><Plus className="h-4 w-4" /> Add</button>
             </form>
             {alerts.length === 0 ? (
                 <EmptyCard icon={Bell} title="No alerts configured" body="Most caregivers set a 70% lifetime-cap and an 85% quarterly alert as their first two." />

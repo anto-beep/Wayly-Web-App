@@ -245,7 +245,7 @@ export default function Reports() {
                                 <CheckCircle2 className="h-12 w-12 text-sage mx-auto" />
                                 <p className="font-heading text-lg text-primary-k">Your report is ready.</p>
                                 <div className="flex gap-2 justify-center">
-                                    <button onClick={() => { const r = items.find((i) => i.id === generating.report_id) || { id: generating.report_id }; setGenerating(null); openPreview(r); }} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]" data-testid="view-report-btn">View</button>
+                                    <button onClick={() => { const r = items.find((i) => i.id === generating.report_id) || { id: generating.report_id }; setGenerating(null); openPreview(r); }} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]" data-testid="view-report-btn">View</button>
                                     <button onClick={() => { const r = items.find((i) => i.id === generating.report_id) || { id: generating.report_id }; downloadReport(r); }} className="bg-gold text-primary-k font-semibold rounded-md px-4 py-2 text-sm" data-testid="download-report-btn">Download PDF</button>
                                     <button onClick={() => setGenerating(null)} className="text-muted-k px-3 py-2 text-sm">Close</button>
                                 </div>

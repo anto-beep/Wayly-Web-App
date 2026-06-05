@@ -149,7 +149,7 @@ export default function PriceCheckerTool() {
                         onClick={submit}
                         disabled={loading || !rate}
                         data-testid="pc-submit"
-                        className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {loading ? "Checking…" : "Check this price"}
@@ -192,7 +192,7 @@ export default function PriceCheckerTool() {
                             <div className="font-medium text-primary-k">Want every charge checked automatically?</div>
                             <p className="text-sm text-muted-k mt-1">Wayly compares every line on every statement against published prices and our anonymised network — and tells you the moment something looks off.</p>
                             <div className="mt-3 flex items-center gap-3 flex-wrap">
-                                <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
+                                <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]">Start free trial</Link>
                                 <Link to="/ai-tools/statement-decoder" className="text-sm text-primary-k underline inline-flex items-center gap-1">
                                     Decode a full statement <ArrowRight className="h-3.5 w-3.5" />
                                 </Link>

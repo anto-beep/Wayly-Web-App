@@ -164,7 +164,7 @@ export default function CarePlanAmendments() {
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-kindred">
-                    <button onClick={generate} disabled={generating} data-testid="amendment-generate-btn" className="bg-primary-k text-white rounded-md px-5 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60">
+                    <button onClick={generate} disabled={generating} data-testid="amendment-generate-btn" className="bg-primary-k text-white rounded-md px-5 py-2 text-sm hover:bg-[#091D33] disabled:opacity-60">
                         {generating ? "Generating…" : "Generate letter"}
                     </button>
                 </div>
@@ -186,7 +186,7 @@ export default function CarePlanAmendments() {
                             <button onClick={() => mailLetter(preview.generated_letter, preview.provider_name)} className="inline-flex items-center gap-1.5 bg-surface-2 border border-kindred text-primary-k rounded-md px-3 py-2 text-sm" data-testid="amendment-mail-btn">
                                 <Mail className="h-3.5 w-3.5" /> Open email
                             </button>
-                            <button onClick={() => setStatus(preview.id, "sent")} className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-md px-3 py-2 text-sm hover:bg-[#16294a]" data-testid="amendment-mark-sent">
+                            <button onClick={() => setStatus(preview.id, "sent")} className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-md px-3 py-2 text-sm hover:bg-[#091D33]" data-testid="amendment-mark-sent">
                                 <Send className="h-3.5 w-3.5" /> Mark as sent
                             </button>
                         </div>

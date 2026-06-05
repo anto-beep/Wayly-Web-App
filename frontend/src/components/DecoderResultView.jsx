@@ -44,8 +44,8 @@ export default function DecoderResultView({ result }) {
         : counts.medium > 0
         ? { cls: "bg-gold/20 text-primary-k border-gold", Icon: ShieldAlert, text: `${counts.medium} thing${counts.medium === 1 ? "" : "s"} worth a closer look.` }
         : counts.low > 0
-        ? { cls: "bg-sage/15 text-[#3A5A40] border-sage", Icon: Info, text: `${counts.low} small note${counts.low === 1 ? "" : "s"} — mostly informational.` }
-        : { cls: "bg-sage/15 text-[#3A5A40] border-sage", Icon: ShieldCheck, text: "Statement looks clean. Nothing unusual found. ✓" };
+        ? { cls: "bg-sage/15 text-[#0F5648] border-sage", Icon: Info, text: `${counts.low} small note${counts.low === 1 ? "" : "s"} — mostly informational.` }
+        : { cls: "bg-sage/15 text-[#0F5648] border-sage", Icon: ShieldCheck, text: "Statement looks clean. Nothing unusual found. ✓" };
 
     return (
         <div className="space-y-6" data-testid="decoder-result-v2">
@@ -64,7 +64,7 @@ export default function DecoderResultView({ result }) {
                     </button>
                     <button
                         onClick={() => downloadDecodedAsPdf(result, "decoded-statement")}
-                        className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#16294a]"
+                        className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#091D33]"
                         data-testid="decoder-download-pdf-btn"
                     >
                         <FileDown className="h-3.5 w-3.5" /> Download PDF

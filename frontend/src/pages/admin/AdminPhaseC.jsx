@@ -331,7 +331,7 @@ export function AdminRevenue() {
                             <YAxis stroke="var(--admin-muted)" style={{ fontSize: 11 }} />
                             <Tooltip contentStyle={{ background: "var(--admin-card)", border: "1px solid var(--admin-border)", borderRadius: 6, fontSize: 12 }}
                                 formatter={(v) => fmtMoney(v)} />
-                            <Line type="monotone" dataKey="mrr_aud" stroke="#D4A24E" strokeWidth={2.5} dot={{ fill: "#D4A24E", r: 4 }} />
+                            <Line type="monotone" dataKey="mrr_aud" stroke="#2BC4D6" strokeWidth={2.5} dot={{ fill: "#2BC4D6", r: 4 }} />
                         </LineChart>
                     </ResponsiveContainer>
                 )}

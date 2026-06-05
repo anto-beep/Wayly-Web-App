@@ -170,7 +170,7 @@ export default function BudgetCalculatorTool() {
                         onClick={calc}
                         disabled={loading}
                         data-testid="bc-submit"
-                        className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {loading ? "Calculating…" : "Calculate my budget"}
@@ -235,7 +235,7 @@ export default function BudgetCalculatorTool() {
                             <div className="font-medium text-primary-k">Want this updating live?</div>
                             <p className="text-sm text-muted-k mt-1">Wayly tracks your real spend against this budget every day, alerts you to rollover risk, and watches your lifetime cap.</p>
                             <div className="mt-3 flex items-center gap-3 flex-wrap">
-                                <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
+                                <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]">Start free trial</Link>
                                 <Link to="/ai-tools/statement-decoder" className="text-sm text-primary-k underline inline-flex items-center gap-1">
                                     Decode a statement <ArrowRight className="h-3.5 w-3.5" />
                                 </Link>

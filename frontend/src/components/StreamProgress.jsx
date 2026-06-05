@@ -2,7 +2,7 @@ import React from "react";
 import { formatAUD } from "@/lib/api";
 
 const COLORS = {
-    Clinical: "bg-[#3A5A40]",
+    Clinical: "bg-[#0F5648]",
     Independence: "bg-[#8B9B82]",
     "Everyday Living": "bg-[#A05545]",
 };

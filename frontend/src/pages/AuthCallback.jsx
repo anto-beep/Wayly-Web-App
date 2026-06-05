@@ -79,7 +79,7 @@ export default function AuthCallback() {
                         <p className="mt-2 text-sm text-muted-k">{error}</p>
                         <button
                             onClick={() => nav("/login")}
-                            className="mt-6 bg-primary-k text-white rounded-full px-6 py-2.5 text-sm hover:bg-[#16294a]"
+                            className="mt-6 bg-primary-k text-white rounded-full px-6 py-2.5 text-sm hover:bg-[#091D33]"
                         >
                             Back to sign in
                         </button>

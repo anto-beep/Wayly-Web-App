@@ -134,7 +134,7 @@ export default function AdviserBrand() {
                             </div>
                         </div>
                         <div className="pt-3 border-t border-kindred">
-                            <button onClick={save} disabled={saving} data-testid="brand-save-btn" className="bg-primary-k text-white rounded-md px-5 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60">
+                            <button onClick={save} disabled={saving} data-testid="brand-save-btn" className="bg-primary-k text-white rounded-md px-5 py-2 text-sm hover:bg-[#091D33] disabled:opacity-60">
                                 {saving ? "Saving…" : "Save branding"}
                             </button>
                         </div>
@@ -143,15 +143,15 @@ export default function AdviserBrand() {
                     {/* Preview card */}
                     <div className="bg-surface border border-kindred rounded-2xl p-5 sticky top-6 self-start" data-testid="brand-preview">
                         <div className="text-[10px] uppercase tracking-wider text-muted-k mb-3">PDF preview</div>
-                        <div className="border-2 rounded-lg p-4" style={{ borderColor: data.primary_color || "#1F3A5F" }}>
+                        <div className="border-2 rounded-lg p-4" style={{ borderColor: data.primary_color || "#0E2A47" }}>
                             {data.logo_b64 ? (
                                 <img src={`data:${data.logo_mime || "image/png"};base64,${data.logo_b64}`} alt="logo" className="h-12 mb-3" />
                             ) : (
                                 <div className="h-12 mb-3 flex items-center text-xs text-muted-k">No logo yet</div>
                             )}
-                            <div className="font-heading text-lg" style={{ color: data.primary_color || "#1F3A5F" }}>{data.firm_name || "Your firm"}</div>
+                            <div className="font-heading text-lg" style={{ color: data.primary_color || "#0E2A47" }}>{data.firm_name || "Your firm"}</div>
                             {data.tagline && <div className="text-xs text-muted-k">{data.tagline}</div>}
-                            <div className="mt-3 text-[11px]" style={{ color: data.secondary_color || "#D4A24E" }}>Sample heading</div>
+                            <div className="mt-3 text-[11px]" style={{ color: data.secondary_color || "#2BC4D6" }}>Sample heading</div>
                             <div className="mt-1 h-2 rounded" style={{ background: data.accent_color || "#7C9B82" }} />
                             <div className="mt-4 text-[10px] text-muted-k">{data.footer_text || "Disclaimer / ABN goes here."}</div>
                         </div>

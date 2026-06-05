@@ -63,7 +63,7 @@ export default function CarePlanReviewer() {
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["care-plan-reviewer"]} className="mb-4" />
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="care-plan-form">
                     <textarea value={text} onChange={(e) => setText(e.target.value)} rows={12} placeholder="Paste the full text of the care plan here…" data-testid="cp-text" className="w-full rounded-md border border-kindred bg-surface-2 p-3 text-sm focus:outline-none focus:ring-2 ring-primary-k" />
-                    <button onClick={submit} disabled={loading || text.length < 50} data-testid="cp-submit" className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2">
+                    <button onClick={submit} disabled={loading || text.length < 50} data-testid="cp-submit" className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2">
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {loading ? "Reviewing…" : "Review my care plan"}
                     </button>
@@ -103,7 +103,7 @@ export default function CarePlanReviewer() {
 
                         <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
                             <div className="font-medium text-primary-k">Want Wayly to watch divergence between this plan and what's actually delivered?</div>
-                            <Link to="/signup" className="mt-3 inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
+                            <Link to="/signup" className="mt-3 inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]">Start free trial</Link>
                         </div>
                     </div>
                 )}

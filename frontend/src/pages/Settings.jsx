@@ -71,7 +71,7 @@ function ProfileTab() {
                     <span className="text-sm text-muted-k">Role</span>
                     <div className="mt-1 inline-flex items-center gap-2 rounded-full bg-surface-2 border border-kindred px-3 py-1.5 text-sm text-primary-k capitalize">{user?.role}</div>
                 </label>
-                <button onClick={save} disabled={saving || name === user?.name} data-testid="profile-save-btn" className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#16294a] disabled:opacity-60">{saving ? "Saving…" : "Save changes"}</button>
+                <button onClick={save} disabled={saving || name === user?.name} data-testid="profile-save-btn" className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] disabled:opacity-60">{saving ? "Saving…" : "Save changes"}</button>
             </div>
         </div>
     );
@@ -259,7 +259,7 @@ function BillingTab() {
                         return (
                             <div key={p} className={`rounded-2xl border p-5 ${isCurrent ? "border-primary-k ring-2 ring-primary-k/20 bg-surface" : "border-kindred bg-surface"}`} data-testid={`billing-plan-${p}`}>
                                 <div className="flex items-baseline justify-between"><span className="font-heading text-xl text-primary-k">{PLANS[p].name}</span><span className="text-sm text-muted-k">{PLANS[p].price}{PLANS[p].period}</span></div>
-                                {isCurrent ? (<div className="mt-4 inline-flex items-center gap-1 text-xs text-sage"><Check className="h-3.5 w-3.5" /> Current</div>) : p === "free" && currentPlan !== "free" ? (<button onClick={downgradeToFree} disabled={busy} data-testid={`billing-downgrade-${p}`} className="mt-4 w-full text-sm border border-terracotta text-terracotta rounded-md py-2 hover:bg-terracotta hover:text-white disabled:opacity-60">Downgrade to Free</button>) : activeSub ? (<button onClick={() => changePlan(p)} disabled={busy} data-testid={`billing-switch-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#16294a] disabled:opacity-60">Switch to {PLANS[p].name}</button>) : p === "free" ? null : (<button onClick={() => startCheckout(p)} disabled={busy} data-testid={`billing-start-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2">Start {PLANS[p].name} <ArrowUpRight className="h-3.5 w-3.5" /></button>)}
+                                {isCurrent ? (<div className="mt-4 inline-flex items-center gap-1 text-xs text-sage"><Check className="h-3.5 w-3.5" /> Current</div>) : p === "free" && currentPlan !== "free" ? (<button onClick={downgradeToFree} disabled={busy} data-testid={`billing-downgrade-${p}`} className="mt-4 w-full text-sm border border-terracotta text-terracotta rounded-md py-2 hover:bg-terracotta hover:text-white disabled:opacity-60">Downgrade to Free</button>) : activeSub ? (<button onClick={() => changePlan(p)} disabled={busy} data-testid={`billing-switch-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#091D33] disabled:opacity-60">Switch to {PLANS[p].name}</button>) : p === "free" ? null : (<button onClick={() => startCheckout(p)} disabled={busy} data-testid={`billing-start-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2">Start {PLANS[p].name} <ArrowUpRight className="h-3.5 w-3.5" /></button>)}
                             </div>
                         );
                     })}
@@ -296,7 +296,7 @@ function MembersTab() {
                 <div className="bg-surface border border-gold rounded-2xl p-6" data-testid="members-upgrade-gate">
                     <h3 className="font-heading text-xl text-primary-k">Inviting siblings is on Family plan</h3>
                     <p className="text-sm text-muted-k mt-2">Family plan adds 5 seats, role-based permissions, and the Sunday digest.</p>
-                    <Link to="/settings/billing" className="mt-4 inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#16294a]" data-testid="members-upgrade-cta">Upgrade to Family</Link>
+                    <Link to="/settings/billing" className="mt-4 inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33]" data-testid="members-upgrade-cta">Upgrade to Family</Link>
                 </div>
             ) : (<>
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="invite-card">
@@ -305,7 +305,7 @@ function MembersTab() {
                         <label className="block sm:col-span-2"><span className="text-sm text-muted-k">Email</span><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required data-testid="invite-email-input" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" /></label>
                         <label className="block"><span className="text-sm text-muted-k">Role</span><select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} data-testid="invite-role-select" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"><option value="family_member">Family member (sibling / partner)</option><option value="advisor">Advisor / GP (read-only)</option></select></label>
                         <label className="block"><span className="text-sm text-muted-k">Optional note</span><input type="text" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Hey sis, looping you in…" data-testid="invite-note-input" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" /></label>
-                        <div className="sm:col-span-2"><button type="submit" disabled={sending} data-testid="invite-submit-btn" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#16294a] disabled:opacity-60">{sending && <Loader2 className="h-4 w-4 animate-spin" />}<Mail className="h-4 w-4" /> Send invitation</button></div>
+                        <div className="sm:col-span-2"><button type="submit" disabled={sending} data-testid="invite-submit-btn" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] disabled:opacity-60">{sending && <Loader2 className="h-4 w-4 animate-spin" />}<Mail className="h-4 w-4" /> Send invitation</button></div>
                     </form>
                 </div>
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="members-list-card">
@@ -370,7 +370,7 @@ function DigestTab() {
                 <div className="bg-surface border border-gold rounded-2xl p-6">
                     <h3 className="font-heading text-xl text-primary-k">Sending digests is on Family plan</h3>
                     <p className="text-sm text-muted-k mt-2">You can preview what it looks like on any plan — sending requires Family (because it goes to up to 5 people).</p>
-                    <Link to="/settings/billing" className="mt-4 inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#16294a]">Upgrade to Family</Link>
+                    <Link to="/settings/billing" className="mt-4 inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33]">Upgrade to Family</Link>
                 </div>
             )}
 
@@ -572,7 +572,7 @@ function SecurityTab() {
             <div className="bg-surface border border-kindred rounded-2xl p-6 max-w-xl">
                 <h3 className="font-heading text-lg text-primary-k">Password</h3>
                 <p className="text-sm text-muted-k mt-1">We'll email you a secure link to set a new password.</p>
-                <button onClick={sendReset} disabled={sending} data-testid="security-send-reset-btn" className="mt-4 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#16294a] disabled:opacity-60">{sending ? "Sending…" : "Send me a reset link"}</button>
+                <button onClick={sendReset} disabled={sending} data-testid="security-send-reset-btn" className="mt-4 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] disabled:opacity-60">{sending ? "Sending…" : "Send me a reset link"}</button>
             </div>
         </div>
     );

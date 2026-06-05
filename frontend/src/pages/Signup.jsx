@@ -322,7 +322,7 @@ export default function Signup() {
                                     type="submit"
                                     disabled={submitting}
                                     data-testid="signup-submit-button"
-                                    className="w-full bg-primary-k text-white rounded-md py-3 text-base hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                                    className="w-full bg-primary-k text-white rounded-md py-3 text-base hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                                 >
                                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                                     {submitting ? "Working…" : (form.plan === "free" ? "Create account" : "Start 7-day free trial")}

@@ -74,7 +74,7 @@ export default function TrialCountdownBanner({ className = "" }) {
                 className={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0 transition-colors ${
                     lessThan24h
                         ? "bg-terracotta text-white hover:bg-[#a3431a]"
-                        : "bg-primary-k text-white hover:bg-[#16294a]"
+                        : "bg-primary-k text-white hover:bg-[#091D33]"
                 }`}
             >
                 <Crown className="h-3.5 w-3.5" />

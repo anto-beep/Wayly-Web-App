@@ -109,7 +109,7 @@ export default function AIToolsIndex() {
                                 <div className="text-right">
                                     <span
                                         className={`text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 ${
-                                            t.planTone === "free" ? "bg-sage/20 text-[#3A5A40]" : "bg-[#1F3A5F] text-white"
+                                            t.planTone === "free" ? "bg-sage/20 text-[#0F5648]" : "bg-[#0E2A47] text-white"
                                         }`}
                                         data-testid={`ai-tool-plan-${t.slug}`}
                                     >

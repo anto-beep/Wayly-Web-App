@@ -374,7 +374,7 @@ async def forgot_password(body: ForgotBody, request: Request):
                 headline="Reset your Wayly password",
                 body_html=(
                     f"<p>Someone (hopefully you) requested a password reset for your Wayly account.</p>"
-                    f"<p><a href='{reset_url}' style='display:inline-block;background:#1F3A5F;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none'>Reset password</a></p>"
+                    f"<p><a href='{reset_url}' style='display:inline-block;background:#0E2A47;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none'>Reset password</a></p>"
                     f"<p style='color:#6B7280;font-size:13px'>This link expires in 60 minutes. If you didn't request this, ignore this email — your password has not changed.</p>"
                 ),
             )
@@ -417,7 +417,7 @@ async def send_verify(user_id: str = Depends(get_current_user_id), request: Requ
             headline=f"Confirm your Wayly account, {u['name'].split(' ')[0]}",
             body_html=(
                 f"<p>Welcome to Wayly. Tap the button below to confirm this email address.</p>"
-                f"<p><a href='{verify_url}' style='display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Confirm email</a></p>"
+                f"<p><a href='{verify_url}' style='display:inline-block;background:#2BC4D6;color:#0E2A47;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Confirm email</a></p>"
                 f"<p style='color:#6B7280;font-size:13px'>If you didn't create a Wayly account, ignore this email.</p>"
             ),
         )
@@ -489,7 +489,7 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
             body_html=(
                 f"<p>{u['name']} wants you involved as a <strong>{body.role.replace('_', ' ')}</strong> on {hh_name}'s Wayly household.</p>"
                 f"{('<p><em>Note from ' + u['name'].split(' ')[0] + ':</em> ' + body.note + '</p>') if body.note else ''}"
-                f"<p><a href='{accept_url}' style='display:inline-block;background:#D4A24E;color:#1F3A5F;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invitation</a></p>"
+                f"<p><a href='{accept_url}' style='display:inline-block;background:#2BC4D6;color:#0E2A47;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invitation</a></p>"
                 f"<p style='color:#6B7280;font-size:13px'>Invitation expires in {INVITE_EXPIRY_DAYS} days.</p>"
             ),
         )
@@ -583,7 +583,7 @@ async def share_dashboard(body: ShareDashboardBody, user_id: str = Depends(get_c
         streams_html += (
             f"<tr><td style='padding:6px 8px;'>{s}</td>"
             f"<td style='padding:6px 8px;text-align:right;'>{fmt(spent)} / {fmt(cap)}</td>"
-            f"<td style='padding:6px 8px;text-align:right;color:{'#A0522D' if pct > 100 else '#1F3A5F'};'>{pct:.0f}%</td></tr>"
+            f"<td style='padding:6px 8px;text-align:right;color:{'#A0522D' if pct > 100 else '#0E2A47'};'>{pct:.0f}%</td></tr>"
         )
 
     anom_html = "".join(
@@ -594,7 +594,7 @@ async def share_dashboard(body: ShareDashboardBody, user_id: str = Depends(get_c
     ) or "<li style='color:#5A6470;'>No anomalies caught this quarter — looking good!</li>"
 
     note_block = (
-        f"<blockquote style='border-left:3px solid #D4A574;margin:12px 0;padding:6px 12px;color:#1F3A5F;background:#fdf6ec;'>"
+        f"<blockquote style='border-left:3px solid #D4A574;margin:12px 0;padding:6px 12px;color:#0E2A47;background:#DCEBF7;'>"
         f"{(body.note or '').replace('<', '&lt;').replace('>', '&gt;')}</blockquote>"
         if body.note and body.note.strip() else ""
     )
@@ -603,10 +603,10 @@ async def share_dashboard(body: ShareDashboardBody, user_id: str = Depends(get_c
         <p>Hi,</p>
         <p>{sender.get('name') or 'Your family caregiver'} is sharing this Wayly dashboard snapshot for <strong>{h.get('participant_name','')}</strong> ({q_label}).</p>
         {note_block}
-        <h3 style='font-family:Georgia,serif;color:#1F3A5F;margin-top:24px;'>Budget this quarter</h3>
+        <h3 style='font-family:Georgia,serif;color:#0E2A47;margin-top:24px;'>Budget this quarter</h3>
         <table style='border-collapse:collapse;width:100%;font-size:14px;'>
             <thead>
-                <tr style='background:#F5F1EA;color:#5A6470;text-align:left;'>
+                <tr style='background:#DCEBF7;color:#5A6470;text-align:left;'>
                     <th style='padding:6px 8px;'>Stream</th>
                     <th style='padding:6px 8px;text-align:right;'>Spent / Cap</th>
                     <th style='padding:6px 8px;text-align:right;'>%</th>
@@ -621,10 +621,10 @@ async def share_dashboard(body: ShareDashboardBody, user_id: str = Depends(get_c
                 </tr>
             </tfoot>
         </table>
-        <h3 style='font-family:Georgia,serif;color:#1F3A5F;margin-top:24px;'>Lifetime contribution cap</h3>
+        <h3 style='font-family:Georgia,serif;color:#0E2A47;margin-top:24px;'>Lifetime contribution cap</h3>
         <p>{fmt(contributions_total)} of {fmt(cap_amount)} ({(contributions_total / cap_amount * 100) if cap_amount else 0:.2f}% used)</p>
-        <h3 style='font-family:Georgia,serif;color:#1F3A5F;margin-top:24px;'>Top anomalies to know</h3>
-        <ul style='font-size:14px;line-height:1.55;color:#1F3A5F;'>{anom_html}</ul>
+        <h3 style='font-family:Georgia,serif;color:#0E2A47;margin-top:24px;'>Top anomalies to know</h3>
+        <ul style='font-size:14px;line-height:1.55;color:#0E2A47;'>{anom_html}</ul>
         <p style='margin-top:28px;color:#5A6470;font-size:13px;'>
             View the full dashboard at <a href='https://wayly.com.au/app'>wayly.com.au/app</a>.
             Forwarded by {sender.get('name','')} ({sender.get('email','')}).

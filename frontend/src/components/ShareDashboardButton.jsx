@@ -161,7 +161,7 @@ export default function ShareDashboardButton({ className = "" }) {
                                 onClick={submit}
                                 disabled={sending}
                                 data-testid="share-submit"
-                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a] inline-flex items-center gap-2 disabled:opacity-60"
+                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33] inline-flex items-center gap-2 disabled:opacity-60"
                             >
                                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                 {sending ? "Sending…" : "Send snapshot"}

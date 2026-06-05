@@ -435,7 +435,7 @@ def _build_review_pack_pdf(snapshot: dict, adviser_name: str) -> bytes:
         author=f"Wayly · {adviser_name}",
     )
     base = getSampleStyleSheet()
-    NAVY = colors.HexColor("#1F3A5F")
+    NAVY = colors.HexColor("#0E2A47")
     MUTED = colors.HexColor("#6F6A60")
 
     h1 = ParagraphStyle("h1", parent=base["Heading1"], fontName="Helvetica-Bold",
@@ -514,7 +514,7 @@ def _build_review_pack_pdf(snapshot: dict, adviser_name: str) -> bytes:
         ("TEXTCOLOR", (0, 0), (-1, 0), MUTED),
         ("TEXTCOLOR", (0, 1), (-1, 1), NAVY),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#FAF7F2")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EAF4FB")),
         ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#E6E1D6")),
         ("LINEABOVE", (0, 1), (-1, 1), 0.5, colors.HexColor("#E6E1D6")),
         ("TOPPADDING", (0, 0), (-1, -1), 8),
@@ -540,7 +540,7 @@ def _build_review_pack_pdf(snapshot: dict, adviser_name: str) -> bytes:
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("TEXTCOLOR", (0, 0), (-1, 0), MUTED),
         ("TEXTCOLOR", (0, 1), (-1, -1), NAVY),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#FAF7F2")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EAF4FB")),
         ("LINEBELOW", (0, 0), (-1, -1), 0.25, colors.HexColor("#E6E1D6")),
         ("TOPPADDING", (0, 0), (-1, -1), 5),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),

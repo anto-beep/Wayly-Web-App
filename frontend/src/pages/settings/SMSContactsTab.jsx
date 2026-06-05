@@ -108,7 +108,7 @@ export default function SMSContactsTab() {
                     </span>
                 </label>
                 <div className="flex items-center gap-2">
-                    <button onClick={save} disabled={saving} data-testid="sms-save-btn" className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60">
+                    <button onClick={save} disabled={saving} data-testid="sms-save-btn" className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33] disabled:opacity-60">
                         {saving ? "Saving…" : "Save"}
                     </button>
                     {doc?.phone_e164 && doc.sms_opt_in && (

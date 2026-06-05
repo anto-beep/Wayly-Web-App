@@ -52,7 +52,7 @@ export default function EmailForwardingPanel({ onSwitchToFile }) {
                     statement arrives in your dashboard automatically — no uploads, no copying.
                 </p>
                 <div className="flex gap-2 justify-center mt-4">
-                    <a href="/signup" className="inline-flex items-center gap-1 bg-primary-k text-white text-sm px-4 py-2 rounded-md hover:bg-[#16294a]" data-testid="email-tab-signup">
+                    <a href="/signup" className="inline-flex items-center gap-1 bg-primary-k text-white text-sm px-4 py-2 rounded-md hover:bg-[#091D33]" data-testid="email-tab-signup">
                         Start free trial <ArrowRight className="h-3.5 w-3.5" />
                     </a>
                     {onSwitchToFile && (
@@ -101,7 +101,7 @@ export default function EmailForwardingPanel({ onSwitchToFile }) {
                         type="button"
                         onClick={copy}
                         data-testid="email-forwarding-copy"
-                        className="inline-flex items-center gap-1.5 px-3 text-sm rounded-md bg-primary-k text-white hover:bg-[#16294a]"
+                        className="inline-flex items-center gap-1.5 px-3 text-sm rounded-md bg-primary-k text-white hover:bg-[#091D33]"
                     >
                         {copied ? <><Check className="h-4 w-4" /> Copied</> : <><Copy className="h-4 w-4" /> Copy</>}
                     </button>

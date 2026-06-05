@@ -35,7 +35,7 @@ export default function LegalPage({ title, lastUpdated, path, description, child
                                [&_p]:my-3 [&_p]:text-base
                                [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-3
                                [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-3
-                               [&_a]:text-primary-k [&_a]:underline hover:[&_a]:text-[#16294a]"
+                               [&_a]:text-primary-k [&_a]:underline hover:[&_a]:text-[#091D33]"
                     data-testid="legal-page-body"
                 >
                     {children}

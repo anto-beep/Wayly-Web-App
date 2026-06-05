@@ -4,6 +4,7 @@ import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, Ale
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
+import HeroSpotlight from "@/components/HeroSpotlight";
 import { BrowserFrame, ScreenshotStatement, ScreenshotDashboard, ScreenshotFamilyThread, ScreenshotAnomaly, ScreenshotReportsHub } from "@/components/Screenshots";
 import RevealOnScroll from "@/components/RevealOnScroll";
 
@@ -81,19 +82,20 @@ export default function Landing() {
             <MarketingHeader />
 
             {/* HERO */}
-            <section className="mx-auto max-w-7xl px-6 pt-12 pb-20">
+            <HeroSpotlight />
+
+            {/* PERSONA ON-RAMP + DECODER EMBED */}
+            <section className="mx-auto max-w-7xl px-6 pt-16 pb-8" data-testid="persona-section">
                 <div className="grid lg:grid-cols-12 gap-10 items-start">
-                    <div className="lg:col-span-7 animate-fade-up">
-                        <span className="overline">For Australian families · Support at Home</span>
-                        <h1 className="font-heading text-5xl sm:text-6xl lg:text-7xl text-primary-k mt-4 leading-[1.05] tracking-tight">
-                            Support at Home,<br />finally explained.
-                        </h1>
-                        <p className="mt-6 text-lg text-muted-k max-w-xl leading-relaxed">
-                            Australia's aged-care system was rebuilt November 2025. Get the AI co-pilot that turns your monthly statement, quarterly budget, and care plan into one calm dashboard — for the whole family.
+                    <div className="lg:col-span-7">
+                        <span className="overline">Three quick ways in</span>
+                        <h2 className="font-heading text-3xl sm:text-4xl text-[#0E2A47] mt-3">Which describes you best?</h2>
+                        <p className="mt-3 text-base text-[#4A5A75] max-w-xl leading-relaxed">
+                            Australia's aged-care system was rebuilt on 1 November 2025. Pick the path that fits your household and we'll tailor the next step for you.
                         </p>
 
                         {/* Persona on-ramp */}
-                        <div className="mt-8 grid sm:grid-cols-3 gap-3" data-testid="persona-onramp">
+                        <div className="mt-6 grid sm:grid-cols-3 gap-3" data-testid="persona-onramp">
                             {PERSONAS.map((p) => (
                                 <button
                                     key={p.id}
@@ -102,29 +104,21 @@ export default function Landing() {
                                     data-testid={`persona-${p.id}`}
                                     className={`text-left rounded-xl p-4 border transition-all ${
                                         selectedPersona === p.id
-                                            ? "border-primary-k bg-primary-k text-white -translate-y-0.5 shadow-md"
-                                            : "border-kindred bg-surface hover:border-primary-k hover:-translate-y-0.5"
+                                            ? "border-[#0E2A47] bg-[#0E2A47] text-white -translate-y-0.5 shadow-md"
+                                            : "border-kindred bg-surface hover:border-[#0E2A47] hover:-translate-y-0.5"
                                     }`}
                                 >
-                                    <div className={`text-xs uppercase tracking-wider ${selectedPersona === p.id ? "text-gold" : "text-muted-k"}`}>
+                                    <div className={`text-xs uppercase tracking-wider ${selectedPersona === p.id ? "text-[#2BC4D6]" : "text-muted-k"}`}>
                                         {p.sub}
                                     </div>
-                                    <div className={`font-heading text-lg mt-1 ${selectedPersona === p.id ? "text-white" : "text-primary-k"}`}>
+                                    <div className={`font-heading text-lg mt-1 ${selectedPersona === p.id ? "text-white" : "text-[#0E2A47]"}`}>
                                         {p.title}
                                     </div>
-                                    <div className={`mt-3 text-sm inline-flex items-center gap-1 ${selectedPersona === p.id ? "text-white" : "text-primary-k"}`}>
+                                    <div className={`mt-3 text-sm inline-flex items-center gap-1 ${selectedPersona === p.id ? "text-white" : "text-[#0E2A47]"}`}>
                                         {p.cta} <ArrowRight className="h-3.5 w-3.5" />
                                     </div>
                                 </button>
                             ))}
-                        </div>
-
-                        {/* Trust strip */}
-                        <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-k">
-                            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-sage" /> Australian-hosted</span>
-                            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-sage" /> Privacy Act compliant</span>
-                            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-sage" /> Never accepts commissions</span>
-                            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-sage" /> Never sells your data</span>
                         </div>
                     </div>
 
@@ -233,7 +227,7 @@ export default function Landing() {
                         <Link
                             to="/signup"
                             data-testid="big-number-cta"
-                            className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f] transition-colors"
+                            className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8] transition-colors"
                         >
                             Start free for 7 days
                         </Link>
@@ -429,7 +423,7 @@ export default function Landing() {
                         Try Wayly free for 7 days. Cancel anytime. No card required for the trial.
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-                        <Link to="/signup" data-testid="final-cta-signup" className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f] transition-colors">
+                        <Link to="/signup" data-testid="final-cta-signup" className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8] transition-colors">
                             Start free trial
                         </Link>
                         <Link to="/ai-tools" className="text-white underline">Or try a free AI tool</Link>

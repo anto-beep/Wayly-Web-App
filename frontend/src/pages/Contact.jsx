@@ -236,7 +236,7 @@ export default function Contact() {
                                 type="submit"
                                 disabled={submitting}
                                 data-testid="contact-submit"
-                                className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                                className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-60"
                             >
                                 {isDemo ? <Calendar className="h-4 w-4" /> : <Send className="h-4 w-4" />}
                                 {isDemo ? "Book my demo" : "Send"}

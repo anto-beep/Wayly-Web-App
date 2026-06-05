@@ -139,7 +139,7 @@ export default function AdviserScenarios() {
                             <label className="text-xs text-muted-k">Save this scenario</label>
                             <div className="mt-1 flex gap-2">
                                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Scenario name" className="flex-1 rounded-md border border-kindred px-3 py-2" data-testid="scenario-name-input" />
-                                <button onClick={save} disabled={saving} data-testid="scenario-save-btn" className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-md px-3 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60">
+                                <button onClick={save} disabled={saving} data-testid="scenario-save-btn" className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-md px-3 py-2 text-sm hover:bg-[#091D33] disabled:opacity-60">
                                     <Save className="h-3.5 w-3.5" /> Save
                                 </button>
                             </div>

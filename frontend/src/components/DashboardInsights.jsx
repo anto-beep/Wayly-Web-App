@@ -56,7 +56,7 @@ function BurnRateChart({ series }) {
                                 {formatShort(p.gross)}
                             </div>
                             <div
-                                className="w-full bg-primary-k rounded-t-md transition-all group-hover:bg-[#16294a]"
+                                className="w-full bg-primary-k rounded-t-md transition-all group-hover:bg-[#091D33]"
                                 style={{ height: `${heightPct}%` }}
                                 title={`${p.label}: ${formatAUD2(p.gross)} gross, ${formatAUD2(p.copay)} co-payment`}
                             />

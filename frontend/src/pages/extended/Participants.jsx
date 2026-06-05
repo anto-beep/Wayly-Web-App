@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useParticipants } from "@/context/ParticipantsContext";
 
-const COLOR_SWATCHES = ["#1F3A5F", "#D4A24E", "#7C9B82", "#C76B5A", "#5F4E76"];
+const COLOR_SWATCHES = ["#0E2A47", "#2BC4D6", "#7C9B82", "#C76B5A", "#5F4E76"];
 
 function ProviderPicker({ value, onChange, existing, testId }) {
     // Deduplicate and surface previously-used providers from sibling participants.
@@ -385,7 +385,7 @@ export default function ParticipantsPage() {
                                         <p className="text-sm text-primary-k">Adding a participant requires a paid plan.</p>
                                         <p className="text-sm text-muted-k">Upgrade to Solo ($19/mo) for 1 participant, or Family ($39/mo) for 2 participants and 3 caregiver seats.</p>
                                         <div className="flex gap-2">
-                                            <Link to="/pricing?plan=solo" className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]" data-testid="upgrade-solo">Upgrade to Solo</Link>
+                                            <Link to="/pricing?plan=solo" className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]" data-testid="upgrade-solo">Upgrade to Solo</Link>
                                             <Link to="/pricing?plan=family" className="inline-flex items-center gap-1.5 bg-gold text-primary-k font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95" data-testid="upgrade-family">Upgrade to Family</Link>
                                         </div>
                                     </div>
@@ -415,7 +415,7 @@ export default function ParticipantsPage() {
                                                     if (msg.includes("Billing unavailable")) setStep("form"); // fall back to immediate add
                                                     else toast.error(msg);
                                                 }
-                                            }} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]" data-testid="confirm-solo-to-family">
+                                            }} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]" data-testid="confirm-solo-to-family">
                                                 Pay $20 & upgrade now
                                             </button>
                                             <button onClick={() => setStep("form")} className="text-sm text-muted-k hover:text-primary-k" data-testid="skip-checkout-solo-to-family">
@@ -439,7 +439,7 @@ export default function ParticipantsPage() {
                                             <div className="text-muted-k">Base Family plan: $39/month</div>
                                             <div className="border-t border-kindred pt-1 mt-1 font-medium text-primary-k">New total: ${addPreview.new_monthly_total.toFixed(0)}/month</div>
                                         </div>
-                                        <button onClick={() => setStep("form")} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]" data-testid="confirm-family-add">
+                                        <button onClick={() => setStep("form")} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]" data-testid="confirm-family-add">
                                             Continue
                                         </button>
                                     </div>
@@ -447,7 +447,7 @@ export default function ParticipantsPage() {
                                 {addPreview.branch === "adviser_included" && (
                                     <div className="space-y-3">
                                         <p className="text-sm text-primary-k">Your Adviser plan includes participant management at no extra cost.</p>
-                                        <button onClick={() => setStep("form")} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]">Continue</button>
+                                        <button onClick={() => setStep("form")} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]">Continue</button>
                                     </div>
                                 )}
                             </div>
@@ -498,7 +498,7 @@ export default function ParticipantsPage() {
                                 </div>
                                 <div className="flex justify-end gap-2 pt-2 border-t border-kindred">
                                     <button onClick={closeAdd} className="px-4 py-2 text-sm text-muted-k hover:text-primary-k">Cancel</button>
-                                    <button onClick={submitAdd} disabled={saving} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60" data-testid="form-submit-add">
+                                    <button onClick={submitAdd} disabled={saving} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33] disabled:opacity-60" data-testid="form-submit-add">
                                         {saving ? "Adding…" : "Add participant"}
                                     </button>
                                 </div>
@@ -537,7 +537,7 @@ export default function ParticipantsPage() {
                                         Pay $19/mo add-on now
                                     </button>
                                 )}
-                                <button onClick={closeAdd} className="w-full bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a]">Done</button>
+                                <button onClick={closeAdd} className="w-full bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]">Done</button>
                             </div>
                         )}
                     </div>
@@ -603,7 +603,7 @@ export default function ParticipantsPage() {
                                 }}
                                 disabled={editSaving}
                                 data-testid="edit-save-btn"
-                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60"
+                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33] disabled:opacity-60"
                             >
                                 {editSaving ? "Saving…" : "Save"}
                             </button>

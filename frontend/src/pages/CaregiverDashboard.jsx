@@ -12,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useParticipants } from "@/context/ParticipantsContext";
 
 const PLAN_LABELS = {
-    free: { label: "Free plan", tone: "bg-sage/15 text-[#3A5A40]", desc: "2 of 8 AI tools · no household tracking" },
+    free: { label: "Free plan", tone: "bg-sage/15 text-[#0F5648]", desc: "2 of 8 AI tools · no household tracking" },
     solo: { label: "Solo plan · Trial", tone: "bg-gold/20 text-primary-k", desc: "All 8 tools · 1 caregiver seat" },
     family: { label: "Family plan · Trial", tone: "bg-primary-k/15 text-primary-k", desc: "All 8 tools · 5 family seats · Sunday digest" },
 };
@@ -41,7 +41,7 @@ function FreePlanLimitCard() {
         On Free you can use all 8 public AI tools (rate limited to 5 uses per hour per tool). To unlock budget tracking, anomaly alerts, family thread, audit log, and AI chat for your specific household — start a 7-day free trial.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
-                        <Link to="/pricing" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]" data-testid="dashboard-upgrade-cta">Compare plans</Link>
+                        <Link to="/pricing" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]" data-testid="dashboard-upgrade-cta">Compare plans</Link>
                         <Link to="/ai-tools" className="text-sm border border-kindred rounded-full px-5 py-2.5 text-primary-k hover:bg-surface-2">Try the AI tools</Link>
                     </div>
                 </div>

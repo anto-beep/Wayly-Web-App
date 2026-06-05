@@ -131,7 +131,7 @@ export default function ClassificationCheck() {
                         onClick={submit}
                         disabled={!allDone || loading}
                         data-testid="cc-submit"
-                        className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {loading ? "Calculating…" : allDone ? "See likely classification" : `Answer all 12 questions (${answers.filter((a) => a !== null).length}/12)`}

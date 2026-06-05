@@ -167,26 +167,26 @@ export function downloadDecodedAsPdf(result, baseName = "statement") {
 <html><head><meta charset="utf-8"/><title>${label} — decoded</title>
 <style>
   *{box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1f3a5f;padding:32px;max-width:900px;margin:auto;font-size:12pt}
-  h1{font-size:22pt;margin:0 0 6px;color:#1f3a5f}
-  h2{font-size:14pt;margin:24px 0 8px;color:#1f3a5f;border-bottom:1px solid #d9c98c;padding-bottom:4px}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#0e2a47;padding:32px;max-width:900px;margin:auto;font-size:12pt}
+  h1{font-size:22pt;margin:0 0 6px;color:#0e2a47}
+  h2{font-size:14pt;margin:24px 0 8px;color:#0e2a47;border-bottom:1px solid #d9c98c;padding-bottom:4px}
   .muted{color:#6b7280;font-size:10pt}
   table{width:100%;border-collapse:collapse;margin-top:8px;font-size:10pt}
-  th{text-align:left;background:#faf7f2;padding:6px 8px;border-bottom:1px solid #e5d9c0}
+  th{text-align:left;background:#eaf4fb;padding:6px 8px;border-bottom:1px solid #e5d9c0}
   td{padding:6px 8px;border-bottom:1px solid #f0e6d3;vertical-align:top}
   .num{text-align:right;font-variant-numeric:tabular-nums}
   .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
-  .summary div{background:#faf7f2;padding:10px;border-radius:8px}
+  .summary div{background:#eaf4fb;padding:10px;border-radius:8px}
   .summary .label{display:block;color:#6b7280;font-size:9pt;text-transform:uppercase;letter-spacing:0.04em}
-  .summary .val{font-size:13pt;font-weight:600;color:#1f3a5f}
-  .anomaly{border-left:3px solid #d4a24e;padding:8px 12px;margin:8px 0;background:#fffaf0}
+  .summary .val{font-size:13pt;font-weight:600;color:#0e2a47}
+  .anomaly{border-left:3px solid #2bc4d6;padding:8px 12px;margin:8px 0;background:#fffaf0}
   .anomaly.alert{border-color:#a05545;background:#fdf3ef}
   .anomaly .sev{font-size:9pt;text-transform:uppercase;letter-spacing:0.04em;color:#6b7280;margin-right:8px}
   .footer{margin-top:32px;padding-top:12px;border-top:1px solid #e5d9c0;color:#6b7280;font-size:9pt}
   @media print{button{display:none}}
 </style></head>
 <body>
-  <button onclick="window.print()" style="float:right;background:#1f3a5f;color:#fff;border:0;padding:8px 14px;border-radius:6px;cursor:pointer">Print / Save as PDF</button>
+  <button onclick="window.print()" style="float:right;background:#0e2a47;color:#fff;border:0;padding:8px 14px;border-radius:6px;cursor:pointer">Print / Save as PDF</button>
   <h1>Decoded statement — ${esc(label)}</h1>
   <p class="muted">Decoded by Wayly. AI-generated summary — please verify against the original statement before acting.</p>
 

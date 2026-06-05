@@ -49,30 +49,30 @@ export default function InviteAccept() {
 
     if (loading || authLoading) {
         return (
-            <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center">
+            <div className="min-h-screen bg-[#EAF4FB] flex items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-k" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center px-6" data-testid="invite-accept-page">
+        <div className="min-h-screen bg-[#EAF4FB] flex items-center justify-center px-6" data-testid="invite-accept-page">
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
                     <WaylyLogo size={32} className="rounded-md" />
-                    <span className="font-heading text-lg text-[#1F3A5F]">Wayly</span>
+                    <span className="font-heading text-lg text-[#0E2A47]">Wayly</span>
                 </Link>
-                <div className="bg-white border border-[#E8E2D9] rounded-2xl p-8">
+                <div className="bg-white border border-[#CFE0F0] rounded-2xl p-8">
                     {error ? (
                         <>
-                            <h1 className="font-heading text-2xl text-[#1F3A5F]" data-testid="invite-error-title">Invitation unavailable</h1>
+                            <h1 className="font-heading text-2xl text-[#0E2A47]" data-testid="invite-error-title">Invitation unavailable</h1>
                             <p className="mt-3 text-sm text-muted-k">{error}</p>
                             <Link to="/" className="mt-6 inline-block text-sm text-primary-k underline">Go home</Link>
                         </>
                     ) : (
                         <>
                             <div className="h-10 w-10 rounded-full bg-gold/20 flex items-center justify-center"><Users className="h-5 w-5 text-primary-k" /></div>
-                            <h1 className="font-heading text-2xl text-[#1F3A5F] mt-4 tracking-tight" data-testid="invite-title">
+                            <h1 className="font-heading text-2xl text-[#0E2A47] mt-4 tracking-tight" data-testid="invite-title">
                                 {invite.inviter_name} invited you
                             </h1>
                             <p className="mt-2 text-sm text-muted-k leading-relaxed">
@@ -88,7 +88,7 @@ export default function InviteAccept() {
                                 <div className="mt-6 text-sm text-muted-k">
                                     <p>To accept, you need a Wayly account using <span className="font-medium text-primary-k">{invite.email}</span>.</p>
                                     <div className="mt-4 flex gap-2">
-                                        <Link to={`/signup?plan=free&invite=${token}`} data-testid="invite-signup-link" className="text-sm bg-primary-k text-white rounded-md px-4 py-2 hover:bg-[#16294a]">Create account</Link>
+                                        <Link to={`/signup?plan=free&invite=${token}`} data-testid="invite-signup-link" className="text-sm bg-primary-k text-white rounded-md px-4 py-2 hover:bg-[#091D33]">Create account</Link>
                                         <Link to={`/login?invite=${token}`} data-testid="invite-login-link" className="text-sm border border-kindred rounded-md px-4 py-2 text-primary-k hover:bg-surface-2">Sign in</Link>
                                     </div>
                                 </div>
@@ -101,7 +101,7 @@ export default function InviteAccept() {
                                     onClick={accept}
                                     disabled={accepting}
                                     data-testid="invite-accept-btn"
-                                    className="mt-6 w-full bg-primary-k text-white rounded-md py-3 text-sm hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                                    className="mt-6 w-full bg-primary-k text-white rounded-md py-3 text-sm hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2"
                                 >
                                     {accepting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                                     {accepting ? "Joining…" : "Accept invitation"}

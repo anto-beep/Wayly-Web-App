@@ -36,7 +36,7 @@ export default function VisitCalendar() {
             overline="Visit calendar"
             title="Upcoming appointments & home visits"
             description="Track GP appointments, allied-health visits, ACAT reviews, and provider home visits in one place."
-            actions={<button type="button" data-testid="visits-add-btn" onClick={() => setShowAdd((s) => !s)} className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#16294a]"><Plus className="h-4 w-4" /> Add visit</button>}
+            actions={<button type="button" data-testid="visits-add-btn" onClick={() => setShowAdd((s) => !s)} className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#091D33]"><Plus className="h-4 w-4" /> Add visit</button>}
         >
             {showAdd && (
                 <form onSubmit={add} className="bg-surface border border-kindred rounded-xl p-5 grid sm:grid-cols-2 gap-3" data-testid="visits-add-form">
@@ -54,7 +54,7 @@ export default function VisitCalendar() {
                     <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Location" className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                     <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Notes" rows={2} className="sm:col-span-2 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                     <div className="sm:col-span-2 flex gap-3">
-                        <button type="submit" data-testid="visits-form-submit" className="bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a]">Save</button>
+                        <button type="submit" data-testid="visits-form-submit" className="bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33]">Save</button>
                         <button type="button" onClick={() => setShowAdd(false)} className="text-sm text-muted-k">Cancel</button>
                     </div>
                 </form>

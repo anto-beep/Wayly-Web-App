@@ -138,7 +138,7 @@ export default function AddToHomeScreenPrompt() {
                             type="button"
                             onClick={install}
                             data-testid="a2hs-install"
-                            className="mt-3 inline-flex items-center gap-1.5 bg-primary-k text-white text-sm rounded-md px-3 py-1.5 hover:bg-[#16294a]"
+                            className="mt-3 inline-flex items-center gap-1.5 bg-primary-k text-white text-sm rounded-md px-3 py-1.5 hover:bg-[#091D33]"
                         >
                             <Download className="h-3.5 w-3.5" /> Install now
                         </button>

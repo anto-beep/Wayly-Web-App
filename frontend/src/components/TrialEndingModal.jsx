@@ -120,7 +120,7 @@ export default function TrialEndingModal() {
                             to="/settings/billing"
                             onClick={dismiss}
                             data-testid="trial-modal-upgrade"
-                            className="flex-1 inline-flex items-center justify-center bg-primary-k text-white rounded-md py-2.5 text-sm font-medium hover:bg-[#16294a]"
+                            className="flex-1 inline-flex items-center justify-center bg-primary-k text-white rounded-md py-2.5 text-sm font-medium hover:bg-[#091D33]"
                         >
                             Add card to keep {planLabel}
                         </Link>

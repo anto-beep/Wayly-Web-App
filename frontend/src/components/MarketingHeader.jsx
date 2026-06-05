@@ -17,7 +17,7 @@ const NAV = [
 const PLAN_LABEL = { free: "FREE", solo: "SOLO", family: "FAMILY" };
 
 function PlanBadge({ plan }) {
-    const tone = plan === "family" ? "bg-[#D4A24E] text-[#1F3A5F]" : plan === "solo" ? "bg-[#7A9B7E] text-white" : "bg-white/15 text-white";
+    const tone = plan === "family" ? "bg-[#2BC4D6] text-[#0E2A47]" : plan === "solo" ? "bg-[#3DB8A8] text-white" : "bg-white/15 text-white";
     return (
         <span className={`text-[10px] tracking-wider font-semibold rounded-full px-2 py-0.5 ${tone}`} data-testid="nav-plan-badge">
             {PLAN_LABEL[plan] || "FREE"}
@@ -31,7 +31,7 @@ function Avatar({ user, onClick, dataTestId }) {
         <button
             onClick={onClick}
             data-testid={dataTestId}
-            className="h-9 w-9 rounded-full bg-[#D4A24E] text-[#1F3A5F] font-semibold text-sm inline-flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-all"
+            className="h-9 w-9 rounded-full bg-[#2BC4D6] text-[#0E2A47] font-semibold text-sm inline-flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-all"
             title={user.name || user.email}
         >
             {user.picture ? (
@@ -73,9 +73,9 @@ function SignedInControls({ user }) {
                     </button>
                 </div>
                 {open && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-[#E8E2D9] overflow-hidden z-50" data-testid="nav-dropdown">
-                        <div className="px-4 py-3 border-b border-[#E8E2D9]">
-                            <div className="text-sm font-semibold text-[#1F3A5F]">{user.name}</div>
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-[#CFE0F0] overflow-hidden z-50" data-testid="nav-dropdown">
+                        <div className="px-4 py-3 border-b border-[#CFE0F0]">
+                            <div className="text-sm font-semibold text-[#0E2A47]">{user.name}</div>
                             <div className="text-xs text-[#6B7280] mt-0.5">{user.email}</div>
                         </div>
                         <div className="py-1">
@@ -84,19 +84,19 @@ function SignedInControls({ user }) {
                                     key={m.label}
                                     to={m.to}
                                     onClick={() => setOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1F3A5F] hover:bg-[#FAF7F2] transition-colors"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#0E2A47] hover:bg-[#EAF4FB] transition-colors"
                                 >
                                     <m.icon className="h-4 w-4 text-[#6B7280]" />
                                     {m.label}
                                 </Link>
                             ))}
                         </div>
-                        <div className="border-t border-[#E8E2D9] py-1">
+                        <div className="border-t border-[#CFE0F0] py-1">
                             <button
                                 type="button"
                                 onClick={handleSignOut}
                                 data-testid="nav-signout"
-                                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[#C5734D] hover:bg-[#FAF7F2] transition-colors"
+                                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[#E07A5F] hover:bg-[#EAF4FB] transition-colors"
                             >
                                 <LogOut className="h-4 w-4" />
                                 Sign out
@@ -115,14 +115,14 @@ function SignedOutControls() {
             <Link
                 to="/login"
                 data-testid="nav-login"
-                className="text-sm text-white border border-white/40 rounded-lg px-4 py-2 hover:bg-white hover:text-[#1F3A5F] transition-all duration-200"
+                className="text-sm text-white border border-white/40 rounded-lg px-4 py-2 hover:bg-white hover:text-[#0E2A47] transition-all duration-200"
             >
                 Sign in
             </Link>
             <Link
                 to="/signup?plan=family"
                 data-testid="nav-start-trial"
-                className="inline-flex items-center text-sm font-semibold bg-[#D4A24E] text-[#1F3A5F] rounded-lg px-5 py-2 shadow-[0_2px_8px_rgba(212,162,78,0.40)] hover:bg-[#DDB567] hover:shadow-[0_4px_14px_rgba(212,162,78,0.55)] hover:-translate-y-px active:scale-[0.97] transition-all duration-200"
+                className="inline-flex items-center text-sm font-semibold bg-[#2BC4D6] text-[#0E2A47] rounded-lg px-5 py-2 shadow-[0_2px_8px_rgba(212,162,78,0.40)] hover:bg-[#DDB567] hover:shadow-[0_4px_14px_rgba(212,162,78,0.55)] hover:-translate-y-px active:scale-[0.97] transition-all duration-200"
             >
                 Start free trial
             </Link>
@@ -134,7 +134,7 @@ export default function MarketingHeader() {
     const { user } = useAuth();
     const [open, setOpen] = useState(false);
     return (
-        <header className="sticky top-0 z-40 bg-[#1F3A5F] border-b border-[#16294a] h-16" data-testid="marketing-header">
+        <header className="sticky top-0 z-40 bg-[#0E2A47] border-b border-[#091D33] h-16" data-testid="marketing-header">
             <div className="mx-auto max-w-7xl h-full flex items-center justify-between px-6">
                 <Link to="/" data-testid="nav-logo" className="flex items-center gap-2 group">
                     <WaylyLogo size={28} className="rounded-md" />
@@ -148,7 +148,7 @@ export default function MarketingHeader() {
                             data-testid={`nav-link-${n.label.toLowerCase().replace(/\s+/g, "-")}`}
                             className={({ isActive }) =>
                                 `relative text-sm font-medium text-white/85 hover:text-white transition-colors py-1 ${
-                                    isActive ? "text-white after:absolute after:inset-x-0 after:-bottom-1 after:h-[2px] after:bg-[#D4A24E]" : "hover:after:absolute hover:after:inset-x-0 hover:after:-bottom-1 hover:after:h-[2px] hover:after:bg-[#D4A24E]"
+                                    isActive ? "text-white after:absolute after:inset-x-0 after:-bottom-1 after:h-[2px] after:bg-[#2BC4D6]" : "hover:after:absolute hover:after:inset-x-0 hover:after:-bottom-1 hover:after:h-[2px] hover:after:bg-[#2BC4D6]"
                                 }`
                             }
                         >
@@ -170,7 +170,7 @@ export default function MarketingHeader() {
                 </button>
             </div>
             {open && (
-                <div className="md:hidden fixed inset-0 top-16 bg-[#1F3A5F] z-50 p-6 animate-in slide-in-from-right duration-200" data-testid="nav-mobile-drawer">
+                <div className="md:hidden fixed inset-0 top-16 bg-[#0E2A47] z-50 p-6 animate-in slide-in-from-right duration-200" data-testid="nav-mobile-drawer">
                     <nav className="flex flex-col">
                         {NAV.map((n) => (
                             <Link
@@ -186,13 +186,13 @@ export default function MarketingHeader() {
                     <div className="mt-8 space-y-3">
                         {user ? (
                             <>
-                                <Link to="/app" onClick={() => setOpen(false)} className="block w-full text-center bg-[#D4A24E] text-[#1F3A5F] font-semibold rounded-lg py-3">Go to dashboard</Link>
+                                <Link to="/app" onClick={() => setOpen(false)} className="block w-full text-center bg-[#2BC4D6] text-[#0E2A47] font-semibold rounded-lg py-3">Go to dashboard</Link>
                                 <Link to="/settings" onClick={() => setOpen(false)} className="block w-full text-center border border-white/40 text-white rounded-lg py-3">Settings</Link>
                             </>
                         ) : (
                             <>
                                 <Link to="/login" onClick={() => setOpen(false)} className="block w-full text-center border border-white/40 text-white rounded-lg py-3">Sign in</Link>
-                                <Link to="/signup?plan=family" onClick={() => setOpen(false)} className="block w-full text-center bg-[#D4A24E] text-[#1F3A5F] font-semibold rounded-lg py-3">Start free trial</Link>
+                                <Link to="/signup?plan=family" onClick={() => setOpen(false)} className="block w-full text-center bg-[#2BC4D6] text-[#0E2A47] font-semibold rounded-lg py-3">Start free trial</Link>
                             </>
                         )}
                     </div>

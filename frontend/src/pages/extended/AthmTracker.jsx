@@ -47,7 +47,7 @@ export default function AthmTracker() {
                 <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Item (e.g. walker)" data-testid="athm-form-name" className="sm:col-span-2 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 <input type="number" min="0" value={form.cost_aud} onChange={(e) => setForm({ ...form, cost_aud: e.target.value })} placeholder="Cost (AUD)" className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 <input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder="Supplier" className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
-                <button type="submit" data-testid="athm-form-submit" className="inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a]"><Plus className="h-4 w-4" /> Add</button>
+                <button type="submit" data-testid="athm-form-submit" className="inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33]"><Plus className="h-4 w-4" /> Add</button>
             </form>
             {items.length === 0 ? (
                 <EmptyCard icon={Wrench} title="No AT/HM items yet" body="Start by adding a walker frame or grab rail to track approval and cost." />

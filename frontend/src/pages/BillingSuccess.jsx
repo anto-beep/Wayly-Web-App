@@ -71,7 +71,7 @@ export default function BillingSuccess() {
                         <button
                             onClick={() => nav("/onboarding")}
                             data-testid="billing-success-continue"
-                            className="mt-7 bg-primary-k text-white rounded-full px-6 py-3 inline-flex items-center gap-2 hover:bg-[#16294a]"
+                            className="mt-7 bg-primary-k text-white rounded-full px-6 py-3 inline-flex items-center gap-2 hover:bg-[#091D33]"
                         >
                             Complete onboarding <ArrowRight className="h-4 w-4" />
                         </button>
@@ -85,7 +85,7 @@ export default function BillingSuccess() {
                         </div>
                         <h1 className="font-heading text-3xl text-primary-k tracking-tight mt-6">We couldn't confirm your payment.</h1>
                         <p className="mt-3 text-muted-k">If your card was charged, the system will catch up shortly. Otherwise, you can try again from the pricing page.</p>
-                        <Link to="/pricing" className="mt-6 inline-block bg-primary-k text-white rounded-full px-6 py-3 hover:bg-[#16294a]">
+                        <Link to="/pricing" className="mt-6 inline-block bg-primary-k text-white rounded-full px-6 py-3 hover:bg-[#091D33]">
                             Back to pricing
                         </Link>
                     </>

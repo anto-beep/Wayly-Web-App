@@ -115,7 +115,7 @@ export default function NotificationsBell({ tone = "dark" }) {
 
     const btnTextCls = tone === "dark"
         ? "text-white/80 hover:text-white"
-        : "text-[#1F3A5F]/70 hover:text-[#1F3A5F]";
+        : "text-[#0E2A47]/70 hover:text-[#0E2A47]";
 
     return (
         <div className="relative" ref={ref}>
@@ -128,18 +128,18 @@ export default function NotificationsBell({ tone = "dark" }) {
             >
                 <Bell className="h-5 w-5" />
                 {unread > 0 && (
-                    <span className="absolute top-0.5 right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-[#D4A24E] text-[#1F3A5F] text-[10px] font-bold leading-4 text-center" data-testid="nav-bell-count">
+                    <span className="absolute top-0.5 right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-[#2BC4D6] text-[#0E2A47] text-[10px] font-bold leading-4 text-center" data-testid="nav-bell-count">
                         {unread > 9 ? "9+" : unread}
                     </span>
                 )}
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-[#E8E2D9] overflow-hidden z-50" data-testid="notifications-dropdown">
-                    <div className="px-4 py-3 border-b border-[#E8E2D9] flex items-center justify-between">
-                        <span className="text-sm font-semibold text-[#1F3A5F]">Notifications</span>
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-[#CFE0F0] overflow-hidden z-50" data-testid="notifications-dropdown">
+                    <div className="px-4 py-3 border-b border-[#CFE0F0] flex items-center justify-between">
+                        <span className="text-sm font-semibold text-[#0E2A47]">Notifications</span>
                         {unread > 0 && (
-                            <button type="button" onClick={markAllRead} data-testid="notifications-mark-all-read" className="text-xs text-[#1F3A5F] hover:underline">
+                            <button type="button" onClick={markAllRead} data-testid="notifications-mark-all-read" className="text-xs text-[#0E2A47] hover:underline">
                                 Mark all read
                             </button>
                         )}
@@ -154,16 +154,16 @@ export default function NotificationsBell({ tone = "dark" }) {
                         ) : (
                             <ul>
                                 {items.slice(0, 10).map((n) => (
-                                    <li key={n.id} className={`px-4 py-3 border-b border-[#E8E2D9] last:border-0 ${!n.read ? "bg-[#FAF7F2]" : ""}`} data-testid={`notification-item-${n.id}`}>
+                                    <li key={n.id} className={`px-4 py-3 border-b border-[#CFE0F0] last:border-0 ${!n.read ? "bg-[#EAF4FB]" : ""}`} data-testid={`notification-item-${n.id}`}>
                                         {n.link ? (
                                             <Link to={n.link} onClick={() => setOpen(false)} className="block">
-                                                <div className="text-sm font-medium text-[#1F3A5F]">{n.title}</div>
+                                                <div className="text-sm font-medium text-[#0E2A47]">{n.title}</div>
                                                 {n.body && <div className="text-xs text-[#6B7280] mt-0.5">{n.body}</div>}
                                                 <div className="text-[10px] text-[#6B7280] mt-1 uppercase tracking-wider">{new Date(n.created_at).toLocaleString()}</div>
                                             </Link>
                                         ) : (
                                             <>
-                                                <div className="text-sm font-medium text-[#1F3A5F]">{n.title}</div>
+                                                <div className="text-sm font-medium text-[#0E2A47]">{n.title}</div>
                                                 {n.body && <div className="text-xs text-[#6B7280] mt-0.5">{n.body}</div>}
                                                 <div className="text-[10px] text-[#6B7280] mt-1 uppercase tracking-wider">{new Date(n.created_at).toLocaleString()}</div>
                                             </>
@@ -173,8 +173,8 @@ export default function NotificationsBell({ tone = "dark" }) {
                             </ul>
                         )}
                     </div>
-                    <div className="px-4 py-2 border-t border-[#E8E2D9] bg-[#FAF7F2]">
-                        <Link to="/settings/notifications" onClick={() => setOpen(false)} className="text-xs text-[#1F3A5F] hover:underline">
+                    <div className="px-4 py-2 border-t border-[#CFE0F0] bg-[#EAF4FB]">
+                        <Link to="/settings/notifications" onClick={() => setOpen(false)} className="text-xs text-[#0E2A47] hover:underline">
                             Manage preferences
                         </Link>
                     </div>

@@ -108,7 +108,7 @@ export default function ReassessmentLetter() {
                             <input value={form.relationship} onChange={update("relationship")} data-testid="rl-rel" className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
                         </label>
                     </div>
-                    <button onClick={submit} disabled={loading || !form.participant_name || !form.changes_summary || !form.sender_name} data-testid="rl-submit" className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] disabled:opacity-60 inline-flex items-center justify-center gap-2">
+                    <button onClick={submit} disabled={loading || !form.participant_name || !form.changes_summary || !form.sender_name} data-testid="rl-submit" className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2">
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {loading ? "Drafting…" : "Draft my letter"}
                     </button>
@@ -128,11 +128,11 @@ export default function ReassessmentLetter() {
                             <div className="font-medium text-primary-k">Want Wayly to track the response?</div>
                             <p className="text-sm text-muted-k mt-1">Paid plans watch for the My Aged Care reply, log it to your audit trail, and walk you through the next steps.</p>
                             <div className="mt-3 flex items-center gap-3 flex-wrap">
-                                <Link to="/signup" className="inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]">Start free trial</Link>
+                                <Link to="/signup" className="inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]">Start free trial</Link>
                                 <EmailResultButton
                                     tool="Reassessment Letter"
                                     headline={`Reassessment letter for ${form.participant_name || "[Participant]"}`}
-                                    bodyHtml={`<p style="margin:0 0 12px;color:#555;font-size:13px">Draft reassessment letter to My Aged Care:</p><pre style="white-space:pre-wrap;font-family:Georgia,serif;color:#1F3A5F;background:#FAF7F2;padding:16px;border-radius:8px;border:1px solid #e5dfd2">${(letter || "").replace(/</g, "&lt;")}</pre>`}
+                                    bodyHtml={`<p style="margin:0 0 12px;color:#555;font-size:13px">Draft reassessment letter to My Aged Care:</p><pre style="white-space:pre-wrap;font-family:Georgia,serif;color:#0E2A47;background:#EAF4FB;padding:16px;border-radius:8px;border:1px solid #CFE0F0">${(letter || "").replace(/</g, "&lt;")}</pre>`}
                                 />
                             </div>
                         </div>

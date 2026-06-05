@@ -198,7 +198,7 @@ export default function StatementDecoderTool() {
                         {usage.remaining === 0 && (
                             <div className="flex gap-2">
                                 <Link to="/login" className="text-xs underline">Sign in</Link>
-                                <Link to="/signup?plan=solo" className="text-xs font-semibold bg-primary-k text-white rounded-full px-3 py-1 hover:bg-[#16294a]" data-testid="usage-upgrade-btn">Upgrade · $19/mo</Link>
+                                <Link to="/signup?plan=solo" className="text-xs font-semibold bg-primary-k text-white rounded-full px-3 py-1 hover:bg-[#091D33]" data-testid="usage-upgrade-btn">Upgrade · $19/mo</Link>
                             </div>
                         )}
                     </div>
@@ -278,7 +278,7 @@ export default function StatementDecoderTool() {
                         onClick={submit}
                         disabled={loading || !!limitInfo || mode === "email" || (mode === "file" && !file) || (mode === "text" && !text.trim())}
                         data-testid="decoder-submit"
-                        className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {loading ? "Reading your statement…" : "Decode this statement"}
@@ -319,7 +319,7 @@ export default function StatementDecoderTool() {
                                 <div className="font-medium text-primary-k">Want this every month, automatically?</div>
                                 <p className="text-sm text-muted-k mt-1">Wayly watches every statement, alerts you when something's off, and tracks your quarterly budget across all three streams.</p>
                                 <div className="mt-3 flex items-center gap-3 flex-wrap">
-                                    <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#16294a]" data-testid="decoder-upgrade">
+                                    <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]" data-testid="decoder-upgrade">
                                         Start 7-day free trial
                                     </Link>
                                     <Link to="/ai-tools/budget-calculator" className="text-sm text-primary-k underline inline-flex items-center gap-1">
@@ -330,7 +330,7 @@ export default function StatementDecoderTool() {
                                     <EmailResultButton
                                         tool="Statement Decoder"
                                         headline={result.summary?.slice(0, 200) || "Your statement, decoded"}
-                                        bodyHtml={`<h3 style="font-family:Georgia,serif;color:#1F3A5F">Plain-English summary</h3><p>${(result.summary || "").replace(/</g, "&lt;")}</p><h3 style="font-family:Georgia,serif;color:#1F3A5F;margin-top:24px">Line items</h3><ul>${(result.line_items || []).map(li => `<li>${li.date} — ${li.service_name} (${li.stream}) — $${(li.total || 0).toFixed(2)}</li>`).join("")}</ul>${(result.anomalies || []).length ? `<h3 style="font-family:Georgia,serif;color:#C5734D;margin-top:24px">Things to check</h3><ul>${(result.anomalies || []).map(a => `<li><strong>${a.headline || a.title}</strong> — ${a.detail || ""}${a.suggested_action ? ` → <em>${a.suggested_action}</em>` : ""}</li>`).join("")}</ul>` : ""}`}
+                                        bodyHtml={`<h3 style="font-family:Georgia,serif;color:#0E2A47">Plain-English summary</h3><p>${(result.summary || "").replace(/</g, "&lt;")}</p><h3 style="font-family:Georgia,serif;color:#0E2A47;margin-top:24px">Line items</h3><ul>${(result.line_items || []).map(li => `<li>${li.date} — ${li.service_name} (${li.stream}) — $${(li.total || 0).toFixed(2)}</li>`).join("")}</ul>${(result.anomalies || []).length ? `<h3 style="font-family:Georgia,serif;color:#E07A5F;margin-top:24px">Things to check</h3><ul>${(result.anomalies || []).map(a => `<li><strong>${a.headline || a.title}</strong> — ${a.detail || ""}${a.suggested_action ? ` → <em>${a.suggested_action}</em>` : ""}</li>`).join("")}</ul>` : ""}`}
                                     />
                                 </div>
                             </div>

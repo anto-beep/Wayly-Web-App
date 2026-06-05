@@ -213,7 +213,7 @@ function StepHousehold({ form, setForm, saving, onSubmit }) {
                     type="submit"
                     disabled={saving}
                     data-testid="onboarding-submit-button"
-                    className="w-full bg-primary-k text-white rounded-md py-3 text-base hover:bg-[#16294a] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                    className="w-full bg-primary-k text-white rounded-md py-3 text-base hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                 >
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                     {saving ? "Saving…" : "Continue"}
@@ -277,7 +277,7 @@ function StepEmailForwarding({ onNext, onBack }) {
                                 type="button"
                                 onClick={copy}
                                 data-testid="onboarding-copy-email"
-                                className="inline-flex items-center gap-1.5 px-3 text-sm rounded-md bg-primary-k text-white hover:bg-[#16294a]"
+                                className="inline-flex items-center gap-1.5 px-3 text-sm rounded-md bg-primary-k text-white hover:bg-[#091D33]"
                             >
                                 {copied ? <><Check className="h-4 w-4" /> Copied</> : <><Copy className="h-4 w-4" /> Copy</>}
                             </button>
@@ -322,7 +322,7 @@ function StepEmailForwarding({ onNext, onBack }) {
                         type="button"
                         onClick={onNext}
                         data-testid="onboarding-next"
-                        className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#16294a] inline-flex items-center gap-2"
+                        className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] inline-flex items-center gap-2"
                     >
                         Continue <ArrowRight className="h-4 w-4" />
                     </button>
@@ -452,7 +452,7 @@ function StepFamilyInvite({ onNext, onBack, isFamilyPlan }) {
                         onClick={submit}
                         disabled={sending}
                         data-testid="onboarding-next"
-                        className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#16294a] inline-flex items-center gap-2 disabled:opacity-60"
+                        className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] inline-flex items-center gap-2 disabled:opacity-60"
                     >
                         {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                         {isFamilyPlan && invites.some((i) => i.email.trim()) ? "Send invites & continue" : "Continue"}
@@ -518,7 +518,7 @@ function StepFirstStatement({ onFinish, onBack }) {
                     type="button"
                     onClick={onFinish}
                     data-testid="onboarding-finish"
-                    className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#16294a] inline-flex items-center gap-2"
+                    className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] inline-flex items-center gap-2"
                 >
                     <Check className="h-4 w-4" /> Take me to my dashboard
                 </button>

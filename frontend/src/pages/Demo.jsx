@@ -49,9 +49,9 @@ export default function Demo() {
         <div className="space-y-6">
             <div className="grid sm:grid-cols-3 gap-4">
                 {[
-                    { stream: "Clinical", spent: 195, allocated: 2226, color: "#3A5A40" },
-                    { stream: "Independence", spent: 380, allocated: 3340, color: "#7A9B7E" },
-                    { stream: "Everyday Living", spent: 282, allocated: 1115, color: "#C5734D" },
+                    { stream: "Clinical", spent: 195, allocated: 2226, color: "#0F5648" },
+                    { stream: "Independence", spent: 380, allocated: 3340, color: "#3DB8A8" },
+                    { stream: "Everyday Living", spent: 282, allocated: 1115, color: "#E07A5F" },
                 ].map((s) => {
                     const pct = (s.spent / s.allocated) * 100;
                     return (
@@ -218,7 +218,7 @@ export default function Demo() {
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-14 text-center">
                     <h2 className="font-heading text-4xl text-white tracking-tight">Want this for your family?</h2>
-                    <Link to="/signup" className="mt-6 inline-flex items-center gap-2 bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f]">Start free trial <ArrowRight className="h-4 w-4" /></Link>
+                    <Link to="/signup" className="mt-6 inline-flex items-center gap-2 bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]">Start free trial <ArrowRight className="h-4 w-4" /></Link>
                 </div>
             </section>
             <Footer />

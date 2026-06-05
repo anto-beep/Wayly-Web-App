@@ -29,7 +29,7 @@ export default function ForGPs() {
                             Free Wayly for your own elderly parents. Free referral cards for your waiting room. A simple way to refer a family to a tool that will actually help.
                         </p>
                         <div className="mt-7 flex items-center gap-3 flex-wrap">
-                            <Link to="/contact" data-testid="gp-book-call" className="bg-primary-k text-white rounded-full px-6 py-3 hover:bg-[#16294a] transition-colors">
+                            <Link to="/contact" data-testid="gp-book-call" className="bg-primary-k text-white rounded-full px-6 py-3 hover:bg-[#091D33] transition-colors">
                                 Book a 15-min intro call
                             </Link>
                             <Link to="/contact" className="text-primary-k underline">Order referral cards</Link>
@@ -66,7 +66,7 @@ export default function ForGPs() {
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-16 text-center">
                     <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">15 minutes. We'll bring the cards.</h2>
-                    <Link to="/contact" className="mt-8 inline-flex items-center gap-2 bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#c8973f]">Book a call <ArrowRight className="h-4 w-4" /></Link>
+                    <Link to="/contact" className="mt-8 inline-flex items-center gap-2 bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]">Book a call <ArrowRight className="h-4 w-4" /></Link>
                 </div>
             </section>
             <Footer />

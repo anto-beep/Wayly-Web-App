@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 240" preserveAspectRatio="none" role="img" aria-label="Wayly wave">
+  <title>Wayly wave</title>
+  <defs>
+    <linearGradient id="ww-1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#BFE0F5"/>
+      <stop offset="100%" stop-color="#6FE3DA"/>
+    </linearGradient>
+    <linearGradient id="ww-2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E7BD9"/>
+      <stop offset="100%" stop-color="#2BC4D6"/>
+    </linearGradient>
+    <linearGradient id="ww-3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0E2A47"/>
+      <stop offset="100%" stop-color="#1E7BD9"/>
+    </linearGradient>
+  </defs>
+  <path d="M0,160 C240,80 480,200 720,140 C960,80 1200,200 1440,120 L1440,240 L0,240 Z" fill="url(#ww-1)" opacity="0.55"/>
+  <path d="M0,180 C240,120 480,220 720,170 C960,120 1200,220 1440,160 L1440,240 L0,240 Z" fill="url(#ww-2)" opacity="0.8"/>
+  <path d="M0,210 C240,170 480,230 720,200 C960,170 1200,230 1440,200 L1440,240 L0,240 Z" fill="url(#ww-3)"/>
+</svg>

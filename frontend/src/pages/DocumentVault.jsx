@@ -206,7 +206,7 @@ export default function DocumentVault() {
                         Upload assessments, statements, care plans, medical letters and more. Tap <em>Send to Decoder</em> on a statement to auto-parse it.
                     </p>
                 </div>
-                <label className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#16294a] cursor-pointer" data-testid="docvault-upload-btn">
+                <label className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#091D33] cursor-pointer" data-testid="docvault-upload-btn">
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                     {uploading ? "Uploading…" : "Upload document"}
                     <input
@@ -410,7 +410,7 @@ export default function DocumentVault() {
                                 onClick={saveEdit}
                                 disabled={busyId === editing.id}
                                 data-testid="docvault-edit-save"
-                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a] inline-flex items-center gap-2 disabled:opacity-60"
+                                className="bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33] inline-flex items-center gap-2 disabled:opacity-60"
                             >
                                 {busyId === editing.id && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                                 Save changes

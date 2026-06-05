@@ -53,7 +53,7 @@ export default function SummaryReports() {
                         onClick={download}
                         disabled={downloading}
                         data-testid="reports-download-btn"
-                        className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#16294a] disabled:opacity-60"
+                        className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#091D33] disabled:opacity-60"
                     >
                         {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadIcon className="h-4 w-4" />}
                         {downloading ? "Generating…" : "Download PDF"}

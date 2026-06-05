@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, UserPlus, Users as UsersIcon, Star, AlertCircle } from "lucide-react";
 import { useParticipants } from "@/context/ParticipantsContext";
 
-const COLOR_SWATCHES = ["#1F3A5F", "#D4A24E", "#7C9B82", "#C76B5A", "#5F4E76"];
+const COLOR_SWATCHES = ["#0E2A47", "#2BC4D6", "#7C9B82", "#C76B5A", "#5F4E76"];
 
 export default function ParticipantSwitcher({ tone = "light" }) {
     const { items, active, setActiveId } = useParticipants();

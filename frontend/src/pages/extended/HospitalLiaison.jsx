@@ -103,7 +103,7 @@ export default function HospitalLiaison() {
                     type="button"
                     onClick={() => setShowForm(true)}
                     data-testid="hospital-log-btn"
-                    className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-4 py-2.5 text-sm hover:bg-[#16294a]"
+                    className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-4 py-2.5 text-sm hover:bg-[#091D33]"
                 >
                     <Plus className="h-4 w-4" /> Log a hospital stay
                 </button>
@@ -154,7 +154,7 @@ export default function HospitalLiaison() {
                                             <button
                                                 onClick={() => discharge(a)}
                                                 data-testid={`admission-discharge-${a.id}`}
-                                                className="inline-flex items-center justify-center gap-2 bg-primary-k text-white hover:bg-[#16294a] rounded-md px-3 py-2 text-xs font-medium"
+                                                className="inline-flex items-center justify-center gap-2 bg-primary-k text-white hover:bg-[#091D33] rounded-md px-3 py-2 text-xs font-medium"
                                             >
                                                 <CalendarCheck2 className="h-3.5 w-3.5" /> Mark discharged
                                             </button>
@@ -255,7 +255,7 @@ export default function HospitalLiaison() {
                         </div>
                         <div className="px-5 py-3 border-t border-kindred flex justify-end gap-2">
                             <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-muted-k hover:text-primary-k">Cancel</button>
-                            <button onClick={save} disabled={saving} data-testid="hospital-form-save" className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#16294a] disabled:opacity-60">
+                            <button onClick={save} disabled={saving} data-testid="hospital-form-save" className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33] disabled:opacity-60">
                                 {saving ? "Saving…" : "Log admission"}
                             </button>
                         </div>

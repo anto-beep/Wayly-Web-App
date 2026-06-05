@@ -55,7 +55,7 @@ export default function ProviderSwitch() {
                     <input value={form.target_provider} onChange={(e) => setForm({ ...form, target_provider: e.target.value })} placeholder="Target provider (optional)" data-testid="switch-form-target" className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                     <textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Why switching?" rows={2} className="sm:col-span-2 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                     <div className="sm:col-span-2">
-                        <button type="submit" data-testid="switch-form-submit" className="bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#16294a]">Start switching workflow</button>
+                        <button type="submit" data-testid="switch-form-submit" className="bg-primary-k text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#091D33]">Start switching workflow</button>
                     </div>
                 </form>
             ) : (
