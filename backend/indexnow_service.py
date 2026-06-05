@@ -30,7 +30,11 @@ log = logging.getLogger(__name__)
 
 INDEXNOW_KEY = "9a677bbfffc44a13f71ab79eb5bc971bb94a5ff82c6d813795aff11ac8fa2ef7"
 HOST = "wayly.com.au"
-KEY_LOCATION = f"https://{HOST}/{INDEXNOW_KEY}.txt"
+# IndexNow allows the key file to live at any URL on the declared host. We
+# serve it from a real backend route to avoid the SPA's catch-all rewriting
+# /<key>.txt to the React index.html. The path below is registered in
+# seo_routes.py (mounted both at /api/public/seo and at /public/seo).
+KEY_LOCATION = f"https://{HOST}/api/public/seo/indexnow-key.txt"
 ENDPOINT = "https://api.indexnow.org/IndexNow"
 SUBMIT_TIMEOUT_S = 12
 MAX_URLS_PER_SUBMIT = 10_000  # protocol limit

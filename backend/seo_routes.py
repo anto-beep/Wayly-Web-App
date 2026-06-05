@@ -194,3 +194,23 @@ Sitemap: {DOMAIN}/sitemap.xml
 async def robots_txt():
     body = _ROBOTS.replace("{DOMAIN}", SITE_DOMAIN)
     return Response(content=body, media_type="text/plain")
+
+
+
+
+@seo_public.get("/indexnow-key.txt")
+async def indexnow_key_file():
+    """
+    Hosts the IndexNow verification key at a real backend route so the
+    receiving engines (Bing, Yandex, Naver, Seznam, Yep) can fetch the key
+    even though the React SPA's catch-all would otherwise rewrite any
+    .txt request to index.html.
+
+    The key value lives in indexnow_service.INDEXNOW_KEY (single source of
+    truth). When submitting URLs we pass this endpoint as `keyLocation`
+    in the payload, so the engines know to look here.
+    """
+    from indexnow_service import INDEXNOW_KEY
+    # Return exactly the key, no trailing whitespace — the receiving
+    # engine does a byte-for-byte equality check against the submitted key.
+    return Response(content=INDEXNOW_KEY, media_type="text/plain")
