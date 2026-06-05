@@ -1,0 +1,2074 @@
+{
+  "generated": "2026-06-05T00:17:10.775Z",
+  "origin": "https://wayly.com.au",
+  "pages": [
+    {
+      "url": "https://wayly.com.au/",
+      "status": 200,
+      "title": "Wayly · AI for Australian Support at Home",
+      "titleLen": 41,
+      "desc": "Decode aged-care statements, check classifications and plan budgets — Wayly's AI assistant helps Australian families navigate Support at Home in plain English.",
+      "descLen": 159,
+      "canonical": "https://wayly.com.au/",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly · AI for Australian Support at Home",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Support at Home,finally explained.",
+        "Dorothy, this quarter"
+      ],
+      "h2Count": 15,
+      "h2": [
+        "The new Support at Home program is more flexible — and far more complex.",
+        "Three steps. Five minutes a month. The whole family in the loop.",
+        "Bluebell Care · Dorothy",
+        "Cleaning rate increased 11% this month.",
+        "3 of you · 2 days of conversation",
+        "The average Wayly household spots $1,847/year in incorrect charges and unused funding.",
+        "Eight quiet AI agents, one calm dashboard.",
+        "One calm dashboard for everything."
+      ],
+      "internalCount": 28,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "wordCount": 1521,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 17
+        },
+        {
+          "id": "label",
+          "impact": "critical",
+          "help": "Form elements must have labels",
+          "count": 1
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 5
+        }
+      ],
+      "axeTotal": 23,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/features",
+      "status": 200,
+      "title": "Features · Wayly",
+      "titleLen": 16,
+      "desc": "Statement Decoder, Budget Calculator, Classification Self-Check and 5 more tools to make Support at Home (and legacy Home Care Package) admin simpler.",
+      "descLen": 150,
+      "canonical": "https://wayly.com.au/features",
+      "ogLocale": "en_AU",
+      "ogTitle": "Features · Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Eight AI tools, plus a connected co‑pilot for the whole household."
+      ],
+      "h2Count": 9,
+      "h2": [
+        "One free tool. Seven on any paid plan.",
+        "Forward your statement. Sleep through Sunday.",
+        "Thirty‑second oversight. Everything else when you want it.",
+        "Big text. Two buttons. Nothing else.",
+        "Everyone informed. The right person deciding.",
+        "One account. Every parent in one view.",
+        "Built around your rights, not retrofitted to them.",
+        "What you get at every tier"
+      ],
+      "internalCount": 33,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 992,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 1
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 2,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/pricing",
+      "status": 200,
+      "title": "Pricing · Wayly",
+      "titleLen": 15,
+      "desc": "See Wayly plans for Australian families navigating Support at Home — start free, upgrade when you need full statement decoding and household coordination.",
+      "descLen": 154,
+      "canonical": "https://wayly.com.au/pricing",
+      "ogLocale": "en_AU",
+      "ogTitle": "Pricing · Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Simple, honest pricing.Start free."
+      ],
+      "h2Count": 7,
+      "h2": [
+        "Free",
+        "Solo",
+        "Family",
+        "Adviser",
+        "Managing more than 2 participants?",
+        "Full feature comparison",
+        "Pricing questions"
+      ],
+      "internalCount": 26,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "FAQPage"
+      ],
+      "wordCount": 1374,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/trust",
+      "status": 200,
+      "title": "Trust & Safety · Wayly",
+      "titleLen": 22,
+      "desc": "How Wayly keeps your aged-care data private and accurate: Australian-hosted, human-reviewed content, and clear AI disclaimers on every result.",
+      "descLen": 142,
+      "canonical": "https://wayly.com.au/trust",
+      "ogLocale": "en_AU",
+      "ogTitle": "Trust & Safety · Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Built for the most vulnerable data of all."
+      ],
+      "h2Count": 9,
+      "h2": [
+        "Where your data lives",
+        "Who can see your data",
+        "What we do not do",
+        "Compliance",
+        "Audit log",
+        "Elder protection",
+        "Independent oversight",
+        "Crisis resources (current Australian numbers)"
+      ],
+      "internalCount": 24,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 472,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/demo",
+      "status": 200,
+      "title": "See Wayly in Action · Demo",
+      "titleLen": 26,
+      "desc": "Watch how Wayly decodes a Support at Home statement, flags anomalies and explains charges in plain English — without signing up.",
+      "descLen": 128,
+      "canonical": "https://wayly.com.au/demo",
+      "ogLocale": "en_AU",
+      "ogTitle": "See Wayly in Action · Demo",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Meet the Anderson family."
+      ],
+      "h2Count": 1,
+      "h2": [
+        "Want this for your family?"
+      ],
+      "internalCount": 24,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 459,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/contact",
+      "status": 200,
+      "title": "Contact Wayly Support",
+      "titleLen": 21,
+      "desc": "Reach Wayly's Australian support team for help with Support at Home statements, billing questions or partnership enquiries — usually under 24 hours.",
+      "descLen": 148,
+      "canonical": "https://wayly.com.au/contact",
+      "ogLocale": "en_AU",
+      "ogTitle": "Contact Wayly Support",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Talk to a real person."
+      ],
+      "h2Count": 0,
+      "h2": [],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 284,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/for-advisors",
+      "status": 200,
+      "title": "Wayly for Aged Care Advisers",
+      "titleLen": 28,
+      "desc": "Help your clients understand Support at Home statements, budgets and classifications faster. Free Adviser plan with audit trail and client export.",
+      "descLen": 146,
+      "canonical": "https://wayly.com.au/for-advisors",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly for Aged Care Advisers",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Make aged-care planning a profit centre, not a black hole.",
+        "Dorothy, this quarter"
+      ],
+      "h2Count": 5,
+      "h2": [
+        "Everything you need for the aged-care chapter of a financial plan.",
+        "The two screens you'll spend most of your day on.",
+        "$3,810 of $6,681 remaining",
+        "Two tiers. Built for practices.",
+        "A 30-minute demo will show you everything."
+      ],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 509,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 3
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 4,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/for-gps",
+      "status": 200,
+      "title": "Wayly for GPs & Health Pros",
+      "titleLen": 27,
+      "desc": "Refer patients to Wayly to demystify Support at Home billing, classifications and reassessments — built for Australian families, free for advocacy use.",
+      "descLen": 151,
+      "canonical": "https://wayly.com.au/for-gps",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly for GPs & Health Pros",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Save four calls a week. Help your aged patients get the care they're entitled to."
+      ],
+      "h2Count": 2,
+      "h2": [
+        "Less aged-care explaining. More medicine.",
+        "15 minutes. We'll bring the cards."
+      ],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 365,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources",
+      "status": 200,
+      "title": "Aged Care Resources · Wayly",
+      "titleLen": 27,
+      "desc": "Plain-English guides, glossary and templates for Support at Home and Home Care Package families — written and reviewed by Australian aged-care experts.",
+      "descLen": 151,
+      "canonical": "https://wayly.com.au/resources",
+      "ogLocale": "en_AU",
+      "ogTitle": "Aged Care Resources · Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Plain-English Support at Home knowledge — free for everyone."
+      ],
+      "h2Count": 1,
+      "h2": [
+        "Where to start"
+      ],
+      "internalCount": 29,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 449,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles",
+      "status": 200,
+      "title": "Articles · Wayly Aged Care Resources",
+      "titleLen": 36,
+      "desc": "Wayly's plain-English articles on Support at Home statements, classifications, budgets and the 2026 program changes. Reviewed by aged-care experts.",
+      "descLen": 147,
+      "canonical": "https://wayly.com.au/resources/articles",
+      "ogLocale": "en_AU",
+      "ogTitle": "Articles · Wayly Aged Care Resources",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "21 pieces, no fluff."
+      ],
+      "h2Count": 21,
+      "h2": [
+        "Wayly Statement Decoder: How to Read Your Support at Home Statement and Spot Hidden Charges",
+        "Wayly Budget Calculator: How Your Support at Home Quarterly Budget Works",
+        "Wayly Provider Price Checker: Comparing Support at Home Prices After the Cap Deferral",
+        "Wayly Classification Self-Check: Are You on the Right Support at Home Level?",
+        "Wayly Reassessment Letter Generator: How to Request a Support at Home Reassessment",
+        "Wayly Contribution Estimator: What Will You Pay Under Support at Home?",
+        "Wayly Care Plan Reviewer: Does Your Care Plan Match Your Support at Home Level?",
+        "Wayly Family Coordinator: Managing a Parent's Aged Care as a Family"
+      ],
+      "internalCount": 44,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 906,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/glossary",
+      "status": 200,
+      "title": "Aged Care Glossary · Wayly",
+      "titleLen": 26,
+      "desc": "Plain-English Australian aged-care glossary: ACAT, Support at Home, AN-ACC, Home Care Package, classifications, contributions — written for families.",
+      "descLen": 149,
+      "canonical": "https://wayly.com.au/resources/glossary",
+      "ogLocale": "en_AU",
+      "ogTitle": "Aged Care Glossary · Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Every term, defined."
+      ],
+      "h2Count": 0,
+      "h2": [],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 800,
+      "axeViolations": [
+        {
+          "id": "dlitem",
+          "impact": "serious",
+          "help": "<dt> and <dd> elements must be contained by a <dl>",
+          "count": 72
+        }
+      ],
+      "axeTotal": 72,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/templates",
+      "status": 200,
+      "title": "Aged Care Templates · Wayly",
+      "titleLen": 27,
+      "desc": "Free downloadable templates for Australian aged care: reassessment letters, complaint letters, statement query letters — drafted by experts, edit-ready.",
+      "descLen": 152,
+      "canonical": "https://wayly.com.au/resources/templates",
+      "ogLocale": "en_AU",
+      "ogTitle": "Aged Care Templates · Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "The conversations you weren't sure how to start."
+      ],
+      "h2Count": 0,
+      "h2": [],
+      "internalCount": 27,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 369,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools",
+      "status": 200,
+      "title": "Wayly AI Tools for Aged Care",
+      "titleLen": 28,
+      "desc": "Eight free AI tools for Australian Support at Home: statement decoder, budget calculator, classification check, price checker and more — built for families.",
+      "descLen": 156,
+      "canonical": "https://wayly.com.au/ai-tools",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly AI Tools for Aged Care",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Eight tools. No signup. Built for Australian families."
+      ],
+      "h2Count": 8,
+      "h2": [
+        "Statement Decoder",
+        "Budget & Lifetime Cap Calculator",
+        "Provider Price Checker",
+        "Classification Self-Check",
+        "Reassessment Letter Drafter",
+        "Contribution Estimator",
+        "Care Plan Reviewer",
+        "Family Care Coordinator"
+      ],
+      "internalCount": 31,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 456,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools/statement-decoder",
+      "status": 200,
+      "title": "Support at Home Statement Decoder · Wayly",
+      "titleLen": 41,
+      "desc": "Upload your Support at Home statement and Wayly's AI explains every charge in plain English — flags anomalies, double-billing and provider errors.",
+      "descLen": 146,
+      "canonical": "https://wayly.com.au/ai-tools/statement-decoder",
+      "ogLocale": "en_AU",
+      "ogTitle": "Support at Home Statement Decoder · Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Statement Decoder"
+      ],
+      "h2Count": 2,
+      "h2": [
+        "Plain English. Numbers that add up. Anomalies you can act on.",
+        "Bluebell Care · Dorothy"
+      ],
+      "internalCount": 25,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "SoftwareApplication",
+        "HowTo",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "wordCount": 621,
+      "axeViolations": [
+        {
+          "id": "aria-required-children",
+          "impact": "critical",
+          "help": "Certain ARIA roles must contain particular children",
+          "count": 1
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 3
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 5,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools/budget-calculator",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [],
+      "h2Count": 1,
+      "h2": [
+        "Budget Calculator is available on Solo and Family plans."
+      ],
+      "internalCount": 25,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 305,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 2
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 3,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools/provider-price-checker",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [],
+      "h2Count": 1,
+      "h2": [
+        "Provider Price Checker is available on Solo and Family plans."
+      ],
+      "internalCount": 25,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 305,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 2
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 3,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools/classification-self-check",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [],
+      "h2Count": 1,
+      "h2": [
+        "Classification Self-Check is available on Solo and Family plans."
+      ],
+      "internalCount": 25,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 307,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 2
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 3,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools/reassessment-letter",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [],
+      "h2Count": 1,
+      "h2": [
+        "Reassessment Letter Drafter is available on Solo and Family plans."
+      ],
+      "internalCount": 25,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 322,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 2
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 3,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools/contribution-estimator",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [],
+      "h2Count": 1,
+      "h2": [
+        "Contribution Estimator is available on Solo and Family plans."
+      ],
+      "internalCount": 25,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 309,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 2
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 3,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools/care-plan-reviewer",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [],
+      "h2Count": 1,
+      "h2": [
+        "Care Plan Reviewer is available on Solo and Family plans."
+      ],
+      "internalCount": 25,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 308,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 2
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 3,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/ai-tools/family-coordinator",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [],
+      "h2Count": 1,
+      "h2": [
+        "Family Care Coordinator is available on Solo and Family plans."
+      ],
+      "internalCount": 25,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 325,
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "count": 2
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "help": "Interactive controls must not be nested",
+          "count": 1
+        }
+      ],
+      "axeTotal": 3,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/legal/terms",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Terms of Service"
+      ],
+      "h2Count": 7,
+      "h2": [
+        "1. What Wayly is and is not",
+        "2. What you are agreeing to",
+        "3. AI accuracy and limitation of liability",
+        "4. Your data",
+        "5. Subscriptions and cancellation",
+        "6. Changes to these terms",
+        "7. Governing law"
+      ],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 438,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/legal/privacy",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Privacy Policy"
+      ],
+      "h2Count": 10,
+      "h2": [
+        "1. Who we are",
+        "2. What information we collect",
+        "3. Why we collect it",
+        "4. How we use AI",
+        "5. Who we share data with",
+        "6. How long we keep it",
+        "7. Your rights under the Australian Privacy Principles",
+        "8. Cookies"
+      ],
+      "internalCount": 23,
+      "externalCount": 3,
+      "external": [
+        "https://oaic.gov.au",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 503,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/legal/ai-disclaimer",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "AI Accuracy Disclaimer"
+      ],
+      "h2Count": 5,
+      "h2": [
+        "What our AI tools do",
+        "What they cannot guarantee",
+        "What you should always do",
+        "What Wayly is not",
+        "Voluntary AI Safety Standard"
+      ],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 435,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/legal/ai-intent",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Our commitment when our AI gets it wrong"
+      ],
+      "h2Count": 4,
+      "h2": [
+        "Our commitment",
+        "How to report an AI error",
+        "What this is not",
+        "Important"
+      ],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 583,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/legal/accessibility",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Accessibility Statement"
+      ],
+      "h2Count": 5,
+      "h2": [
+        "Standard",
+        "Features",
+        "Known limitations",
+        "Feedback",
+        "Third party content"
+      ],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 362,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/legal/cookies",
+      "status": 200,
+      "title": "Wayly — Aged-care concierge for Australian families",
+      "titleLen": 51,
+      "desc": "",
+      "descLen": 0,
+      "canonical": "",
+      "ogLocale": "",
+      "ogTitle": "",
+      "ogImage": "",
+      "twCard": "",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Cookie Policy"
+      ],
+      "h2Count": 4,
+      "h2": [
+        "Essential cookies (cannot be disabled)",
+        "Analytics cookies (can be disabled)",
+        "Preference cookies",
+        "How to disable"
+      ],
+      "internalCount": 23,
+      "externalCount": 2,
+      "external": [
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [],
+      "wordCount": 308,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/support-at-home-statement",
+      "status": 200,
+      "title": "How to Read Your Support at Home Statement | Wayly",
+      "titleLen": 50,
+      "desc": "A plain English guide to reading your Support at Home monthly statement, checking the 10% care fee and spotting charges that look wrong.",
+      "descLen": 136,
+      "canonical": "https://wayly.com.au/resources/articles/support-at-home-statement",
+      "ogLocale": "en_AU",
+      "ogTitle": "How to Read Your Support at Home Statement | Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "How to read your Support at Home statement and spot when something looks off"
+      ],
+      "h2Count": 11,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "Why do I get a monthly statement when the budget is quarterly?",
+        "What is actually on a Support at Home statement?",
+        "How much should the care management fee be?",
+        "What should clinical care cost my parent?",
+        "What are the warning signs on a statement?",
+        "How can I keep track when I live far away?"
+      ],
+      "internalCount": 28,
+      "externalCount": 8,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fsupport-at-home-statement&text=How%20to%20read%20your%20Support%20at%20Home%20statement%20and%20spot%20when%20something%20looks%20off",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fsupport-at-home-statement",
+        "https://www.health.gov.au/our-work/support-at-home",
+        "https://www.myagedcare.gov.au/support-at-home-costs-and-contributions",
+        "https://opan.org.au",
+        "https://www.agedcarequality.gov.au",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "wordCount": 1987,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/home-care-package-vs-support-at-home",
+      "status": 200,
+      "title": "Home Care Package vs Support at Home Explained | Wayly",
+      "titleLen": 54,
+      "desc": "What changed when Support at Home replaced Home Care Packages, the no worse off rule, the 8 levels and what it means for your parent.",
+      "descLen": 133,
+      "canonical": "https://wayly.com.au/resources/articles/home-care-package-vs-support-at-home",
+      "ogLocale": "en_AU",
+      "ogTitle": "Home Care Package vs Support at Home Explained | Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Home Care Package vs Support at Home: what actually changed for your family"
+      ],
+      "h2Count": 12,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "Is Support at Home just a new name for Home Care Packages?",
+        "How do the funding levels compare?",
+        "What is the \"no worse off\" rule?",
+        "How does the money work now?",
+        "What about unspent Home Care Package money?",
+        "Has anything to do with fees changed in 2026?"
+      ],
+      "internalCount": 28,
+      "externalCount": 8,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fhome-care-package-vs-support-at-home&text=Home%20Care%20Package%20vs%20Support%20at%20Home%3A%20what%20actually%20changed%20for%20your%20family",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fhome-care-package-vs-support-at-home",
+        "https://www.health.gov.au/our-work/support-at-home/about",
+        "https://www.myagedcare.gov.au/support-at-home-costs-and-contributions",
+        "https://www.myagedcare.gov.au",
+        "https://www.cota.org.au",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "wordCount": 1921,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/support-at-home-costs-and-contributions",
+      "status": 200,
+      "title": "Support at Home Costs and Fees: 2026 Guide | Wayly",
+      "titleLen": 50,
+      "desc": "What you pay under Support at Home in 2026: contribution rates, the 10% fee, the lifetime cap, the price cap delay and how to estimate costs.",
+      "descLen": 141,
+      "canonical": "https://wayly.com.au/resources/articles/support-at-home-costs-and-contributions",
+      "ogLocale": "en_AU",
+      "ogTitle": "Support at Home Costs and Fees: 2026 Guide | Wayly",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "What will Support at Home actually cost? A 2026 guide to fees and contributions"
+      ],
+      "h2Count": 11,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "How are Support at Home costs worked out?",
+        "What are the contribution rates?",
+        "Is there a limit on what my parent can pay?",
+        "What happened to the 1 July 2026 price caps?",
+        "Is there a Support at Home fees calculator?",
+        "What does this look like in practice?"
+      ],
+      "internalCount": 29,
+      "externalCount": 8,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fsupport-at-home-costs-and-contributions&text=What%20will%20Support%20at%20Home%20actually%20cost%3F%20A%202026%20guide%20to%20fees%20and%20contributions",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fsupport-at-home-costs-and-contributions",
+        "https://www.health.gov.au/our-work/support-at-home",
+        "https://www.agedcarequality.gov.au",
+        "https://www.myagedcare.gov.au/support-at-home-fee-estimator",
+        "https://www.myagedcare.gov.au/financial-support-and-advice",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "wordCount": 1920,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/wayly-statement-decoder-support-at-home-statement-explained",
+      "status": 200,
+      "title": "Wayly Statement Decoder: Read Your Aged Care Statement",
+      "titleLen": 54,
+      "desc": "The Wayly Statement Decoder reads your Support at Home statement, finds hidden charges and tells you the dollar impact. One free decode a month.",
+      "descLen": 144,
+      "canonical": "https://wayly.com.au/resources/articles/wayly-statement-decoder-support-at-home-statement-explained",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly Statement Decoder: Read Your Aged Care Statement",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Wayly Statement Decoder: How to Read Your Support at Home Statement and Spot Hidden Charges"
+      ],
+      "h2Count": 10,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "How does a Support at Home statement work?",
+        "Why are aged care statements so hard to check?",
+        "How Wayly's Statement Decoder does this for you",
+        "A worked example: Dorothy's June 2026 statement",
+        "What should you do if the Decoder flags something?",
+        "Try the Wayly Statement Decoder"
+      ],
+      "internalCount": 28,
+      "externalCount": 7,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-statement-decoder-support-at-home-statement-explained&text=Wayly%20Statement%20Decoder%3A%20How%20to%20Read%20Your%20Support%20at%20Home%20Statement%20and%20Spot%20Hidden%20Charges",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-statement-decoder-support-at-home-statement-explained",
+        "https://www.agedcarequality.gov.au",
+        "https://opan.org.au",
+        "https://www.myagedcare.gov.au",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList",
+        "HowTo"
+      ],
+      "wordCount": 2023,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/wayly-budget-calculator-support-at-home-quarterly-budget",
+      "status": 200,
+      "title": "Wayly Budget Calculator: Track Your Quarterly Budget",
+      "titleLen": 52,
+      "desc": "The Wayly Budget Calculator tracks your Support at Home quarterly budget, the 10% care management cap and your rollover so funds are not lost.",
+      "descLen": 142,
+      "canonical": "https://wayly.com.au/resources/articles/wayly-budget-calculator-support-at-home-quarterly-budget",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly Budget Calculator: Track Your Quarterly Budget",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Wayly Budget Calculator: How Your Support at Home Quarterly Budget Works"
+      ],
+      "h2Count": 11,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "How do Support at Home quarterly budgets work?",
+        "What happens to unspent funds?",
+        "What are the three streams and why do they matter?",
+        "How Wayly's Budget Calculator does this for you",
+        "A worked example: Dorothy on Level 4",
+        "How can families avoid losing funding?"
+      ],
+      "internalCount": 28,
+      "externalCount": 4,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-budget-calculator-support-at-home-quarterly-budget&text=Wayly%20Budget%20Calculator%3A%20How%20Your%20Support%20at%20Home%20Quarterly%20Budget%20Works",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-budget-calculator-support-at-home-quarterly-budget",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList",
+        "HowTo"
+      ],
+      "wordCount": 1815,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/wayly-provider-price-checker-support-at-home-prices",
+      "status": 200,
+      "title": "Wayly Provider Price Checker: Compare Aged Care Prices",
+      "titleLen": 54,
+      "desc": "With price caps deferred, the Wayly Provider Price Checker compares your provider's rates against published prices and the Wayly Quality Index.",
+      "descLen": 143,
+      "canonical": "https://wayly.com.au/resources/articles/wayly-provider-price-checker-support-at-home-prices",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly Provider Price Checker: Compare Aged Care Prices",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Wayly Provider Price Checker: Comparing Support at Home Prices After the Cap Deferral"
+      ],
+      "h2Count": 10,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "What happened to the Support at Home price caps?",
+        "What protections replaced the caps?",
+        "How do you compare aged care providers on price?",
+        "How Wayly's Provider Price Checker does this for you",
+        "A worked example: Robert and a brokered physio premium",
+        "Try the Wayly Provider Price Checker"
+      ],
+      "internalCount": 28,
+      "externalCount": 7,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-provider-price-checker-support-at-home-prices&text=Wayly%20Provider%20Price%20Checker%3A%20Comparing%20Support%20at%20Home%20Prices%20After%20the%20Cap%20Deferral",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-provider-price-checker-support-at-home-prices",
+        "https://opan.org.au",
+        "https://www.cota.org.au",
+        "https://www.myagedcare.gov.au/find-a-provider",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "wordCount": 1850,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/wayly-classification-self-check-support-at-home-levels",
+      "status": 200,
+      "title": "Wayly Classification Self-Check: Right Support at Home Level",
+      "titleLen": 60,
+      "desc": "The Wayly Classification Self-Check screens your parent's needs against assessment criteria and flags if a higher Support at Home level is warranted.",
+      "descLen": 149,
+      "canonical": "https://wayly.com.au/resources/articles/wayly-classification-self-check-support-at-home-levels",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly Classification Self-Check: Right Support at Home Level?",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Wayly Classification Self-Check: Are You on the Right Support at Home Level?"
+      ],
+      "h2Count": 10,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "How do Support at Home classifications work?",
+        "Who decides your classification?",
+        "Why might a parent be under classified?",
+        "How Wayly's Classification Self-Check does this for you",
+        "A worked example: Patricia after a fall",
+        "Try the Wayly Classification Self-Check"
+      ],
+      "internalCount": 29,
+      "externalCount": 5,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-classification-self-check-support-at-home-levels&text=Wayly%20Classification%20Self-Check%3A%20Are%20You%20on%20the%20Right%20Support%20at%20Home%20Level%3F",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-classification-self-check-support-at-home-levels",
+        "https://www.myagedcare.gov.au",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList",
+        "HowTo"
+      ],
+      "wordCount": 1663,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/wayly-reassessment-letter-generator-support-at-home-reassessment",
+      "status": 200,
+      "title": "Wayly Reassessment Letter Generator: Request a Review",
+      "titleLen": 53,
+      "desc": "The Wayly Reassessment Letter Generator writes a clear letter to My Aged Care requesting a Support at Home reassessment. Editable and saved to your vault.",
+      "descLen": 154,
+      "canonical": "https://wayly.com.au/resources/articles/wayly-reassessment-letter-generator-support-at-home-reassessment",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly Reassessment Letter Generator: Request a Review",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Wayly Reassessment Letter Generator: How to Request a Support at Home Reassessment"
+      ],
+      "h2Count": 10,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "When should you request a reassessment?",
+        "What is the difference between a support plan review and a reassessment?",
+        "How do you make the request count?",
+        "How Wayly's Reassessment Letter Generator does this for you",
+        "A worked example: Patricia's letter",
+        "Try the Wayly Reassessment Letter Generator"
+      ],
+      "internalCount": 29,
+      "externalCount": 5,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-reassessment-letter-generator-support-at-home-reassessment&text=Wayly%20Reassessment%20Letter%20Generator%3A%20How%20to%20Request%20a%20Support%20at%20Home%20Reassessment",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-reassessment-letter-generator-support-at-home-reassessment",
+        "https://www.myagedcare.gov.au",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList",
+        "HowTo"
+      ],
+      "wordCount": 1696,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/wayly-contribution-estimator-support-at-home-fees",
+      "status": 200,
+      "title": "Wayly Contribution Estimator: What You'll Pay for Care",
+      "titleLen": 54,
+      "desc": "The Wayly Contribution Estimator models your Support at Home contributions from pension status, income and assets, including the lifetime cap.",
+      "descLen": 142,
+      "canonical": "https://wayly.com.au/resources/articles/wayly-contribution-estimator-support-at-home-fees",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly Contribution Estimator: What You'll Pay for Care",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Wayly Contribution Estimator: What Will You Pay Under Support at Home?"
+      ],
+      "h2Count": 10,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "How do Support at Home contributions work?",
+        "What is changing on 1 October 2026?",
+        "How does the lifetime cap work?",
+        "How Wayly's Contribution Estimator does this for you",
+        "A worked example: Robert and Margaret",
+        "Try the Wayly Contribution Estimator"
+      ],
+      "internalCount": 28,
+      "externalCount": 4,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-contribution-estimator-support-at-home-fees&text=Wayly%20Contribution%20Estimator%3A%20What%20Will%20You%20Pay%20Under%20Support%20at%20Home%3F",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-contribution-estimator-support-at-home-fees",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList",
+        "HowTo"
+      ],
+      "wordCount": 1588,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/wayly-care-plan-reviewer-support-at-home-care-plan",
+      "status": 200,
+      "title": "Wayly Care Plan Reviewer: Does Your Care Plan Match?",
+      "titleLen": 52,
+      "desc": "The Wayly Care Plan Reviewer checks your Support at Home care plan against your classification, service adequacy and the 10% care management cap.",
+      "descLen": 145,
+      "canonical": "https://wayly.com.au/resources/articles/wayly-care-plan-reviewer-support-at-home-care-plan",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly Care Plan Reviewer: Does Your Care Plan Match?",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Wayly Care Plan Reviewer: Does Your Care Plan Match Your Support at Home Level?"
+      ],
+      "h2Count": 10,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "What is a Support at Home care plan?",
+        "What does a weak care plan look like?",
+        "Why does the care management cap matter here?",
+        "How Wayly's Care Plan Reviewer does this for you",
+        "A worked example: Dorothy's Level 4 plan",
+        "Try the Wayly Care Plan Reviewer"
+      ],
+      "internalCount": 29,
+      "externalCount": 4,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-care-plan-reviewer-support-at-home-care-plan&text=Wayly%20Care%20Plan%20Reviewer%3A%20Does%20Your%20Care%20Plan%20Match%20Your%20Support%20at%20Home%20Level%3F",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-care-plan-reviewer-support-at-home-care-plan",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList",
+        "HowTo"
+      ],
+      "wordCount": 1656,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    },
+    {
+      "url": "https://wayly.com.au/resources/articles/wayly-family-coordinator-managing-parents-aged-care",
+      "status": 200,
+      "title": "Wayly Family Coordinator: Manage a Parent's Care Together",
+      "titleLen": 57,
+      "desc": "The Wayly Family Coordinator lets siblings, partners and advisers share aged care info with role-based access and alerts on new statements and anomalies.",
+      "descLen": 153,
+      "canonical": "https://wayly.com.au/resources/articles/wayly-family-coordinator-managing-parents-aged-care",
+      "ogLocale": "en_AU",
+      "ogTitle": "Wayly Family Coordinator: Manage a Parent's Care Together",
+      "ogImage": "https://wayly.com.au/og-default.png",
+      "twCard": "summary_large_image",
+      "themeColor": "#1F3A5F",
+      "robots": "",
+      "h1": [
+        "Wayly Family Coordinator: Managing a Parent's Aged Care as a Family"
+      ],
+      "h2Count": 9,
+      "h2": [
+        "Key takeaways",
+        "In this article",
+        "Why is managing a parent's care so hard to share?",
+        "What does good family coordination look like?",
+        "How Wayly's Family Coordinator does this for you",
+        "A worked example: coordinating around Dorothy",
+        "Try the Wayly Family Coordinator",
+        "Frequently asked questions"
+      ],
+      "internalCount": 29,
+      "externalCount": 4,
+      "external": [
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-family-coordinator-managing-parents-aged-care&text=Wayly%20Family%20Coordinator%3A%20Managing%20a%20Parent's%20Aged%20Care%20as%20a%20Family",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-family-coordinator-managing-parents-aged-care",
+        "https://apps.apple.com/app/kindred-aged-care/id000000000",
+        "https://play.google.com/store/apps/details?id=au.kindred.app"
+      ],
+      "images": {
+        "total": 2,
+        "withAlt": 2,
+        "decorative": 0,
+        "missing": 0,
+        "altCoverage": 1
+      },
+      "schemaTypes": [
+        "Article",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "wordCount": 1411,
+      "axeViolations": [],
+      "axeTotal": 0,
+      "errors": []
+    }
+  ],
+  "externalLinks": {
+    "https://play.google.com/store/apps/details?id=au.kindred.app": {
+      "status": 404,
+      "ok": false
+    },
+    "https://apps.apple.com/app/kindred-aged-care/id000000000": {
+      "status": 404,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fsupport-at-home-statement&text=How%20to%20read%20your%20Support%20at%20Home%20statement%20and%20spot%20when%20something%20looks%20off": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fhome-care-package-vs-support-at-home&text=Home%20Care%20Package%20vs%20Support%20at%20Home%3A%20what%20actually%20changed%20for%20your%20family": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fsupport-at-home-costs-and-contributions&text=What%20will%20Support%20at%20Home%20actually%20cost%3F%20A%202026%20guide%20to%20fees%20and%20contributions": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-budget-calculator-support-at-home-quarterly-budget&text=Wayly%20Budget%20Calculator%3A%20How%20Your%20Support%20at%20Home%20Quarterly%20Budget%20Works": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-provider-price-checker-support-at-home-prices&text=Wayly%20Provider%20Price%20Checker%3A%20Comparing%20Support%20at%20Home%20Prices%20After%20the%20Cap%20Deferral": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-statement-decoder-support-at-home-statement-explained&text=Wayly%20Statement%20Decoder%3A%20How%20to%20Read%20Your%20Support%20at%20Home%20Statement%20and%20Spot%20Hidden%20Charges": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-classification-self-check-support-at-home-levels&text=Wayly%20Classification%20Self-Check%3A%20Are%20You%20on%20the%20Right%20Support%20at%20Home%20Level%3F": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-reassessment-letter-generator-support-at-home-reassessment&text=Wayly%20Reassessment%20Letter%20Generator%3A%20How%20to%20Request%20a%20Support%20at%20Home%20Reassessment": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-contribution-estimator-support-at-home-fees&text=Wayly%20Contribution%20Estimator%3A%20What%20Will%20You%20Pay%20Under%20Support%20at%20Home%3F": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-care-plan-reviewer-support-at-home-care-plan&text=Wayly%20Care%20Plan%20Reviewer%3A%20Does%20Your%20Care%20Plan%20Match%20Your%20Support%20at%20Home%20Level%3F": {
+      "status": 403,
+      "ok": false
+    },
+    "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-family-coordinator-managing-parents-aged-care&text=Wayly%20Family%20Coordinator%3A%20Managing%20a%20Parent's%20Aged%20Care%20as%20a%20Family": {
+      "status": 403,
+      "ok": false
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fsupport-at-home-statement": {
+      "status": 200,
+      "ok": true
+    },
+    "https://oaic.gov.au": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fhome-care-package-vs-support-at-home": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-statement-decoder-support-at-home-statement-explained": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-provider-price-checker-support-at-home-prices": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-budget-calculator-support-at-home-quarterly-budget": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-reassessment-letter-generator-support-at-home-reassessment": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-classification-self-check-support-at-home-levels": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-contribution-estimator-support-at-home-fees": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-care-plan-reviewer-support-at-home-care-plan": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fwayly-family-coordinator-managing-parents-aged-care": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwayly.com.au%2Fresources%2Farticles%2Fsupport-at-home-costs-and-contributions": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.cota.org.au": {
+      "status": 202,
+      "ok": true
+    },
+    "https://opan.org.au": {
+      "status": 200,
+      "ok": true
+    },
+    "https://www.health.gov.au/our-work/support-at-home": {
+      "status": 0,
+      "ok": false,
+      "error": "The operation was aborted due to timeout"
+    },
+    "https://www.myagedcare.gov.au/support-at-home-costs-and-contributions": {
+      "status": 0,
+      "ok": false,
+      "error": "The operation was aborted due to timeout"
+    },
+    "https://www.agedcarequality.gov.au": {
+      "status": 0,
+      "ok": false,
+      "error": "The operation was aborted due to timeout"
+    },
+    "https://www.health.gov.au/our-work/support-at-home/about": {
+      "status": 0,
+      "ok": false,
+      "error": "The operation was aborted due to timeout"
+    },
+    "https://www.myagedcare.gov.au": {
+      "status": 0,
+      "ok": false,
+      "error": "The operation was aborted due to timeout"
+    },
+    "https://www.myagedcare.gov.au/support-at-home-fee-estimator": {
+      "status": 0,
+      "ok": false,
+      "error": "The operation was aborted due to timeout"
+    },
+    "https://www.myagedcare.gov.au/financial-support-and-advice": {
+      "status": 0,
+      "ok": false,
+      "error": "The operation was aborted due to timeout"
+    },
+    "https://www.myagedcare.gov.au/find-a-provider": {
+      "status": 0,
+      "ok": false,
+      "error": "The operation was aborted due to timeout"
+    }
+  }
+}
