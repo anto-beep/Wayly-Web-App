@@ -6,22 +6,24 @@ import AppStoreBadges from "@/components/AppStoreBadges";
 const PRODUCT = [
     { to: "/features", label: "Features" },
     { to: "/ai-tools", label: "AI Tools" },
+    { to: "/services", label: "Services" },
+    { to: "/policy", label: "Policy explainers" },
     { to: "/pricing", label: "Pricing" },
     { to: "/demo", label: "Demo" },
-    { to: "/for-advisors", label: "For Advisors" },
-    { to: "/for-gps", label: "For GPs" },
 ];
 
 const RESOURCES = [
-    { to: "/resources/articles", label: "Blog" },
-    { to: "/resources/guides", label: "Guides" },
+    { to: "/guides", label: "Caregiver guides" },
+    { to: "/faq", label: "FAQ" },
+    { to: "/ask-wayly", label: "Ask Wayly" },
+    { to: "/support-at-home-levels", label: "Support at Home levels" },
+    { to: "/resources/articles", label: "Articles" },
     { to: "/resources/glossary", label: "Glossary" },
     { to: "/resources/templates", label: "Templates" },
-    { to: "/resources/webinars", label: "Webinars" },
-    { to: "/resources", label: "What's New" },
 ];
 
 const LEGAL_COMPANY = [
+    { to: "/about", label: "About Wayly" },
     { to: "/legal/terms", label: "Terms of Service" },
     { to: "/legal/privacy", label: "Privacy Policy" },
     { to: "/legal/ai-disclaimer", label: "AI Disclaimer" },
@@ -29,7 +31,6 @@ const LEGAL_COMPANY = [
     { to: "/legal/cookies", label: "Cookie Policy" },
     { to: "/trust", label: "Trust & Security" },
     { to: "/contact", label: "Contact" },
-    { to: "/press", label: "Press" },
 ];
 
 const CRISIS_LINES = [

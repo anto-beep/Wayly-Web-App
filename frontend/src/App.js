@@ -83,6 +83,16 @@ const AdviserAlerts = lazy(() => import("@/pages/AdviserAlerts"));
 // Phase 4 Batch 1 — Support at Home levels hub + 8 level pages
 const SupportAtHomeLevels = lazy(() => import("@/pages/sah-levels/SupportAtHomeLevels"));
 const SupportAtHomeLevelDetail = lazy(() => import("@/pages/sah-levels/SupportAtHomeLevelDetail"));
+// Phase 4 Batches B-G — services, policy, guides, FAQ, Ask Wayly, About
+const ServicesHub = lazy(() => import("@/pages/services/ServicesHub"));
+const ServiceDetail = lazy(() => import("@/pages/services/ServiceDetail"));
+const PolicyHub = lazy(() => import("@/pages/policy/PolicyHub"));
+const PolicyDetail = lazy(() => import("@/pages/policy/PolicyDetail"));
+const GuidesHub = lazy(() => import("@/pages/guides/GuidesHub"));
+const GuideDetail = lazy(() => import("@/pages/guides/GuideDetail"));
+const FaqHub = lazy(() => import("@/pages/FaqHub"));
+const AskWayly = lazy(() => import("@/pages/AskWayly"));
+const About = lazy(() => import("@/pages/About"));
 
 // Shared chrome stays eager.
 import CommandPalette from "@/components/CommandPalette";
@@ -192,6 +202,16 @@ function App() {
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/support-at-home-levels" element={<SupportAtHomeLevels />} />
                     <Route path="/support-at-home-levels/:slug" element={<SupportAtHomeLevelDetail />} />
+                    {/* Phase 4 Batches B-G */}
+                    <Route path="/services" element={<ServicesHub />} />
+                    <Route path="/services/:slug" element={<ServiceDetail />} />
+                    <Route path="/policy" element={<PolicyHub />} />
+                    <Route path="/policy/:slug" element={<PolicyDetail />} />
+                    <Route path="/guides" element={<GuidesHub />} />
+                    <Route path="/guides/:slug" element={<GuideDetail />} />
+                    <Route path="/faq" element={<FaqHub />} />
+                    <Route path="/ask-wayly" element={<AskWayly />} />
+                    <Route path="/about" element={<About />} />
                     <Route path="/trust" element={<Trust />} />
                     <Route path="/demo" element={<Demo />} />
                     <Route path="/contact" element={<Contact />} />

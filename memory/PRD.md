@@ -1687,3 +1687,58 @@ All 9 features from the Batch 2 PRD shipped end-to-end (backend + frontend + DB 
 - Visual smoke (4 screenshots) — Landing hero, Pricing, AI tools index, Caregiver Dashboard — all clean.
 - No behaviour changes (tokens-only swap). Iter 41 backend tests still pass.
 - Pending: regenerate cached `storage/reports/*.html` PDFs (left as-is — will pick up new palette on next user-triggered generate). User-action: any future custom branding screenshot capture should use the new W mark and palette.
+
+
+## Implemented (Iteration 43 — Jun 2026 · Hero refinement + Phase 4 Batches B-G shipped)
+
+### Hero refinement (user feedback on iter 42)
+- Removed the W mark + "wayly · wayly.com.au" lockup from the hero left column (already present in the marketing header).
+- Section is now wider (`max-w-[1480px]`, `px-6 lg:px-10`) with a 3-lane grid: copy (cols 1-5) · cards (cols 6-8) · photo (cols 9-12). On lg screens the photo and the card stack are stretched to equal height via `items-stretch`.
+- Lifestyle photograph re-cropped from the source image (x=72% to x=100%) so the leftover dashboard mockup that was baked into the reference image is no longer visible behind the mother and daughter.
+- The three preview cards (Budget overview / Recent statement / Care plan insights) now sit in their own vertical lane with `gap-5` and never overlap each other or the lifestyle photo.
+- Net effect: photo unobstructed, faces clearly visible, cards readable, hero feels full-bleed and clean.
+
+### Phase 4 Batches B through G + /about — shipped
+Twenty-two new SEO/AEO pages went live in one batch (pre-approved publishing cadence per `AUDIT_ROADMAP.md`):
+- **Batch B (8 service explainers)**: `/services` hub + `/services/cleaning`, `/services/gardening`, `/services/transport`, `/services/meals`, `/services/personal-care`, `/services/nursing`, `/services/respite`, `/services/social-support`.
+- **Batch C (3 policy explainers)**: `/policy` hub + `/policy/personal-care-free-1-october-2026`, `/policy/price-caps-status`, `/policy/no-worse-off-guarantee`.
+- **Batches D+E (8 caregiver guides)**: `/guides` hub + 4 problem-aware (`/guides/my-aged-care-assessment-delay`, `/guides/parent-refuses-help`, `/guides/understanding-statement-line-items`, `/guides/switching-providers`) + 4 emotional (`/guides/talking-to-a-parent-about-aged-care`, `/guides/sibling-disagreements-about-mum`, `/guides/caregiver-guilt`, `/guides/caring-from-far-away`).
+- **Batch F**: `/faq` hub with five themed groups, live search, FAQPage schema spanning all 40 questions.
+- **Batch G**: `/ask-wayly` landing page.
+- **`/about`** page.
+
+### Architecture
+- Shared `<ContentPage>` template (`/app/frontend/src/components/ContentPage.jsx`) renders crumbs, H1, intro, "What this page covers" key takeaways, body sections (heading + paragraphs + bullets + note panels), FAQs, "Related on Wayly" links, and the byline + reviewer + updated-date trust line.
+- JSON-LD: every page emits BreadcrumbList + Article schema. Pages with FAQs additionally emit FAQPage. Hub pages emit CollectionPage. `/ask-wayly` adds WebApplication. `/about` adds AboutPage.
+- Content lives in three data registries (`/app/frontend/src/data/services.js`, `policies.js`, `guides.js`, `faq.js`). Editorial team can extend without touching React.
+- All routes lazy-loaded in `App.js` so the marketing bundle stays small.
+- All 22 URLs added to `/app/backend/seo_routes.py` `STATIC_PAGES` with appropriate priority/changefreq.
+- Footer nav refreshed: PRODUCT now surfaces /services + /policy; RESOURCES surfaces /guides + /faq + /ask-wayly + /support-at-home-levels; LEGAL_COMPANY surfaces /about.
+
+### Editorial compliance
+- Australian English throughout; no em-dashes, en-dashes, or hyphens used as sentence breaks.
+- Never frames "price caps" or "1 July 2026" as a future event. `/policy/price-caps-status` documents that the cap rule was deferred.
+- Frames the policy change as: "Personal care becomes fully government funded from 1 October 2026" and "Support at Home replaced Home Care Packages on 1 November 2025".
+- Byline "Antony Chiware" + "Reviewed by: To be confirmed" + updated date + correction email `hello@wayly.com.au` on every page.
+
+### Smoke verified (5 screenshots)
+- Hero v3 (clean, full-width, photo unobstructed).
+- `/services` hub (8 cards rendering with overline + h1 + description).
+- `/services/personal-care` detail (breadcrumbs, key takeaways, sections, bullets, the 1 October 2026 callout).
+- `/faq` (search input, themed groups, expandable Q&A).
+- `/guides/caregiver-guilt` (intro, key takeaways, bold inline elements via the small markdown parser).
+
+### Test status iter 43
+- All 22 new URLs return HTTP 200 via the production preview.
+- Sitemap regenerated and includes all 22 URLs with the expected priority/changefreq.
+- No backend behaviour changes (data only added to the sitemap STATIC_PAGES list).
+- Iter 42 brand rebrand + all earlier regression suites still green.
+
+### Phase 4 status
+Phase 4 is **COMPLETE**. All 38 missing pages identified in the baseline audit are now live: 1 levels hub + 8 level pages + 1 services hub + 8 service pages + 1 policy hub + 3 policy explainers + 1 guides hub + 8 guides + 1 FAQ + 1 Ask Wayly + 1 About = 33 pages, plus the existing 5 from Phase 3.
+
+### Next up
+- **Phase 5** — internal linking hub-and-spoke audit (Wayly tools <-> tool articles, Phase 4 pages -> pillars).
+- **Phase 6** — accessibility sweep (colour contrast, nested-interactive, ARIA labels) targeting WCAG 2.1 AA.
+- **Phase 7 deeper pass** — mobile LCP (font-display swap + subset, defer non-critical CSS).
+- **Phase 8 + 9** — broken-link sweep, GSC + Bing webmaster confirmation, analytics goal events.

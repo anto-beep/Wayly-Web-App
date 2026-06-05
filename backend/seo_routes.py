@@ -68,6 +68,35 @@ STATIC_PAGES = [
     ("/support-at-home-levels/level-6", "0.7", "monthly"),
     ("/support-at-home-levels/level-7", "0.7", "monthly"),
     ("/support-at-home-levels/level-8", "0.7", "monthly"),
+    # Phase 4 Batch B — service explainers (Jun 2026)
+    ("/services", "0.9", "monthly"),
+    ("/services/cleaning", "0.8", "monthly"),
+    ("/services/gardening", "0.8", "monthly"),
+    ("/services/transport", "0.8", "monthly"),
+    ("/services/meals", "0.8", "monthly"),
+    ("/services/personal-care", "0.9", "monthly"),
+    ("/services/nursing", "0.8", "monthly"),
+    ("/services/respite", "0.8", "monthly"),
+    ("/services/social-support", "0.8", "monthly"),
+    # Phase 4 Batch C — policy explainers
+    ("/policy", "0.9", "monthly"),
+    ("/policy/personal-care-free-1-october-2026", "0.9", "monthly"),
+    ("/policy/price-caps-status", "0.8", "monthly"),
+    ("/policy/no-worse-off-guarantee", "0.8", "monthly"),
+    # Phase 4 Batches D + E — caregiver guides
+    ("/guides", "0.9", "monthly"),
+    ("/guides/my-aged-care-assessment-delay", "0.7", "monthly"),
+    ("/guides/parent-refuses-help", "0.7", "monthly"),
+    ("/guides/understanding-statement-line-items", "0.7", "monthly"),
+    ("/guides/switching-providers", "0.7", "monthly"),
+    ("/guides/talking-to-a-parent-about-aged-care", "0.7", "monthly"),
+    ("/guides/sibling-disagreements-about-mum", "0.7", "monthly"),
+    ("/guides/caregiver-guilt", "0.7", "monthly"),
+    ("/guides/caring-from-far-away", "0.7", "monthly"),
+    # Phase 4 Batches F + G + /about
+    ("/faq", "0.9", "weekly"),
+    ("/ask-wayly", "0.9", "monthly"),
+    ("/about", "0.8", "yearly"),
 ]
 
 

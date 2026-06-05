@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Lock, Users, Sparkles, ChevronRight, CheckCircle2 } from "lucide-react";
 
 /**
- * HeroSpotlight — Landing page hero modelled on the Jun 2026 brand reference.
- * Left column: wordmark + headline (with cyan-gradient "explained"), subhead,
- * persona on-ramp, trust pills.
- * Right column: lifestyle photograph of caregiver and parent (cropped),
- * with two real-product dashboard cards floating above.
+ * HeroSpotlight — Landing page hero, Jun 2026 brand.
  *
- * Built with the new --wayly-* / kindred.* tokens so no inline hex needed.
+ * Layout on lg+ : 3 visual lanes inside a full-bleed section
+ *   • lane 1 (cols 1-5)  → headline + subhead + CTAs + 4 trust pills
+ *   • lane 2 (cols 6-8)  → 3 dashboard cards stacked vertically, evenly spaced, no overlap
+ *   • lane 3 (cols 9-12) → lifestyle photograph of caregiver + parent, never covered
+ *
+ * Below md the photo stacks on top, cards stack below it, all separated.
  */
 
 function PillBadge({ icon: Icon, label, tone }) {
@@ -29,39 +30,6 @@ function PillBadge({ icon: Icon, label, tone }) {
     );
 }
 
-function BudgetCard() {
-    return (
-        <div className="rounded-2xl bg-white wayly-card-shadow p-5 w-[280px]" data-testid="hero-budget-card">
-            <div className="flex items-center gap-2">
-                <img src="/branding/svg/wayly-mark.svg" alt="" className="h-6 w-6" />
-                <span className="font-semibold text-[#0E2A47] tracking-tight">wayly</span>
-            </div>
-            <div className="mt-4">
-                <div className="font-heading text-lg text-[#0E2A47]">Good morning, Sarah</div>
-                <div className="text-xs text-[#4A5A75] mt-0.5">Here's an overview of Mum's Support at Home.</div>
-            </div>
-            <div className="mt-5 rounded-xl bg-[#F4FAFE] p-4">
-                <div className="text-[11px] uppercase tracking-wider text-[#4A5A75]">Budget overview</div>
-                <div className="text-xs text-[#4A5A75] mt-2">Total budget</div>
-                <div className="flex items-center justify-between mt-1">
-                    <div className="font-heading text-2xl text-[#0E2A47] tabular-nums">$24,857.10</div>
-                    <DonutChart />
-                </div>
-                <button className="mt-3 text-xs text-[#1E7BD9] inline-flex items-center gap-1">Manage budget <ChevronRight className="h-3 w-3" /></button>
-            </div>
-            <div className="mt-4">
-                <div className="text-[11px] uppercase tracking-wider text-[#4A5A75]">Top spending categories</div>
-                <div className="mt-2 space-y-2">
-                    <CategoryBar label="Personal Care" pct={62} colour="#1E7BD9" />
-                    <CategoryBar label="Domestic Assistance" pct={48} colour="#2BC4D6" />
-                    <CategoryBar label="Transport" pct={28} colour="#8E7BE8" />
-                    <CategoryBar label="Nursing" pct={18} colour="#CFE0F0" />
-                </div>
-            </div>
-        </div>
-    );
-}
-
 function CategoryBar({ label, pct, colour }) {
     return (
         <div>
@@ -76,7 +44,6 @@ function CategoryBar({ label, pct, colour }) {
 }
 
 function DonutChart() {
-    // Simple SVG donut: 49% blue, rest light
     const r = 26, c = 2 * Math.PI * r;
     const used = c * 0.51;
     return (
@@ -108,9 +75,37 @@ function DonutChart() {
     );
 }
 
+function BudgetCard() {
+    return (
+        <div className="rounded-2xl bg-white wayly-card-shadow p-5" data-testid="hero-budget-card">
+            <div className="flex items-center gap-2">
+                <img src="/branding/svg/wayly-mark.svg" alt="" className="h-6 w-6" />
+                <span className="font-semibold text-[#0E2A47] tracking-tight">wayly</span>
+            </div>
+            <div className="mt-3">
+                <div className="font-heading text-base text-[#0E2A47]">Good morning, Sarah</div>
+                <div className="text-xs text-[#4A5A75] mt-0.5">Here's an overview of Mum's Support at Home.</div>
+            </div>
+            <div className="mt-4 rounded-xl bg-[#F4FAFE] p-4">
+                <div className="text-[11px] uppercase tracking-wider text-[#4A5A75]">Budget overview</div>
+                <div className="text-xs text-[#4A5A75] mt-2">Total budget</div>
+                <div className="flex items-center justify-between mt-1">
+                    <div className="font-heading text-xl text-[#0E2A47] tabular-nums">$24,857.10</div>
+                    <DonutChart />
+                </div>
+            </div>
+            <div className="mt-4 space-y-2">
+                <CategoryBar label="Personal Care" pct={62} colour="#1E7BD9" />
+                <CategoryBar label="Domestic Assistance" pct={48} colour="#2BC4D6" />
+                <CategoryBar label="Transport" pct={28} colour="#8E7BE8" />
+            </div>
+        </div>
+    );
+}
+
 function StatementCard() {
     return (
-        <div className="rounded-2xl bg-white wayly-card-shadow p-5 w-[260px]" data-testid="hero-statement-card">
+        <div className="rounded-2xl bg-white wayly-card-shadow p-5" data-testid="hero-statement-card">
             <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold text-[#0E2A47]">Recent statement</div>
                 <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#0F5648] bg-[#D5F1E9] rounded-full px-2 py-0.5">
@@ -118,7 +113,7 @@ function StatementCard() {
                 </span>
             </div>
             <div className="text-[11px] text-[#4A5A75] mt-1">Services from 1 – 30 Apr 2026</div>
-            <div className="mt-4 space-y-2.5 text-[13px]">
+            <div className="mt-3 space-y-2.5 text-[13px]">
                 <div className="flex items-center justify-between">
                     <span className="text-[#4A5A75]">Total budget</span>
                     <span className="font-semibold text-[#0E2A47] tabular-nums">$24,857.10</span>
@@ -132,16 +127,13 @@ function StatementCard() {
                     <span className="font-bold text-[#0F5648] tabular-nums">$12,341.25</span>
                 </div>
             </div>
-            <div className="mt-4 flex items-center justify-between">
-                <button className="text-xs font-medium text-[#1E7BD9] inline-flex items-center gap-1">View statement <ChevronRight className="h-3 w-3" /></button>
-            </div>
         </div>
     );
 }
 
 function CarePlanCard() {
     return (
-        <div className="rounded-2xl bg-white wayly-card-shadow p-4 w-[240px]" data-testid="hero-careplan-card">
+        <div className="rounded-2xl bg-white wayly-card-shadow p-4" data-testid="hero-careplan-card">
             <div className="flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-[#8E7BE8]" />
                 <div className="text-[12px] font-semibold text-[#0E2A47]">Care plan insights</div>
@@ -160,20 +152,15 @@ function CarePlanCard() {
 export default function HeroSpotlight() {
     return (
         <section className="relative overflow-hidden wayly-hero-bg" data-testid="hero-spotlight">
-            <div className="mx-auto max-w-7xl px-6 pt-10 pb-32 lg:pb-40">
-                <div className="grid lg:grid-cols-12 gap-8 items-center">
-                    {/* LEFT — wordmark + headline + pills */}
-                    <div className="lg:col-span-6 relative z-10 animate-fade-up">
-                        {/* W mark + wordmark */}
-                        <div className="flex items-center gap-3">
-                            <img src="/branding/svg/wayly-mark.svg" alt="" className="h-14 w-14 sm:h-16 sm:w-16" />
-                            <div>
-                                <div className="font-heading text-[40px] sm:text-[48px] leading-none text-[#0E2A47] tracking-tight">wayly</div>
-                                <div className="text-[12px] text-[#1E7BD9] mt-0.5">wayly.com.au</div>
-                            </div>
-                        </div>
+            <div className="mx-auto w-full max-w-[1480px] px-6 lg:px-10 pt-10 pb-32 lg:pb-44">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
 
-                        <h1 className="font-heading mt-8 text-[44px] sm:text-[56px] lg:text-[64px] leading-[1.05] tracking-tight text-[#0E2A47]">
+                    {/* LANE 1 — copy block (cols 1-5) */}
+                    <div className="lg:col-span-5 relative z-10 animate-fade-up self-center">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-white border border-[#CFE0F0] px-3 py-1 text-[11px] uppercase tracking-wider text-[#1E7BD9]">
+                            For Australian families
+                        </span>
+                        <h1 className="font-heading mt-6 text-[44px] sm:text-[56px] lg:text-[64px] xl:text-[72px] leading-[1.04] tracking-tight text-[#0E2A47]">
                             Support at Home,<br />finally <span className="wayly-gradient-text">explained.</span>
                         </h1>
                         <p className="mt-6 text-lg text-[#4A5A75] max-w-xl leading-relaxed">
@@ -206,45 +193,38 @@ export default function HeroSpotlight() {
                         </div>
                     </div>
 
-                    {/* RIGHT — lifestyle photo + dashboard cards overlay */}
-                    <div className="lg:col-span-6 relative min-h-[440px] lg:min-h-[560px]">
-                        {/* Photo: caregiver + parent with tablet */}
-                        <picture>
-                            <source srcSet="/branding/hero-photo.webp" type="image/webp" media="(min-width: 768px)" />
-                            <source srcSet="/branding/hero-photo-portrait.webp" type="image/webp" />
-                            <img
-                                src="/branding/hero-photo.jpg"
-                                alt="An adult daughter and her mother look at a tablet together, reviewing the Wayly dashboard."
-                                className="absolute inset-0 w-full h-full object-cover rounded-2xl"
-                                loading="eager"
-                                fetchpriority="high"
-                                width="1017"
-                                height="773"
-                                data-testid="hero-photo"
-                            />
-                        </picture>
+                    {/* LANE 2 — three stacked dashboard cards (cols 6-8), no overlap */}
+                    <div className="lg:col-span-3 order-3 lg:order-2 flex flex-col justify-center gap-4 lg:gap-5" data-testid="hero-card-stack">
+                        <BudgetCard />
+                        <StatementCard />
+                        <CarePlanCard />
+                    </div>
 
-                        {/* Floating dashboard preview cards */}
-                        <div className="hidden md:block absolute top-4 left-2 lg:-left-10 z-20">
-                            <BudgetCard />
-                        </div>
-                        <div className="hidden md:block absolute top-32 right-2 lg:-right-4 z-20">
-                            <StatementCard />
-                        </div>
-                        <div className="hidden lg:block absolute bottom-6 left-6 z-20">
-                            <CarePlanCard />
-                        </div>
-
-                        {/* Mobile-only single card overlay */}
-                        <div className="md:hidden absolute -bottom-4 left-4 right-4 z-20">
-                            <StatementCard />
+                    {/* LANE 3 — lifestyle photo (cols 9-12) — kept clean, no cards on top */}
+                    <div className="lg:col-span-4 order-2 lg:order-3 relative flex">
+                        <div className="relative w-full rounded-3xl overflow-hidden wayly-card-shadow min-h-[460px] lg:min-h-[640px]">
+                            <picture>
+                                <source srcSet="/branding/hero-photo-portrait.webp?v=2" type="image/webp" />
+                                <img
+                                    src="/branding/hero-photo-portrait.jpg?v=2"
+                                    alt="An adult daughter and her mother smile while reviewing the Wayly dashboard on a tablet together."
+                                    className="absolute inset-0 w-full h-full object-cover object-center"
+                                    loading="eager"
+                                    fetchpriority="high"
+                                    width="570"
+                                    height="773"
+                                    data-testid="hero-photo"
+                                />
+                            </picture>
+                            {/* Soft sky gradient at the top edge so the photo blends into the page */}
+                            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#EAF4FB]/55 to-transparent pointer-events-none" />
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Wave divider */}
-            <div className="absolute inset-x-0 -bottom-0 pointer-events-none" aria-hidden>
+            <div className="absolute inset-x-0 bottom-0 pointer-events-none" aria-hidden>
                 <img src="/branding/wayly-wave.svg" alt="" className="w-full block" />
             </div>
         </section>
