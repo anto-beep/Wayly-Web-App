@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { api, extractErrorMessage } from "@/lib/api";
+import { track } from "@/lib/analytics";
 import { toast } from "sonner";
 import {
     User, CreditCard, Users, Shield, Loader2, Check, X, Crown, Mail, ArrowUpRight, Trash2,
@@ -141,7 +142,7 @@ function BillingTab() {
             }
         }
         setBusy(true);
-        try { const { data } = await api.post("/billing/upgrade", { plan }); if (data?.ok) { toast.success(`Plan changed to ${PLANS[plan].name}`); await refreshUser(); await load(); } }
+        try { const { data } = await api.post("/billing/upgrade", { plan }); if (data?.ok) { track.upgradeSuccess({ plan, from: user?.plan, source: "settings" }); toast.success(`Plan changed to ${PLANS[plan].name}`); await refreshUser(); await load(); } }
         catch (err) { toast.error(extractErrorMessage(err, "Could not change plan")); }
         finally { setBusy(false); }
     };

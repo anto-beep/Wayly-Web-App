@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api, setAuthToken } from "@/lib/api";
+import { track } from "@/lib/analytics";
 
 const AuthContext = createContext(null);
 
@@ -59,6 +60,7 @@ export function AuthProvider({ children }) {
         const { data } = await api.post("/auth/login", { email, password });
         setAuthToken(data.token);
         setUser(data.user);
+        try { track.login({ method: "email" }); track.identify(data.user); } catch (_) {}
         await refreshHousehold();
         return data.user;
     };
@@ -74,6 +76,7 @@ export function AuthProvider({ children }) {
         const { data } = await api.post("/auth/google-session", { session_id: sessionId });
         setAuthToken(data.token);
         setUser(data.user);
+        try { track.login({ method: "google" }); track.identify(data.user); } catch (_) {}
         await refreshHousehold();
         setLoading(false);
         return data.user;
@@ -81,6 +84,7 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         try { await api.post("/auth/logout"); } catch { /* ignore */ }
+        try { track.logout(); track.reset(); } catch (_) {}
         setAuthToken(null);
         setUser(null);
         setHousehold(null);

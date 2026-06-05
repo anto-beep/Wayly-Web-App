@@ -9,6 +9,7 @@ import GoogleSignInButton from "@/components/GoogleSignInButton";
 import PasswordStrength, { evaluatePassword } from "@/components/PasswordStrength";
 
 import SeoHead from "@/seo/SeoHead";
+import { track } from "@/lib/analytics";
 import { SEO } from "@/seo/pageConfig";
 const PLANS = [
     {
@@ -117,10 +118,13 @@ export default function Signup() {
         setSubmitting(true);
         try {
             const u = await signup({ ...form, invite: inviteToken || undefined });
+            track.signup({ plan: form.plan, has_invite: Boolean(inviteToken) });
+            track.identify(u);
             // Paid plans → start free 7-day trial (no payment). Free → straight to onboarding.
             if (form.plan === "solo" || form.plan === "family" || form.plan === "adviser") {
                 try {
                     await api.post("/billing/start-trial", { plan: form.plan });
+                    track.trialStart({ plan: form.plan });
                     const planLabel = form.plan === "family" ? "Family" : form.plan === "adviser" ? "Adviser" : "Solo";
                     toast.success(`Your free ${planLabel} trial is active for 7 days, ${u.name.split(" ")[0]}.`);
                     nav(form.plan === "adviser" ? "/adviser" : "/onboarding");

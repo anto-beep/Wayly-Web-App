@@ -93,6 +93,9 @@ const GuideDetail = lazy(() => import("@/pages/guides/GuideDetail"));
 const FaqHub = lazy(() => import("@/pages/FaqHub"));
 const AskWayly = lazy(() => import("@/pages/AskWayly"));
 const About = lazy(() => import("@/pages/About"));
+// Phase 8 — custom error pages
+const NotFound = lazy(() => import("@/pages/NotFound"));
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Shared chrome stays eager.
 import CommandPalette from "@/components/CommandPalette";
@@ -191,6 +194,7 @@ function App() {
                 <Toaster richColors position="top-right" />
                 <ConsumerWidgets />
                 <OfflineIndicator />
+                <ErrorBoundary>
                 <Suspense fallback={<RouteSkeleton />}>
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
@@ -292,9 +296,10 @@ function App() {
                         AdminApp manages its own auth via AdminAuthContext. */}
                     <Route path="/admin/*" element={<AdminApp />} />
 
-                    <Route path="*" element={<Navigate to="/" replace />} />
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
                 </Suspense>
+                </ErrorBoundary>
             </BrowserRouter>
                 </ParticipantsProvider>
             </AuthProvider>

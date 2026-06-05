@@ -15,6 +15,18 @@
         <meta name="apple-mobile-web-app-title" content="Wayly" />
         <meta name="format-detection" content="telephone=no" />
 
+        <!-- Phase 9: Search engine ownership verification.
+             Replace the content="" values with the tokens you receive when you add
+             https://wayly.com.au as a property in:
+               • Google Search Console → Settings → Ownership verification → HTML tag
+               • Bing Webmaster Tools  → Settings → Add a site → HTML meta tag
+               • Yandex Webmaster      → optional, fill if you target Russian/CIS traffic
+             Once you've added the tokens, redeploy. We do not commit real tokens to
+             this file; they live in the deployed HTML only. -->
+        <meta name="google-site-verification" content="WAYLY_GSC_TOKEN_REPLACE_ME" />
+        <meta name="msvalidate.01" content="WAYLY_BING_TOKEN_REPLACE_ME" />
+        <meta name="yandex-verification" content="WAYLY_YANDEX_TOKEN_REPLACE_ME" />
+
         <!-- Per-page SEO (title / description / og / twitter / JSON-LD) is injected by react-helmet-async on every public page. See /src/seo/SeoHead.jsx. -->
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />

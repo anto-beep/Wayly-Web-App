@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { api } from "@/lib/api";
+import { track } from "@/lib/analytics";
 import { Sparkles, Loader2, AlertTriangle, Check } from "lucide-react";
 
 const SAMPLE = `BlueBerry Care — Monthly Statement
@@ -68,10 +69,18 @@ export default function StatementDecoderEmbed({ compact = false }) {
             }
             if (!final) throw new Error("Decode timed out — try a shorter statement.");
             setResult(final);
+            try {
+                track.decode({
+                    rules: final?.rules_run || final?.summary?.rules_run,
+                    anomalies: final?.anomalies?.length,
+                    surface: compact ? "embed" : "tool",
+                });
+            } catch (_) {}
         } catch (err) {
             const detail = err?.response?.data?.detail;
             if (detail && typeof detail === "object" && detail.error === "daily_limit") {
                 setError("You've used your free decode for today. Come back tomorrow — or sign up for unlimited access.");
+                try { track.freeDecodeUsed({ surface: compact ? "embed" : "tool" }); } catch (_) {}
             } else {
                 setError(typeof detail === "string" ? detail : detail?.message || err?.message || "Could not decode the statement.");
             }

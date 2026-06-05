@@ -1786,3 +1786,58 @@ Phase 4 is **COMPLETE**. All 38 missing pages identified in the baseline audit a
 ### Next up
 - **Phase 7 deeper pass** — mobile LCP (font-display swap + subset, defer non-critical CSS, preload hero image).
 - **Phase 8 + 9** — broken-link sweep, 404/500 custom confirm, GSC + Bing webmaster verification, Plausible + PostHog goal events.
+
+
+## Implemented (Iteration 45 — Jun 2026 · Phase 8 housekeeping + Phase 9 analytics)
+
+### Phase 8 — Broken-link sweep + custom error pages
+- **`/app/scripts/broken_link_sweep.py`** — production-safe Python crawler. Hits the sitemap, then every internal href found in the React source. Uses `requests` (Cloudflare-friendly UA, HTTP/2 capable) and parallel workers. **Result on first run: 0 broken links** across 95 sitemap URLs + 51 source-discovered hrefs.
+- **`/app/frontend/src/pages/NotFound.jsx`** — real custom 404 with 3 CTAs (Home / Free AI tools / Search FAQ), 3 suggestion cards (services / policy / guides), `<SeoHead noindex>` so Google never indexes a soft 404, and PostHog + Plausible logging via `page_not_found` event so we can spot recurring broken paths.
+- **`/app/frontend/src/pages/ServerError.jsx`** — custom 500 with retry button, Home link, and a collapsed "Technical detail" section. Logs `uncaught_error` with the stack (truncated to 800 chars) to PostHog.
+- **`/app/frontend/src/components/ErrorBoundary.jsx`** — top-level boundary wrapping the entire route tree in App.js. Resets via the retry button on ServerError.
+- **`App.js`**: replaced the previous `path="*"` → `<Navigate to="/" replace />` catch-all (a soft 404 hostile to SEO) with the real `<NotFound>` page.
+
+### Phase 9 — Plausible + PostHog goal events
+- **`/app/frontend/src/lib/analytics.js`** — single helper module exposing a `track` object with named events: `signup`, `login`, `logout`, `trialStart`, `upgradeClick`, `upgradeSuccess`, `cancelSubscription`, `decode`, `freeDecodeUsed`, `toolRun`, `ctaClick`, `contactSubmit`. Every event fires to BOTH Plausible (props-based custom event) and PostHog (capture) with identical names so dashboards align. Null-safe — never throws if either lib is ad-blocked.
+- **Wired into key conversion paths**:
+  - `Signup.jsx` → `track.signup` + `track.identify` + `track.trialStart` (with plan attribution).
+  - `AuthContext.jsx` → `track.login` (method=email|google) + `track.identify` on login + `track.logout` + `track.reset` on logout.
+  - `StatementDecoderEmbed.jsx` → `track.decode` on success (with `rules`, `anomalies`, `surface`) + `track.freeDecodeUsed` on daily-limit hit.
+  - `Pricing.jsx` → `track.upgradeClick` on every tier CTA click (with plan + location=pricing).
+  - `Settings.jsx` → `track.upgradeSuccess` on plan-change confirmation (with from-plan, to-plan).
+- Live test: clicking the Family pricing CTA fires both `window.plausible(...)` AND `window.posthog.capture(...)` cleanly with zero console errors.
+
+### Phase 9 — Search engine ownership verification
+- **`/app/frontend/public/index.html`** now ships three placeholder verification meta tags:
+  - `<meta name="google-site-verification" content="WAYLY_GSC_TOKEN_REPLACE_ME" />`
+  - `<meta name="msvalidate.01" content="WAYLY_BING_TOKEN_REPLACE_ME" />`
+  - `<meta name="yandex-verification" content="WAYLY_YANDEX_TOKEN_REPLACE_ME" />`
+- Action required from user post-deployment: log in to GSC / Bing Webmaster, claim https://wayly.com.au, copy each verification token, replace the placeholder values, and redeploy. We intentionally did not commit real tokens to source control.
+
+### Smoke verified
+- 95 / 95 sitemap URLs return HTTP 200.
+- 51 / 51 source-discovered internal hrefs return HTTP 200.
+- `/this-page-does-not-exist` renders the new 404 page with all CTAs + suggestion cards visible.
+- Plausible + PostHog globals both confirmed present at runtime; `track.upgradeClick` confirmed firing to both providers.
+
+### Phase 8 + 9 status: COMPLETE
+SEO audit Phases 1 through 9 are now closed. The Wayly platform is shippable to production with:
+- Full metadata, Open Graph, canonical, hreflang.
+- Sitewide JSON-LD (Organization, WebSite, Article, BreadcrumbList, FAQPage, CollectionPage, WebApplication, AboutPage).
+- E-E-A-T signals (byline, reviewer, updated date, contact email).
+- 38 net-new content pages across Levels / Services / Policy / Guides / FAQ / Ask Wayly / About.
+- Hub-and-spoke internal linking on tools, articles, hubs.
+- WCAG 2.1 AA contrast / landmarks / labels / alt text / skip-link.
+- Code-split bundle (596 KB), preconnect for fonts, hero photo as webp.
+- Custom 404 + 500 pages.
+- Goal-event analytics on both Plausible and PostHog.
+
+### What remains for the user post-deployment
+1. Replace the 3 verification meta tokens in index.html with real values from GSC / Bing / (optional) Yandex.
+2. Submit `https://wayly.com.au/api/public/seo/sitemap.xml` to GSC + Bing Webmaster.
+3. Confirm Plausible + PostHog dashboards begin receiving the new goal events.
+
+### Known follow-ups (not in this audit)
+- Mobile LCP deeper pass (font subsetting, defer non-critical CSS) — Phase 7 was partly done, still room for a few hundred ms.
+- Backlog: in-article TOC with `ItemList` JSON-LD (optional engagement booster).
+- Backlog: cron-driven AEO citation tracker.

@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import { Check, Minus, Crown, Plus, Users, ArrowDown } from "lucide-react";
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
+import { track } from "@/lib/analytics";
 
 const TIERS = [
     {
@@ -268,7 +269,7 @@ export default function Pricing() {
                                     <li key={h} className="flex gap-2"><Check className={`h-4 w-4 mt-0.5 flex-none ${t.featured ? "text-gold" : "text-sage"}`} />{h}</li>
                                 ))}
                             </ul>
-                            <Link to={t.href} data-testid={`tier-cta-${t.key}`} className={`mt-5 block text-center rounded-full px-4 py-2.5 text-sm font-semibold ${t.featured ? "bg-gold text-primary-k hover:brightness-95" : "bg-primary-k text-white hover:bg-[#091D33]"}`}>
+                            <Link to={t.href} data-testid={`tier-cta-${t.key}`} onClick={() => track.upgradeClick({ plan: t.key, location: "pricing" })} className={`mt-5 block text-center rounded-full px-4 py-2.5 text-sm font-semibold ${t.featured ? "bg-gold text-primary-k hover:brightness-95" : "bg-primary-k text-white hover:bg-[#091D33]"}`}>
                                 {t.cta}
                             </Link>
                         </div>
