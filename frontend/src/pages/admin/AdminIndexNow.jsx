@@ -57,7 +57,7 @@ export default function AdminIndexNow() {
                 <h1 className="text-2xl font-semibold text-[#0E2A47]">IndexNow</h1>
                 <p className="mt-1 text-sm text-[#3F506B] max-w-2xl">
                     Push wayly.com.au URLs to Bing, Yandex, Naver, Seznam and Yep within seconds. The IndexNow key is
-                    published at <code className="font-mono">https://wayly.com.au/api/public/seo/indexnow-key.txt</code> so the receiving
+                    published at <code className="font-mono">https://wayly.com.au/{`<KEY>`}.txt</code> so the receiving
                     engines can verify the submission before crawling.
                 </p>
             </header>
