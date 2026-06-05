@@ -3,7 +3,7 @@ import LegalPage from "./LegalPage";
 
 export default function Terms() {
     return (
-        <LegalPage title="Terms of Service" lastUpdated="February 2026">
+        <LegalPage title="Terms of Service" path="/legal/terms" description="Wayly Terms of Service for Australian families using our Support at Home statement decoder, classification self-check and aged-care AI tools. Plain-English service terms." lastUpdated="February 2026">
             <h2>1. What Wayly is and is not</h2>
             <p>
                 Wayly is an information tool. It is not a registered aged-care provider, financial adviser,

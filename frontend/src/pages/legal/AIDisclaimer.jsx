@@ -3,7 +3,7 @@ import LegalPage from "./LegalPage";
 
 export default function AIDisclaimer() {
     return (
-        <LegalPage title="AI Accuracy Disclaimer" lastUpdated="February 2026">
+        <LegalPage title="AI Accuracy Disclaimer" path="/legal/ai-disclaimer" description="How Wayly handles AI accuracy in aged-care tools: human-reviewed content, source citations, and what to do if you spot an error in a Support at Home result." lastUpdated="February 2026">
             <h2>What our AI tools do</h2>
             <p>
                 Wayly's AI tools use large language models to read, interpret, and summarise Support at

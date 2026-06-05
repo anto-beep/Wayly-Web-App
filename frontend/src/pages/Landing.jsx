@@ -77,7 +77,7 @@ export default function Landing() {
 
     return (
         <div className="min-h-screen bg-kindred">
-            <SeoHead {...SEO.home} jsonLd={[organizationLd(), websiteLd()]} />
+            <SeoHead {...SEO.home} />
             <MarketingHeader />
 
             {/* HERO */}

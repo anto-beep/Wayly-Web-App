@@ -217,9 +217,26 @@ export default function Pricing() {
             acceptedAnswer: { "@type": "Answer", text: f.a },
         })),
     };
+    // Product + Offer schema for each paid tier. Free omitted from Offer list
+    // (schema.org Offer expects a real transaction value) but is described in
+    // the product description below. Adviser Pro is not in the public TIERS
+    // array — only the four published plans are emitted.
+    const productJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: "Wayly",
+        description: "AI assistant for Australian families navigating Support at Home. Decode statements, check classifications, plan budgets and coordinate family carers.",
+        brand: { "@type": "Brand", name: "Wayly" },
+        offers: [
+            { "@type": "Offer", name: "Free", price: "0", priceCurrency: "AUD", availability: "https://schema.org/InStock", url: "https://wayly.com.au/pricing", description: "One Statement Decoder use per calendar month, one participant." },
+            { "@type": "Offer", name: "Solo", price: "19", priceCurrency: "AUD", priceSpecification: { "@type": "UnitPriceSpecification", price: "19", priceCurrency: "AUD", unitText: "MONTH" }, availability: "https://schema.org/InStock", url: "https://wayly.com.au/pricing", description: "All eight AI tools, unlimited Statement Decoder, one participant. 7-day free trial." },
+            { "@type": "Offer", name: "Family", price: "39", priceCurrency: "AUD", priceSpecification: { "@type": "UnitPriceSpecification", price: "39", priceCurrency: "AUD", unitText: "MONTH" }, availability: "https://schema.org/InStock", url: "https://wayly.com.au/pricing", description: "Up to four participants, family thread, weekly digest, audit log, household coordination." },
+            { "@type": "Offer", name: "Adviser", price: "299", priceCurrency: "AUD", priceSpecification: { "@type": "UnitPriceSpecification", price: "299", priceCurrency: "AUD", unitText: "MONTH" }, availability: "https://schema.org/InStock", url: "https://wayly.com.au/pricing", description: "For aged-care specialist advisers. Client export, audit trail, branded reports." },
+        ],
+    };
     return (
         <div className="min-h-screen bg-kindred">
-            <SeoHead {...SEO.pricing} jsonLd={faqJsonLd} />
+            <SeoHead {...SEO.pricing} jsonLd={[faqJsonLd, productJsonLd]} />
             <MarketingHeader />
             <section className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
                 <span className="overline">Pricing</span>

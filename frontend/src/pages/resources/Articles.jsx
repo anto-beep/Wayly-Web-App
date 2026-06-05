@@ -258,7 +258,7 @@ function StructuredArticle({ article, slug }) {
             mainEntityOfPage: { "@type": "WebPage", "@id": url },
             datePublished: article.published_at,
             dateModified: article.updated_at || article.published_at,
-            author: { "@type": "Person", name: article.author?.name || "Wayly editorial" },
+            author: { "@type": "Person", name: article.author?.name || "Antony Chiware" },
             publisher: {
                 "@type": "Organization",
                 name: "Wayly",
@@ -322,6 +322,16 @@ function StructuredArticle({ article, slug }) {
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">{article.excerpt}</p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-k" data-testid="article-meta">
+                    {article.author?.name && (
+                        <span className="text-primary-k font-medium" data-testid="article-byline">By {article.author.name}</span>
+                    )}
+                    <span data-testid="article-reviewer">Reviewed by: To be confirmed</span>
+                    {article.published_at && (
+                        <span data-testid="article-published">Published {new Date(article.published_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}</span>
+                    )}
+                    {article.updated_at && article.updated_at !== article.published_at && (
+                        <span data-testid="article-updated">Updated {new Date(article.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}</span>
+                    )}
                     <span>{readingTime} min read</span>
                 </div>
 
@@ -385,6 +395,14 @@ function StructuredArticle({ article, slug }) {
                 )}
 
                 <ShareButtons title={article.title} onCopyLink={handleCopyLink} className="mt-10" />
+
+                {/* Last reviewed footer — Phase 3 E-E-A-T trust signal for YMYL content. */}
+                {(article.updated_at || article.published_at) && (
+                    <footer className="mt-12 pt-6 border-t border-kindred text-xs text-muted-k space-y-1" data-testid="article-trust-footer">
+                        <p>Last reviewed: {new Date(article.updated_at || article.published_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })} · Reviewed by: To be confirmed</p>
+                        <p>Wayly content is researched against primary sources from health.gov.au, myagedcare.gov.au, servicesaustralia.gov.au and agedcarequality.gov.au. If you find an error, email <a href="mailto:hello@wayly.com.au" className="underline">hello@wayly.com.au</a>.</p>
+                    </footer>
+                )}
             </article>
             <Footer />
         </div>

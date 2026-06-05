@@ -3,7 +3,7 @@ import LegalPage from "./LegalPage";
 
 export default function Accessibility() {
     return (
-        <LegalPage title="Accessibility Statement" lastUpdated="February 2026">
+        <LegalPage title="Accessibility Statement" path="/legal/accessibility" description="Wayly's accessibility commitments for older Australians and carers using assistive tech. WCAG 2.1 AA target, larger text and high-contrast modes built in." lastUpdated="February 2026">
             <p>
                 Wayly is committed to making our product accessible to all Australians, including older
                 adults and people with disability.

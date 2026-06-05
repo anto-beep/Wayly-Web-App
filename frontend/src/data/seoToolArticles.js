@@ -10,6 +10,9 @@
  */
 export const SEO_TOOL_ARTICLES = [
     {
+        published_at: "2026-02-04",
+        updated_at: "2026-02-04",
+        author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-statement-decoder-support-at-home-statement-explained",
         title: "Wayly Statement Decoder: How to Read Your Support at Home Statement and Spot Hidden Charges",
         excerpt: "The Wayly Statement Decoder reads your Support at Home statement, finds hidden charges and tells you the dollar impact. One free decode a month.",
@@ -104,6 +107,9 @@ If you are not satisfied, you have backup. The [Older Persons Advocacy Network](
         ],
     },
     {
+        published_at: "2026-02-04",
+        updated_at: "2026-02-04",
+        author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-budget-calculator-support-at-home-quarterly-budget",
         title: "Wayly Budget Calculator: How Your Support at Home Quarterly Budget Works",
         excerpt: "The Wayly Budget Calculator tracks your Support at Home quarterly budget, the 10% care management cap and your rollover so funds are not lost.",
@@ -200,6 +206,9 @@ If the budget keeps falling short or keeps building up, that is a signal. A shor
         ],
     },
     {
+        published_at: "2026-02-04",
+        updated_at: "2026-02-04",
+        author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-provider-price-checker-support-at-home-prices",
         title: "Wayly Provider Price Checker: Comparing Support at Home Prices After the Cap Deferral",
         excerpt: "With price caps deferred, the Wayly Provider Price Checker compares your provider's rates against published prices and the Wayly Quality Index.",
@@ -276,6 +285,9 @@ The Checker also showed how Sunrise Community Care's rates sat against published
         ],
     },
     {
+        published_at: "2026-02-04",
+        updated_at: "2026-02-04",
+        author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-classification-self-check-support-at-home-levels",
         title: "Wayly Classification Self-Check: Are You on the Right Support at Home Level?",
         excerpt: "The Wayly Classification Self-Check screens your parent's needs against assessment criteria and flags if a higher Support at Home level is warranted.",
@@ -360,6 +372,9 @@ That gave Daniel the confidence to request a support plan review, and a clear pi
         ],
     },
     {
+        published_at: "2026-02-04",
+        updated_at: "2026-02-04",
+        author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-reassessment-letter-generator-support-at-home-reassessment",
         title: "Wayly Reassessment Letter Generator: How to Request a Support at Home Reassessment",
         excerpt: "The Wayly Reassessment Letter Generator writes a clear letter to My Aged Care requesting a Support at Home reassessment. Editable and saved to your vault.",
@@ -446,6 +461,9 @@ Daniel edited a couple of lines to add that Patricia's GP could provide a suppor
         ],
     },
     {
+        published_at: "2026-02-04",
+        updated_at: "2026-02-04",
+        author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-contribution-estimator-support-at-home-fees",
         title: "Wayly Contribution Estimator: What Will You Pay Under Support at Home?",
         excerpt: "The Wayly Contribution Estimator models your Support at Home contributions from pension status, income and assets, including the lifetime cap.",
@@ -529,6 +547,9 @@ It also showed the effect of the 1 October 2026 change, since Robert uses person
         ],
     },
     {
+        published_at: "2026-02-04",
+        updated_at: "2026-02-04",
+        author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-care-plan-reviewer-support-at-home-care-plan",
         title: "Wayly Care Plan Reviewer: Does Your Care Plan Match Your Support at Home Level?",
         excerpt: "The Wayly Care Plan Reviewer checks your Support at Home care plan against your classification, service adequacy and the 10% care management cap.",
@@ -612,6 +633,9 @@ With that, Catherine had a focused agenda for her next call with Susan Tran. Rat
         ],
     },
     {
+        published_at: "2026-02-04",
+        updated_at: "2026-02-04",
+        author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-family-coordinator-managing-parents-aged-care",
         title: "Wayly Family Coordinator: Managing a Parent's Aged Care as a Family",
         excerpt: "The Wayly Family Coordinator lets siblings, partners and advisers share aged care info with role-based access and alerts on new statements and anomalies.",

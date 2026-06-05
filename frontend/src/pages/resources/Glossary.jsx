@@ -62,13 +62,13 @@ export default function Glossary() {
                         <li key={g.term} className="p-5">
                             {g.slug ? (
                                 <Link to={`/resources/glossary/${g.slug}`} className="block group" data-testid={`glossary-link-${g.slug}`}>
-                                    <dt className="font-heading text-lg text-primary-k group-hover:underline">{g.term}</dt>
-                                    <dd className="mt-1.5 text-sm text-muted-k leading-relaxed">{g.def}</dd>
+                                    <div className="font-heading text-lg text-primary-k group-hover:underline">{g.term}</div>
+                                    <div className="mt-1.5 text-sm text-muted-k leading-relaxed">{g.def}</div>
                                 </Link>
                             ) : (
                                 <>
-                                    <dt className="font-heading text-lg text-primary-k">{g.term}</dt>
-                                    <dd className="mt-1.5 text-sm text-muted-k leading-relaxed">{g.def}</dd>
+                                    <div className="font-heading text-lg text-primary-k">{g.term}</div>
+                                    <div className="mt-1.5 text-sm text-muted-k leading-relaxed">{g.def}</div>
                                 </>
                             )}
                         </li>

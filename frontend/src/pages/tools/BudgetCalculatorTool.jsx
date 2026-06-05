@@ -76,6 +76,7 @@ export default function BudgetCalculatorTool() {
     if (access === "blocked") {
         return (
             <div className="min-h-screen bg-kindred">
+                <SeoHead {...SEO.toolBudgetCalculator} jsonLd={_toolJsonLd(SEO.toolBudgetCalculator)} />
                 <MarketingHeader />
                 <section className="mx-auto max-w-4xl px-6 pt-8">
                     <AIAccuracyBanner text={TOOL_DISCLAIMERS["budget-calculator"]} />
@@ -89,6 +90,7 @@ export default function BudgetCalculatorTool() {
     }
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.toolBudgetCalculator} jsonLd={_toolJsonLd(SEO.toolBudgetCalculator)} />
             <MarketingHeader />
             <section className="mx-auto max-w-4xl px-6 pt-12 pb-6">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>

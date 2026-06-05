@@ -67,7 +67,11 @@ export default function SeoHead({
     const desc = description || SITE.description;
     const canonicalUrl = canonical || canonicalFor(path || "/");
     const ogImage = image || SITE.defaultOgImage;
-    const ldBlocks = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+    // Hoist sitewide Org + WebSite schema onto every page that uses SeoHead.
+    // These were previously only emitted on the homepage. Lifting them here
+    // means every public page now declares the publisher + a SearchAction.
+    const sitewideLd = [organizationLd(), websiteLd()];
+    const ldBlocks = sitewideLd.concat(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []);
 
     return (
         <Helmet prioritizeSeoTags>

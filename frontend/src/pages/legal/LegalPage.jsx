@@ -2,14 +2,21 @@ import React from "react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
+import SeoHead from "@/seo/SeoHead";
 
 /**
  * LegalPage — shared layout for all /legal/* documents.
  * Title + subtitle + last-updated + body content.
+ *
+ * Renders a per-document <SeoHead> using the page's title + the canonical
+ * /legal/* path. Without this every legal route serves the index.html
+ * default title (the issue picked up in the Phase 0 audit).
  */
-export default function LegalPage({ title, lastUpdated, children }) {
+export default function LegalPage({ title, lastUpdated, path, description, children }) {
+    const seoDesc = description || `${title} for Wayly, the AI assistant for Australian Support at Home. Australian-hosted, plain-English aged-care help.`;
     return (
         <div className="min-h-screen bg-kindred">
+            <SeoHead title={`${title} · Wayly`} description={seoDesc} path={path} type="article" />
             <MarketingHeader />
             <main className="mx-auto max-w-3xl px-6 py-16">
                 <div className="mb-8 pb-6 border-b border-kindred">

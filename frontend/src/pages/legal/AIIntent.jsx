@@ -3,7 +3,7 @@ import LegalPage from "./LegalPage";
 
 export default function AIIntent() {
     return (
-        <LegalPage title="Our commitment when our AI gets it wrong" lastUpdated="February 2026">
+        <LegalPage title="Our commitment when our AI gets it wrong" path="/legal/ai-intent" description="What Wayly does when our AI gets a Support at Home result wrong: clear correction path, dual review on flagged calls, and refund commitments for paid tiers." lastUpdated="February 2026">
             <p>
                 We know our AI tools can make mistakes. We say so on every page. This page explains what we
                 commit to do when an error causes a real problem.

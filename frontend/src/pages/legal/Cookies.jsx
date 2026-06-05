@@ -3,7 +3,7 @@ import LegalPage from "./LegalPage";
 
 export default function Cookies() {
     return (
-        <LegalPage title="Cookie Policy" lastUpdated="February 2026">
+        <LegalPage title="Cookie Policy" path="/legal/cookies" description="Cookies Wayly uses to keep you signed in, remember your participant context and measure how Australian families use our Support at Home tools." lastUpdated="February 2026">
             <p>
                 Wayly uses a small number of cookies to make the product work. We do not use advertising
                 cookies or tracking cookies for third-party advertising purposes.

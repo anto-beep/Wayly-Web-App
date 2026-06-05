@@ -62,10 +62,12 @@ export default function FamilyCoordinator() {
 
     if (access === "loading") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolFamilyCoordinator} jsonLd={_toolJsonLd(SEO.toolFamilyCoordinator)} />
             <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><Footer /></div>);
-    if (access === "blocked") return (<div className="min-h-screen bg-kindred"><MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["family-coordinator"]} /></section><ToolGate toolName="Family Care Coordinator"><ScreenshotFamilyThread /></ToolGate><Footer /></div>);
+    if (access === "blocked") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolFamilyCoordinator} jsonLd={_toolJsonLd(SEO.toolFamilyCoordinator)} />
+    <MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["family-coordinator"]} /></section><ToolGate toolName="Family Care Coordinator"><ScreenshotFamilyThread /></ToolGate><Footer /></div>);
 
     return (
         <div className="min-h-screen bg-kindred flex flex-col">
+            <SeoHead {...SEO.toolFamilyCoordinator} jsonLd={_toolJsonLd(SEO.toolFamilyCoordinator)} />
             <MarketingHeader />
             <section className="mx-auto max-w-3xl px-6 pt-12 pb-6 w-full">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
