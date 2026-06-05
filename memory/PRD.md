@@ -1841,3 +1841,36 @@ SEO audit Phases 1 through 9 are now closed. The Wayly platform is shippable to 
 - Mobile LCP deeper pass (font subsetting, defer non-critical CSS) — Phase 7 was partly done, still room for a few hundred ms.
 - Backlog: in-article TOC with `ItemList` JSON-LD (optional engagement booster).
 - Backlog: cron-driven AEO citation tracker.
+
+
+## Implemented (Iteration 46 — Jun 2026 · IndexNow + Bing verification follow-up)
+
+### IndexNow protocol
+- **Key generated and committed**: `9a677bbfffc44a13f71ab79eb5bc971bb94a5ff82c6d813795aff11ac8fa2ef7` (64-char hex). Stored only in source — never reused as an auth credential.
+- **Static key file** at `/app/frontend/public/9a677bbfffc44a13f71ab79eb5bc971bb94a5ff82c6d813795aff11ac8fa2ef7.txt` containing only the key + newline (65 bytes). Verified the preview returns the exact contents required by IndexNow's verification step.
+- **Backend service** `/app/backend/indexnow_service.py`:
+  - `submit_urls(urls)` — async httpx POST to `https://api.indexnow.org/IndexNow` with the canonical payload `{host, key, keyLocation, urlList}`. Normalises relative paths into absolute https://wayly.com.au URLs, drops anything off-host, capped at 10,000 URLs per submission, 12-second timeout, never raises.
+  - `all_sitemap_urls()` — pulls the full list from `seo_routes.STATIC_PAGES` so the sitemap and IndexNow submissions stay in lockstep.
+- **Admin endpoints** in `admin_routes.py`:
+  - `POST /api/admin/seo/indexnow/all` — submits every sitemap URL (95 URLs after Phase 4).
+  - `POST /api/admin/seo/indexnow/urls` — submits a custom JSON `{urls: [...]}` list. Both endpoints write an audit log entry.
+- **Admin UI** at `/admin/seo/indexnow` (page `AdminIndexNow.jsx`): "Submit all sitemap URLs" button + textarea for manual URL entry + last-submission result panel showing HTTP status, count, error, and the raw IndexNow response body. New "IndexNow" entry added to the Content section of the admin sidebar.
+
+### Bing verification meta tag
+- `<meta name="msvalidate.01" content="6E0EE2D604B0A2FE3D507B04C335CBAD" />` written into `/app/frontend/public/index.html`. Will be picked up by Bing once redeploy completes and the production crawler-cache refreshes.
+
+### Smoke verified
+- Preview key file returns 65 bytes (64 hex chars + newline). Correct.
+- `POST /api/admin/seo/indexnow/all` returns 401 unauthorised when called without a session (auth gate active).
+- Frontend recompiled without warnings or errors.
+
+### Production rollout steps
+1. Redeploy the app so the static key file and the new backend service ship to wayly.com.au.
+2. Verify the key file is reachable at `https://wayly.com.au/9a677bbfffc44a13f71ab79eb5bc971bb94a5ff82c6d813795aff11ac8fa2ef7.txt` (returns exactly 65 bytes, no HTML wrapper). If it returns the SPA shell, contact Emergent Support to purge the crawler-cache for the root + key URL.
+3. Log in to `/admin/login` with super admin + 2FA, navigate to **Content → IndexNow**, click "Submit all sitemap URLs". Confirm a `200` or `202` response.
+4. Repeat the same flow after every redeploy that adds new pages (or wire a CI/CD step that POSTs to `/api/admin/seo/indexnow/all`).
+
+### Known follow-ups (not in this iteration)
+- Optional: backend cron that runs `submit_urls(all_sitemap_urls())` daily so we never forget after a redeploy.
+- Optional: hook `submit_urls([article.url])` into the CMS publish flow in `admin_phase_e2.py` so every new article auto-pings.
+- The production crawler-cache will keep serving stale HTML to bots until purged. If Bing meta-tag verification still fails after redeploy, request a cache purge from Emergent Support.

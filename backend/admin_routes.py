@@ -1087,3 +1087,47 @@ async def user_profile(user_id: str, _: dict = Depends(get_current_admin)):
         "notes": notes,
         "sessions": sessions,
     }
+
+
+
+
+# ----------------------------- IndexNow ----------------------------------
+# Push Wayly URLs to Bing, Yandex, Naver, Seznam and Yep instantly via the
+# IndexNow protocol. See /app/backend/indexnow_service.py for full detail.
+
+@admin.post("/seo/indexnow/all")
+async def indexnow_submit_sitemap(admin: dict = Depends(get_current_admin)):
+    """Submit every URL in the Wayly sitemap to IndexNow."""
+    from indexnow_service import submit_urls, all_sitemap_urls
+    urls = all_sitemap_urls()
+    result = await submit_urls(urls)
+    await audit_log(
+        actor_id=admin.get("id"),
+        action="indexnow_submit_sitemap",
+        target_id=f"{result.get('submitted')} URLs",
+        result="success" if result.get("error") is None else "error",
+        detail={"status": result.get("status"), "error": result.get("error")},
+    )
+    return {"ok": result.get("error") is None, **result, "total_in_sitemap": len(urls)}
+
+
+@admin.post("/seo/indexnow/urls")
+async def indexnow_submit_specific(body: dict, admin: dict = Depends(get_current_admin)):
+    """
+    Submit a custom list of URLs to IndexNow.
+
+    Body: { "urls": ["/services/personal-care", "https://wayly.com.au/about"] }
+    """
+    from indexnow_service import submit_urls
+    raw = body.get("urls") or []
+    if not isinstance(raw, list) or not raw:
+        raise HTTPException(status_code=400, detail="urls must be a non-empty list")
+    result = await submit_urls(raw)
+    await audit_log(
+        actor_id=admin.get("id"),
+        action="indexnow_submit_urls",
+        target_id=f"{result.get('submitted')} URLs",
+        result="success" if result.get("error") is None else "error",
+        detail={"status": result.get("status"), "error": result.get("error"), "sample": raw[:3]},
+    )
+    return {"ok": result.get("error") is None, **result}

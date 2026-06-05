@@ -66,6 +66,7 @@ const NAV = [
             { to: "/admin/glossary", label: "Glossary", icon: FileText, testid: "admin-nav-glossary" },
             { to: "/admin/templates-library", label: "Templates Library", icon: FileText, testid: "admin-nav-tpllib" },
             { to: "/admin/changelog", label: "Changelog", icon: FileText, testid: "admin-nav-changelog" },
+            { to: "/admin/seo/indexnow", label: "IndexNow", icon: FileText, testid: "admin-nav-indexnow" },
         ],
     },
     {
@@ -268,6 +269,7 @@ import {
 import {
     AdminArticles, AdminGlossary, AdminTemplatesLibrary, AdminChangelog,
 } from "./AdminPhaseE2";
+import AdminIndexNow from "./AdminIndexNow";
 
 function AdminRoutes() {
     return (
@@ -307,6 +309,8 @@ function AdminRoutes() {
                 <Route path="glossary" element={<AdminGlossary />} />
                 <Route path="templates-library" element={<AdminTemplatesLibrary />} />
                 <Route path="changelog" element={<AdminChangelog />} />
+                {/* SEO ops */}
+                <Route path="seo/indexnow" element={<AdminIndexNow />} />
                 {/* Fallback placeholders for not-yet-built sections */}
                 {NAV.flatMap((s) => s.items).map((it) => {
                     const path = it.to.replace("/admin/", "").replace("/admin", "");
@@ -320,6 +324,7 @@ function AdminRoutes() {
                         "audit-log", "sessions", "data-requests",
                         "feature-flags", "health", "maintenance", "admins",
                         "blog", "glossary", "templates-library", "changelog",
+                        "seo/indexnow",
                     ].includes(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}
