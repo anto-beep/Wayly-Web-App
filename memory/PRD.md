@@ -1905,8 +1905,15 @@ Implementing the 10-phase security audit to meet the Australian Privacy Act
   deployment dashboard (preview env already rotated).
 - Delivery report: `/app/security-audit/phase-1-delivery.md`.
 
-### Phase 2 — Participant Data Isolation (NEXT, awaiting approval)
-- Central `assert_participant_access()` helper + automated isolation suite.
+### Phase 2 — Participant Data Isolation ✅ DONE (13/13 isolation tests pass; 25/25 with Phase 1; 18/18 regression on iter35)
+- New `assert_participant_access(user_id, participant_id)` helper in `security_utils.py` — single audited gate, always 404 (never 403) on mismatch.
+- `_resolve_active_participant` in `server.py` hardened: foreign `X-Participant-Id` now raises 404 instead of silently falling back to the caller's primary.
+- Patched: `/hospital/admissions`, `/wall/posts`, `/amendments`, `/reports/generate`, `/reports` (was AND-filter only — now goes through the helper).
+- Automated suite `/app/backend/tests/test_phase2_isolation.py` proves Account A cannot read or write Account B's data across query, body, and header attack vectors.
+- Delivery report: `/app/security-audit/phase-2-delivery.md`.
+
+### Phase 3 — Rate Limiting (NEXT, awaiting approval)
+- Provision Redis (`REDIS_URL` env var); slowapi or in-house token-bucket; wrap `/auth/login`, `/auth/signup`, `/auth/forgot`, `/auth/reset`, file uploads, public tools, admin endpoints.
 
 ### Phase 3 — Rate Limiting (planned)
 - Redis-backed (provision Redis first), wrap login/signup/reset/uploads.

@@ -1208,15 +1208,9 @@ async def generate_report(body: GenerateBody, request: Request, user_id: str = D
     if not participant_id:
         raise HTTPException(status_code=400, detail="No participant available")
 
-    # Ownership check (must belong to this user's account or household)
-    p = await db.participants.find_one({"id": participant_id}, {"_id": 0})
-    if not p:
-        raise HTTPException(status_code=404, detail="Participant not found")
-    u = await db.users.find_one({"id": user_id}, {"_id": 0})
-    if u and u.get("household_id") != p.get("household_id"):
-        acct = await db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0, "id": 1})
-        if not acct or p.get("account_id") != acct.get("id"):
-            raise HTTPException(status_code=403, detail="Not your participant")
+    # Phase 2: central ownership check (replaces the inlined two-branch check).
+    from security_utils import assert_participant_access
+    p = await assert_participant_access(user_id, participant_id, require_active=False)
 
     rid = _new_id()
     p_name = f"{p.get('first_name','')} {p.get('last_name','')}".strip() or "Participant"
@@ -1254,6 +1248,9 @@ async def list_reports(participant_id: Optional[str] = None, request: Request = 
         participant_id = request.headers.get("x-participant-id")
     q: Dict[str, Any] = {"generated_by": user_id}
     if participant_id:
+        # Phase 2: only honour the filter once we've proven ownership.
+        from security_utils import assert_participant_access
+        await assert_participant_access(user_id, participant_id, require_active=False)
         q["participant_id"] = participant_id
     items = await db.generated_reports.find(q, {"_id": 0}).sort("created_at", -1).to_list(200)
     return {"items": items}

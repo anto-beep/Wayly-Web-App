@@ -259,3 +259,89 @@ async def clear_login_failures(user_id: str) -> None:
         {"id": user_id},
         {"$set": {"user_failed_login_count": 0, "user_lockout_until": None}},
     )
+
+
+# ----------------------------- Phase 2: participant access isolation -----------------------------
+
+class ParticipantAccessDenied(Exception):
+    """Raised when a user attempts to read/write a participant outside their
+    household / account. Always surfaces as a 404 to the client (never 403) so
+    we don't leak the existence of unrelated participants."""
+
+
+async def _user_household_and_account(user_id: str) -> tuple[Optional[str], Optional[str]]:
+    """Return `(household_id, account_id)` for a user, or (None, None) if the
+    user has no household yet (legacy / mid-onboarding)."""
+    u = await _db.users.find_one({"id": user_id}, {"_id": 0, "household_id": 1})
+    hid = (u or {}).get("household_id")
+    acct = await _db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0, "id": 1})
+    return hid, (acct or {}).get("id")
+
+
+async def assert_participant_access(
+    user_id: str,
+    participant_id: Optional[str],
+    *,
+    allow_none: bool = False,
+    require_active: bool = True,
+) -> Optional[dict]:
+    """Central, audited gate for every endpoint that touches participant data.
+
+    - Returns the participant dict (no `_id`) when access is permitted.
+    - Raises HTTPException(404) when the participant either doesn't exist or
+      doesn't belong to the caller's household OR account. We always 404 (not
+      403) so existence cannot be probed.
+    - Honours `allow_none=True` for endpoints that accept "no participant
+      selected" — in that mode a missing pid resolves to (None) instead of
+      raising.
+
+    The helper is intentionally simple: ANY new endpoint that consumes a
+    participant_id from path / query / body / header MUST call this first.
+    """
+    from fastapi import HTTPException
+
+    if not participant_id:
+        if allow_none:
+            return None
+        raise HTTPException(status_code=400, detail="participant_id is required")
+
+    p = await _db.participants.find_one({"id": participant_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(status_code=404, detail="Participant not found")
+
+    if require_active:
+        if p.get("status") == "REMOVED" or p.get("is_archived") is True:
+            raise HTTPException(status_code=404, detail="Participant not found")
+
+    user_hid, user_acct = await _user_household_and_account(user_id)
+    p_hid = p.get("household_id")
+    p_acct = p.get("account_id")
+
+    # Match either via household (legacy / current data model) OR account
+    # (newer multi-participant accounts). One of the two must agree.
+    via_household = bool(user_hid and p_hid and user_hid == p_hid)
+    via_account = bool(user_acct and p_acct and user_acct == p_acct)
+
+    if not (via_household or via_account):
+        log.warning(
+            "participant access denied: user=%s p=%s p_hid=%s user_hid=%s p_acct=%s user_acct=%s",
+            user_id, participant_id, p_hid, user_hid, p_acct, user_acct,
+        )
+        # 404 not 403 — no probing.
+        raise HTTPException(status_code=404, detail="Participant not found")
+
+    return p
+
+
+async def assert_household_access(user_id: str, household_id: Optional[str]) -> str:
+    """Same contract as `assert_participant_access` but for household-scoped
+    routes. Returns the household_id when access is permitted."""
+    from fastapi import HTTPException
+    if not household_id:
+        raise HTTPException(status_code=400, detail="household_id is required")
+    user_hid, _ = await _user_household_and_account(user_id)
+    if not user_hid or user_hid != household_id:
+        log.warning("household access denied: user=%s requested=%s actual=%s",
+                    user_id, household_id, user_hid)
+        raise HTTPException(status_code=404, detail="Household not found")
+    return user_hid

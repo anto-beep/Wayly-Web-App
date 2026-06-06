@@ -129,22 +129,19 @@ async def _require_household(user_id: str) -> dict:
 
 async def _resolve_active_participant(user_id: str, request: Request) -> Optional[dict]:
     """Reads the `X-Participant-Id` header and validates it belongs to the
-    user's account. Falls back to the household's primary participant when
-    the header is missing or invalid. Returns None for legacy users with no
-    participant rows."""
+    user's account via `assert_participant_access`. Falls back to the
+    household's primary participant when the header is missing. If the header
+    is present but the participant doesn't belong to the caller we now
+    raise 404 — silently falling back was hiding cross-account bugs."""
+    from security_utils import assert_participant_access
     pid = request.headers.get("x-participant-id")
+    if pid:
+        # 404 if the pid doesn't belong to this user — explicit, auditable.
+        return await assert_participant_access(user_id, pid, require_active=True)
     user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "household_id": 1})
     hid = (user_doc or {}).get("household_id")
     if not hid:
         return None
-    if pid:
-        acct = await db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0, "id": 1})
-        if acct:
-            p = await db.participants.find_one(
-                {"id": pid, "account_id": acct["id"], "status": "ACTIVE"}, {"_id": 0}
-            )
-            if p:
-                return p
     return await db.participants.find_one(
         {"household_id": hid, "is_primary": True, "status": {"$ne": "REMOVED"}}, {"_id": 0}
     ) or await db.participants.find_one({"household_id": hid, "status": {"$ne": "REMOVED"}}, {"_id": 0})

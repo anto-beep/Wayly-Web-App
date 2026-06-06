@@ -257,6 +257,9 @@ async def list_hospital_admissions(request: Request, participant_id: Optional[st
     hid = await _require_household_id(user)
     q: Dict[str, Any] = {"household_id": hid}
     if participant_id:
+        # Phase 2: validate ownership before honouring the param.
+        from security_utils import assert_participant_access
+        await assert_participant_access(user["id"], participant_id)
         q["participant_id"] = participant_id
     if status_filter in ("active", "discharged"):
         q["status"] = status_filter
@@ -370,6 +373,8 @@ async def list_wall_posts(request: Request, participant_id: Optional[str] = Quer
     hid = await _require_household_id(user)
     q: Dict[str, Any] = {"household_id": hid}
     if participant_id:
+        from security_utils import assert_participant_access
+        await assert_participant_access(user["id"], participant_id)
         q["participant_id"] = participant_id
     cur = _db.family_wall_posts.find(q, {"_id": 0}).sort("created_at", -1).limit(limit)
     return {"items": [d async for d in cur]}
@@ -588,6 +593,8 @@ async def list_amendments(request: Request, participant_id: Optional[str] = Quer
     hid = await _require_household_id(user)
     q: Dict[str, Any] = {"household_id": hid}
     if participant_id:
+        from security_utils import assert_participant_access
+        await assert_participant_access(user["id"], participant_id)
         q["participant_id"] = participant_id
     cur = _db.care_plan_amendments.find(q, {"_id": 0}).sort("created_at", -1).limit(100)
     return {"items": [d async for d in cur]}
