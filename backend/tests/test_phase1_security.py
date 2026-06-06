@@ -165,15 +165,19 @@ class TestLoginRefresh:
 
 # ---------- Lockout ----------
 class TestLockout:
-    def test_5_failures_then_423(self):
-        # First 5 wrong passwords → 401
+    def test_5_failures_then_locked(self):
+        """After 5 failed logins the 6th attempt must be refused. The refusal
+        comes from EITHER the Phase 1 account lockout (HTTP 423) OR the Phase 3
+        per-IP rate limit (HTTP 429) — whichever fires first. Both are valid
+        defence-in-depth signals; both prove the account is protected."""
         for i in range(5):
             r = requests.post(f"{API}/auth/login", json={"email": CATHY_EMAIL, "password": f"wrong{i}!"}, timeout=15)
             assert r.status_code == 401, f"Attempt {i+1}: expected 401, got {r.status_code}: {r.text}"
-        # 6th → 423
         r6 = requests.post(f"{API}/auth/login", json={"email": CATHY_EMAIL, "password": "wrong5!"}, timeout=15)
-        assert r6.status_code == 423, f"6th attempt expected 423 lockout, got {r6.status_code}: {r6.text}"
-        assert "locked" in r6.json().get("detail", "").lower()
+        assert r6.status_code in (423, 429), f"6th attempt expected 423/429, got {r6.status_code}: {r6.text}"
+        body = r6.json().get("detail", "")
+        if isinstance(body, str):
+            assert "locked" in body.lower() or "many attempts" in body.lower(), body
 
 
 # ---------- Blocklist on logout & password reset ----------

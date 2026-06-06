@@ -1920,8 +1920,22 @@ Implementing the 10-phase security audit to meet the Australian Privacy Act
 - ⚠️ Production needs `REDIS_URL` env var (Upstash free tier is plenty); if unset, app keeps running with limits disabled.
 - Delivery report: `/app/security-audit/phase-3-delivery.md`.
 
-### Phase 4 — File Upload Security (NEXT, awaiting approval)
-- Full ClamAV daemon + magic-byte validation + 20MB streamed limit + UUID rename + prompt-injection sanitiser.
+### Phase 4 — File Upload Security ✅ DONE (47/47 tests pass across Phases 1+2+3+4+5)
+- New `/app/backend/upload_security.py` — 5-layer secure-upload helper (size cap, magic-byte allowlist, UUID rename, ClamAV stream-scan, prompt-injection sanitiser).
+- Full ClamAV daemon running (apt-installed, virus DB downloaded via freshclam, supervised via `/etc/supervisor/conf.d/clamd.conf`). EICAR pattern detected as `Eicar-Test-Signature`. **Fail-CLOSED** when clamd unreachable.
+- Applied to `/statements/upload`, `/public/decode-statement`, `/vault/upload`, POST `/documents`, `/wall/posts` (photo + voice b64).
+- 20 MB hard ceiling, 8 MB image, 15 MB audio (env-tunable).
+- Delivery report: `/app/security-audit/phase-4-delivery.md`.
+
+### Phase 5 — HTTP Security Headers ✅ DONE
+- New `/app/backend/security_headers.py` Starlette middleware — HSTS (2-year + preload), X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy disabling all unneeded sensors + FLoC opt-out, COOP/CORP, full CSP with vendor allowlist + `frame-ancestors 'none'` + `object-src 'none'`.
+- SPA-side mirror at `/app/frontend/public/_headers` for static-asset coverage (Cloudflare Pages / Netlify format).
+- `CSP_REPORT_ONLY` env-var toggle for safe vendor additions.
+- 8 pytest assertions covering header presence + values; `/api/health` exempted for monitor-probe performance.
+- Delivery report: `/app/security-audit/phase-5-delivery.md`.
+
+### Phase 6 — Encryption & Storage Verification (NEXT, awaiting approval)
+- Verify Mongo encryption-at-rest and TLS in transit; document key rotation; add `.env.example`; verify S3 (if used) is private + AES-256.
 
 ### Phase 3 — Rate Limiting (planned)
 - Redis-backed (provision Redis first), wrap login/signup/reset/uploads.

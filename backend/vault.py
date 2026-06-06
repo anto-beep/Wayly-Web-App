@@ -87,14 +87,21 @@ async def upload_document(
 ):
     if document_type not in VALID_TYPES:
         raise HTTPException(400, f"document_type must be one of {VALID_TYPES}")
-    if file.content_type not in ACCEPTED_MIME:
-        raise HTTPException(400, f"Unsupported file type: {file.content_type}")
-    max_mb, fmt_badge = ACCEPTED_MIME[file.content_type]
 
-    data = await file.read()
+    # Phase 4: signature + virus scan + UUID rename.
+    from upload_security import secure_read_upload, PROFILE_DOCUMENT
+    data, safe_name, file_kind = await secure_read_upload(
+        file, allowed_profiles=PROFILE_DOCUMENT,
+    )
+    # Per-profile size cap on top of the global 20MB ceiling.
+    if file.content_type and file.content_type in ACCEPTED_MIME:
+        max_mb, fmt_badge = ACCEPTED_MIME[file.content_type]
+        if len(data) > max_mb * 1024 * 1024:
+            raise HTTPException(400, f"File too large — max {max_mb}MB for {fmt_badge}")
+    else:
+        # Fallback badge from sniffed kind.
+        fmt_badge = file_kind.upper()
     size = len(data)
-    if size > max_mb * 1024 * 1024:
-        raise HTTPException(400, f"File too large — max {max_mb}MB for {fmt_badge}")
     if size < 16:
         raise HTTPException(400, "File appears empty")
 

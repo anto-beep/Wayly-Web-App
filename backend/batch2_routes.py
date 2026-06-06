@@ -385,17 +385,25 @@ async def create_wall_post(payload: WallPostCreate, request: Request):
     user = await _user_dep(request)
     hid = await _require_household_id(user)
     p = await _get_participant_or_404(hid, payload.participant_id)
-    # Size cap on b64 payloads — ~2 MB raw → ~2.7 MB b64
-    for field in ("image_b64", "audio_b64"):
-        v = getattr(payload, field) or ""
-        if len(v) > 3_000_000:
-            raise HTTPException(status_code=413, detail=f"{field} too large (max ~2 MB)")
+    # Phase 4: signature-validate + virus-scan the b64 photo/voice payloads.
+    from upload_security import (
+        secure_validate_b64, PROFILE_IMAGE, PROFILE_AUDIO,
+        MAX_IMAGE_BYTES, MAX_AUDIO_BYTES,
+    )
     if payload.kind == "message" and not (payload.body or "").strip():
         raise HTTPException(status_code=400, detail="Message body required")
-    if payload.kind == "photo" and not payload.image_b64:
-        raise HTTPException(status_code=400, detail="Photo upload missing")
-    if payload.kind == "voice" and not payload.audio_b64:
-        raise HTTPException(status_code=400, detail="Voice clip missing")
+    if payload.kind == "photo":
+        if not payload.image_b64:
+            raise HTTPException(status_code=400, detail="Photo upload missing")
+        secure_validate_b64(
+            payload.image_b64, allowed_profiles=PROFILE_IMAGE, max_bytes=MAX_IMAGE_BYTES,
+        )
+    if payload.kind == "voice":
+        if not payload.audio_b64:
+            raise HTTPException(status_code=400, detail="Voice clip missing")
+        secure_validate_b64(
+            payload.audio_b64, allowed_profiles=PROFILE_AUDIO, max_bytes=MAX_AUDIO_BYTES,
+        )
     post = WallPost(
         household_id=hid,
         participant_id=payload.participant_id,

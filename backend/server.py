@@ -1174,7 +1174,11 @@ async def upload_statement(
     # Resolve the active participant so this statement is correctly scoped.
     active_p = await _resolve_active_participant(user_id, request)
     participant_id = active_p["id"] if active_p else None
-    raw = await file.read()
+    # Phase 4: signature-validate + virus-scan + UUID-rename before we touch it.
+    from upload_security import secure_read_upload, PROFILE_STATEMENT, sanitize_for_prompt
+    raw, safe_name, file_kind = await secure_read_upload(
+        file, allowed_profiles=PROFILE_STATEMENT,
+    )
     if not raw:
         raise HTTPException(status_code=400, detail="Empty file")
     from document_extract import (
@@ -1182,7 +1186,7 @@ async def upload_statement(
         CorruptFileError, PasswordProtectedError,
     )
     try:
-        text, input_method, page_count, parse_warnings = await extract_document(file.filename or "", raw)
+        text, input_method, page_count, parse_warnings = await extract_document(safe_name, raw)
     except UnsupportedFormatError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except FileTooLargeError as e:
@@ -1192,6 +1196,8 @@ async def upload_statement(
         raise HTTPException(status_code=400, detail="This PDF is password-protected. Open it in your PDF viewer, remove the password, save a new copy, and upload that file.")
     except CorruptFileError as e:
         raise HTTPException(status_code=400, detail=f"This file appears to be damaged or unreadable: {e}")
+    # Phase 4: soft-redact prompt-injection lures before any LLM sees the text.
+    text = sanitize_for_prompt(text)
     if not text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from file. Try a clearer photo or paste the text directly.")
     # Stash the original bytes so the user can re-download the source PDF / CSV / TXT later.
@@ -2374,7 +2380,11 @@ async def public_decode_text(body: PublicTextBody, request: Request, response: R
 @api.post("/public/decode-statement")
 async def public_decode_file(request: Request, response: Response, file: UploadFile = File(...)):
     await _enforce_statement_decoder_limit(request, response)
-    raw = await file.read()
+    # Phase 4: signature + virus scan + UUID rename before we touch it.
+    from upload_security import secure_read_upload, PROFILE_STATEMENT, sanitize_for_prompt
+    raw, safe_name, _kind = await secure_read_upload(
+        file, allowed_profiles=PROFILE_STATEMENT,
+    )
     if not raw:
         raise HTTPException(status_code=400, detail="Empty file")
     from document_extract import (
@@ -2382,7 +2392,7 @@ async def public_decode_file(request: Request, response: Response, file: UploadF
         CorruptFileError, PasswordProtectedError,
     )
     try:
-        text, input_method, page_count, parse_warnings = await extract_document(file.filename or "", raw)
+        text, input_method, page_count, parse_warnings = await extract_document(safe_name, raw)
     except UnsupportedFormatError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except FileTooLargeError as e:
@@ -2394,9 +2404,11 @@ async def public_decode_file(request: Request, response: Response, file: UploadF
         raise HTTPException(status_code=400, detail=f"This file appears to be damaged or unreadable: {e}")
     if not text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from file. Try a clearer photo or paste the text directly.")
+    # Phase 4: prompt-injection sanitisation.
+    text = sanitize_for_prompt(text)
     job_id = _submit_decode_job(
         text, input_method=input_method, document_pages=page_count,
-        parsing_warnings=parse_warnings, original_filename=file.filename,
+        parsing_warnings=parse_warnings, original_filename=safe_name,
     )
     return {"job_id": job_id, "status": "pending"}
 
@@ -3868,6 +3880,8 @@ except Exception as _e:
 
 app.include_router(api)
 
+# Phase 5 — install the security-headers middleware AFTER CORS so the headers
+# attach to every response (including preflight 204s).
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -3875,6 +3889,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+import security_headers as _security_headers
+_security_headers.install(app)
 
 
 # ---------------------------------------------------------------------------

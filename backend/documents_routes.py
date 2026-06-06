@@ -175,15 +175,14 @@ async def upload_document(
     scope = await _resolve_scope(request, None)  # uploads are owner-only
     if category not in CATEGORIES:
         raise HTTPException(status_code=400, detail={"error": "bad_category", "message": f"Unknown category. Use one of: {sorted(CATEGORIES)}"})
-    raw = await file.read()
+    # Phase 4: signature + virus scan + UUID rename.
+    from upload_security import secure_read_upload, PROFILE_DOCUMENT
+    raw, safe_name, file_kind = await secure_read_upload(
+        file, allowed_profiles=PROFILE_DOCUMENT, max_bytes=MAX_FILE_BYTES,
+    )
     size = len(raw)
     if size == 0:
         raise HTTPException(status_code=400, detail="Empty file")
-    if size > MAX_FILE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail={"error": "file_too_large", "message": f"Files must be 10 MB or smaller. Yours is {size / 1_048_576:.1f} MB."},
-        )
     existing_bytes = await _vault_total_bytes(scope["household_id"])
     if existing_bytes + size > MAX_VAULT_BYTES:
         raise HTTPException(
@@ -205,7 +204,8 @@ async def upload_document(
         "owner_user_id": scope["user_id"],
         "category": category,
         "title": (title or file.filename or "Untitled").strip()[:200],
-        "filename": (file.filename or "upload.bin")[:200],
+        # Store the UUID-renamed filename; the original is discarded for safety.
+        "filename": safe_name,
         "file_mimetype": mimetype,
         "file_size_bytes": size,
         "file_b64": base64.b64encode(raw).decode("ascii"),
