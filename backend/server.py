@@ -18,13 +18,37 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 from pypdf import PdfReader
+import jwt
 
 from auth import (
     hash_password,
     verify_password,
     create_token,
+    create_access_token,
+    create_refresh_token,
+    create_mfa_challenge_token,
+    decode_refresh_token,
+    decode_mfa_challenge_token,
     get_current_user_id,
+    get_current_user_payload,
 )
+from security_utils import (
+    assert_password_not_pwned,
+    revoke_jti,
+    revoke_all_user_tokens,
+    is_user_locked,
+    record_login_failure,
+    clear_login_failures,
+    encrypt_totp_secret,
+    decrypt_totp_secret,
+    is_totp_encrypted,
+    ensure_security_indexes,
+)
+import pyotp
+import qrcode
+import base64
+import io as _io_for_qr
+import secrets as _secrets_mod
 from models import (
     SignupRequest,
     LoginRequest,
@@ -171,6 +195,7 @@ def _user_public(u: dict, sub: Optional[dict] = None) -> UserPublic:
         subscription_status=(sub or {}).get("status"),
         trial_ends_at=(sub or {}).get("trial_ends_at"),
         cancel_at_period_end=(sub or {}).get("cancel_at_period_end"),
+        totp_enabled=bool(u.get("totp_enabled", False)),
     )
 
 
@@ -181,11 +206,14 @@ async def _user_public_with_sub(u: dict) -> UserPublic:
 
 
 # ----------------- auth -----------------
-@api.post("/auth/signup", response_model=TokenResponse)
+@api.post("/auth/signup")
 async def signup(payload: SignupRequest):
+    # Check existing email first to save an HIBP round-trip on collisions.
     existing = await db.users.find_one({"email": payload.email.lower()})
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered")
+    # Phase 1: refuse passwords seen in HIBP breach corpus.
+    await assert_password_not_pwned(payload.password)
     user_doc = {
         "id": new_id(),
         "email": payload.email.lower(),
@@ -205,23 +233,102 @@ async def signup(payload: SignupRequest):
             await link_client_by_invite_token(user_doc["id"], payload.invite)
     except Exception as _e:
         logger.warning("adviser auto-link (signup) failed: %s", _e)
-    token = create_token(user_doc["id"])
-    return TokenResponse(token=token, user=await _user_public_with_sub(user_doc))
+    access, _jti, _exp = create_access_token(user_doc["id"])
+    refresh, _rjti, _rexp = create_refresh_token(user_doc["id"])
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(user_doc)).model_dump(),
+    }
 
 
-@api.post("/auth/login", response_model=TokenResponse)
-async def login(payload: LoginRequest):
+@api.post("/auth/login")
+async def login(payload: LoginRequest, request: Request):
+    """Phase 1 hardened login:
+    - Generic error message for unknown email vs wrong password (anti-enumeration)
+    - 5-failure / 15-min lockout per account
+    - MFA branch: if the user opted into TOTP, returns `requires_mfa=true` and a
+      short-lived challenge token instead of the access pair.
+    """
     user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
-    if not user or not verify_password(payload.password, user["password_hash"]):
+    if not user:
+        # Constant-ish time: run a dummy bcrypt to mask the no-user path.
+        try:
+            verify_password(payload.password, "$2b$12$" + "x" * 53)
+        except Exception:
+            pass
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    token = create_token(user["id"])
-    return TokenResponse(token=token, user=await _user_public_with_sub(user))
+
+    locked, until = await is_user_locked(user["id"])
+    if locked:
+        raise HTTPException(
+            status_code=423,
+            detail=(
+                "Account temporarily locked due to too many failed attempts. "
+                f"Try again after {until.strftime('%H:%M UTC')} or reset your password."
+            ),
+        )
+
+    if not verify_password(payload.password, user["password_hash"]):
+        await record_login_failure(user["id"])
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    await clear_login_failures(user["id"])
+
+    # MFA branch (opt-in for caregivers / participants)
+    if user.get("totp_enabled") and user.get("totp_secret"):
+        return {
+            "requires_mfa": True,
+            "temp_token": create_mfa_challenge_token(user["id"]),
+        }
+
+    access, _jti, _exp = create_access_token(user["id"])
+    refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(user)).model_dump(),
+    }
 
 
 @api.get("/auth/me", response_model=UserPublic)
 async def me(user_id: str = Depends(get_current_user_id)):
     u = await _get_user(user_id)
     return await _user_public_with_sub(u)
+
+
+@api.post("/auth/refresh")
+async def refresh_session(request: Request):
+    """Exchange a refresh token for a new short-lived access token. Optional
+    rotation of the refresh token itself (defence against token reuse)."""
+    body = await request.json()
+    rt = (body or {}).get("refresh_token")
+    if not rt:
+        raise HTTPException(status_code=400, detail="Missing refresh token")
+    payload = decode_refresh_token(rt)
+    # Defence in depth — refresh tokens are also subject to the per-user
+    # `token_invalid_before` sentinel and the blocklist.
+    from auth import _enforce_revocation
+    await _enforce_revocation({**payload, "type": "access"})  # reuse the checks
+    user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="User no longer exists")
+    access, _jti, _exp = create_access_token(user["id"])
+    new_refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    # Rotate: revoke the *used* refresh jti so it cannot be re-used.
+    try:
+        old_jti = payload.get("jti")
+        old_exp = payload.get("exp")
+        if old_jti and old_exp:
+            await revoke_jti(
+                old_jti,
+                payload["sub"],
+                datetime.fromtimestamp(int(old_exp), tz=timezone.utc),
+                reason="refresh_rotated",
+            )
+    except Exception as _e:
+        logger.warning("refresh-token rotation revoke failed: %s", _e)
+    return {"token": access, "refresh_token": new_refresh}
 
 
 @api.put("/auth/plan", response_model=UserPublic)
@@ -300,12 +407,33 @@ async def google_session(body: GoogleSessionBody, response: Response):
             secure=True,
             samesite="none",
         )
-    token = create_token(user["id"])
-    return TokenResponse(token=token, user=await _user_public_with_sub(user))
+    access, _jti, _exp = create_access_token(user["id"])
+    refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(user)).model_dump(),
+    }
 
 
 @api.post("/auth/logout")
-async def logout(response: Response, user_id: str = Depends(get_current_user_id)):
+async def logout(
+    response: Response,
+    payload: dict = Depends(get_current_user_payload),
+):
+    user_id = payload["sub"]
+    # Blocklist the current access token so it can't be re-used until expiry.
+    try:
+        jti = payload.get("jti")
+        exp = payload.get("exp")
+        if jti and exp:
+            await revoke_jti(
+                jti, user_id,
+                datetime.fromtimestamp(int(exp), tz=timezone.utc),
+                reason="logout",
+            )
+    except Exception as _e:
+        logger.warning("logout blocklist failed: %s", _e)
     await db.user_sessions.delete_many({"user_id": user_id})
     response.delete_cookie("session_token", path="/")
     return {"ok": True}
@@ -385,6 +513,8 @@ async def forgot_password(body: ForgotBody, request: Request):
 
 @api.post("/auth/reset")
 async def reset_password(body: ResetBody):
+    # HIBP — refuse a reset to a known-compromised password.
+    await assert_password_not_pwned(body.new_password)
     rec = await db.password_resets.find_one({"token": body.token, "used": False}, {"_id": 0})
     if not rec:
         raise HTTPException(status_code=400, detail="Invalid or expired reset link")
@@ -393,8 +523,174 @@ async def reset_password(body: ResetBody):
         raise HTTPException(status_code=400, detail="Reset link has expired — request a new one")
     await db.users.update_one({"id": rec["user_id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
     await db.password_resets.update_one({"token": body.token}, {"$set": {"used": True, "used_at": now_iso()}})
+    # Kill every outstanding access / refresh token for this user.
+    try:
+        await revoke_all_user_tokens(rec["user_id"], reason="password_reset")
+    except Exception as _e:
+        logger.warning("revoke_all_user_tokens (reset) failed: %s", _e)
     u = await _get_user(rec["user_id"])
     return {"ok": True, "email": u["email"]}
+
+
+# ----------------- caregiver MFA (TOTP, opt-in) -----------------
+class MfaVerifyBody(BaseModel):
+    temp_token: str
+    code: str
+
+
+class MfaEnableBody(BaseModel):
+    setup_token: str
+    code: str
+
+
+class MfaDisableBody(BaseModel):
+    password: str
+    code: Optional[str] = None  # current TOTP or backup code
+
+
+def _qr_data_uri(otpauth_uri: str) -> str:
+    img = qrcode.make(otpauth_uri)
+    buf = _io_for_qr.BytesIO()
+    img.save(buf, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+@api.post("/auth/mfa/setup")
+async def mfa_setup(user_id: str = Depends(get_current_user_id)):
+    """Generate a new TOTP secret + QR code. Secret lives inside the setup
+    token (signed JWT, 10-min TTL) and is *not* stored until /mfa/enable
+    confirms a valid first code."""
+    u = await _get_user(user_id)
+    if u.get("totp_enabled"):
+        raise HTTPException(status_code=409, detail="Two-factor is already enabled on this account.")
+    secret = pyotp.random_base32()
+    otpauth = pyotp.totp.TOTP(secret).provisioning_uri(
+        name=u["email"], issuer_name="Wayly",
+    )
+    setup_payload_token = jwt.encode(
+        {
+            "sub": user_id,
+            "type": "mfa_setup",
+            "totp_secret": secret,
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
+        },
+        os.environ["JWT_SECRET"],
+        algorithm=os.environ.get("JWT_ALGORITHM", "HS256"),
+    )
+    return {
+        "setup_token": setup_payload_token,
+        "qr_data_uri": _qr_data_uri(otpauth),
+        "secret": secret,
+    }
+
+
+@api.post("/auth/mfa/enable")
+async def mfa_enable(body: MfaEnableBody, user_id: str = Depends(get_current_user_id)):
+    """Confirm the QR-scanned authenticator works, then persist the (encrypted)
+    secret + 8 backup codes."""
+    try:
+        data = jwt.decode(
+            body.setup_token,
+            os.environ["JWT_SECRET"],
+            algorithms=[os.environ.get("JWT_ALGORITHM", "HS256")],
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Setup window expired — restart 2FA setup.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid setup token.")
+    if data.get("type") != "mfa_setup" or data.get("sub") != user_id:
+        raise HTTPException(status_code=401, detail="Invalid setup token.")
+    secret = data.get("totp_secret")
+    if not secret or not pyotp.TOTP(secret).verify(body.code, valid_window=1):
+        raise HTTPException(status_code=401, detail="That code didn't match — try the latest 6 digits from your authenticator.")
+    # generate 8 single-use backup codes
+    plain_codes = [_secrets_mod.token_hex(4).upper() for _ in range(8)]
+    import bcrypt as _bc
+    hashed_codes = [_bc.hashpw(p.encode(), _bc.gensalt()).decode() for p in plain_codes]
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "totp_secret": encrypt_totp_secret(secret),
+            "totp_enabled": True,
+            "totp_backup_codes": hashed_codes,
+            "totp_enabled_at": now_iso(),
+        }},
+    )
+    return {"ok": True, "backup_codes": plain_codes}
+
+
+@api.post("/auth/mfa/verify")
+async def mfa_verify(body: MfaVerifyBody):
+    """Second leg of login: consume the short-lived challenge token + a 6-digit
+    TOTP (or 8-char backup code) and return the real access/refresh pair."""
+    data = decode_mfa_challenge_token(body.temp_token)
+    user_id = data["sub"]
+    u = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not u or not u.get("totp_secret"):
+        raise HTTPException(status_code=401, detail="2FA not configured for this account.")
+    code = (body.code or "").strip()
+    accepted = False
+    raw_secret = u.get("totp_secret")
+    plain_secret = decrypt_totp_secret(raw_secret)
+    if len(code) == 6 and code.isdigit() and plain_secret:
+        if pyotp.TOTP(plain_secret).verify(code, valid_window=1):
+            accepted = True
+            if raw_secret and not is_totp_encrypted(raw_secret):
+                try:
+                    await db.users.update_one(
+                        {"id": user_id},
+                        {"$set": {"totp_secret": encrypt_totp_secret(plain_secret)}},
+                    )
+                except Exception:
+                    pass
+    if not accepted:
+        # backup-code path (single-use)
+        import bcrypt as _bc
+        for h in list(u.get("totp_backup_codes") or []):
+            try:
+                if _bc.checkpw(code.upper().encode(), h.encode()):
+                    remaining = [x for x in u.get("totp_backup_codes") or [] if x != h]
+                    await db.users.update_one(
+                        {"id": user_id},
+                        {"$set": {"totp_backup_codes": remaining}},
+                    )
+                    accepted = True
+                    break
+            except Exception:
+                continue
+    if not accepted:
+        await record_login_failure(user_id)
+        raise HTTPException(status_code=401, detail="Invalid 2FA code.")
+    await clear_login_failures(user_id)
+    access, _jti, _exp = create_access_token(user_id)
+    refresh, _rjti, _rexp = create_refresh_token(user_id)
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(u)).model_dump(),
+    }
+
+
+@api.post("/auth/mfa/disable")
+async def mfa_disable(body: MfaDisableBody, user_id: str = Depends(get_current_user_id)):
+    """Disable 2FA — requires the current password AND (if a code is provided)
+    the current TOTP. The code is optional only as a last-resort recovery
+    if the user lost their authenticator AND their backup codes; the password
+    confirmation alone is enough but is *strongly* discouraged in the UI."""
+    u = await _get_user(user_id)
+    if not verify_password(body.password, u["password_hash"]):
+        raise HTTPException(status_code=401, detail="Password incorrect.")
+    if body.code:
+        # If they provided a code, it must match — extra defence.
+        raw = u.get("totp_secret")
+        plain = decrypt_totp_secret(raw)
+        if not plain or not pyotp.TOTP(plain).verify(body.code, valid_window=1):
+            raise HTTPException(status_code=401, detail="Invalid 2FA code.")
+    await db.users.update_one(
+        {"id": user_id},
+        {"$unset": {"totp_secret": "", "totp_enabled": "", "totp_backup_codes": "", "totp_enabled_at": ""}},
+    )
+    return {"ok": True}
 
 
 @api.post("/auth/verify/send")
@@ -3761,6 +4057,15 @@ async def _trial_scheduler_loop():
 @app.on_event("startup")
 async def _start_trial_scheduler():
     _asyncio.create_task(_trial_scheduler_loop())
+
+
+@app.on_event("startup")
+async def _security_index_bootstrap():
+    """Phase 1: ensure revoked-token TTL index + per-user lockout indexes exist."""
+    try:
+        await ensure_security_indexes()
+    except Exception as e:
+        logger.warning("security index bootstrap failed: %s", e)
 
 
 @app.on_event("startup")

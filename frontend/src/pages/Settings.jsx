@@ -563,6 +563,160 @@ function UsageTab() {
 }
 
 /* -------------------------------- Security -------------------------------- */
+function MfaPanel() {
+    const { user, refreshUser } = useAuth();
+    const enabled = !!user?.totp_enabled;
+    const [step, setStep] = useState("idle"); // idle | setup | verify | enabled
+    const [qr, setQr] = useState(null);
+    const [setupToken, setSetupToken] = useState(null);
+    const [secret, setSecret] = useState(null);
+    const [code, setCode] = useState("");
+    const [backupCodes, setBackupCodes] = useState(null);
+    const [busy, setBusy] = useState(false);
+    // disable flow
+    const [disablePassword, setDisablePassword] = useState("");
+    const [disableCode, setDisableCode] = useState("");
+
+    const startSetup = async () => {
+        setBusy(true);
+        try {
+            const { data } = await api.post("/auth/mfa/setup");
+            setQr(data.qr_data_uri);
+            setSecret(data.secret);
+            setSetupToken(data.setup_token);
+            setStep("setup");
+        } catch (err) {
+            toast.error(extractErrorMessage(err, "Could not start 2FA setup"));
+        } finally { setBusy(false); }
+    };
+
+    const confirmSetup = async () => {
+        setBusy(true);
+        try {
+            const { data } = await api.post("/auth/mfa/enable", { setup_token: setupToken, code: code.trim() });
+            setBackupCodes(data.backup_codes || []);
+            setStep("enabled");
+            toast.success("Two-factor enabled.");
+            await refreshUser();
+        } catch (err) {
+            toast.error(extractErrorMessage(err, "Code didn't match — try the latest 6 digits"));
+        } finally { setBusy(false); }
+    };
+
+    const disable = async () => {
+        if (!window.confirm("Disable two-factor authentication? Your account will be less secure.")) return;
+        setBusy(true);
+        try {
+            await api.post("/auth/mfa/disable", { password: disablePassword, code: disableCode || undefined });
+            toast.success("Two-factor disabled.");
+            setDisablePassword(""); setDisableCode("");
+            await refreshUser();
+        } catch (err) {
+            toast.error(extractErrorMessage(err, "Could not disable 2FA"));
+        } finally { setBusy(false); }
+    };
+
+    return (
+        <div className="bg-surface border border-kindred rounded-2xl p-6 max-w-xl" data-testid="security-mfa-panel">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="font-heading text-lg text-primary-k">Two-factor authentication</h3>
+                    <p className="text-sm text-muted-k mt-1">
+                        Add a 6-digit code from your authenticator app to every sign-in.
+                    </p>
+                </div>
+                <span
+                    className={`text-xs px-2 py-1 rounded-full ${enabled ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
+                    data-testid="security-mfa-status"
+                >
+                    {enabled ? "Enabled" : "Disabled"}
+                </span>
+            </div>
+
+            {!enabled && step === "idle" && (
+                <button
+                    onClick={startSetup}
+                    disabled={busy}
+                    data-testid="security-mfa-enable-btn"
+                    className="mt-4 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] disabled:opacity-60"
+                >
+                    {busy ? "Preparing…" : "Enable two-factor"}
+                </button>
+            )}
+
+            {step === "setup" && (
+                <div className="mt-4 space-y-4">
+                    <p className="text-sm text-muted-k">1. Scan this QR code with your authenticator app:</p>
+                    {qr && <img src={qr} alt="2FA QR code" className="w-44 h-44 rounded-lg border border-kindred" />}
+                    <details className="text-xs text-muted-k">
+                        <summary className="cursor-pointer">Can't scan? Enter secret manually</summary>
+                        <code className="block mt-2 break-all p-2 bg-surface-2 rounded">{secret}</code>
+                    </details>
+                    <label className="block">
+                        <span className="text-sm text-muted-k">2. Enter the 6-digit code from the app:</span>
+                        <input
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            inputMode="numeric"
+                            data-testid="security-mfa-verify-input"
+                            className="mt-1 w-40 rounded-md border border-kindred bg-surface px-3 py-2 text-lg tracking-widest font-mono"
+                            placeholder="123456"
+                        />
+                    </label>
+                    <button
+                        onClick={confirmSetup}
+                        disabled={busy || code.length < 6}
+                        data-testid="security-mfa-verify-btn"
+                        className="bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] disabled:opacity-60"
+                    >
+                        {busy ? "Verifying…" : "Verify and enable"}
+                    </button>
+                </div>
+            )}
+
+            {step === "enabled" && backupCodes && (
+                <div className="mt-4 space-y-3">
+                    <p className="text-sm font-medium text-primary-k">Backup codes — save these now</p>
+                    <p className="text-xs text-muted-k">Each can be used once if you lose your authenticator. Store them in a password manager — they will not be shown again.</p>
+                    <div className="grid grid-cols-2 gap-2 p-3 bg-surface-2 rounded-lg font-mono text-sm" data-testid="security-mfa-backup-codes">
+                        {backupCodes.map((c) => <span key={c}>{c}</span>)}
+                    </div>
+                </div>
+            )}
+
+            {enabled && (
+                <div className="mt-4 space-y-3">
+                    <p className="text-sm text-muted-k">Disable 2FA (not recommended). Requires your current password.</p>
+                    <input
+                        type="password"
+                        value={disablePassword}
+                        onChange={(e) => setDisablePassword(e.target.value)}
+                        placeholder="Current password"
+                        data-testid="security-mfa-disable-password"
+                        className="w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm"
+                    />
+                    <input
+                        value={disableCode}
+                        onChange={(e) => setDisableCode(e.target.value)}
+                        placeholder="Current 6-digit code (optional)"
+                        inputMode="numeric"
+                        data-testid="security-mfa-disable-code"
+                        className="w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm font-mono"
+                    />
+                    <button
+                        onClick={disable}
+                        disabled={busy || !disablePassword}
+                        data-testid="security-mfa-disable-btn"
+                        className="text-sm text-terracotta hover:underline disabled:opacity-60"
+                    >
+                        {busy ? "Disabling…" : "Disable two-factor"}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
 function SecurityTab() {
     const { user } = useAuth();
     const [sending, setSending] = useState(false);
@@ -575,6 +729,7 @@ function SecurityTab() {
                 <p className="text-sm text-muted-k mt-1">We'll email you a secure link to set a new password.</p>
                 <button onClick={sendReset} disabled={sending} data-testid="security-send-reset-btn" className="mt-4 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] disabled:opacity-60">{sending ? "Sending…" : "Send me a reset link"}</button>
             </div>
+            <MfaPanel />
         </div>
     );
 }

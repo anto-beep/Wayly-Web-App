@@ -30,6 +30,7 @@ class LoginRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     token: str
+    refresh_token: Optional[str] = None
     user: "UserPublic"
 
 
@@ -49,6 +50,8 @@ class UserPublic(BaseModel):
     subscription_status: Optional[str] = None  # "trialing" | "active" | "cancelled" | None
     trial_ends_at: Optional[str] = None        # ISO datetime when trial expires (if trialing)
     cancel_at_period_end: Optional[bool] = None
+    # Phase 1 security: surfaced so the Settings UI can show 2FA state.
+    totp_enabled: Optional[bool] = None
 
 
 class PlanUpdate(BaseModel):

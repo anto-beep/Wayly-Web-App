@@ -45,8 +45,15 @@ from pydantic import BaseModel, EmailStr
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from auth import (
-    JWT_SECRET, JWT_ALGORITHM, hash_password, verify_password,
+    ADMIN_JWT_SECRET, JWT_ALGORITHM, hash_password, verify_password,
 )
+from security_utils import (
+    encrypt_totp_secret, decrypt_totp_secret, is_totp_encrypted,
+)
+
+# Admin realm signs with a *separate* secret so a compromised user-tier JWT
+# secret cannot mint admin tokens. Module-local alias keeps the diff small.
+JWT_SECRET = ADMIN_JWT_SECRET
 
 router = APIRouter(prefix="/admin/auth", tags=["admin-auth"])
 bearer = HTTPBearer(auto_error=False)
@@ -395,7 +402,7 @@ async def admin_2fa_enable(body: TwoFAEnableBody, request: Request):
 
     plain_codes, hashed_codes = _gen_backup_codes()
     await db.users.update_one({"id": user_id}, {"$set": {
-        "totp_secret": secret,
+        "totp_secret": encrypt_totp_secret(secret),
         "totp_enabled": True,
         "totp_backup_codes": hashed_codes,
         "totp_enabled_at": _iso(_now()),
@@ -425,10 +432,23 @@ async def admin_2fa_verify(body: TwoFAVerifyBody, request: Request):
 
     code = (body.code or "").strip()
     accepted = False
+    # Decrypt TOTP secret transparently — supports legacy plaintext values.
+    raw_secret = user.get("totp_secret")
+    totp_secret_plain = decrypt_totp_secret(raw_secret)
     # Path 1: TOTP
-    if len(code) == 6 and code.isdigit():
-        if pyotp.TOTP(user["totp_secret"]).verify(code, valid_window=1):
+    if len(code) == 6 and code.isdigit() and totp_secret_plain:
+        if pyotp.TOTP(totp_secret_plain).verify(code, valid_window=1):
             accepted = True
+            # opportunistic migration: if the stored value was the legacy
+            # plaintext form, re-encrypt now.
+            if raw_secret and not is_totp_encrypted(raw_secret):
+                try:
+                    await db.users.update_one(
+                        {"id": user_id},
+                        {"$set": {"totp_secret": encrypt_totp_secret(totp_secret_plain)}},
+                    )
+                except Exception:
+                    pass
     # Path 2: Backup code (single-use)
     if not accepted:
         remaining = _consume_backup_code(user.get("totp_backup_codes") or [], code)

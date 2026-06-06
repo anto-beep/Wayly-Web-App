@@ -1874,3 +1874,51 @@ SEO audit Phases 1 through 9 are now closed. The Wayly platform is shippable to 
 - Optional: backend cron that runs `submit_urls(all_sitemap_urls())` daily so we never forget after a redeploy.
 - Optional: hook `submit_urls([article.url])` into the CMS publish flow in `admin_phase_e2.py` so every new article auto-pings.
 - The production crawler-cache will keep serving stale HTML to bots until purged. If Bing meta-tag verification still fails after redeploy, request a cache purge from Emergent Support.
+
+
+---
+
+## Iteration N — Security Hardening (Feb 2026) — IN PROGRESS
+
+Implementing the 10-phase security audit to meet the Australian Privacy Act
+1988 + NDB scheme. Phases gated on user approval.
+
+### Phase 0 — Discovery & Audit Report ✅ APPROVED
+- Report at `/app/security-audit/phase-0-findings.md` (1 CRITICAL, 11 HIGH,
+  12 MEDIUM, 4 LOW findings). Stack-discrepancy notes captured (React/CRA,
+  MongoDB, Stripe — not Next/Postgres/Airwallex).
+
+### Phase 1 — Password & Authentication Security ✅ DONE (12/12 tests pass)
+- Killed `JWT_SECRET="dev-secret"` fallback — fail-fast.
+- Rotated `JWT_SECRET`; introduced separate `ADMIN_JWT_SECRET`.
+- Refresh-token model: 60-min access + 30-day refresh + one-shot rotation.
+- Mongo blocklist (`revoked_tokens`, TTL index) on logout.
+- `token_invalid_before` sentinel — password reset kills all tokens instantly.
+- HIBP k-Anonymity refusing breached passwords on signup + reset.
+- Caregiver lockout (5 fails → 15-min lock, env-tunable).
+- Generic 401 "Invalid email or password" — anti-enumeration.
+- Caregiver opt-in TOTP MFA + 8 bcrypt-hashed backup codes.
+- Admin TOTP secrets transparently migrated to Fernet AEAD at rest.
+- Frontend: refresh-token storage + 401 auto-refresh interceptor; 2FA
+  challenge UI on Login; MFA enable/disable panel in Settings → Security.
+- ⚠️ Production env still needs the user to set the new secrets in the
+  deployment dashboard (preview env already rotated).
+- Delivery report: `/app/security-audit/phase-1-delivery.md`.
+
+### Phase 2 — Participant Data Isolation (NEXT, awaiting approval)
+- Central `assert_participant_access()` helper + automated isolation suite.
+
+### Phase 3 — Rate Limiting (planned)
+- Redis-backed (provision Redis first), wrap login/signup/reset/uploads.
+
+### Phase 4 — File Upload Security (planned)
+- ClamAV daemon, magic-byte validator, 20MB streamed limit, UUID rename,
+  prompt-injection sanitiser.
+
+### Phase 5 — HTTP Security Headers (planned)
+- HSTS, CSP, X-Frame-Options, X-Content-Type-Options, etc.
+
+### Phase 6 — Encryption & Storage Verification (planned)
+### Phase 7 — Dependency Security (planned)
+### Phase 8 — Admin Hardening (planned)
+### Phase 9 — NDB & Privacy Act Readiness (planned)
