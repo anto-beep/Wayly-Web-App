@@ -49,6 +49,7 @@ import qrcode
 import base64
 import io as _io_for_qr
 import secrets as _secrets_mod
+import rate_limit as _rl
 from models import (
     SignupRequest,
     LoginRequest,
@@ -204,7 +205,12 @@ async def _user_public_with_sub(u: dict) -> UserPublic:
 
 # ----------------- auth -----------------
 @api.post("/auth/signup")
-async def signup(payload: SignupRequest):
+async def signup(payload: SignupRequest, request: Request):
+    await _rl.enforce(
+        request,
+        ("signup_ip", _rl._client_ip(request)),
+        ("signup_email", payload.email.lower()),
+    )
     # Check existing email first to save an HIBP round-trip on collisions.
     existing = await db.users.find_one({"email": payload.email.lower()})
     if existing:
@@ -241,12 +247,18 @@ async def signup(payload: SignupRequest):
 
 @api.post("/auth/login")
 async def login(payload: LoginRequest, request: Request):
-    """Phase 1 hardened login:
+    """Phase 1 hardened login + Phase 3 rate limiting:
     - Generic error message for unknown email vs wrong password (anti-enumeration)
     - 5-failure / 15-min lockout per account
+    - Per-IP + per-email Redis rate limit (5/5min/IP + 10/hour/email)
     - MFA branch: if the user opted into TOTP, returns `requires_mfa=true` and a
       short-lived challenge token instead of the access pair.
     """
+    await _rl.enforce(
+        request,
+        ("login_ip", _rl._client_ip(request)),
+        ("login_email", payload.email.lower()),
+    )
     user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
     if not user:
         # Constant-ish time: run a dummy bcrypt to mask the no-user path.
@@ -479,6 +491,7 @@ class VerifyBody(BaseModel):
 @api.post("/auth/forgot")
 async def forgot_password(body: ForgotBody, request: Request):
     """Email enumeration-safe: always returns ok=True after a short delay."""
+    await _rl.enforce(request, ("forgot_email", body.email.lower()))
     user = await db.users.find_one({"email": body.email.lower()}, {"_id": 0})
     if user:
         token = new_id().replace("-", "") + new_id().replace("-", "")
@@ -509,7 +522,8 @@ async def forgot_password(body: ForgotBody, request: Request):
 
 
 @api.post("/auth/reset")
-async def reset_password(body: ResetBody):
+async def reset_password(body: ResetBody, request: Request):
+    await _rl.enforce(request, ("reset_ip", _rl._client_ip(request)))
     # HIBP — refuse a reset to a known-compromised password.
     await assert_password_not_pwned(body.new_password)
     rec = await db.password_resets.find_one({"token": body.token, "used": False}, {"_id": 0})
@@ -1155,6 +1169,8 @@ async def upload_statement(
     """
     h = await _require_household(user_id)
     user = await _get_user(user_id)
+    # Phase 3: cap uploads at 20/hour/account.
+    await _rl.enforce(request, ("upload_account", user_id))
     # Resolve the active participant so this statement is correctly scoped.
     active_p = await _resolve_active_participant(user_id, request)
     participant_id = active_p["id"] if active_p else None
@@ -1845,7 +1861,11 @@ async def _require_paid_plan(request: Request, response: Response, tool_label: s
     """Dependency: only Solo/Family/Advisor or active trial may call gated tools.
 
     401 for unauthenticated. 403 for Free / expired-trial. Returns the user.
+
+    Phase 3: a per-IP burst limit (10/hour) is applied BEFORE the auth check so
+    unauthenticated scrapers can't waste cycles on the AI tool router.
     """
+    await _rl.enforce(request, ("tools_unauth_ip", _rl._client_ip(request)))
     user = await _user_from_request(request)
     if not user:
         raise HTTPException(
@@ -1936,7 +1956,12 @@ async def _enforce_statement_decoder_limit(request: Request, response: Response)
     - Logged-in Free users: 1 decode per calendar month (tracked by user_id).
     - Unauthenticated visitors: 1 decode per calendar month (tracked by
       browser fingerprint + IP fallback).
+
+    Phase 3: a per-IP burst limit (10/hour) is applied to everyone — even paid
+    users — to absorb scraping/abuse.
     """
+    # Burst-protect first — fail-open if Redis is down (paid users still work).
+    await _rl.enforce(request, ("tools_unauth_ip", _rl._client_ip(request)))
     user = await _user_from_request(request)
     if user:
         plan = (user.get("plan") or "free").lower()
@@ -4063,6 +4088,21 @@ async def _security_index_bootstrap():
         await ensure_security_indexes()
     except Exception as e:
         logger.warning("security index bootstrap failed: %s", e)
+
+
+@app.on_event("startup")
+async def _rate_limit_bootstrap():
+    """Phase 3: warm up the Redis client so the first request doesn't pay
+    the connection cost (or — if Redis is unreachable — so we surface a
+    single startup warning instead of a per-request one)."""
+    try:
+        r = await _rl._get_redis()
+        if r is None:
+            logger.warning("rate limiter: Redis not configured (REDIS_URL missing) — limits are fail-open")
+        else:
+            logger.info("rate limiter: Redis ready, %d buckets configured", len(_rl.LIMITS))
+    except Exception as e:
+        logger.warning("rate limiter bootstrap failed: %s", e)
 
 
 @app.on_event("startup")

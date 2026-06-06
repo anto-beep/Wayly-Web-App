@@ -334,6 +334,9 @@ async def admin_login(body: LoginBody, request: Request):
       { requires_2fa: true,        temp_token, role }     (normal path)
       { requires_2fa_setup: true,  setup_token, qr_data_uri, secret, role }  (first time)
     """
+    # Phase 3: lock the front door — 5 attempts per 5 min per IP.
+    from rate_limit import enforce as _rl_enforce, _client_ip
+    await _rl_enforce(request, ("admin_login_ip", _client_ip(request)))
     ip = request.client.host if request.client else None
     email = body.email.lower().strip()
     user = await db.users.find_one({"email": email}, {"_id": 0})

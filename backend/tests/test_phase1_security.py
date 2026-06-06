@@ -21,6 +21,12 @@ import pytest
 import requests
 import pyotp
 from pymongo import MongoClient
+from pathlib import Path
+from dotenv import load_dotenv
+
+# CRITICAL: load .env BEFORE importing rate_limit so REDIS_URL is visible.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://aged-care-os.preview.emergentagent.com").rstrip("/")
 API = f"{BASE_URL}/api"
@@ -51,8 +57,36 @@ def _reset_cathy_state():
 @pytest.fixture(autouse=True)
 def _per_test_setup():
     _reset_cathy_state()
+    _purge_rate_limits_for_tests()
     yield
     _reset_cathy_state()
+    _purge_rate_limits_for_tests()
+
+
+def _purge_rate_limits_for_tests() -> None:
+    """Phase 3: blow away the rate-limit counters that the Phase 1 tests
+    intentionally exhaust, so the suites don't interfere with each other."""
+    try:
+        # Talk to Redis directly — bypass the rate_limit module cache that
+        # may have cached `_redis=None` from an earlier import where
+        # REDIS_URL wasn't yet visible.
+        import asyncio
+        async def go():
+            try:
+                import redis.asyncio as redis_async
+                url = os.environ.get("REDIS_URL")
+                if not url:
+                    return
+                r = redis_async.from_url(url, decode_responses=True)
+                keys = await r.keys("rl:*")
+                if keys:
+                    await r.delete(*keys)
+                await r.close()
+            except Exception:
+                pass
+        asyncio.run(go())
+    except Exception:
+        pass
 
 
 @pytest.fixture

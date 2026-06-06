@@ -1912,8 +1912,16 @@ Implementing the 10-phase security audit to meet the Australian Privacy Act
 - Automated suite `/app/backend/tests/test_phase2_isolation.py` proves Account A cannot read or write Account B's data across query, body, and header attack vectors.
 - Delivery report: `/app/security-audit/phase-2-delivery.md`.
 
-### Phase 3 — Rate Limiting (NEXT, awaiting approval)
-- Provision Redis (`REDIS_URL` env var); slowapi or in-house token-bucket; wrap `/auth/login`, `/auth/signup`, `/auth/forgot`, `/auth/reset`, file uploads, public tools, admin endpoints.
+### Phase 3 — Rate Limiting ✅ DONE (32/32 tests pass across Phase 1+2+3)
+- New `/app/backend/rate_limit.py` — Redis-backed (`redis://localhost:6379/0` in preview), 11 buckets.
+- Applied to `/auth/login` (5/5min/IP + 10/hour/email), `/auth/signup` (same), `/auth/forgot` (3/hour/email), `/auth/reset` (5/hour/IP), `/statements/upload` (20/hour/account), `/public/*` AI tools via `_require_paid_plan` + decoder (10/hour/IP), `/admin/auth/login` (5/5min/IP).
+- Fail-open by default; fail-closed for login + admin-login buckets so a Redis outage biases secure on attack surfaces.
+- Friendly 429 + `Retry-After` header — frontend already toasts these via the existing axios interceptor.
+- ⚠️ Production needs `REDIS_URL` env var (Upstash free tier is plenty); if unset, app keeps running with limits disabled.
+- Delivery report: `/app/security-audit/phase-3-delivery.md`.
+
+### Phase 4 — File Upload Security (NEXT, awaiting approval)
+- Full ClamAV daemon + magic-byte validation + 20MB streamed limit + UUID rename + prompt-injection sanitiser.
 
 ### Phase 3 — Rate Limiting (planned)
 - Redis-backed (provision Redis first), wrap login/signup/reset/uploads.
