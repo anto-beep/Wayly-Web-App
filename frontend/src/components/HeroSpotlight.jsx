@@ -193,31 +193,22 @@ export default function HeroSpotlight() {
                         </div>
                     </div>
 
-                    {/* LANE 2 — three stacked dashboard cards (cols 6-8), no overlap */}
-                    <div className="lg:col-span-3 order-3 lg:order-2 flex flex-col justify-center gap-4 lg:gap-5" data-testid="hero-card-stack">
-                        <BudgetCard />
-                        <StatementCard />
-                        <CarePlanCard />
-                    </div>
-
-                    {/* LANE 3 — lifestyle photo (cols 9-12) — kept clean, no cards on top */}
-                    <div className="lg:col-span-4 order-2 lg:order-3 relative flex">
-                        <div className="relative w-full rounded-3xl overflow-hidden wayly-card-shadow min-h-[460px] lg:min-h-[640px]">
-                            <picture>
-                                <source srcSet="/branding/hero-photo-portrait.webp?v=2" type="image/webp" />
-                                <img
-                                    src="/branding/hero-photo-portrait.jpg?v=2"
-                                    alt="An adult daughter and her mother smile while reviewing the Wayly dashboard on a tablet together."
-                                    className="absolute inset-0 w-full h-full object-cover object-center"
-                                    loading="eager"
-                                    fetchpriority="high"
-                                    width="570"
-                                    height="773"
-                                    data-testid="hero-photo"
-                                />
-                            </picture>
-                            {/* Soft sky gradient at the top edge so the photo blends into the page */}
-                            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#EAF4FB]/55 to-transparent pointer-events-none" />
+                    {/* LANE 2 — single real dashboard screenshot (cols 6-12) — shows users
+                        the actual product instead of decorative card mocks. */}
+                    <div className="lg:col-span-7 order-3 lg:order-2 relative flex items-center" data-testid="hero-dashboard-stack">
+                        <div className="relative w-full rounded-3xl overflow-hidden wayly-card-shadow ring-1 ring-wayly-neutral-200 bg-white">
+                            <img
+                                src="/branding/screenshots/dashboard-hero.png?v=3"
+                                alt="The Wayly dashboard — a Family-plan participant's quarterly Support at Home wellbeing summary showing budget, alerts, statements, lifetime cap, monthly spend chart and anomaly timeline."
+                                className="block w-full h-auto"
+                                loading="eager"
+                                fetchpriority="high"
+                                width="1440"
+                                height="1000"
+                                data-testid="hero-dashboard-shot"
+                            />
+                            {/* Faint warm overlay at the top to blend into the hero band */}
+                            <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
                         </div>
                     </div>
                 </div>

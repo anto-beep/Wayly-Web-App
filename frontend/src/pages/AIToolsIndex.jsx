@@ -89,9 +89,30 @@ export default function AIToolsIndex() {
             <MarketingHeader />
             <section className="mx-auto max-w-7xl px-6 pt-12 pb-8">
                 <span className="overline">Free AI tools</span>
-                <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4 leading-tight max-w-3xl">
-                    Eight tools. No signup. Built for Australian families.
+                <h1 className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4 leading-tight max-w-3xl wf-dot-lg">
+                    Eight tools. No signup. Built for Australian families
                 </h1>
+                <p className="mt-5 text-lg text-muted-k max-w-2xl">
+                    Drop in a statement, paste a care plan, or run the numbers — here's the kind of plain-English answer you'll get back.
+                </p>
+            </section>
+
+            {/* Product preview — the actual Statement Decoder UI users will see. */}
+            <section className="mx-auto max-w-7xl px-6 pb-12">
+                <div className="rounded-2xl overflow-hidden wayly-card-shadow ring-1 ring-wayly-neutral-200 bg-white">
+                    <img
+                        src="/branding/screenshots/statement-decoder.png?v=1"
+                        alt="The Wayly Statement Decoder — paste a Support at Home monthly statement and get a plain-English breakdown of every line item, anomaly and rule check."
+                        className="block w-full h-auto"
+                        loading="eager"
+                        width="1440"
+                        height="900"
+                        data-testid="aitools-product-shot"
+                    />
+                </div>
+                <p className="mt-3 text-sm text-muted-k italic">
+                    Above — Statement Decoder running on a real Support at Home monthly statement.
+                </p>
             </section>
             <section className="mx-auto max-w-7xl px-6 pb-20">
                 <AIAccuracyBanner className="mb-6" />
