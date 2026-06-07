@@ -97,23 +97,6 @@ export default function AIToolsIndex() {
                 </p>
             </section>
 
-            {/* Product preview — the actual Statement Decoder UI users will see. */}
-            <section className="mx-auto max-w-7xl px-6 pb-12">
-                <div className="rounded-2xl overflow-hidden wayly-card-shadow ring-1 ring-wayly-neutral-200 bg-white">
-                    <img
-                        src="/branding/screenshots/statement-decoder.png?v=1"
-                        alt="The Wayly Statement Decoder — paste a Support at Home monthly statement and get a plain-English breakdown of every line item, anomaly and rule check."
-                        className="block w-full h-auto"
-                        loading="eager"
-                        width="1440"
-                        height="900"
-                        data-testid="aitools-product-shot"
-                    />
-                </div>
-                <p className="mt-3 text-sm text-muted-k italic">
-                    Above — Statement Decoder running on a real Support at Home monthly statement.
-                </p>
-            </section>
             <section className="mx-auto max-w-7xl px-6 pb-20">
                 <AIAccuracyBanner className="mb-6" />
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="ai-tools-grid">

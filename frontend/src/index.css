@@ -675,3 +675,33 @@ header.bg-\[\#0E2A47\] a[aria-current="page"] {
     color: var(--wayly-neutral-900); /* dark on the white input chip itself */
     background-color: #FFFFFF;
 }
+
+
+/* ============================================================ *
+ *  DROPDOWN MENU INSIDE TEAL HEADER — keep dark text readable   *
+ * ============================================================ *
+ * The white user dropdown is a DOM descendant of the teal header,
+ * so the "header.bg-[#0E2A47] a → color:#FFF" rule above would
+ * paint its menu links white-on-white (invisible). Override here
+ * to restore dark text + visible hover. */
+header [data-testid="nav-dropdown"] a,
+header [data-testid="nav-dropdown"] a:hover,
+header [data-testid="nav-dropdown"] a:focus,
+header [data-testid="nav-dropdown"] a:visited,
+[data-testid="nav-dropdown"] a,
+[data-testid="nav-dropdown"] a:hover,
+[data-testid="nav-dropdown"] a:focus,
+[data-testid="nav-dropdown"] a:visited {
+    color: var(--wayly-teal-600) !important;
+    text-decoration: none !important;
+}
+header [data-testid="nav-dropdown"] a *,
+header [data-testid="nav-dropdown"] button *,
+[data-testid="nav-dropdown"] a *,
+[data-testid="nav-dropdown"] button * {
+    color: inherit !important;
+}
+header [data-testid="nav-dropdown"] a:hover,
+[data-testid="nav-dropdown"] a:hover {
+    background-color: var(--wayly-teal-50) !important;
+}
