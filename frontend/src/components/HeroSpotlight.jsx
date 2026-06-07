@@ -193,29 +193,20 @@ export default function HeroSpotlight() {
                         </div>
                     </div>
 
-                    {/* LANE 2 — auto-playing 6s dashboard preview (cols 6-12).
-                        Muted + loop + playsInline so it autoplays on every
-                        browser/mobile without a user gesture. PNG poster + WebM
-                        + MP4 covers every device, total <400 KB. */}
+                    {/* LANE 2 — single real dashboard screenshot (cols 6-12) — shows users
+                        the actual product instead of decorative card mocks. */}
                     <div className="lg:col-span-7 order-3 lg:order-2 relative flex items-center" data-testid="hero-dashboard-stack">
                         <div className="relative w-full rounded-3xl overflow-hidden wayly-card-shadow ring-1 ring-wayly-neutral-200 bg-white">
-                            <video
-                                src="/branding/screenshots/dashboard-hero.mp4?v=4"
-                                poster="/branding/screenshots/dashboard-hero.png?v=4"
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                                preload="metadata"
-                                aria-label="A short loop of the Wayly dashboard showing a Family-plan participant's quarterly Support at Home summary."
+                            <img
+                                src="/branding/screenshots/dashboard-hero.png?v=5"
+                                alt="The Wayly dashboard — a Family-plan participant's quarterly Support at Home wellbeing summary showing budget, alerts, statements, lifetime cap, monthly spend chart and anomaly timeline."
                                 className="block w-full h-auto"
-                                data-testid="hero-dashboard-video"
-                            >
-                                <source src="/branding/screenshots/dashboard-hero.webm?v=4" type="video/webm" />
-                                <source src="/branding/screenshots/dashboard-hero.mp4?v=4" type="video/mp4" />
-                                {/* Final fallback for very old browsers — the still */}
-                                <img src="/branding/screenshots/dashboard-hero.png?v=4" alt="The Wayly dashboard." className="block w-full h-auto" />
-                            </video>
+                                loading="eager"
+                                fetchpriority="high"
+                                width="1280"
+                                height="720"
+                                data-testid="hero-dashboard-shot"
+                            />
                             <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
                         </div>
                     </div>
