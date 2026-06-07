@@ -41,10 +41,32 @@ def _signup_or_login(email: str, password: str, name: str) -> dict:
         r = requests.post(f"{API}/auth/login", json={"email": email, "password": password}, timeout=15)
         if r.status_code == 200 and r.json().get("token"):
             return r.json()
+    # Maybe the rate-limit on the IP burst is tripping us — purge & retry.
+    if r.status_code == 429:
+        time.sleep(2)
+        r = requests.post(f"{API}/auth/login", json={"email": email, "password": password}, timeout=15)
+        if r.status_code == 200 and r.json().get("token"):
+            return r.json()
     # signup
     sr = requests.post(f"{API}/auth/signup", json={
         "email": email, "password": password, "name": name, "role": "caregiver", "plan": "free",
     }, timeout=15)
+    if sr.status_code == 409:
+        # An account exists from a prior run but the password doesn't match.
+        # Reset it directly in Mongo so subsequent runs can log in.
+        import bcrypt as _bc
+        new_hash = _bc.hashpw(password.encode(), _bc.gensalt()).decode()
+        db.users.update_one(
+            {"email": email},
+            {"$set": {
+                "password_hash": new_hash,
+                "user_failed_login_count": 0,
+                "user_lockout_until": None,
+            }, "$unset": {"token_invalid_before": ""}},
+        )
+        r = requests.post(f"{API}/auth/login", json={"email": email, "password": password}, timeout=15)
+        assert r.status_code == 200, f"post-bcrypt-reset login failed: {r.text}"
+        return r.json()
     assert sr.status_code in (200, 201), sr.text
     return sr.json()
 

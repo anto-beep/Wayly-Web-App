@@ -31,6 +31,7 @@ from auth import (
     decode_mfa_challenge_token,
     get_current_user_id,
     get_current_user_payload,
+    get_current_admin_id,
 )
 from security_utils import (
     assert_password_not_pwned,
@@ -3382,21 +3383,85 @@ class AccountDeleteBody(BaseModel):
 async def delete_account(body: AccountDeleteBody, user_id: str = Depends(get_current_user_id)):
     if body.confirm != "delete my account":
         raise HTTPException(status_code=400, detail="Type 'delete my account' to confirm")
-    await db.users.update_one(
-        {"id": user_id},
-        {"$set": {
-            "email": f"deleted+{user_id}@kindred.local",
-            "name": "Deleted user",
-            "password_hash": "",
-            "deleted_at": now_iso(),
-            "plan": "free",
-            "household_id": None,
-        }},
-    )
-    await db.subscriptions.update_many({"user_id": user_id}, {"$set": {"status": "cancelled", "cancel_at_period_end": True}})
-    await db.household_members.update_many({"user_id": user_id}, {"$set": {"status": "removed", "removed_at": now_iso()}})
-    await db.user_sessions.delete_many({"user_id": user_id})
-    return {"ok": True}
+    # Phase 9: full deletion cascade across every scoped collection +
+    # immediate anonymisation; final hard-delete fires 60 days later.
+    from privacy import soft_delete_account
+    result = await soft_delete_account(user_id)
+    return {
+        "ok": True,
+        "deletion_completes_at": result.get("deletion_completes_at"),
+        "message": (
+            "Your account has been deactivated. All your personal data will "
+            "be permanently deleted from our systems in 60 days. If you change "
+            "your mind, contact hello@wayly.com.au within that window."
+        ),
+    }
+
+
+@api.get("/auth/account/export")
+async def export_account_data(user_id: str = Depends(get_current_user_id)):
+    """Phase 9 — Australian Privacy Act APP 12: user-initiated data export.
+
+    Returns every piece of personal data Wayly holds about this user, across
+    every collection that references their user / household / account scope.
+    Sensitive fields like `password_hash`, `totp_secret`, JWT material are
+    excluded — they're not "personal information" the user needs back."""
+    from privacy import SCOPED_COLLECTIONS
+    user = await db.users.find_one({"id": user_id}, {
+        "_id": 0,
+        "password_hash": 0, "totp_secret": 0, "totp_backup_codes": 0,
+        "user_lockout_until": 0, "user_failed_login_count": 0,
+        "token_invalid_before": 0, "token_invalid_reason": 0,
+    })
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    hid = user.get("household_id")
+    acct = await db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0})
+    acct_id = (acct or {}).get("id")
+
+    bundle: Dict[str, list] = {}
+    bundle["user"] = [user]
+    if acct:
+        bundle["account"] = [acct]
+
+    for coll, field in SCOPED_COLLECTIONS:
+        if coll in ("revoked_tokens", "user_sessions", "admin_sessions", "admin_login_devices", "password_resets"):
+            continue  # session/auth metadata — not personal data
+        # Build the OR query
+        clauses: list[dict] = []
+        if field == "user_id":
+            clauses.append({"user_id": user_id})
+        elif field == "owner_user_id":
+            clauses.append({"owner_user_id": user_id})
+        elif field == "generated_by":
+            clauses.append({"generated_by": user_id})
+        elif field == "client_user_id":
+            clauses.append({"client_user_id": user_id})
+        elif field == "household_id" and hid:
+            clauses.append({"household_id": hid})
+        if acct_id:
+            clauses.append({"account_id": acct_id})
+        if not clauses:
+            continue
+        q = clauses[0] if len(clauses) == 1 else {"$or": clauses}
+        cur = db[coll].find(q, {"_id": 0})
+        rows = await cur.to_list(2000)
+        # Strip raw file bytes from documents — let the user re-download
+        # individual files via the existing `/documents/{id}/download`
+        # endpoint if they want the binaries.
+        for r in rows:
+            for k in ("file_b64", "image_b64", "audio_b64"):
+                if k in r:
+                    r[k] = f"[redacted — re-download via /api/documents/{r.get('id', '')}/download]"
+        if rows:
+            bundle[coll] = rows
+
+    return {
+        "exported_at": now_iso(),
+        "user_id": user_id,
+        "note": "This is the complete personal data Wayly holds about you under Australian Privacy Act APP 12. File contents (PDFs, photos, audio) are referenced by ID — re-download them individually if needed.",
+        "data": bundle,
+    }
 
 
 
@@ -3892,6 +3957,23 @@ app.add_middleware(
 import security_headers as _security_headers
 _security_headers.install(app)
 
+# Phase 8 — admin gate + IP allowlist + maintenance mode
+# (maintenance toggle endpoints already exist in admin_phase_e.py;
+# audit-chain verify is a fresh add)
+import admin_hardening as _admin_hardening
+_admin_hardening.install(app)
+
+
+@api.get("/admin/audit-log/verify")
+async def admin_verify_audit_chain(user_id: str = Depends(get_current_admin_id)):
+    ok, broken_at = await _admin_hardening.verify_chain()
+    await _admin_hardening.append_audit(
+        actor_id=user_id, action="audit_chain_verify",
+        result="success" if ok else "tampered",
+        detail={"broken_at_seq": broken_at} if not ok else {},
+    )
+    return {"ok": ok, "broken_at_seq": broken_at}
+
 
 # ---------------------------------------------------------------------------
 # Trial lifecycle scheduler — sends T-1 reminder + auto-downgrades on expiry.
@@ -4119,6 +4201,18 @@ async def _rate_limit_bootstrap():
             logger.info("rate limiter: Redis ready, %d buckets configured", len(_rl.LIMITS))
     except Exception as e:
         logger.warning("rate limiter bootstrap failed: %s", e)
+
+
+@app.on_event("startup")
+async def _privacy_purge_scheduler():
+    """Phase 9: kick off the 60-day hard-delete background task."""
+    try:
+        import privacy as _privacy
+        _privacy.start_scheduler()
+        logger.info("privacy purge scheduler started (interval=%ds, window=%dd)",
+                    _privacy._SCHEDULER_INTERVAL_S, _privacy.SOFT_DELETE_WINDOW_DAYS)
+    except Exception as e:
+        logger.warning("privacy purge scheduler failed to start: %s", e)
 
 
 @app.on_event("startup")

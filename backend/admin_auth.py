@@ -475,6 +475,18 @@ async def admin_2fa_verify(body: TwoFAVerifyBody, request: Request):
     safe = {k: v for k, v in user.items() if k not in ("password_hash", "totp_secret", "totp_backup_codes")}
     token = _make_admin_token(user_id, sid, user["admin_role"])
     await audit_log(user_id, "admin_login_complete", ip=ip)
+    # Phase 8: append to hash-chained audit log + new-device email alert.
+    try:
+        from admin_hardening import append_audit, record_admin_signin_and_maybe_alert
+        await append_audit(
+            actor_id=user_id, action="admin_login_complete",
+            ip=ip, result="success",
+            detail={"sid": sid, "role": user.get("admin_role")},
+        )
+        await record_admin_signin_and_maybe_alert(user, request)
+    except Exception as _e:
+        # never block the sign-in on logging failures.
+        pass
     return {"token": token, "admin": _public_admin(safe)}
 
 

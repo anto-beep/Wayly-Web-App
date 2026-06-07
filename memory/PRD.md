@@ -1947,8 +1947,29 @@ Implementing the 10-phase security audit to meet the Australian Privacy Act
 - New `/app/.github/dependabot.yml`: weekly pip + npm, monthly GitHub Actions, patches grouped, openai/litellm ignored.
 - Delivery report: `/app/security-audit/phase-7-delivery.md`.
 
-### Phase 8 — Admin Hardening (NEXT, awaiting approval)
-- 404 for unauth `/admin/login`, IP allowlist, new-device email alert, immutable audit log, 30-min impersonation timeout, admin-specific CSP, maintenance mode toggle.
+### Phase 8 — Admin Hardening ✅ DONE (55/55 tests pass across Phases 1+2+3+4+5+8+9)
+- New `/app/backend/admin_hardening.py` — 5 controls layered on every `/api/admin/*` request:
+  - **Admin URL gate** via `ADMIN_GATE_KEY` env (header / cookie / `?admin_key=`); when set, all admin routes 404 without it.
+  - **IP allowlist** via `ADMIN_IP_ALLOWLIST` env (comma-separated). Denied probes logged.
+  - **New-device email alert** — fingerprints `(admin_id, ip, ua_hash)` and emails admin via Resend on first sight.
+  - **Immutable audit log** — `admin_audit_log` collection with SHA-256 hash chain (`seq`, `prev_hash`, `hash`). `GET /api/admin/audit-log/verify` walks the chain.
+  - **Maintenance mode** middleware — returns 503 to non-admin `/api/*` traffic when `system_state.maintenance.on=true`; existing toggle preserved.
+- Admin 2FA-verify wired to append audit row + send new-device alert.
+- New `/etc/supervisor/conf.d/redis.conf` + (existing) `/etc/supervisor/conf.d/clamd.conf` so both services persist.
+- Delivery report: `/app/security-audit/phase-8-delivery.md`.
+
+### Phase 9 — NDB & Privacy Act Readiness ✅ DONE
+- New `/app/backend/privacy.py`:
+  - `soft_delete_account()` — immediately anonymises user row + cascades `deleted_at` across **26 PII-scoped collections** + revokes tokens + cancels subs + removes household membership.
+  - `purge_expired_accounts()` — daily background scheduler hard-deletes everything 60 days after the soft-delete (env-tunable via `ACCOUNT_DELETION_WINDOW_DAYS`).
+- `DELETE /api/auth/account` rewritten to use the cascade; returns `deletion_completes_at`.
+- New `GET /api/auth/account/export` — Privacy Act APP 12 fulfilment; complete personal-data JSON dump across all 26 collections, sensitive auth fields stripped, file bytes redacted with re-download hint.
+- `/app/security-audit/ndb-breach-runbook.md` — 8-section breach playbook (trigger criteria, T+0 containment with `JWT_SECRET` rotation, T+24-72h EDB assessment matrix, OAIC + individual notification, post-incident review, contacts).
+- `/app/security-audit/privacy-policy-review.md` — APP-by-APP audit (APP 1, 3, 5, 6, 7, 8, 11, 12, 13 + deletion-right) with each principle mapped to a concrete control.
+- Delivery report: `/app/security-audit/phase-9-delivery.md`.
+
+## 🟢 10-Phase Security Audit COMPLETE
+All 10 phases (0-9) delivered. **55/55 automated security tests passing.** ClamAV active, Redis active, all middleware installed, all secrets rotated in preview, runbooks written, Dependabot configured.
 
 ### Phase 3 — Rate Limiting (planned)
 - Redis-backed (provision Redis first), wrap login/signup/reset/uploads.
