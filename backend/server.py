@@ -3957,6 +3957,10 @@ app.add_middleware(
 import security_headers as _security_headers
 _security_headers.install(app)
 
+# Phase-monitoring-1+2: Sentry + structured JSON logging + request IDs
+import observability as _observability
+_observability.install(app)
+
 # Phase 8 — admin gate + IP allowlist + maintenance mode
 # (maintenance toggle endpoints already exist in admin_phase_e.py;
 # audit-chain verify is a fresh add)
