@@ -104,7 +104,7 @@ PyJWT==2.13.0
 pymongo==4.17.0
 pyotp==2.9.0
 pyparsing==3.3.2
-pypdf==6.10.2
+pypdf==6.13.0
 pytest==9.0.3
 pytest-asyncio==1.4.0
 python-dateutil==2.9.0.post0
