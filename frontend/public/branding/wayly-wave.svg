@@ -2,16 +2,16 @@
   <title>Wayly wave</title>
   <defs>
     <linearGradient id="ww-1" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#BFE0F5"/>
-      <stop offset="100%" stop-color="#6FE3DA"/>
+      <stop offset="0%" stop-color="#F4EFE7"/>
+      <stop offset="100%" stop-color="#E7E0D5"/>
     </linearGradient>
     <linearGradient id="ww-2" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#1E7BD9"/>
-      <stop offset="100%" stop-color="#2BC4D6"/>
+      <stop offset="0%" stop-color="#3D8488"/>
+      <stop offset="100%" stop-color="#1A696E"/>
     </linearGradient>
     <linearGradient id="ww-3" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0E2A47"/>
-      <stop offset="100%" stop-color="#1E7BD9"/>
+      <stop offset="0%" stop-color="#0A3E42"/>
+      <stop offset="100%" stop-color="#0E4D52"/>
     </linearGradient>
   </defs>
   <path d="M0,160 C240,80 480,200 720,140 C960,80 1200,200 1440,120 L1440,240 L0,240 Z" fill="url(#ww-1)" opacity="0.55"/>

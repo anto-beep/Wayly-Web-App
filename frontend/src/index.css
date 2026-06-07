@@ -1,112 +1,237 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/* Wayly Design System — Feb 2026 brief implementation
+ * Teal-ink (#0E4D52) + Sage (#6B8F71) + Clay (#C2683D / button #A5512B)
+ * Fraunces (headings, variable serif) + Inter (body, humanist sans) + IBM Plex Mono (numbers).
+ * Spec ref: /app/docs/wayly-design-system.md
+ *
+ * Token strategy: legacy `--kindred-*` and shadcn HSL tokens are remapped to
+ * the new spec values, so 90% of components shift automatically. New code
+ * should reference the spec-canonical `wayly.teal-*`, `wayly.sage-*`,
+ * `wayly.clay-*`, `wayly.neutral-*` Tailwind utilities instead of hex.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-    /* Wayly brand tokens — Sky blue + cyan + mint-teal (Jun 2026 rebrand) */
-    --kindred-bg: #EAF4FB;             /* soft sky background */
-    --kindred-surface: #FFFFFF;
-    --kindred-surface-2: #DCEBF7;      /* pale blue surface */
-    --kindred-primary: #0E2A47;        /* deep navy (gradient endpoint) */
-    --kindred-primary-fg: #FFFFFF;
-    --kindred-gold: #2BC4D6;           /* brand cyan accent (bg/icons/dark-bg text) */
-    --kindred-sage: #3DB8A8;           /* mint-teal success */
-    --kindred-terracotta: #E07A5F;     /* warm coral alert */
-    --kindred-text: #0E1F35;           /* near-black with blue undertone */
-    --kindred-muted: #3F506B;
-    --kindred-border: #CFE0F0;
-    --kindred-success: #3DB8A8;
-    --kindred-alert: #E07A5F;
+    /* --- Wayly brand tokens (Feb 2026 spec) ---------------------------- */
+    --kindred-bg:        #FBF8F3;   /* neutral 50 — warm off-white app shell */
+    --kindred-surface:   #FFFFFF;
+    --kindred-surface-2: #F4EFE7;   /* neutral 100 — sunken/inset */
+    --kindred-primary:   #0E4D52;   /* teal-ink 600 — primary brand surface */
+    --kindred-primary-fg:#FFFFFF;
+    --kindred-gold:      #A5512B;   /* clay 500 — accent/CTA (AA on white) */
+    --kindred-sage:      #425F47;   /* sage 600 — body-safe sage */
+    --kindred-terracotta:#C0392B;   /* error base */
+    --kindred-text:      #1C2B2D;   /* warm ink — body text (AAA on bg) */
+    --kindred-muted:     #524B42;   /* neutral 700 — muted body text */
+    --kindred-border:    #E7E0D5;   /* neutral 200 — default border */
+    --kindred-success:   #1B5733;   /* success dark — AAA on white */
+    --kindred-alert:     #B7791F;   /* warning dark — AA on white */
 
-    /* Extended palette for the gradient + lifestyle accents */
-    --wayly-blue: #1565B8;             /* royal blue (gradient start) */
-    --wayly-cyan: #2BC4D6;             /* cyan (gradient mid + accent) */
-    --wayly-mint: #6FE3DA;             /* mint cyan (gradient end) */
-    --wayly-sky: #BFE0F5;              /* pale sky tint */
-    --wayly-wave: #2E78C8;             /* footer wave mid-blue */
-    --wayly-indigo: #5A7BE8;           /* pill: independent */
-    --wayly-lavender: #8E7BE8;         /* pill: AI-powered */
+    /* Spec-canonical names (use directly via var(--wayly-*)) */
+    --wayly-teal-50:  #E9F2F2;
+    --wayly-teal-600: #0E4D52;
+    --wayly-teal-700: #0A3E42;
+    --wayly-teal-800: #072E31;
+    --wayly-sage-400: #6B8F71;
+    --wayly-sage-600: #425F47;
+    --wayly-clay-400: #C2683D;     /* focus ring + non-text fills */
+    --wayly-clay-500: #A5512B;     /* button fill (AA on white text) */
+    --wayly-neutral-50:  #FBF8F3;
+    --wayly-neutral-100: #F4EFE7;
+    --wayly-neutral-200: #E7E0D5;
+    --wayly-neutral-700: #524B42;
+    --wayly-neutral-900: #1C2B2D;
+
+    /* Legacy aliases — kept so existing /app/frontend/src code still resolves.
+     * These now point at the new spec equivalents. */
+    --wayly-blue:    #0E4D52;
+    --wayly-cyan:    #A5512B;
+    --wayly-mint:    #6B8F71;
+    --wayly-sky:     #FBF8F3;
+    --wayly-wave:    #3D8488;
+    --wayly-indigo:  #6B8F71;
+    --wayly-lavender:#94B397;
 }
 
 @layer base {
     :root {
-        --background: 206 64% 95%;        /* sky #EAF4FB */
-        --foreground: 213 58% 13%;        /* #0E1F35 */
+        --background: 40 33% 97%;          /* #FBF8F3 warm off-white */
+        --foreground: 187 22% 14%;         /* #1C2B2D warm ink */
         --card: 0 0% 100%;
-        --card-foreground: 213 58% 13%;
+        --card-foreground: 187 22% 14%;
         --popover: 0 0% 100%;
-        --popover-foreground: 213 58% 13%;
-        --primary: 211 67% 17%;           /* #0E2A47 */
+        --popover-foreground: 187 22% 14%;
+        --primary: 184 71% 19%;            /* #0E4D52 teal-ink 600 */
         --primary-foreground: 0 0% 100%;
-        --secondary: 206 64% 92%;
-        --secondary-foreground: 211 67% 17%;
-        --muted: 206 58% 90%;
-        --muted-foreground: 217 23% 38%;  /* #4A5A75 */
-        --accent: 187 67% 51%;            /* #2BC4D6 cyan */
-        --accent-foreground: 213 58% 13%;
-        --destructive: 13 67% 63%;        /* #E07A5F coral */
+        --secondary: 35 38% 92%;           /* #F4EFE7 neutral 100 */
+        --secondary-foreground: 184 71% 19%;
+        --muted: 35 38% 92%;
+        --muted-foreground: 30 11% 30%;    /* #524B42 neutral 700 */
+        --accent: 19 56% 41%;              /* #A5512B clay 500 — text-on-fill safe */
+        --accent-foreground: 0 0% 100%;
+        --destructive: 5 63% 46%;          /* #C0392B */
         --destructive-foreground: 0 0% 100%;
-        --border: 208 60% 88%;            /* #CFE0F0 */
-        --input: 208 60% 88%;
-        --ring: 187 67% 51%;
-        --radius: 0.625rem;
+        --border: 35 27% 87%;              /* #E7E0D5 neutral 200 */
+        --input: 35 27% 87%;
+        --ring: 19 56% 50%;                /* #C2683D clay 400 — focus ring */
+        --radius: 0.625rem;                /* 10px buttons + inputs */
     }
 }
 
 @layer base {
-    * {
-        @apply border-border;
-    }
-    html, body, #root {
-        height: 100%;
-    }
+    * { @apply border-border; }
+
+    html, body, #root { height: 100%; }
+
     body {
         margin: 0;
         background-color: var(--kindred-bg);
         color: var(--kindred-text);
-        font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-        font-feature-settings: "tnum" 1, "lnum" 1;
+        font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-feature-settings: "tnum" 1, "lnum" 1, "ss01" 1, "cv11" 1;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        /* Spec: body 17px, line-height 1.6 — never below 16px */
+        font-size: 17px;
+        line-height: 1.6;
     }
+
     h1, h2, h3, h4, h5, h6, .font-heading {
-        font-family: 'Crimson Pro', Georgia, serif;
-        font-weight: 500;
+        font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+        font-weight: 600;
         letter-spacing: -0.01em;
+        color: var(--kindred-text);
+        font-feature-settings: "ss01" 1;
     }
+    h1, .font-heading.text-3xl, .font-heading.text-4xl, .font-heading.text-5xl,
+    .font-heading.text-6xl, .font-heading.text-7xl {
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
     code, .tabular {
         font-variant-numeric: tabular-nums;
         font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
     }
+
+    /* Spec focus ring — 3px Clay 400 with 2px offset, never the default blue.
+     * Applied globally via :focus-visible so keyboard users get clear feedback
+     * but mouse users don't see rings on every click. */
+    :focus-visible {
+        outline: 3px solid var(--wayly-clay-400) !important;
+        outline-offset: 2px;
+        border-radius: inherit;
+    }
+    /* Remove the legacy ring on focused buttons that shadcn adds — replaced
+     * by our outline above, otherwise we'd get a doubled ring. */
+    button:focus-visible, a:focus-visible, [role="button"]:focus-visible,
+    input:focus-visible, textarea:focus-visible, select:focus-visible {
+        box-shadow: none !important;
+    }
+
+    /* Heading scale — desktop (mobile overrides below). */
+    .h1 { font-family: 'Fraunces', Georgia, serif; font-size: 3rem;     line-height: 1.1;  font-weight: 600; letter-spacing: -0.02em; }
+    .h2 { font-family: 'Fraunces', Georgia, serif; font-size: 2.25rem;  line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; }
+    .h3 { font-family: 'Fraunces', Georgia, serif; font-size: 1.75rem;  line-height: 1.2;  font-weight: 600; }
+    .h4 { font-family: 'Fraunces', Georgia, serif; font-size: 1.375rem; line-height: 1.3;  font-weight: 600; }
+    .h5 { font-family: 'Inter', sans-serif;       font-size: 1.125rem; line-height: 1.4;  font-weight: 600; }
+    .h6 { font-family: 'Inter', sans-serif;       font-size: 1rem;     line-height: 1.4;  font-weight: 700; }
+
+    .body-large  { font-size: 1.1875rem; line-height: 1.6;  font-weight: 400; }
+    .body        { font-size: 1.0625rem; line-height: 1.6;  font-weight: 400; }
+    .body-small  { font-size: 0.9375rem; line-height: 1.55; font-weight: 400; }
+    .caption     { font-size: 0.8125rem; line-height: 1.4;  font-weight: 400; }
+    .eyebrow     { font-size: 0.8125rem; line-height: 1.2;  font-weight: 600;
+                   letter-spacing: 0.06em; text-transform: uppercase; }
+    .btn-text    { font-size: 1rem;      line-height: 1;    font-weight: 600; }
+
+    @media (max-width: 767px) {
+        .h1 { font-size: 2.25rem; }
+        .h2 { font-size: 1.875rem; }
+        .h3 { font-size: 1.5rem; }
+    }
 }
 
 @layer utilities {
-    .bg-kindred { background-color: var(--kindred-bg); }
-    .bg-surface { background-color: var(--kindred-surface); }
-    .bg-surface-2 { background-color: var(--kindred-surface-2); }
-    .bg-primary-k { background-color: var(--kindred-primary); }
+    /* --- Kindred utility surface (kept for backwards compat — values remap to new spec) --- */
+    .bg-kindred     { background-color: var(--kindred-bg); }
+    .bg-surface     { background-color: var(--kindred-surface); }
+    .bg-surface-2   { background-color: var(--kindred-surface-2); }
+    .bg-primary-k   { background-color: var(--kindred-primary); }
     .text-primary-k { color: var(--kindred-primary); }
-    .text-muted-k { color: var(--kindred-muted); }
-    .text-sage { color: var(--kindred-sage); }
-    .text-terracotta { color: var(--kindred-terracotta); }
-    .text-gold { color: var(--kindred-gold); }
-    .bg-sage { background-color: var(--kindred-sage); }
-    .bg-terracotta { background-color: var(--kindred-terracotta); }
-    .bg-gold { background-color: var(--kindred-gold); }
+    .text-muted-k   { color: var(--kindred-muted); }
+    .text-sage      { color: var(--kindred-sage); }
+    .text-terracotta{ color: var(--kindred-terracotta); }
+    .text-gold      { color: var(--kindred-gold); }
+    .bg-sage        { background-color: var(--kindred-sage); }
+    .bg-terracotta  { background-color: var(--kindred-terracotta); }
+    .bg-gold        { background-color: var(--kindred-gold); }
     .border-kindred { border-color: var(--kindred-border); }
-    .border-gold { border-color: var(--kindred-gold); }
+    .border-gold    { border-color: var(--kindred-gold); }
     .ring-primary-k { --tw-ring-color: var(--kindred-primary); }
+
     .overline {
         text-transform: uppercase;
         letter-spacing: 0.18em;
         font-size: 0.72rem;
-        font-weight: 500;
+        font-weight: 600;
         color: var(--kindred-muted);
-        font-family: 'IBM Plex Sans', sans-serif;
+        font-family: 'Inter', sans-serif;
     }
     .tabular-nums { font-variant-numeric: tabular-nums; }
+
+    /* --- Spec components -------------------------------------------------- */
+
+    /* Accent CTA — sparingly used for the single most important action. */
+    .btn-accent {
+        background-color: var(--wayly-clay-500);
+        color: #FFFFFF;
+        border-radius: 10px;
+        min-height: 48px;
+        padding: 0 24px;
+        font-weight: 600;
+        font-family: 'Inter', sans-serif;
+        transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1),
+                    transform 150ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    .btn-accent:hover { background-color: var(--wayly-clay-500); filter: brightness(0.92); }
+    .btn-accent:active { transform: translateY(1px); }
+
+    /* Primary band callout — calm full-width band used on landing CTAs. */
+    .band-primary {
+        background-color: var(--wayly-teal-50);
+        color: var(--kindred-text);
+        padding: 64px 24px;
+    }
+    .band-sage {
+        background-color: #EEF3EE;
+        color: var(--kindred-text);
+        padding: 64px 24px;
+    }
+
+    /* Card surfaces */
+    .card-spec {
+        background-color: var(--kindred-surface);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(17,24,26,0.08), 0 1px 2px rgba(17,24,26,0.06);
+    }
+    .card-callout {
+        background-color: var(--wayly-teal-50);
+        border-left: 4px solid var(--wayly-teal-600);
+        border-radius: 16px;
+        padding: 20px 24px;
+    }
+
+    /* Prose column — 720px max for reading content. */
+    .prose-spec {
+        max-width: 45rem; /* ~720px */
+        font-size: 1.1875rem;
+        line-height: 1.7;
+    }
 }
 
 @layer base {
@@ -114,77 +239,107 @@
 }
 
 /* Drag-drop styling */
-.dropzone { transition: all 180ms ease; }
+.dropzone { transition: all 180ms cubic-bezier(0.2, 0, 0, 1); }
 .dropzone:hover, .dropzone.active {
     border-color: var(--kindred-primary);
     background: var(--kindred-surface-2);
 }
 
-/* ---- Dark mode — swaps the core tokens, everything that uses var() adapts ---- */
+/* ---- Dark mode — warm near-black, off-white text (no halation) -------- */
+/* Spec recommends shipping light first; dark stays AA. */
 html.theme-dark {
-    --kindred-bg: #0A1626;
-    --kindred-surface: #121F36;
-    --kindred-surface-2: #1A2A44;
-    --kindred-primary: #1A3457;
-    --kindred-primary-fg: #E8F4FB;
-    --kindred-gold: #45D5E6;          /* brighter cyan on dark */
-    --kindred-sage: #5BD0BF;          /* brighter teal on dark */
-    --kindred-terracotta: #F09478;
-    --kindred-text: #E8F4FB;
-    --kindred-muted: #A8BCD6;
-    --kindred-border: #2A3D5E;
+    --kindred-bg:        #11181A;     /* neutral 950 — warm near-black */
+    --kindred-surface:   #1C2B2D;
+    --kindred-surface-2: #28241F;
+    --kindred-primary:   #1A696E;     /* teal 500 — brighter on dark */
+    --kindred-primary-fg:#FBF8F3;
+    --kindred-gold:      #DD9069;     /* clay 300 — softer on dark */
+    --kindred-sage:      #94B397;     /* sage 300 — brighter on dark */
+    --kindred-terracotta:#DD9069;
+    --kindred-text:      #ECE7DE;     /* off-white, not pure white */
+    --kindred-muted:     #B3A899;     /* neutral 400 */
+    --kindred-border:    #37322C;     /* neutral 800 */
     color-scheme: dark;
 }
 html.theme-dark body { background-color: var(--kindred-bg); color: var(--kindred-text); }
-
-/* Brand-utility overrides for dark mode — body text uses cream, headings use gold */
 html.theme-dark .text-primary-k { color: var(--kindred-text); }
-html.theme-dark .text-muted-k { color: var(--kindred-muted); }
+html.theme-dark .text-muted-k   { color: var(--kindred-muted); }
 html.theme-dark h1.font-heading,
 html.theme-dark h2.font-heading,
 html.theme-dark h3.font-heading,
-html.theme-dark .font-heading { color: var(--kindred-gold); }
+html.theme-dark .font-heading { color: var(--wayly-clay-400); }
 
-/* Inline hex overrides used in marketing components */
+/* ---- Inline hex overrides — used on hand-written marketing pages that
+ *      still reference legacy palette values directly. We translate them to
+ *      the new spec rather than touch every JSX file. */
+.bg-\[\#EAF4FB\]   { background-color: var(--wayly-neutral-50) !important; }
+.bg-\[\#DCEBF7\]   { background-color: var(--wayly-neutral-100) !important; }
+.bg-\[\#F4FAFE\]   { background-color: var(--wayly-neutral-100) !important; }
+.bg-\[\#0E2A47\]   { background-color: var(--wayly-teal-600) !important; color: #FFFFFF; }
+.bg-\[\#0E2A47\]\/95 { background-color: rgba(14, 77, 82, 0.95) !important; color: #FFFFFF; }
+.bg-\[\#0E2A47\]\/90 { background-color: rgba(14, 77, 82, 0.90) !important; color: #FFFFFF; }
+.bg-\[\#091D33\]   { background-color: var(--wayly-teal-700) !important; color: #FFFFFF; }
+.text-\[\#0E2A47\] { color: var(--wayly-teal-600) !important; }
+.text-\[\#0E1F35\] { color: var(--wayly-neutral-900) !important; }
+.text-\[\#091D33\] { color: var(--wayly-teal-700) !important; }
+.text-\[\#4A5A75\] { color: var(--wayly-neutral-700) !important; }
+.text-\[\#3F506B\] { color: var(--wayly-neutral-700) !important; }
+.bg-\[\#2BC4D6\]   { background-color: var(--wayly-clay-500) !important; color: #FFFFFF; }
+.text-\[\#2BC4D6\] { color: var(--wayly-clay-500) !important; }
+.bg-\[\#3DB8A8\]   { background-color: var(--wayly-sage-600) !important; color: #FFFFFF; }
+.text-\[\#3DB8A8\] { color: var(--wayly-sage-600) !important; }
+.bg-\[\#E07A5F\]   { background-color: var(--wayly-clay-500) !important; color: #FFFFFF; }
+.text-\[\#E07A5F\] { color: var(--wayly-clay-500) !important; }
+.bg-\[\#1565B8\]   { background-color: var(--wayly-teal-600) !important; color: #FFFFFF; }
+.text-\[\#1565B8\] { color: var(--wayly-teal-600) !important; }
+.bg-\[\#1E7BD9\]   { background-color: var(--wayly-teal-500) !important; color: #FFFFFF; }
+.text-\[\#1E7BD9\] { color: var(--wayly-teal-500) !important; }
+.bg-\[\#5A7BE8\]   { background-color: var(--wayly-sage-400) !important; color: #FFFFFF; }
+.text-\[\#5A7BE8\] { color: var(--wayly-sage-600) !important; }
+.bg-\[\#8E7BE8\]   { background-color: var(--wayly-sage-300) !important; color: var(--wayly-neutral-900); }
+.text-\[\#8E7BE8\] { color: var(--wayly-clay-500) !important; }
+.bg-\[\#6FE3DA\]   { background-color: var(--wayly-sage-200) !important; }
+.text-\[\#6FE3DA\] { color: var(--wayly-sage-600) !important; }
+.bg-\[\#BFE0F5\]   { background-color: var(--wayly-neutral-100) !important; }
+.text-\[\#BFE0F5\] { color: var(--wayly-neutral-700) !important; }
+.bg-\[\#CFE0F0\]   { background-color: var(--wayly-neutral-200) !important; }
+.border-\[\#CFE0F0\] { border-color: var(--wayly-neutral-200) !important; }
+
+/* Dark-mode overrides for the same hex literals — keep AA */
 html.theme-dark .bg-white { background-color: var(--kindred-surface) !important; color: var(--kindred-text); }
-html.theme-dark .bg-white\/75 { background-color: rgba(22, 33, 58, 0.75) !important; }
-html.theme-dark .bg-white\/80 { background-color: rgba(22, 33, 58, 0.85) !important; }
-html.theme-dark .bg-white\/95 { background-color: rgba(22, 33, 58, 0.92) !important; }
-html.theme-dark .text-\[\#0E2A47\] { color: var(--kindred-text) !important; }
-html.theme-dark .bg-\[\#0E2A47\] { background-color: #0A1E36 !important; color: var(--kindred-text) !important; }
-html.theme-dark .bg-\[\#EAF4FB\] { background-color: var(--kindred-bg) !important; }
-html.theme-dark .bg-\[#0E2A47\] { background-color: #0A1E36 !important; }
-html.theme-dark .bg-\[\#DCEBF7\] { background-color: var(--kindred-surface-2) !important; }
+html.theme-dark .bg-white\/75 { background-color: rgba(28, 43, 45, 0.75) !important; }
+html.theme-dark .bg-white\/80 { background-color: rgba(28, 43, 45, 0.85) !important; }
+html.theme-dark .bg-white\/95 { background-color: rgba(28, 43, 45, 0.92) !important; }
 
-/* ---- Accessibility user-controlled font-size scaling ---- */
+/* ---- Accessibility — user-controlled font-size scaling ---------------- */
 html[data-font-scale="0"] { font-size: 14px; }
 html[data-font-scale="1"] { font-size: 16px; } /* default */
 html[data-font-scale="2"] { font-size: 18px; }
 html[data-font-scale="3"] { font-size: 20px; }
 html[data-font-scale="4"] { font-size: 22px; }
 
-/* ---- High-contrast mode (opt-in via accessibility widget) ---- */
+/* ---- High-contrast mode (opt-in via accessibility widget) ------------- */
 html.theme-high-contrast {
-    --kindred-text: #000000;
-    --kindred-muted: #1a1a1a;
-    --kindred-bg: #FFFFFF;
-    --kindred-surface: #FFFFFF;
+    --kindred-text:      #000000;
+    --kindred-muted:     #1a1a1a;
+    --kindred-bg:        #FFFFFF;
+    --kindred-surface:   #FFFFFF;
     --kindred-surface-2: #FAFAFA;
-    --kindred-primary: #000000;
-    --kindred-primary-fg: #FFFFFF;
-    --kindred-gold: #B8860B;
-    --kindred-border: #000000;
+    --kindred-primary:   #000000;
+    --kindred-primary-fg:#FFFFFF;
+    --kindred-gold:      #6A3219;
+    --kindred-border:    #000000;
 }
 html.theme-high-contrast.theme-dark {
-    --kindred-text: #FFFFFF;
-    --kindred-muted: #E8E8E8;
-    --kindred-bg: #000000;
-    --kindred-surface: #0A0A0A;
+    --kindred-text:      #FFFFFF;
+    --kindred-muted:     #E8E8E8;
+    --kindred-bg:        #000000;
+    --kindred-surface:   #0A0A0A;
     --kindred-surface-2: #1A1A1A;
-    --kindred-primary: #FFFFFF;
-    --kindred-primary-fg: #000000;
-    --kindred-gold: #FFD700;
-    --kindred-border: #FFFFFF;
+    --kindred-primary:   #FFFFFF;
+    --kindred-primary-fg:#000000;
+    --kindred-gold:      #F4D6C5;
+    --kindred-border:    #FFFFFF;
 }
 html.theme-high-contrast button,
 html.theme-high-contrast a,
@@ -192,14 +347,27 @@ html.theme-high-contrast input,
 html.theme-high-contrast textarea,
 html.theme-high-contrast select { outline: 1px solid currentColor; }
 
-/* ---- Underlined links (opt-in via accessibility widget) ---- */
+/* ---- Atkinson Hyperlegible accessibility toggle (opt-in) -------------- */
+html.a11y-hyperlegible body,
+html.a11y-hyperlegible {
+    font-family: "Atkinson Hyperlegible", 'Inter', system-ui, sans-serif !important;
+}
+
+/* ---- Underlined links (opt-in via accessibility widget) --------------- */
 html.a11y-underline-links a { text-decoration: underline !important; }
 
-/* ---- Reduce motion (opt-in via accessibility widget — hard switch) ---- */
+/* ---- Reduce motion (system + opt-in) ---------------------------------- */
 html.a11y-reduce-motion *, html.a11y-reduce-motion *::before, html.a11y-reduce-motion *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
 }
 
 /* ---- LivePreviewLoop animations (gate page conversion teaser) ---------- */
@@ -212,34 +380,31 @@ html.a11y-reduce-motion *, html.a11y-reduce-motion *::before, html.a11y-reduce-m
 }
 @keyframes kindred-anomaly-flash {
     0%, 35% { opacity: 0; transform: translateY(12px); }
-    45%     { opacity: 1; transform: translateY(0); box-shadow: 0 4px 18px rgba(197,115,77,0.4); }
-    55%     { opacity: 1; box-shadow: 0 2px 12px rgba(197,115,77,0.18); }
+    45%     { opacity: 1; transform: translateY(0); box-shadow: 0 4px 18px rgba(165,81,43,0.4); }
+    55%     { opacity: 1; box-shadow: 0 2px 12px rgba(165,81,43,0.18); }
     78%     { opacity: 1; transform: translateY(0); }
     88%     { opacity: 0; transform: translateY(-4px); }
     100%    { opacity: 0; }
 }
 .kindred-fadein {
     opacity: 0;
-    animation: kindred-fadein-loop 7s ease-out infinite;
+    animation: kindred-fadein-loop 7s cubic-bezier(0.2, 0, 0, 1) infinite;
 }
 .kindred-anomaly-flash {
     opacity: 0;
-    animation: kindred-anomaly-flash 7s ease-out infinite;
+    animation: kindred-anomaly-flash 7s cubic-bezier(0.2, 0, 0, 1) infinite;
 }
 
-/* ---- Help chat panel entrance (one-shot, ends at opacity 1) ----------- */
+/* ---- Help chat panel entrance (one-shot) ------------------------------ */
 @keyframes kindred-help-chat-in {
     0%   { opacity: 0; transform: translateY(8px) scale(0.98); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 .animate-help-chat-in {
-    animation: kindred-help-chat-in 220ms ease-out both;
-}
-@media (prefers-reduced-motion: reduce) {
-    .animate-help-chat-in { animation: none; }
+    animation: kindred-help-chat-in 220ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 
-/* ---- iOS safe-area-inset support for installed PWA / standalone mode ---- */
+/* ---- iOS safe-area-inset support -------------------------------------- */
 @supports (padding: env(safe-area-inset-top)) {
     body {
         padding-top: env(safe-area-inset-top);
@@ -248,73 +413,60 @@ html.a11y-reduce-motion *, html.a11y-reduce-motion *::before, html.a11y-reduce-m
         padding-right: env(safe-area-inset-right);
     }
 }
-.safe-bottom {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
-}
-.safe-top {
-    padding-top: max(0.5rem, env(safe-area-inset-top));
-}
+.safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+.safe-top    { padding-top: max(0.5rem, env(safe-area-inset-top)); }
 
-/* ---- Mobile bottom-nav spacer so fixed nav doesn't cover content ------- */
-.has-bottom-nav main {
-    padding-bottom: 5rem;
-}
+/* ---- Mobile bottom-nav spacer ----------------------------------------- */
+.has-bottom-nav main { padding-bottom: 5rem; }
 @media (min-width: 768px) {
-    .has-bottom-nav main {
-        padding-bottom: 0;
-    }
+    .has-bottom-nav main { padding-bottom: 0; }
 }
 
-/* ---- Hide horizontal scrollbar utility (used on mobile tab strips) ----- */
+/* ---- Hide horizontal scrollbar utility -------------------------------- */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 
-/* ---- Tap target minimum 44px for accessibility on touch devices -------- */
+/* ---- Touch targets — spec 48px web, 56px primary mobile, 60px participant view --- */
 @media (pointer: coarse) {
     button, a[role="button"], .tap-target {
-        min-height: 44px;
+        min-height: 48px;
     }
+    .tap-primary { min-height: 56px; }
+    .tap-participant { min-height: 60px; }
 }
 
-/* ---- Disable iOS auto-zoom on inputs by ensuring 16px font ------------- */
+/* ---- Disable iOS auto-zoom on inputs ---------------------------------- */
 @media screen and (max-width: 767px) {
     input, select, textarea {
         font-size: 16px !important;
     }
 }
-@media (prefers-reduced-motion: reduce) {
-    .kindred-fadein, .kindred-anomaly-flash {
-        animation: none !important;
-        opacity: 1 !important;
-        transform: none !important;
-    }
-}
 
-/* ---- Wayly brand gradient utilities (Jun 2026 rebrand) ----------------- */
+/* ---- Wayly brand wash utilities (spec — replaces the rainbow gradient) -- */
+/* The spec explicitly rejects "gradient overload". Keep the utility names
+ * (.wayly-gradient-*) so existing markup still resolves, but replace the
+ * rainbow with a calm teal-ink-only treatment so we don't have to retag
+ * every hero. */
 .wayly-gradient-text {
-    background: linear-gradient(95deg, var(--wayly-blue) 0%, var(--wayly-cyan) 55%, var(--wayly-mint) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    color: var(--wayly-teal-600);
+    background: none;
+    -webkit-text-fill-color: var(--wayly-teal-600);
+    background-clip: initial;
+    -webkit-background-clip: initial;
 }
 .wayly-gradient-bg {
-    background: linear-gradient(135deg, var(--wayly-blue) 0%, var(--wayly-cyan) 100%);
+    background: linear-gradient(135deg, var(--wayly-teal-600) 0%, var(--wayly-teal-700) 100%);
+    color: #FFFFFF;
 }
 .wayly-hero-bg {
     background:
         radial-gradient(1100px 600px at 20% 0%, #FFFFFF 0%, rgba(255,255,255,0) 60%),
-        linear-gradient(180deg, #F4FAFE 0%, #E2EEF8 100%);
-}
-.wayly-wave-divider {
-    background-repeat: no-repeat;
-    background-position: bottom center;
-    background-size: 100% auto;
+        linear-gradient(180deg, var(--wayly-neutral-50) 0%, var(--wayly-neutral-100) 100%);
 }
 .wayly-card-shadow {
-    box-shadow: 0 20px 50px -20px rgba(14, 42, 71, 0.18), 0 8px 24px -12px rgba(14, 42, 71, 0.12);
+    box-shadow: 0 1px 3px rgba(17, 24, 26, 0.08), 0 1px 2px rgba(17, 24, 26, 0.06);
 }
 
-/* Phase 6 — accent text utility that passes WCAG AA on light backgrounds */
-.text-accent-aa { color: #0A6E80; }    /* 4.5:1 on white, 4.5:1 on #EAF4FB */
-.text-accent-aa-bold { color: #075866; font-weight: 600; }
+/* Phase-6 accent text utility (kept — already AA-safe on light surfaces) */
+.text-accent-aa      { color: var(--wayly-clay-500); }      /* 4.8:1 on white */
+.text-accent-aa-bold { color: var(--wayly-clay-600); font-weight: 600; }  /* 6.6:1 on white */

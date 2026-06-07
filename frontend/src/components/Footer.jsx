@@ -45,7 +45,7 @@ export default function Footer() {
     return (
         <footer
             className="text-white"
-            style={{ backgroundColor: "#0E2A47" }}
+            style={{ backgroundColor: "#0E4D52" }}
             data-testid="site-footer"
         >
             <div className="mx-auto max-w-7xl px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">

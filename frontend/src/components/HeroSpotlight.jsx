@@ -15,17 +15,17 @@ import { ArrowRight, ShieldCheck, Lock, Users, Sparkles, ChevronRight, CheckCirc
 
 function PillBadge({ icon: Icon, label, tone }) {
     const tones = {
-        teal: "bg-[#3DB8A8]",
-        cyan: "bg-[#2BC4D6]",
-        indigo: "bg-[#5A7BE8]",
-        lavender: "bg-[#8E7BE8]",
+        teal: "bg-wayly-sage-600",       // sage 600 — calm secondary
+        cyan: "bg-wayly-teal-600",       // teal-ink — primary brand
+        indigo: "bg-wayly-clay-500",     // clay 500 — accent
+        lavender: "bg-wayly-sage-400",   // sage 400 — secondary
     };
     return (
         <span className="inline-flex items-center gap-2 rounded-full bg-white pl-1 pr-4 py-1 wayly-card-shadow border border-white/60">
             <span className={`h-7 w-7 rounded-full inline-flex items-center justify-center text-white ${tones[tone]}`}>
                 <Icon className="h-4 w-4" aria-hidden />
             </span>
-            <span className="text-[13px] font-medium text-[#0E2A47]">{label}</span>
+            <span className="text-[13px] font-medium text-wayly-neutral-900">{label}</span>
         </span>
     );
 }
@@ -62,14 +62,14 @@ function DonutChart() {
                 />
                 <defs>
                     <linearGradient id="donutG" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#1565B8" />
-                        <stop offset="100%" stopColor="#2BC4D6" />
+                        <stop offset="0%" stopColor="#0E4D52" />
+                        <stop offset="100%" stopColor="#3D8488" />
                     </linearGradient>
                 </defs>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-[11px] font-semibold text-[#0E2A47] tabular-nums">$12,341</div>
-                <div className="text-[9px] text-[#4A5A75]">Remaining</div>
+                <div className="text-[11px] font-semibold text-wayly-neutral-900 tabular-nums">$12,341</div>
+                <div className="text-[9px] text-wayly-neutral-700">Remaining</div>
             </div>
         </div>
     );
@@ -80,24 +80,24 @@ function BudgetCard() {
         <div className="rounded-2xl bg-white wayly-card-shadow p-5" data-testid="hero-budget-card">
             <div className="flex items-center gap-2">
                 <img src="/branding/svg/wayly-mark.svg" alt="" className="h-6 w-6" />
-                <span className="font-semibold text-[#0E2A47] tracking-tight">wayly</span>
+                <span className="font-semibold text-wayly-neutral-900 tracking-tight">wayly</span>
             </div>
             <div className="mt-3">
-                <div className="font-heading text-base text-[#0E2A47]">Good morning, Sarah</div>
-                <div className="text-xs text-[#4A5A75] mt-0.5">Here's an overview of Mum's Support at Home.</div>
+                <div className="font-heading text-base text-wayly-neutral-900">Good morning, Sarah</div>
+                <div className="text-xs text-wayly-neutral-700 mt-0.5">Here's an overview of Mum's Support at Home.</div>
             </div>
-            <div className="mt-4 rounded-xl bg-[#F4FAFE] p-4">
-                <div className="text-[11px] uppercase tracking-wider text-[#4A5A75]">Budget overview</div>
-                <div className="text-xs text-[#4A5A75] mt-2">Total budget</div>
+            <div className="mt-4 rounded-xl bg-wayly-neutral-100 p-4">
+                <div className="text-[11px] uppercase tracking-wider text-wayly-neutral-700">Budget overview</div>
+                <div className="text-xs text-wayly-neutral-700 mt-2">Total budget</div>
                 <div className="flex items-center justify-between mt-1">
-                    <div className="font-heading text-xl text-[#0E2A47] tabular-nums">$24,857.10</div>
+                    <div className="font-heading text-xl text-wayly-neutral-900 tabular-nums">$24,857.10</div>
                     <DonutChart />
                 </div>
             </div>
             <div className="mt-4 space-y-2">
-                <CategoryBar label="Personal Care" pct={62} colour="#1565B8" />
-                <CategoryBar label="Domestic Assistance" pct={48} colour="#2BC4D6" />
-                <CategoryBar label="Transport" pct={28} colour="#8E7BE8" />
+                <CategoryBar label="Personal Care" pct={62} colour="#0E4D52" />
+                <CategoryBar label="Domestic Assistance" pct={48} colour="#6B8F71" />
+                <CategoryBar label="Transport" pct={28} colour="#A5512B" />
             </div>
         </div>
     );
@@ -139,10 +139,10 @@ function CarePlanCard() {
                 <div className="text-[12px] font-semibold text-[#0E2A47]">Care plan insights</div>
             </div>
             <div className="mt-2.5 flex items-start gap-1.5">
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#8E7BE8]" />
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-wayly-clay-500" />
                 <div>
-                    <div className="text-[12px] font-semibold text-[#0E2A47]">Your plan is on track.</div>
-                    <div className="text-[11px] text-[#4A5A75] mt-0.5">You have 49% of your budget remaining.</div>
+                    <div className="text-[12px] font-semibold text-wayly-neutral-900">Your plan is on track.</div>
+                    <div className="text-[11px] text-wayly-neutral-700 mt-0.5">You have 49% of your budget remaining.</div>
                 </div>
             </div>
         </div>
@@ -157,13 +157,13 @@ export default function HeroSpotlight() {
 
                     {/* LANE 1 — copy block (cols 1-5) */}
                     <div className="lg:col-span-5 relative z-10 animate-fade-up self-center">
-                        <span className="inline-flex items-center gap-2 rounded-full bg-white border border-[#CFE0F0] px-3 py-1 text-[11px] uppercase tracking-wider text-[#1565B8]">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-white border border-wayly-neutral-200 px-3 py-1 text-[11px] uppercase tracking-wider text-wayly-teal-600 font-semibold">
                             For Australian families
                         </span>
-                        <h1 className="font-heading mt-6 text-[44px] sm:text-[56px] lg:text-[64px] xl:text-[72px] leading-[1.04] tracking-tight text-[#0E2A47]">
-                            Support at Home,<br />finally <span className="wayly-gradient-text">explained.</span>
+                        <h1 className="font-heading mt-6 text-[44px] sm:text-[56px] lg:text-[64px] xl:text-[72px] leading-[1.04] tracking-tight text-wayly-neutral-900">
+                            Support at Home,<br />finally <span className="text-wayly-teal-600">explained.</span>
                         </h1>
-                        <p className="mt-6 text-lg text-[#4A5A75] max-w-xl leading-relaxed">
+                        <p className="mt-6 text-lg text-wayly-neutral-700 max-w-xl leading-relaxed">
                             Helping Australian families understand aged care funding, statements and care plans.
                         </p>
 
@@ -171,14 +171,14 @@ export default function HeroSpotlight() {
                             <Link
                                 to="/signup"
                                 data-testid="hero-cta-primary"
-                                className="inline-flex items-center gap-2 rounded-full bg-[#0E2A47] hover:bg-[#091D33] text-white px-6 py-3.5 text-sm font-semibold transition-colors"
+                                className="inline-flex items-center gap-2 rounded-full bg-wayly-clay-500 hover:bg-wayly-clay-600 text-white px-6 py-3.5 text-sm font-semibold transition-colors"
                             >
                                 Start free trial <ArrowRight className="h-4 w-4" />
                             </Link>
                             <Link
                                 to="/ai-tools/statement-decoder"
                                 data-testid="hero-cta-secondary"
-                                className="inline-flex items-center gap-2 rounded-full bg-white text-[#0E2A47] border border-[#CFE0F0] px-6 py-3.5 text-sm font-semibold hover:border-[#2BC4D6] hover:text-[#1565B8] transition-colors"
+                                className="inline-flex items-center gap-2 rounded-full bg-white text-wayly-teal-600 border-[1.5px] border-wayly-teal-600 px-6 py-3.5 text-sm font-semibold hover:bg-wayly-teal-50 transition-colors"
                             >
                                 Try the Statement Decoder
                             </Link>

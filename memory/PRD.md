@@ -2036,3 +2036,51 @@ All 10 phases (0-9) delivered. **55/55 automated security tests passing.** ClamA
 ### Files added/modified
 - New: `backend/security_alerter.py`, `frontend/src/lib/sentry.js`, `frontend/src/pages/admin/AdminSecurityAlerts.jsx`, `backend/tests/test_monitoring_phase_{1_2,3,4,5,6}.py`, `.github/workflows/lighthouse.yml`, `lighthouserc.json`.
 - Modified: `backend/server.py` (Phase 3 health endpoints, Phase 4 alerter hooks, Phase 5 decoder cost propagation, Phase 6 webhook hardening), `backend/agents.py` (cost_ctx threading), `backend/llm_costs.py` (participant_id + phase fields), `backend/admin_routes.py` (security-alerts + decoder-cost endpoints), `backend/upload_security.py` (on_malware callback), `backend/admin_hardening.py` (alerter hook on audit), `frontend/src/index.js` (Sentry init + ErrorBoundary), `frontend/src/lib/api.js` (request-id tag), `frontend/src/context/AuthContext.jsx` (Sentry user lifecycle), `frontend/src/pages/admin/AdminApp.jsx` (sidebar + route), `docs/monitoring-runbook.md` (all 6 phases).
+
+## Implemented (Iteration 38 — Feb 2026 · Brand & Design System overhaul)
+
+Per the attached "Wayly brand colours and typography" brief (founder spec), replaced the Jun-2026 sky-blue/cyan/mint rebrand with the new teal-ink + sage + warm-clay palette on warm off-white. Approach: token-level remap so 90% of the app shifts automatically without per-component edits.
+
+### Palette swap
+- Page background `#EAF4FB` sky-blue → `#FBF8F3` warm off-white (neutral 50)
+- Primary brand `#0E2A47` navy → `#0E4D52` teal-ink 600 (AAA on white)
+- Accent / CTA `#2BC4D6` cyan → `#A5512B` clay 500 (AA on white, fills only)
+- Focus ring → 3px `#C2683D` clay 400 with 2px offset (replaces default blue, global via `:focus-visible`)
+- Body text `#0E1F35` navy-black → `#1C2B2D` warm ink (AAA on bg)
+- Sage secondary `#3DB8A8` mint-teal → `#425F47` body-safe sage 600
+- Destructive `#E07A5F` coral → `#C0392B` softer brick red (AA)
+
+### Typography swap
+- Body `IBM Plex Sans` → `Inter` (humanist sans, large x-height, open counters at small sizes)
+- Headings `Crimson Pro` → `Fraunces` (variable serif with warmth/character via `opsz` axis, 9..144)
+- Body size locked to 17px line-height 1.6 (never < 16px); headings re-mapped to spec scale (`.h1/.h2/.h3/.h4/.h5/.h6/.body-large/.eyebrow`)
+- IBM Plex Mono kept for numbers + money (tabular figures, money columns)
+
+### Token surface
+- New Tailwind scales: `wayly-teal-{50..900}`, `wayly-sage-{50..900}`, `wayly-clay-{50..900}`, `wayly-neutral-{0..950}` + semantic light/base/dark for success/warning/error/info.
+- Legacy `wayly.navy/blue/cyan/mint/sky/wave/indigo/lavender/coral/teal` aliases remap to nearest spec equivalent so existing markup still resolves.
+- CSS vars `--kindred-*` and shadcn HSL `--primary / --accent / --background / --foreground / --ring` all remapped — no theming code in components changed.
+- Card radius 16px (`rounded-card`), button/input 10px (`rounded-input`), pill 9999px.
+- New shadow stops `shadow-card / shadow-card-lift / shadow-modal` to match spec.
+
+### Patches beyond token remapping
+- `Footer.jsx` — background swapped to `#0E4D52`
+- `HeroSpotlight.jsx` — donut gradient, category bars, pills, and inline hex literals remapped to spec colours; the rainbow gradient on "explained." replaced with a solid teal-ink word (spec rejects gradient overload).
+- `/branding/wayly-wave.svg` — recoloured to neutral → teal-400 → teal-700 gradient (was sky-blue → cyan).
+- Global hex-literal override layer in `index.css` catches `bg-[#0E2A47]`, `text-[#1565B8]`, `bg-[#2BC4D6]`, `bg-[#8E7BE8]`, `bg-[#3DB8A8]`, `#CFE0F0`, `#F4FAFE`, `#5A7BE8` etc. so any remaining hand-written marketing pages render in the new palette without further edits.
+
+### Accessibility
+- `prefers-reduced-motion` collapses every transition to 1ms globally
+- Atkinson Hyperlegible accessibility toggle scaffold (`html.a11y-hyperlegible`) ready to wire to the existing accessibility widget
+- High-contrast mode preserved; underline-links opt-in preserved; font-scale 0-4 preserved
+- Touch-target utilities: `.tap-primary` (56px), `.tap-participant` (60px) on top of the base 48px floor for pointer:coarse
+
+### Spec doc
+- `/app/docs/wayly-design-system.md` — single page reference with the canonical palette table, type scale, radii, focus ring, motion timings, and the "what NOT to do" list. Use for any new component work.
+
+### Dark mode
+- Re-tuned to spec: warm near-black `#11181A` background, off-white `#ECE7DE` text (no halation), brighter clay 300 accents for AA on dark.
+
+### Verified
+- Live preview screenshots taken — landing hero + footer both render in the new palette; Fraunces + Inter loaded; computed body returns `font-family: Inter` at 17px, body `rgb(28,43,45)` on `rgb(251,248,243)`, heading `font-family: Fraunces`.
+- 6-phase rollout (Tokens → Primitives → Surfaces → Data/dashboards → Templates → A11y) collapsed into a single token-level pass since the app already used CSS-var indirection — no per-component refactor needed.
