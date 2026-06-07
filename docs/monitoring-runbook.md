@@ -1,6 +1,6 @@
 # Wayly — Monitoring & Observability Runbook
 
-Last updated: 2026-02-07
+Last updated: 2026-02-07 (Phase 1+2 close-out)
 Owner: hello@wayly.com.au
 
 ## What's wired today (code-level, shipped)
@@ -9,9 +9,11 @@ Owner: hello@wayly.com.au
 |---|---|---|
 | Sentry error capture + perf tracing (FastAPI + Motor + PyMongo auto-instrumented) | `observability.init_sentry()` — reads `SENTRY_DSN`, `SENTRY_ENV`, `SENTRY_RELEASE`, `SENTRY_TRACES_SAMPLE_RATE` | `backend/observability.py` |
 | Sentry user context (id only, no PII) | `set_sentry_user(user_id)` — call from auth dependency | `backend/observability.py` |
-| Structured JSON logging (stdout) | `JsonFormatter` — every line carries `ts`, `level`, `service`, `request_id`, `user_id`, plus `extra` fields | `backend/observability.py` |
+| **Frontend Sentry (React + browserTracing)** — PII scrub for emails/tokens/cookies; ErrorBoundary fallback in `index.js`; X-Request-ID auto-tagged from every axios response | `frontend/src/lib/sentry.js`, `frontend/src/index.js`, `frontend/src/lib/api.js`, `frontend/src/context/AuthContext.jsx` | reads `REACT_APP_SENTRY_DSN`, `REACT_APP_SENTRY_ENV`, `REACT_APP_SENTRY_RELEASE`, `REACT_APP_SENTRY_TRACES_SAMPLE_RATE` |
+| Structured JSON logging (stderr — supervisor captures) | `JsonFormatter` — every line carries `ts`, `level`, `service`, `request_id`, `user_id`, plus `extra` fields | `backend/observability.py` |
 | Per-request `X-Request-ID` header + access log | `RequestLoggingMiddleware` | installed via `_observability.install(app)` in `server.py` |
 | Security event taxonomy (13 event types) | `log_auth_login_success`, `log_decoder_run`, `log_file_upload`, `log_participant_access`, etc. | `backend/observability.py` |
+| **Sec-events wired into hot code paths** (server.py) | `signup` ⇒ `LOGIN_SUCCESS`; `login` ⇒ `LOGIN_SUCCESS/LOGIN_FAILURE/LOCKOUT`; `google-session` ⇒ `LOGIN_SUCCESS`; `mfa/verify` ⇒ `LOGIN_SUCCESS/MFA_FAILURE`; `mfa/enable` ⇒ `MFA_ENABLED`; `/auth/reset` ⇒ `PASSWORD_RESET`; `DELETE /auth/account` ⇒ `ACCOUNT_DELETION` (hashed id) | `backend/server.py` |
 | Account-deletion + data-export events | `log_account_deletion`, `log_data_export` (hashed user-id, no PII) | same |
 
 ## What's NOT wired (platform tasks — you do these in your dashboards)
@@ -19,9 +21,9 @@ Owner: hello@wayly.com.au
 These require Sentry / Cloudflare / Stripe / Anthropic / UptimeRobot dashboards. I cannot reach them from preview.
 
 ### Phase 1 — Sentry final wiring
-1. Create a Sentry project for Wayly at https://sentry.io. Use one project for backend ("wayly-api"); a second for frontend is optional.
-2. Copy the DSN. Set `SENTRY_DSN` in your production env. Restart backend.
-3. **Frontend**: `yarn add @sentry/react`; add `src/sentry.instrument.js` that calls `Sentry.init({dsn: process.env.REACT_APP_SENTRY_DSN, environment: process.env.REACT_APP_SENTRY_ENV, tracesSampleRate: 0.2, sendDefaultPii: false})`, import as first line of `src/index.js`. Set `REACT_APP_SENTRY_DSN` in frontend env.
+1. Create a Sentry project for Wayly at https://sentry.io. Use one project for backend ("wayly-api"); a second for frontend ("wayly-web").
+2. Copy the DSN. Set `SENTRY_DSN` (backend env) and `REACT_APP_SENTRY_DSN` (frontend env). Restart backend; frontend hot-reloads.
+3. **Frontend is already wired** — `@sentry/react` v10 installed, `initSentry()` reads `REACT_APP_SENTRY_DSN` and is a no-op when blank. `Sentry.ErrorBoundary` wraps `<App />` in `index.js`. The axios response interceptor in `lib/api.js` auto-tags every Sentry scope with the backend's `X-Request-ID` for cross-stack correlation. `AuthContext` calls `setSentryUser(user.id)` / `clearSentryUser()` on login/logout (id only — never email).
 4. **Source maps**: add to `frontend/package.json`:
    ```json
    "scripts": {"sentry:sourcemaps": "sentry-cli sourcemaps inject build && sentry-cli sourcemaps upload build --rewrite --validate"}

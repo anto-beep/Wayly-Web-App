@@ -87,6 +87,7 @@ from constants import (
     DEFAULT_NOTIFICATION_PREFS, DIGEST_FREQUENCY_DEFAULT,
 )
 import digest_service
+import observability as _obs
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
@@ -239,6 +240,7 @@ async def signup(payload: SignupRequest, request: Request):
         logger.warning("adviser auto-link (signup) failed: %s", _e)
     access, _jti, _exp = create_access_token(user_doc["id"])
     refresh, _rjti, _rexp = create_refresh_token(user_doc["id"])
+    _obs.log_auth_login_success(user_doc["id"], _rl._client_ip(request))
     return {
         "token": access,
         "refresh_token": refresh,
@@ -246,6 +248,7 @@ async def signup(payload: SignupRequest, request: Request):
     }
 
 
+# ----------------- auth: login -----------------
 @api.post("/auth/login")
 async def login(payload: LoginRequest, request: Request):
     """Phase 1 hardened login + Phase 3 rate limiting:
@@ -260,6 +263,7 @@ async def login(payload: LoginRequest, request: Request):
         ("login_ip", _rl._client_ip(request)),
         ("login_email", payload.email.lower()),
     )
+    _ip = _rl._client_ip(request)
     user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
     if not user:
         # Constant-ish time: run a dummy bcrypt to mask the no-user path.
@@ -267,10 +271,12 @@ async def login(payload: LoginRequest, request: Request):
             verify_password(payload.password, "$2b$12$" + "x" * 53)
         except Exception:
             pass
+        _obs.log_auth_login_failure(_ip, attempt_count=0)
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     locked, until = await is_user_locked(user["id"])
     if locked:
+        _obs.log_auth_lockout(_ip, user_id=user["id"])
         raise HTTPException(
             status_code=423,
             detail=(
@@ -281,6 +287,13 @@ async def login(payload: LoginRequest, request: Request):
 
     if not verify_password(payload.password, user["password_hash"]):
         await record_login_failure(user["id"])
+        # Best-effort attempt count from the user record after the increment.
+        try:
+            _u = await db.users.find_one({"id": user["id"]}, {"failed_login_count": 1, "_id": 0})
+            _attempts = int((_u or {}).get("failed_login_count") or 0)
+        except Exception:
+            _attempts = 0
+        _obs.log_auth_login_failure(_ip, attempt_count=_attempts)
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     await clear_login_failures(user["id"])
@@ -294,6 +307,7 @@ async def login(payload: LoginRequest, request: Request):
 
     access, _jti, _exp = create_access_token(user["id"])
     refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    _obs.log_auth_login_success(user["id"], _ip)
     return {
         "token": access,
         "refresh_token": refresh,
@@ -419,6 +433,7 @@ async def google_session(body: GoogleSessionBody, response: Response):
         )
     access, _jti, _exp = create_access_token(user["id"])
     refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    _obs.log_auth_login_success(user["id"], ip=None)
     return {
         "token": access,
         "refresh_token": refresh,
@@ -535,6 +550,7 @@ async def reset_password(body: ResetBody, request: Request):
         raise HTTPException(status_code=400, detail="Reset link has expired — request a new one")
     await db.users.update_one({"id": rec["user_id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
     await db.password_resets.update_one({"token": body.token}, {"$set": {"used": True, "used_at": now_iso()}})
+    _obs.log_auth_password_reset(rec["user_id"])
     # Kill every outstanding access / refresh token for this user.
     try:
         await revoke_all_user_tokens(rec["user_id"], reason="password_reset")
@@ -628,6 +644,7 @@ async def mfa_enable(body: MfaEnableBody, user_id: str = Depends(get_current_use
             "totp_enabled_at": now_iso(),
         }},
     )
+    _obs.log_auth_mfa_enabled(user_id)
     return {"ok": True, "backup_codes": plain_codes}
 
 
@@ -672,10 +689,12 @@ async def mfa_verify(body: MfaVerifyBody):
                 continue
     if not accepted:
         await record_login_failure(user_id)
+        _obs.log_auth_mfa_failure(user_id, ip=None)
         raise HTTPException(status_code=401, detail="Invalid 2FA code.")
     await clear_login_failures(user_id)
     access, _jti, _exp = create_access_token(user_id)
     refresh, _rjti, _rexp = create_refresh_token(user_id)
+    _obs.log_auth_login_success(user_id, ip=None)
     return {
         "token": access,
         "refresh_token": refresh,
@@ -3387,6 +3406,7 @@ async def delete_account(body: AccountDeleteBody, user_id: str = Depends(get_cur
     # immediate anonymisation; final hard-delete fires 60 days later.
     from privacy import soft_delete_account
     result = await soft_delete_account(user_id)
+    _obs.log_account_deletion(user_id)
     return {
         "ok": True,
         "deletion_completes_at": result.get("deletion_completes_at"),

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { toast } from "sonner";
+import { tagRequestId } from "@/lib/sentry";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
@@ -79,8 +80,20 @@ async function _tryRefreshAccessToken() {
 // Global error interceptor — maps backend error codes to friendly toasts,
 // AND auto-retries one time on 401 using the refresh token.
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Cross-stack request correlation: tag the active Sentry scope with the
+        // backend request id so a frontend error can be jumped to its server log.
+        try {
+            const rid = response?.headers?.["x-request-id"];
+            if (rid) tagRequestId(rid);
+        } catch { /* ignore */ }
+        return response;
+    },
     async (error) => {
+        try {
+            const rid = error?.response?.headers?.["x-request-id"];
+            if (rid) tagRequestId(rid);
+        } catch { /* ignore */ }
         const status = error?.response?.status;
         const detailMsg = extractErrorMessage(error, "");
         const url = error?.config?.url || "";

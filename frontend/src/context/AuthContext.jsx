@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api, setAuthToken, setRefreshToken } from "@/lib/api";
 import { track } from "@/lib/analytics";
+import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 
 const AuthContext = createContext(null);
 
@@ -43,11 +44,13 @@ export function AuthProvider({ children }) {
         try {
             const { data } = await api.get("/auth/me");
             setUser(data);
+            if (data?.id) setSentryUser(data.id);
             await refreshHousehold();
         } catch {
             setAuthToken(null);
             setRefreshToken(null);
             setUser(null);
+            clearSentryUser();
         } finally {
             setLoading(false);
         }
@@ -71,6 +74,7 @@ export function AuthProvider({ children }) {
         setAuthToken(data.token);
         setRefreshToken(data.refresh_token || null);
         setUser(data.user);
+        if (data?.user?.id) setSentryUser(data.user.id);
         try { track.login({ method: "email" }); track.identify(data.user); } catch (_) { /* analytics best-effort */ }
         await refreshHousehold();
         return data.user;
@@ -81,6 +85,7 @@ export function AuthProvider({ children }) {
         setAuthToken(data.token);
         setRefreshToken(data.refresh_token || null);
         setUser(data.user);
+        if (data?.user?.id) setSentryUser(data.user.id);
         try { track.login({ method: "email-2fa" }); track.identify(data.user); } catch (_) { /* analytics best-effort */ }
         await refreshHousehold();
         return data.user;
@@ -91,6 +96,7 @@ export function AuthProvider({ children }) {
         setAuthToken(data.token);
         setRefreshToken(data.refresh_token || null);
         setUser(data.user);
+        if (data?.user?.id) setSentryUser(data.user.id);
         return data.user;
     };
 
@@ -99,6 +105,7 @@ export function AuthProvider({ children }) {
         setAuthToken(data.token);
         setRefreshToken(data.refresh_token || null);
         setUser(data.user);
+        if (data?.user?.id) setSentryUser(data.user.id);
         try { track.login({ method: "google" }); track.identify(data.user); } catch (_) { /* analytics best-effort */ }
         await refreshHousehold();
         setLoading(false);
@@ -112,6 +119,7 @@ export function AuthProvider({ children }) {
         setRefreshToken(null);
         setUser(null);
         setHousehold(null);
+        clearSentryUser();
     };
 
     return (
