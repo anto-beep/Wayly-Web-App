@@ -2755,9 +2755,16 @@ async def root():
 
 
 # ---------------------------------------------------------------------------
-# Public status — uptime, last ingestion, model versions, dependency health.
-# Intentionally public + cache-friendly; safe values only.
+# Phase 3 — Uptime & Health Monitoring
 # ---------------------------------------------------------------------------
+# `/api/health`   = unauthenticated, cheap. UptimeRobot polls this every 5 min.
+# `/api/health/deep` = admin-only. Probes Mongo / Redis / ClamAV / LLM key.
+#                     Used for incident triage + the public `/status` page.
+# Never returns PII / secrets — only ok/fail booleans + timings.
+
+WAYLY_VERSION = os.environ.get("WAYLY_VERSION", "preview")
+
+
 def _human_uptime(seconds: int) -> str:
     if seconds < 60:
         return f"{seconds}s"
@@ -2770,6 +2777,117 @@ def _human_uptime(seconds: int) -> str:
     d = seconds // 86400
     h = (seconds % 86400) // 3600
     return f"{d}d {h}h" if h else f"{d}d"
+
+
+@api.get("/health")
+async def health():
+    """Liveness probe. Always returns 200 unless the process is dead. Designed
+    for high-frequency unauthenticated polling (UptimeRobot, k8s, Cloudflare)."""
+    return {
+        "status": "ok",
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "service": "wayly-api",
+        "version": WAYLY_VERSION,
+    }
+
+
+async def _ping_mongo(timeout_s: float = 2.0) -> Dict[str, Any]:
+    started = datetime.now(timezone.utc)
+    try:
+        await asyncio.wait_for(client.admin.command("ping"), timeout=timeout_s)
+        return {"ok": True, "latency_ms": int((datetime.now(timezone.utc) - started).total_seconds() * 1000)}
+    except Exception as e:
+        return {"ok": False, "error": type(e).__name__}
+
+
+async def _ping_redis(timeout_s: float = 2.0) -> Dict[str, Any]:
+    started = datetime.now(timezone.utc)
+    url = os.environ.get("REDIS_URL")
+    if not url:
+        return {"ok": False, "error": "REDIS_URL not set"}
+    try:
+        import redis.asyncio as redis_async
+        r = redis_async.from_url(url)
+        await asyncio.wait_for(r.ping(), timeout=timeout_s)
+        try:
+            await r.aclose()
+        except Exception:
+            pass
+        return {"ok": True, "latency_ms": int((datetime.now(timezone.utc) - started).total_seconds() * 1000)}
+    except Exception as e:
+        return {"ok": False, "error": type(e).__name__}
+
+
+async def _ping_clamav(timeout_s: float = 2.0) -> Dict[str, Any]:
+    """Best-effort PING to the clamd unix socket (if configured)."""
+    started = datetime.now(timezone.utc)
+    sock = os.environ.get("CLAMD_SOCKET", "/var/run/clamav/clamd.ctl")
+    if not os.path.exists(sock):
+        return {"ok": False, "error": "clamd socket missing", "skipped": True}
+    try:
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_unix_connection(sock), timeout=timeout_s
+        )
+        writer.write(b"nPING\n")
+        await writer.drain()
+        data = await asyncio.wait_for(reader.readline(), timeout=timeout_s)
+        writer.close()
+        try:
+            await writer.wait_closed()
+        except Exception:
+            pass
+        ok = b"PONG" in data
+        return {"ok": ok, "latency_ms": int((datetime.now(timezone.utc) - started).total_seconds() * 1000)}
+    except Exception as e:
+        return {"ok": False, "error": type(e).__name__}
+
+
+def _check_llm_key() -> Dict[str, Any]:
+    """Sanity-check the Emergent LLM key is present + correctly shaped. Never
+    transmits it; never includes it in the response."""
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        return {"ok": False, "error": "EMERGENT_LLM_KEY missing"}
+    # Emergent keys are `sk-emergent-<token>`. We deliberately don't probe a
+    # paid endpoint here — that would burn credit on every health check.
+    return {
+        "ok": key.startswith("sk-emergent-") and len(key) >= 20,
+        "prefix": key[:12] + "…" if key else "",
+    }
+
+
+@api.get("/health/deep")
+async def health_deep(user_id: str = Depends(get_current_admin_id)):
+    """Deep liveness — checks every external dependency. Admin-only.
+    Returns 200 with per-dep status; the orchestrator decides whether to
+    page based on which dep is `ok=false`."""
+    started = datetime.now(timezone.utc)
+    mongo, redis_dep, clamav = await asyncio.gather(
+        _ping_mongo(), _ping_redis(), _ping_clamav(),
+    )
+    llm = _check_llm_key()
+    uptime_s = int((started - APP_STARTED_AT).total_seconds())
+    all_ok = mongo.get("ok") and redis_dep.get("ok") and llm.get("ok") and (clamav.get("ok") or clamav.get("skipped"))
+    return {
+        "status": "ok" if all_ok else "degraded",
+        "ts": started.isoformat(),
+        "service": "wayly-api",
+        "version": WAYLY_VERSION,
+        "uptime_seconds": uptime_s,
+        "uptime_human": _human_uptime(uptime_s),
+        "dependencies": {
+            "mongo": mongo,
+            "redis": redis_dep,
+            "clamav": clamav,
+            "llm_key": llm,
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
+# Public status — uptime, last ingestion, model versions, dependency health.
+# Intentionally public + cache-friendly; safe values only.
+# ---------------------------------------------------------------------------
 
 
 @api.get("/status")

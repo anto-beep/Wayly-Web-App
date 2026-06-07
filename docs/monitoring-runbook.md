@@ -12,6 +12,7 @@ Owner: hello@wayly.com.au
 | **Frontend Sentry (React + browserTracing)** — PII scrub for emails/tokens/cookies; ErrorBoundary fallback in `index.js`; X-Request-ID auto-tagged from every axios response | `frontend/src/lib/sentry.js`, `frontend/src/index.js`, `frontend/src/lib/api.js`, `frontend/src/context/AuthContext.jsx` | reads `REACT_APP_SENTRY_DSN`, `REACT_APP_SENTRY_ENV`, `REACT_APP_SENTRY_RELEASE`, `REACT_APP_SENTRY_TRACES_SAMPLE_RATE` |
 | Structured JSON logging (stderr — supervisor captures) | `JsonFormatter` — every line carries `ts`, `level`, `service`, `request_id`, `user_id`, plus `extra` fields | `backend/observability.py` |
 | Per-request `X-Request-ID` header + access log | `RequestLoggingMiddleware` | installed via `_observability.install(app)` in `server.py` |
+| **Phase 3 health endpoints** | `GET /api/health` (public, liveness) + `GET /api/health/deep` (admin-only — Mongo/Redis/ClamAV/LLM-key probes with per-dep `{ok, latency_ms}`). LLM key value is NEVER returned, only prefix. | `backend/server.py` |
 | Security event taxonomy (13 event types) | `log_auth_login_success`, `log_decoder_run`, `log_file_upload`, `log_participant_access`, etc. | `backend/observability.py` |
 | **Sec-events wired into hot code paths** (server.py) | `signup` ⇒ `LOGIN_SUCCESS`; `login` ⇒ `LOGIN_SUCCESS/LOGIN_FAILURE/LOCKOUT`; `google-session` ⇒ `LOGIN_SUCCESS`; `mfa/verify` ⇒ `LOGIN_SUCCESS/MFA_FAILURE`; `mfa/enable` ⇒ `MFA_ENABLED`; `/auth/reset` ⇒ `PASSWORD_RESET`; `DELETE /auth/account` ⇒ `ACCOUNT_DELETION` (hashed id) | `backend/server.py` |
 | Account-deletion + data-export events | `log_account_deletion`, `log_data_export` (hashed user-id, no PII) | same |
@@ -35,16 +36,52 @@ These require Sentry / Cloudflare / Stripe / Anthropic / UptimeRobot dashboards.
    - "Issue contains tag transaction:decoder" → email
    - "Auth event spike > 10 in 5 min" → email
 
-### Phase 3 — Uptime monitoring (UptimeRobot)
-Sign in at https://uptimerobot.com (free tier covers 50 monitors / 5-min interval). Create 3 HTTP(s) monitors:
+### Phase 3 — Uptime monitoring (UptimeRobot) — ENDPOINTS LIVE
+
+The two health endpoints are now wired in `server.py`:
+
+| Endpoint | Auth | What it checks | Used by |
+|---|---|---|---|
+| `GET /api/health` | none | Liveness only (process is up + serving HTTP). Returns `{status, ts, service, version}`. No DB hit. | UptimeRobot, k8s liveness probe |
+| `GET /api/health/deep` | admin JWT | Probes Mongo, Redis, ClamAV unix socket, Emergent LLM key shape. Returns per-dependency `{ok, latency_ms}` + an aggregate `status: ok\|degraded`. Never returns the raw LLM key — only the `sk-emergent-…` prefix. | Incident triage, the existing `/status` page can later proxy a subset of this |
+
+Live verified end-to-end:
+```
+$ curl -s $API/api/health
+{"status":"ok","ts":"2026-…","service":"wayly-api","version":"preview"}
+
+$ curl -s -H "Authorization: Bearer <admin-jwt>" $API/api/health/deep
+{
+  "status":"ok",
+  "dependencies":{
+    "mongo":{"ok":true,"latency_ms":1},
+    "redis":{"ok":true,"latency_ms":2},
+    "clamav":{"ok":true,"latency_ms":1},
+    "llm_key":{"ok":true,"prefix":"sk-emergent-…"}
+  },
+  "uptime_seconds":42,"uptime_human":"42s"
+}
+```
+Unauth `/api/health/deep` returns 401; non-admin user JWT returns 403.
+
+### UptimeRobot configuration
+
+Sign in at https://uptimerobot.com (free tier covers 50 monitors / 5-min interval). Create these HTTP(s) monitors:
 
 | Friendly Name | URL | Interval | Alert contacts | Alert when |
 |---|---|---|---|---|
 | Wayly Marketing | `https://wayly.com.au` | 5 min | hello@wayly.com.au | non-200 for 2 consecutive checks |
-| Wayly API | `https://wayly.com.au/api/health` | 5 min | hello@wayly.com.au | non-200 for 2 consecutive checks |
+| Wayly API Health | `https://wayly.com.au/api/health` | 5 min | hello@wayly.com.au | non-200 for 2 consecutive checks OR body does not contain `"status":"ok"` |
 | Wayly Articles | `https://wayly.com.au/articles` | 5 min | hello@wayly.com.au | non-200 for 2 consecutive checks |
+| Wayly Login | `https://wayly.com.au/login` | 15 min | hello@wayly.com.au | non-200 for 2 consecutive checks |
 
-(A `/api/health` endpoint already exists in the codebase — verify with `curl https://wayly.com.au/api/health`.)
+For the API Health monitor:
+- **Monitor type**: Keyword
+- **Keyword**: `"status":"ok"` (alert when keyword NOT exists)
+- **HTTP method**: GET
+- **Add notification contact** in the UptimeRobot dashboard for hello@wayly.com.au (and optionally a Slack/Discord webhook).
+
+For `/api/health/deep`, do NOT poll from UptimeRobot — it requires an admin JWT and the LLM-key probe is heavier. Use it from the incident-response runbook only.
 
 ### Phase 4 — Cloudflare WAF (replaces AWS WAF)
 1. In Cloudflare → Security → WAF, enable these Managed Rulesets in `Log` mode for 48 h:
