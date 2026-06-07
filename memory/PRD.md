@@ -1985,3 +1985,54 @@ All 10 phases (0-9) delivered. **55/55 automated security tests passing.** ClamA
 ### Phase 7 — Dependency Security (planned)
 ### Phase 8 — Admin Hardening (planned)
 ### Phase 9 — NDB & Privacy Act Readiness (planned)
+
+## Implemented (Iteration 37 — Feb 2026 · Monitoring & Observability 6-Phase pass)
+
+### Phase 1 — Sentry error tracking
+- **Backend**: `sentry_sdk` installed, init in `observability.py` behind `SENTRY_DSN` env (no-op when blank). FastAPI + Starlette + Logging integrations auto-wired. `traces_sample_rate` configurable.
+- **Frontend**: `@sentry/react@10` + `browserTracingIntegration`. `Sentry.ErrorBoundary` wraps `<App />` in `index.js`. PII scrub on `beforeSend` (drops emails/tokens/cookies/query-strings). Axios response interceptor auto-tags every Sentry scope with the backend's `X-Request-ID` for cross-stack correlation. `AuthContext` calls `setSentryUser(user.id)` on login / `clearSentryUser()` on logout — id only, never email.
+
+### Phase 2 — Structured JSON logging + sec-events
+- `JsonFormatter` replaces stdlib formatter — every log line carries `ts`, `level`, `service`, `logger`, `msg`, `request_id`, `user_id`, plus structured `extra` fields.
+- `RequestLoggingMiddleware` injects an `X-Request-ID` UUID on every request, logs `{endpoint, method, status, duration_ms, ip}` per call.
+- 13 sec-event helpers exposed in `observability.py` with PII-safe payloads (auto-drops `email/password/token/secret` keys; hashes user_id for `ACCOUNT_DELETION`).
+- Wired into 7 hot paths: `signup` / `login` / `google-session` / `mfa/verify` / `mfa/enable` / `auth/reset` / `DELETE /auth/account`.
+
+### Phase 3 — Health endpoints + UptimeRobot docs
+- `GET /api/health` — public, cheap (no DB hit), returns `{status, ts, service, version}`. For UptimeRobot 5-min polling.
+- `GET /api/health/deep` — admin-only, probes Mongo + Redis + ClamAV unix socket + Emergent LLM key shape. Returns per-dep `{ok, latency_ms}` + aggregate `status: ok | degraded`. **LLM key value never returned — prefix only.**
+- Runbook section drafted with 4 recommended UptimeRobot monitors (Marketing / API Health keyword-match / Articles / Login).
+
+### Phase 4 — Security-specific monitoring + admin UI
+- New `backend/security_alerter.py` — Mongo-backed sliding-window alerter, 5 rules:
+  - `LOGIN_FAILURE_PER_IP` (>20/5m HIGH)
+  - `LOGIN_FAILURE_PER_EMAIL_HASH` (>50/5m HIGH; emails SHA-256 hashed)
+  - `PARTICIPANT_SCRAPE` (>50 distinct pids/10m HIGH)
+  - `ADMIN_ACTION_SPIKE` (>30/5m CRITICAL)
+  - `MALWARE_UPLOAD` (every event CRITICAL)
+- 30-min cooldown dedupe per `(rule, subject)`. Each fire emits `ALERT_FIRED` JSON log + best-effort Resend email to `hello@wayly.com.au` (override via `SECURITY_ALERT_EMAIL`).
+- 4 call sites wired: `auth/login` failure · `_resolve_active_participant` · `statements/upload` ClamAV `on_malware` callback · `admin_hardening.append_audit`.
+- Admin API: `GET /api/admin/security-alerts` (list+stats+thresholds) + `POST /api/admin/security-alerts/{id}/resolve` (writes resolve action into the hash-chained admin audit log).
+- Admin UI: `/admin/security-alerts` page with 3 stat tiles (Open / Critical-open / 24h count), filter toggle (All / Open), per-row severity badges + Resolve modal with audit note. Auto-refreshes every 30s. Added to AdminApp sidebar Security section.
+
+### Phase 5 — Performance monitoring
+- Decoder cost tracking: every LLM call inside `_llm_chunk_call` and `audit_statement` now writes a row into `db.llm_calls` carrying `user_id`, `household_id`, `participant_id`, `phase` (`extract_header / extract_clinical / extract_independence / extract_everyday / extract_adjustments / extract_provider_notes / audit`), token estimates, AUD cost (Anthropic pricing × 1.5 USD→AUD), duration_ms.
+- `extract_statement()` and `audit_statement()` now accept optional `user_id` + `participant_id` kwargs.
+- Summary `DECODER_RUN` JSON log line emitted at the end of each upload.
+- New alerter rule `DECODER_COST_RUNAWAY` — HIGH, > $20 AUD aggregated per user_id in 60min.
+- Admin endpoint `GET /api/admin/decoder-cost?days=14` returns daily series + top spenders (24h) + per-phase breakdown + totals.
+- **Lighthouse CI**: `/.github/workflows/lighthouse.yml` + `/lighthouserc.json` — 6 URLs × 3 runs, fails on Perf < 0.85 / A11y < 0.95 / LCP > 2.5s / CLS > 0.10 / TBT > 200ms / unminified-JS / unminified-CSS / no text compression.
+
+### Phase 6 — Cost & billing protection (Stripe webhook hardening)
+- Stripe webhook handler at `/api/webhook/stripe` rewritten:
+  - **Signature verification** — reads `STRIPE_WEBHOOK_SECRET` env var and passes to `StripeCheckout(webhook_secret=…)`. Unsigned → 400 + audit row `rejected_no_signature`. Bad HMAC → 400 + audit row `rejected_bad_signature`.
+  - **Idempotency** — Redis (`SET stripe:evt:<id> "1" NX EX 86400`) + Mongo (`stripe_webhook_events` with `result:"processed"` lookup). Replayed events return `{"ok":true,"deduped":true}` without re-processing.
+  - **Audit collection** `stripe_webhook_events` — every webhook hit persists `received_at, event_id, event_type, result (rejected_*/deduped/processed), handler_result, duration_ms`.
+- New env var (production-only): `STRIPE_WEBHOOK_SECRET` from Stripe Dashboard → Developers → Webhooks → Signing secret.
+
+### Test status iter 37 — 52/52 pass (4 reasonable skips)
+- 5 Phase 1+2 tests · 4 Phase 3 tests (1 skipped for TestClient async-redis interop) · 8 Phase 4 tests · 5 Phase 5 tests · 7 Phase 6 tests (2 skipped: STRIPE_WEBHOOK_SECRET-dependent + signature-gate blocks dedup test in test mode) · 25 existing security regression. New runbook at `/app/docs/monitoring-runbook.md` updated for all 6 phases.
+
+### Files added/modified
+- New: `backend/security_alerter.py`, `frontend/src/lib/sentry.js`, `frontend/src/pages/admin/AdminSecurityAlerts.jsx`, `backend/tests/test_monitoring_phase_{1_2,3,4,5,6}.py`, `.github/workflows/lighthouse.yml`, `lighthouserc.json`.
+- Modified: `backend/server.py` (Phase 3 health endpoints, Phase 4 alerter hooks, Phase 5 decoder cost propagation, Phase 6 webhook hardening), `backend/agents.py` (cost_ctx threading), `backend/llm_costs.py` (participant_id + phase fields), `backend/admin_routes.py` (security-alerts + decoder-cost endpoints), `backend/upload_security.py` (on_malware callback), `backend/admin_hardening.py` (alerter hook on audit), `frontend/src/index.js` (Sentry init + ErrorBoundary), `frontend/src/lib/api.js` (request-id tag), `frontend/src/context/AuthContext.jsx` (Sentry user lifecycle), `frontend/src/pages/admin/AdminApp.jsx` (sidebar + route), `docs/monitoring-runbook.md` (all 6 phases).

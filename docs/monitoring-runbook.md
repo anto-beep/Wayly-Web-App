@@ -126,16 +126,18 @@ Admin API:
 ### Phase 4 — Alerts via Mongo+Resend (no CloudWatch in this stack)
 Already covered by the in-process alerter above. If you also pipe stdout into Logflare/BetterStack/Axiom, you can layer a second set of saved queries on the `ALERT_FIRED` log lines for off-host redundancy.
 
-### Phase 6 — Cost & billing
-1. **Anthropic / Emergent LLM**: log into your Emergent dashboard → Universal Key → set auto top-up cap.
-2. **Stripe**: webhook signature verification is already implemented via `StripeCheckout.handle_webhook()` in `server.py` (the `signature` header is required). Verify by sending an unsigned webhook — it should 400.
-3. **Stripe webhook idempotency**: the existing handler at `server.py:stripe_webhook` should be augmented to dedupe on `event.id` via Redis (24h TTL). Quick implementation:
-   ```python
-   import redis.asyncio as redis_async
-   r = redis_async.from_url(os.environ["REDIS_URL"])
-   if not await r.set(f"stripe:evt:{event_id}", "1", nx=True, ex=86400):
-       return {"ok": True, "deduped": True}
-   ```
+### Phase 6 — Cost & billing (SHIPPED)
+1. **Anthropic / Emergent LLM**: log into your Emergent dashboard → Universal Key → set auto top-up cap. (No code surface.)
+2. **Stripe webhook signature verification** — wired in `server.py` `/api/webhook/stripe`. Reads `STRIPE_WEBHOOK_SECRET` from env and passes it to `StripeCheckout(webhook_secret=…)`. Unsigned → 400 + audit row `rejected_no_signature`. Bad HMAC → 400 + audit row `rejected_bad_signature`. Production REQUIRES the env var to be set — without it the SDK behaviour is permissive on parseable payloads. Set it from the Stripe Dashboard → Developers → Webhooks → Signing secret.
+3. **Stripe webhook idempotency** — Redis + Mongo dual-write. On every event:
+   - Redis `SET stripe:evt:<event_id> "1" NX EX 86400` (24h hot dedupe).
+   - Mongo `stripe_webhook_events.find_one({event_id, result:"processed"})` (durable dedupe even if Redis flushed).
+   - If either says "seen before" → persist a `deduped` row + return `{"ok":true, "deduped":true}` without re-processing.
+   - First-time event → process, then write a `processed` row with `handler_result`, `duration_ms`, `payment_status`, `session_id`.
+4. **Audit collection `stripe_webhook_events`** — every webhook hit lands here with one of `rejected_no_signature / rejected_bad_signature / deduped / processed`. Read it from the admin UI (future iteration) for billing visibility.
+
+### Cost runaway alert
+Already shipped in Phase 5 — see `DECODER_COST_RUNAWAY` rule. Fires when a single user's hourly decoder cost exceeds $20 AUD. Surfaces in `/admin/security-alerts`.
 
 ## Daily security digest (cron pattern)
 A daily cron Lambda is NOT available here. Use a simple scheduler in `server.py`:

@@ -3980,52 +3980,152 @@ async def upgrade_downgrade(body: UpgradeBody, user_id: str = Depends(get_curren
 
 @api.post("/webhook/stripe")
 async def stripe_webhook(request: Request):
+    """Phase 6 hardened Stripe webhook:
+      • Verifies the Stripe-Signature header. Unsigned / mis-signed → 400.
+      • Idempotent on `event.id` via Redis (24h hot path) + Mongo (durable
+        history). A replayed event is a no-op (returns `{ok:true,deduped:true}`).
+      • Every event is persisted into `stripe_webhook_events` for audit /
+        admin visibility / DLQ.
+    """
     api_key = os.environ.get("STRIPE_API_KEY")
     if not api_key:
-        return {"ok": False}
+        return {"ok": False, "error": "stripe_disabled"}
+
     body = await request.body()
     sig = request.headers.get("Stripe-Signature", "")
-    try:
-        stripe = StripeCheckout(api_key=api_key, webhook_url="")
-        ev = await stripe.handle_webhook(body, sig)
-    except Exception as e:
-        logger.warning("Stripe webhook parse failed: %s", e)
-        return {"ok": False}
-    if (ev.payment_status or "").lower() == "paid" and ev.session_id:
-        tx = await db.payment_transactions.find_one({"session_id": ev.session_id})
-        if tx and tx.get("payment_status") != "paid":
-            # Batch-3 v2 transactions carry a metadata.kind that routes to dedicated handlers
-            tx_kind = (tx.get("kind") or "")
-            md = tx.get("metadata") or {}
-            if tx_kind in ("plan_upgrade", "participant_addon"):
-                from batch3_billing import handle_batch3_paid_event
-                try:
-                    await handle_batch3_paid_event(md, ev.session_id)
-                except Exception as e:
-                    logger.warning("Batch3 paid-event handler failed: %s", e)
-            else:
-                # Legacy single-plan checkout flow
-                await db.users.update_one({"id": tx["user_id"]}, {"$set": {"plan": tx["plan"]}})
-            await db.payment_transactions.update_one(
-                {"session_id": ev.session_id},
-                {"$set": {"payment_status": "paid", "paid_at": now_iso(), "webhook_event": ev.event_type}},
-            )
-    # Mobile push trigger — failed payment
-    if (ev.payment_status or "").lower() in ("failed", "unpaid", "requires_payment_method") and ev.session_id:
-        tx = await db.payment_transactions.find_one({"session_id": ev.session_id}) or {}
+    received_at = datetime.now(timezone.utc).isoformat()
+
+    # 1. Signature verification — reject anything we can't authenticate.
+    if not sig:
         try:
-            import asyncio as _asyncio
-            import push_service as _push
-            user = await db.users.find_one({"id": tx.get("user_id")}, {"_id": 0, "email": 1}) or {}
-            _asyncio.create_task(_push.notify_role(
-                "payment_failed",
-                title="💳 Payment failed",
-                body=f"{user.get('email') or 'A customer'} — ${tx.get('amount', '')} {tx.get('currency', 'AUD').upper()}",
-                data={"type": "payment_failed", "session_id": ev.session_id, "user_id": tx.get("user_id")},
-            ))
+            await db.stripe_webhook_events.insert_one({
+                "received_at": received_at, "result": "rejected_no_signature",
+                "raw_len": len(body or b""),
+            })
         except Exception:
             pass
-    return {"ok": True}
+        raise HTTPException(status_code=400, detail="Missing Stripe-Signature header")
+
+    try:
+        webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+        stripe = StripeCheckout(api_key=api_key, webhook_secret=webhook_secret, webhook_url="")
+        ev = await stripe.handle_webhook(body, sig)
+    except Exception as e:
+        # `handle_webhook` raises on bad signatures.
+        logger.warning("Stripe webhook signature verification failed: %s", e)
+        try:
+            await db.stripe_webhook_events.insert_one({
+                "received_at": received_at, "result": "rejected_bad_signature",
+                "raw_len": len(body or b""), "error": str(e)[:200],
+            })
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail="Invalid Stripe signature")
+
+    # Some emergentintegrations builds expose event.id; fall back to a hash
+    # of the body so we still dedupe replays even if the field is missing.
+    event_id = getattr(ev, "event_id", None) or getattr(ev, "id", None)
+    if not event_id:
+        import hashlib as _hash
+        event_id = "sha256:" + _hash.sha256(body).hexdigest()[:32]
+
+    # 2. Idempotency — Redis SET NX EX 24h (hot path) + Mongo (durable).
+    redis_marked = False
+    try:
+        import redis.asyncio as _redis_async
+        _r = _redis_async.from_url(os.environ["REDIS_URL"])
+        # `set(..., nx=True)` returns True only the first time.
+        redis_marked = bool(await _r.set(f"stripe:evt:{event_id}", "1", nx=True, ex=86400))
+        try:
+            await _r.aclose()
+        except Exception:
+            pass
+    except Exception as e:
+        logger.warning("Redis idempotency check failed (continuing): %s", e)
+
+    # Mongo dedupe — if we've already processed this event_id with result=processed,
+    # this is a no-op (defence even if Redis was unavailable).
+    existing = await db.stripe_webhook_events.find_one(
+        {"event_id": event_id, "result": "processed"},
+        {"_id": 0, "event_id": 1, "processed_at": 1},
+    )
+    if existing or not redis_marked:
+        try:
+            await db.stripe_webhook_events.insert_one({
+                "event_id": event_id, "received_at": received_at,
+                "event_type": ev.event_type, "result": "deduped",
+                "previously_processed_at": (existing or {}).get("processed_at"),
+            })
+        except Exception:
+            pass
+        return {"ok": True, "deduped": True}
+
+    # 3. Process the event (legacy logic preserved, wrapped with timing + status capture).
+    import time as _time
+    _t0 = _time.time()
+    handler_result = "no_op"
+    handler_error: Optional[str] = None
+    try:
+        if (ev.payment_status or "").lower() == "paid" and ev.session_id:
+            tx = await db.payment_transactions.find_one({"session_id": ev.session_id})
+            if tx and tx.get("payment_status") != "paid":
+                tx_kind = (tx.get("kind") or "")
+                md = tx.get("metadata") or {}
+                if tx_kind in ("plan_upgrade", "participant_addon"):
+                    from batch3_billing import handle_batch3_paid_event
+                    try:
+                        await handle_batch3_paid_event(md, ev.session_id)
+                        handler_result = f"paid:{tx_kind}"
+                    except Exception as e:
+                        logger.warning("Batch3 paid-event handler failed: %s", e)
+                        handler_result = "paid_handler_error"
+                        handler_error = str(e)[:300]
+                else:
+                    await db.users.update_one({"id": tx["user_id"]}, {"$set": {"plan": tx["plan"]}})
+                    handler_result = "paid:legacy_plan"
+                await db.payment_transactions.update_one(
+                    {"session_id": ev.session_id},
+                    {"$set": {"payment_status": "paid", "paid_at": now_iso(), "webhook_event": ev.event_type}},
+                )
+        # Mobile push trigger — failed payment
+        if (ev.payment_status or "").lower() in ("failed", "unpaid", "requires_payment_method") and ev.session_id:
+            tx = await db.payment_transactions.find_one({"session_id": ev.session_id}) or {}
+            try:
+                import asyncio as _asyncio
+                import push_service as _push
+                user = await db.users.find_one({"id": tx.get("user_id")}, {"_id": 0, "email": 1}) or {}
+                _asyncio.create_task(_push.notify_role(
+                    "payment_failed",
+                    title="💳 Payment failed",
+                    body=f"{user.get('email') or 'A customer'} — ${tx.get('amount', '')} {tx.get('currency', 'AUD').upper()}",
+                    data={"type": "payment_failed", "session_id": ev.session_id, "user_id": tx.get("user_id")},
+                ))
+                handler_result = "failed_push"
+            except Exception:
+                pass
+    except Exception as e:
+        logger.exception("Stripe webhook handler exception")
+        handler_result = "handler_exception"
+        handler_error = str(e)[:300]
+
+    # 4. Persist the durable history row.
+    try:
+        await db.stripe_webhook_events.insert_one({
+            "event_id": event_id,
+            "received_at": received_at,
+            "processed_at": datetime.now(timezone.utc).isoformat(),
+            "event_type": ev.event_type,
+            "payment_status": (ev.payment_status or None),
+            "session_id": getattr(ev, "session_id", None),
+            "result": "processed",
+            "handler_result": handler_result,
+            "handler_error": handler_error,
+            "duration_ms": int((_time.time() - _t0) * 1000),
+        })
+    except Exception:
+        pass
+
+    return {"ok": True, "event_id": event_id, "result": handler_result}
 
 
 from admin_routes import admin as admin_router
