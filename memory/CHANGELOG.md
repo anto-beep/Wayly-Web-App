@@ -1,3 +1,13 @@
+## Iteration 52 (Feb 2026) — Mobile handoff bundle exposed + hero confirmed static
+
+- **Hero static image confirmed**: `HeroSpotlight.jsx` already uses an `<img>` tag pointing to `/branding/screenshots/dashboard-hero.png?v=5` (no `<video>` element present). Verified live on the preview URL — full dashboard screenshot renders in the right column of the hero with no autoplaying media. The previously-attempted 6-second loop is not in the repo.
+- **Mobile handoff bundle made findable**: `wayly-mobile-handoff.zip` (783 KB) now exists at three locations so any mobile agent can reach it:
+  - Repo root: `/app/wayly-mobile-handoff.zip`
+  - Docs: `/app/docs/wayly-mobile-handoff.zip`
+  - Live HTTPS: `https://<wayly-domain>/wayly-mobile-handoff.zip` (verified `HTTP/2 200`, content-length 783920).
+- **Mobile-agent prompt added**: New file `/app/MOBILE_AGENT_PROMPT.md` is the copy-pasteable brief for the mobile agent — full token sheet (teal/sage/clay/neutral hex values), Fraunces + Inter + IBM Plex Mono font instructions, iOS + Android + Expo splash & status-bar wiring, screen-by-screen styling notes (cards / buttons / inputs / lists / charts), and a pre-submit sweep checklist.
+
+
 ## Iteration 50 (Feb 2026) — All articles published · per-term Glossary URLs · time-pegged content queue
 
 ### Articles — all published, all reviewed by Antony Chiware (Aged Care Financial Adviser)
