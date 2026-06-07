@@ -1934,8 +1934,21 @@ Implementing the 10-phase security audit to meet the Australian Privacy Act
 - 8 pytest assertions covering header presence + values; `/api/health` exempted for monitor-probe performance.
 - Delivery report: `/app/security-audit/phase-5-delivery.md`.
 
-### Phase 6 — Encryption & Storage Verification (NEXT, awaiting approval)
-- Verify Mongo encryption-at-rest and TLS in transit; document key rotation; add `.env.example`; verify S3 (if used) is private + AES-256.
+### Phase 6 — Encryption & Storage Verification ✅ DONE
+- S3 PUTs in `reports_routes._upload_to_s3` now carry `ServerSideEncryption=AES256` + `ACL=private` so individual objects stay encrypted even if a bucket policy is later misconfigured.
+- New `/app/backend/.env.example` documents every env var (DB, JWT, TOTP, Rate Limiting, Upload, Headers, Email, Stripe, S3) with `[REQUIRED]` / `[SECURITY]` markers and copy-paste commands to generate fresh secrets.
+- New `/app/security-audit/encryption-runbook.md`: data classification (Tier 1 health/PII vs Tier 2 account), at-rest (Mongo Atlas + WiredTiger + AWS KMS; S3 SSE-AES256; Fernet/HMAC-SHA256/bcrypt), in-transit (TLS 1.2+ at Cloudflare; `mongodb+srv://`; `rediss://`; clamd 127.0.0.1 only), exact rotation procedures for JWT_SECRET / ADMIN_JWT_SECRET / TOTP_ENC_KEY / Stripe / Resend keys, quarterly compliance checklist.
+- Delivery report: `/app/security-audit/phase-6-delivery.md`.
+
+### Phase 7 — Dependency Security ✅ DONE (47/47 tests still pass)
+- Backend bumps (with full regression): fastapi 0.110.1 → 0.136.3, starlette 0.37.2 → 1.2.1 (4 CVEs gone), pyjwt 2.12.1 → 2.13.0, urllib3 2.6.3 → 2.7.0, aiohttp 3.13.5 → 3.14.0, idna 3.11 → 3.18, python-multipart 0.0.24 → 0.0.32, pymongo 4.5.0 → 4.17.0, motor 3.3.1 → 3.7.1.
+- Frontend bumps: axios 1.8.4 → 1.17.0, react-router-dom 7.5.1 → 7.17.0. **Production-affecting frontend vulnerabilities: 34 → 0**.
+- Accepted-risk: `openai`, `litellm` pinned by `emergentintegrations==0.1.0` (Emergent Universal LLM key). Mitigations: Phase 4 prompt-injection sanitiser, Phase 3 rate limits, no raw user prompts piped through litellm.
+- New `/app/.github/dependabot.yml`: weekly pip + npm, monthly GitHub Actions, patches grouped, openai/litellm ignored.
+- Delivery report: `/app/security-audit/phase-7-delivery.md`.
+
+### Phase 8 — Admin Hardening (NEXT, awaiting approval)
+- 404 for unauth `/admin/login`, IP allowlist, new-device email alert, immutable audit log, 30-min impersonation timeout, admin-specific CSP, maintenance mode toggle.
 
 ### Phase 3 — Rate Limiting (planned)
 - Redis-backed (provision Redis first), wrap login/signup/reset/uploads.

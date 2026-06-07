@@ -63,12 +63,24 @@ def _get_s3():
 
 
 def _upload_to_s3(pdf_path: Path, key: str) -> Optional[str]:
-    """Upload the local PDF to S3 and return the S3 URI (s3://bucket/key) or None on failure."""
+    """Upload the local PDF to S3 and return the S3 URI (s3://bucket/key) or None on failure.
+
+    Phase 6: hardens every PUT with `ServerSideEncryption=AES256` + `ACL=private`
+    so even if a bucket policy is later misconfigured, individual objects stay
+    encrypted at rest and unreadable to anonymous callers.
+    """
     s3 = _get_s3()
     if not s3:
         return None
     try:
-        s3.upload_file(str(pdf_path), S3_BUCKET, key, ExtraArgs={"ContentType": "application/pdf"})
+        s3.upload_file(
+            str(pdf_path), S3_BUCKET, key,
+            ExtraArgs={
+                "ContentType": "application/pdf",
+                "ServerSideEncryption": "AES256",
+                "ACL": "private",
+            },
+        )
         return f"s3://{S3_BUCKET}/{key}"
     except Exception as e:
         logger.warning(f"S3 upload failed: {e}")
