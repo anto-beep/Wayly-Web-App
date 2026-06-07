@@ -1,21 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" role="img" aria-label="Wayly">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" role="img" aria-label="Wayly">
   <title>Wayly</title>
-  <defs>
-    <linearGradient id="lk-w-fill1" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#1E7BD9"/><stop offset="100%" stop-color="#1456A3"/>
-    </linearGradient>
-    <linearGradient id="lk-w-fill2" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#6FE3DA"/><stop offset="100%" stop-color="#2BC4D6"/>
-    </linearGradient>
-  </defs>
-  <g transform="translate(0 0)">
-    <rect x="6" y="22" width="180" height="180" rx="40" fill="transparent"/>
-    <g transform="translate(6 22) scale(0.352)">
-      <path d="M 92 128 L 168 128 L 232 384 L 188 384 Z" fill="url(#lk-w-fill1)"/>
-      <path d="M 188 384 L 232 384 L 256 256 L 232 128 L 168 128 Z" fill="url(#lk-w-fill2)" opacity="0.92"/>
-      <path d="M 420 128 L 344 128 L 280 384 L 324 384 Z" fill="url(#lk-w-fill1)"/>
-      <path d="M 324 384 L 280 384 L 256 256 L 280 128 L 344 128 Z" fill="url(#lk-w-fill2)" opacity="0.92"/>
-    </g>
+  <!-- Mark -->
+  <g transform="translate(0, 16) scale(0.25)">
+    <rect width="512" height="512" rx="112" fill="#0E4D52"/>
+    <path
+      d="M 88 132 C 88 124, 96 116, 108 116 L 124 116 C 134 116, 142 122, 145 132 L 196 312 L 240 152 C 244 138, 254 130, 268 132 C 280 134, 290 142, 294 156 L 332 308 L 388 132 C 391 122, 400 116, 410 116 L 426 116 C 438 116, 446 124, 446 132"
+      fill="none" stroke="#FBF8F3" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="446" cy="132" r="22" fill="#C2683D"/>
   </g>
-  <text x="210" y="148" font-family="IBM Plex Sans, system-ui, sans-serif" font-weight="700" font-size="120" fill="#0E2A47" letter-spacing="-2">wayly</text>
+  <!-- Wordmark "Wayly" in Fraunces serif -->
+  <text x="160" y="105" font-family="Fraunces, Georgia, serif" font-size="84" font-weight="600" fill="#0E4D52" letter-spacing="-2">Wayly</text>
 </svg>

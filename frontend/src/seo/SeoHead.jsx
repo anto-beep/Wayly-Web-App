@@ -18,7 +18,7 @@ export const SITE = {
     description:
         "Wayly is the AI assistant for Australian families navigating Support at Home. Decode statements, check classifications, plan budgets — in plain English.",
     twitter: "@waylyhq",
-    defaultOgImage: "https://wayly.com.au/og-default.png",
+    defaultOgImage: "https://wayly.com.au/branding/og-image.png",
     contactEmail: "support@wayly.com.au",
     locale: "en_AU",
 };
