@@ -608,24 +608,35 @@ nav .hover\:bg-white:hover *, header .hover\:bg-white:hover * {
 }
 
 /* Top nav links — the menu items render on the teal nav bar. NO default
- * underline (fixes the double-line bug). Underline appears ONLY on hover. */
+ * underline (fixes the double-line bug). Underline appears ONLY on hover
+ * — and is suppressed entirely for NavLink components that draw their own
+ * `::after` clay bar, so we never get two lines stacked. */
 nav.bg-wayly-teal-600 a,
 header.bg-wayly-teal-600 a,
 nav.bg-\[\#0E2A47\] a,
-header.bg-\[\#0E2A47\] a {
+header.bg-\[\#0E2A47\] a,
+header.bg-\[\#0E2A47\]\/95 a {
     color: #FFFFFF !important;
     text-decoration: none !important;
 }
 nav.bg-wayly-teal-600 a:hover,
 header.bg-wayly-teal-600 a:hover,
 nav.bg-\[\#0E2A47\] a:hover,
-header.bg-\[\#0E2A47\] a:hover {
+header.bg-\[\#0E2A47\] a:hover,
+header.bg-\[\#0E2A47\]\/95 a:hover {
     color: #FFFFFF !important;
-    text-decoration: underline !important;
-    text-decoration-color: var(--wayly-clay-400) !important;
-    text-decoration-thickness: 2px !important;
-    text-underline-offset: 6px !important;
     background-color: transparent !important;
+    /* The clay underline is drawn by the NavLink's own ::after pseudo-element.
+     * Setting text-decoration to none here prevents the double-line bug. */
+    text-decoration: none !important;
+}
+/* NavLinks that ship their own ::after bar (data-testid^="nav-link-") get
+ * no text-decoration ever — the ::after is the only treatment. */
+a[data-testid^="nav-link-"],
+a[data-testid^="nav-link-"]:hover,
+a[data-testid^="nav-link-"]:focus,
+a[data-testid^="nav-link-"]:active {
+    text-decoration: none !important;
 }
 nav.bg-wayly-teal-600 a[aria-current="page"],
 header.bg-wayly-teal-600 a[aria-current="page"],

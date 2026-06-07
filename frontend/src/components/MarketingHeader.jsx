@@ -156,8 +156,8 @@ export default function MarketingHeader() {
                             to={n.to}
                             data-testid={`nav-link-${n.label.toLowerCase().replace(/\s+/g, "-")}`}
                             className={({ isActive }) =>
-                                `relative text-sm font-medium text-white/85 hover:text-white transition-colors py-1 ${
-                                    isActive ? "text-white after:absolute after:inset-x-0 after:-bottom-1 after:h-[2px] after:bg-[#2BC4D6]" : "hover:after:absolute hover:after:inset-x-0 hover:after:-bottom-1 hover:after:h-[2px] hover:after:bg-[#2BC4D6]"
+                                `relative text-sm font-medium text-white transition-colors py-1 no-underline ${
+                                    isActive ? "after:absolute after:inset-x-0 after:-bottom-1.5 after:h-[2px] after:bg-wayly-clay-400 after:content-['']" : "hover:after:absolute hover:after:inset-x-0 hover:after:-bottom-1.5 hover:after:h-[2px] hover:after:bg-wayly-clay-400 hover:after:content-['']"
                                 }`
                             }
                         >
