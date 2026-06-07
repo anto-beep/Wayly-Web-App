@@ -1131,3 +1131,46 @@ async def indexnow_submit_specific(body: dict, admin: dict = Depends(get_current
         detail={"status": result.get("status"), "error": result.get("error"), "sample": raw[:3]},
     )
     return {"ok": result.get("error") is None, **result}
+
+
+# ---------------------- SECURITY ALERTS (Phase 4 monitoring) ----------------------
+
+from pydantic import BaseModel, Field as _Field
+import security_alerter as _alerter
+
+
+class _AlertResolveBody(BaseModel):
+    note: str = _Field(default="", max_length=500)
+
+
+@admin.get("/security-alerts")
+async def security_alerts_list(
+    only_open: bool = False,
+    limit: int = 50,
+    admin: dict = Depends(get_current_admin),
+):
+    """List the most recent security alerts. `only_open=true` filters to
+    unresolved rows. Capped at 200 per call."""
+    limit = max(1, min(int(limit or 50), 200))
+    alerts = await _alerter.list_alerts(db, limit=limit, only_open=only_open)
+    stats = await _alerter.alert_stats(db)
+    return {"alerts": alerts, "stats": stats, "thresholds": _alerter.RULE_THRESHOLDS}
+
+
+@admin.post("/security-alerts/{alert_id}/resolve")
+async def security_alerts_resolve(
+    alert_id: str,
+    body: _AlertResolveBody,
+    admin: dict = Depends(get_current_admin),
+):
+    ok = await _alerter.resolve_alert(db, alert_id=alert_id, admin_id=admin.get("id"), note=body.note)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    await audit_log(
+        actor_id=admin.get("id"),
+        action="security_alert_resolve",
+        target_id=alert_id,
+        result="success",
+        detail={"note": body.note[:200]},
+    )
+    return {"ok": True}

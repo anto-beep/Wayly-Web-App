@@ -88,6 +88,7 @@ from constants import (
 )
 import digest_service
 import observability as _obs
+import security_alerter as _alerter
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
@@ -140,7 +141,12 @@ async def _resolve_active_participant(user_id: str, request: Request) -> Optiona
     pid = request.headers.get("x-participant-id")
     if pid:
         # 404 if the pid doesn't belong to this user — explicit, auditable.
-        return await assert_participant_access(user_id, pid, require_active=True)
+        p = await assert_participant_access(user_id, pid, require_active=True)
+        try:
+            await _alerter.record_participant_access(db, user_id=user_id, participant_id=pid)
+        except Exception:
+            pass
+        return p
     user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "household_id": 1})
     hid = (user_doc or {}).get("household_id")
     if not hid:
@@ -272,6 +278,7 @@ async def login(payload: LoginRequest, request: Request):
         except Exception:
             pass
         _obs.log_auth_login_failure(_ip, attempt_count=0)
+        await _alerter.record_login_failure(db, ip=_ip, email=payload.email.lower())
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     locked, until = await is_user_locked(user["id"])
@@ -294,6 +301,7 @@ async def login(payload: LoginRequest, request: Request):
         except Exception:
             _attempts = 0
         _obs.log_auth_login_failure(_ip, attempt_count=_attempts)
+        await _alerter.record_login_failure(db, ip=_ip, email=payload.email.lower())
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     await clear_login_failures(user["id"])
@@ -1196,8 +1204,19 @@ async def upload_statement(
     participant_id = active_p["id"] if active_p else None
     # Phase 4: signature-validate + virus-scan + UUID-rename before we touch it.
     from upload_security import secure_read_upload, PROFILE_STATEMENT, sanitize_for_prompt
+
+    def _alert_malware(virus_name: str) -> None:
+        # Fire-and-forget — we're in a sync callback inside an async handler.
+        try:
+            asyncio.create_task(_alerter.record_malware_upload(
+                db, user_id=user_id, filename=(file.filename or "unknown")[:120],
+                scan_result=f"infected:{virus_name}",
+            ))
+        except Exception:
+            pass
+
     raw, safe_name, file_kind = await secure_read_upload(
-        file, allowed_profiles=PROFILE_STATEMENT,
+        file, allowed_profiles=PROFILE_STATEMENT, on_malware=_alert_malware,
     )
     if not raw:
         raise HTTPException(status_code=400, detail="Empty file")
@@ -4115,6 +4134,14 @@ async def admin_verify_audit_chain(user_id: str = Depends(get_current_admin_id))
         detail={"broken_at_seq": broken_at} if not ok else {},
     )
     return {"ok": ok, "broken_at_seq": broken_at}
+
+
+# ---------------------------------------------------------------------------
+# Phase 4 — Security Alerts admin API
+# Endpoints live in `admin_routes.py` (real admin-realm gate via
+# `get_current_admin`, which the AdminApp UI uses). Defined there so the
+# legacy `/api/admin/security-alerts/*` paths from this file are unused.
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------

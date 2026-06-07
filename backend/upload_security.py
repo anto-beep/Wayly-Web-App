@@ -171,9 +171,13 @@ def _get_clamd():
         return None
 
 
-def virus_scan(raw: bytes) -> None:
+def virus_scan(raw: bytes, *, on_malware=None) -> None:
     """Stream `raw` to clamd. Raises 400 on malware detected; raises 503 on
-    clamd unreachable (fail-closed). Becomes a no-op when CLAMAV_ENABLED=false."""
+    clamd unreachable (fail-closed). Becomes a no-op when CLAMAV_ENABLED=false.
+
+    `on_malware(name: str)` is invoked synchronously on detection (before the
+    HTTPException is raised) so the security alerter can record the event.
+    """
     if not _CLAMAV_ENABLED:
         return
     cli = _get_clamd()
@@ -199,6 +203,11 @@ def virus_scan(raw: bytes) -> None:
     status, name = status_tuple
     if status == "FOUND":
         log.warning("malware detected in upload: %s", name)
+        if on_malware:
+            try:
+                on_malware(name)
+            except Exception as e:
+                log.warning("on_malware callback failed: %s", e)
         raise HTTPException(
             status_code=400,
             detail=(
@@ -255,6 +264,7 @@ async def secure_read_upload(
     allowed_profiles: list[str],
     max_bytes: Optional[int] = None,
     scan: bool = True,
+    on_malware=None,
 ) -> tuple[bytes, str, str]:
     """Read, validate, virus-scan, and rename an `UploadFile`.
 
@@ -265,7 +275,7 @@ async def secure_read_upload(
     assert_size(raw, max_bytes=max_bytes)
     kind = assert_signature(raw, file.filename or "", allowed_profiles)
     if scan:
-        virus_scan(raw)
+        virus_scan(raw, on_malware=on_malware)
     return raw, safe_filename(file.filename or "", kind), kind
 
 

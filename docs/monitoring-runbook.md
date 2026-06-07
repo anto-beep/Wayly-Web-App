@@ -91,13 +91,40 @@ For `/api/health/deep`, do NOT poll from UptimeRobot — it requires an admin JW
 3. Flip to `Block` mode.
 4. Create a **Cloudflare Rate Limiting rule**: `(http.host eq "wayly.com.au" and http.request.uri.path contains "/api/auth/login") → block when > 30 req / 5 min per IP`. This is layered defence on top of the Phase 3 Redis limit.
 
+### Phase 4 — In-process security alerter (SHIPPED)
+
+A Mongo-backed sliding-window alerter is wired into `server.py` (no external aggregator needed). Rules:
+
+| Rule | Event | Threshold | Severity | Cooldown |
+|---|---|---|---|---|
+| `LOGIN_FAILURE_PER_IP` | `AUTH_LOGIN_FAILURE` | > 20 / 5 min / single IP | HIGH | 30 min |
+| `LOGIN_FAILURE_PER_EMAIL_HASH` | `AUTH_LOGIN_FAILURE` | > 50 / 5 min / single email (SHA-256 hashed) | HIGH | 30 min |
+| `PARTICIPANT_SCRAPE` | `PARTICIPANT_ACCESS` | > 50 distinct participant_ids / 10 min / single user_id | HIGH | 30 min |
+| `ADMIN_ACTION_SPIKE` | `ADMIN_ACTION` (admin_audit_log row) | > 30 / 5 min / single admin_id | CRITICAL | 30 min |
+| `MALWARE_UPLOAD` | `FILE_UPLOAD` with `scan_result:"infected"` | every event | CRITICAL | n/a |
+
+When a threshold is crossed:
+1. A row is inserted into `security_alerts` (Mongo, idempotent by `(rule, subject)` while the existing alert is open + within cooldown).
+2. An `ALERT_FIRED` JSON log line is emitted (downstream aggregators can ingest it as-is).
+3. A best-effort Resend email goes to `hello@wayly.com.au` (override via `SECURITY_ALERT_EMAIL` env var).
+4. The alert surfaces on **/admin/security-alerts** in the AdminApp UI with severity badges, stats tiles (open / critical-open / 24h count), filter toggle (all / open only), and a `Resolve` action that records an audit-log entry.
+
+Wired call sites in `server.py`:
+- `auth/login` failure → `_alerter.record_login_failure(ip, email)`
+- `_resolve_active_participant` → `_alerter.record_participant_access(user_id, participant_id)`
+- `statements/upload` → ClamAV `on_malware` callback → `_alerter.record_malware_upload`
+- `admin_hardening.append_audit` → every admin action → `_alerter.record_admin_action`
+
+Env vars:
+- `WAYLY_ALERT_COOLDOWN_S` — defaults to `1800` (30 min). Prevents alert-spam for a long-running incident.
+- `SECURITY_ALERT_EMAIL` — defaults to `hello@wayly.com.au`. Email destination for fired alerts.
+
+Admin API:
+- `GET /api/admin/security-alerts?only_open=true&limit=50` — list alerts + stats + threshold metadata.
+- `POST /api/admin/security-alerts/{id}/resolve` body `{note}` — marks resolved, records `security_alert_resolve` in the admin audit chain.
+
 ### Phase 4 — Alerts via Mongo+Resend (no CloudWatch in this stack)
-The structured `AUTH_LOGIN_FAILURE`, `PARTICIPANT_ACCESS`, `DECODER_RUN` events are emitted to stdout as JSON. To wire alerts:
-- Pipe stdout into Logflare/BetterStack/Axiom (your choice — `kubectl logs` or sidecar).
-- In that tool, create saved queries + alert rules matching the brief's thresholds:
-  - `event_type:AUTH_LOGIN_FAILURE | by ip | count > 20 / 5min` → email hello@wayly.com.au
-  - `event_type:PARTICIPANT_ACCESS | by user_id | count(distinct participant_id) > 50 / 10min` → email
-  - `event_type:DECODER_RUN | sum(cost_aud) over 60min > 20` → email
+Already covered by the in-process alerter above. If you also pipe stdout into Logflare/BetterStack/Axiom, you can layer a second set of saved queries on the `ALERT_FIRED` log lines for off-host redundancy.
 
 ### Phase 6 — Cost & billing
 1. **Anthropic / Emergent LLM**: log into your Emergent dashboard → Universal Key → set auto top-up cap.

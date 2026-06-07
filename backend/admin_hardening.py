@@ -183,6 +183,13 @@ async def append_audit(
     canonical = json.dumps(payload, sort_keys=True, default=str)
     h = hashlib.sha256((str(seq) + prev + canonical).encode("utf-8")).hexdigest()
     await _db.admin_audit_log.insert_one({**payload, "prev_hash": prev, "hash": h})
+    # Phase 4 — feed the security alerter so an admin-action spike pages the team.
+    if actor_id:
+        try:
+            import security_alerter as _alerter
+            await _alerter.record_admin_action(_db, admin_id=actor_id, action_type=action)
+        except Exception:
+            pass
 
 
 async def verify_chain(limit: int = 5000) -> tuple[bool, Optional[int]]:

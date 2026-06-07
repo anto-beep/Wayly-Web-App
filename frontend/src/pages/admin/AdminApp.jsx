@@ -80,6 +80,7 @@ const NAV = [
     {
         section: "Security",
         items: [
+            { to: "/admin/security-alerts", label: "Security Alerts", icon: ShieldAlert, testid: "admin-nav-secalerts" },
             { to: "/admin/audit-log", label: "Audit Log", icon: Lock, testid: "admin-nav-audit" },
             { to: "/admin/sessions", label: "Admin Sessions", icon: Lock, testid: "admin-nav-sessions" },
             { to: "/admin/data-requests", label: "Data Requests", icon: Lock, testid: "admin-nav-datareq" },
@@ -270,6 +271,7 @@ import {
     AdminArticles, AdminGlossary, AdminTemplatesLibrary, AdminChangelog,
 } from "./AdminPhaseE2";
 import AdminIndexNow from "./AdminIndexNow";
+import AdminSecurityAlerts from "./AdminSecurityAlerts";
 
 function AdminRoutes() {
     return (
@@ -300,6 +302,7 @@ function AdminRoutes() {
                 <Route path="audit-log" element={<AdminAuditLog />} />
                 <Route path="sessions" element={<AdminSessions />} />
                 <Route path="data-requests" element={<AdminDataRequests />} />
+                <Route path="security-alerts" element={<AdminSecurityAlerts />} />
                 <Route path="feature-flags" element={<AdminFeatureFlags />} />
                 <Route path="health" element={<AdminSystemHealth />} />
                 <Route path="maintenance" element={<AdminSystemHealth />} />
