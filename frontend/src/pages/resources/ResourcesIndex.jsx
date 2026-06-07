@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { ARTICLES, GLOSSARY, TEMPLATES } from "@/data/resources";
+import { SEO_ARTICLES_2026 } from "@/data/seoArticles2026";
+import { SEO_TOOL_ARTICLES } from "@/data/seoToolArticles";
 import { ArrowRight, BookOpen, FileText, ListOrdered } from "lucide-react";
 
 import SeoHead from "@/seo/SeoHead";
@@ -41,7 +43,7 @@ export default function ResourcesIndex() {
             </section>
 
             <section className="mx-auto max-w-7xl px-6 pb-12 grid sm:grid-cols-3 gap-5">
-                <Card icon={BookOpen} title="Articles" body="Pillar pieces on the parts of the program families ask about most." href="/resources/articles" count={`${ARTICLES.length} articles`} testId="resources-card-articles" />
+                <Card icon={BookOpen} title="Articles" body="Pillar pieces on the parts of the program families ask about most." href="/resources/articles" count={`${ARTICLES.length + SEO_ARTICLES_2026.length + SEO_TOOL_ARTICLES.length}+ articles`} testId="resources-card-articles" />
                 <Card icon={ListOrdered} title="Glossary" body="Every acronym, every stream, every contribution rate — defined." href="/resources/glossary" count={`${GLOSSARY.length} terms`} testId="resources-card-glossary" />
                 <Card icon={FileText} title="Templates" body="Letters, checklists and conversation prompts — copy, edit, send." href="/resources/templates" count={`${TEMPLATES.length} templates`} testId="resources-card-templates" />
             </section>
