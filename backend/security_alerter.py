@@ -75,6 +75,13 @@ RULE_THRESHOLDS = {
         "severity": "CRITICAL",
         "description": "ClamAV flagged an uploaded file as infected",
     },
+    "DECODER_COST_RUNAWAY": {
+        "event": "DECODER_RUN",
+        "window_s": 3600,
+        "limit_aud": 20.0,
+        "severity": "HIGH",
+        "description": "Statement Decoder cost > $20 AUD in 60 min for a single user",
+    },
 }
 
 ALERT_COOLDOWN_S = int(os.environ.get("WAYLY_ALERT_COOLDOWN_S", "1800"))  # 30 min default
@@ -151,6 +158,36 @@ async def record_malware_upload(db, *, user_id: str, filename: str, scan_result:
             db, rule_key="MALWARE_UPLOAD", subject_value=user_id,
             count=1, now=now, since=now,
             extra={"filename": filename[:120], "scan_result": scan_result},
+        )
+
+
+async def check_decoder_cost(db, *, user_id: str) -> None:
+    """Sum cost_aud_est for this user over the last hour. Fire HIGH alert if
+    above the runaway threshold. Called after every DECODER_RUN so the rule
+    catches both single-shot expensive runs and a sustained burn."""
+    if not user_id:
+        return
+    rule = RULE_THRESHOLDS["DECODER_COST_RUNAWAY"]
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(seconds=rule["window_s"])
+    pipeline = [
+        {"$match": {
+            "user_id": user_id,
+            "ts": {"$gte": since.isoformat()},
+        }},
+        {"$group": {"_id": None, "total_aud": {"$sum": "$cost_aud_est"}}},
+    ]
+    try:
+        agg = await db.llm_calls.aggregate(pipeline).to_list(length=1)
+    except Exception:
+        return
+    total = float((agg[0].get("total_aud") if agg else 0) or 0)
+    if total > rule["limit_aud"]:
+        await _fire_alert(
+            db, rule_key="DECODER_COST_RUNAWAY", subject_value=user_id,
+            count=int(total * 100),  # cents — for sort-stable display
+            now=now, since=since,
+            extra={"total_aud": round(total, 4)},
         )
 
 

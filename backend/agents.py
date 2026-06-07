@@ -810,15 +810,24 @@ async def _llm_chunk_call(
     session_id: str,
     max_tokens: int,
     is_valid=None,
+    *,
+    phase: str = "extract",
+    cost_ctx: Optional[Dict[str, Any]] = None,
 ) -> Optional[Any]:
     """Run a single chunked extraction call with one retry. Returns parsed
     JSON or None. Retries once on transport / parse failure or, when an
     `is_valid` callable is provided, when the parsed result fails validation
     (e.g. all fields empty — a known LLM hiccup mode for the header chunk).
+
+    `phase` and `cost_ctx` are forwarded to `record_llm_call` so each LLM
+    call lands in `db.llm_calls` with the user/household/participant + phase
+    metadata needed for the admin cost dashboard.
     """
     key = _key()
     if not key:
         raise RuntimeError("EMERGENT_LLM_KEY not configured")
+
+    cost_ctx = cost_ctx or {}
 
     async def _attempt(attempt: int) -> Optional[Any]:
         import time
@@ -838,12 +847,20 @@ async def _llm_chunk_call(
                 input_text=user_text, output_text="",
                 duration_ms=int((time.time() - t0) * 1000),
                 success=False, error=str(e)[:200],
+                user_id=cost_ctx.get("user_id"),
+                household_id=cost_ctx.get("household_id"),
+                participant_id=cost_ctx.get("participant_id"),
+                phase=phase,
             )
             return None
         await record_llm_call(
             tool=f"chunk:{session_id.split('-')[0]}", model=EXTRACTOR_MODEL,
             input_text=user_text, output_text=str(raw or ""),
             duration_ms=int((time.time() - t0) * 1000), success=True,
+            user_id=cost_ctx.get("user_id"),
+            household_id=cost_ctx.get("household_id"),
+            participant_id=cost_ctx.get("participant_id"),
+            phase=phase,
         )
         parsed = _safe_json_load(raw)
         if parsed is None:
@@ -1085,7 +1102,13 @@ def _dedupe_line_items(items: list[dict]) -> tuple[list[dict], int]:
     return out, dropped
 
 
-async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
+async def extract_statement(
+    text: str,
+    household_id: str,
+    *,
+    user_id: Optional[str] = None,
+    participant_id: Optional[str] = None,
+) -> Dict[str, Any]:
     """Pass 1 — Chunked parallel extraction.
 
     Splits extraction across 5 parallel LLM calls so no single call hits the
@@ -1099,12 +1122,16 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
     All chunks see the full statement text. Each chunk has its own bounded
     output budget. JSON repair is applied to each chunk's response. The five
     sub-results are assembled into the unified extraction schema.
+
+    `user_id` / `participant_id` are forwarded into `db.llm_calls` rows so
+    the admin cost dashboard can roll up spend per user / per participant.
     """
     key = _key()
     if not key:
         raise RuntimeError("EMERGENT_LLM_KEY not configured")
     payload = text[:24000]
     user_msg = f"STATEMENT TEXT:\n\n{payload}"
+    cost_ctx = {"user_id": user_id, "household_id": household_id, "participant_id": participant_id}
 
     def _header_is_valid(parsed):
         if not isinstance(parsed, dict):
@@ -1127,12 +1154,12 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
         return False
 
     tasks = [
-        _llm_chunk_call(HEADER_EXTRACTOR_SYSTEM, user_msg, f"extract-header-{household_id}", max_tokens=1000, is_valid=_header_is_valid),
-        _llm_chunk_call(CLINICAL_EXTRACTOR_SYSTEM, user_msg, f"extract-clin-{household_id}", max_tokens=2500),
-        _llm_chunk_call(INDEPENDENCE_EXTRACTOR_SYSTEM, user_msg, f"extract-indep-{household_id}", max_tokens=2500),
-        _llm_chunk_call(EVERYDAY_EXTRACTOR_SYSTEM, user_msg, f"extract-everyday-{household_id}", max_tokens=2500),
-        _llm_chunk_call(ADJUSTMENTS_EXTRACTOR_SYSTEM, user_msg, f"extract-adj-{household_id}", max_tokens=1200),
-        _llm_chunk_call(PROVIDER_NOTES_EXTRACTOR_SYSTEM, user_msg, f"extract-notes-{household_id}", max_tokens=1500),
+        _llm_chunk_call(HEADER_EXTRACTOR_SYSTEM, user_msg, f"extract-header-{household_id}", max_tokens=1000, is_valid=_header_is_valid, phase="extract_header", cost_ctx=cost_ctx),
+        _llm_chunk_call(CLINICAL_EXTRACTOR_SYSTEM, user_msg, f"extract-clin-{household_id}", max_tokens=2500, phase="extract_clinical", cost_ctx=cost_ctx),
+        _llm_chunk_call(INDEPENDENCE_EXTRACTOR_SYSTEM, user_msg, f"extract-indep-{household_id}", max_tokens=2500, phase="extract_independence", cost_ctx=cost_ctx),
+        _llm_chunk_call(EVERYDAY_EXTRACTOR_SYSTEM, user_msg, f"extract-everyday-{household_id}", max_tokens=2500, phase="extract_everyday", cost_ctx=cost_ctx),
+        _llm_chunk_call(ADJUSTMENTS_EXTRACTOR_SYSTEM, user_msg, f"extract-adj-{household_id}", max_tokens=1200, phase="extract_adjustments", cost_ctx=cost_ctx),
+        _llm_chunk_call(PROVIDER_NOTES_EXTRACTOR_SYSTEM, user_msg, f"extract-notes-{household_id}", max_tokens=1500, phase="extract_provider_notes", cost_ctx=cost_ctx),
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     header_res, clin_res, indep_res, every_res, adj_res, notes_res = [
@@ -1337,7 +1364,13 @@ async def extract_statement(text: str, household_id: str) -> Dict[str, Any]:
     return assembled
 
 
-async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[str, Any]:
+async def audit_statement(
+    extracted: Dict[str, Any],
+    household_id: str,
+    *,
+    user_id: Optional[str] = None,
+    participant_id: Optional[str] = None,
+) -> Dict[str, Any]:
     """Pass 2 — Claude Haiku 4.5 applies the 10-rule anomaly audit against
     the structured extraction from Pass 1. Returns statement_summary +
     stream_breakdown + anomalies + anomaly_count.
@@ -1360,8 +1393,19 @@ async def audit_statement(extracted: Dict[str, Any], household_id: str) -> Dict[
     payload = json.dumps(extracted, separators=(",", ":"))[:40000]
     msg = UserMessage(text=f"Audit this extracted statement:\n\n{payload}")
     raw = None
+    import time as _time
+    from llm_costs import record_llm_call as _rec
+    _t0 = _time.time()
     try:
         raw = await chat.send_message(msg)
+        # Record the audit-pass cost row
+        await _rec(
+            tool="audit", model=AUDITOR_MODEL,
+            input_text=payload, output_text=str(raw or ""),
+            duration_ms=int((_time.time() - _t0) * 1000), success=True,
+            user_id=user_id, household_id=household_id,
+            participant_id=participant_id, phase="audit",
+        )
         result = _safe_json_load(raw)
         if result is None:
             raise json.JSONDecodeError("repair failed", raw or "", 0)

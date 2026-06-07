@@ -2284,9 +2284,36 @@ async def _run_upload_job(
     try:
         job["status"] = "running"
         job["phase"] = "extract"
-        extracted = await extract_statement(text, household_id=household_id)
+        extracted = await extract_statement(
+            text, household_id=household_id,
+            user_id=user_id, participant_id=participant_id,
+        )
         job["phase"] = "audit"
-        audit = await audit_statement(extracted, household_id=household_id)
+        audit = await audit_statement(
+            extracted, household_id=household_id,
+            user_id=user_id, participant_id=participant_id,
+        )
+        # Phase 5 monitoring: check if this user has crossed the $20/60min decoder spend.
+        try:
+            await _alerter.check_decoder_cost(db, user_id=user_id)
+        except Exception:
+            pass
+        # Phase 5 monitoring: emit a structured DECODER_RUN summary log line.
+        try:
+            _obs.log_decoder_run(
+                user_id=user_id,
+                household_id=household_id,
+                participant_id=participant_id,
+                anomaly_count=int((audit.get("anomaly_count") or {}).get("high", 0)
+                                  + (audit.get("anomaly_count") or {}).get("medium", 0)
+                                  + (audit.get("anomaly_count") or {}).get("low", 0)),
+                input_tokens=len(text) // 4,
+                output_tokens=len(json.dumps(audit, default=str)) // 4,
+                cost_aud=0.0,  # detailed per-phase costs are in db.llm_calls
+                model="claude-haiku-4-5",
+            )
+        except Exception:
+            pass
 
         # Map chunked-extraction line items into the dashboard's StatementLineItem shape.
         line_items: List[StatementLineItem] = []

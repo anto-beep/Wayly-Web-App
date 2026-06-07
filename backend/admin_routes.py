@@ -1174,3 +1174,106 @@ async def security_alerts_resolve(
         detail={"note": body.note[:200]},
     )
     return {"ok": True}
+
+
+# ---------------------- DECODER COSTS (Phase 5 monitoring) ----------------------
+
+@admin.get("/decoder-cost")
+async def decoder_cost_rollup(
+    days: int = 14,
+    admin: dict = Depends(get_current_admin),
+):
+    """Daily decoder cost rollup over the trailing `days`. Returns the
+    per-day series + top-spending users (last 24h)."""
+    days = max(1, min(int(days or 14), 90))
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+
+    # Per-day series (UTC). Match anything with cost_aud_est > 0.
+    pipeline = [
+        {"$match": {"ts": {"$gte": since}}},
+        {"$group": {
+            "_id": {"$substr": ["$ts", 0, 10]},   # YYYY-MM-DD
+            "total_aud": {"$sum": "$cost_aud_est"},
+            "calls": {"$sum": 1},
+            "in_tokens": {"$sum": "$input_tokens_est"},
+            "out_tokens": {"$sum": "$output_tokens_est"},
+        }},
+        {"$sort": {"_id": 1}},
+    ]
+    series = []
+    async for row in db.llm_calls.aggregate(pipeline):
+        series.append({
+            "day": row["_id"],
+            "total_aud": round(float(row.get("total_aud") or 0), 4),
+            "calls": int(row.get("calls") or 0),
+            "input_tokens": int(row.get("in_tokens") or 0),
+            "output_tokens": int(row.get("out_tokens") or 0),
+        })
+
+    # Top spenders last 24h
+    since_24h = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    top_pipeline = [
+        {"$match": {"ts": {"$gte": since_24h}, "user_id": {"$ne": None}}},
+        {"$group": {
+            "_id": "$user_id",
+            "total_aud": {"$sum": "$cost_aud_est"},
+            "calls": {"$sum": 1},
+        }},
+        {"$sort": {"total_aud": -1}},
+        {"$limit": 10},
+    ]
+    top = []
+    async for row in db.llm_calls.aggregate(top_pipeline):
+        u = await db.users.find_one({"id": row["_id"]}, {"email": 1, "name": 1, "_id": 0})
+        top.append({
+            "user_id": row["_id"],
+            "email": (u or {}).get("email"),
+            "name": (u or {}).get("name"),
+            "total_aud": round(float(row.get("total_aud") or 0), 4),
+            "calls": int(row.get("calls") or 0),
+        })
+
+    # Phase-level breakdown (last 24h)
+    phase_pipeline = [
+        {"$match": {"ts": {"$gte": since_24h}, "phase": {"$ne": None}}},
+        {"$group": {
+            "_id": "$phase",
+            "total_aud": {"$sum": "$cost_aud_est"},
+            "calls": {"$sum": 1},
+            "avg_ms": {"$avg": "$duration_ms"},
+        }},
+        {"$sort": {"total_aud": -1}},
+    ]
+    phases = []
+    async for row in db.llm_calls.aggregate(phase_pipeline):
+        phases.append({
+            "phase": row["_id"],
+            "total_aud": round(float(row.get("total_aud") or 0), 4),
+            "calls": int(row.get("calls") or 0),
+            "avg_duration_ms": int(row.get("avg_ms") or 0),
+        })
+
+    # Overall totals
+    totals_24h = await db.llm_calls.aggregate([
+        {"$match": {"ts": {"$gte": since_24h}}},
+        {"$group": {"_id": None, "total_aud": {"$sum": "$cost_aud_est"}, "calls": {"$sum": 1}}},
+    ]).to_list(length=1)
+    totals_range = await db.llm_calls.aggregate([
+        {"$match": {"ts": {"$gte": since}}},
+        {"$group": {"_id": None, "total_aud": {"$sum": "$cost_aud_est"}, "calls": {"$sum": 1}}},
+    ]).to_list(length=1)
+
+    return {
+        "range_days": days,
+        "series": series,
+        "top_users_24h": top,
+        "phases_24h": phases,
+        "totals_24h": {
+            "total_aud": round(float((totals_24h[0].get("total_aud") if totals_24h else 0) or 0), 4),
+            "calls": int((totals_24h[0].get("calls") if totals_24h else 0) or 0),
+        },
+        "totals_range": {
+            "total_aud": round(float((totals_range[0].get("total_aud") if totals_range else 0) or 0), 4),
+            "calls": int((totals_range[0].get("calls") if totals_range else 0) or 0),
+        },
+    }

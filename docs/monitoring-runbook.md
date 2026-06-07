@@ -177,10 +177,43 @@ Already-shipping data sources:
 Follow `/app/security-audit/ndb-breach-runbook.md` (Phase 9). T+0 rotation of `JWT_SECRET` + `ADMIN_JWT_SECRET` is the first action.
 
 ## Open items intentionally not auto-implemented
-- Lighthouse CI workflow (`.github/workflows/lighthouse.yml`) — add when GitHub Actions is configured.
-- Performance budgets in webpack config — CRA hides webpack; needs eject or `react-app-rewired`.
-- `decoder_cost_log` Mongo collection writes — wire from inside the existing decoder pipeline by calling `log_decoder_run()` AND inserting into `db.decoder_cost_log`.
+- Lighthouse CI workflow (`.github/workflows/lighthouse.yml`) — **SHIPPED**. See Phase 5 section below.
+- Performance budgets in webpack config — CRA hides webpack; needs eject or `react-app-rewired`. Mitigation: Lighthouse CI enforces budgets on the built static output (no webpack changes required).
+- `decoder_cost_log` Mongo collection writes — **SHIPPED**. Existing `db.llm_calls` collection now carries `user_id`, `household_id`, `participant_id`, `phase` on every decoder call (was `None` before this iteration). The admin endpoint `/api/admin/decoder-cost?days=N` rolls up daily + per-user + per-phase totals.
 - Stripe webhook idempotency snippet (see Phase 6 above) — 5-line add to the handler.
+
+## Phase 5 — Performance monitoring (SHIPPED)
+
+### Decoder cost tracking
+- Every LLM call in `agents.py` (5 extract chunks + provider-notes chunk + audit) writes a row into `db.llm_calls` via `llm_costs.record_llm_call`.
+- New fields: `participant_id`, `phase`. Phase values: `extract_header / extract_clinical / extract_independence / extract_everyday / extract_adjustments / extract_provider_notes / audit`.
+- Token estimate = chars / 4. Cost in AUD computed from the Anthropic published pricing table (Haiku 4.5: $0.80/M input · $4/M output · USD→AUD ~1.5).
+- The Statement upload handler emits a structured `DECODER_RUN` JSON log line at the end of each run summarising anomaly counts + token totals.
+
+### Admin endpoint
+`GET /api/admin/decoder-cost?days=14` returns:
+```json
+{
+  "range_days": 14,
+  "series": [{"day":"2026-02-07","total_aud":1.23,"calls":45,"input_tokens":...,"output_tokens":...}, ...],
+  "top_users_24h": [{"user_id":"...","email":"...","total_aud":5.42,"calls":12}, ...],
+  "phases_24h": [{"phase":"extract_clinical","total_aud":0.31,"calls":18,"avg_duration_ms":2103}, ...],
+  "totals_24h": {"total_aud":12.45,"calls":102},
+  "totals_range": {"total_aud":167.21,"calls":1893}
+}
+```
+
+### Runaway-cost alert
+A 6th rule was added to the in-process alerter: `DECODER_COST_RUNAWAY` (HIGH, > $20 AUD aggregated per user_id in 60 min). After every Statement upload `_alerter.check_decoder_cost(db, user_id)` runs a sum-aggregate on `db.llm_calls` and fires the alert if the threshold is crossed. Shows up on `/admin/security-alerts` next to the auth-spike rules.
+
+### Lighthouse CI
+- Workflow: `/app/.github/workflows/lighthouse.yml` — runs on every push + PR. Builds the React SPA with `REACT_APP_BACKEND_URL=https://wayly.com.au` then runs `lhci autorun`.
+- Config: `/app/lighthouserc.json` — 6 URLs (`/`, `/pricing`, `/login`, `/ai-tools`, `/articles`, `/legal/privacy`) × 3 runs each.
+- Performance budget assertions (failing the CI):
+  - Performance ≥ 0.85 · Accessibility ≥ 0.95 · Best-practices ≥ 0.90 · SEO ≥ 0.95
+  - LCP ≤ 2500ms · CLS ≤ 0.10 · TBT ≤ 200ms · FCP ≤ 1800ms
+  - Unminified JS/CSS / no text compression → error
+- LHCI uploads HTML reports to temporary public storage (set `LHCI_GITHUB_APP_TOKEN` secret to comment scores on PRs).
 
 ## Doc index
 - `/app/security-audit/encryption-runbook.md` — key rotation, TLS, at-rest encryption.
