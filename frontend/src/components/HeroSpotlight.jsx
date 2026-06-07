@@ -161,7 +161,7 @@ export default function HeroSpotlight() {
                             For Australian families
                         </span>
                         <h1 className="font-heading mt-6 text-[44px] sm:text-[56px] lg:text-[64px] xl:text-[72px] leading-[1.04] tracking-tight text-wayly-neutral-900">
-                            Support at Home,<br />finally <span className="text-wayly-teal-600">explained.</span>
+                            Support at Home,<br />finally <span className="text-wayly-teal-600 wf-dot-lg">explained</span>
                         </h1>
                         <p className="mt-6 text-lg text-wayly-neutral-700 max-w-xl leading-relaxed">
                             Helping Australian families understand aged care funding, statements and care plans.

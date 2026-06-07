@@ -232,6 +232,35 @@
         font-size: 1.1875rem;
         line-height: 1.7;
     }
+
+    /* Wayfinder dot — the clay-500 punctuation mark that echoes the logo.
+     * Apply `.wf-dot` to any Fraunces heading and a small clay round mark
+     * appears after the last character, separated by 0.18em of breathing
+     * room. Use sparingly — once per page, on the dominant heading. */
+    .wf-dot::after {
+        content: "";
+        display: inline-block;
+        width: 0.34em;
+        height: 0.34em;
+        background-color: var(--wayly-clay-500);
+        border-radius: 9999px;
+        margin-left: 0.18em;
+        margin-bottom: 0.08em;
+        vertical-align: baseline;
+    }
+    /* Larger variant for hero-scale H1s where the default dot would feel
+     * undersized relative to the 56-72px display type. */
+    .wf-dot-lg::after {
+        content: "";
+        display: inline-block;
+        width: 0.22em;
+        height: 0.22em;
+        background-color: var(--wayly-clay-500);
+        border-radius: 9999px;
+        margin-left: 0.16em;
+        margin-bottom: 0.16em;
+        vertical-align: baseline;
+    }
 }
 
 @layer base {

@@ -419,7 +419,7 @@ export default function Landing() {
             {/* FINAL CTA */}
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-16 text-center">
-                    <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Ready when you are.</h2>
+                    <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight wf-dot-lg">Ready when you are</h2>
                     <p className="mt-4 text-white/80 max-w-xl mx-auto">
                         Try Wayly free for 7 days. Cancel anytime. No card required for the trial.
                     </p>
