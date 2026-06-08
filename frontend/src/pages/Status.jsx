@@ -48,7 +48,7 @@ export default function Status() {
         fetchStatus();
         const id = setInterval(fetchStatus, 60_000);
         return () => clearInterval(id);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, []);
 
     const overall = data?.status || (error ? "down" : "ok");

@@ -33,7 +33,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
             // POST with retry on transient ingress errors (502/503/504/network).
             let initial;
             let postAttempt = 0;
-            // eslint-disable-next-line no-constant-condition
+             
             while (true) {
                 try {
                     ({ data: initial } = await api.post("/public/decode-statement-text", { text }, { timeout: 90_000 }));

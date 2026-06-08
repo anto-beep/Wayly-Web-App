@@ -96,7 +96,7 @@ export default function StatementDecoderTool() {
             let initial;
             // POST with retry on transient ingress errors (502/503/504/network).
             let postAttempt = 0;
-            // eslint-disable-next-line no-constant-condition
+             
             while (true) {
                 try {
                     if (mode === "file" && file) {

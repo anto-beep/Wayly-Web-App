@@ -23,7 +23,7 @@ export default function StatementUpload() {
             // POST with retry on transient ingress errors (502/503/504/network).
             let data;
             let postAttempt = 0;
-            // eslint-disable-next-line no-constant-condition
+             
             while (true) {
                 try {
                     const res = await api.post("/statements/upload", fd, {
