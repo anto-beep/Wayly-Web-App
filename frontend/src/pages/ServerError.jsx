@@ -34,7 +34,7 @@ export default function ServerError({ error, resetError }) {
     };
 
     return (
-        <div className="min-h-screen bg-kindred">
+        <div className="min-h-screen bg-kindred" data-testid="server-error">
             <SeoHead
                 title="Something went wrong · Wayly"
                 description="An unexpected error occurred. We've logged it. Try refreshing the page or returning home."

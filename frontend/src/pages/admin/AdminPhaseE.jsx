@@ -430,8 +430,86 @@ export function AdminSystemHealth() {
                         <span style={{ fontSize: 13 }}>LLM call errors</span>
                         <strong style={{ color: data.llm_errors_24h > 10 ? "var(--admin-critical)" : "var(--admin-success)" }}>{data.llm_errors_24h}</strong>
                     </div>
+
+                    {/* Smoke test status — populated by the GH Actions runner every 15 min. */}
+                    <SmokeStatusPanel />
                 </>
             )}
+        </div>
+    );
+}
+
+function SmokeStatusPanel() {
+    const [state, setState] = useState({ loading: true });
+    useEffect(() => {
+        let cancelled = false;
+        const load = () =>
+            adminApi.get("/admin/smoke-status")
+                .then((r) => { if (!cancelled) setState({ loading: false, ...r.data }); })
+                .catch((e) => { if (!cancelled) setState({ loading: false, error: extractMsg(e) }); });
+        load();
+        const id = setInterval(load, 60000);
+        return () => { cancelled = true; clearInterval(id); };
+    }, []);
+
+    const { summary, runs, error, loading } = state;
+    const lastOk = summary?.last_status;
+    const dot = loading || lastOk == null
+        ? "admin-status-dot admin-status-dot-warn"
+        : lastOk ? "admin-status-dot admin-status-dot-ok admin-status-dot-pulse"
+                 : "admin-status-dot admin-status-dot-down";
+    const label = loading ? "Loading…"
+        : error ? error
+        : lastOk == null ? "No runs yet — waiting for the first scheduled smoke run."
+        : lastOk ? "All steps passing"
+        : "Last run FAILED — check below";
+
+    return (
+        <div style={{ marginTop: 24 }} data-testid="admin-smoke-panel">
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Smoke test (every 15 min)</h2>
+            <div className="admin-card" style={{ padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                    <div>
+                        <div style={{ fontSize: 15, fontWeight: 600 }}>
+                            <span className={dot} /> {label}
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--admin-muted)", marginTop: 6 }}>
+                            {summary?.last_run_at ? `Last run: ${new Date(summary.last_run_at).toLocaleString("en-AU", { hour12: false })}` : "—"}
+                        </div>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "auto auto", gap: "4px 14px", fontSize: 12, color: "var(--admin-muted)" }}>
+                        <span>24h success</span>
+                        <span style={{ color: "var(--admin-text)" }}>{summary?.success_rate_24h_pct != null ? `${summary.success_rate_24h_pct}%` : "—"}</span>
+                        <span>Runs in 24h</span>
+                        <span style={{ color: "var(--admin-text)" }}>{summary?.runs_24h ?? "—"}</span>
+                        <span>Last success</span>
+                        <span style={{ color: "var(--admin-text)" }}>{summary?.last_success_at ? new Date(summary.last_success_at).toLocaleTimeString("en-AU", { hour12: false }) : "—"}</span>
+                        <span>Last failure</span>
+                        <span style={{ color: "var(--admin-text)" }}>{summary?.last_failure_at ? new Date(summary.last_failure_at).toLocaleTimeString("en-AU", { hour12: false }) : "none"}</span>
+                    </div>
+                </div>
+                {runs && runs.length > 0 && (
+                    <details style={{ marginTop: 14, color: "var(--admin-muted)", fontSize: 12 }}>
+                        <summary style={{ cursor: "pointer" }}>Last {runs.length} runs</summary>
+                        <table className="admin-table" style={{ marginTop: 10 }}>
+                            <thead><tr><th>When</th><th>Result</th><th>Duration</th><th>Failed step</th></tr></thead>
+                            <tbody>
+                                {runs.map((r) => {
+                                    const fail = (r.steps || []).find((s) => !s.ok);
+                                    return (
+                                        <tr key={r._id || r.run_id}>
+                                            <td className="admin-mono">{r.received_at ? new Date(r.received_at).toLocaleString("en-AU", { hour12: false }) : "—"}</td>
+                                            <td><Badge tone={r.ok ? "active" : "suspended"}>{r.ok ? "ok" : "fail"}</Badge></td>
+                                            <td className="admin-mono">{r.duration_ms} ms</td>
+                                            <td style={{ color: "var(--admin-critical)" }}>{fail ? `${fail.name}: ${(fail.error || "").slice(0, 80)}` : ""}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </details>
+                )}
+            </div>
         </div>
     );
 }

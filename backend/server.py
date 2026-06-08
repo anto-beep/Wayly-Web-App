@@ -4227,6 +4227,14 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"reports_routes failed to load: {_e}")
 
+# Smoke-test status — wires the GH Actions smoke runner into /api/admin/smoke-status.
+try:
+    from smoke_status import attach_router as _attach_smoke
+    _attach_smoke(api, db, get_current_admin_id)
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"smoke_status failed to load: {_e}")
+
 app.include_router(api)
 
 # Phase 5 — install the security-headers middleware AFTER CORS so the headers

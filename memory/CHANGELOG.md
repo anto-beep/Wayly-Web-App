@@ -1,3 +1,25 @@
+## Iteration 53 (Feb 2026) — Admin restyle + production smoke test wiring
+
+- **Admin theme migrated to Wayly brand**:
+  - `admin.css` palette swapped from generic dark navy + red to dark teal-ink (#052327 / #072E31 / #0A3E42 / #14464A) with clay (#A5512B) primary CTA, sage (#6B8F71) success, teal-400 info. Still distinct from the consumer surface so operators can't confuse the two.
+  - Pill-shaped buttons, 12 px card radius, Fraunces headings (`.admin-heading`), subtle radial-gradient background grain.
+  - New `.admin-status-dot` (ok / warn / down + pulse animation) and `.admin-info-grid` helpers.
+- **`/admin/login` overhauled to be informative**:
+  - Two-column layout. Left panel: Wayly mark + lockup, lead paragraph, 3-bullet feature list (audit log, anomaly alerts, 2FA), live status grid (system status, build version, region, last API timestamp — auto-refreshed every 30 s from `/api/health`), helpful links (status page, request access, runbook), Australian Criminal Code notice.
+  - Right card: Fraunces "Sign in" heading, contextual copy, clay-pill Continue CTA, "Locked out? Email the on-call" support line. 2FA setup/verify steps reuse the same card.
+- **Production smoke test wired**:
+  - `scripts/smoke.py` — Playwright runner that logs in as `smoke@wayly.com.au` and walks `/app`, `/app/chat`, `/app/statements`, `/app/budget`. Detects ErrorBoundary, redirects to /login, 500s, and uncaught `pageerror`s. ~9 s full run.
+  - `scripts/seed_smoke_account.py` — creates / resets the dedicated sentinel account (marked `is_smoke_account: true`).
+  - `backend/smoke_status.py` — new module exposing `POST /api/internal/smoke-report` (HMAC-SHA256 signed body, no JWT needed) and `GET /api/admin/smoke-status` (admin only). Persists last 200 runs to `smoke_runs` collection. Auto-emails `TEAM_INBOX` via Resend on a failing report.
+  - `.github/workflows/smoke.yml` — scheduled `*/15 * * * *` on GitHub Actions (also manual + on workflow change). Caches Playwright Chromium between runs; uploads trace artifact on failure.
+  - `AdminPhaseE.jsx` → `AdminSystemHealth` now shows a Smoke test panel with live status dot, 24h success-rate %, last success/failure timestamps, and a collapsible last-20-runs table.
+  - `ServerError.jsx` got a `data-testid="server-error"` for the smoke runner to detect crash-page renders.
+- **Test credentials & secrets**:
+  - `smoke@wayly.com.au / Sm0ke!hpJ4Hnc6bpLBsg-lIsqknp-XaBU` seeded on preview (recorded in `memory/test_credentials.md`).
+  - `SMOKE_HMAC_SECRET` (256-bit hex) added to `backend/.env` — must be mirrored as a GitHub Actions secret + production env.
+  - Setup guide at `docs/smoke-test.md`.
+
+
 ## Iteration 52 (Feb 2026) — Mobile handoff bundle exposed + hero confirmed static
 
 - **Hero static image confirmed**: `HeroSpotlight.jsx` already uses an `<img>` tag pointing to `/branding/screenshots/dashboard-hero.png?v=5` (no `<video>` element present). Verified live on the preview URL — full dashboard screenshot renders in the right column of the hero with no autoplaying media. The previously-attempted 6-second loop is not in the repo.
