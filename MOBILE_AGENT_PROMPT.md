@@ -1,5 +1,10 @@
 # Mobile Agent Prompt — Wayly Capacitor App Brand Refresh
 
+> **Building the full app, not just the brand refresh?** Use
+> [`MOBILE_AGENT_DASHBOARD_PROMPT.md`](./MOBILE_AGENT_DASHBOARD_PROMPT.md)
+> instead — it covers every module, route, API, billing flow and participant
+> switching behavior in addition to the visual tokens below.
+
 Copy everything below the `===` line and paste it into the mobile agent (or your own agent session that owns the Capacitor / React-Native mobile repo).
 
 The mobile handoff bundle is committed to this repo at **three** locations, pick whichever your tooling can reach:
