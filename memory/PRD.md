@@ -14,6 +14,17 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 38 — Scenario Engine Phase 7 + 8, Feb 2026)
+- **Phase 7 — Shared schema contract**. `GET /api/scenario/schema` (public, deterministic) exports lifecycle, flags, event taxonomy, alerts, advice boundaries, and workflows in a single versioned envelope so the mobile app and any future SDK consume the same definitions without duplicating logic. `schema_version=1.0.0`, with per-section revisions for cheap diffing.
+- **Phase 8 — Validation**. Idempotent seed script at `/app/backend/scripts/seed_phase8_households.py` creates Robert Kowalski (hospitalisation→restorative) and Patricia Holloway (means_not_disclosed) alongside the existing Dorothy. New regression suite `/app/backend/tests/test_scenario_phase8.py` (16 cases) plus the updated Phase 6 suite together pass 23/23. Final validation report at `/app/docs/scenario-engine-validation-report.md`.
+- **Bug fix**: deadline-clock alerts now deep-link to `/app/budget-alerts` (was `/app/budget`, which 404'd).
+- **UX**: Death workflow route-out banner now explicitly labels "Escalate · please contact straight away".
+
+### Scenario engine phase status (FINAL)
+All 8 phases complete (0 discovery, 1 reference data, 2 lifecycle+flags, 3 event taxonomy+UI, 4 alerts+deadlines, 5 route-out guardrails, 6 tool+statement integration, 7 shared schema, 8 validation+seeds+tests). The engine is the only mutation path for participant lifecycle/flags/events/alerts; the advice-boundary guard sits in front of every LLM response path; the schema endpoint is the single contract for any client.
+
+
+
 ## Implemented (Iteration 37 — Scenario Engine Phase 6, Feb 2026)
 - **Tool + Statement Integration**. Statement decoder now emits typed participant_events for every upload (`statement_received`) and maps each anomaly rule key to the full taxonomy in `events.py` (care_management_over_cap / wrong_stream_billing / means_not_disclosed / backdated_adjustment / at_hm_expiring / at_hm_purchased / quarter_end_underspend_risk).
 - **Budget exhaustion projected** deadline clock added to `DEADLINE_CLOCKS` — linearly projects quarter-end spend after 14d of signal, fires when projection ≥110% of the quarterly budget.

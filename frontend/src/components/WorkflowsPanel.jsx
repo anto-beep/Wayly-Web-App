@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import {
-    LifeBuoy, CheckCircle2, ArrowRight, Loader2, Phone, ChevronRight,
+    LifeBuoy, CheckCircle2, ArrowRight, Loader2, Phone, ChevronRight, ShieldAlert,
 } from "lucide-react";
 
 /**
@@ -245,9 +245,17 @@ export default function WorkflowsPanel({ participant }) {
             </div>
 
             {(details.route_out_contacts_resolved || []).length > 0 && (
-                <div className="rounded-xl border border-wayly-clay-200 bg-wayly-clay-50 p-3" data-testid="workflow-route-out">
-                    <div className="text-xs uppercase tracking-wide font-semibold text-muted-k mb-1.5">
-                        Where to call for help
+                <div className={`rounded-xl border p-3 ${details.advice_boundary === "ESCALATE"
+                    ? "border-wayly-clay-300 bg-wayly-clay-50"
+                    : "border-wayly-teal-200 bg-wayly-teal-50"}`} data-testid="workflow-route-out">
+                    <div className={`flex items-center gap-2 text-xs uppercase tracking-wider font-semibold mb-1.5 ${details.advice_boundary === "ESCALATE" ? "text-wayly-clay-700" : "text-wayly-teal-700"}`}>
+                        {details.advice_boundary === "ESCALATE" ? (
+                            <>
+                                <ShieldAlert className="h-3.5 w-3.5" /> Escalate · please contact straight away
+                            </>
+                        ) : (
+                            <>Where to call for help</>
+                        )}
                     </div>
                     <ul className="space-y-1">
                         {details.route_out_contacts_resolved.map((c, i) => (

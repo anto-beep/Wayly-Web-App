@@ -1,3 +1,27 @@
+## Iteration 38 (Feb 2026) — Scenario engine **Phase 7 + Phase 8** + budget-alerts deep-link fix
+
+### Phase 7 — Shared schema contract for the mobile app
+- **NEW** `backend/scenario_engine/schema_export.py` — purely declarative serialiser for the entire scenario engine type surface.
+- **NEW** `GET /api/scenario/schema` (public, deterministic) — returns `{schema_version: "1.0.0", section_revisions: {lifecycle, flags, events, alerts, boundaries, workflows}, lifecycle: {14 states, 38 transitions, initial/terminal}, flags: {42 in 5 groups + mutual exclusion + restricted}, events: {68 typed types + 4 trigger sources}, alerts: {26 types + 4 severities + 6 axes}, boundaries: {3 levels + contact directory + per-event and per-alert maps}, workflows: {3 wizards with full step definitions}}`. Mobile clients pin a minimum `schema_version` and diff per-section revisions for cheap updates.
+
+### Phase 8 — Validation
+- **NEW** `backend/scripts/seed_phase8_households.py` — idempotent seed (markers: `is_seed`, `seed_key`) that creates Robert Kowalski (hospitalisation → restorative) and Patricia Holloway (means_not_disclosed flag) under Cathy's household alongside the existing Dorothy.
+- **NEW** `backend/tests/test_scenario_phase8.py` — 16 cases covering: lifecycle transition guards (5), audit-chain integrity, lifetime-cap clock shape, advice-boundary classification (5), seeded households (2), and schema round-trip.
+- **UPDATED** `backend/tests/test_scenario_phase6.py` — module-level token cache eliminates the brute-force lockout when the full suite runs.
+- **Combined regression:** `pytest tests/test_scenario_phase6.py tests/test_scenario_phase8.py` → **23 passed** (2 budget-projection cases skip <14d into quarter).
+- **NEW** `docs/scenario-engine-validation-report.md` — final sign-off document covering all 8 phases, the test matrix, the seeded household walkthroughs, and known non-blocking follow-ups.
+
+### Bug fix
+- `backend/scenario_engine/alerts.py` — three deadline-clock alerts (`_clock_quarter_end_underspend`, `_clock_budget_exhaustion_projected`, `_clock_at_hm_expiry`) had `next_action_link="/app/budget"` which 404s. Now points to the real `/app/budget-alerts` route.
+
+### UX polish
+- `frontend/src/components/WorkflowsPanel.jsx` — the route-out banner now explicitly says "Escalate · please contact straight away" with a ShieldAlert icon for ESCALATE workflows (was previously only conveyed by colour/icon, missed by screen readers).
+
+### Verification (testing_agent_v3_fork iteration 38)
+- Backend: 23/23 pytest green; schema endpoint deterministic across consecutive calls; seed script idempotent.
+- Frontend: 0 console errors across `/app`, `/app/budget-alerts`, `/app/participants`, `/app/participants/:id/timeline`, `/app/scenarios`. The Death workflow surfaces all 3 escalate contacts (MAC 1800 200 422, FIS 132 300, OPAN 1800 700 600) sourced from the schema-driven boundaries directory.
+
+
 ## Iteration 57 (Feb 2026) — Scenario engine Phase 5 (route-out guardrails)
 
 - `backend/scenario_engine/boundaries.py` — canonical contact directory (My Aged Care, Services Australia FIS, OPAN, ACQSC, 000, 1800 ELDERHelp, IDCARE, Scamwatch, financial adviser, solicitor), per-event-type and per-alert-type boundary maps (ROUTE_OUT / ESCALATE), deterministic rule-based query classifier, and the canonical route-out copy generator.
