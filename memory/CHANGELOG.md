@@ -1,3 +1,27 @@
+## Iteration 55 (Feb 2026) — Scenario engine Phase 2 (lifecycle + flags)
+
+Lifecycle state machine and parallel flag bag are live on every participant,
+guarded by a transition map, and audited with a hash-chained log.
+
+**Backend**
+- `backend/scenario_engine/__init__.py` (new package)
+- `backend/scenario_engine/lifecycle.py` — 14 states (`AWAITING_ASSESSMENT`, `ASSESSED_WAITLISTED`, `INTERIM_FUNDED`, `ACTIVE`, `AWAITING_REASSESSMENT`, `RESTORATIVE`, `END_OF_LIFE`, `HOSPITALISED`, `IN_RESPITE`, `SERVICES_PAUSED`, `OVERSEAS`, `MOVED_TO_RESIDENTIAL`, `EXITED`, `DECEASED`), explicit `ALLOWED_TRANSITIONS` map, `apply_transition()` guard that writes an audit row for both accepted and rejected attempts, SHA-256 hash chain across `participant_state_audit` rows.
+- `backend/scenario_engine/flags.py` — 42 flags across 5 groups (funding, contribution cohort, legal/supporter, provider, special cohort), payload-bearing flags (`AT_HM_ACTIVE`, `PROVIDER_CEASING`, `RESTORATIVE_ACTIVE`, `EOL_ACTIVE`, `INTERIM_60PCT`, `TRANSITIONED_HCP_LEVEL`, `HARDSHIP_GRANTED`), mutual-exclusion clusters (one classification at a time, one pension-status at a time, one provider-state at a time), `RESTRICTED_VISIBILITY = {SAFEGUARDING_ALERT}` with the `filter_flags_for_user()` wrapper and the `is_account_owner()` helper.
+- `backend/server.py` — startup hook calls `ensure_indexes`, `backfill_initial_states`, `backfill_empty_flags`. Five new endpoints under `/api/scenario/...` (state, transition, flags, audit, lifecycle-map).
+- Mongo indexes on `participant_state_audit` (`participant_id+created_at`, `account_id+created_at`, unique `id`).
+
+**Verification (end-to-end)**
+- 48 existing participants backfilled to `lifecycle_state=ACTIVE` with empty flags and `lifecycle_backfill` audit rows.
+- Allowed transition `ACTIVE -> HOSPITALISED -> ACTIVE` accepted and audited.
+- Disallowed `HOSPITALISED -> OVERSEAS` returns 409 and writes a `lifecycle_transition_rejected` audit row.
+- `AT_HM_ACTIVE` with payload `{expiry_date, tier, approved_aud}` stored on the participant doc.
+- Mutual exclusion: setting `ONGOING_CLASSIFICATION_5` cleared `_4` automatically.
+- Unknown flag rejected with 400.
+- `SAFEGUARDING_ALERT` set succeeded for the account OWNER.
+
+**Phase 2 deliberately does not** wire any alerts or callers — that's Phase 4.
+
+
 ## Iteration 54 (Feb 2026) — Scenario engine Phase 0 (audit) and Phase 1 (reference data)
 
 **Phase 0** — wrote `docs/scenario-engine-phase-0.md` audit. No code changes. Inventoried participant model (V1/V2), 5 duplicate hard-coded program-figure sites, the notification stack, the access model, and the absence of a shared types contract with mobile.

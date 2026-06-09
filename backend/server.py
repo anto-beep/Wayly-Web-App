@@ -4310,6 +4310,148 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"program_reference routes failed to load: {_e}")
 
+
+# Scenario engine — Phase 2: lifecycle state machine + parallel flags + audit.
+# These are caregiver-facing endpoints, gated by ``assert_participant_access``.
+try:
+    from scenario_engine import lifecycle as _se_lifecycle
+    from scenario_engine import flags as _se_flags
+    from security_utils import assert_participant_access as _assert_pa  # type: ignore
+
+    @api.get("/scenario/participants/{participant_id}/state", tags=["scenario"])
+    async def _scenario_state(
+        participant_id: str,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Return current lifecycle_state + visible flags for the participant.
+        Restricted flags (e.g. SAFEGUARDING_ALERT) are stripped for non-owner
+        readers."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "lifecycle_state": 1,
+                                             "flags": 1, "account_id": 1,
+                                             "lifecycle_state_updated_at": 1})
+        if p is None:
+            raise HTTPException(404, "participant not found")
+        flags = await _se_flags.get_flags(db, participant_id,
+                                          requesting_user_id=user_id,
+                                          account_id=p.get("account_id"))
+        return {
+            "participant_id": participant_id,
+            "lifecycle_state": p.get("lifecycle_state"),
+            "lifecycle_state_updated_at": p.get("lifecycle_state_updated_at"),
+            "flags": flags,
+        }
+
+    class _LifecycleTransitionBody(BaseModel):
+        to_state: str
+        reason: Optional[str] = None
+        source: Optional[Dict[str, Any]] = None
+
+    @api.post("/scenario/participants/{participant_id}/lifecycle-transition", tags=["scenario"])
+    async def _scenario_lifecycle_transition(
+        participant_id: str,
+        body: _LifecycleTransitionBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Apply a lifecycle transition. Validates against the transition map
+        and writes an audited row. Rejected attempts also write an audit
+        row (kind=lifecycle_transition_rejected) so abuse is visible."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        u = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+        try:
+            res = await _se_lifecycle.apply_transition(
+                db, participant_id=participant_id, account_id=None,
+                to_state=body.to_state, actor_id=user_id,
+                actor_name=(u or {}).get("name"),
+                reason=body.reason, source=body.source,
+            )
+            return {"ok": True, **res}
+        except _se_lifecycle.TransitionRejected as e:
+            raise HTTPException(409, str(e))
+
+    class _FlagBody(BaseModel):
+        flag: str
+        value: bool
+        payload: Optional[Dict[str, Any]] = None
+        reason: Optional[str] = None
+        source: Optional[Dict[str, Any]] = None
+
+    @api.post("/scenario/participants/{participant_id}/flags", tags=["scenario"])
+    async def _scenario_set_flag(
+        participant_id: str,
+        body: _FlagBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Set or clear a parallel flag. SAFEGUARDING_ALERT may only be set by
+        account owners — non-owners get 403."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "account_id": 1})
+        if p is None:
+            raise HTTPException(404, "participant not found")
+        if body.flag in _se_flags.RESTRICTED_VISIBILITY:
+            is_owner = await _se_flags.is_account_owner(
+                db, user_id=user_id, account_id=p.get("account_id"))
+            if not is_owner:
+                raise HTTPException(403, "Only account owners can set this flag")
+        u = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+        try:
+            res = await _se_flags.set_flag(
+                db, participant_id=participant_id, account_id=p.get("account_id"),
+                flag=body.flag, value=body.value, payload=body.payload,
+                actor_id=user_id, actor_name=(u or {}).get("name"),
+                reason=body.reason, source=body.source,
+            )
+            return {"ok": True, **res}
+        except _se_flags.FlagRejected as e:
+            raise HTTPException(400, str(e))
+
+    @api.get("/scenario/participants/{participant_id}/state-audit", tags=["scenario"])
+    async def _scenario_state_audit(
+        participant_id: str,
+        limit: int = 50,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Return the participant's state-change history. Restricted flag
+        changes are stripped for non-owner readers."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        rows = await _se_lifecycle.get_state_audit(db, participant_id, limit=limit)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "account_id": 1})
+        is_owner = await _se_flags.is_account_owner(
+            db, user_id=user_id, account_id=(p or {}).get("account_id"))
+        if not is_owner:
+            visible: List[Dict[str, Any]] = []
+            for r in rows:
+                if r.get("kind") == "flag_change":
+                    tv = r.get("to_value") or {}
+                    fv = r.get("from_value") or {}
+                    if any(k in _se_flags.RESTRICTED_VISIBILITY for k in
+                           list(tv.keys()) + list(fv.keys())):
+                        continue
+                visible.append(r)
+            rows = visible
+        return {"participant_id": participant_id, "items": rows}
+
+    @api.get("/scenario/lifecycle-map", tags=["scenario"])
+    async def _scenario_lifecycle_map():
+        """Public read-only map of states and their allowed transitions. Used
+        by the timeline UI to render the 'what can happen next' picker."""
+        return {
+            "states": _se_lifecycle.LIFECYCLE_STATES,
+            "terminal": list(_se_lifecycle.TERMINAL_STATES),
+            "initial": list(_se_lifecycle.INITIAL_STATES),
+            "transitions": {k: sorted(v) for k, v in
+                            _se_lifecycle.ALLOWED_TRANSITIONS.items()},
+            "flag_groups": _se_flags.FLAG_GROUPS,
+            "restricted_flags": list(_se_flags.RESTRICTED_VISIBILITY),
+            "payload_keys": _se_flags.FLAG_PAYLOAD_KEYS,
+        }
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"scenario_engine routes failed to load: {_e}")
+
 app.include_router(api)
 
 # Phase 5 — install the security-headers middleware AFTER CORS so the headers
@@ -4575,6 +4717,22 @@ async def _program_reference_bootstrap():
         logger.info("program_reference ready")
     except Exception as e:
         logger.error("program_reference bootstrap failed: %s", e, exc_info=True)
+
+
+@app.on_event("startup")
+async def _scenario_engine_bootstrap():
+    """Phase 2 scenario engine: ensure indexes, backfill lifecycle_state and
+    flags on existing participants. Idempotent."""
+    try:
+        from scenario_engine.lifecycle import ensure_indexes, backfill_initial_states
+        from scenario_engine.flags import backfill_empty_flags
+        await ensure_indexes(db)
+        state_counts = await backfill_initial_states(db)
+        flag_count = await backfill_empty_flags(db)
+        logger.info("scenario_engine ready — lifecycle_state backfill=%s, flags backfill=%d",
+                    state_counts, flag_count)
+    except Exception as e:
+        logger.error("scenario_engine bootstrap failed: %s", e, exc_info=True)
 
 
 @app.on_event("startup")
