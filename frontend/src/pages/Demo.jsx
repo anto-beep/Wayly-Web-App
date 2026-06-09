@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { formatAUD, formatAUD2 } from "@/lib/api";
+import { lifetimeCapStandard, loadProgramReference } from "@/lib/programReference";
 import { ArrowRight, Phone, AlertOctagon, Clock, AlertTriangle, Check, Wallet, FileText, MessageCircle } from "lucide-react";
 
 import SeoHead from "@/seo/SeoHead";
@@ -43,6 +44,11 @@ const FAMILY = [
 ];
 
 export default function Demo() {
+    // Pull the live lifetime cap from /api/program-reference/public.
+    const [capStandard, setCapStandard] = React.useState(lifetimeCapStandard());
+    React.useEffect(() => {
+        loadProgramReference().then(() => setCapStandard(lifetimeCapStandard()));
+    }, []);
     const [role, setRole] = useState("primary");
 
     const Caregiver = () => (
@@ -172,7 +178,7 @@ export default function Demo() {
             </div>
             <div className="bg-surface border border-kindred rounded-xl p-6">
                 <span className="overline">Lifetime contribution cap</span>
-                <div className="mt-3"><div className="font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(487.20)} <span className="text-sm font-sans text-muted-k">of {formatAUD(135318.69)}</span></div></div>
+                <div className="mt-3"><div className="font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(487.20)} <span className="text-sm font-sans text-muted-k">of {formatAUD(capStandard)}</span></div></div>
                 <div className="mt-3 h-2 w-full bg-surface-2 rounded-full overflow-hidden"><div className="bg-primary-k h-full" style={{ width: "0.36%" }} /></div>
                 <p className="mt-3 text-sm text-muted-k">At current pace, projected to reach cap in <span className="text-primary-k tabular-nums">23.4 years</span>. No near-term action required.</p>
             </div>

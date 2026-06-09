@@ -686,6 +686,9 @@ _DEFAULT_MEANS_TEST = {
         "asset_taper_per_year": 17.50,        # 17.5% of value above floor / year
     },
     "annual_contribution_cap": 36923.27,
+    # NOTE: lifetime caps and subsidies are now overlaid from program_reference
+    # in _load_means_test_settings(). Hard-coded values kept as compile-time
+    # fallback only — they may lag indexation events.
     "lifetime_cap_new_entrant": 135318.69,
     "lifetime_cap_grandfathered": 84571.66,
     "subsidy_by_classification": {
@@ -698,9 +701,24 @@ _DEFAULT_MEANS_TEST = {
 async def _load_means_test_settings() -> Dict[str, Any]:
     doc = await _db.means_test_settings.find_one({"id": "current"}, {"_id": 0})
     if not doc:
-        return dict(_DEFAULT_MEANS_TEST)
-    merged = dict(_DEFAULT_MEANS_TEST)
-    merged.update({k: v for k, v in doc.items() if k != "id"})
+        merged: Dict[str, Any] = dict(_DEFAULT_MEANS_TEST)
+    else:
+        merged = dict(_DEFAULT_MEANS_TEST)
+        merged.update({k: v for k, v in doc.items() if k != "id"})
+
+    # Overlay the canonical reference-data figures so indexation flows
+    # through automatically. See backend/program_reference.py.
+    try:
+        from program_reference import get_value as _pr_get
+        merged["lifetime_cap_new_entrant"] = float(_pr_get("lifetime_cap.standard"))
+        merged["lifetime_cap_grandfathered"] = float(_pr_get("lifetime_cap.no_worse_off"))
+        merged["subsidy_by_classification"] = {
+            str(c): float(_pr_get(f"classification_annual.{c}")) for c in range(1, 9)
+        }
+    except Exception:
+        # If program_reference isn't loaded for any reason, fall back to whatever
+        # the means_test_settings doc already had (or keep merged unchanged).
+        pass
     return merged
 
 

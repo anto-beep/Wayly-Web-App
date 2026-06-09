@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, formatAUD, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -8,17 +8,17 @@ import {
     Loader2, Sparkles, X,
 } from "lucide-react";
 import WaylyLogo from "@/components/WaylyLogo";
+import { loadProgramReference, getProgramReferenceSync } from "@/lib/programReference";
 
-const CLASSIFICATIONS = [
-    { v: 1, annual: 10731 },
-    { v: 2, annual: 15910 },
-    { v: 3, annual: 22515 },
-    { v: 4, annual: 29696 },
-    { v: 5, annual: 39805 },
-    { v: 6, annual: 49906 },
-    { v: 7, annual: 60005 },
-    { v: 8, annual: 78106 },
-];
+// Default snapshot — overwritten once /api/program-reference/public resolves.
+function _classificationsFromSnapshot(snap) {
+    const out = [];
+    for (let v = 1; v <= 8; v++) {
+        const row = snap.classifications?.[String(v)];
+        if (row) out.push({ v, annual: row.annual });
+    }
+    return out;
+}
 
 const STEPS = [
     { id: 1, label: "Your household" },
@@ -38,6 +38,18 @@ export default function Onboarding() {
         is_grandfathered: household?.is_grandfathered || false,
     });
     const [savingHousehold, setSavingHousehold] = useState(false);
+    const [, _setSnapshotVersion] = useState(0);
+
+    // Pull live figures from /api/program-reference/public on mount so the
+    // classification picker shows the current-indexation annual budgets.
+    useEffect(() => { loadProgramReference().then(() => _setSnapshotVersion((v) => v + 1)); }, []);
+
+    const CLASSIFICATIONS = useMemo(
+        () => _classificationsFromSnapshot(getProgramReferenceSync()),
+        // _setSnapshotVersion above forces a recompute when the API resolves.
+         
+        [],
+    );
 
     const goNext = () => setStep((s) => Math.min(s + 1, STEPS.length));
     const goBack = () => setStep((s) => Math.max(s - 1, 1));
@@ -141,7 +153,7 @@ export default function Onboarding() {
 }
 
 /* ---------- Step 1: Household ---------- */
-function StepHousehold({ form, setForm, saving, onSubmit }) {
+function StepHousehold({ form, setForm, saving, onSubmit, classifications }) {
     const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
     return (
@@ -165,7 +177,7 @@ function StepHousehold({ form, setForm, saving, onSubmit }) {
                 <div>
                     <span className="text-sm text-muted-k">Support at Home classification</span>
                     <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {CLASSIFICATIONS.map((c) => (
+                        {classifications.map((c) => (
                             <button
                                 key={c.v}
                                 type="button"

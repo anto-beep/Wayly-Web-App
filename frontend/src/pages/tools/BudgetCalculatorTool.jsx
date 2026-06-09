@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
@@ -9,6 +9,7 @@ import ToolGate from "@/components/ToolGate";
 import { ScreenshotBudget } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
+import { loadProgramReference, getProgramReferenceSync } from "@/lib/programReference";
 
 import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
@@ -29,7 +30,7 @@ const _toolJsonLd = (cfg) => {
     return blocks;
 };
 
-const CLASSIFICATIONS = [
+const CLASSIFICATIONS_FALLBACK = [
     { v: 1, annual: 10731 },
     { v: 2, annual: 15910 },
     { v: 3, annual: 22515 },
@@ -48,6 +49,20 @@ export default function BudgetCalculatorTool() {
     const [annualBurn, setAnnualBurn] = useState("");
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [, _setSnapshotVersion] = useState(0);
+
+    // Pull the live figures from /api/program-reference/public on mount.
+    useEffect(() => { loadProgramReference().then(() => _setSnapshotVersion((v) => v + 1)); }, []);
+
+    const CLASSIFICATIONS = useMemo(() => {
+        const snap = getProgramReferenceSync();
+        const list = [];
+        for (let v = 1; v <= 8; v++) {
+            const row = snap.classifications?.[String(v)];
+            list.push({ v, annual: row ? row.annual : CLASSIFICATIONS_FALLBACK[v - 1].annual });
+        }
+        return list;
+    }, []);
 
     const calc = async () => {
         setLoading(true);

@@ -4235,6 +4235,81 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"smoke_status failed to load: {_e}")
 
+
+# Program reference — Phase 1 scenario engine. Public snapshot for the
+# front-end loader + admin mutation + history audit.
+try:
+    import program_reference as _pr_mod
+
+    @api.get("/program-reference/public", tags=["reference"])
+    async def _program_reference_public():
+        """Public-safe snapshot of current Support at Home figures. Used by
+        the front-end (Onboarding, Budget Calculator, Demo hero) so any
+        indexation update propagates without redeploy. No participant or
+        billing data here."""
+        try:
+            return _pr_mod.public_snapshot()
+        except Exception as e:
+            logger.warning("program_reference public snapshot failed: %s", e)
+            raise HTTPException(503, "Reference data temporarily unavailable")
+
+    @api.get("/admin/program-reference", tags=["admin"])
+    async def _program_reference_admin_list(
+        key: Optional[str] = None,
+        _admin_id: str = Depends(get_current_admin_id),
+    ):
+        """Admin-only — list all rows for one key (or all keys when no key is
+        passed) so the on-call can verify which figures are in force."""
+        if key:
+            rows = []
+            for eff_from, eff_to, value, row_id in (_pr_mod._CACHE.get(key) or []):
+                rows.append({"key": key, "value": value,
+                             "effective_from": eff_from,
+                             "effective_to": eff_to, "row_id": row_id})
+            return {"key": key, "rows": rows}
+        # All keys: return current-effective row for each
+        from datetime import datetime as _dt, timezone as _tz
+        today = _dt.now(_tz.utc).date().isoformat()
+        out = {}
+        for k, rows in _pr_mod._CACHE.items():
+            for eff_from, eff_to, value, row_id in rows:
+                if eff_from <= today and (eff_to is None or today < eff_to):
+                    out[k] = {"value": value, "effective_from": eff_from,
+                              "effective_to": eff_to, "row_id": row_id}
+                    break
+        return {"as_of": today, "current": out}
+
+    class _ProgramReferenceSet(BaseModel):
+        key: str
+        value: Any
+        effective_from: str  # YYYY-MM-DD
+        source_url: Optional[str] = None
+        notes: Optional[str] = None
+
+    @api.post("/admin/program-reference", tags=["admin"])
+    async def _program_reference_admin_set(
+        body: _ProgramReferenceSet,
+        admin_id: str = Depends(get_current_admin_id),
+    ):
+        """Admin-only — insert a new effective row, closes the previous one.
+        Refreshes the cache on success. Use this on indexation events."""
+        row = await _pr_mod.set_value(
+            body.key, body.value, body.effective_from,
+            source_url=body.source_url, notes=body.notes, created_by=admin_id,
+        )
+        return {"ok": True, "row": row}
+
+    @api.get("/admin/program-reference/history", tags=["admin"])
+    async def _program_reference_admin_history(
+        key: Optional[str] = None,
+        _admin_id: str = Depends(get_current_admin_id),
+    ):
+        """Admin-only — full insert/close history for one key or all."""
+        return {"items": await _pr_mod.list_history(key)}
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"program_reference routes failed to load: {_e}")
+
 app.include_router(api)
 
 # Phase 5 — install the security-headers middleware AFTER CORS so the headers
@@ -4481,6 +4556,25 @@ async def _trial_scheduler_loop():
 @app.on_event("startup")
 async def _start_trial_scheduler():
     _asyncio.create_task(_trial_scheduler_loop())
+
+
+@app.on_event("startup")
+async def _program_reference_bootstrap():
+    """Phase 1 scenario engine: seed program_reference and load the cache.
+
+    Idempotent. Runs before anything that reads program figures (budget calc,
+    statement decoder, adviser scenario modeller). If any step fails, the
+    cache stays empty and ``get_value()`` calls raise — surfaced rather than
+    masked with wrong literals."""
+    try:
+        import program_reference as _pr
+        from seed_program_reference import get_seed_rows as _seed_rows
+        _pr.init(db)
+        await _pr.ensure_seeded(_seed_rows())
+        await _pr.preload_cache()
+        logger.info("program_reference ready")
+    except Exception as e:
+        logger.error("program_reference bootstrap failed: %s", e, exc_info=True)
 
 
 @app.on_event("startup")

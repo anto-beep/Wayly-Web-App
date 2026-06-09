@@ -1,3 +1,27 @@
+## Iteration 54 (Feb 2026) — Scenario engine Phase 0 (audit) and Phase 1 (reference data)
+
+**Phase 0** — wrote `docs/scenario-engine-phase-0.md` audit. No code changes. Inventoried participant model (V1/V2), 5 duplicate hard-coded program-figure sites, the notification stack, the access model, and the absence of a shared types contract with mobile.
+
+**Phase 1** — versioned reference-data layer is live:
+
+- `backend/program_reference.py` — Mongo-backed `program_reference` collection with `(key, value, effective_from, effective_to, source_url, notes)` rows, `program_reference_history` audit mirror, in-process cache populated at startup, synchronous `get_value(key, as_of_date)` lookup, `set_value()` admin mutation that closes the previous row and refreshes the cache, `get_value_async()` for deep-historical Mongo lookups, `public_snapshot()` for the frontend loader.
+- `backend/seed_program_reference.py` — 50 seed rows covering the 8 ongoing classifications, care-management cap, rollover floor/pct, lifetime caps (with the 20 March 2026 indexation already encoded as a separate effective row), time-limited cap years, interim 60% funding, Restorative Care / End-of-Life pathway budgets, AT-HM validity, contribution category rates, stream proportions, 11 confirmed program deadlines, and the 4 forward-dated policy gates (1 Oct 2026, 1 Jul 2026, early-2027, CHSP).
+- `backend/server.py` startup hook seeds + preloads (idempotent). Three new admin endpoints: `GET/POST /api/admin/program-reference`, `GET /api/admin/program-reference/history`. Public endpoint `GET /api/program-reference/public` for the frontend loader.
+- `backend/budget.py` — refactored to read every figure through `get_value`. Backward-compat shim `CLASSIFICATIONS` view + a baked-in `_FALLBACK_ANNUAL` mirror for safety.
+- `backend/batch2_routes.py` — `_load_means_test_settings` now overlays the canonical lifetime cap + subsidy figures from `program_reference` so the adviser scenario modeller stays in sync.
+- `frontend/src/lib/programReference.js` — fetches `/api/program-reference/public` once per hour, caches to localStorage, falls back to baked-in literals (kept in lockstep with the backend seed). Exports `loadProgramReference`, `getProgramReferenceSync`, `classificationAnnual`, `classificationQuarterly`, `lifetimeCapStandard`, `lifetimeCapNoWorseOff`.
+- `frontend/src/App.js` — warms up the snapshot at boot.
+- `frontend/src/pages/Onboarding.jsx`, `tools/BudgetCalculatorTool.jsx`, `Demo.jsx` — refactored away from hard-coded literals; now read live from the snapshot.
+
+Verified end-to-end:
+- Cache loads 48 keys / 50 rows at startup.
+- `get_value("lifetime_cap.standard", "2025-12-15")` → 135318.69 (pre-March-2026 row).
+- `get_value("lifetime_cap.standard", "2026-04-01")` → 137917.01 (post-March-2026 row).
+- `GET /api/program-reference/public` returns the full snapshot in the shape the frontend loader expects.
+- `GET /api/budget/current` returns class=4 / annual=29696 / quarterly=6681.6 / rollover=1000 — same numbers as before the refactor, now sourced from `program_reference`.
+- Lint clean (frontend ESLint guard passes, backend `eb` linter advisory-only).
+
+
 ## Iteration 53 (Feb 2026) — Admin restyle + production smoke test wiring
 
 - **Admin theme migrated to Wayly brand**:

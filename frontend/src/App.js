@@ -167,6 +167,10 @@ function App() {
     // Boot accessibility prefs (font size, dark, contrast, etc) BEFORE first paint
     if (typeof window !== "undefined") {
         bootAccessibilityPrefs();
+        // Phase 1 scenario engine: warm up the program-reference snapshot so
+        // Onboarding / Budget Calculator / Demo see live indexation figures
+        // without a redeploy. Fire-and-forget; the helper caches to localStorage.
+        import("@/lib/programReference").then((m) => m.loadProgramReference()).catch(() => {});
     }
     // CRITICAL: Detect Emergent OAuth callback synchronously, before any router
     // logic runs. The session_id arrives in the URL fragment and must be
