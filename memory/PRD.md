@@ -13,6 +13,20 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - React (CRA) + Tailwind + shadcn UI · FastAPI + MongoDB (motor) · JWT auth (bcrypt) · Claude Sonnet 4.5 via emergentintegrations (EMERGENT_LLM_KEY) · pypdf for PDF extraction.
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
+
+## Implemented (Iteration 37 — Scenario Engine Phase 6, Feb 2026)
+- **Tool + Statement Integration**. Statement decoder now emits typed participant_events for every upload (`statement_received`) and maps each anomaly rule key to the full taxonomy in `events.py` (care_management_over_cap / wrong_stream_billing / means_not_disclosed / backdated_adjustment / at_hm_expiring / at_hm_purchased / quarter_end_underspend_risk).
+- **Budget exhaustion projected** deadline clock added to `DEADLINE_CLOCKS` — linearly projects quarter-end spend after 14d of signal, fires when projection ≥110% of the quarterly budget.
+- **Guided caregiver workflows** API (`/api/scenario/workflows`, `/api/scenario/workflows/{key}`) + UI (`WorkflowsPanel` embedded in `/app/scenarios`). Three wizards (reassessment, hospitalisation, death) walk the caregiver through capturing the right events on the timeline. Death wizard surfaces `advice_boundary=ESCALATE` + route-out contacts (My Aged Care, Services Australia FIS, OPAN).
+- **Participant Timeline UI** in all three placements:
+  - **Dashboard** — Recent activity panel (`DashboardTimelinePanel`) embedded in caregiver dashboard
+  - **Per-participant route** `/app/participants/:id/timeline` with back link
+  - **Active-participant route** `/app/timeline` (sidebar nav)
+  - **Participants list** card now links each participant to its timeline.
+- Backend regression tests at `/app/backend/tests/test_scenario_phase6.py` (5 pass + 2 quarter-boundary skips).
+- Frontend Phase 6 surface verified by testing_agent_v3_fork (iteration 37): 15/15 UI assertions, 0 console errors.
+
+
 ## Implemented (Iteration 1 — May 2026)
 - Auth: signup with role select (caregiver/participant), login, me. JWT, bcrypt.
 - Household onboarding (Class 1–8, provider, grandfathered flag).
