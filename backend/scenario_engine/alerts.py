@@ -134,6 +134,15 @@ async def emit_alert(
         "created_at": now_iso,
         "dedupe_key": dk,
     }
+    # Phase 5 — overlay boundary level + contacts from the boundary map.
+    try:
+        from scenario_engine.boundaries import boundary_for_alert, contact_block
+        level, contact_keys = boundary_for_alert(alert_type)
+        if level != "SAFE_TO_EXPLAIN":
+            doc["advice_boundary"] = level
+            doc["route_out_contacts"] = contact_block(contact_keys)
+    except Exception:
+        pass
     await db.scenario_alerts.insert_one(dict(doc))
 
     # Fan out: owner + every caregiver with participant_access.

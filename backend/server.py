@@ -1654,6 +1654,37 @@ def _humanize_assistant_reply(text: str) -> str:
 
 @api.post("/chat")
 async def chat(payload: ChatRequest, request: Request, user_id: str = Depends(get_current_user_id)):
+    # Phase 5 — route-out guard runs BEFORE we call the LLM. If the query
+    # maps to a means-test, legal, or safeguarding topic, we return the
+    # canonical route-out copy and the right contacts. The LLM is not
+    # consulted on the substance.
+    try:
+        from scenario_engine.boundaries import (
+            classify_boundary_for_query, route_out_response,
+        )
+        boundary, contacts, topic = classify_boundary_for_query(payload.message or "")
+        if boundary in ("ROUTE_OUT", "ESCALATE"):
+            reply = route_out_response(payload.message or "", contacts, boundary, topic)
+            try:
+                await db.chat_history.insert_one({
+                    "id": str(uuid.uuid4()), "user_id": user_id,
+                    "role": "user", "content": payload.message,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                })
+                await db.chat_history.insert_one({
+                    "id": str(uuid.uuid4()), "user_id": user_id,
+                    "role": "assistant", "content": reply,
+                    "advice_boundary": boundary, "topic": topic,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                })
+            except Exception:
+                pass
+            return {"reply": reply, "advice_boundary": boundary,
+                    "topic": topic, "contacts": contacts,
+                    "guarded": True}
+    except Exception as _guard_err:
+        logger.warning("route-out guard failed; proceeding to LLM: %s", _guard_err)
+
     h = await _require_household(user_id)
     user = await _get_user(user_id)
     # Honour the active participant — classification + provider follow them
@@ -4548,6 +4579,27 @@ try:
         """Admin trigger to run the deadline clocks immediately."""
         counts = await _se_alerts.evaluate_all_clocks(db)
         return {"ok": True, "counts": counts}
+
+    # ---- Phase 5: route-out guardrails ------------------------------------
+    from scenario_engine import boundaries as _se_bound
+
+    @api.get("/scenario/contacts", tags=["scenario"])
+    async def _scenario_contacts():
+        """Public list of canonical contacts used by route-out and escalate
+        alerts. Surfaced on the timeline and on any blocked AI response."""
+        return {"contacts": _se_bound.CONTACTS}
+
+    class _BoundaryProbeBody(BaseModel):
+        query: str
+
+    @api.post("/scenario/boundary-probe", tags=["scenario"])
+    async def _scenario_boundary_probe(body: _BoundaryProbeBody,
+                                         _user_id: str = Depends(get_current_user_id)):
+        """Inspect a free-text question without consulting any LLM. Returns
+        the boundary classification + the contacts the response would route
+        to. Used by the UI to preview before sending to Ask Wayly."""
+        boundary, contacts, topic = _se_bound.classify_boundary_for_query(body.query)
+        return {"boundary": boundary, "topic": topic, "contacts": contacts}
 except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"scenario_engine routes failed to load: {_e}")

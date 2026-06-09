@@ -1,3 +1,10 @@
+## Iteration 57 (Feb 2026) — Scenario engine Phase 5 (route-out guardrails)
+
+- `backend/scenario_engine/boundaries.py` — canonical contact directory (My Aged Care, Services Australia FIS, OPAN, ACQSC, 000, 1800 ELDERHelp, IDCARE, Scamwatch, financial adviser, solicitor), per-event-type and per-alert-type boundary maps (ROUTE_OUT / ESCALATE), deterministic rule-based query classifier, and the canonical route-out copy generator.
+- Wired into 4 enforcement points: (1) `events.capture_event` overlays `advice_boundary` + `route_out_contacts` on persistence, (2) `alerts.emit_alert` does the same, (3) `/api/chat` (Ask Wayly) runs the guard BEFORE any LLM call and returns the route-out copy directly when the query maps to means-test / RAD-DAP / EPOA / safeguarding / scam / missing-person etc., (4) `/api/scenario/boundary-probe` for UI preview.
+- Verified end-to-end: "how much will I pay" → ROUTE_OUT/FIS; "mum is being abused" → ESCALATE/1800-ELDERHelp+000; "classification 4 cover?" → SAFE; "sell the home" via /api/chat → guarded=true, LLM not called, calm copy + contacts returned.
+
+
 ## Iteration 56 (Feb 2026) — Scenario engine Phase 3 (event capture)
 
 - `backend/scenario_engine/events.py` — 68 event types across all 10 catalogue groups, each tagged with the six what-changed axes and (where relevant) a proposed lifecycle transition + flag changes. Capture function applies proposed changes through the Phase 2 guard. Blocked transitions persist the event with `transition_status="blocked"` so the caregiver can confirm an alternative — never silent-fails.

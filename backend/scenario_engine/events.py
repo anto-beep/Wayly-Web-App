@@ -489,11 +489,19 @@ async def capture_event(
         "affects": affects,
         "proposed": proposed,
         "audit_ids": audit_ids,
-        "advice_boundary": "SAFE_TO_EXPLAIN",   # Phase 5 will overwrite
+        "advice_boundary": "SAFE_TO_EXPLAIN",
         "created_at": now_iso,
         "created_by": actor_id,
         "created_by_name": actor_name,
     }
+    # Phase 5 — overlay boundary level + contacts from the boundary map.
+    try:
+        from scenario_engine.boundaries import boundary_for_event, contact_block
+        level, contact_keys = boundary_for_event(event_type)
+        doc["advice_boundary"] = level
+        doc["route_out_contacts"] = contact_block(contact_keys)
+    except Exception as e:
+        log.warning("boundary overlay failed for %s: %s", event_type, e)
     await db.participant_events.insert_one(dict(doc))
     # Phase 4 — fire event-driven alerts (wrong-stream billing, safeguarding,
     # lifetime cap reached, etc.). Best-effort; failures must not block capture.
