@@ -495,6 +495,13 @@ async def capture_event(
         "created_by_name": actor_name,
     }
     await db.participant_events.insert_one(dict(doc))
+    # Phase 4 — fire event-driven alerts (wrong-stream billing, safeguarding,
+    # lifetime cap reached, etc.). Best-effort; failures must not block capture.
+    try:
+        from scenario_engine import alerts as _alerts
+        await _alerts.maybe_emit_event_alert(db, doc)
+    except Exception as e:
+        log.warning("event alert emission failed for %s: %s", event_type, e)
     return doc
 
 

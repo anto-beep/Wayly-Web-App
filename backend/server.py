@@ -4511,6 +4511,43 @@ try:
         items = await _se_events.list_events(db, participant_id,
                                               limit=limit, cursor_date=cursor_date)
         return {"participant_id": participant_id, "items": items}
+
+    # ---- Phase 4: alerts ---------------------------------------------------
+    from scenario_engine import alerts as _se_alerts
+
+    @api.get("/scenario/participants/{participant_id}/alerts", tags=["scenario"])
+    async def _scenario_list_alerts(
+        participant_id: str, status: Optional[str] = None, limit: int = 100,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        await _assert_pa(user_id, participant_id, require_active=False)
+        items = await _se_alerts.list_alerts(db, participant_id, status=status, limit=limit)
+        return {"participant_id": participant_id, "items": items}
+
+    class _AlertStatusBody(BaseModel):
+        status: str  # acknowledged | resolved | dismissed | open
+
+    @api.post("/scenario/alerts/{alert_id}/status", tags=["scenario"])
+    async def _scenario_update_alert_status(
+        alert_id: str, body: _AlertStatusBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        a = await db.scenario_alerts.find_one({"id": alert_id},
+                                                {"_id": 0, "participant_id": 1})
+        if not a:
+            raise HTTPException(404, "alert not found")
+        await _assert_pa(user_id, a["participant_id"], require_active=False)
+        ok = await _se_alerts.update_status(db, alert_id=alert_id,
+                                              new_status=body.status, actor_id=user_id)
+        return {"ok": ok}
+
+    @api.post("/admin/scenario/evaluate-clocks", tags=["admin"])
+    async def _scenario_evaluate_clocks_now(
+        _admin_id: str = Depends(get_current_admin_id),
+    ):
+        """Admin trigger to run the deadline clocks immediately."""
+        counts = await _se_alerts.evaluate_all_clocks(db)
+        return {"ok": True, "counts": counts}
 except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"scenario_engine routes failed to load: {_e}")
@@ -4785,19 +4822,40 @@ async def _program_reference_bootstrap():
 @app.on_event("startup")
 async def _scenario_engine_bootstrap():
     """Phase 2 scenario engine: ensure indexes, backfill lifecycle_state and
-    flags on existing participants. Phase 3: events index. Idempotent."""
+    flags on existing participants. Phase 3: events index. Phase 4: alerts
+    index + scheduled deadline-clock evaluator. Idempotent."""
     try:
         from scenario_engine.lifecycle import ensure_indexes, backfill_initial_states
         from scenario_engine.flags import backfill_empty_flags
         from scenario_engine.events import ensure_indexes as ev_indexes
+        from scenario_engine.alerts import ensure_indexes as al_indexes
         await ensure_indexes(db)
         await ev_indexes(db)
+        await al_indexes(db)
         state_counts = await backfill_initial_states(db)
         flag_count = await backfill_empty_flags(db)
         logger.info("scenario_engine ready — lifecycle_state backfill=%s, flags backfill=%d",
                     state_counts, flag_count)
     except Exception as e:
         logger.error("scenario_engine bootstrap failed: %s", e, exc_info=True)
+
+
+@app.on_event("startup")
+async def _scenario_alerts_scheduler():
+    """Phase 4 — evaluate deadline clocks for every participant every hour.
+    First run fires 30s after boot so the smoke test sees consistent state."""
+    async def _loop():
+        import asyncio as _aio
+        await _aio.sleep(30)
+        while True:
+            try:
+                from scenario_engine.alerts import evaluate_all_clocks
+                counts = await evaluate_all_clocks(db)
+                logger.info("scenario_alerts evaluation: %s", counts)
+            except Exception as e:
+                logger.warning("scenario_alerts evaluation failed: %s", e)
+            await _aio.sleep(3600)  # one hour
+    _asyncio.create_task(_loop())
 
 
 @app.on_event("startup")
