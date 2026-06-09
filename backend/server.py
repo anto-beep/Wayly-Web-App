@@ -4748,6 +4748,19 @@ try:
         if not w:
             raise HTTPException(404, "unknown workflow")
         return w
+
+    # ---- Phase 7: shared types contract for the mobile app ----------------
+    from scenario_engine import schema_export as _se_schema
+
+    @api.get("/scenario/schema", tags=["scenario"])
+    async def _scenario_schema():
+        """Single source-of-truth contract for the scenario engine.
+
+        Public — the schema is non-sensitive and identical for every
+        participant. Mobile clients pin a minimum ``schema_version`` and
+        compare ``section_revisions`` to skip downloading unchanged sections.
+        """
+        return _se_schema.build_schema()
 except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"scenario_engine routes failed to load: {_e}")

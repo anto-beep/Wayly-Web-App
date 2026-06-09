@@ -319,7 +319,7 @@ async def _clock_quarter_end_underspend(db, p: Dict[str, Any]) -> List[Dict[str,
                 "Only the greater of $1,000 or 10% of the quarterly budget rolls over. "
                 "Anything above that is lost. Review spend and book any planned services.",
         "next_action_text": "Open budget",
-        "next_action_link": "/app/budget",
+        "next_action_link": "/app/budget-alerts",
         "source": {"kind": "deadline_clock", "clock": "quarter_end_underspend",
                    "quarter_end": q_end.isoformat()},
         "dedupe_key": f"quarter_end:{q_end.isoformat()}",
@@ -385,7 +385,7 @@ async def _clock_budget_exhaustion_projected(db, p: Dict[str, Any]) -> List[Dict
                 "budget is not subsidised — review upcoming services with your provider "
                 "and consider deferring non-essential bookings.",
         "next_action_text": "Open budget",
-        "next_action_link": "/app/budget",
+        "next_action_link": "/app/budget-alerts",
         "source": {"kind": "deadline_clock", "clock": "budget_exhaustion_projected",
                    "quarter_end": q_end.isoformat(),
                    "projected_total": round(projected, 0),
@@ -409,7 +409,7 @@ async def _clock_interim_60pct(db, p: Dict[str, Any]) -> List[Dict[str, Any]]:
         "title": "Interim funding active — remainder is not backdated",
         "body": body,
         "next_action_text": "Open budget",
-        "next_action_link": "/app/budget",
+        "next_action_link": "/app/budget-alerts",
         "source": {"kind": "deadline_clock", "clock": "interim_60pct"},
         "dedupe_key": "interim_60pct_standing",
     }]

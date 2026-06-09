@@ -46,6 +46,31 @@ async def db():
     client.close()
 
 
+async def _get_token() -> str | None:
+    """Login once and cache — avoids brute-force lockout when running the
+    full Phase 6+8 suite back-to-back."""
+    async with httpx.AsyncClient(timeout=10) as c:
+        r = await c.post(
+            f"{BASE}/api/auth/login",
+            json={"email": "cathy@example.com", "password": "testpass123"},
+        )
+    if r.status_code != 200:
+        return None
+    return r.json().get("token")
+
+
+_TOKEN_CACHE: dict = {}
+
+
+async def _get_token_cached() -> str | None:
+    if "t" in _TOKEN_CACHE:
+        return _TOKEN_CACHE["t"]
+    t = await _get_token()
+    _TOKEN_CACHE["t"] = t
+    return t
+
+
+
 # -------------------------------------------------------------------------
 # Workflows catalogue
 # -------------------------------------------------------------------------
@@ -61,16 +86,10 @@ async def test_workflows_catalogue_lists_three_workflows():
 
 @pytest.mark.asyncio
 async def test_workflow_detail_includes_steps_with_event_types():
+    token = await _get_token_cached()
+    if not token:
+        pytest.skip("auth lockout or smoke account not seeded")
     async with httpx.AsyncClient(timeout=10) as c:
-        # Workflow detail requires auth — use the smoke account.
-        login = await c.post(
-            f"{BASE}/api/auth/login",
-            json={"email": "cathy@example.com",
-                  "password": "testpass123"},
-        )
-        if login.status_code != 200:
-            pytest.skip("smoke account not seeded in this environment")
-        token = login.json()["token"]
         r = await c.get(f"{BASE}/api/scenario/workflows/reassessment",
                          headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 200
@@ -85,15 +104,10 @@ async def test_workflow_detail_includes_steps_with_event_types():
 
 @pytest.mark.asyncio
 async def test_workflow_death_returns_route_out_contacts():
+    token = await _get_token_cached()
+    if not token:
+        pytest.skip("auth lockout or smoke account not seeded")
     async with httpx.AsyncClient(timeout=10) as c:
-        login = await c.post(
-            f"{BASE}/api/auth/login",
-            json={"email": "cathy@example.com",
-                  "password": "testpass123"},
-        )
-        if login.status_code != 200:
-            pytest.skip("smoke account not seeded in this environment")
-        token = login.json()["token"]
         r = await c.get(f"{BASE}/api/scenario/workflows/death",
                          headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 200
@@ -105,15 +119,10 @@ async def test_workflow_death_returns_route_out_contacts():
 
 @pytest.mark.asyncio
 async def test_unknown_workflow_returns_404():
+    token = await _get_token_cached()
+    if not token:
+        pytest.skip("auth lockout or smoke account not seeded")
     async with httpx.AsyncClient(timeout=10) as c:
-        login = await c.post(
-            f"{BASE}/api/auth/login",
-            json={"email": "cathy@example.com",
-                  "password": "testpass123"},
-        )
-        if login.status_code != 200:
-            pytest.skip("smoke account not seeded in this environment")
-        token = login.json()["token"]
         r = await c.get(f"{BASE}/api/scenario/workflows/not-a-workflow",
                          headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 404
