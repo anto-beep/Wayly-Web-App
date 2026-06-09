@@ -171,6 +171,53 @@ def _get_clamd():
         return None
 
 
+def _signature_db_ready() -> bool:
+    """Has freshclam fetched at least one signature database? Until this is
+    true, clamd may be listening but will refuse to scan, so we hold uploads
+    rather than emitting a confusing "scanner unreachable" error.
+
+    Checks the canonical files freshclam writes to /var/lib/clamav. The path
+    can be overridden via CLAMAV_READY_FILE for self-hosted operators with
+    custom DatabaseDirectory values.
+    """
+    explicit = os.environ.get("CLAMAV_READY_FILE")
+    if explicit:
+        return os.path.exists(explicit)
+    db_dir = os.environ.get("CLAMAV_DB_DIR", "/var/lib/clamav")
+    for name in ("main.cvd", "main.cld", "daily.cvd", "daily.cld"):
+        if os.path.exists(os.path.join(db_dir, name)):
+            return True
+    return False
+
+
+def clamav_status() -> dict:
+    """Health-probe snapshot used by /api/health/clamav. Cheap: pings the
+    daemon if signatures are present, otherwise reports the bootstrap state."""
+    if not _CLAMAV_ENABLED:
+        return {"enabled": False, "ready": True, "db_loaded": False,
+                "transport": None, "detail": "CLAMAV_ENABLED=false"}
+    db_ready = _signature_db_ready()
+    if not db_ready:
+        return {"enabled": True, "ready": False, "db_loaded": False,
+                "transport": None,
+                "detail": "freshclam has not finished downloading signatures yet"}
+    cli = _get_clamd()
+    if cli is None:
+        return {"enabled": True, "ready": False, "db_loaded": True,
+                "transport": None, "detail": "clamd unreachable"}
+    transport = (
+        f"unix:{_CLAMAV_SOCKET}" if os.path.exists(_CLAMAV_SOCKET)
+        else f"tcp:{_CLAMAV_HOST}:{_CLAMAV_PORT}"
+    )
+    try:
+        cli.ping()
+    except Exception as e:
+        return {"enabled": True, "ready": False, "db_loaded": True,
+                "transport": transport, "detail": f"ping failed: {e}"}
+    return {"enabled": True, "ready": True, "db_loaded": True,
+            "transport": transport, "detail": "ok"}
+
+
 def virus_scan(raw: bytes, *, on_malware=None) -> None:
     """Stream `raw` to clamd. Raises 400 on malware detected; raises 503 on
     clamd unreachable (fail-closed). Becomes a no-op when CLAMAV_ENABLED=false.
@@ -180,6 +227,18 @@ def virus_scan(raw: bytes, *, on_malware=None) -> None:
     """
     if not _CLAMAV_ENABLED:
         return
+    # Distinguish "scanner not ready yet" (signatures still downloading on a
+    # fresh container) from "scanner unreachable". The first happens for ~60s
+    # on every cold start; calling it out explicitly keeps the caregiver UX
+    # informative instead of alarming.
+    if not _signature_db_ready():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "File scanner is still loading its virus database on the server. "
+                "This usually clears within a minute or two of a deploy — please try again shortly."
+            ),
+        )
     cli = _get_clamd()
     if cli is None:
         # Fail-closed: refuse the upload rather than risk a malicious file

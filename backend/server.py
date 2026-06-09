@@ -3048,6 +3048,16 @@ async def health_deep(user_id: str = Depends(get_current_admin_id)):
 
 
 # ---------------------------------------------------------------------------
+
+
+@api.get("/health/clamav")
+async def health_clamav():
+    """Public liveness probe for the virus scanner. Used by the frontend's
+    upload composer to show an inline readiness indicator without needing a
+    failed upload to discover the daemon is down."""
+    from upload_security import clamav_status
+    return clamav_status()
+
 # Public status — uptime, last ingestion, model versions, dependency health.
 # Intentionally public + cache-friendly; safe values only.
 # ---------------------------------------------------------------------------

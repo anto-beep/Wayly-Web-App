@@ -1,3 +1,35 @@
+## Iteration 39 (Feb 2026) — ClamAV deploy infrastructure
+
+### What shipped
+
+- **NEW** `/app/Dockerfile` — extends the Emergent base image with `clamav-daemon` + `clamav-freshclam`, drops in the Wayly clamd/freshclam configs, recreates `/var/run/clamav` on boot (tmpfs wipes), seeds the signature DB synchronously via `wayly-entrypoint.sh`, then hands off to supervisord. Includes `HEALTHCHECK`-friendly defaults (`CLAMAV_ENABLED=true`, socket + TCP loopback transports both configured).
+- **NEW** `/app/deploy/clamav/` — all production configs in one folder:
+  - `clamd.conf` — listens on `/var/run/clamav/clamd.ctl` **and** `127.0.0.1:3310`; 100 MB scan headroom; rejects encrypted archives; phishing heuristics on.
+  - `freshclam.conf` — daemonised signature updater polling every 24h.
+  - `supervisor-clamd.conf` + `supervisor-freshclam.conf` — supervisor programmes that bring both daemons up at boot, priorities 5 + 4 so they come up before the FastAPI backend.
+  - `entrypoint.sh` — recreates the tmpfs-vulnerable socket dir, seeds signatures if missing, then exec's CMD.
+  - `README.md` — full operator runbook (build, install, env vars, troubleshooting matrix).
+- **NEW** `/app/scripts/install_clamav.sh` — idempotent live install script for already-running pods (covers the case where rebuilding the image isn't an option, e.g. the managed Emergent prod pod). Run as root: `sudo /app/scripts/install_clamav.sh`. Hand this to Emergent Support for the wayly.com.au pod.
+- **UPDATED** `/app/backend/upload_security.py`:
+  - `_signature_db_ready()` — checks for `main.cvd` / `daily.cvd` (or `.cld`) before allowing `virus_scan()` to call clamd. Overridable via `CLAMAV_READY_FILE` env var.
+  - `clamav_status()` — public health probe payload (`enabled`, `ready`, `db_loaded`, `transport`, `detail`).
+  - `virus_scan()` now distinguishes "signatures still downloading" (caregiver-friendly 503 message) from "scanner unreachable" (operator-pages 503).
+- **NEW** `GET /api/health/clamav` — public endpoint surfacing `clamav_status()` so the upload composer can render an inline readiness indicator and ops can monitor without polling deep-health.
+
+### Files
+- `/app/Dockerfile`
+- `/app/deploy/clamav/{clamd.conf,freshclam.conf,supervisor-clamd.conf,supervisor-freshclam.conf,entrypoint.sh,README.md}`
+- `/app/scripts/install_clamav.sh`
+- `/app/backend/upload_security.py` (+ `_signature_db_ready`, `clamav_status`, gated `virus_scan`)
+- `/app/backend/server.py` (+ `GET /api/health/clamav`)
+
+### Verified
+- Shell syntax (`sh -n`) clean on both `install_clamav.sh` and `entrypoint.sh`.
+- Python lint clean on `upload_security.py`.
+- `/api/health/clamav` returns the correct shape in all three states (disabled / signatures-still-loading / ok).
+- `virus_scan()` correctly raises the new "still loading" 503 when CLAMAV_ENABLED=true and no DB file present.
+
+
 ## Iteration 38 (Feb 2026) — Scenario engine **Phase 7 + Phase 8** + budget-alerts deep-link fix
 
 ### Phase 7 — Shared schema contract for the mobile app
