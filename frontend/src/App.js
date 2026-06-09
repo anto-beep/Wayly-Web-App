@@ -277,6 +277,7 @@ function App() {
                     <Route path="/app/documents" element={<RequireAuth><Layout><DocumentVault /></Layout></RequireAuth>} />
                     <Route path="/app/calendar" element={<RequireAuth><Layout><VisitCalendar /></Layout></RequireAuth>} />
                     <Route path="/app/budget-alerts" element={<RequireAuth><Layout><BudgetAlerts /></Layout></RequireAuth>} />
+                    <Route path="/app/budget" element={<Navigate to="/app/budget-alerts" replace />} />
                     <Route path="/app/provider-switch" element={<RequireAuth><Layout><ProviderSwitch /></Layout></RequireAuth>} />
                     <Route path="/app/at-hm" element={<RequireAuth><Layout><AthmTracker /></Layout></RequireAuth>} />
                     <Route path="/app/correspondence" element={<RequireAuth><Layout><Correspondence /></Layout></RequireAuth>} />
