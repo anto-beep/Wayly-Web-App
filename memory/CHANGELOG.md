@@ -1,3 +1,11 @@
+## Iteration 56 (Feb 2026) — Scenario engine Phase 3 (event capture)
+
+- `backend/scenario_engine/events.py` — 68 event types across all 10 catalogue groups, each tagged with the six what-changed axes and (where relevant) a proposed lifecycle transition + flag changes. Capture function applies proposed changes through the Phase 2 guard. Blocked transitions persist the event with `transition_status="blocked"` so the caregiver can confirm an alternative — never silent-fails.
+- `backend/server.py` — 3 new endpoints (`GET /scenario/event-types`, `POST/GET /scenario/participants/{id}/events`) + index bootstrap.
+- `frontend/src/pages/extended/ScenarioCapture.jsx` — calm caregiver-facing form at `/app/scenarios` with live preview of "Will move status to X" and "Updates flags: Y" before submit. Nav entry added under Their Care.
+- Verified end-to-end: allowed transitions accepted, flag-only events leave status untouched, payload-bearing flags carry their payload through, blocked events show a confirm panel.
+
+
 ## Iteration 55 (Feb 2026) — Scenario engine Phase 2 (lifecycle + flags)
 
 Lifecycle state machine and parallel flag bag are live on every participant,

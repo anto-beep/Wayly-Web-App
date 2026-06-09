@@ -5,7 +5,7 @@ import {
     LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut,
     UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
     ShieldCheck, FolderArchive, Calendar, Bell, Repeat, Wrench, Mail, Share2, Star, FileBarChart,
-    HeartPulse, Heart, FilePenLine, UserPlus, ChevronDown, ChevronRight, Wallet,
+    HeartPulse, Heart, FilePenLine, UserPlus, ChevronDown, ChevronRight, Wallet, ClipboardEdit,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import WaylyLogo from "@/components/WaylyLogo";
@@ -47,6 +47,7 @@ const navGroups = [
             { to: "/app/hospital", label: "Hospital mode", icon: HeartPulse },
             { to: "/app/at-hm", label: "AT & HM", icon: Wrench },
             { to: "/app/amendments", label: "Care-plan changes", icon: FilePenLine },
+            { to: "/app/scenarios", label: "Log a scenario", icon: ClipboardEdit },
         ],
     },
     {

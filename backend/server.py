@@ -4448,6 +4448,69 @@ try:
             "restricted_flags": list(_se_flags.RESTRICTED_VISIBILITY),
             "payload_keys": _se_flags.FLAG_PAYLOAD_KEYS,
         }
+
+    # ---- Phase 3: event capture --------------------------------------------
+    from scenario_engine import events as _se_events
+
+    @api.get("/scenario/event-types", tags=["scenario"])
+    async def _scenario_event_types():
+        """Public event taxonomy — used by the caregiver capture UI."""
+        return _se_events.taxonomy()
+
+    class _EventCaptureBody(BaseModel):
+        event_type: str
+        sub_type: Optional[str] = None
+        effective_date: str  # YYYY-MM-DD
+        trigger_source: str = "caregiver"
+        note: Optional[str] = None
+        payload: Optional[Dict[str, Any]] = None
+        source: Optional[Dict[str, Any]] = None
+        apply_transitions: bool = True
+
+    @api.post("/scenario/participants/{participant_id}/events", tags=["scenario"])
+    async def _scenario_capture_event(
+        participant_id: str,
+        body: _EventCaptureBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Log an event for a participant. Applies the proposed lifecycle
+        transition and flag changes through the Phase 2 guard. If the
+        proposed transition is blocked, the event is still persisted with
+        ``proposed.transition_status='blocked'`` so the caregiver can confirm
+        a different action — never fails silently."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "account_id": 1})
+        if p is None:
+            raise HTTPException(404, "participant not found")
+        u = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+        try:
+            ev = await _se_events.capture_event(
+                db, participant_id=participant_id,
+                account_id=p.get("account_id"),
+                event_type=body.event_type, sub_type=body.sub_type,
+                trigger_source=body.trigger_source,
+                effective_date=body.effective_date,
+                note=body.note, payload=body.payload,
+                source=body.source,
+                actor_id=user_id, actor_name=(u or {}).get("name"),
+                apply_transitions=body.apply_transitions,
+            )
+            return {"ok": True, "event": ev}
+        except _se_events.EventRejected as e:
+            raise HTTPException(400, str(e))
+
+    @api.get("/scenario/participants/{participant_id}/events", tags=["scenario"])
+    async def _scenario_list_events(
+        participant_id: str,
+        limit: int = 100,
+        cursor_date: Optional[str] = None,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        await _assert_pa(user_id, participant_id, require_active=False)
+        items = await _se_events.list_events(db, participant_id,
+                                              limit=limit, cursor_date=cursor_date)
+        return {"participant_id": participant_id, "items": items}
 except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"scenario_engine routes failed to load: {_e}")
@@ -4722,11 +4785,13 @@ async def _program_reference_bootstrap():
 @app.on_event("startup")
 async def _scenario_engine_bootstrap():
     """Phase 2 scenario engine: ensure indexes, backfill lifecycle_state and
-    flags on existing participants. Idempotent."""
+    flags on existing participants. Phase 3: events index. Idempotent."""
     try:
         from scenario_engine.lifecycle import ensure_indexes, backfill_initial_states
         from scenario_engine.flags import backfill_empty_flags
+        from scenario_engine.events import ensure_indexes as ev_indexes
         await ensure_indexes(db)
+        await ev_indexes(db)
         state_counts = await backfill_initial_states(db)
         flag_count = await backfill_empty_flags(db)
         logger.info("scenario_engine ready — lifecycle_state backfill=%s, flags backfill=%d",
