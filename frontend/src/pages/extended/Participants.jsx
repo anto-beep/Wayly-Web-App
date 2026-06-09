@@ -17,7 +17,7 @@ import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import {
     Users, Plus, Star, Trash2, Copy, X, ArrowUpRight, RotateCcw, AlertTriangle,
-    Mail as MailIcon, Crown, CheckCircle2, Edit3,
+    Mail as MailIcon, Crown, CheckCircle2, Edit3, Activity,
 } from "lucide-react";
 import { useParticipants } from "@/context/ParticipantsContext";
 
@@ -286,6 +286,13 @@ export default function ParticipantsPage() {
                                     </div>
                                 )}
                                 <div className="flex gap-2 pt-1 items-center flex-wrap">
+                                    <Link
+                                        to={`/app/participants/${p.id}/timeline`}
+                                        data-testid={`participant-timeline-${p.id}`}
+                                        className="text-xs text-primary-k hover:underline inline-flex items-center gap-1"
+                                    >
+                                        <Activity className="h-3 w-3" /> Timeline
+                                    </Link>
                                     <button
                                         type="button"
                                         onClick={() => { setEditTarget(p); setEditForm({ first_name: p.first_name || "", last_name: p.last_name || "", classification: p.classification || "", provider_name: p.provider_name || "" }); }}

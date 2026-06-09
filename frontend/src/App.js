@@ -78,6 +78,7 @@ const HospitalLiaison = lazy(() => import("@/pages/extended/HospitalLiaison"));
 const FamilyWall = lazy(() => import("@/pages/extended/FamilyWall"));
 const CarePlanAmendments = lazy(() => import("@/pages/extended/CarePlanAmendments"));
 const ScenarioCapture = lazy(() => import("@/pages/extended/ScenarioCapture"));
+const ParticipantTimeline = lazy(() => import("@/pages/extended/ParticipantTimeline"));
 const AdviserBrand = lazy(() => import("@/pages/AdviserBrand"));
 const AdviserScenarios = lazy(() => import("@/pages/AdviserScenarios"));
 const AdviserAlerts = lazy(() => import("@/pages/AdviserAlerts"));
@@ -288,6 +289,8 @@ function App() {
                     <Route path="/app/wall" element={<RequireAuth><Layout><FamilyWall /></Layout></RequireAuth>} />
                     <Route path="/app/amendments" element={<RequireAuth><Layout><CarePlanAmendments /></Layout></RequireAuth>} />
                     <Route path="/app/scenarios" element={<RequireAuth><Layout><ScenarioCapture /></Layout></RequireAuth>} />
+                    <Route path="/app/timeline" element={<RequireAuth><Layout><ParticipantTimeline /></Layout></RequireAuth>} />
+                    <Route path="/app/participants/:id/timeline" element={<RequireAuth><Layout><ParticipantTimeline /></Layout></RequireAuth>} />
                     <Route path="/settings" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />

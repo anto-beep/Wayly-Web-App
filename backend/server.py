@@ -2417,6 +2417,92 @@ async def _run_upload_job(
                 )
             except Exception:
                 pass
+        # Phase 6 — emit participant_events so the timeline captures the
+        # full journey. Always log statement_received; map decoder anomalies
+        # to typed events (events.py). Parse-only / data-quality rules
+        # (RULE_14, RULE_15, RULE_20, RULE_17/18 informational) are skipped.
+        if participant_id:
+            try:
+                from scenario_engine.events import (
+                    capture_event as _se_capture, EVENT_TYPES as _SE_EVENT_TYPES,
+                )
+                _ANOM_TO_EVENT = {
+                    # Care management cap breaches
+                    "RULE_1": "care_management_over_cap",
+                    "RULE_1B": "care_management_over_cap",
+                    "RULE_1_CARE_MGMT_CAP": "care_management_over_cap",
+                    "RULE_1B_CARE_MGMT_MONTHLY": "care_management_over_cap",
+                    # Stream / classification misallocation
+                    "RULE_4": "wrong_stream_billing",
+                    "RULE_9_WRONG_STREAM": "wrong_stream_billing",
+                    "RULE_9_CLINICAL_CONTRIB": "wrong_stream_billing",
+                    "RULE_9_CONTRIBUTION_MISMATCH": "wrong_stream_billing",
+                    "RULE_11": "wrong_stream_billing",
+                    "RULE_11_BROKERED_PREMIUM": "wrong_stream_billing",
+                    "RULE_16_STREAM_DISCREPANCY": "wrong_stream_billing",
+                    # Means / pension disclosure
+                    "RULE_9_PENSION_STATUS_UNKNOWN": "means_not_disclosed",
+                    # Backdated adjustments
+                    "RULE_10": "backdated_adjustment",
+                    "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS": "backdated_adjustment",
+                    # AT-HM
+                    "RULE_12_AT_HM_ACTIVE": "at_hm_expiring",
+                    "RULE_19_AT_HM_LARGE_CLAIM": "at_hm_purchased",
+                    # Quarter-end underspend
+                    "RULE_13_QUARTERLY_UNDERSPEND": "quarter_end_underspend_risk",
+                    "RULE_13_MID_QUARTER_UPDATE": "quarter_end_underspend_risk",
+                }
+                u = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+                actor_name = (u or {}).get("name")
+                today_iso = datetime.now(timezone.utc).date().isoformat()
+                # Always log one statement_received event per upload — the
+                # backbone of the timeline regardless of anomalies.
+                if participant_id:
+                    try:
+                        await _se_capture(
+                            db, participant_id=participant_id, account_id=None,
+                            event_type="statement_received", trigger_source="statement",
+                            effective_date=today_iso,
+                            note=f"{filename} · {len(line_items)} line items, {len(anomalies)} alerts",
+                            payload={"line_item_count": len(line_items),
+                                     "anomaly_count": len(anomalies)},
+                            source={"kind": "statement", "statement_id": statement.id,
+                                    "filename": filename},
+                            actor_id=user_id, actor_name=actor_name,
+                        )
+                    except Exception as _e:
+                        logger.debug("statement_received event skipped: %s", _e)
+                seen_event_keys: set = set()
+                for a in anomalies:
+                    rk = (a if isinstance(a, str) else a.get("rule_key") or a.get("rule") or "")
+                    et = _ANOM_TO_EVENT.get(rk)
+                    if not et or not participant_id:
+                        continue
+                    if et not in _SE_EVENT_TYPES:
+                        continue
+                    # Dedupe within this single upload (one event per type
+                    # even if multiple anomalies map to it).
+                    dedupe = (et, statement.id)
+                    if dedupe in seen_event_keys:
+                        continue
+                    seen_event_keys.add(dedupe)
+                    try:
+                        await _se_capture(
+                            db, participant_id=participant_id, account_id=None,
+                            event_type=et, trigger_source="statement",
+                            effective_date=today_iso,
+                            note=f"From {filename}",
+                            payload={"rule_key": rk},
+                            source={"kind": "statement_anomaly",
+                                    "statement_id": statement.id,
+                                    "rule_key": rk,
+                                    "filename": filename},
+                            actor_id=user_id, actor_name=actor_name,
+                        )
+                    except Exception as _e:
+                        logger.debug("scenario event emission skipped: %s", _e)
+            except Exception:
+                pass
 
         job["statement_id"] = statement.id
         job["status"] = "done"
@@ -4589,17 +4675,79 @@ try:
         alerts. Surfaced on the timeline and on any blocked AI response."""
         return {"contacts": _se_bound.CONTACTS}
 
-    class _BoundaryProbeBody(BaseModel):
-        query: str
+    @api.get("/scenario/participants/{participant_id}/timeline", tags=["scenario"])
+    async def _scenario_timeline(
+        participant_id: str, limit: int = 200,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Single chronological stream that merges events, lifecycle
+        transitions, and alerts. Restricted (safeguarding) items are stripped
+        for non-owner readers."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "account_id": 1, "first_name": 1,
+                                             "lifecycle_state": 1, "flags": 1})
+        if p is None:
+            raise HTTPException(404, "participant not found")
+        is_owner = await _se_flags.is_account_owner(
+            db, user_id=user_id, account_id=p.get("account_id"))
+
+        events = await _se_events.list_events(db, participant_id, limit=limit)
+        audit = await _se_lifecycle.get_state_audit(db, participant_id, limit=limit)
+        alerts = await _se_alerts.list_alerts(db, participant_id, limit=limit)
+
+        items = []
+        for ev in events:
+            items.append({
+                "type": "event", "at": ev.get("captured_date") or ev.get("created_at"),
+                "data": ev,
+            })
+        for a in audit:
+            # Drop restricted-flag changes for non-owners.
+            if not is_owner and a.get("kind") == "flag_change":
+                fv = list((a.get("from_value") or {}).keys())
+                tv = list((a.get("to_value") or {}).keys())
+                if any(k in _se_flags.RESTRICTED_VISIBILITY for k in fv + tv):
+                    continue
+            items.append({"type": "state", "at": a["created_at"], "data": a})
+        for al in alerts:
+            items.append({"type": "alert", "at": al["created_at"], "data": al})
+        items.sort(key=lambda x: x["at"] or "", reverse=True)
+        return {
+            "participant_id": participant_id,
+            "lifecycle_state": p.get("lifecycle_state"),
+            "first_name": p.get("first_name"),
+            "items": items[:limit],
+        }
 
     @api.post("/scenario/boundary-probe", tags=["scenario"])
-    async def _scenario_boundary_probe(body: _BoundaryProbeBody,
+    async def _scenario_boundary_probe(body: dict,
                                          _user_id: str = Depends(get_current_user_id)):
         """Inspect a free-text question without consulting any LLM. Returns
         the boundary classification + the contacts the response would route
         to. Used by the UI to preview before sending to Ask Wayly."""
-        boundary, contacts, topic = _se_bound.classify_boundary_for_query(body.query)
+        q = (body or {}).get("query", "") if isinstance(body, dict) else ""
+        boundary, contacts, topic = _se_bound.classify_boundary_for_query(q)
         return {"boundary": boundary, "topic": topic, "contacts": contacts}
+
+    # ---- Phase 6: guided caregiver workflows ------------------------------
+    from scenario_engine import workflows as _se_workflows
+
+    @api.get("/scenario/workflows", tags=["scenario"])
+    async def _scenario_list_workflows():
+        """Public catalogue of guided wizards (reassessment, hospitalisation,
+        death). The wizard UI renders each step inline and uses the existing
+        POST /scenario/participants/{id}/events endpoint to capture each
+        event_type — no separate mutation surface."""
+        return _se_workflows.list_workflows()
+
+    @api.get("/scenario/workflows/{workflow_key}", tags=["scenario"])
+    async def _scenario_get_workflow(workflow_key: str,
+                                       _user_id: str = Depends(get_current_user_id)):
+        w = _se_workflows.get_workflow(workflow_key)
+        if not w:
+            raise HTTPException(404, "unknown workflow")
+        return w
 except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"scenario_engine routes failed to load: {_e}")

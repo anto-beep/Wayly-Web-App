@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api, formatAUD, formatAUD2 } from "@/lib/api";
 import StreamProgress from "@/components/StreamProgress";
 import DashboardInsights from "@/components/DashboardInsights";
+import DashboardTimelinePanel from "@/components/DashboardTimelinePanel";
 import ShareDashboardButton from "@/components/ShareDashboardButton";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
@@ -204,6 +205,8 @@ export default function CaregiverDashboard() {
                     </div>
 
                     <DashboardInsights statements={statements} />
+
+                    <DashboardTimelinePanel />
 
                     <div className="bg-surface border border-kindred rounded-xl p-6" data-testid="lifetime-cap-card">
                         <div className="flex items-baseline justify-between">

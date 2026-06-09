@@ -326,6 +326,74 @@ async def _clock_quarter_end_underspend(db, p: Dict[str, Any]) -> List[Dict[str,
     }]
 
 
+async def _clock_budget_exhaustion_projected(db, p: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Project quarter-end spend from current burn rate. If the linear
+    extrapolation would exceed the quarterly budget before the quarter
+    ends, surface a high-severity alert so the caregiver can act early.
+
+    Conservative: requires (a) at least 14 days into the quarter so the
+    burn rate is meaningful, and (b) ≥10% safety margin so we don't fire
+    on a household that is on-budget within the noise band.
+    """
+    if p.get("lifecycle_state") not in {"ACTIVE", "RESTORATIVE", "INTERIM_FUNDED",
+                                          "AWAITING_REASSESSMENT", "END_OF_LIFE"}:
+        return []
+    try:
+        from budget import (
+            get_quarter_window, compute_burn, quarterly_budget, STREAMS,
+        )
+    except Exception:
+        return []
+    q_start, q_end, q_label = get_quarter_window(_today())
+    days_into = (_today() - q_start).days + 1
+    days_left = (q_end - _today()).days
+    if days_into < 14 or days_left <= 0:
+        return []
+    # Read household classification through the participant doc.
+    classification = p.get("classification")
+    if not classification:
+        h = await db.households.find_one({"primary_user_id": p.get("primary_user_id")},
+                                           {"_id": 0, "classification": 1})
+        classification = (h or {}).get("classification")
+    if not classification:
+        return []
+    cur = db.statements.find({"participant_id": p["id"]},
+                              {"_id": 0, "line_items": 1}).limit(50)
+    all_items: List[Dict[str, Any]] = []
+    async for s in cur:
+        all_items.extend(s.get("line_items") or [])
+    burn = compute_burn(all_items, q_start, q_end)
+    total_spent = sum(burn.values())
+    if total_spent <= 0:
+        return []
+    try:
+        q_total = quarterly_budget(int(classification))
+    except Exception:
+        return []
+    daily_rate = total_spent / max(1, days_into)
+    projected = total_spent + (daily_rate * days_left)
+    # Require ≥10% overshoot before firing.
+    if projected < q_total * 1.10:
+        return []
+    overshoot = round(projected - q_total, 0)
+    return [{
+        "participant_id": p["id"], "account_id": p.get("account_id"),
+        "alert_type": "budget_exhaustion_projected",
+        "title": "Budget projected to exhaust before quarter end",
+        "body": f"At the current spending rate, the {q_label} quarter will exceed "
+                f"the budget by about ${overshoot:,.0f}. Anything above the quarterly "
+                "budget is not subsidised — review upcoming services with your provider "
+                "and consider deferring non-essential bookings.",
+        "next_action_text": "Open budget",
+        "next_action_link": "/app/budget",
+        "source": {"kind": "deadline_clock", "clock": "budget_exhaustion_projected",
+                   "quarter_end": q_end.isoformat(),
+                   "projected_total": round(projected, 0),
+                   "quarterly_total": round(q_total, 0)},
+        "dedupe_key": f"budget_exhaustion:{q_end.isoformat()}",
+    }]
+
+
 async def _clock_interim_60pct(db, p: Dict[str, Any]) -> List[Dict[str, Any]]:
     if p.get("lifecycle_state") != "INTERIM_FUNDED":
         return []
@@ -454,6 +522,7 @@ DEADLINE_CLOCKS = [
     _clock_provider_cease,
     _clock_statement_overdue,
     _clock_quarter_end_underspend,
+    _clock_budget_exhaustion_projected,
     _clock_interim_60pct,
     _clock_no_service_4q,
     _clock_means_not_disclosed,
@@ -473,7 +542,8 @@ async def evaluate_all_clocks(db) -> Dict[str, int]:
     cursor = db.participants.find(
         {"status": {"$ne": "REMOVED"}},
         {"_id": 0, "id": 1, "account_id": 1, "flags": 1, "lifecycle_state": 1,
-         "lifecycle_state_updated_at": 1},
+         "lifecycle_state_updated_at": 1, "classification": 1,
+         "primary_user_id": 1},
     )
     async for p in cursor:
         counts["participants"] += 1

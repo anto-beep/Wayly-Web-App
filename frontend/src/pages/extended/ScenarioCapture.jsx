@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, ArrowRight, AlertTriangle, CheckCircle2 } from "lucide-react";
+import WorkflowsPanel from "@/components/WorkflowsPanel";
 
 /**
  * Scenario capture — caregivers log what actually happened to the participant.
@@ -115,6 +116,8 @@ export default function ScenarioCapture() {
                     </div>
                 </div>
             )}
+
+            <WorkflowsPanel participant={participant} />
 
             <form onSubmit={submit} className="rounded-2xl border border-wayly-neutral-200 bg-white p-6 wayly-card-shadow space-y-5">
                 <div>
