@@ -137,6 +137,7 @@ export default function Onboarding() {
                             setForm={setHouseholdForm}
                             saving={savingHousehold}
                             onSubmit={submitHousehold}
+                            classifications={CLASSIFICATIONS}
                         />
                     )}
                     {step === 2 && <StepEmailForwarding onNext={goNext} onBack={goBack} />}

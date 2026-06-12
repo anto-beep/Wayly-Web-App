@@ -261,10 +261,16 @@ async def login(payload: LoginRequest, request: Request):
     - Generic error message for unknown email vs wrong password (anti-enumeration)
     - 5-failure / 15-min lockout per account
     - Per-IP + per-email Redis rate limit (5/5min/IP + 10/hour/email)
+      counted on FAILED attempts only — successful logins are not abuse and
+      must not lock legitimate users sharing an IP (NAT, carrier CGN, family
+      behind one router).
     - MFA branch: if the user opted into TOTP, returns `requires_mfa=true` and a
       short-lived challenge token instead of the access pair.
     """
-    await _rl.enforce(
+    # Read-only check — if a previous burst of failures has exhausted the
+    # bucket we still refuse to even look at the password. This is the
+    # short-circuit that protects against credential-stuffing.
+    await _rl.enforce_peek(
         request,
         ("login_ip", _rl._client_ip(request)),
         ("login_email", payload.email.lower()),
@@ -277,6 +283,9 @@ async def login(payload: LoginRequest, request: Request):
             verify_password(payload.password, "$2b$12$" + "x" * 53)
         except Exception:
             pass
+        # Consume the budget — this is a real failed attempt.
+        await _rl.consume("login_ip", _ip)
+        await _rl.consume("login_email", payload.email.lower())
         _obs.log_auth_login_failure(_ip, attempt_count=0)
         await _alerter.record_login_failure(db, ip=_ip, email=payload.email.lower())
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -300,11 +309,23 @@ async def login(payload: LoginRequest, request: Request):
             _attempts = int((_u or {}).get("failed_login_count") or 0)
         except Exception:
             _attempts = 0
+        # Failed password — burn the rate-limit budget so brute-force still
+        # gets blocked.
+        await _rl.consume("login_ip", _ip)
+        await _rl.consume("login_email", payload.email.lower())
         _obs.log_auth_login_failure(_ip, attempt_count=_attempts)
         await _alerter.record_login_failure(db, ip=_ip, email=payload.email.lower())
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     await clear_login_failures(user["id"])
+    # Successful login — clear any prior failure counter on this email so a
+    # legitimate user who fat-fingered earlier today isn't punished. We leave
+    # the per-IP counter alone (it protects against a shared NAT being used
+    # for credential stuffing across many accounts).
+    try:
+        await _rl.reset("login_email", payload.email.lower())
+    except Exception:
+        pass
 
     # MFA branch (opt-in for caregivers / participants)
     if user.get("totp_enabled") and user.get("totp_secret"):

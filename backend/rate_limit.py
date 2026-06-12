@@ -30,7 +30,7 @@ LIMITS: dict[str, tuple[int, int]] = {
     # (count, window_seconds)
     "login_ip":         (5,  5 * 60),
     "login_email":      (10, 60 * 60),
-    "signup_ip":        (5,  5 * 60),
+    "signup_ip":        (10, 15 * 60),    # generous: families behind one NAT
     "signup_email":     (10, 60 * 60),
     "forgot_email":     (3,  60 * 60),
     "reset_ip":         (5,  60 * 60),
@@ -168,6 +168,61 @@ async def enforce(request: Request, *checks: tuple[str, str]) -> None:
     if worst_bucket:
         # Friendly, user-facing copy. Includes Retry-After so the UI / clients
         # can show a count-down rather than a generic "try again" message.
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "You've made too many attempts. "
+                f"Please wait {max(1, worst_retry // 60)} minute(s) and try again."
+            ),
+            headers={"Retry-After": str(max(1, worst_retry))},
+        )
+
+
+# --------------------------------------------------------------------------
+# peek — check if any bucket is already over budget WITHOUT incrementing.
+# Used by paths that want to count failures only, not successful attempts.
+# --------------------------------------------------------------------------
+async def peek(bucket: str, identifier: str) -> Tuple[bool, int]:
+    """Return (allowed, retry_after_seconds) without consuming the counter.
+
+    Fail-open on Redis outage even for FAIL_CLOSED_BUCKETS — `peek` is for
+    *checking*, not for enforcement of attempts; the matching `consume` on
+    the failure branch still enforces fail-closed if Redis is down.
+    """
+    if bucket not in LIMITS:
+        raise ValueError(f"unknown bucket: {bucket}")
+    limit, _window = LIMITS[bucket]
+    r = await _get_redis()
+    if r is None:
+        return True, 0
+    key = f"rl:{bucket}:{identifier}"
+    try:
+        cur = await r.get(key)
+        if cur is None:
+            return True, 0
+        count = int(cur)
+        if count <= limit:
+            return True, 0
+        ttl = await r.ttl(key)
+        return False, int(max(1, ttl))
+    except Exception:
+        return True, 0
+
+
+async def enforce_peek(request: Request, *checks: tuple[str, str]) -> None:
+    """Like `enforce` but read-only — raises 429 if any bucket is already
+    exhausted, but never increments the counter. Pair with `consume` on the
+    failure branch so only abusive attempts burn budget."""
+    worst_retry = 0
+    worst_bucket = None
+    for bucket, ident in checks:
+        if not ident:
+            continue
+        allowed, retry = await peek(bucket, ident)
+        if not allowed and retry > worst_retry:
+            worst_retry = retry
+            worst_bucket = bucket
+    if worst_bucket:
         raise HTTPException(
             status_code=429,
             detail=(
