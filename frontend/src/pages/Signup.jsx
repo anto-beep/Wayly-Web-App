@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Check, Loader2, Briefcase } from "lucide-react";
+import { Check, Loader2, Briefcase, Eye, EyeOff } from "lucide-react";
 import WaylyLogo from "@/components/WaylyLogo";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
@@ -80,6 +80,7 @@ export default function Signup() {
         plan: params.get("plan") && ["free", "solo", "family", "adviser"].includes(params.get("plan")) ? params.get("plan") : "family",
     });
     const [submitting, setSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Pre-fill name + email when an adviser-invite token is present.
     useEffect(() => {
@@ -283,15 +284,27 @@ export default function Signup() {
                                 </label>
                                 <label className="block">
                                     <span className="text-sm text-muted-k">Password</span>
-                                    <input
-                                        type="password"
-                                        value={form.password}
-                                        onChange={update("password")}
-                                        required
-                                        minLength={8}
-                                        data-testid="signup-password-input"
-                                        className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 text-base focus:outline-none focus:ring-2 ring-primary-k"
-                                    />
+                                    <div className="relative mt-1">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            value={form.password}
+                                            onChange={update("password")}
+                                            required
+                                            minLength={8}
+                                            data-testid="signup-password-input"
+                                            className="w-full rounded-md border border-kindred bg-surface px-3 py-2.5 pr-11 text-base focus:outline-none focus:ring-2 ring-primary-k"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword((s) => !s)}
+                                            data-testid="signup-password-toggle"
+                                            aria-label={showPassword ? "Hide password" : "Show password"}
+                                            aria-pressed={showPassword}
+                                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-k hover:text-primary-k focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k rounded-r-md"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
                                     <PasswordStrength password={form.password} email={form.email} name={form.name} />
                                 </label>
                                 <fieldset>

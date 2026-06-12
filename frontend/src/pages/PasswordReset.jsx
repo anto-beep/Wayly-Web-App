@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
-import { ArrowLeft, Loader2, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Check, Eye, EyeOff } from "lucide-react";
 import WaylyLogo from "@/components/WaylyLogo";
 import { toast } from "sonner";
 import PasswordStrength, { evaluatePassword } from "@/components/PasswordStrength";
@@ -94,6 +94,8 @@ export function ResetPassword() {
     const [confirm, setConfirm] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [done, setDone] = useState(false);
+    const [showPw, setShowPw] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const nav = useNavigate();
 
     const result = evaluatePassword(pw);
@@ -130,12 +132,50 @@ export function ResetPassword() {
                         <form onSubmit={submit} className="mt-5 space-y-4">
                             <label className="block">
                                 <span className="text-sm text-[#6B7280]">New password</span>
-                                <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} required data-testid="reset-pw-input" className="mt-1 w-full rounded-md border border-[#CFE0F0] px-3 py-2.5 focus:outline-none focus:ring-2 ring-[#0E2A47]" />
+                                <div className="relative mt-1">
+                                    <input
+                                        type={showPw ? "text" : "password"}
+                                        value={pw}
+                                        onChange={(e) => setPw(e.target.value)}
+                                        required
+                                        data-testid="reset-pw-input"
+                                        className="w-full rounded-md border border-[#CFE0F0] px-3 py-2.5 pr-11 focus:outline-none focus:ring-2 ring-[#0E2A47]"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPw((s) => !s)}
+                                        data-testid="reset-pw-toggle"
+                                        aria-label={showPw ? "Hide password" : "Show password"}
+                                        aria-pressed={showPw}
+                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-[#6B7280] hover:text-[#0E2A47] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E2A47] rounded-r-md"
+                                    >
+                                        {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                                 <PasswordStrength password={pw} />
                             </label>
                             <label className="block">
                                 <span className="text-sm text-[#6B7280]">Confirm password</span>
-                                <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required data-testid="reset-confirm-input" className="mt-1 w-full rounded-md border border-[#CFE0F0] px-3 py-2.5 focus:outline-none focus:ring-2 ring-[#0E2A47]" />
+                                <div className="relative mt-1">
+                                    <input
+                                        type={showConfirm ? "text" : "password"}
+                                        value={confirm}
+                                        onChange={(e) => setConfirm(e.target.value)}
+                                        required
+                                        data-testid="reset-confirm-input"
+                                        className="w-full rounded-md border border-[#CFE0F0] px-3 py-2.5 pr-11 focus:outline-none focus:ring-2 ring-[#0E2A47]"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirm((s) => !s)}
+                                        data-testid="reset-confirm-toggle"
+                                        aria-label={showConfirm ? "Hide password" : "Show password"}
+                                        aria-pressed={showConfirm}
+                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-[#6B7280] hover:text-[#0E2A47] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E2A47] rounded-r-md"
+                                    >
+                                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                                 {confirm && pw !== confirm && <span className="text-[11px] text-[#E07A5F] mt-1 block">Passwords don't match</span>}
                             </label>
                             <button type="submit" disabled={submitting || !result.valid || pw !== confirm} data-testid="reset-submit" className="w-full bg-[#0E2A47] text-white rounded-md py-3 text-sm hover:bg-[#091D33] disabled:opacity-60">
