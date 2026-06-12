@@ -30,7 +30,33 @@ def _is_live() -> bool:
 
 
 def _sender() -> str:
-    return os.environ.get("SENDER_EMAIL", "Wayly <onboarding@resend.dev>")
+    """Resolve the From address used on every outbound email.
+
+    Precedence: ``RESEND_FROM_EMAIL`` → ``SENDER_EMAIL`` → safe Resend default.
+    Both env vars are accepted so older deployments keep working; new ones
+    should standardise on ``RESEND_FROM_EMAIL``.
+    """
+    return (
+        os.environ.get("RESEND_FROM_EMAIL")
+        or os.environ.get("SENDER_EMAIL")
+        or "Wayly <onboarding@resend.dev>"
+    )
+
+
+async def send_email(*, to: str, subject: str, html: str,
+                     reply_to: Optional[str] = None) -> Dict[str, Any]:
+    """Public, low-level send helper used by ad-hoc callers (admin hardening,
+    cron alerts, anywhere outside the templated helpers below). Reads the
+    From address from ``_sender()`` so the env var is always honoured."""
+    params: Dict[str, Any] = {
+        "from": _sender(),
+        "to": [to],
+        "subject": subject,
+        "html": html,
+    }
+    if reply_to:
+        params["reply_to"] = reply_to
+    return await _send(params)
 
 
 def _team_inbox() -> str:
