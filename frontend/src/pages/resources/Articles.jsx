@@ -19,10 +19,12 @@ const fmtDate = (iso) => { if (!iso) return null; try { return new Date(iso).toL
 
 // Merge the structured 2026 SEO articles into the existing static catalog so
 // they appear on the index page and at /resources/articles/:slug.
+// Sort newest-first by published_at so freshly added articles head the index.
+const _byDateDesc = (a, b) => String(b.published_at || "").localeCompare(String(a.published_at || ""));
 const STRUCTURED_SEO_ARTICLES = [
     ...SEO_TOOL_ARTICLES,
     ...SEO_ARTICLES_2026,
-];
+].sort(_byDateDesc);
 const ALL_STATIC_ARTICLES = [
     ...STRUCTURED_SEO_ARTICLES,
     ...STATIC_ARTICLES,
@@ -237,7 +239,10 @@ export function ArticleDetail() {
 // ---------------------------------------------------------------------------
 
 function StructuredArticle({ article, slug }) {
-    const url = canonicalFor(`/resources/articles/${slug}`);
+    // Articles can opt into a custom public path (e.g. /articles/<slug>) for
+    // their canonical URL while still being reachable at /resources/articles/<slug>.
+    const publicPath = article.canonical_path || `/resources/articles/${slug}`;
+    const url = canonicalFor(publicPath);
     const readingTime = useMemo(() => readingTimeMinutes(article), [article]);
     const tocItems = useMemo(
         () => (article.sections || []).map((s) => ({ id: slugify(s.heading), text: s.heading })),
@@ -308,7 +313,7 @@ function StructuredArticle({ article, slug }) {
             <SeoHead
                 title={article.meta?.title || article.title}
                 description={article.meta?.description || article.excerpt}
-                path={`/resources/articles/${slug}`}
+                path={publicPath}
                 type="article"
                 publishedAt={article.published_at}
                 updatedAt={article.updated_at}

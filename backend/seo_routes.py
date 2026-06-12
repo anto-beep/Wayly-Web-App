@@ -58,6 +58,8 @@ STATIC_PAGES = [
     ("/resources/articles/wayly-contribution-estimator-support-at-home-fees", "0.8", "monthly"),
     ("/resources/articles/wayly-care-plan-reviewer-support-at-home-care-plan", "0.8", "monthly"),
     ("/resources/articles/wayly-family-coordinator-managing-parents-aged-care", "0.8", "monthly"),
+    # Jun 2026 — personal-care policy article, canonical at /articles/<slug>
+    ("/articles/support-at-home-personal-care-free-october-2026", "0.9", "monthly"),
     # Phase 4 Batch 1 — Support at Home levels hub + 8 level pages (Feb 2026)
     ("/support-at-home-levels", "0.9", "monthly"),
     ("/support-at-home-levels/level-1", "0.7", "monthly"),

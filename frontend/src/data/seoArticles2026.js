@@ -356,4 +356,140 @@ Start with the My Aged Care fee estimator to get a guide, then let Wayly keep tr
             "home-care-package-vs-support-at-home",
         ],
     },
+    // -----------------------------------------------------------------
+    // Added Jun 2026 — published exactly as supplied, canonical at /articles/<slug>
+    // -----------------------------------------------------------------
+    {
+        slug: "support-at-home-personal-care-free-october-2026",
+        canonical_path: "/articles/support-at-home-personal-care-free-october-2026",
+        title: "Personal care becomes free under Support at Home from 1 October 2026",
+        excerpt: "From 1 October 2026, showering, dressing and continence support under Support at Home cost families nothing. What changes, what to check, in plain English.",
+        published_at: "2026-12-01",
+        updated_at: "2026-12-01",
+        author: { name: "Antony Chiware", role: "Wayly" },
+        hero_alt: "Adult daughter sitting beside her father at home reviewing a Support at Home statement",
+        meta: {
+            title: "Personal Care Free From 1 October 2026 | Wayly",
+            description: "From 1 October 2026, showering, dressing and continence support under Support at Home cost families nothing. What changes, what to check, in plain English.",
+        },
+        intro_md: `From 1 October 2026, help with showering, dressing and continence support will cost Support at Home families nothing. Here is what is changing, why it matters for your budget, and exactly what to check on your statements when the date arrives.`,
+        sections: [
+            {
+                heading: "The short version",
+                body_md: `On 22 April 2026, the government announced a significant change to Support at Home. From 1 October 2026, personal care moves from the Independence category into the Clinical Care category.
+
+That one sentence has a real dollar effect. Services in the Clinical Care category are fully government funded. Participants pay no contribution for them. Services in the Independence category attract a means tested contribution of between 5 per cent and 50 per cent of the service cost, depending on the participant's financial situation.
+
+So from 1 October 2026, the personal care visits your parent receives every week stop carrying a contribution. The government covers the full cost.`,
+            },
+            {
+                heading: "What counts as personal care",
+                body_md: `Personal care covers the hands on support with daily living that many families rely on most. It includes:
+
+- Help with showering and bathing
+- Help with dressing and grooming
+- Continence support
+- Help moving safely around the home, such as transfers in and out of bed or a chair
+
+If your parent's care plan includes any of these, this change applies to you.`,
+            },
+            {
+                heading: "What is not changing",
+                body_md: `It is just as important to know what stays the same.
+
+Everyday Living services keep their contributions. Cleaning, gardening, meal delivery and similar services still attract a means tested contribution of between 17.5 per cent and 80 per cent.
+
+Other Independence services keep their contributions too. Social support, transport and allied health services that sit in the Independence category are not part of this change. Only personal care moves.
+
+Your classification and budget do not change because of this. The quarterly budget your parent receives is set by their classification, not by which category a service sits in. What changes is how much of the personal care cost comes out of your family's pocket. From 1 October 2026 the answer is nothing.
+
+One more thing worth knowing. Earlier this year the government also deferred the price caps that were due to start on 1 July 2026. Providers continue to set their own prices for now, which makes it more important, not less, to check what your provider charges against their published price list.`,
+            },
+            {
+                heading: "What this means in real dollars",
+                body_md: `Here is a worked example. The names are fictional but the maths is real.
+
+Dorothy is 79, lives in Geelong, and receives three personal care visits a week of one hour each. Her provider charges $85 per hour for personal care. Dorothy is a part pensioner, and her means tested contribution rate for Independence services is 15 per cent.
+
+Before 1 October 2026, Dorothy's family contributes 15 per cent of each visit. That is $12.75 per visit, $38.25 per week, and around $1,989 per year.
+
+From 1 October 2026, that contribution drops to zero. Same visits, same care worker, same provider. The government covers the full cost.
+
+Every household's numbers are different because contribution rates are means tested. A full pensioner pays the lowest rates, while a self funded retiree without a Commonwealth Seniors Health Card can pay up to 50 per cent on Independence services today. The higher your current contribution rate, the bigger your saving from October. If you want to see your own household's numbers, the [Wayly Contribution Estimator](/articles/wayly-contribution-estimator-support-at-home-fees) models contributions for your situation, and our [costs and contributions guide](/articles/support-at-home-costs-and-contributions) explains how the rates work.`,
+            },
+            {
+                heading: "There is a second, quieter benefit",
+                body_md: `Support at Home has a lifetime contribution cap. Once a participant's total contributions reach the cap, they stop paying contributions altogether. The cap only accrues from non clinical contributions.
+
+Because personal care contributions stop counting from 1 October 2026, families with heavy personal care needs will accrue toward the lifetime cap more slowly. For households where a parent might one day move into residential aged care, where the same combined cap applies, this slower accrual can matter years down the track.`,
+            },
+            {
+                heading: "The transition detail that catches people out",
+                body_md: `The change applies to services delivered from 1 October 2026. It is based on when the service happens, not when it is billed.
+
+Personal care delivered on 30 September 2026 still attracts a contribution, even though the invoice for it will likely arrive in your October statement. Personal care delivered on 1 October 2026 should show a contribution of zero.
+
+This is exactly the kind of boundary where billing mistakes happen. Provider systems need to be updated on time, and not all of them will be.`,
+            },
+            {
+                heading: "What to check on your statements",
+                body_md: `Here is your checklist for the transition.
+
+First, look at your September statement when it arrives in October. Personal care delivered in September should still show your normal contribution. That is correct.
+
+Second, look closely at your October statement when it arrives in November. Every personal care line for services dated 1 October 2026 or later should show a participant contribution of $0.00. If any personal care visit dated October or later still shows a contribution, query it with your provider straight away and ask for a corrected statement.
+
+Third, check the category labels. Personal care should appear under Clinical Care from October, not under Independence. A service sitting in the wrong category is one of the most common ways families end up paying contributions they do not owe.
+
+If reading the statement line by line sounds like hard work, that is the exact job the [Wayly Statement Decoder](/articles/wayly-statement-decoder-support-at-home-statement-explained) does. Drop in the statement and it checks every line, flags anything still carrying a personal care contribution after 1 October, and drafts the query to your provider for you. Our guide on [how to read your Support at Home statement](/articles/how-to-read-your-support-at-home-statement) walks through the statement format in detail.`,
+            },
+            {
+                heading: "What to do between now and October",
+                body_md: `You do not need to apply for anything. The change happens automatically for every Support at Home participant.
+
+That said, there are three sensible steps to take now.
+
+Review the care plan. If your parent has been holding back on personal care hours because of the contribution cost, October changes that equation. It may be worth talking to your provider about whether the care plan still reflects what your parent actually needs. The [Wayly Budget Calculator](/articles/wayly-budget-calculator-support-at-home-quarterly-budget) can show you how a change in hours fits within the quarterly budget.
+
+Know your current contribution rate. Dig out the most recent letter from Services Australia that sets out your parent's contribution percentages. That letter tells you exactly how much you are paying on personal care today, which is the amount you will stop paying in October.
+
+Diarise the statement check. Put a note in your calendar for mid November to check the October statement. The transition month is the one most likely to contain errors.`,
+            },
+            {
+                heading: "Where this information comes from",
+                body_md: `The change was announced by the government on 22 April 2026 and takes effect on 1 October 2026. You can read the official program information at the [Department of Health's Support at Home pages](https://www.health.gov.au/our-work/support-at-home) and at [My Aged Care](https://www.myagedcare.gov.au). Wayly is independent of providers and government. We help families understand the system. For decisions about your specific financial situation, speak to Services Australia or a licensed financial adviser.`,
+            },
+        ],
+        faqs: [
+            {
+                q: "Is personal care free under Support at Home?",
+                a: "From 1 October 2026, yes. Personal care moves into the Clinical Care category, which is fully government funded with no participant contribution. Before that date, personal care sits in the Independence category and attracts a means tested contribution of between 5 per cent and 50 per cent.",
+            },
+            {
+                q: "When exactly does personal care become free?",
+                a: "The change applies to personal care services delivered on or after 1 October 2026. It is based on the date the service is delivered, not the date it is billed. Services delivered before 1 October 2026 still attract a contribution even if they appear on a later statement.",
+            },
+            {
+                q: "What counts as personal care under Support at Home?",
+                a: "Personal care includes help with showering and bathing, dressing and grooming, continence support, and help moving safely around the home. It does not include cleaning, gardening or meal services, which remain in the Everyday Living category with their own contributions.",
+            },
+            {
+                q: "Will I get a refund for personal care contributions paid before October 2026?",
+                a: "No. Contributions correctly charged for services delivered before 1 October 2026 were charged under the rules that applied at the time. The change is not backdated. If you believe you were charged incorrectly at any time, that is a separate matter to raise with your provider.",
+            },
+            {
+                q: "Does this change my parent's classification or quarterly budget?",
+                a: "No. Classifications and quarterly budgets are unchanged. What changes is the participant contribution on personal care services, which drops to zero from 1 October 2026.",
+            },
+            {
+                q: "What should I check on the statement after 1 October 2026?",
+                a: "Check that every personal care line dated 1 October 2026 or later shows a participant contribution of $0.00, and that personal care appears under Clinical Care rather than Independence. If either is wrong, query it with your provider and ask for a corrected statement.",
+            },
+        ],
+        related: [
+            "support-at-home-costs-and-contributions",
+            "how-to-read-your-support-at-home-statement",
+            "wayly-contribution-estimator-support-at-home-fees",
+        ],
+    },
 ];

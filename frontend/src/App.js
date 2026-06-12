@@ -233,6 +233,8 @@ function App() {
                     <Route path="/resources/templates" element={<Templates />} />
                     <Route path="/resources/articles" element={<ArticlesIndex />} />
                     <Route path="/resources/articles/:slug" element={<ArticleDetail />} />
+                    {/* Public alias for SEO-canonical /articles/<slug> URLs. */}
+                    <Route path="/articles/:slug" element={<ArticleDetail />} />
                     <Route path="/ai-tools" element={<AIToolsRoute><AIToolsIndex /></AIToolsRoute>} />
                     <Route path="/ai-tools/statement-decoder" element={<AIToolsRoute><StatementDecoderTool /></AIToolsRoute>} />
                     <Route path="/ai-tools/budget-calculator" element={<AIToolsRoute><BudgetCalculatorTool /></AIToolsRoute>} />
