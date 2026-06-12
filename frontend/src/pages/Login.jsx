@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import WaylyLogo from "@/components/WaylyLogo";
+import { Eye, EyeOff } from "lucide-react";
 
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
@@ -13,6 +14,7 @@ export default function Login() {
     const nav = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     // 2FA challenge state — populated when /auth/login returns requires_mfa.
     const [mfaToken, setMfaToken] = useState(null);
@@ -94,14 +96,26 @@ export default function Login() {
                                 </label>
                                 <label className="block">
                                     <span className="text-sm text-muted-k">Password</span>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        data-testid="login-password-input"
-                                        className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 text-base focus:outline-none focus:ring-2 ring-primary-k"
-                                    />
+                                    <div className="relative mt-1">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                            data-testid="login-password-input"
+                                            className="w-full rounded-md border border-kindred bg-surface px-3 py-2.5 pr-11 text-base focus:outline-none focus:ring-2 ring-primary-k"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword((s) => !s)}
+                                            data-testid="login-password-toggle"
+                                            aria-label={showPassword ? "Hide password" : "Show password"}
+                                            aria-pressed={showPassword}
+                                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-k hover:text-primary-k focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k rounded-r-md"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
                                     <Link to="/forgot" data-testid="login-forgot-link" className="mt-1 inline-block text-xs text-primary-k hover:underline">
                                         Forgot password?
                                     </Link>
