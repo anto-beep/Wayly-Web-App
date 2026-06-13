@@ -14,6 +14,14 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 42 — F5 / F6 / F9 fixes, Feb 2026)
+Three related defects fixed in one sweep:
+- **F5** — `/api/public/contribution-estimator` now uses `budget_lib.classification_annual(c)` as the gross annual service base (previously `quarterly_budget(c) * 4`, which was 10% low because `quarterly_budget` already deducts care management).
+- **F6** — `PublicContributionBody.pension_status` accepts `full|part|cshc|self`; CSHC is now its own cohort instead of being forced into `self`. New optional `independence_rate_pct` / `everyday_rate_pct` inputs let the user paste the exact rates from their Services Australia contribution letter. Validation: out-of-band rates return HTTP 400 with a helpful message. Response shape: band cohorts without user rates now return `annual_contribution = null` plus `annual_contribution_low/high`, `rate_basis = "band_range"` and a Services Australia caveat. `years_to_cap` mirrors the same convention.
+- **F9** — `/api/public/budget-calc` and `/api/budget/current` now expose `quarterly_gross` (annual / 4), `care_management_quarterly` (gross − usable) and `quarterly_usable` (post-CM). `quarterly_total` kept as a deprecated alias of `quarterly_usable` for one release with a TODO marker.
+- Frontend updates: Contribution Estimator gains a CSHC option, conditional rate-input pair (visible only for part/CSHC), and a range-vs-exact result renderer with caveat surfacing. Budget Calculator's top result row is now a three-card layout (gross → CM → usable) so families can reconcile against the printed statement.
+- New `tests/test_contribution_estimator.py` (6 cases) and `tests/test_budget_calc_labels.py` (3 cases). Combined regression with prior iteration tests: 32 passed, 2 skipped (rate-limit; harness clears `tools_*` Redis buckets between runs).
+
 ## Implemented (Iteration 41 — Rollover cap correctness, Feb 2026)
 `backend/budget.py` `rollover_cap()` was computing against the post-CM `quarterly_budget()` figure. The Support at Home rollover rule applies to the GROSS quarterly (annual / 4). Fix:
 - `rollover_cap()` now uses `classification_annual(c) / 4.0` as the base; floor and pct still read from `program_reference`. Level 8 now returns the correct $1,952.65 (was $1,757.39); Levels 6 / 7 increase to ~$1,247.65 / ~$1,500.13; Levels 1-5 keep the $1,000 floor.

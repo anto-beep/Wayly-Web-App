@@ -30,10 +30,14 @@ const _toolJsonLd = (cfg) => {
 };
 
 const PENSION = [
-    { v: "full", label: "Full pension", sub: "Lowest contribution rates" },
-    { v: "part", label: "Part pension", sub: "Mid-tier rates" },
-    { v: "self", label: "Self-funded", sub: "Highest rates" },
+    { v: "full", label: "Full pension", sub: "Lowest rates (5% / 17.5%)" },
+    { v: "part", label: "Part pension", sub: "Means-tested band" },
+    { v: "cshc", label: "CSHC", sub: "Self-funded with a Commonwealth Seniors Health Card" },
+    { v: "self", label: "Self-funded", sub: "Highest rates (50% / 80%)" },
 ];
+
+const _aud = (n) => (n == null || Number.isNaN(n) ? "—" : formatAUD2(n));
+const _range = (lo, hi) => `${_aud(lo)}–${_aud(hi)}`;
 
 export default function ContributionEstimator() {
     const access = useToolAccess();
@@ -44,15 +48,36 @@ export default function ContributionEstimator() {
         expected_mix_clinical_pct: 30,
         expected_mix_independence_pct: 45,
         expected_mix_everyday_pct: 25,
+        independence_rate_pct: "",
+        everyday_rate_pct: "",
     });
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const showRateInputs = form.pension_status === "part" || form.pension_status === "cshc";
 
     const submit = async () => {
         setLoading(true);
+        setError(null);
+        setResult(null);
         try {
-            const { data } = await api.post("/public/contribution-estimator", form);
+            const payload = { ...form };
+            // Only send the optional user rates when relevant + non-empty.
+            if (!showRateInputs || payload.independence_rate_pct === "") {
+                delete payload.independence_rate_pct;
+            } else {
+                payload.independence_rate_pct = parseFloat(payload.independence_rate_pct);
+            }
+            if (!showRateInputs || payload.everyday_rate_pct === "") {
+                delete payload.everyday_rate_pct;
+            } else {
+                payload.everyday_rate_pct = parseFloat(payload.everyday_rate_pct);
+            }
+            const { data } = await api.post("/public/contribution-estimator", payload);
             setResult(data);
+        } catch (e) {
+            setError(e?.response?.data?.detail || "Could not estimate contribution.");
         } finally { setLoading(false); }
     };
 
@@ -84,7 +109,7 @@ export default function ContributionEstimator() {
                     </label>
                     <div>
                         <span className="text-sm text-muted-k">Pension status</span>
-                        <div className="mt-2 grid sm:grid-cols-3 gap-2">
+                        <div className="mt-2 grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
                             {PENSION.map((p) => (
                                 <button key={p.v} type="button" onClick={() => setForm((f) => ({ ...f, pension_status: p.v }))} data-testid={`ce-pension-${p.v}`} className={`rounded-lg border p-3 text-left transition-colors ${form.pension_status === p.v ? "border-primary-k bg-surface-2" : "border-kindred hover:bg-surface-2"}`}>
                                     <div className="font-medium text-primary-k">{p.label}</div>
@@ -93,6 +118,32 @@ export default function ContributionEstimator() {
                             ))}
                         </div>
                     </div>
+                    {showRateInputs && (
+                        <div data-testid="ce-rate-inputs" className="rounded-lg border border-kindred p-3 bg-surface-2/60">
+                            <div className="text-sm text-primary-k font-medium">Optional: enter exact rates from your Services Australia contribution letter</div>
+                            <p className="text-xs text-muted-k mt-1">
+                                Leave blank to see the full range for a {form.pension_status === "cshc" ? "Commonwealth Seniors Health Card holder" : "part-pension cohort"}. Independence range {form.pension_status === "cshc" ? "5%–50%" : "5%–25%"}. Everyday Living {form.pension_status === "cshc" ? "17.5%–80%" : "17.5%–25%"}.
+                            </p>
+                            <div className="mt-3 grid sm:grid-cols-2 gap-3">
+                                <label className="block">
+                                    <span className="text-xs text-muted-k">Independence rate % from your letter</span>
+                                    <input type="number" min="0" max="100" step="0.01" value={form.independence_rate_pct}
+                                        onChange={(e) => setForm((f) => ({ ...f, independence_rate_pct: e.target.value }))}
+                                        data-testid="ce-independence-rate"
+                                        placeholder={form.pension_status === "cshc" ? "5–50" : "5–25"}
+                                        className="mt-1 w-full rounded-md border border-kindred px-3 py-2 tabular-nums focus:outline-none focus:ring-2 ring-primary-k" />
+                                </label>
+                                <label className="block">
+                                    <span className="text-xs text-muted-k">Everyday Living rate %</span>
+                                    <input type="number" min="0" max="100" step="0.01" value={form.everyday_rate_pct}
+                                        onChange={(e) => setForm((f) => ({ ...f, everyday_rate_pct: e.target.value }))}
+                                        data-testid="ce-everyday-rate"
+                                        placeholder={form.pension_status === "cshc" ? "17.5–80" : "17.5–25"}
+                                        className="mt-1 w-full rounded-md border border-kindred px-3 py-2 tabular-nums focus:outline-none focus:ring-2 ring-primary-k" />
+                                </label>
+                            </div>
+                        </div>
+                    )}
                     <div>
                         <span className="text-sm text-muted-k">Expected service mix (must sum to 100%)</span>
                         <div className="mt-2 grid sm:grid-cols-3 gap-3">
@@ -116,34 +167,74 @@ export default function ContributionEstimator() {
                     <button onClick={submit} disabled={loading} data-testid="ce-submit" className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2">
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Estimate contribution
                     </button>
+                    {error && <div data-testid="ce-error" className="text-sm text-terracotta">{typeof error === "string" ? error : JSON.stringify(error)}</div>}
                 </div>
 
                 {result && (
                     <div className="mt-6 space-y-5 animate-fade-up" data-testid="ce-result">
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="bg-surface border border-kindred rounded-xl p-5">
-                                <div className="overline">Annual contribution</div>
-                                <div className="mt-2 font-heading text-3xl text-primary-k tabular-nums">{formatAUD2(result.annual_contribution)}</div>
+                        {result.rate_basis === "band_range" ? (
+                            <>
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                    <div className="bg-surface border border-kindred rounded-xl p-5">
+                                        <div className="overline">Annual contribution range</div>
+                                        <div className="mt-2 font-heading text-3xl text-primary-k tabular-nums" data-testid="ce-annual-range">
+                                            {_range(result.annual_contribution_low, result.annual_contribution_high)}
+                                        </div>
+                                    </div>
+                                    <div className="bg-surface border border-kindred rounded-xl p-5">
+                                        <div className="overline">Per quarter range</div>
+                                        <div className="mt-2 font-heading text-3xl text-primary-k tabular-nums">
+                                            {_range(result.quarterly_contribution_low, result.quarterly_contribution_high)}
+                                        </div>
+                                    </div>
+                                </div>
+                                {result.caveat && (
+                                    <div data-testid="ce-caveat" className="bg-surface-2 border border-kindred rounded-xl p-4 text-sm text-primary-k leading-relaxed">
+                                        {result.caveat}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div className="bg-surface border border-kindred rounded-xl p-5">
+                                    <div className="overline">Annual contribution</div>
+                                    <div className="mt-2 font-heading text-3xl text-primary-k tabular-nums" data-testid="ce-annual">{_aud(result.annual_contribution)}</div>
+                                    {result.rate_basis === "user_supplied" && (
+                                        <div className="text-xs text-muted-k mt-2">Using the rates you entered from your Services Australia contribution letter.</div>
+                                    )}
+                                </div>
+                                <div className="bg-surface border border-kindred rounded-xl p-5">
+                                    <div className="overline">Per quarter</div>
+                                    <div className="mt-2 font-heading text-3xl text-primary-k tabular-nums">{_aud(result.quarterly_contribution)}</div>
+                                </div>
                             </div>
-                            <div className="bg-surface border border-kindred rounded-xl p-5">
-                                <div className="overline">Per quarter</div>
-                                <div className="mt-2 font-heading text-3xl text-primary-k tabular-nums">{formatAUD2(result.quarterly_contribution)}</div>
-                            </div>
-                        </div>
+                        )}
                         <div className="bg-surface border border-kindred rounded-xl p-5">
                             <div className="overline">By stream</div>
                             <ul className="mt-3 space-y-2 text-sm">
-                                {result.per_stream.map((s) => (
-                                    <li key={s.stream} className="flex items-baseline justify-between border-b border-kindred pb-2 last:border-0">
-                                        <span className="text-primary-k">{s.stream} <span className="text-muted-k tabular-nums">({s.rate_pct.toFixed(1)}% rate)</span></span>
-                                        <span className="font-heading text-base text-primary-k tabular-nums">{formatAUD2(s.annual_contribution)}/yr</span>
-                                    </li>
-                                ))}
+                                {result.per_stream.map((s) => {
+                                    const rateLabel = s.rate_pct != null
+                                        ? `${s.rate_pct.toFixed(1)}% rate`
+                                        : `${(s.rate_pct_low ?? s.rate_band_pct?.[0]).toFixed(1)}%–${(s.rate_pct_high ?? s.rate_band_pct?.[1]).toFixed(1)}% range`;
+                                    const annualLabel = s.annual_contribution != null
+                                        ? `${_aud(s.annual_contribution)}/yr`
+                                        : `${_range(s.annual_contribution_low, s.annual_contribution_high)}/yr`;
+                                    return (
+                                        <li key={s.stream} className="flex items-baseline justify-between border-b border-kindred pb-2 last:border-0">
+                                            <span className="text-primary-k">{s.stream} <span className="text-muted-k tabular-nums">({rateLabel})</span></span>
+                                            <span className="font-heading text-base text-primary-k tabular-nums">{annualLabel}</span>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </div>
-                        {result.years_to_cap && (
+                        {(result.years_to_cap || result.years_to_cap_low) && (
                             <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
-                                <p className="text-sm text-primary-k">At this contribution rate, the participant would reach the lifetime cap ({formatAUD(result.lifetime_cap)}) in approximately <span className="font-medium tabular-nums">{result.years_to_cap} years</span>.</p>
+                                <p className="text-sm text-primary-k">
+                                    {result.years_to_cap
+                                        ? <>At this contribution rate, the participant would reach the lifetime cap ({formatAUD(result.lifetime_cap)}) in approximately <span className="font-medium tabular-nums">{result.years_to_cap} years</span>.</>
+                                        : <>Depending on the exact rate Services Australia sets, the participant would reach the lifetime cap ({formatAUD(result.lifetime_cap)}) somewhere between <span className="font-medium tabular-nums">{result.years_to_cap_low}</span> and <span className="font-medium tabular-nums">{result.years_to_cap_high}</span> years.</>}
+                                </p>
                             </div>
                         )}
                         <div className="bg-surface-2 rounded-xl p-5 border border-kindred">

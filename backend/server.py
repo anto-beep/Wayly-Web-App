@@ -1604,7 +1604,10 @@ async def current_budget(request: Request, user_id: str = Depends(get_current_us
     classification = (p or {}).get("classification") or h["classification"]
     q_start, q_end, q_label = budget_lib.get_quarter_window()
     allocations = budget_lib.stream_allocations(classification)
-    quarterly_total = budget_lib.quarterly_budget(classification)
+    quarterly_usable = budget_lib.quarterly_budget(classification)
+    annual_total = budget_lib.CLASSIFICATIONS[classification]["annual"]
+    quarterly_gross = round(annual_total / 4.0, 2)
+    care_management_quarterly = round(quarterly_gross - quarterly_usable, 2)
 
     q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
     docs = await db.statements.find(q, {"_id": 0}).to_list(200)
@@ -1630,11 +1633,16 @@ async def current_budget(request: Request, user_id: str = Depends(get_current_us
     return {
         "classification": classification,
         "classification_label": budget_lib.CLASSIFICATIONS[classification]["label"],
-        "annual_total": budget_lib.CLASSIFICATIONS[classification]["annual"],
+        "annual_total": annual_total,
         "quarter_label": q_label,
         "quarter_start": q_start.isoformat(),
         "quarter_end": q_end.isoformat(),
-        "quarterly_total": quarterly_total,
+        # F9: GROSS quarterly leads — that's what providers print on statements.
+        "quarterly_gross": quarterly_gross,
+        "care_management_quarterly": care_management_quarterly,
+        "quarterly_usable": quarterly_usable,
+        # DEPRECATED alias for one release — remove once clients migrate.
+        "quarterly_total": quarterly_usable,
         "rollover_cap": budget_lib.rollover_cap(classification),
         "streams": streams,
         "lifetime_cap": cap_amount,
@@ -2624,7 +2632,11 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
     await _require_paid_plan(request, response, "Budget Calculator")
     classification = body.classification
     annual = budget_lib.CLASSIFICATIONS[classification]["annual"]
-    quarterly = budget_lib.quarterly_budget(classification)
+    quarterly_gross = round(annual / 4.0, 2)
+    quarterly_usable = budget_lib.quarterly_budget(classification)
+    # Care management is the gross-minus-usable slice (mathematically
+    # quarterly_gross * care_management.cap_pct, rounded the same way).
+    care_management_quarterly = round(quarterly_gross - quarterly_usable, 2)
     allocations = budget_lib.stream_allocations(classification)
     rollover = budget_lib.rollover_cap(classification)
     cap_amount = budget_lib.lifetime_cap(body.is_grandfathered)
@@ -2638,7 +2650,14 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
         "classification": classification,
         "classification_label": budget_lib.CLASSIFICATIONS[classification]["label"],
         "annual_total": annual,
-        "quarterly_total": quarterly,
+        # F9: GROSS quarterly is what users see on their statement — it leads.
+        "quarterly_gross": quarterly_gross,
+        "care_management_quarterly": care_management_quarterly,
+        "quarterly_usable": quarterly_usable,
+        # DEPRECATED: kept for one release so existing clients keep working.
+        # TODO: remove ``quarterly_total`` once the frontend / mobile app stop
+        # reading it (target: next major release after the F9 rollout).
+        "quarterly_total": quarterly_usable,
         "rollover_cap": rollover,
         "streams": [
             {"stream": s, "allocated": allocations[s]} for s in budget_lib.STREAMS
@@ -2813,6 +2832,10 @@ class PublicContributionBody(BaseModel):
     expected_mix_clinical_pct: float = Field(ge=0, le=100, default=30)
     expected_mix_independence_pct: float = Field(ge=0, le=100, default=45)
     expected_mix_everyday_pct: float = Field(ge=0, le=100, default=25)
+    # Optional: user can paste the exact rates from their Services Australia
+    # contribution letter so the estimate is precise rather than a band range.
+    independence_rate_pct: float | None = Field(default=None, ge=0, le=100)
+    everyday_rate_pct: float | None = Field(default=None, ge=0, le=100)
 
 
 @api.post("/public/contribution-estimator")
@@ -2823,61 +2846,221 @@ async def public_contribution_estimator(body: PublicContributionBody, request: R
         raise HTTPException(status_code=400, detail="Service mix percentages should sum to 100")
     rates = PENSION_RATES[body.pension_status]
 
-    def _band_midpoint(stream_key: str) -> tuple[float, bool]:
-        lo, hi = rates[stream_key]
-        return ((lo + hi) / 2, abs(hi - lo) > 1e-9)
+    clin_band = rates["clinical"]      # always (0.0, 0.0)
+    ind_band = rates["independence"]
+    ev_band = rates["everyday_living"]
 
-    clin_rate, clin_band = _band_midpoint("clinical")
-    ind_rate, ind_band = _band_midpoint("independence")
-    ev_rate, ev_band = _band_midpoint("everyday_living")
-    rate_basis = "band_midpoint_estimate" if (clin_band or ind_band or ev_band) else "exact_rate"
+    is_ind_band = abs(ind_band[1] - ind_band[0]) > 1e-9
+    is_ev_band = abs(ev_band[1] - ev_band[0]) > 1e-9
 
-    quarterly = budget_lib.quarterly_budget(body.classification)
-    annual_service = quarterly * 4
+    # ---- Validate any user-supplied rates against the cohort band -------
+    user_ind = body.independence_rate_pct
+    user_ev = body.everyday_rate_pct
+
+    def _validate_rate(label: str, rate_pct: float, band: tuple[float, float]):
+        lo_pct = round(band[0] * 100, 2)
+        hi_pct = round(band[1] * 100, 2)
+        # Allow a 0.5 percentage-point tolerance to absorb rounding from
+        # the printed Services Australia letter.
+        if rate_pct < lo_pct - 0.5 or rate_pct > hi_pct + 0.5:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"{label} rate {rate_pct}% is outside the {lo_pct}%-{hi_pct}% range "
+                    f"that applies to a {body.pension_status} cohort. Double-check the "
+                    "rate on your Services Australia contribution letter."
+                ),
+            )
+
+    if user_ind is not None and is_ind_band:
+        _validate_rate("Independence", user_ind, ind_band)
+    if user_ev is not None and is_ev_band:
+        _validate_rate("Everyday Living", user_ev, ev_band)
+
+    # ---- Gross annual service base (F5 fix — no longer / 4 * 4 via post-CM) --
+    annual_service = budget_lib.classification_annual(body.classification)
     clin = annual_service * (body.expected_mix_clinical_pct / 100)
     ind = annual_service * (body.expected_mix_independence_pct / 100)
     ev = annual_service * (body.expected_mix_everyday_pct / 100)
-    contrib_clin = clin * clin_rate
-    contrib_ind = ind * ind_rate
-    contrib_ev = ev * ev_rate
-    annual_contrib = round(contrib_clin + contrib_ind + contrib_ev, 2)
-    quarterly_contrib = round(annual_contrib / 4, 2)
+
+    # ---- Decide rate_basis ----------------------------------------------
+    has_user_rates = (
+        (is_ind_band and user_ind is not None)
+        or (is_ev_band and user_ev is not None)
+    )
+    has_band = is_ind_band or is_ev_band
+    if not has_band:
+        rate_basis = "exact_rate"
+    elif (
+        (not is_ind_band or user_ind is not None)
+        and (not is_ev_band or user_ev is not None)
+    ):
+        rate_basis = "user_supplied" if has_user_rates else "exact_rate"
+    else:
+        rate_basis = "band_range"
+
+    # Clinical contribution is always $0 — outside the band-vs-exact axis.
+    contrib_clin = 0.0
+
     cap = budget_lib.lifetime_cap(body.is_grandfathered)
-    years_to_cap = round(cap / annual_contrib, 1) if annual_contrib > 0 else None
-    return {
-        "annual_service_total": round(annual_service, 2),
-        "annual_contribution": annual_contrib,
-        "quarterly_contribution": quarterly_contrib,
-        "per_stream": [
+
+    caveat: str | None = None
+    if rate_basis == "band_range":
+        caveat = (
+            "Your exact contribution rate is set by Services Australia based on your "
+            "income and assets. Enter the rates from your contribution letter for a "
+            "precise estimate, or call Services Australia on 1800 227 475."
+        )
+
+    def _resolve_rate(user_pct: float | None, band: tuple[float, float]) -> float:
+        if user_pct is not None:
+            return user_pct / 100
+        if abs(band[1] - band[0]) <= 1e-9:
+            return band[0]
+        # Band cohort with no user rate — caller must use low/high path.
+        return float("nan")
+
+    if rate_basis == "band_range":
+        # Range output. annual_contribution + per-stream rate_pct stay null.
+        ind_low_rate, ind_high_rate = ind_band
+        ev_low_rate, ev_high_rate = ev_band
+        if user_ind is not None:
+            ind_low_rate = ind_high_rate = user_ind / 100
+        if user_ev is not None:
+            ev_low_rate = ev_high_rate = user_ev / 100
+
+        contrib_ind_low = ind * ind_low_rate
+        contrib_ind_high = ind * ind_high_rate
+        contrib_ev_low = ev * ev_low_rate
+        contrib_ev_high = ev * ev_high_rate
+
+        annual_low = round(contrib_clin + contrib_ind_low + contrib_ev_low, 2)
+        annual_high = round(contrib_clin + contrib_ind_high + contrib_ev_high, 2)
+        quarterly_low = round(annual_low / 4, 2)
+        quarterly_high = round(annual_high / 4, 2)
+        years_to_cap_low = round(cap / annual_high, 1) if annual_high > 0 else None
+        years_to_cap_high = round(cap / annual_low, 1) if annual_low > 0 else None
+
+        per_stream = [
             {
                 "stream": "Clinical",
                 "annual_charged": round(clin, 2),
-                "annual_contribution": round(contrib_clin, 2),
-                "rate_pct": round(clin_rate * 100, 2),
-                "rate_band_pct": [round(rates["clinical"][0] * 100, 2), round(rates["clinical"][1] * 100, 2)],
-                "is_band": clin_band,
+                "annual_contribution": 0.0,
+                "annual_contribution_low": 0.0,
+                "annual_contribution_high": 0.0,
+                "rate_pct": 0.0,
+                "rate_pct_low": 0.0,
+                "rate_pct_high": 0.0,
+                "rate_band_pct": [0.0, 0.0],
+                "is_band": False,
             },
             {
                 "stream": "Independence",
                 "annual_charged": round(ind, 2),
-                "annual_contribution": round(contrib_ind, 2),
-                "rate_pct": round(ind_rate * 100, 2),
-                "rate_band_pct": [round(rates["independence"][0] * 100, 2), round(rates["independence"][1] * 100, 2)],
-                "is_band": ind_band,
+                "annual_contribution": None,
+                "annual_contribution_low": round(contrib_ind_low, 2),
+                "annual_contribution_high": round(contrib_ind_high, 2),
+                "rate_pct": None if is_ind_band and user_ind is None else round(_resolve_rate(user_ind, ind_band) * 100, 2),
+                "rate_pct_low": round(ind_low_rate * 100, 2),
+                "rate_pct_high": round(ind_high_rate * 100, 2),
+                "rate_band_pct": [round(ind_band[0] * 100, 2), round(ind_band[1] * 100, 2)],
+                "is_band": is_ind_band,
             },
             {
                 "stream": "Everyday Living",
                 "annual_charged": round(ev, 2),
-                "annual_contribution": round(contrib_ev, 2),
-                "rate_pct": round(ev_rate * 100, 2),
-                "rate_band_pct": [round(rates["everyday_living"][0] * 100, 2), round(rates["everyday_living"][1] * 100, 2)],
-                "is_band": ev_band,
+                "annual_contribution": None,
+                "annual_contribution_low": round(contrib_ev_low, 2),
+                "annual_contribution_high": round(contrib_ev_high, 2),
+                "rate_pct": None if is_ev_band and user_ev is None else round(_resolve_rate(user_ev, ev_band) * 100, 2),
+                "rate_pct_low": round(ev_low_rate * 100, 2),
+                "rate_pct_high": round(ev_high_rate * 100, 2),
+                "rate_band_pct": [round(ev_band[0] * 100, 2), round(ev_band[1] * 100, 2)],
+                "is_band": is_ev_band,
             },
-        ],
+        ]
+        return {
+            "annual_service_total": round(annual_service, 2),
+            "annual_contribution": None,
+            "annual_contribution_low": annual_low,
+            "annual_contribution_high": annual_high,
+            "quarterly_contribution": None,
+            "quarterly_contribution_low": quarterly_low,
+            "quarterly_contribution_high": quarterly_high,
+            "per_stream": per_stream,
+            "lifetime_cap": cap,
+            "years_to_cap": None,
+            "years_to_cap_low": years_to_cap_low,
+            "years_to_cap_high": years_to_cap_high,
+            "pension_status": body.pension_status,
+            "rate_basis": rate_basis,
+            "caveat": caveat,
+        }
+
+    # ---- Exact / user-supplied path -------------------------------------
+    ind_rate = _resolve_rate(user_ind, ind_band)
+    ev_rate = _resolve_rate(user_ev, ev_band)
+
+    contrib_ind = ind * ind_rate
+    contrib_ev = ev * ev_rate
+    annual_contrib = round(contrib_clin + contrib_ind + contrib_ev, 2)
+    quarterly_contrib = round(annual_contrib / 4, 2)
+    years_to_cap = round(cap / annual_contrib, 1) if annual_contrib > 0 else None
+
+    per_stream = [
+        {
+            "stream": "Clinical",
+            "annual_charged": round(clin, 2),
+            "annual_contribution": 0.0,
+            "annual_contribution_low": None,
+            "annual_contribution_high": None,
+            "rate_pct": 0.0,
+            "rate_pct_low": None,
+            "rate_pct_high": None,
+            "rate_band_pct": [0.0, 0.0],
+            "is_band": False,
+        },
+        {
+            "stream": "Independence",
+            "annual_charged": round(ind, 2),
+            "annual_contribution": round(contrib_ind, 2),
+            "annual_contribution_low": None,
+            "annual_contribution_high": None,
+            "rate_pct": round(ind_rate * 100, 2),
+            "rate_pct_low": None,
+            "rate_pct_high": None,
+            "rate_band_pct": [round(ind_band[0] * 100, 2), round(ind_band[1] * 100, 2)],
+            "is_band": is_ind_band,
+        },
+        {
+            "stream": "Everyday Living",
+            "annual_charged": round(ev, 2),
+            "annual_contribution": round(contrib_ev, 2),
+            "annual_contribution_low": None,
+            "annual_contribution_high": None,
+            "rate_pct": round(ev_rate * 100, 2),
+            "rate_pct_low": None,
+            "rate_pct_high": None,
+            "rate_band_pct": [round(ev_band[0] * 100, 2), round(ev_band[1] * 100, 2)],
+            "is_band": is_ev_band,
+        },
+    ]
+    return {
+        "annual_service_total": round(annual_service, 2),
+        "annual_contribution": annual_contrib,
+        "annual_contribution_low": None,
+        "annual_contribution_high": None,
+        "quarterly_contribution": quarterly_contrib,
+        "quarterly_contribution_low": None,
+        "quarterly_contribution_high": None,
+        "per_stream": per_stream,
         "lifetime_cap": cap,
         "years_to_cap": years_to_cap,
+        "years_to_cap_low": None,
+        "years_to_cap_high": None,
         "pension_status": body.pension_status,
         "rate_basis": rate_basis,
+        "caveat": caveat,
     }
 
 

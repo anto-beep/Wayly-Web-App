@@ -197,17 +197,26 @@ export default function BudgetCalculatorTool() {
 
                 {result && (
                     <div className="mt-6 space-y-5 animate-fade-up" data-testid="bc-result">
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="bg-surface border border-kindred rounded-xl p-5">
-                                <div className="overline">Annual budget</div>
-                                <div className="mt-2 font-heading text-3xl text-primary-k tabular-nums">{formatAUD(result.annual_total)}</div>
-                                <div className="text-xs text-muted-k mt-1">Before 10% care management</div>
+                        <div className="grid sm:grid-cols-3 gap-4">
+                            <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-quarterly-gross">
+                                <div className="overline">Gross quarterly</div>
+                                <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(result.quarterly_gross ?? (result.annual_total / 4))}</div>
+                                <div className="text-xs text-muted-k mt-1">This is the figure printed on your statement (annual ÷ 4).</div>
                             </div>
-                            <div className="bg-surface border border-kindred rounded-xl p-5">
-                                <div className="overline">Quarterly draw</div>
-                                <div className="mt-2 font-heading text-3xl text-primary-k tabular-nums">{formatAUD2(result.quarterly_total)}</div>
-                                <div className="text-xs text-muted-k mt-1">After 10% care management</div>
+                            <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-care-management">
+                                <div className="overline">Care management (10%)</div>
+                                <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">−{formatAUD2(result.care_management_quarterly ?? ((result.quarterly_gross ?? result.annual_total/4) - (result.quarterly_usable ?? result.quarterly_total)))}</div>
+                                <div className="text-xs text-muted-k mt-1">Provider's care management slice.</div>
                             </div>
+                            <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-quarterly-usable">
+                                <div className="overline">Usable for services</div>
+                                <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(result.quarterly_usable ?? result.quarterly_total)}</div>
+                                <div className="text-xs text-muted-k mt-1">What you can spend on care this quarter.</div>
+                            </div>
+                        </div>
+                        <div className="bg-surface border border-kindred rounded-xl p-4 flex items-baseline justify-between" data-testid="bc-annual-summary">
+                            <span className="text-sm text-muted-k">Annual budget</span>
+                            <span className="font-heading text-lg text-primary-k tabular-nums">{formatAUD(result.annual_total)}</span>
                         </div>
 
                         <div className="bg-surface border border-kindred rounded-xl p-5">

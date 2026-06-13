@@ -315,3 +315,135 @@ agent_communication:
       Budget Calculator and Reports pages already display API-returned
       rollover figures.
 
+
+backend:
+  - task: "F5: Contribution Estimator uses gross annual base (classification_annual)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          /api/public/contribution-estimator now sets
+          annual_service = budget_lib.classification_annual(c) instead of
+          quarterly_budget(c) * 4 — old base was 10% low.
+
+  - task: "F6: cshc cohort + optional user-supplied rates + band_range output"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Pension status pattern now accepts full|part|cshc|self.
+          Optional independence_rate_pct + everyday_rate_pct fields validated
+          against the cohort band (400 with helpful message if outside).
+          Response shape: exact cohorts return scalar annual/quarterly_contribution
+          and rate_basis='exact_rate'/'user_supplied'; band cohorts without user
+          rates return annual_contribution=null + annual_contribution_low/high +
+          rate_basis='band_range' + a Services Australia caveat. years_to_cap
+          mirrors the same convention (years_to_cap_low/high).
+
+  - task: "F9: Budget Calculator labels — quarterly_gross + care_management_quarterly + quarterly_usable (with quarterly_total alias)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          /api/public/budget-calc and /api/budget/current both expose
+          quarterly_gross (annual/4), care_management_quarterly (gross-usable),
+          quarterly_usable (post-CM). quarterly_total kept as a deprecated
+          alias of quarterly_usable for one release with TODO marker.
+
+  - task: "test_contribution_estimator.py (6 cases)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_contribution_estimator.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Covers (1) gross annual base + exact-rate path, (2) band_range
+          output for part with no user rates, (3) user_supplied with exact
+          rates, (4) 400 when user rate outside band, (5) cshc band wider
+          than part, (6) mix !=100% returns 400.
+
+  - task: "test_budget_calc_labels.py (3 cases)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_budget_calc_labels.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Parametrized over classifications 1, 4 and 8: quarterly_gross ==
+          round(annual/4, 2); care_management_quarterly == round(gross*0.10, 2);
+          quarterly_usable == round(gross*0.90, 2); quarterly_total alias.
+
+frontend:
+  - task: "Contribution Estimator UI: CSHC option + optional rate inputs + band_range / caveat rendering"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/tools/ContributionEstimator.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Pension grid now 4 options (Full, Part, CSHC with Services Australia
+          help text, Self-funded). Part / CSHC reveal two optional rate inputs
+          (data-testid ce-independence-rate, ce-everyday-rate). Result block
+          switches to range display when rate_basis === 'band_range', shows
+          range for annual + quarterly + per-stream, and renders the caveat
+          (data-testid ce-caveat) explaining Services Australia sets the
+          exact rate. years_to_cap shows a span when only low/high is
+          available. ce-error testid surfaces 400 detail.
+
+  - task: "Budget Calculator UI: gross / care management / usable three-card layout"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/tools/BudgetCalculatorTool.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Top result row replaced with a three-card grid: bc-quarterly-gross,
+          bc-care-management, bc-quarterly-usable. Annual total moved to a
+          compact summary strip. UI falls back to the legacy quarterly_total
+          alias when the API hasn't rolled out yet.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Iteration 42 shipped F5/F6/F9. Combined regression: 32 passed, 2 skipped
+      (skips are the existing pension band + estimator integration cases when
+      the per-IP 5/hour rate-limit is exhausted). Test scripts clear the
+      tools_* Redis buckets between runs to keep CI stable. Frontend pages
+      hot-reloaded; blocked-state screenshot confirmed the gated branch still
+      renders correctly. Existing CaregiverDashboard continues to read
+      quarterly_total (kept as a deprecated alias) without any frontend change.
+

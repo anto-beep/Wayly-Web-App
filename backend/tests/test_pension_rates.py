@@ -323,12 +323,16 @@ def test_server_contribution_estimator_returns_band_midpoint_for_part_pension():
         pytest.skip(f"contribution-estimator rate-limited: {r.text}")
     result = r.json()
     assert result["pension_status"] == "part"
-    assert result["rate_basis"] == "band_midpoint_estimate"
+    # After F6 the band cohort returns a range when no user rates supplied.
+    assert result["rate_basis"] == "band_range"
     streams = {s["stream"]: s for s in result["per_stream"]}
-    assert streams["Independence"]["rate_pct"] == pytest.approx(15.0, abs=0.01)
+    assert streams["Independence"]["rate_pct"] is None
+    assert streams["Independence"]["rate_pct_low"] == pytest.approx(5.0, abs=0.01)
+    assert streams["Independence"]["rate_pct_high"] == pytest.approx(25.0, abs=0.01)
     assert streams["Independence"]["rate_band_pct"] == [5.0, 25.0]
     assert streams["Independence"]["is_band"] is True
-    assert streams["Everyday Living"]["rate_pct"] == pytest.approx(21.25, abs=0.01)
+    assert streams["Everyday Living"]["rate_pct"] is None
+    assert streams["Everyday Living"]["rate_pct_high"] == pytest.approx(25.0, abs=0.01)
     assert streams["Clinical"]["rate_pct"] == 0.0
 
     # cshc must also be accepted under the new pattern.
@@ -348,7 +352,7 @@ def test_server_contribution_estimator_returns_band_midpoint_for_part_pension():
     if r2.status_code == 429:
         pytest.skip(f"contribution-estimator rate-limited on cshc check: {r2.text}")
     assert r2.json()["pension_status"] == "cshc"
-    assert r2.json()["rate_basis"] == "band_midpoint_estimate"
+    assert r2.json()["rate_basis"] == "band_range"
 
 
 def _read_env(path: str, key: str) -> str | None:
