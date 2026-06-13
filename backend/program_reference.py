@@ -158,6 +158,65 @@ async def apply_data_migrations() -> None:
         log.info("program_reference migrations applied: %s", "; ".join(migrations_run))
 
 
+async def apply_reseed_for_authoritative_keys(seed_rows: list[dict]) -> None:
+    """Overwrite a small allowlist of keys in-place when their seed value
+    diverges from what's in Mongo. Used to push the Aged Care Rules 2025
+    authoritative figures (classification daily/annual, AT-HM tiers,
+    transitional HCP, pathway, supplement) over earlier MVP values without
+    creating duplicate effective_from rows.
+
+    The allowlist is intentional — for most keys we WANT the seeder's
+    "skip if same effective_from already exists" behaviour. These are
+    corrections, not new effective periods.
+    """
+    if _DB is None:
+        raise RuntimeError("program_reference.init(db) must be called first")
+    allowlist_prefixes = (
+        "classification_annual.", "classification.",
+        "transitional_hcp.",
+        "athm.", "at_hm.",
+        "pathway.", "supplement.",
+    )
+    seed_by_key_eff: dict[tuple[str, str], dict] = {}
+    for r in seed_rows:
+        if not any(r["key"].startswith(p) for p in allowlist_prefixes):
+            continue
+        seed_by_key_eff[(r["key"], r["effective_from"])] = r
+
+    if not seed_by_key_eff:
+        return
+
+    rewrites = 0
+    for (key, eff_from), row in seed_by_key_eff.items():
+        existing = await _DB.program_reference.find_one(
+            {"key": key, "effective_from": eff_from}, {"_id": 0}
+        )
+        if existing and existing.get("value") == row["value"]:
+            continue
+        await _DB.program_reference.update_one(
+            {"key": key, "effective_from": eff_from},
+            {"$set": {
+                "value": row["value"],
+                "source_url": row.get("source_url"),
+                "notes": row.get("notes"),
+                "effective_to": row.get("effective_to"),
+            }},
+            upsert=True,
+        )
+        await _DB.program_reference_history.insert_one({
+            "op": "reseed_authoritative",
+            "key": key,
+            "effective_from": eff_from,
+            "old_value": existing.get("value") if existing else None,
+            "new_value": row["value"],
+            "applied_at": datetime.now(timezone.utc).isoformat(),
+            "note": "Aged Care Rules 2025 re-seed (Phase 2 prompts H–N).",
+        })
+        rewrites += 1
+    if rewrites:
+        log.info("Re-seeded %d authoritative program_reference rows.", rewrites)
+
+
 async def preload_cache() -> None:
     """Read every row from Mongo into the in-process cache. Called once at
     startup right after ``ensure_seeded``."""
@@ -392,6 +451,45 @@ def public_snapshot(as_of_date: Optional[date | str] = None) -> dict:
         "policy_status": {
             "price_caps": get_value("policy.price_caps_status", as_of_date, default="deferred_indefinitely"),
         },
+        "pathways": {
+            "restorative_care": {
+                "daily_aud": get_value("pathway.restorative_care.daily_aud", as_of_date, default=None),
+                "duration_days": get_value("pathway.restorative_care.duration_days", as_of_date, default=None),
+                "episode_aud": get_value("pathway.restorative_care.episode_aud", as_of_date, default=None),
+                "max_episodes": get_value("pathway.restorative_care.max_episodes", as_of_date, default=None),
+                "max_total_aud": get_value("pathway.restorative_care.max_total_aud", as_of_date, default=None),
+            },
+            "end_of_life": {
+                "daily_aud": get_value("pathway.end_of_life.daily_aud", as_of_date, default=None),
+                "duration_days": get_value("pathway.end_of_life.duration_days", as_of_date, default=None),
+                "episode_aud": get_value("pathway.end_of_life.episode_aud", as_of_date, default=None),
+            },
+        },
+        "athm_tiers": {
+            "tier": {
+                "low": {"amount_aud": get_value("athm.tier.low.amount_aud", as_of_date, default=None)},
+                "medium": {"amount_aud": get_value("athm.tier.medium.amount_aud", as_of_date, default=None)},
+                "high": {
+                    "amount_aud": get_value("athm.tier.high.amount_aud", as_of_date, default=None),
+                    "amount_can_exceed": get_value("athm.tier.high.amount_can_exceed", as_of_date, default=False),
+                    "one_per_lifetime": get_value("athm.tier.high.one_per_lifetime", as_of_date, default=False),
+                },
+            },
+            "duration": {
+                "initial_months": get_value("athm.duration.initial_months", as_of_date, default=12),
+                "extension_months": get_value("athm.duration.extension_months", as_of_date, default=12),
+            },
+            "remote_supplement": {
+                "pct": get_value("athm.remote_supplement.pct", as_of_date, default=None),
+                "eligibility": get_value("athm.remote_supplement.eligibility", as_of_date, default=None),
+            },
+        },
+        "assistance_dog_tier": {
+            "amount_aud": get_value("athm.assistance_dog.amount_aud", as_of_date, default=None),
+            "period_months": get_value("athm.assistance_dog.period_months", as_of_date, default=None),
+            "rollover": get_value("athm.assistance_dog.rollover", as_of_date, default=False),
+        },
+        "supplements": _supplements_snapshot(as_of_date),
         "deadlines": {
             "statement_due_days_after_month_end": get_value("deadline.statement_due_days_after_month_end", as_of_date, default=None),
             "provider_exit_notice_days": get_value("deadline.provider_exit_notice_days", as_of_date, default=None),
@@ -402,3 +500,92 @@ def public_snapshot(as_of_date: Optional[date | str] = None) -> dict:
             "no_service_quarters_for_withdrawal": get_value("deadline.no_service_quarters_for_withdrawal", as_of_date, default=None),
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Pathway + supplement helpers (Prompts K + M)
+# ---------------------------------------------------------------------------
+_PATHWAY_FIELDS = {
+    "restorative_care": (
+        "daily_aud", "duration_days", "episode_aud",
+        "max_episodes", "max_total_aud",
+    ),
+    "end_of_life": (
+        "daily_aud", "duration_days", "episode_aud",
+    ),
+}
+
+_SUPPLEMENTS = (
+    "oxygen", "enteral_bolus", "enteral_non_bolus", "veterans",
+    "dementia_cognition", "eachd_top_up", "care_management_provider",
+)
+
+
+def get_pathway(name: str, as_of: Optional[date | str] = None) -> dict:
+    """Return the rules bundle for a short-term pathway.
+
+    ``name`` must be one of ``restorative_care`` or ``end_of_life``. Raises
+    ``ValueError`` for any other name.
+    """
+    if name not in _PATHWAY_FIELDS:
+        raise ValueError(
+            f"Unknown pathway {name!r} — supported: {sorted(_PATHWAY_FIELDS)}"
+        )
+    out: dict = {"name": name}
+    for field in _PATHWAY_FIELDS[name]:
+        out[field] = get_value(f"pathway.{name}.{field}", as_of, default=None)
+    return out
+
+
+def get_supplement(name: str, as_of: Optional[date | str] = None) -> Optional[dict]:
+    """Return the rules bundle for a primary supplement, or ``None`` when
+    no such supplement is seeded.
+
+    Source: Aged Care Rules 2025, sections 196-15 / 196-20 / 196-25 /
+    196-30 / 196-35 (primary supplements) and 205-15 (provider care
+    management supplement)."""
+    if name not in _SUPPLEMENTS:
+        return None
+    daily = get_value(f"supplement.{name}.daily_aud", as_of, default=None)
+    pct = get_value(f"supplement.{name}.pct_of_base_individual", as_of, default=None)
+    if daily is None and pct is None:
+        return None
+    out: dict = {"name": name}
+    if daily is not None:
+        out["daily_aud"] = float(daily)
+    if pct is not None:
+        out["pct_of_base_individual"] = float(pct)
+    out["eligibility"] = get_value(
+        f"supplement.{name}.eligibility", as_of, default=None,
+    )
+    out["grandfathered_only"] = bool(
+        get_value(f"supplement.{name}.grandfathered_only", as_of, default=False)
+    )
+    out["applies_to_provider"] = bool(
+        get_value(f"supplement.{name}.applies_to_provider", as_of, default=False)
+    )
+    return out
+
+
+def list_supplements(as_of: Optional[date | str] = None) -> List[dict]:
+    """Return every seeded supplement bundle as a list."""
+    out: List[dict] = []
+    for name in _SUPPLEMENTS:
+        sup = get_supplement(name, as_of)
+        if sup is not None:
+            out.append(sup)
+    return out
+
+
+def _supplements_snapshot(as_of_date: Optional[date | str] = None) -> dict:
+    """Public-safe supplement bundle for ``public_snapshot``."""
+    out: dict = {}
+    for sup in list_supplements(as_of_date):
+        name = sup["name"]
+        out[name] = {
+            k: v for k, v in sup.items()
+            if k in ("daily_aud", "pct_of_base_individual", "eligibility",
+                     "grandfathered_only", "applies_to_provider")
+        }
+    return out
+

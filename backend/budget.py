@@ -58,18 +58,22 @@ def stream_allocations(classification: int, as_of: Optional[date | str] = None) 
 
 
 def rollover_cap(classification: int, as_of: Optional[date | str] = None) -> float:
-    """Greater of $1,000 or 10% of the GROSS quarterly budget.
+    """Greater of $1,000 or 10% of the post-care-management quarterly budget.
 
-    Note: the Support at Home rollover rule is calculated against the gross
-    quarterly figure (annual / 4), NOT against ``quarterly_budget()`` which
-    already deducts the 10% care-management slice. Using the post-CM figure
-    understates the cap for Levels 6, 7 and 8 and risks families forfeiting
-    funds they were entitled to carry over.
+    Aged Care Rules 2025, section 193-5: the quarterly rollover credit is
+    ``max($1,000, 10% × base individual daily amount × days in the quarter)``.
+    The "base individual daily amount" is the **post-care-management** portion
+    (the base provider amount — the 10% care management slice — is excluded).
+    So this multiplies ``quarterly_budget()`` (which is already post-CM) by
+    10%. Earlier code briefly switched to the gross quarterly figure; that
+    was a misreading of section 193-5 and has been reverted.
+
+    The round(..., 2) is kept (improvement from the earlier change).
     """
-    q_gross = classification_annual(classification, as_of) / 4.0
+    q = quarterly_budget(classification, as_of)
     floor = float(get_value("rollover.floor_aud", _as_of(as_of)))
     pct = float(get_value("rollover.pct", _as_of(as_of)))
-    return max(floor, round(q_gross * pct, 2))
+    return round(max(floor, q * pct), 2)
 
 
 def lifetime_cap(is_grandfathered: bool, as_of: Optional[date | str] = None) -> float:
@@ -125,9 +129,40 @@ def compute_contributions(line_items: List[dict]) -> float:
 # (process bootstrap, test environment) we fall back to the seed literals so
 # the legacy callers don't silently get $0.
 _FALLBACK_ANNUAL = {
-    1: 10731.00, 2: 15910.00, 3: 22515.00, 4: 29696.00,
-    5: 39805.00, 6: 49906.00, 7: 60005.00, 8: 78106.00,
+    1: 10731.00, 2: 16034.00, 3: 21966.00, 4: 29696.00,
+    5: 39697.00, 6: 48114.00, 7: 58148.00, 8: 78106.00,
 }
+
+# Aged Care Rules 2025, section 194-5(3) — transitional HCP daily figures
+# (levels 1-4 only). Distinct from the ongoing classification figures and
+# only applicable to participants who transitioned from a Home Care Package
+# on or before 31 October 2025.
+_FALLBACK_TRANSITIONAL_ANNUAL = {
+    1: 10986.00, 2: 19319.00, 3: 42055.00, 4: 63758.00,
+}
+
+
+def classification_annual_transitional(level: int, as_of: Optional[date | str] = None) -> float:
+    """Transitional HCP annual figure for grandfathered participants.
+
+    Source: Aged Care Rules 2025, section 194-5(3). Only levels 1-4 exist
+    in the transitional schedule; higher levels raise ValueError.
+    """
+    if level not in _FALLBACK_TRANSITIONAL_ANNUAL:
+        raise ValueError(
+            f"Transitional HCP level {level} is not defined — only levels 1-4 "
+            "exist per Aged Care Rules 2025, section 194-5(3)."
+        )
+    try:
+        return float(get_value(f"transitional_hcp.{level}.annual_aud", _as_of(as_of)))
+    except Exception:
+        return _FALLBACK_TRANSITIONAL_ANNUAL[level]
+
+
+def quarterly_budget_transitional(level: int, as_of: Optional[date | str] = None) -> float:
+    """Post-care-management quarterly budget for transitional HCP cohorts."""
+    annual = classification_annual_transitional(level, as_of)
+    return round(annual * 0.90 / 4.0, 2)
 
 
 class _ClassificationsView(dict):

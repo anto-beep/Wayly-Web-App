@@ -816,3 +816,176 @@ agent_communication:
       (run takes ~3 min because of the LLM calls). UI updates verified via
       screenshot — gated state still renders cleanly.
 
+
+backend:
+  - task: "Phase 2 — H: rollover_cap reverted to post-CM quarterly × 10%"
+    implemented: true
+    working: true
+    file: "/app/backend/budget.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          rollover_cap() now uses the post-care-management quarterly_budget()
+          * 10% with $1,000 floor, rounded to 2 dp. This matches Aged Care
+          Rules 2025 section 193-5: "10% × base individual daily amount ×
+          days in the quarter". The brief gross-base version was a misread
+          of the section and has been reverted. test_rollover_cap.py
+          rewritten — L8 returns $1,757.39, L1/L4 hit the $1,000 floor,
+          L6/L7 assertions remain formula-based.
+
+  - task: "Phase 2 — I: authoritative classification figures (Aged Care Rules 2025)"
+    implemented: true
+    working: true
+    file: "/app/backend/seed_program_reference.py, /app/backend/budget.py, /app/backend/program_reference.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Seed now carries the daily_base_individual + daily_base_provider +
+          daily_total + classification_annual for all eight classifications,
+          sourced from Aged Care Rules 2025 sections 194-5(2) and 238-5.
+          Corrected annuals: L2=$16,034, L3=$21,966, L5=$39,697, L6=$48,114,
+          L7=$58,148 (L1/L4/L8 unchanged). _FALLBACK_ANNUAL updated to match.
+          A new apply_reseed_for_authoritative_keys() startup hook overwrites
+          existing rows where the seed value disagrees, with an audit trail
+          in program_reference_history.
+
+  - task: "Phase 2 — J: transitional HCP figures + budget-calc routing"
+    implemented: true
+    working: true
+    file: "/app/backend/seed_program_reference.py, /app/backend/budget.py, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Seeded transitional_hcp.{1-4}.{daily_base_individual,
+          daily_base_provider, daily_total, annual_aud} per Aged Care Rules
+          2025 section 194-5(3). New budget helpers
+          classification_annual_transitional() and
+          quarterly_budget_transitional() with safe fallbacks.
+          /api/public/budget-calc accepts transitional_classification (1-4)
+          override; otherwise routes to transitional figures when
+          is_grandfathered=True AND classification in 1-4. L5+ with
+          is_grandfathered raises HTTP 400 with a clear explanation.
+          Response now includes is_transitional_hcp flag.
+
+  - task: "Phase 2 — K: short-term pathways + assistance dog tier"
+    implemented: true
+    working: true
+    file: "/app/backend/seed_program_reference.py, /app/backend/program_reference.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Seeded pathway.restorative_care.* ($53.67/day × 112 days, 2 max
+          episodes) and pathway.end_of_life.* ($298.04/day × 84 days) per
+          Aged Care Rules 2025 section 194-10(2). Assistance dog tier
+          ($2,000/year, no rollover) seeded under athm.assistance_dog.*.
+          New helpers program_reference.get_pathway() and
+          public_snapshot() now includes pathways + assistance_dog_tier
+          + athm_tiers + supplements blocks.
+
+  - task: "Phase 2 — L: AT-HM tiers + Rule 11B"
+    implemented: true
+    working: true
+    file: "/app/backend/seed_program_reference.py, /app/backend/agents.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Full AT-HM tier table seeded — low $500, medium $2,000, high
+          $15,000 (one per lifetime, exceedance allowed with evidence),
+          duration 12 months + 12-month extension with evidence, MM6/MM7
+          50% remote supplement loading. New RULE_11B_ATHM_AMOUNT_EXCEEDS_TIER
+          deterministic post-pass flags AT-HM line items > $15,000 when
+          provider_notes_raw does NOT contain "exceedance approved".
+
+  - task: "Phase 2 — M: six primary supplements + helpers"
+    implemented: true
+    working: true
+    file: "/app/backend/seed_program_reference.py, /app/backend/program_reference.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Seeded oxygen ($14.66/day), enteral_bolus ($23.25/day),
+          enteral_non_bolus ($26.11/day), veterans (11.5% of base individual
+          daily), dementia_cognition (11.5%, grandfathered HCP only),
+          eachd_top_up ($3.45/day, grandfathered), and
+          care_management_provider ($3.95/day, provider-only). New
+          program_reference.get_supplement() and list_supplements() helpers.
+
+  - task: "Phase 2 — N: supplements wired into budget calc + decoder + Ask Wayly"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py, /app/backend/agents.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          /api/public/budget-calc accepts applicable_supplements: list[str].
+          Per-supplement: skips when unrecognised, when provider-only
+          (care_management_provider), or when grandfathered-only and
+          is_grandfathered=False. Computes annual_supplements_total +
+          annual_total_with_supplements + applied_supplements array
+          + supplement_warnings. Decoder schema gains "supplement" stream;
+          extractor prompt instructs the LLM to extract supplement line
+          items with stream=supplement and lower-snake-case service_code.
+          New RULE_16_SUPPLEMENT_AMOUNT_VARIANCE deterministic post-pass
+          flags supplement line items whose daily rate differs from the
+          seeded value by more than $0.50. Ask Wayly CHAT_SYSTEM_TEMPLATE
+          documents all six supplements + two pathways with rule-section
+          citations. Care-management computation (RULE_1B) now excludes
+          stream=supplement lines from the monthly gross.
+
+  - task: "Phase 2 — new pytest suite test_phase2_authoritative.py (17 cases)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_phase2_authoritative.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Live API + Mongo coverage of prompts H–N: classification annual
+          corrections, transitional HCP routing + L5 rejection, pathway
+          + assistance dog snapshot, AT-HM tier helper, Rule 11B fire +
+          silent paths, supplement helpers + grandfathered/provider
+          filtering, budget-calc supplement maths, decoder Rule 16
+          silent/flagged paths, Ask Wayly template documents supplements.
+          17 passed.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Phase 2 (prompts H–N) landed. Combined regression — phase 2 suite +
+      rollover + pension + caps + stream allocation + decoder metadata +
+      budget labels + contribution estimator + Okafor decoder fixture: 63
+      passed, 9 skipped (rate-limit collisions in older suites that don't
+      auto-clear buckets — none of those skips are this iteration's
+      responsibility).
+

@@ -122,7 +122,16 @@ How to sound:
 - Stay short. Two or three sentences is usually enough. Spell out money figures, never invent them.
 - If you genuinely do not know, say so. Clinical questions belong with their care team, not with you.
 - Streams (Clinical, Independence, Everyday Living) cannot cross-subsidise — be clear about that whenever it matters.
-- If the topic is provider pricing or fees, explain that the government has deferred the planned national price caps indefinitely (announced May 2026), so providers set their own prices. Encourage the caregiver to compare quotes and, if they suspect overcharging, contact the Aged Care Quality and Safety Commission (ACQSC)."""
+- If the topic is provider pricing or fees, explain that the government has deferred the planned national price caps indefinitely (announced May 2026), so providers set their own prices. Encourage the caregiver to compare quotes and, if they suspect overcharging, contact the Aged Care Quality and Safety Commission (ACQSC).
+- Wayly knows about six Support at Home supplements:
+  * Oxygen supplement ($14.66/day) for participants whose care plan covers oxygen — Aged Care Rules 2025, section 196-15.
+  * Enteral feeding supplement ($23.25/day bolus, $26.11/day non-bolus) — section 196-20.
+  * Veterans' supplement (11.5% of the base individual daily amount) — section 196-25.
+  * Dementia and cognition supplement (11.5% of base individual daily) — section 196-30, grandfathered HCP only, ceases on reassessment.
+  * EACHD top-up ($3.45/day) — section 196-35, grandfathered from 2013.
+  * Care management supplement ($3.95/day) — section 205-15, paid to the provider, not the participant.
+- Wayly also knows about two short-term pathways: Restorative Care Pathway ($6,000 over up to 16 weeks, with possible extension to $12,000) and End-of-Life Pathway ($25,000 over up to 12 weeks for participants with a prognosis of 3 months or less). Both are defined in Aged Care Rules 2025 section 194-10(2).
+- If asked about supplements or pathways, cite the relevant section of the Aged Care Rules 2025."""
 
 
 async def parse_statement(text: str, household_id: str) -> Dict[str, Any]:
@@ -215,7 +224,7 @@ Return a JSON object with this exact structure:
       "date": "",
       "service_description": "",
       "service_code": "",
-      "stream": "Clinical" | "Independence" | "EverydayLiving" | "ATHM" | "CareMgmt",
+      "stream": "Clinical" | "Independence" | "EverydayLiving" | "ATHM" | "CareMgmt" | "supplement",
       "hours": 0.00,
       "unit_rate": 0.00,
       "gross": 0.00,
@@ -317,6 +326,7 @@ GROSS TOTAL CALCULATION — PERMITTED SOURCES ONLY
 - provider_abn is the provider's Australian Business Number as it appears on the statement header (e.g. "12 345 678 901" or "12345678901"). Copy it verbatim including any spaces. If absent, "".
 - stream_used_this_month is the per-stream "Used [current month] (this statement)" / "Used This Month" / "Spent This Month" / "This Month Total" figures from the QUARTERLY BUDGET SUMMARY or BUDGET TRACKING or "SERVICE STREAM ALLOCATIONS" header sections. Match the provider's value for the CURRENT statement month — typically labelled "Used [Month] (this statement): $XX.XX" inside each stream's allocation block. CRITICAL: this must be the value from the header / allocations block, NOT the "Stream X Subtotal" line printed inside the ITEMISED SERVICES tables. Those two figures may legitimately differ (and a discrepancy is itself a flagged anomaly), so it is essential you extract the HEADER value here, not the subtotal. If the header value is absent or unclear, use 0.00 for that stream. Only fill the three keys (Clinical, Independence, EverydayLiving). Use 0.00 when not present.
 - header_stream_budgets is the per-stream QUARTERLY ALLOCATION figure printed in the SERVICE STREAM ALLOCATIONS header section — typically labelled "Quarterly Allocation: $X,XXX.XX" inside each stream block (NOT the "Used This Month" line, NOT the "Total Q? Used" line, NOT the "Remaining" line). This is the participant's actual per-stream quarterly budget set by their individualised care plan and Services Australia, and overrides Wayly's MVP-wide proportion estimate when present. Only fill the three keys (Clinical, Independence, EverydayLiving). Use 0.00 when the figure is absent.
+- SUPPLEMENT LINE ITEMS: Some statements include supplement line items labelled "Oxygen supplement", "Enteral feeding supplement", "Veterans' supplement", "Dementia and cognition supplement", or "EACHD top-up". Extract these as line items with ``stream`` set to ``"supplement"`` and the supplement name (in lower-snake-case — ``oxygen``, ``enteral_bolus``, ``enteral_non_bolus``, ``veterans``, ``dementia_cognition``, ``eachd_top_up``) in the ``service_code`` field; put the printed description in ``service_description``. Do NOT categorise supplements under Clinical, Independence, or Everyday Living — they are a separate stream. Care management provider supplement should not appear on participant statements; if you see one labelled that way, still extract it as ``stream=supplement, service_code=care_management_provider``.
 
 PENSION STATUS — read this from the SERVICE STREAM ALLOCATIONS section by looking at the Independence and Everyday Living "Participant Contribution Rate" percentages. EXPLICIT TEXT WINS: if the statement contains a parenthetical or label such as "(full Age Pension)", "(part Age Pension)", "(self-funded)", "(Commonwealth Seniors Health Card)" or "(CSHC)", set pension_status to "full_age_pension", "part_age_pension", "self_funded" or "cshc" accordingly — DO NOT fall through to rate inference.
 
@@ -1805,6 +1815,115 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                         ),
                     })
 
+    # ---------------------------------------------------------------------
+    # Rule 11B — AT-HM amount exceeds the seeded high tier without an
+    # explicit "exceedance approved" provider note. Informational only —
+    # exceedances are legitimately allowed with evidence under Aged Care
+    # Rules 2025 section 211.
+    # Rule 16  — Supplement amount variance against the seeded daily figures.
+    # MEDIUM severity when a supplement line item's implied daily amount
+    # diverges from the seeded value by more than ±$0.50.
+    # ---------------------------------------------------------------------
+    if "RULE_11B_ATHM_AMOUNT_EXCEEDS_TIER" not in existing_rules:
+        try:
+            import program_reference as _pr
+            high_tier = float(_pr.get_value("athm.tier.high.amount_aud", None, default=15000.0) or 15000.0)
+        except Exception:
+            high_tier = 15000.0
+        notes_blob = " ".join(
+            (n or "") for n in (extracted.get("provider_notes_raw") or [])
+            if isinstance(n, str)
+        ).lower()
+        has_exceedance_note = ("exceedance approved" in notes_blob
+                               or "exceedance: approved" in notes_blob)
+        for li in (extracted.get("line_items") or []):
+            if not isinstance(li, dict) or li.get("is_cancellation"):
+                continue
+            if (li.get("stream") or "").strip() != "ATHM":
+                continue
+            try:
+                gross = float(li.get("gross") or 0.0)
+            except Exception:
+                continue
+            if gross > high_tier and not has_exceedance_note:
+                anomalies.append({
+                    "severity": "low",
+                    "rule": "RULE_11B_ATHM_AMOUNT_EXCEEDS_TIER",
+                    "headline": (
+                        f"AT-HM line of ${gross:,.2f} exceeds the high tier (${high_tier:,.2f}) "
+                        "with no exceedance-approved note in the statement."
+                    ),
+                    "detail": (
+                        "Aged Care Rules 2025 section 212-10 sets the AT-HM high tier at "
+                        f"${high_tier:,.2f}. Exceedances are allowed under section 211 with "
+                        "clinical evidence (e.g. an OT prescription), but the statement should "
+                        "carry an explicit 'exceedance approved' note. Ask the provider to "
+                        "confirm the approval reference."
+                    ),
+                    "dollar_impact": 0.0,
+                    "evidence": [
+                        f"line gross: ${gross:,.2f}",
+                        f"high tier: ${high_tier:,.2f}",
+                        "no exceedance-approved note found in provider notes",
+                    ],
+                    "suggested_action": (
+                        "Ask the provider for the AT-HM exceedance approval reference and the "
+                        "evidence (e.g. OT prescription) that supported it."
+                    ),
+                })
+
+    if "RULE_16_SUPPLEMENT_AMOUNT_VARIANCE" not in existing_rules:
+        try:
+            import program_reference as _pr
+        except Exception:
+            _pr = None
+        if _pr is not None:
+            for li in (extracted.get("line_items") or []):
+                if not isinstance(li, dict) or li.get("is_cancellation"):
+                    continue
+                if (li.get("stream") or "").strip().lower() != "supplement":
+                    continue
+                code = (li.get("service_code") or "").strip().lower()
+                if not code:
+                    continue
+                expected_daily = _pr.get_value(
+                    f"supplement.{code}.daily_aud", None, default=None
+                )
+                if expected_daily is None:
+                    continue
+                try:
+                    actual_daily = float(li.get("unit_rate") or 0.0)
+                    if actual_daily == 0:
+                        # Fall back to gross when unit_rate is missing.
+                        actual_daily = float(li.get("gross") or 0.0)
+                except Exception:
+                    continue
+                variance = round(actual_daily - float(expected_daily), 2)
+                if abs(variance) > 0.50:
+                    anomalies.append({
+                        "severity": "medium",
+                        "rule": "RULE_16_SUPPLEMENT_AMOUNT_VARIANCE",
+                        "headline": (
+                            f"{code.replace('_', ' ').title()} supplement charged at "
+                            f"${actual_daily:.2f}/day — expected ${float(expected_daily):.2f}."
+                        ),
+                        "detail": (
+                            f"Aged Care Rules 2025 sets this supplement at ${float(expected_daily):.2f}/day "
+                            f"(see sections 196-15 / 196-20 / 196-25 / 196-30 / 196-35). The line "
+                            f"implies ${actual_daily:.2f}/day, a variance of ${variance:.2f}/day."
+                        ),
+                        "dollar_impact": abs(variance) * 30,  # rough monthly impact
+                        "evidence": [
+                            f"supplement: {code}",
+                            f"expected daily: ${float(expected_daily):.2f}",
+                            f"charged daily: ${actual_daily:.2f}",
+                        ],
+                        "suggested_action": (
+                            "Ask the provider to confirm the supplement amount against the Aged Care "
+                            "Rules 2025 schedule and reissue the line at the correct rate if needed."
+                        ),
+                    })
+
     # Rule 13 — Quarterly underspend pattern (deterministic, period-aware)
     # Only fire the full forfeiture alert when the statement period_end falls
     # in the FINAL month of the quarter (March / June / September / December).
@@ -2639,8 +2758,9 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                 pct_used = pct_match.group(1) if pct_match else ""
                 # Compute monthly gross services from extracted line items as a
                 # fallback when the provider notes don't disclose it directly.
-                # Per Fix 5 spec: sum of Clinical + Independence + EverydayLiving
-                # line items excluding care management and AT-HM.
+                # Per Fix 5 spec + Prompt N: sum of Clinical + Independence +
+                # EverydayLiving line items excluding care management, AT-HM
+                # and supplement line items.
                 computed_monthly_gross = 0.0
                 for li in (extracted.get("line_items") or []):
                     if not isinstance(li, dict):
@@ -2648,7 +2768,7 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     if li.get("is_cancellation"):
                         continue
                     stream = (li.get("stream") or "").strip()
-                    if stream in {"CareMgmt", "ATHM"}:
+                    if stream in {"CareMgmt", "ATHM", "supplement", "Supplement"}:
                         continue
                     try:
                         computed_monthly_gross += float(li.get("gross") or 0.0)

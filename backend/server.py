@@ -72,6 +72,7 @@ from models import (
     now_iso,
 )
 import budget as budget_lib
+import program_reference as _pr
 from agents import parse_statement, explain_anomalies, chat_with_kindred
 from wrapper import run_wrapper
 import email_service
@@ -2151,6 +2152,16 @@ class PublicBudgetBody(BaseModel):
     is_grandfathered: bool = False
     current_lifetime_balance: float = 0.0
     expected_annual_burn: float | None = None
+    # Prompt J — transitional HCP override. When is_grandfathered=True and
+    # ``classification`` is in 1-4, the route looks up the transitional HCP
+    # figures (Aged Care Rules 2025, section 194-5(3)) instead of the ongoing
+    # ones. ``transitional_classification`` is an explicit override for
+    # callers who want to pick the transitional level independently of
+    # ``classification``.
+    transitional_classification: int | None = Field(default=None, ge=1, le=4)
+    # Prompt N — optional list of primary supplement names to apply on top of
+    # the base annual budget (e.g. ["oxygen", "veterans"]).
+    applicable_supplements: list[str] | None = None
 
 
 class PublicPriceBody(BaseModel):
@@ -2711,16 +2722,61 @@ async def public_decode_file(request: Request, response: Response, file: UploadF
 
 @api.post("/public/budget-calc")
 async def public_budget_calc(body: PublicBudgetBody, request: Request, response: Response):
+    """Compute the Support at Home quarterly + annual budget.
+
+    Aged Care Rules 2025 references:
+      - Ongoing classifications: section 194-5(2) + 238-5 (daily base
+        individual + base provider amounts).
+      - Transitional HCP: section 194-5(3). When ``is_grandfathered`` is True
+        and ``classification`` is in 1-4 (or ``transitional_classification``
+        is supplied), the route routes to the transitional figures instead
+        of the ongoing ones. Transitional levels 5+ do not exist —
+        an error is returned.
+      - Primary supplements: sections 196-15 to 196-35 (and 205-15 for the
+        provider care-management supplement). The optional
+        ``applicable_supplements`` list adds these on top of the base
+        annual figure.
+    """
     await _require_paid_plan(request, response, "Budget Calculator")
-    classification = body.classification
-    annual = budget_lib.CLASSIFICATIONS[classification]["annual"]
+
+    # ---- Transitional HCP routing (Prompt J) ----
+    trans_level: int | None = None
+    if body.transitional_classification is not None:
+        trans_level = body.transitional_classification
+    elif body.is_grandfathered:
+        if 1 <= body.classification <= 4:
+            trans_level = body.classification
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Transitional HCP classification {body.classification} does not exist. "
+                    "Only levels 1-4 are defined per Aged Care Rules 2025, section 194-5(3). "
+                    "Either supply transitional_classification (1-4) or set is_grandfathered=false "
+                    "to use the ongoing classification figures."
+                ),
+            )
+
+    if trans_level is not None:
+        annual = budget_lib.classification_annual_transitional(trans_level)
+        quarterly_usable = budget_lib.quarterly_budget_transitional(trans_level)
+        classification_label = f"Transitional HCP Level {trans_level}"
+        classification_for_display = body.classification
+    else:
+        classification = body.classification
+        annual = budget_lib.CLASSIFICATIONS[classification]["annual"]
+        quarterly_usable = budget_lib.quarterly_budget(classification)
+        classification_label = budget_lib.CLASSIFICATIONS[classification]["label"]
+        classification_for_display = classification
+
     quarterly_gross = round(annual / 4.0, 2)
-    quarterly_usable = budget_lib.quarterly_budget(classification)
     # Care management is the gross-minus-usable slice (mathematically
     # quarterly_gross * care_management.cap_pct, rounded the same way).
     care_management_quarterly = round(quarterly_gross - quarterly_usable, 2)
-    allocations = budget_lib.stream_allocations(classification)
-    rollover = budget_lib.rollover_cap(classification)
+    allocations = budget_lib.stream_allocations(
+        trans_level if trans_level is not None else body.classification
+    ) if trans_level is None else {s: round(quarterly_usable / 3, 2) for s in budget_lib.STREAMS}
+    rollover = budget_lib.rollover_cap(body.classification) if trans_level is None else round(max(1000.0, quarterly_usable * 0.10), 2)
     cap_amount = budget_lib.lifetime_cap(body.is_grandfathered)
     contributions = max(0.0, body.current_lifetime_balance)
     pct = (contributions / cap_amount * 100) if cap_amount else 0.0
@@ -2728,17 +2784,65 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
     if body.expected_annual_burn and body.expected_annual_burn > 0:
         remaining = max(0.0, cap_amount - contributions)
         years_to_cap = round(remaining / body.expected_annual_burn, 2)
+
+    # ---- Primary supplements (Prompt N change 1) ----
+    annual_supplements_total = 0.0
+    applied_supplements: list[dict] = []
+    supplement_warnings: list[str] = []
+    daily_base_individual: float | None = None
+    if trans_level is not None:
+        daily_base_individual = float(_pr.get_value(
+            f"transitional_hcp.{trans_level}.daily_base_individual", None, default=0.0,
+        ) or 0.0)
+    else:
+        daily_base_individual = float(_pr.get_value(
+            f"classification.{body.classification}.daily_base_individual", None, default=0.0,
+        ) or 0.0)
+
+    for name in (body.applicable_supplements or []):
+        sup = _pr.get_supplement(name)
+        if sup is None:
+            supplement_warnings.append(
+                f"Supplement '{name}' is not recognised; ignored."
+            )
+            continue
+        if sup.get("applies_to_provider"):
+            supplement_warnings.append(
+                f"Supplement '{name}' is provider-based and does not appear on the participant's budget; ignored."
+            )
+            continue
+        if sup.get("grandfathered_only") and not body.is_grandfathered:
+            supplement_warnings.append(
+                f"Supplement '{name}' is only available to grandfathered HCP recipients; ignored."
+            )
+            continue
+        annual_aud = 0.0
+        if "daily_aud" in sup:
+            annual_aud = round(float(sup["daily_aud"]) * 365, 2)
+        elif "pct_of_base_individual" in sup and daily_base_individual > 0:
+            annual_aud = round(
+                daily_base_individual * (float(sup["pct_of_base_individual"]) / 100.0) * 365, 2
+            )
+        annual_supplements_total += annual_aud
+        applied_supplements.append({
+            "name": name,
+            "daily_aud": sup.get("daily_aud"),
+            "pct_of_base_individual": sup.get("pct_of_base_individual"),
+            "annual_aud": annual_aud,
+        })
+
+    annual_supplements_total = round(annual_supplements_total, 2)
+    annual_total_with_supplements = round(annual + annual_supplements_total, 2)
+
     return {
-        "classification": classification,
-        "classification_label": budget_lib.CLASSIFICATIONS[classification]["label"],
+        "classification": classification_for_display,
+        "classification_label": classification_label,
         "annual_total": annual,
         # F9: GROSS quarterly is what users see on their statement — it leads.
         "quarterly_gross": quarterly_gross,
         "care_management_quarterly": care_management_quarterly,
         "quarterly_usable": quarterly_usable,
         # DEPRECATED: kept for one release so existing clients keep working.
-        # TODO: remove ``quarterly_total`` once the frontend / mobile app stop
-        # reading it (target: next major release after the F9 rollout).
         "quarterly_total": quarterly_usable,
         "rollover_cap": rollover,
         "streams": [
@@ -2756,6 +2860,12 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
         "lifetime_pct": round(pct, 2),
         "years_to_cap": years_to_cap,
         "is_grandfathered": body.is_grandfathered,
+        "is_transitional_hcp": trans_level is not None,
+        # Prompt N — supplements bundle.
+        "annual_supplements_total": annual_supplements_total,
+        "annual_total_with_supplements": annual_total_with_supplements,
+        "applied_supplements": applied_supplements,
+        "supplement_warnings": supplement_warnings,
     }
 
 
@@ -5638,6 +5748,7 @@ async def _program_reference_bootstrap():
         _pr.init(db)
         await _pr.ensure_seeded(_seed_rows())
         await _pr.apply_data_migrations()
+        await _pr.apply_reseed_for_authoritative_keys(_seed_rows())
         await _pr.preload_cache()
         logger.info("program_reference ready")
     except Exception as e:
