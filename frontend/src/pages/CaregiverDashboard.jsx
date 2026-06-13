@@ -203,6 +203,24 @@ export default function CaregiverDashboard() {
                             <StreamProgress key={s.stream} stream={s} />
                         ))}
                     </div>
+                    {budget.streams_note && (
+                        <div
+                            data-testid="dashboard-streams-note"
+                            className="flex items-start justify-between gap-3 rounded-lg border border-kindred bg-surface-2/70 px-4 py-3 text-xs text-muted-k leading-relaxed"
+                        >
+                            <span>{budget.streams_note}</span>
+                            <span
+                                data-testid="dashboard-streams-source"
+                                className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider ${
+                                    budget.allocation_source === "statement"
+                                        ? "bg-sage/10 text-sage"
+                                        : "bg-amber-100 text-primary-k"
+                                }`}
+                            >
+                                {budget.allocation_source === "statement" ? "From your latest statement" : "Indicative split"}
+                            </span>
+                        </div>
+                    )}
 
                     <DashboardInsights statements={statements} />
 

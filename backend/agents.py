@@ -280,6 +280,11 @@ Return STRICT JSON only:
     "Independence": 0.00,
     "EverydayLiving": 0.00
   },
+  "header_stream_budgets": {
+    "Clinical": 0.00,
+    "Independence": 0.00,
+    "EverydayLiving": 0.00
+  },
   "lifetime_cap_total": 0.00,
   "lifetime_contributions_to_date": 0.00,
   "direct_debit_amount": 0.00,
@@ -311,6 +316,7 @@ GROSS TOTAL CALCULATION — PERMITTED SOURCES ONLY
 - budget_remaining_at_quarter_end is the statement's stated remaining quarterly service budget (post all line items), if shown.
 - provider_abn is the provider's Australian Business Number as it appears on the statement header (e.g. "12 345 678 901" or "12345678901"). Copy it verbatim including any spaces. If absent, "".
 - stream_used_this_month is the per-stream "Used [current month] (this statement)" / "Used This Month" / "Spent This Month" / "This Month Total" figures from the QUARTERLY BUDGET SUMMARY or BUDGET TRACKING or "SERVICE STREAM ALLOCATIONS" header sections. Match the provider's value for the CURRENT statement month — typically labelled "Used [Month] (this statement): $XX.XX" inside each stream's allocation block. CRITICAL: this must be the value from the header / allocations block, NOT the "Stream X Subtotal" line printed inside the ITEMISED SERVICES tables. Those two figures may legitimately differ (and a discrepancy is itself a flagged anomaly), so it is essential you extract the HEADER value here, not the subtotal. If the header value is absent or unclear, use 0.00 for that stream. Only fill the three keys (Clinical, Independence, EverydayLiving). Use 0.00 when not present.
+- header_stream_budgets is the per-stream QUARTERLY ALLOCATION figure printed in the SERVICE STREAM ALLOCATIONS header section — typically labelled "Quarterly Allocation: $X,XXX.XX" inside each stream block (NOT the "Used This Month" line, NOT the "Total Q? Used" line, NOT the "Remaining" line). This is the participant's actual per-stream quarterly budget set by their individualised care plan and Services Australia, and overrides Wayly's MVP-wide proportion estimate when present. Only fill the three keys (Clinical, Independence, EverydayLiving). Use 0.00 when the figure is absent.
 
 PENSION STATUS — read this from the SERVICE STREAM ALLOCATIONS section by looking at the Independence and Everyday Living "Participant Contribution Rate" percentages. EXPLICIT TEXT WINS: if the statement contains a parenthetical or label such as "(full Age Pension)", "(part Age Pension)", "(self-funded)", "(Commonwealth Seniors Health Card)" or "(CSHC)", set pension_status to "full_age_pension", "part_age_pension", "self_funded" or "cshc" accordingly — DO NOT fall through to rate inference.
 
@@ -910,6 +916,7 @@ _HEADER_DEFAULTS = {
 
 _HEADER_DICT_DEFAULTS = {
     "stream_used_this_month": {"Clinical": 0.0, "Independence": 0.0, "EverydayLiving": 0.0},
+    "header_stream_budgets": {"Clinical": 0.0, "Independence": 0.0, "EverydayLiving": 0.0},
 }
 
 
@@ -1197,6 +1204,16 @@ async def extract_statement(
                 except Exception:
                     cleaned[stream_key] = 0.0
             assembled["stream_used_this_month"] = cleaned
+        # header_stream_budgets — per-stream QUARTERLY ALLOCATION from statement header.
+        hsb = header_res.get("header_stream_budgets")
+        if isinstance(hsb, dict):
+            cleaned_hsb = {}
+            for stream_key in ("Clinical", "Independence", "EverydayLiving"):
+                try:
+                    cleaned_hsb[stream_key] = float(hsb.get(stream_key) or 0.0)
+                except Exception:
+                    cleaned_hsb[stream_key] = 0.0
+            assembled["header_stream_budgets"] = cleaned_hsb
         # Normalise pension_status to one of the canonical values
         ps = (assembled.get("pension_status") or "").strip().lower().replace("-", "_").replace(" ", "_")
         if "self" in ps and "fund" in ps:

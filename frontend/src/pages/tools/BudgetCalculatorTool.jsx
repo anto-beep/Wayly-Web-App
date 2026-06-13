@@ -219,8 +219,15 @@ export default function BudgetCalculatorTool() {
                             <span className="font-heading text-lg text-primary-k tabular-nums">{formatAUD(result.annual_total)}</span>
                         </div>
 
-                        <div className="bg-surface border border-kindred rounded-xl p-5">
-                            <div className="overline">Per-stream quarterly allocation</div>
+                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-streams">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <div className="overline">Per-stream quarterly allocation</div>
+                                {result.allocation_source === "statement" ? (
+                                    <span data-testid="bc-streams-source" className="text-xs rounded-full bg-sage/10 text-sage px-2.5 py-1">From your latest statement</span>
+                                ) : (
+                                    <span data-testid="bc-streams-source" className="text-xs rounded-full bg-amber-100 text-primary-k px-2.5 py-1">Indicative split</span>
+                                )}
+                            </div>
                             <div className="mt-3 space-y-2">
                                 {result.streams.map((s) => (
                                     <div key={s.stream} className="flex items-baseline justify-between border-b border-kindred pb-2 last:border-0">
@@ -229,7 +236,9 @@ export default function BudgetCalculatorTool() {
                                     </div>
                                 ))}
                             </div>
-                            <div className="text-xs text-muted-k mt-3">Streams cannot cross-subsidise. Indicative split — your provider's care plan may differ.</div>
+                            <div data-testid="bc-streams-note" className="text-xs text-muted-k mt-3 leading-relaxed">
+                                {result.streams_note || "Streams cannot cross-subsidise. Indicative split — your provider's care plan may differ."}
+                            </div>
                         </div>
 
                         <div className="bg-surface border border-kindred rounded-xl p-5">

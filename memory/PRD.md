@@ -14,6 +14,15 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 43 — Stream allocation transparency, Feb 2026)
+The MVP `stream_proportion` figures (Clinical 0.40, Independence 0.35, Everyday Living 0.25) are program-wide averages, not the participant's real per-stream quarterly allocation. Until Wayly ingests the actual individualised budget, splits must be labelled as indicative — and replaced with the statement's real figures when available.
+
+- **Decoder** — header extractor schema + prompt now capture `header_stream_budgets: {Clinical, Independence, EverydayLiving}` from the "Quarterly Allocation" lines in the SERVICE STREAM ALLOCATIONS block. The merge pass cleans + persists the dict; statement upload writes it onto `db.statements.<id>.header_stream_budgets`.
+- **Public Budget Calculator** (`/api/public/budget-calc`) — every entry in `streams[]` gets `indicative: true`, response adds `allocation_source: "program_average"` and `streams_note: "Indicative split only. Your participant's actual stream allocation is set in their individualised budget and care plan..."`.
+- **Dashboard** (`/api/budget/current`) — scans the participant's statements (most-recent first) for one with non-empty `header_stream_budgets`. If found, uses those exact figures, sets `allocation_source: "statement"`, `indicative: false`, and `streams_note: "Stream allocation taken from your latest statement (<period>)."`. Otherwise falls back to the program-average split with the same indicative copy as the public calculator.
+- **Frontend** — `BudgetCalculatorTool` renders a colour-coded pill (`bc-streams-source`) above the per-stream rows + the `streams_note` below. `CaregiverDashboard` adds a `dashboard-streams-note` disclaimer band with the same source badge.
+- Tests: new `backend/tests/test_stream_allocation_source.py` (3 cases — public-calc indicative invariants, dashboard program_average fallback, dashboard statement override). Cross-iteration regression: 51 passed, 2 skipped (per-IP 5/hour rate-limit on `/api/public/*`).
+
 ## Implemented (Iteration 42 — F5 / F6 / F9 fixes, Feb 2026)
 Three related defects fixed in one sweep:
 - **F5** — `/api/public/contribution-estimator` now uses `budget_lib.classification_annual(c)` as the gross annual service base (previously `quarterly_budget(c) * 4`, which was 10% low because `quarterly_budget` already deducts care management).

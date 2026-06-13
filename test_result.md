@@ -447,3 +447,74 @@ agent_communication:
       renders correctly. Existing CaregiverDashboard continues to read
       quarterly_total (kept as a deprecated alias) without any frontend change.
 
+
+backend:
+  - task: "Stream allocations labelled indicative + use statement header when present"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          /api/public/budget-calc — every entry in streams[] now carries
+          indicative:true and the response adds allocation_source='program_average'
+          + streams_note ("Indicative split only..."). /api/budget/current scans
+          the household's statements for the most recent one with non-empty
+          header_stream_budgets; when found, the per-stream allocations come
+          from the statement (allocation_source='statement', indicative:false,
+          streams_note references the statement period). Otherwise it falls
+          back to the program-average split. The decoder schema now extracts
+          header_stream_budgets and the statement upload persists it on the
+          db.statements document.
+
+  - task: "test_stream_allocation_source.py (3 cases)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_stream_allocation_source.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          (1) Public budget-calc marks streams indicative + allocation_source
+          program_average + Note copy contains 'individualised budget'.
+          (2) Dashboard /api/budget/current falls back to program_average when
+          a household statement carries no header_stream_budgets.
+          (3) Dashboard uses statement figures + allocation_source 'statement'
+          when a recent statement has header_stream_budgets, and the streams
+          array matches the persisted figures.
+
+frontend:
+  - task: "Budget Calculator + Dashboard: indicative badge / statement-source banner"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/tools/BudgetCalculatorTool.jsx, /app/frontend/src/pages/CaregiverDashboard.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          BudgetCalculatorTool — per-stream card now shows a pill badge
+          (bc-streams-source data-testid) reading either "Indicative split"
+          (amber) or "From your latest statement" (sage) and renders
+          streams_note below the rows. Dashboard's stream grid gains a
+          dashboard-streams-note disclaimer with the same source badge.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Iteration 43 — stream-allocation labelling shipped. Backend exposes
+      allocation_source + indicative flags + streams_note on both /budget-calc
+      and /budget/current. Decoder schema/prompt extracts header_stream_budgets
+      and the statement upload pipeline persists it on db.statements so the
+      dashboard can switch from MVP averages to the participant's actual
+      allocation. Combined regression: 51 passed, 2 skipped (per-IP rate limit).
+

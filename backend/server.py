@@ -1617,16 +1617,64 @@ async def current_budget(request: Request, user_id: str = Depends(get_current_us
     burn = budget_lib.compute_burn(all_items, q_start, q_end)
     contributions_total = budget_lib.compute_contributions(all_items)
 
+    # Allocation source: prefer the most-recent statement's per-stream
+    # quarterly allocation header. Falls back to the MVP-wide program average
+    # when no statement has been decoded yet (or none carried the header).
+    statement_allocations: Dict[str, float] | None = None
+    statement_period_label: str | None = None
+    statements_sorted = sorted(
+        docs,
+        key=lambda d: d.get("uploaded_at") or d.get("created_at") or "",
+        reverse=True,
+    )
+    for s in statements_sorted:
+        hsb = s.get("header_stream_budgets") or {}
+        if not isinstance(hsb, dict):
+            continue
+        try:
+            mapped = {
+                "Clinical": float(hsb.get("Clinical") or 0.0),
+                "Independence": float(hsb.get("Independence") or 0.0),
+                "Everyday Living": float(
+                    hsb.get("Everyday Living")
+                    if hsb.get("Everyday Living") is not None
+                    else hsb.get("EverydayLiving") or 0.0
+                ),
+            }
+        except Exception:
+            continue
+        if any(v > 0 for v in mapped.values()):
+            statement_allocations = mapped
+            statement_period_label = s.get("period_label")
+            break
+
+    use_statement = statement_allocations is not None
+    allocation_source = "statement" if use_statement else "program_average"
+    indicative = not use_statement
+    streams_note = (
+        f"Stream allocation taken from your latest statement ({statement_period_label})."
+        if use_statement and statement_period_label
+        else "Stream allocation taken from your latest statement."
+        if use_statement
+        else "Indicative split only. Your participant's actual stream allocation is set in their "
+             "individualised budget and care plan, and may differ substantially. Check the quarterly "
+             "budget summary on your provider statement for the real split."
+    )
+
     streams = []
     for s in budget_lib.STREAMS:
         spent = burn.get(s, 0.0)
-        cap = allocations[s]
+        if use_statement and statement_allocations is not None:
+            cap = round(statement_allocations.get(s, 0.0), 2)
+        else:
+            cap = allocations[s]
         streams.append({
             "stream": s,
             "allocated": cap,
             "spent": spent,
             "remaining": round(cap - spent, 2),
             "pct": round((spent / cap * 100) if cap else 0, 1),
+            "indicative": indicative,
         })
 
     cap_amount = budget_lib.lifetime_cap(h.get("is_grandfathered", False))
@@ -1645,6 +1693,8 @@ async def current_budget(request: Request, user_id: str = Depends(get_current_us
         "quarterly_total": quarterly_usable,
         "rollover_cap": budget_lib.rollover_cap(classification),
         "streams": streams,
+        "allocation_source": allocation_source,
+        "streams_note": streams_note,
         "lifetime_cap": cap_amount,
         "lifetime_contributions": contributions_total,
         "lifetime_pct": round((contributions_total / cap_amount * 100) if cap_amount else 0, 2),
@@ -2432,7 +2482,15 @@ async def _run_upload_job(
             file_size_bytes=file_size,
             file_b64=file_b64,
         )
-        await db.statements.insert_one({**statement.model_dump(), "participant_id": participant_id})
+        await db.statements.insert_one({
+            **statement.model_dump(),
+            "participant_id": participant_id,
+            # F-streams-source: persist the per-stream quarterly allocation
+            # printed in the statement header (when present), so the dashboard
+            # can show the participant's real allocation instead of the
+            # MVP-wide proportion average.
+            "header_stream_budgets": (extracted or {}).get("header_stream_budgets") or {},
+        })
         await _audit(
             household_id, user_id, user_name, "STATEMENT_UPLOADED",
             f"Uploaded {filename} — {len(line_items)} line items, {len(anomalies)} alerts",
@@ -2660,8 +2718,15 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
         "quarterly_total": quarterly_usable,
         "rollover_cap": rollover,
         "streams": [
-            {"stream": s, "allocated": allocations[s]} for s in budget_lib.STREAMS
+            {"stream": s, "allocated": allocations[s], "indicative": True}
+            for s in budget_lib.STREAMS
         ],
+        "allocation_source": "program_average",
+        "streams_note": (
+            "Indicative split only. Your participant's actual stream allocation is set in their "
+            "individualised budget and care plan, and may differ substantially. Check the quarterly "
+            "budget summary on your provider statement for the real split."
+        ),
         "lifetime_cap": cap_amount,
         "lifetime_contributions": contributions,
         "lifetime_pct": round(pct, 2),
