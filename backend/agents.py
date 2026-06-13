@@ -312,12 +312,15 @@ GROSS TOTAL CALCULATION — PERMITTED SOURCES ONLY
 - provider_abn is the provider's Australian Business Number as it appears on the statement header (e.g. "12 345 678 901" or "12345678901"). Copy it verbatim including any spaces. If absent, "".
 - stream_used_this_month is the per-stream "Used [current month] (this statement)" / "Used This Month" / "Spent This Month" / "This Month Total" figures from the QUARTERLY BUDGET SUMMARY or BUDGET TRACKING or "SERVICE STREAM ALLOCATIONS" header sections. Match the provider's value for the CURRENT statement month — typically labelled "Used [Month] (this statement): $XX.XX" inside each stream's allocation block. CRITICAL: this must be the value from the header / allocations block, NOT the "Stream X Subtotal" line printed inside the ITEMISED SERVICES tables. Those two figures may legitimately differ (and a discrepancy is itself a flagged anomaly), so it is essential you extract the HEADER value here, not the subtotal. If the header value is absent or unclear, use 0.00 for that stream. Only fill the three keys (Clinical, Independence, EverydayLiving). Use 0.00 when not present.
 
-PENSION STATUS — read this from the SERVICE STREAM ALLOCATIONS section by looking at the Independence and Everyday Living "Participant Contribution Rate" percentages:
+PENSION STATUS — read this from the SERVICE STREAM ALLOCATIONS section by looking at the Independence and Everyday Living "Participant Contribution Rate" percentages. EXPLICIT TEXT WINS: if the statement contains a parenthetical or label such as "(full Age Pension)", "(part Age Pension)", "(self-funded)", "(Commonwealth Seniors Health Card)" or "(CSHC)", set pension_status to "full_age_pension", "part_age_pension", "self_funded" or "cshc" accordingly — DO NOT fall through to rate inference.
+
+  When there is no explicit text:
   - Independence 5% AND Everyday Living 17.5% → "full_age_pension"
-  - Independence 17.5% AND Everyday Living 50% → "part_age_pension"
   - Independence 50% AND Everyday Living 80% → "self_funded"
-  - Rates absent or any other combination → "unknown"
-  Also accept explicit text in the statement such as "(part Age Pension)" / "(full Age Pension)" / "(self-funded)" appended to a contribution-rate label, and use that to set pension_status accordingly.
+  - Any other combination of stated Independence / Everyday Living rates (e.g. 12% / 22%, 17.5% / 50%, 25% / 60%) → "part_or_cshc_unconfirmed". This is correct — part Age Pension and CSHC cohorts each have a means-tested range and Wayly should not guess between them without explicit text.
+  - Rates absent / unreadable → "unknown".
+
+  Never emit "part_age_pension" or "cshc" based on inferred rates alone — only explicit text can select between those two.
 
 - Return only the JSON object. No prose."""
 
@@ -547,15 +550,20 @@ GLOBAL RULE — NO NO-ANOMALY COMMENTARY
 Never emit anomaly objects whose detail says "no anomaly", "no issue found", "standard rate applies", "Friday is a weekday", "weekday rate is correct", "this is consistent with", or any equivalent phrase that explains why a rule did NOT fire. The anomalies array contains only positive findings. If a rule check produces "no anomaly", emit nothing — silence is the correct output.
 
 RULE 9 — CONTRIBUTION ARITHMETIC CHECK (PENSION-AWARE)
-DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check is performed in code (rule keys "RULE_9_CONTRIBUTION_MISMATCH" or "RULE_9_PENSION_STATUS_UNKNOWN") which:
+DO NOT EMIT THIS RULE FROM THE AUDITOR. A deterministic post-audit Python check is performed in code (rule keys "RULE_9_CONTRIBUTION_MISMATCH", "RULE_9_INCONSISTENT_RATE" or "RULE_9_PENSION_STATUS_UNKNOWN") which:
   - Reads pension_status from the extracted header.
   - If pension_status is "unknown": emits ONE LOW-severity flag advising the user that contribution checks were skipped (and runs no per-line math).
-  - Otherwise: looks up the correct rate per stream from the table below and validates each non-cancelled line item's participant_contribution against (gross × expected_rate). Only flags a line where the variance exceeds $0.10.
+  - Otherwise: looks up the applicable rate band per stream from the table below and validates each non-cancelled line item's participant_contribution.
+    - Exact-rate cohorts (full Age Pension, self-funded without CSHC): flag a line where the dollar variance exceeds $0.10 against the single expected rate.
+    - Band cohorts (part Age Pension, CSHC, or the "part_or_cshc_unconfirmed" fallback): flag a line only when the IMPLIED rate (contribution / gross) is outside the band (with a 0.5 percentage-point tolerance). Inside the band the check stays silent because Services Australia sets the exact rate per participant.
+    - For band cohorts, also flag RULE_9_INCONSISTENT_RATE when two non-cancelled lines in the same stream imply different rates (spread > 0.5 percentage points).
 
-  Contribution rate table:
-    full_age_pension  → Clinical 0%, Independence 5%,    EverydayLiving 17.5%, ATHM 0%
-    part_age_pension  → Clinical 0%, Independence 17.5%, EverydayLiving 50%,   ATHM 0%
-    self_funded       → Clinical 0%, Independence 50%,   EverydayLiving 80%,   ATHM 0%
+  Contribution rate table (min – max per stream):
+    full_age_pension          → Clinical 0%,    Independence 5% (exact),       Everyday Living 17.5% (exact), AT-HM 0%
+    part_age_pension          → Clinical 0%,    Independence 5% – 25%,         Everyday Living 17.5% – 25%,    AT-HM 0%
+    cshc                      → Clinical 0%,    Independence 5% – 50%,         Everyday Living 17.5% – 80%,    AT-HM 0%
+    self_funded               → Clinical 0%,    Independence 50% (exact),      Everyday Living 80% (exact),    AT-HM 0%
+    part_or_cshc_unconfirmed  → Clinical 0%,    Independence 5% – 50% (wide),  Everyday Living 17.5% – 80% (wide), AT-HM 0%
 
 You MUST skip Rule 9 entirely in your output. Emitting Rule 9 in your JSON will cause double-counting and is treated as a hallucination.
 
@@ -1531,11 +1539,31 @@ def _parse_iso_date(value: Any):
 
 
 # Pension-aware contribution rate table for Rule 9 deterministic check.
-# Maps pension_status → stream → expected contribution rate (decimal).
+# Each entry maps a pension cohort + stream to a (min_rate, max_rate) band.
+# Exact-rate cohorts (full Age Pension, self-funded without CSHC) have
+# min == max. Band cohorts (part Age Pension, CSHC) have a Services Australia
+# means-tested rate that sits anywhere inside the band — Wayly can only
+# validate the band, not the exact rate.
+#
+# Source: Department of Health, Support at Home contribution framework.
 _PENSION_RATES = {
-    "full_age_pension": {"Clinical": 0.0,    "Independence": 0.05,  "EverydayLiving": 0.175, "ATHM": 0.0, "CareMgmt": 0.0},
-    "part_age_pension": {"Clinical": 0.0,    "Independence": 0.175, "EverydayLiving": 0.5,   "ATHM": 0.0, "CareMgmt": 0.0},
-    "self_funded":      {"Clinical": 0.0,    "Independence": 0.5,   "EverydayLiving": 0.8,   "ATHM": 0.0, "CareMgmt": 0.0},
+    "full_age_pension":          {"Clinical": (0.0, 0.0),  "Independence": (0.05, 0.05),  "EverydayLiving": (0.175, 0.175), "ATHM": (0.0, 0.0), "CareMgmt": (0.0, 0.0)},
+    "part_age_pension":          {"Clinical": (0.0, 0.0),  "Independence": (0.05, 0.25),  "EverydayLiving": (0.175, 0.25),  "ATHM": (0.0, 0.0), "CareMgmt": (0.0, 0.0)},
+    "cshc":                      {"Clinical": (0.0, 0.0),  "Independence": (0.05, 0.50),  "EverydayLiving": (0.175, 0.80),  "ATHM": (0.0, 0.0), "CareMgmt": (0.0, 0.0)},
+    "self_funded":               {"Clinical": (0.0, 0.0),  "Independence": (0.50, 0.50),  "EverydayLiving": (0.80, 0.80),   "ATHM": (0.0, 0.0), "CareMgmt": (0.0, 0.0)},
+    # Used when the header extractor cannot disambiguate between part_age_pension
+    # and cshc — Rule 9 validates against the widest applicable band so the
+    # check stays informative without producing false positives.
+    "part_or_cshc_unconfirmed":  {"Clinical": (0.0, 0.0),  "Independence": (0.05, 0.50),  "EverydayLiving": (0.175, 0.80),  "ATHM": (0.0, 0.0), "CareMgmt": (0.0, 0.0)},
+}
+
+# Human-readable cohort labels used in anomaly copy.
+_PENSION_STATUS_LABELS = {
+    "full_age_pension": "full Age Pension",
+    "part_age_pension": "part Age Pension",
+    "cshc": "Commonwealth Seniors Health Card",
+    "self_funded": "self-funded (no CSHC)",
+    "part_or_cshc_unconfirmed": "part Age Pension or CSHC (cohort unconfirmed)",
 }
 
 
@@ -1559,7 +1587,11 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
     existing_rules = {(a.get("rule") or "").upper() for a in anomalies if isinstance(a, dict)}
 
     # Rule 9 — Pension-aware contribution arithmetic (deterministic)
-    rule_9_keys = {"RULE_9_CONTRIBUTION_MISMATCH", "RULE_9_PENSION_STATUS_UNKNOWN"}
+    rule_9_keys = {
+        "RULE_9_CONTRIBUTION_MISMATCH",
+        "RULE_9_PENSION_STATUS_UNKNOWN",
+        "RULE_9_INCONSISTENT_RATE",
+    }
     if not (existing_rules & rule_9_keys):
         pension_status = (extracted.get("pension_status") or "unknown").strip().lower()
         if pension_status not in _PENSION_RATES:
@@ -1567,22 +1599,33 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                 "severity": "low",
                 "rule": "RULE_9_PENSION_STATUS_UNKNOWN",
                 "headline": "We couldn't confirm this participant's pension status from the statement.",
-                "detail": "Contribution rate checks have been skipped because pension status is unclear. Verify your contribution rates directly with your provider — the correct rates depend on whether the participant receives the full Age Pension, part Age Pension, or is self-funded.",
+                "detail": (
+                    "Contribution rate checks have been skipped because pension status is unclear. "
+                    "Verify your contribution rates directly with your provider — the correct rates "
+                    "depend on whether the participant receives the full Age Pension, part Age Pension, "
+                    "holds a Commonwealth Seniors Health Card, or is self-funded."
+                ),
                 "dollar_impact": 0.0,
                 "evidence": [f"pension_status: {pension_status or 'unknown'}"],
                 "suggested_action": "Phone your provider's billing line and ask them to confirm the participant's recorded pension status, then reconcile your contribution rates against the published Support at Home rate table.",
             })
         else:
             rates = _PENSION_RATES[pension_status]
+            cohort_label = _PENSION_STATUS_LABELS.get(pension_status, pension_status.replace("_", " "))
             mismatches: list[dict] = []
+            # Track implied rates by stream to detect inconsistency across the
+            # same statement (band cohorts only — the exact rate is set per
+            # participant by Services Australia and should be uniform within
+            # a single statement).
+            implied_by_stream: dict[str, list[dict]] = {}
             for li in (extracted.get("line_items") or []):
                 if not isinstance(li, dict):
                     continue
                 if li.get("is_cancellation"):
                     continue
                 stream = (li.get("stream") or "").strip()
-                expected_rate = rates.get(stream)
-                if expected_rate is None:
+                band = rates.get(stream)
+                if band is None:
                     continue
                 try:
                     gross = float(li.get("gross") or 0.0)
@@ -1591,49 +1634,159 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
                     continue
                 if gross <= 0:
                     continue
-                expected_dollars = round(gross * expected_rate, 2)
-                variance = round(abs(contrib - expected_dollars), 2)
-                if variance > 0.10:
-                    mismatches.append({
-                        "date": li.get("date") or "",
-                        "service_code": li.get("service_code") or "",
-                        "service_description": li.get("service_description") or "",
-                        "stream": stream,
-                        "gross": gross,
-                        "charged_contribution": round(contrib, 2),
-                        "expected_contribution": expected_dollars,
-                        "expected_rate_pct": round(expected_rate * 100, 2),
-                        "variance": variance,
-                    })
+                lo, hi = band
+                implied_rate = contrib / gross
+                line_summary = {
+                    "date": li.get("date") or "",
+                    "service_code": li.get("service_code") or "",
+                    "service_description": li.get("service_description") or "",
+                    "stream": stream,
+                    "gross": gross,
+                    "charged_contribution": round(contrib, 2),
+                    "implied_rate_pct": round(implied_rate * 100, 2),
+                    "band_min_pct": round(lo * 100, 2),
+                    "band_max_pct": round(hi * 100, 2),
+                }
+                # Always remember the implied rate for cross-line consistency.
+                implied_by_stream.setdefault(stream, []).append(line_summary)
+
+                if abs(hi - lo) < 1e-9:
+                    # Exact-rate cohort: keep the original dollar-variance check.
+                    expected_dollars = round(gross * lo, 2)
+                    variance = round(abs(contrib - expected_dollars), 2)
+                    if variance > 0.10:
+                        mismatches.append({
+                            **line_summary,
+                            "mode": "exact",
+                            "expected_contribution": expected_dollars,
+                            "expected_rate_pct": round(lo * 100, 2),
+                            "variance": variance,
+                        })
+                else:
+                    # Band cohort: tolerate a 0.5 percentage-point margin to
+                    # absorb cents-level rounding on the printed rate.
+                    if implied_rate < (lo - 0.005) or implied_rate > (hi + 0.005):
+                        mismatches.append({
+                            **line_summary,
+                            "mode": "band",
+                            "variance": round(
+                                min(
+                                    abs(contrib - gross * lo),
+                                    abs(contrib - gross * hi),
+                                ),
+                                2,
+                            ),
+                        })
+
             for m in mismatches:
-                anomalies.append({
-                    "severity": "medium",
-                    "rule": "RULE_9_CONTRIBUTION_MISMATCH",
-                    "headline": (
+                if m.get("mode") == "exact":
+                    headline = (
                         f"{m['service_description'] or m['service_code'] or m['stream']} "
                         f"on {m['date']} contribution doesn't match the expected "
-                        f"{m['expected_rate_pct']}% rate for {pension_status.replace('_', ' ')}."
-                    ),
-                    "detail": (
-                        f"For a {pension_status.replace('_', ' ')} participant, the {m['stream']} stream "
-                        f"contribution rate is {m['expected_rate_pct']}%. On gross ${m['gross']:,.2f} the expected "
-                        f"contribution is ${m['expected_contribution']:,.2f}, but the statement charged "
+                        f"{m['expected_rate_pct']}% rate for a {cohort_label} participant."
+                    )
+                    detail = (
+                        f"For a {cohort_label} participant the {m['stream']} stream contribution rate is "
+                        f"{m['expected_rate_pct']}%. On gross ${m['gross']:,.2f} the expected contribution "
+                        f"is ${m['expected_contribution']:,.2f}, but the statement charged "
                         f"${m['charged_contribution']:,.2f} — a variance of ${m['variance']:,.2f}."
-                    ),
-                    "dollar_impact": m["variance"],
-                    "evidence": [
+                    )
+                    evidence = [
                         f"pension_status: {pension_status}",
                         f"stream: {m['stream']}",
                         f"gross: ${m['gross']:,.2f}",
                         f"charged contribution: ${m['charged_contribution']:,.2f}",
                         f"expected contribution: ${m['expected_contribution']:,.2f}",
-                    ],
+                    ]
+                else:
+                    headline = (
+                        f"{m['service_description'] or m['service_code'] or m['stream']} "
+                        f"on {m['date']} contribution implies {m['implied_rate_pct']}%, outside the "
+                        f"{m['band_min_pct']}% to {m['band_max_pct']}% range that applies to a "
+                        f"{cohort_label} participant."
+                    )
+                    detail = (
+                        f"For a {cohort_label} participant the {m['stream']} stream contribution rate is "
+                        f"means-tested by Services Australia within the {m['band_min_pct']}% to "
+                        f"{m['band_max_pct']}% range. On gross ${m['gross']:,.2f} the statement charged "
+                        f"${m['charged_contribution']:,.2f}, which implies {m['implied_rate_pct']}% — "
+                        "outside that range."
+                    )
+                    evidence = [
+                        f"pension_status: {pension_status}",
+                        f"stream: {m['stream']}",
+                        f"gross: ${m['gross']:,.2f}",
+                        f"charged contribution: ${m['charged_contribution']:,.2f}",
+                        f"implied rate: {m['implied_rate_pct']}%",
+                        f"expected band: {m['band_min_pct']}% – {m['band_max_pct']}%",
+                    ]
+                anomalies.append({
+                    "severity": "medium",
+                    "rule": "RULE_9_CONTRIBUTION_MISMATCH",
+                    "headline": headline,
+                    "detail": detail,
+                    "dollar_impact": m["variance"],
+                    "evidence": evidence,
                     "suggested_action": (
                         f"Ask your provider to confirm the contribution rate applied to "
-                        f"{m['service_code'] or m['service_description']} on {m['date']}, and to refund the "
-                        f"variance if it was charged in error."
+                        f"{m.get('service_code') or m.get('service_description') or m.get('stream')} "
+                        f"on {m.get('date')}, and to refund the variance if it was charged in error."
                     ),
                 })
+
+            # Cross-line consistency check — band cohorts only.
+            inconsistency_emitted: set[str] = set()
+            for stream, lines in implied_by_stream.items():
+                band = rates.get(stream)
+                if band is None:
+                    continue
+                lo, hi = band
+                if abs(hi - lo) < 1e-9:
+                    continue  # Exact-rate cohort — single-line check is enough.
+                rates_pct = [li["implied_rate_pct"] for li in lines]
+                if len(rates_pct) < 2:
+                    continue
+                spread = max(rates_pct) - min(rates_pct)
+                if spread > 0.5 and stream not in inconsistency_emitted:
+                    inconsistency_emitted.add(stream)
+                    sample_lines = sorted(
+                        lines,
+                        key=lambda x: x["implied_rate_pct"],
+                    )
+                    sample_low = sample_lines[0]
+                    sample_high = sample_lines[-1]
+                    anomalies.append({
+                        "severity": "medium",
+                        "rule": "RULE_9_INCONSISTENT_RATE",
+                        "headline": (
+                            f"{stream} contributions on this statement imply two different rates "
+                            f"({sample_low['implied_rate_pct']}% and {sample_high['implied_rate_pct']}%). "
+                            "Services Australia sets a single rate per participant."
+                        ),
+                        "detail": (
+                            f"For a {cohort_label} participant the {stream} contribution rate is "
+                            f"means-tested by Services Australia and should be the same for every "
+                            f"{stream} line on a single statement. This statement shows "
+                            f"{sample_low['implied_rate_pct']}% on "
+                            f"{sample_low['service_description'] or sample_low['service_code']} "
+                            f"({sample_low['date']}) and {sample_high['implied_rate_pct']}% on "
+                            f"{sample_high['service_description'] or sample_high['service_code']} "
+                            f"({sample_high['date']}) — a spread of "
+                            f"{round(spread, 2)} percentage points."
+                        ),
+                        "dollar_impact": 0.0,
+                        "evidence": [
+                            f"pension_status: {pension_status}",
+                            f"stream: {stream}",
+                            f"implied rates: {sorted({r for r in rates_pct})}",
+                            f"expected band: {round(lo * 100, 2)}% – {round(hi * 100, 2)}%",
+                        ],
+                        "suggested_action": (
+                            f"Ask your provider why two different {stream} contribution rates appear on the "
+                            "same statement. Services Australia sets one means-tested rate per participant — "
+                            "the rate must not change line-by-line."
+                        ),
+                    })
 
     # Rule 13 — Quarterly underspend pattern (deterministic, period-aware)
     # Only fire the full forfeiture alert when the statement period_end falls

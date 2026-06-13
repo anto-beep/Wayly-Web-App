@@ -2794,16 +2794,21 @@ async def public_reassessment_letter(body: PublicReassessmentBody, request: Requ
 
 
 # ---- Tool 6: Contribution estimator ----
+# Each entry maps a pension cohort + stream to a (min_rate, max_rate) band.
+# Exact-rate cohorts have min == max. Band cohorts (part Age Pension, CSHC) sit
+# on a Services Australia means-tested range — for the estimator the band
+# midpoint is used as an indicative rate and the response flags the basis.
 PENSION_RATES = {
-    "full":      {"clinical": 0.0, "independence": 0.05, "everyday_living": 0.175},
-    "part":      {"clinical": 0.0, "independence": 0.175, "everyday_living": 0.50},
-    "self":      {"clinical": 0.0, "independence": 0.50, "everyday_living": 0.80},
+    "full":      {"clinical": (0.0, 0.0), "independence": (0.05, 0.05),  "everyday_living": (0.175, 0.175)},
+    "part":      {"clinical": (0.0, 0.0), "independence": (0.05, 0.25),  "everyday_living": (0.175, 0.25)},
+    "cshc":      {"clinical": (0.0, 0.0), "independence": (0.05, 0.50),  "everyday_living": (0.175, 0.80)},
+    "self":      {"clinical": (0.0, 0.0), "independence": (0.50, 0.50),  "everyday_living": (0.80, 0.80)},
 }
 
 
 class PublicContributionBody(BaseModel):
     classification: int = Field(ge=1, le=8)
-    pension_status: str = Field(pattern="^(full|part|self)$")
+    pension_status: str = Field(pattern="^(full|part|cshc|self)$")
     is_grandfathered: bool = False
     expected_mix_clinical_pct: float = Field(ge=0, le=100, default=30)
     expected_mix_independence_pct: float = Field(ge=0, le=100, default=45)
@@ -2817,14 +2822,24 @@ async def public_contribution_estimator(body: PublicContributionBody, request: R
     if total_pct < 95 or total_pct > 105:
         raise HTTPException(status_code=400, detail="Service mix percentages should sum to 100")
     rates = PENSION_RATES[body.pension_status]
+
+    def _band_midpoint(stream_key: str) -> tuple[float, bool]:
+        lo, hi = rates[stream_key]
+        return ((lo + hi) / 2, abs(hi - lo) > 1e-9)
+
+    clin_rate, clin_band = _band_midpoint("clinical")
+    ind_rate, ind_band = _band_midpoint("independence")
+    ev_rate, ev_band = _band_midpoint("everyday_living")
+    rate_basis = "band_midpoint_estimate" if (clin_band or ind_band or ev_band) else "exact_rate"
+
     quarterly = budget_lib.quarterly_budget(body.classification)
     annual_service = quarterly * 4
     clin = annual_service * (body.expected_mix_clinical_pct / 100)
     ind = annual_service * (body.expected_mix_independence_pct / 100)
     ev = annual_service * (body.expected_mix_everyday_pct / 100)
-    contrib_clin = clin * rates["clinical"]
-    contrib_ind = ind * rates["independence"]
-    contrib_ev = ev * rates["everyday_living"]
+    contrib_clin = clin * clin_rate
+    contrib_ind = ind * ind_rate
+    contrib_ev = ev * ev_rate
     annual_contrib = round(contrib_clin + contrib_ind + contrib_ev, 2)
     quarterly_contrib = round(annual_contrib / 4, 2)
     cap = budget_lib.lifetime_cap(body.is_grandfathered)
@@ -2834,13 +2849,35 @@ async def public_contribution_estimator(body: PublicContributionBody, request: R
         "annual_contribution": annual_contrib,
         "quarterly_contribution": quarterly_contrib,
         "per_stream": [
-            {"stream": "Clinical", "annual_charged": round(clin, 2), "annual_contribution": round(contrib_clin, 2), "rate_pct": rates["clinical"] * 100},
-            {"stream": "Independence", "annual_charged": round(ind, 2), "annual_contribution": round(contrib_ind, 2), "rate_pct": rates["independence"] * 100},
-            {"stream": "Everyday Living", "annual_charged": round(ev, 2), "annual_contribution": round(contrib_ev, 2), "rate_pct": rates["everyday_living"] * 100},
+            {
+                "stream": "Clinical",
+                "annual_charged": round(clin, 2),
+                "annual_contribution": round(contrib_clin, 2),
+                "rate_pct": round(clin_rate * 100, 2),
+                "rate_band_pct": [round(rates["clinical"][0] * 100, 2), round(rates["clinical"][1] * 100, 2)],
+                "is_band": clin_band,
+            },
+            {
+                "stream": "Independence",
+                "annual_charged": round(ind, 2),
+                "annual_contribution": round(contrib_ind, 2),
+                "rate_pct": round(ind_rate * 100, 2),
+                "rate_band_pct": [round(rates["independence"][0] * 100, 2), round(rates["independence"][1] * 100, 2)],
+                "is_band": ind_band,
+            },
+            {
+                "stream": "Everyday Living",
+                "annual_charged": round(ev, 2),
+                "annual_contribution": round(contrib_ev, 2),
+                "rate_pct": round(ev_rate * 100, 2),
+                "rate_band_pct": [round(rates["everyday_living"][0] * 100, 2), round(rates["everyday_living"][1] * 100, 2)],
+                "is_band": ev_band,
+            },
         ],
         "lifetime_cap": cap,
         "years_to_cap": years_to_cap,
         "pension_status": body.pension_status,
+        "rate_basis": rate_basis,
     }
 
 

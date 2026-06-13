@@ -14,6 +14,18 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 40 — Pension contribution rate correctness, Feb 2026)
+Wayly previously hard-coded part Age Pension contribution rates as Independence 17.5% / Everyday Living 50%. The real Support at Home framework uses bands:
+- Clinical / AT-HM / Care Mgmt: 0% for every cohort.
+- Independence: full Age Pension 5% (exact), part Age Pension 5%-25%, CSHC 5%-50%, self-funded (no CSHC) 50% (exact).
+- Everyday Living: full Age Pension 17.5% (exact), part Age Pension 17.5%-25%, CSHC 17.5%-80%, self-funded 80% (exact).
+
+Sweep applied:
+- `backend/agents.py` — `_PENSION_RATES` rewritten to (min, max) bands for full / part / CSHC / self_funded / `part_or_cshc_unconfirmed` (fallback). Rule 9 now flags band breaches (not single-rate mismatches) for band cohorts and adds a new RULE_9_INCONSISTENT_RATE when the same statement implies different rates in the same stream. HEADER_EXTRACTOR_SYSTEM detection rewritten: explicit text wins (`(part Age Pension)`, `(CSHC)`, etc.); without explicit text only Independence 5%/EL 17.5% and 50%/80% select exact cohorts, everything else falls to `part_or_cshc_unconfirmed`. AUDITOR_SYSTEM Rule 9 reference block updated.
+- `backend/server.py` — `PENSION_RATES` converted to bands; `/api/public/contribution-estimator` now accepts `cshc`, returns `rate_basis` (`band_midpoint_estimate` | `exact_rate`) and per-stream `rate_band_pct` + `is_band`. For part-pension classification 4 this drops the projected annual contribution from the previously inflated ~$5,000+ to ~$3,224 (band midpoint).
+- `backend/tests/test_pension_rates.py` — 11 deterministic + 1 live integration regression. 10/10 deterministic pass; live case skipped only when Wayly's existing 5-uses/hour public-tool rate-limit is exhausted.
+- Existing decoder fixture tests (Okafor, Beverley, Dorothy) unchanged — pre-existing failures (`test_budget_calc_unauth`, `test_duplicate_transport_05_may_high`) confirmed via `git stash` not caused by this iteration.
+
 ## Implemented (Iteration 39 — Price Caps Deferred sweep, Feb 2026)
 The Australian Government announced on 20 May 2026 that the planned national provider price caps under Support at Home are deferred indefinitely. The codebase, CMS content, AI prompts, DB seed rows and frontend data files have all been brought in line:
 - `backend/server.py` — `PRICE_BENCHMARKS` no longer carries a "cap" key; `/api/public/price-check` returns median-only verdicts plus a `caps_note` explaining the deferral and ACQSC route.
