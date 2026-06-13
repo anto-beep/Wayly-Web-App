@@ -637,20 +637,20 @@ With that, Catherine had a focused agenda for her next call with Susan Tran. Rat
         updated_at: "2026-02-04",
         author: { name: "Antony Chiware", role: "Wayly" },
         slug: "wayly-family-coordinator-managing-parents-aged-care",
-        title: "Wayly Family Coordinator: Managing a Parent's Aged Care as a Family",
-        excerpt: "The Wayly Family Coordinator lets siblings, partners and advisers share aged care info with role-based access and alerts on new statements and anomalies.",
+        title: "Wayly Family Hub: Managing a Parent's Aged Care as a Family",
+        excerpt: "The Wayly Family Hub lets siblings, partners and advisers share aged care info with role-based access and alerts on new statements and anomalies.",
         meta: {
-            title: "Wayly Family Coordinator: Manage a Parent's Care Together",
-            description: "The Wayly Family Coordinator lets siblings, partners and advisers share aged care info with role-based access and alerts on new statements and anomalies.",
+            title: "Wayly Family Hub: Manage a Parent's Care Together",
+            description: "The Wayly Family Hub lets siblings, partners and advisers share aged care info with role-based access and alerts on new statements and anomalies.",
         },
         key_takeaways: [
             "Most aged care coordination falls to one primary caregiver, often an adult child managing from a distance.",
             "Information gaps between siblings cause stress, duplicated effort and missed problems.",
-            "The Wayly Family Coordinator lets you invite siblings, partners and financial advisers, with role based access so people see what they need to.",
+            "The Wayly Family Hub lets you invite siblings, partners and financial advisers, with role based access so people see what they need to.",
             "It sends notifications when a new statement arrives or an anomaly is flagged.",
             "Sharing access does not mean losing control. The primary caregiver decides who sees what.",
         ],
-        intro_md: `Managing a parent's aged care is rarely a one person job, yet it often lands on one person anyway. One sibling holds all the information, fields all the calls and carries all the worry, while others want to help but cannot see what is going on. The Wayly Family Coordinator lets a family share the load properly.`,
+        intro_md: `Managing a parent's aged care is rarely a one person job, yet it often lands on one person anyway. One sibling holds all the information, fields all the calls and carries all the worry, while others want to help but cannot see what is going on. The Wayly Family Hub lets a family share the load properly.`,
         sections: [
             {
                 heading: "Why is managing a parent's care so hard to share?",
@@ -667,12 +667,12 @@ Distance makes all of this harder. Many adult children manage a parent's care fr
 It also respects boundaries. Not everyone should see everything, and the person carrying primary responsibility should stay in control of who has access. Good coordination shares the work without creating a free for all.`,
             },
             {
-                heading: "How Wayly's Family Coordinator does this for you",
-                body_md: `The [Wayly Family Coordinator](/ai-tools/family-coordinator) is built around shared, controlled access. The primary caregiver invites the people who should be involved, which might be siblings, a parent's partner, or a financial adviser, and assigns each person a role.
+                heading: "How Wayly's Family Hub does this for you",
+                body_md: `The [Wayly Family Hub](/ai-tools/family-coordinator) is built around shared, controlled access. The primary caregiver invites the people who should be involved, which might be siblings, a parent's partner, or a financial adviser, and assigns each person a role.
 
 Role based access means people see what fits their part. A sibling sharing the caring can see statements and care details. A financial adviser can see the parts relevant to fees and contributions. The primary caregiver decides and can change this, so sharing never means handing over control.
 
-The Wayly Family Coordinator also keeps everyone current with notifications. When a new statement arrives, or when the [Wayly Statement Decoder](/ai-tools/statement-decoder) flags an anomaly, the relevant people are told. That means a problem is far less likely to sit unseen, and the primary caregiver is not the only line of defence.
+The Wayly Family Hub also keeps everyone current with notifications. When a new statement arrives, or when the [Wayly Statement Decoder](/ai-tools/statement-decoder) flags an anomaly, the relevant people are told. That means a problem is far less likely to sit unseen, and the primary caregiver is not the only line of defence.
 
 The effect is that the work, and the worry, get shared across the people who care about your parent.`,
             },
@@ -680,21 +680,21 @@ The effect is that the work, and the worry, get shared across the people who car
                 heading: "A worked example: coordinating around Dorothy",
                 body_md: `Dorothy Anderson lives in Geelong, on Level 4 with Bluebell Care Services. Her daughter Catherine Smith is the primary caregiver, but Catherine has siblings who want to help and who worry from a distance.
 
-Catherine set up the Wayly Family Coordinator for Dorothy's care. She invited her siblings and gave them access to Dorothy's statements and care details, so they could see the same information she did rather than relying on her relayed updates. When Dorothy's June statement arrived and the Wayly Statement Decoder flagged the duplicate transport charge and the two worker substitutions, the whole group was notified, not just Catherine.
+Catherine set up the Wayly Family Hub for Dorothy's care. She invited her siblings and gave them access to Dorothy's statements and care details, so they could see the same information she did rather than relying on her relayed updates. When Dorothy's June statement arrived and the Wayly Statement Decoder flagged the duplicate transport charge and the two worker substitutions, the whole group was notified, not just Catherine.
 
 That changed the dynamic. One sibling offered to ring Susan Tran about the duplicate charge, because they could see the detail themselves. The questions stopped flowing through Catherine as the single point of contact. And when Catherine was busy, she knew the others could see what was happening rather than being in the dark. The caring was still led by Catherine, but it was no longer carried by her alone.`,
             },
             {
-                heading: "Try the Wayly Family Coordinator",
-                body_md: `Caring for a parent should not fall on one set of shoulders. Set up the [Wayly Family Coordinator](/ai-tools/family-coordinator), invite the people who want to help, and share the information, and the load, across your family.`,
+                heading: "Try the Wayly Family Hub",
+                body_md: `Caring for a parent should not fall on one set of shoulders. Set up the [Wayly Family Hub](/ai-tools/family-coordinator), invite the people who want to help, and share the information, and the load, across your family.`,
             },
         ],
         faqs: [
-            { q: "Who can I invite to the Wayly Family Coordinator?", a: "Siblings, a parent's partner, and financial advisers, among others. You assign each person a role so they see what is relevant to them." },
+            { q: "Who can I invite to the Wayly Family Hub?", a: "Siblings, a parent's partner, and financial advisers, among others. You assign each person a role so they see what is relevant to them." },
             { q: "Does sharing access mean I lose control?", a: "No. The primary caregiver decides who is invited and what each person can see, and can change that at any time. Role based access keeps you in control." },
             { q: "Will everyone see my parent's financial details?", a: "Only if you give them that access. Roles let you share care details with a sibling while keeping financial detail to, say, a financial adviser or yourself." },
-            { q: "What notifications does the Wayly Family Coordinator send?", a: "It alerts the relevant people when a new statement arrives and when an anomaly is flagged by the Wayly Statement Decoder, so problems are not missed." },
-            { q: "Is this useful if I live far from my parent?", a: "Yes. The Wayly Family Coordinator is especially helpful for families managing care from a distance, because everyone can see the current picture rather than relying on second hand updates." },
+            { q: "What notifications does the Wayly Family Hub send?", a: "It alerts the relevant people when a new statement arrives and when an anomaly is flagged by the Wayly Statement Decoder, so problems are not missed." },
+            { q: "Is this useful if I live far from my parent?", a: "Yes. The Wayly Family Hub is especially helpful for families managing care from a distance, because everyone can see the current picture rather than relying on second hand updates." },
         ],
         related: [
             "wayly-statement-decoder-support-at-home-statement-explained",

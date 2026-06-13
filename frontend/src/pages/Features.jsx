@@ -27,7 +27,7 @@ const TOOLS = [
     { slug: "reassessment-letter", title: "Reassessment Letter Drafter", body: "A polite, factual reassessment request, ready for My Aged Care.", icon: FileEdit, plan: "Solo+" },
     { slug: "contribution-estimator", title: "Contribution Estimator", body: "What the participant actually pays each quarter, in clear dollars.", icon: Receipt, plan: "Solo+" },
     { slug: "care-plan-reviewer", title: "Care Plan Reviewer", body: "Checks a care plan against the Statement of Rights and the National Quality Standards.", icon: ClipboardCheck, plan: "Solo+" },
-    { slug: "family-coordinator", title: "Family Care Coordinator", body: "Ask anything about Australia's aged‑care system. Cited answers, no waffle.", icon: MessageCircle, plan: "Solo+" },
+    { slug: "family-coordinator", title: "Aged Care Q&A", body: "Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.", icon: MessageCircle, plan: "Solo+" },
 ];
 
 const WEDGE = [

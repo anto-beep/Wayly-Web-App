@@ -53,7 +53,7 @@ export default function FamilyCoordinator() {
         setBusy(true);
         setMsgs((x) => [...x, { id: `u-${Date.now()}`, role: "user", content: m }]);
         try {
-            const { data } = await api.post("/public/family-coordinator-chat", { message: m, session_id: sessionId });
+            const { data } = await api.post("/public/aged-care-chat", { message: m, session_id: sessionId });
             setSessionId(data.session_id);
             setMsgs((x) => [...x, { id: `a-${Date.now()}`, role: "assistant", content: data.reply }]);
         } catch (err) {
@@ -65,7 +65,7 @@ export default function FamilyCoordinator() {
             <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><ToolRelatedLinks slug="family-coordinator" />
             <Footer /></div>);
     if (access === "blocked") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolFamilyCoordinator} jsonLd={_toolJsonLd(SEO.toolFamilyCoordinator)} />
-    <MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["family-coordinator"]} /></section><ToolGate toolName="Family Care Coordinator"><ScreenshotFamilyThread /></ToolGate><ToolRelatedLinks slug="family-coordinator" />
+    <MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["family-coordinator"]} /></section><ToolGate toolName="Aged Care Q&A"><ScreenshotFamilyThread /></ToolGate><ToolRelatedLinks slug="family-coordinator" />
             <Footer /></div>);
 
     return (
@@ -75,11 +75,12 @@ export default function FamilyCoordinator() {
             <section className="mx-auto max-w-3xl px-6 pt-12 pb-6 w-full">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
                 <span className="overline mt-6 block">Free tool · 5 uses per hour</span>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Family Care Coordinator</h1>
-                <p className="mt-4 text-lg text-muted-k leading-relaxed">Ask anything about Australia's aged-care system. Answers grounded in the Aged Care Act 2024, the Support at Home program manual, and the National Quality Standards.</p>
+                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Aged Care Q&amp;A</h1>
+                <p className="mt-4 text-lg text-muted-k leading-relaxed">Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.</p>
+                <p className="mt-2 text-xs text-muted-k">This is a general Q&amp;A assistant — it can't see your account or statements. Signed-in members can ask the in-app assistant questions about their own household.</p>
             </section>
 
-            <section className="mx-auto max-w-3xl px-6 pb-12 w-full flex-1 flex flex-col" data-testid="family-coordinator">
+            <section className="mx-auto max-w-3xl px-6 pb-12 w-full flex-1 flex flex-col" data-testid="aged-care-qa">
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["family-coordinator"]} className="mb-4" />
                 <div ref={ref} className="flex-1 min-h-[400px] overflow-y-auto bg-surface border border-kindred rounded-2xl p-5 space-y-4">
                     {msgs.length === 0 && !busy && (

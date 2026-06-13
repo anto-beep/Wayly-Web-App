@@ -54,7 +54,7 @@ export default function CommandPalette() {
         { label: "Reassessment Letter", to: "/ai-tools/reassessment-letter", icon: Sparkles },
         { label: "Contribution Estimator", to: "/ai-tools/contribution-estimator", icon: Sparkles },
         { label: "Care Plan Reviewer", to: "/ai-tools/care-plan-reviewer", icon: Sparkles },
-        { label: "Family Care Coordinator", to: "/ai-tools/family-coordinator", icon: Sparkles },
+        { label: "Aged Care Q&A", to: "/ai-tools/family-coordinator", icon: Sparkles },
     ];
     const resourcesItems = [
         { label: "Resources", to: "/resources", icon: BookOpen },

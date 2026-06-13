@@ -275,7 +275,7 @@ export const GUIDES = [
             {
                 heading: "A monthly update that solves a lot",
                 paragraphs: [
-                    "Send a short monthly note to all siblings. Three lines. What is going well. What is on the watch list. The next decision. This single habit reduces the volume of sibling friction more than any other practice. Wayly's Family Coordinator chat can help draft this in seconds if writing it from scratch feels heavy.",
+                    "Send a short monthly note to all siblings. Three lines. What is going well. What is on the watch list. The next decision. This single habit reduces the volume of sibling friction more than any other practice. Wayly's Aged Care Q&A chat can help draft this in seconds if writing it from scratch feels heavy.",
                 ],
             },
             {
@@ -294,7 +294,7 @@ export const GUIDES = [
         related: [
             { href: "/guides/caregiver-guilt", label: "Caregiver guilt", sub: "It is normal. Here is what helps" },
             { href: "/guides/talking-to-a-parent-about-aged-care", label: "Talking about aged care", sub: "Scripts for the first conversation" },
-            { href: "/ai-tools/family-coordinator", label: "Family Coordinator chat", sub: "Draft monthly family updates" },
+            { href: "/ai-tools/family-coordinator", label: "Aged Care Q&A chat", sub: "Draft monthly family updates" },
         ],
     },
     {
@@ -363,7 +363,7 @@ export const GUIDES = [
             {
                 heading: "Use shared visibility tools",
                 paragraphs: [
-                    "Long distance carers do better when they can see the same view as the nearby family. Wayly's family thread, monthly statement and care plan review hub mean you do not have to take the nearby sibling's word for what is happening. Use the [Family Coordinator chat](/ai-tools/family-coordinator) when a question crosses time zones.",
+                    "Long distance carers do better when they can see the same view as the nearby family. Wayly's family thread, monthly statement and care plan review hub mean you do not have to take the nearby sibling's word for what is happening. Use the [Aged Care Q&A chat](/ai-tools/family-coordinator) when a question crosses time zones.",
                 ],
             },
             {
@@ -383,7 +383,7 @@ export const GUIDES = [
         related: [
             { href: "/guides/sibling-disagreements-about-mum", label: "Sibling disagreements", sub: "Distance often amplifies these" },
             { href: "/services/social-support", label: "Social support", sub: "What fills the gap when you are not there" },
-            { href: "/ai-tools/family-coordinator", label: "Family Coordinator chat", sub: "Ask anything, any timezone" },
+            { href: "/ai-tools/family-coordinator", label: "Aged Care Q&A chat", sub: "Ask anything, any timezone" },
         ],
     },
 ];

@@ -73,8 +73,8 @@ const TOOLS = [
     },
     {
         slug: "family-coordinator",
-        title: "Family Care Coordinator",
-        body: "Ask any question about Australia's aged-care system. Answers grounded in the Aged Care Act 2024 and program manual.",
+        title: "Aged Care Q&A",
+        body: "Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.",
         icon: MessageCircle,
         plan: "Solo & Family",
         planTone: "paid",

@@ -91,7 +91,7 @@ const SECTIONS = [
             ["Reassessment Letter Generator", false, true, true, true],
             ["Contribution Estimator", false, true, true, true],
             ["Care Plan Reviewer", false, true, true, true],
-            ["Family Coordinator", false, true, true, true],
+            ["Aged Care Q&A", false, true, true, true],
             ["Care Plan Amendment Generator", false, true, true, true],
             ["Ask Wayly (AI chat)", false, true, true, true],
         ],

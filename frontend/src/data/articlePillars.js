@@ -42,6 +42,6 @@ export const ARTICLE_PILLAR_MAP = {
     "wayly-family-coordinator-managing-parents-aged-care": [
         { href: "/guides/sibling-disagreements-about-mum", label: "Sibling disagreements", sub: "Bringing family on side" },
         { href: "/guides/caring-from-far-away", label: "Caring from far away", sub: "Long distance carer setup" },
-        { href: "/ai-tools/family-coordinator", label: "Open the Family Coordinator", sub: "Ask anything, any timezone" },
+        { href: "/ai-tools/family-coordinator", label: "Open Aged Care Q&A", sub: "Ask anything, any timezone" },
     ],
 };

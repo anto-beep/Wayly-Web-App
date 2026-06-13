@@ -181,12 +181,12 @@ export const SEO = {
         toolDesc: "Plain-English review of any Support at Home or HCP care plan.",
     },
     toolFamilyCoordinator: {
-        title: "Family Aged Care Coordinator · Wayly",
+        title: "Aged Care Q&A · Wayly",
         description:
-            "Share Support at Home updates with siblings and family carers privately — Wayly's coordinator keeps everyone aligned on visits, costs and care decisions.",
+            "Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024. A free Wayly tool — no account required.",
         path: "/ai-tools/family-coordinator",
-        toolName: "Family Coordinator",
-        toolDesc: "Coordinate aged-care decisions across multiple family members.",
+        toolName: "Aged Care Q&A",
+        toolDesc: "Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.",
     },
 
     // ----- AUTH -----

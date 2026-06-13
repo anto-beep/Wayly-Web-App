@@ -600,3 +600,86 @@ agent_communication:
       54 passed, 2 skipped across the cross-iteration regression suite.
       Old Mongo documents continue to load cleanly via Pydantic defaults.
 
+
+backend:
+  - task: "Public chat tool rebranded to Aged Care Q&A + system prompt hardening"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          New canonical route POST /api/public/aged-care-chat backed by the
+          extracted handler _aged_care_qa_handler. Legacy
+          /public/family-coordinator-chat remains as a deprecation alias
+          calling the same handler. _require_paid_plan label updated to
+          "Aged Care Q&A". System prompt extended with explicit data-boundary
+          instructions: model has no household data, must not invent dollar
+          figures, must route household-specific questions to the in-app
+          assistant. CHAT_SYSTEM_TEMPLATE (authenticated /api/chat) untouched
+          — confirmed via git log.
+
+  - task: "tests/test_aged_care_qa_chat.py (4 cases)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_aged_care_qa_chat.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Live API: (1) new /aged-care-chat returns a non-empty reply,
+          (2) legacy /family-coordinator-chat alias still returns a reply,
+          (3) "what is mum's budget" returns a reply containing NO dollar
+          regex match AND containing one of the redirect keywords
+          (sign in / signed in / in-app / household etc),
+          (4) static check on server.AGED_CARE_QA_SYSTEM prompt asserts
+          "no access" + "household" + "signed-in/in-app" present and the
+          old "Family Care Coordinator" brand is absent.
+
+frontend:
+  - task: "Sweep tool name 'Family Coordinator' → 'Aged Care Q&A'"
+    implemented: true
+    working: true
+    file: |
+      /app/frontend/src/pages/tools/FamilyCoordinator.jsx,
+      /app/frontend/src/seo/pageConfig.js,
+      /app/frontend/src/pages/AIToolsIndex.jsx,
+      /app/frontend/src/pages/Features.jsx,
+      /app/frontend/src/pages/Pricing.jsx,
+      /app/frontend/src/components/CommandPalette.jsx,
+      /app/frontend/src/data/{seoToolArticles,toolArticles2026,guides,articlePillars}.js,
+      /app/frontend/src/App.js
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Tool page header, blocked-state ToolGate label, hero copy, hero
+          subtext ("can't see your account…") all updated. Public API call
+          switched to /public/aged-care-chat. SEO config + 8-tools index +
+          Features + Pricing comparison + CommandPalette all renamed. Long
+          SEO articles that referred to the Family-plan coordination feature
+          were updated to call that feature "Wayly Family Hub" so the Q&A
+          tool name + the Family-plan feature stay distinct. New
+          /ai-tools/aged-care-qa route registered (renders the same component);
+          /ai-tools/family-coordinator stays live as the legacy slug for SEO.
+          Repo grep confirms no user-facing "Family Coordinator" string left.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Iteration 45 — public chat rebranded to "Aged Care Q&A". Authenticated
+      /api/chat handler + CHAT_SYSTEM_TEMPLATE untouched. Combined
+      regression: 39 passed, 5 skipped (skips are the per-IP 5-uses/hour
+      rate-limit collisions when the LLM chat suite + the older estimator
+      suite run back-to-back). Each test handles 429 explicitly.
+

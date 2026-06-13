@@ -244,6 +244,10 @@ function App() {
                     <Route path="/ai-tools/contribution-estimator" element={<AIToolsRoute><ContributionEstimator /></AIToolsRoute>} />
                     <Route path="/ai-tools/care-plan-reviewer" element={<AIToolsRoute><CarePlanReviewer /></AIToolsRoute>} />
                     <Route path="/ai-tools/family-coordinator" element={<AIToolsRoute><FamilyCoordinator /></AIToolsRoute>} />
+                    {/* Aged Care Q&A — same tool, more honest URL. The
+                        family-coordinator slug stays live for SEO + existing
+                        backlinks; both render the Aged Care Q&A page. */}
+                    <Route path="/ai-tools/aged-care-qa" element={<AIToolsRoute><FamilyCoordinator /></AIToolsRoute>} />
 
                     {/* Legal pages */}
                     <Route path="/legal/terms" element={<Terms />} />

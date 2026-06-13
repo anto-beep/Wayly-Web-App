@@ -3195,15 +3195,49 @@ async def public_care_plan_review(body: PublicCarePlanBody, request: Request, re
     return out
 
 
-# ---- Tool 8: Family Care Coordinator chat (public) ----
+# ---- Tool 8: Aged Care Q&A (public chat) ----
+# Public, unauthenticated tool. The assistant has NO access to the user's
+# account, household, statements or budget — it is a plain-English aged-care
+# Q&A surface. The authenticated /api/chat endpoint (CHAT_SYSTEM_TEMPLATE) is
+# the household-aware "Ask Wayly" and is intentionally separate.
 class PublicChatBody(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     session_id: str | None = None
 
 
-@api.post("/public/family-coordinator-chat")
-async def public_family_coordinator(body: PublicChatBody, request: Request, response: Response):
-    await _require_paid_plan(request, response, "Family Care Coordinator")
+AGED_CARE_QA_SYSTEM = (
+    "You are Wayly's Aged Care Q&A — a friendly, expert chat assistant for "
+    "Australian families navigating the Support at Home program. Tone: the friendliest, "
+    "most patient, most well‑informed niece in Australia — calm, specific, never "
+    "breathless. Ground answers in: Aged Care Act 2024, Support at Home program manual, "
+    "National Quality Standards. Australian English. Use gender‑neutral language; refer "
+    "to 'the person you care for' or 'the participant', never default to 'Mum'. Lead "
+    "with the answer (1‑2 sentences), then one paragraph of context, then cite sources "
+    "where you can ('Aged Care Act 2024, section X'). NEVER invent dollar figures, "
+    "dates, or section numbers — say 'I don't have a current figure for that — the "
+    "authoritative source is My Aged Care on 1800 200 422'. NEVER give clinical or "
+    "financial‑product advice; redirect to the GP / a FAAA‑registered advisor. NEVER "
+    "recommend a specific provider. If asked, you are Wayly's AI; offer human handoff "
+    "with 'type human and I'll connect you'. Keep responses 50–150 words by default, "
+    "up to 250 only if needed. End with one soft next step (a relevant tool or guide). "
+    "\n\nDATA BOUNDARIES — READ CAREFULLY:\n"
+    "- You have NO access to the user's account, household, statements, budget, contributions, "
+    "care team, or any personal data. Never imply that you do, never invent a name, dollar "
+    "figure, or statement reference about them.\n"
+    "- If asked anything that requires their data (e.g. 'what is mum's budget', 'what did our "
+    "last statement say', 'how much have we paid this year'), explain you cannot see their "
+    "information here, and that signed-in Wayly members can ask these questions inside the app "
+    "where the assistant has their household context. Do NOT include any dollar figure when "
+    "replying to such a question.\n"
+    "- If the user asks about coordinating family members, inviting relatives, or roles and "
+    "permissions, answer generally about the responsibilities involved and point them to the "
+    "in-app Family features available on the Family plan — do not pretend to invite anyone, "
+    "manage permissions, or read a real family thread."
+)
+
+
+async def _aged_care_qa_handler(body: PublicChatBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Aged Care Q&A")
     key = os.environ.get("EMERGENT_LLM_KEY", "")
     if not key:
         raise HTTPException(status_code=503, detail="LLM unavailable")
@@ -3215,24 +3249,8 @@ async def public_family_coordinator(body: PublicChatBody, request: Request, resp
             "abuse_flag": wrapped["abuse_flag"],
         }
     from emergentintegrations.llm.chat import LlmChat, UserMessage
-    system = (
-        "You are Wayly's Family Care Coordinator — a friendly, expert chat assistant for "
-        "Australian families navigating the Support at Home program. Tone: the friendliest, "
-        "most patient, most well‑informed niece in Australia — calm, specific, never "
-        "breathless. Ground answers in: Aged Care Act 2024, Support at Home program manual, "
-        "National Quality Standards. Australian English. Use gender‑neutral language; refer "
-        "to 'the person you care for' or 'the participant', never default to 'Mum'. Lead "
-        "with the answer (1‑2 sentences), then one paragraph of context, then cite sources "
-        "where you can ('Aged Care Act 2024, section X'). NEVER invent dollar figures, "
-        "dates, or section numbers — say 'I don't have a current figure for that — the "
-        "authoritative source is My Aged Care on 1800 200 422'. NEVER give clinical or "
-        "financial‑product advice; redirect to the GP / a FAAA‑registered advisor. NEVER "
-        "recommend a specific provider. If asked, you are Wayly's AI; offer human handoff "
-        "with 'type human and I'll connect you'. Keep responses 50–150 words by default, "
-        "up to 250 only if needed. End with one soft next step (a relevant tool or guide)."
-    )
     sid = body.session_id or f"public-chat-{_client_ip(request)}"
-    chat = LlmChat(api_key=key, session_id=sid, system_message=system).with_model(
+    chat = LlmChat(api_key=key, session_id=sid, system_message=AGED_CARE_QA_SYSTEM).with_model(
         "anthropic", "claude-sonnet-4-5-20250929"
     )
     reply = await chat.send_message(UserMessage(text=wrapped["redacted_input"]))
@@ -3240,6 +3258,20 @@ async def public_family_coordinator(body: PublicChatBody, request: Request, resp
     if wrapped["redaction_notice"]:
         out["redaction_notice"] = wrapped["redaction_notice"]
     return out
+
+
+@api.post("/public/aged-care-chat")
+async def public_aged_care_chat(body: PublicChatBody, request: Request, response: Response):
+    return await _aged_care_qa_handler(body, request, response)
+
+
+# DEPRECATED — this slug presented a public Q&A bot as a "Family Care
+# Coordinator" even though it has no household data. New clients should call
+# /public/aged-care-chat. This alias stays for one release so existing
+# frontend / mobile builds keep working, then it goes.
+@api.post("/public/family-coordinator-chat")
+async def public_family_coordinator(body: PublicChatBody, request: Request, response: Response):
+    return await _aged_care_qa_handler(body, request, response)
 
 
 @api.get("/")
@@ -3512,7 +3544,7 @@ HELP_CHAT_SYSTEM = (
     "5. Reassessment Letter Generator (Solo+).\n"
     "6. Contribution Estimator (Solo+).\n"
     "7. Care Plan Reviewer (Solo+).\n"
-    "8. Family Care Coordinator chat (Solo+).\n\n"
+    "8. Aged Care Q&A chat (Solo+).\n\n"
     "KEY FEATURES\n"
     "Caregiver dashboard with per-stream budget cards, lifetime cap progress, anomaly alerts. "
     "Participant view designed for an older parent (huge text, voice-first, single-action UX). "
@@ -5222,7 +5254,7 @@ async def _process_trial_reminders_once() -> dict:
                        "<ul>"
                        "<li><strong>Provider Price Checker</strong> — see if your provider's rates are above the median (most users find at least one item that's overcharged)</li>"
                        "<li><strong>Reassessment Letter Generator</strong> — produce a polished letter to MyAgedCare asking for a higher classification</li>"
-                       "<li><strong>Family Care Coordinator chat</strong> — ask anything about your statements, budget or anomalies</li>"
+                       "<li><strong>Aged Care Q&amp;A chat</strong> — plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024</li>"
                        "</ul>")
                     + f"<p>After your trial, {label} is <strong>${amount:.2f}/month</strong> — cancel any time. "
                     "Add a card any time at <a href='https://wayly.com.au/settings/billing'>Settings → Plan & Billing</a>.</p>"
