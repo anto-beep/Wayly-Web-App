@@ -82,7 +82,7 @@ export default function PriceCheckerTool() {
             <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><ToolRelatedLinks slug="provider-price-checker" />
             <Footer /></div>);
     if (access === "blocked") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolPriceChecker} jsonLd={_toolJsonLd(SEO.toolPriceChecker)} />
-    <MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["provider-price-checker"]} /></section><ToolGate toolName="Provider Price Checker"><ScreenshotStatement /></ToolGate><ToolRelatedLinks slug="provider-price-checker" />
+    <MarketingHeader /><section className="mx-auto max-w-4xl px-6 pt-8"><AIAccuracyBanner text={TOOL_DISCLAIMERS["provider-price-checker"]} /><div data-testid="pc-caps-note" className="mt-4 bg-surface-2 border border-kindred rounded-xl p-4 text-sm text-primary-k leading-relaxed"><span className="font-medium">Price caps deferred.</span> The Australian Government announced in May 2026 that the planned 1 July 2026 national provider price caps under Support at Home are deferred indefinitely. Providers continue to set their own prices. This tool compares your provider's rate against indicative network medians — not a government cap. If you believe you have been overcharged, the Aged Care Quality and Safety Commission can order refunds.</div></section><ToolGate toolName="Provider Price Checker"><ScreenshotStatement /></ToolGate><ToolRelatedLinks slug="provider-price-checker" />
             <Footer /></div>);
 
     return (
@@ -100,6 +100,13 @@ export default function PriceCheckerTool() {
 
             <section className="mx-auto max-w-4xl px-6 pb-20">
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["provider-price-checker"]} className="mb-4" />
+                <div
+                    data-testid="pc-caps-note"
+                    className="mb-4 bg-surface-2 border border-kindred rounded-xl p-4 text-sm text-primary-k leading-relaxed"
+                >
+                    <span className="font-medium">Price caps deferred.</span>{" "}
+                    The Australian Government announced in May 2026 that the planned 1 July 2026 national provider price caps under Support at Home are deferred indefinitely. Providers continue to set their own prices. This tool compares your provider's rate against indicative network medians — not a government cap. If you believe you have been overcharged, the Aged Care Quality and Safety Commission can order refunds.
+                </div>
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="price-checker">
                     <label className="block">
                         <span className="text-sm text-muted-k">Service</span>
@@ -188,6 +195,15 @@ export default function PriceCheckerTool() {
                                     You're paying <span className="font-medium tabular-nums">{result.delta_pct > 0 ? "+" : ""}{result.delta_pct.toFixed(1)}%</span> vs the typical rate.
                                     {result.suggested_action && <span className="block mt-1 italic">→ {result.suggested_action}</span>}
                                 </p>
+                            </div>
+                        )}
+
+                        {result.caps_note && (
+                            <div
+                                data-testid="pc-result-caps-note"
+                                className="bg-surface-2 rounded-xl p-4 border border-kindred text-sm text-muted-k leading-relaxed"
+                            >
+                                {result.caps_note}
                             </div>
                         )}
 

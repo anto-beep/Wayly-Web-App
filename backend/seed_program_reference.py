@@ -125,8 +125,11 @@ SEED_ROWS: List[dict] = [
     # ---------- Forward-dated policy dates (gated for alerts) ----------
     _row("policy_date.personal_care_free", "2026-10-01", "2025-11-01", source=DOH,
          notes="Announced 22 April 2026 by Aged Care Minister Sam Rae. Personal care moves from Independence to Clinical Supports — zero contribution from 1 October 2026."),
-    _row("policy_date.price_caps_start", "2026-07-01", "2025-11-01", source=DOH,
-         notes="National provider price caps commence."),
+    _row("policy_date.price_caps_start", "2026-07-01", "2025-11-01", eff_to="2026-05-19", source=DOH,
+         notes="Originally scheduled commencement of national provider price caps. Closed 19 May 2026 after the Australian Government announced an indefinite deferral the next day."),
+    _row("policy.price_caps_status", "deferred_indefinitely", "2026-05-20",
+         source="https://www.health.gov.au/our-work/support-at-home",
+         notes="Australian Government announced on 20 May 2026 that national provider price caps under Support at Home are deferred indefinitely. Providers continue to set their own prices."),
     _row("policy_date.eol_second_round_start", "2027-02-01", "2025-11-01", source=DOH,
          notes="Approximate — 'early 2027' for End-of-Life second-round funding."),
     _row("policy_date.chsp_transition_earliest", "2027-07-01", "2025-11-01", source=DOH,

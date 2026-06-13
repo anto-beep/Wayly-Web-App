@@ -10,9 +10,11 @@ Hard rules (per the Phase 4 prompt)
 - One clear next action per alert. No "URGENT!" copy.
 - Push and notification payloads must NOT contain health or financial detail.
   Use a generic title that opens the app to the full alert body.
-- Forward-dated policy alerts (1 Oct 2026 personal care free, 1 Jul 2026
-  price caps, early-2027 EoL second round, CHSP transition) are gated behind
-  their effective dates read from program_reference.
+- Forward-dated policy alerts (1 Oct 2026 personal care free, early-2027
+  EoL second round, CHSP transition) are gated behind their effective dates
+  read from program_reference. The previously planned 1 Jul 2026 national
+  provider price caps were deferred indefinitely in May 2026 — no policy
+  gate fires for them.
 - Confirmed deadlines only. Where the catalogue notes "confirm with provider
   or Services Australia", the alert body says so — we do not invent numbers.
 - Delivery goes through the existing in-app notification stack (Phase 0 §4).
@@ -69,7 +71,7 @@ ALERT_TYPES: Dict[str, Dict[str, Any]] = {
     "safeguarding_concern":            {"severity": "critical","axis": "legal_status"},
     # ---- Forward-dated policy alerts (gated) ----
     "policy_personal_care_free_2026":  {"severity": "low",     "axis": "contribution"},
-    "policy_price_caps_2026":          {"severity": "low",     "axis": "budget"},
+    "policy_price_caps_deferred_2026": {"severity": "low",     "axis": "budget"},
     "policy_eol_round2_2027":          {"severity": "low",     "axis": "budget"},
     "policy_chsp_transition":          {"severity": "low",     "axis": "services"},
 }
@@ -485,10 +487,10 @@ async def _clock_policy_gates(db, p: Dict[str, Any]) -> List[Dict[str, Any]]:
          "From 1 Oct 2026, personal care moves to clinical supports",
          "Personal care contributions drop to zero. Watch the first statement after that date "
          "to confirm the change is reflected.", "/app/statements"),
-        ("policy_date.price_caps_start", "policy_price_caps_2026",
-         "National provider price caps start 1 Jul 2026",
-         "Provider prices for capped services will be limited. Check your statement after the start "
-         "date to make sure capped services are within the cap.", "/app/statements"),
+        # National provider price caps were deferred indefinitely in May 2026.
+        # No alert fires; the deferral itself is reflected in CMS content and
+        # the Provider Price Checker's caps_note. See program_reference key
+        # ``policy.price_caps_status`` for the live status string.
         ("policy_date.eol_second_round_start", "policy_eol_round2_2027",
          "End-of-Life second-round funding available from early 2027",
          "A second round of EoL funding becomes available. If the first 12 weeks aren't enough, "

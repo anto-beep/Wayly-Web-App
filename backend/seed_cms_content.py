@@ -95,7 +95,7 @@ Your Support at Home statement looks different. The biggest changes:
 - Charges are now grouped by **service type** rather than by date.
 - There's a clearer **rollover** line showing what carried over from last quarter.
 - **Care management** is broken out as its own category.
-- Provider price caps will start appearing from **1 July 2026**.
+- Providers continue to set their own prices — the Australian Government's planned national price caps under Support at Home were deferred indefinitely in May 2026, so your statement still shows whatever your provider has chosen to charge.
 
 Wayly's Statement Decoder reads both old HCP statements and new Support at Home statements — drop yours in to see the new format explained in plain English.
 
@@ -104,7 +104,7 @@ Wayly's Statement Decoder reads both old HCP statements and new Support at Home 
 | Date | What happens |
 |---|---|
 | **1 November 2025** | HCP → Support at Home transition (done) |
-| **1 July 2026** | National **price caps** start. Providers can't charge above the cap for capped services. |
+| **May 2026** | National provider **price caps deferred indefinitely** by the Australian Government. Providers continue to set their own prices. |
 | **1 October 2026** | **Personal care becomes free** for everyone on Support at Home (no individual contribution for showering, dressing, mobility help). |
 | **Not before 1 July 2027** | CHSP (Commonwealth Home Support Program) folds into Support at Home. |
 
@@ -128,69 +128,58 @@ If anything in this article doesn't match your statement, your statement is the 
     },
     {
         "slug": "support-at-home-price-caps-july-2026",
-        "title": "Support at Home price caps: what families need to know before 1 July 2026",
-        "excerpt": "From 1 July 2026 the Australian Government caps what aged-care providers can charge for Support at Home services. Here's how to check your provider's prices and what to do if they're over the cap.",
+        "title": "Support at Home price caps deferred indefinitely: what families need to know",
+        "excerpt": "The Australian Government announced in May 2026 that the planned 1 July 2026 national price caps for Support at Home are deferred indefinitely. Here's what that means for your provider's pricing, your statements, and what to do if you think you're being overcharged.",
         "body_md": """## The short version
 
-From **1 July 2026**, the Australian Government will publish **national price caps** for most Support at Home services. Your provider will not be able to charge above the cap for capped services. This is the biggest billing change since the program launched in November 2025, and it's designed to stop the wide price variation between providers that families have been reporting.
+In **May 2026**, the Australian Government announced that the **national price caps** that were due to start on 1 July 2026 under Support at Home are **deferred indefinitely**. There is no longer a fixed start date. Providers continue to set their own prices.
 
-This article explains how the caps work, how to check whether your provider is currently above the (draft) cap, and what to do if they are.
+That doesn't mean nothing has changed. The Aged Care Quality and Safety Commission (ACQSC) can still order refunds where a provider has overcharged or billed for services that weren't delivered. Your means-test contribution, lifetime contribution cap and budget rules are unchanged.
 
-## What's actually being capped
+This article explains the current state of pricing, how to sanity-check your provider, and what to do if your bill looks high.
 
-The caps will cover the **most common Support at Home services**, including:
+## Why the caps were deferred
 
-- **Personal care** (showering, dressing, mobility help) — note this also becomes **free to recipients** from 1 October 2026.
-- **Domestic assistance** (cleaning, laundry, meal prep).
-- **Allied health** (physio, occupational therapy, podiatry).
-- **Nursing** (wound care, medication management).
-- **Transport** (per kilometre and per hour rates).
-- **Social support** (group and individual).
+The Department of Health, in consultation with the sector, decided it needed more data before locking in national price caps. The original draft caps published during the late-2025 consultation are no longer treated as upcoming policy. The government has not given a revised commencement date and has said any future schedule will go through a fresh consultation.
 
-Not all services are capped — some specialised services and care-management fees follow separate rules. Your statement will mark capped and uncapped lines once 1 July 2026 hits.
+For families this means: **stop planning around 1 July 2026**. Any savings calculator or article that still references that date as a live event is out of date.
 
-## How the caps are set
+## What's still true
 
-The Department of Health publishes the cap schedule based on data from the Australian Bureau of Statistics and provider cost surveys. Caps are set by **service type** and may differ between **metro, regional and remote** areas (acknowledging that delivering care in remote Australia genuinely costs more).
+- Your **classification budget** and **quarterly rules** are unchanged.
+- **Personal care becomes free at the point of service from 1 October 2026** (that policy is on track and confirmed).
+- **Your lifetime contribution cap** still applies — once you reach it, you don't pay any further contributions, ever.
+- **Care management fees** continue to be governed by their own program rules, not by any price cap.
+- The **Aged Care Quality and Safety Commission (ACQSC)** continues to handle billing complaints and can order refunds.
 
-You can check the live cap schedule at `health.gov.au/our-work/support-at-home/pricing` once published.
+## How to sanity-check your provider now
 
-## How to check your provider now
+Without a national cap to lean on, the best check is to compare your provider's rates against the **published rate cards of other providers in your area** and the **indicative network medians** Wayly tracks.
 
-You don't have to wait until July. Wayly's **Provider Price Checker** tool already loads the draft caps published in the late-2025 consultation papers. Enter the rates from your last statement and you'll see:
+Wayly's **Provider Price Checker** loads our current network medians and tells you whether your provider's rates are above, below or roughly in line with the rest of the sector. It no longer references a "cap" — it shows the median and a sensible band around it.
 
-- Which services are currently **above** the draft cap (you'll likely see a reduction on your July statement)
-- Which services are currently **below** the cap (no change expected)
-- An estimated **annual saving** if your provider has to drop prices
+If you're consistently paying well above the median for the same service, the next steps are:
 
-If your provider is well above the cap on multiple lines, it's worth asking them now whether they plan to keep charging at the cap when it lands. Some providers may negotiate down in advance.
-
-## What to do if you think the cap was breached after 1 July
-
-1. **Cross-check your statement** line-by-line against the published cap schedule.
-2. **Ask your provider in writing** for an explanation of any line above the cap. (Wayly's Statement Decoder can draft this letter for you.)
-3. If the provider can't justify it, **complain to the Aged Care Quality and Safety Commission** (`agedcarequality.gov.au`, 1800 951 822).
-4. **OPAN** (`opan.org.au`, 1800 700 600) can advocate on your behalf for free.
-
-## What providers can still charge for
-
-The cap is a maximum — providers can charge less. Many will, especially if competing for clients. The cap also doesn't stop providers passing on legitimate **third-party costs** (e.g. equipment, consumables) at cost. Watch for those lines on your statement.
-
-Providers also keep **their own management and overhead margin** built into the capped rate — they're not being asked to deliver care below cost.
+1. **Ask your provider in writing** for a breakdown of how they set the rate. (Wayly's Statement Decoder can draft this letter.)
+2. **Compare quotes** from at least two other providers in your area.
+3. **Use OPAN** (1800 700 600) for free advocacy if the provider response isn't satisfactory.
+4. **Lodge a complaint with ACQSC** (1800 951 822 · `agedcarequality.gov.au`) if you believe you have been overcharged or billed for services that weren't delivered.
 
 ## What this doesn't change
 
-- Your **classification** and **budget** are unchanged by the cap.
-- **Care management fees** are governed separately.
-- Your **out-of-pocket contribution** (means-tested) is unchanged by the cap — but the *amount* you contribute will fall because the price is lower.
+- Your **classification** and **quarterly budget** are unchanged.
+- Your **out-of-pocket contribution** is still calculated by Services Australia from your means-test outcome.
+- Your **rollover rules** are unchanged ($1,000 or 10% of the quarterly budget, whichever is higher).
+- The **1 October 2026 zero-contribution change** for personal care is unaffected by this announcement.
 
-## Where to verify everything in this article
+## Where to verify
 
-- Department of Health Support at Home pricing page: `health.gov.au/our-work/support-at-home`
-- Aged Care Quality and Safety Commission: `agedcarequality.gov.au`
-- OPAN: `opan.org.au` · 1800 700 600
+- Department of Health Support at Home page: `health.gov.au/our-work/support-at-home`
+- My Aged Care: 1800 200 422 · `myagedcare.gov.au`
+- Aged Care Quality and Safety Commission (billing complaints, refunds): 1800 951 822 · `agedcarequality.gov.au`
+- OPAN (free advocacy): 1800 700 600 · `opan.org.au`
 """,
-        "tags": ["support-at-home", "price-caps", "billing", "july-2026"],
+        "tags": ["support-at-home", "price-caps", "deferred", "billing", "policy-update"],
         "publish_date": _today(),
     },
     {
@@ -221,7 +210,6 @@ For each line you should see:
 - **Date and duration** of the service
 - **Hourly or per-service rate**
 - **Total cost** for that line
-- A flag if the service was **capped** (caps land 1 July 2026) or **uncapped**
 
 If you see a service you don't recognise, or a duration that doesn't match what was delivered, **query it in writing**. Wayly's Statement Decoder can draft the email for you.
 
@@ -257,7 +245,7 @@ If the provider doesn't respond satisfactorily within **14 days**, escalate to t
 
 ## What's coming on future statements
 
-- From **1 July 2026**: capped services will be marked, and you'll see fewer over-cap lines.
+- The Australian Government deferred the planned 1 July 2026 national provider price caps indefinitely in May 2026, so don't expect a sudden price drop on capped services. Providers continue to set their own prices.
 - From **1 October 2026**: personal-care lines will show **$0 contribution** (the government pays your share).
 
 Bookmark the dates — and if a provider doesn't reflect these changes on your statement after the deadlines, that's worth a written query.
@@ -388,7 +376,7 @@ If a provider tries to charge you for a personal-care line after 1 October 2026,
 
 The average Support at Home recipient uses around 3–6 hours of personal care per week. At pre-cap prices, that translates to roughly **$200–$450 per week in services** previously partly funded by your contribution. From October 2026, that contribution disappears — depending on your means-test outcome, you'll save anywhere from a few hundred dollars to several thousand per year.
 
-The savings stack with the **price caps starting 1 July 2026** — by the end of 2026, personal-care lines on your statement should be both **lower priced** *and* **fully government-funded**.
+The savings stand on their own. The Australian Government deferred the planned 1 July 2026 national provider price caps indefinitely in May 2026, so don't expect a parallel price drop on capped services — providers continue to set their own rates. The personal-care change still removes your contribution for that category from October 2026, regardless of pricing.
 
 ## What to do in the lead-up
 
@@ -405,7 +393,7 @@ If a worker spends an hour with you doing personal care **and** light cleaning, 
 
 ### Does it apply to top-up personal care above the budget?
 
-No. The $0 contribution applies only to personal care **within your classification budget**. If you self-fund extra personal care above the budget, you pay the provider's full rate (subject to the 1 July 2026 cap).
+No. The $0 contribution applies only to personal care **within your classification budget**. If you self-fund extra personal care above the budget, you pay the provider's full rate (the Australian Government deferred the planned national price caps indefinitely in May 2026, so providers still set their own rates).
 
 ### What if I'm on CHSP, not Support at Home?
 
@@ -520,11 +508,11 @@ Not automatically — they're separate processes. But if your circumstances have
     },
     {
         "slug": "what-changes-for-hcp-families-july-2026",
-        "title": "What changes for ex–Home Care Package families on 1 July 2026",
-        "excerpt": "If you transitioned from a Home Care Package to Support at Home in November 2025, here's what changes on 1 July 2026 when national price caps land — and what doesn't.",
+        "title": "Ex-HCP families: what the deferred 1 July 2026 price caps mean for you",
+        "excerpt": "If you transitioned from a Home Care Package to Support at Home in November 2025, here's what the Australian Government's May 2026 decision to indefinitely defer the planned national price caps means for your statement, your unspent HCP balance and your provider relationship.",
         "body_md": """## The short version
 
-If you transitioned from a **Home Care Package** to **Support at Home** on 1 November 2025, the **no-detriment rule** has been protecting your budget and services since then. From **1 July 2026**, the new world fully takes over — including the national price caps on most services. This article walks through what that means in practice for your statement and your provider relationship.
+If you transitioned from a **Home Care Package** to **Support at Home** on 1 November 2025, the **no-detriment rule** has been protecting your budget and services since then. The national provider price caps that were planned for **1 July 2026** have been **deferred indefinitely** by the Australian Government (announced May 2026). That changes what to expect on your mid-2026 statements — but it does **not** undo any of the protections you already have under the transition.
 
 ## What's protected under "no detriment"
 
@@ -534,19 +522,17 @@ The transitional protection guarantees:
 - **Your out-of-pocket contribution doesn't increase** beyond what you'd have paid under HCP (assuming similar income/assets).
 - **Your unspent HCP balance** keeps being usable under Support at Home rules.
 
-This protection runs **indefinitely** for transitioned recipients — but the *system around you* fully shifts to the new rules.
+This protection runs **indefinitely** for transitioned recipients and is unaffected by the cap deferral.
 
-## What changes on 1 July 2026
+## What changes — and what doesn't — from mid-2026
 
-### 1. Price caps land
+### 1. Price caps did NOT land on 1 July 2026
 
-The biggest change: providers can no longer charge above the national price cap for **capped services**. Most personal-care, domestic-assistance, nursing, allied-health, transport and social-support rates are capped.
-
-If your provider was charging above the cap (many were, especially for personal care), you'll see **lower per-line costs** on your July statement. Your **budget goes further** as a result. Your **contribution may also fall** because contributions are calculated against the actual price.
+The biggest change families were planning for has been pushed back with no new start date. Providers continue to set their own prices. If your provider was charging well above what other providers charge, **the cap is not going to fix that automatically** — you need to compare quotes and, if you suspect overcharging, escalate to ACQSC.
 
 ### 2. Your unspent HCP balance is still yours
 
-Some families built up significant unspent balances under HCP — sometimes $20,000 or more. The transitional rules let you continue using this balance under Support at Home. **You don't lose it on 1 July 2026.** It stays earmarked to your file.
+Some families built up significant unspent balances under HCP — sometimes $20,000 or more. The transitional rules let you continue using this balance under Support at Home. **The cap deferral does not touch your unspent balance.** It stays earmarked to your file.
 
 If your provider tells you "the unspent balance is gone now, sorry" — that's wrong. Push back, in writing, and escalate to ACQSC (1800 951 822) if needed.
 
@@ -554,31 +540,31 @@ If your provider tells you "the unspent balance is gone now, sorry" — that's w
 
 Services Australia compares what you'd have received and paid under HCP against what you're getting under Support at Home. If the new system is worse for you on any metric, you get topped up. This comparison continues for the lifetime of your time on the program.
 
-### 4. Your provider's pricing leaflet changes
+### 4. Provider pricing leaflets stay as the provider's own choice
 
-Providers must publish their **capped rates** alongside their old "indicative" rates. If your provider hasn't sent you a new pricing leaflet by mid-July 2026, request one in writing.
+Without national caps, there is no obligation for providers to publish a "capped rate" alongside their indicative rate. Ask your provider for a current pricing leaflet anyway — they should publish one — and compare it line by line against what's appearing on your statement.
 
 ## What doesn't change
 
 - **Your classification** is unchanged (unless you've had a reassessment).
 - **Your quarterly budget figure** is unchanged.
 - **Your rollover rules** are unchanged ($1,000 or 10%, whichever is higher).
-- **Care management fees** are governed separately — they're not capped under the July changes.
-- **Your provider relationship** doesn't auto-terminate. You can stay or switch.
+- **Care management fees** are governed separately.
+- The **1 October 2026 zero-contribution change** for personal care is unaffected by the cap deferral.
 
-## Three checks for your July 2026 statement
+## Three checks for your mid-2026 statement
 
-1. **Are per-line costs lower than May/June 2026?** They should be, on capped services. If they're identical, something's wrong.
+1. **Has the per-line cost changed from earlier in 2026?** Without caps, expect rates to stay where the provider set them. If they've gone up, ask for a written explanation.
 2. **Does your unspent balance carry over?** Look for an explicit line.
-3. **Did your contribution amount fall?** Lower service prices mean lower contributions (assuming your means-test result is unchanged).
+3. **Did your contribution amount change?** A change without a means-test reassessment is unusual and worth querying.
 
 If any of these three don't check out, **email your provider in writing** asking for an explanation. Wayly's Statement Decoder can draft the email for you. If the response isn't satisfactory within 14 days, escalate to the Aged Care Quality and Safety Commission.
 
 ## What to do this quarter
 
-- **Update your provider pricing record.** Ask for their new July 2026 pricing leaflet now and compare it to what they were charging.
-- **Use any remaining unspent HCP balance deliberately.** With lower prices coming, your unspent balance buys *more services* from July onwards — there's no rush to spend it before then.
-- **Don't switch providers in panic.** The cap applies to all providers equally — switching doesn't get you below the cap.
+- **Ask your provider for an up-to-date pricing leaflet.** Compare it to what was on offer in early 2026 and to other providers in your area.
+- **Use any remaining unspent HCP balance deliberately.** Without a cap-driven price drop coming, there is no reason to delay spending the balance on services you actually need.
+- **Don't switch providers in panic.** The cap deferral applies to all providers equally — switching won't get you a guaranteed lower price.
 
 ## Where to verify
 
@@ -587,7 +573,7 @@ If any of these three don't check out, **email your provider in writing** asking
 - Aged Care Quality and Safety Commission: 1800 951 822 · `agedcarequality.gov.au`
 - OPAN: 1800 700 600 · `opan.org.au`
 """,
-        "tags": ["support-at-home", "home-care-package", "price-caps", "july-2026", "transition"],
+        "tags": ["support-at-home", "home-care-package", "price-caps", "deferred", "transition"],
         "publish_date": _today(),
     },
 ]
@@ -602,7 +588,7 @@ KEY_GLOSSARY = [
     ("Quarterly budget", "Support at Home funding is split into 3-month windows rather than annually. Unused funds carry over within limits (up to $1,000 or 10% of the quarterly budget, whichever is higher)."),
     ("Rollover", "The amount of unspent quarterly budget that carries into the next quarter. Capped at the higher of $1,000 or 10%."),
     ("Care management", "Support at Home funds for coordinating your care — case manager time, scheduling, paperwork. Has its own annual cap; rolls over without quarterly limits."),
-    ("Price cap", "From 1 July 2026, the maximum hourly or per-service amount a provider can charge for capped Support at Home services. Set by service type and region by the Department of Health."),
+    ("Price cap", "A national maximum hourly or per-service amount that the Australian Government planned to set for capped Support at Home services. The 1 July 2026 commencement was deferred indefinitely in May 2026, so there is currently no national price cap in force. Providers continue to set their own prices; the Aged Care Quality and Safety Commission handles billing complaints."),
     ("Personal care", "Help with daily living tasks (showering, dressing, mobility, toileting). Becomes free at the point of service from 1 October 2026 — your contribution drops to zero for this category."),
     ("Means-tested contribution", "The amount you personally contribute to your care, calculated by Services Australia based on your income and assets. Capped lifetime amount applies."),
     ("OPAN", "Older Persons Advocacy Network. Free, independent advocacy if you disagree with an assessment, complaint, or provider issue. 1800 700 600. opan.org.au."),

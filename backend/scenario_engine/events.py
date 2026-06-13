@@ -274,8 +274,8 @@ EVENT_TYPES: Dict[str, EventTypeSpec] = {
     "policy_personal_care_free_2026": _ev(
         "Personal care moves to Clinical (1 Oct 2026)",
         "program_policy", [A_CONTRIB]),
-    "policy_price_caps_2026": _ev(
-        "National provider price caps commence (1 Jul 2026)",
+    "policy_price_caps_deferred_2026": _ev(
+        "National provider price caps deferred indefinitely (announced May 2026)",
         "program_policy", [A_BUDGET]),
     "policy_eol_round2_2027": _ev(
         "End-of-Life second-round funding (early 2027)",

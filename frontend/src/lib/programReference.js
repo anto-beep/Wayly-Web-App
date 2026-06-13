@@ -41,9 +41,16 @@ const FALLBACK = Object.freeze({
     },
     policy_dates: {
         personal_care_free: "2026-10-01",
+        // National provider price caps were originally scheduled for 2026-07-01
+        // but the Australian Government deferred them indefinitely in May 2026.
+        // The fallback keeps the historical date here for reference; the live
+        // status is exposed via policy_status.price_caps below.
         price_caps_start: "2026-07-01",
         eol_second_round_start: "2027-02-01",
         chsp_transition_earliest: "2027-07-01",
+    },
+    policy_status: {
+        price_caps: "deferred_indefinitely",
     },
 });
 

@@ -62,7 +62,8 @@ Keys are lowercase, dot-separated. The first segment is the family. Examples:
   deadline.respite_days_per_year                             int — 63
   deadline.cancellation_charge_hours_threshold               int — 48
   policy_date.personal_care_free                             str — "2026-10-01"
-  policy_date.price_caps_start                               str — "2026-07-01"
+  policy_date.price_caps_start                               str — "2026-07-01" (DEFERRED — see policy.price_caps_status)
+  policy.price_caps_status                                   str — "deferred_indefinitely" from 2026-05-20
   policy_date.eol_second_round_start                         str — "2027-02-01"  (approx — "early 2027")
   policy_date.chsp_transition_earliest                       str — "2027-07-01"
   policy_date.next_classification_indexation                 str — "2026-07-01"
@@ -117,6 +118,45 @@ async def ensure_seeded(seed_rows: List[dict]) -> None:
             continue
         await _DB.program_reference.insert_one(dict(row))
         await _DB.program_reference_history.insert_one({**row, "op": "seed"})
+
+
+async def apply_data_migrations() -> None:
+    """One-off data migrations on program_reference rows.
+
+    Each migration is idempotent and safe to re-run on every startup. Use this
+    when a previously open-ended row needs to be closed (``effective_to`` set)
+    because policy changed in flight — the seed file already carries the
+    correct shape for fresh installs, but existing Mongo databases need to
+    be brought in line.
+    """
+    if _DB is None:
+        raise RuntimeError("program_reference.init(db) must be called first")
+    migrations_run: List[str] = []
+
+    # 2026-05-20 — National provider price caps deferred indefinitely.
+    # Close any open-ended ``policy_date.price_caps_start`` row by setting
+    # ``effective_to=2026-05-19``. The matching ``policy.price_caps_status``
+    # row is added by the regular seed step.
+    result = await _DB.program_reference.update_many(
+        {"key": "policy_date.price_caps_start",
+         "$or": [{"effective_to": None}, {"effective_to": {"$exists": False}}]},
+        {"$set": {"effective_to": "2026-05-19"}},
+    )
+    if result.modified_count:
+        migrations_run.append(
+            f"closed {result.modified_count} open policy_date.price_caps_start row(s) at 2026-05-19"
+        )
+        await _DB.program_reference_history.insert_one({
+            "op": "migration",
+            "migration_id": "price_caps_deferred_2026_05_20",
+            "applied_at": datetime.now(timezone.utc).isoformat(),
+            "rows_modified": result.modified_count,
+            "note": "Australian Government deferred national provider price caps indefinitely (announced 20 May 2026).",
+        })
+
+    if migrations_run:
+        log.info("program_reference migrations applied: %s", "; ".join(migrations_run))
+
 
 async def preload_cache() -> None:
     """Read every row from Mongo into the in-process cache. Called once at
@@ -348,6 +388,9 @@ def public_snapshot(as_of_date: Optional[date | str] = None) -> dict:
             "price_caps_start": get_value("policy_date.price_caps_start", as_of_date, default=None),
             "eol_second_round_start": get_value("policy_date.eol_second_round_start", as_of_date, default=None),
             "chsp_transition_earliest": get_value("policy_date.chsp_transition_earliest", as_of_date, default=None),
+        },
+        "policy_status": {
+            "price_caps": get_value("policy.price_caps_status", as_of_date, default="deferred_indefinitely"),
         },
         "deadlines": {
             "statement_due_days_after_month_end": get_value("deadline.statement_due_days_after_month_end", as_of_date, default=None),

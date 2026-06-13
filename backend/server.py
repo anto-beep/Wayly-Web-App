@@ -2104,17 +2104,19 @@ class PublicPriceBody(BaseModel):
 
 # Indicative network-median rates (AUD/hour or per-visit) — derived from public provider price lists.
 # These are placeholder benchmarks for MVP; real medians come from accumulated user data over time.
+# Note: National provider price caps were deferred indefinitely by the Australian Government in May 2026,
+# so these benchmarks intentionally contain only network medians (no cap value).
 PRICE_BENCHMARKS = {
-    "Domestic assistance — cleaning": {"median": 76.0, "cap": 82.0},
-    "Personal care": {"median": 84.0, "cap": 90.0},
-    "Occupational therapy": {"median": 155.0, "cap": 165.0},
-    "Physiotherapy": {"median": 145.0, "cap": 158.0},
-    "Social support": {"median": 70.0, "cap": 78.0},
-    "Transport — community access": {"median": 35.0, "cap": 38.0},
-    "Home maintenance / gardening": {"median": 75.0, "cap": 82.0},
-    "Meal preparation": {"median": 68.0, "cap": 74.0},
-    "Nursing — registered": {"median": 165.0, "cap": 178.0},
-    "Allied health — podiatry": {"median": 130.0, "cap": 140.0},
+    "Domestic assistance — cleaning": {"median": 76.0},
+    "Personal care": {"median": 84.0},
+    "Occupational therapy": {"median": 155.0},
+    "Physiotherapy": {"median": 145.0},
+    "Social support": {"median": 70.0},
+    "Transport — community access": {"median": 35.0},
+    "Home maintenance / gardening": {"median": 75.0},
+    "Meal preparation": {"median": 68.0},
+    "Nursing — registered": {"median": 165.0},
+    "Allied health — podiatry": {"median": 130.0},
 }
 
 
@@ -5055,6 +5057,7 @@ async def _program_reference_bootstrap():
         from seed_program_reference import get_seed_rows as _seed_rows
         _pr.init(db)
         await _pr.ensure_seeded(_seed_rows())
+        await _pr.apply_data_migrations()
         await _pr.preload_cache()
         logger.info("program_reference ready")
     except Exception as e:
