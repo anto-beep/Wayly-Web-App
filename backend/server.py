@@ -2652,22 +2652,15 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
 @api.post("/public/price-check")
 async def public_price_check(body: PublicPriceBody, request: Request, response: Response):
     await _require_paid_plan(request, response, "Provider Price Checker")
-    bench = PRICE_BENCHMARKS.get(body.service, {"median": body.rate, "cap": body.rate})
+    bench = PRICE_BENCHMARKS.get(body.service, {"median": body.rate})
     median = bench["median"]
-    cap = bench["cap"]
     delta_pct = ((body.rate - median) / median * 100) if median else 0.0
-    if body.rate > cap:
-        verdict, label = "high", "Above the 1 July 2026 cap"
-        assessment = (
-            f"At ${body.rate:.2f}/unit, this is above the published 1 July 2026 cap of "
-            f"${cap:.2f}. From that date, providers cannot exceed the cap."
-        )
-        suggested = "Ask the provider for a corrected rate, or raise it with the Aged Care Quality and Safety Commission."
-    elif body.rate > median * 1.10:
+    if body.rate > median * 1.10:
         verdict, label = "high", "Higher than the typical rate"
         assessment = (
             f"At ${body.rate:.2f}/unit, this is about {delta_pct:.0f}% above the network median "
-            f"of ${median:.2f}. Worth asking the provider why."
+            f"of ${median:.2f} for {body.service.lower()}. Worth asking the provider for a written "
+            "explanation of how they set the rate."
         )
         suggested = "Email the provider asking for a written explanation of the rate."
     elif body.rate < median * 0.85:
@@ -2680,8 +2673,8 @@ async def public_price_check(body: PublicPriceBody, request: Request, response: 
     else:
         verdict, label = "fair", "About what you'd expect"
         assessment = (
-            f"At ${body.rate:.2f}/unit, you're within typical range for {body.service.lower()} "
-            f"(network median ${median:.2f}, 1 Jul 2026 cap ${cap:.2f})."
+            f"At ${body.rate:.2f}/unit, you're within the typical range for {body.service.lower()} "
+            f"(network median ${median:.2f})."
         )
         suggested = None
 
@@ -2689,12 +2682,17 @@ async def public_price_check(body: PublicPriceBody, request: Request, response: 
         "service": body.service,
         "charged": body.rate,
         "median": median,
-        "cap": cap,
         "delta_pct": round(delta_pct, 2),
         "verdict": verdict,
         "verdict_label": label,
         "assessment": assessment,
         "suggested_action": suggested,
+        "caps_note": (
+            "Government price caps for Support at Home were deferred indefinitely in May 2026. "
+            "Providers set their own prices. This comparison uses indicative network medians. "
+            "If you believe you have been overcharged, the Aged Care Quality and Safety Commission "
+            "can order refunds."
+        ),
     }
 
 
