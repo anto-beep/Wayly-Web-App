@@ -2859,6 +2859,62 @@ class PublicReassessmentBody(BaseModel):
     recent_events: str | None = None
     sender_name: str = Field(min_length=1, max_length=120)
     relationship: str | None = "family caregiver"
+    # F13: three letter types share the same intake form.
+    letter_type: str = Field(
+        default="classification_reassessment",
+        pattern="^(classification_reassessment|rcp_assessment|care_plan_amendment)$",
+    )
+    # Optional context — used by rcp_assessment to reference the hospital
+    # discharge that prompted the request.
+    hospital_name: str | None = Field(default=None, max_length=200)
+    discharge_date: str | None = Field(default=None, max_length=40)
+
+
+_REASSESS_BASE_RULES = (
+    "Draft a polite, factual letter for Australian Support at Home. Australian English. "
+    "250-400 words. Plain professional tone. Use the participant's name and the sender's "
+    "name. Use gender-neutral language unless explicitly told otherwise — never default to "
+    "'Mum'. Reference the Aged Care Act 2024 framework where relevant. Focus on functional "
+    "changes only — NEVER include a clinical diagnosis. End with a specific request and a "
+    "14-day response timeframe. Output ONLY the letter body — no preamble, no markdown. "
+    "NEVER claim a specific outcome (e.g. 'they should be on Classification 7' or "
+    "'they should be approved for RCP') — frame requests as 'we'd like an assessment / "
+    "we'd like the plan amended to reflect…'."
+)
+
+
+_LETTER_TYPE_SYSTEM = {
+    "classification_reassessment": (
+        "You are a paperwork drafter for Australian Support at Home. Draft a polite, "
+        "factual CLASSIFICATION REASSESSMENT request letter addressed to My Aged Care. "
+        f"{_REASSESS_BASE_RULES} Ask the assessor to consider whether the current "
+        "classification still fits given the functional changes described."
+    ),
+    "rcp_assessment": (
+        "You are a paperwork drafter for Australian Support at Home. Draft a polite, "
+        "factual RESTORATIVE CARE PATHWAY (RCP) ASSESSMENT request letter addressed to "
+        "the provider's care manager (or My Aged Care where the user has not nominated a "
+        f"care manager). {_REASSESS_BASE_RULES} The letter must: explicitly use the words "
+        "'Restorative Care Pathway' and 'RCP assessment'; reference the recent hospital "
+        "discharge (use the hospital name and discharge date when supplied) as the prompt "
+        "for the request; describe the FUNCTIONAL DECLINE (mobility, transfers, ADLs, falls "
+        "risk, cognition where stated) without a diagnosis; ask for the RCP assessment to "
+        "be scheduled within the next 14 days; and INCLUDE a single line noting that RCP "
+        "funding is separate from the participant's quarterly Support at Home budget so "
+        "scheduling an assessment does not reduce ongoing services."
+    ),
+    "care_plan_amendment": (
+        "You are a paperwork drafter for Australian Support at Home. Draft a polite, "
+        "factual CARE PLAN AMENDMENT request letter addressed to the provider's care "
+        f"manager. {_REASSESS_BASE_RULES} The letter must: explicitly reference 'the care "
+        "plan'; list the CHANGED NEEDS (functional changes only — no diagnoses) in a clear "
+        "paragraph; list the SPECIFIC SERVICE ADJUSTMENTS being requested (e.g. more "
+        "personal-care hours per week, addition of OT, change to weekend transport); ask "
+        "the care manager to issue an updated plan within 14 days; and confirm the "
+        "amendment must continue to respect the participant's stated goals and the rights "
+        "in the Aged Care Act 2024."
+    ),
+}
 
 
 @api.post("/public/reassessment-letter")
@@ -2873,29 +2929,33 @@ async def public_reassessment_letter(body: PublicReassessmentBody, request: Requ
     if wrapped["abuse_flag"]:
         return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
     from emergentintegrations.llm.chat import LlmChat, UserMessage
-    system = (
-        "You are a paperwork drafter for Australian Support at Home. Draft a polite, factual "
-        "reassessment request letter to My Aged Care. Australian English. 250–400 words. "
-        "Plain professional tone. Use the participant's name and the sender's name. Use "
-        "gender‑neutral language unless the user has supplied otherwise — never default to "
-        "'Mum'. Reference Aged Care Act 2024 framework where relevant. End with a specific "
-        "request and a 14‑day response timeframe. Output ONLY the letter body — no preamble, "
-        "no markdown. NEVER claim a specific reassessment outcome ('they should be on L7') — "
-        "frame as 'we'd like the assessor to consider whether the current classification still "
-        "fits'."
-    )
+    system = _LETTER_TYPE_SYSTEM[body.letter_type]
     chat = LlmChat(
         api_key=key, session_id=f"reassess-{datetime.now(timezone.utc).timestamp()}",
         system_message=system,
     ).with_model("anthropic", "claude-sonnet-4-5-20250929")
-    prompt = (
-        f"Participant: {body.participant_name}\n"
-        f"Current classification: Classification {body.current_classification}\n"
-        f"What's changed: {wrapped['redacted_input']}\n"
+
+    prompt_lines = [
+        f"Participant: {body.participant_name}",
+        f"Current classification: Classification {body.current_classification}",
+        f"What's changed: {wrapped['redacted_input']}",
+    ]
+    if body.letter_type == "rcp_assessment":
+        if body.hospital_name:
+            prompt_lines.append(f"Recent hospital discharge: {body.hospital_name}")
+        if body.discharge_date:
+            prompt_lines.append(f"Discharge date: {body.discharge_date}")
+    prompt_lines.append(
         f"Letter sender: {body.sender_name} ({body.relationship or 'family caregiver'})"
     )
+    prompt = "\n".join(prompt_lines)
+
     letter = await chat.send_message(UserMessage(text=prompt))
-    out = {"letter": letter.strip(), "word_count": len(letter.split())}
+    out = {
+        "letter": letter.strip(),
+        "word_count": len(letter.split()),
+        "letter_type": body.letter_type,
+    }
     if wrapped["redaction_notice"]:
         out["redaction_notice"] = wrapped["redaction_notice"]
     return out
@@ -3156,6 +3216,16 @@ async def public_contribution_estimator(body: PublicContributionBody, request: R
 # ---- Tool 7: Care plan reviewer ----
 class PublicCarePlanBody(BaseModel):
     text: str = Field(min_length=50, max_length=20000)
+    # Optional context — improves the two numeric checks (budget_fit +
+    # care_management_cap). Omitting them leaves those checks status="unknown".
+    classification: int | None = Field(default=None, ge=1, le=8)
+    quarterly_budget: float | None = Field(default=None, ge=0)
+
+
+_CARE_PLAN_CHECK_KEYS = (
+    "budget_fit", "care_management_cap", "service_list",
+    "stream_alignment", "review_date", "goals_alignment",
+)
 
 
 @api.post("/public/care-plan-review")
@@ -3169,30 +3239,199 @@ async def public_care_plan_review(body: PublicCarePlanBody, request: Request, re
         return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     system = (
-        "You review Australian Support at Home care plans. Check coverage against the "
-        "Statement of Rights (Aged Care Act 2024) and the National Quality Standards. "
-        "Use gender‑neutral language — never default to 'Mum'. "
-        "Output STRICT JSON: {\"summary\":\"1 paragraph\",\"coverage\":[{\"item\":\"...\","
-        "\"present\":true/false,\"note\":\"...\"}],\"gaps\":[\"...\"],"
-        "\"questions_to_raise\":[\"...\"]}. Coverage items: goals stated, services listed "
-        "with frequency, review date set, restorative focus, cultural/language preferences, "
-        "advance care directive referenced, named worker preferences, complaint pathway, "
-        "contribution amounts, rights statement. No markdown."
+        "You review Australian Support at Home care plans against six structured checks "
+        "plus a coverage / gap audit. Australian English. Use gender‑neutral language — "
+        "never default to 'Mum'. Output STRICT JSON only — no markdown, no preamble.\n\n"
+        "SHAPE:\n"
+        "{\"summary\":\"1 paragraph\","
+        "\"checks\":[{\"check\":\"budget_fit|care_management_cap|service_list|stream_alignment|review_date|goals_alignment\","
+        "\"status\":\"pass|flag|unknown\",\"note\":\"...\"}],"
+        "\"coverage\":[{\"item\":\"...\",\"present\":true|false,\"note\":\"...\"}],"
+        "\"gaps\":[\"...\"],\"questions_to_raise\":[\"...\"]}\n\n"
+        "The six checks (emit one entry per key, in this order):\n"
+        "1. budget_fit — Estimate the monthly cost of listed services where frequencies and "
+        "rates are stated. Quarterly estimate = monthly × 3. If a quarterly budget is "
+        "supplied in the user message context, flag when the estimate exceeds 90% of that "
+        "budget (the usable-after-care-management figure); otherwise status=unknown.\n"
+        "2. care_management_cap — If the plan states a care-management percentage, flag when "
+        "it is above 10%. If absent, status=unknown.\n"
+        "3. service_list — Verify each listed service belongs to a recognised Support at "
+        "Home category. Clinical: nursing, wound care, medication management, OT, physio, "
+        "podiatry, speech, dietetics, continence, dementia care, palliative care. "
+        "Independence: personal care, respite, social support, transport, AT-HM products, "
+        "community access. Everyday Living: domestic assistance, gardening, meal preparation, "
+        "shopping, minor home maintenance. Flag any service outside these categories.\n"
+        "4. stream_alignment — Personal care belongs to Independence until 1 October 2026 and "
+        "moves to Clinical from that date. Gardening is Everyday Living, never Independence. "
+        "Transport is Independence. Nursing is Clinical. Flag any miscoded item.\n"
+        "5. review_date — Flag when the review date is past or within 30 days of the current "
+        "date the plan is being read on. Status=unknown when no review date is present.\n"
+        "6. goals_alignment — Flag when listed services clearly do not connect to the stated "
+        "participant goals. Status=unknown when goals aren't stated.\n\n"
+        "COVERAGE — keep an item array for: goals stated; services listed with frequency; "
+        "review date set; restorative focus; cultural/language preferences; advance care "
+        "directive referenced; named worker preferences; complaint pathway; contribution "
+        "amounts; rights statement.\n\n"
+        "NEVER invent a clinical diagnosis or suggest a specific provider."
     )
+    context_block = ""
+    if body.classification is not None:
+        context_block += f"Classification level: {body.classification}\n"
+    if body.quarterly_budget is not None:
+        context_block += f"Quarterly budget (AUD): {body.quarterly_budget:.2f}\n"
+
     chat = LlmChat(
         api_key=key, session_id=f"careplan-{datetime.now(timezone.utc).timestamp()}",
         system_message=system,
     ).with_model("anthropic", "claude-sonnet-4-5-20250929")
-    raw = await chat.send_message(UserMessage(text=f"Care plan:\n\n{wrapped['redacted_input'][:18000]}"))
+    user_msg = f"Care plan:\n\n{wrapped['redacted_input'][:18000]}"
+    if context_block:
+        user_msg = f"Context:\n{context_block}\n{user_msg}"
+    raw = await chat.send_message(UserMessage(text=user_msg))
     import json as _json
     try:
         from agents import _strip_json
         out = _json.loads(_strip_json(raw))
     except Exception:
-        out = {"summary": raw[:500], "coverage": [], "gaps": [], "questions_to_raise": []}
+        out = {"summary": raw[:500], "checks": [], "coverage": [], "gaps": [], "questions_to_raise": []}
+
+    # Normalise checks: ensure every key is present once, in canonical order.
+    existing_checks = {(c.get("check") or "").lower(): c
+                      for c in (out.get("checks") or []) if isinstance(c, dict)}
+    normalised: list[dict] = []
+    for key in _CARE_PLAN_CHECK_KEYS:
+        existing = existing_checks.get(key) or {"check": key, "status": "unknown", "note": ""}
+        if existing.get("check") != key:
+            existing["check"] = key
+        status = (existing.get("status") or "").lower()
+        if status not in ("pass", "flag", "unknown"):
+            existing["status"] = "unknown"
+        existing.setdefault("note", "")
+        normalised.append(existing)
+
+    # Deterministic post-pass: overwrite the LLM's verdict for the two numeric
+    # checks when the optional context is supplied. We trust code over the LLM
+    # for arithmetic (same pattern the decoder uses for Rule 9).
+    text_lower = body.text.lower()
+    if body.quarterly_budget is not None and body.quarterly_budget > 0:
+        usable = round(body.quarterly_budget * 0.90, 2)
+        budget_fit = next(c for c in normalised if c["check"] == "budget_fit")
+        # Try a simple numeric scan: pick up "$X" service lines + a per-week
+        # frequency hint. The wider review-quality estimation stays with the
+        # LLM in the note. Code only owns the verdict when the LLM gave us a
+        # plain-numeric monthly_estimate hint we can parse out of its note.
+        monthly_estimate = _try_parse_monthly_total(budget_fit.get("note") or "")
+        if monthly_estimate is None:
+            monthly_estimate = _estimate_monthly_total_from_plan_text(body.text)
+        if monthly_estimate is not None and monthly_estimate > 0:
+            quarterly_estimate = round(monthly_estimate * 3, 2)
+            if quarterly_estimate > usable:
+                budget_fit["status"] = "flag"
+                budget_fit["note"] = (
+                    f"Estimated monthly cost ${monthly_estimate:,.2f} → quarterly ${quarterly_estimate:,.2f}, "
+                    f"which exceeds 90% of the supplied quarterly budget (${usable:,.2f}). "
+                    "Ask the care manager to rebalance services or confirm the budget figure."
+                )
+            else:
+                budget_fit["status"] = "pass"
+                budget_fit["note"] = (
+                    f"Estimated monthly cost ${monthly_estimate:,.2f} → quarterly ${quarterly_estimate:,.2f}, "
+                    f"within 90% of the supplied quarterly budget (${usable:,.2f})."
+                )
+
+    cm_pct = _parse_care_management_pct(text_lower)
+    cm_check = next(c for c in normalised if c["check"] == "care_management_cap")
+    if cm_pct is not None:
+        if cm_pct > 10.0:
+            cm_check["status"] = "flag"
+            cm_check["note"] = (
+                f"Plan states care management at {cm_pct:.1f}% — above the 10% Support at Home cap. "
+                "Ask the care manager to bring this back to 10% or below in writing."
+            )
+        else:
+            cm_check["status"] = "pass"
+            cm_check["note"] = (
+                f"Plan states care management at {cm_pct:.1f}% — within the 10% cap."
+            )
+
+    out["checks"] = normalised
+    out.setdefault("coverage", [])
+    out.setdefault("gaps", [])
+    out.setdefault("questions_to_raise", [])
     if wrapped["redaction_notice"]:
         out["redaction_notice"] = wrapped["redaction_notice"]
     return out
+
+
+_CARE_MGMT_PCT_RE = re.compile(
+    r"care\s*management[^%\n]{0,80}?(\d{1,2}(?:\.\d{1,2})?)\s*%", re.IGNORECASE,
+)
+
+
+def _parse_care_management_pct(text_lower: str) -> float | None:
+    m = _CARE_MGMT_PCT_RE.search(text_lower)
+    if not m:
+        return None
+    try:
+        return float(m.group(1))
+    except Exception:
+        return None
+
+
+_MONTHLY_HINT_RE = re.compile(
+    r"monthly[^$\n]{0,40}\$\s*([0-9][0-9,]*(?:\.\d{1,2})?)", re.IGNORECASE,
+)
+
+
+def _try_parse_monthly_total(note: str) -> float | None:
+    """If the LLM happened to include a "monthly: $X" figure in its note,
+    extract it so the deterministic check can compare against the usable
+    budget without re-estimating."""
+    m = _MONTHLY_HINT_RE.search(note)
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(",", ""))
+    except Exception:
+        return None
+
+
+_PLAN_DOLLAR_LINE_RE = re.compile(
+    r"\$\s*([0-9][0-9,]*(?:\.\d{1,2})?)(?:\s*(?:per|/|a)?\s*"
+    r"(hour|hr|week|wk|fortnight|month|visit|session))?",
+    re.IGNORECASE,
+)
+
+
+def _estimate_monthly_total_from_plan_text(text: str) -> float | None:
+    """Cheap-and-conservative parser: walks every "$X per <unit>" line in the
+    care plan and converts to a monthly figure. Returns the sum, or None when
+    nothing matched. Trades precision for determinism — the LLM's narrative
+    review remains the qualitative authority."""
+    total = 0.0
+    found = False
+    for match in _PLAN_DOLLAR_LINE_RE.finditer(text):
+        try:
+            amount = float(match.group(1).replace(",", ""))
+        except Exception:
+            continue
+        unit = (match.group(2) or "").lower()
+        monthly_multiplier: float | None
+        if unit in ("week", "wk"):
+            monthly_multiplier = 4.33
+        elif unit == "fortnight":
+            monthly_multiplier = 2.17
+        elif unit == "month":
+            monthly_multiplier = 1.0
+        elif unit in ("visit", "session"):
+            monthly_multiplier = 4.33  # assume weekly visits unless other context
+        else:
+            monthly_multiplier = None
+        if monthly_multiplier is None:
+            continue
+        total += amount * monthly_multiplier
+        found = True
+    return round(total, 2) if found else None
 
 
 # ---- Tool 8: Aged Care Q&A (public chat) ----

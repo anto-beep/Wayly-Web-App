@@ -683,3 +683,136 @@ agent_communication:
       rate-limit collisions when the LLM chat suite + the older estimator
       suite run back-to-back). Each test handles 429 explicitly.
 
+
+backend:
+  - task: "F10: Care Plan Reviewer six structured checks + deterministic numeric post-pass"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          PublicCarePlanBody now accepts optional classification (1-8) and
+          quarterly_budget (float). System prompt rewritten to emit a strict
+          JSON shape with a "checks" array (budget_fit, care_management_cap,
+          service_list, stream_alignment, review_date, goals_alignment) plus
+          the existing coverage/gaps/questions_to_raise sections. Server
+          normalises the checks array to always contain all six canonical
+          keys in order with status in {pass,flag,unknown}.
+          Deterministic post-pass (mirrors the decoder's Rule 9 pattern):
+          (a) care_management_cap — extracts a "care management ... X%"
+          figure from the plan and overrides verdict to pass/flag against the
+          10% Support at Home ceiling.
+          (b) budget_fit — when quarterly_budget supplied, computes monthly
+          $ via a regex over "$X per hour/week/fortnight/month/visit/session"
+          lines, derives quarterly = monthly × 3, flags when above 90% of the
+          supplied budget. Both checks fall back to "unknown" when no
+          numbers were parsed.
+
+  - task: "F13: Reassessment Letter Generator — three letter types"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          PublicReassessmentBody now carries letter_type with pattern
+          ^(classification_reassessment|rcp_assessment|care_plan_amendment)$
+          (default = classification_reassessment, so existing callers stay
+          unchanged) plus optional hospital_name + discharge_date (used by
+          the RCP letter only). _LETTER_TYPE_SYSTEM maps each type to a
+          dedicated system prompt sharing the existing 250-400 word,
+          gender-neutral, no-diagnosis, no-claimed-outcome rules. The
+          rcp_assessment prompt is required to: use the words "Restorative
+          Care Pathway"; reference the recent hospital discharge when given;
+          describe the functional decline; ask for the assessment to be
+          scheduled inside 14 days; and include a single line stating that
+          RCP funding is separate from the participant's quarterly budget.
+          Response now also returns letter_type for clients to display.
+
+  - task: "tests/test_careplan_checks.py (5 cases)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_careplan_checks.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          (1) care_management at 12% with quarterly_budget supplied returns
+          status='flag' citing 12% and the 10% cap.
+          (2) care_management at 8% returns status='pass'.
+          (3) Plan with services exceeding 90% of the supplied quarterly
+          budget returns budget_fit status='flag' with detail noting the
+          exceedance.
+          (4) Omitting quarterly_budget + classification leaves the checks
+          well-formed (status in {pass,flag,unknown}).
+          (5) All six canonical check keys always present in canonical order.
+
+  - task: "tests/test_letter_types.py (4 cases)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_letter_types.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          (1) rcp_assessment letter contains the exact phrase "Restorative
+          Care Pathway", references the supplied hospital, and includes the
+          "separate / does not reduce / not deducted" line about RCP funding
+          being separate from the quarterly budget.
+          (2) care_plan_amendment letter references "care plan".
+          (3) Invalid letter_type returns HTTP 422 via Pydantic.
+          (4) Default letter_type stays classification_reassessment with no
+          regression in word_count.
+
+frontend:
+  - task: "Care Plan Reviewer + Reassessment Letter UI: optional context, six-check card, letter-type selector + RCP hospital fields"
+    implemented: true
+    working: true
+    file: |
+      /app/frontend/src/pages/tools/CarePlanReviewer.jsx,
+      /app/frontend/src/pages/tools/ReassessmentLetter.jsx
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          CarePlanReviewer: form gains a "Classification level" select and
+          "Quarterly budget ($)" input (data-testids cp-classification,
+          cp-quarterly-budget). Result renders a new "Six structured checks"
+          card (data-testid cp-checks) with one row per check, pass/flag/
+          unknown coloured pill, friendly label and the note from the
+          backend.
+          ReassessmentLetter: top-of-form letter-type selector with three
+          radio-style cards (data-testids rl-type-<type>), conditional
+          hospital_name + discharge_date inputs that only appear for the
+          rcp_assessment type (data-testid rl-rcp-fields). API payload
+          strips the RCP-only fields for the other two letter types.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Iteration 46 — Care Plan Reviewer rebuilt around the six structured
+      checks with a deterministic post-pass for the two arithmetic checks
+      (budget fit + care management cap). Reassessment Letter Generator now
+      drafts three letter types (classification reassessment, RCP, care
+      plan amendment) with conditional context fields. 9/9 new tests pass
+      (run takes ~3 min because of the LLM calls). UI updates verified via
+      screenshot — gated state still renders cleanly.
+

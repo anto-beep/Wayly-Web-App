@@ -14,6 +14,14 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 46 — F10 / F13 tool-completeness, Feb 2026)
+Two tool-completeness gaps closed in a single sweep:
+
+- **F10 — Care Plan Reviewer** (`/api/public/care-plan-review`) now emits the six structured checks the design spec requires: `budget_fit`, `care_management_cap`, `service_list`, `stream_alignment`, `review_date`, `goals_alignment`. The system prompt grounds each check in concrete Support at Home rules (stream taxonomy, the 1 Oct 2026 personal-care shift, the 10% care-management ceiling). Optional `classification` (1-8) and `quarterly_budget` (float) inputs feed a deterministic Python post-pass that overrides the LLM verdict for the two numeric checks: care-management percentage is regex-extracted and tested against the 10% cap, monthly service total is regex-summed across `$X per <unit>` lines and tested against 90% of the supplied quarterly. Response always carries all six canonical keys in order so the UI can build a stable table.
+- **F13 — Reassessment Letter Generator** (`/api/public/reassessment-letter`) now drafts three letter types via a `letter_type` field (`classification_reassessment` default · `rcp_assessment` · `care_plan_amendment`). RCP letters use the optional `hospital_name` + `discharge_date` context, must say "Restorative Care Pathway", reference the discharge, describe the functional decline, ask for a 14-day scheduling and include the RCP-funding-is-separate-from-the-quarterly-budget line. Care-plan amendment letters list changed needs and requested service adjustments. Default behaviour for existing callers is unchanged.
+- **Frontend** — Care Plan Reviewer form gains the classification + quarterly_budget inputs and renders a coloured-pill "Six structured checks" card. Reassessment Letter Drafter gains a 3-card letter-type selector and conditional hospital fields for the RCP path.
+- **Tests** — new `tests/test_careplan_checks.py` (5 cases) and `tests/test_letter_types.py` (4 cases). All 9 pass live (~3 min run because of the LLM calls). Existing iteration 39-45 tests untouched.
+
 ## Implemented (Iteration 45 — Aged Care Q&A rename + data-boundary hardening, Feb 2026)
 The public chat tool was marketed as a "Family Care Coordinator" but had zero access to household data. Rather than rebuild it, this iteration renames the surface honestly and hardens the prompt.
 

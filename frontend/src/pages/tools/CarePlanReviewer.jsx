@@ -32,6 +32,8 @@ const _toolJsonLd = (cfg) => {
 export default function CarePlanReviewer() {
     const access = useToolAccess();
     const [text, setText] = useState("");
+    const [classification, setClassification] = useState("");
+    const [quarterlyBudget, setQuarterlyBudget] = useState("");
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
 
@@ -39,7 +41,10 @@ export default function CarePlanReviewer() {
         setLoading(true);
         setResult(null);
         try {
-            const { data } = await api.post("/public/care-plan-review", { text });
+            const payload = { text };
+            if (classification) payload.classification = parseInt(classification, 10);
+            if (quarterlyBudget) payload.quarterly_budget = parseFloat(quarterlyBudget);
+            const { data } = await api.post("/public/care-plan-review", payload);
             setResult(data);
         } finally { setLoading(false); }
     };
@@ -66,6 +71,19 @@ export default function CarePlanReviewer() {
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["care-plan-reviewer"]} className="mb-4" />
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="care-plan-form">
                     <textarea value={text} onChange={(e) => setText(e.target.value)} rows={12} placeholder="Paste the full text of the care plan here…" data-testid="cp-text" className="w-full rounded-md border border-kindred bg-surface-2 p-3 text-sm focus:outline-none focus:ring-2 ring-primary-k" />
+                    <div className="mt-3 grid sm:grid-cols-2 gap-3" data-testid="cp-optional-context">
+                        <label className="block">
+                            <span className="text-xs text-muted-k">Classification level (optional, improves the review)</span>
+                            <select value={classification} onChange={(e) => setClassification(e.target.value)} data-testid="cp-classification" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k">
+                                <option value="">— Choose —</option>
+                                {[1,2,3,4,5,6,7,8].map((c) => <option key={c} value={c}>Classification {c}</option>)}
+                            </select>
+                        </label>
+                        <label className="block">
+                            <span className="text-xs text-muted-k">Quarterly budget ($) — optional</span>
+                            <input type="number" min="0" step="0.01" value={quarterlyBudget} onChange={(e) => setQuarterlyBudget(e.target.value)} placeholder="e.g. 7424.00" data-testid="cp-quarterly-budget" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm tabular-nums focus:outline-none focus:ring-2 ring-primary-k" />
+                        </label>
+                    </div>
                     <button onClick={submit} disabled={loading || text.length < 50} data-testid="cp-submit" className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2">
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {loading ? "Reviewing…" : "Review my care plan"}
@@ -75,6 +93,38 @@ export default function CarePlanReviewer() {
                 {result && (
                     <div className="mt-6 space-y-5 animate-fade-up" data-testid="cp-result">
                         {result.summary && <div className="bg-surface-2 rounded-xl p-5 border border-kindred"><div className="overline">Summary</div><p className="mt-2 text-primary-k leading-relaxed">{result.summary}</p></div>}
+
+                        {result.checks?.length > 0 && (
+                            <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="cp-checks">
+                                <div className="overline">Six structured checks</div>
+                                <ul className="mt-3 space-y-2">
+                                    {result.checks.map((c) => {
+                                        const label = ({
+                                            budget_fit: "Budget fit",
+                                            care_management_cap: "Care management cap (10%)",
+                                            service_list: "Service-list compliance",
+                                            stream_alignment: "Stream alignment",
+                                            review_date: "Review-date currency",
+                                            goals_alignment: "Goals alignment",
+                                        }[c.check]) || c.check;
+                                        const pillClass = c.status === "pass"
+                                            ? "bg-sage/10 text-sage"
+                                            : c.status === "flag"
+                                                ? "bg-terracotta/10 text-terracotta"
+                                                : "bg-amber-100 text-primary-k";
+                                        return (
+                                            <li key={c.check} data-testid={`cp-check-${c.check}`} className="flex items-start gap-3 border-b border-kindred pb-2 last:border-0">
+                                                <span className={`shrink-0 text-[10px] uppercase tracking-wider rounded-full px-2 py-0.5 mt-0.5 ${pillClass}`}>{c.status}</span>
+                                                <div className="flex-1">
+                                                    <div className="text-sm text-primary-k font-medium">{label}</div>
+                                                    {c.note && <div className="text-xs text-muted-k mt-0.5 leading-relaxed">{c.note}</div>}
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        )}
 
                         {result.coverage?.length > 0 && (
                             <div className="bg-surface border border-kindred rounded-xl p-5">

@@ -40,6 +40,9 @@ export default function ReassessmentLetter() {
         recent_events: "",
         sender_name: "",
         relationship: "family caregiver",
+        letter_type: "classification_reassessment",
+        hospital_name: "",
+        discharge_date: "",
     });
     const [loading, setLoading] = useState(false);
     const [letter, setLetter] = useState(null);
@@ -50,7 +53,12 @@ export default function ReassessmentLetter() {
         setLoading(true);
         setLetter(null);
         try {
-            const { data } = await api.post("/public/reassessment-letter", form);
+            const payload = { ...form };
+            if (payload.letter_type !== "rcp_assessment") {
+                delete payload.hospital_name;
+                delete payload.discharge_date;
+            }
+            const { data } = await api.post("/public/reassessment-letter", payload);
             setLetter(data.letter);
         } catch (err) {
             toast.error(extractErrorMessage(err, "Could not draft letter."));
@@ -81,12 +89,33 @@ export default function ReassessmentLetter() {
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI tools</Link>
                 <span className="overline mt-6 block">Free tool · 5 uses per hour</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Reassessment Letter Drafter</h1>
-                <p className="mt-4 text-lg text-muted-k leading-relaxed">Tell us what's changed since the last assessment. We'll draft a clear, polite reassessment request you can send to My Aged Care.</p>
+                <p className="mt-4 text-lg text-muted-k leading-relaxed">Tell us what's changed. We'll draft a clear, polite letter you can send to My Aged Care, the provider's care manager, or both — including Restorative Care Pathway and care-plan amendment requests.</p>
             </section>
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["reassessment-letter"]} className="mb-4" />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="reassessment-form">
+                    <div>
+                        <span className="text-sm text-muted-k">Letter type</span>
+                        <div className="mt-2 grid sm:grid-cols-3 gap-2">
+                            {[
+                                { v: "classification_reassessment", label: "Classification reassessment", sub: "Ask My Aged Care to re-rate the participant" },
+                                { v: "rcp_assessment", label: "Restorative Care Pathway", sub: "Request an RCP assessment after a hospital stay or decline" },
+                                { v: "care_plan_amendment", label: "Care plan amendment", sub: "Ask the care manager to change services in the plan" },
+                            ].map((t) => (
+                                <button
+                                    key={t.v}
+                                    type="button"
+                                    onClick={() => setForm((f) => ({ ...f, letter_type: t.v }))}
+                                    data-testid={`rl-type-${t.v}`}
+                                    className={`text-left rounded-lg border p-3 transition-colors ${form.letter_type === t.v ? "border-primary-k bg-surface-2" : "border-kindred hover:bg-surface-2"}`}
+                                >
+                                    <div className="text-sm font-medium text-primary-k">{t.label}</div>
+                                    <div className="text-xs text-muted-k mt-0.5">{t.sub}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                         <label className="block"><span className="text-sm text-muted-k">Participant name</span>
                             <input value={form.participant_name} onChange={update("participant_name")} required data-testid="rl-participant" className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
@@ -103,6 +132,18 @@ export default function ReassessmentLetter() {
                     <label className="block"><span className="text-sm text-muted-k">Recent events (optional)</span>
                         <textarea value={form.recent_events} onChange={update("recent_events")} rows={2} placeholder="e.g. Hospital admission 14 March, fall on 2 April, new dementia diagnosis." data-testid="rl-events" className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
                     </label>
+                    {form.letter_type === "rcp_assessment" && (
+                        <div data-testid="rl-rcp-fields" className="grid sm:grid-cols-2 gap-4">
+                            <label className="block">
+                                <span className="text-sm text-muted-k">Hospital name (optional)</span>
+                                <input value={form.hospital_name} onChange={update("hospital_name")} placeholder="e.g. Royal Melbourne Hospital" data-testid="rl-hospital" className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
+                            </label>
+                            <label className="block">
+                                <span className="text-sm text-muted-k">Discharge date (optional)</span>
+                                <input type="date" value={form.discharge_date} onChange={update("discharge_date")} data-testid="rl-discharge" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
+                            </label>
+                        </div>
+                    )}
                     <div className="grid sm:grid-cols-2 gap-4">
                         <label className="block"><span className="text-sm text-muted-k">Your name (the sender)</span>
                             <input value={form.sender_name} onChange={update("sender_name")} required data-testid="rl-sender" className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
