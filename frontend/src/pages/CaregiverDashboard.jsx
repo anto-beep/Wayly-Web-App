@@ -65,6 +65,7 @@ export default function CaregiverDashboard() {
     const [familyMsgs, setFamilyMsgs] = useState([]);
     const [audit, setAudit] = useState([]);
     const [chatHistory, setChatHistory] = useState([]);
+    const [pathways, setPathways] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const plan = user?.plan || "free";
@@ -76,12 +77,13 @@ export default function CaregiverDashboard() {
         setLoading(true);
         (async () => {
             try {
-                const [b, s, f, a, c] = await Promise.all([
+                const [b, s, f, a, c, p] = await Promise.all([
                     api.get("/budget/current").catch(() => ({ data: null })),
                     api.get("/statements").catch(() => ({ data: [] })),
                     api.get("/family-thread").catch(() => ({ data: [] })),
                     api.get("/audit-log").catch(() => ({ data: [] })),
                     api.get("/chat/history").catch(() => ({ data: [] })),
+                    api.get("/budget/eligible-pathways").catch(() => ({ data: null })),
                 ]);
                 if (cancelled) return;
                 setBudget(b.data);
@@ -89,6 +91,7 @@ export default function CaregiverDashboard() {
                 setFamilyMsgs(f.data || []);
                 setAudit(a.data || []);
                 setChatHistory(c.data || []);
+                setPathways(p.data);
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -114,7 +117,7 @@ export default function CaregiverDashboard() {
                     </h1>
                     {budget && (
                         <p className="text-muted-k mt-2">
-                            {budget.quarter_label} · {budget.classification_label} · {formatAUD(budget.quarterly_total)} per quarter{displayProvider ? ` · Provider: ${displayProvider}` : ""}
+                            {budget.quarter_label} · {budget.classification_label} · {formatAUD(budget.quarterly_usable ?? budget.quarterly_total)} per quarter{displayProvider ? ` · Provider: ${displayProvider}` : ""}
                         </p>
                     )}
                 </div>
@@ -160,8 +163,8 @@ export default function CaregiverDashboard() {
                                 {formatAUD(budget.streams.reduce((a, s) => a + s.spent, 0))}
                             </div>
                             <div className="text-xs text-muted-k mt-0.5">
-                                of {formatAUD(budget.quarterly_total)} ·
-                                <span className="text-sage"> {formatAUD(budget.quarterly_total - budget.streams.reduce((a, s) => a + s.spent, 0))} left</span>
+                                of {formatAUD(budget.quarterly_usable ?? budget.quarterly_total)} ·
+                                <span className="text-sage"> {formatAUD((budget.quarterly_usable ?? budget.quarterly_total) - budget.streams.reduce((a, s) => a + s.spent, 0))} left</span>
                             </div>
                         </div>
                         <Link to="/app/budget-alerts" className="bg-surface border border-kindred rounded-xl p-5 hover:border-primary-k hover:shadow-sm transition-all" data-testid="stat-anomalies">
@@ -219,6 +222,51 @@ export default function CaregiverDashboard() {
                             >
                                 {budget.allocation_source === "statement" ? "From your latest statement" : "Indicative split"}
                             </span>
+                        </div>
+                    )}
+                    {pathways && pathways.eligible && pathways.eligible.length > 0 && (
+                        <div
+                            data-testid="dashboard-pathways"
+                            className="bg-surface border border-sage/40 rounded-xl p-5"
+                        >
+                            <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                                <span className="overline">Pathways the participant may qualify for</span>
+                                <span className="text-[10px] uppercase tracking-wider rounded-full bg-sage/10 text-sage px-2.5 py-1">
+                                    {pathways.eligible.length} match{pathways.eligible.length === 1 ? "" : "es"}
+                                </span>
+                            </div>
+                            <ul className="mt-4 space-y-3">
+                                {pathways.eligible.map((p) => (
+                                    <li
+                                        key={p.pathway}
+                                        data-testid={`dashboard-pathway-${p.pathway}`}
+                                        className="border-b border-kindred pb-3 last:border-0"
+                                    >
+                                        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                                            <span className="text-sm text-primary-k font-medium">{p.title}</span>
+                                            {p.episode_aud && (
+                                                <span className="text-xs text-muted-k tabular-nums">
+                                                    Up to ${Number(p.episode_aud).toLocaleString()} · {p.duration_days} days
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-k mt-1 leading-relaxed">{p.reason}</p>
+                                        <div className="flex items-center gap-3 mt-2 text-[10px] uppercase tracking-wider text-muted-k">
+                                            <span>{p.section_ref}</span>
+                                            {p.next_step && (
+                                                <a
+                                                    href={p.next_step}
+                                                    className="text-sage hover:text-primary-k normal-case tracking-normal text-xs underline"
+                                                    data-testid={`dashboard-pathway-cta-${p.pathway}`}
+                                                >
+                                                    Draft a request letter →
+                                                </a>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="text-[11px] text-muted-k mt-3 leading-relaxed">{pathways.disclaimer}</p>
                         </div>
                     )}
 

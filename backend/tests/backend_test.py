@@ -183,7 +183,7 @@ class TestBudget:
         d = r.json()
         assert d["classification"] == 4
         assert d["classification_label"] == "Classification 4"
-        assert d["quarterly_total"] > 0
+        assert d["quarterly_usable"] > 0
         assert "quarter_label" in d
         assert len(d["streams"]) == 3
         for s in d["streams"]:
@@ -192,11 +192,11 @@ class TestBudget:
         assert d["lifetime_cap"] > 0
         assert "lifetime_contributions" in d
         assert "lifetime_pct" in d
+class TestChat:
+    def test_chat_post(self, existing_headers):
 
 
 # ---------- CHAT ----------
-class TestChat:
-    def test_chat_post(self, existing_headers):
         r = requests.post(f"{API}/chat", json={"message": "How much do I have left this quarter?"},
                           headers=existing_headers, timeout=90)
         assert r.status_code == 200, r.text
@@ -287,7 +287,7 @@ class TestPublicBudget:
         d = r.json()
         assert d["classification"] == 4
         assert d["annual_total"] > 0
-        assert d["quarterly_total"] > 0
+        assert d["quarterly_usable"] > 0
         assert len(d["streams"]) == 3
         assert {s["stream"] for s in d["streams"]} == {"Clinical", "Independence", "Everyday Living"}
         assert d["lifetime_cap"] > 0

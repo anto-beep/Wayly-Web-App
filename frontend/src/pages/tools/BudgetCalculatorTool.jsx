@@ -32,13 +32,22 @@ const _toolJsonLd = (cfg) => {
 
 const CLASSIFICATIONS_FALLBACK = [
     { v: 1, annual: 10731 },
-    { v: 2, annual: 15910 },
-    { v: 3, annual: 22515 },
+    { v: 2, annual: 16034 },
+    { v: 3, annual: 21966 },
     { v: 4, annual: 29696 },
-    { v: 5, annual: 39805 },
-    { v: 6, annual: 49906 },
-    { v: 7, annual: 60005 },
+    { v: 5, annual: 39697 },
+    { v: 6, annual: 48114 },
+    { v: 7, annual: 58148 },
     { v: 8, annual: 78106 },
+];
+
+const SUPPLEMENT_OPTIONS = [
+    { value: "oxygen", label: "Oxygen supplement", sub: "$14.66/day · medical certification required" },
+    { value: "enteral_bolus", label: "Enteral feeding (bolus)", sub: "$23.25/day" },
+    { value: "enteral_non_bolus", label: "Enteral feeding (non-bolus)", sub: "$26.11/day" },
+    { value: "veterans", label: "Veterans' supplement", sub: "11.5% of base individual daily" },
+    { value: "dementia_cognition", label: "Dementia & cognition (grandfathered HCP)", sub: "11.5% · grandfathered HCP only" },
+    { value: "eachd_top_up", label: "EACHD top-up (grandfathered)", sub: "$3.45/day · grandfathered since 2013" },
 ];
 
 export default function BudgetCalculatorTool() {
@@ -47,6 +56,7 @@ export default function BudgetCalculatorTool() {
     const [isGrandfathered, setIsGrandfathered] = useState(false);
     const [currentBalance, setCurrentBalance] = useState(0);
     const [annualBurn, setAnnualBurn] = useState("");
+    const [applicableSupplements, setApplicableSupplements] = useState([]);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [, _setSnapshotVersion] = useState(0);
@@ -64,6 +74,12 @@ export default function BudgetCalculatorTool() {
         return list;
     }, []);
 
+    const toggleSupplement = (value) => {
+        setApplicableSupplements((prev) =>
+            prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+        );
+    };
+
     const calc = async () => {
         setLoading(true);
         try {
@@ -72,6 +88,7 @@ export default function BudgetCalculatorTool() {
                 is_grandfathered: isGrandfathered,
                 current_lifetime_balance: parseFloat(currentBalance) || 0,
                 expected_annual_burn: parseFloat(annualBurn) || null,
+                applicable_supplements: applicableSupplements.length ? applicableSupplements : null,
             });
             setResult(data);
         } finally {
@@ -184,6 +201,36 @@ export default function BudgetCalculatorTool() {
                         </span>
                     </label>
 
+                    <div data-testid="bc-supplements">
+                        <span className="text-sm text-primary-k font-medium">Applicable supplements (optional)</span>
+                        <p className="text-xs text-muted-k mt-1 leading-relaxed">
+                            Tick any supplement the participant's care plan covers. Wayly adds the seeded daily amount on top of the base annual budget and filters out supplements that don't apply (e.g. grandfathered-only when no HCP transition).
+                        </p>
+                        <div className="mt-3 grid sm:grid-cols-2 gap-2">
+                            {SUPPLEMENT_OPTIONS.map((opt) => {
+                                const checked = applicableSupplements.includes(opt.value);
+                                return (
+                                    <label
+                                        key={opt.value}
+                                        data-testid={`bc-supplement-${opt.value}`}
+                                        className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${checked ? "border-primary-k bg-surface-2" : "border-kindred hover:bg-surface-2"}`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => toggleSupplement(opt.value)}
+                                            className="h-4 w-4 mt-0.5 accent-[var(--kindred-primary)]"
+                                        />
+                                        <span>
+                                            <span className="text-sm text-primary-k font-medium block">{opt.label}</span>
+                                            <span className="text-xs text-muted-k block mt-0.5">{opt.sub}</span>
+                                        </span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <button
                         onClick={calc}
                         disabled={loading}
@@ -205,12 +252,12 @@ export default function BudgetCalculatorTool() {
                             </div>
                             <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-care-management">
                                 <div className="overline">Care management (10%)</div>
-                                <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">−{formatAUD2(result.care_management_quarterly ?? ((result.quarterly_gross ?? result.annual_total/4) - (result.quarterly_usable ?? result.quarterly_total)))}</div>
+                                <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">−{formatAUD2(result.care_management_quarterly ?? ((result.quarterly_gross ?? result.annual_total/4) - result.quarterly_usable))}</div>
                                 <div className="text-xs text-muted-k mt-1">Provider's care management slice.</div>
                             </div>
                             <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-quarterly-usable">
                                 <div className="overline">Usable for services</div>
-                                <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(result.quarterly_usable ?? result.quarterly_total)}</div>
+                                <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(result.quarterly_usable)}</div>
                                 <div className="text-xs text-muted-k mt-1">What you can spend on care this quarter.</div>
                             </div>
                         </div>
@@ -240,6 +287,34 @@ export default function BudgetCalculatorTool() {
                                 {result.streams_note || "Streams cannot cross-subsidise. Indicative split — your provider's care plan may differ."}
                             </div>
                         </div>
+                        {(result.applied_supplements?.length > 0 || result.supplement_warnings?.length > 0) && (
+                            <div data-testid="bc-supplements-result" className="bg-surface border border-kindred rounded-xl p-5">
+                                <div className="overline">Supplements</div>
+                                {result.applied_supplements?.length > 0 && (
+                                    <ul className="mt-3 space-y-2">
+                                        {result.applied_supplements.map((s) => (
+                                            <li key={s.name} className="flex items-baseline justify-between border-b border-kindred pb-2 last:border-0">
+                                                <span className="text-sm text-primary-k">{s.name.replace(/_/g, " ")}</span>
+                                                <span className="font-heading text-base text-primary-k tabular-nums">{formatAUD2(s.annual_aud)}/yr</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                                {result.annual_supplements_total > 0 && (
+                                    <div className="mt-3 flex items-baseline justify-between bg-surface-2 rounded-lg px-3 py-2">
+                                        <span className="text-sm text-muted-k">Annual budget + supplements</span>
+                                        <span className="font-heading text-lg text-primary-k tabular-nums" data-testid="bc-supplements-total">
+                                            {formatAUD(result.annual_total_with_supplements)}
+                                        </span>
+                                    </div>
+                                )}
+                                {result.supplement_warnings?.length > 0 && (
+                                    <ul className="mt-3 space-y-1 text-xs text-terracotta" data-testid="bc-supplement-warnings">
+                                        {result.supplement_warnings.map((w, i) => <li key={i}>• {w}</li>)}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
 
                         <div className="bg-surface border border-kindred rounded-xl p-5">
                             <div className="overline">Lifetime cap projection</div>

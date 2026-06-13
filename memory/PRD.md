@@ -14,6 +14,15 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 48 — Phase 2 follow-ups, Feb 2026)
+Four follow-ups from the Phase 2 (H–N) sweep landed:
+
+- **Supplements UI** — `BudgetCalculatorTool` gains a multi-select picker (six supplements as checkboxes with descriptions and daily/percentage hints). Selected supplements flow through to the API; the result panel renders a new "Supplements" card with per-supplement annual amounts, a combined `annual_total_with_supplements` line and a terracotta-coloured warnings list when the backend filters out provider-only or grandfathered-only entries. Fallback annuals refreshed to the Aged Care Rules 2025 figures.
+- **Pathway eligibility tile** — new `GET /api/budget/eligible-pathways` scans the household's recent statements + life-event fields for RCP triggers (hospital discharge, rehab, stroke, fall, fracture, mobility decline) and EoL triggers (palliative, prognosis, comfort care, advance care directive, 3 months). Returns the seeded pathway figures plus reason copy + Aged Care Rules section citation + deeplink to the Reassessment Letter Generator. `CaregiverDashboard` renders a `dashboard-pathways` tile beneath the streams disclaimer with one-click CTAs to the letter drafter.
+- **Alias cleanup** — `quarterly_total` removed from `/api/public/budget-calc` and `/api/budget/current`; consumers (`CaregiverDashboard`, `BudgetCalculatorTool`, `backend_test.py`) migrated to `quarterly_usable`. Legacy `POST /api/public/family-coordinator-chat` removed; the Aged Care Q&A test now asserts the legacy slug returns 404/405.
+- **server.py refactor (step 1)** — `backend/lib/tool_helpers.py` created with the first ~210 lines extracted: `PRICE_BENCHMARKS`, `PENSION_RATES`, `CARE_PLAN_CHECK_KEYS`, `parse_care_management_pct`, `try_parse_monthly_total`, `estimate_monthly_total_from_plan_text`. `server.py` re-imports under the existing private names so all callers stay working. Foundation laid for the upcoming route-by-route split (kept as its own focused iteration so it doesn't ship alongside three product surfaces).
+- Combined regression: **47 passed, 9 skipped** (rate-limit collisions in older test suites).
+
 ## Implemented (Iteration 47 — Phase 2: Aged Care Rules 2025 authoritative seed + supplements, Feb 2026)
 Seven-prompt sweep (H–N) aligns Wayly's reference data with the Aged Care Rules 2025 source-of-truth and unlocks the supplement / pathway / transitional-HCP / AT-HM tier surfaces.
 

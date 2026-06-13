@@ -73,7 +73,10 @@ def test_budget_calc_exposes_gross_usable_and_alias(auth_token, classification):
     assert "quarterly_gross" in data
     assert "quarterly_usable" in data
     assert "care_management_quarterly" in data
-    assert "quarterly_total" in data, "Legacy alias must stay for one release"
+    # quarterly_total alias removed in iteration 48 — confirm it's gone.
+    assert "quarterly_total" not in data, (
+        "quarterly_total alias should have been removed after the one-release window"
+    )
 
     expected_gross = round(annual / 4, 2)
     expected_cm = round(expected_gross * 0.10, 2)
@@ -82,9 +85,6 @@ def test_budget_calc_exposes_gross_usable_and_alias(auth_token, classification):
     assert data["quarterly_gross"] == pytest.approx(expected_gross, abs=0.01)
     assert data["care_management_quarterly"] == pytest.approx(expected_cm, abs=0.02)
     assert data["quarterly_usable"] == pytest.approx(expected_usable, abs=0.02)
-    assert data["quarterly_total"] == pytest.approx(data["quarterly_usable"], abs=0.01), (
-        "quarterly_total must remain an alias for quarterly_usable"
-    )
 
     # Internal consistency: gross = usable + care_management.
     assert data["quarterly_gross"] == pytest.approx(

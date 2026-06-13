@@ -77,15 +77,12 @@ def test_aged_care_chat_route_returns_reply(cathy_token):
     assert len(body["reply"]) > 20, body
 
 
-def test_legacy_family_coordinator_alias_still_works(cathy_token):
-    """Old slug stays live for one release so existing clients don't break."""
+def test_legacy_family_coordinator_alias_removed(cathy_token):
+    """Legacy slug must now 404 after the one-release deprecation window."""
     r = _post("/api/public/family-coordinator-chat", cathy_token,
-              "What is the lifetime contribution cap?",
-              session_id=f"pytest-{uuid.uuid4()}")
-    if r.status_code == 429:
-        pytest.skip(f"rate-limited: {r.text}")
-    assert r.status_code == 200, r.text
-    assert isinstance(r.json().get("reply"), str)
+              "ping", session_id=f"pytest-{uuid.uuid4()}")
+    # Legacy route is gone — accept 404 (route absent) or 405 (no handler).
+    assert r.status_code in (404, 405), r.text
 
 
 def test_household_data_question_does_not_invent_dollar_figure(cathy_token):

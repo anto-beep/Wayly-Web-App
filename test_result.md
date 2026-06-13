@@ -989,3 +989,105 @@ agent_communication:
       auto-clear buckets — none of those skips are this iteration's
       responsibility).
 
+
+backend:
+  - task: "Iteration 48 — drop quarterly_total alias + drop /public/family-coordinator-chat alias"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          /api/public/budget-calc and /api/budget/current no longer return
+          the deprecated quarterly_total alias. Existing consumers
+          (CaregiverDashboard, BudgetCalculatorTool, backend_test.py) all
+          migrated to quarterly_usable. Legacy POST
+          /api/public/family-coordinator-chat removed — the
+          test_aged_care_qa_chat suite now asserts the route returns 404/405.
+
+  - task: "Iteration 48 — eligible-pathways endpoint + dashboard tile"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py, /app/frontend/src/pages/CaregiverDashboard.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          New GET /api/budget/eligible-pathways. Scans the household's
+          recent statements + life-event fields for RCP triggers
+          (hospital discharge, rehab, stroke, fall, fracture, transfer
+          assistance, mobility decline, functional decline) and EoL
+          triggers (palliative, prognosis, comfort care, advance care
+          directive, 3 months). When a trigger fires, returns the seeded
+          pathway figures plus reason copy + Aged Care Rules section
+          citation + a next_step deeplink into the Reassessment Letter
+          Generator with letter_type=rcp_assessment pre-selected.
+          CaregiverDashboard loads /budget/eligible-pathways in parallel
+          and renders a dashboard-pathways tile beneath the streams
+          disclaimer (data-testids dashboard-pathway-<name>,
+          dashboard-pathway-cta-<name>). Returns 200 with empty list +
+          friendly disclaimer when no household is linked.
+
+  - task: "Iteration 48 — refactor: extract tool constants + helpers into lib.tool_helpers"
+    implemented: true
+    working: true
+    file: "/app/backend/lib/__init__.py, /app/backend/lib/tool_helpers.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          First-step server.py refactor — ~210 lines moved out into
+          backend/lib/tool_helpers.py: PRICE_BENCHMARKS, PENSION_RATES,
+          CARE_PLAN_CHECK_KEYS, parse_care_management_pct,
+          try_parse_monthly_total, estimate_monthly_total_from_plan_text.
+          server.py re-imports under their existing private names so all
+          external callers keep working. Foundation laid for the upcoming
+          route-by-route split.
+
+frontend:
+  - task: "Iteration 48 — applicable_supplements multi-select in Budget Calculator"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/tools/BudgetCalculatorTool.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          New "Applicable supplements (optional)" picker with six
+          checkboxes (oxygen, enteral bolus, enteral non-bolus, veterans,
+          dementia_cognition, eachd_top_up — data-testids
+          bc-supplement-<value>). Selected supplements forwarded to the
+          API; result block renders a new "Supplements" card
+          (data-testid bc-supplements-result) with per-supplement annual
+          values, a combined annual_total_with_supplements line and a
+          terracotta-coloured supplement_warnings list when the backend
+          filters out provider-only or grandfathered-only entries.
+          Existing fallback values updated to the Aged Care Rules 2025
+          authoritative annuals.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Iteration 48 — Phase 2 follow-ups landed. quarterly_total alias and
+      legacy family-coordinator-chat route removed (callers migrated).
+      Pathway eligibility surface live end-to-end (API + dashboard tile).
+      Budget Calculator UI now consumes applicable_supplements. server.py
+      refactor: lib/tool_helpers.py created with ~210 lines extracted —
+      no regressions. The full route-split refactor is teed up but kept
+      as its own focused iteration so it doesn't ship alongside three
+      product surfaces. Combined regression: 47 passed, 9 skipped (older
+      suite rate-limit collisions).
+

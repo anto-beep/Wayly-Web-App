@@ -1596,6 +1596,109 @@ async def inbound_email_webhook(payload: InboundEmailPayload, request: Request):
 
 
 # ----------------- budget -----------------
+@api.get("/budget/eligible-pathways")
+async def get_eligible_pathways(request: Request, user_id: str = Depends(get_current_user_id)):
+    """Return short-term Aged Care pathways the household may qualify for,
+    plus a "why we surfaced this" explanation. Best-effort surfacing only —
+    actual eligibility is determined by My Aged Care / the care manager."""
+    h = await _get_user_household(user_id)
+    if not h:
+        return {
+            "eligible": [],
+            "evaluated_statements": 0,
+            "evaluated_at": datetime.now(timezone.utc).isoformat(),
+            "disclaimer": "No household linked yet — link a household to see pathway suggestions.",
+        }
+    q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+
+    # Pull the household's recent statements + free-text fields.
+    docs = await db.statements.find(
+        q, {"_id": 0, "file_b64": 0},
+    ).sort("uploaded_at", -1).to_list(20)
+
+    # Heuristic signal harvest: anomaly rule keys + statement summaries +
+    # household life-event fields. Keep it lightweight; cohort assessment
+    # belongs to My Aged Care, not Wayly.
+    anomaly_keys: set[str] = set()
+    text_signal_blob = ""
+    for s in docs:
+        for a in (s.get("anomalies") or []):
+            if not isinstance(a, dict):
+                continue
+            rk = (a.get("rule") or "")
+            if rk:
+                anomaly_keys.add(rk.upper())
+            text_signal_blob += " ".join([
+                str(a.get("headline") or ""), str(a.get("detail") or "")
+            ]) + " "
+        text_signal_blob += str(s.get("summary") or "") + " "
+
+    life_events_blob = " ".join([
+        str(h.get("recent_hospital_discharge") or ""),
+        str(h.get("life_events") or ""),
+        str(h.get("care_notes") or ""),
+    ])
+    blob = (text_signal_blob + " " + life_events_blob).lower()
+
+    eligible: list[dict] = []
+
+    rcp_triggers = (
+        "hospital discharge", "rehab", "stroke", "fall", "fracture",
+        "transfer assistance", "mobility decline", "functional decline",
+    )
+    if any(t in blob for t in rcp_triggers):
+        rcp = _pr.get_pathway("restorative_care")
+        eligible.append({
+            "pathway": "restorative_care",
+            "title": "Restorative Care Pathway",
+            "section_ref": "Aged Care Rules 2025, section 194-10(2)",
+            "daily_aud": rcp.get("daily_aud"),
+            "duration_days": rcp.get("duration_days"),
+            "episode_aud": rcp.get("episode_aud"),
+            "max_episodes": rcp.get("max_episodes"),
+            "max_total_aud": rcp.get("max_total_aud"),
+            "reason": (
+                "Recent hospital / mobility decline signal detected in the household's "
+                "statements or care notes. RCP funding is separate from the quarterly "
+                "budget."
+            ),
+            "next_step": "/ai-tools/reassessment-letter?letter_type=rcp_assessment",
+        })
+
+    eol_triggers = (
+        "palliative", "end of life", "prognosis", "comfort care",
+        "advance care directive", "3 months",
+    )
+    if any(t in blob for t in eol_triggers):
+        eol = _pr.get_pathway("end_of_life")
+        eligible.append({
+            "pathway": "end_of_life",
+            "title": "End-of-Life Pathway",
+            "section_ref": "Aged Care Rules 2025, section 194-10(2)",
+            "daily_aud": eol.get("daily_aud"),
+            "duration_days": eol.get("duration_days"),
+            "episode_aud": eol.get("episode_aud"),
+            "reason": (
+                "Palliative or end-of-life signal detected. EoL pathway provides "
+                f"${eol.get('episode_aud', 25000):,.0f} over up to {eol.get('duration_days', 84)} "
+                "days for participants with a prognosis of 3 months or less."
+            ),
+            "next_step": "/ai-tools/reassessment-letter?letter_type=rcp_assessment",
+        })
+
+    return {
+        "eligible": eligible,
+        "evaluated_statements": len(docs),
+        "evaluated_at": datetime.now(timezone.utc).isoformat(),
+        "disclaimer": (
+            "Best-effort surfacing only. Actual eligibility for these pathways is "
+            "determined by My Aged Care and the participant's care manager. Use the "
+            "linked letter generator to start a formal request."
+        ),
+    }
+
+
+
 @api.get("/budget/current")
 async def current_budget(request: Request, user_id: str = Depends(get_current_user_id)):
     h = await _require_household(user_id)
@@ -1690,8 +1793,6 @@ async def current_budget(request: Request, user_id: str = Depends(get_current_us
         "quarterly_gross": quarterly_gross,
         "care_management_quarterly": care_management_quarterly,
         "quarterly_usable": quarterly_usable,
-        # DEPRECATED alias for one release — remove once clients migrate.
-        "quarterly_total": quarterly_usable,
         "rollover_cap": budget_lib.rollover_cap(classification),
         "streams": streams,
         "allocation_source": allocation_source,
@@ -2171,22 +2272,18 @@ class PublicPriceBody(BaseModel):
     provider: str | None = None
 
 
-# Indicative network-median rates (AUD/hour or per-visit) — derived from public provider price lists.
-# These are placeholder benchmarks for MVP; real medians come from accumulated user data over time.
-# Note: National provider price caps were deferred indefinitely by the Australian Government in May 2026,
-# so these benchmarks intentionally contain only network medians (no cap value).
-PRICE_BENCHMARKS = {
-    "Domestic assistance — cleaning": {"median": 76.0},
-    "Personal care": {"median": 84.0},
-    "Occupational therapy": {"median": 155.0},
-    "Physiotherapy": {"median": 145.0},
-    "Social support": {"median": 70.0},
-    "Transport — community access": {"median": 35.0},
-    "Home maintenance / gardening": {"median": 75.0},
-    "Meal preparation": {"median": 68.0},
-    "Nursing — registered": {"median": 165.0},
-    "Allied health — podiatry": {"median": 130.0},
-}
+# Indicative network-median rates (AUD/hour or per-visit) — sourced from
+# ``lib.tool_helpers``. National provider price caps were deferred
+# indefinitely in May 2026, so these benchmarks intentionally contain only
+# network medians (no cap value).
+from lib.tool_helpers import (  # noqa: E402 — module-level re-exports
+    PRICE_BENCHMARKS,
+    PENSION_RATES,
+    CARE_PLAN_CHECK_KEYS as _CARE_PLAN_CHECK_KEYS,
+    parse_care_management_pct as _parse_care_management_pct,
+    try_parse_monthly_total as _try_parse_monthly_total,
+    estimate_monthly_total_from_plan_text as _estimate_monthly_total_from_plan_text,
+)
 
 
 async def _run_public_decode(text: str) -> dict:
@@ -2842,8 +2939,6 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
         "quarterly_gross": quarterly_gross,
         "care_management_quarterly": care_management_quarterly,
         "quarterly_usable": quarterly_usable,
-        # DEPRECATED: kept for one release so existing clients keep working.
-        "quarterly_total": quarterly_usable,
         "rollover_cap": rollover,
         "streams": [
             {"stream": s, "allocated": allocations[s], "indicative": True}
@@ -3072,16 +3167,9 @@ async def public_reassessment_letter(body: PublicReassessmentBody, request: Requ
 
 
 # ---- Tool 6: Contribution estimator ----
-# Each entry maps a pension cohort + stream to a (min_rate, max_rate) band.
-# Exact-rate cohorts have min == max. Band cohorts (part Age Pension, CSHC) sit
-# on a Services Australia means-tested range — for the estimator the band
-# midpoint is used as an indicative rate and the response flags the basis.
-PENSION_RATES = {
-    "full":      {"clinical": (0.0, 0.0), "independence": (0.05, 0.05),  "everyday_living": (0.175, 0.175)},
-    "part":      {"clinical": (0.0, 0.0), "independence": (0.05, 0.25),  "everyday_living": (0.175, 0.25)},
-    "cshc":      {"clinical": (0.0, 0.0), "independence": (0.05, 0.50),  "everyday_living": (0.175, 0.80)},
-    "self":      {"clinical": (0.0, 0.0), "independence": (0.50, 0.50),  "everyday_living": (0.80, 0.80)},
-}
+# PENSION_RATES + band semantics live in ``lib.tool_helpers`` and are re-exported
+# above. The route below converts band cohorts to per-stream low/high values
+# (see iteration 42 F5/F6 for the design).
 
 
 class PublicContributionBody(BaseModel):
@@ -3324,18 +3412,15 @@ async def public_contribution_estimator(body: PublicContributionBody, request: R
 
 
 # ---- Tool 7: Care plan reviewer ----
+# CARE_PLAN_CHECK_KEYS + the small regex helpers (_parse_care_management_pct,
+# _try_parse_monthly_total, _estimate_monthly_total_from_plan_text) all live
+# in ``lib.tool_helpers`` and are re-exported above.
 class PublicCarePlanBody(BaseModel):
     text: str = Field(min_length=50, max_length=20000)
     # Optional context — improves the two numeric checks (budget_fit +
     # care_management_cap). Omitting them leaves those checks status="unknown".
     classification: int | None = Field(default=None, ge=1, le=8)
     quarterly_budget: float | None = Field(default=None, ge=0)
-
-
-_CARE_PLAN_CHECK_KEYS = (
-    "budget_fit", "care_management_cap", "service_list",
-    "stream_alignment", "review_date", "goals_alignment",
-)
 
 
 @api.post("/public/care-plan-review")
@@ -3473,75 +3558,9 @@ async def public_care_plan_review(body: PublicCarePlanBody, request: Request, re
     return out
 
 
-_CARE_MGMT_PCT_RE = re.compile(
-    r"care\s*management[^%\n]{0,80}?(\d{1,2}(?:\.\d{1,2})?)\s*%", re.IGNORECASE,
-)
-
-
-def _parse_care_management_pct(text_lower: str) -> float | None:
-    m = _CARE_MGMT_PCT_RE.search(text_lower)
-    if not m:
-        return None
-    try:
-        return float(m.group(1))
-    except Exception:
-        return None
-
-
-_MONTHLY_HINT_RE = re.compile(
-    r"monthly[^$\n]{0,40}\$\s*([0-9][0-9,]*(?:\.\d{1,2})?)", re.IGNORECASE,
-)
-
-
-def _try_parse_monthly_total(note: str) -> float | None:
-    """If the LLM happened to include a "monthly: $X" figure in its note,
-    extract it so the deterministic check can compare against the usable
-    budget without re-estimating."""
-    m = _MONTHLY_HINT_RE.search(note)
-    if not m:
-        return None
-    try:
-        return float(m.group(1).replace(",", ""))
-    except Exception:
-        return None
-
-
-_PLAN_DOLLAR_LINE_RE = re.compile(
-    r"\$\s*([0-9][0-9,]*(?:\.\d{1,2})?)(?:\s*(?:per|/|a)?\s*"
-    r"(hour|hr|week|wk|fortnight|month|visit|session))?",
-    re.IGNORECASE,
-)
-
-
-def _estimate_monthly_total_from_plan_text(text: str) -> float | None:
-    """Cheap-and-conservative parser: walks every "$X per <unit>" line in the
-    care plan and converts to a monthly figure. Returns the sum, or None when
-    nothing matched. Trades precision for determinism — the LLM's narrative
-    review remains the qualitative authority."""
-    total = 0.0
-    found = False
-    for match in _PLAN_DOLLAR_LINE_RE.finditer(text):
-        try:
-            amount = float(match.group(1).replace(",", ""))
-        except Exception:
-            continue
-        unit = (match.group(2) or "").lower()
-        monthly_multiplier: float | None
-        if unit in ("week", "wk"):
-            monthly_multiplier = 4.33
-        elif unit == "fortnight":
-            monthly_multiplier = 2.17
-        elif unit == "month":
-            monthly_multiplier = 1.0
-        elif unit in ("visit", "session"):
-            monthly_multiplier = 4.33  # assume weekly visits unless other context
-        else:
-            monthly_multiplier = None
-        if monthly_multiplier is None:
-            continue
-        total += amount * monthly_multiplier
-        found = True
-    return round(total, 2) if found else None
+_CARE_MGMT_PCT_RE = None  # See lib.tool_helpers; kept here for legacy import path.
+_MONTHLY_HINT_RE = None
+_PLAN_DOLLAR_LINE_RE = None
 
 
 # ---- Tool 8: Aged Care Q&A (public chat) ----
@@ -3614,13 +3633,8 @@ async def public_aged_care_chat(body: PublicChatBody, request: Request, response
     return await _aged_care_qa_handler(body, request, response)
 
 
-# DEPRECATED — this slug presented a public Q&A bot as a "Family Care
-# Coordinator" even though it has no household data. New clients should call
-# /public/aged-care-chat. This alias stays for one release so existing
-# frontend / mobile builds keep working, then it goes.
-@api.post("/public/family-coordinator-chat")
-async def public_family_coordinator(body: PublicChatBody, request: Request, response: Response):
-    return await _aged_care_qa_handler(body, request, response)
+# Legacy POST /api/public/family-coordinator-chat removed after one-release
+# deprecation window. New clients call POST /api/public/aged-care-chat.
 
 
 @api.get("/")
