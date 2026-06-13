@@ -14,6 +14,14 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 41 — Rollover cap correctness, Feb 2026)
+`backend/budget.py` `rollover_cap()` was computing against the post-CM `quarterly_budget()` figure. The Support at Home rollover rule applies to the GROSS quarterly (annual / 4). Fix:
+- `rollover_cap()` now uses `classification_annual(c) / 4.0` as the base; floor and pct still read from `program_reference`. Level 8 now returns the correct $1,952.65 (was $1,757.39); Levels 6 / 7 increase to ~$1,247.65 / ~$1,500.13; Levels 1-5 keep the $1,000 floor.
+- `quarterly_budget()` left unchanged (other callers depend on its post-CM semantics).
+- `backend/agents.py` Rule 13 deterministic rollover_cap calc reads `quarterly_budget_total` from the statement header — providers print this as the gross figure, so 0.10 * value is already correct; added an explanatory code comment to prevent future drift.
+- New `backend/tests/test_rollover_cap.py` — 8 cases, formula-based for L6/L7 so they survive any future re-seed of those classifications.
+- Frontend already consumed API-returned rollover figures (`BudgetCalculatorTool.jsx`, `Reports.jsx`) — no UI code change required.
+
 ## Implemented (Iteration 40 — Pension contribution rate correctness, Feb 2026)
 Wayly previously hard-coded part Age Pension contribution rates as Independence 17.5% / Everyday Living 50%. The real Support at Home framework uses bands:
 - Clinical / AT-HM / Care Mgmt: 0% for every cohort.

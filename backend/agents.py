@@ -1806,6 +1806,12 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
         if is_final_month and quarterly_total > 0 and remaining > 0:
             # Final month of the quarter — fire the full forfeiture alert
             remaining_pct = remaining / quarterly_total * 100
+            # Rollover cap = max($1,000, 10% of GROSS quarterly budget).
+            # ``quarterly_total`` comes from the statement's quarterly_budget_total
+            # header, which providers print as the GROSS quarterly figure (annual / 4,
+            # before the 10% care-management slice). So multiplying it by 0.10 here
+            # already produces the correct gross-base rollover cap — do NOT swap to
+            # budget_lib.quarterly_budget(), which would deduct CM a second time.
             rollover_cap = max(1000.00, 0.10 * quarterly_total)
             if remaining_pct >= 10 or remaining >= 500:
                 participant = extracted.get("participant_name") or "The participant"

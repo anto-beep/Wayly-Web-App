@@ -58,10 +58,18 @@ def stream_allocations(classification: int, as_of: Optional[date | str] = None) 
 
 
 def rollover_cap(classification: int, as_of: Optional[date | str] = None) -> float:
-    q = quarterly_budget(classification, as_of)
+    """Greater of $1,000 or 10% of the GROSS quarterly budget.
+
+    Note: the Support at Home rollover rule is calculated against the gross
+    quarterly figure (annual / 4), NOT against ``quarterly_budget()`` which
+    already deducts the 10% care-management slice. Using the post-CM figure
+    understates the cap for Levels 6, 7 and 8 and risks families forfeiting
+    funds they were entitled to carry over.
+    """
+    q_gross = classification_annual(classification, as_of) / 4.0
     floor = float(get_value("rollover.floor_aud", _as_of(as_of)))
     pct = float(get_value("rollover.pct", _as_of(as_of)))
-    return max(floor, q * pct)
+    return max(floor, round(q_gross * pct, 2))
 
 
 def lifetime_cap(is_grandfathered: bool, as_of: Optional[date | str] = None) -> float:

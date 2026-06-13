@@ -254,3 +254,64 @@ agent_communication:
       via git stash). Frontend Contribution Estimator UI redesign is
       explicitly deferred per the user's prompt.
 
+
+backend:
+  - task: "Rollover cap computes against GROSS quarterly budget (not post-CM)"
+    implemented: true
+    working: true
+    file: "/app/backend/budget.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          rollover_cap() now uses classification_annual(c) / 4.0 as the
+          gross quarterly base before applying the 10% rollover percentage.
+          The previous implementation called quarterly_budget() which already
+          deducts the 10% care-management slice, understating the rollover
+          cap for Levels 6/7/8. Level 8 now returns the correct $1,952.65
+          (vs the bug's $1,757.39). quarterly_budget() semantics unchanged.
+          agents.py Rule 13 deterministic rollover_cap calc verified — it
+          reads quarterly_budget_total from the extracted statement header,
+          which providers print as the GROSS figure, so the existing
+          0.10 * quarterly_total math is already correct; added an explanatory
+          comment to prevent future drift. Frontend BudgetCalculatorTool and
+          Reports pages already consume API-returned rollover figures, so the
+          fix flows through without any frontend code change.
+
+  - task: "New regression suite test_rollover_cap.py"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_rollover_cap.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          8 cases — Level 1 / Level 4 hit the $1,000 floor; Level 6 / Level 7
+          assertions are formula-based (classification_annual(c)/4 * 0.10) so
+          they remain correct if the seeded L6/L7 annuals are revised later;
+          Level 8 pins the canonical $1,952.65 number from the bug report and
+          a sanity guard ensures we never return the old buggy $1,757.39;
+          rollover_cap >= $1,000 invariant verified for every classification;
+          quarterly_budget() post-CM contract verified unchanged.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Rollover-cap fix shipped. budget.py rollover_cap() now uses the gross
+      quarterly base. Verified no regression on:
+        - tests/test_pension_rates.py (10 pass, 1 skip - rate-limit)
+        - tests/test_price_caps_removed.py (6 pass)
+        - tests/test_rollover_cap.py (8 pass)
+        - tests/test_iter17_okafor.py (cached - pass)
+      Combined: 40 passed, 1 skipped. agents.py Rule 13 reads gross
+      quarterly from the statement header — added a clarifying code comment
+      but no maths change required. No frontend code change needed; the
+      Budget Calculator and Reports pages already display API-returned
+      rollover figures.
+
