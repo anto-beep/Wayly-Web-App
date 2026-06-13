@@ -518,3 +518,85 @@ agent_communication:
       dashboard can switch from MVP averages to the participant's actual
       allocation. Combined regression: 51 passed, 2 skipped (per-IP rate limit).
 
+
+backend:
+  - task: "Statement Anomaly model: persist rule, dollar_impact, evidence, raw_severity"
+    implemented: true
+    working: true
+    file: "/app/backend/models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Anomaly model extended with rule (Optional[str]), dollar_impact
+          (Optional[float]), evidence (List[str], default factory []), and
+          raw_severity (Optional[str] — decoder's high/medium/low before the
+          display map). model_config extra='ignore' + safe defaults mean old
+          Mongo docs load unchanged. Statement model gains
+          anomaly_dollar_impact_total (float, default 0.0) and
+          informational_notes (List[dict], default []).
+
+  - task: "_run_upload_job: copy decoder metadata + aggregates onto Statement"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Anomaly mapping pulls rule, dollar_impact, evidence and raw_severity
+          off each audit anomaly. anomaly_dollar_impact_total sums every
+          non-negative dollar_impact (clamped at 0). informational_notes
+          copied verbatim from audit.informational_notes (dict entries only).
+          Statement detail endpoints already return the full Statement model
+          and the only field exclusion is file_b64 — new fields flow through.
+
+  - task: "tests/test_anomaly_persistence.py (3 cases)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/test_anomaly_persistence.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          (1) Audit dict → Anomaly mapping carries rule, dollar_impact (None
+          when zero), evidence, raw_severity; anomaly_dollar_impact_total
+          rolls up correctly. (2) Statement.model_dump() round-trips the
+          new aggregates and per-anomaly keys. (3) Legacy doc without
+          rule/dollar_impact/evidence/raw_severity/anomaly_dollar_impact_total
+          loads cleanly with safe defaults.
+
+frontend:
+  - task: "StatementDetail anomaly card: dollar impact + rule key + evidence"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/StatementDetail.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          Anomaly card now shows a header pill with total potential impact
+          (anomalies-total-impact testid), per-row "Potential impact: $X"
+          when dollar_impact > 0, an expandable "Why was this flagged?"
+          section listing evidence entries, and a small monospaced rule
+          caption (anomaly-rule-<id> testid) at the bottom of each row.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Iteration 44 — decoder metadata now lives on persisted statements.
+      54 passed, 2 skipped across the cross-iteration regression suite.
+      Old Mongo documents continue to load cleanly via Pydantic defaults.
+

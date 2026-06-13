@@ -14,6 +14,14 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 44 — Decoder metadata persistence, Feb 2026)
+The Statement Decoder audit emits rule keys, dollar impacts, evidence arrays and informational notes — but the dashboard upload flow was discarding them on persistence. That blocked historical reporting and rule analytics.
+
+- **`backend/models.py`** — `Anomaly` extended with `rule`, `dollar_impact`, `evidence`, `raw_severity` (all optional / default-empty so legacy docs load unchanged thanks to `extra="ignore"`). `Statement` gains `anomaly_dollar_impact_total: float` and `informational_notes: List[dict]`.
+- **`backend/server.py` `_run_upload_job`** — anomaly mapping copies the four new per-row fields and rolls up `anomaly_dollar_impact_total` (sum of non-negative `dollar_impact`s). `informational_notes` copied from `audit.informational_notes`. Statement detail / list endpoints already return the full model; the only field exclusion is `file_b64`, so the new fields flow automatically.
+- **`frontend/src/pages/StatementDetail.jsx`** — anomaly card shows total potential impact pill, per-row "Potential impact: $X" line, expandable "Why was this flagged?" section listing evidence entries, and a small monospaced rule caption (`anomaly-rule-<id>` testid) for support/debug.
+- **Tests**: new `backend/tests/test_anomaly_persistence.py` (3 cases — mapping, model round-trip, legacy doc compatibility). Cross-iteration regression: **54 passed, 2 skipped** (rate-limit).
+
 ## Implemented (Iteration 43 — Stream allocation transparency, Feb 2026)
 The MVP `stream_proportion` figures (Clinical 0.40, Independence 0.35, Everyday Living 0.25) are program-wide averages, not the participant's real per-stream quarterly allocation. Until Wayly ingests the actual individualised budget, splits must be labelled as indicative — and replaced with the statement's real figures when available.
 

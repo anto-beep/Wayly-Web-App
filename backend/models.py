@@ -111,6 +111,10 @@ class Statement(BaseModel):
     file_size_bytes: Optional[int] = None
     file_b64: Optional[str] = None  # original bytes, base64-encoded
     has_original_file: bool = False  # surfaced on list/detail endpoints (file_b64 itself is excluded)
+    # Audit-level aggregates (added Feb 2026). Old documents load cleanly
+    # thanks to extra="ignore" + the safe defaults.
+    anomaly_dollar_impact_total: float = 0.0
+    informational_notes: List[dict] = Field(default_factory=list)
 
 
 class Anomaly(BaseModel):
@@ -121,6 +125,13 @@ class Anomaly(BaseModel):
     detail: str
     suggested_action: Optional[str] = None
     line_item_id: Optional[str] = None
+    # Decoder-side metadata (added Feb 2026). Old documents predating this
+    # change simply have rule=None / dollar_impact=None / evidence=[] thanks
+    # to extra="ignore" + the safe defaults below.
+    rule: Optional[str] = None
+    dollar_impact: Optional[float] = None
+    evidence: List[str] = Field(default_factory=list)
+    raw_severity: Optional[str] = None  # decoder's high/medium/low before display mapping
 
 
 # ---------- Family thread / audit ----------

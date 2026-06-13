@@ -117,16 +117,43 @@ export default function StatementDetail() {
 
             {(stmt.anomalies || []).length > 0 && (
                 <div className="bg-surface border border-kindred rounded-xl p-6" data-testid="anomalies-card">
-                    <span className="overline">Things to know</span>
+                    <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                        <span className="overline">Things to know</span>
+                        {stmt.anomaly_dollar_impact_total > 0 && (
+                            <span data-testid="anomalies-total-impact" className="text-xs rounded-full bg-terracotta/10 text-terracotta px-2.5 py-1 tabular-nums">
+                                Potential impact: ${Number(stmt.anomaly_dollar_impact_total).toFixed(2)}
+                            </span>
+                        )}
+                    </div>
                     <ul className="mt-4 space-y-3">
                         {stmt.anomalies.map((a) => (
-                            <li key={a.id} className="flex items-start gap-3 border-b border-kindred pb-3 last:border-0">
+                            <li key={a.id} className="flex items-start gap-3 border-b border-kindred pb-3 last:border-0" data-testid={`anomaly-${a.rule || a.id}`}>
                                 <AlertTriangle className={`h-4 w-4 mt-1 ${a.severity === "alert" ? "text-terracotta" : "text-sage"}`} />
                                 <div className="flex-1">
                                     <div className="font-medium text-primary-k text-sm">{a.title}</div>
                                     <div className="text-xs text-muted-k mt-0.5">{a.detail}</div>
+                                    {a.dollar_impact != null && a.dollar_impact > 0 && (
+                                        <div data-testid={`anomaly-dollar-${a.id}`} className="text-xs text-terracotta mt-1 tabular-nums">
+                                            Potential impact: ${Number(a.dollar_impact).toFixed(2)}
+                                        </div>
+                                    )}
                                     {a.suggested_action && (
                                         <div className="text-xs text-primary-k mt-1.5 italic">→ {a.suggested_action}</div>
+                                    )}
+                                    {Array.isArray(a.evidence) && a.evidence.length > 0 && (
+                                        <details className="mt-2 text-xs text-muted-k" data-testid={`anomaly-evidence-${a.id}`}>
+                                            <summary className="cursor-pointer text-primary-k hover:underline">Why was this flagged?</summary>
+                                            <ul className="mt-1.5 ml-3 list-disc space-y-0.5">
+                                                {a.evidence.map((e, i) => (
+                                                    <li key={i} className="tabular-nums">{e}</li>
+                                                ))}
+                                            </ul>
+                                        </details>
+                                    )}
+                                    {a.rule && (
+                                        <div data-testid={`anomaly-rule-${a.id}`} className="mt-2 text-[10px] uppercase tracking-wider text-muted-k font-mono">
+                                            {a.rule}
+                                        </div>
                                     )}
                                     <div className="mt-2">
                                         <AIAccuracyBanner variant="anomaly" />

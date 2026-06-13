@@ -2454,18 +2454,40 @@ async def _run_upload_job(
             except Exception as e:
                 logger.warning("Skipping bad line item: %s — %s", li, e)
 
-        # Map audit anomalies to the existing Anomaly model.
+        # Map audit anomalies to the existing Anomaly model. The decoder
+        # carries richer metadata (rule key, dollar_impact, evidence array,
+        # raw severity); persist all of it so historical reports can answer
+        # "how much in flagged overcharges this year" and "which rules fired
+        # in August". Old documents loaded back through this model simply
+        # have rule=None / dollar_impact=None / evidence=[] (extra="ignore"
+        # + defaults make that a no-op).
         anomalies: List[Anomaly] = []
+        anomaly_dollar_total = 0.0
         for a in (audit.get("anomalies") or []):
             if not isinstance(a, dict):
                 continue
-            sev = _SEVERITY_DISPLAY_MAP.get((a.get("severity") or "").lower(), "info")
+            raw_sev = (a.get("severity") or "").lower() or None
+            sev = _SEVERITY_DISPLAY_MAP.get(raw_sev or "", "info")
+            try:
+                dollar_val = float(a.get("dollar_impact") or 0.0)
+            except Exception:
+                dollar_val = 0.0
+            evidence_raw = a.get("evidence") or []
+            evidence_list = [str(e) for e in evidence_raw if isinstance(evidence_raw, list) and e is not None]
             anomalies.append(Anomaly(
                 severity=sev,
                 title=str(a.get("headline") or a.get("title") or "Item flagged"),
                 detail=str(a.get("detail") or ""),
                 suggested_action=a.get("suggested_action"),
+                rule=(a.get("rule") or None),
+                dollar_impact=dollar_val if dollar_val else None,
+                evidence=evidence_list,
+                raw_severity=raw_sev,
             ))
+            anomaly_dollar_total += max(0.0, dollar_val)
+
+        informational_notes_raw = audit.get("informational_notes") or []
+        informational_notes_list = [n for n in informational_notes_raw if isinstance(n, dict)]
 
         summary_text = audit.get("statement_summary", {}).get("period") or extracted.get("statement_period") or ""
         period_label = extracted.get("statement_period") or None
@@ -2481,6 +2503,8 @@ async def _run_upload_job(
             file_mimetype=file_mimetype,
             file_size_bytes=file_size,
             file_b64=file_b64,
+            anomaly_dollar_impact_total=round(anomaly_dollar_total, 2),
+            informational_notes=informational_notes_list,
         )
         await db.statements.insert_one({
             **statement.model_dump(),
