@@ -240,6 +240,15 @@ def _build_profile_prompts(doc: dict) -> List[Dict[str, str]]:
             "where": "reassessment_letter",
             "tier": "3",
         })
+        out.append({
+            "field": "care_manager_name",
+            "prompt": (
+                "If this statement names a care manager, save them to the profile so "
+                "Wayly can flag changes and pre-fill it on letters."
+            ),
+            "where": "statement_decoder",
+            "tier": "3",
+        })
     if not doc.get("full_address"):
         out.append({
             "field": "full_address",

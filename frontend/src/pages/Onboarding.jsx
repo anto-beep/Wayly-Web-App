@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, formatAUD, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -58,11 +58,14 @@ function classificationsFromSnapshot(snap) {
 
 export default function Onboarding() {
     const nav = useNavigate();
+    const [searchParams] = useSearchParams();
+    const editPid = searchParams.get("pid");
     const { user, refreshHousehold } = useAuth();
     const [step, setStep] = useState(1);
     const [participantId, setParticipantId] = useState(null);
     const [participantDoc, setParticipantDoc] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [loadingExisting, setLoadingExisting] = useState(Boolean(editPid));
     const [, _setSnapshotVersion] = useState(0);
 
     const [tier1, setTier1] = useState({
@@ -89,6 +92,45 @@ export default function Onboarding() {
     useEffect(() => { loadProgramReference().then(() => _setSnapshotVersion((v) => v + 1)); }, []);
     const CLASSIFICATIONS = useMemo(() => classificationsFromSnapshot(getProgramReferenceSync()), []);
 
+    // Deep-link "Complete now" mode — pre-fill the existing participant.
+    useEffect(() => {
+        if (!editPid) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const { data } = await api.get(`/participants/${editPid}`);
+                if (cancelled) return;
+                setParticipantId(data.id);
+                setParticipantDoc(data);
+                setTier1({
+                    first_name: data.first_name || "",
+                    last_name: data.last_name || "",
+                    dob: data.dob || data.date_of_birth || "",
+                    pension_status: data.pension_status && data.pension_status !== "unsure" ? data.pension_status : "",
+                    classification_level: data.classification_level || data.classification || 0,
+                    provider_name: data.provider_name || "",
+                    statement_delivery: data.statement_delivery || "",
+                });
+                setTier2({
+                    preferred_name: data.preferred_name || "",
+                    mac_reference_number: data.mac_reference_number || "",
+                    suburb: data.suburb || "",
+                    state: data.state || "",
+                    is_grandfathered_hcp: data.is_grandfathered_hcp || "",
+                    hcp_level: data.hcp_level || null,
+                    caregiver_relationship: data.caregiver_relationship || "",
+                    caregiver_phone: data.caregiver_phone || "",
+                });
+                setAuth({ confirmed: Boolean(data.authorisation_confirmed) });
+            } catch (err) {
+                toast.error(extractErrorMessage(err, "Could not load participant"));
+            } finally {
+                if (!cancelled) setLoadingExisting(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [editPid]);
+
     const finish = () => nav(user?.role === "participant" ? "/participant" : "/app");
 
     const submitStep1 = async () => {
@@ -108,10 +150,20 @@ export default function Onboarding() {
         }
         setSaving(true);
         try {
-            const payload = { ...tier1, authorisation_confirmed: true };
-            const { data } = await api.post("/participants", payload);
-            setParticipantId(data.id);
-            setParticipantDoc(data);
+            if (editPid && participantId) {
+                // Deep-link mode — PATCH the existing participant.
+                const patch = {
+                    ...tier1,
+                    authorisation_confirmed: true,
+                };
+                const { data } = await api.patch(`/participants/${participantId}`, patch);
+                setParticipantDoc(data);
+            } else {
+                const payload = { ...tier1, authorisation_confirmed: true };
+                const { data } = await api.post("/participants", payload);
+                setParticipantId(data.id);
+                setParticipantDoc(data);
+            }
             try { await refreshHousehold(); } catch { /* no-op */ }
             toast.success("Participant saved");
             setStep(3);
@@ -171,6 +223,16 @@ export default function Onboarding() {
             </header>
 
             <div className="mx-auto max-w-3xl px-4 md:px-6 py-6 md:py-10">
+                {editPid && !loadingExisting && participantDoc && (
+                    <div data-testid="onboarding-complete-now-banner" className="mb-5 rounded-xl border border-sage/40 bg-sage/10 px-4 py-3 text-sm text-primary-k">
+                        <strong>Completing profile for {participantDoc.preferred_name || participantDoc.first_name || "your participant"}.</strong> We&apos;ve pre-filled what we know — just fill the missing bits and re-confirm authorisation.
+                    </div>
+                )}
+                {loadingExisting && (
+                    <div data-testid="onboarding-loading-existing" className="mb-5 flex items-center gap-2 text-sm text-muted-k">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Loading your participant…
+                    </div>
+                )}
                 {/* Stepper */}
                 <div className="flex items-center gap-1.5 md:gap-3 mb-6 md:mb-8" data-testid="onboarding-stepper">
                     {STEPS.map((s, i) => {
@@ -779,7 +841,7 @@ export function ProfileCompletionBanner() {
                 )}
             </div>
             <a
-                href="/onboarding"
+                href={`/onboarding?pid=${encodeURIComponent(first.id)}`}
                 data-testid="profile-completion-cta"
                 className="flex-none bg-terracotta text-white rounded-md px-3 py-1.5 text-xs hover:bg-terracotta/90 inline-flex items-center gap-1"
             >

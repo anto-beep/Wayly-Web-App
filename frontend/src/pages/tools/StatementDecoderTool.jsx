@@ -11,6 +11,7 @@ import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
 import DecoderResultView from "@/components/DecoderResultView";
 import DecoderProgress from "@/components/DecoderProgress";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
+import ProfileInlinePrompts from "@/components/ProfileInlinePrompts";
 import AcceptedFormatsPanel from "@/components/AcceptedFormatsPanel";
 import PhotoTipsAccordion from "@/components/PhotoTipsAccordion";
 import EmailForwardingPanel from "@/components/EmailForwardingPanel";
@@ -190,6 +191,7 @@ export default function StatementDecoderTool() {
                     text={TOOL_DISCLAIMERS["statement-decoder"]}
                     className="mb-4"
                 />
+                <ProfileInlinePrompts where="statement_decoder" />
                 {usage && !user && (
                     <div className={`mb-4 rounded-xl border px-4 py-3 text-sm flex items-center justify-between gap-3 flex-wrap ${usage.remaining > 0 ? "bg-sage/10 border-sage/30 text-primary-k" : "bg-gold/10 border-gold/40 text-primary-k"}`} data-testid="usage-counter-banner">
                         <div>

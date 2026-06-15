@@ -9,6 +9,7 @@ import ToolGate from "@/components/ToolGate";
 import { ScreenshotBudget } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
+import ProfileInlinePrompts from "@/components/ProfileInlinePrompts";
 import { loadProgramReference, getProgramReferenceSync } from "@/lib/programReference";
 
 import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
@@ -138,7 +139,8 @@ export default function BudgetCalculatorTool() {
 
             <section className="mx-auto max-w-4xl px-6 pb-20">
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["budget-calculator"]} className="mb-4" />
-                <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="budget-calculator">
+                <ProfileInlinePrompts where="budget_calculator" />
+                <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5 mt-4" data-testid="budget-calculator">
                     <div>
                         <span className="text-sm text-muted-k">Support at Home classification</span>
                         <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">

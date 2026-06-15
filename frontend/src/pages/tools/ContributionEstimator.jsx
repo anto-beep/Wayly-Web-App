@@ -7,6 +7,7 @@ import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
+import ProfileInlinePrompts from "@/components/ProfileInlinePrompts";
 import { api, formatAUD2, formatAUD } from "@/lib/api";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
@@ -101,7 +102,8 @@ export default function ContributionEstimator() {
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["contribution-estimator"]} className="mb-4" />
-                <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="contribution-form">
+                <ProfileInlinePrompts where="contribution_estimator" />
+                <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5 mt-4" data-testid="contribution-form">
                     <label className="block"><span className="text-sm text-muted-k">Classification</span>
                         <select value={form.classification} onChange={(e) => setForm((f) => ({ ...f, classification: parseInt(e.target.value) }))} data-testid="ce-class" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5">
                             {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>Classification {n}</option>)}
