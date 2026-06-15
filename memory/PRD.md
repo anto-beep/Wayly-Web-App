@@ -14,6 +14,21 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 50 — Inline Tier-3 prompts + deep-link onboarding, Feb 2026)
+Building on iteration 49's Participant Profile v2 schema. Two follow-ups:
+
+- **`<ProfileInlinePrompts where="..." />`** shared component (`/app/frontend/src/components/ProfileInlinePrompts.jsx`) — fetches the user's primary participant via `GET /participants`, then the matching prompts via `GET /participants/{pid}/profile-prompts`, filters by `where` slug, and renders compact editable cards. Per-field renderers:
+  - `applicable_supplements` → 5 supplement checkboxes (oxygen/enteral/veterans/dementia_cognition/eachd_top_up) with descriptions, conditional bolus/non-bolus enteral type
+  - `part_pension_actual_independence_pct` / `part_pension_actual_everyday_pct` → number+% inputs
+  - `mac_reference_number` / `care_manager_name` → text input
+  - `full_address` → textarea
+  - `is_grandfathered_hcp` → 3 pills (yes/no/unsure) + conditional HCP level 1-4 dropdown
+  - Each card has Save (PATCH `/api/participants/{pid}`) + Dismiss. Auto-hides for unauthenticated visitors. Auto-refreshes prompts on each save so dependent prompts unlock (e.g. enteral checkbox unlocks bolus/non-bolus dropdown).
+- **Wired into 4 tools** — `BudgetCalculatorTool` (where='budget_calculator'), `ContributionEstimator` (='contribution_estimator'), `ReassessmentLetter` (='reassessment_letter'), `StatementDecoderTool` (='statement_decoder'). Backend `_build_profile_prompts` also emits a `statement_decoder` slug for `care_manager_name`.
+- **Deep-link "Complete now" onboarding** — `Onboarding.jsx` now accepts `?pid=<id>`: fetches the existing participant via `GET /participants/{pid}`, pre-fills all known Tier 1 + Tier 2 fields, shows a sage-bordered "Completing profile for <name>" banner (`data-testid="onboarding-complete-now-banner"`), and on Step 2 PATCHes the existing participant instead of POSTing a new one. Zero duplicates created. `ProfileCompletionBanner` CTA on the dashboard now points to `/onboarding?pid={first.id}`.
+- **Tests** — `testing_agent_v3_fork` ran 19 prior backend tests + 7 new in `tests/test_iter41_inline_prompts.py` (all 26 pass), plus full Playwright sweep of all 4 tools (panel renders authenticated, hidden anonymously, hidden when participant 100% complete, save-then-disappear flow on each field, PATCH-no-duplicate on deep-link). Zero issues raised.
+
+
 ## Implemented (Iteration 49 — Participant Profile v2 schema + 4-step onboarding, Feb 2026)
 Expanded the participant profile to capture Tier 1 (mandatory) / Tier 2 (strongly recommended) / Tier 3 (progressive disclosure) fields. Old schema (`first_name`, `last_name`, optional `date_of_birth`, classification, provider, statement_format) was too thin for the AI tools and DOB being optional caused statement-matching ambiguity.
 
