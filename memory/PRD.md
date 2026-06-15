@@ -14,6 +14,19 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 51 — Polish sweep, Feb 2026)
+Six P1 polish items in one pass — all verified end-to-end:
+
+- **Profile-aware Budget Calculator re-run**: `BudgetCalculatorTool` now accepts an `onParticipantUpdated` callback from `<ProfileInlinePrompts>`. When the caregiver saves supplements via the inline prompt, the participant's `applicable_supplements` + `enteral_feeding_type` are mapped onto the calc's value set (`enteral` + `bolus`/`non_bolus` → `enteral_bolus`/`enteral_non_bolus`), the form checkboxes auto-sync, and `calc()` re-runs immediately so the displayed annual + quarterly figures bump (e.g. ticking oxygen for Class 6 jumps the quarterly from $12,028.50 to ~$13,366).
+- **Softer Tier-3 prompt headers per `where` slug** — replaced the generic "Sharpen this result" with context-specific copy: `budget_calculator` → "Add what we're missing", `contribution_estimator` → "Get a precise figure", `reassessment_letter` → "Make this letter complete", `statement_decoder` → "Save a detail for next time", `profile` → "Add a few more details". Exposed as `HEADER_BY_WHERE` for reuse.
+- **"Saved ✓" pill animation** — `PromptRow` now sets `justSaved=true` on a successful PATCH and renders a sage-bordered "Saved ✓" pill (`data-testid='profile-prompt-{field}-saved'`) for 900ms before the row collapses. Removed the disruptive toast.success.
+- **Static HTML title** — `public/index.html` and `manifest.json` switched from `Wayly — Aged-care concierge for Australian families` (em-dash) to `Wayly · AI for Australian Support at Home` (middot, matching the SEO home page).
+- **Notification badge decrement on click** — added `markOneRead()` in `NotificationsBell` with optimistic local update + rollback on failure. Both `Link` items (with deep-link) and non-link items (now wrapped in a clickable button with `data-testid='notification-item-{id}-mark'`) decrement the unread count on click and POST `/notifications/read` with the specific id.
+- **White text on clay/cyan badges** — `MarketingHeader` `PlanBadge` family tone + `Avatar` initials + `NotificationsBell` bell badge all swapped from `text-[#0E2A47]` to `text-white` for WCAG-AA contrast on solid clay (`#A5512B`) / cyan (`#2BC4D6`) backgrounds. Bulk-replaced 31 occurrences of `bg-gold text-primary-k` → `bg-gold text-white` across all CTAs and severity badges. `DecoderResultView` medium severity badge also flipped to white.
+
+Tested via `testing_agent_v3_fork` (iteration_42.json) — backend regression clean (17/17 pytest), frontend Playwright verifies all 6 items end-to-end. Zero issues raised.
+
+
 ## Implemented (Iteration 50 — Inline Tier-3 prompts + deep-link onboarding, Feb 2026)
 Building on iteration 49's Participant Profile v2 schema. Two follow-ups:
 
