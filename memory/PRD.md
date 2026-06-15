@@ -14,6 +14,30 @@ Kindred is the AI operating system for Australian families navigating the Suppor
 - Brand: **Sky blue + cyan + mint-teal** (Jun 2026 rebrand) — deep navy `#0E2A47` headlines, cyan `#2BC4D6` accent, mint-teal `#3DB8A8` success, royal blue→cyan→mint gradient on hero "explained" wordmark. Soft sky `#EAF4FB` page background. New gradient `W` mark replaces the warm-gold heart. Crimson Pro headings + IBM Plex Sans body.
 
 
+## Implemented (Iteration 49 — Participant Profile v2 schema + 4-step onboarding, Feb 2026)
+Expanded the participant profile to capture Tier 1 (mandatory) / Tier 2 (strongly recommended) / Tier 3 (progressive disclosure) fields. Old schema (`first_name`, `last_name`, optional `date_of_birth`, classification, provider, statement_format) was too thin for the AI tools and DOB being optional caused statement-matching ambiguity.
+
+- **Backend** — new `/app/backend/participant_profile.py` module:
+  - **Tier 1 (60% weight)**: `first_name`, `last_name`, `dob`, `classification_level`, `pension_status` (full_pension/part_pension/cshc/self_funded/unsure), `provider_name`, `statement_delivery` (email/post/portal/other), `authorisation_confirmed` (must be `True`).
+  - **Tier 2 (30% weight)**: `preferred_name`, `mac_reference_number`, `suburb`, `state`, `is_grandfathered_hcp` (+ optional `hcp_level` 1-4), `caregiver_relationship`, `caregiver_phone`.
+  - **Tier 3 (10% weight, progressive disclosure)**: `care_manager_name/phone/email`, `full_address`, `part_pension_actual_independence_pct`, `part_pension_actual_everyday_pct`, `applicable_supplements[]`, `enteral_feeding_type`, `active_pathway`, `primary_language`, `interpreter_required`, `veteran_status`.
+  - `compute_profile_completeness()` helper: weighted score, Tier 1 + Tier 2 fully filled = 90% (good enough), all 3 tiers = 100%.
+  - 4 new endpoints: `POST /api/participants` (strict 422 on missing Tier 1 or `authorisation_required` if not ticked), `GET /api/participants` (list with completeness + missing_required_fields + recommended_next_fields decoration), `GET /api/participants/{pid}` (single), `PATCH /api/participants/{pid}` (partial Tier 2 + Tier 3 updates, recomputes pct, audits Tier 3 disclosure events), `GET /api/participants/{pid}/profile-prompts` (returns ordered inline disclosure prompts keyed by where they belong — `budget_calculator` / `contribution_estimator` / `reassessment_letter` / `profile`).
+  - `participant_profile_router` registered BEFORE `batch2_router` so the new `/api/participants` paths take precedence on collisions; legacy `/api/v2/participants` from batch3 remain available for existing frontend callers (`pages/extended/Participants.jsx`).
+  - **Migration** — `migrate_participants_to_v2(db)` idempotent: legacy docs get `pension_status='unsure'`, `statement_delivery` derived from legacy `statement_format`, `classification_level` from legacy `classification`, `authorisation_confirmed=False` (only when absent — pre-confirmed docs preserved), `applicable_supplements=[]`, `interpreter_required=False`, and a stamped `profile_completeness_pct`. Runs at startup; first preview run scanned 58, flagged 58 for completion (all need re-authorisation).
+  - **CLI** — `/app/backend/scripts/migrate_participants_v2.py`: `python -m scripts.migrate_participants_v2` from `/app/backend/`.
+
+- **Frontend** — `/app/frontend/src/pages/Onboarding.jsx` rewritten as 4-step wizard:
+  - **Step 1 — Essentials** (Tier 1 only): first/last name, DOB date picker, 5 pension-status radio cards (incl. CSHC + "I'm not sure"), 8 classification buttons with `formatAUD(annual)` chips, provider input, 4 statement-delivery radios, "Why we ask" expandable hints.
+  - **Step 2 — Authorisation**: legal-style required checkbox citing power of attorney / nominated representative / explicit consent. POST fires here.
+  - **Step 3 — Recommended** (Tier 2, skippable): preferred name, MAC reference, suburb + state, HCP transition (+ conditional HCP level), caregiver relationship + phone. Both "Skip for now" and "Continue" buttons.
+  - **Step 4 — All done**: SVG completeness ring with 60% / 90% / 100% colour thresholds + 4 Tier 3 promotion cards (supplements → Budget Calc · exact rates → Contribution Estimator · full address & care manager → Reassessment Letter) plus a "Go to dashboard" finish CTA.
+  - **`ProfileCompletionBanner`** component exported from the same file — used by `CaregiverDashboard.jsx` at the top of the layout. Shows a terracotta-bordered alert with "Complete now" CTA → `/onboarding` for any participant with `requires_completion=true`. Self-hides when no incomplete profiles remain.
+
+- **Tests** — new `/app/backend/tests/test_participant_profile_v2.py` (10 tests: completeness scoring, missing/recommended priority, migration idempotency, pre-confirmed authorisation preservation). All 10 pass.
+- **Integration testing** — `testing_agent_v3_fork` ran 10 backend pytest + 9 backend integration tests + full Playwright walkthrough of the 4-step wizard + dashboard banner end-to-end. All pass, no issues raised.
+
+
 ## Implemented (Iteration 48 — Phase 2 follow-ups, Feb 2026)
 Four follow-ups from the Phase 2 (H–N) sweep landed:
 
