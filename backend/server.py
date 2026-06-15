@@ -4996,6 +4996,12 @@ from batch3_routes import (
     check_free_tool_usage, record_free_tool_usage,
 )
 from batch3_billing import billing_router as batch3_billing_router, init_billing_routes
+from participant_profile import (
+    participant_profile_router,
+    init_participant_profile_routes,
+    migrate_participants_to_v2,
+)
+from batch3_routes import _account_for_user as _batch3_account_for_user  # noqa: E402
 init_adviser_routes(
     db=db,
     require_adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
@@ -5052,6 +5058,11 @@ init_batch2_routes(
 )
 init_batch3_routes(db=db, user_dep=_user_from_request_required)
 init_billing_routes(db=db, user_dep=_user_from_request_required)
+init_participant_profile_routes(
+    db=db,
+    user_dep=_user_from_request_required,
+    account_for_user=_batch3_account_for_user,
+)
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -5067,6 +5078,7 @@ api.include_router(adviser_router)
 api.include_router(adviser_public_router)
 api.include_router(documents_router)
 api.include_router(extended_router)
+api.include_router(participant_profile_router)
 api.include_router(batch2_router)
 api.include_router(batch3_router)
 api.include_router(batch3_billing_router)
@@ -5888,6 +5900,14 @@ async def _start_batch3_migration_and_purge():
             logger.info("Batch3 purge job: %s", purge_res)
     except Exception as e:
         logger.warning("Batch3 purge job failed: %s", e)
+    # Participant Profile v2 migration — idempotent, runs after batch3
+    # backfills so it sees every participant.
+    try:
+        pm_res = await migrate_participants_to_v2(db)
+        if pm_res.get("updated"):
+            logger.info("Participant profile v2 migration: %s", pm_res)
+    except Exception as e:
+        logger.warning("Participant profile v2 migration failed: %s", e)
 
 
 # Manual trigger for testing/debugging.

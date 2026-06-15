@@ -5,6 +5,7 @@ import StreamProgress from "@/components/StreamProgress";
 import DashboardInsights from "@/components/DashboardInsights";
 import DashboardTimelinePanel from "@/components/DashboardTimelinePanel";
 import ShareDashboardButton from "@/components/ShareDashboardButton";
+import { ProfileCompletionBanner } from "./Onboarding";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
     Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2,
@@ -106,6 +107,7 @@ export default function CaregiverDashboard() {
 
     return (
         <div className="space-y-8" data-testid="caregiver-dashboard">
+            <ProfileCompletionBanner />
             <div className="flex items-end justify-between flex-wrap gap-3">
                 <div>
                     <div className="flex items-center gap-3 flex-wrap">
