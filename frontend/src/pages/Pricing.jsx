@@ -254,7 +254,7 @@ export default function Pricing() {
                     {TIERS.map((t) => (
                         <div key={t.key} className={`relative rounded-2xl border p-6 ${t.featured ? "bg-primary-k text-white border-gold shadow-xl" : "bg-surface border-kindred"}`} data-testid={`tier-${t.key}`}>
                             {t.badge && (
-                                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-primary-k text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-semibold">
+                                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-white text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-semibold">
                                     {t.badge}
                                 </span>
                             )}
@@ -269,7 +269,7 @@ export default function Pricing() {
                                     <li key={h} className="flex gap-2"><Check className={`h-4 w-4 mt-0.5 flex-none ${t.featured ? "text-gold" : "text-sage"}`} />{h}</li>
                                 ))}
                             </ul>
-                            <Link to={t.href} data-testid={`tier-cta-${t.key}`} onClick={() => track.upgradeClick({ plan: t.key, location: "pricing" })} className={`mt-5 block text-center rounded-full px-4 py-2.5 text-sm font-semibold ${t.featured ? "bg-gold text-primary-k hover:brightness-95" : "bg-primary-k text-white hover:bg-[#091D33]"}`}>
+                            <Link to={t.href} data-testid={`tier-cta-${t.key}`} onClick={() => track.upgradeClick({ plan: t.key, location: "pricing" })} className={`mt-5 block text-center rounded-full px-4 py-2.5 text-sm font-semibold ${t.featured ? "bg-gold text-white hover:brightness-95" : "bg-primary-k text-white hover:bg-[#091D33]"}`}>
                                 {t.cta}
                             </Link>
                         </div>

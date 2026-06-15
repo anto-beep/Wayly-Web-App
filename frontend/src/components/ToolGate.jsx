@@ -37,7 +37,7 @@ export default function ToolGate({ toolName }) {
                                 to="/settings/billing"
                                 state={{ plan: "solo" }}
                                 data-testid="tool-gate-upgrade-solo"
-                                className="bg-gold text-primary-k font-semibold rounded-md py-3 px-5 text-sm hover:brightness-95 inline-flex items-center justify-center gap-2"
+                                className="bg-gold text-white font-semibold rounded-md py-3 px-5 text-sm hover:brightness-95 inline-flex items-center justify-center gap-2"
                             >
                                 Upgrade to Solo — $19/mo <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
@@ -65,7 +65,7 @@ export default function ToolGate({ toolName }) {
                         <Link
                             to="/signup?plan=solo"
                             data-testid="tool-gate-trial-cta"
-                            className="mt-6 w-full bg-gold text-primary-k font-semibold rounded-md py-3 px-5 text-sm hover:brightness-95 inline-flex items-center justify-center gap-2"
+                            className="mt-6 w-full bg-gold text-white font-semibold rounded-md py-3 px-5 text-sm hover:brightness-95 inline-flex items-center justify-center gap-2"
                         >
                             Start free 7-day trial <ArrowRight className="h-3.5 w-3.5" />
                         </Link>

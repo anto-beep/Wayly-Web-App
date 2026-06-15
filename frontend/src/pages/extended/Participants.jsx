@@ -238,7 +238,7 @@ export default function ParticipantsPage() {
                     type="button"
                     onClick={openAdd}
                     data-testid="participants-add-btn"
-                    className="inline-flex items-center gap-2 bg-gold text-primary-k font-semibold rounded-full px-4 py-2.5 text-sm hover:brightness-95"
+                    className="inline-flex items-center gap-2 bg-gold text-white font-semibold rounded-full px-4 py-2.5 text-sm hover:brightness-95"
                 >
                     <Plus className="h-4 w-4" /> Add participant
                 </button>
@@ -393,7 +393,7 @@ export default function ParticipantsPage() {
                                         <p className="text-sm text-muted-k">Upgrade to Solo ($19/mo) for 1 participant, or Family ($39/mo) for 2 participants and 3 caregiver seats.</p>
                                         <div className="flex gap-2">
                                             <Link to="/pricing?plan=solo" className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]" data-testid="upgrade-solo">Upgrade to Solo</Link>
-                                            <Link to="/pricing?plan=family" className="inline-flex items-center gap-1.5 bg-gold text-primary-k font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95" data-testid="upgrade-family">Upgrade to Family</Link>
+                                            <Link to="/pricing?plan=family" className="inline-flex items-center gap-1.5 bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95" data-testid="upgrade-family">Upgrade to Family</Link>
                                         </div>
                                     </div>
                                 )}
@@ -538,7 +538,7 @@ export default function ParticipantsPage() {
                                                 toast.error(extractErrorMessage(e, "Could not start add-on checkout"));
                                             }
                                         }}
-                                        className="w-full bg-gold text-primary-k font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95"
+                                        className="w-full bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95"
                                         data-testid="pay-addon-btn"
                                     >
                                         Pay $19/mo add-on now

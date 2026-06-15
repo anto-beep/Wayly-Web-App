@@ -424,7 +424,7 @@ function DigestTab() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <button onClick={sendNow} disabled={!onFamily || sending} data-testid="digest-send-btn" className="inline-flex items-center gap-2 bg-gold text-primary-k rounded-md px-5 py-2.5 text-sm font-semibold hover:brightness-95 disabled:opacity-60">
+                    <button onClick={sendNow} disabled={!onFamily || sending} data-testid="digest-send-btn" className="inline-flex items-center gap-2 bg-gold text-white rounded-md px-5 py-2.5 text-sm font-semibold hover:brightness-95 disabled:opacity-60">
                         {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                         Send this digest now
                     </button>

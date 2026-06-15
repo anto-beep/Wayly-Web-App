@@ -224,7 +224,7 @@ export default function Demo() {
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-14 text-center">
                     <h2 className="font-heading text-4xl text-white tracking-tight">Want this for your family?</h2>
-                    <Link to="/signup" className="mt-6 inline-flex items-center gap-2 bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]">Start free trial <ArrowRight className="h-4 w-4" /></Link>
+                    <Link to="/signup" className="mt-6 inline-flex items-center gap-2 bg-gold text-white font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]">Start free trial <ArrowRight className="h-4 w-4" /></Link>
                 </div>
             </section>
             <Footer />

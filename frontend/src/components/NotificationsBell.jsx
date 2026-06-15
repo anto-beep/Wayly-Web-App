@@ -113,6 +113,20 @@ export default function NotificationsBell({ tone = "dark" }) {
         } catch {/* ignore */}
     };
 
+    const markOneRead = async (n) => {
+        if (n.read) return;
+        // Optimistic: update locally first so the badge decrements instantly
+        setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+        setUnread((u) => Math.max(0, u - 1));
+        try {
+            await api.post("/notifications/read", { ids: [n.id] });
+        } catch {
+            // Roll back if the server call failed
+            setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: false } : x)));
+            setUnread((u) => u + 1);
+        }
+    };
+
     const btnTextCls = tone === "dark"
         ? "text-white/80 hover:text-white"
         : "text-[#0E2A47]/70 hover:text-[#0E2A47]";
@@ -128,7 +142,7 @@ export default function NotificationsBell({ tone = "dark" }) {
             >
                 <Bell className="h-5 w-5" />
                 {unread > 0 && (
-                    <span className="absolute top-0.5 right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-[#2BC4D6] text-[#0E2A47] text-[10px] font-bold leading-4 text-center" data-testid="nav-bell-count">
+                    <span className="absolute top-0.5 right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-[#2BC4D6] text-white text-[10px] font-bold leading-4 text-center" data-testid="nav-bell-count">
                         {unread > 9 ? "9+" : unread}
                     </span>
                 )}
@@ -156,17 +170,17 @@ export default function NotificationsBell({ tone = "dark" }) {
                                 {items.slice(0, 10).map((n) => (
                                     <li key={n.id} className={`px-4 py-3 border-b border-[#CFE0F0] last:border-0 ${!n.read ? "bg-[#EAF4FB]" : ""}`} data-testid={`notification-item-${n.id}`}>
                                         {n.link ? (
-                                            <Link to={n.link} onClick={() => setOpen(false)} className="block">
+                                            <Link to={n.link} onClick={() => { markOneRead(n); setOpen(false); }} className="block">
                                                 <div className="text-sm font-medium text-[#0E2A47]">{n.title}</div>
                                                 {n.body && <div className="text-xs text-[#6B7280] mt-0.5">{n.body}</div>}
                                                 <div className="text-[10px] text-[#6B7280] mt-1 uppercase tracking-wider">{new Date(n.created_at).toLocaleString()}</div>
                                             </Link>
                                         ) : (
-                                            <>
+                                            <button type="button" onClick={() => markOneRead(n)} className="text-left w-full" data-testid={`notification-item-${n.id}-mark`}>
                                                 <div className="text-sm font-medium text-[#0E2A47]">{n.title}</div>
                                                 {n.body && <div className="text-xs text-[#6B7280] mt-0.5">{n.body}</div>}
                                                 <div className="text-[10px] text-[#6B7280] mt-1 uppercase tracking-wider">{new Date(n.created_at).toLocaleString()}</div>
-                                            </>
+                                            </button>
                                         )}
                                     </li>
                                 ))}

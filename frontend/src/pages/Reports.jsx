@@ -172,7 +172,7 @@ export default function Reports() {
                                             onClick={() => handleGenerateClick(rt)}
                                             disabled={locked || !participantId}
                                             data-testid={`generate-${rt.type}`}
-                                            className="mt-3 inline-flex items-center gap-1.5 bg-gold text-primary-k font-semibold rounded-full px-3.5 py-1.5 text-xs hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="mt-3 inline-flex items-center gap-1.5 bg-gold text-white font-semibold rounded-full px-3.5 py-1.5 text-xs hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Generate
                                         </button>
@@ -246,7 +246,7 @@ export default function Reports() {
                                 <p className="font-heading text-lg text-primary-k">Your report is ready.</p>
                                 <div className="flex gap-2 justify-center">
                                     <button onClick={() => { const r = items.find((i) => i.id === generating.report_id) || { id: generating.report_id }; setGenerating(null); openPreview(r); }} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]" data-testid="view-report-btn">View</button>
-                                    <button onClick={() => { const r = items.find((i) => i.id === generating.report_id) || { id: generating.report_id }; downloadReport(r); }} className="bg-gold text-primary-k font-semibold rounded-md px-4 py-2 text-sm" data-testid="download-report-btn">Download PDF</button>
+                                    <button onClick={() => { const r = items.find((i) => i.id === generating.report_id) || { id: generating.report_id }; downloadReport(r); }} className="bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm" data-testid="download-report-btn">Download PDF</button>
                                     <button onClick={() => setGenerating(null)} className="text-muted-k px-3 py-2 text-sm">Close</button>
                                 </div>
                             </div>
@@ -381,7 +381,7 @@ function ConfigModal({ type, onClose, onSubmit }) {
                 </div>
                 <div className="px-5 py-3 border-t border-kindred flex justify-end gap-2">
                     <button onClick={onClose} className="px-4 py-2 text-sm text-muted-k">Cancel</button>
-                    <button onClick={submit} className="bg-gold text-primary-k font-semibold rounded-md px-4 py-2 text-sm" data-testid="cfg-submit">Generate</button>
+                    <button onClick={submit} className="bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm" data-testid="cfg-submit">Generate</button>
                 </div>
             </div>
         </div>
@@ -396,7 +396,7 @@ function ReportPreview({ preview, onClose, onDownload }) {
                 <button onClick={onClose} className="inline-flex items-center gap-1.5 text-sm text-muted-k hover:text-primary-k" data-testid="preview-back">
                     <ArrowLeft className="h-4 w-4" /> Back to reports
                 </button>
-                <button onClick={() => onDownload(report)} className="inline-flex items-center gap-1.5 bg-gold text-primary-k font-semibold rounded-full px-4 py-2 text-sm" data-testid="preview-download">
+                <button onClick={() => onDownload(report)} className="inline-flex items-center gap-1.5 bg-gold text-white font-semibold rounded-full px-4 py-2 text-sm" data-testid="preview-download">
                     <Download className="h-4 w-4" /> Download PDF
                 </button>
             </div>

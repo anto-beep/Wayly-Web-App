@@ -153,7 +153,7 @@ function SnapshotModal({ client, onClose, onDownloadPdf, downloading }) {
                                     onClick={onDownloadPdf}
                                     disabled={downloading}
                                     data-testid="adviser-download-pdf-modal"
-                                    className="inline-flex items-center gap-2 bg-gold text-primary-k rounded-full px-5 py-2.5 text-sm font-semibold hover:brightness-95 disabled:opacity-60"
+                                    className="inline-flex items-center gap-2 bg-gold text-white rounded-full px-5 py-2.5 text-sm font-semibold hover:brightness-95 disabled:opacity-60"
                                 >
                                     {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                                     {downloading ? "Generating…" : "Download review pack PDF"}
@@ -213,7 +213,7 @@ export default function AdviserPortal() {
                         <Link
                             to="/signup?plan=adviser"
                             data-testid="adviser-upgrade-cta"
-                            className="bg-gold text-primary-k font-semibold rounded-full px-5 py-2.5 text-sm hover:brightness-95"
+                            className="bg-gold text-white font-semibold rounded-full px-5 py-2.5 text-sm hover:brightness-95"
                         >
                             Start free trial
                         </Link>
@@ -494,7 +494,7 @@ export default function AdviserPortal() {
                                                                 onClick={() => downloadPdf(c)}
                                                                 disabled={downloadingPdfFor === c.id}
                                                                 data-testid={`adviser-client-pdf-${c.id}`}
-                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 bg-gold text-primary-k hover:brightness-95"
+                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 bg-gold text-white hover:brightness-95"
                                                                 title="Download review pack PDF"
                                                             >
                                                                 {downloadingPdfFor === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
@@ -507,7 +507,7 @@ export default function AdviserPortal() {
                                                                 type="button"
                                                                 onClick={() => resendInvite(c)}
                                                                 data-testid={`adviser-client-resend-${c.id}`}
-                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 bg-gold text-primary-k hover:brightness-95"
+                                                                className="inline-flex items-center gap-1 text-xs rounded-md px-2.5 py-1.5 mr-2 bg-gold text-white hover:brightness-95"
                                                                 title="Re-send invitation email"
                                                             >
                                                                 <Mail className="h-3.5 w-3.5" /> Resend invite
@@ -544,7 +544,7 @@ export default function AdviserPortal() {
                                 <li>· Recurring billing automation via Stripe</li>
                             </ul>
                         </div>
-                        <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-gold text-primary-k rounded-full px-5 py-2.5 text-sm font-medium hover:brightness-95">
+                        <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-gold text-white rounded-full px-5 py-2.5 text-sm font-medium hover:brightness-95">
                             Share feedback <ArrowUpRight className="h-4 w-4" />
                         </Link>
                     </div>

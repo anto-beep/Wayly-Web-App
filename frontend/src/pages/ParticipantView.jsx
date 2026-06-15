@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 const MOODS = [
     { v: "good", label: "I feel good", Icon: Smile, cls: "bg-sage text-white", note: "Pleasant day" },
-    { v: "okay", label: "I'm OK", Icon: Meh, cls: "bg-gold text-primary-k", note: "Just checking in" },
+    { v: "okay", label: "I'm OK", Icon: Meh, cls: "bg-gold text-white", note: "Just checking in" },
     { v: "not_great", label: "Not great", Icon: Frown, cls: "bg-terracotta text-white", note: "Will notify caregiver" },
 ];
 

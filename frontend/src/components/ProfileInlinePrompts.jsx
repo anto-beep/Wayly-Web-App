@@ -18,7 +18,15 @@ import { Sparkles, X, Loader2, Check } from "lucide-react";
  *   - "reassessment_letter"    → mac_reference_number, care_manager_name, full_address
  *   - "profile"                → catch-all (rendered in the dashboard / settings)
  */
-export default function ProfileInlinePrompts({ where }) {
+export const HEADER_BY_WHERE = {
+    budget_calculator: "Add what we're missing",
+    contribution_estimator: "Get a precise figure",
+    reassessment_letter: "Make this letter complete",
+    statement_decoder: "Save a detail for next time",
+    profile: "Add a few more details",
+};
+
+export default function ProfileInlinePrompts({ where, onParticipantUpdated }) {
     const { user } = useAuth();
     const [participant, setParticipant] = useState(null);
     const [prompts, setPrompts] = useState([]);
@@ -49,8 +57,11 @@ export default function ProfileInlinePrompts({ where }) {
     const visible = (!user || !participant) ? [] : prompts.filter((q) => !dismissed[q.field]);
     if (visible.length === 0) return null;
 
-    const onSaved = (field) => {
+    const onSaved = (field, updatedDoc) => {
         setDismissed((d) => ({ ...d, [field]: true }));
+        if (updatedDoc) setParticipant(updatedDoc);
+        // Notify parent so the tool can re-run with the new participant data
+        if (onParticipantUpdated && updatedDoc) onParticipantUpdated(updatedDoc);
         // Refresh the prompt list — saving one field may resolve others or
         // unlock new ones (e.g. supplements enable enteral_feeding_type).
         load();
@@ -63,7 +74,7 @@ export default function ProfileInlinePrompts({ where }) {
         >
             <div className="flex items-center gap-2 text-primary-k">
                 <Sparkles className="h-4 w-4" />
-                <span className="text-sm font-medium">Sharpen this result</span>
+                <span className="text-sm font-medium">{HEADER_BY_WHERE[where] || "Add a few more details"}</span>
             </div>
             {visible.map((q) => (
                 <PromptRow
@@ -71,7 +82,7 @@ export default function ProfileInlinePrompts({ where }) {
                     participantId={participant.id}
                     prompt={q}
                     participant={participant}
-                    onSaved={() => onSaved(q.field)}
+                    onSaved={(updatedDoc) => onSaved(q.field, updatedDoc)}
                     onDismiss={() => setDismissed((d) => ({ ...d, [q.field]: true }))}
                 />
             ))}
@@ -82,14 +93,16 @@ export default function ProfileInlinePrompts({ where }) {
 
 function PromptRow({ participantId, prompt, participant, onSaved, onDismiss }) {
     const [saving, setSaving] = useState(false);
+    const [justSaved, setJustSaved] = useState(false);
     const renderer = useMemo(() => RENDERERS[prompt.field] || GenericText, [prompt.field]);
 
     const save = async (patch) => {
         setSaving(true);
         try {
-            await api.patch(`/participants/${participantId}`, patch);
-            toast.success("Saved to participant profile");
-            onSaved();
+            const { data: updated } = await api.patch(`/participants/${participantId}`, patch);
+            // Show inline "Saved ✓" pill briefly before the row disappears.
+            setJustSaved(true);
+            setTimeout(() => onSaved(updated), 900);
         } catch (err) {
             toast.error(extractErrorMessage(err, "Could not save"));
         } finally {
@@ -101,28 +114,39 @@ function PromptRow({ participantId, prompt, participant, onSaved, onDismiss }) {
     return (
         <div
             data-testid={`profile-prompt-${prompt.field}`}
-            className="rounded-lg border border-kindred bg-surface p-3"
+            className={`rounded-lg border bg-surface p-3 transition-all ${justSaved ? "border-sage" : "border-kindred"}`}
         >
             <div className="flex items-start gap-2">
                 <p className="flex-1 text-xs text-primary-k leading-relaxed">{prompt.prompt}</p>
-                <button
-                    type="button"
-                    onClick={onDismiss}
-                    data-testid={`profile-prompt-${prompt.field}-dismiss`}
-                    aria-label="Dismiss"
-                    className="flex-none text-muted-k hover:text-primary-k"
-                >
-                    <X className="h-3.5 w-3.5" />
-                </button>
+                {justSaved ? (
+                    <span
+                        data-testid={`profile-prompt-${prompt.field}-saved`}
+                        className="flex-none inline-flex items-center gap-1 rounded-full bg-sage/15 text-sage border border-sage/40 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+                    >
+                        <Check className="h-3 w-3" /> Saved
+                    </span>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={onDismiss}
+                        data-testid={`profile-prompt-${prompt.field}-dismiss`}
+                        aria-label="Dismiss"
+                        className="flex-none text-muted-k hover:text-primary-k"
+                    >
+                        <X className="h-3.5 w-3.5" />
+                    </button>
+                )}
             </div>
-            <div className="mt-2">
-                <FieldEditor
-                    save={save}
-                    saving={saving}
-                    participant={participant}
-                    field={prompt.field}
-                />
-            </div>
+            {!justSaved && (
+                <div className="mt-2">
+                    <FieldEditor
+                        save={save}
+                        saving={saving}
+                        participant={participant}
+                        field={prompt.field}
+                    />
+                </div>
+            )}
         </div>
     );
 }

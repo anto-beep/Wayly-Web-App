@@ -95,7 +95,7 @@ export default function ForAdvisors() {
                             <div className={`mt-2 font-heading text-4xl tabular-nums ${t.featured ? "text-white" : "text-primary-k"}`}>{t.price}<span className="text-base font-sans">/mo</span></div>
                             <div className={`text-sm ${t.featured ? "text-white/70" : "text-muted-k"}`}>{t.clients}</div>
                             <p className={`mt-4 text-sm leading-relaxed ${t.featured ? "text-white/85" : "text-muted-k"}`}>{t.desc}</p>
-                            <Link to="/contact" className={`mt-6 inline-flex items-center justify-center gap-1 w-full rounded-full py-2.5 text-sm font-medium ${t.featured ? "bg-gold text-primary-k hover:bg-[#1FA8B8]" : "bg-primary-k text-white hover:bg-[#091D33]"}`}>
+                            <Link to="/contact" className={`mt-6 inline-flex items-center justify-center gap-1 w-full rounded-full py-2.5 text-sm font-medium ${t.featured ? "bg-gold text-white hover:bg-[#1FA8B8]" : "bg-primary-k text-white hover:bg-[#091D33]"}`}>
                                 Book a demo <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
                         </div>
@@ -106,7 +106,7 @@ export default function ForAdvisors() {
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-16 text-center">
                     <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">A 30-minute demo will show you everything.</h2>
-                    <Link to="/contact" className="mt-8 inline-block bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]">Book a demo</Link>
+                    <Link to="/contact" className="mt-8 inline-block bg-gold text-white font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]">Book a demo</Link>
                 </div>
             </section>
             <Footer />

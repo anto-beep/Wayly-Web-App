@@ -228,7 +228,7 @@ export default function Landing() {
                         <Link
                             to="/signup"
                             data-testid="big-number-cta"
-                            className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8] transition-colors"
+                            className="bg-gold text-white font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8] transition-colors"
                         >
                             Start free for 7 days
                         </Link>
@@ -272,7 +272,7 @@ export default function Landing() {
                     </RevealOnScroll>
                 </div>
                 <div className="text-center mt-8">
-                    <Link to="/signup?plan=solo" data-testid="dashboard-strip-cta" className="inline-flex items-center gap-2 bg-gold text-primary-k font-semibold rounded-full px-6 py-3 hover:brightness-95">
+                    <Link to="/signup?plan=solo" data-testid="dashboard-strip-cta" className="inline-flex items-center gap-2 bg-gold text-white font-semibold rounded-full px-6 py-3 hover:brightness-95">
                         Start your free 7-day trial <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
@@ -424,7 +424,7 @@ export default function Landing() {
                         Try Wayly free for 7 days. Cancel anytime. No card required for the trial.
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-                        <Link to="/signup" data-testid="final-cta-signup" className="bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8] transition-colors">
+                        <Link to="/signup" data-testid="final-cta-signup" className="bg-gold text-white font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8] transition-colors">
                             Start free trial
                         </Link>
                         <Link to="/ai-tools" className="text-white underline">Or try a free AI tool</Link>

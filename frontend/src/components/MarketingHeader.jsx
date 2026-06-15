@@ -17,7 +17,7 @@ const NAV = [
 const PLAN_LABEL = { free: "FREE", solo: "SOLO", family: "FAMILY" };
 
 function PlanBadge({ plan }) {
-    const tone = plan === "family" ? "bg-[#2BC4D6] text-[#0E2A47]" : plan === "solo" ? "bg-[#3DB8A8] text-white" : "bg-white/15 text-white";
+    const tone = plan === "family" ? "bg-[#2BC4D6] text-white" : plan === "solo" ? "bg-[#3DB8A8] text-white" : "bg-white/15 text-white";
     return (
         <span className={`text-[10px] tracking-wider font-semibold rounded-full px-2 py-0.5 ${tone}`} data-testid="nav-plan-badge">
             {PLAN_LABEL[plan] || "FREE"}
@@ -31,7 +31,7 @@ function Avatar({ user, onClick, dataTestId }) {
         <button
             onClick={onClick}
             data-testid={dataTestId}
-            className="h-9 w-9 rounded-full bg-[#2BC4D6] text-[#0E2A47] font-semibold text-sm inline-flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-all"
+            className="h-9 w-9 rounded-full bg-[#2BC4D6] text-white font-semibold text-sm inline-flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-all"
             title={user.name || user.email}
         >
             {user.picture ? (

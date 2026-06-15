@@ -332,7 +332,7 @@ export default function DocumentVault() {
                                             onClick={() => onSendToDecoder(d)}
                                             disabled={busyId === d.id}
                                             data-testid={`docvault-decode-${d.id}`}
-                                            className="inline-flex items-center gap-1 text-xs bg-gold text-primary-k rounded-md px-2.5 py-1.5 font-semibold hover:brightness-95 disabled:opacity-60"
+                                            className="inline-flex items-center gap-1 text-xs bg-gold text-white rounded-md px-2.5 py-1.5 font-semibold hover:brightness-95 disabled:opacity-60"
                                         >
                                             {busyId === d.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                                             Decode

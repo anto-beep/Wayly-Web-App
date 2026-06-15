@@ -120,7 +120,7 @@ export default function Features() {
                     <Link to="/signup" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-6 py-3 hover:bg-[#091D33]" data-testid="features-cta-trial">
                         Start free trial <ArrowRight className="h-4 w-4" />
                     </Link>
-                    <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-gold text-primary-k rounded-full px-6 py-3 hover:bg-[#1FA8B8]" data-testid="features-cta-demo">
+                    <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-gold text-white rounded-full px-6 py-3 hover:bg-[#1FA8B8]" data-testid="features-cta-demo">
                         Book a demo
                     </Link>
                 </div>
@@ -236,7 +236,7 @@ export default function Features() {
                     <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Ready when you are.</h2>
                     <p className="mt-4 text-white/80 max-w-xl mx-auto">Start the free 7-day trial — no card needed — or book a 20‑minute call with a real person on our team.</p>
                     <div className="mt-7 flex flex-wrap gap-3 justify-center">
-                        <Link to="/signup" className="inline-flex items-center gap-2 bg-gold text-primary-k font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]" data-testid="features-bottom-cta-trial">
+                        <Link to="/signup" className="inline-flex items-center gap-2 bg-gold text-white font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]" data-testid="features-bottom-cta-trial">
                             Start free trial <ArrowRight className="h-4 w-4" />
                         </Link>
                         <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-transparent border border-white/40 text-white rounded-full px-6 py-3 hover:bg-white/10" data-testid="features-bottom-cta-demo">

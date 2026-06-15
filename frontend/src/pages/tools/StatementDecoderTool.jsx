@@ -300,7 +300,7 @@ export default function StatementDecoderTool() {
                                         <p className="text-xs text-muted-k mt-2 tabular-nums">Resets in: <span className="font-semibold text-primary-k">{countdown}</span></p>
                                     )}
                                     <div className="mt-4 flex flex-wrap gap-2">
-                                        <Link to="/signup?plan=solo" data-testid="sd-limit-trial" className="text-sm bg-gold text-primary-k font-semibold rounded-md px-4 py-2 hover:brightness-95">Start free trial →</Link>
+                                        <Link to="/signup?plan=solo" data-testid="sd-limit-trial" className="text-sm bg-gold text-white font-semibold rounded-md px-4 py-2 hover:brightness-95">Start free trial →</Link>
                                         <Link to="/login" data-testid="sd-limit-signin" className="text-sm border border-kindred rounded-md px-4 py-2 text-primary-k hover:bg-surface-2">Sign in →</Link>
                                     </div>
                                 </div>
@@ -349,7 +349,7 @@ export default function StatementDecoderTool() {
                                         <li className="flex items-start gap-2"><span className="text-gold">✦</span> Budget tracking + lifetime cap monitor</li>
                                         <li className="flex items-start gap-2"><span className="text-gold">✦</span> Family sharing (Family plan)</li>
                                     </ul>
-                                    <Link to="/signup?plan=solo" data-testid="sd-conversion-cta" className="mt-6 w-full bg-gold text-primary-k font-semibold rounded-md py-3 hover:brightness-95 inline-flex items-center justify-center gap-2">
+                                    <Link to="/signup?plan=solo" data-testid="sd-conversion-cta" className="mt-6 w-full bg-gold text-white font-semibold rounded-md py-3 hover:brightness-95 inline-flex items-center justify-center gap-2">
                                         Start free 7-day trial <ArrowRight className="h-4 w-4" />
                                     </Link>
                                     <p className="text-center text-xs text-white/70 mt-3">No card required. Cancel anytime.</p>
@@ -379,7 +379,7 @@ export default function StatementDecoderTool() {
                             <div className="absolute top-1/2 left-0 -translate-x-full -translate-y-1/2 h-px w-12 bg-terracotta" />
                         </div>
                         <div className="hidden lg:block absolute bottom-[10%] -left-4 transform -translate-x-full">
-                            <div className="bg-gold text-primary-k text-[11px] uppercase tracking-wider rounded-md px-3 py-1.5 font-semibold whitespace-nowrap">Contribution amount</div>
+                            <div className="bg-gold text-white text-[11px] uppercase tracking-wider rounded-md px-3 py-1.5 font-semibold whitespace-nowrap">Contribution amount</div>
                             <div className="absolute top-1/2 right-0 translate-x-full -translate-y-1/2 h-px w-12 bg-gold" />
                         </div>
                     </div>

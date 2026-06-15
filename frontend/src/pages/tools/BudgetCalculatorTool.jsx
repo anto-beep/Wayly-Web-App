@@ -81,15 +81,45 @@ export default function BudgetCalculatorTool() {
         );
     };
 
-    const calc = async () => {
+    // Map a participant doc's Tier 3 supplements onto the calc's value set
+    const _participantSupplementsToCalc = (doc) => {
+        const out = [];
+        const supp = doc?.applicable_supplements || [];
+        const enteralType = doc?.enteral_feeding_type;
+        supp.forEach((s) => {
+            if (s === "enteral") {
+                out.push(enteralType === "non_bolus" ? "enteral_non_bolus" : "enteral_bolus");
+            } else if (s === "oxygen" || s === "veterans" || s === "dementia_cognition" || s === "eachd_top_up") {
+                out.push(s);
+            }
+        });
+        return out;
+    };
+
+    // Called when the inline prompt saves Tier 3 supplements — re-run the
+    // calc immediately so the caregiver sees the updated annual total.
+    const onParticipantUpdated = (doc) => {
+        const next = _participantSupplementsToCalc(doc);
+        setApplicableSupplements(next);
+        if (typeof doc?.is_grandfathered_hcp === "string" && doc.is_grandfathered_hcp === "yes") {
+            setIsGrandfathered(true);
+        }
+        // Re-run with the new supplements so the result panel reflects them
+        if (result) {
+            setTimeout(() => { calc(next); }, 50);
+        }
+    };
+
+    const calc = async (overrideSupplements) => {
         setLoading(true);
         try {
+            const supps = overrideSupplements !== undefined ? overrideSupplements : applicableSupplements;
             const { data } = await api.post("/public/budget-calc", {
                 classification,
                 is_grandfathered: isGrandfathered,
                 current_lifetime_balance: parseFloat(currentBalance) || 0,
                 expected_annual_burn: parseFloat(annualBurn) || null,
-                applicable_supplements: applicableSupplements.length ? applicableSupplements : null,
+                applicable_supplements: supps.length ? supps : null,
             });
             setResult(data);
         } finally {
@@ -139,7 +169,7 @@ export default function BudgetCalculatorTool() {
 
             <section className="mx-auto max-w-4xl px-6 pb-20">
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["budget-calculator"]} className="mb-4" />
-                <ProfileInlinePrompts where="budget_calculator" />
+                <ProfileInlinePrompts where="budget_calculator" onParticipantUpdated={onParticipantUpdated} />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5 mt-4" data-testid="budget-calculator">
                     <div>
                         <span className="text-sm text-muted-k">Support at Home classification</span>

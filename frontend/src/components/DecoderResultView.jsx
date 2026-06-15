@@ -9,7 +9,7 @@ function aud(n) {
 }
 const SEV_META = {
     high:   { label: "High",   bg: "bg-terracotta",  fg: "text-white", Icon: AlertOctagon },
-    medium: { label: "Medium", bg: "bg-gold",        fg: "text-primary-k", Icon: ShieldAlert },
+    medium: { label: "Medium", bg: "bg-gold",        fg: "text-white", Icon: ShieldAlert },
     low:    { label: "Low",    bg: "bg-sage",        fg: "text-white", Icon: Shield },
 };
 const STREAM_LABEL = {
