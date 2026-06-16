@@ -58,6 +58,44 @@ export default function ContributionEstimator() {
 
     const showRateInputs = form.pension_status === "part" || form.pension_status === "cshc";
 
+    // Map participant pension_status → form's pension_status value
+    const _participantPensionToForm = (ps) => {
+        switch ((ps || "").toLowerCase()) {
+            case "full_pension": return "full";
+            case "part_pension": return "part";
+            case "cshc":         return "cshc";
+            case "self_funded":  return "self";
+            default:             return null;
+        }
+    };
+
+    // Called when the inline prompt saves any participant field (rates,
+    // pension_status, supplements, …). Hydrate the form with the new values
+    // and re-run the estimate if a result is already displayed.
+    const onParticipantUpdated = (doc) => {
+        const patch = {};
+        const formPension = _participantPensionToForm(doc?.pension_status);
+        if (formPension && formPension !== form.pension_status) patch.pension_status = formPension;
+        if (typeof doc?.classification_level === "number" && doc.classification_level !== form.classification) {
+            patch.classification = doc.classification_level;
+        }
+        if (doc?.is_grandfathered_hcp === "yes" && !form.is_grandfathered) patch.is_grandfathered = true;
+        const ind = doc?.part_pension_actual_independence_pct;
+        const eve = doc?.part_pension_actual_everyday_pct;
+        if (typeof ind === "number" && String(ind) !== String(form.independence_rate_pct)) {
+            patch.independence_rate_pct = String(ind);
+        }
+        if (typeof eve === "number" && String(eve) !== String(form.everyday_rate_pct)) {
+            patch.everyday_rate_pct = String(eve);
+        }
+        if (Object.keys(patch).length === 0) return;
+        setForm((f) => ({ ...f, ...patch }));
+        if (result) {
+            // Re-run with the merged form
+            setTimeout(() => { submit(); }, 50);
+        }
+    };
+
     const submit = async () => {
         setLoading(true);
         setError(null);
@@ -102,7 +140,7 @@ export default function ContributionEstimator() {
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["contribution-estimator"]} className="mb-4" />
-                <ProfileInlinePrompts where="contribution_estimator" />
+                <ProfileInlinePrompts where="contribution_estimator" onParticipantUpdated={onParticipantUpdated} />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5 mt-4" data-testid="contribution-form">
                     <label className="block"><span className="text-sm text-muted-k">Classification</span>
                         <select value={form.classification} onChange={(e) => setForm((f) => ({ ...f, classification: parseInt(e.target.value) }))} data-testid="ce-class" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5">

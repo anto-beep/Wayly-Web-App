@@ -184,3 +184,60 @@ async def test_migration_preserves_already_confirmed_authorisation():
     # Cleanup
     await db.participants.delete_one({"id": test_id})
     client.close()
+
+
+# -------------------- field_modifications audit trail --------------------
+@pytest.mark.asyncio
+async def test_field_modifications_recorded_on_patch(monkeypatch):
+    """Verify the PATCH route stamps field_modifications with actor + timestamp."""
+    import participant_profile as pp
+
+    mongo_url = os.environ["MONGO_URL"]
+    db_name = os.environ["DB_NAME"]
+    client = AsyncIOMotorClient(mongo_url)
+    db = client[db_name]
+
+    # Insert a synthetic participant
+    test_id = "test-audit-trail-pid"
+    test_account_id = "test-audit-trail-account"
+    await db.participants.delete_many({"id": test_id})
+    await db.participants.insert_one({
+        "id": test_id,
+        "account_id": test_account_id,
+        "household_id": "test-hh",
+        "first_name": "Trail",
+        "last_name": "Test",
+        "status": "ACTIVE",
+        "applicable_supplements": [],
+    })
+
+    # Stub the module-level globals so we can call patch_participant directly.
+    fake_user = {"id": "actor-1", "name": "Test User", "email": "t@example.com",
+                 "household_id": "test-hh"}
+    fake_account = {"id": test_account_id}
+
+    async def fake_account_for(req):
+        return fake_user, fake_account
+
+    monkeypatch.setattr(pp, "_db", db)
+    monkeypatch.setattr(pp, "_account_for", fake_account_for)
+
+    body = pp.ParticipantPatchBody(
+        applicable_supplements=["oxygen"],
+        care_manager_name="Jane Doe",
+    )
+    result = await pp.patch_participant(test_id, body, request=None)
+    fm = result.get("field_modifications") or {}
+    assert "applicable_supplements" in fm
+    assert "care_manager_name" in fm
+    # System / mirror fields must NOT appear in the trail
+    assert "profile_completeness_pct" not in fm
+    assert "updated_at" not in fm
+    # Actor name + timestamp populated
+    assert fm["applicable_supplements"]["actor_name"] == "Test User"
+    assert fm["applicable_supplements"]["actor_id"] == "actor-1"
+    assert "T" in fm["applicable_supplements"]["at"]  # ISO timestamp
+
+    # Cleanup
+    await db.participants.delete_one({"id": test_id})
+    client.close()

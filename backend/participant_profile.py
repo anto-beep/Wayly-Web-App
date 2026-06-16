@@ -410,6 +410,20 @@ async def create_participant(body: ParticipantCreateBody, request: Request):
         "updated_at": _now_iso(),
     }
     doc["profile_completeness_pct"] = compute_profile_completeness(doc)
+    # Initial audit trail for every user-supplied field
+    actor_label = user.get("name") or user.get("email") or "Caregiver"
+    trail: Dict[str, Any] = {}
+    initial_fields = [
+        "first_name", "last_name", "dob", "classification_level", "pension_status",
+        "provider_name", "statement_delivery", "authorisation_confirmed",
+        "preferred_name", "mac_reference_number", "suburb", "state",
+        "is_grandfathered_hcp", "hcp_level", "caregiver_relationship", "caregiver_phone",
+    ]
+    now = _now_iso()
+    for f in initial_fields:
+        if doc.get(f) not in (None, "", []):
+            trail[f] = {"actor_id": user["id"], "actor_name": actor_label, "at": now}
+    doc["field_modifications"] = trail
     await _db.participants.insert_one(doc)
     await _audit(acct["id"], user["id"], "PARTICIPANT_CREATED", pid,
                  f"Created participant {full_name} (class {body.classification_level})")
@@ -459,6 +473,29 @@ async def patch_participant(pid: str, body: ParticipantPatchBody, request: Reque
     # Compute completeness against the merged doc
     merged = {**doc, **patch}
     patch["profile_completeness_pct"] = compute_profile_completeness(merged)
+
+    # Per-field audit trail — record actor + timestamp for every field touched
+    # in this PATCH so the UI can render "Saved by Cathy · 4 min ago" under
+    # each Tier-2 / Tier-3 field.
+    actor_label = user.get("name") or user.get("email") or "Caregiver"
+    existing_trail = dict(doc.get("field_modifications") or {})
+    now = _now_iso()
+    # Fields we do NOT want to surface as user-facing audits (computed/system)
+    SYSTEM_FIELDS = {
+        "profile_completeness_pct", "updated_at",
+        "date_of_birth", "classification", "statement_format",  # legacy mirrors
+        "authorisation_confirmed_at", "authorisation_confirmed_by_user_id",
+    }
+    for fname, fval in patch.items():
+        if fname in SYSTEM_FIELDS:
+            continue
+        existing_trail[fname] = {
+            "actor_id": user["id"],
+            "actor_name": actor_label,
+            "at": now,
+        }
+    patch["field_modifications"] = existing_trail
+
     await _db.participants.update_one({"id": pid}, {"$set": patch})
 
     # Audit which Tier 3 fields were filled via progressive disclosure

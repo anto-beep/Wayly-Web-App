@@ -93,16 +93,21 @@ export default function ProfileInlinePrompts({ where, onParticipantUpdated }) {
 
 function PromptRow({ participantId, prompt, participant, onSaved, onDismiss }) {
     const [saving, setSaving] = useState(false);
-    const [justSaved, setJustSaved] = useState(false);
+    const [savedMeta, setSavedMeta] = useState(null); // { actor_name, at }
     const renderer = useMemo(() => RENDERERS[prompt.field] || GenericText, [prompt.field]);
 
     const save = async (patch) => {
         setSaving(true);
         try {
             const { data: updated } = await api.patch(`/participants/${participantId}`, patch);
-            // Show inline "Saved ✓" pill briefly before the row disappears.
-            setJustSaved(true);
-            setTimeout(() => onSaved(updated), 900);
+            // Show inline "Saved by … · just now" pill before the row collapses.
+            const trail = updated?.field_modifications?.[prompt.field] || null;
+            setSavedMeta({
+                actor_name: trail?.actor_name || "you",
+                at: trail?.at || new Date().toISOString(),
+            });
+            // Slightly longer than the original 900ms so the actor name is readable.
+            setTimeout(() => onSaved(updated), 1700);
         } catch (err) {
             toast.error(extractErrorMessage(err, "Could not save"));
         } finally {
@@ -110,6 +115,7 @@ function PromptRow({ participantId, prompt, participant, onSaved, onDismiss }) {
         }
     };
 
+    const justSaved = Boolean(savedMeta);
     const FieldEditor = renderer;
     return (
         <div
@@ -137,7 +143,14 @@ function PromptRow({ participantId, prompt, participant, onSaved, onDismiss }) {
                     </button>
                 )}
             </div>
-            {!justSaved && (
+            {justSaved ? (
+                <p
+                    data-testid={`profile-prompt-${prompt.field}-trail`}
+                    className="mt-2 text-[11px] text-muted-k italic"
+                >
+                    Saved by {savedMeta.actor_name} · {relativeTime(savedMeta.at)}
+                </p>
+            ) : (
                 <div className="mt-2">
                     <FieldEditor
                         save={save}
@@ -149,6 +162,22 @@ function PromptRow({ participantId, prompt, participant, onSaved, onDismiss }) {
             )}
         </div>
     );
+}
+
+
+/** Relative time formatter — "just now", "4 min ago", "2 h ago", "yesterday". */
+export function relativeTime(iso) {
+    if (!iso) return "just now";
+    const t = new Date(iso).getTime();
+    if (!t || isNaN(t)) return "just now";
+    const diff = Math.max(0, (Date.now() - t) / 1000);
+    if (diff < 45) return "just now";
+    if (diff < 90) return "1 min ago";
+    if (diff < 3600) return `${Math.round(diff / 60)} min ago`;
+    if (diff < 7200) return "1 h ago";
+    if (diff < 86400) return `${Math.round(diff / 3600)} h ago`;
+    if (diff < 172800) return "yesterday";
+    return `${Math.round(diff / 86400)} days ago`;
 }
 
 

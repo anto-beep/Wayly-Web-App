@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
@@ -50,6 +50,35 @@ export default function ReassessmentLetter() {
     const [copied, setCopied] = useState(false);
     const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+    // Pre-fill from the user's primary participant when available — saves
+    // typing and keeps the letter consistent with the saved profile.
+    const _applyParticipantToForm = (doc) => {
+        if (!doc) return;
+        const fullName = `${doc.first_name || ""} ${doc.last_name || ""}`.trim();
+        setForm((f) => ({
+            ...f,
+            participant_name: f.participant_name || fullName,
+            current_classification: doc.classification_level || f.current_classification,
+        }));
+    };
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const { data } = await api.get("/participants");
+                if (cancelled) return;
+                const p = (data?.items || []).find((x) => x.is_primary && x.status === "ACTIVE")
+                       || (data?.items || [])[0];
+                _applyParticipantToForm(p);
+            } catch { /* unauthenticated or no participant — no-op */ }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    // When an inline prompt saves any field, re-apply the freshest values.
+    const onParticipantUpdated = (doc) => _applyParticipantToForm(doc);
+
     const submit = async () => {
         setLoading(true);
         setLetter(null);
@@ -95,7 +124,7 @@ export default function ReassessmentLetter() {
 
             <section className="mx-auto max-w-3xl px-6 pb-20">
                 <AIAccuracyBanner text={TOOL_DISCLAIMERS["reassessment-letter"]} className="mb-4" />
-                <ProfileInlinePrompts where="reassessment_letter" />
+                <ProfileInlinePrompts where="reassessment_letter" onParticipantUpdated={onParticipantUpdated} />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5 mt-4" data-testid="reassessment-form">
                     <div>
                         <span className="text-sm text-muted-k">Letter type</span>

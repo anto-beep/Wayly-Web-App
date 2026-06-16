@@ -4210,109 +4210,11 @@ async def create_notification(user_id: str, category: str, title: str, body: str
     })
 
 
-@api.get("/notifications")
-async def list_notifications(user_id: str = Depends(get_current_user_id)):
-    cur = db.notifications.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(30)
-    items = await cur.to_list(30)
-    unread = await db.notifications.count_documents({"user_id": user_id, "read": False})
-    return {"items": items, "unread": unread}
-
-
-class NotificationReadBody(BaseModel):
-    ids: List[str] = Field(default_factory=list)
-
-
-@api.post("/notifications/read")
-async def mark_notifications_read(body: NotificationReadBody, user_id: str = Depends(get_current_user_id)):
-    query: dict = {"user_id": user_id}
-    if body.ids:
-        query["id"] = {"$in": body.ids}
-    res = await db.notifications.update_many(query, {"$set": {"read": True, "read_at": now_iso()}})
-    return {"ok": True, "modified": res.modified_count}
-
-
-class NotificationPrefsBody(BaseModel):
-    prefs: dict = Field(default_factory=dict)
-
-
-@api.get("/notifications/prefs")
-async def get_notification_prefs(user_id: str = Depends(get_current_user_id)):
-    u = await _get_user(user_id)
-    prefs = u.get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS
-    return {"prefs": {c: bool(prefs.get(c, True)) for c in NOTIFICATION_CATEGORIES}}
-
-
-@api.put("/notifications/prefs")
-async def put_notification_prefs(body: NotificationPrefsBody, user_id: str = Depends(get_current_user_id)):
-    clean = {c: bool(body.prefs.get(c, True)) for c in NOTIFICATION_CATEGORIES}
-    await db.users.update_one({"id": user_id}, {"$set": {"notification_prefs": clean}})
-    return {"ok": True, "prefs": clean}
-
-
-@api.get("/notifications/stream")
-async def stream_notifications(request: Request, token: Optional[str] = None):
-    """Server-Sent Events stream for real-time bell updates.
-
-    EventSource cannot send custom Authorization headers, so we accept the JWT
-    via the ``?token=`` query string. The stream emits one ``notification``
-    event per newly inserted row and a ``heartbeat`` every 25 seconds so
-    proxies don't close the connection.
-    """
-    from fastapi.responses import StreamingResponse
-    # Resolve user from query token or Authorization header
-    auth_header = request.headers.get("authorization", "")
-    jwt_str = None
-    if token:
-        jwt_str = token
-    elif auth_header.lower().startswith("bearer "):
-        jwt_str = auth_header.split(" ", 1)[1]
-    if not jwt_str:
-        raise HTTPException(status_code=401, detail="Missing token")
-    try:
-        from auth import decode_token
-        user_id = decode_token(jwt_str)
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    async def event_stream():
-        # Track last-seen created_at so we only send genuinely new rows.
-        last_ts = datetime.now(timezone.utc).isoformat()
-        # Send an initial unread count so the bell badge reconciles immediately.
-        unread = await db.notifications.count_documents({"user_id": user_id, "read": False})
-        yield f"event: snapshot\ndata: {json.dumps({'unread': unread})}\n\n"
-        heartbeat = 0
-        while True:
-            if await request.is_disconnected():
-                return
-            try:
-                cur = db.notifications.find(
-                    {"user_id": user_id, "created_at": {"$gt": last_ts}},
-                    {"_id": 0},
-                ).sort("created_at", 1)
-                docs = await cur.to_list(20)
-                for doc in docs:
-                    last_ts = doc.get("created_at", last_ts)
-                    yield f"event: notification\ndata: {json.dumps(doc)}\n\n"
-                heartbeat += 1
-                if heartbeat % 25 == 0:
-                    yield "event: heartbeat\ndata: {}\n\n"
-            except Exception as e:
-                logger.warning(f"SSE tick error: {e}")
-            await asyncio.sleep(1)
-
-    return StreamingResponse(
-        event_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache, no-transform",
-            "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
-        },
-    )
+@api.get("/notifications/legacy-removed")
+async def _notifications_extracted_marker():
+    """Notification endpoints moved to routes/notifications.py — this stub
+    exists only as a documentation breadcrumb during the modular refactor."""
+    return {"moved_to": "routes/notifications.py"}
 
 
 # ---------------------------------------------------------------------------
@@ -5001,6 +4903,10 @@ from participant_profile import (
     init_participant_profile_routes,
     migrate_participants_to_v2,
 )
+from routes.notifications import (
+    notification_router,
+    init_notification_routes,
+)
 from batch3_routes import _account_for_user as _batch3_account_for_user  # noqa: E402
 init_adviser_routes(
     db=db,
@@ -5063,6 +4969,13 @@ init_participant_profile_routes(
     user_dep=_user_from_request_required,
     account_for_user=_batch3_account_for_user,
 )
+init_notification_routes(
+    db=db,
+    get_user_helper=_get_user,
+    now_iso_helper=now_iso,
+    default_prefs=DEFAULT_NOTIFICATION_PREFS,
+    categories=NOTIFICATION_CATEGORIES,
+)
 api.include_router(admin_auth_router)
 api.include_router(admin_router)
 api.include_router(phase_d_admin)
@@ -5079,6 +4992,7 @@ api.include_router(adviser_public_router)
 api.include_router(documents_router)
 api.include_router(extended_router)
 api.include_router(participant_profile_router)
+api.include_router(notification_router)
 api.include_router(batch2_router)
 api.include_router(batch3_router)
 api.include_router(batch3_billing_router)
