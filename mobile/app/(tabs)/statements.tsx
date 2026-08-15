@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { AppHeader, Badge, Button, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { cacheGet, cacheSet } from "@/src/lib/cache";
 import { colors, fonts, radius, shadow, spacing } from "@/src/theme";
 import { money, shortDate } from "@/src/utils/format";
 
@@ -26,24 +27,34 @@ export default function StatementsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
+  const [offline, setOffline] = useState(false);
 
   const load = useCallback(async () => {
     setError(false);
     try {
       const data = await apiFetch<Statement[]>("/statements");
-      setItems(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setItems(list);
+      setOffline(false);
+      cacheSet(`statements:${activeId || "all"}`, list);
     } catch {
-      setError(true);
+      const cached = await cacheGet<Statement[]>(`statements:${activeId || "all"}`);
+      if (cached?.data?.length) {
+        setItems(cached.data);
+        setOffline(true);
+      } else {
+        setError(true);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [activeId]);
 
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [load, activeId])
+    }, [load])
   );
 
   const renderItem = ({ item }: { item: Statement }) => {
@@ -117,6 +128,16 @@ export default function StatementsScreen() {
           data={items}
           keyExtractor={(s) => s.id}
           renderItem={renderItem}
+          ListHeaderComponent={
+            offline ? (
+              <View testID="statements-offline-banner" style={styles.offlineBanner}>
+                <Ionicons name="cloud-offline" size={16} color={colors.alert} />
+                <T variant="small" style={{ color: colors.alert, flex: 1 }}>
+                  Showing offline copies. Pull to refresh when connected.
+                </T>
+              </View>
+            ) : null
+          }
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}
           refreshControl={
             <RefreshControl
@@ -135,6 +156,15 @@ export default function StatementsScreen() {
 }
 
 const styles = StyleSheet.create({
+  offlineBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: colors.alertSoft,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+  },
   row: {
     flexDirection: "row",
     alignItems: "center",

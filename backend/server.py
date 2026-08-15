@@ -4048,6 +4048,24 @@ async def _run_upload_job(
         job["statement_id"] = statement.id
         job["status"] = "done"
         job["phase"] = "done"
+        # Notify the caregiver their statement is decoded (they're often offline
+        # while it processes). Non-blocking: push failure must never fail upload.
+        try:
+            from push_notifications import send_push
+            _n_flags = len(anomalies or [])
+            if _n_flags > 0:
+                _title = "Statement ready — items to check"
+                _msg = f"{filename}: {_n_flags} flagged charge{'s' if _n_flags != 1 else ''} to review."
+            else:
+                _title = "Statement ready"
+                _msg = f"{filename} has been decoded. No issues found."
+            await send_push(
+                recipients=[user_id],
+                data={"title": _title, "message": _msg, "action_url": f"/statement/{statement.id}"},
+                idempotency_key=f"stmt-done-{statement.id}",
+            )
+        except Exception as _pe:
+            logger.warning("push (statement done) failed, non-blocking: %s", _pe)
     except Exception as e:
         logger.exception("upload job %s failed", job_id)
         job["status"] = "error"
@@ -7031,6 +7049,11 @@ except Exception as _e:
     _logging.getLogger("wayly").warning(f"scenario_engine routes failed to load: {_e}")
 
 app.include_router(api)
+
+# Emergent managed push notifications (mobile). push_router carries its own
+# /api prefix, so mount it directly on the app.
+from push_notifications import push_router  # noqa: E402
+app.include_router(push_router)
 
 # Phase 5, install the security-headers middleware AFTER CORS so the headers
 # attach to every response (including preflight 204s).

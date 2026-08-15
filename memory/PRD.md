@@ -6618,3 +6618,10 @@ The product is now cross-platform: web (React) + mobile (Expo) + shared FastAPI/
 - SSE live re-decode of statements on mobile (currently shows stored decoded data).
 - In-app plan purchase (intentionally deferred; web-only).
 - Google OAuth end-to-end can only be validated on a device/build (external redirect).
+
+### 2026-06 · Mobile feature pass 2 (Family Wall, Live Decode, Offline, Push)
+- **Family Wall** (`app/(tabs)/family.tsx`, new 5th tab): household activity feed per participant. GET/POST /api/wall/posts, emoji reactions (POST /wall/posts/{id}/react), delete-own (DELETE), text + photo (base64 via image-picker) composer. Voice posts display-only (recording deferred).
+- **Live Decode** (`app/decode/[id].tsx` + `src/lib/sse.ts`): streams POST /api/sd3/statements/{id}/decode-v2/stream over SSE (consumed via XHR incremental responseText), rendering phase status, confidence-pilled line cards, alerts, final summary; "Re-run decode" button. Reached via statement-decode-button on statement detail.
+- **Offline Statements** (`src/lib/cache.ts`): statements list + detail cached on-device (JSON in AsyncStorage/IndexedDB); on fetch failure, falls back to cache with an "offline copy" banner.
+- **Push Alerts** (Emergent managed relay): backend `push_notifications.py` (POST /api/register-push + send_push helper) mounted on app; non-blocking send_push triggered when a statement finishes decoding (flagged-charge aware). Frontend: expo-notifications handler+channel at module scope in _layout, `PushManager` (tap routing warm+cold, weekly denied-nudge, registration via getDevicePushTokenAsync). `EMERGENT_PUSH_KEY=placeholder` in backend .env (replaced by deployer). app.json has expo-notifications plugin + android.googleServicesFile. REQUIRES user to add google-services.json + Publish/build to function (not testable in Expo Go/web).
+- Verified: testing_agent iter 151 — backend 8/8 pytest pass; all mobile flows work; push endpoint returns expected 500 with placeholder key.

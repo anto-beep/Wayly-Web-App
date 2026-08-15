@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
+import { cacheGet, cacheSet } from "@/src/lib/cache";
 import { colors, fonts, radius, spacing } from "@/src/theme";
 import { money, shortDate } from "@/src/utils/format";
 
@@ -36,14 +37,24 @@ export default function StatementDetail() {
   const [stmt, setStmt] = useState<Statement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [offline, setOffline] = useState(false);
 
   const load = useCallback(async () => {
     setError(false);
     try {
       const data = await apiFetch<Statement>(`/statements/${id}`);
       setStmt(data);
+      setOffline(false);
+      cacheSet(`statement:${id}`, data);
     } catch {
-      setError(true);
+      // Fall back to a cached copy so carers can read it without signal.
+      const cached = await cacheGet<Statement>(`statement:${id}`);
+      if (cached?.data) {
+        setStmt(cached.data);
+        setOffline(true);
+      } else {
+        setError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -77,6 +88,14 @@ export default function StatementDetail() {
         />
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
+          {offline ? (
+            <View testID="statement-offline-banner" style={styles.offlineBanner}>
+              <Ionicons name="cloud-offline" size={16} color={colors.alert} />
+              <T variant="small" style={{ color: colors.alert, flex: 1 }}>
+                Showing an offline copy. Connect to refresh.
+              </T>
+            </View>
+          ) : null}
           {/* Overview */}
           <Card testID="statement-overview">
             <T variant="label">STATEMENT PERIOD</T>
@@ -162,6 +181,12 @@ export default function StatementDetail() {
           </Card>
 
           <Button
+            label="Decode with AI"
+            testID="statement-decode-button"
+            icon="sparkles"
+            onPress={() => router.push(`/decode/${stmt.id}`)}
+          />
+          <Button
             label="Ask Wayly about this statement"
             testID="statement-ask-button"
             icon="chatbubbles"
@@ -188,6 +213,14 @@ function groupByStream(items: LineItem[]): { name: string; total: number; count:
 }
 
 const styles = StyleSheet.create({
+  offlineBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: colors.alertSoft,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+  },
   overviewRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
   metric: {
     flex: 1,

@@ -52,9 +52,17 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="family"
+        options={{
+          title: "Family",
+          tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} />,
+          tabBarButtonTestID: "tab-family",
+        }}
+      />
+      <Tabs.Screen
         name="ask"
         options={{
-          title: "Ask Wayly",
+          title: "Ask",
           tabBarIcon: ({ color, size }) => <Ionicons name="chatbubbles" size={size} color={color} />,
           tabBarButtonTestID: "tab-ask",
         }}
