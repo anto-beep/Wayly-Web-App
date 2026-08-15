@@ -1,0 +1,46 @@
+{
+  "summary": "LF-1 v1.2 Iteration 1 — full backend + frontend E2E test of Letters & Follow-ups skeleton. All 38 unit tests + 16 new HTTP integration tests pass; all frontend flows (12-situation front door, safeguarding gate, autosave with reload persistence, complaint-mode/ATSI conditional rendering with positive AND negative cases, correspondence log, terms ack, /ai-tools rename cascade) work.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_lf1_iter1.py (38 unit tests, pre-existing, all pass)",
+    "/app/backend/tests/test_lf1_http.py (16 new HTTP integration tests via Cathy auth, all pass)",
+    "/app/test_reports/pytest/iter64_lf1_http.xml"
+  ],
+  "action_items": [
+    "Optional (not blocking): the marketing/blocked view for /ai-tools/letters-and-follow-ups renders <ScreenshotStatement /> (imported from '@/components/Screenshots'), and ToolGate.jsx uses /marketing/ai-tool-reassessment-letter.png as the hero image — the PNG asset itself still contains the OLD 'Reassessment Letter Drafter' title text. Replace the image or supply a new /marketing/ai-tool-letters-and-follow-ups.png so unauth visitors don't see the legacy name in the gated screenshot.",
+    "Optional: seoToolArticles.js, guides.js, articlePillars.js, toolContent.js still reference the '/ai-tools/reassessment-letter' slug in blog copy / related links; the /ai-tools/reassessment-letter route now 301-equivalent-redirects, so these links resolve correctly, but the human-readable article text still says 'Wayly Reassessment Letter Generator'. Refresh SEO copy at your leisure.",
+    "Optional: The legacy → new redirect is implemented via a SPA <Navigate replace/> (client-side), not a true HTTP 301 (which would need to be at ingress / server level). Functionally equivalent for logged-in users; if you want search-engine-friendly 301 for the old URL to preserve link equity, add a redirect at the ingress or in server.py."
+  ],
+  "critical_code_review_comments": [
+    "routes/lf1.py: solid Pydantic validation on all inputs (situation_id, archetype, direction, sender_identity, complaint_mode, recipient_type, status, inbound_source). All handlers exclude MongoDB _id via projection {'_id': 0}. Good.",
+    "routes/lf1.py::patch_correspondence appends a canonical draft_versions entry on every content_final change and correctly marks previous versions non-canonical (WS8 T32) — verified via 2-patch test.",
+    "routes/lf1.py::log_inbound correctly flips the parent to status=responded — verified. Downside: if user re-logs a 2nd inbound, parent is stamped 'responded' again with the newer inbound_received_at (idempotent enough, but consider a chronological guard if that matters).",
+    "routes/lf1.py::delete_correspondence writes an lf1_deletions audit row before the delete_one — good for the T39 audit trail.",
+    "lib/lf1.py loads recipient_directory.yaml at import time; changes require a backend restart. Acceptable for a static, quarterly-reviewed dataset.",
+    "frontend LettersFollowUps.jsx: the SPA redirect from /ai-tools/reassessment-letter uses React Router <Navigate replace />, not an HTTP 301. This is functionally equivalent for authenticated app users but doesn't preserve SEO link equity from external inbound links to the old URL.",
+    "frontend CorrespondenceDetail.jsx: autosave debounce is a plain useEffect+setTimeout; if the user navigates away within the debounce window (<1s) the last few characters won't save. Consider a beforeunload flush or triggering save on blur.",
+    "frontend CorrespondenceDetail.jsx: on the very first render the debounced autosave fires with the initial state, immediately POST-ing an empty content_draft/senderAuthority. This is harmless (server upserts nothing meaningful) but noisy — consider a 'dirty' guard so autosave only fires after the user first mutates the form.",
+    "frontend ToolGate marketing screenshot still references '/marketing/ai-tool-reassessment-letter.png' — the file itself likely still shows the OLD name (visible on the blocked / unauth view)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_lf1_http.py (new — 16 HTTP integration tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (54/54 tests — 38 unit + 16 HTTP integration)",
+    "frontend": "100% (all requested flows verified end-to-end with Cathy on the public URL)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (family plan, works). trial30909@example.com was not exercised (not needed for this feature — it's a paywall / gating test).",
+  "seed_data_creation": "Backend integration tests create ~7 correspondence entries under cathy@example.com and clean them up in a teardown loop. The log page already shows historical entries from previous runs (12 visible in the final check).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 1 of LF-1 is stable. Backend HTTP tests live at /app/backend/tests/test_lf1_http.py (uses REACT_APP_BACKEND_URL, 60s auth timeout because login bcrypt is slow ~30s on the preview URL). Iteration 2 will add the LLM letter generation engine — expect a new /api/lf1/generate endpoint or similar under routes/lf1_generate.py. When testing UI, always wait for the actual `lf1-detail-content` selector (or another gated-by-loaded selector) before checking conditional testids like `lf1-detail-atsi` — the detail page renders 'Loading…' with the h1 for the first ~1s while GET /lf1/correspondence/{id} is in flight.",
+  "rca_of_the_issue": "N/A — no bugs found in the LF-1 Iteration 1 delivery. All 20+ endpoints work end-to-end, the 12-situation front door + safeguarding gate + autosave loop + redirect + rename cascade on the core pages (AIToolsIndex, Landing, Features, Pricing) are all correct. Minor rename-cascade misses (marketing screenshot PNG, SEO blog copy) are cosmetic and flagged as optional cleanup."
+}

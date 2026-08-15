@@ -1,0 +1,45 @@
+{
+  "summary": "Wave 2 follow-up #2 verified — banner contrast, Timeline Add Event, §11 backend grammar sweep, §8 mobile screenshot chrome hiding, and Care-Plan Changes Title Case all pass. Backend copy-QA and frontend copy-QA both exit 0 with '✓ No violations found.'. Backend boots cleanly post-sweep (/api/health 200) and the 402 paywall regression still works. HOWEVER: the Ask Wayly chat endpoint returns HTTP 500 — root cause is a pre-existing startup failure in program_reference cache (KeyError: 'id'), NOT the em-dash sweep. Reported below as a CRITICAL pre-existing regression that blocks the AI integration assertion in this iteration's brief.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/chat", "issue": "Returns 500. Server log shows RuntimeError: 'program_reference cache not loaded — call preload_cache() at startup'. Root cause is the startup hook _program_reference_bootstrap raising KeyError: 'id' at program_reference.py:235 (doc['id']) because some persisted Mongo rows lack the 'id' field. Cascades into budget_lib.lifetime_cap() inside the chat handler (server.py:2134). This is NOT a regression from the em-dash sweep but it blocks the brief's Ask Wayly chat assertion.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_results": {
+    "read_only_banner_contrast": "PASS — banner_bg rgb(255,255,255), banner_color rgb(14,77,82); Subscribe button bg rgb(255,255,255), color rgb(14,77,82), border 1px rgb(231,224,213) visible. Both clearly legible.",
+    "timeline_add_event_expired": "PASS — bg rgba(165,81,43,0.6) (Clay #A5512B with disabled opacity), color rgb(255,255,255), aria-disabled='true', label 'Add Event' with Plus icon.",
+    "timeline_add_event_paid": "PASS — bg rgb(165,81,43) (exact Clay #A5512B), color rgb(255,255,255), aria-disabled=null, label 'Add Event'.",
+    "backend_health": "PASS — GET /api/health → 200 {status:ok, service:wayly-api, version:preview}.",
+    "backend_paywall_402_regression": "PASS — POST /api/public/budget-calc {classification:4} with expired-trial bearer returns 402 with detail.error='trial_expired', detail.message='Your trial has ended. Subscribe to continue.', detail.upgrade_url='/pricing'.",
+    "ask_wayly_chat_cathy": "FAIL — POST /api/chat returns 500 for cathy@example.com. Root cause: program_reference cache bootstrap failure (see backend_issues.critical). Confirmed via stack trace in /var/log/supervisor/backend.err.log.",
+    "lib_pdf_reports_import": "PASS — `python3 -c 'import lib.pdf_reports'` succeeds. NOTE: the brief asks to import `_build_household_summary` but that symbol does not exist in lib/pdf_reports.py; the actual public symbol is `render_household_summary`. Plain `import lib.pdf_reports` succeeds with no syntax/f-string errors, which is the sweep regression check the brief actually cares about.",
+    "backend_copy_qa": "PASS — `cd /app/backend && python3 scripts/backend_copy_qa.py` scanned 154 files, '✓ No violations found.', exit 0.",
+    "frontend_copy_qa": "PASS — `cd /app/frontend && yarn copy-qa` scanned 223 files, '✓ No violations found.', exit 0.",
+    "mobile_screenshot_chrome_375": "PASS — at 375x800 on /ai-tools/budget-calculator (logged-out), tool-gate-live-preview .h-7 browser-chrome row computed display:none. No horizontal overflow (scrollWidth ≤ window.innerWidth).",
+    "tablet_screenshot_chrome_768": "PASS — at 768x900 .h-7 display:flex (visible).",
+    "desktop_screenshot_chrome_1440": "PASS — at 1440x900 .h-7 display:flex (visible).",
+    "care_plan_changes_title_case_reports": "PASS — /app/reports body contains exact string 'Care-Plan Changes' (1 occurrence), no lowercase variants.",
+    "double_comma_sweep": "PASS — grep across lib/, email_service.py, server.py, agents.py finds no ', ,' or `else ','` artifacts left by the autofix."
+  },
+  "test_report_links": ["/tmp/be_smoke.py"],
+  "action_items": [
+    "Fix the program_reference cache bootstrap KeyError at program_reference.py:235 — either (a) defensively `.get('id')` and skip rows without an id while logging, or (b) add a migration that backfills the `id` field on existing program_reference docs. The current behaviour silently disables the cache and cascades 500s into /api/chat (and any other handler that calls budget_lib.lifetime_cap / program_reference.get_value).",
+    "Optional: the brief references `_build_household_summary` but the symbol in lib/pdf_reports.py is `render_household_summary`. Update the brief or rename for clarity."
+  ],
+  "critical_code_review_comments": [
+    "ReadOnlyBanner correctly switches to white-bg + ink text + outlined Subscribe pill per the contrast spec. Lock icon retained in clay-tinted circle for context — looks good.",
+    "ParticipantTimeline Add Event button is back on Clay (#A5512B) for active users, and uses Clay-with-opacity + aria-disabled='true' + cursor-not-allowed for expired users. Matches §10.",
+    "Screenshots.jsx BrowserFrame uses `hidden sm:flex` on the .h-7 chrome row — Tailwind compiles to display:none below 640px and display:flex from sm: up, confirmed at 375/768/1440 viewports.",
+    "program_reference.py preload_cache assumes every doc has an `id` field. This is brittle and is currently the root cause of /api/chat 500s in this environment. Should be defensive (skip+warn) so a single malformed row doesn't disable the whole cache."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "85% (5/6 — chat 500 from pre-existing startup bug)", "frontend": "100% (8/8 visual + QA assertions)"},
+  "test_credentials": "trial30909@example.com / TrialPass1! (expired-trial), cathy@example.com / testpass123 (family). Both logins succeeded.",
+  "seed_data_creation": "None.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All §11 grammar-sweep surfaces, §4.5 banner contrast, §10 timeline button, §8 mobile chrome, and Care-Plan Changes Title Case are verified at 100%. The single failure — POST /api/chat 500 — is caused by a pre-existing program_reference cache bootstrap KeyError, NOT by the em-dash autofix or the CHAT_SYSTEM_TEMPLATE update. Once program_reference.py:235 is hardened (skip rows without id), the chat endpoint should recover and the LLM prompt change can be retested directly. /api/health, /api/public/budget-calc 402 regression, both copy-QA scripts, and all visual assertions are green.",
+  "rca_of_the_issue": "Symptom: POST /api/chat → 500 Internal Server Error. Reproduction: login cathy@example.com / testpass123, POST /api/chat with any message body. Stack trace (from backend.err.log): server.py:2134 → budget.py:81 lifetime_cap → program_reference.py:280 get_value → raise RuntimeError('program_reference cache not loaded'). Upstream trigger: every startup attempt of _program_reference_bootstrap raises KeyError: 'id' at program_reference.py:235 inside preload_cache because some persisted program_reference Mongo docs are missing the `id` field. Because the bootstrap wrapper swallows the exception (`except Exception as e: logger.error(...)`), the cache stays empty and every downstream call raises. Mitigation: in program_reference.py preload_cache, change `doc['id']` to `doc.get('id', '')` (and log a warning when missing) OR add a one-shot data migration that backfills `id` (uuid4 hex) for any program_reference row missing it. This single change unblocks /api/chat and any other call into budget_lib / program_reference."
+}

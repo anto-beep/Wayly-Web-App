@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 28 — Adviser per-client read-only access (snapshot JSON + PDF review pack) tested end-to-end. 17/17 backend pytest cases pass; all critical frontend flows verified (linked column, disabled/enabled snapshot+PDF buttons, modal open with snapshot data, in-modal PDF download button, modal close).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter28_adviser_snapshot.py",
+    "/app/test_reports/pytest/iter28_adviser_snapshot.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "link_client_by_email and link_client_household are idempotent (only touch rows where linked_user_id/linked_household_id is null) — safe to call repeatedly from signup/google-session/household flows. Correctly imported lazily inside server.py to avoid circular import.",
+    "_load_client_household correctly enforces adviser ownership (returns 404 if cid is not on this adviser's roster) BEFORE checking linked status — cross-adviser isolation verified.",
+    "client_not_linked path returns 409 with detail.error='client_not_linked' as specified.",
+    "PDF endpoint returns proper application/pdf content-type, %PDF- magic bytes, content-length >1500 (verified at 4400+ bytes), and content-disposition with attachment + filename pattern 'wayly-review-pack-*.pdf'. X-Wayly-Review-Pack header added too.",
+    "Snapshot endpoint updates adviser_clients.last_seen_at to the most-recent statement's uploaded_at — verified via follow-up GET /adviser/clients.",
+    "Frontend correctly uses axios responseType:'blob' with programmatic <a download> click for PDF download — no iframe assumption.",
+    "Modal overlay uses onClick={onClose} on outer overlay with stopPropagation on inner card — Adviser can dismiss by clicking the dimmed background OR the X close button. Both work.",
+    "All testids match spec: adviser-snapshot-modal, adviser-snapshot-close, adviser-download-pdf-modal, adviser-linked-{id}, adviser-client-snapshot-{id}, adviser-client-pdf-{id}.",
+    "MongoDB _id correctly excluded via projection {_id: 0} on all reads."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter28_adviser_snapshot.py"],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "100% on tested flows"},
+  "test_credentials": "Adviser: mark.adviser@example.com / AdviserPass1!. Family: cathy@example.com / testpass123. Auto-linked signup uses fresh TEST_autolink_*@example.com per run.",
+  "seed_data_creation": "Backend test creates throwaway adviser_clients rows + a fresh signup user per run and cleans them up in test_zzz_cleanup. Also creates a temporary second adviser (TEST_adv2_*) for cross-isolation tests. cathy's existing seeded household is used as the linked-household source.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend test file: /app/backend/tests/test_iter28_adviser_snapshot.py. Run with REACT_APP_BACKEND_URL exported. Test data: roster is cleaned between runs. Note: the frontend test added 'cathy@example.com' as an adviser client during browser testing — leftover rows on mark.adviser's roster may persist (they will be cleaned/replaced by next backend test run). Coverage includes: auto-link on signup, auto-link on household, immediate-link on POST /adviser/clients for pre-existing users, snapshot 200/401/403/404/409 paths, PDF 200/401/403/404/409 + magic bytes + content-disposition, cross-adviser isolation (404), last_seen_at update.",
+  "rca of the issue": "N/A — no bugs found."
+}

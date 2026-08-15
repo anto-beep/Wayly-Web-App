@@ -1,0 +1,46 @@
+{
+  "summary": "Iteration 2 verification: full backend + frontend regression on top of new public marketing layer + 3 free AI tools + new navy/gold palette. 32/32 backend pytest cases pass (21 from iter1 + 11 new public-tool tests covering /api/public/decode-statement-text, /decode-statement file upload, /budget-calc, /price-check, IP rate limit 5/30days). Frontend marketing pages (/, /pricing, /trust, /ai-tools, /ai-tools/*) render with new palette, persona on-ramp works, embedded Statement Decoder runs end-to-end (Claude Sonnet 4.5 returns summary + line items + anomalies in <15s), countdown to 1 Jul 2026 displays correctly (58 days / 01 hrs / 08 min), Pricing tier cards show 'Most popular' gold badge, Trust + Footer expose all 4 Australian crisis numbers (1800 353 374, 1800 700 600, 1300 22 4636, 13 11 14), mobile hamburger toggles. Existing authenticated product (cathy@example.com login → dashboard with 3 streams + lifetime cap + 'Things to know' anomalies + plain-English summary, sidebar nav across statements/chat/family/audit, /login redirects to /app while authed) still fully functional under new palette. Zero JS pageerrors across both flows.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/public/* (PRICE_BENCHMARKS)", "issue": "Static hard-coded medians for 10 services — acknowledged in PRD as PLACEHOLDER, real medians pending accumulated user data"},
+      {"endpoint": "/api/public/* rate limit", "issue": "RATE_LIMIT_BUCKET is in-memory (defaultdict) — resets on backend restart; for production should be Redis-backed, but acceptable for MVP"},
+      {"endpoint": "/api/participant/today.appointment", "issue": "Static sample (Sarah, 10:00 AM) — flagged in iter1, still mocked"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Landing page social proof", "issues": ["Counters '2,847 households / 127 advisor practices / $2.4M flagged' are STATIC PLACEHOLDERS — already documented in PRD/mocked APIs list"]},
+      {"screen": "Landing decoder embed", "issues": ["data-testid attributes on hero embedded decoder elements (e.g. 'embedded-decoder', 'decode-btn', 'countdown') are not present — script falls back to text selectors which still works, but hardening with explicit testids would improve future test stability. Not a blocker."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Optional: add data-testid attributes to landing-hero countdown, embedded decoder, and decode button for stable selector-based UI tests.",
+    "Optional (production hardening): move RATE_LIMIT_BUCKET from in-memory dict to Redis or DB-backed counter so backend restart doesn't reset abuse-limit windows, and so multiple worker processes share the bucket.",
+    "Optional (iter1 carry-over): convert /api/auth/me missing-token from 403 → 401; replace static participant appointment with real calendar feed; expose Statement Upload in sidebar nav."
+  ],
+  "critical_code_review_comments": [
+    "server.py grew from 545 → 738 lines with the public layer added. Strongly recommend splitting into routers (auth/household/statements/budget/chat/family/audit/participant/public) — at this size single-file maintenance risk is real.",
+    "PRICE_BENCHMARKS dict embedded inline in server.py — better suited to a config module or DB collection so non-engineers can update medians without code changes.",
+    "_check_rate_limit uses sync defaultdict in an async path — acceptable (no awaitable I/O) but in a multi-worker uvicorn deploy each worker has its own bucket → effective limit is N×5 not 5. Document or migrate to shared store.",
+    "Public decode endpoint coerces line items via try/except per row — good resilience pattern.",
+    "All new public endpoints honour the existing _detect_anomalies + Pydantic validation patterns — consistent with iter1 architecture.",
+    "Marketing palette change is scoped to CSS tokens (index.css + tailwind.config.js) — no component-level color hardcoding broke the existing product, confirmed visually."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (added 11 new public-tool tests — TestPublicBudget, TestPublicPriceCheck, TestPublicDecode, TestPublicRateLimit; uses x-forwarded-for IP isolation per test to avoid rate-limit collisions)"
+  ],
+  "success_rate": {"backend": "100% (32/32)", "frontend": "100% — all marketing + tool + auth flows verified, zero JS errors"},
+  "test_credentials": "cathy@example.com / testpass123 (seeded). Public tools require no auth; rate-limit testing uses unique x-forwarded-for IPs (10.99.x.y).",
+  "seed_data_creation": "Per-run test+<timestamp>@example.com signup + 'Mum' household. Public-tool tests use synthetic IPs and don't pollute Mongo (rate bucket is in-memory).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend test file at /app/backend/tests/backend_test.py covers 32 cases (auth/household/statements/budget/chat/family/audit/participant + public budget/price/decode/rate-limit). Public endpoint tests must pass an x-forwarded-for header to isolate IPs, otherwise the 5/30days bucket will block reruns. Login form testids are 'login-email-input' / 'login-password-input' / 'login-submit-button' (NOT 'login-email'). Sidebar nav testids: nav-dashboard, nav-statements, nav-ask-kindred, nav-family-thread, nav-audit-log. Marketing personas have testids persona-caregiver/persona-participant/persona-advisor; landing-hero decoder + countdown rely on text selectors (no testid yet).",
+  "rca of the issue": "No bugs to RCA — iteration 2 is clean. New public layer + palette change integrated without regressing the authenticated product."
+}

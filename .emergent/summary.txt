@@ -1,0 +1,149 @@
+<analysis>**original_problem_statement**: 
+Implement the remaining billing feature specs (BILLING-UI-1-v5, PRICING-UI-1-v11, STRIPE-CONFIG-1-v4), execute the BILLING-TEST-EXECUTION-1 test spec in the Stripe test environment, and disable Klarna. Additionally, ensure the Participant + Family signup flow accurately captures and stores the second participant's details (fixing the bug where the second participant was lost). Finally, resolve widespread billing UX issues including add-on pricing mismatches, plan downgrade guards, and cancel-action rollbacks. 
+PRODUCT REQUIREMENTS: Progressively implement the full 45-scenario Stripe test clock harness, enable Apple Pay/Google Pay, and configure Stripe Tax + Australian GST.
+
+**User's preferred language**: English (INSTRUCT next agent to respond in the user's preferred language only)
+
+**what currently exists?**: 
+A robust React SPA + FastAPI + MongoDB application (Wayly) featuring advanced AI decoders, live SSE streaming, and a complex billing/participant management system. It integrates deeply with Stripe for subscription management, including live proration previews, automated webhooks, test clock harnesses, and participant add-on tracking.
+
+**Last working item**: 
+    - Last item agent was working: Resolving three billing UX bugs on the Participants page. The agent wired the  URL parameter to automatically rollback a pending add-on checkout, rebuilt the Done button into a Skip payment and remove action, and fixed the 3/2 included participants counter by adding an over-limit warning banner for users downgrading from Family to Solo.
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y
+    - Which testing method agent to use? 
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:  
+  Issue 1: Enable Stripe Tax and Apple/Google Pay (P0)
+     - Attempted fixes: None yet. User requested this in the prompt but the agent prioritized the critical missing participant bug and UI fixes first.
+     - Next debug checklist: 
+       - Stripe Tax: Ensure Australian GST registration is handled and  is correctly set on Stripe Checkout sessions.
+       - Apple/Google Pay: Ensure these are enabled in the Stripe Checkout payment method options alongside cards.
+     - Why fix this issue and what will be achieved with the fix? Required for compliance and user convenience as requested by the user.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
+
+  Issue 2: Lingering deep data monthly strings (P2)
+     - Attempted fixes: Agent did a surgical sweep of , , and  strings across the frontend UI, but deep DB structures (like  from the previous fork) might still contain old pricing language.
+     - Next debug checklist: Check  or other deep tool configurations in the DB.
+     - Why fix this issue and what will be achieved with the fix? Ensures 100% accurate application copy.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Frontend
+
+**In progress Task List**: 
+  Task 1: Full 45-Test Suite for Stripe Billing (P0)
+     - Where to resume: . The agent implemented the CRITICAL subset (9 tests) which all passed. The user requested extending the harness to cover A1, A3, A5, A7, B3-B6, C2-C5, D1-D4, E1, E3, F2, G1-G5, H1-H4, I1, I2, I4 for exhaustive spec-completeness proof.
+     - What will be achieved with this? Guarantees billing logic is bulletproof against all edge cases before the live cutover.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? Backend
+     - Blocked on something: None
+
+**Upcoming and Future Tasks**
+    Upcoming Tasks:
+    - **Live Cutover Workflow (P1)**: Walk through switching  to , re-seeding the catalogue in the live environment, and updating the webhook endpoint.
+    - **Adviser Landing Page (P1)**: Add  with a Book a demo CTA and no consumer pricing (spec PRICING-UI-1 v11 §6).
+    
+    Future Tasks:
+    - **Reconciliation Admin View (P2)**: Surface the  inside the Super Admin dashboard so drift rows are visible without using curl.
+
+**Completed work in this session**
+- **Billing UI & Pricing Polish**: Disabled Klarna, removed Billed every 14 days and 7-day free trial texts from pricing cards, and aligned styling.
+- **Participant + Family Signup Parity**: Fixed the critical bug where a participant adding a second family member during signup lost the second person's data. Pre-creates the participant stub via .
+- **Stripe Test Clock Harness**: Created  and . Passed the 9 critical proration/billing tests.
+- **Live Proration Preview**: Implemented actual Stripe upcoming-invoice fetches for accurate plan-switch modals.
+- **Billing UX Fixes**: Fixed add-on pricing from 9 to 4.50, fixed the current plan header total calculation, implemented cancel-checkout rollbacks, and added Family->Solo downgrade warnings.
+
+**Earlier issues found/mentioned but not fixed**
+   - Issue 1: None beyond the pending Apple Pay/Google Pay and Stripe Tax enablement.
+
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: None
+  - Recurrence count: 0
+  - Status: RESOLVED
+
+**Code Architecture**
+/app/
+├── backend/
+│   ├── routes/ (payments.py, payments_advanced.py, batch3_routes.py)
+│   ├── batch3_billing.py (Billing calculations and checkouts)
+│   ├── scripts/seed_stripe_catalogue.py (Stripe test data seeder)
+│   ├── tests/billing/test_stripe_test_clock_harness.py (Proration E2E tests)
+│   ├── server.py 
+├── frontend/
+│   ├── src/pages/ (Settings.jsx, Pricing.jsx, Signup.jsx, Onboarding.jsx)
+│   ├── src/pages/extended/Participants.jsx (Participant management UX)
+
+**Key Technical Concepts**
+React SPA, FastAPI backend. Stripe Checkout, Webhooks, and Billing Test Clocks. Proration behavior calculations. MongoDB for user, subscription, and participant tracking.
+
+**key DB schema**
+  - : Tracks Stripe subscription IDs and states.
+  - : Tracks primary and added family members/caregivers.
+  - : Tracks individual 4.50 fortnightly add-ons tied to a Stripe item.
+
+**changes in tech stack**
+  - None.
+
+**All files of reference** 
+  -  (Created to seed fortnightly Stripe products)
+  -  (Created to automate billing time-travel tests)
+  -  (Created for proration previews and reconciliation)
+  -  (Heavily updated for add-on checkouts, cancel rollbacks, and limits)
+  -  (Updated to handle Participant+Family signup parity)
+
+**Areas that need refactoring**: 
+  -  will become very large when all 45 tests are implemented. Consider breaking it down by category (e.g., trials, upgrades, downgrades) if it gets unwieldy.
+
+**key api endpoints**
+  -  & 
+  - 
+  - 
+  - 
+
+**Critical Info for New Agent** 
+- **Two Environments**: The user has deployed to production (). You are strictly operating in PREVIEW. If the user reports issues, always verify if they mean Preview or Production. You cannot push to Production directly.
+- **Stripe Integration**: The testing harness relies on . Always use the test API keys provided in . DO NOT alter  to live keys until explicitly doing the cutover task requested by the user.
+- **Testing Standard**: The user enforces a STRICT mandate to run  or  after every fix. Do not finish a bug task without its corresponding subagent report.
+
+**documents and test reports created in this job** 
+  - 
+  -  (Stores the test clock harness results)
+  -  to 
+
+**Last 10 User Messages and any pending HUMAN messages** 
+1. User: Asked to execute the attached  spec in Stripe test mode.
+2. Agent: Built test seeder, test clock harness, fixed proration bugs, passed 9/9 critical scenarios, verified with testing agent.
+3. User: Requested Stripe Tax, Apple/Google Pay, full 45-test suite, and reported a critical bug (Participant choosing Family doesn't save the second person Caren).
+4. Agent: Focused on fixing the critical Caren signup bug, pre-creating the participant, and adding an auto-heal. Verified with testing agent.
+5. User: Reported add-on checkout showed 9 instead of 4.50, and cancelling a transition still added the participant.
+6. Agent: Updated  to 24.50, implemented rollback logic for pending add-ons.
+7. User: Reported billing header mismatch (9.50 vs 4.00) on Settings page.
+8. Agent: Updated the current plan header to include the add-on totals. Verified with testing agent.
+9. User: Asked to wire  to the rollback, questioned the Done button behavior, and reported the Solo plan showed misleading 3/2 included participants.
+10. Agent: Rebuilt the Done button, wired the cancel rollback URL, added a Family->Solo downgrade warning banner, and verified everything with testing agent. (Finished).
+*(Pending Human messages: None, but the user's request for Apple Pay, Stripe Tax, and the full 45-Test Suite remain pending).*
+
+**Project Health Check:**
+Healthy. Extensive testing done.
+
+**3rd Party Integrations** 
+- Claude Opus 4.7 / Sonnet 4.6 — uses Emergent LLM Key
+- Stripe (Payments) — requires User API Key (Test key currently in )
+- Resend (Emails) — requires User API Key
+
+**Testing status** 
+  - Testing agent used after significant changes: YES
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: 
+  - Known regressions: None detected.
+
+**Credentials to test flow:**
+- Super Admin:  (Check  for password)
+- Test Caregiver: 
+
+**What agent forgot to execute**
+- The agent successfully addressed the critical bugs, but missed implementing **Stripe Tax/Australian GST**, **Apple Pay/Google Pay**, and extending the **Full 45-test Stripe harness**, which were specifically requested by the user in message 292. Ensure these are picked up.</analysis>

@@ -1,0 +1,131 @@
+{
+  "project_context": "Read-only design review of 5 key pages for incremental polish without full redesign. Audience skews 60+; accessibility and legibility are non-negotiable.",
+  "design_constraints": {
+    "colors": "Strictly preserve existing palette (kindred cream, sage, terracotta, gold, primary-k #0E4D52). No new hex colors.",
+    "typography": "Preserve Playfair Display (headings) and IBM Plex Mono/Sans (body). Maintain Wayly Title Case rules.",
+    "boundaries": "No massive redesigns, no backend changes, no new pages, no stock photo additions."
+  },
+  "opportunities_by_page": {
+    "Landing Page (/app/frontend/src/pages/Landing.jsx)": [
+      {
+        "priority": "P1",
+        "where": "Persona On-Ramp (data-testid='persona-onramp')",
+        "problem_observed": "Hover states use simple vertical translations (-translate-y-0.5), feeling slightly rigid and lacking a premium tactile 'snap'.",
+        "proposed_change": "Increase the hover scale slightly (e.g., scale-[1.02]) with a spring-based transition. Apply a slight horizontal translation (group-hover:translate-x-1) to the ArrowRight icon.",
+        "why": "Micro-interactions & Motion: Adds a tactile, polished feel that reinforces interactivity without visual clutter."
+      },
+      {
+        "priority": "P2",
+        "where": "Social Proof Strip",
+        "problem_observed": "The three large numbers (e.g., 2,847 households) load statically, missing an opportunity to emphasize scale and impact.",
+        "proposed_change": "Implement a staggered fade-up entrance animation using intersection observers. Animate the numbers counting up from 0 to their target value over 1-1.5 seconds.",
+        "why": "Motion & Rhythm: Draws attention to key trust metrics dynamically as the user scrolls down the page."
+      },
+      {
+        "priority": "P1",
+        "where": "Feature Grid ('Eight AI Tools. One Calm Dashboard.')",
+        "problem_observed": "The cards are uniform; interacting yields a standard lift but icons remain static, making the dense grid feel slightly monotonous.",
+        "proposed_change": "Add a subtle micro-interaction to the Lucide icons on hover (e.g., a slight scale pulse or 10-degree rotation) and increase card internal padding from p-5 to p-6 or p-8.",
+        "why": "Whitespace & Micro-interactions: Increases the 'breathing room' within each tile and adds interaction delight."
+      },
+      {
+        "priority": "P2",
+        "where": "How It Works (Screenshots & Copy)",
+        "problem_observed": "The alternating left/right layout is solid, but the static scrolling feels standard.",
+        "proposed_change": "Apply a subtle parallax effect or a slight vertical scroll delay to the images relative to their text blocks, so they slide into place gracefully on scroll.",
+        "why": "Section Transitions & Motion: Makes the narrative flow feel more dynamic and immersive."
+      }
+    ],
+    "Pricing Page (/app/frontend/src/pages/Pricing.jsx)": [
+      {
+        "priority": "P0",
+        "where": "Feature Comparison Table (data-testid='pricing-table')",
+        "problem_observed": "The table is visually dense and can be difficult to scan, especially for older users.",
+        "proposed_change": "Increase vertical padding on table rows (py-2.5 to py-4). Add a subtle background hover state (e.g., hover:bg-primary-k/[0.02]) to rows to guide the user's reading line across columns.",
+        "why": "Content Density & Hierarchy: Drastically improves scanability and readability for the 60+ audience."
+      },
+      {
+        "priority": "P1",
+        "where": "Pricing Cards (data-testid='tier-*')",
+        "problem_observed": "The 'Most popular' badge on the Family tier is static; hierarchy relies solely on the background color.",
+        "proposed_change": "Add a continuous, slow shimmer effect passing over the gold badge. Slightly increase the drop shadow (shadow-2xl instead of shadow-xl) on the featured tier.",
+        "why": "Hierarchy & Motion: Gently guides the user's eye to the preferred conversion path without feeling aggressive."
+      },
+      {
+        "priority": "P2",
+        "where": "Add-on Explainer (data-testid='addons-section')",
+        "problem_observed": "The three columns of features appear instantly, lacking narrative sequencing.",
+        "proposed_change": "Add a staggered slide-up fade animation for the 3 columns, triggering when the section enters the viewport.",
+        "why": "Section Transitions: Connects the flow from the pricing tiers down into the add-on details smoothly."
+      }
+    ],
+    "About Page (/app/frontend/src/pages/About.jsx)": [
+      {
+        "priority": "P1",
+        "where": "Scene Cards ('11pm' vs 'Wednesday, 9am')",
+        "problem_observed": "The cards feel tightly packed internally (p-6 sm:p-8) contrasting with the generous wide 12-column editorial grid around them.",
+        "proposed_change": "Increase internal padding to p-8 sm:p-10. Increase the spacing between paragraphs inside the cards (space-y-5 to space-y-6).",
+        "why": "Whitespace & Rhythm: Matches the pacing and 'breathing room' of a high-end editorial piece."
+      },
+      {
+        "priority": "P2",
+        "where": "Sticky Section Markers (Left column Roman numeral + H2)",
+        "problem_observed": "As users scroll through long prose sections, the sticky marker remains static and blends in, losing its wayfinding value.",
+        "proposed_change": "Add an intersection observer to the adjacent prose. When the section is actively crossing the middle of the viewport, subtly shift the Roman numeral's color to --uxf-gold.",
+        "why": "Hierarchy & Section Transitions: Provides clear, elegant wayfinding in a long-form article."
+      }
+    ],
+    "Statement Decoder Tool (/app/frontend/src/pages/tools/StatementDecoderTool.jsx)": [
+      {
+        "priority": "P0",
+        "where": "Mode Toggle (Paste, Upload, Email)",
+        "problem_observed": "The pill toggle uses instant CSS class switching for active states, feeling abrupt.",
+        "proposed_change": "Implement an animated shared-layout sliding background indicator (e.g., using Framer Motion layoutId) that glides smoothly behind the active tab.",
+        "why": "Micro-interactions: Creates a fluid, seamless state transition expected in modern, premium SaaS tools."
+      },
+      {
+        "priority": "P0",
+        "where": "Decoder Result View (data-testid='decoder-result')",
+        "problem_observed": "The results (summary, line items, anomalies) appear simultaneously once loading finishes, which can overwhelm the user with data.",
+        "proposed_change": "Implement a staggered cascade reveal: The top Summary card appears first, followed by the Line Items 150ms later, and Anomalies 150ms after that.",
+        "why": "Motion & Hierarchy: Reduces cognitive overload by guiding the user through the decoded information sequentially."
+      },
+      {
+        "priority": "P1",
+        "where": "Drag & Drop Zone (data-testid='decoder-dropzone')",
+        "problem_observed": "The active drag state only changes the static border color and scale, lacking lively feedback.",
+        "proposed_change": "Add an animated 'marching ants' (moving dashed stroke) effect to the border when dragging a file over it, and gently pulse the central Upload icon.",
+        "why": "Motion & Micro-interactions: Provides clear, immediate, and delightful visual feedback during a core user action."
+      }
+    ],
+    "Signed-in Dashboard (/app/frontend/src/pages/CaregiverDashboard.jsx)": [
+      {
+        "priority": "P0",
+        "where": "Alerts/Anomalies Card (data-testid='alerts-card')",
+        "problem_observed": "The list of anomalies is dense and the 'View' link lacks affordance as an interactive row.",
+        "proposed_change": "Apply the 'group' class to the list item. Add a subtle hover background tint (e.g., hover:bg-[--uxf-warning-bg] or similar soft token). Make the 'View' link translate slightly right on group hover.",
+        "why": "Micro-interactions & Hierarchy: Vastly improves clickability and interactivity for critical alerts."
+      },
+      {
+        "priority": "P1",
+        "where": "Lifetime Cap Card (data-testid='lifetime-cap-card')",
+        "problem_observed": "The percentage progress bar width is set instantly on load, missing a chance to visualize the data calculation.",
+        "proposed_change": "Animate the width of the inner progress bar from 0% to the target percentage over 800ms using an ease-out curve when the component mounts.",
+        "why": "Motion: Makes the data feel 'alive' and actively calculated, reinforcing trust in the system."
+      },
+      {
+        "priority": "P2",
+        "where": "Quick-glance Stat Cards (data-testid='dashboard-stats')",
+        "problem_observed": "The four metric cards are visually uniform and border-heavy, causing slight visual clutter.",
+        "proposed_change": "Increase the padding (p-5 to p-6) for more air. Move the icons from the left of the overline to be right-aligned in the card header, creating a stronger diagonal reading path.",
+        "why": "Whitespace & Rhythm: Reduces cognitive load and improves the scanning rhythm of top-level metrics."
+      }
+    ]
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "DO NOT use complete `transparent` background in headers, overlays, or any surface that has content under it.",
+    "All interactive and key informational elements MUST include a `data-testid` attribute to facilitate robust automated testing.",
+    "Never replace existing UXF tokens. Only apply structural, spacing, and motion adjustments.",
+    "Prioritize accessibility over pure aesthetics: ensure contrast and readability aren't sacrificed by new animations."
+  ]
+}

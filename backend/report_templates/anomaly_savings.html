@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero">
+  <div class="hero-label">in potential billing errors identified</div>
+  <div class="hero-value">{{ data.hero.total_value|money }}</div>
+  <div class="hero-label" style="margin-top: 4px;">Across {{ data.hero.statements_count }} statements · {{ data.hero.anomalies_count }} flagged · {{ data.hero.resolved_count }} resolved</div>
+  <div class="cols-2" style="margin-top: 12px;">
+    <div style="background: rgba(90,143,111,0.18); padding: 8px 10px; border-radius: 6px;">
+      <div style="font-size: 9px; text-transform: uppercase; color: #2C6646;">Resolved</div>
+      <div style="font-size: 18px; font-weight: 700; color: #2C6646;">{{ data.hero.resolved_value|money }}</div>
+    </div>
+    <div style="background: rgba(194,83,61,0.15); padding: 8px 10px; border-radius: 6px;">
+      <div style="font-size: 9px; text-transform: uppercase; color: #913526;">Outstanding</div>
+      <div style="font-size: 18px; font-weight: 700; color: #913526;">{{ data.hero.outstanding_value|money }}</div>
+    </div>
+  </div>
+</div>
+
+{% if data.exec_summary %}
+<div class="cream-card section"><h3>Summary</h3><p>{{ data.exec_summary }}</p></div>
+{% endif %}
+
+<h2>Anomalies by type</h2>
+{% if data.by_type %}
+<table>
+  <thead><tr><th>Type</th><th>Count</th><th>Total value</th><th>Resolved</th><th>Outstanding</th></tr></thead>
+  <tbody>
+    {% for t in data.by_type %}
+    <tr><td>{{ t.type }}</td><td>{{ t.count }}</td><td>{{ t.value|money }}</td><td>{{ t.resolved|money }}</td><td>{{ t.outstanding|money }}</td></tr>
+    {% endfor %}
+    <tr class="tr-totals"><td>Total</td><td>{{ data.hero.anomalies_count }}</td><td>{{ data.hero.total_value|money }}</td><td>{{ data.hero.resolved_value|money }}</td><td>{{ data.hero.outstanding_value|money }}</td></tr>
+  </tbody>
+</table>
+{% else %}
+<div class="cream-card"><p>No anomalies have been flagged in this period. Keep decoding your statements — each one is another chance to catch errors.</p></div>
+{% endif %}
+
+<h2>Timeline of anomalies</h2>
+{% if data.timeline %}
+<table>
+  <thead><tr><th>Date</th><th>Statement</th><th>Severity</th><th>Anomaly</th><th>Value</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for t in data.timeline %}
+    <tr>
+      <td>{{ t.date|niceDate }}</td>
+      <td>{{ t.statement or '—' }}</td>
+      <td><span class="badge {% if t.severity == 'HIGH' %}red{% elif t.severity == 'MEDIUM' %}amber{% else %}grey{% endif %}">{{ t.severity }}</span></td>
+      <td>{{ t.headline }}</td>
+      <td>{{ t.value|money }}</td>
+      <td><span class="badge {% if t.status == 'resolved' %}green{% elif t.status == 'escalated' %}red{% elif t.status == 'informational' %}grey{% else %}amber{% endif %}">{{ t.status|title }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if data.outstanding_items %}
+<h2>Outstanding items</h2>
+<div class="red-card">
+  <p><strong>These {{ data.outstanding_items|length }} items need attention:</strong></p>
+  <table>
+    <tbody>
+      {% for t in data.outstanding_items %}
+      <tr><td><span class="badge {% if t.severity == 'HIGH' %}red{% else %}amber{% endif %}">{{ t.severity }}</span> {{ t.headline }}</td><td>{{ t.value|money }}</td><td>{{ t.date|niceDate }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<h2>Subscription value</h2>
+<div class="gold-card">
+  <p>Wayly subscription cost over this period: <strong>{{ data.subscription.total|money }}</strong> ({{ data.subscription.plan }} plan)</p>
+  <p>Anomalies identified: <strong>{{ data.hero.total_value|money }}</strong></p>
+  <p>Anomalies resolved: <strong>{{ data.hero.resolved_value|money }}</strong></p>
+  {% if data.hero.resolved_value > data.subscription.total %}
+  <p style="font-size: 14px; font-weight: 700; color: #0E2A47; margin-top: 8px;">Wayly has more than paid for itself. {{ data.subscription.roi }}× return.</p>
+  {% else %}
+  <p>Keep decoding your monthly statements — each one is another chance to catch errors.</p>
+  {% endif %}
+  <p class="muted" style="font-size: 8px; margin-top: 8px;">Dollar values reflect amounts flagged as potential billing errors. Resolved amounts reflect credits received or errors confirmed by your provider. Not all flagged amounts may result in credits.</p>
+</div>
+
+{% if data.monthly_trend %}
+<h2>Monthly anomaly trend</h2>
+<table>
+  <thead><tr>{% for m in data.monthly_trend %}<th>{{ m.label }}</th>{% endfor %}</tr></thead>
+  <tbody><tr>{% for m in data.monthly_trend %}<td>{{ m.flagged }}</td>{% endfor %}</tr></tbody>
+</table>
+{% endif %}
+{% endblock %}

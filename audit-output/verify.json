@@ -1,0 +1,250 @@
+[
+  {
+    "url": "https://wayly.com.au/legal/terms",
+    "title": "Terms of Service · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/legal/privacy",
+    "title": "Privacy Policy · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/legal/cookies",
+    "title": "Cookie Policy · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/legal/accessibility",
+    "title": "Accessibility Statement · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/legal/ai-disclaimer",
+    "title": "AI Accuracy Disclaimer · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/legal/ai-intent",
+    "title": "Our commitment when our AI gets it wrong · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/budget-calculator",
+    "title": "Support at Home Budget Calculator · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "SoftwareApplication",
+      "HowTo",
+      "FAQPage",
+      "BreadcrumbList"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/provider-price-checker",
+    "title": "Aged Care Provider Price Checker · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "SoftwareApplication",
+      "FAQPage",
+      "BreadcrumbList"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/classification-self-check",
+    "title": "Support at Home Classification Self-Check | Wayly",
+    "titleOk": false,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "SoftwareApplication",
+      "BreadcrumbList"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": false
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/reassessment-letter",
+    "title": "Reassessment Letter Generator · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "SoftwareApplication",
+      "BreadcrumbList"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/contribution-estimator",
+    "title": "Support at Home Contribution Estimator | Wayly",
+    "titleOk": false,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "SoftwareApplication",
+      "BreadcrumbList"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": false
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/care-plan-reviewer",
+    "title": "Aged Care Plan Reviewer · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "SoftwareApplication",
+      "BreadcrumbList"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/family-coordinator",
+    "title": "Family Aged Care Coordinator · Wayly",
+    "titleOk": false,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "SoftwareApplication",
+      "BreadcrumbList"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": false
+  },
+  {
+    "url": "https://wayly.com.au/pricing",
+    "title": "Pricing · Wayly",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "FAQPage",
+      "Product"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  },
+  {
+    "url": "https://wayly.com.au/resources/articles/wayly-statement-decoder-support-at-home-statement-explained",
+    "title": "Wayly Statement Decoder: Read Your Aged Care Statement",
+    "titleOk": true,
+    "canonical": true,
+    "ogLocale": "en_AU",
+    "types": [
+      "Organization",
+      "WebSite",
+      "Article",
+      "FAQPage",
+      "BreadcrumbList",
+      "HowTo"
+    ],
+    "schemaOk": true,
+    "bylineOk": true,
+    "reviewerOk": true,
+    "allOk": true
+  }
+]

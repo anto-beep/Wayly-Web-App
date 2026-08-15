@@ -1,0 +1,468 @@
+{
+  "login": "success",
+  "dark_class": true,
+  "pages": {
+    "dashboard": {
+      "url": "https://proration-preview.preview.emergentagent.com/app",
+      "dark": true,
+      "checked": 174,
+      "issues_count": 4,
+      "problems": [
+        {
+          "tag": "a",
+          "cls": "flex-1 sm:flex-none bg-terracotta text-white rounded-md px-3 py-2 text-xs hover:",
+          "text": "Complete now",
+          "color": "rgb(79, 168, 174)",
+          "bg": "rgb(232,154,111)",
+          "ratio": 1.23,
+          "fs": 12,
+          "fw": 400,
+          "testid": "profile-completion-cta"
+        },
+        {
+          "tag": "div",
+          "cls": "mt-0.5 font-heading text-lg text-primary-k tabular-nums",
+          "text": "$6,682",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 18,
+          "fw": 600,
+          "testid": null
+        },
+        {
+          "tag": "div",
+          "cls": "mt-0.5 font-heading text-lg text-primary-k tabular-nums",
+          "text": "$7,673",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 18,
+          "fw": 600,
+          "testid": null
+        },
+        {
+          "tag": "div",
+          "cls": "mt-0.5 font-heading text-lg text-primary-k tabular-nums",
+          "text": "$8,434",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 18,
+          "fw": 600,
+          "testid": null
+        }
+      ]
+    },
+    "voice-check": {
+      "url": "https://proration-preview.preview.emergentagent.com/app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb/voice-check",
+      "dark": true,
+      "checked": 38,
+      "issues_count": 0,
+      "problems": []
+    },
+    "coordinator": {
+      "url": "https://proration-preview.preview.emergentagent.com/app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb/coordinator",
+      "dark": true,
+      "checked": 50,
+      "issues_count": 9,
+      "problems": [
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "What This Does",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-sm text-primary-k mt-2 leading-relaxed",
+          "text": "One place to coordinate the household around a participant a",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "How to Use It",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Add tasks and share them with the household",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Confirm visits on the calendar",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Record the participant's own preferences and wishes",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "What You Get",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "A coordinated household",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "A one-click handover pack PDF",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        }
+      ]
+    },
+    "budget-scenarios": {
+      "url": "https://proration-preview.preview.emergentagent.com/app/budget-scenarios",
+      "dark": true,
+      "checked": 74,
+      "issues_count": 9,
+      "problems": [
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "What This Does",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-sm text-primary-k mt-2 leading-relaxed",
+          "text": "Recomputes the quarterly budget projection using your what-i",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "How to Use It",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Move the sliders to set your assumptions",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Watch the adjusted projection update against the baseline",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Save a scenario and compare two side-by-side",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "What You Get",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "A live baseline vs adjusted comparison",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Named scenarios you can revisit and compare",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        }
+      ]
+    },
+    "handover-pack": {
+      "url": "https://proration-preview.preview.emergentagent.com/app/carer/handover-pack",
+      "dark": true,
+      "checked": 59,
+      "issues_count": 9,
+      "problems": [
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "What This Does",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-sm text-primary-k mt-2 leading-relaxed",
+          "text": "Captures routines, key information, emergency priorities and",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "How to Use It",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Fill in the sections that matter most",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Add backup contacts and who helps with what",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "Download the PDF and give it to your backup carer",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "p",
+          "cls": "text-xs uppercase tracking-wider",
+          "text": "What You Get",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "A print-ready handover PDF",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "li",
+          "cls": "",
+          "text": "A saved pack you can update any time",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(255,255,255)",
+          "ratio": 1,
+          "fs": 14,
+          "fw": 400,
+          "testid": null
+        }
+      ]
+    },
+    "statement-detail": {
+      "url": "https://proration-preview.preview.emergentagent.com/app/statements/408fcbf3-c126-4897-a9b1-c76628c49ca7",
+      "dark": true,
+      "checked": 110,
+      "issues_count": 6,
+      "problems": [
+        {
+          "tag": "p",
+          "cls": "mt-1 text-xs text-muted-k",
+          "text": "Grounded on Unknown provider, iter58_stmt_728357.csv. Privat",
+          "color": "rgb(240, 228, 213)",
+          "bg": "rgb(165,81,43)",
+          "ratio": 4.4,
+          "fs": 12,
+          "fw": 400,
+          "testid": null
+        },
+        {
+          "tag": "div",
+          "cls": "text-sm font-medium",
+          "text": "1 high-priority thing to review.",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(232,154,111)",
+          "ratio": 2.26,
+          "fs": 14,
+          "fw": 500,
+          "testid": null
+        },
+        {
+          "tag": "span",
+          "cls": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-go",
+          "text": "Medium",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(232,154,111)",
+          "ratio": 2.26,
+          "fs": 9,
+          "fw": 600,
+          "testid": null
+        },
+        {
+          "tag": "span",
+          "cls": "inline-flex items-center gap-1.5 text-xs ",
+          "text": "This flag is AI-generated and may be incorrect. Verify befor",
+          "color": "rgb(146, 64, 14)",
+          "bg": "rgb(21,36,37)",
+          "ratio": 2.26,
+          "fs": 12,
+          "fw": 400,
+          "testid": "ai-anomaly-disclaimer"
+        },
+        {
+          "tag": "span",
+          "cls": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-te",
+          "text": "High",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(232,154,111)",
+          "ratio": 2.26,
+          "fs": 9,
+          "fw": 600,
+          "testid": null
+        },
+        {
+          "tag": "span",
+          "cls": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-sa",
+          "text": "Low",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgb(168,199,171)",
+          "ratio": 1.84,
+          "fs": 9,
+          "fw": 600,
+          "testid": null
+        }
+      ]
+    },
+    "settings": {
+      "url": "https://proration-preview.preview.emergentagent.com/settings/profile",
+      "dark": true,
+      "checked": 43,
+      "issues_count": 0,
+      "problems": []
+    }
+  },
+  "routing": {}
+}

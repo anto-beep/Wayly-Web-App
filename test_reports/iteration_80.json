@@ -1,0 +1,77 @@
+{
+  "summary": "ITER-80 signup/onboarding/settings carryover pass — 5 of 7 features PASS, 2 CRITICAL bugs found in the mobile-carryover chain, plus 1 minor participant-path regression. Verified end-to-end via live UI + backend probes: (1) new `signup-cr-last-name` input renders, toggles hide/show correctly with role; (2) fresh caregiver signup persists care_recipient.first_name+last_name+relationship to /api/persona; (3) Onboarding StepEssentials prefills first_name='Louisa' + last_name='Davids' (verified visually — override to 'Emily' also works, confirming editable); (4) StepRecommended prefills onboarding-relationship='daughter' correctly; (5) Backend model change (CareRecipient.last_name Optional max_length=80) works — PUT validates 81 chars → 422, optional field roundtrips; (6) Persona regression suite 35/36 (30 persona + 5 new iter-80 tests + 1 known /auth/me mobile FAIL that IS the bug). CRITICAL BUGS: (A) StepRecommended `onboarding-caregiver-phone` prefill is EMPTY — expected '+61412345678' — because /api/account response contains only {summary, participants, members, addons, is_owner} (no `mobile`, no `owner.mobile`) AND /api/auth/me UserPublic model strips `mobile` field (mobile IS in DB, confirmed via mongo — just not surfaced). (B) Settings /settings profile-phone-input is EMPTY for the same root cause — fallback path `user?.phone_e164 || user?.mobile` never resolves because UserPublic returns neither. MINOR: routes/persona.py line 96-104 participant branch rebuilds CareRecipient using only first_name from user doc — drops last_name (verified: PUT with last_name='Selfcare' on participant → GET returns last_name=null).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/auth/me (UserPublic model)",
+        "issue": "UserPublic in backend/models.py:42 does not expose `mobile` (stored on users doc) or `phone_e164`. Blocks BOTH StepRecommended caregiver_phone prefill AND Settings /profile phone fallback. Frontend code (Onboarding.jsx line 88, Settings.jsx lines 202/208) reads user.mobile / user.phone_e164 — both are undefined for signed-up users.",
+        "priority": "HIGH"
+      },
+      {
+        "endpoint": "/api/account",
+        "issue": "Response omits account holder's mobile at both top-level and owner level. `_account_summary` in batch3_routes.py:171 returns {account_id, base_plan, ...} but no mobile. Onboarding.jsx line 88 reads `acct.mobile || acct.owner?.mobile` — both undefined."
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "PUT /api/persona (participant branch)",
+        "issue": "routes/persona.py lines 96-104: when viewer_persona=='participant', backend rebuilds CareRecipient from user doc using ONLY first_name — drops last_name from the payload. Repro: PUT {care_recipient:{is_self:true,first_name:'Prue',last_name:'Selfcare'}} → GET returns care_recipient.last_name=null. Should mirror user.last_name / name split alongside first_name."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Onboarding.jsx / StepRecommended",
+        "issue": "`onboarding-caregiver-phone` renders empty after signup with mobile='+61412345678'. Prefill effect at lines 72-106 reads acct.mobile || acct.owner?.mobile || user?.mobile — none exist in API responses. Fix requires backend exposing mobile on /api/account or /auth/me.",
+        "selector": "[data-testid='onboarding-caregiver-phone']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Settings.jsx / ProfileTab",
+        "issue": "profile-phone-input renders empty for a user who signed up with mobile='+61412345678'. Fallback chain `user?.phone_e164 || user?.mobile` never resolves because UserPublic model doesn't expose either field. Feature described in review request #5 is NOT lit up in preview env.",
+        "selector": "[data-testid='profile-phone-input']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Signup mobile → Onboarding caregiver_phone prefill → Settings profile phone fallback",
+        "issue": "End-to-end chain broken at the /api/auth/me + /api/account boundary — mobile IS persisted to Mongo (verified: db.users.findOne shows mobile:'+61412345678') but never surfaced back to the frontend. Frontend logic is correct; backend serializers need to include the field.",
+        "affected_selectors": ["[data-testid='onboarding-caregiver-phone']", "[data-testid='profile-phone-input']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter80_signup_carryover.py",
+    "/app/test_reports/pytest/iter80_full.xml",
+    "/app/test_reports/pytest/iter80_signup.xml",
+    "/app/test_reports/pytest/iter80_persona.xml"
+  ],
+  "action_items": [
+    "[HIGH] Add `mobile: Optional[str] = None` to UserPublic in /app/backend/models.py:42 (mobile is already stored on users doc; just not exposed). This single change fixes both the Onboarding caregiver_phone prefill AND the Settings /profile phone fallback simultaneously.",
+    "[HIGH-alt] OR: add `mobile: user.mobile` to the /api/account response in /app/backend/batch3_routes.py:_account_summary (Onboarding.jsx already reads acct.mobile).",
+    "[MEDIUM] Fix routes/persona.py:99-104 participant-branch — mirror last_name from user doc (e.g. `last_name = doc.get('last_name') or ((doc.get('name') or '').split(' ',1)[1] if ' ' in (doc.get('name') or '') else None)`). Otherwise the last_name captured on signup is silently dropped for participants (caregiver path is fine).",
+    "[LOW] Consider adding a data-testid on the /settings Profile tab button — Settings.jsx exposes phone input testid but not the tab-switcher for automated navigation."
+  ],
+  "critical_code_review_comments": [
+    "UserPublic model has NEVER exposed mobile/phone_e164 (checked model definition line 42-59) — this Feb 2026 UX carryover work assumed the field would be available on `user` from useAuth(), but that assumption doesn't hold. Recommend a smoke test that hits the full carryover chain end-to-end in CI.",
+    "Onboarding.jsx line 88 defensively reads three fallbacks (acct.mobile || acct.owner?.mobile || user?.mobile) — good defensive coding, but ALL THREE resolve to undefined in the current backend. The 'defensive' pattern hides the missing-endpoint issue silently since the prefill effect swallows all errors — worth adding a one-time console.debug when carryMobile is falsy but user email exists.",
+    "routes/persona.py participant-mirror block silently DROPS non-first_name fields from the client payload — this is surprising API behaviour. If the participant branch must own the care_recipient shape, at minimum it should mirror ALL name-shaped fields (first + last) from the user doc, not just first_name. A comment explaining the truncation semantics would help.",
+    "backend/models.py:42 UserPublic uses ConfigDict(extra='ignore') — this means any field added to the mongo doc that isn't declared here is silently stripped from every /auth/me response. That's the root cause here, and it's a repeat pattern from previous iterations (see iter 76 persona_v1 fields also had to be plumbed through). Consider a shared 'ExposedFields' constant."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter80_signup_carryover.py (NEW — 6 tests: 4 for persona.last_name model change (PUT/GET/max-length/optional), 2 for signup-mobile persistence + carryover exposure)"
+  ],
+  "success_rate": {
+    "backend": "97% (35/36 — 4/4 persona.last_name PASS; 1/2 signup-mobile FAIL is the exposed bug)",
+    "frontend": "60% (3/5 features work: last-name signup input ✅, StepEssentials prefill ✅, relationship prefill ✅ + override ✅. BROKEN: caregiver_phone prefill ❌, Settings phone fallback ❌)"
+  },
+  "test_credentials": "Dynamically-generated caregiver accounts: sv1784696085@example.com, sv21784696133@example.com, sv31784696193@example.com, sv_participant1784696259@example.com (all family plan, trialing). Password on all: Zx9!kLmQrT#2026 (or ts-suffixed). No sensitive data — safe to leave or delete via `db.users.deleteMany({email:{$regex:'^sv[1-9]?178'}})`.",
+  "seed_data_creation": "4 test caregiver + participant accounts created via /api/auth/signup. Test data cleanup: `db.users.deleteMany({email:{$regex:'^sv[1-9]?178'}})` OR `email:{$regex:'@example.com',subscription_status:'trialing'}`. No fixtures were injected into other collections.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "This iteration exposed a TWO-LAYER gap in the Feb 2026 signup carryover feature: backend model UserPublic + /api/account response both strip the `mobile` field that the frontend needs. The mobile IS persisted to mongo (verified). E1 needs to make ONE tiny model change (add `mobile: Optional[str] = None` to UserPublic in models.py:42) OR expose mobile in /api/account response. After the fix, retest: (a) StepRecommended `onboarding-caregiver-phone` should pre-fill; (b) Settings /profile phone should pre-fill. Also worth retesting after fixing the participant-path last_name mirroring in routes/persona.py:99-104. Test file `/app/backend/tests/test_iter80_signup_carryover.py` will be a good regression check — the `test_auth_me_returns_mobile` case is failing today and will pass once the UserPublic model exposes mobile.",
+  "rca of the issue": "Root cause is a serializer-strip regression that's older than the Feb 2026 UX work — UserPublic in models.py has never included `mobile` even though the field is stored on user docs. The Feb 2026 carryover feature (Onboarding.jsx line 88, Settings.jsx line 202/208) was designed against the assumption that `user.mobile` or `user.phone_e164` would resolve from useAuth() — but AuthContext's setUser is fed from /auth/me → UserPublic response → `extra='ignore'` strips the field. Same pattern in /api/account (batch3_routes.py:_account_summary) which returns only summary/participants/members/addons/is_owner. FIX: (a) add `mobile: Optional[str] = None` to UserPublic (1-line), OR (b) inject `mobile: acct.get('owner_mobile')` into /api/account response (2 lines). Frontend needs zero changes — the fallback chain is already coded correctly and will just start resolving once backend exposes the value. Separately, routes/persona.py:99-104 rebuilds CareRecipient on participant PUT dropping last_name — a smaller bug from the Feb 2026 last_name addition that only affects the participant path."
+}

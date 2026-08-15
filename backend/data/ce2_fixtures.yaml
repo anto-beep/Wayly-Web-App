@@ -1,0 +1,121 @@
+# CE-2 v1.1 Phase 0 fixtures.
+#
+# Three locked test cases for the Contribution Estimator rebuild. Bill and John
+# are gate-blocking: if either fails to reproduce to the cent, CE-2 does not
+# ship. Louisa is the shared cross-tool fixture (DEC-1 / PPC-1 / CPR-1 /
+# CE-2).
+#
+# Sources for all inputs:
+#   - Australian Government Department of Health, Support at Home Program
+#     Participant Contributions fact sheet (December 2025 edition):
+#     https://www.health.gov.au/sites/default/files/2025-12/support-at-home-program-participant-contributions.pdf
+#   - Department of Health case studies:
+#     https://www.health.gov.au/sites/default/files/2024-09/case-studies-support-at-home_0.pdf
+#   - Schedule of Fees and Charges for Support at Home (indexed 20 March 2026)
+
+version: 1
+fixtures:
+
+  bill:
+    label: "Bill — standard arrangements, part pensioner"
+    source_url: "https://www.health.gov.au/sites/default/files/2025-12/support-at-home-program-participant-contributions.pdf"
+    input:
+      person_name: "Bill"
+      assessment_status: "have_classification"
+      pension_status: "part_pension"
+      relationship: "single"
+      homeowner: true
+      # Assessable income excluding pension. The DoH fact sheet publishes Bill's
+      # total income (incl. pension) as $45,500 but does not publish his
+      # ordinary income directly. The value below is derived from the DoH's
+      # published 14.0% total contribution rate: solving the means-test formula
+      # backwards gives income_reduction = 14% * max_reduction = $6,680.59,
+      # therefore assessable_income = $5,668 + $6,680.59 / 0.50 = $19,029.18.
+      income_excluding_pension_annual: 19029.18
+      total_income_including_pension_annual: 45500
+      financial_assets: 10000
+      partner_income: null
+      partner_assets: null
+      entry_path: "post_nov_2025"
+      hcp_paid_fees: null
+      classification: "class_5"
+      service_mix:
+        clinical: 30
+        independence: 45
+        everyday: 25
+      effective_date: "2026-03-20"
+    expected_output:
+      input_contribution_rate_pct: 14.0
+      # Derived rates: independence = 0.45 * 14 + 5 = 11.30%
+      #                everyday    = 0.625 * 14 + 17.5 = 26.25%
+      independence_rate_pct: 11.30
+      everyday_rate_pct: 26.25
+      government_share_pct: 86.0
+      is_fee_exempt: false
+      is_no_worse_off: false
+      applicable_lifetime_cap_aud: 137917.01
+      show_hcp_comparison: false
+
+  john:
+    label: "John — no-worse-off principle, full pensioner"
+    source_url: "https://www.health.gov.au/sites/default/files/2025-12/support-at-home-program-participant-contributions.pdf"
+    input:
+      person_name: "John"
+      assessment_status: "have_classification"
+      pension_status: "full_pension"
+      relationship: "single"
+      homeowner: true
+      income_excluding_pension_annual: 0
+      financial_assets: 0
+      entry_path: "hcp_pre_sep_2024"
+      hcp_paid_fees: false                            # triggers fee-exempt short-circuit
+      classification: "class_3"                       # was on HCP Level 3
+      hcp_level_when_grandfathered: 3
+      service_mix:
+        clinical: 30
+        independence: 45
+        everyday: 25
+      effective_date: "2026-03-20"
+    expected_output:
+      total_contribution_pct: 0.0                     # gate-blocking, permanent zero
+      contribution_weekly_aud: 0.0
+      contribution_annual_aud: 0.0
+      is_fee_exempt: true                             # gate-blocking
+      is_no_worse_off: true
+      applicable_lifetime_cap_aud: null               # not applicable when fee exempt
+      show_hcp_comparison: true                       # entry path 2 always shows HCP comparison
+      copy_signal: "will_never_pay"                   # result-screen headline signal
+
+  louisa:
+    label: "Louisa Davids — cross-tool fixture (DEC-1 / PPC-1 / CPR-1 / CE-2)"
+    canonical: true
+    input:
+      person_name: "Louisa Davids"
+      participant_id: "SAH-500711"
+      provider_name: "Glorious Services Pty Ltd"
+      assessment_status: "have_classification"
+      pension_status: "full_pension"
+      relationship: "single"
+      homeowner: true
+      income_excluding_pension_annual: 0
+      financial_assets: 0
+      entry_path: "post_nov_2025"
+      hcp_paid_fees: null
+      classification: "class_8"                       # corrected per spec §2.5
+      service_mix:
+        clinical: 30
+        independence: 45
+        everyday: 25
+      effective_date: "2026-03-20"
+    expected_output:
+      independence_rate_pct: 5.0                      # full pensioner floor
+      everyday_rate_pct: 17.5
+      total_rate_pct_weighted:
+        # 0.30 * 0 + 0.45 * 5 + 0.25 * 17.5 = 6.625
+        approx: 6.625
+      applicable_lifetime_cap_aud: 137917.01
+      is_fee_exempt: false
+      is_no_worse_off: false
+      # Class 8 annual funding: $78,106.00 (INDEX-1 key classification_annual.8)
+      annual_service_base_aud: 78106.00
+      # Weekly total contribution ≈ 6.625% × 78,106 / 52.14285714 ≈ $99.24

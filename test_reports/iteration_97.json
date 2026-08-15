@@ -1,0 +1,34 @@
+{
+  "summary": "LOOP-1 v1.1 add-ons validated end-to-end. All 31/31 backend tests pass (8 new add-on + 11 LOOP-1 v1 + 12 CORE-1). Frontend PatternAlertsCard renders 4 patterns (statement_anomaly_ready high, manual low, reclassification_review high, invoice_issue_review medium) on cathy's /app/me, positioned correctly between Financial Position and Open follow-ups. CaseDetail assignee dropdown renders with Unassigned + household members, selection persists after reload, and clearing to null persists (confirms Pydantic model_fields_set fix works). LCA-1 sweep idempotency, dry-run, digest body, and SLA nudge cooldown all pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "CaseDetail /app/participants/:id/cases/:cid", "issues": ["React hydration warning: '<span> cannot be a child of <option>' logged on every render. Source is emergent ai-devtools/visual-editor instrumentation injecting x-ve-dynamic <span> wrappers inside <option> children. Not caused by user code but pollutes console for all users hitting a case detail page."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/loop1/test_loop1_addons.py",
+    "/app/backend/tests/loop1/test_loop1_v1.py",
+    "/app/backend/tests/core1/test_core1_v1.py",
+    "/app/test_reports/pytest/loop1_v1_1_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "loop1_addons.py — clean separation via init_addons DI, all four endpoints correctly gated by _assert_flag(). Aggregate pipeline for patterns is efficient (single group across accessible pids).",
+    "LCA-1 sweep idempotency correctly enforced via existing-case check keyed on dedupe_key `reclassification_review:oct2026:{pid}` BEFORE calling scanner — confirmed by second run returning opened:0.",
+    "Nudge cooldown uses 5-day case_events lookup; correct and idempotent.",
+    "Assignee PATCH bug fix (using payload.model_fields_set) verified end-to-end via UI: setting then clearing assignee both persist on reload.",
+    "Minor: PATTERN_HEADLINES fallback template joins on underscore replace — acceptable but 'manual' case_type has no headline entry so renders generic '7 open manual cases...' text (visible in UI). Consider adding a headline entry or hiding non-registered types.",
+    "Minor: digest hardcodes https://proration-preview.preview.emergentagent.com/app in email body; should read from an APP_URL env var for prod portability."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "LCA-1 sweep live run opened reclassification_review cases for cathy's Level-2/3 participants during test_lca1_sweep_live_is_idempotent — this is by design and matches E1's ship intent.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All four LOOP-1 v1.1 features (patterns, assignee, LCA-1 sweep+digest, SLA nudges) shipped clean. Only cosmetic notes: (a) 'manual' case_type falls through to generic headline template; (b) digest emails contain hardcoded preview URL; (c) React hydration warning from emergent ai-devtools injecting <span> inside <option> in CaseDetail — infra-level, not user code. Feature flag LOOP1_CASES_ENABLED=0 not exercised at runtime (would require backend restart) but code review confirms all four endpoints call _assert_flag() as first line.",
+  "rca of the issue": "N/A — no functional issues found."
+}

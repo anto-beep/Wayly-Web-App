@@ -1,0 +1,223 @@
+"""Pydantic models for Wayly."""
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from typing import List, Optional, Literal
+from datetime import datetime, timezone
+import uuid
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def new_id() -> str:
+    return str(uuid.uuid4())
+
+
+# ---------- Auth ----------
+class SignupRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+    name: str
+    # UI-1 §12, first/last persisted separately, mobile captured for account
+    # recovery and security alerts only (never used for SMS marketing).
+    first_name: Optional[str] = Field(default=None, max_length=80)
+    last_name: Optional[str] = Field(default=None, max_length=80)
+    mobile: Optional[str] = Field(default=None, max_length=20)
+    role: Literal["caregiver", "participant"] = "caregiver"
+    plan: Literal["free", "solo", "family", "adviser"] = "free"
+    invite: Optional[str] = Field(default=None, max_length=64)
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(BaseModel):
+    token: str
+    refresh_token: Optional[str] = None
+    user: "UserPublic"
+
+
+class UserPublic(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    email: EmailStr
+    name: str
+    # Signup carryover: surface first/last/mobile so Onboarding + Settings
+    # can pre-fill without a second API round trip.
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    mobile: Optional[str] = None
+    role: Literal["caregiver", "participant"]
+    plan: Literal["free", "solo", "family", "adviser"] = "free"
+    household_id: Optional[str] = None
+    created_at: str
+    is_admin: bool = False
+    admin_role: Optional[Literal["super_admin", "operations_admin", "support_admin", "content_admin"]] = None
+    # Subscription summary (optional, populated only on /auth/me, /auth/login,
+    # /auth/signup, /auth/google-session responses).
+    subscription_status: Optional[str] = None  # "trialing" | "active" | "cancelled" | None
+    trial_ends_at: Optional[str] = None        # ISO datetime when trial expires (if trialing)
+    cancel_at_period_end: Optional[bool] = None
+    # Phase 1 security: surfaced so the Settings UI can show 2FA state.
+    totp_enabled: Optional[bool] = None
+
+
+class PlanUpdate(BaseModel):
+    plan: Literal["free", "solo", "family", "adviser"]
+
+
+# ---------- Household & Participant ----------
+class HouseholdCreate(BaseModel):
+    participant_name: str
+    classification: int = Field(ge=1, le=8)
+    provider_name: str
+    is_grandfathered: bool = False
+    relationship: Optional[str] = "parent"
+
+
+class Household(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=new_id)
+    owner_id: str
+    participant_name: str
+    classification: int
+    provider_name: str
+    is_grandfathered: bool = False
+    relationship: str = "parent"
+    created_at: str = Field(default_factory=now_iso)
+
+
+# ---------- Statements ----------
+class StatementLineItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=new_id)
+    date: str  # YYYY-MM-DD
+    service_code: Optional[str] = None
+    service_name: str
+    # DEC-1 Phase 2 #7: keep CareMgmt and AT-HM as first-class streams
+    # instead of folding them into Everyday Living. Backwards-compatible via
+    # extra="ignore" for old docs.
+    stream: Literal["Clinical", "Independence", "Everyday Living", "Care Management", "AT-HM"]
+    units: float = 1.0
+    unit_price: float = 0.0
+    total: float = 0.0
+    contribution_paid: float = 0.0
+    government_paid: float = 0.0
+    confidence: float = 1.0
+
+
+class Statement(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=new_id)
+    household_id: str
+    filename: str
+    period_label: Optional[str] = None  # e.g. "October 2026"
+    uploaded_at: str = Field(default_factory=now_iso)
+    line_items: List[StatementLineItem] = Field(default_factory=list)
+    summary: Optional[str] = None
+    anomalies: List["Anomaly"] = Field(default_factory=list)
+    raw_text_preview: Optional[str] = None
+    # Original-file storage for re-download. Stored as base64 to avoid binary in JSON.
+    file_mimetype: Optional[str] = None
+    file_size_bytes: Optional[int] = None
+    file_b64: Optional[str] = None  # original bytes, base64-encoded
+    has_original_file: bool = False  # surfaced on list/detail endpoints (file_b64 itself is excluded)
+    # Audit-level aggregates (added Feb 2026). Old documents load cleanly
+    # thanks to extra="ignore" + the safe defaults.
+    anomaly_dollar_impact_total: float = 0.0
+    informational_notes: List[dict] = Field(default_factory=list)
+    # DEC-1 Phase 1: preserve the full decoder payload so the Statements tab
+    # can render the same rich <DecoderResultView> as the AI Tools pathway,
+    # and both surfaces can share the same client-side PDF export. Old
+    # documents (pre-unification) simply have these as None → the detail
+    # screen falls back to the legacy view.
+    extracted_json: Optional[dict] = None  # raw extract_statement() output
+    audit_json: Optional[dict] = None      # raw audit_statement() output
+    input_method: Optional[str] = None     # "upload_dashboard" | "text_paste" | "file_upload_public" | ...
+    document_pages: Optional[int] = None
+    parsing_warnings: List[str] = Field(default_factory=list)
+    # DEC-1 Phase 1: record which pathway created this statement without
+    # changing where it lives or whether it renders.
+    origin_route: Optional[str] = None     # "statements_upload" | "ai_tools_decoder"
+    # STMT-UI-1 v2 Decision 6: private user note. Stored server-side, user-scoped,
+    # user-owned. Body itself is stripped from list responses (Decision 6:
+    # register only sends the boolean `has_note` for cheap indicator rendering).
+    user_note: Optional[str] = None
+    has_note: bool = False
+
+
+class Anomaly(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=new_id)
+    severity: Literal["info", "warning", "alert"] = "info"
+    title: str
+    detail: str
+    suggested_action: Optional[str] = None
+    line_item_id: Optional[str] = None
+    # Decoder-side metadata (added Feb 2026). Old documents predating this
+    # change simply have rule=None / dollar_impact=None / evidence=[] thanks
+    # to extra="ignore" + the safe defaults below.
+    rule: Optional[str] = None
+    dollar_impact: Optional[float] = None
+    evidence: List[str] = Field(default_factory=list)
+    raw_severity: Optional[str] = None  # decoder's high/medium/low before display mapping
+
+
+# ---------- Family thread / audit ----------
+class FamilyMessageCreate(BaseModel):
+    body: str
+    related_statement_id: Optional[str] = None
+
+
+class FamilyMessage(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=new_id)
+    household_id: str
+    author_id: str
+    author_name: str
+    body: str
+    related_statement_id: Optional[str] = None
+    created_at: str = Field(default_factory=now_iso)
+
+
+class AuditEvent(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=new_id)
+    household_id: str
+    actor_id: str
+    actor_name: str
+    action: str  # e.g. "STATEMENT_UPLOADED", "PROVIDER_CHANGED"
+    detail: str
+    created_at: str = Field(default_factory=now_iso)
+
+
+# ---------- Chat ----------
+class ChatRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None  # one chat session per caregiver/household
+    # STMT-UI-1 v2 · statement-scoped Ask Wayly. When set, the /api/chat handler
+    # loads THIS specific statement's summary + line items + anomalies as the
+    # AI's grounding context (instead of the household's latest statement).
+    # Any un-matched or cross-household id is silently ignored so callers can
+    # never leak data across households.
+    statement_id: Optional[str] = None
+
+
+class ChatTurn(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=new_id)
+    household_id: str
+    role: Literal["user", "assistant"]
+    content: str
+    created_at: str = Field(default_factory=now_iso)
+
+
+# ---------- Participant view ----------
+class ConcernCreate(BaseModel):
+    note: Optional[str] = None
+
+
+TokenResponse.model_rebuild()
+Statement.model_rebuild()

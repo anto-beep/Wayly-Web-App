@@ -1,0 +1,77 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "Perform a comprehensive UI audit and fix for Dark Mode across all application screens (text visibility, checkboxes/radios/ticks contrast with bright accent for selected state, button contrast, cards/modals/nav no dark-on-dark). Also perform a full audit of all internal routing and links: fix broken links, 404/empty pages, sidebar/footer/nav links, and ensure feature cards/Featured badges link correctly (example dead link cited: /app/tools/invoice-checker/list).",
+  "summary": "No relevant testing skill found. Logged in as cathy@example.com on the preview URL, forced dark mode via localStorage, and measured the exact reported dashboard, voice-check, statement-detail, light-mode regression, and routing cases. Voice Check dark radio rows are fixed, Your Rights text is legible, light mode checks passed, and current sidebar/features/footer/provider back-links resolve; however several cited dark contrast issues still reproduce and the cited legacy invoice-checker URL still renders the 404 page.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Dashboard profile completion banner CTA",
+        "issue": "Dark mode still renders the 'Complete now' CTA as white text on light terracotta rgb(232,154,111), measured contrast 2.26:1. This is below the requested readable/high-contrast target and visually similar to the prior failure, despite the text now being white.",
+        "selector": "[data-testid='profile-completion-cta']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Statement detail anomaly AI disclaimer",
+        "issue": "Dark mode AI disclaimer text remains rgb(146,64,14) on dark card bg rgb(21,36,37), measured 2.26:1. The CSS text-amber override does not affect this because AIAccuracyBanner variant='anomaly' uses an inline color style.",
+        "selector": "[data-testid='ai-anomaly-disclaimer']",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "Statement detail High/Medium priority pill badges",
+        "issue": "Dark mode High and Medium anomaly badges remain white text on light terracotta/gold remap rgb(232,154,111), measured 2.26:1 at 9px. Low badges are fixed (10.15:1), but High/Medium are still low contrast.",
+        "selector": "[data-testid^='anomaly-card-'] span",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Cited legacy invoice checker route",
+        "issue": "Direct visit to /app/tools/invoice-checker/list still renders the Wayly 404 page ('This page has gone for a walk.'). Current internal feature/sidebar links no longer point there, but the user-cited internal URL is still a dead route rather than redirecting to /ai-tools/invoice-checker.",
+        "affected_selectors": []
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/bug_verification_131_playwright.py",
+    "/app/test_reports/bug_verification_131_results.json",
+    "/app/test_reports/bug_verification_131_routing_supplement.py",
+    "/app/test_reports/bug_verification_131_routing_supplement_results.json",
+    "/app/test_reports/bug_verification_131_light_supplement.py",
+    "/app/test_reports/bug_verification_131_light_supplement_results.json"
+  ],
+  "action_items": [
+    "Fix dark-mode .bg-terracotta/.bg-gold button and badge contrast: either keep a darker accent background for white text or use dark text on the light remapped accent.",
+    "Fix AIAccuracyBanner anomaly variant in dark mode; inline #92400E must be theme-aware or overridden by a more specific dark-mode rule targeting [data-testid='ai-anomaly-disclaimer'].",
+    "Add a redirect/route alias for /app/tools/invoice-checker/list to /ai-tools/invoice-checker (or another valid invoice checker page).",
+    "Re-run the focused contrast/routing verification after fixes."
+  ],
+  "critical_code_review_comments": [
+    "/app/frontend/src/index.css pass 2 rule A only forces white foreground on accent backgrounds; it does not address the dark-mode remap that turns bg-terracotta/bg-gold into light rgb(232,154,111), so white text still fails contrast.",
+    "/app/frontend/src/components/AIAccuracyBanner.jsx uses inline style color '#92400E' for variant='anomaly', so the appended text-amber-800/900 CSS selectors cannot brighten that disclaimer.",
+    "/app/frontend/src/index.css pass 2 rule D fixes only bg-sage; high/medium badges use bg-terracotta/bg-gold and remain white-on-light-accent in dark mode."
+  ],
+  "updated_files": [
+    "/app/test_reports/bug_verification_131_playwright.py",
+    "/app/test_reports/bug_verification_131_results.json",
+    "/app/test_reports/bug_verification_131_routing_supplement.py",
+    "/app/test_reports/bug_verification_131_routing_supplement_results.json",
+    "/app/test_reports/bug_verification_131_light_supplement.py",
+    "/app/test_reports/bug_verification_131_light_supplement_results.json",
+    "/app/test_reports/bug_verification_131.json",
+    "/app/test_reports/iteration_131.json"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend only",
+    "frontend": "Partial: voice-check radios, Your Rights panel, light-mode regression, sidebar/features/footer/provider back-links passed; dashboard CTA, anomaly disclaimer, High/Medium badges, and cited legacy route failed."
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use preview URL https://proration-preview.preview.emergentagent.com (not localhost, to avoid CORS noise). Set localStorage wayly:app:appearance='dark'. The exact failures measured were dashboard Complete now contrast 2.26:1, ai-anomaly-disclaimer contrast 2.26:1, High/Medium anomaly badges 2.26:1, and direct /app/tools/invoice-checker/list 404. Passing checks: dark Voice Check rows not all clay and selected row distinct, Your Rights panel >=12.79:1, light-mode dashboard/voice/statement checks, sidebar expanded route sweep, features CTAs, footer links, and provider compare back-link.",
+  "rca_of_the_issue": "The attempted CSS fix is incomplete: foreground-only overrides leave white text on a light terracotta dark-mode remap; anomaly disclaimer color is inline-styled so utility-class CSS remaps never apply; and the badge fix targets only sage/Low while High/Medium use terracotta/gold. The cited invoice checker legacy path has no redirect route."
+}
