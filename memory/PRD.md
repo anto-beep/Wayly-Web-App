@@ -6592,3 +6592,29 @@ User reported that switching participants in the header failed to cascade: the p
 - LF-2 · new /app/letters mailbox page listing chains and drafts per participant with inline edit + send + status badge. Sidebar link added under Guided Journeys.
 - Verified · testing_agent iter 124: 9/9 pytest cases pass, mailbox UI renders and empty state shows.
 - Updated spec status: IC-2 ~65%, LCA-1 ~95%, LF-2 ~75%.
+
+---
+
+## 2026-06 · Mobile App Added (Expo / React Native) — Cross-Platform Fork
+
+The product is now cross-platform: web (React) + mobile (Expo) + shared FastAPI/Mongo backend (backend UNCHANGED). User-approved MVP scope: Core Caregiver App.
+
+### Mobile MVP delivered (`/app/mobile`)
+- Auth: email/password login + signup, and Emergent Google OAuth ("Continue with Google") — JWT Bearer (kindred_token/kindred_refresh_token) stored in expo-secure-store (native) / AsyncStorage (web preview). Transparent 401 refresh. `POST /api/auth/{login,signup,google-session,refresh,me,logout}`.
+- Dashboard: plan/subscription status card, stat tiles (statements/invoices/flags/$ impact), quick actions, latest statement, pull-to-refresh.
+- Participant/Family switcher (bottom sheet) + `/participants` screen. Reads `GET /api/participants` → `{items:[...]}`; sets `X-Participant-Id` header for scoping. Normalizes preferred_name/first+last, provider_name, classification level.
+- Statements: list (`GET /api/statements`) + detail (`/api/statements/{id}`) with AI decoded summary, streams grouping, anomalies. "Ask Wayly about this statement".
+- Invoices: list (`GET /api/invoices` → `{count,items}`) + detail (`/api/invoices/{id}`) with reconciliation verdict, summary_md, findings, checks-run.
+- Ask Wayly: chat (`POST /api/chat`, session_id retained), suggestions, statement-scoped questions.
+- Upload: statement/invoice toggle; sources = file (expo-document-picker), camera + photos (expo-image-picker with full permission contract). Statement upload polls `/api/statements/upload-job/{id}`; invoice upload is synchronous.
+- Plan & billing: VIEW-ONLY (plan status + subscription). Purchases/upgrades open the web billing page in the external browser via `Linking.openURL` (per user decision; avoids App Store IAP rules).
+- Design: brand-matched to web — Playfair Display headings + IBM Plex body (loaded via expo-font), teal #0E4D52 / cream #FBF8F3 / clay #A5512B palette, large 60+-friendly touch targets. expo-router file-based routing with a 4-tab bar (Home/Statements/Ask/More).
+
+### Verified
+- testing_agent iter 150: backend 9/10 pytest pass; all mobile flows work end-to-end on Expo web preview (430x900).
+- Fixed post-report: ParticipantContext `items` contract (switcher now lists all participants; X-Participant-Id resolves); mobile signup plan `free`→`family` (free plan retired).
+
+### Mobile backlog / not in this pass
+- SSE live re-decode of statements on mobile (currently shows stored decoded data).
+- In-app plan purchase (intentionally deferred; web-only).
+- Google OAuth end-to-end can only be validated on a device/build (external redirect).

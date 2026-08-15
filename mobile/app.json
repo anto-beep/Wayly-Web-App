@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "Wayly",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,12 +10,16 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.emergent.prorationpreview.x214np"
+      "bundleIdentifier": "com.emergent.prorationpreview.x214np",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Wayly uses the camera so you can photograph statements and invoices to upload.",
+        "NSPhotoLibraryUsageDescription": "Wayly needs access to your photos so you can upload statements and invoices."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#0E4D52"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.emergent.prorationpreview.x214np"
@@ -33,7 +37,14 @@
           "image": "./assets/images/splash-image.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000000"
+          "backgroundColor": "#0E4D52"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Wayly needs access to your photos so you can upload statements and invoices.",
+          "cameraPermission": "Wayly uses the camera so you can photograph statements and invoices to upload."
         }
       ]
     ],
