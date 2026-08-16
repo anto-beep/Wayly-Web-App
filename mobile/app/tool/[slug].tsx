@@ -1,10 +1,18 @@
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Sparkles, AlertTriangle } from "lucide-react-native";
+import { Sparkles, AlertTriangle, FileText } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Field, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import BudgetCalculatorTool from "@/src/components/tools/BudgetCalculatorTool";
+import ClassificationSelfCheck from "@/src/components/tools/ClassificationSelfCheck";
+import ProviderPriceChecker from "@/src/components/tools/ProviderPriceChecker";
+import ContributionEstimator from "@/src/components/tools/ContributionEstimator";
+import LettersFollowUps from "@/src/components/tools/LettersFollowUps";
+import AgedCareQA from "@/src/components/tools/AgedCareQA";
+import CarePlanReviewer from "@/src/components/tools/CarePlanReviewer";
+import InvoiceChecker from "@/src/components/tools/InvoiceChecker";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -19,7 +27,7 @@ const CLASS_OPTS = Array.from({ length: 8 }, (_, i) => ({ label: `${i + 1}`, val
 
 const TOOLS: Record<string, ToolCfg> = {
   "budget-calculator": {
-    title: "Budget & Lifetime Cap Calculator", subtitle: "Project the quarterly budget and lifetime cap", endpoint: "/public/budget-calc", submitLabel: "Calculate",
+    title: "Budget & Lifetime Cap Calculator", subtitle: "See your annual budget, per-stream allocation, and lifetime cap projection", endpoint: "/public/budget-calc", submitLabel: "Calculate",
     fields: [
       { key: "classification", label: "Classification level", type: "select", options: CLASS_OPTS, default: 4 },
       { key: "expected_annual_burn", label: "Expected annual spend (AUD)", type: "number", placeholder: "e.g. 20000", default: "" },
@@ -76,15 +84,134 @@ const TOOLS: Record<string, ToolCfg> = {
 // Launcher tools: their page shows the same web explainer content plus a button
 // that opens the working feature (statements, invoices, chat). No form.
 const LAUNCHERS: Record<string, { title: string; subtitle: string; launchLabel: string; launchRoute: string }> = {
-  "statement-decoder": { title: "Statement Decoder", subtitle: "Decode a statement, line by line", launchLabel: "Open Statement Decoder", launchRoute: "/(tabs)/statements" },
   "invoice-checker": { title: "Invoice Checker", subtitle: "Check an invoice before you pay", launchLabel: "Open Invoice Checker", launchRoute: "/invoices" },
   "family-coordinator": { title: "Aged Care Q&A", subtitle: "Ask anything about aged care", launchLabel: "Open Aged Care Q&A", launchRoute: "/(tabs)/ask" },
 };
 
 export default function ToolScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
+  const s = slug || "";
+  if (s === "statement-decoder") return <StatementDecoderTool />;
+  if (s === "budget-calculator") return <BudgetCalculatorTool />;
+  if (s === "classification-self-check") return <ClassificationSelfCheck />;
+  if (s === "provider-price-checker") return <ProviderPriceChecker />;
+  if (s === "contribution-estimator") return <ContributionEstimator />;
+  if (s === "letters-and-follow-ups") return <LettersFollowUps />;
+  if (s === "care-plan-reviewer") return <CarePlanReviewer />;
+  if (s === "invoice-checker") return <InvoiceChecker />;
+  if (s === "family-coordinator") return <AgedCareQA />;
+  return <FormTool slug={s} />;
+}
+
+function StatementDecoderTool() {
+  const { colors } = useTheme();
+  const [mode, setMode] = useState<"text" | "file">("text");
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState("");
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<any>(null);
+
+  const decode = async () => {
+    if (!text.trim()) { setError("Paste your statement text first."); return; }
+    setBusy(true); setError(""); setResult(null); setPhase("Reading your statement…");
+    try {
+      const start = await apiFetch<{ job_id: string }>("/public/decode-statement-text", { method: "POST", body: { text: text.trim() } });
+      let final: any = null;
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const job = await apiFetch<{ status: string; phase?: string; result?: any; error?: string }>(`/public/decode-job/${start.job_id}`).catch(() => null);
+        if (!job) continue;
+        if (job.phase) setPhase(job.phase.replace(/_/g, " "));
+        if (job.status === "done") { final = job.result; break; }
+        if (job.status === "error") throw new ApiError(500, job.error || "Decode failed.");
+      }
+      if (!final) throw new ApiError(500, "Decode timed out. Please try a shorter statement.");
+      setResult(final);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
+    } finally { setBusy(false); setPhase(""); }
+  };
+
+  const anomalies = result?.anomalies || [];
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <AppHeader title="Statement Decoder" onBack={() => router.back()} />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
+          <T style={{ fontFamily: fonts.heading, fontSize: 30 }}>Statement Decoder</T>
+          <T variant="bodyMuted" style={{ lineHeight: 22 }}>Upload, photograph, or paste any Support at Home monthly statement.</T>
+
+          {/* Mode toggle */}
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            {([["text", "Paste text"], ["file", "Upload file or photo"]] as const).map(([v, label]) => {
+              const on = mode === v;
+              return (
+                <Pressable key={v} testID={`decoder-mode-${v}`} onPress={() => { setMode(v); setResult(null); setError(""); }} style={[styles.chip, { flexGrow: 1, alignItems: "center", borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: on ? "#fff" : colors.text }}>{label}</T>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {mode === "text" ? (
+            <>
+              <Field label="" testID="decoder-text-input" value={text} onChangeText={setText} multiline placeholder="Paste your statement text here…" />
+              {error ? <View style={[styles.err, { backgroundColor: colors.errorSoft }]}><AlertTriangle size={18} color={colors.terracotta} /><T variant="small" style={{ color: colors.terracotta, flex: 1 }}>{error}</T></View> : null}
+              <Button label={busy ? (phase || "Reading your statement…") : "Decode this statement"} testID="decoder-submit" icon={Sparkles} onPress={decode} loading={busy} />
+            </>
+          ) : (
+            <Card testID="decoder-file-launcher">
+              <T variant="body" style={{ lineHeight: 22 }}>To decode a PDF or photo, use the secure uploader. Wayly extracts the text, decodes every line, and saves it to your statements.</T>
+              <Button label="Upload a Statement" testID="decoder-open-upload" icon={FileText} onPress={() => router.push("/upload")} style={{ marginTop: spacing.md }} />
+            </Card>
+          )}
+
+          {result ? (
+            <Card testID="decoder-result" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.primary }}>SMART SUMMARY</T>
+              <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, marginTop: 2, color: colors.primary }}>Your statement, decoded</T>
+              <T style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 22, marginTop: 8, color: colors.text }}>
+                {`We checked every line against Support at Home rules. ${anomalies.length ? `We found ${anomalies.length} thing${anomalies.length === 1 ? "" : "s"} worth checking with your provider. ` : "Nothing looked out of order. "}${sanitizeAI(result.summary || "")}`.trim()}
+              </T>
+              {anomalies.length ? (
+                <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+                  {anomalies.map((a: any, i: number) => (
+                    <View key={i} style={{ flexDirection: "row", gap: 8 }}>
+                      <AlertTriangle size={16} color={colors.terracotta} style={{ marginTop: 2 }} />
+                      <View style={{ flex: 1 }}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>{a.title || a.type}</T>
+                        {a.detail ? <T variant="small" style={{ marginTop: 2 }}>{sanitizeAI(a.detail)}</T> : null}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              {(result.line_items || []).length ? (
+                <View style={{ marginTop: spacing.md }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, marginBottom: 4 }}>Line items</T>
+                  {(result.line_items || []).slice(0, 20).map((li: any, i: number) => (
+                    <View key={i} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                      <T variant="small" style={{ flex: 1 }} numberOfLines={2}>{li.description || li.name}</T>
+                      <T style={{ fontFamily: fonts.mono, fontSize: 13, color: colors.text }}>{money(li.total ?? li.amount)}</T>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </Card>
+          ) : null}
+
+          <ToolExplainer toolKey="statement-decoder" />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+function FormTool({ slug }: { slug: string }) {
   const cfg = TOOLS[slug || ""];
   const { colors } = useTheme();
+
   const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries((cfg?.fields || []).map((f) => [f.key, f.default])));
   const [result, setResult] = useState<any>(null);
   const [busy, setBusy] = useState(false);

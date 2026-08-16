@@ -129,7 +129,7 @@ export function Button({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.btn,
-        { backgroundColor: p.bg, opacity: isDisabled ? 0.55 : pressed ? 0.88 : 1 },
+        { backgroundColor: p.bg, color: p.fg, opacity: isDisabled ? 0.55 : pressed ? 0.88 : 1 },
         p.border ? { borderWidth: 1.5, borderColor: p.border } : null,
         style,
       ]}
