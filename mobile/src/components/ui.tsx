@@ -10,7 +10,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft, LucideIcon } from "lucide-react-native";
 
 import { fonts, radius, spacing, typeScale } from "@/src/theme/tokens";
@@ -45,8 +45,9 @@ export function AppHeader({
   right?: React.ReactNode;
 }) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.header, { backgroundColor: colors.bg }]}>
+    <View style={[styles.header, { backgroundColor: colors.bg, paddingTop: insets.top + 8 }]}>
       {onBack ? (
         <Pressable
           testID="header-back-button"

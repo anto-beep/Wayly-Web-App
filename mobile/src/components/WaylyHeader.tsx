@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, Menu } from "lucide-react-native";
 
 import { useDrawer } from "@/src/context/DrawerContext";
@@ -16,9 +17,10 @@ export function WaylyHeader({ notifications = 0 }: { notifications?: number }) {
   const { openDrawer } = useDrawer();
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.bar, { backgroundColor: colors.bg, borderBottomColor: colors.border }]}>
+    <View style={[styles.bar, { backgroundColor: colors.bg, borderBottomColor: colors.border, paddingTop: insets.top + 8 }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <WaylyMark size={30} white={isDark} />
         <T style={{ fontFamily: fonts.heading, fontSize: 22 }}>Wayly</T>

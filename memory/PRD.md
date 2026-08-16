@@ -6655,3 +6655,14 @@ Rule for all AI summaries: friendly-expert tone, NO dashes/em-dashes (only comma
 - Money screens built + wired in drawer (implemented): Quarterly Pacing detail (/qp1/pacing + /pacing/history), Budget Alerts (/budget-alerts), Budget Scenarios (projection from /budget/current + pacing), Reports (/reports).
 - Verified via screenshots: dashboard (all sections, correct numbers) + pacing screen render correctly.
 - STILL TODO this request: AI Tools rest (6): Budget & Cap Calculator, Provider Price Checker, Classification Self-Check, Letters & Follow-ups, Contribution Estimator, Support Plan Reviewer. Then remaining groups (Their Care, Guided Journeys, Providers & Paperwork, Account) + dark-theme secondary detail screens.
+
+## 2026-06 · Mobile spacing fix + pacing polish
+- FIXED loud display bug: WaylyHeader + AppHeader now respect the top safe-area inset (useSafeAreaInsets, paddingTop insets.top+8) so the header no longer clashes with the status bar/notch. Verified via screenshot (clean).
+- Pacing history rows now use real data (quarter.label, actual_spent, envelope); paceMeta handles underspend/overspend.
+- mobile-care-os config doc reviewed: current app already matches its palette/spacing/8pt-grid intent; fonts remain Playfair+IBM Plex (matches THIS web app). Key actionable from it = spacing, now fixed.
+
+STILL TODO (large, per-turn builds):
+- AI Tools (6): Budget & Cap Calculator, Provider Price Checker, Classification Self-Check, Letters & Follow-ups, Contribution Estimator, Support Plan Reviewer (interactive forms + AI results).
+- Statements/Money tab: every sub-screen detail per web (statement compare, audit log, downloads, etc.).
+- Their Care (6): Care Team, Key Contacts, Calendar, Hospital Mode, Care Plans, Timeline + dark-theme the secondary detail screens (statement/invoice/decode/family/ask/participants/upload/login/signup still light).
+- Journeys & Paperwork: Guided Journeys + Documents, Correspondence, Compare Providers, Ratings.

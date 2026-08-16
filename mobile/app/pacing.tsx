@@ -11,14 +11,13 @@ import { fonts, spacing } from "@/src/theme/tokens";
 import { money } from "@/src/utils/format";
 
 type Pacing = { envelope?: number; actual_spent?: number; projected_end_of_quarter_total?: number; pace_status?: string; over_under_aud?: number; quarter?: { label?: string; total_days?: number; elapsed_days?: number }; daily_run_rate_aud?: number };
-type History = { history?: { label?: string; envelope?: number; spent?: number; pace_status?: string }[]; rollover_cap_aud?: number };
+type History = { history?: { quarter?: { label?: string }; envelope?: number; actual_spent?: number; pace_status?: string }[]; rollover_cap_aud?: number };
 
 function paceMeta(s?: string) {
-  switch ((s || "").toLowerCase()) {
-    case "over": return { label: "Over pace", color: "#B7791F" };
-    case "under": return { label: "Under pace", color: "#1B5733" };
-    default: return { label: "On track", color: "#1B5733" };
-  }
+  const v = (s || "").toLowerCase();
+  if (v.includes("over")) return { label: "Over pace", color: "#B7791F" };
+  if (v.includes("under")) return { label: "Under pace", color: "#1B5733" };
+  return { label: "On track", color: "#1B5733" };
 }
 
 export default function PacingScreen() {
@@ -72,8 +71,8 @@ export default function PacingScreen() {
               <T variant="h3" style={{ marginBottom: spacing.sm }}>History</T>
               {h.history.map((q, i) => (
                 <View key={i} style={[styles.hrow, { borderBottomColor: colors.border }]}>
-                  <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 }}>{q.label}</T>
-                  <T style={{ fontFamily: fonts.monoMedium, fontSize: 13 }}>{money(q.spent)} / {money(q.envelope)}</T>
+                  <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 }}>{q.quarter?.label || "Quarter"}</T>
+                  <T style={{ fontFamily: fonts.monoMedium, fontSize: 13 }}>{money(q.actual_spent)} / {money(q.envelope)}</T>
                 </View>
               ))}
               {h.rollover_cap_aud != null ? <T variant="small" style={{ marginTop: spacing.sm }}>Rollover cap: {money(h.rollover_cap_aud)}</T> : null}
