@@ -2,6 +2,26 @@
 
 
 ---
+## Mobile Iteration (Jun 2026) — Statements Depth + Tool content parity
+
+### Shipped (mobile /app/mobile)
+- **Statements Depth**: Statement Detail (`app/statement/[id].tsx`) is now theme-aware (dark mode) and has a "Downloads & records" card: Download original file, Decoded CSV, Decoded PDF (authenticated download + native share via `src/lib/download.ts`; web-preview uses a fetch+blob fallback), plus links to new **Audit Log** (`app/statement-audit/[id].tsx`) and **Compare** (`app/statement-compare/[id].tsx`, tabs: Decoded breakdown / Original file) screens. Matches web StatementDetail/StatementAuditLog/StatementCompare.
+- **AI Tool content parity**: ported the web `ToolExplainer` content (`src/data/toolContent.ts`, verbatim from web `data/toolContent.js`) and built a mobile `src/components/ToolExplainer.tsx`. Each of the 6 tool screens (`app/tool/[slug].tsx`) now shows the intro one-liner, **What This Tool Does**, **How It Works** (numbered steps), the amber AI-accuracy disclaimer, **What You'll Need / What You'll Get**, **Common Questions** (accordion), and a closing CTA — same copy and structure as the web tool pages.
+
+### Verified
+- Statements Depth: testing_agent iteration_153.json (all pass after the web-preview download fix).
+- Tool content parity: self-verified via screenshots — budget-calculator (light) and care-plan-reviewer (dark), intro + all explainer sections + FAQ accordion render with high contrast in both themes.
+
+### Remaining full-parity backlog (user wants every web feature on mobile)
+- Other tool pages need the same explainer treatment / full parity: Statement Decoder, Invoice Checker, Aged Care Q&A (family-coordinator).
+- **Journeys & Paperwork (P1, next)**: Guided Journeys, Documents, Correspondence, Compare Providers, Ratings.
+- **Their Care (P1)**: Care Team, Key Contacts, Calendar, Hospital Mode, Care Plans, Timeline.
+- **Tool Result Sharing**: share/save any AI tool result as a summary.
+- **Push Notifications live cutover (P2)**: deferred until real google-services.json + publish.
+
+
+
+---
 ## Mobile Iteration (Jun 2026) — 6 AI Tools wired + guardrail fallback
 
 ### Shipped (mobile /app/mobile)

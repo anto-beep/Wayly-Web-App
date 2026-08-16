@@ -4,10 +4,12 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Sparkles, AlertTriangle } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Field, T } from "@/src/components/ui";
+import ToolExplainer from "@/src/components/ToolExplainer";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money, moneyWhole, sanitizeAI } from "@/src/utils/format";
+import { TOOL_CONTENT } from "@/src/data/toolContent";
 
 type FieldType = "number" | "text" | "textarea" | "switch" | "select" | "scale12";
 type FormField = { key: string; label: string; type: FieldType; placeholder?: string; options?: { label: string; value: any }[]; default?: any; help?: string };
@@ -110,6 +112,12 @@ export default function ToolScreen() {
       <AppHeader title={cfg.title} subtitle={cfg.subtitle} onBack={() => router.back()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
+          {TOOL_CONTENT[slug || ""]?.heroOneLiner ? (
+            <Card testID="tool-intro" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
+              <T variant="body" style={{ color: colors.text, lineHeight: 24 }}>{TOOL_CONTENT[slug || ""].heroOneLiner}</T>
+            </Card>
+          ) : null}
+
           <Card>
             <View style={{ gap: spacing.md }}>
               {cfg.fields.map((f) => <FormRow key={f.key} field={f} value={values[f.key]} onChange={(v) => set(f.key, v)} colors={colors} />)}
@@ -126,6 +134,8 @@ export default function ToolScreen() {
           <Button label={cfg.submitLabel} testID="tool-submit" icon={Sparkles} onPress={submit} loading={busy} />
 
           {result ? <ToolResult slug={slug!} data={result} colors={colors} /> : null}
+
+          <ToolExplainer toolKey={slug || ""} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
