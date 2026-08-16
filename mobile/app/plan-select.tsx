@@ -1,36 +1,15 @@
 import React, { useCallback, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { AlertTriangle, Check, CheckCircle2, Sparkles } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { invalidateTrialCache } from "@/src/components/TrialBanner";
+import { PLAN_OPTIONS, PlanKey, startCheckout } from "@/src/lib/plans";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
-
-const SITE_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "";
-
-const PLANS = [
-  {
-    key: "solo",
-    name: "Solo",
-    price: "$24.50",
-    period: "per fortnight",
-    blurb: "For one caregiver looking after one person.",
-    features: ["1 caregiver seat, 1 participant", "All 9 AI tools", "Unlimited Statement Decoder", "Caregiver dashboard & budget tracker"],
-  },
-  {
-    key: "family",
-    name: "Family",
-    price: "$49.50",
-    period: "per fortnight",
-    blurb: "For families sharing the load across the household.",
-    features: ["Up to 4 participants", "Everything in Solo", "Family Wall for shared updates", "Sunday digest for the whole family", "Audit log & household coordination"],
-    highlight: true,
-  },
-];
 
 type Sub = { plan?: string; status?: string };
 
@@ -42,7 +21,6 @@ export default function PlanSelectScreen() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -58,24 +36,16 @@ export default function PlanSelectScreen() {
 
   const currentPlan = (sub?.plan || user?.plan || "free").toLowerCase();
 
-  const startTrial = async (plan: string) => {
-    setBusy(`trial-${plan}`); setError(""); setNotice("");
+  // Card-capture checkout, exactly like the web. 7-day trial if still
+  // eligible, otherwise a straight paid subscription.
+  const choosePlan = async (plan: PlanKey) => {
+    setBusy(plan); setError("");
     try {
-      await apiFetch("/billing/start-trial", { method: "POST", body: { plan } });
+      const opened = await startCheckout(plan, eligible ? 7 : 0);
+      invalidateTrialCache();
       await refreshUser();
       await load();
-      setNotice(`Your 7-day free ${plan} trial has started. No card needed.`);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Could not start your trial. Please try again.");
-    } finally { setBusy(null); }
-  };
-
-  const subscribe = async (plan: string) => {
-    setBusy(`sub-${plan}`); setError(""); setNotice("");
-    try {
-      const res = await apiFetch<{ url?: string }>("/billing/checkout", { method: "POST", body: { plan, origin_url: SITE_BASE } });
-      if (res?.url) { await WebBrowser.openBrowserAsync(res.url); await refreshUser(); await load(); }
-      else setError("Could not open secure checkout. Please try again.");
+      if (!opened) setError("Could not open secure checkout. Please try again.");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not open secure checkout. Please try again.");
     } finally { setBusy(null); }
@@ -92,7 +62,9 @@ export default function PlanSelectScreen() {
             <Card style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
               <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
                 <Sparkles size={18} color={colors.sage} />
-                <T style={{ flex: 1, fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.text }}>Start with a 7-day free trial on any plan. No card required.</T>
+                <T style={{ flex: 1, fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.text }}>
+                  7-day free trial on any plan. We take your card securely on Stripe now, but you are not charged until day 8.
+                </T>
               </View>
             </Card>
           ) : null}
@@ -103,20 +75,22 @@ export default function PlanSelectScreen() {
               <T variant="small" style={{ color: colors.terracotta, flex: 1 }}>{error}</T>
             </View>
           ) : null}
-          {notice ? <T variant="small" testID="plan-select-notice" style={{ color: colors.success }}>{notice}</T> : null}
 
-          {PLANS.map((p) => {
+          {PLAN_OPTIONS.map((p) => {
             const isCurrent = currentPlan === p.key;
             return (
-              <Card key={p.key} testID={`plan-card-${p.key}`} style={p.highlight ? { borderColor: colors.primary, borderWidth: 2 } : undefined}>
+              <Card key={p.key} testID={`plan-card-${p.key}`} style={p.popular ? { borderColor: colors.primary, borderWidth: 2 } : undefined}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                   <T style={{ fontFamily: fonts.heading, fontSize: 24 }}>{p.name}</T>
-                  {isCurrent ? <Badge label="CURRENT" tone="success" testID={`plan-current-${p.key}`} /> : p.highlight ? <Badge label="POPULAR" tone="brand" /> : null}
+                  {isCurrent ? <Badge label="CURRENT" tone="success" testID={`plan-current-${p.key}`} /> : p.popular ? <Badge label="MOST POPULAR" tone="brand" /> : null}
                 </View>
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 18, color: colors.primary, marginTop: 2 }}>{p.price} <T variant="small">{p.period}</T></T>
-                <T variant="small" style={{ marginTop: 6 }}>{p.blurb}</T>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm }}>
+                  <Badge label={p.participants.toUpperCase()} tone="neutral" testID={`plan-participants-${p.key}`} />
+                  <Badge label={p.seats.toUpperCase()} tone="neutral" testID={`plan-seats-${p.key}`} />
+                </View>
                 <View style={{ marginTop: spacing.md, gap: 8 }}>
-                  {p.features.map((f, i) => (
+                  {p.bullets.map((f, i) => (
                     <View key={i} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
                       <CheckCircle2 size={16} color={colors.sage} style={{ marginTop: 2 }} />
                       <T variant="small" style={{ flex: 1, color: colors.text }}>{f}</T>
@@ -128,10 +102,14 @@ export default function PlanSelectScreen() {
                     <Check size={16} color={colors.success} />
                     <T variant="small" style={{ color: colors.text }}>This is your current plan.</T>
                   </View>
-                ) : eligible ? (
-                  <Button label={`Start free ${p.name} trial`} testID={`plan-trial-${p.key}`} onPress={() => startTrial(p.key)} loading={busy === `trial-${p.key}`} style={{ marginTop: spacing.md }} />
                 ) : (
-                  <Button label={`Subscribe to ${p.name}`} testID={`plan-subscribe-${p.key}`} onPress={() => subscribe(p.key)} loading={busy === `sub-${p.key}`} style={{ marginTop: spacing.md }} />
+                  <Button
+                    label={eligible ? `Start 7-day free ${p.name} trial` : `Subscribe to ${p.name}`}
+                    testID={eligible ? `plan-trial-${p.key}` : `plan-subscribe-${p.key}`}
+                    onPress={() => choosePlan(p.key)}
+                    loading={busy === p.key}
+                    style={{ marginTop: spacing.md }}
+                  />
                 )}
               </Card>
             );
@@ -139,7 +117,7 @@ export default function PlanSelectScreen() {
 
           <Card style={{ backgroundColor: colors.surface2, borderColor: colors.surface2 }}>
             <T variant="small" style={{ lineHeight: 20 }}>
-              Payment and your card are handled securely by Stripe in your browser. You are not charged during a free trial. Manage your card or cancel any time from Plan & Billing.
+              Your card is captured and stored securely by Stripe in your browser (same as the website). You are not charged during a free trial. Manage or remove your card any time from Plan & Billing.
             </T>
           </Card>
         </ScrollView>

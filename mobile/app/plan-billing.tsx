@@ -2,12 +2,14 @@ import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { CreditCard, CheckCircle2, ExternalLink, AlertTriangle, Sparkles } from "lucide-react-native";
+import { CreditCard, CheckCircle2, ExternalLink, AlertTriangle, Sparkles, Clock } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { invalidateTrialCache } from "@/src/components/TrialBanner";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
+import { daysUntil, formatDate } from "@/src/utils/format";
 
 type Sub = {
   plan?: string;
@@ -26,9 +28,7 @@ const PLAN_META: Record<string, { name: string; price: string; features: string[
 };
 
 function fmt(s?: string | null): string {
-  if (!s) return "";
-  try { return new Date(s).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }); }
-  catch { return s; }
+  return formatDate(s);
 }
 
 export default function PlanBillingScreen() {
@@ -43,6 +43,7 @@ export default function PlanBillingScreen() {
   const load = useCallback(async () => {
     setError(false);
     try {
+      invalidateTrialCache();
       setSub(await apiFetch<Sub>("/billing/subscription"));
     } catch {
       setError(true);
@@ -57,6 +58,7 @@ export default function PlanBillingScreen() {
   const planKey = (sub?.plan || "free").toLowerCase();
   const meta = PLAN_META[planKey] || PLAN_META.free;
   const isTrial = sub?.status === "trialing" || sub?.status === "trial";
+  const trialDaysLeft = daysUntil(sub?.trial_ends_at);
   const isCancelling = !!sub?.cancel_at_period_end;
   const statusLabel = isCancelling ? "CANCELS SOON" : isTrial ? "FREE TRIAL" : (sub?.status || "active").toUpperCase();
   const statusTone: "success" | "alert" | "brand" = isCancelling ? "alert" : isTrial ? "brand" : "success";
@@ -64,7 +66,7 @@ export default function PlanBillingScreen() {
   const openPortal = async () => {
     setBusy("portal"); setActionError("");
     try {
-      const res = await apiFetch<{ url?: string; portal_url?: string }>("/portal", { method: "POST", body: { origin_url: process.env.EXPO_PUBLIC_BACKEND_URL } });
+      const res = await apiFetch<{ url?: string; portal_url?: string }>("/payments/portal", { method: "POST", body: { origin_url: process.env.EXPO_PUBLIC_BACKEND_URL } });
       const url = res?.url || res?.portal_url;
       if (url) await WebBrowser.openBrowserAsync(url);
       else setActionError("Could not open billing right now. Please try again.");
@@ -108,7 +110,15 @@ export default function PlanBillingScreen() {
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: colors.primary, marginTop: 2 }}>{meta.price}</T>
 
             {isTrial && sub?.trial_ends_at ? (
-              <T variant="small" style={{ marginTop: spacing.sm }}>Free trial ends {fmt(sub.trial_ends_at)}. Your first charge is after that.</T>
+              <View testID="billing-trial-countdown" style={{ marginTop: spacing.md, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.alertSoft }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Clock size={16} color={colors.alert} />
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.alert }}>
+                    {trialDaysLeft === 0 ? "Your free trial ends today" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left in your free trial`}
+                  </T>
+                </View>
+                <T variant="small" style={{ marginTop: 4 }}>Ends {fmt(sub.trial_ends_at)}. Your card is on file — you will be charged for {meta.name} then unless you cancel.</T>
+              </View>
             ) : isCancelling && sub?.current_period_end ? (
               <T variant="small" style={{ marginTop: spacing.sm, color: colors.alert }}>Auto-renew is off. You keep {meta.name} until {fmt(sub.current_period_end)}.</T>
             ) : sub?.current_period_end ? (
@@ -138,8 +148,11 @@ export default function PlanBillingScreen() {
             </View>
           ) : null}
 
-          <Button label="Change plan" testID="billing-change-plan" icon={Sparkles} onPress={() => router.push("/plan-select")} />
-          <Button label="Manage billing & payment method" testID="billing-portal" variant="outline" icon={ExternalLink} onPress={openPortal} loading={busy === "portal"} />
+          {isTrial ? (
+            <Button label="Manage payment method" testID="billing-add-card" icon={CreditCard} onPress={openPortal} loading={busy === "portal"} />
+          ) : null}
+          <Button label="Change plan" testID="billing-change-plan" icon={Sparkles} variant={isTrial ? "outline" : "primary"} onPress={() => router.push("/plan-select")} />
+          <Button label="Manage card & billing" testID="billing-portal" variant="outline" icon={ExternalLink} onPress={openPortal} loading={busy === "portal"} />
           {isCancelling ? (
             <Button label="Reactivate auto-renew" testID="billing-reactivate" variant="outline" onPress={reactivate} loading={busy === "reactivate"} />
           ) : planKey !== "free" ? (

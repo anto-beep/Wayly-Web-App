@@ -17,11 +17,35 @@ export function sanitizeAI(text?: string | null): string {
     .replace(/,\s*,/g, ",");
 }
 
+// Wayly rule (UI-1 §0.6): render ALL full dates as DD/MM/YYYY (Australian),
+// datetimes as DD/MM/YYYY HH:mm (24h), month-only as "Month YYYY". Mirrors
+// the web util frontend/src/lib/formatDate.js so web and mobile read identically.
+const _pad = (n: number) => String(n).padStart(2, "0");
+
 export function shortDate(iso?: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  return `${_pad(d.getDate())}/${_pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+// Canonical alias, prefer formatDate in new code.
+export const formatDate = shortDate;
+
+export function formatDateTime(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return `${shortDate(iso)} ${_pad(d.getHours())}:${_pad(d.getMinutes())}`;
+}
+
+const _MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+export function formatMonthYear(value?: string | null): string {
+  if (!value) return "";
+  const s = /^\d{4}-\d{2}$/.test(value) ? `${value}-01` : value;
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return "";
+  return `${_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 export function timeAgo(iso?: string | null): string {
@@ -43,6 +67,22 @@ export function initials(name?: string | null): string {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/);
   return (parts[0]?.[0] || "") + (parts[1]?.[0] || "");
+}
+
+// Time-of-day greeting for the logged-in caregiver.
+export function greetingFor(d: Date = new Date()): string {
+  const h = d.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+// Whole days remaining until an ISO date (0 if today/past, null if invalid).
+export function daysUntil(iso?: string | null): number | null {
+  if (!iso) return null;
+  const end = new Date(iso).getTime();
+  if (isNaN(end)) return null;
+  return Math.max(0, Math.ceil((end - Date.now()) / 86400000));
 }
 
 export function verdictTone(v?: string): { label: string; tone: "success" | "alert" | "error" | "neutral" } {

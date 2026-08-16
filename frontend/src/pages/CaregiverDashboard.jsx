@@ -142,6 +142,9 @@ export default function CaregiverDashboard() {
         ? `${activeParticipant.first_name || ""} ${activeParticipant.last_name || ""}`.trim()
         : (household?.participant_name || "");
     const displayProvider = activeParticipant?.provider_name || household?.provider_name || "";
+    const caregiverFirst = user?.first_name || (user?.name || "").split(" ")[0] || "there";
+    const hourNow = new Date().getHours();
+    const greeting = hourNow < 12 ? "Good morning" : hourNow < 18 ? "Good afternoon" : "Good evening";
     const [budget, setBudget] = useState(null);
     const [statements, setStatements] = useState([]);
     const [familyMsgs, setFamilyMsgs] = useState([]);
@@ -213,6 +216,7 @@ export default function CaregiverDashboard() {
             <OnboardingEnvelopeTile />
             <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
                 <div>
+                    <p className="text-sm font-semibold mb-1" style={{ color: "var(--kindred-sage)" }} data-testid="dashboard-greeting">{greeting}, {caregiverFirst}</p>
                     <div className="flex items-center gap-3 flex-wrap">
                         <span className="overline">Wellbeing summary</span>
                         <PlanBadge plan={plan} />

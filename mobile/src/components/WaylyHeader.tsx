@@ -8,6 +8,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { WaylyMark } from "@/src/components/WaylyMark";
 import { T } from "@/src/components/ui";
+import { TrialBanner } from "@/src/components/TrialBanner";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { initials } from "@/src/utils/format";
 
@@ -20,6 +21,7 @@ export function WaylyHeader({ notifications = 0 }: { notifications?: number }) {
   const insets = useSafeAreaInsets();
 
   return (
+    <>
     <View style={[styles.bar, { backgroundColor: colors.bg, borderBottomColor: colors.border, paddingTop: insets.top + 8 }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <WaylyMark size={30} white={isDark} />
@@ -44,6 +46,8 @@ export function WaylyHeader({ notifications = 0 }: { notifications?: number }) {
         </Pressable>
       </View>
     </View>
+    <TrialBanner />
+    </>
   );
 }
 

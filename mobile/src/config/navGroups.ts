@@ -60,6 +60,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Invoices", route: "/invoices", icon: ReceiptText, implemented: true },
       { label: "Budget Alerts", route: "/budget-alerts", icon: Bell, implemented: true },
       { label: "Budget Scenarios", route: "/budget-scenarios", icon: Wallet, implemented: true },
+      { label: "Contribution Position", route: "/contribution-position", icon: Wallet, implemented: true },
       { label: "Reports", route: "/reports", icon: FileBarChart, implemented: true },
     ],
   },
@@ -107,8 +108,8 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Your Account",
     items: [
       { label: "Participants", route: "/participants", icon: UserPlus, implemented: true },
-      { label: "Referrals", route: "/referrals", icon: Share2 },
-      { label: "Audit Log", route: "/audit", icon: ScrollText },
+      { label: "Referrals", route: "/referrals", icon: Share2, implemented: true },
+      { label: "Audit Log", route: "/audit", icon: ScrollText, implemented: true },
       { label: "Support", route: "/support", icon: LifeBuoy },
       { label: "Settings", route: "/(tabs)/settings", icon: SettingsIcon, implemented: true },
     ],

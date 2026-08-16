@@ -16,7 +16,7 @@ import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
-import { money, moneyWhole, sanitizeAI, shortDate, timeAgo } from "@/src/utils/format";
+import { money, moneyWhole, sanitizeAI, shortDate, timeAgo, greetingFor } from "@/src/utils/format";
 
 type Budget = {
   quarter_label?: string; classification_label?: string; quarterly_usable?: number; quarterly_total?: number;
@@ -98,7 +98,7 @@ export default function Dashboard() {
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.gold }}>{(user?.plan || "free").toUpperCase()}</T>
             </View>
           </View>
-          <T style={{ fontFamily: fonts.heading, fontSize: 30, marginTop: 6 }}>{firstName}, this quarter</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 30, marginTop: 6 }} testID="dashboard-greeting">{greetingFor()}, {firstName}</T>
           {budget ? (
             <T variant="bodyMuted" style={{ marginTop: 4 }}>
               {budget.quarter_label} · {budget.classification_label} · {moneyWhole(usable)} per quarter

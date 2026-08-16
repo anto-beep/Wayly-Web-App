@@ -1948,3 +1948,12 @@ Session: MOBILE ONLY. Closed the remaining web→mobile parity gap. All 8 featur
 - **Fix:** onboarding crashed with `useDrawer must be used within DrawerProvider` — swapped WaylyHeader→AppHeader.
 - **Note:** Stripe card entry / paid activation is handled via the hosted Stripe Checkout in the browser (store-safe, matches web); native in-app card field (SetupIntent) would require a dev build and is intentionally not used.
 - **Light/dark:** all new screens built on shared useTheme tokens; parity inherent.
+
+## [2026-06] Web→mobile parity: card-at-signup, dates, new screens, handoff doc (iter 162)
+- **FIX**: mobile Stripe portal now POSTs `/api/payments/portal` (was `/api/portal` → 404).
+- **Card captured at signup** (mirrors web): mobile `signup.tsx` now has a plan picker (Solo/Family + participant/seat counts) and routes through Stripe Checkout (`POST /api/payments/checkout {plan,origin_url,trial_days:7}`) via `src/lib/plans.ts` `startCheckout()`. `plan-select.tsx` uses the same card-capture path. No more no-card trial.
+- **DD/MM/YYYY everywhere**: `mobile/src/utils/format.ts` `shortDate/formatDate` now render DD/MM/YYYY, added `formatDateTime` (DD/MM/YYYY HH:mm) + `formatMonthYear`; new screens use them.
+- **3 new mobile screens for parity** (verified iter162): Audit Log (`/audit`, GET /audit-log), Referrals (`/referrals`, full CRUD), Contribution Position (`/contribution-position`, CE3 lifetime-cap + annual-projection + reconciliation + hardship). Drawer `navGroups.ts` now marks these `implemented:true`.
+- **Trial banner + Plan & Billing** copy aligned to "card on file" model.
+- **BACKEND_HANDOFF.md** (`/app/mobile/BACKEND_HANDOFF.md`) expanded with exact signup fields/labels/required flags, card-at-signup flow, plans×participants×seats, DD/MM/YYYY rules, 9-tool catalogue, onboarding constants, product-wide workflows/system behaviours, and a remaining-gaps list. Full 580-endpoint appendix retained.
+- Remaining mobile gaps: Support tickets, CE3 pension-change wizard, SD3 statement-pair review, Loop cases, participant sub-tabs, email-verification.

@@ -8,6 +8,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, spacing } from "@/src/theme/tokens";
+import { formatDate } from "@/src/utils/format";
 
 type Digest = {
   household_name?: string;
@@ -21,9 +22,7 @@ type Digest = {
 type HistoryItem = { id?: string; sent_at?: string; recipients?: string[]; recipient_count?: number };
 
 function fmtDate(s?: string): string {
-  if (!s) return "";
-  try { return new Date(s).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }); }
-  catch { return s; }
+  return formatDate(s);
 }
 function money(n?: number): string {
   try { return `$${Number(n || 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }

@@ -1,5 +1,7 @@
 // Wayly design tokens. Light + dark palettes mirror the web CSS custom
 // properties (:root and html.theme-dark) so web and mobile read identically.
+import { Platform } from "react-native";
+
 
 export type Palette = {
   bg: string;
@@ -106,11 +108,14 @@ export const typeScale = {
 } as const;
 
 export const shadowFor = (isDark: boolean) => ({
-  card: {
-    shadowColor: "#000",
-    shadowOpacity: isDark ? 0.4 : 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
+  card: Platform.select({
+    web: { boxShadow: isDark ? "0px 6px 16px rgba(0,0,0,0.4)" : "0px 6px 16px rgba(17,24,26,0.08)" },
+    default: {
+      shadowColor: "#000",
+      shadowOpacity: isDark ? 0.4 : 0.08,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 3,
+    },
+  }) as Record<string, unknown>,
 });

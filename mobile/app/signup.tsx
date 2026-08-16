@@ -9,6 +9,7 @@ import { WaylyMark } from "@/src/components/WaylyMark";
 import { useAuth } from "@/src/context/AuthContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { ApiError } from "@/src/lib/api";
+import { PLAN_OPTIONS, PlanKey, startCheckout } from "@/src/lib/plans";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
 const PW_RULES = [
@@ -30,12 +31,13 @@ function evaluatePassword(password: string, email: string, name: string) {
 
 export default function SignupScreen() {
   const { colors, isDark } = useTheme();
-  const { signup, loginWithGoogle } = useAuth();
+  const { signup, loginWithGoogle, refreshUser } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [plan, setPlan] = useState<PlanKey>("family");
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
@@ -68,7 +70,14 @@ export default function SignupScreen() {
         last_name: lastName.trim() || undefined,
         mobile: mobileClean || undefined,
       });
-      router.replace("/(tabs)");
+      // Card capture, exactly like the web signup: route through Stripe
+      // Checkout (subscription mode + 7-day trial) so payment is on file
+      // from day zero, then continue to onboarding.
+      try {
+        await startCheckout(plan, 7);
+      } catch { /* if checkout can't open, still let them onboard and subscribe later */ }
+      await refreshUser();
+      router.replace("/onboarding");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not create your account. Please try again.");
     } finally {
@@ -104,6 +113,39 @@ export default function SignupScreen() {
           <T variant="bodyMuted" style={{ marginBottom: spacing.lg, textAlign: "center" }}>
             Join Wayly to make sense of Support at Home statements, invoices and budgets.
           </T>
+
+          <T variant="label" style={{ marginBottom: 8 }}>PICK A PLAN · 7-DAY FREE TRIAL</T>
+          <View style={{ gap: spacing.sm, marginBottom: spacing.lg }}>
+            {PLAN_OPTIONS.map((p) => {
+              const active = plan === p.key;
+              return (
+                <Pressable
+                  key={p.key}
+                  testID={`signup-plan-${p.key}`}
+                  onPress={() => setPlan(p.key)}
+                  style={{
+                    borderWidth: 2,
+                    borderColor: active ? colors.primary : colors.border,
+                    backgroundColor: active ? colors.sageSoft : colors.surface,
+                    borderRadius: radius.md,
+                    padding: spacing.md,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: active ? colors.primary : colors.muted, alignItems: "center", justifyContent: "center" }}>
+                        {active ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} /> : null}
+                      </View>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>{p.name}</T>
+                      {p.popular ? <T variant="small" style={{ color: colors.gold, fontFamily: fonts.bodySemi }}>Most popular</T> : null}
+                    </View>
+                    <T style={{ fontFamily: fonts.bodySemi, color: colors.primary }}>{p.price} <T variant="small">{p.period}</T></T>
+                  </View>
+                  <T variant="small" style={{ marginTop: 4 }}>{p.participants} · {p.seats}</T>
+                </Pressable>
+              );
+            })}
+          </View>
 
           <View style={{ flexDirection: "row", gap: spacing.md }}>
             <Field
@@ -182,12 +224,15 @@ export default function SignupScreen() {
           ) : null}
 
           <Button
-            label="Create Account"
+            label={`Start 7-day free ${plan === "family" ? "Family" : "Solo"} trial`}
             testID="signup-submit-button"
             onPress={onSignup}
             loading={busy}
             style={{ marginTop: spacing.lg }}
           />
+          <T variant="small" style={{ marginTop: 8, textAlign: "center" }}>
+            We take your card securely on Stripe. No charge until day 8, cancel any time.
+          </T>
 
           <View style={styles.divider}>
             <View style={[styles.line, { backgroundColor: colors.border }]} />

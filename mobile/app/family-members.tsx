@@ -8,15 +8,14 @@ import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
+import { formatDate } from "@/src/utils/format";
 
 type Member = { user_id?: string; email: string; name?: string; role: string; status: string };
 type Invite = { token: string; email: string; role: string; expires_at?: string };
 type MembersData = { members: Member[]; invites: Invite[] };
 
 function fmtDate(s?: string): string {
-  if (!s) return "";
-  try { return new Date(s).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }); }
-  catch { return s; }
+  return formatDate(s);
 }
 
 const ROLES = [
