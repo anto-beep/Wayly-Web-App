@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
+import { useScrollToTop } from "@react-navigation/native";
 import { Sun, Moon, Smartphone, ExternalLink, LogOut, User, CreditCard, Info, Bell, Shield, Phone, Mail, ChevronRight } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
@@ -71,6 +72,8 @@ function NotificationsCard() {
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const { colors, pref, setPref, isDark } = useTheme();
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
 
   const plan = (user?.plan || "free").toLowerCase();
   const planLabel = plan.replace(/^\w/, (c) => c.toUpperCase());
@@ -85,7 +88,7 @@ export default function SettingsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <WaylyHeader />
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
+      <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
         <T style={{ fontFamily: fonts.heading, fontSize: 30, marginBottom: spacing.xs }}>Settings</T>
 
         {/* Account */}

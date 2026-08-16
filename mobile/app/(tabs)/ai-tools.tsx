@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
+import { useScrollToTop } from "@react-navigation/native";
 import {
   ChevronRight,
   FileSearch,
@@ -37,10 +38,12 @@ const TOOLS: Tool[] = [
 
 export default function AiToolsHub() {
   const { colors, shadow } = useTheme();
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <WaylyHeader />
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}>
+      <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}>
         <T style={{ fontFamily: fonts.heading, fontSize: 30 }}>AI Tools</T>
         <T variant="bodyMuted" style={{ marginTop: 4, marginBottom: spacing.lg }}>
           Expert help for every part of Support at Home.

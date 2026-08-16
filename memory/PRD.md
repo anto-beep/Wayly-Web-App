@@ -2,6 +2,32 @@
 
 
 ---
+## Mobile Iteration (Jun 2026) — Remaining journeys + Their Care completion + scroll-to-top + header wrap
+
+### Shipped (mobile /app/mobile) — theme-aware, real backend
+- **Care-Plan Changes** (`app/amendments.tsx`): list + generate a change-request letter (POST `/amendments/generate`, needs sender_name from logged-in user).
+- **Log a Scenario** (`app/scenarios.tsx`): event history + capture (event-type groups from `/scenario/event-types`, POST `/scenario/participants/{pid}/events`).
+- **AT & HM Projects** (`app/athm.tsx`): list + create + advance status (GET/POST/PUT `/athm`).
+- **Letters Mailbox** (`app/letters.tsx`): overdue/upcoming follow-ups (`/lf1/follow-ups`) + all letters (`/lf1/correspondence`) + draft CTA.
+- **Classification Prep** (`app/classification-prep.tsx`) and **CHSP Tools** (`app/chsp-tools.tsx`): informational hubs with web-matching copy + CTAs to the relevant tools.
+- **Scroll-to-top**: all 4 bottom tabs (Dashboard, AI Tools, Statements, Settings) now scroll to top when the active tab is re-tapped (`useScrollToTop` on each scroll container).
+- **Settings parity**: Account (email/phone/role), live Notifications (5 toggles via `/notifications/prefs`), Privacy & legal links.
+- Drawer: all Their Care and Guided Journeys items now `implemented: true` (no more "Soon" on these).
+
+### Fixed
+- **Header truncation** (`src/components/ui.tsx`): AppHeader title & subtitle now `numberOfLines={2}` so long titles ("Care-Plan Changes", "AT & HM Projects") wrap instead of clipping.
+
+### Verified
+- testing_agent iteration_156: all 6 new screens + scroll-to-top + Settings PASS, light & dark, no dashes in AI text.
+- testing_agent iteration_157: header-truncation fix confirmed (full titles, both themes).
+
+### Remaining backlog (user wants exhaustive pixel/light-dark parity, screen by screen)
+- Deep visual light/dark match to web per screen (ongoing audit); Tool Result Sharing; richer Compare Providers (official ratings/quality profiles); Push Notifications live cutover (P2).
+- Minor: verify `/statement-audit/{id}` direct-route (works via in-app link; testing agent hit a 404 on a direct id).
+
+
+
+---
 ## Mobile Iteration (Jun 2026) — Remaining journeys + Settings parity + full sweep
 
 ### Shipped (mobile /app/mobile) — theme-aware, real backend

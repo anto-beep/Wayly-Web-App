@@ -59,11 +59,11 @@ export function AppHeader({
         </Pressable>
       ) : null}
       <View style={{ flex: 1 }}>
-        <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={2}>
           {title}
         </Text>
         {subtitle ? (
-          <Text style={[styles.headerSubtitle, { color: colors.muted }]} numberOfLines={1}>
+          <Text style={[styles.headerSubtitle, { color: colors.muted }]} numberOfLines={2}>
             {subtitle}
           </Text>
         ) : null}

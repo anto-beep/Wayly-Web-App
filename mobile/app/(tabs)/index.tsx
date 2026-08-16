@@ -1,6 +1,7 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
+import { useScrollToTop } from "@react-navigation/native";
 import {
   TrendingUp, Bell, FileText, CheckCircle2, AlertTriangle, Sparkles, ChevronRight,
   UploadCloud, MessageCircle, Users, Activity, ArrowRight,
@@ -44,6 +45,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
 
   const load = useCallback(async () => {
     setError(false);
@@ -83,6 +86,7 @@ export default function Dashboard() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <WaylyHeader notifications={allAnomalies.length} />
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >

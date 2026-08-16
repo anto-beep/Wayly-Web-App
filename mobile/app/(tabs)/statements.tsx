@@ -1,6 +1,7 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
+import { useScrollToTop } from "@react-navigation/native";
 import { FileText, ChevronRight, Plus, CloudOff, FileSearch } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
@@ -22,6 +23,8 @@ export default function StatementsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
   const [offline, setOffline] = useState(false);
+  const listRef = useRef<FlatList>(null);
+  useScrollToTop(listRef);
 
   const load = useCallback(async () => {
     setError(false);
@@ -85,6 +88,7 @@ export default function StatementsScreen() {
         </View>
       ) : (
         <FlatList
+          ref={listRef}
           data={items}
           keyExtractor={(s) => s.id}
           renderItem={renderItem}
