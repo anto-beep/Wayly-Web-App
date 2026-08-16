@@ -2,6 +2,25 @@
 
 
 ---
+## Mobile Iteration (Jun 2026) — Remaining journeys + Settings parity + full sweep
+
+### Shipped (mobile /app/mobile) — theme-aware, real backend
+- **Carer Self-Check** (`app/carer-self-check.tsx`): strengths/constraints/supports/desired chip groups + opt-in burnout self-report (level rows) -> POST `/cs1/assessments`; result shows stress-signal badge, message (sanitizeAI), and "Who can help" resources.
+- **Handover Pack** (`app/handover-pack.tsx`): list + create (routines, key info, emergency, opt-in medical) -> POST `/cs1/handover-packs`; Export PDF via authenticated download `/cs1/handover-packs/{id}/export.pdf`.
+- **Switch Provider** (`app/provider-switch.tsx`): list + start (current provider, reason chips, notes) -> POST `/psw1/participants/{pid}/switches`; stage badges. (Post-test fixes: added `deciding`/`decision_confirmed` stage tones, surfaced save errors, shortened subtitle.)
+- **Settings parity** (`app/(tabs)/settings.tsx`): enriched Account card (email/phone/role), new live **Notifications** section (5 toggles wired to GET/PUT `/notifications/prefs`), **Privacy & legal** links, kept Appearance/Plan/Logout.
+- Drawer nav: Carer Self-Check, Handover Pack, Switch Provider marked `implemented: true`.
+
+### Verified — FULL PARITY SWEEP
+- testing_agent iteration_155.json: PASS. Confirmed the header-truncation regression fix (dashboard greeting + tab headers no longer clip, both themes), all 3 new journeys POST successfully, Settings notifications persist, all 9 AI tools + statements depth + their care + journeys/paperwork intact, no dashes in AI text, dark theme legible. Only non-blocking cosmetic RN-Web `shadow*` deprecation warnings remain.
+
+### Remaining backlog
+- Journeys still "Soon": Classification Prep, AT & HM Projects, CHSP Tools, Letters Mailbox; Care-Plan Changes & Scenarios.
+- Tool Result Sharing; richer Compare Providers (official star ratings/quality profiles); Push Notifications live cutover (P2).
+
+
+
+---
 ## Mobile Iteration (Jun 2026) — Full AI-tool parity + header truncation fix
 
 ### Fixed

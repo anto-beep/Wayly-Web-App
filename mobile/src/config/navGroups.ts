@@ -69,13 +69,13 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Guided Journeys", route: "/journeys", icon: Compass, implemented: true },
       { label: "Ask Wayly", route: "/(tabs)/ask", icon: MessageCircle, implemented: true },
-      { label: "Carer Self-Check", route: "/carer-self-check", icon: Heart },
-      { label: "Handover Pack", route: "/handover-pack", icon: ClipboardEdit },
+      { label: "Carer Self-Check", route: "/carer-self-check", icon: Heart, implemented: true },
+      { label: "Handover Pack", route: "/handover-pack", icon: ClipboardEdit, implemented: true },
       { label: "Classification Prep", route: "/classification-prep", icon: ClipboardList },
       { label: "AT & HM Projects", route: "/athm", icon: Wrench },
       { label: "CHSP Tools", route: "/chsp-tools", icon: HeartPulse },
       { label: "Letters Mailbox", route: "/letters", icon: Mail },
-      { label: "Switch Provider", route: "/provider-switch", icon: Repeat },
+      { label: "Switch Provider", route: "/provider-switch", icon: Repeat, implemented: true },
     ],
   },
   {
