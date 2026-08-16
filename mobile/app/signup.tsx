@@ -100,19 +100,15 @@ export default function SignupScreen() {
 
   return (
     <Screen edges={["top", "bottom"]}>
-      <AppHeader title="Create account" onBack={() => router.back()} />
+      <AppHeader title="" onBack={() => router.back()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={{ alignItems: "center", marginBottom: spacing.lg }}>
             <WaylyMark size={64} white={isDark} />
-            <T style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.primary, marginTop: 8 }}>Wayly</T>
-            <T testID="brand-tagline" style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, letterSpacing: 1, color: colors.gold, marginTop: 10, textAlign: "center" }}>
+            <T testID="brand-tagline" style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, letterSpacing: 1, color: colors.gold, marginTop: 12, textAlign: "center" }}>
               AGED CARE, MADE EASY
             </T>
           </View>
-          <T variant="bodyMuted" style={{ marginBottom: spacing.lg, textAlign: "center" }}>
-            Join Wayly to make sense of Support at Home statements, invoices and budgets.
-          </T>
 
           <T variant="label" style={{ marginBottom: 8 }}>PICK A PLAN · 7-DAY FREE TRIAL</T>
           <View style={{ gap: spacing.sm, marginBottom: spacing.lg }}>
@@ -149,7 +145,8 @@ export default function SignupScreen() {
 
           <View style={{ flexDirection: "row", gap: spacing.md }}>
             <Field
-              label="First name"
+              label="First Name"
+              required
               testID="signup-first-name-input"
               value={firstName}
               onChangeText={setFirstName}
@@ -157,7 +154,8 @@ export default function SignupScreen() {
               style={{ flex: 1, marginBottom: spacing.md }}
             />
             <Field
-              label="Last name"
+              label="Last Name"
+              required
               testID="signup-last-name-input"
               value={lastName}
               onChangeText={setLastName}
@@ -168,6 +166,7 @@ export default function SignupScreen() {
 
           <Field
             label="Email"
+            required
             testID="signup-email-input"
             value={email}
             onChangeText={setEmail}
@@ -177,7 +176,8 @@ export default function SignupScreen() {
             style={{ marginBottom: spacing.md }}
           />
           <Field
-            label="Mobile (optional)"
+            label="Mobile Number"
+            optional
             testID="signup-mobile-input"
             value={mobile}
             onChangeText={setMobile}
@@ -186,9 +186,19 @@ export default function SignupScreen() {
             style={{ marginBottom: spacing.md }}
           />
 
-          <T variant="label" style={{ color: colors.text, fontFamily: fonts.bodySemi, fontSize: 14, marginBottom: 6 }}>
-            Password
-          </T>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Password</T>
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</T>
+          </View>
+          <View style={{ backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm }}>
+            <T variant="small" style={{ marginBottom: 4 }}>Your password needs:</T>
+            {["At least 8 characters", "An uppercase and a lowercase letter", "A number and a symbol", "Not your name or email"].map((r) => (
+              <View key={r} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 }}>
+                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.sage }} />
+                <T variant="small">{r}</T>
+              </View>
+            ))}
+          </View>
           <View style={styles.pwWrap}>
             <Field
               testID="signup-password-input"

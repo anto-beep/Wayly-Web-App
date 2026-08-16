@@ -1966,3 +1966,9 @@ Session: MOBILE ONLY. Closed the remaining web→mobile parity gap. All 8 featur
 - **Reports**: generate (8 types) + open PDF via token-signed `/reports/{id}/download` in browser.
 - Bugs fixed & retested (iter164, 3/3): support thread read {ticket,thread}; close/reopen status flip; cases scan 422 → query param.
 - BACKEND_HANDOFF.md: added §19 (emails/reporting/PDFs), refreshed §18 remaining gaps (now only SD3 pair review + participant sub-tabs + verify landing pages remain).
+
+## [2026-06] Signup/login copy + labels batch (iter 165, verified)
+- Removed "Wayly" wordmark + "Create account" header + "Join Wayly…" tagline on signup; login wordmark removed, "Welcome Back", subtitle no "Wayly".
+- Shared Field now renders "Required" (clay) / "Optional" (muted) hints; Title-Case labels (First Name, Last Name, Mobile Number); password requirements shown before typing.
+- Plan cards: Family "2 participants · Up to 3 caregiver seats" (was 5, removed "two parents on one plan"); plans.ts updated. "Log Out".
+- Created /app/memory/MOBILE_PARITY_ROADMAP.md — screenshot-driven, prioritized remaining screen redesigns (Invoices, Statements, Participants, Support, Plan & Billing tables/views; dashboard walkthrough; signup persona questions; Stripe return; date picker; initials menu; dark-mode + capitalisation sweeps; SD3/participant tabs/verify landing).

@@ -84,21 +84,18 @@ export default function LoginScreen() {
         >
           <View style={styles.brandMark}>
             <WaylyMark size={78} white={isDark} />
-            <T style={{ fontFamily: fonts.heading, fontSize: 34, color: colors.primary, marginTop: 10 }}>
-              Wayly
-            </T>
             <T
               testID="brand-tagline"
-              style={{ fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, letterSpacing: 1, color: colors.gold, marginTop: 12, textAlign: "center" }}
+              style={{ fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, letterSpacing: 1, color: colors.gold, marginTop: 14, textAlign: "center" }}
             >
               AGED CARE, MADE EASY
             </T>
           </View>
 
           <View style={styles.form}>
-            <T variant="h2">Welcome back</T>
+            <T variant="h2">Welcome Back</T>
             <T variant="bodyMuted" style={{ marginTop: 4, marginBottom: spacing.lg }}>
-              Sign in to your Wayly account
+              Sign in to your account
             </T>
 
             <Field

@@ -148,13 +148,21 @@ export function Button({
 
 export function Field({
   label,
+  required,
+  optional,
   style,
   ...props
-}: TextInputProps & { label?: string; style?: ViewStyle }) {
+}: TextInputProps & { label?: string; required?: boolean; optional?: boolean; style?: ViewStyle }) {
   const { colors } = useTheme();
   return (
     <View style={style}>
-      {label ? <Text style={[styles.fieldLabel, { color: colors.text }]}>{label}</Text> : null}
+      {label ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+          <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>{label}</Text>
+          {required ? <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</Text> : null}
+          {optional ? <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>Optional</Text> : null}
+        </View>
+      ) : null}
       <TextInput
         placeholderTextColor={colors.muted}
         style={[styles.input, { borderColor: colors.border, backgroundColor: colors.surface, color: colors.text }]}

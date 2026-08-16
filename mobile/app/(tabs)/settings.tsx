@@ -228,7 +228,7 @@ export default function SettingsScreen() {
         </Card>
 
         <Button
-          label="Log out"
+          label="Log Out"
           testID="settings-logout"
           variant="outline"
           icon={LogOut}
