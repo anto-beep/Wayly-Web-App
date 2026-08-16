@@ -3,7 +3,7 @@
 // open them in a browser. We fetch the bytes with the bearer token, then hand
 // the file to the OS share sheet (native) or a browser download (web preview).
 import { Platform } from "react-native";
-import { cacheDirectory, downloadAsync } from "expo-file-system/legacy";
+import { cacheDirectory, downloadAsync, writeAsStringAsync } from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 
 import { API, getActiveParticipantId, getToken } from "@/src/lib/api";
@@ -52,4 +52,30 @@ export async function downloadAndShare(path: string, filename: string): Promise<
     await Sharing.shareAsync(res.uri);
   }
   return res.uri;
+}
+
+// Write a text string (e.g. a CSV) to a file and open the native share sheet.
+// On web, triggers a browser download. Returns the uri/url.
+export async function shareTextFile(filename: string, content: string, mime = "text/csv"): Promise<string> {
+  if (Platform.OS === "web") {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const doc = (globalThis as any).document;
+    if (doc) {
+      const a = doc.createElement("a");
+      a.href = url;
+      a.download = safeName(filename);
+      doc.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return url;
+  }
+  const target = `${cacheDirectory}${safeName(filename)}`;
+  await writeAsStringAsync(target, content);
+  if (await Sharing.isAvailableAsync()) {
+    await Sharing.shareAsync(target, { mimeType: mime });
+  }
+  return target;
 }

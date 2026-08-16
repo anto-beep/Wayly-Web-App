@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "@react-navigation/native";
-import { FileText, Plus, CloudOff, FileSearch, Search, StickyNote } from "lucide-react-native";
+import { FileText, Plus, CloudOff, FileSearch, Search, StickyNote, Download, Archive } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
 import { PageIntro } from "@/src/components/PageIntro";
@@ -10,6 +10,7 @@ import { Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { cacheGet, cacheSet } from "@/src/lib/cache";
+import { shareTextFile } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money, sanitizeAI } from "@/src/utils/format";
@@ -50,6 +51,7 @@ export default function StatementsScreen() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [insight, setInsight] = useState<string | null>(null);
+  const [archivedCount, setArchivedCount] = useState(0);
   const listRef = useRef<FlatList>(null);
   useScrollToTop(listRef);
 
@@ -76,6 +78,24 @@ export default function StatementsScreen() {
   }, [activeId]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  useFocusEffect(useCallback(() => {
+    apiFetch<any>("/statements/archived")
+      .then((d) => setArchivedCount((Array.isArray(d) ? d : d?.items || []).length))
+      .catch(() => setArchivedCount(0));
+  }, []));
+
+  const exportCsv = async () => {
+    if (sorted.length === 0) return;
+    const esc = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const header = ["Period", "Provider", "Uploaded", "Gross Total", "Closing Balance", "Status"];
+    const rows = sorted.map((s) => [
+      periodCompact(s), providerName(s), uploadedLabel(s.uploaded_at || s.created_at),
+      grossTotal(s).toFixed(2), (closingBalance(s) ?? "").toString(), STATUS_LABEL[decodeStatus(s)],
+    ].map(esc).join(","));
+    const csv = [header.map(esc).join(","), ...rows].join("\n");
+    try { await shareTextFile("wayly-statements.csv", csv); } catch { /* ignore */ }
+  };
 
   const sorted = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -135,7 +155,11 @@ export default function StatementsScreen() {
           "An audit trail if you ever need to escalate a dispute.",
         ]}
       />
-      <Button label="Upload statement" testID="statements-upload-cta" icon={FileText} onPress={() => router.push("/upload")} />
+      <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}>
+        <Button label="Upload statement" testID="statements-upload-cta" icon={FileText} onPress={() => router.push("/upload")} style={{ flexGrow: 1 }} />
+        <Button label="Export CSV" testID="statements-export-csv-btn" icon={Download} variant="outline" onPress={exportCsv} style={{ flexGrow: 1 }} />
+        <Button label={archivedCount > 0 ? `Archived (${archivedCount})` : "Archived"} testID="statements-archived-link" icon={Archive} variant="outline" onPress={() => router.push("/statements-archived" as any)} style={{ flexGrow: 1 }} />
+      </View>
       {insight ? (
         <Card testID="smart-ai-summary-statements-list" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
           <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.primary }}>SMART SUMMARY</T>

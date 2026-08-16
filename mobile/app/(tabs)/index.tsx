@@ -8,6 +8,7 @@ import {
 } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
+import { MissingDetailsBanner } from "@/src/components/MissingDetailsBanner";
 import { StreamProgress, Stream } from "@/src/components/StreamProgress";
 import { Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
@@ -112,6 +113,7 @@ export default function Dashboard() {
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >
+        <MissingDetailsBanner />
         {/* Greeting + wellbeing summary header */}
         <View style={{ paddingHorizontal: spacing.lg }}>
           <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.sage }} testID="dashboard-greeting">{greetingFor()}, {firstName}</T>

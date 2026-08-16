@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { RefreshControl, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { CreditCard, CheckCircle2, ExternalLink, AlertTriangle, Sparkles, Clock } from "lucide-react-native";
@@ -108,6 +108,7 @@ export default function PlanBillingScreen() {
             </View>
             <T style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.text, marginTop: 4 }}>{meta.name}</T>
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: colors.primary, marginTop: 2 }}>{meta.price}</T>
+            {planKey !== "free" ? <T variant="small" style={{ marginTop: 2 }}>Billed every 14 days · Includes GST</T> : null}
 
             {isTrial && sub?.trial_ends_at ? (
               <View testID="billing-trial-countdown" style={{ marginTop: spacing.md, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.alertSoft }}>
@@ -135,11 +136,49 @@ export default function PlanBillingScreen() {
             </View>
           </Card>
 
-          <Card style={{ backgroundColor: colors.surface2, borderColor: colors.surface2 }}>
-            <T variant="small" style={{ lineHeight: 20 }}>
-              Wayly is fortnightly billing, in AUD including GST. You can change or cancel any time; changes take effect at the end of your current period, so you never lose access mid-cycle.
-            </T>
-          </Card>
+          {/* What you are paying for */}
+          {planKey !== "free" ? (
+            <Card testID="billing-breakdown">
+              <T variant="label">WHAT YOU ARE PAYING FOR</T>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: spacing.md }}>
+                <T variant="small">Base plan ({meta.name})</T>
+                <T style={{ fontFamily: fonts.mono, fontSize: 13, color: colors.text }}>{meta.price}</T>
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm }}>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Fortnightly total</T>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{meta.price}</T>
+              </View>
+              <Pressable testID="billing-manage-participants" onPress={() => router.push("/participants")} style={{ marginTop: spacing.md }}>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>Manage participants</T>
+              </Pressable>
+            </Card>
+          ) : null}
+
+          {/* Solo / Family switch cards */}
+          {planKey !== "free" ? (
+            <View style={{ flexDirection: "row", gap: spacing.sm }}>
+              {(["solo", "family"] as const).map((k) => {
+                const current = planKey === k;
+                const m = PLAN_META[k];
+                return (
+                  <View key={k} testID={`billing-plan-${k}`} style={[styles.switchCard, { backgroundColor: colors.surface, borderColor: current ? colors.primary : colors.border }]}>
+                    <T style={{ fontFamily: fonts.headingSemi, fontSize: 16 }}>{m.name}</T>
+                    <T variant="small" style={{ marginTop: 2 }}>{m.price}</T>
+                    {current ? (
+                      <View style={{ marginTop: spacing.sm, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: colors.sageSoft }}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.sage }}>Current</T>
+                      </View>
+                    ) : (
+                      <Pressable testID={`billing-switch-${k}`} onPress={() => router.push("/plan-select")} style={{ marginTop: spacing.sm }}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>Switch to {m.name}</T>
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          ) : null}
+
 
           {actionError ? (
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
@@ -164,4 +203,6 @@ export default function PlanBillingScreen() {
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  switchCard: { flex: 1, borderRadius: radius.lg, borderWidth: 1.5, padding: spacing.md },
+});

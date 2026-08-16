@@ -1,15 +1,15 @@
-import React, { useCallback, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { LifeBuoy, Plus } from "lucide-react-native";
+import { LifeBuoy, Plus, Search } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
-import { formatDate } from "@/src/utils/format";
+import { formatDate, timeAgo } from "@/src/utils/format";
 
-type Ticket = { id: string; reference?: string; category?: string; status?: string; user_note?: string; created_at?: string; message_count?: number };
+type Ticket = { id: string; reference?: string; category?: string; status?: string; user_note?: string; tool_name?: string; created_at?: string; updated_at?: string; last_activity_at?: string; message_count?: number };
 
 const CATEGORIES = [
   { v: "figure_incorrect", label: "A figure looks wrong" },
@@ -17,12 +17,13 @@ const CATEGORIES = [
   { v: "situation_not_captured", label: "My situation isn't captured" },
   { v: "other", label: "Something else" },
 ];
+const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.map((c) => [c.v, c.label]));
 const STATUS_TONE: Record<string, "brand" | "alert" | "success" | "neutral"> = {
   received: "brand", under_review: "alert", awaiting_user: "alert", resolved: "success", closed: "neutral",
 };
 
 export default function SupportScreen() {
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -30,6 +31,8 @@ export default function SupportScreen() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const load = useCallback(async () => {
     try {
@@ -39,6 +42,30 @@ export default function SupportScreen() {
     finally { setLoading(false); }
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const stats = useMemo(() => {
+    let open = 0, awaiting = 0, resolved = 0;
+    for (const t of tickets) {
+      const s = t.status || "";
+      if (s === "awaiting_user") awaiting++;
+      if (s === "resolved") resolved++;
+      if (s !== "resolved" && s !== "closed") open++;
+    }
+    return { open, awaiting, resolved, total: tickets.length };
+  }, [tickets]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return tickets.filter((t) => {
+      if (statusFilter === "open" && (t.status === "resolved" || t.status === "closed")) return false;
+      if (statusFilter !== "all" && statusFilter !== "open" && t.status !== statusFilter) return false;
+      if (q) {
+        const hay = [t.reference, t.tool_name, t.user_note, CATEGORY_LABEL[t.category || ""]].join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [tickets, search, statusFilter]);
 
   const submit = async () => {
     setErr("");
@@ -53,16 +80,34 @@ export default function SupportScreen() {
     } finally { setSaving(false); }
   };
 
+  const STATUS_FILTERS: { v: string; label: string }[] = [
+    { v: "all", label: "All statuses" }, { v: "open", label: "Open" },
+    { v: "awaiting_user", label: "Awaiting you" }, { v: "resolved", label: "Resolved" },
+  ];
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Support" subtitle="Raise and track help requests" onBack={() => router.back()} />
+      <AppHeader title="My Support" subtitle="Track tickets you have raised" onBack={() => router.back()} />
       {loading ? (
         <Loading label="Loading your requests…" />
       ) : (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
+            <View>
+              <T style={{ fontFamily: fonts.heading, fontSize: 28 }}>My Support</T>
+              <T variant="small" style={{ marginTop: 2, lineHeight: 20 }}>Track tickets you have raised and read what the Wayly team has come back with.</T>
+            </View>
+
+            {/* Stat cards */}
+            <View style={styles.statGrid}>
+              <StatCard label="Open" value={stats.open} tone={colors.primary} colors={colors} shadow={shadow} testID="my-support-stat-open" />
+              <StatCard label="Awaiting You" value={stats.awaiting} tone={stats.awaiting > 0 ? colors.alert : colors.muted} colors={colors} shadow={shadow} testID="my-support-stat-awaiting" />
+              <StatCard label="Resolved" value={stats.resolved} tone={colors.sage} colors={colors} shadow={shadow} testID="my-support-stat-resolved" />
+              <StatCard label="Total" value={stats.total} tone={colors.muted} colors={colors} shadow={shadow} testID="my-support-stat-total" />
+            </View>
+
             {!showForm ? (
-              <Button label="Raise a request" testID="support-new-btn" icon={Plus} onPress={() => setShowForm(true)} />
+              <Button label="Raise a New Ticket" testID="support-new-btn" icon={Plus} onPress={() => setShowForm(true)} />
             ) : (
               <Card testID="support-form">
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, marginBottom: spacing.sm }}>What do you need help with?</T>
@@ -89,18 +134,39 @@ export default function SupportScreen() {
               </Card>
             )}
 
+            {/* Search + status filter */}
+            {tickets.length > 0 ? (
+              <>
+                <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Search size={18} color={colors.muted} />
+                  <TextInput testID="my-support-search" value={search} onChangeText={setSearch} placeholder="Search reference, tool, keyword…" placeholderTextColor={colors.muted} style={{ flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.text }} />
+                </View>
+                <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}>
+                  {STATUS_FILTERS.map((s) => {
+                    const on = statusFilter === s.v;
+                    return (
+                      <Pressable key={s.v} testID={`my-support-filter-${s.v}`} onPress={() => setStatusFilter(s.v)} style={[styles.chip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: on ? colors.primaryFg : colors.muted }}>{s.label}</T>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            ) : null}
+
             {tickets.length === 0 ? (
               <StatePanel icon={LifeBuoy} title="No requests yet" message="Raise a request and we will get back to you. You can track replies right here." />
             ) : (
-              tickets.map((t, i) => (
-                <Pressable key={t.id} testID={`support-ticket-${i}`} onPress={() => router.push(`/support/${t.id}`)}>
+              filtered.map((t, i) => (
+                <Pressable key={t.id} testID={`ticket-row-${t.reference || i}`} onPress={() => router.push(`/support/${t.id}`)}>
                   <Card>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: spacing.sm }}>
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, flex: 1 }} numberOfLines={1}>{t.reference || "Request"} · {(t.category || "").replace(/_/g, " ")}</T>
+                      <T style={{ fontFamily: fonts.mono, fontSize: 13, color: colors.muted }}>{t.reference || "Request"}</T>
                       <Badge label={(t.status || "").replace(/_/g, " ").toUpperCase()} tone={STATUS_TONE[t.status || ""] || "neutral"} />
                     </View>
-                    {t.user_note ? <T variant="small" style={{ marginTop: 4 }} numberOfLines={2}>{t.user_note}</T> : null}
-                    <T variant="small" style={{ marginTop: 4, color: colors.muted }}>{formatDate(t.created_at)}{t.message_count ? ` · ${t.message_count} message(s)` : ""}</T>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, marginTop: 4 }}>{CATEGORY_LABEL[t.category || ""] || "Ticket"}</T>
+                    {t.user_note ? <T variant="small" style={{ marginTop: 2 }} numberOfLines={2}>{t.user_note}</T> : null}
+                    <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted, marginTop: 6 }}>Raised {formatDate(t.created_at)} · Updated {timeAgo(t.last_activity_at || t.updated_at)}</T>
                   </Card>
                 </Pressable>
               ))
@@ -111,3 +177,19 @@ export default function SupportScreen() {
     </View>
   );
 }
+
+function StatCard({ label, value, tone, colors, shadow, testID }: any) {
+  return (
+    <View testID={testID} style={[styles.stat, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
+      <T style={{ fontFamily: fonts.heading, fontSize: 24, color: tone }}>{value}</T>
+      <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.4, color: colors.muted, marginTop: 2 }}>{label.toUpperCase()}</T>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  statGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  stat: { flexBasis: "47%", flexGrow: 1, borderRadius: radius.lg, borderWidth: 1, padding: spacing.md },
+  searchBox: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: radius.md, borderWidth: 1, paddingHorizontal: spacing.md, minHeight: 46 },
+  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderWidth: 1 },
+});
