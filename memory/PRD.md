@@ -2,6 +2,36 @@
 
 
 ---
+## Mobile Iteration (Jun 2026) — Their Care + Journeys & Paperwork (11 screens)
+
+### Shipped (mobile /app/mobile) — all theme-aware (dark mode), real backend data
+**Their Care:**
+- Care Team (`app/care-team.tsx`) + Key Contacts (`app/key-contacts.tsx`) — shared `src/components/ContactsView.tsx`, split by contact kind; list + Call/Email (Linking) + add form (role chips) + remove. API: `/participants/{pid}/contacts`.
+- Calendar (`app/calendar.tsx`) — visits grouped by date with attendance-status badges. API: `/fc2/participants/{pid}/calendar`.
+- Hospital Mode (`app/hospital.tsx`) — admissions list (IN HOSPITAL/DISCHARGED), log admission form, Request RCP + Mark discharged actions. API: `/hospital/admissions` (+ /request-rcp, /discharge).
+- Care Plans (`app/care-plans.tsx`) — plan list + "Review with AI" CTA. API: `/care-plans`.
+- Timeline (`app/timeline.tsx`) — vertical care-history timeline, tappable statement/invoice events. API: `/core/participants/{pid}/timeline`.
+
+**Journeys & Paperwork:**
+- Guided Journeys (`app/journeys.tsx`) — onboarding progress ("X of 5 done") + step checklist linking to AI tools. API: `/journeys/current`.
+- Documents (`app/documents.tsx`) — vault list + authenticated download. API: `/documents` (+ /{id}/download).
+- Correspondence (`app/correspondence.tsx`) — letter log with archetype/recipient/status. API: `/lf1/correspondence`.
+- Ratings (`app/ratings.tsx`) — provider ratings list + add (star picker) + delete. API: `/provider-ratings`.
+- Compare Providers (`app/compare-providers.tsx`) — ranks providers aggregated from saved ratings.
+- Drawer nav (`src/config/navGroups.ts`): marked all 11 items `implemented: true`; added "Guided Journeys" entry.
+
+### Verified
+- testing_agent iteration_154.json: all 11 screens PASS on Expo preview as cathy@example.com, real data, dark theme legible. Only cosmetic RN-Web deprecation warnings (non-blocking, pre-existing).
+
+### Remaining full-parity backlog
+- Compare Providers currently ranks from user's saved ratings; the web's full provider-comparison (star ratings + quality profiles via `/ppc3`) could be added later.
+- Other journeys (Carer Self-Check, Handover Pack, Classification Prep, AT&HM, CHSP, Switch Provider) and Care-Plan Changes/Scenarios remain as "Soon" in the drawer.
+- Decoder & Invoice tool pages: give full web explainer content (like the 6 AI tools).
+- Tool Result Sharing. Push Notifications live cutover (P2).
+
+
+
+---
 ## Mobile Iteration (Jun 2026) — Statements Depth + Tool content parity
 
 ### Shipped (mobile /app/mobile)
