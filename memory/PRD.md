@@ -1,6 +1,25 @@
 # Kindred — Product Requirements (Living Doc)
 
 
+---
+## Mobile Iteration (Jun 2026) — 6 AI Tools wired + guardrail fallback
+
+### Shipped (mobile /app/mobile)
+- **AI Tools hub** (`app/(tabs)/ai-tools.tsx`): the 6 core tools (Budget & Lifetime Cap Calculator, Provider Price Checker, Classification Self-Check, Letters & Follow-ups, Contribution Estimator, Support Plan Reviewer) were built in `app/tool/[slug].tsx` but shown as disabled "SOON" cards. Now wired to navigate to `/tool/{slug}`.
+- **Guardrail fallback** (`app/tool/[slug].tsx`): when a public tool returns `{abuse_flag, abuse_response}` (e.g. Letters with a clinical prompt) instead of a result, the Result card now renders `sanitizeAI(abuse_response)` (testID `tool-guardrail`) instead of an empty card.
+- **No-dash copy rule**: replaced hard-coded ` - ` range separators with " to " in Provider Price Checker (Indicative range) and Classification Self-Check (Indicative annual) so no dash reaches the user.
+
+### Verified
+- testing_agent (iteration_152.json): all 6 tools verified end-to-end on Expo preview logged in as cathy@example.com; sanitizeAI no-dash rule confirmed across all AI text; dark theme legible. Guardrail fallback fix self-verified against live `/api/public/reassessment-letter` clinical response.
+
+### Next (user-confirmed order)
+- **Statements Depth (P1)**: Compare, Audit log, Decoded downloads sub-screens (mobile).
+- **Journeys & Paperwork (P1)**: Guided Journeys, Documents, Correspondence, Compare Providers, Ratings.
+- **Their Care (P1)**: Care Team, Key Contacts, Calendar, Hospital Mode, Care Plans, Timeline.
+- **Push Notifications live cutover (P2)**: deferred until real google-services.json + publish.
+
+
+
 
 ---
 ## Iteration 140 (Feb 2026) — Pricing/Landing card cleanup + Klarna disabled

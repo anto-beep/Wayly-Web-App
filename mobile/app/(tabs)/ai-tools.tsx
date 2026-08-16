@@ -48,18 +48,17 @@ export default function AiToolsHub() {
         <View style={{ gap: spacing.md }}>
           {TOOLS.map((tool) => {
             const Icon = tool.icon;
-            const disabled = !tool.route;
+            const dest = tool.route ?? `/tool/${tool.slug}`;
             return (
               <Pressable
                 key={tool.slug}
                 testID={`tool-${tool.slug}`}
-                disabled={disabled}
-                onPress={() => tool.route && router.push(tool.route as any)}
+                onPress={() => router.push(dest as any)}
                 style={({ pressed }) => [
                   styles.card,
                   { backgroundColor: colors.surface, borderColor: colors.border },
                   shadow.card,
-                  pressed && !disabled && { opacity: 0.9 },
+                  pressed && { opacity: 0.9 },
                 ]}
               >
                 <View style={[styles.iconWrap, { backgroundColor: colors.sageSoft }]}>
@@ -68,17 +67,12 @@ export default function AiToolsHub() {
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, flexShrink: 1 }}>{tool.name}</T>
-                    {disabled ? (
-                      <View style={[styles.soon, { backgroundColor: colors.surface2 }]}>
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, color: colors.muted }}>SOON</T>
-                      </View>
-                    ) : null}
                   </View>
                   <T variant="small" style={{ marginTop: 2 }}>
                     {tool.blurb}
                   </T>
                 </View>
-                {!disabled ? <ChevronRight size={20} color={colors.muted} /> : null}
+                <ChevronRight size={20} color={colors.muted} />
               </Pressable>
             );
           })}
@@ -91,5 +85,4 @@ export default function AiToolsHub() {
 const styles = StyleSheet.create({
   card: { flexDirection: "row", alignItems: "center", gap: spacing.md, borderRadius: radius.lg, borderWidth: 1, padding: spacing.md },
   iconWrap: { width: 48, height: 48, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
-  soon: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.sm },
 });
