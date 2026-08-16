@@ -6819,3 +6819,9 @@ Shipped (verified iter159/160): Settings hub with in-app detail screens (profile
 Remaining backlog (P2, non-blocking):
 - Native in-app Stripe card field (SetupIntent) — deferred; needs dev build + App Store IAP review. Currently uses hosted Checkout in browser.
 - Clean RN-Web `shadow*`/`pointerEvents` deprecation console warnings in shared components/ui.tsx (cosmetic, web-only).
+
+## 2026-06 · Web→Mobile EXACT parity sweep (ongoing, screen-by-screen)
+User request: audit every web screen at the app and make each mobile screen identical (exact copy/labels/symbols, single $, exact %, no invented/removed content), Wayly branding, light+dark readable, Smart AI summaries no dashes, dismissible (24h) email-verify + missing-details banners, prominent participant switcher with per-participant data isolation.
+Audit order = web sidebar (Layout.jsx): Today → AI Tools → Money & Statements → Guided Journeys → Their Care → Providers & Paperwork → Your Account.
+DONE + verified this session: Dashboard, Family Wall, AI Tools, Statements.
+NEXT: Participants redesign, then Support, Plan & Billing, Dashboard walkthrough card; then remaining Money (Quarterly Pacing, Invoices, Budget Alerts, Budget Scenarios, Reports), Guided Journeys, Their Care, Providers & Paperwork, Your Account screens. Cross-cutting TODO: verify missing-details banner is dismissible+24h-suppressed like the email-verify banner; dark-mode contrast sweep on remaining secondary screens; Statements Export CSV + Archived.

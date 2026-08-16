@@ -18,11 +18,13 @@ import { Users, CloudOff, MessageSquare } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import { AppHeader, Loading, StatePanel, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { ParticipantSwitcher } from "@/src/components/ParticipantSwitcher";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
-import { colors, fonts, radius, shadow, spacing } from "@/src/theme";
+import { useTheme } from "@/src/theme/ThemeContext";
+import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { initials, timeAgo } from "@/src/utils/format";
 
 type Post = {
@@ -40,11 +42,13 @@ type Post = {
   created_at: string;
 };
 
-const EMOJIS = ["❤️", "👍", "🙏", "😊"];
+// Matches web REACT_EMOJIS verbatim.
+const EMOJIS = ["❤️", "👍", "🙏", "😊", "😢"];
 
 export default function FamilyWall() {
   const { user } = useAuth();
   const { active, activeId } = useParticipants();
+  const { colors } = useTheme();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -76,6 +80,12 @@ export default function FamilyWall() {
     }, [load])
   );
 
+  const openSettings = () =>
+    Alert.alert("Allow photo access", "Wayly needs photo access to share pictures on the family wall.", [
+      { text: "Not now", style: "cancel" },
+      { text: "Open Settings", onPress: () => Linking.openSettings() },
+    ]);
+
   const attachPhoto = async () => {
     const current = await ImagePicker.getMediaLibraryPermissionsAsync();
     let status = current.status;
@@ -93,12 +103,6 @@ export default function FamilyWall() {
     const a = res.assets[0];
     setPhoto({ b64: a.base64 as string, mime: a.mimeType || "image/jpeg" });
   };
-
-  const openSettings = () =>
-    Alert.alert("Allow photo access", "Wayly needs photo access to share pictures on the family wall.", [
-      { text: "Not now", style: "cancel" },
-      { text: "Open Settings", onPress: () => Linking.openSettings() },
-    ]);
 
   const submit = async () => {
     if (!activeId || (!body.trim() && !photo) || posting) return;
@@ -119,7 +123,6 @@ export default function FamilyWall() {
   };
 
   const react = async (post: Post, emoji: string) => {
-    // optimistic
     const mine = new Set(post.reacted_by?.[user?.id || ""] || []);
     const reactions = { ...(post.reactions || {}) };
     if (mine.has(emoji)) reactions[emoji] = Math.max(0, (reactions[emoji] || 1) - 1);
@@ -133,7 +136,7 @@ export default function FamilyWall() {
   };
 
   const remove = (post: Post) =>
-    Alert.alert("Delete post", "Remove this post from the family wall?", [
+    Alert.alert("Delete post", "Delete this post?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -148,6 +151,8 @@ export default function FamilyWall() {
         },
       },
     ]);
+
+  const pName = active?.display_name || "Your Participant";
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -173,12 +178,29 @@ export default function FamilyWall() {
             contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
           >
+            <PageIntro
+              eyebrow="Family Wall"
+              title={`A Digital Fridge Door for ${pName}`}
+              description="A calm, shared space for photos, updates, and quick voice notes, so everyone who loves this person stays in the loop, without another group chat."
+              whatItDoes="Threads photos, messages, and voice notes tied to the household. Only the family members you invite can see or contribute."
+              howToUse={[
+                "Snap a photo, type a short message, or leave a voice note.",
+                "React with a heart or a comment to show you saw an update.",
+                "Invite siblings and family so everyone sees the same wall.",
+                "Everything stays here, no messages get lost between phones.",
+              ]}
+              whatYouGet={[
+                "One shared record of the small moments that matter.",
+                "Everyone updated without a dozen group SMS chains.",
+                "A gentle timeline of the caring journey to look back on.",
+              ]}
+            />
             {posts.length === 0 ? (
               <StatePanel
                 testID="wall-empty"
                 icon={MessageSquare}
                 title="No posts yet"
-                message={`Share the first update about ${active?.display_name || "your loved one"} below.`}
+                message={`Be the first to share a moment with ${active?.display_name || "your family"}.`}
               />
             ) : (
               posts.map((p) => (
@@ -190,33 +212,33 @@ export default function FamilyWall() {
 
         {/* Composer */}
         {activeId ? (
-          <View style={styles.composer}>
+          <View style={[styles.composer, { borderTopColor: colors.border, backgroundColor: colors.surface }]}>
             {photo ? (
               <View style={styles.photoPreview}>
-                <Image source={{ uri: `data:${photo.mime};base64,${photo.b64}` }} style={styles.previewImg} />
-                <Pressable testID="wall-remove-photo" onPress={() => setPhoto(null)} style={styles.removePhoto} hitSlop={8}>
+                <Image source={{ uri: `data:${photo.mime};base64,${photo.b64}` }} style={[styles.previewImg, { backgroundColor: colors.surface2 }]} />
+                <Pressable testID="wall-remove-photo" onPress={() => setPhoto(null)} style={[styles.removePhoto, { backgroundColor: colors.surface }]} hitSlop={8}>
                   <Ionicons name="close-circle" size={22} color={colors.terracotta} />
                 </Pressable>
               </View>
             ) : null}
             <View style={styles.composerRow}>
-              <Pressable testID="wall-attach-photo" onPress={attachPhoto} hitSlop={8} style={styles.iconBtn}>
+              <Pressable testID="wall-attach-photo" onPress={attachPhoto} hitSlop={8} style={[styles.iconBtn, { backgroundColor: colors.sageSoft }]}>
                 <Ionicons name="image" size={22} color={colors.primary} />
               </Pressable>
               <TextInput
                 testID="wall-input"
                 value={body}
                 onChangeText={setBody}
-                placeholder="Write an update…"
+                placeholder={`Share a moment, an update, or a memory with ${active?.display_name || "the family"}…`}
                 placeholderTextColor={colors.muted}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }]}
                 multiline
               />
               <Pressable
                 testID="wall-send"
                 onPress={submit}
                 disabled={posting || (!body.trim() && !photo)}
-                style={[styles.sendBtn, (posting || (!body.trim() && !photo)) && { opacity: 0.5 }]}
+                style={[styles.sendBtn, { backgroundColor: colors.gold }, (posting || (!body.trim() && !photo)) && { opacity: 0.5 }]}
               >
                 <Ionicons name="send" size={20} color="#fff" />
               </Pressable>
@@ -239,12 +261,13 @@ function PostCard({
   onReact: (p: Post, e: string) => void;
   onDelete: (p: Post) => void;
 }) {
+  const { colors, shadow } = useTheme();
   const mine = post.author_id === meId;
   const myReactions = new Set(post.reacted_by?.[meId] || []);
   return (
-    <View testID={`wall-post-${post.id}`} style={styles.post}>
+    <View testID={`wall-post-${post.id}`} style={[styles.post, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
           <T style={{ color: "#fff", fontFamily: fonts.bodyBold, fontSize: 14 }}>{initials(post.author_name).toUpperCase()}</T>
         </View>
         <View style={{ flex: 1 }}>
@@ -263,13 +286,13 @@ function PostCard({
       {post.kind === "photo" && post.image_b64 ? (
         <Image
           source={{ uri: `data:${post.image_mime || "image/jpeg"};base64,${post.image_b64}` }}
-          style={styles.postImg}
+          style={[styles.postImg, { backgroundColor: colors.surface2 }]}
           resizeMode="cover"
         />
       ) : null}
 
       {post.kind === "voice" ? (
-        <View style={styles.voiceCard}>
+        <View style={[styles.voiceCard, { backgroundColor: colors.sageSoft }]}>
           <Ionicons name="mic" size={18} color={colors.sage} />
           <T variant="small" style={{ color: colors.sage, flex: 1 }}>
             Voice note — open the Wayly web app to listen.
@@ -277,7 +300,6 @@ function PostCard({
         </View>
       ) : null}
 
-      {/* Reactions */}
       <View style={styles.reactRow}>
         {EMOJIS.map((e) => {
           const count = post.reactions?.[e] || 0;
@@ -287,7 +309,7 @@ function PostCard({
               key={e}
               testID={`wall-react-${post.id}-${e}`}
               onPress={() => onReact(post, e)}
-              style={[styles.reactChip, active && { backgroundColor: colors.sageSoft, borderColor: colors.sage }]}
+              style={[styles.reactChip, { borderColor: colors.border, backgroundColor: colors.surface }, active && { backgroundColor: colors.sageSoft, borderColor: colors.sage }]}
             >
               <T style={{ fontSize: 15 }}>{e}</T>
               {count > 0 ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.muted }}>{count}</T> : null}
@@ -300,56 +322,28 @@ function PostCard({
 }
 
 const styles = StyleSheet.create({
-  avatar: { width: 40, height: 40, borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
-  post: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    ...shadow.card,
-  },
-  postImg: { width: "100%", height: 220, borderRadius: radius.md, marginTop: spacing.sm, backgroundColor: colors.surface2 },
-  voiceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: colors.sageSoft,
-    borderRadius: radius.md,
-    padding: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  reactRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.md },
-  reactChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  composer: { borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface, padding: spacing.md },
+  avatar: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  post: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.md },
+  postImg: { width: "100%", height: 220, borderRadius: radius.md, marginTop: spacing.sm },
+  voiceCard: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: radius.md, padding: spacing.sm, marginTop: spacing.sm },
+  reactRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, flexWrap: "wrap" },
+  reactChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill, borderWidth: 1 },
+  composer: { borderTopWidth: 1, padding: spacing.md },
   composerRow: { flexDirection: "row", alignItems: "flex-end", gap: spacing.sm },
-  iconBtn: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: colors.sageSoft, alignItems: "center", justifyContent: "center" },
+  iconBtn: { width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   input: {
     flex: 1,
     maxHeight: 110,
     minHeight: 44,
     borderRadius: radius.lg,
-    backgroundColor: colors.bg,
     borderWidth: 1,
-    borderColor: colors.border,
     paddingHorizontal: spacing.md,
     paddingTop: Platform.OS === "ios" ? 12 : 8,
     fontFamily: fonts.body,
     fontSize: 15,
-    color: colors.text,
   },
-  sendBtn: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: colors.gold, alignItems: "center", justifyContent: "center" },
+  sendBtn: { width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   photoPreview: { marginBottom: spacing.sm, alignSelf: "flex-start" },
-  previewImg: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.surface2 },
-  removePhoto: { position: "absolute", top: -8, right: -8, backgroundColor: colors.surface, borderRadius: radius.pill },
+  previewImg: { width: 84, height: 84, borderRadius: radius.md },
+  removePhoto: { position: "absolute", top: -8, right: -8, borderRadius: radius.pill },
 });
