@@ -13,11 +13,11 @@ import { money } from "@/src/utils/format";
 type Pacing = { envelope?: number; actual_spent?: number; projected_end_of_quarter_total?: number; pace_status?: string; over_under_aud?: number; quarter?: { label?: string; total_days?: number; elapsed_days?: number }; daily_run_rate_aud?: number };
 type History = { history?: { quarter?: { label?: string }; envelope?: number; actual_spent?: number; pace_status?: string }[]; rollover_cap_aud?: number };
 
-function paceMeta(s?: string) {
+function paceMeta(s: string | undefined, colors: any) {
   const v = (s || "").toLowerCase();
-  if (v.includes("over")) return { label: "Over pace", color: "#B7791F" };
-  if (v.includes("under")) return { label: "Under pace", color: "#1B5733" };
-  return { label: "On track", color: "#1B5733" };
+  if (v.includes("over")) return { label: "Over pace", color: colors.gold };
+  if (v.includes("under")) return { label: "Under pace", color: colors.sage };
+  return { label: "On track", color: colors.sage };
 }
 
 export default function PacingScreen() {
@@ -40,7 +40,7 @@ export default function PacingScreen() {
   }, [activeId]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
-  const pace = paceMeta(p?.pace_status);
+  const pace = paceMeta(p?.pace_status, colors);
   const envPct = p?.envelope ? Math.round(((p.actual_spent || 0) / p.envelope) * 100) : 0;
 
   return (

@@ -8,13 +8,16 @@ import * as ImagePicker from "expo-image-picker";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
-import { colors, fonts, radius, spacing } from "@/src/theme";
+import { useTheme } from "@/src/theme/ThemeContext";
+import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
 
 type Picked = { uri: string; name: string; mimeType: string };
 type UploadType = "statement" | "invoice";
 
 export default function UploadScreen() {
   const params = useLocalSearchParams<{ type?: string }>();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [docType, setDocType] = useState<UploadType>(params.type === "invoice" ? "invoice" : "statement");
   const [picked, setPicked] = useState<Picked | null>(null);
   const [busy, setBusy] = useState(false);
@@ -259,6 +262,8 @@ function SourceRow({
   onPress: () => void;
   testID?: string;
 }) {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   return (
     <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [styles.sourceRow, pressed && { opacity: 0.85 }]}>
       <View style={styles.sourceIcon}>
@@ -270,33 +275,34 @@ function SourceRow({
   );
 }
 
-const styles = StyleSheet.create({
-  segment: {
-    flexDirection: "row",
-    backgroundColor: colors.surface2,
-    borderRadius: radius.pill,
-    padding: 4,
-  },
-  segmentBtn: { flex: 1, alignItems: "center", paddingVertical: 10, borderRadius: radius.pill },
-  segmentActive: { backgroundColor: colors.primary },
-  sourceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-  },
-  sourceIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.sageSoft, alignItems: "center", justifyContent: "center" },
-  fileIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.sageSoft, alignItems: "center", justifyContent: "center" },
-  errorBox: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-    backgroundColor: "#FBE6E4",
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    segment: {
+      flexDirection: "row",
+      backgroundColor: colors.surface2,
+      borderRadius: radius.pill,
+      padding: 4,
+    },
+    segmentBtn: { flex: 1, alignItems: "center", paddingVertical: 10, borderRadius: radius.pill },
+    segmentActive: { backgroundColor: colors.primary },
+    sourceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.md,
+    },
+    sourceIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.sageSoft, alignItems: "center", justifyContent: "center" },
+    fileIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.sageSoft, alignItems: "center", justifyContent: "center" },
+    errorBox: {
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "center",
+      backgroundColor: colors.errorSoft,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+  });

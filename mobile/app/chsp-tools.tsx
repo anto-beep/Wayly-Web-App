@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2 } from "lucide-react-native";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -27,11 +28,12 @@ export default function ChspToolsScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="CHSP Tools" subtitle="Commonwealth Home Support Programme" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg }}>
-        <Card style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
-          <T variant="body" style={{ color: colors.text, lineHeight: 24 }}>
-            CHSP is entry-level support for older people who need a little help to keep living independently. These tools help you understand where you sit, check a CHSP fee, and plan a move to Support at Home if that is right for you.
-          </T>
-        </Card>
+        <PageIntro
+          eyebrow="Commonwealth Home Support Programme"
+          title="Verify CHSP Billing. Consider a Move to Support at Home."
+          description="Two decisions matter on CHSP: was I actually billed correctly, and should I transition to Support at Home? This tool walks you through both without pressure."
+          whatItDoes="Runs a variance check on any CHSP invoice against what you expected to pay, and gives you a 3-step walkthrough for thinking through whether transitioning to SAH is right for you."
+        />
 
         <View>
           <T variant="h3" style={{ color: colors.primary, marginBottom: spacing.sm }}>Where are you with CHSP?</T>

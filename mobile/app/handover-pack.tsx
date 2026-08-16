@@ -4,6 +4,7 @@ import { router, useFocusEffect } from "expo-router";
 import { ClipboardList, Plus, X, FileDown } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { downloadAndShare } from "@/src/lib/download";
@@ -97,11 +98,12 @@ export default function HandoverPackScreen() {
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
         >
-          <Card style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
-            <T variant="small" style={{ color: colors.text, lineHeight: 20 }}>
-              A handover pack captures the routines, key information, and emergency priorities a family member or stand-in carer needs if you're ever away. Build it once, export a PDF, keep it handy.
-            </T>
-          </Card>
+          <PageIntro
+            eyebrow="Carer support"
+            title="Carer Handover Pack"
+            description="Write down everything a backup carer or respite provider needs to keep care running smoothly, then download it as a one-page PDF."
+            whatItDoes="Captures routines, key information, emergency priorities and contacts in one place, ready to hand over."
+          />
 
           {showForm ? (
             <Card testID="handover-form">

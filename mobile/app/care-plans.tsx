@@ -4,6 +4,7 @@ import { router, useFocusEffect } from "expo-router";
 import { ClipboardList, Sparkles, FileText } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -66,6 +67,12 @@ export default function CarePlansScreen() {
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
         >
+          <PageIntro
+            eyebrow="Care Plans"
+            title="Every Care Plan, Reviewed"
+            description="Every support plan you have uploaded through the Support Plan Reviewer, with the latest findings and rights checks. Upload a new plan to run a fresh review before your next meeting."
+            whatItDoes="Stores each plan version, runs Statement-of-Rights checks against it, and surfaces the findings by severity so you know what to raise with the provider."
+          />
           {plans.length === 0 ? (
             <StatePanel
               testID="care-plans-empty"

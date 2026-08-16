@@ -30,11 +30,11 @@ export default function BudgetAlertsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Budget Alerts" subtitle="Get told before the budget runs hot" onBack={() => router.back()} />
+      <AppHeader title="Budget Alerts" subtitle="Get notified before you overspend" onBack={() => router.back()} />
       {loading ? <Loading /> : error ? (
         <StatePanel testID="alerts-error" icon={Bell} title="Couldn't load alerts" actionLabel="Retry" onAction={load} />
       ) : items.length === 0 ? (
-        <StatePanel testID="alerts-empty" icon={Bell} title="No alerts set" message="Alerts let you know when spending crosses a threshold." />
+        <StatePanel testID="alerts-empty" icon={Bell} title="No alerts configured" message="Most caregivers set a 70% lifetime-cap and an 85% quarterly alert as their first two." />
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
           {items.map((a) => (
@@ -52,7 +52,6 @@ export default function BudgetAlertsScreen() {
               </View>
             </Card>
           ))}
-          <T variant="small" style={{ textAlign: "center" }}>Manage alert rules on the web app.</T>
         </ScrollView>
       )}
     </View>

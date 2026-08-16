@@ -5,6 +5,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Download, FileBarChart, Plus, X } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -97,7 +98,14 @@ export default function ReportsScreen() {
               data={items}
               keyExtractor={(r) => r.id}
               ListHeaderComponent={!showPicker ? (
-                <Button label="Generate a report" testID="reports-generate-btn" icon={Plus} onPress={() => setShowPicker(true)} style={{ marginBottom: spacing.md }} />
+                <>
+                  <PageIntro
+                    eyebrow="Reports"
+                    title="Reports"
+                    description="Eight reports built for caregivers. Each one becomes a polished PDF you can email, print, or hand to a GP, family member, or accountant."
+                  />
+                  <Button label="Generate a report" testID="reports-generate-btn" icon={Plus} onPress={() => setShowPicker(true)} style={{ marginTop: spacing.md, marginBottom: spacing.md }} />
+                </>
               ) : null}
               contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
               renderItem={({ item }) => {

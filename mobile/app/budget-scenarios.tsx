@@ -4,6 +4,7 @@ import { router, useFocusEffect } from "expo-router";
 import { Wallet } from "lucide-react-native";
 
 import { AppHeader, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -47,6 +48,11 @@ export default function BudgetScenariosScreen() {
         <StatePanel testID="scenarios-error" icon={Wallet} title="Couldn't load scenarios" actionLabel="Retry" onAction={load} />
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
+          <PageIntro
+            eyebrow="Budget · What-if"
+            title="Budget Scenarios"
+            description="Model what happens to the budget if the classification, spending pace, or indexation changed, then save and compare scenarios."
+          />
           <Card testID="scenario-current">
             <T variant="label" style={{ color: colors.muted }}>AT CURRENT PACE</T>
             <View style={styles.line}><T variant="body">Projected this quarter</T><T style={styles.val}>{moneyWhole(projected)}</T></View>
@@ -65,8 +71,6 @@ export default function BudgetScenariosScreen() {
             <View style={styles.line}><T variant="body">Cap</T><T style={styles.val}>{moneyWhole(b.lifetime_cap)}</T></View>
             <View style={styles.line}><T variant="body">Headroom remaining</T><T style={[styles.val, { color: colors.success }]}>{money(capLeft)}</T></View>
           </Card>
-
-          <T variant="small" style={{ textAlign: "center" }}>Build and save detailed what-if scenarios on the web app.</T>
         </ScrollView>
       )}
     </View>

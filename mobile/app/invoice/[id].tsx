@@ -6,7 +6,8 @@ import { CloudOff, MessageCircle } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
-import { colors, fonts, radius, spacing } from "@/src/theme";
+import { useTheme } from "@/src/theme/ThemeContext";
+import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
 import { shortDate, verdictTone } from "@/src/utils/format";
 
 type Finding = {
@@ -32,6 +33,8 @@ type Invoice = {
 
 export default function InvoiceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [inv, setInv] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -147,7 +150,8 @@ export default function InvoiceDetail() {
   );
 }
 
-const styles = StyleSheet.create({
-  finding: { backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.md },
-  checkRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: 8 },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    finding: { backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.md },
+    checkRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: 8 },
+  });

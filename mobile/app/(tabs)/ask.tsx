@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -15,7 +15,8 @@ import { useLocalSearchParams } from "expo-router";
 import { AppHeader, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
-import { colors, fonts, radius, spacing } from "@/src/theme";
+import { useTheme } from "@/src/theme/ThemeContext";
+import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
@@ -27,6 +28,8 @@ const SUGGESTIONS = [
 
 export default function AskWayly() {
   const { active } = useParticipants();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { statement_id } = useLocalSearchParams<{ statement_id?: string }>();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -142,6 +145,8 @@ export default function AskWayly() {
 }
 
 function Bubble({ msg }: { msg: Msg }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isUser = msg.role === "user";
   return (
     <View style={[styles.bubbleRow, { justifyContent: isUser ? "flex-end" : "flex-start" }]}>
@@ -161,60 +166,61 @@ function Bubble({ msg }: { msg: Msg }) {
   );
 }
 
-const styles = StyleSheet.create({
-  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.lg },
-  orb: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.pill,
-    backgroundColor: colors.sageSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  suggestion: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-  },
-  bubbleRow: { flexDirection: "row" },
-  bubble: { maxWidth: "84%", borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  userBubble: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
-  aiBubble: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
-  typing: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.lg, paddingBottom: 6 },
-  inputBar: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  input: {
-    flex: 1,
-    maxHeight: 120,
-    minHeight: 46,
-    borderRadius: radius.lg,
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === "ios" ? 12 : 8,
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: colors.text,
-  },
-  sendBtn: {
-    width: 46,
-    height: 46,
-    borderRadius: radius.pill,
-    backgroundColor: colors.gold,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.lg },
+    orb: {
+      width: 72,
+      height: 72,
+      borderRadius: radius.pill,
+      backgroundColor: colors.sageSoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    suggestion: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.md,
+    },
+    bubbleRow: { flexDirection: "row" },
+    bubble: { maxWidth: "84%", borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+    userBubble: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
+    aiBubble: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
+    typing: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.lg, paddingBottom: 6 },
+    inputBar: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: spacing.sm,
+      padding: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    input: {
+      flex: 1,
+      maxHeight: 120,
+      minHeight: 46,
+      borderRadius: radius.lg,
+      backgroundColor: colors.bg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: spacing.md,
+      paddingTop: Platform.OS === "ios" ? 12 : 8,
+      fontFamily: fonts.body,
+      fontSize: 15,
+      color: colors.text,
+    },
+    sendBtn: {
+      width: 46,
+      height: 46,
+      borderRadius: radius.pill,
+      backgroundColor: colors.gold,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  });

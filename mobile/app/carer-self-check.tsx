@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
-import { Heart, Sparkles, AlertTriangle, Phone } from "lucide-react-native";
+import { Sparkles, AlertTriangle, Phone } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Field, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -130,15 +131,12 @@ export default function CarerSelfCheckScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Carer Self-Check" subtitle="A private check-in on how you're coping" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg }} keyboardShouldPersistTaps="handled">
-        <Card style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
-          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-            <Heart size={18} color={colors.sage} />
-            <T style={{ fontFamily: fonts.bodySemi, color: colors.sage, flex: 1 }}>This is just for you</T>
-          </View>
-          <T variant="small" style={{ marginTop: 6, lineHeight: 20 }}>
-            Caring is a big job. This quick check-in recognises your strengths and the pressures you carry, then points you to support if you want it. Nothing here is shared without your say so.
-          </T>
-        </Card>
+        <PageIntro
+          eyebrow="Carer Self-Check"
+          title="Your Space to Check In With Yourself"
+          description="Caring for someone is demanding, and looking after yourself is not optional. This is a private self-check, nothing is shared, no diagnosis, and you can skip any question."
+          whatItDoes="Walks you through your caring role, strengths, constraints, and stress signals. Recognises burnout patterns and points you to the right support, Carer Gateway, GP, or a warm human contact."
+        />
 
         <ChipGroup title="What are your strengths as a carer?" options={STRENGTHS} selected={strengths} onToggle={(k: string) => toggle(strengths, setStrengths, k)} colors={colors} prefix="csc-strength" />
         <ChipGroup title="What's making it harder right now?" options={CONSTRAINTS} selected={constraints} onToggle={(k: string) => toggle(constraints, setConstraints, k)} colors={colors} prefix="csc-constraint" />

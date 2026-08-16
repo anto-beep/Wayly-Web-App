@@ -2003,3 +2003,14 @@ Full screen-by-screen audit against web (source of truth), following web sidebar
 - MissingDetailsBanner.tsx (NEW): mirrors web ProfileCompletionBanner copy, dismissible with X, suppressed 24h via AsyncStorage (key wayly_missing_details_banner_dismissed_at); rendered at top of Dashboard scroll. Matches the email-verify banner pattern.
 - Statements extras: Export CSV (builds CSV via new shareTextFile helper in download.ts; web = browser download, native = file + share sheet) + Archived button (count badge) → new app/statements-archived.tsx (read-only list from /statements/archived).
 - All verified rendering via screenshots (Cathy/Family). Single $ throughout.
+
+## [2026-06] Parity sweep — Money category + Guided Journeys PageIntro + Dark-mode sweep
+DARK-MODE SWEEP (no text/button blends): converted the last 4 static-palette screens to useTheme (makeStyles factory) so light+dark both apply — app/(tabs)/ask.tsx, app/upload.tsx, app/decode/[id].tsx, app/invoice/[id].tsx. Verified zero remaining `from "@/src/theme"` static imports and zero hardcoded non-#fff hex across all Guided Journeys + Their Care screens.
+MONEY:
+- pacing.tsx: pace status colors now theme tokens (colors.gold/colors.sage) instead of hardcoded #B7791F/#1B5733 (dark-mode contrast fix).
+- budget-alerts.tsx: header + empty-state copy aligned to web (subtitle "Get notified before you overspend"; empty "No alerts configured" / "Most caregivers set a 70% lifetime-cap and an 85% quarterly alert as their first two."); removed invented "Manage alert rules on the web app." footnote.
+- budget-scenarios.tsx: added web PageIntro (eyebrow "Budget · What-if", title "Budget Scenarios", exact description); removed invented footnote.
+- reports.tsx: added web PageIntro (eyebrow "Reports", title "Reports", exact description). 8 report types already match web.
+GUIDED JOURNEYS — added exact web PageIntro (eyebrow/title/description/whatItDoes) to: carer-self-check, handover-pack, athm, chsp-tools, letters, care-plans. (ClassificationCheck/ProviderSwitch have no web PageIntro → left as-is per no-invention rule.)
+THEIR CARE: care-plans done; calendar/hospital/amendments/scenarios/timeline + care-team/key-contacts have no dedicated web PageIntro to mirror and are already theme-aware → at parity, no changes.
+All verified via screenshots (Cathy/Family): AT&HM, Carer Self-Check, CHSP Tools, Quarterly Pacing render with exact copy + single $.

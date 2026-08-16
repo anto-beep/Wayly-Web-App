@@ -6,20 +6,23 @@ import { RotateCw } from "lucide-react-native";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import { streamSSE, SSEHandle } from "@/src/lib/sse";
-import { colors, fonts, radius, spacing } from "@/src/theme";
+import { useTheme } from "@/src/theme/ThemeContext";
+import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
 import { money } from "@/src/utils/format";
 
 type Line = { line_id: string; description: string; amount: number; confidence: number; note?: string };
 type Alert = { level: string; text: string };
 
-function confTone(c: number): { label: string; color: string; bg: string } {
+function confTone(c: number, colors: Palette): { label: string; color: string; bg: string } {
   if (c >= 0.85) return { label: `${Math.round(c * 100)}%`, color: colors.success, bg: colors.successSoft };
   if (c >= 0.6) return { label: `${Math.round(c * 100)}%`, color: colors.alert, bg: colors.alertSoft };
-  return { label: `${Math.round(c * 100)}%`, color: colors.terracotta, bg: "#FBE6E4" };
+  return { label: `${Math.round(c * 100)}%`, color: colors.terracotta, bg: colors.errorSoft };
 }
 
 export default function DecodeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [phase, setPhase] = useState<string>("");
   const [lines, setLines] = useState<Line[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -119,7 +122,7 @@ export default function DecodeScreen() {
 
         {/* Streaming lines */}
         {lines.map((l, i) => {
-          const ct = confTone(l.confidence);
+          const ct = confTone(l.confidence, colors);
           return (
             <Card key={`${l.line_id}-${i}`} testID={`decode-line-${i}`} style={{ padding: spacing.md }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", gap: spacing.sm }}>
@@ -176,25 +179,26 @@ function phaseLabel(name?: string): string {
   return map[name || ""] || "Working…";
 }
 
-const styles = StyleSheet.create({
-  alert: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 4,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  confPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, alignSelf: "flex-start" },
-  errorBox: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-    backgroundColor: "#FBE6E4",
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    alert: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderLeftWidth: 4,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+    confPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, alignSelf: "flex-start" },
+    errorBox: {
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "center",
+      backgroundColor: colors.errorSoft,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+  });

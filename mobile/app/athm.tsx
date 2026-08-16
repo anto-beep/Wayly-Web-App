@@ -4,6 +4,7 @@ import { router, useFocusEffect } from "expo-router";
 import { Wrench, Plus, X, Home } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -90,11 +91,12 @@ export default function AthmScreen() {
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
         >
-          <Card style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
-            <T variant="small" style={{ color: colors.text, lineHeight: 20 }}>
-              Assistive technology (AT) and home modifications (HM) are funded separately from your quarterly budget. Track each project from proposed through to installed.
-            </T>
-          </Card>
+          <PageIntro
+            eyebrow="Assistive Technology & Home Modifications"
+            title="AT & HM Projects"
+            description="Track every step of buying assistive technology or modifying the home, from OT referral through quotes, funding, delivery, and trial period. Nothing important slips through the cracks."
+            whatItDoes="Groups related AT items and HM modifications into a single project. Compares supplier quotes side-by-side. Counts down each trial period so you never miss a return window."
+          />
 
           {showForm ? (
             <Card testID="athm-form">
