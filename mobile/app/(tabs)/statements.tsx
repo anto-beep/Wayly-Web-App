@@ -156,7 +156,7 @@ export default function StatementsScreen() {
         ]}
       />
       <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}>
-        <Button label="Upload statement" testID="statements-upload-cta" icon={FileText} onPress={() => router.push("/upload")} style={{ flexGrow: 1 }} />
+        <Button label="Upload a Statement" testID="statements-upload-cta" icon={FileText} onPress={() => router.push("/upload")} style={{ flexGrow: 1 }} />
         <Button label="Export CSV" testID="statements-export-csv-btn" icon={Download} variant="outline" onPress={exportCsv} style={{ flexGrow: 1 }} />
         <Button label={archivedCount > 0 ? `Archived (${archivedCount})` : "Archived"} testID="statements-archived-link" icon={Archive} variant="outline" onPress={() => router.push("/statements-archived" as any)} style={{ flexGrow: 1 }} />
       </View>
@@ -196,15 +196,6 @@ export default function StatementsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <WaylyHeader />
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingTop: spacing.sm }}>
-        <View>
-          <T style={{ fontFamily: fonts.heading, fontSize: 28 }}>Statements</T>
-          <T variant="bodyMuted">Support at Home statements</T>
-        </View>
-        <Pressable testID="statements-upload-button" onPress={() => router.push("/upload")} style={[styles.addBtn, { backgroundColor: colors.gold }]}>
-          <Plus size={26} color="#fff" />
-        </Pressable>
-      </View>
       {loading ? (
         <Loading label="Loading statements…" />
       ) : error ? (

@@ -24,8 +24,8 @@ export function AppDrawer() {
 
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={closeDrawer}>
-      <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={closeDrawer}>
-        <Pressable style={[styles.panel, { backgroundColor: colors.bg }]} onPress={() => {}}>
+      <Pressable style={styles.backdrop} onPress={closeDrawer}>
+        <Pressable style={[styles.panel, { backgroundColor: colors.bg, borderRightColor: colors.border, borderRightWidth: 1 }]} onPress={() => {}}>
           <View style={[styles.head, { borderBottomColor: colors.border }]}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <WaylyMark size={30} white={isDark} />

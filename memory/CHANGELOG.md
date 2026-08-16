@@ -2021,3 +2021,13 @@ All verified via screenshots (Cathy/Family): AT&HM, Carer Self-Check, CHSP Tools
 - compare-providers.tsx: added web PageIntro ("Compare Providers" / "Side-by-Side Quality Context" + description + whatItDoes).
 - Verified via screenshots (Cathy/Family): Provider Switch stepper resumes at stage, Documents + Compare Providers PageIntro render.
 - Your Account (Referrals, Audit Log, Settings, Profile hub) + Correspondence + Ratings: no dedicated web PageIntro to mirror, all theme-aware (dark-mode safe), headers match nav labels → at parity, no changes.
+
+## [2026-06] Mobile UI/nav bug fixes (user-reported) — verified iter 173/174
+- Dashboard: removed the Household/participant-switcher chip from the top (WaylyHeader no longer renders ParticipantSwitcher).
+- Shared <T> component (src/components/ui.tsx): fixed teal buttons showing dark text — style order changed to [{ color }, merged] so a caller-supplied color:'#fff' wins (default color is now a fallback). App-wide fix for text-on-teal legibility. No regression to normal text colors.
+- Dashboard CTA relabeled "Upload a Statement" (Title Case), white on teal.
+- AppDrawer: backdrop no longer dims/darkens the rest of the screen (transparent backdrop + right border on panel); tap-outside still closes.
+- Bottom tab bar: replaced "Settings" tab with "More" (menu icon) that opens the drawer of all category groups (via tabPress preventDefault + openDrawer; TabsInner component under DrawerProvider).
+- Statements: removed the duplicate "Statements" title + "Support at Home statements" subtitle row under the header; upload button relabeled "Upload a Statement".
+- Upload (app/upload.tsx): now statement-only — removed the Statement/Invoice toggle; title "Upload a Statement"; three source rows only.
+- STILL TODO (user-requested, large follow-on builds): (a) implement each AI Tools tool page to match the web dedicated pages (StatementDecoder, InvoiceChecker, BudgetCalculator, PriceChecker, ClassificationCheck, LettersFollowUps, ContributionEstimator, CarePlanReviewer, FamilyCoordinator) — mobile currently uses a single generic tool/[slug].tsx; (b) build out Your Account subscreens (Settings tabs: profile, plan/billing, notifications, security, appearance, delete account) to match web; (c) continue any remaining per-category screens vs web.

@@ -138,8 +138,8 @@ export default function Dashboard() {
           {!isFree ? (
             <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, flexWrap: "wrap" }}>
               <Pressable testID="dashboard-upload-cta" onPress={() => router.push("/upload")} style={[styles.headerBtn, { backgroundColor: colors.cta }]}>
-                <FileText size={16} color={colors.primaryFg} />
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primaryFg }}>Upload a statement</T>
+                <FileText size={16} color="#fff" />
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>Upload a Statement</T>
               </Pressable>
               {activeId ? (
                 <Pressable testID="dashboard-key-contacts-cta" onPress={() => router.push("/key-contacts" as any)} style={[styles.headerBtnOutline, { borderColor: colors.primary }]}>

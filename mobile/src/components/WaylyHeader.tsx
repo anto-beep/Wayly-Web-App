@@ -10,7 +10,6 @@ import { WaylyMark } from "@/src/components/WaylyMark";
 import { T } from "@/src/components/ui";
 import { TrialBanner } from "@/src/components/TrialBanner";
 import { EmailVerifyBanner } from "@/src/components/EmailVerifyBanner";
-import { ParticipantSwitcher } from "@/src/components/ParticipantSwitcher";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { initials } from "@/src/utils/format";
 
@@ -50,9 +49,6 @@ export function WaylyHeader({ notifications = 0 }: { notifications?: number }) {
     </View>
     <TrialBanner />
     <EmailVerifyBanner />
-    <View style={{ paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-      <ParticipantSwitcher />
-    </View>
     </>
   );
 }

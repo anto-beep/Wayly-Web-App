@@ -1,31 +1,21 @@
 import React from "react";
 import { Redirect, Tabs } from "expo-router";
-import { LayoutDashboard, Sparkles, FileText, Settings as SettingsIcon } from "lucide-react-native";
+import { LayoutDashboard, Sparkles, FileText, Menu } from "lucide-react-native";
 import { Platform } from "react-native";
 
 import { useAuth } from "@/src/context/AuthContext";
-import { DrawerProvider } from "@/src/context/DrawerContext";
+import { DrawerProvider, useDrawer } from "@/src/context/DrawerContext";
 import { AppDrawer } from "@/src/components/AppDrawer";
 import { Loading, Screen } from "@/src/components/ui";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts } from "@/src/theme/tokens";
 
-export default function TabsLayout() {
-  const { user, loading } = useAuth();
+function TabsInner() {
   const { colors } = useTheme();
-
-  if (loading) {
-    return (
-      <Screen edges={["top", "bottom"]}>
-        <Loading />
-      </Screen>
-    );
-  }
-  if (!user) return <Redirect href="/login" />;
-  if (!user.household_id) return <Redirect href="/onboarding" />;
+  const { openDrawer } = useDrawer();
 
   return (
-    <DrawerProvider>
+    <>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -66,18 +56,44 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="settings"
+          name="more"
           options={{
-            title: "Settings",
-            tabBarIcon: ({ color, size }) => <SettingsIcon size={size} color={color} />,
-            tabBarButtonTestID: "tab-settings",
+            title: "More",
+            tabBarIcon: ({ color, size }) => <Menu size={size} color={color} />,
+            tabBarButtonTestID: "tab-more",
+          }}
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              openDrawer();
+            },
           }}
         />
+        <Tabs.Screen name="settings" options={{ href: null }} />
         <Tabs.Screen name="family" options={{ href: null }} />
         <Tabs.Screen name="ask" options={{ href: null }} />
-        <Tabs.Screen name="more" options={{ href: null }} />
       </Tabs>
       <AppDrawer />
+    </>
+  );
+}
+
+export default function TabsLayout() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <Screen edges={["top", "bottom"]}>
+        <Loading />
+      </Screen>
+    );
+  }
+  if (!user) return <Redirect href="/login" />;
+  if (!user.household_id) return <Redirect href="/onboarding" />;
+
+  return (
+    <DrawerProvider>
+      <TabsInner />
     </DrawerProvider>
   );
 }

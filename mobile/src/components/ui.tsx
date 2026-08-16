@@ -268,7 +268,7 @@ export const T = ({
   }
   return (
     <Text
-      style={[merged, { color }]}
+      style={[{ color }, merged]}
       numberOfLines={numberOfLines}
       onPress={onPress}
       testID={testID}

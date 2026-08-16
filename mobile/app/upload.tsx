@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { UploadCloud } from "lucide-react-native";
 import * as DocumentPicker from "expo-document-picker";
@@ -15,10 +15,9 @@ type Picked = { uri: string; name: string; mimeType: string };
 type UploadType = "statement" | "invoice";
 
 export default function UploadScreen() {
-  const params = useLocalSearchParams<{ type?: string }>();
   const { colors } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const [docType, setDocType] = useState<UploadType>(params.type === "invoice" ? "invoice" : "statement");
+  const [docType] = useState<UploadType>("statement");
   const [picked, setPicked] = useState<Picked | null>(null);
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState("");
@@ -155,38 +154,10 @@ export default function UploadScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Upload a document" onBack={() => router.back()} />
+      <AppHeader title="Upload a Statement" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
-        {/* Type toggle */}
-        <View style={styles.segment}>
-          {(["statement", "invoice"] as UploadType[]).map((t) => {
-            const active = docType === t;
-            return (
-              <Pressable
-                key={t}
-                testID={`upload-type-${t}`}
-                onPress={() => setDocType(t)}
-                style={[styles.segmentBtn, active && styles.segmentActive]}
-              >
-                <T
-                  style={{
-                    fontFamily: fonts.bodySemi,
-                    color: active ? "#fff" : colors.muted,
-                    fontSize: 15,
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {t}
-                </T>
-              </Pressable>
-            );
-          })}
-        </View>
-
         <T variant="bodyMuted">
-          {docType === "statement"
-            ? "Upload a Support at Home statement (PDF or a clear photo). Wayly will decode the charges for you."
-            : "Upload a care invoice (PDF or photo). Wayly will check it line-by-line before you pay."}
+          Upload a Support at Home statement (PDF or a clear photo). Wayly will decode the charges for you.
         </T>
 
         {/* Source options */}
