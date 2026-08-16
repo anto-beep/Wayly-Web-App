@@ -47,7 +47,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Today",
     items: [
       { label: "Dashboard", route: "/(tabs)", icon: LayoutDashboard, implemented: true },
-      { label: "Profile", route: "/participants", icon: UserIcon, implemented: true },
+      { label: "Profile", route: "/profile", icon: UserIcon, implemented: true },
       { label: "Family Wall", route: "/(tabs)/family", icon: Heart, implemented: true },
       { label: "AI Tools", route: "/(tabs)/ai-tools", icon: Sparkles, implemented: true },
     ],
