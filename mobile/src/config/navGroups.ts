@@ -54,12 +54,12 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "money",
     label: "Money & Statements",
     items: [
-      { label: "Quarterly Pacing", route: "/pacing", icon: Timer },
+      { label: "Quarterly Pacing", route: "/pacing", icon: Timer, implemented: true },
       { label: "Statements", route: "/(tabs)/statements", icon: FileText, implemented: true },
       { label: "Invoices", route: "/invoices", icon: ReceiptText, implemented: true },
-      { label: "Budget Alerts", route: "/budget-alerts", icon: Bell },
-      { label: "Budget Scenarios", route: "/budget-scenarios", icon: Wallet },
-      { label: "Reports", route: "/reports", icon: FileBarChart },
+      { label: "Budget Alerts", route: "/budget-alerts", icon: Bell, implemented: true },
+      { label: "Budget Scenarios", route: "/budget-scenarios", icon: Wallet, implemented: true },
+      { label: "Reports", route: "/reports", icon: FileBarChart, implemented: true },
     ],
   },
   {

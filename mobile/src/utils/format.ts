@@ -3,6 +3,20 @@ export function money(n: number | null | undefined): string {
   return v.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2 });
 }
 
+export function moneyWhole(n: number | null | undefined): string {
+  const v = typeof n === "number" && !isNaN(n) ? n : 0;
+  return v.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
+
+// Wayly rule: AI copy uses a friendly-expert tone with NO dashes or em-dashes.
+export function sanitizeAI(text?: string | null): string {
+  if (!text) return "";
+  return text
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/\s+-\s+/g, ", ")
+    .replace(/,\s*,/g, ",");
+}
+
 export function shortDate(iso?: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);

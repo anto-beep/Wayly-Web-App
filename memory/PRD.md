@@ -6649,3 +6649,9 @@ REMAINING PHASES (to build):
 - P5 Providers & Paperwork: Documents, Correspondence, Compare Providers, Ratings.
 - P6 Account: Profile detail, Referrals, Audit Log, Support.
 Rule for all AI summaries: friendly-expert tone, NO dashes/em-dashes (only commas/periods/semicolons).
+
+## 2026-06 · Mobile parity — Dashboard (full) + Money screens
+- Dashboard rebuilt to FULL web parity (CaregiverDashboard.jsx): Wellbeing summary overline + plan badge + "{name}, this quarter" + "{quarter} · {classification} · {usable}/quarter"; AI "Wayly summary" (POST /insights/summarise, dashes stripped via sanitizeAI); stat cards (This quarter spent/of/left, Alerts count, Statements + latest date, Lifetime cap %); Budget Snapshot with per-stream StreamProgress bars (GET /budget/current: streams allocated/spent/remaining/pct) + streams_note + allocation-source badge; Pathways the participant may qualify for (GET /budget/eligible-pathways); Lifetime contribution cap card (contrib of cap, %, bar); Things to know (statement anomalies); Recent statements; Recent activity (GET /audit-log); Quick actions.
+- Money screens built + wired in drawer (implemented): Quarterly Pacing detail (/qp1/pacing + /pacing/history), Budget Alerts (/budget-alerts), Budget Scenarios (projection from /budget/current + pacing), Reports (/reports).
+- Verified via screenshots: dashboard (all sections, correct numbers) + pacing screen render correctly.
+- STILL TODO this request: AI Tools rest (6): Budget & Cap Calculator, Provider Price Checker, Classification Self-Check, Letters & Follow-ups, Contribution Estimator, Support Plan Reviewer. Then remaining groups (Their Care, Guided Journeys, Providers & Paperwork, Account) + dark-theme secondary detail screens.

@@ -2,46 +2,45 @@ import React, { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import {
-  ChevronRight,
-  FileText,
-  ReceiptText,
-  AlertCircle,
-  DollarSign,
-  UploadCloud,
-  MessageCircle,
-  TrendingUp,
-  Ribbon,
+  TrendingUp, Bell, FileText, CheckCircle2, AlertTriangle, Sparkles, ChevronRight,
+  UploadCloud, MessageCircle, Users, Activity, ArrowRight,
 } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
 import { ParticipantSwitcher } from "@/src/components/ParticipantSwitcher";
+import { StreamProgress, Stream } from "@/src/components/StreamProgress";
 import { Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
-import { money, shortDate } from "@/src/utils/format";
+import { money, moneyWhole, sanitizeAI, shortDate, timeAgo } from "@/src/utils/format";
 
-type Statement = { id: string; filename: string; period_label?: string | null; uploaded_at: string; anomalies?: any[]; anomaly_dollar_impact_total?: number; line_items?: any[] };
-type Pacing = { envelope?: number; actual_spent?: number; projected_end_of_quarter_total?: number; pace_status?: string; quarter?: { label?: string; total_days?: number; elapsed_days?: number } };
+type Budget = {
+  quarter_label?: string; classification_label?: string; quarterly_usable?: number; quarterly_total?: number;
+  streams?: Stream[]; streams_note?: string; allocation_source?: string;
+  lifetime_cap?: number; lifetime_contributions?: number; lifetime_pct?: number; is_grandfathered?: boolean;
+};
+type Statement = { id: string; filename: string; period_label?: string | null; uploaded_at?: string; created_at?: string; anomalies?: any[]; provider_name?: string };
+type Pathway = { pathway: string; title: string; episode_aud?: number; duration_days?: number; reason?: string; section_ref?: string };
+type AuditEntry = { id: string; actor_name?: string; action?: string; detail?: string; created_at?: string };
+type Insight = { summary?: string; alerts?: { level: string; text: string }[] };
 
-function paceMeta(status?: string) {
-  switch ((status || "").toLowerCase()) {
-    case "over": return { label: "Over pace", color: "#B7791F" };
-    case "under": return { label: "Under pace", color: "#1B5733" };
-    case "on": case "on_track": return { label: "On track", color: "#1B5733" };
-    default: return { label: "Tracking", color: "#524B42" };
-  }
-}
+const Overline = ({ children }: { children: React.ReactNode }) => {
+  const { colors } = useTheme();
+  return <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.8, color: colors.muted }}>{String(children).toUpperCase()}</T>;
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { activeId, active } = useParticipants();
+  const { activeId } = useParticipants();
   const { colors, shadow } = useTheme();
+  const [budget, setBudget] = useState<Budget | null>(null);
   const [statements, setStatements] = useState<Statement[]>([]);
-  const [invoiceCount, setInvoiceCount] = useState<number | null>(null);
-  const [pacing, setPacing] = useState<Pacing | null>(null);
+  const [pathways, setPathways] = useState<Pathway[]>([]);
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [insight, setInsight] = useState<Insight | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
@@ -49,139 +48,251 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     setError(false);
     try {
-      const [stmts, inv, pace] = await Promise.all([
-        apiFetch<Statement[]>("/statements"),
-        apiFetch<{ count: number }>("/invoices").catch(() => ({ count: 0 })),
-        activeId ? apiFetch<Pacing>(`/qp1/pacing?participant_id=${activeId}`).catch(() => null) : Promise.resolve(null),
+      const [b, stmts, pw, au] = await Promise.all([
+        apiFetch<Budget>("/budget/current").catch(() => null),
+        apiFetch<Statement[]>("/statements").catch(() => []),
+        apiFetch<{ eligible: Pathway[] }>("/budget/eligible-pathways").catch(() => ({ eligible: [] })),
+        apiFetch<AuditEntry[]>("/audit-log").catch(() => []),
       ]);
+      setBudget(b);
       setStatements(Array.isArray(stmts) ? stmts : []);
-      setInvoiceCount(inv?.count ?? 0);
-      setPacing(pace);
+      setPathways(pw?.eligible || []);
+      setAudit(Array.isArray(au) ? au.slice(0, 5) : []);
+      // AI wellbeing summary (non-blocking)
+      apiFetch<Insight>("/insights/summarise", { method: "POST", body: { page_key: "dashboard", context: { plan: user?.plan } } })
+        .then(setInsight)
+        .catch(() => setInsight(null));
     } catch {
       setError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeId]);
+  }, [activeId, user?.plan]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const firstName = user?.first_name || user?.name?.split(" ")[0] || "there";
-  const totalAnomalies = statements.reduce((s, st) => s + (st.anomalies?.length || 0), 0);
-  const totalImpact = statements.reduce((s, st) => s + (st.anomaly_dollar_impact_total || 0), 0);
+  const allAnomalies = statements.flatMap((s) => (s.anomalies || []).map((a: any) => ({ ...a, statement_id: s.id })));
+  const spent = (budget?.streams || []).reduce((a, s) => a + (s.spent || 0), 0);
+  const usable = budget?.quarterly_usable ?? budget?.quarterly_total ?? 0;
+  const left = usable - spent;
   const latest = statements[0];
-  const planLabel = (user?.plan || "free").replace(/^\w/, (c) => c.toUpperCase());
-  const pace = paceMeta(pacing?.pace_status);
-  const envPct = pacing?.envelope ? Math.round(((pacing.actual_spent || 0) / pacing.envelope) * 100) : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <WaylyHeader notifications={totalAnomalies} />
+      <WaylyHeader notifications={allAnomalies.length} />
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >
+        {/* Wellbeing summary header */}
         <View style={{ paddingHorizontal: spacing.lg }}>
-          <T style={{ fontFamily: fonts.heading, fontSize: 28 }}>Hi, {firstName}</T>
-          <T variant="bodyMuted" style={{ marginBottom: spacing.md }}>Here&apos;s your care overview</T>
-          <ParticipantSwitcher householdName={user?.name} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+            <Overline>Wellbeing summary</Overline>
+            <View style={[styles.planBadge, { backgroundColor: colors.goldSoft }]}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.gold }}>{(user?.plan || "free").toUpperCase()}</T>
+            </View>
+          </View>
+          <T style={{ fontFamily: fonts.heading, fontSize: 30, marginTop: 6 }}>{firstName}, this quarter</T>
+          {budget ? (
+            <T variant="bodyMuted" style={{ marginTop: 4 }}>
+              {budget.quarter_label} · {budget.classification_label} · {moneyWhole(usable)} per quarter
+            </T>
+          ) : null}
+          <View style={{ marginTop: spacing.md }}>
+            <ParticipantSwitcher householdName={user?.name} />
+          </View>
         </View>
 
         {loading ? (
           <Loading label="Loading your dashboard…" />
         ) : error ? (
-          <StatePanel testID="dashboard-error" icon={AlertCircle} title="Couldn't load your dashboard" message="Please check your connection and try again." actionLabel="Retry" onAction={load} />
+          <StatePanel testID="dashboard-error" icon={AlertTriangle} title="Couldn't load your dashboard" message="Please check your connection and try again." actionLabel="Retry" onAction={load} />
         ) : (
           <>
-            {/* Quarterly Pacing */}
-            {pacing?.envelope ? (
+            {/* AI wellbeing summary */}
+            {insight?.summary ? (
               <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-                <Pressable testID="pacing-card" onPress={() => router.push("/(tabs)/statements")} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <TrendingUp size={18} color={colors.primary} />
-                      <T variant="label" style={{ color: colors.muted }}>QUARTERLY PACING</T>
+                <Card testID="dashboard-ai-summary" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <Sparkles size={18} color={colors.sage} />
+                    <T style={{ fontFamily: fonts.bodySemi, color: colors.sage }}>Wayly summary</T>
+                  </View>
+                  <T style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23 }}>{sanitizeAI(insight.summary)}</T>
+                  {insight.alerts?.map((a, i) => (
+                    <View key={i} style={{ flexDirection: "row", gap: 8, marginTop: spacing.sm, alignItems: "flex-start" }}>
+                      <ArrowRight size={16} color={colors.sage} style={{ marginTop: 3 }} />
+                      <T variant="small" style={{ flex: 1, color: colors.text }}>{sanitizeAI(a.text)}</T>
                     </View>
-                    <ChevronRight size={18} color={colors.muted} />
-                  </View>
-                  <T style={{ fontFamily: fonts.heading, fontSize: 22, marginTop: 4, color: pace.color }}>
-                    {pace.label} · {pacing.quarter?.label || ""}
-                  </T>
-                  <View style={styles.pacingRow}>
-                    <PacingStat label="ENVELOPE" value={money(pacing.envelope)} colors={colors} />
-                    <PacingStat label="SPENT SO FAR" value={money(pacing.actual_spent)} colors={colors} />
-                    <PacingStat label="PROJECTED" value={money(pacing.projected_end_of_quarter_total)} colors={colors} />
-                  </View>
-                  <View style={[styles.bar, { backgroundColor: colors.surface2 }]}>
-                    <View style={{ width: `${Math.min(envPct, 100)}%`, height: "100%", backgroundColor: pace.color, borderRadius: 999 }} />
-                  </View>
-                  <T variant="small" style={{ marginTop: 6 }}>
-                    {envPct}% of envelope
-                    {pacing.quarter?.elapsed_days != null && pacing.quarter?.total_days != null
-                      ? ` · ${pacing.quarter.elapsed_days} of ${pacing.quarter.total_days} days elapsed`
-                      : ""}
-                  </T>
-                </Pressable>
+                  ))}
+                </Card>
               </View>
             ) : null}
 
-            {/* Plan */}
-            <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.md }}>
-              <Card testID="plan-status-card" style={{ backgroundColor: colors.primary, borderColor: colors.primary }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <View>
-                    <T style={{ fontFamily: fonts.body, fontSize: 12, color: "rgba(255,255,255,0.7)", letterSpacing: 0.5 }}>
-                      {(user?.subscription_status || "free").toUpperCase()} PLAN
-                    </T>
-                    <T style={{ fontFamily: fonts.heading, fontSize: 24, color: "#fff", marginTop: 2 }}>{planLabel}</T>
-                    <T style={{ fontFamily: fonts.body, fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
-                      {active?.display_name || user?.name}
-                    </T>
-                  </View>
-                  <Ribbon size={26} color="rgba(255,255,255,0.9)" />
+            {/* Quick-glance stat cards */}
+            {budget ? (
+              <>
+                <View style={styles.statsRow}>
+                  <StatCard testID="stat-spent" icon={TrendingUp} label="This quarter" value={moneyWhole(spent)} sub={`of ${moneyWhole(usable)} · ${moneyWhole(left)} left`} colors={colors} shadow={shadow} />
+                  <StatCard testID="stat-anomalies" icon={Bell} label="Alerts" value={String(allAnomalies.length)} sub={allAnomalies.length === 0 ? "Nothing unusual" : "Things to review"} onPress={() => router.push("/budget-alerts")} colors={colors} shadow={shadow} />
                 </View>
+                <View style={styles.statsRow}>
+                  <StatCard testID="stat-statements" icon={FileText} label="Statements" value={String(statements.length)} sub={latest ? `Latest ${shortDate(latest.uploaded_at || latest.created_at)}` : "None yet"} onPress={() => router.push("/(tabs)/statements")} colors={colors} shadow={shadow} />
+                  <StatCard testID="stat-cap" icon={CheckCircle2} label="Lifetime cap" value={`${(budget.lifetime_pct ?? 0).toFixed(1)}%`} sub={`used of ${moneyWhole(budget.lifetime_cap)}`} onPress={() => router.push("/reports")} colors={colors} shadow={shadow} />
+                </View>
+
+                {/* Stream breakdowns */}
+                <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                  <Overline>Budget snapshot</Overline>
+                  <View style={{ gap: spacing.md, marginTop: spacing.sm }}>
+                    {(budget.streams || []).map((s) => <StreamProgress key={s.stream} stream={s} />)}
+                  </View>
+                  {budget.streams_note ? (
+                    <View testID="dashboard-streams-note" style={[styles.note, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
+                      <T variant="small" style={{ flex: 1 }}>{budget.streams_note}</T>
+                      <View style={[styles.sourceBadge, { backgroundColor: budget.allocation_source === "statement" ? colors.sageSoft : colors.goldSoft }]}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.5, color: budget.allocation_source === "statement" ? colors.sage : colors.gold }}>
+                          {budget.allocation_source === "statement" ? "FROM YOUR LATEST STATEMENT" : "INDICATIVE SPLIT"}
+                        </T>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+
+                {/* Pathways */}
+                {pathways.length > 0 ? (
+                  <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                    <Card testID="dashboard-pathways" style={{ borderColor: colors.sage }}>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <Overline>Pathways the participant may qualify for</Overline>
+                        <View style={[styles.matchBadge, { backgroundColor: colors.sageSoft }]}>
+                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, color: colors.sage }}>{pathways.length} match{pathways.length === 1 ? "" : "es"}</T>
+                        </View>
+                      </View>
+                      <View style={{ marginTop: spacing.md, gap: spacing.md }}>
+                        {pathways.map((p) => (
+                          <View key={p.pathway} testID={`dashboard-pathway-${p.pathway}`} style={{ borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: spacing.md }}>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", gap: 4 }}>
+                              <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, flex: 1 }}>{p.title}</T>
+                              {p.episode_aud ? <T variant="small">Up to {moneyWhole(p.episode_aud)} · {p.duration_days} days</T> : null}
+                            </View>
+                            {p.reason ? <T variant="small" style={{ marginTop: 4 }}>{sanitizeAI(p.reason)}</T> : null}
+                            {p.section_ref ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.muted, marginTop: 6 }}>{p.section_ref.toUpperCase()}</T> : null}
+                          </View>
+                        ))}
+                      </View>
+                    </Card>
+                  </View>
+                ) : null}
+
+                {/* Lifetime contribution cap */}
+                <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                  <Card testID="lifetime-cap-card">
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <Overline>Lifetime contribution cap</Overline>
+                      <T variant="small">{budget.is_grandfathered ? "Grandfathered" : "New entrant"}</T>
+                    </View>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginTop: spacing.sm, flexWrap: "wrap" }}>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 22 }}>
+                        {money(budget.lifetime_contributions)} <T variant="small">of {moneyWhole(budget.lifetime_cap)}</T>
+                      </T>
+                      <T variant="small">{(budget.lifetime_pct ?? 0).toFixed(2)}%</T>
+                    </View>
+                    <View style={[styles.bar, { backgroundColor: colors.surface2 }]}>
+                      <View style={{ width: `${Math.min(100, budget.lifetime_pct ?? 0)}%`, height: "100%", backgroundColor: colors.sage, borderRadius: 999 }} />
+                    </View>
+                  </Card>
+                </View>
+              </>
+            ) : null}
+
+            {/* Things to know */}
+            <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+              <Card testID="alerts-card">
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <Overline>Things to know</Overline>
+                  {allAnomalies.length > 0 ? <T variant="small">{allAnomalies.length} item{allAnomalies.length === 1 ? "" : "s"}</T> : null}
+                </View>
+                {allAnomalies.length === 0 ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.md }}>
+                    <Sparkles size={16} color={colors.sage} />
+                    <T variant="small">Nothing unusual at the moment.</T>
+                  </View>
+                ) : (
+                  <View style={{ marginTop: spacing.md, gap: spacing.md }}>
+                    {allAnomalies.slice(0, 6).map((a: any, i: number) => (
+                      <Pressable key={a.id || i} onPress={() => router.push(`/statement/${a.statement_id}`)} style={{ flexDirection: "row", gap: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: spacing.md }}>
+                        <AlertTriangle size={16} color={a.severity === "alert" ? colors.terracotta : colors.sage} style={{ marginTop: 2 }} />
+                        <View style={{ flex: 1 }}>
+                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>{a.title}</T>
+                          {a.detail ? <T variant="small" style={{ marginTop: 2 }}>{a.detail}</T> : null}
+                        </View>
+                        <ChevronRight size={16} color={colors.muted} />
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
               </Card>
             </View>
 
-            {/* At a glance */}
-            <View style={styles.statsRow}>
-              <StatTile icon={FileText} value={String(statements.length)} label="Statements" onPress={() => router.push("/(tabs)/statements")} colors={colors} shadow={shadow} tint={colors.primary} testID="stat-statements" />
-              <StatTile icon={ReceiptText} value={invoiceCount === null ? "—" : String(invoiceCount)} label="Invoices" onPress={() => router.push("/invoices")} colors={colors} shadow={shadow} tint={colors.primary} testID="stat-invoices" />
-            </View>
-            <View style={styles.statsRow}>
-              <StatTile icon={AlertCircle} value={String(totalAnomalies)} label="Flags found" colors={colors} shadow={shadow} tint={colors.alert} testID="stat-flags" />
-              <StatTile icon={DollarSign} value={money(totalImpact)} label="$ impact" colors={colors} shadow={shadow} tint={colors.gold} testID="stat-impact" />
-            </View>
-
-            {/* Quick actions */}
-            <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.sm }}>
-              <T variant="h3" style={{ marginBottom: spacing.sm }}>Quick actions</T>
-              <View style={{ flexDirection: "row", gap: spacing.md }}>
-                <ActionTile icon={UploadCloud} label="Upload a document" onPress={() => router.push("/upload")} colors={colors} shadow={shadow} testID="action-upload" />
-                <ActionTile icon={MessageCircle} label="Ask Wayly" onPress={() => router.push("/(tabs)/ask")} colors={colors} shadow={shadow} testID="action-ask" />
-              </View>
-            </View>
-
-            {/* Latest statement */}
+            {/* Recent statements */}
             <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-              <T variant="h3" style={{ marginBottom: spacing.sm }}>Latest statement</T>
-              {latest ? (
-                <Card testID="latest-statement-card" style={{ padding: spacing.md }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-                    <View style={[styles.docIcon, { backgroundColor: colors.sageSoft }]}>
-                      <FileText size={22} color={colors.primary} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }} numberOfLines={1}>{latest.period_label || latest.filename}</T>
-                      <T variant="small">{shortDate(latest.uploaded_at)} · {latest.line_items?.length || 0} items</T>
-                    </View>
-                    <T testID="latest-statement-open" style={{ color: colors.gold, fontFamily: fonts.bodySemi }} onPress={() => router.push(`/statement/${latest.id}`)}>View</T>
+              <Card testID="recent-statements-card">
+                <Overline>Recent statements</Overline>
+                {statements.length === 0 ? (
+                  <View style={{ marginTop: spacing.md }}>
+                    <T variant="small">No statements yet.</T>
+                    <Pressable onPress={() => router.push("/upload")}><T style={{ color: colors.gold, fontFamily: fonts.bodySemi, marginTop: 4 }}>Upload one</T></Pressable>
+                  </View>
+                ) : (
+                  <View style={{ marginTop: spacing.sm }}>
+                    {statements.slice(0, 4).map((s) => (
+                      <Pressable key={s.id} onPress={() => router.push(`/statement/${s.id}`)} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                        <FileText size={18} color={colors.primary} />
+                        <View style={{ flex: 1 }}>
+                          <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }} numberOfLines={1}>{s.period_label || s.filename}</T>
+                          <T variant="small">{shortDate(s.uploaded_at || s.created_at)}</T>
+                        </View>
+                        <ChevronRight size={16} color={colors.muted} />
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </Card>
+            </View>
+
+            {/* Recent activity */}
+            {audit.length > 0 ? (
+              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                <Card testID="recent-activity-card">
+                  <Overline>Recent activity</Overline>
+                  <View style={{ marginTop: spacing.sm }}>
+                    {audit.map((a) => (
+                      <View key={a.id} style={{ flexDirection: "row", gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                        <Activity size={16} color={colors.sage} style={{ marginTop: 2 }} />
+                        <View style={{ flex: 1 }}>
+                          <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13 }}>{a.detail || a.action}</T>
+                          <T variant="small">{a.actor_name ? `${a.actor_name} · ` : ""}{timeAgo(a.created_at)}</T>
+                        </View>
+                      </View>
+                    ))}
                   </View>
                 </Card>
-              ) : (
-                <StatePanel testID="dashboard-empty-statements" icon={FileText} title="No statements yet" message="Upload your first Support at Home statement to see it decoded here." actionLabel="Upload a statement" onAction={() => router.push("/upload")} />
-              )}
+              </View>
+            ) : null}
+
+            {/* Quick actions */}
+            <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+              <Overline>Quick actions</Overline>
+              <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.sm }}>
+                <ActionTile icon={UploadCloud} label="Upload a statement" onPress={() => router.push("/upload")} colors={colors} shadow={shadow} testID="action-upload" />
+                <ActionTile icon={MessageCircle} label="Ask Wayly" onPress={() => router.push("/(tabs)/ask")} colors={colors} shadow={shadow} testID="action-ask" />
+              </View>
+              <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.md }}>
+                <ActionTile icon={Users} label="Key Contacts" onPress={() => router.push("/key-contacts" as any)} colors={colors} shadow={shadow} testID="action-contacts" />
+                <ActionTile icon={Sparkles} label="AI Tools" onPress={() => router.push("/(tabs)/ai-tools")} colors={colors} shadow={shadow} testID="action-tools" />
+              </View>
             </View>
           </>
         )}
@@ -190,43 +301,37 @@ export default function Dashboard() {
   );
 }
 
-function PacingStat({ label, value, colors }: any) {
+function StatCard({ icon: Icon, label, value, sub, onPress, colors, shadow, testID }: any) {
   return (
-    <View style={{ flex: 1 }}>
-      <T style={{ fontFamily: fonts.body, fontSize: 10, color: colors.muted, letterSpacing: 0.4 }}>{label}</T>
-      <T style={{ fontFamily: fonts.monoMedium, fontSize: 16, color: colors.text, marginTop: 2 }}>{value}</T>
-    </View>
-  );
-}
-
-function StatTile({ icon: Icon, value, label, onPress, tint, colors, shadow, testID }: any) {
-  return (
-    <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={({ pressed }) => [styles.tile, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card, pressed && onPress && { opacity: 0.85 }]}>
-      <Icon size={22} color={tint} />
-      <T style={{ fontFamily: fonts.heading, fontSize: 22, marginTop: 6 }} numberOfLines={1}>{value}</T>
-      <T variant="small">{label}</T>
+    <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={({ pressed }) => [styles.stat, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card, pressed && onPress && { opacity: 0.85 }]}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Icon size={16} color={colors.muted} />
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.6, color: colors.muted }}>{label.toUpperCase()}</T>
+      </View>
+      <T style={{ fontFamily: fonts.heading, fontSize: 22, marginTop: 4 }} numberOfLines={1}>{value}</T>
+      <T variant="small" style={{ marginTop: 2 }} numberOfLines={2}>{sub}</T>
     </Pressable>
   );
 }
 
 function ActionTile({ icon: Icon, label, onPress, colors, shadow, testID }: any) {
   return (
-    <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [styles.tile, { backgroundColor: colors.surface, borderColor: colors.border, alignItems: "flex-start" }, shadow.card, pressed && { opacity: 0.85 }]}>
-      <View style={[styles.actionIcon, { backgroundColor: colors.gold }]}>
-        <Icon size={22} color="#fff" />
-      </View>
-      <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, marginTop: spacing.sm }}>{label}</T>
+    <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [styles.action, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card, pressed && { opacity: 0.85 }]}>
+      <View style={[styles.actionIcon, { backgroundColor: colors.gold }]}><Icon size={20} color="#fff" /></View>
+      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, marginTop: spacing.sm }}>{label}</T>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { paddingBottom: spacing.xxl, paddingTop: spacing.sm },
-  card: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.lg },
-  pacingRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md, marginBottom: spacing.sm },
-  bar: { height: 8, borderRadius: 999, overflow: "hidden", marginTop: 4 },
+  planBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill },
   statsRow: { flexDirection: "row", gap: spacing.md, paddingHorizontal: spacing.lg, marginTop: spacing.md },
-  tile: { flex: 1, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1 },
+  stat: { flex: 1, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1 },
+  note: { flexDirection: "row", gap: spacing.sm, alignItems: "center", borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
+  sourceBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
+  matchBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
+  bar: { height: 8, borderRadius: 999, overflow: "hidden", marginTop: spacing.sm },
+  action: { flex: 1, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, alignItems: "flex-start" },
   actionIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
-  docIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
 });
