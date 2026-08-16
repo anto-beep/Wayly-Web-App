@@ -1,0 +1,308 @@
+{
+  "anon_dash_checks": [
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/ai-tools",
+      "text_length": 3603,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/ai-tools/invoice-checker",
+      "text_length": 4683,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/invoice-checker"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/ai-tools/statement-decoder",
+      "text_length": 4657,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/statement-decoder"
+    }
+  ],
+  "athm_check": {
+    "authed_fake_attach_body": "{\"detail\":\"Document not found\"}",
+    "authed_fake_attach_status": 404,
+    "get_body": {
+      "referrals": []
+    },
+    "get_has_referrals_array": true,
+    "get_status": 200,
+    "participant_id": "0c538637-b0dd-4982-8f78-b32814c6a5eb",
+    "participant_probe": {
+      "body": "{\"participants\":[{\"id\":\"0c538637-b0dd-4982-8f78-b32814c6a5eb\",\"household_id\":\"b6228253-f0ee-49f0-a670-4b67f5df1b80\",\"display_name\":\"Mum\",\"first_name\":\"Dorothy\",\"last_name\":\"Smith\",\"preferred_name\":\"Mum\",\"classification\":{\"band\":4,\"confidence\":null,\"source\":\"unknown\",\"effective_date\":null,\"last_updated\":\"2026-08-06T02:33:42.737000+00:00\"},\"provider\":{\"primary\":\"Test Provider 8c1af9aa\",\"additional\":[],\"last_updated\":\"2026-08-06T02:33:42.737000+00:00\"},\"pension_status\":\"part_pension\",\"transition_st",
+      "status": 200
+    },
+    "project_id": "0bc56f63-c41b-46d2-b918-0b5d0b5a3383",
+    "project_title": "Dash QA OT Referral 1786022346",
+    "section_visible": true,
+    "unauth_attach_status": 401,
+    "unauth_get_status": 401,
+    "upload_button_text": "Upload Referral",
+    "upload_button_visible": true
+  },
+  "athm_failure": false,
+  "auth_dash_checks": [
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app",
+      "text_length": 7998,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/csc/stream-mix-and-iat",
+      "text_length": 2572,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/csc/stream-mix-and-iat"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/athm/projects",
+      "text_length": 1852,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/athm/projects"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/chsp/tools",
+      "text_length": 2025,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/chsp/tools"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/ask-wayly",
+      "text_length": 2144,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/ask-wayly"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/carer/self-assessment",
+      "text_length": 2004,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/carer/self-assessment"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/statements",
+      "text_length": 3447,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/statements"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/documents",
+      "text_length": 3367,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/documents"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/reports",
+      "text_length": 16574,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/reports"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/care-plans",
+      "text_length": 3369,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/care-plans"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/app/wall",
+      "text_length": 1886,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/wall"
+    }
+  ],
+  "base_url": "https://mobile-parity-sweep.preview.emergentagent.com",
+  "console_errors": [
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "type": "error",
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/chsp/tools"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "type": "error",
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/chsp/tools"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 401 ()",
+      "type": "error",
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/classification-self-check"
+    }
+  ],
+  "cta_checks": [
+    {
+      "anonymous_cta_count": 0,
+      "authed": true,
+      "button_deeplink_ok": true,
+      "button_href": "/app/tools/invoice-checker/list",
+      "expected_testid_found": true,
+      "heading_ok": true,
+      "text": "YOU'RE LOGGED IN Open This Tool In Your Wayly App Skip the marketing page and go straight to the connected version, where Invoice Checker works on your real data. Open Invoice Checker",
+      "tool_key": "invoice-checker"
+    },
+    {
+      "anonymous_cta_count": 0,
+      "authed": true,
+      "button_deeplink_ok": true,
+      "button_href": "/app/statements/upload",
+      "expected_testid_found": true,
+      "heading_ok": true,
+      "text": "YOU'RE LOGGED IN Open This Tool In Your Wayly App Skip the marketing page and go straight to the connected version, where Statement Decoder works on your real data. Open Statement Decoder",
+      "tool_key": "statement-decoder"
+    },
+    {
+      "authed": false,
+      "authed_cta_count": 0,
+      "button_href": "/signup",
+      "button_signup_ok": true,
+      "expected_testid_found": true,
+      "text": "Check Your Provider's Invoice Upload the invoice you were sent and Wayly tells you whether anything is worth raising before you pay. Start Your 7-Day Free Trial",
+      "tool_key": "invoice-checker",
+      "trial_button_ok": true
+    },
+    {
+      "authed": false,
+      "authed_cta_count": 0,
+      "button_href": "/signup",
+      "button_signup_ok": true,
+      "expected_testid_found": true,
+      "text": "See What Your Statement Is Really Telling You Upload a statement and get a clear, calm read in minutes. Start Your 7-Day Free Trial",
+      "tool_key": "statement-decoder",
+      "trial_button_ok": true
+    }
+  ],
+  "cta_failures": [],
+  "dash_failure_pages": [],
+  "failures": [],
+  "login_user": {
+    "admin_role": null,
+    "cancel_at_period_end": false,
+    "created_at": "2026-05-03T12:06:24.354556+00:00",
+    "email": "cathy@example.com",
+    "first_name": "Cathy",
+    "household_id": "b6228253-f0ee-49f0-a670-4b67f5df1b80",
+    "id": "fbaf9ceb-9be3-4c9b-b1d6-bcfe4e13d852",
+    "is_admin": false,
+    "last_name": "Roberts",
+    "mobile": null,
+    "name": "Cathy",
+    "plan": "family",
+    "role": "caregiver",
+    "subscription_status": "active",
+    "totp_enabled": false,
+    "trial_ends_at": "2025-01-01T00:00:00+00:00"
+  },
+  "page_errors": [],
+  "tool_smoke_checks": [
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/ai-tools/invoice-checker",
+      "render_ok": true,
+      "text_length": 4683,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/invoice-checker"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/ai-tools/statement-decoder",
+      "render_ok": true,
+      "text_length": 4657,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/statement-decoder"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/ai-tools/budget-calculator",
+      "render_ok": true,
+      "text_length": 4463,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/budget-calculator"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/ai-tools/classification-self-check",
+      "render_ok": true,
+      "text_length": 4355,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/classification-self-check"
+    },
+    {
+      "compiled_overlay": false,
+      "em_dash_count": 0,
+      "em_dash_snippet": "",
+      "en_dash_count": 0,
+      "en_dash_snippet": "",
+      "path": "/ai-tools/provider-price-checker",
+      "render_ok": true,
+      "text_length": 4753,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/provider-price-checker"
+    }
+  ],
+  "tool_smoke_failures": []
+}

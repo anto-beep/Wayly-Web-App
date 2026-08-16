@@ -1,0 +1,55 @@
+# CSC-1 "What the assessor will ask" - Integrated Assessment Tool (IAT) domains.
+#
+# Powers the collapsible block in the results screen (§6.3). Loaded from this
+# file so an ANZSGM-driven IAT structure change before 1 October 2026 is a
+# data update, not a code change.
+#
+# covered_by_csc values: "yes" | "partly" | "no"
+
+schema_version: csc.iat_domains.v1
+effective_from: 2026-02-01
+legislativeVerificationStatus: VERIFIED
+source: CSC-1-v1.md §6.3, DoH IAT domain descriptions
+
+domains:
+  - name: "Physical health and medical conditions"
+    covered_by_csc: partly
+    notes: "Q14 hospital or ED visits in the last 12 months"
+  - name: "Cognition"
+    covered_by_csc: yes
+    notes: "Q10 memory, conversations, everyday decisions"
+  - name: "Behaviour"
+    covered_by_csc: yes
+    notes: "Q12 agitation, night confusion, resistance to help"
+  - name: "Emotional wellbeing"
+    covered_by_csc: yes
+    notes: "Q11 mood, anxiety, distress"
+  - name: "Activities of daily living"
+    covered_by_csc: yes
+    notes: "Q1 to Q4 showering, dressing, mobility, continence"
+  - name: "Instrumental activities of daily living"
+    covered_by_csc: yes
+    notes: "Q5 to Q9 meals, cleaning, medication, shopping, transport"
+  - name: "Home environment"
+    covered_by_csc: yes
+    notes: "Q15 stairs, bathroom, isolation, home safety"
+  - name: "Social circumstances"
+    covered_by_csc: no
+    notes: "Not covered by this self-check. The assessor will ask about isolation, friendships and community connection."
+  - name: "Carer capacity"
+    covered_by_csc: partly
+    notes: "Q16 informal support amount only"
+  - name: "Continence"
+    covered_by_csc: yes
+    notes: "Q4 bladder and bowel management"
+  - name: "Falls and safety"
+    covered_by_csc: yes
+    notes: "Q13 falls in the last 6 months"
+  - name: "Goals and preferences"
+    covered_by_csc: no
+    notes: "Not covered by this self-check. The assessor will ask what you or the person you care for want to keep doing at home."
+
+closing_copy: >
+  The IAT is more thorough than what we ask here. This block tells you what to
+  expect and what to make sure the assessor asks about. Some assessors move
+  quickly. The more prepared you are, the more accurate the outcome.

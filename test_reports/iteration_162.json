@@ -1,0 +1,37 @@
+{
+  "summary": "Mobile parity retest — ALL 8 checks PASS. (1) Plan & Billing portal FIX verified: mobile now POSTs to /api/payments/portal (not /api/portal). For cathy who has no stripe_customer_id, backend returns 400 and the UI shows the friendly 'No Stripe customer on record. Start a subscription first.' banner — NO red 'Not Found' error. (2) Signup plan picker renders both plans, selection toggles correctly ('Start 7-day free Family/Solo trial' text swaps), helper copy 'We take your card securely on Stripe' is present, participant/seat counts render. (3) plan-select shows plan-participants-solo='1 PARTICIPANT TRACKED', plan-seats-family='UP TO 5 CAREGIVER SEATS', plan-current-family badge (cathy is on family), and plan-subscribe-solo (cathy is not trial-eligible so shows Subscribe not Trial — expected). (4) DD/MM/YYYY dates verified: Plan & Billing 'Renews 01/01/2027', Audit Log timestamps '16/08/2026 08:28', Referrals '16/08/2026'. Zero long-form ('23 August 2026') or short-form ('23 Aug 2026') dates observed on tested screens. (5) Audit Log renders 112 rows with audit-row-* testIDs, actions, actors, DD/MM/YYYY HH:mm timestamps. (6) Referrals: add-btn opens form, submit creates 'Dr Lee' specialist referral as referral-row-0 with referral-status-0/referral-remove-0 present, status cycles OPEN→IN PROGRESS on tap. (7) Contribution Position: all six testIDs (ce3-lifetime-cap-card, ce3-annual-card, ce3-annual-estimate, ce3-reconciliation-card, ce3-reconcile-btn, ce3-cap-refresh) render for cathy's active participant. (8) Drawer parity: navGroups.ts confirms Referrals, Audit Log, and Contribution Position are all implemented:true (live links) and Support is the only intentionally-hidden entry (no implemented flag) — verified in /app/mobile/src/config/navGroups.ts.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter162_signup.jpeg",
+    "/app/test_reports/iter162_plan_select.jpeg",
+    "/app/test_reports/iter162_plan_billing.jpeg",
+    "/app/test_reports/iter162_plan_billing_after_portal.jpeg",
+    "/app/test_reports/iter162_audit.jpeg",
+    "/app/test_reports/iter162_referrals.jpeg",
+    "/app/test_reports/iter162_contribution.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Portal path fix in /app/mobile/app/plan-billing.tsx:69 is correctly '/payments/portal' now — matches backend and web behavior.",
+    "Friendly 400 handling on billing-portal is good: apiFetch surfaces the backend's message ('No Stripe customer on record. Start a subscription first.') via ApiError.message instead of a generic Not Found, giving the user an actionable next step."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, active, has participant, no stripe_customer_id)",
+  "seed_data_creation": "Created one test referral row for cathy: 'Dr Lee' (specialist, status OPEN → IN PROGRESS after cycle). Not cleaned up — safe test data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All Wayly mobile parity work from this iteration verified. Portal endpoint is now /api/payments/portal in /app/mobile/app/plan-billing.tsx (was /api/portal). Format util /app/mobile/src/utils/format.ts renders DD/MM/YYYY and DD/MM/YYYY HH:mm consistently. Three new screens (/audit, /referrals, /contribution-position) all live via drawer navGroups. If retesting, note cathy has no stripe_customer_id — tapping billing-portal is expected to show the friendly 400 message, not open Stripe. To exercise the happy-path Stripe portal open, use a user with an active paid subscription/stripe_customer_id.",
+  "rca of the issue": "Prior iter 161 bug (POST /api/portal → 404) is fixed at /app/mobile/app/plan-billing.tsx line 69 (path now '/payments/portal'). Confirmed via captured network log: 'REQ POST .../api/payments/portal' followed by 'RES 400 .../api/payments/portal' and the friendly UI message rendering."
+}

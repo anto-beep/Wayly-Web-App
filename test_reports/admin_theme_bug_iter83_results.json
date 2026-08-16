@@ -1,0 +1,178 @@
+{
+  "base_url": "https://mobile-parity-sweep.preview.emergentagent.com",
+  "admin_email_used": "hello@techglove.com.au",
+  "checks": [
+    {
+      "name": "admin login uses light palette",
+      "ok": true,
+      "details": {
+        "root": {
+          "text": "Wayly AdminOperations consoleInternal tooling for the Wayly support team. Audit-logged actions for billing, cost monitoring, anomaly review and incident response.Every action signed, hashed and replayable from the audit log.Real-time anomaly alerts, LLM cost ledger and Stripe revenue.2-factor required. Backup codes are shown once at enrolment.Live system statusAll systems operationalBuildpreviewRegionAU \u00b7 productionAPI response05:46:28Public status page Need access?RunbookRestricted access. All sign-ins, queries and exports are recorded. Unauthorised access is monitored and prosecuted under the Australian Criminal Code Act 1995.Sign inUse your Wayly admin credentials. You'll be asked for a 2FA code on the next step.EmailPasswordContinueLocked out? Email the on-call.Wayly Pty Ltd \u00b7 Sydney, AUvpreview",
+          "color": "rgb(14, 42, 44)",
+          "backgroundColor": "rgb(251, 248, 243)",
+          "rootTheme": "light",
+          "rootBg": "rgb(251, 248, 243)",
+          "rootColor": "rgb(14, 42, 44)"
+        },
+        "sign_in": {
+          "text": "Sign in",
+          "color": "rgb(14, 42, 44)",
+          "backgroundColor": "rgb(251, 248, 243)",
+          "rootTheme": "light",
+          "rootBg": "rgb(251, 248, 243)",
+          "rootColor": "rgb(14, 42, 44)"
+        },
+        "cta": {
+          "text": "Continue",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgb(135, 64, 33)",
+          "rootTheme": "light",
+          "rootBg": "rgb(251, 248, 243)",
+          "rootColor": "rgb(14, 42, 44)"
+        },
+        "root_contrast": 14.3
+      }
+    },
+    {
+      "name": "overview dark h1/stat labels have AA contrast",
+      "ok": true,
+      "details": {
+        "h1": {
+          "text": "Overview",
+          "color": "rgb(251, 248, 243)",
+          "backgroundColor": "rgb(5, 35, 39)",
+          "rootTheme": "dark",
+          "rootBg": "rgb(5, 35, 39)",
+          "rootColor": "rgb(251, 248, 243)"
+        },
+        "h1_contrast": 15.53,
+        "total_label": {
+          "text": "Total users",
+          "color": "rgb(184, 221, 222)",
+          "backgroundColor": "rgb(7, 46, 49)",
+          "rootTheme": "dark",
+          "rootBg": "rgb(5, 35, 39)",
+          "rootColor": "rgb(251, 248, 243)"
+        },
+        "total_label_contrast": 10.0,
+        "mrr_label": {
+          "text": "MRR (AUD)",
+          "color": "rgb(184, 221, 222)",
+          "backgroundColor": "rgb(7, 46, 49)",
+          "rootTheme": "dark",
+          "rootBg": "rgb(5, 35, 39)",
+          "rootColor": "rgb(251, 248, 243)"
+        },
+        "mrr_label_contrast": 10.0
+      }
+    },
+    {
+      "name": "feature flags h1 has strong dark-theme contrast",
+      "ok": true,
+      "details": {
+        "h1": {
+          "text": "Feature Flags (0)",
+          "color": "rgb(251, 248, 243)",
+          "backgroundColor": "rgb(5, 35, 39)",
+          "rootTheme": "dark",
+          "rootBg": "rgb(5, 35, 39)",
+          "rootColor": "rgb(251, 248, 243)"
+        },
+        "contrast": 15.53
+      }
+    },
+    {
+      "name": "preferences page exists",
+      "ok": true,
+      "details": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/admin/preferences"
+      }
+    },
+    {
+      "name": "preferences light toggle applies immediately and persists",
+      "ok": true,
+      "details": {
+        "rootTheme": "light",
+        "storedTheme": "light",
+        "rootBg": "rgb(251, 248, 243)",
+        "topbarLightPressed": "false",
+        "prefsLightChecked": "true"
+      }
+    },
+    {
+      "name": "top-bar toggle syncs after Preferences choice",
+      "ok": false,
+      "details": {
+        "rootTheme": "light",
+        "storedTheme": "light",
+        "rootBg": "rgb(251, 248, 243)",
+        "topbarLightPressed": "false",
+        "prefsLightChecked": "true"
+      }
+    },
+    {
+      "name": "theme persists across navigation",
+      "ok": true,
+      "details": {
+        "rootTheme": "light",
+        "storedTheme": "light",
+        "rootBg": "rgb(251, 248, 243)"
+      }
+    },
+    {
+      "name": "Preferences controls sync after top-bar theme choice",
+      "ok": false,
+      "details": {
+        "rootTheme": "dark",
+        "storedTheme": "dark",
+        "topbarDarkPressed": "true",
+        "prefsDarkChecked": "false",
+        "prefsActiveText": "Light:true,System:false,Dark:false"
+      }
+    },
+    {
+      "name": "system theme follows OS light preference",
+      "ok": true,
+      "details": {
+        "rootTheme": "system",
+        "storedTheme": "system",
+        "rootBg": "rgb(251, 248, 243)",
+        "rootColor": "rgb(14, 42, 44)"
+      }
+    },
+    {
+      "name": "system theme follows OS dark preference",
+      "ok": true,
+      "details": {
+        "rootTheme": "system",
+        "storedTheme": "system",
+        "rootBg": "rgb(5, 35, 39)",
+        "rootColor": "rgb(251, 248, 243)"
+      }
+    }
+  ],
+  "failures": [
+    {
+      "name": "top-bar toggle syncs after Preferences choice",
+      "ok": false,
+      "details": {
+        "rootTheme": "light",
+        "storedTheme": "light",
+        "rootBg": "rgb(251, 248, 243)",
+        "topbarLightPressed": "false",
+        "prefsLightChecked": "true"
+      }
+    },
+    {
+      "name": "Preferences controls sync after top-bar theme choice",
+      "ok": false,
+      "details": {
+        "rootTheme": "dark",
+        "storedTheme": "dark",
+        "topbarDarkPressed": "true",
+        "prefsDarkChecked": "false",
+        "prefsActiveText": "Light:true,System:false,Dark:false"
+      }
+    }
+  ]
+}

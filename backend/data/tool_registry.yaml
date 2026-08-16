@@ -1,0 +1,192 @@
+# INV-1 v1.2 · Tool Registry (spec §12A, S2)
+#
+# Single source of truth for every tool that appears anywhere in the product.
+# Every surface (tools grid, sidebar, pricing, About, Ask Wayly, marketing,
+# mobile) reads from this file — either directly (backend) or via the mirrored
+# JS module at frontend/src/config/toolRegistry.js.
+#
+# The tool count shown anywhere is derived from `count-featured` in this file,
+# never hardcoded. Adding a new tool means one PR to this file plus wiring the
+# frontend/backend route, and the count updates automatically.
+#
+# Editorial rules apply to every string.
+
+version: "1.0"
+generated_from_spec: "INV-1-v1.2-Invoice-Checker-handoff.md §12A"
+
+tools:
+  - slug: statement-decoder
+    name: "Statement Decoder"
+    short_description: "Plain-English explanation of your monthly Support at Home statement."
+    long_description: >
+      Paste any Support at Home monthly statement and get a plain-English
+      explanation in 60 seconds. Handles multi-page PDFs, images, and
+      photographed paper.
+    icon: FileSearch
+    route: "/ai-tools/statement-decoder"
+    marketing_route: "/ai-tools/statement-decoder"
+    plan: "Free, 1 use/120 days"
+    plan_tone: free
+    plan_sub: "No signup required"
+    tier_entitlement: [free, solo, family, adviser]
+    featured: true
+    order: 10
+    badge: null
+    analytics_id: statement_decode
+    active: true
+
+  - slug: invoice-checker
+    name: "Invoice Checker"
+    short_description: "Check the separate contribution invoice your provider sent."
+    long_description: >
+      Upload the invoice your provider sends for the contribution you pay.
+      Wayly checks it line by line against your funding, your expected
+      contribution, and the current program rules, and flags anything worth
+      raising with your provider before you pay.
+    icon: ReceiptText
+    route: "/ai-tools/invoice-checker"
+    marketing_route: "/ai-tools/invoice-checker"
+    plan: "Solo & Family"
+    plan_tone: paid
+    plan_sub: "7-day free trial"
+    tier_entitlement: [solo, family, adviser]
+    featured: true
+    order: 15                        # paired next to Statement Decoder
+    badge: new
+    badge_expires_at: "2026-11-15"   # six-week launch window from 1 Oct 2026
+    analytics_id: inv1_result_rendered
+    active: true
+
+  - slug: budget-calculator
+    name: "Budget & Lifetime Cap Calculator"
+    short_description: "Annual budget, per-stream allocation, and lifetime cap projection."
+    long_description: >
+      Enter your classification and contribution status. See annual budget,
+      per-stream allocation, and lifetime cap projection.
+    icon: Wallet
+    route: "/ai-tools/budget-calculator"
+    marketing_route: "/ai-tools/budget-calculator"
+    plan: "Solo & Family"
+    plan_tone: paid
+    plan_sub: "7-day free trial"
+    tier_entitlement: [solo, family, adviser]
+    featured: true
+    order: 20
+    badge: null
+    analytics_id: bud1_result_rendered
+    active: true
+
+  - slug: provider-price-checker
+    name: "Provider Price Checker"
+    short_description: "Compare your provider's charge against published medians."
+    long_description: >
+      Tell us what you are being charged. We compare it against published
+      medians and the Wayly Provider Quality Index, and flag brokered service
+      premiums.
+    icon: BarChart3
+    route: "/ai-tools/provider-price-checker"
+    marketing_route: "/ai-tools/provider-price-checker"
+    plan: "Solo & Family"
+    plan_tone: paid
+    plan_sub: "7-day free trial"
+    tier_entitlement: [solo, family, adviser]
+    featured: true
+    order: 30
+    badge: null
+    analytics_id: ppc_result_rendered
+    active: true
+
+  - slug: classification-self-check
+    name: "Classification Self-Check"
+    short_description: "See which Support at Home classification is likely for you."
+    long_description: >
+      Answer 12 questions about daily life. See which classification is
+      likely, and whether to request a reassessment.
+    icon: ListChecks
+    route: "/ai-tools/classification-self-check"
+    marketing_route: "/ai-tools/classification-self-check"
+    plan: "Solo & Family"
+    plan_tone: paid
+    plan_sub: "7-day free trial"
+    tier_entitlement: [solo, family, adviser]
+    featured: true
+    order: 40
+    badge: null
+    analytics_id: csc_result_rendered
+    active: true
+
+  - slug: letters-and-follow-ups
+    name: "Letters & Follow-ups"
+    short_description: "Draft polished letters to your provider, ACQSC, or the Ombudsman."
+    long_description: >
+      Draft a polished letter to My Aged Care, your provider, ACQSC, or the
+      Ombudsman. Track responses and know when to escalate.
+    icon: FileEdit
+    route: "/ai-tools/letters-and-follow-ups"
+    marketing_route: "/ai-tools/letters-and-follow-ups"
+    plan: "Solo & Family"
+    plan_tone: paid
+    plan_sub: "7-day free trial"
+    tier_entitlement: [solo, family, adviser]
+    featured: true
+    order: 50
+    badge: null
+    analytics_id: lf1_letter_generated
+    active: true
+
+  - slug: contribution-estimator
+    name: "Contribution Estimator"
+    short_description: "See how much you will actually pay each quarter."
+    long_description: >
+      How much will you actually pay each quarter under Support at Home?
+      Enter the situation, see a clear breakdown.
+    icon: Receipt
+    route: "/ai-tools/contribution-estimator"
+    marketing_route: "/ai-tools/contribution-estimator"
+    plan: "Solo & Family"
+    plan_tone: paid
+    plan_sub: "7-day free trial"
+    tier_entitlement: [solo, family, adviser]
+    featured: true
+    order: 60
+    badge: null
+    analytics_id: ce2_result_rendered
+    active: true
+
+  - slug: care-plan-reviewer
+    name: "Care Plan Reviewer"
+    short_description: "Check a care plan against the Statement of Rights."
+    long_description: >
+      Paste a care plan. We will check it against the Statement of Rights
+      and the National Quality Standards.
+    icon: ClipboardCheck
+    route: "/ai-tools/care-plan-reviewer"
+    marketing_route: "/ai-tools/care-plan-reviewer"
+    plan: "Solo & Family"
+    plan_tone: paid
+    plan_sub: "7-day free trial"
+    tier_entitlement: [solo, family, adviser]
+    featured: true
+    order: 70
+    badge: null
+    analytics_id: cpr_result_rendered
+    active: true
+
+  - slug: family-coordinator
+    name: "Aged Care Q&A"
+    short_description: "Plain-English answers grounded in the Aged Care Act 2024."
+    long_description: >
+      Plain-English answers about the Support at Home program, grounded in
+      the Aged Care Act 2024.
+    icon: MessageCircle
+    route: "/ai-tools/family-coordinator"
+    marketing_route: "/ai-tools/family-coordinator"
+    plan: "Solo & Family"
+    plan_tone: paid
+    plan_sub: "7-day free trial"
+    tier_entitlement: [solo, family, adviser]
+    featured: true
+    order: 80
+    badge: null
+    analytics_id: family_coordinator_query
+    active: true

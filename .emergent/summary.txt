@@ -1,0 +1,181 @@
+<analysis>**original_problem_statement**: 
+The user wants a comprehensive, strict web-to-mobile parity sweep for their cross-platform aged-care support app (Wayly). The explicit mandate is to copy the exact text, capitalization, layouts, functionality, tools, and workflows from the web app into the mobile (Expo) app without missing any detail.
+PRODUCT REQUIREMENTS: 
+- Every screen must match the web app (Settings, Onboarding, Billing, Invoices, Support, Participant Profile, Switch Provider). 
+- UI/UX: Strict dark-mode contrast rules (more clay/white, absolutely NO black text against teal or clay backgrounds/buttons).
+- Formatting: All dates must use . Use precise capitalization (e.g., First Name, Log Out, Required).
+- Data separation: The Participant Switcher must cleanly isolate data across all screens and workflows.
+
+**User's preferred language**: English
+*(INSTRUCT next agent to respond in the user's preferred language only)*
+
+**what currently exists?**: 
+A mature cross-platform application (React web, Expo mobile, FastAPI + MongoDB backend). A massive mobile parity effort is currently underway. Much of the underlying mobile scaffolding exists (Settings, Onboarding, Plan/Billing, Invoices, Participant Profile Hub) and utilizes  to auto-inject  headers. The mobile UI now needs strict refinement and logic parity to match the web app verbatim. 
+
+**Last working item**: 
+    - Last item agent was working: Building initial context by reading , , , and . The agent generated a plan to address the pending P0/P1 parity issues and sent it to the user via the  tool for approval.
+    - Status: BLOCKED (Waiting for user response to  tool)
+    - Agent Testing Done: N/A
+    - Which testing method agent to use? Both (Mobile screenshots for UI/color checks,  for full screen parity and complex flows).
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:
+  Issue 1: Dark Mode Contrast & App-wide Capitalization Sweep (P0)
+  Issue 2: Signup Persona Additional Questions Parity (P0)
+  Issue 3: Initials Dropdown Menu Parity (P0)
+  Issue 4: Stripe Post-Purchase Redirect (P1)
+  Issue 5: Dashboard Walkthrough UI (P1)
+  Issue 6: Date Picker Implementation (P2)
+  
+  Issues Detail:
+  - Issue 1: 
+     - Attempted fixes: None yet in this session.
+     - Next debug checklist: Check all mobile components/screens, especially , buttons, badges, and headers, utilizing . Ensure no black text exists on teal or clay backgrounds. Ensure exact capitalization matches web.
+     - Why fix this issue and what will be achieved with the fix?: User explicitly demanded readable dark-mode contrast and strict text-match parity.
+     - Status: BLOCKED (Waiting for  response)
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Frontend (Mobile screenshot)
+     - Blocked on other issue:  response
+  - Issue 2: 
+     - Attempted fixes: None yet.
+     - Next debug checklist: Review web signup flow vs . Add missing extra questions for solo/family plans to mobile.
+     - Why fix this issue and what will be achieved with the fix?: Maintains data collection and workflow parity with the web onboarding flow.
+     - Status: BLOCKED (Waiting for  response)
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Frontend
+     - Blocked on other issue:  response
+  - Issue 3: 
+     - Attempted fixes: None yet.
+     - Next debug checklist: Modify  or . Initials must be white. Tapping initials must open a dropdown menu (Profile and Settings, Plan and Billing, Members, Help & Support) matching web.
+     - Why fix this issue and what will be achieved with the fix?: Fulfills user request for mobile header navigation parity.
+     - Status: BLOCKED (Waiting for  response)
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Frontend
+     - Blocked on other issue:  response
+  - Issue 4: 
+     - Attempted fixes: None yet.
+     - Next debug checklist: Check  and .
+     - Why fix this issue and what will be achieved with the fix?: Ensures smooth UX by redirecting users back to the app after a Stripe portal payment.
+     - Status: BLOCKED (Waiting for  response)
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Frontend
+     - Blocked on other issue:  response
+  - Issue 5: 
+     - Attempted fixes: None yet.
+     - Next debug checklist: Update .
+     - Why fix this issue and what will be achieved with the fix?: Mirrors the web dashboard's Walkthrough section on mobile.
+     - Status: BLOCKED (Waiting for  response)
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Frontend
+     - Blocked on other issue:  response
+  - Issue 6: 
+     - Attempted fixes: None yet.
+     - Next debug checklist: Update  or create .
+     - Why fix this issue and what will be achieved with the fix?: Native date picker/calendar requested instead of standard text fields.
+     - Status: BLOCKED (Waiting for  response)
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Frontend
+     - Blocked on other issue:  response
+
+**In progress Task List**:
+  Task 1: Execution of  (P0)
+
+ Task Detail:
+  - Task 1: 
+     - Where to resume: You need to proceed with porting remaining web screens and UI tweaks to mobile exactly as they appear on the web, starting once the user approves the pending plan.
+     - What will be achieved with this?: Fulfilling the user's mandate for 100% visual and functional parity.
+     - Status: BLOCKED (Waiting for  response)
+     - Should Test frontend/backend/both after fix?: Frontend
+     - Blocked on something: User approval via pending  prompt.
+
+**Upcoming and Future Tasks**
+    Upcoming Tasks:
+    - P0: Implement the Statements page on mobile to look exactly like the web.
+    - P0: Bring full SD3 side-by-side statement pairs change review to mobile.
+    - P1: Implement the Switch Provider workflow end-to-end on mobile.
+    - P1: AI Tool Parity Audit (run all 9 AI tools on both platforms and ensure identical mobile outputs/UI).
+    - P2: Add an in-app email-verified landing/confirmation screen so deep links don't dump users abruptly.
+
+**Completed work in this session**
+- List of all completed tasks with file and method name: No code changes were executed in this current brief session yet (agent just read files and called ).
+- Recently completed (From previous session):
+  - Phase A-D Mobile Settings, Onboarding, Plan selection parity (DONE)
+  - Integration of Stripe Checkout at signup (DONE)
+  - Support Center, Ticket details, and Loop Cases tracking screens on mobile (DONE)
+  - Pension Change wizard on mobile (DONE)
+  - Email verification banner (DONE)
+  - Global forced-refresh Participant Switcher (DONE)
+  - Invoices list view & Participant Profile Hub matching web (DONE)
+
+**Earlier issues found/mentioned but not fixed**
+   - None. All user requests have been properly captured in the Pending Issues list.
+
+**Known issue recurrence from previous fork**
+  - None.
+
+**Code Architecture**
+- : Shared FastAPI & MongoDB backend.
+- : React Web App.
+- : Expo React Native Mobile App (File-based routing in ).
+- Shared UI styling philosophy: Web uses Tailwind/CSS variables (), Mobile mimics these using  / .
+
+**Key Technical Concepts**
+Cross-platform Mono-repo architecture, Shared JWT logic,  for scoping data globally,  utility for automatic  backend injection.
+
+**key DB schema**
+  - Users, Households, Participants, Cases, Tickets
+
+**changes in tech stack**
+  - None
+
+**All files of reference** 
+  -  (Checklist for pending UI rebuilds - viewed this session)
+  -  (Design tokens - viewed this session)
+  -  (Signup workflow - viewed this session)
+  -  (Detailed backend contract for mobile development)
+  -  (Global header switcher)
+
+**Areas that need refactoring**: 
+  - Mobile dark mode contrast and text colors (Teal/Clay backgrounds currently have black text which is unreadable).
+
+**key api endpoints**
+  - 
+  - 
+  - 
+  - 
+
+**Critical Info for New Agent** 
+- Wait for the user to respond to the pending  tool prompt before executing the roadmap.
+- **ENVIRONMENT**: You are working in the PREVIEW environment. 
+- **DATES**: Use  formatting everywhere.
+- **TEXT STRICTNESS**: Do not invent copy. Find the web equivalent and match it 100% case-sensitively. 
+- Ensure all screens dynamically re-fetch when  changes.
+
+**documents and test reports created in this job** 
+  -  (Created previously, heavily referenced)
+  -  (Created previously, heavily referenced)
+
+**Last 10 User Messages and any pending HUMAN messages** 
+ - *User*: Please use ask_human tool and confirm your plan now. (COMPLETED)
+ - *User*: [Tool result: Question has been sent to the user. Waiting for response] **(HUMAN MESSAGE PENDING)**
+
+**Project Health Check:**
+- Broken: None
+- Mocked: None
+
+**3rd Party Integrations** 
+ - Stripe (Payments) — requires User API Key via emergentintegrations.
+ - Email service via backend.
+
+**Testing status**
+  - Testing agent used after significant changes: NO (no changes made in this exact session yet).
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: None
+  - Known regressions: None
+
+**Credentials to test flow:**
+- Email:  / Password: 
+- Alternate: 
+
+**What agent forgot to execute**
+- The agent properly paused for the user's approval. Nothing was forgotten.</analysis>

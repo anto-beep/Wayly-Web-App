@@ -1,0 +1,494 @@
+{
+  "base_url": "https://mobile-parity-sweep.preview.emergentagent.com",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "routes": [
+    {
+      "route": "/about",
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/about",
+      "checks": {
+        "single_document_scrollbar": {
+          "pass": true,
+          "details": {
+            "verticalScrollable": true,
+            "scrollingElement": "html",
+            "htmlOverflowY": "auto",
+            "bodyOverflowY": "visible",
+            "rootOverflowY": "visible",
+            "pageLevelScrollContainers": [
+              {
+                "tag": "html",
+                "overflowY": "auto",
+                "overflowX": "hidden",
+                "clientHeight": 1080,
+                "scrollHeight": 9774,
+                "clientWidth": 1905,
+                "scrollWidth": 1905,
+                "hasElementScrollbar": true
+              }
+            ],
+            "viewportScrollbarWidth": 15
+          }
+        },
+        "mouse_wheel_scroll": {
+          "pass": true,
+          "before": 0,
+          "after": 900
+        },
+        "trackpad_like_wheel_scroll": {
+          "pass": true,
+          "before": 0,
+          "after": 900
+        },
+        "keyboard_scroll": {
+          "pass": true,
+          "arrow_before": 0,
+          "arrow_after": 480,
+          "pagedown_before": 0,
+          "pagedown_after": 945,
+          "space_before": 0,
+          "space_after": 945
+        },
+        "scrollbar_track_click": {
+          "pass": true,
+          "before": 0,
+          "after_track_click": 945
+        },
+        "scrollbar_thumb_drag": {
+          "pass": true,
+          "before": 0,
+          "after_drag": 6551
+        },
+        "top_to_bottom_and_back": {
+          "pass": true,
+          "bottom_scrollY": 8694,
+          "max_scroll": 8694,
+          "after_up_wheel": 7994
+        }
+      },
+      "errors": [],
+      "initial_metrics": {
+        "href": "https://mobile-parity-sweep.preview.emergentagent.com/about",
+        "scrollY": 0,
+        "innerHeight": 1080,
+        "innerWidth": 1920,
+        "scrollingElement": "html",
+        "docClientHeight": 1080,
+        "docScrollHeight": 9774,
+        "bodyClientHeight": 1080,
+        "bodyScrollHeight": 9774,
+        "rootClientHeight": 1080,
+        "rootScrollHeight": 9774,
+        "viewportScrollbarWidth": 15,
+        "htmlOverflowY": "auto",
+        "bodyOverflowY": "visible",
+        "rootOverflowY": "visible",
+        "htmlOverflowX": "hidden",
+        "bodyOverflowX": "visible",
+        "rootOverflowX": "visible",
+        "pageLevel": [
+          {
+            "tag": "html",
+            "overflowY": "auto",
+            "overflowX": "hidden",
+            "clientHeight": 1080,
+            "scrollHeight": 9774,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": true
+          },
+          {
+            "tag": "body",
+            "overflowY": "visible",
+            "overflowX": "visible",
+            "clientHeight": 1080,
+            "scrollHeight": 9774,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": false
+          },
+          {
+            "tag": "#root",
+            "overflowY": "visible",
+            "overflowX": "visible",
+            "clientHeight": 1080,
+            "scrollHeight": 9774,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": false
+          }
+        ],
+        "verticalScrollable": true,
+        "horizontalOverflow": false,
+        "activeElement": "BODY"
+      },
+      "pass": true
+    },
+    {
+      "route": "/features",
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/features",
+      "checks": {
+        "single_document_scrollbar": {
+          "pass": true,
+          "details": {
+            "verticalScrollable": true,
+            "scrollingElement": "html",
+            "htmlOverflowY": "auto",
+            "bodyOverflowY": "visible",
+            "rootOverflowY": "visible",
+            "pageLevelScrollContainers": [
+              {
+                "tag": "html",
+                "overflowY": "auto",
+                "overflowX": "hidden",
+                "clientHeight": 1080,
+                "scrollHeight": 6974,
+                "clientWidth": 1905,
+                "scrollWidth": 1905,
+                "hasElementScrollbar": true
+              }
+            ],
+            "viewportScrollbarWidth": 15
+          }
+        },
+        "mouse_wheel_scroll": {
+          "pass": true,
+          "before": 0,
+          "after": 900
+        },
+        "trackpad_like_wheel_scroll": {
+          "pass": true,
+          "before": 0,
+          "after": 900
+        },
+        "keyboard_scroll": {
+          "pass": true,
+          "arrow_before": 0,
+          "arrow_after": 480,
+          "pagedown_before": 0,
+          "pagedown_after": 945,
+          "space_before": 0,
+          "space_after": 945
+        },
+        "scrollbar_track_click": {
+          "pass": true,
+          "before": 0,
+          "after_track_click": 945
+        },
+        "scrollbar_thumb_drag": {
+          "pass": true,
+          "before": 0,
+          "after_drag": 4678
+        },
+        "top_to_bottom_and_back": {
+          "pass": true,
+          "bottom_scrollY": 5894,
+          "max_scroll": 5894,
+          "after_up_wheel": 5194
+        }
+      },
+      "errors": [],
+      "initial_metrics": {
+        "href": "https://mobile-parity-sweep.preview.emergentagent.com/features",
+        "scrollY": 0,
+        "innerHeight": 1080,
+        "innerWidth": 1920,
+        "scrollingElement": "html",
+        "docClientHeight": 1080,
+        "docScrollHeight": 6974,
+        "bodyClientHeight": 1080,
+        "bodyScrollHeight": 6974,
+        "rootClientHeight": 1080,
+        "rootScrollHeight": 6974,
+        "viewportScrollbarWidth": 15,
+        "htmlOverflowY": "auto",
+        "bodyOverflowY": "visible",
+        "rootOverflowY": "visible",
+        "htmlOverflowX": "hidden",
+        "bodyOverflowX": "visible",
+        "rootOverflowX": "visible",
+        "pageLevel": [
+          {
+            "tag": "html",
+            "overflowY": "auto",
+            "overflowX": "hidden",
+            "clientHeight": 1080,
+            "scrollHeight": 6974,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": true
+          },
+          {
+            "tag": "body",
+            "overflowY": "visible",
+            "overflowX": "visible",
+            "clientHeight": 1080,
+            "scrollHeight": 6974,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": false
+          },
+          {
+            "tag": "#root",
+            "overflowY": "visible",
+            "overflowX": "visible",
+            "clientHeight": 1080,
+            "scrollHeight": 6974,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": false
+          }
+        ],
+        "verticalScrollable": true,
+        "horizontalOverflow": false,
+        "activeElement": "BODY"
+      },
+      "pass": true
+    },
+    {
+      "route": "/",
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/",
+      "checks": {
+        "single_document_scrollbar": {
+          "pass": true,
+          "details": {
+            "verticalScrollable": true,
+            "scrollingElement": "html",
+            "htmlOverflowY": "auto",
+            "bodyOverflowY": "visible",
+            "rootOverflowY": "visible",
+            "pageLevelScrollContainers": [
+              {
+                "tag": "html",
+                "overflowY": "auto",
+                "overflowX": "hidden",
+                "clientHeight": 1080,
+                "scrollHeight": 9615,
+                "clientWidth": 1905,
+                "scrollWidth": 1905,
+                "hasElementScrollbar": true
+              }
+            ],
+            "viewportScrollbarWidth": 15
+          }
+        },
+        "mouse_wheel_scroll": {
+          "pass": true,
+          "before": 0,
+          "after": 900
+        },
+        "trackpad_like_wheel_scroll": {
+          "pass": true,
+          "before": 0,
+          "after": 900
+        },
+        "keyboard_scroll": {
+          "pass": true,
+          "arrow_before": 0,
+          "arrow_after": 480,
+          "pagedown_before": 0,
+          "pagedown_after": 945,
+          "space_before": 0,
+          "space_after": 945
+        },
+        "scrollbar_track_click": {
+          "pass": true,
+          "before": 0,
+          "after_track_click": 945
+        },
+        "scrollbar_thumb_drag": {
+          "pass": true,
+          "before": 0,
+          "after_drag": 6445
+        },
+        "top_to_bottom_and_back": {
+          "pass": true,
+          "bottom_scrollY": 8535,
+          "max_scroll": 8535,
+          "after_up_wheel": 7835
+        }
+      },
+      "errors": [],
+      "initial_metrics": {
+        "href": "https://mobile-parity-sweep.preview.emergentagent.com/",
+        "scrollY": 0,
+        "innerHeight": 1080,
+        "innerWidth": 1920,
+        "scrollingElement": "html",
+        "docClientHeight": 1080,
+        "docScrollHeight": 9615,
+        "bodyClientHeight": 1080,
+        "bodyScrollHeight": 9615,
+        "rootClientHeight": 1080,
+        "rootScrollHeight": 9615,
+        "viewportScrollbarWidth": 15,
+        "htmlOverflowY": "auto",
+        "bodyOverflowY": "visible",
+        "rootOverflowY": "visible",
+        "htmlOverflowX": "hidden",
+        "bodyOverflowX": "visible",
+        "rootOverflowX": "visible",
+        "pageLevel": [
+          {
+            "tag": "html",
+            "overflowY": "auto",
+            "overflowX": "hidden",
+            "clientHeight": 1080,
+            "scrollHeight": 9615,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": true
+          },
+          {
+            "tag": "body",
+            "overflowY": "visible",
+            "overflowX": "visible",
+            "clientHeight": 1080,
+            "scrollHeight": 9615,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": false
+          },
+          {
+            "tag": "#root",
+            "overflowY": "visible",
+            "overflowX": "visible",
+            "clientHeight": 1080,
+            "scrollHeight": 9615,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": false
+          }
+        ],
+        "verticalScrollable": true,
+        "horizontalOverflow": false,
+        "activeElement": "H1"
+      },
+      "pass": true
+    },
+    {
+      "route": "/pricing",
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/pricing",
+      "checks": {
+        "single_document_scrollbar": {
+          "pass": true,
+          "details": {
+            "verticalScrollable": true,
+            "scrollingElement": "html",
+            "htmlOverflowY": "auto",
+            "bodyOverflowY": "visible",
+            "rootOverflowY": "visible",
+            "pageLevelScrollContainers": [
+              {
+                "tag": "html",
+                "overflowY": "auto",
+                "overflowX": "hidden",
+                "clientHeight": 1080,
+                "scrollHeight": 5361,
+                "clientWidth": 1905,
+                "scrollWidth": 1905,
+                "hasElementScrollbar": true
+              }
+            ],
+            "viewportScrollbarWidth": 15
+          }
+        },
+        "mouse_wheel_scroll": {
+          "pass": true,
+          "before": 0,
+          "after": 900
+        },
+        "trackpad_like_wheel_scroll": {
+          "pass": true,
+          "before": 0,
+          "after": 900
+        },
+        "keyboard_scroll": {
+          "pass": true,
+          "arrow_before": 0,
+          "arrow_after": 480,
+          "pagedown_before": 0,
+          "pagedown_after": 945,
+          "space_before": 0,
+          "space_after": 945
+        },
+        "scrollbar_track_click": {
+          "pass": true,
+          "before": 0,
+          "after_track_click": 945
+        },
+        "scrollbar_thumb_drag": {
+          "pass": true,
+          "before": 0,
+          "after_drag": 3593
+        },
+        "top_to_bottom_and_back": {
+          "pass": true,
+          "bottom_scrollY": 4281,
+          "max_scroll": 4281,
+          "after_up_wheel": 3581
+        }
+      },
+      "errors": [],
+      "initial_metrics": {
+        "href": "https://mobile-parity-sweep.preview.emergentagent.com/pricing",
+        "scrollY": 0,
+        "innerHeight": 1080,
+        "innerWidth": 1920,
+        "scrollingElement": "html",
+        "docClientHeight": 1080,
+        "docScrollHeight": 5361,
+        "bodyClientHeight": 1080,
+        "bodyScrollHeight": 5361,
+        "rootClientHeight": 1080,
+        "rootScrollHeight": 5361,
+        "viewportScrollbarWidth": 15,
+        "htmlOverflowY": "auto",
+        "bodyOverflowY": "visible",
+        "rootOverflowY": "visible",
+        "htmlOverflowX": "hidden",
+        "bodyOverflowX": "visible",
+        "rootOverflowX": "visible",
+        "pageLevel": [
+          {
+            "tag": "html",
+            "overflowY": "auto",
+            "overflowX": "hidden",
+            "clientHeight": 1080,
+            "scrollHeight": 5361,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": true
+          },
+          {
+            "tag": "body",
+            "overflowY": "visible",
+            "overflowX": "visible",
+            "clientHeight": 1080,
+            "scrollHeight": 5361,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": false
+          },
+          {
+            "tag": "#root",
+            "overflowY": "visible",
+            "overflowX": "visible",
+            "clientHeight": 1080,
+            "scrollHeight": 5361,
+            "clientWidth": 1905,
+            "scrollWidth": 1905,
+            "hasElementScrollbar": false
+          }
+        ],
+        "verticalScrollable": true,
+        "horizontalOverflow": false,
+        "activeElement": "BODY"
+      },
+      "pass": true
+    }
+  ],
+  "overall_pass": true
+}

@@ -1,0 +1,1690 @@
+{
+  "base_url": "https://mobile-parity-sweep.preview.emergentagent.com",
+  "steps": [
+    {
+      "name": "Login as caregiver",
+      "ok": true,
+      "details": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/app"
+      }
+    },
+    {
+      "name": "Set light theme",
+      "ok": true,
+      "details": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/app",
+        "isDark": false
+      }
+    },
+    {
+      "name": "light: Adjusted what-if column is visually distinct",
+      "ok": false,
+      "details": {
+        "baseline": {
+          "text": "Baseline (today)Class 4Jul-Sep 2026 spend vs budget$3,718 / $6,682$2,964 headroomNext 3 quartersOct-Dec 2026$3,718Jan-Mar 2027$3,718Apr-Jun 2027$3,718",
+          "color": "rgb(28, 43, 45)",
+          "background": "rgb(255, 255, 255)",
+          "effectiveBackground": "rgb(255, 255, 255)",
+          "parentEffectiveBackground": "rgb(251, 248, 243)",
+          "contrast": 14.66,
+          "fontSize": "17px",
+          "fontWeight": "400",
+          "borderColor": "rgb(231, 223, 213)",
+          "borderWidth": "1px",
+          "boxShadow": "none",
+          "className": "rounded-2xl p-4 space-y-3 border border-primary-k/10 bg-white",
+          "tagName": "DIV",
+          "rect": {
+            "x": 380,
+            "y": 804,
+            "w": 504,
+            "h": 239
+          }
+        },
+        "adjusted": {
+          "text": "Adjusted (what-if)What-IfJul-Sep 2026 spend vs budget$3,718 / $6,682$2,964 headroomNext 3 quartersOct-Dec 2026$3,718no changeJan-Mar 2027$3,718no changeApr-Jun 2027$3,718no change",
+          "color": "rgb(28, 43, 45)",
+          "background": "rgba(0, 0, 0, 0)",
+          "effectiveBackground": "rgb(251, 248, 243)",
+          "parentEffectiveBackground": "rgb(251, 248, 243)",
+          "contrast": 13.83,
+          "fontSize": "17px",
+          "fontWeight": "400",
+          "borderColor": "rgb(231, 223, 213)",
+          "borderWidth": "2px",
+          "boxShadow": "rgb(255, 255, 255) 0px 0px 0px 0px, rgba(59, 130, 246, 0.5) 0px 0px 0px 1px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px",
+          "className": "rounded-2xl p-4 space-y-3 border-2 border-clay bg-clay/10 ring-1 ring-clay/40 shadow-sm",
+          "tagName": "DIV",
+          "rect": {
+            "x": 900,
+            "y": 804,
+            "w": 504,
+            "h": 239
+          }
+        },
+        "badge": {
+          "text": "What-If",
+          "color": "rgb(255, 255, 255)",
+          "background": "rgba(0, 0, 0, 0)",
+          "effectiveBackground": "rgb(251, 248, 243)",
+          "parentEffectiveBackground": "rgb(251, 248, 243)",
+          "contrast": 1.06,
+          "fontSize": "10px",
+          "fontWeight": "700",
+          "borderColor": "rgb(231, 223, 213)",
+          "borderWidth": "0px",
+          "boxShadow": "none",
+          "className": "text-[10px] font-bold uppercase tracking-wider rounded-full bg-clay text-white px-2 py-0.5",
+          "tagName": "SPAN",
+          "rect": {
+            "x": 1320,
+            "y": 822,
+            "w": 66,
+            "h": 20
+          }
+        }
+      }
+    },
+    {
+      "name": "light: Spending pace right shows red extra-cost net and quarter deltas",
+      "ok": true,
+      "details": {
+        "net": {
+          "text": "Extra $3,346 over 3 quarters",
+          "color": "rgb(220, 38, 38)",
+          "background": "rgb(254, 242, 242)",
+          "effectiveBackground": "rgb(254, 242, 242)",
+          "parentEffectiveBackground": "rgb(251, 248, 243)",
+          "contrast": 4.41,
+          "fontSize": "14px",
+          "fontWeight": "700",
+          "borderColor": "rgb(231, 223, 213)",
+          "borderWidth": "0px",
+          "boxShadow": "none",
+          "className": "rounded-xl px-3 py-2 text-sm font-bold flex items-center gap-1.5 bg-red-50 text-red-600",
+          "tagName": "DIV",
+          "rect": {
+            "x": 918,
+            "y": 817,
+            "w": 468,
+            "h": 36
+          }
+        },
+        "deltas": [
+          {
+            "text": "+$1,115",
+            "color": "rgb(220, 38, 38)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(251, 248, 243)",
+            "parentEffectiveBackground": "rgb(251, 248, 243)",
+            "contrast": 4.56,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-red-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 965,
+              "w": 66,
+              "h": 16
+            }
+          },
+          {
+            "text": "+$1,115",
+            "color": "rgb(220, 38, 38)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(251, 248, 243)",
+            "parentEffectiveBackground": "rgb(251, 248, 243)",
+            "contrast": 4.56,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-red-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 991,
+              "w": 66,
+              "h": 16
+            }
+          },
+          {
+            "text": "+$1,115",
+            "color": "rgb(220, 38, 38)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(251, 248, 243)",
+            "parentEffectiveBackground": "rgb(251, 248, 243)",
+            "contrast": 4.56,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-red-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 1017,
+              "w": 66,
+              "h": 16
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "light: Spending pace left shows green savings net and quarter deltas",
+      "ok": true,
+      "details": {
+        "net": {
+          "text": "Saves $3,346 over 3 quarters",
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "effectiveBackground": "rgb(236, 253, 245)",
+          "parentEffectiveBackground": "rgb(251, 248, 243)",
+          "contrast": 5.21,
+          "fontSize": "14px",
+          "fontWeight": "700",
+          "borderColor": "rgb(231, 223, 213)",
+          "borderWidth": "0px",
+          "boxShadow": "none",
+          "className": "rounded-xl px-3 py-2 text-sm font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-700",
+          "tagName": "DIV",
+          "rect": {
+            "x": 918,
+            "y": 817,
+            "w": 468,
+            "h": 36
+          }
+        },
+        "deltas": [
+          {
+            "text": "-$1,115",
+            "color": "rgb(5, 150, 105)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(251, 248, 243)",
+            "parentEffectiveBackground": "rgb(251, 248, 243)",
+            "contrast": 3.56,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-emerald-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 965,
+              "w": 66,
+              "h": 16
+            }
+          },
+          {
+            "text": "-$1,115",
+            "color": "rgb(5, 150, 105)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(251, 248, 243)",
+            "parentEffectiveBackground": "rgb(251, 248, 243)",
+            "contrast": 3.56,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-emerald-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 991,
+              "w": 66,
+              "h": 16
+            }
+          },
+          {
+            "text": "-$1,115",
+            "color": "rgb(5, 150, 105)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(251, 248, 243)",
+            "parentEffectiveBackground": "rgb(251, 248, 243)",
+            "contrast": 3.56,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-emerald-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 1017,
+              "w": 66,
+              "h": 16
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "light: Save scenario button contrast and non-flat fill",
+      "ok": true,
+      "details": {
+        "text": "Save scenario",
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(14, 78, 83)",
+        "effectiveBackground": "rgb(14, 78, 83)",
+        "parentEffectiveBackground": "rgb(255, 255, 255)",
+        "contrast": 9.4,
+        "fontSize": "14px",
+        "fontWeight": "500",
+        "borderColor": "rgb(231, 223, 213)",
+        "borderWidth": "0px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+        "className": "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2",
+        "tagName": "BUTTON",
+        "rect": {
+          "x": 1227,
+          "y": 686,
+          "w": 156,
+          "h": 36
+        }
+      }
+    },
+    {
+      "name": "Set dark theme",
+      "ok": true,
+      "details": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/budget-scenarios",
+        "isDark": true
+      }
+    },
+    {
+      "name": "dark: Adjusted what-if column is visually distinct",
+      "ok": false,
+      "details": {
+        "baseline": {
+          "text": "Baseline (today)Class 4Jul-Sep 2026 spend vs budget$3,718 / $6,682$2,964 headroomNext 3 quartersOct-Dec 2026$3,718Jan-Mar 2027$3,718Apr-Jun 2027$3,718",
+          "color": "rgb(255, 255, 255)",
+          "background": "rgb(21, 36, 37)",
+          "effectiveBackground": "rgb(21, 36, 37)",
+          "parentEffectiveBackground": "rgb(11, 20, 22)",
+          "contrast": 16.02,
+          "fontSize": "17px",
+          "fontWeight": "400",
+          "borderColor": "rgb(70, 89, 91)",
+          "borderWidth": "1px",
+          "boxShadow": "none",
+          "className": "rounded-2xl p-4 space-y-3 border border-primary-k/10 bg-white",
+          "tagName": "DIV",
+          "rect": {
+            "x": 380,
+            "y": 804,
+            "w": 504,
+            "h": 239
+          }
+        },
+        "adjusted": {
+          "text": "Adjusted (what-if)What-IfJul-Sep 2026 spend vs budget$3,718 / $6,682$2,964 headroomNext 3 quartersOct-Dec 2026$3,718no changeJan-Mar 2027$3,718no changeApr-Jun 2027$3,718no change",
+          "color": "rgb(26, 18, 6)",
+          "background": "rgba(232, 154, 111, 0.16)",
+          "effectiveBackground": "rgb(46, 41, 36)",
+          "parentEffectiveBackground": "rgb(11, 20, 22)",
+          "contrast": 1.29,
+          "fontSize": "17px",
+          "fontWeight": "400",
+          "borderColor": "rgb(42, 58, 60)",
+          "borderWidth": "2px",
+          "boxShadow": "rgb(255, 255, 255) 0px 0px 0px 0px, rgba(59, 130, 246, 0.5) 0px 0px 0px 1px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px",
+          "className": "rounded-2xl p-4 space-y-3 border-2 border-clay bg-clay/10 ring-1 ring-clay/40 shadow-sm",
+          "tagName": "DIV",
+          "rect": {
+            "x": 900,
+            "y": 804,
+            "w": 504,
+            "h": 239
+          }
+        },
+        "badge": {
+          "text": "What-If",
+          "color": "rgb(255, 255, 255)",
+          "background": "rgba(0, 0, 0, 0)",
+          "effectiveBackground": "rgb(46, 41, 36)",
+          "parentEffectiveBackground": "rgb(46, 41, 36)",
+          "contrast": 14.32,
+          "fontSize": "10px",
+          "fontWeight": "700",
+          "borderColor": "rgb(231, 223, 213)",
+          "borderWidth": "0px",
+          "boxShadow": "none",
+          "className": "text-[10px] font-bold uppercase tracking-wider rounded-full bg-clay text-white px-2 py-0.5",
+          "tagName": "SPAN",
+          "rect": {
+            "x": 1320,
+            "y": 822,
+            "w": 66,
+            "h": 20
+          }
+        }
+      }
+    },
+    {
+      "name": "dark: Spending pace right shows red extra-cost net and quarter deltas",
+      "ok": true,
+      "details": {
+        "net": {
+          "text": "Extra $3,346 over 3 quarters",
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(239, 68, 68, 0.16)",
+          "effectiveBackground": "rgb(77, 46, 41)",
+          "parentEffectiveBackground": "rgb(46, 41, 36)",
+          "contrast": 6.38,
+          "fontSize": "14px",
+          "fontWeight": "700",
+          "borderColor": "rgb(231, 223, 213)",
+          "borderWidth": "0px",
+          "boxShadow": "none",
+          "className": "rounded-xl px-3 py-2 text-sm font-bold flex items-center gap-1.5 bg-red-50 text-red-600",
+          "tagName": "DIV",
+          "rect": {
+            "x": 918,
+            "y": 817,
+            "w": 468,
+            "h": 36
+          }
+        },
+        "deltas": [
+          {
+            "text": "+$1,115",
+            "color": "rgb(252, 165, 165)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(46, 41, 36)",
+            "parentEffectiveBackground": "rgb(46, 41, 36)",
+            "contrast": 7.54,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-red-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 965,
+              "w": 66,
+              "h": 16
+            }
+          },
+          {
+            "text": "+$1,115",
+            "color": "rgb(252, 165, 165)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(46, 41, 36)",
+            "parentEffectiveBackground": "rgb(46, 41, 36)",
+            "contrast": 7.54,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-red-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 991,
+              "w": 66,
+              "h": 16
+            }
+          },
+          {
+            "text": "+$1,115",
+            "color": "rgb(252, 165, 165)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(46, 41, 36)",
+            "parentEffectiveBackground": "rgb(46, 41, 36)",
+            "contrast": 7.54,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-red-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 1017,
+              "w": 66,
+              "h": 16
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark: Spending pace left shows green savings net and quarter deltas",
+      "ok": true,
+      "details": {
+        "net": {
+          "text": "Saves $3,346 over 3 quarters",
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(16, 185, 129, 0.16)",
+          "effectiveBackground": "rgb(42, 64, 51)",
+          "parentEffectiveBackground": "rgb(46, 41, 36)",
+          "contrast": 7.3,
+          "fontSize": "14px",
+          "fontWeight": "700",
+          "borderColor": "rgb(231, 223, 213)",
+          "borderWidth": "0px",
+          "boxShadow": "none",
+          "className": "rounded-xl px-3 py-2 text-sm font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-700",
+          "tagName": "DIV",
+          "rect": {
+            "x": 918,
+            "y": 817,
+            "w": 468,
+            "h": 36
+          }
+        },
+        "deltas": [
+          {
+            "text": "-$1,115",
+            "color": "rgb(110, 231, 183)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(46, 41, 36)",
+            "parentEffectiveBackground": "rgb(46, 41, 36)",
+            "contrast": 9.39,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-emerald-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 965,
+              "w": 66,
+              "h": 16
+            }
+          },
+          {
+            "text": "-$1,115",
+            "color": "rgb(110, 231, 183)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(46, 41, 36)",
+            "parentEffectiveBackground": "rgb(46, 41, 36)",
+            "contrast": 9.39,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-emerald-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 991,
+              "w": 66,
+              "h": 16
+            }
+          },
+          {
+            "text": "-$1,115",
+            "color": "rgb(110, 231, 183)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(46, 41, 36)",
+            "parentEffectiveBackground": "rgb(46, 41, 36)",
+            "contrast": 9.39,
+            "fontSize": "12px",
+            "fontWeight": "700",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs font-bold inline-flex items-center gap-0.5 text-emerald-600",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1320,
+              "y": 1017,
+              "w": 66,
+              "h": 16
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark: Save scenario button contrast and non-flat fill",
+      "ok": true,
+      "details": {
+        "text": "Save scenario",
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(14, 78, 83)",
+        "effectiveBackground": "rgb(14, 78, 83)",
+        "parentEffectiveBackground": "rgb(21, 36, 37)",
+        "contrast": 9.4,
+        "fontSize": "14px",
+        "fontWeight": "500",
+        "borderColor": "rgb(231, 223, 213)",
+        "borderWidth": "0px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px",
+        "className": "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2",
+        "tagName": "BUTTON",
+        "rect": {
+          "x": 1227,
+          "y": 686,
+          "w": 156,
+          "h": 36
+        }
+      }
+    },
+    {
+      "name": "dark: dashboard Complete now CTA high contrast",
+      "ok": true,
+      "details": {
+        "text": "Complete now",
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(165, 81, 43)",
+        "effectiveBackground": "rgb(165, 81, 43)",
+        "parentEffectiveBackground": "rgb(11, 20, 22)",
+        "contrast": 5.51,
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "borderColor": "rgba(255, 255, 255, 0.16)",
+        "borderWidth": "1px",
+        "boxShadow": "none",
+        "className": "flex-1 sm:flex-none bg-terracotta text-white rounded-md px-3 py-2 text-xs hover:bg-terracotta/90 inline-flex items-center justify-center gap-1",
+        "tagName": "A",
+        "rect": {
+          "x": 1577,
+          "y": 124,
+          "w": 126,
+          "h": 34
+        }
+      }
+    },
+    {
+      "name": "Dark primary/accent button sweep: dashboard",
+      "ok": false,
+      "details": {
+        "count": 5,
+        "lowContrast": [],
+        "flatSameAsParent": [],
+        "transparentIntendedFill": [
+          {
+            "text": "Upload a statement",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(11, 20, 22)",
+            "parentEffectiveBackground": "rgb(11, 20, 22)",
+            "contrast": 18.65,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgb(165, 81, 43)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90 transition-colors",
+            "tagName": "A",
+            "rect": {
+              "x": 1348,
+              "y": 824,
+              "w": 193,
+              "h": 40
+            }
+          }
+        ],
+        "sample": [
+          {
+            "text": "Dashboard",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(11, 20, 22)",
+            "contrast": 5.51,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "tap-target flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm whitespace-nowrap transition-colors bg-primary-k text-white",
+            "tagName": "A",
+            "rect": {
+              "x": 132,
+              "y": 143,
+              "w": 224,
+              "h": 42
+            }
+          },
+          {
+            "text": "Complete now",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(11, 20, 22)",
+            "contrast": 5.51,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "flex-1 sm:flex-none bg-terracotta text-white rounded-md px-3 py-2 text-xs hover:bg-terracotta/90 inline-flex items-center justify-center gap-1",
+            "tagName": "A",
+            "rect": {
+              "x": 1577,
+              "y": 124,
+              "w": 126,
+              "h": 34
+            }
+          },
+          {
+            "text": "Resume the walk-through",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 5.51,
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px",
+            "className": "inline-flex items-center gap-2 rounded-full bg-wayly-clay-500 text-white px-5 py-2.5 text-sm font-semibold hover:bg-wayly-clay-600 shadow-md transition",
+            "tagName": "A",
+            "rect": {
+              "x": 478,
+              "y": 367,
+              "w": 241,
+              "h": 40
+            }
+          },
+          {
+            "text": "Upload a statement",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(11, 20, 22)",
+            "parentEffectiveBackground": "rgb(11, 20, 22)",
+            "contrast": 18.65,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgb(165, 81, 43)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90 transition-colors",
+            "tagName": "A",
+            "rect": {
+              "x": 1348,
+              "y": 824,
+              "w": 193,
+              "h": 40
+            }
+          },
+          {
+            "text": "Key Contacts",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(11, 20, 22)",
+            "contrast": 5.51,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-2 bg-white border-2 border-primary-k text-primary-k rounded-full px-4 py-2.5 text-sm hover:bg-primary-k hover:text-white transition-colors",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 1642,
+              "y": 822,
+              "w": 146,
+              "h": 42
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark: statement detail loads",
+      "ok": true,
+      "details": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/statements/408fcbf3-c126-4897-a9b1-c76628c49ca7",
+        "pathname": "/app/statements/408fcbf3-c126-4897-a9b1-c76628c49ca7",
+        "title": "Statement Detail | Wayly",
+        "h1": "iter58_stmt_728357.csv \u00b7 Unknown provider",
+        "textLength": 8972,
+        "notFound": false,
+        "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAI TOOLS\nMONEY & STATEMENTS\nTHEIR CARE\nPROVIDERS & PAPERWORK\nYOUR ACCOUNT\nBack to Statements\nNEW, RECOMMEND"
+      }
+    },
+    {
+      "name": "dark: anomaly AI disclaimer contrast",
+      "ok": true,
+      "details": {
+        "count": 5,
+        "minContrast": 11.11,
+        "measurements": [
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(252, 211, 77)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 11.11,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 text-xs text-amber-800 ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 2247,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(252, 211, 77)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 11.11,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 text-xs text-amber-800 ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 2590,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(252, 211, 77)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 11.11,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 text-xs text-amber-800 ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 2906,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(252, 211, 77)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 11.11,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 text-xs text-amber-800 ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 3161,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(252, 211, 77)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 11.11,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 text-xs text-amber-800 ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 3417,
+              "w": 404,
+              "h": 16
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark: High/Medium/Low priority badge contrast",
+      "ok": true,
+      "details": {
+        "minContrast": 8.19,
+        "badges": [
+          {
+            "text": "Medium",
+            "color": "rgb(26, 18, 6)",
+            "background": "rgb(232, 154, 111)",
+            "effectiveBackground": "rgb(232, 154, 111)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 8.19,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-gold text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 2028,
+              "w": 56,
+              "h": 18
+            }
+          },
+          {
+            "text": "High",
+            "color": "rgb(26, 18, 6)",
+            "background": "rgb(232, 154, 111)",
+            "effectiveBackground": "rgb(232, 154, 111)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 8.19,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-terracotta text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 2324,
+              "w": 40,
+              "h": 18
+            }
+          },
+          {
+            "text": "Medium",
+            "color": "rgb(26, 18, 6)",
+            "background": "rgb(232, 154, 111)",
+            "effectiveBackground": "rgb(232, 154, 111)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 8.19,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-gold text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 2667,
+              "w": 56,
+              "h": 18
+            }
+          },
+          {
+            "text": "Low",
+            "color": "rgb(11, 20, 22)",
+            "background": "rgb(168, 199, 171)",
+            "effectiveBackground": "rgb(168, 199, 171)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 10.15,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-sage text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 2983,
+              "w": 38,
+              "h": 18
+            }
+          },
+          {
+            "text": "Low",
+            "color": "rgb(11, 20, 22)",
+            "background": "rgb(168, 199, 171)",
+            "effectiveBackground": "rgb(168, 199, 171)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 10.15,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-sage text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 449,
+              "y": 3238,
+              "w": 38,
+              "h": 18
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark: Your Rights panel text contrast",
+      "ok": false,
+      "details": {
+        "minContrast": 1.16,
+        "measurements": [
+          {
+            "text": "Your rights",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "11.52px",
+            "fontWeight": "600",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-2 overline",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 405,
+              "y": 3816,
+              "w": 125,
+              "h": 18
+            }
+          },
+          {
+            "text": "This is general information about your rights, not legal advice.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "mt-2 text-xs text-muted-k",
+            "tagName": "P",
+            "rect": {
+              "x": 405,
+              "y": 3842,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to clear information about your care and its cost",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 3874,
+              "w": 385,
+              "h": 20
+            }
+          },
+          {
+            "text": "Relevant here",
+            "color": "rgb(26, 18, 6)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 1.16,
+            "fontSize": "10px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-[10px] uppercase tracking-wider rounded-full bg-terracotta/10 text-terracotta px-2 py-0.5 shrink-0",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1661,
+              "y": 3874,
+              "w": 102,
+              "h": 20
+            }
+          },
+          {
+            "text": "You have the right to a statement you can understand, showing what you were charged and why.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 3896,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Ask your provider to explain any charge in plain language. They must respond.",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 3918,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to be told about changes to your care and fees",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 3959,
+              "w": 376,
+              "h": 20
+            }
+          },
+          {
+            "text": "Relevant here",
+            "color": "rgb(26, 18, 6)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 1.16,
+            "fontSize": "10px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-[10px] uppercase tracking-wider rounded-full bg-terracotta/10 text-terracotta px-2 py-0.5 shrink-0",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1661,
+              "y": 3959,
+              "w": 102,
+              "h": 20
+            }
+          },
+          {
+            "text": "Your provider should tell you before your fees or services change, not surprise you afterwards.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 3981,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Ask for written notice of any backdated adjustment or fee change and the reason for it.",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 4003,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to raise concerns without it affecting your care",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 4044,
+              "w": 376,
+              "h": 20
+            }
+          },
+          {
+            "text": "You can give feedback or make a complaint, and your provider cannot treat you differently for doing so.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 4066,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Raise it with your provider first. If it is not resolved, the Aged Care Quality and Safety Commission can help.",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 4088,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to a free independent advocate",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 4129,
+              "w": 273,
+              "h": 20
+            }
+          },
+          {
+            "text": "You can have someone speak up alongside you, at no cost, through the Older Persons Advocacy Network.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 4151,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Call OPAN on 1800 700 600 for free, confidential advocacy support.",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 405,
+              "y": 4173,
+              "w": 1358,
+              "h": 16
+            }
+          },
+          {
+            "text": "Aged care Statement of Rights (plain-language summary)",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "mt-3 text-[11px] text-muted-k",
+            "tagName": "P",
+            "rect": {
+              "x": 405,
+              "y": 4213,
+              "w": 1358,
+              "h": 18
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Dark primary/accent button sweep: statement detail",
+      "ok": false,
+      "details": {
+        "count": 9,
+        "lowContrast": [],
+        "flatSameAsParent": [],
+        "transparentIntendedFill": [
+          {
+            "text": "Ask",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgb(165, 81, 43)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 bg-primary-k text-white rounded-lg px-4 py-2 text-sm hover:bg-primary-k/90 disabled:opacity-40 disabled:cursor-not-allowed",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 1694,
+              "y": 844,
+              "w": 77,
+              "h": 36
+            }
+          },
+          {
+            "text": "Ask Wayly about this",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(11, 20, 22)",
+            "parentEffectiveBackground": "rgb(11, 20, 22)",
+            "contrast": 18.65,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgb(165, 81, 43)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90",
+            "tagName": "A",
+            "rect": {
+              "x": 1587,
+              "y": 4280,
+              "w": 201,
+              "h": 40
+            }
+          }
+        ],
+        "sample": [
+          {
+            "text": "Reconcile now",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 5.51,
+            "fontSize": "14px",
+            "fontWeight": "600",
+            "borderColor": "rgb(231, 223, 213)",
+            "borderWidth": "0px",
+            "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px",
+            "className": "inline-flex items-center gap-2 rounded-full bg-wayly-clay-500 text-white px-5 py-2 text-sm font-semibold hover:bg-wayly-clay-600 shadow-md transition disabled:opacity-60",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 466,
+              "y": 306,
+              "w": 161,
+              "h": 36
+            }
+          },
+          {
+            "text": "Archive",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(11, 20, 22)",
+            "contrast": 5.51,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 text-sm border border-terracotta/40 text-terracotta rounded-md px-3 py-1.5 hover:bg-terracotta/5 disabled:opacity-50",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 1692,
+              "y": 392,
+              "w": 96,
+              "h": 34
+            }
+          },
+          {
+            "text": "What am I actually paying out of pocket on this statement?",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 5.51,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "text-xs border border-kindred rounded-full px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white disabled:opacity-40 transition-colors",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 397,
+              "y": 796,
+              "w": 356,
+              "h": 30
+            }
+          },
+          {
+            "text": "Are any of the fees unusually high for this period?",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 5.51,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "text-xs border border-kindred rounded-full px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white disabled:opacity-40 transition-colors",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 759,
+              "y": 796,
+              "w": 306,
+              "h": 30
+            }
+          },
+          {
+            "text": "Should I question anything before approving this?",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 5.51,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "text-xs border border-kindred rounded-full px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white disabled:opacity-40 transition-colors",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 1071,
+              "y": 796,
+              "w": 306,
+              "h": 30
+            }
+          },
+          {
+            "text": "Ask",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "parentEffectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgb(165, 81, 43)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 bg-primary-k text-white rounded-lg px-4 py-2 text-sm hover:bg-primary-k/90 disabled:opacity-40 disabled:cursor-not-allowed",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 1694,
+              "y": 844,
+              "w": 77,
+              "h": 36
+            }
+          },
+          {
+            "text": "Share this decode",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(28, 47, 49)",
+            "contrast": 5.51,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 text-sm border border-primary-k rounded-md px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white transition-colors",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 1301,
+              "y": 1108,
+              "w": 165,
+              "h": 34
+            }
+          },
+          {
+            "text": "Download PDF",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "parentEffectiveBackground": "rgb(28, 47, 49)",
+            "contrast": 5.51,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#091D33]",
+            "tagName": "BUTTON",
+            "rect": {
+              "x": 1628,
+              "y": 1108,
+              "w": 143,
+              "h": 34
+            }
+          },
+          {
+            "text": "Ask Wayly about this",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(11, 20, 22)",
+            "parentEffectiveBackground": "rgb(11, 20, 22)",
+            "contrast": 18.65,
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "borderColor": "rgb(165, 81, 43)",
+            "borderWidth": "0px",
+            "boxShadow": "none",
+            "className": "inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90",
+            "tagName": "A",
+            "rect": {
+              "x": 1587,
+              "y": 4280,
+              "w": 201,
+              "h": 40
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Legacy /app/tools/invoice-checker/list redirects to invoice checker",
+      "ok": true,
+      "details": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/invoice-checker",
+        "pathname": "/ai-tools/invoice-checker",
+        "title": "Aged Care Invoice Checker \u00b7 Wayly",
+        "h1": "Invoice Checker",
+        "textLength": 5436,
+        "notFound": false,
+        "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAI TOOLS\nMONEY & STATEMENTS\nTHEIR CARE\nPROVIDERS & PAPERWORK\nYOUR ACCOUNT\nAll AI Tools\nInvoice Checker\n\nUpl"
+      }
+    }
+  ],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "In HTML, %s cannot be a child of <%s>.%s\nThis will cause a hydration error.%s <span> option  \n\n  ...\n    <RenderedRoute match={{params:{}, ...}} routeContext={{outlet:null, ...}}>\n      <RequireAuth x-file-name=\"App\" x-line-number=\"477\" x-column=\"65\" x-component=\"RequireAuth\" x-id=\"App_477_65\" ...>\n        <Layout x-file-name=\"App\" x-line-number=\"477\" x-column=\"78\" x-component=\"Layout\" x-id=\"App_477_78\" ...>\n          <Helmet>\n          <div className=\"min-h-scre...\" x-file-name=\"Layout\" x-line-number=\"163\" x-column=\"8\" x-component=\"div\" ...>\n            <ReadOnlyBanner>\n            <header>\n            <div className=\"mx-auto ma...\" x-file-name=\"Layout\" x-line-number=\"226\" x-column=\"12\" x-component=\"div\" ...>\n              <aside>\n              <main className=\"flex-1 min...\" x-file-name=\"Layout\" x-line-number=\"240\" x-column=\"16\" x-component=\"main\" ...>\n                <TrialCountdownBanner>\n                <BudgetScenarios x-file-name=\"App\" x-line-number=\"477\" x-column=\"86\" x-component=\"BudgetScen...\" ...>\n                  <div className=\"max-w-5xl ...\" data-testid=\"budget-sce...\" x-file-name=\"BudgetScen...\" ...>\n                    <PageIntro>\n                    <div className=\"rounded-2x...\" data-testid=\"bc2-sliders\" x-file-name=\"BudgetScen...\" ...>\n                      <div>\n                      <div className=\"grid gap-5...\" x-file-name=\"BudgetScen...\" x-line-number=\"249\" x-column=\"24\" ...>\n                        <label className=\"space-y-1....\" x-file-name=\"BudgetScen...\" x-line-number=\"250\" x-column=\"28\" ...>\n                          <span>\n                          <select value={4} onChange={function onChange} data-testid=\"bc2-slider...\" ...>\n>                           <option\n>                             value={1}\n>                             x-file-name=\"BudgetScenarios\"\n>                             x-line-number=\"259\"\n>                             x-column=\"40\"\n>                             x-component=\"option\"\n>                             x-id=\"BudgetScenarios_259_40\"\n>                             x-dynamic=\"true\"\n>                             x-source-type=\"static-local\"\n>                             x-source-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-source-file-abs=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-source-line=\"258\"\n>                             x-source-editable=\"true\"\n>                             x-array-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-array-line=\"258\"\n>                             x-array-item-param=\"n\"\n>                             x-array-inline=\"true\"\n>                           >\n>                             <span\n>                               data-ve-dynamic=\"true\"\n>                               x-excluded=\"true\"\n>                               style={{display:\"contents\"}}\n>                               x-file-name=\"BudgetScenarios\"\n>                               x-line-number=\"259\"\n>                               x-column=\"40\"\n>                               x-component=\"option\"\n>                               x-id=\"BudgetScenarios_259_40_expr1\"\n>                               x-dynamic=\"true\"\n>                               x-source-type=\"static-local\"\n>                               x-source-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-source-file-abs=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-source-line=\"258\"\n>                               x-source-editable=\"true\"\n>                               x-array-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-array-line=\"258\"\n>                               x-array-item-param=\"n\"\n>                             >\n                              ...\n                            ...\n                        ...\n                      ...\n                    ...\n                    ...\n            ...\n"
+    },
+    {
+      "type": "error",
+      "text": "In HTML, %s cannot be a child of <%s>.%s\nThis will cause a hydration error.%s <span> option  \n\n  ...\n    <RenderedRoute match={{params:{}, ...}} routeContext={{outlet:null, ...}}>\n      <RequireAuth x-file-name=\"App\" x-line-number=\"477\" x-column=\"65\" x-component=\"RequireAuth\" x-id=\"App_477_65\" ...>\n        <Layout x-file-name=\"App\" x-line-number=\"477\" x-column=\"78\" x-component=\"Layout\" x-id=\"App_477_78\" ...>\n          <Helmet>\n          <div className=\"min-h-scre...\" x-file-name=\"Layout\" x-line-number=\"163\" x-column=\"8\" x-component=\"div\" ...>\n            <ReadOnlyBanner>\n            <header>\n            <div className=\"mx-auto ma...\" x-file-name=\"Layout\" x-line-number=\"226\" x-column=\"12\" x-component=\"div\" ...>\n              <aside>\n              <main className=\"flex-1 min...\" x-file-name=\"Layout\" x-line-number=\"240\" x-column=\"16\" x-component=\"main\" ...>\n                <TrialCountdownBanner>\n                <BudgetScenarios x-file-name=\"App\" x-line-number=\"477\" x-column=\"86\" x-component=\"BudgetScen...\" ...>\n                  <div className=\"max-w-5xl ...\" data-testid=\"budget-sce...\" x-file-name=\"BudgetScen...\" ...>\n                    <PageIntro>\n                    <div className=\"rounded-2x...\" data-testid=\"bc2-sliders\" x-file-name=\"BudgetScen...\" ...>\n                      <div>\n                      <div className=\"grid gap-5...\" x-file-name=\"BudgetScen...\" x-line-number=\"249\" x-column=\"24\" ...>\n                        <label className=\"space-y-1....\" x-file-name=\"BudgetScen...\" x-line-number=\"250\" x-column=\"28\" ...>\n                          <span>\n                          <select value={4} onChange={function onChange} data-testid=\"bc2-slider...\" ...>\n>                           <option\n>                             value={1}\n>                             x-file-name=\"BudgetScenarios\"\n>                             x-line-number=\"259\"\n>                             x-column=\"40\"\n>                             x-component=\"option\"\n>                             x-id=\"BudgetScenarios_259_40\"\n>                             x-dynamic=\"true\"\n>                             x-source-type=\"static-local\"\n>                             x-source-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-source-file-abs=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-source-line=\"258\"\n>                             x-source-editable=\"true\"\n>                             x-array-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-array-line=\"258\"\n>                             x-array-item-param=\"n\"\n>                             x-array-inline=\"true\"\n>                           >\n>                             <span\n>                               data-ve-dynamic=\"true\"\n>                               x-excluded=\"true\"\n>                               style={{display:\"contents\"}}\n>                               x-file-name=\"BudgetScenarios\"\n>                               x-line-number=\"259\"\n>                               x-column=\"40\"\n>                               x-component=\"option\"\n>                               x-id=\"BudgetScenarios_259_40_expr1\"\n>                               x-dynamic=\"true\"\n>                               x-source-type=\"static-local\"\n>                               x-source-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-source-file-abs=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-source-line=\"258\"\n>                               x-source-editable=\"true\"\n>                               x-array-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-array-line=\"258\"\n>                               x-array-item-param=\"n\"\n>                             >\n                              ...\n                            ...\n                        ...\n                      ...\n                    ...\n            ...\n"
+    },
+    {
+      "type": "error",
+      "text": "In HTML, %s cannot be a child of <%s>.%s\nThis will cause a hydration error.%s <span> option  \n\n  ...\n    <RenderedRoute match={{params:{}, ...}} routeContext={{outlet:null, ...}}>\n      <RequireAuth x-file-name=\"App\" x-line-number=\"477\" x-column=\"65\" x-component=\"RequireAuth\" x-id=\"App_477_65\" ...>\n        <Layout x-file-name=\"App\" x-line-number=\"477\" x-column=\"78\" x-component=\"Layout\" x-id=\"App_477_78\" ...>\n          <Helmet>\n          <div className=\"min-h-scre...\" x-file-name=\"Layout\" x-line-number=\"163\" x-column=\"8\" x-component=\"div\" ...>\n            <ReadOnlyBanner>\n            <header>\n            <div className=\"mx-auto ma...\" x-file-name=\"Layout\" x-line-number=\"226\" x-column=\"12\" x-component=\"div\" ...>\n              <aside>\n              <main className=\"flex-1 min...\" x-file-name=\"Layout\" x-line-number=\"240\" x-column=\"16\" x-component=\"main\" ...>\n                <TrialCountdownBanner>\n                <BudgetScenarios x-file-name=\"App\" x-line-number=\"477\" x-column=\"86\" x-component=\"BudgetScen...\" ...>\n                  <div className=\"max-w-5xl ...\" data-testid=\"budget-sce...\" x-file-name=\"BudgetScen...\" ...>\n                    <PageIntro>\n                    <div className=\"rounded-2x...\" data-testid=\"bc2-sliders\" x-file-name=\"BudgetScen...\" ...>\n                      <div>\n                      <div className=\"grid gap-5...\" x-file-name=\"BudgetScen...\" x-line-number=\"249\" x-column=\"24\" ...>\n                        <label className=\"space-y-1....\" x-file-name=\"BudgetScen...\" x-line-number=\"250\" x-column=\"28\" ...>\n                          <span>\n                          <select value={4} onChange={function onChange} data-testid=\"bc2-slider...\" ...>\n>                           <option\n>                             value={1}\n>                             x-file-name=\"BudgetScenarios\"\n>                             x-line-number=\"259\"\n>                             x-column=\"40\"\n>                             x-component=\"option\"\n>                             x-id=\"BudgetScenarios_259_40\"\n>                             x-dynamic=\"true\"\n>                             x-source-type=\"static-local\"\n>                             x-source-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-source-file-abs=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-source-line=\"258\"\n>                             x-source-editable=\"true\"\n>                             x-array-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-array-line=\"258\"\n>                             x-array-item-param=\"n\"\n>                             x-array-inline=\"true\"\n>                           >\n>                             <span\n>                               data-ve-dynamic=\"true\"\n>                               x-excluded=\"true\"\n>                               style={{display:\"contents\"}}\n>                               x-file-name=\"BudgetScenarios\"\n>                               x-line-number=\"259\"\n>                               x-column=\"40\"\n>                               x-component=\"option\"\n>                               x-id=\"BudgetScenarios_259_40_expr1\"\n>                               x-dynamic=\"true\"\n>                               x-source-type=\"static-local\"\n>                               x-source-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-source-file-abs=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-source-line=\"258\"\n>                               x-source-editable=\"true\"\n>                               x-array-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-array-line=\"258\"\n>                               x-array-item-param=\"n\"\n>                             >\n                              ...\n                            ...\n                        ...\n                      ...\n                    ...\n                    ...\n            ...\n"
+    }
+  ],
+  "network_failures": [
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMzAwNTQsImV4cCI6MTc4NjMzMzY1NCwidHlwZSI6ImFjY2VzcyIsImp0aSI6InJrbWRhc2U3bUsxa3Q1U0ozVFBKbGcifQ.emTAZW3Fk55toB_KPn6yFuUc6sRt0JavXIcqJpAKwuU",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMzAwNTQsImV4cCI6MTc4NjMzMzY1NCwidHlwZSI6ImFjY2VzcyIsImp0aSI6InJrbWRhc2U3bUsxa3Q1U0ozVFBKbGcifQ.emTAZW3Fk55toB_KPn6yFuUc6sRt0JavXIcqJpAKwuU",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMzAwNTQsImV4cCI6MTc4NjMzMzY1NCwidHlwZSI6ImFjY2VzcyIsImp0aSI6InJrbWRhc2U3bUsxa3Q1U0ozVFBKbGcifQ.emTAZW3Fk55toB_KPn6yFuUc6sRt0JavXIcqJpAKwuU",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMzAwNTQsImV4cCI6MTc4NjMzMzY1NCwidHlwZSI6ImFjY2VzcyIsImp0aSI6InJrbWRhc2U3bUsxa3Q1U0ozVFBKbGcifQ.emTAZW3Fk55toB_KPn6yFuUc6sRt0JavXIcqJpAKwuU",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMzAwNTQsImV4cCI6MTc4NjMzMzY1NCwidHlwZSI6ImFjY2VzcyIsImp0aSI6InJrbWRhc2U3bUsxa3Q1U0ozVFBKbGcifQ.emTAZW3Fk55toB_KPn6yFuUc6sRt0JavXIcqJpAKwuU",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMzAwNTQsImV4cCI6MTc4NjMzMzY1NCwidHlwZSI6ImFjY2VzcyIsImp0aSI6InJrbWRhc2U3bUsxa3Q1U0ozVFBKbGcifQ.emTAZW3Fk55toB_KPn6yFuUc6sRt0JavXIcqJpAKwuU",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMzAwNTQsImV4cCI6MTc4NjMzMzY1NCwidHlwZSI6ImFjY2VzcyIsImp0aSI6InJrbWRhc2U3bUsxa3Q1U0ozVFBKbGcifQ.emTAZW3Fk55toB_KPn6yFuUc6sRt0JavXIcqJpAKwuU",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "ok": false
+}

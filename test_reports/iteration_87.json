@@ -1,0 +1,34 @@
+{
+  "summary": "QP-1 v1.5 follow-ups (reconciliation UI + history + dashboard dedup + persona-everywhere) tested end-to-end. Backend: 14/14 new tests pass (persona fallback, reconcile match/no-match, 403 ownership, pacing.reconciled_total, history clamping 0→1 & 20→12, FY labels). Frontend: dashboard dedup verified (OJ-1 hidden, QP-1 visible), CSC-1 shows caregiver voice ('Is your parent on the right classification?'), CE-2 body carries 'your parent's income' copy, /app/pacing?tab=history renders 4 FY-aligned cards (Apr-Jun 2026, Jan-Mar 2026, Oct-Dec 2025, Jul-Sep 2025) each with envelope $6,682 + Underspent, /app/pacing?tab=week reconcile card toggle → form → submit → result flow works and disposition surfaces created_adhoc.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/ai-tools/* pages", "issues": ["Hydration console warning: '<span> cannot be a child of <option>' — cosmetic, does not break UI. Investigate select option content in AIToolsRoute."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_qp1_reconcile_history.py",
+    "/app/test_reports/pytest/qp1_reconcile_results.xml"
+  ],
+  "action_items": [
+    "(Minor) Fix the <span>-in-<option> hydration warning on /ai-tools routes.",
+    "(Nice-to-have) Reconciled_total confidence bump to 'medium/high' currently depends on prior reconciled share of actual_spent; cathy's account has enough legacy adhoc/assumed spend that a single reconciled entry keeps confidence at 'low'. Consider surfacing the raw shares in the response so the UI can show a nuanced badge."
+  ],
+  "critical_code_review_comments": [
+    "routes/qp1.py reconciliation greedy-picks best match (lowest amt_diff then date_gap) and removes it from candidate pool — correct. Ledger update on reconciled entry preserves version + timestamps ✅.",
+    "routes/qp1.py pacing_history: FY quarter walker is correct (Jan/Apr/Jul/Oct starts) and clamps quarters into [1,12] ✅.",
+    "routes/persona.py _profile_from_user: fallback chain viewer_persona → user.role → caregiver works ✅. Verified cathy (no viewer_persona, role=caregiver) resolves to caregiver.",
+    "OJ-1 envelope tile dedup: hides when QP-1 schedules OR ledger entries exist — verified visually on cathy dashboard.",
+    "Prior iter86 code-review notes still apply: /qp1/pacing does verify ownership via _assert_owns_participant (fixed since iter86). /qp1/ledger list also enforces ownership ✅. auto_assume now requires participant_id + ownership check ✅ (matches routes/qp1.py:512-523)."
+  ],
+  "updated_files": ["/app/backend/tests/test_qp1_reconcile_history.py"],
+  "success_rate": {"backend": "100% (14/14 new + 14/14 regression from iter86)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, Dorothy household, classification 4)",
+  "seed_data_creation": "Backend tests seeded a TEST_Recon_Cleaning weekly schedule + several TEST_STMT_* reconciliation audit rows + one TEST ad_hoc entry from the unmatched line. Cleanup fixture ends the TEST_ schedule at teardown, but past ledger entries remain (by design — audit history).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "QP-1 v1.5 verified iter87 against cathy@example.com. New pytest suite at /app/backend/tests/test_qp1_reconcile_history.py (14 tests, ~4s) plus original /app/backend/tests/test_qp1.py from iter86. UI screenshots at /app/test_reports/qp1_v15_dashboard.png. Reconciled_total confidence stays 'low' for cathy because prior adhoc/assumed spend dominates actual_spent — this is spec-correct, not a bug. Any next agent extending reconciliation should seed a fresh participant if they need to test confidence tier transitions cleanly.",
+  "rca of the issue": "N/A — no regressions found."
+}

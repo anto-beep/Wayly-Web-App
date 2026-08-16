@@ -1,0 +1,324 @@
+{
+  "routing": {
+    "/ai-tools/invoice-checker": {
+      "status": 200,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/invoice-checker",
+      "shows_404": false,
+      "title": "Aged Care Invoice Checker \u00b7 Wayly"
+    },
+    "/ai-tools/reassessment-letter": {
+      "status": 200,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/letters-and-follow-ups",
+      "shows_404": false,
+      "title": "Letters & Follow-ups | Wayly"
+    },
+    "/ai-tools/provider-price-checker": {
+      "status": 200,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/provider-price-checker",
+      "shows_404": false,
+      "title": "Aged Care Provider Price Checker \u00b7 Wayly"
+    },
+    "/ai-tools/support-plan-reviewer": {
+      "status": 200,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/support-plan-reviewer",
+      "shows_404": false,
+      "title": "Aged Support Plan Reviewer \u00b7 Wayly"
+    },
+    "/ai-tools/statement-decoder": {
+      "status": 200,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/statement-decoder",
+      "shows_404": false,
+      "title": "Support at Home Statement Decoder \u00b7 Wayly"
+    },
+    "/app/tools/invoice-checker/list": {
+      "status": 200,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/tools/invoice-checker/list",
+      "shows_404": true,
+      "title": "Page not found \u00b7 Wayly"
+    },
+    "/features": {
+      "status": 200,
+      "url": "https://mobile-parity-sweep.preview.emergentagent.com/features",
+      "shows_404": false,
+      "title": "Features \u00b7 Wayly"
+    },
+    "/features_ctas": [
+      {
+        "text": "Try Invoice Checker",
+        "href": "/ai-tools/invoice-checker"
+      },
+      {
+        "text": "Solo+Invoice CheckerVerify every line item against medians a",
+        "href": "/ai-tools/invoice-checker"
+      },
+      {
+        "text": "Solo+Support Plan ReviewerChecks a support plan against the ",
+        "href": "/ai-tools/support-plan-reviewer"
+      },
+      {
+        "text": "Solo+Care Notes And PlansSupport plan reviewer plus goal led",
+        "href": "/app/care-plans"
+      },
+      {
+        "text": "Solo+Bank-CSV ParsingImport a CSV once and Wayly maps every ",
+        "href": "/app/statements"
+      },
+      {
+        "text": "Accessibility Statement",
+        "href": "/legal/accessibility"
+      }
+    ],
+    "sidebar_links_count": 39,
+    "sidebar_links": [
+      {
+        "text": "Ask Wayly",
+        "href": "/app/ask-wayly"
+      },
+      {
+        "text": "Carer Self-Check",
+        "href": "/app/carer/self-assessment"
+      },
+      {
+        "text": "Handover Pack",
+        "href": "/app/carer/handover-pack"
+      },
+      {
+        "text": "Classification Prep",
+        "href": "/app/csc/stream-mix-and-iat"
+      },
+      {
+        "text": "AT & HM Projects",
+        "href": "/app/athm/projects"
+      },
+      {
+        "text": "CHSP Tools",
+        "href": "/app/chsp/tools"
+      },
+      {
+        "text": "Letters Mailbox",
+        "href": "/app/letters"
+      },
+      {
+        "text": "Switch Provider",
+        "href": "/app/provider-switch"
+      },
+      {
+        "text": "Statement Decoder",
+        "href": "/ai-tools/statement-decoder"
+      },
+      {
+        "text": "Invoice CheckerNew",
+        "href": "/ai-tools/invoice-checker"
+      },
+      {
+        "text": "Budget & Lifetime Cap Calculator",
+        "href": "/ai-tools/budget-calculator"
+      },
+      {
+        "text": "Provider Price Checker",
+        "href": "/ai-tools/provider-price-checker"
+      },
+      {
+        "text": "Classification Self-Check",
+        "href": "/ai-tools/classification-self-check"
+      },
+      {
+        "text": "Letters & Follow-ups",
+        "href": "/ai-tools/letters-and-follow-ups"
+      },
+      {
+        "text": "Contribution Estimator",
+        "href": "/ai-tools/contribution-estimator"
+      },
+      {
+        "text": "Support Plan Reviewer",
+        "href": "/ai-tools/care-plan-reviewer"
+      },
+      {
+        "text": "Aged Care Q&A",
+        "href": "/ai-tools/family-coordinator"
+      },
+      {
+        "text": "Quarterly Pacing",
+        "href": "/app/pacing"
+      },
+      {
+        "text": "Statements",
+        "href": "/app/statements"
+      },
+      {
+        "text": "Budget Alerts",
+        "href": "/app/budget-alerts"
+      },
+      {
+        "text": "Budget Scenarios",
+        "href": "/app/budget-scenarios"
+      },
+      {
+        "text": "Reports",
+        "href": "/app/reports"
+      },
+      {
+        "text": "Care Team",
+        "href": "/app/family"
+      },
+      {
+        "text": "Key Contacts",
+        "href": "/app?contacts=open"
+      },
+      {
+        "text": "Calendar",
+        "href": "/app/calendar"
+      },
+      {
+        "text": "Hospital Mode",
+        "href": "/app/hospital"
+      },
+      {
+        "text": "Care Plans",
+        "href": "/app/care-plans"
+      },
+      {
+        "text": "Care-Plan Changes",
+        "href": "/app/amendments"
+      },
+      {
+        "text": "Log a Scenario",
+        "href": "/app/scenarios"
+      },
+      {
+        "text": "Timeline",
+        "href": "/app/timeline"
+      },
+      {
+        "text": "Documents",
+        "href": "/app/documents"
+      },
+      {
+        "text": "Correspondence",
+        "href": "/app/correspondence"
+      },
+      {
+        "text": "Compare Providers",
+        "href": "/app/tools/provider-price-checker/compare"
+      },
+      {
+        "text": "Ratings",
+        "href": "/app/ratings"
+      },
+      {
+        "text": "Participants",
+        "href": "/app/participants"
+      },
+      {
+        "text": "Referrals",
+        "href": "/app/referrals"
+      },
+      {
+        "text": "Audit Log",
+        "href": "/app/audit"
+      },
+      {
+        "text": "Support",
+        "href": "/support"
+      },
+      {
+        "text": "Settings",
+        "href": "/settings/profile"
+      }
+    ],
+    "broken_sidebar_links": [
+      {
+        "href": "/app/family",
+        "text": "Care Team",
+        "status": 429,
+        "404_text": false
+      },
+      {
+        "href": "/app?contacts=open",
+        "text": "Key Contacts",
+        "status": 429,
+        "404_text": false
+      },
+      {
+        "href": "/app/calendar",
+        "text": "Calendar",
+        "status": 429,
+        "404_text": false
+      },
+      {
+        "href": "/app/hospital",
+        "text": "Hospital Mode",
+        "status": 429,
+        "404_text": false
+      },
+      {
+        "href": "/app/care-plans",
+        "text": "Care Plans",
+        "status": 429,
+        "404_text": false
+      },
+      {
+        "href": "/app/amendments",
+        "text": "Care-Plan Changes",
+        "status": 429,
+        "404_text": false
+      }
+    ]
+  },
+  "light_mode": {
+    "class_ok": true
+  },
+  "voice_check_details": {
+    "labels": [
+      {
+        "text": "I'm answering these on behalf of the participant (e.g. becau",
+        "bg": "rgb(21, 36, 37)",
+        "color": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(70, 89, 91)",
+        "inputType": "checkbox",
+        "inputChecked": false
+      },
+      {
+        "text": "Yes, they wanted this",
+        "bg": "rgb(165, 81, 43)",
+        "color": "rgb(255, 255, 255)",
+        "border": "0px solid rgb(165, 81, 43)",
+        "inputType": "radio",
+        "inputChecked": false
+      },
+      {
+        "text": "Yes, but not exactly like this",
+        "bg": "rgb(165, 81, 43)",
+        "color": "rgb(255, 255, 255)",
+        "border": "0px solid rgb(165, 81, 43)",
+        "inputType": "radio",
+        "inputChecked": false
+      },
+      {
+        "text": "No, this was the provider's idea",
+        "bg": "rgb(165, 81, 43)",
+        "color": "rgb(255, 255, 255)",
+        "border": "0px solid rgb(165, 81, 43)",
+        "inputType": "radio",
+        "inputChecked": false
+      },
+      {
+        "text": "I don't remember discussing this",
+        "bg": "rgb(165, 81, 43)",
+        "color": "rgb(255, 255, 255)",
+        "border": "0px solid rgb(165, 81, 43)",
+        "inputType": "radio",
+        "inputChecked": false
+      },
+      {
+        "text": "Skip this goal",
+        "bg": "rgb(165, 81, 43)",
+        "color": "rgb(255, 255, 255)",
+        "border": "0px solid rgb(165, 81, 43)",
+        "inputType": "radio",
+        "inputChecked": false
+      }
+    ]
+  }
+}

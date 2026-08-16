@@ -1,0 +1,51 @@
+{
+  "base_url": "https://mobile-parity-sweep.preview.emergentagent.com",
+  "steps": [
+    {
+      "name": "login",
+      "ok": true,
+      "state": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/app",
+        "title": "",
+        "h1": "",
+        "body": "Welcome back, Cathy",
+        "notFound": false
+      }
+    },
+    {
+      "name": "provider compare route and back href",
+      "ok": true,
+      "href": "/ai-tools/provider-price-checker",
+      "state": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/tools/provider-price-checker/compare",
+        "title": "Compare Providers | Wayly",
+        "h1": "Side-by-Side Quality Context",
+        "body": "Help\nWayly\nSearch\n\u2318K\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAI TOOLS\nMONEY & STATEMENTS\nTHEIR CARE\nPROVIDERS & PAPERWORK\nYOUR ACCOUNT\nBack to Provider Price Checker\n\nCOMP",
+        "notFound": false
+      }
+    },
+    {
+      "name": "provider compare back click",
+      "ok": true,
+      "state": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/ai-tools/provider-price-checker",
+        "title": "Aged Care Provider Price Checker \u00b7 Wayly",
+        "h1": "Provider Price Checker",
+        "body": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAI TOOLS\nMONEY & STATEMENTS\nTHEIR CARE\nPROVIDERS & PAPERWORK\nYOUR ACCOUNT\n\u2190 All AI Tools\nYour price history",
+        "notFound": false
+      }
+    },
+    {
+      "name": "direct legacy invoice checker cited URL",
+      "ok": false,
+      "state": {
+        "url": "https://mobile-parity-sweep.preview.emergentagent.com/app/tools/invoice-checker/list",
+        "title": "Page not found \u00b7 Wayly",
+        "h1": "This page has gone for a walk.",
+        "body": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\n9+\nFAMILY\nC\n404\nThis page has gone for a walk.\n\nThe URL you followed isn't on Wayly. It may have moved, or there could be a typo. Try one of the routes below, or email support@wayly.com.au if you think this is broken.\n",
+        "notFound": true
+      }
+    }
+  ],
+  "ok": false
+}

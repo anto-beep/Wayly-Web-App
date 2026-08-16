@@ -1,0 +1,636 @@
+import React, { useEffect, useState } from "react";
+import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Shield, ShieldAlert, ShieldCheck, AlertOctagon, FileDown, Share2, HelpCircle } from "lucide-react";
+import AIAccuracyBanner from "@/components/AIAccuracyBanner";
+import { NumberMono } from "@/components/ToolShell";
+import { downloadDecodedAsCsv, downloadDecodedAsPdf, downloadShareablePdf } from "@/lib/decoderExport";
+import { formatDate } from "@/lib/formatDate";
+import { getAnomalyExplainer, shortRuleLabel } from "@/lib/anomalyExplainer";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { api } from "@/lib/api";
+import { readPersonaPreview } from "@/lib/persona";
+
+function aud(n) {
+    if (n == null) return ", ";
+    return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(n);
+}
+
+/**
+ * DEC-1 v5 · Phase 2b: render the `quantity · unit` pair on a line item.
+ * Prefer the v5 fields (`quantity` + `unit`) when the LLM populated them.
+ * Fall back to `hours` for pre-v5 rows (hours→ 'hr' assumed by the read-time
+ * backfill). Returns "" when nothing is known.
+ */
+function formatQtyUnit(li) {
+    if (!li) return "";
+    const q = li.quantity;
+    const u = li.unit;
+    if (q != null && u) {
+        // 2.00 hr, 18 km, 1 session.
+        const n = Number(q);
+        const disp = (u === "hr") ? n.toFixed(2) : Number.isInteger(n) ? String(n) : n.toFixed(2);
+        return `${disp} ${u}`;
+    }
+    if (li.hours != null && li.hours !== "") {
+        const h = Number(li.hours);
+        if (!isNaN(h) && h > 0) return `${h.toFixed(2)} hr`;
+    }
+    return "";
+}
+const SEV_META = {
+    high:   { label: "High",   bg: "bg-terracotta",  fg: "text-white", Icon: AlertOctagon },
+    medium: { label: "Medium", bg: "bg-gold",        fg: "text-white", Icon: ShieldAlert },
+    low:    { label: "Low",    bg: "bg-sage",        fg: "text-white", Icon: Shield },
+};
+
+/**
+ * Rule badge with a hover/tap tooltip that shows the plain-English
+ * "what this means" for the deterministic rule that fired. Falls back
+ * gracefully when the rule code is not in the explainer library.
+ */
+function RuleBadge({ rule }) {
+    if (!rule) return null;
+    const info = getAnomalyExplainer(rule);
+    const short = shortRuleLabel(rule);
+    if (!info) {
+        // Unknown rule, render the short code without a tooltip so the UI
+        // never claims to explain something we don't have copy for.
+        return (
+            <span
+                className="text-[10px] text-muted-k uppercase tracking-wider"
+                data-testid={`anomaly-rule-badge-${rule}`}
+            >
+                {short}
+            </span>
+        );
+    }
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <button
+                    type="button"
+                    className="text-[10px] text-muted-k uppercase tracking-wider inline-flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-surface-2 focus:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors cursor-help"
+                    aria-label={`What does ${info.title} mean?`}
+                    data-testid={`anomaly-rule-badge-${rule}`}
+                >
+                    <HelpCircle className="h-3 w-3 opacity-60" aria-hidden="true" />
+                    <span>{short}</span>
+                </button>
+            </TooltipTrigger>
+            <TooltipContent
+                side="top"
+                align="start"
+                className="max-w-xs bg-primary text-primary-foreground text-xs leading-relaxed p-3 rounded-lg shadow-lg"
+                data-testid={`anomaly-rule-tooltip-${rule}`}
+            >
+                <div className="font-semibold text-[11px] uppercase tracking-wider mb-1 opacity-80">
+                    {info.title}
+                </div>
+                <div>{info.explanation}</div>
+            </TooltipContent>
+        </Tooltip>
+    );
+}
+const STREAM_LABEL = {
+    Clinical: "Clinical",
+    Independence: "Independence",
+    EverydayLiving: "Everyday Living",
+    ATHM: "AT-HM (assistive tech & home mods)",
+    CareMgmt: "Care Management",
+};
+
+/**
+ * Rich 4-section result view for the two-pass Statement Decoder.
+ * Renders the Pass-2 audit JSON (statement_summary + stream_breakdown +
+ * anomalies) plus the full line-item table from the Pass-1 extraction.
+ */
+export default function DecoderResultView({ result }) {
+    const audit = result.audit || {};
+    const extracted = result.extracted || {};
+    const summary = audit.statement_summary || {};
+    const anoms = audit.anomalies || [];
+    const counts = audit.anomaly_count || { high: 0, medium: 0, low: 0, advisory: 0 };
+    const streams = audit.stream_breakdown || [];
+    const items = extracted.line_items || [];
+
+    // OXY-1 v1, split anomalies into "issues" (high/medium/low) and
+    // "advisories" (informational callouts like the Oxygen certification
+    // reminder). Advisories render below in a soft "Things worth checking"
+    // section and don't inflate the top-of-page issues-found chip.
+    const advisories = anoms.filter((a) => (a?.severity || "").toLowerCase() === "advisory");
+    const issueAnoms = anoms.filter((a) => (a?.severity || "").toLowerCase() !== "advisory");
+
+    const [openStreams, setOpenStreams] = useState({});
+    const [showTable, setShowTable] = useState(false);
+
+    // PERSONA-1 Workstream F, resolve the 4 DEC-1 Tier-1 keys through the
+    // backend registry so the results view adapts to persona + pronouns.
+    // Falls back to sensible caregiver defaults if the endpoint is
+    // unavailable or the feature flag is off.
+    const [personaCopy, setPersonaCopy] = useState({
+        hero: "Here is what we found in the statement.",
+        no_anomalies: "Statement looks clean. Nothing unusual found.",
+        charged_correctly: "Everything on this statement has been charged in line with the Support at Home plan.",
+        adm_disclosure: null,
+    });
+    useEffect(() => {
+        let cancelled = false;
+        const fetchCopy = async () => {
+            try {
+                const keys = [
+                    "dec1.results.hero",
+                    "dec1.results.no_anomalies",
+                    "dec1.results.charged_correctly",
+                    "dec1.adm_disclosure",
+                ];
+                const preview = readPersonaPreview();
+                const body = { tier1_keys: keys };
+                if (preview?.persona) body.override_persona = preview.persona;
+                if (preview?.pronouns) body.override_pronouns = preview.pronouns;
+                if (preview?.first_name !== undefined) body.override_first_name = preview.first_name || null;
+                const { data } = await api.post("/persona/resolve", body);
+                if (cancelled) return;
+                const t = data?.tier1 || {};
+                setPersonaCopy((cur) => ({
+                    hero: t["dec1.results.hero"] || cur.hero,
+                    no_anomalies: t["dec1.results.no_anomalies"] || cur.no_anomalies,
+                    charged_correctly: t["dec1.results.charged_correctly"] || cur.charged_correctly,
+                    adm_disclosure: t["dec1.adm_disclosure"] || cur.adm_disclosure,
+                }));
+            } catch { /* keep defaults on error */ }
+        };
+        fetchCopy();
+        const onPreview = () => { fetchCopy(); };
+        window.addEventListener("wayly:persona-preview-changed", onPreview);
+        return () => {
+            cancelled = true;
+            window.removeEventListener("wayly:persona-preview-changed", onPreview);
+        };
+    }, []);
+
+    const toggleStream = (s) => setOpenStreams((p) => ({ ...p, [s]: !p[s] }));
+
+    const topBanner = counts.high > 0
+        ? { cls: "bg-terracotta text-white border-terracotta", Icon: AlertOctagon, text: `${counts.high} high-priority thing${counts.high === 1 ? "" : "s"} to review.` }
+        : counts.medium > 0
+        ? { cls: "bg-gold/20 text-primary-k border-gold", Icon: ShieldAlert, text: `${counts.medium} thing${counts.medium === 1 ? "" : "s"} worth a closer look.` }
+        : counts.low > 0
+        ? { cls: "bg-sage/15 text-[#0F5648] border-sage", Icon: Info, text: `${counts.low} small note${counts.low === 1 ? "" : "s"}, mostly informational.` }
+        : { cls: "bg-sage/15 text-[#0F5648] border-sage", Icon: ShieldCheck, text: `${personaCopy.no_anomalies} ✓` };
+    const isClean = counts.high === 0 && counts.medium === 0 && counts.low === 0;
+
+    return (
+        <div className="space-y-6" data-testid="decoder-result-v2">
+            {/* PERSONA-1 §F, persona-aware hero shown above everything else. */}
+            <h2
+                className="font-heading text-2xl md:text-3xl text-primary-k tracking-tight"
+                data-testid="decoder-persona-hero"
+            >
+                {personaCopy.hero}
+            </h2>
+            {isClean && (
+                <p className="text-muted-k text-sm leading-relaxed -mt-2" data-testid="decoder-charged-correctly">
+                    {personaCopy.charged_correctly}
+                </p>
+            )}
+            {/* Download bar, sits above the rich result so users always see it. */}
+            <div className="flex items-center justify-between flex-wrap gap-3 bg-surface-2 border border-kindred rounded-lg px-4 py-3" data-testid="decoder-download-bar">
+                <div className="text-sm text-muted-k">
+                    Save a copy of this decoded statement for your records.
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => downloadShareablePdf(result)}
+                        className="inline-flex items-center gap-1.5 text-sm border border-primary-k rounded-md px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white transition-colors"
+                        data-testid="decoder-share-pdf-btn"
+                        title="One-page PDF you can forward to family, advisers, or anyone questioning the bill."
+                    >
+                        <Share2 className="h-3.5 w-3.5" /> Share this decode
+                    </button>
+                    <button
+                        onClick={() => downloadDecodedAsCsv(result, "decoded-statement")}
+                        className="inline-flex items-center gap-1.5 text-sm border border-kindred rounded-md px-3 py-1.5 hover:bg-surface text-primary-k"
+                        data-testid="decoder-download-csv-btn"
+                    >
+                        <FileDown className="h-3.5 w-3.5" /> Download CSV
+                    </button>
+                    <button
+                        onClick={() => downloadDecodedAsPdf(result, "decoded-statement")}
+                        className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#091D33]"
+                        data-testid="decoder-download-pdf-btn"
+                    >
+                        <FileDown className="h-3.5 w-3.5" /> Download PDF
+                    </button>
+                </div>
+            </div>
+
+            {result.partial_result && (
+                <div className="bg-gold/15 border border-gold/40 rounded-lg p-4 text-sm text-primary-k" data-testid="decoder-partial-warning">
+                    <div className="font-medium">Partial result</div>
+                    We had trouble reading parts of this statement. Here's what we could extract, a Wayly team member will review the rest within a few hours.
+                </div>
+            )}
+
+            <InputMethodAccuracyNote method={result.input_method} parsingWarnings={result.parsing_warnings} />
+
+            {/* SECTION 0, Plain-English AI summary, always shown when the
+                backend produced one. Rendered as multi-paragraph body so
+                users get a full narrative before any table. Both pathways
+                (AI Tools + Statements tab) receive the same text. Defensive
+                dash-scrub on the display so older statements (parsed before
+                the parser's dash rules landed) also read as plain prose. */}
+            {result.summary && result.summary.trim() && (
+                <section className="bg-surface-2 border border-kindred rounded-2xl p-6" data-testid="decoder-plain-english-summary">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="h-6 w-6 rounded-full bg-primary-k text-white flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                            <Info className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="overline">In plain English</span>
+                    </div>
+                    <div className="text-primary-k leading-relaxed space-y-3 text-[15px]">
+                        {String(result.summary)
+                            .replace(/\s*[\u2014\u2013]\s*/g, ", ")
+                            .replace(/(\S)\s-\s(\S)/g, "$1, $2")
+                            .replace(/,\s*,/g, ",")
+                            .replace(/,\s*\./g, ".")
+                            .split(/\n{2,}/)
+                            .map((para, i) => (
+                                <p key={i}>{para}</p>
+                            ))}
+                    </div>
+                    <div className="mt-4 text-[11px] text-muted-k">
+                        AI-generated summary. Always verify important figures with your provider or My Aged Care before acting.
+                    </div>
+                </section>
+            )}
+
+            {/* SECTION 1, Summary banner */}
+            <section className="bg-primary-k text-white rounded-2xl p-6 relative" data-testid="decoder-summary-banner">
+                <InputMethodBadge method={result.input_method} />
+                <div className="text-[11px] uppercase tracking-[0.18em] text-white pr-32" data-testid="decoder-summary-header-line">
+                    {summary.period || "Statement"}
+                    {summary.participant_name ? ` · ${summary.participant_name}` : ""}
+                    {summary.classification ? ` · ${summary.classification}` : ""}
+                    {summary.provider ? ` · ${summary.provider}` : ""}
+                    {summary.cadence && summary.cadence !== "irregular"
+                        ? ` · ${summary.cadence[0].toUpperCase() + summary.cadence.slice(1)}`
+                        : ""}
+                </div>
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-white/70">Gross billed</div>
+                        <div className="text-2xl mt-1"><NumberMono>{aud(summary.total_gross)}</NumberMono></div>
+                    </div>
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-white/70">Your contribution</div>
+                        <div className="text-2xl mt-1 text-gold"><NumberMono>{aud(summary.total_participant_contribution)}</NumberMono></div>
+                    </div>
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-white/70">Government paid</div>
+                        <div className="font-heading text-2xl mt-1 tabular-nums">{aud(summary.total_government_paid)}</div>
+                    </div>
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-white/70">Budget remaining</div>
+                        <div className="text-2xl mt-1"><NumberMono>{aud(summary.adjusted_budget_remaining ?? summary.budget_remaining)}</NumberMono></div>
+                    </div>
+                </div>
+                {(summary.care_management_fee || summary.rollover_applied || summary.lifetime_cap_remaining != null || summary.cadence) && (
+                    <div className="mt-4 pt-4 border-t border-white/15 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-white/70" data-testid="decoder-summary-meta">
+                        {summary.cadence && summary.cadence !== "irregular" ? (
+                            <span data-testid="decoder-cadence-chip">
+                                Cadence <span className="text-white font-medium">{summary.cadence}</span>
+                            </span>
+                        ) : null}
+                        {summary.care_management_fee ? <span>Care management fee {aud(summary.care_management_fee)}</span> : null}
+                        {summary.rollover_applied ? <span>Rollover applied {aud(summary.rollover_applied)}</span> : null}
+                        {summary.lifetime_cap_remaining != null ? <span>Lifetime cap remaining {aud(summary.lifetime_cap_remaining)}</span> : null}
+                    </div>
+                )}
+            </section>
+
+            {/* SECTION 1B, Balance panel, opening + allocation + closing.
+                Rendered when the extraction carried the rollover / quarterly
+                budget context so participants can trace ledger continuity
+                across monthly + quarterly statements. */}
+            <BalancePanel extracted={extracted} summary={summary} audit={audit} />
+
+            {/* SECTION 2, Anomaly alert panel (always shown) */}
+            <section data-testid="decoder-anomaly-panel">
+              <TooltipProvider delayDuration={150}>
+                <div className={`border-l-4 rounded-r-lg p-4 flex items-start gap-3 ${topBanner.cls}`} data-testid="anomaly-top-banner">
+                    <topBanner.Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm font-medium">{topBanner.text}</div>
+                </div>
+
+                {issueAnoms.length > 0 && (
+                    <ul className="mt-4 space-y-3">
+                        {issueAnoms.map((a, i) => {
+                            const meta = SEV_META[(a.severity || "low").toLowerCase()] || SEV_META.low;
+                            return (
+                                <li key={i} className="bg-surface border border-kindred rounded-xl p-5" data-testid={`anomaly-card-${i}`}>
+                                    <div className="flex items-start gap-3">
+                                        <div className={`h-9 w-9 rounded-full ${meta.bg} ${meta.fg} flex items-center justify-center flex-shrink-0`}>
+                                            <meta.Icon className="h-4 w-4" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className={`text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 ${meta.bg} ${meta.fg}`}>
+                                                    {meta.label}
+                                                </span>
+                                                <RuleBadge rule={a.rule} />
+                                            </div>
+                                            <div className="mt-2 font-medium text-primary-k">{a.headline}</div>
+                                            {a.detail && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{a.detail}</p>}
+                                            {a.dollar_impact > 0 && (
+                                                <div className="mt-2 text-sm text-primary-k">
+                                                    Potential impact: <span className="font-semibold tabular-nums">{aud(a.dollar_impact)}</span>
+                                                </div>
+                                            )}
+                                            {Array.isArray(a.evidence) && a.evidence.length > 0 && (
+                                                <ul className="mt-2 space-y-1">
+                                                    {a.evidence.map((e, j) => (
+                                                        <li key={j} className="text-xs text-muted-k flex items-start gap-1.5">
+                                                            <span className="text-gold">▸</span><span>{e}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                            {a.suggested_action && (
+                                                <div className="mt-3 text-sm font-medium text-primary-k">
+                                                    → {a.suggested_action}
+                                                </div>
+                                            )}
+                                            <div className="mt-3">
+                                                <AIAccuracyBanner variant="anomaly" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+
+                {/* OXY-1 v1, advisory bucket. Softer visual weight (sage border,
+                    no red/gold), NOT counted toward the "issues found" banner. */}
+                {advisories.length > 0 && (
+                    <div className="mt-5" data-testid="decoder-advisories">
+                        <div className="overline text-muted-k mb-3">Things worth checking</div>
+                        <ul className="space-y-3">
+                            {advisories.map((a, i) => (
+                                <li key={i} className="bg-surface border border-sage/40 border-l-4 border-l-sage rounded-xl p-5" data-testid={`advisory-card-${i}`}>
+                                    <div className="flex items-start gap-3">
+                                        <div className="h-9 w-9 rounded-full bg-sage/15 text-[#0F5648] flex items-center justify-center flex-shrink-0">
+                                            <Info className="h-4 w-4" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-sage/15 text-[#0F5648]">
+                                                    Advisory
+                                                </span>
+                                                <RuleBadge rule={a.rule} />
+                                            </div>
+                                            <div className="mt-2 font-medium text-primary-k">{a.headline}</div>
+                                            {a.detail && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{a.detail}</p>}
+                                            {a.suggested_action && (
+                                                <div className="mt-3 text-sm font-medium text-primary-k">
+                                                    → {a.suggested_action}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+              </TooltipProvider>
+            </section>
+
+            {/* SECTION 3, Stream breakdown */}
+            {streams.length > 0 && (
+                <section data-testid="decoder-stream-breakdown">
+                    <div className="overline mb-3">Stream breakdown</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {streams.map((s) => {
+                            const isOpen = !!openStreams[s.stream];
+                            const itemsInStream = items.filter((li) => li.stream === s.stream && !li.is_cancellation);
+                            return (
+                                <div key={s.stream} className="bg-surface border border-kindred rounded-xl overflow-hidden" data-testid={`stream-card-${s.stream}`}>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleStream(s.stream)}
+                                        className="w-full text-left p-4 hover:bg-surface-2 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] uppercase tracking-[0.16em] text-muted-k">{STREAM_LABEL[s.stream] || s.stream}</span>
+                                            {isOpen ? <ChevronUp className="h-3.5 w-3.5 text-muted-k" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-k" />}
+                                        </div>
+                                        <div className="mt-1.5 text-xl text-primary-k"><NumberMono>{aud(s.gross_total)}</NumberMono></div>
+                                        <div className="text-[11px] text-muted-k mt-0.5">{s.line_item_count} item{s.line_item_count === 1 ? "" : "s"} · you paid <span className="font-medium text-primary-k">{aud(s.participant_contribution)}</span></div>
+                                    </button>
+                                    {isOpen && (
+                                        <ul className="border-t border-kindred divide-y divide-kindred bg-surface-2">
+                                            {itemsInStream.length === 0 ? (
+                                                <li className="p-3 text-xs text-muted-k">No line items in this stream.</li>
+                                            ) : itemsInStream.map((li, i) => (
+                                                <li key={i} className="p-3 text-xs flex items-center justify-between gap-2">
+                                                    <span className="text-primary-k truncate">{formatDate(li.date) || ", "} · {li.service_description || "Service"}</span>
+                                                    <span className="tabular-nums text-primary-k flex-shrink-0">{aud(li.gross)}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
+            {/* SECTION 4, Full line-item table (collapsed by default) */}
+            {items.length > 0 && (
+                <section data-testid="decoder-full-table">
+                    <button
+                        type="button"
+                        onClick={() => setShowTable((s) => !s)}
+                        data-testid="decoder-table-toggle"
+                        className="inline-flex items-center gap-2 text-sm text-primary-k hover:underline"
+                    >
+                        {showTable ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        {showTable ? "Hide" : "Show"} full line-item table ({items.length})
+                    </button>
+                    {showTable && (
+                        <div className="mt-3 overflow-x-auto bg-surface border border-kindred rounded-xl">
+                            <table className="min-w-full text-xs">
+                                <thead className="bg-surface-2">
+                                    <tr className="text-left text-muted-k uppercase tracking-wider text-[10px]">
+                                        <th className="p-2.5">Date</th>
+                                        <th className="p-2.5">Service</th>
+                                        <th className="p-2.5">Code</th>
+                                        <th className="p-2.5">Stream</th>
+                                        <th className="p-2.5 text-right">Qty · Unit</th>
+                                        <th className="p-2.5 text-right">Rate</th>
+                                        <th className="p-2.5 text-right">Gross</th>
+                                        <th className="p-2.5 text-right">Your share</th>
+                                        <th className="p-2.5 text-right">Gov share</th>
+                                        <th className="p-2.5">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-kindred">
+                                    {items.map((li, i) => {
+                                        const cancelled = !!li.is_cancellation;
+                                        const flag = li.flags_in_original || li.provider_notes;
+                                        return (
+                                            <tr key={i} className={cancelled ? "text-muted-k italic" : "text-primary-k"}>
+                                                <td className="p-2.5 tabular-nums whitespace-nowrap">{formatDate(li.date) || ", "}</td>
+                                                <td className="p-2.5">{li.service_description || ", "}</td>
+                                                <td className="p-2.5 tabular-nums">{li.service_code || ", "}</td>
+                                                <td className="p-2.5">{STREAM_LABEL[li.stream] || li.stream || ", "}</td>
+                                                <td className="p-2.5 text-right tabular-nums whitespace-nowrap">{formatQtyUnit(li) || ", "}</td>
+                                                <td className="p-2.5 text-right tabular-nums">{li.unit_rate ? aud(li.unit_rate) : ", "}</td>
+                                                <td className={`p-2.5 text-right tabular-nums ${cancelled ? "line-through" : ""}`}>{aud(li.gross)}</td>
+                                                <td className="p-2.5 text-right tabular-nums">{aud(li.participant_contribution)}</td>
+                                                <td className="p-2.5 text-right tabular-nums">{aud(li.government_paid)}</td>
+                                                <td className="p-2.5">
+                                                    {flag && (
+                                                        <span className="inline-flex items-center gap-1 text-terracotta" title={flag}>
+                                                            <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                                                            <span className="truncate max-w-[200px]">{flag}</span>
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </section>
+            )}
+            {personaCopy.adm_disclosure && (
+                <section
+                    className="rounded-xl border border-kindred bg-surface-2 p-4 text-xs text-muted-k leading-relaxed"
+                    data-testid="decoder-adm-disclosure"
+                    aria-label="Automated decision-making disclosure"
+                >
+                    {personaCopy.adm_disclosure}
+                </section>
+            )}
+        </div>
+    );
+}
+
+const METHOD_LABELS = {
+    text_paste: "Pasted text",
+    text_file: "Text file",
+    word_document: "Word document",
+    pdf_text: "PDF (text)",
+    pdf_scanned: "PDF (scanned)",
+    image_vision: "Photo",
+    email_attachment: "Email attachment",
+};
+
+function InputMethodBadge({ method }) {
+    if (!method) return null;
+    const label = METHOD_LABELS[method] || method;
+    return (
+        <span
+            className="absolute top-4 right-4 inline-flex items-center bg-gold/20 text-gold border border-gold/40 rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider"
+            data-testid="decoder-input-method-badge"
+            title={`Decoded from ${label}`}
+        >
+            From {label}
+        </span>
+    );
+}
+
+function InputMethodAccuracyNote({ method, parsingWarnings }) {
+    if (!method) return null;
+    let body = null;
+    if (method === "image_vision" || method === "pdf_scanned") {
+        body = "This statement was read from a photograph or scanned document. Image-based processing is less accurate than text-based processing. Dollar figures in particular should be carefully verified against your original statement, the AI can misread shadows, low-contrast figures, or unusual fonts.";
+    } else if (method === "word_document") {
+        body = "This statement was read from a Word document. Table formatting in Word files can sometimes cause data to be extracted in the wrong order. Verify line items against the original document if anything looks out of place.";
+    }
+    if (!body && !(parsingWarnings && parsingWarnings.length)) return null;
+    return (
+        <div className="rounded-lg border border-gold/40 bg-gold/10 p-4 text-sm text-primary-k space-y-2" data-testid="decoder-format-disclaimer">
+            {body && <p>{body}</p>}
+            {parsingWarnings && parsingWarnings.length > 0 && (
+                <ul className="text-xs text-muted-k list-disc pl-4">
+                    {parsingWarnings.map((w, i) => <li key={i}>{w}</li>)}
+                </ul>
+            )}
+        </div>
+    );
+}
+
+
+// DEC-1 v7.7 Batch B, Balance panel component. Shows opening balance,
+// quarterly allocation, closing balance, and rollover context so the ledger
+// continuity across monthly and quarterly statements is visible. Renders
+// only when the extraction supplies at least one balance field.
+function BalancePanel({ extracted, summary, audit }) {
+    // Pull balance-related fields from extracted (many possible key names
+    // depending on the source layout). Falls back to summary values.
+    const src = extracted || {};
+    const sum = summary || {};
+
+    const opening =
+        src.opening_balance ??
+        src.rollover_from_prior_quarter ??
+        src.unused_funding_rolled_over ??
+        sum.rollover_applied ??
+        null;
+    const allocation =
+        src.quarterly_allocation_received ??
+        src.quarterly_subsidy_this_period ??
+        src.quarterly_budget_total ??
+        null;
+    const closing =
+        src.closing_balance ??
+        src.budget_remaining_at_quarter_end ??
+        src.remaining_quarterly_budget ??
+        sum.adjusted_budget_remaining ??
+        sum.budget_remaining ??
+        null;
+
+    // Only render if at least two of the three fields are known, otherwise
+    // the "budget remaining" tile in the main banner already covers it.
+    const known = [opening, allocation, closing].filter(v => v !== null && v !== undefined && v !== "").length;
+    if (known < 2) return null;
+
+    const fmt = (v) => {
+        if (v == null || v === "") return ",";
+        const n = typeof v === "string" ? parseFloat(v.replace(/[$,]/g, "")) : v;
+        if (isNaN(n)) return String(v);
+        return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2 }).format(n);
+    };
+
+    return (
+        <section className="rounded-2xl border border-primary-k/10 bg-white p-5" data-testid="decoder-balance-panel">
+            <h3 className="text-xs uppercase tracking-wider text-muted-k mb-3">Budget continuity</h3>
+            <div className="grid grid-cols-3 gap-4">
+                <div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-k">Opening balance</div>
+                    <div className="text-lg font-heading tabular-nums text-primary-k mt-1" data-testid="decoder-opening-balance">
+                        {fmt(opening)}
+                    </div>
+                </div>
+                <div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-k">Quarterly allocation</div>
+                    <div className="text-lg font-heading tabular-nums text-primary-k mt-1" data-testid="decoder-allocation">
+                        {fmt(allocation)}
+                    </div>
+                </div>
+                <div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-k">Closing balance</div>
+                    <div className="text-lg font-heading tabular-nums text-primary-k mt-1" data-testid="decoder-closing-balance">
+                        {fmt(closing)}
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
