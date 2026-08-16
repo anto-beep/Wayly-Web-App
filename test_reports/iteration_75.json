@@ -1,0 +1,35 @@
+{
+  "summary": "PERSONA-1 Workstreams B+D backend: 27/27 pytest pass; migration backfilled all 140 users (139 caregivers, 1 participant, all stamped with persona_v1_backfilled_at + care_recipient). Onboarding refactor: line counts match spec, all step-testids present, auto-save + draft restore verified. Found & fixed 1 CRITICAL regression from the refactor: missing `Check` lucide import in Onboarding.jsx caused a ReferenceError crash whenever the user advanced past Step 1 (the stepper renders <Check/> on completed steps). After the one-line import fix, full flow Step 1 -> Authorisation -> Recommended -> All Done renders with zero console errors and the completeness ring.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Onboarding.jsx (stepper)", "issue": "REGRESSION from Onboarding file split: lucide `Check` icon is used at line 286 for the 'step completed' state in the stepper, but the top-level import on line 6 only pulled `{ ArrowRight, Cloud, AlertCircle }`. Result: as soon as the user clicked Continue on Step 1 and step 1 became `done`, React threw `ReferenceError: Check is not defined` and the ErrorBoundary rendered the 500 'Something on our side broke' page. Fixed in this iteration by adding Check to the import list. Reproducer: /onboarding?new=1, fill Step 1, click Continue -> crash pre-fix / step-authorisation renders post-fix.", "selector": "[data-testid=\"step-authorisation\"]", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_persona_registry.py",
+    "/app/backend/tests/test_persona_routes.py",
+    "/app/test_reports/pytest/iter75_persona.xml"
+  ],
+  "action_items": [
+    "T1 already applied the missing `Check` import fix in /app/frontend/src/pages/Onboarding.jsx line 6. Main agent: please re-verify locally that the fix is in the file (single-line change; no logic touched)."
+  ],
+  "critical_code_review_comments": [
+    "The Check import miss slipped through because there is no ESLint no-undef rule catching it in dev, only in prod build. Consider enabling `no-undef` and/or an import-linter rule in CI so future extractions can't ship with dangling references.",
+    "Onboarding.jsx line 286 still lives in the parent shell rather than being part of an extracted <OnboardingStepper /> component. Given the shell is now 410 lines with the stepper being ~50 of those, an OnboardingStepper.jsx extraction would be a natural next step and would have prevented this class of regression.",
+    "PERSONA-1 seed only has ~8 Tier-1 keys and the frontend `usePersona` hook is not yet consumed anywhere. As E1 already flagged, Workstreams F/G/H (DEC-1 / LF-1 / CE-2 retrofit) will need coordinated main-agent work; this drop is purely infra + one refactor.",
+    "Backfill idempotency looks solid: repeat boot shows scanned=0/updated=0/already_ok=0. Suggest adding a lightweight admin endpoint to re-trigger backfill on demand for new signups that were created after the boot-time sweep (currently new users get viewer_persona at signup via the model default, but the invariant is worth an integration test)."
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/Onboarding.jsx (line 6: added `Check` to lucide-react import)"
+  ],
+  "success_rate": {"backend": "100% (27/27 persona tests + migration verified against mongo)", "frontend": "100% after the Check-import fix (was 25% pre-fix — only Step 1 rendered)"},
+  "test_credentials": "trial30909@example.com / TrialPass1! (frontend) — cathy@example.com / testpass123 (backend pytest)",
+  "seed_data_creation": "None (only cleared 1 onboarding_draft row for trial30909 during teardown).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "PERSONA_V1_ENABLED=true in backend/.env. `Check` import fix in Onboarding.jsx line 6 was applied by T1 iter 75. If the file gets rewritten, make sure lucide imports include all icons actually used in the shell (Check, ArrowRight, Cloud, AlertCircle at minimum). Persona backfill is boot-idempotent (140/140 users stamped). Frontend `usePersona` hook exists but is not wired into any tool page yet — DEC-1 / LF-1 retrofit is Workstreams F/G/H (out of scope for this iter).",
+  "rca of the issue": "ROOT CAUSE: During the Onboarding file split, the parent shell was slimmed from 1053 -> 410 lines and its lucide-react import was regenerated as `{ ArrowRight, Cloud, AlertCircle }`. However line 286 of the shell — inside the stepper render — still references `<Check className=\"h-3.5 w-3.5\" />` for done steps. Because JSX only renders that branch when `done` is true (i.e., when step > s.id), Step 1 rendered fine, but the first Continue click set step=2, making Step 1 `done`, which triggered the undefined-reference crash caught by the app-wide ErrorBoundary. FIX: Added `Check` back to the import list. REPRODUCTION: /onboarding?new=1 -> complete Step 1 -> Continue -> pre-fix shows 500 page; post-fix Step 2 renders. MITIGATION: Enable no-undef ESLint rule and/or add a smoke test that walks all 4 onboarding steps to catch future refactors."
+}

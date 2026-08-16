@@ -1,0 +1,32 @@
+{
+  "summary": "Frontend smoke + interaction test of 4 new UIs (PPC-3, CS-1, AW-2, PSW-1) as caregiver cathy@example.com. All critical data-testids resolve; end-to-end flows (PPC-3 quality detail + survey POST, PPC-3 provider comparison, CS-1 6-step self-assessment with burnout warm hand-off, AW-2 chat with scope guardrail and hallucination-safe fallback, PSW-1 create switch + decision walkthrough submit) all succeed against live backend. Backend responses observed: 200 for POST /api/ppc3/survey-responses, /api/ppc3/provider-comparison, /api/cs1/assessments, /api/aw2/conversations, /api/aw2/conversations/{id}/messages, /api/psw1/participants/{pid}/switches, /api/psw1/switches/{sid}/decision-walkthrough.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ProviderSwitches (list route)", "issue": "When URL param pid is literally 'None'/undefined, page throws AxiosError 404 rendered as a fullscreen 'Uncaught runtime errors' React dev overlay instead of graceful empty/error state. Not user-reachable in normal flow, but any bad deep-link crashes the tool.", "selector": "/app/participants/None/switches", "priority": "LOW"},
+      {"component": "SwitchDecisionWalkthrough", "issue": "Missing data-testids: 'psw1-cross-tool-context', 'psw1-context-complaints', 'psw1-context-cases'. The information is rendered on screen ('Unresolved complaints ... 0', 'Open LOOP-1 cases 106') but the container/count elements do not expose the spec'd data-testid attributes.", "selector": "[data-testid=\"psw1-cross-tool-context\"]", "priority": "MEDIUM"},
+      {"component": "SwitchDecisionWalkthrough", "issue": "Missing data-testid 'psw1-final-proceed_with_switch' on step 5. The walkthrough still submits successfully via 'psw1-walkthrough-submit' and the final decision was recorded correctly ('Final decision: proceed with switch'), but the spec'd final-choice radio testid is not present in the DOM.", "selector": "[data-testid=\"psw1-final-proceed_with_switch\"]", "priority": "MEDIUM"},
+      {"component": "ProviderQualityDetail (PPC-3)", "issue": "Rating categories in DOM are care_quality, communication, billing_accuracy, worker_reliability (not the 'reliability' / 'value_for_money' from the review request). Spec wording appears to be an example — flagging as informational to confirm intended taxonomy.", "selector": "[data-testid^=\"ppc3-rating-\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "PSW-1: add data-testid attributes for 'psw1-cross-tool-context' (wrapper), 'psw1-context-complaints' (complaints count), 'psw1-context-cases' (LOOP-1 cases count) on SwitchDecisionWalkthrough page.",
+    "PSW-1: add 'psw1-final-proceed_with_switch' (and sibling final-decision options) data-testids on the final decision step so tests can target the specific choice rather than the generic submit.",
+    "PSW-1: add a graceful fallback for participants list route when pid param is missing/invalid — currently produces a runtime error overlay from the axios 404."
+  ],
+  "critical_code_review_comments": [
+    "PSW-1 walkthrough returns 404 initial GET for /api/psw1/switches/{sid}/decision-walkthrough before any walkthrough exists — page handles it fine, but a 404 in normal happy-path adds console noise. Consider using 200 with empty payload or a HEAD probe.",
+    "Confirm intended PPC-3 rating dimensions (billing_accuracy, worker_reliability) vs. review-request wording (reliability, value_for_money) — pick one set consistently."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "PPC-3 100% (survey+compare), CS-1 100% (6-step + burnout warm hand-off), AW-2 100% (settings+scope+fallback), PSW-1 ~85% (flow completes; 4 data-testids missing)"},
+  "test_credentials": "cathy@example.com / testpass123 (auth token stored in localStorage as 'kindred_token'; active pid in 'wayly_active_participant_id')",
+  "seed_data_creation": "Created 1 PPC-3 quality profile for provider 'TestProviderZ' (auto-created via GET); 1 survey-response for TestProviderZ; 1 CS-1 assessment for cathy; 1 AW-2 conversation with 4 messages; 1 PSW-1 switch (Test Provider X, billing_disputes_unresolved) with completed decision walkthrough (proceed_with_switch) for participant 0c538637-b0dd-4982-8f78-b32814c6a5eb.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 4 tool UIs work end-to-end. To hit /api/core/participants you MUST send Authorization: Bearer <localStorage.kindred_token> — cookies alone return 401. Wayly-token key is 'kindred_token', not 'wayly_token'. Active pid is in localStorage 'wayly_active_participant_id'. AW2_NUDGES gate before Dec 2026 confirmed active — proactive nudges banner ('Proactive nudges are gated until December 2026') is visible on AW-2 page as expected. PSW-1 walkthrough has 5 steps (Reason → Alternatives → Considerations → step 4 empty candidates but 'Next' enabled → Final decision). Missing testids listed in action_items are the only functional gaps.",
+  "rca_of_the_issue": "N/A — no critical bugs. Minor missing data-testids on PSW-1 walkthrough page (cross-tool context container + final decision radios) traced to ProviderSwitches.jsx SwitchDecisionWalkthrough component not emitting spec'd testids on those elements. The underlying flow works and backend accepts the payload."
+}

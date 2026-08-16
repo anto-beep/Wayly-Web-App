@@ -1,0 +1,57 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "when a user switches the participant, the profile switcher is not updating, I need you to make sure that everything switches to the selected participant across all pages. data should never link or be shared. this should be applied to all the modules and tools.",
+  "summary": "No relevant testing skill found. Focused retest inspected App.js/ReassessmentLetter/AuthContext and exercised the requested preview UI flow. Anonymous direct /ai-tools/reassessment-letter still redirects correctly, but after logging in as Cathy and switching to Robert, direct navigation to /ai-tools/reassessment-letter still redirected to /ai-tools/letters-and-follow-ups and [data-testid=\"reassessment-form\"]/[data-testid=\"rl-participant\"] never rendered. The primary final check is still failing, so the participant-switcher cascade bug is not fully fixed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ReassessmentLetterRedirectOrPage / Reassessment Letter tool",
+        "issue": "Authenticated direct navigation to /ai-tools/reassessment-letter still lands on /ai-tools/letters-and-follow-ups instead of rendering the standalone Reassessment Letter form. The rl-participant field is absent, so the Robert -> Dorothy participant-switch cascade cannot occur on this page.",
+        "selector": "[data-testid=\"rl-participant\"]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Participant switcher cascade to Reassessment Letter",
+        "issue": "With Cathy logged in and Robert selected, the direct URL route redirects before the participant-scoped ReassessmentLetter component mounts. The header showed Robert L6, but the page displayed the Letters & Follow-ups hub with no reassessment form field.",
+        "affected_selectors": [
+          "participant-switcher-trigger",
+          "reassessment-form",
+          "rl-participant"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/participant_switcher_iter118_playwright.py"
+  ],
+  "action_items": [
+    "Update ReassessmentLetterRedirectOrPage to wait for AuthContext loading to finish before deciding whether the user is anonymous, e.g. read `{ user, loading } = useAuth()` and render a loading state while loading is true.",
+    "Retest: login as Cathy, switch Robert, direct-load /ai-tools/reassessment-letter, confirm rl-participant is Robert, then switch Dorothy and confirm it updates to Dorothy within a couple seconds."
+  ],
+  "critical_code_review_comments": [
+    "frontend/src/App.js currently checks `hasCscContext || user`, but it does not check `loading` from useAuth. On a direct page load, AuthProvider starts with `user=null` and `loading=true`; the guard can return `<Navigate to=\"/ai-tools/letters-and-follow-ups\" replace />` before `/auth/me` hydrates the logged-in user.",
+    "frontend/src/context/AuthContext.jsx confirms the initial state is `user=null` and `loading=true` until bootstrap reads `kindred_token` and `/auth/me`. This matches the observed authenticated redirect race.",
+    "Previously-passing iter 117 cascade checks were not re-run after the early primary failure in this run; the final blocker remains the reassessment direct-route guard."
+  ],
+  "updated_files": [
+    "/app/test_reports/participant_switcher_iter118_playwright.py",
+    "/app/test_reports/bug_verification_118.json",
+    "/app/test_reports/iteration_118.json"
+  ],
+  "success_rate": {
+    "backend": "N/A (frontend-only retest; no backend issue found)",
+    "frontend": "4/5 focused assertions passed before primary reassessment route failure stopped the cascade run"
+  },
+  "seed_data_creation": "No seed data created. No Ask Wayly/LF2 artifacts were created because the run stopped at the primary reassessment route failure.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use Cathy credentials. In this run `/api/account` returned Dorothy id 0c538637-b0dd-4982-8f78-b32814c6a5eb and Robert id seed-robert_kowalski-f0844844. Anonymous /ai-tools/reassessment-letter redirected to /ai-tools/letters-and-follow-ups as expected. After Cathy login and switching to Robert, direct loading /ai-tools/reassessment-letter still showed the Letters & Follow-ups hub and timed out waiting for [data-testid=\"reassessment-form\"].",
+  "rca_of_the_issue": "Repro: clear storage, verify anonymous redirect; log in as cathy@example.com/testpass123; switch header to Robert; direct-load /ai-tools/reassessment-letter. Expected standalone Reassessment Letter form with rl-participant='Robert Kowalski'. Actual URL/content is /ai-tools/letters-and-follow-ups and rl-participant is absent. Likely RCA: route guard consults `user` before AuthProvider bootstrap finishes on full direct navigation."
+}

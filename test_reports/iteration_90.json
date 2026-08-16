@@ -1,0 +1,35 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "https://mobile-exact-parity.preview.emergentagent.com/resources/articles/support-at-home-vs-hcp article still looks like the old one and not the updated one",
+  "summary": "No relevant testing skill found. Verified the public UI flow on the preview URL: the legacy /resources/articles/support-at-home-vs-hcp route redirects to the canonical /resources/articles/support-at-home-vs-home-care-packages-what-changed URL and renders the updated structured article with Wayly Editorial byline, 3 February 2026 publish date, 5 key takeaways, 7 expected sections, and 6 FAQs. Also verified the canonical URL directly, two legacy static articles, and the articles index with 32 visible cards including the new article.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/bug_verification_support_at_home_redirect_iter90.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "No critical code review comments. The implemented client-side window.location.replace redirect matches the requested behavior."
+  ],
+  "updated_files": [
+    "/app/tests/bug_verification_support_at_home_redirect_iter90.py",
+    "/app/test_reports/bug_verification_90.json",
+    "/app/test_reports/iteration_90.json"
+  ],
+  "success_rate": {
+    "backend": "not_applicable",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "None; public article pages required no credentials or seed data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Focused browser automation passed on https://mobile-exact-parity.preview.emergentagent.com. The old URL redirected to the canonical slug; the canonical page rendered directly; /the-three-streams and /switching-providers rendered; the articles index showed 32 cards including the new canonical article and representative legacy static cards. The only console noise observed was expected/static fallback behavior: CMS 404s for the legacy static articles before they rendered from STATIC_ARTICLES, plus aborted Cloudflare RUM/favicon-style requests; no user-visible errors were present.",
+  "rca_of_the_issue": "The old slug previously existed in the legacy STATIC_ARTICLES array, so it rendered stale 5-paragraph content. The fix redirects the old slug before article lookup and removes the stale static entry, so users now land on the canonical structured 2026 article."
+}

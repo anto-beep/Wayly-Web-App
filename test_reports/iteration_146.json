@@ -1,0 +1,31 @@
+{
+  "summary": "Backend-only verification of Stripe catalogue seed, live proration wire-up, and Stripe test-clock harness (BILLING-TEST-EXECUTION-1 CRITICAL subset). Ran the fast subset A4/F1/I3 live against Stripe test mode (all PASS in 54s). Verified prices endpoint, proration-preview endpoint, and seeder idempotency via the preview URL. Prior full 9/9 harness run (billing_exec_results.json) still on record and consistent with the mechanism verified here.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verifications": {
+    "GET /api/payments/prices (no auth)": "HTTP 200. prices contains solo_fortnightly=price_1U3qNGFXu1wTzvp0kPpom0gr, family_fortnightly=price_1U3qNGFXu1wTzvp0FqJns78F, family_additional_participant_fortnightly=price_1U3qNHFXu1wTzvp0v2v3B7Gk. fallback_env={solo:true, family:true, additional:true}.",
+    "POST /api/payments/proration-preview (cathy, no active sub)": "HTTP 200 for both target_plan=family and target_plan=solo -> {available:false, reason:'no_active_subscription', amount:null, currency:'aud'}. Endpoint reachable & responds as spec'd. Live Stripe path (stripe.Invoice.create_preview) not exercised here because cathy has no active Stripe sub, but B1/B2/C1 in the harness cover the live-Stripe proration math end-to-end.",
+    "Seeder idempotency": "STRIPE_API_KEY=... python3 /app/backend/scripts/seed_stripe_catalogue.py printed [skip] for all three lookup_keys (solo_fortnightly, family_fortnightly, family_additional_participant_fortnightly) with matching price_ids and unit_amounts (2450, 4950, 2450). Idempotent.",
+    "Harness fast subset (A4, F1, I3)": "pytest tests/billing/test_stripe_test_clock_harness.py -v -> 3 passed in 53.79s against Stripe test mode. New PASS entries appended to /app/test_reports/billing_exec_results.json (now 12 entries total, latest three all PASS).",
+    "Harness full 9/9 (from prior run in same iteration set)": "billing_exec_results.json has A2/A4/A6/B1/B2/C1/E2/F1/I3 all PASS. B2 proration table exact to the cent at 10d/7d/1d = $17.86/$12.50/$1.79."
+  },
+  "test_report_links": [
+    "/app/backend/tests/billing/test_stripe_test_clock_harness.py",
+    "/app/backend/scripts/seed_stripe_catalogue.py",
+    "/app/test_reports/billing_exec_results.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "payments_advanced.py correctly uses stripe.Invoice.create_preview() (SDK 14.4.1 compatible) and detects proration lines via 'Unused time'/'Remaining time' substring on line.description since the `proration` bool was dropped by Stripe SDK — verified functional via harness B1/B2/C1.",
+    "resolve_price_id() 10-min in-process cache is fine for single-worker, but if backend is scaled horizontally each pod holds its own cache; acceptable given lookup_key is stable and Stripe rate limits are generous.",
+    "proration-preview response schema does not echo target_plan/additional_participants inputs; harmless but slightly reduces debuggability of the frontend network log.",
+    "No structural issues found in seed_stripe_catalogue.py — idempotent, uses lookup_key filter, verifies currency/interval before skipping."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "cathy@example.com / testpass123 (verified working)",
+  "seed_data_creation": "None. Stripe catalogue was already seeded by prior run; seeder confirmed idempotent.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Fast harness subset (A4, F1, I3) runs in ~54s and proves live Stripe test-clock mechanism. Full 9-test harness ~4.5min. Results log at /app/test_reports/billing_exec_results.json. cathy@example.com has no active Stripe subscription so proration-preview returns available:false; to exercise the live-Stripe branch, harness B1/B2/C1 create ephemeral test-mode subs with test clocks."
+}

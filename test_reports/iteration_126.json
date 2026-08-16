@@ -1,0 +1,65 @@
+{
+  "summary": "Iter 126: Batch-tested SDL-1 (attendance log), FC-2 (family coordinator), SD-3 (Statement of Rights annotations) end-to-end. Backend integration: 20 pass / 1 skipped (no zero-anomaly statement available). SoR unit tests: 7/7 pass. Frontend UI verified for SDL-1 attendance page (filters, actions, reconcile, dispute modal), FC-2 hub (all 5 tabs, task add/complete, distress-note crisis panel, message send, handover-btn present), Round 2 regression (BC-2 sliders, handover-pack form) still work, all page titles are '<Name> | Wayly'. Profile Quick-Actions links (sdl1-attendance-open + fc2-coordinator-open) present. ONE CRITICAL FRONTEND BUG: <StatementRightsPanel> only renders in the legacy pre-decoder branch of StatementDetail.jsx, so on any decoded statement (audit_json && extracted_json truthy — which is the norm) the SD-3 rights panel is never mounted.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "StatementDetail.jsx / StatementRightsPanel",
+        "issue": "The Your rights panel (data-testid statement-rights-panel) is placed inside the ELSE branch of `stmt.audit_json && stmt.extracted_json ? <DecoderResultView/> : <>...panel...</>`. Modern decoded statements go into the decoder branch, so <StatementRightsPanel> is never mounted. On statement 408fcbf3-c126-4897-a9b1-c76628c49ca7 (which has 4 rights on the API) the panel never fires the /api/sd3/.../rights-annotations request and the DOM has no statement-rights-panel node.",
+        "selector": "[data-testid=\"statement-rights-panel\"]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "SD-3 SoR annotations on Statement Detail",
+        "issue": "Backend endpoint returns correct 4-right payload for the target statement; frontend never renders the panel because it is nested in the legacy view branch. Move <StatementRightsPanel statementId={id}/> outside/after the conditional so it is rendered for both decoder and legacy statements.",
+        "affected_selectors": ["[data-testid=\"statement-rights-panel\"]", "[data-testid=\"statement-rights-toggle\"]", "[data-testid^=\"right-\"]"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Any /app page (participant switcher)",
+        "issues": ["Persistent hydration warning: '<span> cannot be a child of <option>' — same warning flagged in iter 125. Not blocking."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter126_sdl1_fc2_sd3.py",
+    "/app/backend/tests/test_sor_annotations.py",
+    "/app/test_reports/pytest/iter126.xml"
+  ],
+  "action_items": [
+    "(HIGH) Fix StatementDetail.jsx: hoist <StatementRightsPanel statementId={id}/> above/outside the `stmt.audit_json && stmt.extracted_json ? ... : ...` ternary (or duplicate it in both branches). Currently the panel only renders for legacy statements without decoder payload, so the SD-3 UI requirement is broken for all real (decoded) statements.",
+    "(LOW) Persistent hydration warning '<span> cannot be a child of <option>' — carried over from iter 125, still not fixed."
+  ],
+  "critical_code_review_comments": [
+    "sdl1.reconcile response is nested under `reconciliation` (not returned flat). Frontend `sdl1-recon-summary` handling should ensure it dereferences `.reconciliation` (verified working in UI).",
+    "sdl1.seed_from_calendar SeedIn requires start_date + end_date (Field(...)); the /participants/{pid}/attendance page's Seed button must pass a valid range or backend returns 422. AttendanceLog.jsx caller should confirm date range is supplied.",
+    "sdl1.py evidence: v1 stores text_content only; storage_url is None — matches spec (binary storage deferred).",
+    "sdl1 pattern-detection: triggers on 2+ disputes for same provider. Verified via test: adding second dispute for TEST_iter126_ProviderX surfaces pattern via GET pattern-detections.",
+    "fc2.calendar confirm-attendance: attendance_status='disputed' correctly opens a delivery_discrepancy loop1 case (case_id populated on entry).",
+    "fc2.voice-notes: sensitive-content scanner returns crisis_resources with any elevated flag — verified end-to-end (UI crisis panel shown).",
+    "fc2.handover-pack: POST returns application/pdf bytes, %PDF- header, >500 bytes — verified.",
+    "sd3.rights-annotations: returns `annotations` (not `rights`); baseline rights (make_a_complaint + advocacy_support) always present; anomaly-driven rights include is_baseline=false so UI shows the 'Relevant here' badge.",
+    "StatementRightsPanel.jsx early-returns null when data.annotations empty — good; but the enclosing render path is wrong (see HIGH bug).",
+    "AttendanceLog.jsx: rich data-testid coverage, all filters/action buttons wired.",
+    "FamilyCoordinator.jsx: all 5 tabs and every subview have complete data-testid coverage; distress phrase triggers crisis panel."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter126_sdl1_fc2_sd3.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (20 pass, 1 skipped due to test-data; SoR unit 7/7)",
+    "frontend": "~90% — SDL-1 + FC-2 + Round 2 regression + profile links all OK; SD-3 rights panel does not render on decoded statements (HIGH bug)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (participant Dorothy 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "Created ~5 SDL-1 attendance records for Dorothy (TEST_iter126_Provider / TEST_iter126_ProviderX), 2 disputed to surface a pattern; 2 FC-2 tasks ('TEST_iter126 task', 'TEST_iter126 cancel me'); 1 calendar entry ('TEST_iter126 visit') disputed → LOOP-1 case; 1 voice note 'TEST_iter126 private note'; 1 sensitive voice note 'TEST_iter126 I am so scared and cannot cope'; 1 message; a handover-pack PDF (generated only, not persisted). UI run also created 1 UI task, 1 UI voice distress note, 1 UI message, and 1 UI dispute via modal. Prefix TEST_iter126 for cleanup.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend for SDL-1/FC-2/SD-3 all green. The one open item is the StatementRightsPanel placement in /app/frontend/src/pages/StatementDetail.jsx line 407 — it must be moved outside the `stmt.audit_json && stmt.extracted_json` ternary so it renders in both branches. Confirm the fix by opening /app/statements/408fcbf3-c126-4897-a9b1-c76628c49ca7 (should show 4 rights, 2 of which have 'Relevant here'). Then find a zero-anomaly statement (e.g., via /api/statements filter) and confirm the panel shows only the 3 baseline rights (make_a_complaint, advocacy_support — actually 2, since the sor service returns only what was triggered plus baselines; unit test test_empty_statement_returns_baseline_rights already asserts baseline-only). Re-run: pytest backend/tests/test_iter126_sdl1_fc2_sd3.py backend/tests/test_sor_annotations.py.",
+  "rca of the issue": "RCA: StatementDetail.jsx introduces a conditional at line 333 — `{stmt.audit_json && stmt.extracted_json ? (<DecoderResultView.../>) : (<>...anomaly list + <StatementRightsPanel/> + line-items-table...</>)}`. The rights panel and line-items-table are both authored inside the ELSE fragment (lines 344-447). Any statement that has been decoded (has both audit_json and extracted_json — the default for all real uploads) takes the IF branch and never renders those siblings. The DOM query for [data-testid=statement-rights-panel] returns null and no /api/sd3/.../rights-annotations request is ever fired. Reproduction: log in as cathy → /app/statements/408fcbf3-c126-4897-a9b1-c76628c49ca7 → observe rendered DecoderResultView (StreamBreakdown visible) but no rights panel; devtools shows no sd3 network call. Mitigation: pull the `<StatementRightsPanel statementId={id}/>` up above the ternary or place it after the closing `</div>` at line 474 (before archive/delete modals) so it renders for both code paths."
+}

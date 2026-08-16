@@ -1,0 +1,38 @@
+{
+  "summary": "Iter 171 mobile parity + dark-mode sweep passed. Verified all 12 target screens on Expo web preview: dark mode toggle from Settings applies and every screen (Ask Wayly, Upload, AI Decode, Invoice detail, Pacing, Budget Alerts, Budget Scenarios, Reports, Carer Self-Check, Handover Pack, AT & HM, CHSP Tools, Letters, Care Plans) renders with the themed palette — no white-on-white / dark-on-dark blending observed. Copy parity all matches spec (Budget Alerts subtitle + empty-state hint + no web-app footnote; Budget Scenarios PageIntro eyebrow/title/description; Reports PageIntro + 8 report types picker; Carer Self-Check + Handover Pack + AT & HM + CHSP Tools + Letters + Care Plans PageIntro titles all match). No `$$` doubled dollar signs anywhere in scanned pages. Pace status label uses themed colors.sage / colors.gold (readable in both modes). Per-participant scoping in code paths is via participant_id query + apiFetch's X-Participant-Id header for /reports, /pacing, /budget-scenarios, /care-plans, /letters; verified activeId hook re-fetches on switch.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter171_settings_dark.jpeg",
+    "/app/test_reports/iter171_dark_pacing.jpeg",
+    "/app/test_reports/iter171_dark_alerts.jpeg",
+    "/app/test_reports/iter171_dark_scenarios.jpeg",
+    "/app/test_reports/iter171_dark_reports.jpeg",
+    "/app/test_reports/iter171_dark_csc.jpeg",
+    "/app/test_reports/iter171_dark_chsp.jpeg",
+    "/app/test_reports/iter171_dark_upload.jpeg",
+    "/app/test_reports/iter171_dark_ask.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "reports.tsx load() calls /reports without an explicit participant_id query param — relies on apiFetch injecting X-Participant-Id via ParticipantContext. If that header logic ever regresses, reports list would leak across participants. Consider mirroring the pacing/care-plans pattern and appending ?participant_id=${activeId} defensively.",
+    "handover-pack.tsx GET /cs1/handover-packs does not filter by participant_id in the URL either — same X-Participant-Id header dependency. Confirm backend enforces scoping."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (12/12 routes verified in dark + copy checks)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, Mum/Dorothy Smith active)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Dark-mode toggle testID = theme-dark on Settings. All target screens render themed colors correctly. Copy strings verified via document.body.innerText scans (no $$ doubles, no 'on the web app' / 'Manage alert rules on the web app' leftovers). If retesting per-participant isolation, use the header switcher (participant-switcher testIDs) and re-check /reports, /handover-packs, /letters — those two rely on X-Participant-Id header rather than URL query, worth a direct verification against the backend.",
+  "rca of the issue": ""
+}

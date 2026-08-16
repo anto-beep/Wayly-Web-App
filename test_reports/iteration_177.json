@@ -1,0 +1,37 @@
+{
+  "summary": "Iter 177 — mobile re-test of the two iter176 P1 bugs on the rebuilt AI tools (Classification Self-Check, Budget & Lifetime Cap Calculator, Statement Decoder). BOTH P1 BUGS ARE RESOLVED. (1) CSC result panel now reads the real /api/public/csc/run (csc.payload.v1) shape correctly: confidence pill (csc-confidence-medium 'Medium confidence'), csc-result-header shows 'INDICATIVE BAND' + 'Classification 5 to 7', annual $39,697 to $58,148, quarterly $8,932 to $13,083, profile_summary text rendered ('Substantial daily-care needs...'), csc-drivers card populated with 3 named driver blocks (domain label + answer, e.g. 'Cognition and behaviour / Significant', 'Mood / Significant', 'Cognition and behaviour / Often') — no empty bullets, plus a Gap-detected badge, csc-next-step-a with the 'Draft a reassessment letter' CTA, csc-rerun button, and 'Payload version csc.payload.v1' footer. (2) Primary CTA label + icon now render WHITE (rgb(255,255,255)) on both the light-mode teal fill (rgb(14,77,82)) and the dark-mode terracotta fill (rgb(165,81,43)) for all three tool buttons (csc-submit, bc-submit, decoder-submit). Regression checks: Budget Calculator end-to-end works (Class 4 → annual $29,696, quarterly $6,681.60, care mgmt $742.40, per-stream allocations, rollover floor $1,000.00). Statement Decoder text-paste flow works end-to-end (SMART SUMMARY generated with 8 anomalies flagged, statement period 01/07/2025-30/09/2025). Both prior P1s resolved; no new bugs observed on the 3 rebuilt tools.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/tmp/csc_01_top.png",
+    "/tmp/csc_result_light.png",
+    "/tmp/csc_submit_dark.png"
+  ],
+  "action_items": [
+    "None for the two iter176 P1s — verified resolved. Proceed to rebuild the remaining 6 tools (provider-price-checker, contribution-estimator, care-plan-reviewer, letters-and-follow-ups, invoice-checker, family-coordinator) which are still on the older FormTool path."
+  ],
+  "critical_code_review_comments": [
+    "Recommend adding a small snapshot / contrast unit test on the shared Button component to lock in the white-label-on-primary invariant so this class of regression doesn't recur (this is now the 3rd iteration where a CTA contrast bug slipped in and was fixed).",
+    "Consider extending the DOMAIN_LABEL map in /app/mobile/src/components/tools/ClassificationSelfCheck.tsx to also cover the domain strings the backend currently returns capitalised ('Cognition and behaviour', 'Mood', 'Safety', 'Home environment', 'Informal support') — right now the map keys are lowercase snake_case and the fallback returns the raw domain, which happens to look fine because the backend already returns human-readable labels, but the two shapes should be aligned to avoid future drift."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "not tested (frontend-only re-test as requested)",
+    "frontend": "3/3 rebuilt tools 100% — CSC result panel fully renders per csc.payload.v1 shape, Budget Calculator end-to-end works, Statement Decoder end-to-end works, primary CTA label WHITE on teal (light) and terracotta (dark) across all three submits."
+  },
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter176 P1s (CSC result-panel shape mismatch + primary CTA black-text regression) are both resolved as of iter177. Expo web preview https://mobile-parity-sweep.expo.preview.emergentagent.com. Login testIDs login-email-input / login-password-input / login-submit-button. Deep links used: /tool/classification-self-check, /tool/budget-calculator, /tool/statement-decoder. TestIDs live and passing: csc-current-<none|1..8>, csc-progress, csc-q-<QID>-<value_snake>, csc-submit, csc-result, csc-result-header, csc-confidence-<high|medium|low>, csc-drivers, csc-gap-badge, csc-next-step-<a|b|c>, csc-rerun, bc-class-<1..8>, bc-submit, bc-result, decoder-mode-<text|file>, decoder-text-input, decoder-submit, decoder-result. Question IDs are CASE-SENSITIVE (Q1_..Q16_) — regex when parsing testIDs must not lowercase. Sample answer set that triggers branch A (higher needs than C4) and 'Medium confidence' pill: current=4 + one of {significant, often, two_to_three, some} per question. Dark mode can be forced via Playwright page.emulate_media(color_scheme='dark'). The other 6 tools (provider-price-checker, contribution-estimator, care-plan-reviewer, letters-and-follow-ups, invoice-checker, family-coordinator) remain on the older FormTool render path and were not exercised.",
+  "rca of the issue": "Both P1 fixes verified at source and at runtime. (1) /app/mobile/src/components/tools/ClassificationSelfCheck.tsx was fully rewritten to consume classification.primary / range_low / range_high / confidence / annual_budget_low|high / quarterly_budget_low|high, result.profile_summary, and top_drivers[{question_id, domain, answer}] — matches csc.payload.v1 exactly, and the runtime render shows populated header, summary, and driver blocks. (2) /app/mobile/src/components/ui.tsx Button component sets palette.primary.fg = '#fff' and explicitly passes that colour into both the icon (<Icon color={p.fg}>) and the label (<Text style={{color: p.fg}}>), so the label no longer inherits the theme default text colour. Verified in-browser: label computed color is rgb(255,255,255) on both light-mode teal rgb(14,77,82) and dark-mode terracotta rgb(165,81,43) across csc-submit, bc-submit, and decoder-submit."
+}

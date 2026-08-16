@@ -1,0 +1,59 @@
+{
+  "summary": "E2E tested the new Wayly mobile (Expo) surface against the shared backend as cathy@example.com. Backend endpoints for mobile all pass except a response-shape mismatch on /api/participants. Core mobile flows (login, dashboard, statements list+detail, invoices list+detail, Ask Wayly chat, upload screen, settings/plan, more menu + logout) all render and route correctly. One CRITICAL parity bug: mobile ParticipantContext reads res.participants but backend returns {items:[...]}, so cathy's 3 real participants are dropped -> household-fallback shown in switcher, /participants screen says 'No participants added yet', and no X-Participant-Id header is ever set. Two review-request testIDs (settings-manage-plan, more-logout) do not match the code (actual: manage-plan-button, logout-button) - documentation drift only, buttons work.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "ParticipantContext / participants screen / switcher", "issue": "Mobile reads res.participants from /api/participants, but the shared backend returns {items:[...]}. Consequently cathy (who has 3 seeded participants) shows 0 participants in-app; switcher only exposes the household fallback and /participants screen shows the empty-state 'No participants added yet'. Reference: /app/mobile/src/context/ParticipantContext.tsx:41-42", "testID": "participant-switcher", "priority": "CRITICAL"},
+        {"component": "ParticipantContext / X-Participant-Id header", "issue": "Because the participants list is always empty (see above), activeId stays '' and no X-Participant-Id header is ever attached. Any participant-scoped endpoint on mobile is effectively household-scoped. Reference: /app/mobile/src/context/ParticipantContext.tsx:46-48, /app/mobile/src/lib/api.ts:82-84", "testID": "n/a", "priority": "HIGH"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": [
+        {"component": "react-native-web deprecations", "issue": "Console warns: 'shadow* style props are deprecated. Use boxShadow' and 'props.pointerEvents is deprecated. Use style.pointerEvents'. Non-blocking but will break on future RN Web majors. Coming from theme card shadows / Pressable usage."}
+      ]
+    }
+  },
+  "parity_issues": [
+    {"flow": "Participants list", "platform": "mobile", "issue": "Web reads the same /api/participants correctly (uses items[]). Mobile drops the payload because it expects a 'participants' key.", "expected": "3 participants visible for cathy on both surfaces", "actual": "0 participants on mobile; household fallback only"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_mobile_backend_flows.py",
+    "/app/test_reports/pytest/mobile_iter150.xml",
+    "/app/test_reports/iter150_login.jpeg",
+    "/app/test_reports/iter150_dashboard.jpeg",
+    "/app/test_reports/iter150_stmts.jpeg",
+    "/app/test_reports/iter150_stmt_detail.jpeg",
+    "/app/test_reports/iter150_invoices.jpeg",
+    "/app/test_reports/iter150_invoice_detail.jpeg",
+    "/app/test_reports/iter150_ask.jpeg",
+    "/app/test_reports/iter150_upload.jpeg",
+    "/app/test_reports/iter150_settings.jpeg",
+    "/app/test_reports/iter150_participants.jpeg",
+    "/app/test_reports/iter150_after_logout.jpeg"
+  ],
+  "action_items": [
+    "FIX: In /app/mobile/src/context/ParticipantContext.tsx change `apiFetch<{ participants: Participant[] }>('/participants')` and `res?.participants` to read from `items` (the shared backend contract) -- e.g. `const res = await apiFetch<{ items: Participant[] }>('/participants'); const list = res?.items || res?.participants || [];`. This immediately restores the switcher, /participants screen, and X-Participant-Id header.",
+    "RECONCILE testIDs: review request mentions `settings-manage-plan` and `more-logout` but code uses `manage-plan-button` and `logout-button`. Pick one convention and align the PRD/testIDs so future testing scripts don't drift.",
+    "OPTIONAL cleanup: silence react-native-web deprecation warnings (shadow* / pointerEvents) by using boxShadow / style.pointerEvents where possible."
+  ],
+  "critical_code_review_comments": [
+    "ParticipantContext.tsx response shape assumption diverges from the shared backend contract (items vs participants) -- validate all shared endpoints against the web client (which is the source of truth) to catch similar drift on other endpoints.",
+    "AuthContext signup() hardcodes plan:'free' even though the Wayly product removed the free plan in Dec 2026 (see /app/memory/test_credentials.md). New mobile signups will land as free-plan users, then likely hit the 402 paywall. Should either default to 'family' or accept a plan param and route through the same signup flow as web.",
+    "loginWithGoogle for the Expo web preview does a full-page redirect via window.location.href -- OK for the preview, but note that the session_id post-redirect handler in the same file uses extractSessionId(window.location.href) which will fire on ANY /?session_id=... URL, even accidental ones. Consider clearing/validating scope."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_mobile_backend_flows.py"
+  ],
+  "success_rate": {"backend": "90% (9/10 asserts pass; the 10th documents the shape bug)", "frontend": "88% (11/12 screens verified; participants/switcher blocked by the shape bug)"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan, 36 statements, 25 invoices, 3 participants seeded)",
+  "seed_data_creation": "None; used existing seeded cathy account.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After the participants fix, re-run test_mobile_backend_flows.py (adjust the participants assertion to expect res['items']) and re-hit /participants + participant-switcher in the mobile UI to confirm the 3 participants appear and that X-Participant-Id is now sent on subsequent calls (inspect network in devtools).",
+  "rca of the issue": "RCA: /api/participants returns {items: [...]} (verified against production backend for cathy@example.com). The mobile ParticipantContext (line 41) types the response as {participants: Participant[]} and destructures res?.participants, which is always undefined. Fallback resolves to []. Downstream effects: (a) UI shows household-only fallback in switcher, (b) /participants screen renders empty state, (c) activeId never resolves so X-Participant-Id header is never attached to any request. Fix is a 2-line change in ParticipantContext.tsx to read `res.items`."
+}

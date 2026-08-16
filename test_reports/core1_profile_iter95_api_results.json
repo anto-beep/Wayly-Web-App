@@ -1,0 +1,285 @@
+{
+  "base": "https://mobile-exact-parity.preview.emergentagent.com",
+  "login_status": 200,
+  "core_participant_count": 28,
+  "account_participant_count": 15,
+  "core_scope_counts": {
+    "account_id": "e26010fd-68b6-465a-9b22-f08e5c852262",
+    "household_id": "b6228253-f0ee-49f0-a670-4b67f5df1b80",
+    "account_and_household": 26,
+    "account_only": 1,
+    "household_only": 1,
+    "unknown": 0
+  },
+  "core_profile_statuses": [
+    {
+      "id": "0c538637-b0dd-4982-8f78-b32814c6a5eb",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "b327e177-9b01-432d-ac8b-8656ee122434",
+      "name": "Dorothy",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "seed-robert_kowalski-f0844844",
+      "name": "Robert",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "seed-patricia_holloway-85b8e406",
+      "name": "Patricia",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "26d20a6e-53e0-4950-ac96-25bae4ac9177",
+      "name": "TESTAlice",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "6be86491-003b-49fa-afa1-21505d553124",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "637479c0-c3df-41c7-b4c9-5714a0950d8e",
+      "name": "TESTPart",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "65300fe0-27d8-4e16-98a4-d29968db5b9b",
+      "name": "PWCathy",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "29d82430-fe25-432e-8b9c-1a30adacc203",
+      "name": "TESTAlice",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "8defd506-295c-4bb1-ab7c-57de91b32f42",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "866497f5-780e-4ace-af57-7a6bf7f0e8a1",
+      "name": "TESTPart",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "dfb76032-c5c3-4f26-b4ca-a60174346a66",
+      "name": "Updated",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "6260c692-f8ea-4810-98da-8f3a125076df",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "5bfc7cb0-fa00-45c7-bf0e-89ff8884600e",
+      "name": "Updated",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "0e57fdb1-e304-41ef-8872-df83781e2d57",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "b32e3d41-13e4-4178-913c-ba41eaf21617",
+      "name": "Updated",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "76bea029-4b66-41de-bc11-6d13daa8a7e8",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "6466c4d7-5784-4d0c-83e8-42078d267ebd",
+      "name": "Updated",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "bcc5ab73-e6eb-4042-ba0a-f907c8f85945",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "b9ad0e49-ef29-4536-8172-43786922efae",
+      "name": "TESTAlice",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "db76fb1d-8db1-46ef-b34e-d9d22f2d229f",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "50efb287-6fe3-4cad-a483-534c44814650",
+      "name": "TESTPart",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "fc607497-c26d-4d22-8c2b-adec67e73522",
+      "name": "Updated",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "c4338cbb-53c7-4f6f-9fc5-de573c54ca41",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "8085cefd-e99f-469c-818b-36a2db8fb3d6",
+      "name": "TESTAlice",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "b581cdf4-9882-4cb5-bcf3-94aa1f53fdb9",
+      "name": "Mum",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "ca9b7923-3f3b-454c-a2cb-8326632c4a84",
+      "name": "TESTPart",
+      "status": 200,
+      "has_sections": true
+    },
+    {
+      "id": "f094f938-fb27-4a7a-958c-1cedf8b94ccd",
+      "name": "Lebron",
+      "status": 200,
+      "has_sections": true
+    }
+  ],
+  "account_profile_statuses": [
+    {
+      "id": "0c538637-b0dd-4982-8f78-b32814c6a5eb",
+      "name": "Dorothy Smith",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "f094f938-fb27-4a7a-958c-1cedf8b94ccd",
+      "name": "Lebron James",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "seed-robert_kowalski-f0844844",
+      "name": "Robert Kowalski",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "seed-patricia_holloway-85b8e406",
+      "name": "Patricia Holloway",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "26d20a6e-53e0-4950-ac96-25bae4ac9177",
+      "name": "TESTAlice TESTJones",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "6be86491-003b-49fa-afa1-21505d553124",
+      "name": "TESTDorothy TESTSmith",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "637479c0-c3df-41c7-b4c9-5714a0950d8e",
+      "name": "TESTPart TESTPension",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "65300fe0-27d8-4e16-98a4-d29968db5b9b",
+      "name": "PWCathy PWParent",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "29d82430-fe25-432e-8b9c-1a30adacc203",
+      "name": "TESTAlice TESTJones",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "8defd506-295c-4bb1-ab7c-57de91b32f42",
+      "name": "TESTDorothy TESTSmith",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "866497f5-780e-4ace-af57-7a6bf7f0e8a1",
+      "name": "TESTPart TESTPension",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "dfb76032-c5c3-4f26-b4ca-a60174346a66",
+      "name": "TESTIter41 TESTPrompts",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "6260c692-f8ea-4810-98da-8f3a125076df",
+      "name": "TESTFull TESTComplete",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "5bfc7cb0-fa00-45c7-bf0e-89ff8884600e",
+      "name": "TESTIter41 TESTPrompts",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    },
+    {
+      "id": "0e57fdb1-e304-41ef-8872-df83781e2d57",
+      "name": "TESTFull TESTComplete",
+      "participant_status": "ACTIVE",
+      "profile_status": 200
+    }
+  ],
+  "profile_500s": [],
+  "invalid_profile_status": 404,
+  "summary_string_temp_profile": {
+    "status": 200,
+    "financial_position_present": true,
+    "body_excerpt": null
+  },
+  "summary_string_temp_id": "qa-core1-summary-string-9ff46cd1-cac4-41f5-a2cc-62b94b1bc5db",
+  "errors": []
+}

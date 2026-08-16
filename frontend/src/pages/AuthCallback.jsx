@@ -1,0 +1,96 @@
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { Loader2 } from "lucide-react";
+import WaylyLogo from "@/components/WaylyLogo";
+
+/**
+ * Handles the redirect from Emergent OAuth:
+ *   /…/auth/callback#session_id=xxxxxx
+ * REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS,
+ * THIS BREAKS THE AUTH.
+ */
+export default function AuthCallback() {
+    const { completeGoogleAuth } = useAuth();
+    const nav = useNavigate();
+    const hasProcessed = useRef(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (hasProcessed.current) return;
+        hasProcessed.current = true;
+
+        const hash = window.location.hash || "";
+        const m = hash.match(/session_id=([^&]+)/);
+        if (!m) {
+            setError("No session_id in URL.");
+            return;
+        }
+        const sessionId = decodeURIComponent(m[1]);
+
+        completeGoogleAuth(sessionId)
+            .then(async (user) => {
+                // Clear the hash so refresh doesn't replay
+                window.history.replaceState(null, "", window.location.pathname);
+
+                // Resume any pre-OAuth plan intent, start a free trial if the user
+                // chose Solo/Family before clicking the Google button on /signup.
+                let planIntent = null;
+                try {
+                    planIntent = localStorage.getItem("wayly_plan_intent");
+                    localStorage.removeItem("wayly_plan_intent");
+                } catch {}
+                if (planIntent === "solo" || planIntent === "family") {
+                    if ((user?.plan || "free") === "free") {
+                        try {
+                            const { api } = await import("@/lib/api");
+                            await api.post("/billing/start-trial", { plan: planIntent });
+                        } catch {
+                            // Trial may have been used already, silently fall through to onboarding.
+                        }
+                    }
+                }
+
+                // Resolve destination from user shape
+                let target = "/onboarding";
+                if (user?.role === "participant") target = "/participant";
+                else if (user?.plan === "free" && !planIntent) target = "/app";
+                // Use window.location.replace rather than React Router nav() , 
+                // the destination's auth guard reads `user` from context, and
+                // nav() can fire before React commits the setUser update,
+                // causing the guard to bounce back here. A hard replace
+                // guarantees the destination boots with the persisted token
+                // already in localStorage and the AuthProvider re-bootstraps
+                // cleanly. See user-reported bug: "endless Signing you in".
+                window.location.replace(target);
+            })
+            .catch((e) => {
+                setError(e?.response?.data?.detail || e?.message || "Could not complete sign-in.");
+            });
+    }, [completeGoogleAuth, nav]);
+
+    return (
+        <div className="min-h-screen bg-kindred flex items-center justify-center px-6">
+            <div className="text-center">
+                <WaylyLogo size={48} className="mx-auto rounded-lg" />
+                {error ? (
+                    <>
+                        <h2 className="font-heading text-2xl text-primary-k mt-4">Sign-in didn't complete</h2>
+                        <p className="mt-2 text-sm text-muted-k">{error}</p>
+                        <button
+                            onClick={() => nav("/login")}
+                            className="mt-6 bg-primary-k text-white rounded-full px-6 py-2.5 text-sm hover:bg-[#091D33]"
+                        >
+                            Back to Sign In
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <h2 className="font-heading text-2xl text-primary-k mt-4">Signing you in…</h2>
+                        <Loader2 className="h-5 w-5 text-muted-k animate-spin mx-auto mt-4" />
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}

@@ -1,0 +1,29 @@
+{
+  "summary": "Mobile parity test PASSED for Group 2 — Letters & Follow-ups (triage) + Correspondence detail/editor. All required testIDs render, backend flows return the expected shapes, LLM draft generation completes in ~10s, the 422 missing-fields path highlights the offending inputs and shows lf-error, and the lf-generate CTA is white-on-teal in light mode and white-on-clay in dark mode. No blocking issues.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "LettersFollowUps.tsx (mobile): situation labels come from the backend with a literal `{name}` token (e.g. \"{name}'s condition has changed and they need more help\") and are rendered verbatim. The web app appears to do the same — but worth confirming intent with product / that the token is deliberately left un-interpolated on the triage screen (participant name isn't known yet).",
+    "letters/[id].tsx: intake fields are keyed off entry.archetype but fall back to INTAKE_FIELDS.request when archetype is unknown. That's safe on the happy path but will silently render the wrong required-field set if the backend ever ships a new archetype without a mapping — consider a defensive warning.",
+    "letters/[id].tsx: after generate, subject fallback is `entry?.intake?.subject`. If a later regenerate returns no subject the draft-subject line is hidden — visually fine, but consider preserving the previously-shown subject to avoid a jarring collapse."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "Created two throwaway correspondence entries via /api/lf1/correspondence (situation_id=3) as part of the flow. IDs Y8zInPIze58dQIG6, OOFtGrnW7Y5I_J-F, -RqoAPmAsoWEzIIB — harmless, will show up in Cathy's correspondence log.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Letters & Follow-ups mobile parity is fully verified. Triage (/tool/letters-and-follow-ups) renders lf1-open-log, lf1-log-link, lf1-situation-grid with lf1-situation-1..12, and lf1-terms-footer. Tapping lf1-situation-11 opens the lf1-safeguarding-gate modal (lf1-safeguarding-contacts, lf1-safeguarding-close, lf1-safeguarding-letter → reveals lf1-safeguarding-cancel + lf1-safeguarding-proceed). Tapping a normal card (lf1-situation-3, dispute archetype) POSTs /api/lf1/correspondence and navigates to /letters/{id}. Detail editor renders lf-detail-summary, lf-intake-form with lf-intake-participant_name + lf-intake-disputed_charge_summary. Empty-generate triggers 422 → missing fields highlight red + lf-error shows the friendly copy. Filled generate returns lf-draft with lf-draft-subject + lf-draft-body in ~10s; lf-copy button present. lf-generate CTA: light bg rgb(14,77,82) teal + white label + white icon; dark bg rgb(165,81,43) clay + white label + white icon. Group 2 done — next groups (care-plan-reviewer/support-plan-reviewer, invoice-checker, family-coordinator, aged-care-q&a) still on the old FormTool renderer as expected.",
+  "rca of the issue": ""
+}
