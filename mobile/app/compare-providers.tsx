@@ -3,7 +3,8 @@ import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Star, Trophy, Plus, ThumbsUp } from "lucide-react-native";
 
-import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { AppHeader, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -82,9 +83,15 @@ export default function CompareProvidersScreen() {
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
         >
+          <PageIntro
+            eyebrow="Compare Providers"
+            title="Side-by-Side Quality Context"
+            description="Compare 2 or 3 providers on the signals that actually matter. Every price sits next to a quality context, because the cheapest provider is not always the best value, and the dearest is not always safer."
+            whatItDoes={`Pulls published complaint, workforce, and rating signals for each named provider and lines them up in one view. Wayly does not compute a "best" provider, you decide.`}
+          />
           <Card style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
             <T variant="small" style={{ color: colors.text, lineHeight: 20 }}>
-              This ranking is built from the ratings you've saved. Rate more providers to make the comparison richer.
+              {`This ranking is built from the ratings you've saved. Rate more providers to make the comparison richer.`}
             </T>
           </Card>
 

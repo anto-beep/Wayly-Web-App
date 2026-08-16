@@ -2014,3 +2014,10 @@ MONEY:
 GUIDED JOURNEYS — added exact web PageIntro (eyebrow/title/description/whatItDoes) to: carer-self-check, handover-pack, athm, chsp-tools, letters, care-plans. (ClassificationCheck/ProviderSwitch have no web PageIntro → left as-is per no-invention rule.)
 THEIR CARE: care-plans done; calendar/hospital/amendments/scenarios/timeline + care-team/key-contacts have no dedicated web PageIntro to mirror and are already theme-aware → at parity, no changes.
 All verified via screenshots (Cathy/Family): AT&HM, Carer Self-Check, CHSP Tools, Quarterly Pacing render with exact copy + single $.
+
+## [2026-06] Parity sweep — Providers & Paperwork + Your Account + Provider Switch walkthrough
+- provider-switch.tsx REBUILT from a simple list (/psw1 API) into the faithful web 5-step guided walkthrough on the /provider-switch API: Stepper (Why You Might Switch → Before You Decide → Comparing Providers → Giving Notice → Handover), verbatim step copy, Before-You-Decide Yes/Not Yet/Not Applicable, Compare topics checklist, Giving Notice with buildNoticeLetter draft (Copy + .txt share via shareTextFile), Handover checklist + Mark Switch Complete. Draft persists across reloads (resumes at saved stage). PageIntro eyebrow/title/description match web.
+- documents.tsx: added web PageIntro ("Document Vault" / "All Your Aged-Care Paperwork, in One Place" + description + whatItDoes) to both empty and populated states.
+- compare-providers.tsx: added web PageIntro ("Compare Providers" / "Side-by-Side Quality Context" + description + whatItDoes).
+- Verified via screenshots (Cathy/Family): Provider Switch stepper resumes at stage, Documents + Compare Providers PageIntro render.
+- Your Account (Referrals, Audit Log, Settings, Profile hub) + Correspondence + Ratings: no dedicated web PageIntro to mirror, all theme-aware (dark-mode safe), headers match nav labels → at parity, no changes.
