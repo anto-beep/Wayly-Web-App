@@ -6812,3 +6812,10 @@ STILL TODO (large, per-turn builds):
 - Statements/Money tab: every sub-screen detail per web (statement compare, audit log, downloads, etc.).
 - Their Care (6): Care Team, Key Contacts, Calendar, Hospital Mode, Care Plans, Timeline + dark-theme the secondary detail screens (statement/invoice/decode/family/ask/participants/upload/login/signup still light).
 - Journeys & Paperwork: Guided Journeys + Documents, Correspondence, Compare Providers, Ratings.
+
+## [2026-06] Mobile-parity backlog CLOSED
+Mobile now reaches parity with web for account management + onboarding + plan selection.
+Shipped (verified iter159/160): Settings hub with in-app detail screens (profile-edit, family-members, weekly-digest, security, usage, danger-zone), onboarding wizard (household gating via household_id), plan-select (in-app trial + Stripe Checkout in browser).
+Remaining backlog (P2, non-blocking):
+- Native in-app Stripe card field (SetupIntent) — deferred; needs dev build + App Store IAP review. Currently uses hosted Checkout in browser.
+- Clean RN-Web `shadow*`/`pointerEvents` deprecation console warnings in shared components/ui.tsx (cosmetic, web-only).

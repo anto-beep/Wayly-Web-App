@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
 import { useScrollToTop } from "@react-navigation/native";
-import { Sun, Moon, Smartphone, ExternalLink, LogOut, User, CreditCard, Info, Bell, Shield, Phone, Mail, ChevronRight } from "lucide-react-native";
+import { Sun, Moon, Smartphone, LogOut, User, CreditCard, Bell, Shield, Phone, Mail, ChevronRight, Users, Mailbox, Gauge, AlertTriangle, Pencil } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
 import { Button, Card, T } from "@/src/components/ui";
@@ -13,7 +13,6 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate, initials } from "@/src/utils/format";
 
 const SITE_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "";
-const BILLING_URL = `${SITE_BASE}/settings/billing`;
 
 const NOTIF_LABELS: { key: string; label: string; desc: string }[] = [
   { key: "anomaly_alerts", label: "Anomaly alerts", desc: "When Wayly flags unusual charges on a new statement." },
@@ -66,6 +65,27 @@ function NotificationsCard() {
         </View>
       ))}
     </Card>
+  );
+}
+
+function NavRow({ icon: Icon, label, desc, onPress, testID, danger, last }: { icon: any; label: string; desc?: string; onPress: () => void; testID: string; danger?: boolean; last?: boolean }) {
+  const { colors } = useTheme();
+  const tint = danger ? colors.terracotta : colors.primary;
+  return (
+    <Pressable
+      testID={testID}
+      onPress={onPress}
+      style={[styles.navRow, !last && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
+    >
+      <View style={[styles.navIcon, { backgroundColor: colors.surface2 }]}>
+        <Icon size={18} color={tint} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <T style={{ fontFamily: fonts.bodyMedium, fontSize: 15, color: danger ? colors.terracotta : colors.text }}>{label}</T>
+        {desc ? <T variant="small" style={{ marginTop: 1 }}>{desc}</T> : null}
+      </View>
+      <ChevronRight size={18} color={colors.muted} />
+    </Pressable>
   );
 }
 
@@ -128,7 +148,7 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
-          <Button label="Edit profile in browser" testID="settings-edit-profile" variant="outline" icon={ExternalLink} onPress={() => Linking.openURL(`${SITE_BASE}/settings/profile`)} style={{ marginTop: spacing.md }} />
+          <Button label="Edit profile" testID="settings-edit-profile" variant="outline" icon={Pencil} onPress={() => router.push("/profile-edit")} style={{ marginTop: spacing.md }} />
         </Card>
 
         {/* Appearance / theme */}
@@ -173,14 +193,12 @@ export default function SettingsScreen() {
           ) : null}
         </Card>
 
-        <Card testID="settings-manage-plan">
-          <View style={{ flexDirection: "row", gap: spacing.sm, alignItems: "flex-start" }}>
-            <Info size={20} color={colors.sage} />
-            <T style={{ flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 21, color: colors.text }}>
-              Plan changes and payment details are handled on the web. We will open your Wayly billing page in your browser.
-            </T>
-          </View>
-          <Button label="Manage plan in browser" testID="settings-manage-plan-button" icon={ExternalLink} onPress={() => Linking.openURL(BILLING_URL)} style={{ marginTop: spacing.md }} />
+        <Card testID="settings-manage" style={{ padding: 0 }}>
+          <NavRow icon={CreditCard} label="Plan & Billing" desc="Your subscription, invoices, and payment method" testID="settings-nav-billing" onPress={() => router.push("/plan-billing")} />
+          <NavRow icon={Users} label="Family Members" desc="Invite family and manage seats" testID="settings-nav-members" onPress={() => router.push("/family-members")} />
+          <NavRow icon={Mailbox} label="Weekly Digest" desc="Your Sunday household summary" testID="settings-nav-digest" onPress={() => router.push("/weekly-digest")} />
+          <NavRow icon={Gauge} label="Usage" desc="What you have done with Wayly" testID="settings-nav-usage" onPress={() => router.push("/usage")} />
+          <NavRow icon={Shield} label="Security & Data" desc="Password, two-factor, and audit trail" testID="settings-nav-security" onPress={() => router.push("/security")} last />
         </Card>
 
         {/* Notifications */}
@@ -203,6 +221,10 @@ export default function SettingsScreen() {
               <ChevronRight size={18} color={colors.muted} />
             </Pressable>
           ))}
+        </Card>
+
+        <Card testID="settings-danger" style={{ padding: 0 }}>
+          <NavRow icon={AlertTriangle} label="Danger Zone" desc="Delete your account" testID="settings-nav-danger" danger last onPress={() => router.push("/danger-zone")} />
         </Card>
 
         <Button
@@ -228,4 +250,6 @@ const styles = StyleSheet.create({
   rolePill: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
   notifRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: spacing.sm },
   linkRow: { flexDirection: "row", alignItems: "center", paddingVertical: spacing.md },
+  navRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
+  navIcon: { width: 36, height: 36, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
 });

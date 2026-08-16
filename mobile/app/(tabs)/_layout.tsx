@@ -22,6 +22,7 @@ export default function TabsLayout() {
     );
   }
   if (!user) return <Redirect href="/login" />;
+  if (!user.household_id) return <Redirect href="/onboarding" />;
 
   return (
     <DrawerProvider>

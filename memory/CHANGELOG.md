@@ -1931,3 +1931,20 @@ Every surface now speaks the same rule: **Statement Decoder is free for one deco
 - **All 5 Landing marketing PNGs regenerated** against the current preview app so the nav no longer shows the removed "Demo" tab: `02-caregiver-dashboard.png`, `03-statement-decoder-tool.png`, `07-budget-alerts.png`, `09-family-wall.png`, `11-reports-hub.png`. New Playwright helper at `/app/scripts/regen_marketing_screenshots.py` (block service workers, retry on `ERR_ABORTED`) can be re-run any time the nav or dashboards change.
 - **AI Tools index (`/ai-tools`)** — authenticated users on a trial or active paid plan now see **"Open tool →"** on every card, including the Statement Decoder. The marketing "Try free" CTA is only shown to logged-out / free-tier visitors. The "SOLO & FAMILY" and "FREE, 1 USE/120 DAYS" chips are hidden entirely for paid/trial users (verified with Cathy on the reactivated Family subscription).
 - Test fixture nudge: Cathy's subscription doc had status `expired` (trial run out in May); restored to `active` so `usePlanState` returns `isPaid=true` for QA of the "Open tool" flow. Not user-visible.
+
+## [2026-06] Mobile-parity backlog closeout (iter 159–160)
+Session: MOBILE ONLY. Closed the remaining web→mobile parity gap. All 8 features verified by testing agent (iter159 7/8, iter160 onboarding retest PASS).
+
+- **Settings full parity** — rebuilt the Settings tab as a hub with in-app nav rows (no more "in browser"): Plan & Billing (→/plan-billing), Family Members, Weekly Digest, Usage, Security & Data, Danger Zone; Edit profile now in-app.
+- **New screens** (all expo-router files in /app/mobile/app, all theme-aware light/dark, full testIDs):
+  - `profile-edit.tsx` — name/role display, email change flow (/auth/email/change-request+status), phone edit (PUT /me/contacts).
+  - `family-members.tsx` — members list, invite form + roles, pending invites, remove (Family-gated with upgrade CTA).
+  - `weekly-digest.tsx` — digest preview (wellbeing/anomalies/thread), send now, history (Family-gated).
+  - `security.tsx` — password reset, 2FA setup/enable/disable (QR + backup codes), audit-trail link.
+  - `usage.tsx` — activity counts (/usage).
+  - `danger-zone.tsx` — delete account with exact "delete my account" confirm gate.
+  - `plan-select.tsx` — Solo/Family cards; in-app 7-day trial (POST /billing/start-trial, no card) when eligible, else Stripe Checkout in browser (POST /billing/checkout); current-plan badge.
+  - `onboarding.tsx` — 4-step wizard (Essentials → Authorisation → Recommended → All Done) creating first participant/household (POST/PATCH /participants); tabs now gated on household_id so new signups are routed here.
+- **Fix:** onboarding crashed with `useDrawer must be used within DrawerProvider` — swapped WaylyHeader→AppHeader.
+- **Note:** Stripe card entry / paid activation is handled via the hosted Stripe Checkout in the browser (store-safe, matches web); native in-app card field (SetupIntent) would require a dev build and is intentionally not used.
+- **Light/dark:** all new screens built on shared useTheme tokens; parity inherent.
