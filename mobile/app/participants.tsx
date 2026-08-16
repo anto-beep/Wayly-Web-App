@@ -2,6 +2,7 @@ import React from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Users } from "lucide-react-native";
 
 import { AppHeader, Badge, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
@@ -34,7 +35,7 @@ export default function ParticipantsScreen() {
           <View style={{ marginTop: spacing.lg }}>
             <StatePanel
               testID="participants-empty"
-              icon="people-outline"
+              icon={Users}
               title="No participants added yet"
               message="Participants (the people you care for) appear here once added to your household. Statements and invoices you upload apply to your household."
             />

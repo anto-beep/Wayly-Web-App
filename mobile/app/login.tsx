@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LogIn } from "lucide-react-native";
 
 import { Button, Field, Loading, Screen, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
@@ -158,7 +159,7 @@ export default function LoginScreen() {
               onPress={onGoogle}
               loading={googleBusy}
               variant="outline"
-              icon="logo-google"
+              icon={LogIn}
             />
 
             <Pressable

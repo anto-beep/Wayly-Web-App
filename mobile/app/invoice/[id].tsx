@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { CloudOff, MessageCircle } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
@@ -64,7 +65,7 @@ export default function InvoiceDetail() {
       {loading ? (
         <Loading label="Loading invoice…" />
       ) : error || !inv ? (
-        <StatePanel testID="invoice-error" icon="cloud-offline" title="Couldn't load this invoice" actionLabel="Retry" onAction={load} />
+        <StatePanel testID="invoice-error" icon={CloudOff} title="Couldn't load this invoice" actionLabel="Retry" onAction={load} />
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
           <Card testID="invoice-overview">
@@ -136,7 +137,7 @@ export default function InvoiceDetail() {
           <Button
             label="Ask Wayly about this invoice"
             testID="invoice-ask-button"
-            icon="chatbubbles"
+            icon={MessageCircle}
             variant="secondary"
             onPress={() => router.push("/(tabs)/ask")}
           />

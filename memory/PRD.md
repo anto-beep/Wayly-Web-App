@@ -6625,3 +6625,27 @@ The product is now cross-platform: web (React) + mobile (Expo) + shared FastAPI/
 - **Offline Statements** (`src/lib/cache.ts`): statements list + detail cached on-device (JSON in AsyncStorage/IndexedDB); on fetch failure, falls back to cache with an "offline copy" banner.
 - **Push Alerts** (Emergent managed relay): backend `push_notifications.py` (POST /api/register-push + send_push helper) mounted on app; non-blocking send_push triggered when a statement finishes decoding (flagged-charge aware). Frontend: expo-notifications handler+channel at module scope in _layout, `PushManager` (tap routing warm+cold, weekly denied-nudge, registration via getDevicePushTokenAsync). `EMERGENT_PUSH_KEY=placeholder` in backend .env (replaced by deployer). app.json has expo-notifications plugin + android.googleServicesFile. REQUIRES user to add google-services.json + Publish/build to function (not testable in Expo Go/web).
 - Verified: testing_agent iter 151 — backend 8/8 pytest pass; all mobile flows work; push endpoint returns expected 500 with placeholder key.
+
+## 2026-06 · Mobile FULL PARITY build — Phase 0 (Foundation) COMPLETE
+Goal: rebuild the mobile app for full feature parity with the web app (signed-in caregiver surface only; marketing/legal/admin/adviser excluded per user). Mirror the web mobile view screen-for-screen, same lucide icons, light+dark themes.
+
+Delivered this phase:
+- Theme system (src/theme/tokens.ts + ThemeContext): light + dark palettes mirroring web CSS (:root / html.theme-dark); persisted pref (light/dark/system), system-aware; toggle in Settings. All shared ui.tsx components themed.
+- Icons migrated to lucide-react-native@1.31.0 (+ react-native-svg 15.12.1) to match web exactly.
+- Navigation shell mirroring web mobile: WaylyHeader (logo + wordmark, notification bell w/ count, avatar, hamburger), 4 bottom tabs (Dashboard, AI Tools, Statements, Settings), grouped AppDrawer with the web's 7 sidebar groups (Today, Money & Statements, Guided Journeys, Their Care, Providers & Paperwork, Your Account). Unbuilt drawer items marked "Soon".
+- WaylyMark SVG logo (light/dark variants).
+- Dashboard rebuilt to web parity: Quarterly Pacing card (real GET /api/qp1/pacing — envelope/spent/projected/% + days elapsed), Active Plan card, at-a-glance stats, quick actions, latest statement.
+- AI Tools hub tab: 9 tools from web toolRegistry (Statement Decoder + Invoice Checker + Aged Care Q&A wired; others "Soon").
+- Settings tab: appearance (theme) picker, plan status, manage-plan-in-browser, logout.
+- Existing screens retained + working: statements, statement detail (+AI decode SSE), invoices (+detail), family wall, ask wayly, participants, upload, login/signup. Primary tabs fully themed; secondary detail screens function (light) and get dark theming in Phase 1.
+
+Verified: screenshot smoke tests — login, dashboard (light), drawer, dark mode (Settings), AI Tools hub, Statements. All render correctly.
+
+REMAINING PHASES (to build):
+- P1 Their Care: Care Team, Key Contacts, Calendar, Hospital Mode, Care Plans (+compare), Care-Plan Changes, Log a Scenario, Timeline. + dark-theme the secondary detail screens.
+- P2 Money & Statements extras: Quarterly Pacing detail page, Budget Alerts, Budget Scenarios, Reports.
+- P3 AI Tools (remaining 6): Budget & Lifetime Cap Calculator, Provider Price Checker, Classification Self-Check, Letters & Follow-ups, Contribution Estimator, Support Plan Reviewer.
+- P4 Guided Journeys: Carer Self-Check, Handover Pack, Classification Prep, AT & HM Projects, CHSP Tools, Letters Mailbox, Switch Provider.
+- P5 Providers & Paperwork: Documents, Correspondence, Compare Providers, Ratings.
+- P6 Account: Profile detail, Referrals, Audit Log, Support.
+Rule for all AI summaries: friendly-expert tone, NO dashes/em-dashes (only commas/periods/semicolons).

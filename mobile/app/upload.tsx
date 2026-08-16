@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { UploadCloud } from "lucide-react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
@@ -228,7 +229,7 @@ export default function UploadScreen() {
             testID="upload-submit-button"
             onPress={doUpload}
             loading={busy}
-            icon="cloud-upload"
+            icon={UploadCloud}
           />
         ) : null}
       </ScrollView>

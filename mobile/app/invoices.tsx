@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { CloudOff, ReceiptText as ReceiptIcon, UploadCloud } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -87,16 +88,16 @@ export default function InvoicesScreen() {
       {loading ? (
         <Loading label="Loading invoices…" />
       ) : error ? (
-        <StatePanel testID="invoices-error" icon="cloud-offline" title="Couldn't load invoices" actionLabel="Retry" onAction={load} />
+        <StatePanel testID="invoices-error" icon={CloudOff} title="Couldn't load invoices" actionLabel="Retry" onAction={load} />
       ) : items.length === 0 ? (
         <View style={{ padding: spacing.lg }}>
           <StatePanel
             testID="invoices-empty"
-            icon="receipt-outline"
+            icon={ReceiptIcon}
             title="No invoices yet"
             message="Upload a care invoice and Wayly will check it line-by-line for overcharges before you pay."
           />
-          <Button label="Upload an invoice" testID="invoices-empty-upload" icon="cloud-upload" onPress={() => router.push("/upload?type=invoice")} />
+          <Button label="Upload an invoice" testID="invoices-empty-upload" icon={UploadCloud} onPress={() => router.push("/upload?type=invoice")} />
         </View>
       ) : (
         <FlatList

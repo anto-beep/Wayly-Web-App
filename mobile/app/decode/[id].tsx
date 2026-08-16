@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { RotateCw } from "lucide-react-native";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import { streamSSE, SSEHandle } from "@/src/lib/sse";
@@ -159,7 +160,7 @@ export default function DecodeScreen() {
         ) : null}
 
         {!running ? (
-          <Button label="Re-run decode" testID="decode-rerun-button" icon="refresh" variant="outline" onPress={run} />
+          <Button label="Re-run decode" testID="decode-rerun-button" icon={RotateCw} variant="outline" onPress={run} />
         ) : null}
       </ScrollView>
     </View>

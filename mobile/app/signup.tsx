@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LogIn } from "lucide-react-native";
 
 import { AppHeader, Button, Field, Screen, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
@@ -155,7 +156,7 @@ export default function SignupScreen() {
             onPress={onGoogle}
             loading={googleBusy}
             variant="outline"
-            icon="logo-google"
+            icon={LogIn}
           />
 
           <Pressable onPress={() => router.replace("/login")} style={{ marginTop: spacing.xl, alignItems: "center" }}>

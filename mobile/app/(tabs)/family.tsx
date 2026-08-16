@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Users, CloudOff, MessageSquare } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 
 import { AppHeader, Loading, StatePanel, T } from "@/src/components/ui";
@@ -159,14 +160,14 @@ export default function FamilyWall() {
         {!activeId ? (
           <StatePanel
             testID="wall-no-participant"
-            icon="people-outline"
+            icon={Users}
             title="Add a participant first"
             message="The family wall is shared per participant. Add someone you care for to start posting."
           />
         ) : loading ? (
           <Loading label="Loading the family wall…" />
         ) : error ? (
-          <StatePanel testID="wall-error" icon="cloud-offline" title="Couldn't load the wall" actionLabel="Retry" onAction={load} />
+          <StatePanel testID="wall-error" icon={CloudOff} title="Couldn't load the wall" actionLabel="Retry" onAction={load} />
         ) : (
           <ScrollView
             contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md }}
@@ -175,7 +176,7 @@ export default function FamilyWall() {
             {posts.length === 0 ? (
               <StatePanel
                 testID="wall-empty"
-                icon="chatbox-ellipses-outline"
+                icon={MessageSquare}
                 title="No posts yet"
                 message={`Share the first update about ${active?.display_name || "your loved one"} below.`}
               />

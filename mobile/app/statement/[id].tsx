@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { CloudOff, Sparkles, MessageCircle } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
@@ -81,7 +82,7 @@ export default function StatementDetail() {
       ) : error || !stmt ? (
         <StatePanel
           testID="statement-error"
-          icon="cloud-offline"
+          icon={CloudOff}
           title="Couldn't load this statement"
           actionLabel="Retry"
           onAction={load}
@@ -183,13 +184,13 @@ export default function StatementDetail() {
           <Button
             label="Decode with AI"
             testID="statement-decode-button"
-            icon="sparkles"
+            icon={Sparkles}
             onPress={() => router.push(`/decode/${stmt.id}`)}
           />
           <Button
             label="Ask Wayly about this statement"
             testID="statement-ask-button"
-            icon="chatbubbles"
+            icon={MessageCircle}
             variant="secondary"
             onPress={() => router.push({ pathname: "/(tabs)/ask", params: { statement_id: stmt.id } })}
           />
