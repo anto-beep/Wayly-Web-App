@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { router } from "expo-router";
 import { ChevronDown, CheckCircle2 } from "lucide-react-native";
 
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -50,8 +51,12 @@ export function ParticipantSwitcher({ householdName }: { householdName?: string 
                     key={p.id}
                     testID={`participant-option-${p.id}`}
                     onPress={async () => {
-                      await setActive(p.id);
                       setOpen(false);
+                      if (p.id !== active?.id) {
+                        await setActive(p.id);
+                        // Re-scope every screen with the new participant's data.
+                        router.replace("/(tabs)");
+                      }
                     }}
                     style={[styles.row, isActive && { backgroundColor: colors.sageSoft }]}
                   >

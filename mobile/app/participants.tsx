@@ -52,7 +52,7 @@ export default function ParticipantsScreen() {
               <Pressable
                 key={p.id}
                 testID={`participant-card-${p.id}`}
-                onPress={() => setActive(p.id)}
+                onPress={() => router.push(`/participant/${p.id}`)}
                 style={({ pressed }) => [
                   styles.card,
                   isActive && { borderColor: colors.primary, borderWidth: 2 },

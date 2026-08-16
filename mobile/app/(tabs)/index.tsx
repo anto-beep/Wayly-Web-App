@@ -8,7 +8,6 @@ import {
 } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
-import { ParticipantSwitcher } from "@/src/components/ParticipantSwitcher";
 import { StreamProgress, Stream } from "@/src/components/StreamProgress";
 import { Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
@@ -104,9 +103,6 @@ export default function Dashboard() {
               {budget.quarter_label} · {budget.classification_label} · {moneyWhole(usable)} per quarter
             </T>
           ) : null}
-          <View style={{ marginTop: spacing.md }}>
-            <ParticipantSwitcher householdName={user?.name} />
-          </View>
         </View>
 
         {loading ? (

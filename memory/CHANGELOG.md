@@ -1972,3 +1972,13 @@ Session: MOBILE ONLY. Closed the remaining web→mobile parity gap. All 8 featur
 - Shared Field now renders "Required" (clay) / "Optional" (muted) hints; Title-Case labels (First Name, Last Name, Mobile Number); password requirements shown before typing.
 - Plan cards: Family "2 participants · Up to 3 caregiver seats" (was 5, removed "two parents on one plan"); plans.ts updated. "Log Out".
 - Created /app/memory/MOBILE_PARITY_ROADMAP.md — screenshot-driven, prioritized remaining screen redesigns (Invoices, Statements, Participants, Support, Plan & Billing tables/views; dashboard walkthrough; signup persona questions; Stripe return; date picker; initials menu; dark-mode + capitalisation sweeps; SD3/participant tabs/verify landing).
+
+## [2026-06] Mobile parity round 3 (iter 166-169, all verified)
+- **Participant switcher** now app-wide in WaylyHeader (dashboard/ai-tools/statements/settings); selecting re-scopes ALL screens (apiFetch sends X-Participant-Id) and returns to dashboard for a clean re-fetch. Removed duplicate from dashboard body.
+- **Invoices** screen rebuilt to web parity (useTheme dark-mode safe): PageIntro (ALL INVOICES / WHAT THIS DOES / HOW TO USE IT / WHAT YOU GET), "Check a new invoice", "Your Wayly Insight" summary, rows with Invoice date/Provider/Uploaded/Amount/Findings/Verdict (All clear|Issues). New reusable src/components/PageIntro.tsx.
+- **Verify-email banner** now dismissible with 24h suppression (AsyncStorage wayly_verify_banner_dismissed_at).
+- **Profile** (profile-edit) gained an informative Account card (Plan, Household, Member since).
+- **Participant Profile hub** NEW /participant/[id] mirroring web ParticipantProfile.jsx: PERSONAL DETAILS, Financial Position (Quarterly budget/Spent/Lifetime cap/Last statement + See Contribution Position), Open Follow-Ups→/cases, Household Members→/family-members, Latest Activity (8 tool rows), Timeline→/timeline. Participants list rows now open the hub. Fixed nested-object shapes (provider.primary, classification.band, {amount}).
+- Test creds: bibi@test.com / CarTest123$ recorded.
+
+Remaining parity backlog in /app/memory/MOBILE_PARITY_ROADMAP.md: Statements/Support/Plan&Billing/Dashboard redesigns, signup persona questions + Stripe return + date picker + initials menu, missing-details dashboard banner, dark-mode + capitalisation sweeps, SD3 pairs, participant sub-tabs (voice-check/complaints/attendance), verify landing, per-tool output comparison.

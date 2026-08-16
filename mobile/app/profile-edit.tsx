@@ -8,6 +8,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, spacing } from "@/src/theme/tokens";
+import { shortDate } from "@/src/utils/format";
 
 type EmailStatus = { pending: boolean; new_email?: string; expires_at?: string };
 
@@ -134,6 +135,26 @@ export default function ProfileEditScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.md }}>
               <T variant="label">ROLE</T>
               <Badge label={roleLabel} tone="brand" testID="profile-role-badge" />
+            </View>
+          </Card>
+
+          <Card testID="profile-account-card">
+            <T variant="label">ACCOUNT</T>
+            <View style={{ marginTop: spacing.sm, gap: 10 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <T variant="small">Plan</T>
+                <Badge label={(user?.plan || "free").toUpperCase()} tone={user?.plan === "family" || user?.plan === "solo" ? "brand" : "neutral"} testID="profile-plan-badge" />
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <T variant="small">Household</T>
+                <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>{user?.household_id ? "Active" : "Not set up"}</T>
+              </View>
+              {(user as any)?.created_at ? (
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <T variant="small">Member since</T>
+                  <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>{shortDate((user as any).created_at)}</T>
+                </View>
+              ) : null}
             </View>
           </Card>
 
