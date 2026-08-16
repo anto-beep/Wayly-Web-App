@@ -1,0 +1,32 @@
+{
+  "summary": "Iter 30 — Features 4–13 MVP stubs (extended_routes.py + extended pages + GlobalSearch + OfflineIndicator). Backend pytest: 25/25 PASS. Frontend smoke: 9/9 routes resolve with correct data-testids, all 9 sidebar nav entries present, Global Search ⌘K trigger opens modal and returns results (3 hits for 'statement'). Service worker /sw.js reachable. Cross-user isolation verified for USER-scoped provider ratings.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard MonthlySpend chart", "issues": ["React warning: 'Encountered two children with the same key' (duplicate 'May'/'Apr' labels used as React keys). Non-blocking but should use composite key (period_label+index). Pre-existing issue, not part of this iteration."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter30_extended.py",
+    "/app/test_reports/pytest/iter30_extended.xml"
+  ],
+  "action_items": [
+    "Optional: fix duplicate-key React warning in MonthlySpend chart legend (pre-existing, unrelated to iter 30 scope)."
+  ],
+  "critical_code_review_comments": [
+    "extended_routes.py uses PATCH with full BodyModel (not exclude_unset) — clients must send the entire body on every PATCH for visits/budget-alerts/athm/correspondence/referrals/ratings, otherwise required fields will 422. ProviderSwitch PATCH correctly uses exclude_none, others should follow same pattern.",
+    "Search endpoint only searches 6 sources (statements, documents, family_messages, visits, correspondence, referrals) — task said 'when household has any', confirmed working. No athm or provider_ratings in search (intentional per spec).",
+    "Global Search modal: did not test click-through navigation to result href in this run (modal closes & navigates assumed). E1 may want to add a Playwright test for that flow in future iterations."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter30_extended.py"
+  ],
+  "success_rate": {"backend": "100% (25/25)", "frontend": "100% on smoke (routes + nav + search modal)"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan), mark.adviser@example.com / AdviserPass1! (adviser, for user-isolation test of provider ratings)",
+  "seed_data_creation": "Created and cleaned up TEST_-prefixed visits, budget alerts, athm items, correspondence, referrals, ratings, and one provider_switch (left in place — single-row-per-household model). Created 2 ephemeral TEST_nohousehold_*@example.com users for 409/empty-search verification (cannot delete via API; harmless).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter 30 ships Features 4–13. extended_routes.py is the single backend file. All endpoints return household-scoped data except /api/provider-ratings (user-scoped). The provider_switches collection now has a TEST_BlueBerry row for cathy's household from this run — if testing iter 31 needs a clean switch state, drop that row. Pytest file: backend/tests/test_iter30_extended.py — reuse for regression."
+}

@@ -1,0 +1,37 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "where is the profile page located? i cant see it in the UI",
+  "summary": "No relevant testing skill found. Focused UI verification passed: after logging in as cathy@example.com, the Profile item is discoverable under the Today sidebar group with an icon and href /app/me; clicking it redirects to Dorothy's primary participant profile at /app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb. The ParticipantSwitcher dropdown also exposes data-testid participant-switcher-view-profile and navigates to the active participant profile. The CORE-1 profile rendered all required sections, lifetime cap $137,917, and populated statement/invoice/letter/price-check/contribution artefact cards.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/bug_verification_profile_nav_iter93.py",
+    "/root/.emergent/automation_output/20260805_003750/console_20260805_003750.log"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Reviewed Layout.jsx and ParticipantSwitcher.jsx changes. Layout renders nav-profile unconditionally for authenticated app sidebar/mobile drawer, so the Profile path remains available even if ParticipantSwitcher is collapsed for a one-participant household.",
+    "Console log only showed aborted /cdn-cgi/rum requests; no app error messages were found during the verified flow."
+  ],
+  "updated_files": [
+    "/app/tests/bug_verification_profile_nav_iter93.py",
+    "/app/test_reports/bug_verification_93.json",
+    "/app/test_reports/iteration_93.json"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend-focused verification only",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The exact discoverability bug was verified through real UI flows on https://wayly-rn-build.preview.emergentagent.com using cathy@example.com / testpass123. Automated run confirmed nav-profile under Today, /app/me redirect, ParticipantSwitcher profile link, and full CORE-1 profile rendering. Header title uses preferred_name ('Mum\u2019s profile') while URL/topbar confirm Dorothy's primary participant id.",
+  "rca_of_the_issue": "Original symptom was caused by routes existing without a visible navigation entry. The fix adds a Today > Profile sidebar link to /app/me and a ParticipantSwitcher menu link to /app/participants/<active_id>; both paths now work end to end. Test plan covered: inspect credentials/git/code changes, verify sidebar discovery without URL typing, verify /app/me primary redirect, verify switcher discovery path, verify required profile sections/cards and key financial value, and code-review the single-participant collapsed switcher edge."
+}

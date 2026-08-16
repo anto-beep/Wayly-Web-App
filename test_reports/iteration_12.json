@@ -1,0 +1,26 @@
+{
+  "summary": "Iter12 frontend-only verification of three polish tasks: (1) ToolGate live preview replaces blurred screenshot, (2) Footer App Store + Google Play badges with smart device detection, (3) Landing 'one calm dashboard' strip wipe-IO bug fix. All acceptance criteria PASS via Playwright on the public preview URL.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Document title is still the generic 'Emergent | Fullstack App' (visible across pages including /ai-tools/statement-decoder and /). Consider per-route <title> via react-helmet-async to brand as 'Kindred' for SEO + share previews. Not a blocker for this iter.",
+    "RevealOnScroll fallback is good (1.2s setTimeout) but applies to ALL instances on the page; for users with very slow CPUs this could cause a brief unstyled flash. Consider gating the fallback behind a check for `el.getBoundingClientRect()` already-in-viewport at mount.",
+    "AppStoreBadges placeholder URLs (apps.apple.com/app/.../id000000000 and play.google.com/store/apps/details?id=au.kindred.app) currently 404 in the real stores. The hrefs are correctly structured but main agent should swap to the real listings before launch — flagging because clicking either badge today leads to a broken store page.",
+    "LivePreviewLoop hard-codes Bluebell Care · Dorothy across all 7 tool gates regardless of toolName. The data is fine for SD/Budget context but feels off for 'Reassessment Letter' or 'Family Coordinator' — copy is generic enough that this is acceptable, but a tool-specific preview would strengthen conversion for non-statement tools.",
+    "ToolGate copy still says 'all 8 AI tools' — there are 8 tools total (1 free SD + 7 paid), so accurate, but worth a re-read in case product wants 'all 7 paid AI tools' phrasing."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (7/7 acceptance items verified)"},
+  "test_credentials": "cathy@example.com / testpass123 (verified login, /app dashboard, Cmd-K palette).",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Verified data-testids: dashboard-strip, app-store-badges, app-store-badge, play-store-badge, tool-gate, tool-gate-preview-label, tool-gate-live-preview, tool-gate-trial-cta, tool-gate-signin-link, tool-gate-sd-escape, sd-screenshot-tour, pricing-devices-strip. Routes: 7 paid tools live at /ai-tools/{provider-price-checker, classification-self-check, reassessment-letter, contribution-estimator, care-plan-reviewer, family-coordinator, budget-calculator} — note 'provider-price-checker' is the actual slug (not 'price-checker'). Statement Decoder lives at /ai-tools/statement-decoder (no gate). Landing dashboard-strip now uses default 'fade' mode (clip-path wipe was the silent-failure cause); RevealOnScroll has 1.2s setTimeout fallback. AppStoreBadges uses navigator.userAgent — confirmed iOS UA shows Apple-only, Android UA shows Play-only, default Linux Chromium shows both. Animations (kindred-fadein-loop, kindred-anomaly-flash) confirmed live with 7s infinite loops on .kindred-fadein (3 instances) + .kindred-anomaly-flash (1 instance) inside every gate's preview.",
+  "rca of the issue": "All three iter12 tasks verified working: (a) Landing dashboard-strip box={x:320,y:4230,w:1280,h:814} opacity=1 clipPath=none html_len=21158 — fully rendered, fix confirmed. (b) ToolGate /ai-tools/budget-calculator and all 6 other paid tools render gate + 'Here's what happens 90 seconds after you sign up' label + tool-gate-live-preview with 3 fadein cards + 1 anomaly card flashing; computed animation = kindred-fadein-loop 7s infinite + kindred-anomaly-flash 7s infinite. (c) Footer AppStoreBadges: 'Get the app' overline + Apple badge (href https://apps.apple.com/app/kindred-aged-care/id000000000, aria-label 'Download Kindred on the App Store') + Google Play badge (href https://play.google.com/store/apps/details?id=au.kindred.app, aria-label 'Get Kindred on Google Play'). Device detection verified: iPhone UA → apple-only, Android UA → play-only, default desktop UA → both. Regression: cathy login → /app OK, Cmd-K palette opens, /pricing devices strip OK, Statement Decoder no-gate path OK."
+}

@@ -1,0 +1,37 @@
+{
+  "summary": "Verified user-reported '$19/month' bug on /app/participants Add-participant modal is FIXED. Heading, current-plan line, Add modal (title, family copy, pricing summary card, Includes GST, base Family line, New total per fortnight, recalc on extraCount change), and participant cards all show fortnightly pricing ($24.50 / $49.50 per fortnight) and contain NO $19/month, $39/month or /month total strings. Backend contract tests for /api/payments/reconciliation-report, /api/payments/sync-plan-to-participants, /api/payments/proration-preview all return non-5xx (3/3 pytest pass). Frontend fires /api/payments/sync-plan-to-participants after add/remove per source (line 219, line 256 of Participants.jsx). One MISS found in TrialEndingModal.jsx — see frontend_issues.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "TrialEndingModal",
+        "issue": "Line 116 still renders '<strong>{price}/month</strong>' — since main agent updated `price` to '$24.50' / '$49.50' (fortnightly amounts) but did NOT change the '/month' suffix, this modal now reads '$24.50/month' or '$49.50/month'. That is both a monthly-language regression AND factually wrong (fortnightly amount labeled as monthly). Spec requires 'per fortnight'.",
+        "selector": "/app/frontend/src/components/TrialEndingModal.jsx:116",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/billing/test_participants_pricing_iter144.py",
+    "/app/test_reports/pytest/iter144_participants_pricing.xml"
+  ],
+  "action_items": [
+    "Fix TrialEndingModal.jsx line 116: change '<strong>{price}/month</strong>' to '<strong>{price} per fortnight</strong>' (or similar) to match the spec. This is the only remaining monthly-language string on the participants/billing surfaces I checked."
+  ],
+  "critical_code_review_comments": [
+    "Participants.jsx line ~572-583 (family_addons pricing card) derives fortnightly totals purely from `addPreview.addons_needed` returned by the server preview endpoint. The `extraCount` state input is used only to re-fetch the preview via refreshPreview(). That means the number displayed in 'N × $24.50 per fortnight' reflects server math (which may include existing capacity/gap) rather than the user's typed count. This is defensible (server is source of truth) but visually surprising — typing 3 with 13 existing participants displays 16, not 3. Confirm this is intentional and update the copy to explain it, or drive from the input directly.",
+    "sync-plan-to-participants is fire-and-forget (`.catch(() => {})` at Participants.jsx:219 and :256). If it starts returning 5xx routinely, UI will silently drift from Stripe. Consider surfacing a toast on failure or logging to Sentry."
+  ],
+  "updated_files": [
+    "/app/backend/tests/billing/test_participants_pricing_iter144.py"
+  ],
+  "success_rate": {"backend": "100% (3/3)", "frontend": "95% (all participants-page & Add-modal & Remove-modal fortnightly assertions pass; TrialEndingModal has residual /month suffix)"},
+  "test_credentials": "cathy@example.com / testpass123 — works; cathy currently has 27 active participants so the family-2-participant Remove-modal branch (which contains the 'save $25 per fortnight' + 'Remove + stay on Family $49.50 per fortnight' copy) cannot be triggered on this account. Source-level inspection confirms copy is present at Participants.jsx line 888 and 890 with fortnightly wording (no $20/month or $39/month strings).",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The user-reported bug ('Add participant showing $19/month') is fixed on the Participants page and its modal. If TrialEndingModal.jsx line 116 gets patched, the fortnightly rollout is complete for the surfaces named in the review. To exercise the family-2-participants Remove-modal branch you need an account with exactly 2 active participants on Family plan — cathy has 27, so seed a new user or trim cathy for that test.",
+  "rca of the issue": "Original bug: Add-participant modal on /app/participants displayed monthly pricing ($19/month per addon, $39/month base Family). RCA: hardcoded monthly literals in Participants.jsx pricing card and elsewhere. Fix (main agent): all monthly literals in Participants.jsx, PaywallModal.jsx, ToolGate.jsx, Features.jsx replaced with fortnightly ($24.50/$49.50). Verified via UI. Miss: TrialEndingModal.jsx price constant updated to fortnightly amount but the trailing '/month' suffix in JSX was not changed, so the modal now renders a fortnightly value with a monthly suffix."
+}

@@ -1,0 +1,37 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "I want the article Verify SAH Invoice in 5 Minutes to be showing on the resources page for the articles",
+  "summary": "No relevant testing skill found. Focused verification passed on the public preview: /resources now shows the invoice article as the first Latest Articles / Where to Start card, the Support at Home vs Home Care Packages article as the second card, exactly 6 landing article cards, working click-through to the full invoice article, and /resources/articles still renders the full 32-card article index.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/bug_verification_resources_invoice_iter91.py",
+    "/app/test_reports/bug_verification_91.json",
+    "/app/test_reports/iteration_91.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ResourcesIndex.jsx now pins the two target slugs from the merged SEO_TOOL_ARTICLES + SEO_ARTICLES_2026 + ARTICLES pool and fills the remaining four cards newest-first. Browser evidence confirms the intended DOM order and click-through behavior in preview."
+  ],
+  "updated_files": [
+    "/app/tests/bug_verification_resources_invoice_iter91.py",
+    "/app/test_reports/bug_verification_91.json",
+    "/app/test_reports/iteration_91.json"
+  ],
+  "success_rate": {
+    "backend": "N/A",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "None. Public marketing/resources pages used existing static article data only.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Focused browser verification used https://wayly-rn-build.preview.emergentagent.com/resources. Assertions passed for top-level Resources cards, 6-card Where-to-Start grid, first/second pinned order, invoice article click-through, invoice detail body with 5 key takeaways, C1-C12 content, 7 FAQs, and the full /resources/articles index with 32 cards.",
+  "rca_of_the_issue": "The original ResourcesIndex.jsx rendered only ARTICLES.slice(0, 6), which excluded the SEO_TOOL_ARTICLES invoice article. The fix merges the relevant article registries and pins the invoice slug first so future/fresher dates cannot push it out of the six-card landing grid."
+}

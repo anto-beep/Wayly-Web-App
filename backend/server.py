@@ -1,0 +1,8020 @@
+"""Wayly, backend API."""
+import os
+import io
+import csv
+import logging
+import re
+import statistics
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+from typing import List, Optional, Dict, Any
+from typing import Literal as _LiteralType  # noqa: F401
+
+from collections import defaultdict
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Request, Response, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, EmailStr, Field
+from starlette.middleware.cors import CORSMiddleware
+from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
+from pypdf import PdfReader
+import jwt
+
+from auth import (
+    hash_password,
+    verify_password,
+    create_token,
+    create_access_token,
+    create_refresh_token,
+    create_mfa_challenge_token,
+    decode_refresh_token,
+    decode_mfa_challenge_token,
+    get_current_user_id,
+    get_current_user_id_optional,
+    get_current_user_payload,
+    get_current_admin_id,
+)
+from security_utils import (
+    assert_password_not_pwned,
+    revoke_jti,
+    revoke_all_user_tokens,
+    is_user_locked,
+    record_login_failure,
+    clear_login_failures,
+    encrypt_totp_secret,
+    decrypt_totp_secret,
+    is_totp_encrypted,
+    ensure_security_indexes,
+)
+import pyotp
+import qrcode
+import base64
+import io as _io_for_qr
+import secrets as _secrets_mod
+import rate_limit as _rl
+from models import (
+    SignupRequest,
+    LoginRequest,
+    TokenResponse,
+    UserPublic,
+    PlanUpdate,
+    HouseholdCreate,
+    Household,
+    Statement,
+    StatementLineItem,
+    Anomaly,
+    FamilyMessageCreate,
+    FamilyMessage,
+    AuditEvent,
+    ChatRequest,
+    ChatTurn,
+    ConcernCreate,
+    new_id,
+    now_iso,
+)
+import budget as budget_lib
+import program_reference as _pr
+from agents import parse_statement, explain_anomalies, chat_with_kindred
+from wrapper import run_wrapper
+import email_service
+import asyncio
+import json
+from auth_emergent import exchange_session_id
+from emergentintegrations.payments.stripe.checkout import (
+    StripeCheckout, CheckoutSessionRequest,
+)
+from constants import (
+    TRIAL_DAYS, HOUSEHOLD_MAX_MEMBERS, RATE_LIMIT_WINDOW_HOURS, RATE_LIMIT_MAX_PER_IP,
+    PASSWORD_RESET_EXPIRY_MINUTES, INVITE_EXPIRY_DAYS, NOTIFICATION_CATEGORIES,
+    DEFAULT_NOTIFICATION_PREFS, DIGEST_FREQUENCY_DEFAULT,
+)
+import digest_service
+import observability as _obs
+import security_alerter as _alerter
+
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / ".env")
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("kindred")
+
+mongo_url = os.environ["MONGO_URL"]
+# Section 6, explicit connection pool sizing.
+# Defaults are 100 max / 0 min; for our load (multi-pod, mostly read) a
+# 50-conn pool per pod with a small warm minimum and 30s server-selection
+# timeout is the right balance. minPoolSize=5 keeps connections warm
+# during quiet periods so a sudden burst doesn't pay TCP-handshake cost.
+client = AsyncIOMotorClient(
+    mongo_url,
+    maxPoolSize=int(os.environ.get("MONGO_MAX_POOL", "50")),
+    minPoolSize=int(os.environ.get("MONGO_MIN_POOL", "5")),
+    maxIdleTimeMS=60_000,
+    serverSelectionTimeoutMS=10_000,
+    retryWrites=True,
+)
+db = client[os.environ["DB_NAME"]]
+
+def _trusted_frontend_url() -> str:
+    """Return a server-controlled frontend base URL for building email links.
+
+    Ignores request Origin/Host headers to prevent reset-link poisoning
+    (SEC-001 audit, Feb 2026). Order:
+      1. FRONTEND_URL env var (set per environment, e.g. preview).
+      2. PUBLIC_APP_URL env var (canonical production URL).
+      3. Hardcoded fallback: https://wayly.com.au, so a misconfigured
+         production container still emits branded links.
+    """
+    return (
+        os.environ.get("FRONTEND_URL")
+        or os.environ.get("PUBLIC_APP_URL")
+        or "https://wayly.com.au"
+    ).rstrip("/")
+
+
+# Disable interactive API docs in production to keep the route map private.
+# WAYLY_ENV=production hides /docs, /redoc, /openapi.json; other envs keep
+# them available for local development and staging QA.
+_IS_PROD = (os.environ.get("WAYLY_ENV") or "").lower() == "production"
+app = FastAPI(
+    title="Wayly API",
+    docs_url=None if _IS_PROD else "/docs",
+    redoc_url=None if _IS_PROD else "/redoc",
+    openapi_url=None if _IS_PROD else "/openapi.json",
+)
+APP_STARTED_AT = datetime.now(timezone.utc)
+APP_BUILD_VERSION = os.environ.get("APP_BUILD_VERSION", "iter38-2026-02")
+ANOMALY_ENGINE_VERSION = "v3.4-iter27"
+DOCUMENT_EXTRACT_VERSION = "v2.1-iter28"
+api = APIRouter(prefix="/api")
+
+
+# ----------------- helpers -----------------
+async def _get_user(user_id: str) -> dict:
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+async def _get_user_household(user_id: str) -> Optional[dict]:
+    user = await _get_user(user_id)
+    hid = user.get("household_id")
+    if not hid:
+        return None
+    return await db.households.find_one({"id": hid}, {"_id": 0})
+
+
+async def _require_household(user_id: str) -> dict:
+    h = await _get_user_household(user_id)
+    if not h:
+        raise HTTPException(status_code=400, detail="No household configured. Complete onboarding first.")
+    return h
+
+
+async def _resolve_active_participant(user_id: str, request: Request) -> Optional[dict]:
+    """Reads the `X-Participant-Id` header and validates it belongs to the
+    user's account via `assert_participant_access`. Falls back to the
+    household's primary participant when the header is missing. If the header
+    is present but the participant doesn't belong to the caller we now
+    raise 404, silently falling back was hiding cross-account bugs."""
+    from security_utils import assert_participant_access
+    pid = request.headers.get("x-participant-id")
+    if pid:
+        # 404 if the pid doesn't belong to this user, explicit, auditable.
+        p = await assert_participant_access(user_id, pid, require_active=True)
+        try:
+            await _alerter.record_participant_access(db, user_id=user_id, participant_id=pid)
+        except Exception:
+            pass
+        return p
+    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "household_id": 1})
+    hid = (user_doc or {}).get("household_id")
+    if not hid:
+        return None
+    return await db.participants.find_one(
+        {"household_id": hid, "is_primary": True, "status": {"$ne": "REMOVED"}}, {"_id": 0}
+    ) or await db.participants.find_one({"household_id": hid, "status": {"$ne": "REMOVED"}}, {"_id": 0})
+
+
+async def _scope_query_to_participant(user_id: str, request: Request, base_q: Dict[str, Any]) -> Dict[str, Any]:
+    """Tighten `base_q` to the active participant. Legacy docs (no
+    participant_id) are treated as belonging to the household's primary
+    participant, so existing data continues to surface for that person
+    until a background backfill runs."""
+    p = await _resolve_active_participant(user_id, request)
+    if not p:
+        return base_q
+    q = dict(base_q)
+    if p.get("is_primary"):
+        q["$or"] = [
+            {"participant_id": p["id"]},
+            {"participant_id": None},
+            {"participant_id": {"$exists": False}},
+        ]
+    else:
+        q["participant_id"] = p["id"]
+    return q
+
+
+async def _audit(household_id: str, actor_id: str, actor_name: str, action: str, detail: str) -> None:
+    evt = AuditEvent(
+        household_id=household_id,
+        actor_id=actor_id,
+        actor_name=actor_name,
+        action=action,
+        detail=detail,
+    )
+    await db.audit_events.insert_one(evt.model_dump())
+
+
+def _user_public(u: dict, sub: Optional[dict] = None) -> UserPublic:
+    return UserPublic(
+        id=u["id"],
+        email=u["email"],
+        name=u["name"],
+        first_name=u.get("first_name"),
+        last_name=u.get("last_name"),
+        mobile=u.get("mobile"),
+        role=u["role"],
+        plan=u.get("plan", "free"),
+        household_id=u.get("household_id"),
+        created_at=u["created_at"],
+        is_admin=bool(u.get("is_admin", False)),
+        admin_role=u.get("admin_role"),
+        subscription_status=(sub or {}).get("status"),
+        trial_ends_at=(sub or {}).get("trial_ends_at"),
+        cancel_at_period_end=(sub or {}).get("cancel_at_period_end"),
+        totp_enabled=bool(u.get("totp_enabled", False)),
+    )
+
+
+async def _user_public_with_sub(u: dict) -> UserPublic:
+    """Fetch the subscription doc and build a UserPublic with trial info."""
+    sub = await db.subscriptions.find_one({"user_id": u["id"]}, {"_id": 0})
+    return _user_public(u, sub)
+
+
+# ----------------- auth -----------------
+@api.post("/auth/signup")
+async def signup(payload: SignupRequest, request: Request):
+    await _rl.enforce(
+        request,
+        ("signup_ip", _rl._client_ip(request)),
+        ("signup_email", payload.email.lower()),
+    )
+    # Check existing email first to save an HIBP round-trip on collisions.
+    existing = await db.users.find_one({"email": payload.email.lower()})
+    if existing:
+        raise HTTPException(status_code=409, detail="Email already registered")
+    # Phase 1: refuse passwords seen in HIBP breach corpus.
+    await assert_password_not_pwned(payload.password)
+    user_doc = {
+        "id": new_id(),
+        "email": payload.email.lower(),
+        "password_hash": hash_password(payload.password),
+        "name": payload.name,
+        # UI-1 §12, store first/last and mobile when supplied.
+        "first_name": (payload.first_name or payload.name.split(" ")[0] if payload.name else None),
+        "last_name": (payload.last_name or " ".join((payload.name or "").split(" ")[1:]) or None),
+        "mobile": payload.mobile,
+        "role": payload.role,
+        "plan": payload.plan,
+        "household_id": None,
+        "created_at": now_iso(),
+        # Email verification, soft block, 7-day grace, link expires in 24h.
+        "email_verified": False,
+        "email_verified_at": None,
+        "verification_deadline": deadline_for(now_iso()),
+    }
+    await db.users.insert_one(user_doc)
+    # Fire-and-forget, failures here shouldn't block signup (Resend hiccups,
+    # mocked preview, etc.). The user can request another email from the
+    # banner if needed.
+    try:
+        await send_verification_email_for(user_doc)
+    except Exception as e:
+        logger.warning("verification email send failed for %s: %s", user_doc["email"], e)
+    # Adviser-portal auto-link: if any adviser invited this email, mark linked.
+    try:
+        from adviser_routes import link_client_by_email, link_client_by_invite_token
+        await link_client_by_email(user_doc["id"], user_doc["email"])
+        if payload.invite:
+            await link_client_by_invite_token(user_doc["id"], payload.invite)
+    except Exception as _e:
+        logger.warning("adviser auto-link (signup) failed: %s", _e)
+    access, _jti, _exp = create_access_token(user_doc["id"])
+    refresh, _rjti, _rexp = create_refresh_token(user_doc["id"])
+    _obs.log_auth_login_success(user_doc["id"], _rl._client_ip(request))
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(user_doc)).model_dump(),
+    }
+
+
+# ----------------- auth: login -----------------
+@api.post("/auth/login")
+async def login(payload: LoginRequest, request: Request):
+    """Phase 1 hardened login + Phase 3 rate limiting:
+    - Generic error message for unknown email vs wrong password (anti-enumeration)
+    - 5-failure / 15-min lockout per account
+    - Per-IP + per-email Redis rate limit (5/5min/IP + 10/hour/email)
+      counted on FAILED attempts only, successful logins are not abuse and
+      must not lock legitimate users sharing an IP (NAT, carrier CGN, family
+      behind one router).
+    - MFA branch: if the user opted into TOTP, returns `requires_mfa=true` and a
+      short-lived challenge token instead of the access pair.
+    """
+    # Read-only check, if a previous burst of failures has exhausted the
+    # bucket we still refuse to even look at the password. This is the
+    # short-circuit that protects against credential-stuffing.
+    await _rl.enforce_peek(
+        request,
+        ("login_ip", _rl._client_ip(request)),
+        ("login_email", payload.email.lower()),
+    )
+    _ip = _rl._client_ip(request)
+    user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
+    if not user:
+        # Constant-ish time: run a dummy bcrypt to mask the no-user path.
+        try:
+            verify_password(payload.password, "$2b$12$" + "x" * 53)
+        except Exception:
+            pass
+        # Consume the budget, this is a real failed attempt.
+        await _rl.consume("login_ip", _ip)
+        await _rl.consume("login_email", payload.email.lower())
+        _obs.log_auth_login_failure(_ip, attempt_count=0)
+        await _alerter.record_login_failure(db, ip=_ip, email=payload.email.lower())
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    locked, until = await is_user_locked(user["id"])
+    if locked:
+        _obs.log_auth_lockout(_ip, user_id=user["id"])
+        raise HTTPException(
+            status_code=423,
+            detail=(
+                "Account temporarily locked due to too many failed attempts. "
+                f"Try again after {until.strftime('%H:%M UTC')} or reset your password."
+            ),
+        )
+
+    if not verify_password(payload.password, user["password_hash"]):
+        await record_login_failure(user["id"])
+        # Best-effort attempt count from the user record after the increment.
+        try:
+            _u = await db.users.find_one({"id": user["id"]}, {"failed_login_count": 1, "_id": 0})
+            _attempts = int((_u or {}).get("failed_login_count") or 0)
+        except Exception:
+            _attempts = 0
+        # Failed password, burn the rate-limit budget so brute-force still
+        # gets blocked.
+        await _rl.consume("login_ip", _ip)
+        await _rl.consume("login_email", payload.email.lower())
+        _obs.log_auth_login_failure(_ip, attempt_count=_attempts)
+        await _alerter.record_login_failure(db, ip=_ip, email=payload.email.lower())
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    await clear_login_failures(user["id"])
+    # Email-verification gate, block login when the 7-day grace period has
+    # expired and the user still hasn't clicked the verification link.
+    if (not user.get("email_verified")) and is_past_deadline(user.get("verification_deadline")):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "email_verification_required",
+                "message": (
+                    "Your 7-day grace period to verify your email has expired. "
+                    "Click 'Resend verification email' to receive a new link."
+                ),
+                "email": user["email"],
+            },
+        )
+    # Successful login, clear any prior failure counter on this email so a
+    # legitimate user who fat-fingered earlier today isn't punished. We leave
+    # the per-IP counter alone (it protects against a shared NAT being used
+    # for credential stuffing across many accounts).
+    try:
+        await _rl.reset("login_email", payload.email.lower())
+    except Exception:
+        pass
+
+    # MFA branch (opt-in for caregivers / participants)
+    if user.get("totp_enabled") and user.get("totp_secret"):
+        return {
+            "requires_mfa": True,
+            "temp_token": create_mfa_challenge_token(user["id"]),
+        }
+
+    access, _jti, _exp = create_access_token(user["id"])
+    refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    _obs.log_auth_login_success(user["id"], _ip)
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(user)).model_dump(),
+    }
+
+
+@api.get("/auth/me", response_model=UserPublic)
+async def me(user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    return await _user_public_with_sub(u)
+
+
+@api.post("/auth/refresh")
+async def refresh_session(request: Request):
+    """Exchange a refresh token for a new short-lived access token. Optional
+    rotation of the refresh token itself (defence against token reuse)."""
+    body = await request.json()
+    rt = (body or {}).get("refresh_token")
+    if not rt:
+        raise HTTPException(status_code=400, detail="Missing refresh token")
+    payload = decode_refresh_token(rt)
+    # Defence in depth, refresh tokens are also subject to the per-user
+    # `token_invalid_before` sentinel and the blocklist.
+    from auth import _enforce_revocation
+    await _enforce_revocation({**payload, "type": "access"})  # reuse the checks
+    user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="User no longer exists")
+    access, _jti, _exp = create_access_token(user["id"])
+    new_refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    # Rotate: revoke the *used* refresh jti so it cannot be re-used.
+    try:
+        old_jti = payload.get("jti")
+        old_exp = payload.get("exp")
+        if old_jti and old_exp:
+            await revoke_jti(
+                old_jti,
+                payload["sub"],
+                datetime.fromtimestamp(int(old_exp), tz=timezone.utc),
+                reason="refresh_rotated",
+            )
+    except Exception as _e:
+        logger.warning("refresh-token rotation revoke failed: %s", _e)
+    return {"token": access, "refresh_token": new_refresh}
+
+
+@api.put("/auth/plan", response_model=UserPublic)
+async def update_plan(payload: PlanUpdate, user_id: str = Depends(get_current_user_id)):
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": payload.plan}})
+    u = await _get_user(user_id)
+    return await _user_public_with_sub(u)
+
+
+# ----------------- emergent google auth -----------------
+class GoogleSessionBody(BaseModel):
+    session_id: str = Field(min_length=4, max_length=512)
+
+
+@api.post("/auth/google-session", response_model=TokenResponse)
+async def google_session(body: GoogleSessionBody, response: Response):
+    """Exchange a session_id from #session_id=… for a JWT + persistent cookie."""
+    try:
+        data = await exchange_session_id(body.session_id)
+    except Exception as e:
+        logger.warning("Emergent OAuth exchange failed: %s", e)
+        raise HTTPException(status_code=401, detail="Could not verify Google session")
+    email = (data.get("email") or "").lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="No email returned from Google")
+    name = data.get("name") or email.split("@")[0]
+    picture = data.get("picture")
+    session_token = data.get("session_token")
+
+    existing = await db.users.find_one({"email": email}, {"_id": 0})
+    if existing:
+        await db.users.update_one(
+            {"id": existing["id"]},
+            {"$set": {"name": existing.get("name") or name, "picture": picture, "auth_method": "google"}},
+        )
+        user = await _get_user(existing["id"])
+    else:
+        user = {
+            "id": new_id(),
+            "email": email,
+            "password_hash": "",
+            "name": name,
+            "picture": picture,
+            "role": "caregiver",
+            "plan": "free",
+            "household_id": None,
+            "auth_method": "google",
+            "created_at": now_iso(),
+        }
+        await db.users.insert_one(user)
+        # Adviser-portal auto-link for first-time Google sign-ups.
+        try:
+            from adviser_routes import link_client_by_email
+            await link_client_by_email(user["id"], email)
+        except Exception as _e:
+            logger.warning("adviser auto-link (google) failed: %s", _e)
+
+    if session_token:
+        await db.user_sessions.update_one(
+            {"user_id": user["id"]},
+            {
+                "$set": {
+                    "user_id": user["id"],
+                    "session_token": session_token,
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+                }
+            },
+            upsert=True,
+        )
+        response.set_cookie(
+            "session_token",
+            session_token,
+            max_age=7 * 24 * 3600,
+            path="/",
+            httponly=True,
+            secure=True,
+            # SameSite=Lax: this cookie is a legacy shadow of the JWT (bearer
+            # token in Authorization: Bearer …). SameSite=None would allow
+            # cross-site cookie attachment with no CSRF story; Lax is safe
+            # for our first-party callers.
+            samesite="lax",
+        )
+    access, _jti, _exp = create_access_token(user["id"])
+    refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    _obs.log_auth_login_success(user["id"], ip=None)
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(user)).model_dump(),
+    }
+
+
+@api.post("/auth/logout")
+async def logout(
+    response: Response,
+    payload: dict = Depends(get_current_user_payload),
+):
+    user_id = payload["sub"]
+    # Blocklist the current access token so it can't be re-used until expiry.
+    try:
+        jti = payload.get("jti")
+        exp = payload.get("exp")
+        if jti and exp:
+            await revoke_jti(
+                jti, user_id,
+                datetime.fromtimestamp(int(exp), tz=timezone.utc),
+                reason="logout",
+            )
+    except Exception as _e:
+        logger.warning("logout blocklist failed: %s", _e)
+    await db.user_sessions.delete_many({"user_id": user_id})
+    response.delete_cookie("session_token", path="/")
+    return {"ok": True}
+
+
+# ----------------- household -----------------
+@api.post("/household", response_model=Household)
+async def create_household(payload: HouseholdCreate, user_id: str = Depends(get_current_user_id)):
+    user = await _get_user(user_id)
+    if user.get("household_id"):
+        raise HTTPException(status_code=409, detail="Household already exists for this user")
+    h = Household(owner_id=user_id, **payload.model_dump())
+    await db.households.insert_one(h.model_dump())
+    await db.users.update_one({"id": user_id}, {"$set": {"household_id": h.id}})
+    # Adviser-portal: now that the household exists, wire it into any linked roster row.
+    try:
+        from adviser_routes import link_client_household
+        await link_client_household(user_id, h.id)
+    except Exception as _e:
+        logger.warning("adviser household-link failed: %s", _e)
+    await _audit(h.id, user_id, user["name"], "HOUSEHOLD_CREATED",
+                 f"Set up household for {payload.participant_name} (Classification {payload.classification})")
+    return h
+
+
+@api.get("/household", response_model=Optional[Household])
+async def get_household(user_id: str = Depends(get_current_user_id)):
+    h = await _get_user_household(user_id)
+    return h
+
+
+# ----------------- password reset & email verification -----------------
+class ForgotBody(BaseModel):
+    email: EmailStr
+
+
+class ResetBody(BaseModel):
+    token: str = Field(min_length=10, max_length=128)
+    new_password: str = Field(min_length=8)
+
+
+class VerifyBody(BaseModel):
+    token: str = Field(min_length=10, max_length=128)
+
+
+@api.post("/auth/forgot")
+async def forgot_password(body: ForgotBody, request: Request):
+    """Email enumeration-safe: always returns ok=True after a short delay."""
+    await _rl.enforce(request, ("forgot_email", body.email.lower()))
+    user = await db.users.find_one({"email": body.email.lower()}, {"_id": 0})
+    if user:
+        token = new_id().replace("-", "") + new_id().replace("-", "")
+        await db.password_resets.insert_one({
+            "token": token,
+            "user_id": user["id"],
+            "email": user["email"],
+            "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=PASSWORD_RESET_EXPIRY_MINUTES)).isoformat(),
+            "used": False,
+            "created_at": now_iso(),
+        })
+        origin = _trusted_frontend_url()
+        reset_url = f"{origin}/reset?token={token}"
+        try:
+            await email_service.email_tool_result(
+                to=user["email"],
+                tool_name="Password reset",
+                headline="Reset your Wayly password",
+                body_html=(
+                    f"<p>Someone (hopefully you) requested a password reset for your Wayly account.</p>"
+                    f"<p><a href='{reset_url}' style='display:inline-block;background:#0E2A47;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none'>Reset password</a></p>"
+                    f"<p style='color:#6B7280;font-size:13px'>This link expires in 60 minutes. If you didn't request this, ignore this email, your password has not changed.</p>"
+                ),
+            )
+        except Exception as e:
+            logger.warning("Password reset email send failed: %s", e)
+    return {"ok": True}
+
+
+@api.post("/auth/reset")
+async def reset_password(body: ResetBody, request: Request):
+    await _rl.enforce(request, ("reset_ip", _rl._client_ip(request)))
+    # HIBP, refuse a reset to a known-compromised password.
+    await assert_password_not_pwned(body.new_password)
+    rec = await db.password_resets.find_one({"token": body.token, "used": False}, {"_id": 0})
+    if not rec:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link")
+    expires = datetime.fromisoformat(rec["expires_at"])
+    if datetime.now(timezone.utc) > expires:
+        raise HTTPException(status_code=400, detail="Reset link has expired , request a new one")
+    await db.users.update_one({"id": rec["user_id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
+    await db.password_resets.update_one({"token": body.token}, {"$set": {"used": True, "used_at": now_iso()}})
+    _obs.log_auth_password_reset(rec["user_id"])
+    # Kill every outstanding access / refresh token for this user.
+    try:
+        await revoke_all_user_tokens(rec["user_id"], reason="password_reset")
+    except Exception as _e:
+        logger.warning("revoke_all_user_tokens (reset) failed: %s", _e)
+    u = await _get_user(rec["user_id"])
+    return {"ok": True, "email": u["email"]}
+
+
+# ----------------- caregiver MFA (TOTP, opt-in) -----------------
+class MfaVerifyBody(BaseModel):
+    temp_token: str
+    code: str
+
+
+class MfaEnableBody(BaseModel):
+    setup_token: str
+    code: str
+
+
+class MfaDisableBody(BaseModel):
+    password: str
+    code: Optional[str] = None  # current TOTP or backup code
+
+
+def _qr_data_uri(otpauth_uri: str) -> str:
+    img = qrcode.make(otpauth_uri)
+    buf = _io_for_qr.BytesIO()
+    img.save(buf, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+@api.post("/auth/mfa/setup")
+async def mfa_setup(user_id: str = Depends(get_current_user_id)):
+    """Generate a new TOTP secret + QR code. Secret lives inside the setup
+    token (signed JWT, 10-min TTL) and is *not* stored until /mfa/enable
+    confirms a valid first code."""
+    u = await _get_user(user_id)
+    if u.get("totp_enabled"):
+        raise HTTPException(status_code=409, detail="Two-factor is already enabled on this account.")
+    secret = pyotp.random_base32()
+    otpauth = pyotp.totp.TOTP(secret).provisioning_uri(
+        name=u["email"], issuer_name="Wayly",
+    )
+    setup_payload_token = jwt.encode(
+        {
+            "sub": user_id,
+            "type": "mfa_setup",
+            "totp_secret": secret,
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
+        },
+        os.environ["JWT_SECRET"],
+        algorithm=os.environ.get("JWT_ALGORITHM", "HS256"),
+    )
+    return {
+        "setup_token": setup_payload_token,
+        "qr_data_uri": _qr_data_uri(otpauth),
+        "secret": secret,
+    }
+
+
+@api.post("/auth/mfa/enable")
+async def mfa_enable(body: MfaEnableBody, user_id: str = Depends(get_current_user_id)):
+    """Confirm the QR-scanned authenticator works, then persist the (encrypted)
+    secret + 8 backup codes."""
+    try:
+        data = jwt.decode(
+            body.setup_token,
+            os.environ["JWT_SECRET"],
+            algorithms=[os.environ.get("JWT_ALGORITHM", "HS256")],
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Setup window expired , restart 2FA setup.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid setup token.")
+    if data.get("type") != "mfa_setup" or data.get("sub") != user_id:
+        raise HTTPException(status_code=401, detail="Invalid setup token.")
+    secret = data.get("totp_secret")
+    if not secret or not pyotp.TOTP(secret).verify(body.code, valid_window=1):
+        raise HTTPException(status_code=401, detail="That code didn't match , try the latest 6 digits from your authenticator.")
+    # generate 8 single-use backup codes
+    plain_codes = [_secrets_mod.token_hex(4).upper() for _ in range(8)]
+    import bcrypt as _bc
+    hashed_codes = [_bc.hashpw(p.encode(), _bc.gensalt()).decode() for p in plain_codes]
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "totp_secret": encrypt_totp_secret(secret),
+            "totp_enabled": True,
+            "totp_backup_codes": hashed_codes,
+            "totp_enabled_at": now_iso(),
+        }},
+    )
+    _obs.log_auth_mfa_enabled(user_id)
+    return {"ok": True, "backup_codes": plain_codes}
+
+
+@api.post("/auth/mfa/verify")
+async def mfa_verify(body: MfaVerifyBody):
+    """Second leg of login: consume the short-lived challenge token + a 6-digit
+    TOTP (or 8-char backup code) and return the real access/refresh pair."""
+    data = decode_mfa_challenge_token(body.temp_token)
+    user_id = data["sub"]
+    u = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not u or not u.get("totp_secret"):
+        raise HTTPException(status_code=401, detail="2FA not configured for this account.")
+    code = (body.code or "").strip()
+    accepted = False
+    raw_secret = u.get("totp_secret")
+    plain_secret = decrypt_totp_secret(raw_secret)
+    if len(code) == 6 and code.isdigit() and plain_secret:
+        if pyotp.TOTP(plain_secret).verify(code, valid_window=1):
+            accepted = True
+            if raw_secret and not is_totp_encrypted(raw_secret):
+                try:
+                    await db.users.update_one(
+                        {"id": user_id},
+                        {"$set": {"totp_secret": encrypt_totp_secret(plain_secret)}},
+                    )
+                except Exception:
+                    pass
+    if not accepted:
+        # backup-code path (single-use)
+        import bcrypt as _bc
+        for h in list(u.get("totp_backup_codes") or []):
+            try:
+                if _bc.checkpw(code.upper().encode(), h.encode()):
+                    remaining = [x for x in u.get("totp_backup_codes") or [] if x != h]
+                    await db.users.update_one(
+                        {"id": user_id},
+                        {"$set": {"totp_backup_codes": remaining}},
+                    )
+                    accepted = True
+                    break
+            except Exception:
+                continue
+    if not accepted:
+        await record_login_failure(user_id)
+        _obs.log_auth_mfa_failure(user_id, ip=None)
+        raise HTTPException(status_code=401, detail="Invalid 2FA code.")
+    await clear_login_failures(user_id)
+    access, _jti, _exp = create_access_token(user_id)
+    refresh, _rjti, _rexp = create_refresh_token(user_id)
+    _obs.log_auth_login_success(user_id, ip=None)
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(u)).model_dump(),
+    }
+
+
+@api.post("/auth/mfa/disable")
+async def mfa_disable(body: MfaDisableBody, user_id: str = Depends(get_current_user_id)):
+    """Disable 2FA, requires the current password AND (if a code is provided)
+    the current TOTP. The code is optional only as a last-resort recovery
+    if the user lost their authenticator AND their backup codes; the password
+    confirmation alone is enough but is *strongly* discouraged in the UI."""
+    u = await _get_user(user_id)
+    if not verify_password(body.password, u["password_hash"]):
+        raise HTTPException(status_code=401, detail="Password incorrect.")
+    if body.code:
+        # If they provided a code, it must match, extra defence.
+        raw = u.get("totp_secret")
+        plain = decrypt_totp_secret(raw)
+        if not plain or not pyotp.TOTP(plain).verify(body.code, valid_window=1):
+            raise HTTPException(status_code=401, detail="Invalid 2FA code.")
+    await db.users.update_one(
+        {"id": user_id},
+        {"$unset": {"totp_secret": "", "totp_enabled": "", "totp_backup_codes": "", "totp_enabled_at": ""}},
+    )
+    return {"ok": True}
+
+
+@api.post("/auth/verify/send")
+async def send_verify(user_id: str = Depends(get_current_user_id), request: Request = None):
+    u = await _get_user(user_id)
+    if u.get("email_verified"):
+        return {"ok": True, "already_verified": True}
+    token = new_id().replace("-", "") + new_id().replace("-", "")
+    await db.email_verifications.insert_one({
+        "token": token, "user_id": user_id, "email": u["email"],
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        "created_at": now_iso(),
+    })
+    origin = _trusted_frontend_url()
+    verify_url = f"{origin}/verify?token={token}"
+    try:
+        await email_service.email_tool_result(
+            to=u["email"],
+            tool_name="Verify your email",
+            headline=f"Confirm your Wayly account, {u['name'].split(' ')[0]}",
+            body_html=(
+                f"<p>Welcome to Wayly. Tap the button below to confirm this email address.</p>"
+                f"<p><a href='{verify_url}' style='display:inline-block;background:#2BC4D6;color:#0E2A47;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Confirm email</a></p>"
+                f"<p style='color:#6B7280;font-size:13px'>If you didn't create a Wayly account, ignore this email.</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Verify email failed: %s", e)
+    return {"ok": True}
+
+
+@api.post("/auth/verify")
+async def verify_email(body: VerifyBody):
+    rec = await db.email_verifications.find_one({"token": body.token}, {"_id": 0})
+    if not rec:
+        raise HTTPException(status_code=400, detail="Invalid verification link")
+    expires = datetime.fromisoformat(rec["expires_at"])
+    if datetime.now(timezone.utc) > expires:
+        raise HTTPException(status_code=400, detail="Verification link has expired")
+    await db.users.update_one({"id": rec["user_id"]}, {"$set": {"email_verified": True, "email_verified_at": now_iso()}})
+    await db.email_verifications.delete_many({"user_id": rec["user_id"]})
+    return {"ok": True}
+
+
+# ----------------- household member invites -----------------
+class InviteBody(BaseModel):
+    email: EmailStr
+    role: _LiteralType["family_member", "advisor"]
+    note: Optional[str] = None
+
+
+class InviteAcceptBody(BaseModel):
+    token: str = Field(min_length=10, max_length=128)
+
+
+@api.post("/household/invite")
+async def create_invite(body: InviteBody, request: Request, user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    # Plan gate first (clearer 402 for Solo/Free users)
+    if u.get("plan") != "family":
+        raise HTTPException(status_code=402, detail={"code": "plan_required", "message": "Family plan required to invite members."})
+    household = await _get_user_household(user_id)
+    if not household:
+        raise HTTPException(status_code=400, detail="Create a household first")
+    # max 5 active members including owner
+    members = await db.household_members.count_documents({"household_id": household["id"], "status": {"$in": ["active", "pending"]}})
+    if members >= (HOUSEHOLD_MAX_MEMBERS - 1):  # owner + up to MAX-1 invitees
+        raise HTTPException(status_code=400, detail=f"Family plan limit: {HOUSEHOLD_MAX_MEMBERS} members (including you)")
+    token = new_id().replace("-", "") + new_id().replace("-", "")
+    invite = {
+        "token": token,
+        "household_id": household["id"],
+        "household_name": household['participant_name'],
+        "inviter_user_id": user_id,
+        "inviter_name": u["name"],
+        "email": body.email.lower(),
+        "role": body.role,
+        "note": body.note,
+        "status": "pending",
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=INVITE_EXPIRY_DAYS)).isoformat(),
+        "created_at": now_iso(),
+    }
+    await db.invites.insert_one(invite)
+    origin = _trusted_frontend_url()
+    accept_url = f"{origin}/invite?token={token}"
+    hh_name = household['participant_name']
+    try:
+        await email_service.email_tool_result(
+            to=body.email,
+            tool_name="Wayly family invitation",
+            headline=f"{u['name']} invited you to {hh_name}'s Wayly",
+            body_html=(
+                f"<p>{u['name']} wants you involved as a <strong>{body.role.replace('_', ' ')}</strong> on {hh_name}'s Wayly household.</p>"
+                f"{('<p><em>Note from ' + u['name'].split(' ')[0] + ':</em> ' + body.note + '</p>') if body.note else ''}"
+                f"<p><a href='{accept_url}' style='display:inline-block;background:#2BC4D6;color:#0E2A47;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invitation</a></p>"
+                f"<p style='color:#6B7280;font-size:13px'>Invitation expires in {INVITE_EXPIRY_DAYS} days.</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Invite email failed: %s", e)
+    await _audit(household["id"], user_id, u["name"], "INVITE_SENT", f"Invited {body.email} as {body.role}")
+    invite.pop("_id", None)
+    return invite
+
+
+@api.get("/household/members")
+async def list_members(user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        return {"members": [], "invites": []}
+    invites_cur = db.invites.find({"household_id": household["id"], "status": "pending"}, {"_id": 0})
+    invites = await invites_cur.to_list(50)
+    mem_cur = db.household_members.find({"household_id": household["id"]}, {"_id": 0})
+    members = await mem_cur.to_list(50)
+    # Include the owner (current user) synthesised
+    owner = await _get_user(household["owner_id"])
+    owner_row = {
+        "user_id": owner["id"], "email": owner["email"], "name": owner["name"],
+        "role": "primary", "status": "active", "joined_at": household.get("created_at", ""),
+    }
+    return {"members": [owner_row] + members, "invites": invites}
+
+
+# -- Share dashboard: email a snapshot to all family members or a custom list --
+class ShareDashboardBody(BaseModel):
+    extra_emails: List[EmailStr] = Field(default_factory=list, max_length=10)
+    note: Optional[str] = Field(default="", max_length=600)
+
+
+@api.post("/dashboard/share")
+async def share_dashboard(body: ShareDashboardBody, user_id: str = Depends(get_current_user_id)):
+    """Email an HTML snapshot of the current quarter dashboard to:
+       - all active household members + pending invites
+       - PLUS any extra recipients the caller supplied.
+    Uses the same Resend pipeline as the weekly digest.
+    Returns {sent_to: [emails], failures: [emails]}."""
+    h = await _require_household(user_id)
+    sender = await _get_user(user_id)
+    # Build recipient list (deduped).
+    recips: list[str] = []
+    members = await db.household_members.find({"household_id": h["id"], "status": "active"}, {"_id": 0, "email": 1}).to_list(20)
+    invites = await db.invites.find({"household_id": h["id"], "status": "pending"}, {"_id": 0, "email": 1}).to_list(20)
+    for r in [*members, *invites]:
+        em = (r.get("email") or "").strip().lower()
+        if em and em not in recips:
+            recips.append(em)
+    for em in body.extra_emails:
+        em = str(em).strip().lower()
+        if em and em not in recips:
+            recips.append(em)
+    if not recips:
+        raise HTTPException(status_code=400, detail="No recipients , invite family or add an email address.")
+    if len(recips) > 15:
+        raise HTTPException(status_code=400, detail="Too many recipients in a single send (max 15).")
+
+    # Compute current-quarter snapshot (reuses budget logic)
+    docs = await db.statements.find({"household_id": h["id"]}, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1).to_list(50)
+    all_items: list[dict] = []
+    for s in docs:
+        all_items.extend(s.get("line_items", []))
+    q_start, q_end, q_label = budget_lib.get_quarter_window()
+    burn = budget_lib.compute_burn(all_items, q_start, q_end)
+    allocations = budget_lib.stream_allocations(h.get("classification") or 4)
+    quarterly_total = budget_lib.quarterly_budget(h.get("classification") or 4)
+    cap_amount = budget_lib.lifetime_cap(h.get("is_grandfathered", False))
+    contributions_total = budget_lib.compute_contributions(all_items)
+    # Top 5 anomalies across recent statements
+    recent_anoms: list[dict] = []
+    for s in docs[:3]:
+        for a in s.get("anomalies") or []:
+            recent_anoms.append({**a, "_period": s.get("period_label") or s.get("filename")})
+    recent_anoms.sort(key=lambda a: {"alert": 0, "warning": 1, "info": 2}.get((a.get("severity") or "").lower(), 3))
+    top_anoms = recent_anoms[:5]
+
+    def fmt(n):
+        try:
+            return f"${float(n):,.2f}"
+        except Exception:
+            return "$0.00"
+
+    streams_html = ""
+    for s in budget_lib.STREAMS:
+        spent = burn.get(s, 0.0)
+        cap = allocations.get(s, 0.0)
+        pct = (spent / cap * 100) if cap else 0
+        streams_html += (
+            f"<tr><td style='padding:6px 8px;'>{s}</td>"
+            f"<td style='padding:6px 8px;text-align:right;'>{fmt(spent)} / {fmt(cap)}</td>"
+            f"<td style='padding:6px 8px;text-align:right;color:{'#A0522D' if pct > 100 else '#0E2A47'};'>{pct:.0f}%</td></tr>"
+        )
+
+    anom_html = "".join(
+        f"<li><strong>[{(a.get('severity') or 'info').upper()}]</strong> {a.get('title','')}<br>"
+        f"<span style='color:#5A6470;font-size:13px;'>{(a.get('detail') or '')[:200]}{'…' if len(a.get('detail') or '') > 200 else ''}"
+        f" <em style='color:#9aa3b0'>(from {a.get('_period','')})</em></span></li>"
+        for a in top_anoms
+    ) or "<li style='color:#5A6470;'>No anomalies caught this quarter, looking good!</li>"
+
+    note_block = (
+        f"<blockquote style='border-left:3px solid #D4A574;margin:12px 0;padding:6px 12px;color:#0E2A47;background:#DCEBF7;'>"
+        f"{(body.note or '').replace('<', '&lt;').replace('>', '&gt;')}</blockquote>"
+        if body.note and body.note.strip() else ""
+    )
+
+    body_html = f"""
+        <p>Hi,</p>
+        <p>{sender.get('name') or 'Your family caregiver'} is sharing this Wayly dashboard snapshot for <strong>{h.get('participant_name','')}</strong> ({q_label}).</p>
+        {note_block}
+        <h3 style='font-family:Georgia,serif;color:#0E2A47;margin-top:24px;'>Budget this quarter</h3>
+        <table style='border-collapse:collapse;width:100%;font-size:14px;'>
+            <thead>
+                <tr style='background:#DCEBF7;color:#5A6470;text-align:left;'>
+                    <th style='padding:6px 8px;'>Stream</th>
+                    <th style='padding:6px 8px;text-align:right;'>Spent / Cap</th>
+                    <th style='padding:6px 8px;text-align:right;'>%</th>
+                </tr>
+            </thead>
+            <tbody>{streams_html}</tbody>
+            <tfoot>
+                <tr style='border-top:1px solid #d6c9b3;font-weight:600;'>
+                    <td style='padding:8px;'>Quarterly budget</td>
+                    <td style='padding:8px;text-align:right;'>{fmt(quarterly_total)}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <h3 style='font-family:Georgia,serif;color:#0E2A47;margin-top:24px;'>Lifetime contribution cap</h3>
+        <p>{fmt(contributions_total)} of {fmt(cap_amount)} ({(contributions_total / cap_amount * 100) if cap_amount else 0:.2f}% used)</p>
+        <h3 style='font-family:Georgia,serif;color:#0E2A47;margin-top:24px;'>Top anomalies to know</h3>
+        <ul style='font-size:14px;line-height:1.55;color:#0E2A47;'>{anom_html}</ul>
+        <p style='margin-top:28px;color:#5A6470;font-size:13px;'>
+            View the full dashboard at <a href='https://wayly.com.au/app'>wayly.com.au/app</a>.
+            Forwarded by {sender.get('name','')} ({sender.get('email','')}).
+        </p>
+        <p style='color:#9aa3b0;font-size:11px;margin-top:24px;'>
+            You are receiving this because you are part of the Wayly household for {h.get('participant_name','')}.
+            To stop sharing, ask the primary caregiver to remove you from <em>Settings → Family members</em>.
+        </p>
+    """
+
+    sent: list[str] = []
+    failures: list[str] = []
+    for em in recips:
+        try:
+            await email_service.email_tool_result(
+                to=em,
+                tool_name=f"Wayly snapshot: {h.get('participant_name','')} · {q_label}",
+                headline=f"Dashboard for {h.get('participant_name','')} · {q_label}",
+                body_html=body_html,
+            )
+            sent.append(em)
+        except Exception as e:
+            logger.warning("share_dashboard send failed to %s: %s", em, e)
+            failures.append(em)
+
+    return {"sent_to": sent, "failures": failures, "count": len(sent)}
+
+
+@api.delete("/household/members/{member_user_id}")
+async def remove_member(member_user_id: str, user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household or household["owner_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Only the primary caregiver can remove members")
+    if member_user_id == user_id:
+        raise HTTPException(status_code=400, detail="You can't remove yourself , transfer ownership first")
+    await db.household_members.update_one(
+        {"household_id": household["id"], "user_id": member_user_id},
+        {"$set": {"status": "removed", "removed_at": now_iso()}},
+    )
+    await db.users.update_one({"id": member_user_id}, {"$unset": {"household_id": ""}})
+    return {"ok": True}
+
+
+@api.get("/invite/{token}")
+async def get_invite(token: str):
+    inv = await db.invites.find_one({"token": token, "status": "pending"}, {"_id": 0})
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invitation not found or already used")
+    expires = datetime.fromisoformat(inv["expires_at"])
+    if datetime.now(timezone.utc) > expires:
+        raise HTTPException(status_code=400, detail="Invitation has expired")
+    return {
+        "email": inv["email"],
+        "role": inv["role"],
+        "household_name": inv["household_name"],
+        "inviter_name": inv["inviter_name"],
+        "note": inv.get("note"),
+    }
+
+
+@api.post("/invite/accept")
+async def accept_invite(body: InviteAcceptBody, user_id: str = Depends(get_current_user_id)):
+    inv = await db.invites.find_one({"token": body.token, "status": "pending"}, {"_id": 0})
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    u = await _get_user(user_id)
+    if u["email"].lower() != inv["email"]:
+        raise HTTPException(status_code=403, detail=f"This invitation is for {inv['email']}.")
+    await db.household_members.insert_one({
+        "household_id": inv["household_id"], "user_id": user_id,
+        "email": u["email"], "name": u["name"], "role": inv["role"],
+        "status": "active", "joined_at": now_iso(),
+    })
+    await db.users.update_one({"id": user_id}, {"$set": {"household_id": inv["household_id"]}})
+    await db.invites.update_one({"token": body.token}, {"$set": {"status": "accepted", "accepted_at": now_iso()}})
+    await _audit(inv["household_id"], user_id, u["name"], "INVITE_ACCEPTED",
+                 f"{u['name']} joined as {inv['role']}")
+    # Notify the inviter
+    try:
+        await create_notification(
+            inv["inviter_user_id"],
+            "family_messages",
+            f"{u['name']} joined your household",
+            f"They're now on the Wayly household as {inv['role'].replace('_', ' ')}.",
+            "/settings/members",
+        )
+    except Exception:
+        pass
+    return {"ok": True, "household_id": inv["household_id"]}
+
+
+# ----------------- wellbeing check-in -----------------
+class WellbeingBody(BaseModel):
+    mood: _LiteralType["good", "okay", "not_great"]
+    notify_caregiver: bool = False
+
+
+@api.post("/participant/wellbeing")
+async def log_wellbeing(body: WellbeingBody, user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    household = await _get_user_household(user_id)
+    doc = {
+        "id": new_id(), "user_id": user_id,
+        "household_id": household["id"] if household else None,
+        "mood": body.mood, "notify_caregiver": body.notify_caregiver,
+        "created_at": now_iso(),
+    }
+    await db.wellbeing.insert_one(doc)
+    if household:
+        await _audit(household["id"], user_id, u["name"], "WELLBEING_LOGGED", f"Mood: {body.mood}")
+        # Notify primary caregiver when participant flags "not_great"
+        if body.mood == "not_great" and body.notify_caregiver and household.get("owner_id") and household["owner_id"] != user_id:
+            try:
+                await create_notification(
+                    household["owner_id"],
+                    "wellbeing_concerns",
+                    f"{u['name']} flagged a hard day",
+                    "Your participant marked today as not great. Worth checking in.",
+                    "/participant",
+                )
+            except Exception:
+                pass
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/participant/wellbeing")
+async def recent_wellbeing(user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        return []
+    cur = db.wellbeing.find({"household_id": household["id"]}, {"_id": 0}).sort("created_at", -1).limit(14)
+    return await cur.to_list(14)
+
+
+# ----------------- statements -----------------
+def _extract_text(filename: str, raw: bytes) -> str:
+    name = filename.lower()
+    if name.endswith(".pdf"):
+        try:
+            reader = PdfReader(io.BytesIO(raw))
+            return "\n".join((p.extract_text() or "") for p in reader.pages)
+        except Exception as e:
+            logger.warning("PDF extract failed: %s", e)
+            return ""
+    if name.endswith(".csv"):
+        try:
+            text = raw.decode("utf-8", errors="replace")
+            # also normalize a bit
+            return text
+        except Exception:
+            return ""
+    # txt or other
+    try:
+        return raw.decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+
+def _detect_anomalies(
+    new_items: List[dict],
+    historical_items: List[dict],
+    provider_published: dict,
+) -> List[dict]:
+    """Rule-based anomaly stubs. LLM later turns these into plain-English alerts."""
+    alerts: List[dict] = []
+    # Build historical median price per service_name
+    hist_by_name: dict[str, list[float]] = {}
+    for it in historical_items:
+        name = (it.get("service_name") or "").lower()
+        if not name or not it.get("unit_price"):
+            continue
+        hist_by_name.setdefault(name, []).append(float(it["unit_price"]))
+
+    seen = set()
+    for it in new_items:
+        name = (it.get("service_name") or "").lower()
+        # 1) duplicate detection within this statement
+        key = (it.get("date"), name, it.get("units"), it.get("total"))
+        if key in seen:
+            alerts.append({
+                "id": new_id(),
+                "severity": "warning",
+                "title": "Possible duplicate charge",
+                "detail": f"Same service ({it.get('service_name')}) appears twice on {it.get('date')}.",
+                "suggested_action": "Ask the provider to confirm whether this is a real duplicate.",
+                "line_item_id": it.get("id"),
+            })
+        seen.add(key)
+
+        # 2) rate spike vs historical median
+        prices = hist_by_name.get(name)
+        if prices and len(prices) >= 2:
+            med = statistics.median(prices)
+            up = float(it.get("unit_price", 0) or 0)
+            if med > 0 and up > med * 1.2:
+                alerts.append({
+                    "id": new_id(),
+                    "severity": "warning",
+                    "title": "Rate higher than usual",
+                    "detail": (
+                        f"{it.get('service_name')} on {it.get('date')} was charged at "
+                        f"${up:.2f}/unit; the typical rate has been ${med:.2f}/unit."
+                    ),
+                    "suggested_action": "Ask the provider why the rate increased.",
+                    "line_item_id": it.get("id"),
+                })
+
+        # 3) above provider's published price
+        pub = provider_published.get(name)
+        if pub and float(it.get("unit_price", 0) or 0) > float(pub) * 1.05:
+            alerts.append({
+                "id": new_id(),
+                "severity": "alert",
+                "title": "Above published price",
+                "detail": (
+                    f"{it.get('service_name')} was charged above the provider's published rate."
+                ),
+                "suggested_action": "Request a corrected statement.",
+                "line_item_id": it.get("id"),
+            })
+    return alerts
+
+
+@api.post("/statements/upload")
+async def upload_statement(
+    request: Request,
+    file: UploadFile = File(...),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Async upload, kicks off the chunked-parallel decode pipeline as a
+    background task and returns {job_id} immediately. The frontend polls
+    GET /statements/upload-job/{job_id} for progress + final statement.
+    Solves the K8s ingress 60s timeout that was 502'ing long statements.
+
+    Phase 1 of the duplicate-handling rebuild:
+      * accepts an `Idempotency-Key` header (24h replay window)
+      * computes the file SHA-256 synchronously and returns
+        409 DUPLICATE_EXACT when the same bytes have already been
+        uploaded to this household
+      * semantic-fingerprint dedupe runs inside the background job once
+        the parser produces the extracted_fingerprint
+    """
+    h = await _require_household(user_id)
+    user = await _get_user(user_id)
+    # Phase 3: cap uploads at 20/hour/account.
+    await _rl.enforce(request, ("upload_account", user_id))
+    # Resolve the active participant so this statement is correctly scoped.
+    active_p = await _resolve_active_participant(user_id, request)
+    participant_id = active_p["id"] if active_p else None
+
+    # ---- Idempotency replay (before we do any expensive work) ----
+    from lib.statement_lifecycle import (
+        compute_file_sha256, find_exact_dupe_by_file_sha,
+        lookup_idempotency, store_idempotency, write_audit,
+        DUP_EXACT, EVT_DUPLICATE_REJECTED, STATE_DELETED,
+    )
+    idem_key = request.headers.get("Idempotency-Key") or request.headers.get("idempotency-key")
+    if idem_key:
+        prev = await lookup_idempotency(db, key=idem_key, scope="statements_upload", user_id=user_id)
+        if prev and isinstance(prev.get("response"), dict):
+            return prev["response"]
+
+    # Phase 4: signature-validate + virus-scan + UUID-rename before we touch it.
+    from upload_security import secure_read_upload, PROFILE_STATEMENT, sanitize_for_prompt
+
+    def _alert_malware(virus_name: str) -> None:
+        # Fire-and-forget, we're in a sync callback inside an async handler.
+        try:
+            from lib.jobs import run_async as _run_async
+            _run_async(_alerter.record_malware_upload(
+                db, user_id=user_id, filename=(file.filename or "unknown")[:120],
+                scan_result=f"infected:{virus_name}",
+            ), name="alerter.malware_upload", max_attempts=1)
+        except Exception:
+            pass
+
+    raw, safe_name, file_kind = await secure_read_upload(
+        file, allowed_profiles=PROFILE_STATEMENT, on_malware=_alert_malware,
+    )
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    # ---- Exact-duplicate check (file SHA) ----
+    file_sha = compute_file_sha256(raw)
+    existing = await find_exact_dupe_by_file_sha(db, household_id=h["id"], file_sha256=file_sha)
+    if existing:
+        # Record the rejected duplicate in the audit log so the user can
+        # see it in their history. Don't store the file again.
+        try:
+            await write_audit(
+                db,
+                statement_id=existing["id"],
+                version_id=existing["id"],
+                event_type=EVT_DUPLICATE_REJECTED,
+                actor_user_id=user_id,
+                actor_kind="user",
+                metadata={"reason": "exact_file_sha_match", "attempted_filename": (file.filename or "")[:120]},
+            )
+        except Exception:
+            pass
+        response_body = {
+            "error": DUP_EXACT,
+            "existing_statement_id": existing["id"],
+            "existing_filename": existing.get("filename"),
+            "existing_period_label": existing.get("period_label"),
+            "existing_uploaded_at": existing.get("uploaded_at"),
+            "message": "This exact file has already been uploaded.",
+        }
+        if idem_key:
+            await store_idempotency(db, key=idem_key, scope="statements_upload", user_id=user_id, response=response_body)
+        raise HTTPException(status_code=409, detail=response_body)
+
+    from document_extract import (
+        extract_document, UnsupportedFormatError, FileTooLargeError,
+        CorruptFileError, PasswordProtectedError,
+    )
+    try:
+        text, input_method, page_count, parse_warnings = await extract_document(safe_name, raw)
+    except UnsupportedFormatError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileTooLargeError as e:
+        mb = e.limit_bytes // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"This {e.ext} file exceeds the {mb} MB limit. Try compressing it or splitting into smaller parts.")
+    except PasswordProtectedError:
+        raise HTTPException(status_code=400, detail="This PDF is password-protected. Open it in your PDF viewer, remove the password, save a new copy, and upload that file.")
+    except CorruptFileError as e:
+        raise HTTPException(status_code=400, detail=f"This file appears to be damaged or unreadable: {e}")
+    # Phase 4: soft-redact prompt-injection lures before any LLM sees the text.
+    text = sanitize_for_prompt(text)
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract text from file. Try a clearer photo or paste the text directly.")
+    # Stash the original bytes so the user can re-download the source PDF / CSV / TXT later.
+    import base64 as _b64
+    file_b64 = _b64.b64encode(raw).decode("ascii")
+    mime = file.content_type or _guess_statement_mime(file.filename)
+    job_id = _submit_upload_job(
+        text, file.filename, h["id"], user_id, user["name"],
+        file_b64=file_b64, file_mimetype=mime, file_size=len(raw),
+        participant_id=participant_id,
+        file_sha256=file_sha,
+        upload_idempotency_key=idem_key,
+    )
+    response_body = {"job_id": job_id, "status": "pending"}
+    if idem_key:
+        await store_idempotency(db, key=idem_key, scope="statements_upload", user_id=user_id, response=response_body)
+    return response_body
+
+
+def _guess_statement_mime(filename: str) -> str:
+    name = (filename or "").lower()
+    if name.endswith(".pdf"):
+        return "application/pdf"
+    if name.endswith(".csv"):
+        return "text/csv"
+    return "text/plain"
+
+
+@api.get("/statements/{statement_id}/download")
+async def download_statement_original(statement_id: str, user_id: str = Depends(get_current_user_id)):
+    """Stream back the original uploaded statement file (PDF / CSV / TXT)."""
+    h = await _require_household(user_id)
+    s = await db.statements.find_one({"id": statement_id, "household_id": h["id"]}, {"_id": 0})
+    if not s:
+        raise HTTPException(status_code=404, detail="Statement not found")
+    b64 = s.get("file_b64")
+    if not b64:
+        raise HTTPException(status_code=404, detail="Original file is not available for this statement")
+    import base64 as _b64
+    try:
+        data = _b64.b64decode(b64)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Stored file is corrupt")
+    mime = s.get("file_mimetype") or _guess_statement_mime(s.get("filename") or "")
+    filename = s.get("filename") or "statement"
+    return Response(
+        content=data,
+        media_type=mime,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@api.get("/statements/upload-job/{job_id}")
+async def upload_statement_job(job_id: str, user_id: str = Depends(get_current_user_id)):
+    job = UPLOAD_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+    if job.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+    out = {"status": job["status"], "phase": job.get("phase", job["status"])}
+    if job["status"] == "done":
+        out["statement_id"] = job.get("statement_id")
+        if job.get("duplicate_kind"):
+            out["duplicate_kind"] = job["duplicate_kind"]
+        if job.get("supersedes_version_id"):
+            out["supersedes_version_id"] = job["supersedes_version_id"]
+    elif job["status"] == "duplicate":
+        # Phase 1: semantic duplicate detected, caller should show Modal 2.
+        out["duplicate_kind"] = job.get("duplicate_kind")
+        out["existing_statement_id"] = job.get("existing_statement_id")
+    elif job["status"] == "error":
+        out["error"] = job.get("error") or "decode failed"
+    return out
+
+
+@api.get("/statements", response_model=List[Statement])
+async def list_statements(request: Request, user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+    # Phase 2: hide archived & deleted by default. `?include_archived=true`
+    # opts in. `state=deleted` rows are never returned via this endpoint ,
+    # they're only audit-log breadcrumbs.
+    include_archived = (request.query_params.get("include_archived") or "").lower() in ("1", "true", "yes")
+    if include_archived:
+        q["state"] = {"$nin": ["deleted"]}
+    else:
+        q["state"] = {"$nin": ["archived", "deleted"]}
+    docs = (
+        await db.statements
+        .find(q, {"_id": 0, "file_b64": 1, "id": 1, "household_id": 1, "filename": 1, "period_label": 1, "uploaded_at": 1, "line_items": 1, "summary": 1, "anomalies": 1, "raw_text_preview": 1, "file_mimetype": 1, "file_size_bytes": 1, "state": 1, "archived_at": 1, "superseded_by": 1, "extracted_json": 1, "audit_json": 1, "anomaly_dollar_impact_total": 1, "origin_route": 1, "document_pages": 1, "input_method": 1, "parsing_warnings": 1, "user_note": 1})
+        .sort("uploaded_at", -1)
+        .to_list(100)
+    )
+    out: List[Statement] = []
+    for d in docs:
+        d["has_original_file"] = bool(d.get("file_b64"))
+        d.pop("file_b64", None)
+        # STMT-UI-1 v2 Decision 6: cheap note-indicator on list; body itself stripped
+        d["has_note"] = bool((d.get("user_note") or "").strip())
+        d.pop("user_note", None)
+        # Legacy-doc tolerance: some test-fixture and pre-v5 rows omit `filename`,
+        # store `uploaded_at` as datetime, or have line_items with only `description`/
+        # `amount`. Coerce to the current Statement schema without mutating storage.
+        if not d.get("filename"):
+            d["filename"] = f"statement-{(d.get('id') or 'unknown')[:8]}.pdf"
+        if isinstance(d.get("uploaded_at"), datetime):
+            d["uploaded_at"] = d["uploaded_at"].isoformat()
+        if isinstance(d.get("archived_at"), datetime):
+            d["archived_at"] = d["archived_at"].isoformat()
+        lines = d.get("line_items") or []
+        if isinstance(lines, list):
+            for li in lines:
+                if not isinstance(li, dict):
+                    continue
+                if not li.get("service_name"):
+                    li["service_name"] = li.get("description") or "Service"
+                if not li.get("stream"):
+                    li["stream"] = "unknown"
+                if li.get("amount") is not None and li.get("participant_contribution") is None:
+                    # Best-effort: assume amount ≈ participant_contribution for
+                    # legacy rows that predate the government/participant split.
+                    li["participant_contribution"] = li["amount"]
+        try:
+            out.append(Statement(**d))
+        except Exception as _e:
+            logger.warning("skipping malformed statement %s: %s", d.get("id"), _e)
+    return out
+
+
+@api.get("/statements/archived")
+async def list_archived_statements(request: Request, user_id: str = Depends(get_current_user_id)):
+    """Phase 2: archived-statements page lives off this endpoint. Returns
+    every archived version across the household, ordered by archived_at
+    desc, with the restore-window expiry timestamp pre-computed so the
+    UI can render "X days left to restore" without doing date math."""
+    h = await _require_household(user_id)
+    q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"], "state": "archived"})
+    docs = (
+        await db.statements
+        .find(q, {"_id": 0, "id": 1, "filename": 1, "period_label": 1, "uploaded_at": 1, "archived_at": 1, "participant_id": 1, "file_size_bytes": 1, "anomaly_dollar_impact_total": 1})
+        .sort("archived_at", -1)
+        .to_list(200)
+    )
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    from lib.statement_actions import RETENTION_DAYS
+    now = _dt.now(_tz.utc)
+    out = []
+    for d in docs:
+        restore_until = None
+        days_left: int | None = None
+        try:
+            if d.get("archived_at"):
+                ts = _dt.fromisoformat(str(d["archived_at"]).replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=_tz.utc)
+                expires_at = ts + _td(days=RETENTION_DAYS)
+                restore_until = expires_at.isoformat()
+                days_left = max(0, (expires_at - now).days)
+        except Exception:
+            pass
+        out.append({**d, "restore_until": restore_until, "days_left_to_restore": days_left})
+    return out
+
+
+# ---- Price-checker prefill, UI-1 follow-up.
+# Pulls deduped (service → rate) pairs from the user's most-recent decoded
+# statements, normalised to the canonical service name used by
+# PRICE_BENCHMARKS so the UI can pre-fill the Price Checker in one tap.
+_PC_NORMALISE = {
+    "domestic assistance": "Domestic assistance",
+    "cleaning": "Domestic assistance",
+    "personal care": "Personal care",
+    "ot": "Occupational therapist",
+    "occupational therapy": "Occupational therapist",
+    "occupational therapist": "Occupational therapist",
+    "physio": "Physiotherapist",
+    "physiotherapy": "Physiotherapist",
+    "physiotherapist": "Physiotherapist",
+    "podiatry": "Podiatrist",
+    "podiatrist": "Podiatrist",
+    "nursing": "Nursing care",
+    "registered nurse": "Registered nurse",
+    "enrolled nurse": "Enrolled nurse",
+    "nursing assistant": "Nursing assistant",
+    "social support": "Social support and community engagement",
+    "social support and community engagement": "Social support and community engagement",
+    "transport": "Transport",
+    "community transport": "Transport",
+    "home maintenance": "Home maintenance and repairs",
+    "gardening": "Home maintenance and repairs",
+    "meal preparation": "Meal preparation",
+    "meal delivery": "Meal delivery",
+    "respite": "Respite",
+    "care management": "Care management",
+    "restorative care management": "Restorative care management",
+    "dietitian": "Dietitian or nutritionist",
+    "nutritionist": "Dietitian or nutritionist",
+    "exercise physiologist": "Exercise physiologist",
+    "psychologist": "Psychologist",
+    "counsellor": "Counsellor or psychotherapist",
+    "psychotherapist": "Counsellor or psychotherapist",
+    "speech": "Speech pathologist",
+    "speech pathologist": "Speech pathologist",
+    "social worker": "Social worker",
+}
+
+
+def _normalise_pc_service(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    lo = raw.strip().lower()
+    if not lo:
+        return None
+    if lo in _PC_NORMALISE:
+        return _PC_NORMALISE[lo]
+    for needle, canonical in _PC_NORMALISE.items():
+        if needle in lo:
+            return canonical
+    return None
+
+
+@api.get("/statements/recent-line-items")
+async def recent_line_items_for_price_check(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Up to 20 distinct (service, rate) line items from recent decoded
+    statements so the Price Checker can pre-fill in one tap. Items the
+    normaliser can't map to a canonical PRICE_BENCHMARKS row are dropped."""
+    h = await _require_household(user_id)
+    q = await _scope_query_to_participant(user_id, request, {
+        "household_id": h["id"],
+        "state": {"$nin": ["archived", "deleted"]},
+    })
+    docs = (
+        await db.statements
+        .find(q, {"_id": 0, "id": 1, "period_label": 1, "uploaded_at": 1, "line_items": 1})
+        .sort("uploaded_at", -1)
+        .to_list(5)
+    )
+    seen: dict[tuple[str, float], dict] = {}
+    for d in docs:
+        for li in d.get("line_items") or []:
+            raw = li.get("service_description") or li.get("service_code") or ""
+            canonical = _normalise_pc_service(raw)
+            if not canonical or canonical not in PRICE_BENCHMARKS:
+                continue
+            try:
+                rate = float(li.get("unit_price") or 0)
+            except (TypeError, ValueError):
+                continue
+            if rate <= 0:
+                continue
+            rate = round(rate, 2)
+            key = (canonical, rate)
+            if key in seen:
+                continue
+            seen[key] = {
+                "service": canonical,
+                "raw_service": raw[:120],
+                "unit_price": rate,
+                "period_label": d.get("period_label") or "",
+                "statement_id": d.get("id"),
+                "uploaded_at": d.get("uploaded_at"),
+            }
+            if len(seen) >= 20:
+                break
+        if len(seen) >= 20:
+            break
+    items = list(seen.values())
+    items.sort(key=lambda x: (x["service"], -x["unit_price"]))
+    return {"items": items, "count": len(items)}
+
+
+@api.get("/statements/{statement_id}", response_model=Statement)
+async def get_statement(statement_id: str, user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    doc = await db.statements.find_one(
+        {"id": statement_id, "household_id": h["id"]},
+        {"_id": 0},
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Statement not found")
+    # Phase 2: deleted rows are tombstones, refuse to return their body.
+    if doc.get("state") == "deleted":
+        raise HTTPException(status_code=410, detail="Statement has been permanently deleted")
+    doc["has_original_file"] = bool(doc.get("file_b64"))
+    doc.pop("file_b64", None)
+    # STMT-UI-1 v2 Decision 6: detail returns body (`user_note`) + boolean;
+    # register/list keeps `user_note` stripped and only ships `has_note`.
+    doc["has_note"] = bool((doc.get("user_note") or "").strip())
+    # DEC-1 v5 · Phase 1: idempotent read-time backfill so pre-v5 statements
+    # gain the v5 shape (nullable defaults) without a data migration. Safe:
+    # never overwrites existing values, only fills missing fields.
+    # DEC-1 v5 · Phase 2: also runs the anti-fabrication strip so pre-v5
+    # decodes that carried invented service codes / unverified anomalies
+    # (RULE_27_GST_ON_GST_FREE, RULE_32 header/footer mismatch, etc.) clean
+    # up on first read after strict mode is flipped on.
+    try:
+        ext = doc.get("extracted_json")
+        aud = doc.get("audit_json")
+        raw = doc.get("raw_text_preview") or ""
+        if isinstance(ext, dict) or isinstance(aud, dict):
+            ext_in = ext if isinstance(ext, dict) else {}
+            aud_in = aud if isinstance(aud, dict) else {}
+            new_ext, new_aud, _events = _dec1v5_apply_antifab(ext_in, aud_in, raw)
+            # v5 · read-time date normalization for pre-v5 statements whose
+            # line-item dates were stored short-form (e.g. "19/06"). Resolve
+            # against the extracted period_start / period_end. Idempotent:
+            # ISO values pass through unchanged.
+            try:
+                if isinstance(new_ext, dict) and isinstance(new_ext.get("line_items"), list):
+                    p_start = new_ext.get("period_start")
+                    p_end = new_ext.get("period_end")
+                    for li in new_ext["line_items"]:
+                        if not isinstance(li, dict):
+                            continue
+                        raw_date = li.get("date")
+                        # Skip if already ISO.
+                        if isinstance(raw_date, str) and re.match(r"^\d{4}-\d{2}-\d{2}$", raw_date[:10]):
+                            continue
+                        iso = _parse_line_item_date(raw_date)
+                        if iso is None:
+                            iso = _dec1_v5_backfill_short_form_date(raw_date, p_start, p_end)
+                        if iso:
+                            li["date"] = iso
+            except Exception:
+                pass
+            if isinstance(ext, dict):
+                new_ext = _dec1v5_backfill_extracted(new_ext)
+                doc["extracted_json"] = new_ext
+            if isinstance(aud, dict) and isinstance(new_aud, dict):
+                new_aud = dict(new_aud)
+                new_aud["anomalies"] = _dec1v5_backfill_anomalies(
+                    new_aud.get("anomalies") or []
+                )
+                doc["audit_json"] = new_aud
+            # Re-project the top-level anomalies list from the cleaned audit_json
+            # so the read response is self-consistent. The Statement model uses
+            # audit_json as source of truth for the anomalies list.
+            if isinstance(new_aud, dict) and isinstance(new_aud.get("anomalies"), list):
+                projected = new_aud["anomalies"]
+                # Preserve any Statement-level anomaly ordering already applied,
+                # but drop anomalies whose rule was stripped by anti-fab.
+                projected_rules = {a.get("rule") for a in projected if isinstance(a, dict)}
+                stmt_anoms = doc.get("anomalies") or []
+                if stmt_anoms:
+                    doc["anomalies"] = [
+                        a for a in stmt_anoms
+                        if isinstance(a, dict) and a.get("rule") in projected_rules
+                    ]
+    except Exception:
+        # Backfill must never break a read; log via caller-side telemetry.
+        logger.exception("dec1_v5.read_backfill failed for statement %s", statement_id)
+    return Statement(**doc)
+
+
+@api.patch("/statements/{statement_id}/note")
+async def update_statement_note(
+    statement_id: str,
+    payload: dict,
+    user_id: str = Depends(get_current_user_id),
+):
+    """STMT-UI-1 v2 · Decision 6, autosave a private user note on a statement.
+
+    Body: `{ "user_note": "text..." | null }`. Empty/None clears the note.
+    Response: `{ id, user_note, has_note, updated_at }`.
+    Length cap: 1024 chars (spec doesn't set one, but this guards Mongo doc size).
+    """
+    h = await _require_household(user_id)
+    raw = payload.get("user_note") if isinstance(payload, dict) else None
+    if raw is not None and not isinstance(raw, str):
+        raise HTTPException(status_code=400, detail="user_note must be a string or null")
+    if raw is not None and len(raw) > 1024:
+        raise HTTPException(status_code=400, detail="user_note is too long (max 1024 characters)")
+    note = (raw or "").strip() or None
+    now = now_iso()
+    res = await db.statements.update_one(
+        {"id": statement_id, "household_id": h["id"], "state": {"$nin": ["deleted"]}},
+        {"$set": {"user_note": note, "updated_at": now}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Statement not found")
+    return {
+        "id": statement_id,
+        "user_note": note,
+        "has_note": bool(note),
+        "updated_at": now,
+    }
+
+
+@api.get("/statements/{statement_id}/audit-log")
+async def get_statement_audit_log(statement_id: str, user_id: str = Depends(get_current_user_id)):
+    """Phase 2: full audit trail for one statement, oldest first."""
+    h = await _require_household(user_id)
+    s = await db.statements.find_one(
+        {"id": statement_id, "household_id": h["id"]},
+        {"_id": 0, "id": 1},
+    )
+    if not s:
+        raise HTTPException(status_code=404, detail="Statement not found")
+    rows = (
+        await db.statement_audit_log
+        .find({"statement_id": statement_id}, {"_id": 0})
+        .sort("event_at", 1)
+        .to_list(500)
+    )
+    return {"statement_id": statement_id, "events": rows}
+
+
+@api.delete("/statements/{statement_id}/archive")
+async def archive_statement_endpoint(
+    statement_id: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Phase 2: soft-delete (archive). `?preview=true` returns the impact
+    without mutating. Idempotent via `Idempotency-Key` header."""
+    h = await _require_household(user_id)
+    preview = (request.query_params.get("preview") or "").lower() in ("1", "true", "yes")
+    from lib.statement_actions import compute_archive_impact, archive_statement
+    from lib.statement_lifecycle import lookup_idempotency, store_idempotency
+    if preview:
+        return await compute_archive_impact(db, statement_id=statement_id, household_id=h["id"])
+    idem_key = request.headers.get("Idempotency-Key") or request.headers.get("idempotency-key")
+    if idem_key:
+        prev = await lookup_idempotency(db, key=idem_key, scope="statements_archive", user_id=user_id)
+        if prev and isinstance(prev.get("response"), dict):
+            return prev["response"]
+    doc = await archive_statement(db, statement_id=statement_id, household_id=h["id"], user_id=user_id)
+    resp = {"id": doc.get("id"), "state": doc.get("state"), "archived_at": doc.get("archived_at")}
+    if idem_key:
+        await store_idempotency(db, key=idem_key, scope="statements_archive", user_id=user_id, response=resp)
+    return resp
+
+
+@api.post("/statements/{statement_id}/restore")
+async def restore_statement_endpoint(
+    statement_id: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Phase 2: restore from archive within 30 days."""
+    h = await _require_household(user_id)
+    from lib.statement_actions import restore_statement
+    from lib.statement_lifecycle import lookup_idempotency, store_idempotency
+    idem_key = request.headers.get("Idempotency-Key") or request.headers.get("idempotency-key")
+    if idem_key:
+        prev = await lookup_idempotency(db, key=idem_key, scope="statements_restore", user_id=user_id)
+        if prev and isinstance(prev.get("response"), dict):
+            return prev["response"]
+    doc = await restore_statement(db, statement_id=statement_id, household_id=h["id"], user_id=user_id)
+    resp = {"id": doc.get("id"), "state": doc.get("state")}
+    if idem_key:
+        await store_idempotency(db, key=idem_key, scope="statements_restore", user_id=user_id, response=resp)
+    return resp
+
+
+@api.delete("/statements/{statement_id}/permanent")
+async def hard_delete_statement_endpoint(
+    statement_id: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Phase 2: permanent erasure. Permitted only when archived ≥ 30 days
+    (the retention sweep handles this automatically; this endpoint is the
+    user-initiated path for early erasure under Australian Privacy
+    Principle 11). Currently requires the row to have been archived for
+    ≥ 30 days; a future privacy-erasure flow will pass force=True via a
+    privileged route."""
+    h = await _require_household(user_id)
+    from lib.statement_actions import hard_delete_statement
+    from lib.statement_lifecycle import lookup_idempotency, store_idempotency
+    idem_key = request.headers.get("Idempotency-Key") or request.headers.get("idempotency-key")
+    if idem_key:
+        prev = await lookup_idempotency(db, key=idem_key, scope="statements_hard_delete", user_id=user_id)
+        if prev and isinstance(prev.get("response"), dict):
+            return prev["response"]
+    resp = await hard_delete_statement(
+        db,
+        statement_id=statement_id, household_id=h["id"],
+        user_id=user_id, actor_kind="user", force=False,
+    )
+    if idem_key:
+        await store_idempotency(db, key=idem_key, scope="statements_hard_delete", user_id=user_id, response=resp)
+    return resp
+
+
+# ----------------- email forwarding (inbound statements) -----------------
+import secrets as _secrets
+
+
+def _generate_inbound_token() -> str:
+    """Returns a URL-safe, 14-char token for the user's forwarding alias."""
+    return "kndrd_" + _secrets.token_urlsafe(10)[:10].lower().replace("_", "x").replace("-", "x")
+
+
+def _inbound_domain() -> str:
+    """Domain the inbound webhook accepts mail at. Configure via env."""
+    return os.environ.get("KINDRED_INBOUND_DOMAIN", "inbound.wayly.com.au")
+
+
+async def _ensure_inbound_token(user_id: str) -> str:
+    """Lazily mint an inbound token for the user on first read."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "inbound_token": 1, "email": 1})
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    token = user.get("inbound_token")
+    if token:
+        return token
+    # Mint until we get a unique one (collisions extremely unlikely)
+    for _ in range(5):
+        candidate = _generate_inbound_token()
+        existing = await db.users.find_one({"inbound_token": candidate}, {"_id": 0, "id": 1})
+        if not existing:
+            await db.users.update_one({"id": user_id}, {"$set": {"inbound_token": candidate}})
+            return candidate
+    raise HTTPException(status_code=500, detail="Could not generate inbound address , please retry.")
+
+
+@api.get("/inbound/my-address")
+async def get_my_inbound_address(user_id: str = Depends(get_current_user_id)):
+    """Returns the user's unique forwarding email address + setup status."""
+    token = await _ensure_inbound_token(user_id)
+    domain = _inbound_domain()
+    address = f"statements+{token}@{domain}"
+    # Recent statements ingested via email
+    h = await _get_user_household(user_id)
+    recent = []
+    if h:
+        cursor = db.statements.find(
+            {"household_id": h["id"], "input_method": "email_forward"},
+            {"_id": 0, "id": 1, "filename": 1, "uploaded_at": 1, "period_label": 1, "received_from": 1},
+        ).sort("uploaded_at", -1).limit(10)
+        recent = await cursor.to_list(10)
+    return {
+        "address": address,
+        "domain": domain,
+        "token": token,
+        "recent_inbound": recent,
+        "ready": True,
+    }
+
+
+class InboundEmailAttachment(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: Optional[str] = Field(default=None, max_length=200)
+    content_base64: str = Field(min_length=4)
+
+
+class InboundEmailPayload(BaseModel):
+    """Mirrors the shape of common inbound email webhooks (Resend, Postmark,
+    SendGrid). Required fields are normalised by the email provider before they
+    POST to us."""
+    to: str = Field(min_length=3, max_length=400)
+    from_email: EmailStr = Field(alias="from")
+    subject: Optional[str] = Field(default="", max_length=400)
+    text: Optional[str] = Field(default="", max_length=200_000)
+    html: Optional[str] = Field(default="", max_length=400_000)
+    attachments: List[InboundEmailAttachment] = Field(default_factory=list)
+
+    class Config:
+        populate_by_name = True
+
+
+def _extract_token_from_address(addr: str) -> Optional[str]:
+    """Pull out the kndrd_xxx token from an address like
+    `statements+kndrd_xxx@inbound.wayly.com.au` or `kndrd_xxx@inbound.wayly.com.au`."""
+    addr = addr.strip().lower()
+    # Strip enclosing <...>
+    if "<" in addr and ">" in addr:
+        addr = addr[addr.find("<") + 1 : addr.rfind(">")]
+    # Plus-addressing form
+    m = re.search(r"\+([a-z0-9_]{6,40})@", addr)
+    if m:
+        return m.group(1)
+    # Direct local-part form
+    m = re.search(r"^([a-z0-9_]{6,40})@", addr)
+    if m:
+        return m.group(1)
+    return None
+
+
+@app.post("/api/inbound/email-statement")
+async def inbound_email_webhook(payload: InboundEmailPayload, request: Request):
+    """Public inbound webhook. Auth via shared secret in the
+    X-Inbound-Webhook-Token header (set on the email provider's webhook config).
+    Identifies the recipient user via the `to` address, ingests the first
+    statement-shaped attachment, and runs it through the decoder pipeline as
+    an async job."""
+    expected = os.environ.get("INBOUND_WEBHOOK_TOKEN")
+    if expected:
+        provided = request.headers.get("X-Inbound-Webhook-Token", "")
+        if provided != expected:
+            raise HTTPException(status_code=403, detail="forbidden")
+
+    token = _extract_token_from_address(payload.to)
+    if not token:
+        logger.warning("Inbound email rejected, no token in address: %s", payload.to)
+        raise HTTPException(status_code=400, detail="Could not parse forwarding address")
+
+    user = await db.users.find_one({"inbound_token": token}, {"_id": 0})
+    if not user:
+        logger.warning("Inbound email rejected, unknown token: %s", token)
+        raise HTTPException(status_code=404, detail="Unknown forwarding address")
+
+    h = await _get_user_household(user["id"])
+    if not h:
+        logger.info("Inbound email rejected, user %s has no household", user["id"])
+        try:
+            await email_service.email_tool_result(
+                to=str(payload.from_email), tool_name="Couldn't import your statement",
+                headline="We received your email, but your Wayly household isn't set up yet",
+                body_html="<p>Please complete onboarding at <a href='https://wayly.com.au/onboarding'>wayly.com.au/onboarding</a> before forwarding statements.</p>",
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail="No household configured for this user")
+
+    # Pick the first attachment that looks like a statement
+    accepted_exts = (".pdf", ".docx", ".doc", ".txt", ".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp")
+    attachment = None
+    for a in payload.attachments:
+        ext = "." + a.filename.rsplit(".", 1)[-1].lower() if "." in a.filename else ""
+        if ext in accepted_exts:
+            attachment = a
+            break
+
+    if not attachment:
+        # No usable attachment, try inline text body
+        body_text = (payload.text or "").strip()
+        if len(body_text) > 200:
+            job_id = _submit_upload_job(
+                body_text,
+                f"email-{(payload.subject or 'statement')[:80]}.txt",
+                h["id"],
+                user["id"],
+                user.get("name") or "",
+                file_b64=None,
+                file_mimetype="text/plain",
+                file_size=len(body_text.encode("utf-8")),
+            )
+            try:
+                await email_service.email_tool_result(
+                    to=str(payload.from_email),
+                    tool_name="Statement received , decoding now",
+                    headline="We've received your statement and started decoding",
+                    body_html=f"<p>Your forwarded email arrived safely. We're decoding it now and will save it to your dashboard within ~30 seconds.</p><p>Job ID: <code>{job_id}</code></p><p>, Wayly</p>",
+                )
+            except Exception:
+                pass
+            return {"ok": True, "job_id": job_id, "method": "email_forward_body"}
+        try:
+            await email_service.email_tool_result(
+                to=str(payload.from_email), tool_name="Couldn't find a statement to decode",
+                headline="We didn't find a statement attachment in your email",
+                body_html=(
+                    "<p>We received your email, but it didn't contain a PDF, Word doc, photo, or readable statement text.</p>"
+                    "<p>Please forward the original email <em>with</em> the attachment, or upload the file directly at "
+                    "<a href='https://wayly.com.au/ai-tools/statement-decoder'>wayly.com.au/ai-tools/statement-decoder</a>.</p>"
+                ),
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail="No usable statement attachment or text body")
+
+    # Decode the attachment via the document_extract pipeline
+    import base64 as _b64
+    try:
+        raw = _b64.b64decode(attachment.content_base64)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Attachment base64 was malformed")
+    from document_extract import (
+        extract_document as _extract_doc,
+        UnsupportedFormatError as _UnsupportedFmt,
+        FileTooLargeError as _FileTooLarge,
+        CorruptFileError as _CorruptFile,
+        PasswordProtectedError as _PwdProtected,
+    )
+
+    try:
+        text, _input_method, _page_count, _parse_warnings = await _extract_doc(attachment.filename, raw)
+    except _UnsupportedFmt as e:
+        try:
+            await email_service.email_tool_result(
+                to=str(payload.from_email), tool_name="Couldn't read the attachment",
+                headline="That attachment format isn't supported yet",
+                body_html=f"<p>We couldn't read <strong>{attachment.filename}</strong>: {e}.</p><p>Try forwarding as PDF or photo instead.</p>",
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail=str(e))
+    except _FileTooLarge as e:
+        mb = e.limit_bytes // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"Attachment exceeds the {mb} MB limit.")
+    except (_PwdProtected, _CorruptFile) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Attachment contained no extractable text")
+
+    job_id = _submit_upload_job(
+        text,
+        attachment.filename,
+        h["id"],
+        user["id"],
+        user.get("name") or "",
+        file_b64=attachment.content_base64,
+        file_mimetype=attachment.content_type or "application/octet-stream",
+        file_size=len(raw),
+    )
+
+    try:
+        await email_service.email_tool_result(
+            to=str(payload.from_email),
+            tool_name="Statement received , decoding now",
+            headline="We've received your statement and started decoding",
+            body_html=(
+                f"<p>Your forwarded statement <strong>{attachment.filename}</strong> arrived safely. "
+                "We're decoding it now and will save it to your dashboard within ~30 seconds.</p>"
+                f"<p>Sign in at <a href='https://wayly.com.au/app/statements'>wayly.com.au/app/statements</a> to see the decoded result.</p>"
+                f"<p>Job ID: <code>{job_id}</code></p>"
+                "<p>Wayly</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Inbound confirmation email failed: %s", e)
+
+    return {"ok": True, "job_id": job_id, "method": "email_forward", "filename": attachment.filename}
+
+
+# ----------------- budget -----------------
+@api.get("/budget/eligible-pathways")
+async def get_eligible_pathways(request: Request, user_id: str = Depends(get_current_user_id)):
+    """Return short-term Aged Care pathways the household may qualify for,
+    plus a "why we surfaced this" explanation. Best-effort surfacing only ,
+    actual eligibility is determined by My Aged Care / the care manager."""
+    h = await _get_user_household(user_id)
+    if not h:
+        return {
+            "eligible": [],
+            "evaluated_statements": 0,
+            "evaluated_at": datetime.now(timezone.utc).isoformat(),
+            "disclaimer": "No household linked yet, link a household to see pathway suggestions.",
+        }
+    q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+
+    # Pull the household's recent statements + free-text fields.
+    docs = await db.statements.find(
+        q, {"_id": 0, "file_b64": 0},
+    ).sort("uploaded_at", -1).to_list(20)
+
+    # Heuristic signal harvest: anomaly rule keys + statement summaries +
+    # household life-event fields. Keep it lightweight; cohort assessment
+    # belongs to My Aged Care, not Wayly.
+    anomaly_keys: set[str] = set()
+    text_signal_blob = ""
+    for s in docs:
+        for a in (s.get("anomalies") or []):
+            if not isinstance(a, dict):
+                continue
+            rk = (a.get("rule") or "")
+            if rk:
+                anomaly_keys.add(rk.upper())
+            text_signal_blob += " ".join([
+                str(a.get("headline") or ""), str(a.get("detail") or "")
+            ]) + " "
+        text_signal_blob += str(s.get("summary") or "") + " "
+
+    life_events_blob = " ".join([
+        str(h.get("recent_hospital_discharge") or ""),
+        str(h.get("life_events") or ""),
+        str(h.get("care_notes") or ""),
+    ])
+    blob = (text_signal_blob + " " + life_events_blob).lower()
+
+    eligible: list[dict] = []
+
+    rcp_triggers = (
+        "hospital discharge", "rehab", "stroke", "fall", "fracture",
+        "transfer assistance", "mobility decline", "functional decline",
+    )
+    if any(t in blob for t in rcp_triggers):
+        rcp = _pr.get_pathway("restorative_care")
+        eligible.append({
+            "pathway": "restorative_care",
+            "title": "Restorative Care Pathway",
+            "section_ref": "Aged Care Rules 2025, section 194-10(2)",
+            "daily_aud": rcp.get("daily_aud"),
+            "duration_days": rcp.get("duration_days"),
+            "episode_aud": rcp.get("episode_aud"),
+            "max_episodes": rcp.get("max_episodes"),
+            "max_total_aud": rcp.get("max_total_aud"),
+            "reason": (
+                "Recent hospital / mobility decline signal detected in the household's "
+                "statements or care notes. RCP funding is separate from the quarterly "
+                "budget."
+            ),
+            "next_step": "/ai-tools/reassessment-letter?letter_type=rcp_assessment",
+        })
+
+    eol_triggers = (
+        "palliative", "end of life", "prognosis", "comfort care",
+        "advance care directive", "3 months",
+    )
+    if any(t in blob for t in eol_triggers):
+        eol = _pr.get_pathway("end_of_life")
+        eligible.append({
+            "pathway": "end_of_life",
+            "title": "End-of-Life Pathway",
+            "section_ref": "Aged Care Rules 2025, section 194-10(2)",
+            "daily_aud": eol.get("daily_aud"),
+            "duration_days": eol.get("duration_days"),
+            "episode_aud": eol.get("episode_aud"),
+            "reason": (
+                "Palliative or end-of-life signal detected. EoL pathway provides "
+                f"${eol.get('episode_aud', 25000):,.0f} over up to {eol.get('duration_days', 84)} "
+                "days for participants with a prognosis of 3 months or less."
+            ),
+            "next_step": "/ai-tools/reassessment-letter?letter_type=rcp_assessment",
+        })
+
+    return {
+        "eligible": eligible,
+        "evaluated_statements": len(docs),
+        "evaluated_at": datetime.now(timezone.utc).isoformat(),
+        "disclaimer": (
+            "Best-effort surfacing only. Actual eligibility for these pathways is "
+            "determined by My Aged Care and the participant's care manager. Use the "
+            "linked letter generator to start a formal request."
+        ),
+    }
+
+
+
+@api.get("/budget/current")
+async def current_budget(request: Request, user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    # Honour the active participant, their classification overrides the
+    # household-level one so budget views actually swap when caregivers switch.
+    p = await _resolve_active_participant(user_id, request)
+    classification = (p or {}).get("classification") or h["classification"]
+    q_start, q_end, q_label = budget_lib.get_quarter_window()
+    allocations = budget_lib.stream_allocations(classification)
+    quarterly_usable = budget_lib.quarterly_budget(classification)
+    annual_total = budget_lib.CLASSIFICATIONS[classification]["annual"]
+    quarterly_gross = round(annual_total / 4.0, 2)
+    care_management_quarterly = round(quarterly_gross - quarterly_usable, 2)
+
+    q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+    docs = await db.statements.find(q, STATEMENT_LIGHT_PROJECTION).to_list(200)
+    all_items: List[dict] = []
+    for s in docs:
+        all_items.extend(s.get("line_items", []))
+    burn = budget_lib.compute_burn(all_items, q_start, q_end)
+    contributions_total = budget_lib.compute_contributions(all_items)
+
+    # Allocation source: prefer the most-recent statement's per-stream
+    # quarterly allocation header. Falls back to the MVP-wide program average
+    # when no statement has been decoded yet (or none carried the header).
+    statement_allocations: Dict[str, float] | None = None
+    statement_period_label: str | None = None
+
+    def _sort_key(d):
+        # Coerce to ISO string so datetime and string keys compare correctly.
+        v = d.get("uploaded_at") or d.get("created_at") or ""
+        if isinstance(v, datetime):
+            return v.isoformat()
+        return str(v)
+
+    statements_sorted = sorted(docs, key=_sort_key, reverse=True)
+    for s in statements_sorted:
+        hsb = s.get("header_stream_budgets") or {}
+        if not isinstance(hsb, dict):
+            continue
+        try:
+            mapped = {
+                "Clinical": float(hsb.get("Clinical") or 0.0),
+                "Independence": float(hsb.get("Independence") or 0.0),
+                "Everyday Living": float(
+                    hsb.get("Everyday Living")
+                    if hsb.get("Everyday Living") is not None
+                    else hsb.get("EverydayLiving") or 0.0
+                ),
+            }
+        except Exception:
+            continue
+        if any(v > 0 for v in mapped.values()):
+            statement_allocations = mapped
+            statement_period_label = s.get("period_label")
+            break
+
+    use_statement = statement_allocations is not None
+    allocation_source = "statement" if use_statement else "program_average"
+    indicative = not use_statement
+    streams_note = (
+        f"Stream allocation taken from your latest statement ({statement_period_label})."
+        if use_statement and statement_period_label
+        else "Stream allocation taken from your latest statement."
+        if use_statement
+        else "Indicative split only. Your participant's actual stream allocation is set in their "
+             "individualised budget and care plan, and may differ substantially. Check the quarterly "
+             "budget summary on your provider statement for the real split."
+    )
+
+    streams = []
+    for s in budget_lib.STREAMS:
+        spent = burn.get(s, 0.0)
+        if use_statement and statement_allocations is not None:
+            cap = round(statement_allocations.get(s, 0.0), 2)
+        else:
+            cap = allocations[s]
+        streams.append({
+            "stream": s,
+            "allocated": cap,
+            "spent": spent,
+            "remaining": round(cap - spent, 2),
+            "pct": round((spent / cap * 100) if cap else 0, 1),
+            "indicative": indicative,
+        })
+
+    cap_amount = budget_lib.lifetime_cap(h.get("is_grandfathered", False))
+    return {
+        "classification": classification,
+        "classification_label": budget_lib.CLASSIFICATIONS[classification]["label"],
+        "annual_total": annual_total,
+        "quarter_label": q_label,
+        "quarter_start": q_start.isoformat(),
+        "quarter_end": q_end.isoformat(),
+        # F9: GROSS quarterly leads, that's what providers print on statements.
+        "quarterly_gross": quarterly_gross,
+        "care_management_quarterly": care_management_quarterly,
+        "quarterly_usable": quarterly_usable,
+        "rollover_cap": budget_lib.rollover_cap(classification),
+        "streams": streams,
+        "allocation_source": allocation_source,
+        "streams_note": streams_note,
+        "lifetime_cap": cap_amount,
+        "lifetime_contributions": contributions_total,
+        "lifetime_pct": round((contributions_total / cap_amount * 100) if cap_amount else 0, 2),
+        "is_grandfathered": h.get("is_grandfathered", False),
+    }
+
+
+# ----------------- chat -----------------
+def _humanize_assistant_reply(text: str) -> str:
+    """Strip the visual tells that make assistant copy feel robotic:
+
+      * markdown bold/italic asterisks (``**foo**`` → ``foo``, ``*foo*`` → ``foo``)
+      * em / en / horizontal-bar dashes → ", " (or a sentence break when alone on a line)
+      * stray header markers (``### Heading`` → ``Heading``)
+      * runs of more than two newlines compressed to two
+
+    Keeps content intact, only the visual jaggedness is sanded down.
+    """
+    if not text:
+        return text
+    import re as _re
+    t = text
+    # Bold then italic, order matters
+    t = _re.sub(r"\*\*(.+?)\*\*", r"\1", t)
+    t = _re.sub(r"(?<!\*)\*(?!\s)([^*\n]+?)\*(?!\*)", r"\1", t)
+    # Heading markers
+    t = _re.sub(r"^\s{0,3}#{1,6}\s+", "", t, flags=_re.M)
+    # Em/en/hyphen-bar variants → comma+space, but as a sentence break if line-leading
+    t = _re.sub(r"\s*[,―]\s*", ", ", t)
+    # Two or more dashes used as a separator
+    t = _re.sub(r"\s*-{2,}\s*", ", ", t)
+    # Collapse paragraph breaks
+    t = _re.sub(r"\n{3,}", "\n\n", t)
+    return t.strip()
+
+
+@api.post("/chat")
+async def chat(payload: ChatRequest, request: Request, user_id: str = Depends(get_current_user_id)):
+    # Phase 5, route-out guard runs BEFORE we call the LLM. If the query
+    # maps to a means-test, legal, or safeguarding topic, we return the
+    # canonical route-out copy and the right contacts. The LLM is not
+    # consulted on the substance.
+    try:
+        from scenario_engine.boundaries import (
+            classify_boundary_for_query, route_out_response,
+        )
+        boundary, contacts, topic = classify_boundary_for_query(payload.message or "")
+        if boundary in ("ROUTE_OUT", "ESCALATE"):
+            reply = route_out_response(payload.message or "", contacts, boundary, topic)
+            try:
+                await db.chat_history.insert_one({
+                    "id": str(uuid.uuid4()), "user_id": user_id,
+                    "role": "user", "content": payload.message,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                })
+                await db.chat_history.insert_one({
+                    "id": str(uuid.uuid4()), "user_id": user_id,
+                    "role": "assistant", "content": reply,
+                    "advice_boundary": boundary, "topic": topic,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                })
+            except Exception:
+                pass
+            return {"reply": reply, "advice_boundary": boundary,
+                    "topic": topic, "contacts": contacts,
+                    "guarded": True}
+    except Exception as _guard_err:
+        logger.warning("route-out guard failed; proceeding to LLM: %s", _guard_err)
+
+    h = await _require_household(user_id)
+    user = await _get_user(user_id)
+    # Honour the active participant, classification + provider follow them
+    p = await _resolve_active_participant(user_id, request)
+    classification = (p or {}).get("classification") or h["classification"]
+    participant_name = (p or {}).get("first_name") or h.get("participant_name")
+    provider_name = (p or {}).get("provider_name") or h.get("provider_name")
+    q_start, q_end, q_label = budget_lib.get_quarter_window()
+
+    base_q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+
+    # STMT-UI-1 v2 · statement-scoped Ask Wayly. When the client sends a
+    # statement_id (from the Statement detail page's Ask Wayly card), we
+    # ground the AI on THAT specific statement instead of the household's
+    # latest. Any id that isn't in the caller's household is silently ignored.
+    focused_stmt = None
+    if getattr(payload, "statement_id", None):
+        try:
+            focused_stmt = await db.statements.find_one(
+                {"id": payload.statement_id, **base_q},
+                {"_id": 0, "file_b64": 0},
+            )
+        except Exception:
+            focused_stmt = None
+
+    if focused_stmt:
+        # Compact per-statement grounding: summary + top few anomalies + line-item
+        # roll-up. Keep this well under 2 KB to stay inside the model context.
+        lines = focused_stmt.get("line_items") or []
+        anomalies = focused_stmt.get("anomalies") or []
+        streams_agg: Dict[str, float] = {}
+        for li in lines:
+            s = li.get("stream") or "Uncategorised"
+            streams_agg[s] = streams_agg.get(s, 0.0) + float(li.get("total") or 0.0)
+        stream_str = ", ".join(f"{k}: ${v:,.2f}" for k, v in streams_agg.items()) or "no line items decoded"
+        top_flags = []
+        for a in anomalies[:4]:
+            title = (a.get("title") or a.get("rule") or "").strip()
+            impact = a.get("dollar_impact")
+            if title:
+                top_flags.append(f"{title}" + (f" (~${float(impact):.2f} impact)" if impact else ""))
+        flag_str = "; ".join(top_flags) or "no flags"
+        base_summary = focused_stmt.get("summary") or "No plain-English summary generated for this statement."
+        latest_summary = (
+            f"[Focused statement · {focused_stmt.get('period_label') or focused_stmt.get('filename') or 'this statement'}]\n"
+            f"{base_summary}\n"
+            f"Stream totals: {stream_str}\n"
+            f"Flags: {flag_str}"
+        )
+        # Reuse the household-latest fallback path for the aggregate context.
+        docs = [focused_stmt]
+    else:
+        latest = await db.statements.find(base_q, STATEMENT_LIGHT_PROJECTION) \
+            .sort("uploaded_at", -1).limit(1).to_list(1)
+        latest_summary = latest[0].get("summary") if latest else "No statements uploaded yet."
+        docs = await db.statements.find(base_q, STATEMENT_LIGHT_PROJECTION).to_list(200)
+    items: List[dict] = []
+    for s in docs:
+        items.extend(s.get("line_items", []))
+    burn = budget_lib.compute_burn(items, q_start, q_end)
+    contributions_total = budget_lib.compute_contributions(items)
+    cap_amount = budget_lib.lifetime_cap(h.get("is_grandfathered", False))
+
+    burn_str = ", ".join(f"{k}: ${v:,.2f}" for k, v in burn.items())
+    context = {
+        "caregiver_name": user["name"],
+        "participant_name": participant_name,
+        "classification": budget_lib.CLASSIFICATIONS[classification]["label"],
+        "annual": budget_lib.CLASSIFICATIONS[classification]["annual"],
+        "quarterly": budget_lib.quarterly_budget(classification),
+        "provider": provider_name,
+        "quarter_label": q_label,
+        "burn": burn_str or "no spend recorded yet",
+        "contributions_total": contributions_total,
+        "cap": cap_amount,
+        "statement_summary": latest_summary or "No statements uploaded yet.",
+    }
+    pid_part = (p or {}).get("id") or "default"
+    # STMT-UI-1 v2 · scope the session id to the focused statement so a
+    # multi-turn conversation on Statement A never bleeds into Statement B.
+    stmt_part = f"-stmt-{focused_stmt['id']}" if focused_stmt else ""
+    session_id = payload.session_id or f"chat-{h['id']}-{pid_part}{stmt_part}"
+    # PERSONA-1 §Ask Wayly, inject the caller's persona so the assistant
+    # answers in the right voice (first-person for participant, third-person
+    # for caregiver with the correct pronouns + care recipient name).
+    try:
+        from lib.persona import load_persona_context
+        context["persona_context"] = await load_persona_context(db, user_id)
+    except Exception:
+        context["persona_context"] = None
+    reply_text = await chat_with_kindred(payload.message, session_id, context)
+    reply_text = _humanize_assistant_reply(reply_text)
+
+    # persist
+    user_turn = ChatTurn(household_id=h["id"], role="user", content=payload.message)
+    asst_turn = ChatTurn(household_id=h["id"], role="assistant", content=reply_text)
+    await db.chat_turns.insert_many([
+        {**user_turn.model_dump(), "participant_id": pid_part if p else None},
+        {**asst_turn.model_dump(), "participant_id": pid_part if p else None},
+    ])
+    return {"reply": reply_text, "session_id": session_id}
+
+
+@api.get("/chat/history")
+async def chat_history(request: Request, user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    p = await _resolve_active_participant(user_id, request)
+    q: Dict[str, Any] = {"household_id": h["id"]}
+    if p:
+        if p.get("is_primary"):
+            q["$or"] = [{"participant_id": p["id"]}, {"participant_id": None}, {"participant_id": {"$exists": False}}]
+        else:
+            q["participant_id"] = p["id"]
+    docs = await db.chat_turns.find(q, {"_id": 0}) \
+        .sort("created_at", 1).to_list(500)
+    return docs
+
+
+@api.delete("/chat/history")
+async def clear_chat_history(request: Request, user_id: str = Depends(get_current_user_id)):
+    """Start a fresh Ask Wayly conversation. Scoped to the active participant
+    so swapping participants leaves the other's chat untouched."""
+    h = await _require_household(user_id)
+    p = await _resolve_active_participant(user_id, request)
+    q: Dict[str, Any] = {"household_id": h["id"]}
+    if p and not p.get("is_primary"):
+        q["participant_id"] = p["id"]
+    elif p and p.get("is_primary"):
+        q["$or"] = [{"participant_id": p["id"]}, {"participant_id": None}, {"participant_id": {"$exists": False}}]
+    res = await db.chat_turns.delete_many(q)
+    return {"ok": True, "deleted": res.deleted_count}
+
+
+# ----------------- family thread -----------------
+@api.post("/family-thread", response_model=FamilyMessage)
+async def post_family_message(payload: FamilyMessageCreate, user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    user = await _get_user(user_id)
+    msg = FamilyMessage(
+        household_id=h["id"],
+        author_id=user_id,
+        author_name=user["name"],
+        body=payload.body,
+        related_statement_id=payload.related_statement_id,
+    )
+    await db.family_messages.insert_one(msg.model_dump())
+    await _audit(h["id"], user_id, user["name"], "FAMILY_MESSAGE_POSTED", payload.body[:120])
+    return msg
+
+
+@api.get("/family-thread", response_model=List[FamilyMessage])
+async def list_family_messages(user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    docs = await db.family_messages.find({"household_id": h["id"]}, {"_id": 0}) \
+        .sort("created_at", 1).to_list(500)
+    return [FamilyMessage(**d) for d in docs]
+
+
+# ----------------- audit log -----------------
+@api.get("/audit-log", response_model=List[AuditEvent])
+async def list_audit(user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    docs = await db.audit_events.find({"household_id": h["id"]}, {"_id": 0}) \
+        .sort("created_at", -1).to_list(500)
+    return [AuditEvent(**d) for d in docs]
+
+
+# ----------------- participant view -----------------
+@api.get("/participant/today")
+async def participant_today(user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    classification = h["classification"]
+    q_start, q_end, q_label = budget_lib.get_quarter_window()
+    quarterly_total = budget_lib.quarterly_budget(classification)
+    docs = await db.statements.find({"household_id": h["id"]}, STATEMENT_LIGHT_PROJECTION).to_list(200)
+    items: List[dict] = []
+    for s in docs:
+        items.extend(s.get("line_items", []))
+    burn = budget_lib.compute_burn(items, q_start, q_end)
+    spent = sum(burn.values())
+    remaining = max(0.0, quarterly_total - spent)
+
+    today = datetime.now(timezone.utc).date()
+    days_left = (q_end - today).days + 1
+
+    # Static sample appointment for MVP, calendar agent comes later.
+    appt = {
+        "time": "10:00 AM",
+        "name": "Sarah",
+        "service": "Personal care",
+        "duration": "1 hour",
+    }
+
+    return {
+        "participant_name": h["participant_name"],
+        "today_label": today.strftime("%A %d %B"),
+        "appointment": appt,
+        "quarter_remaining": round(remaining, 2),
+        "quarter_remaining_sentence": (
+            f"That's plenty for the {days_left} days left in this quarter."
+            if remaining > spent * 0.2 or days_left < 30
+            else f"Just keep an eye on it, {days_left} days to go this quarter."
+        ),
+        "caregiver_name": (await _get_user(h["owner_id"]))["name"],
+    }
+
+
+@api.post("/participant/concern")
+async def flag_concern(payload: ConcernCreate, user_id: str = Depends(get_current_user_id)):
+    h = await _require_household(user_id)
+    user = await _get_user(user_id)
+    note = payload.note or "Something doesn't feel right."
+    await _audit(h["id"], user_id, user["name"], "CONCERN_FLAGGED", note)
+    # also drop into family thread for visibility
+    msg = FamilyMessage(
+        household_id=h["id"],
+        author_id=user_id,
+        author_name=user["name"],
+        body=f"⚠ Concern flagged: {note}",
+    )
+    await db.family_messages.insert_one(msg.model_dump())
+    return {"ok": True}
+
+
+# ----------------- public AI tools (no auth, IP rate-limited) -----------------
+RATE_LIMIT_BUCKET: dict[str, list[datetime]] = defaultdict(list)
+RATE_LIMIT_WINDOW = timedelta(hours=RATE_LIMIT_WINDOW_HOURS)
+RATE_LIMIT_MAX = RATE_LIMIT_MAX_PER_IP
+
+
+def _client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _check_rate_limit(ip: str) -> None:
+    now = datetime.now(timezone.utc)
+    RATE_LIMIT_BUCKET[ip] = [t for t in RATE_LIMIT_BUCKET[ip] if now - t < RATE_LIMIT_WINDOW]
+    if len(RATE_LIMIT_BUCKET[ip]) >= RATE_LIMIT_MAX:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "rate_limit",
+                "message": "You've used this tool 5 times in the last hour. Create a free account for unlimited access.",
+            },
+        )
+    RATE_LIMIT_BUCKET[ip].append(now)
+
+
+# ---------------------------------------------------------------------------
+# Tool-access gating
+# ---------------------------------------------------------------------------
+SD_COOKIE_NAME = "kindred_sd_used"
+SD_WINDOW_SECONDS = 24 * 60 * 60  # 24 hours
+# Includes legacy "advisor"/"advisor_pro" plus current "adviser" (AU spelling).
+PAID_PLANS = {"solo", "family", "adviser", "advisor", "advisor_pro"}
+ADVISER_PLANS = {"adviser", "advisor", "advisor_pro"}
+ADVISER_MAX_CLIENTS = {"adviser": 25, "advisor": 25, "advisor_pro": 200}
+
+
+def _trial_active(u: dict) -> bool:
+    """True if the user has an active 7-day trial."""
+    ends = u.get("trial_ends_at")
+    if not ends:
+        return False
+    try:
+        if isinstance(ends, str):
+            return datetime.fromisoformat(ends.replace("Z", "+00:00")) > datetime.now(timezone.utc)
+    except Exception:
+        return False
+    return False
+
+
+async def _user_from_request(request: Request) -> Optional[dict]:
+    """Best-effort: return the calling user from Bearer JWT, else None."""
+    auth = request.headers.get("authorization") or ""
+    if not auth.lower().startswith("bearer "):
+        return None
+    token = auth.split(" ", 1)[1].strip()
+    try:
+        from auth import decode_token
+        uid = decode_token(token)
+        return await db.users.find_one({"id": uid}, {"_id": 0})
+    except Exception:
+        return None
+
+
+async def _user_from_request_required(request: Request) -> dict:
+    """Strict: 401 if no Bearer JWT or token doesn't resolve to a user."""
+    user = await _user_from_request(request)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail={"error": "unauthenticated", "message": "Sign in required."},
+        )
+    return user
+
+
+async def _require_paid_plan(request: Request, response: Response, tool_label: str = "This tool") -> dict:
+    """Dependency: only Solo/Family/Advisor or active trial may call gated tools.
+
+    401 for unauthenticated. 402 for Free / expired-trial (Wave 2). Returns the user.
+
+    Wave 2: trial-expired gate runs BEFORE the per-IP burst limit so authenticated
+    expired users always see the 402 paywall flow (not a stray 429).
+    """
+    user = await _user_from_request(request)
+    if not user:
+        # Per-IP burst limit for unauthenticated callers only.
+        await _rl.enforce(request, ("tools_unauth_ip", _rl._client_ip(request)))
+        raise HTTPException(
+            status_code=401,
+            detail={"error": "unauthenticated", "message": "Sign in required.", "redirect": "/signup"},
+        )
+    plan = (user.get("plan") or "free").lower()
+    if plan in PAID_PLANS or _trial_active(user):
+        return user
+    # Wave 2: trial expired or no active subscription. Return 402 so the
+    # frontend interceptor mounts the hard paywall modal (§4.4/§4.6).
+    raise HTTPException(
+        status_code=402,
+        detail={
+            "error": "trial_expired",
+            "message": "Your trial has ended. Subscribe to continue.",
+            "upgrade_url": "/settings/billing",
+        },
+    )
+
+
+def require_plan(*allowed: str, feature_label: str = "This feature"):
+    """Factory: FastAPI dependency that hard-gates a route to the listed plans.
+
+    Usage: `user: dict = Depends(require_plan("adviser"))`. Returns 401 for
+    unauthenticated callers, 403 for users on the wrong plan. Active 7-day
+    trial users count as their trial plan.
+    """
+    allowed_set = {p.lower() for p in allowed}
+
+    async def _dep(request: Request) -> dict:
+        user = await _user_from_request(request)
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail={"error": "unauthenticated", "message": "Sign in required.", "redirect": "/login"},
+            )
+        plan = (user.get("plan") or "free").lower()
+        if plan in allowed_set:
+            return user
+        # An active trial counts as the trial's plan, we already flip user.plan on trial start.
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "plan_required",
+                "message": f"{feature_label} requires a {' or '.join(sorted(allowed_set))} plan.",
+                "current_plan": plan,
+                "required_plans": sorted(allowed_set),
+                "redirect": "/pricing",
+            },
+        )
+
+    return _dep
+
+
+def _sd_cookie_used_recently(request: Request) -> Optional[datetime]:
+    """If the visitor has used Statement Decoder within the last 24h, return ts."""
+    raw = request.cookies.get(SD_COOKIE_NAME)
+    if not raw:
+        return None
+    try:
+        ts = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if datetime.now(timezone.utc) - ts < timedelta(seconds=SD_WINDOW_SECONDS):
+            return ts
+    except Exception:
+        return None
+    return None
+
+
+def _set_sd_cookie(response: Response) -> None:
+    """Stamp the visitor's 1-per-day cookie. HttpOnly, 24h, Lax, secure-by-host."""
+    response.set_cookie(
+        key=SD_COOKIE_NAME,
+        value=datetime.now(timezone.utc).isoformat(),
+        max_age=SD_WINDOW_SECONDS,
+        httponly=True,
+        samesite="lax",
+        secure=True,
+        path="/",
+    )
+
+
+async def _enforce_statement_decoder_limit(request: Request, response: Response) -> dict:
+    """Gating logic for the public Statement Decoder.
+
+    §2.5 of the Dec 2026 refit: 1 use per 120 days for non-logged-in and Free
+    users (was 1 per calendar month). Solo/Family/Adviser/trial users bypass
+    entirely.
+
+    - Logged-in Solo/Family/trial users: unlimited.
+    - Logged-in Free users: 1 decode per 120-day rolling window.
+    - Unauthenticated visitors: 1 decode per 120-day rolling window (tracked
+      by browser fingerprint + IP fallback).
+
+    Phase 3: a per-IP burst limit (10/hour) is applied to everyone, even paid
+    users, to absorb scraping/abuse.
+    """
+    # Burst-protect first, fail-open if Redis is down (paid users still work).
+    await _rl.enforce(request, ("tools_unauth_ip", _rl._client_ip(request)))
+    user = await _user_from_request(request)
+    if user:
+        plan = (user.get("plan") or "free").lower()
+        if plan in PAID_PLANS or _trial_active(user):
+            return {"user": user, "is_free_use": False}
+    user_id = user["id"] if user else None
+    usage = await check_free_tool_usage(request, tool="STATEMENT_DECODER", user_id=user_id)
+    if not usage["allowed"]:
+        days_left = int(usage.get("days_until_next_use") or 0)
+        day_word = "day" if days_left == 1 else "days"
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "cooldown_active",
+                "message": (
+                    f"You've used your free Statement Decoder check. You can run "
+                    f"another one in {days_left} {day_word}, or sign up for a 7-day "
+                    f"free trial to use it as often as you need."
+                ),
+                "days_until_next_use": days_left,
+                "reset_at": usage["reset_at"],
+                "last_used_at": usage.get("last_used_at"),
+                "window_days": 120,
+            },
+        )
+    # First use this window, also enforce the global IP rate limit as a soft cap.
+    _check_rate_limit(_client_ip(request))
+    # Record the usage immediately so concurrent requests don't slip past the gate.
+    await record_free_tool_usage(request, tool="STATEMENT_DECODER", user_id=user_id)
+    return {"user": user, "is_free_use": True, "days_until_next_use": 120}
+
+
+class PublicTextBody(BaseModel):
+    text: str = Field(min_length=10, max_length=40000)
+
+
+class PublicBudgetBody(BaseModel):
+    classification: int = Field(ge=1, le=8)
+    is_grandfathered: bool = False
+    current_lifetime_balance: float = 0.0
+    expected_annual_burn: float | None = None
+    # Prompt J, transitional HCP override. When is_grandfathered=True and
+    # ``classification`` is in 1-4, the route looks up the transitional HCP
+    # figures (Aged Care Rules 2025, section 194-5(3)) instead of the ongoing
+    # ones. ``transitional_classification`` is an explicit override for
+    # callers who want to pick the transitional level independently of
+    # ``classification``.
+    transitional_classification: int | None = Field(default=None, ge=1, le=4)
+    # Prompt N, optional list of primary supplement names to apply on top of
+    # the base annual budget (e.g. ["oxygen", "veterans"]).
+    applicable_supplements: list[str] | None = None
+
+
+class PublicPriceBody(BaseModel):
+    service: str
+    rate: float = Field(gt=0)
+    postcode: str | None = None
+    provider: str | None = None
+
+
+# Indicative network-median rates (AUD/hour or per-visit), sourced from
+# ``lib.tool_helpers``. National provider price caps were deferred
+# indefinitely in May 2026, so these benchmarks intentionally contain only
+# network medians (no cap value).
+from lib.tool_helpers import (  # noqa: E402, module-level re-exports
+    PRICE_BENCHMARKS,
+    PENSION_RATES,
+    CARE_PLAN_CHECK_KEYS as _CARE_PLAN_CHECK_KEYS,
+    parse_care_management_pct as _parse_care_management_pct,
+    try_parse_monthly_total as _try_parse_monthly_total,
+    estimate_monthly_total_from_plan_text as _estimate_monthly_total_from_plan_text,
+)
+from lib.query_helpers import (  # noqa: E402, Section 2 hardening
+    STATEMENT_LIGHT_PROJECTION,
+    household_usage_counts,
+)
+from lib import cache as _cache  # noqa: E402, Section 3: Redis cache layer
+# DEC-1 v5 · Phase 1+2 (Feb 2026): schema additions + anti-fabrication strip.
+# Strict mode (DEC1_V5_STRICT=true) actively strips fabrications at BOTH the
+# write path (fresh decodes) AND the read path (pre-v5 rows clean up on first
+# read). Log-only mode records what would be stripped without mutating data.
+from lib.dec1_v5_schema import (  # noqa: E402
+    backfill_extracted as _dec1v5_backfill_extracted,
+    backfill_anomalies as _dec1v5_backfill_anomalies,
+    compute_line_item_sum as _dec1v5_line_sum,
+)
+from lib.dec1_v5_antifab import (  # noqa: E402
+    apply_all_anti_fabrication as _dec1v5_apply_antifab,
+)
+
+
+def _apply_dec1_v5_phase1(
+    extracted: Optional[Dict[str, Any]],
+    audit: Optional[Dict[str, Any]],
+    raw_text: str,
+) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """DEC-1 v5 · Phase 1 hook, additive, log-only by default.
+
+    Runs on every decode just before persistence:
+      1. Anti-fabrication guards (F1, F3, F4, F5). Default log-only mode
+         (`DEC1_V5_STRICT=false`) preserves behaviour but emits telemetry.
+      2. Backfills the extracted_json and audit.anomalies dicts to the v5
+         shape (new fields default to null, existing fields untouched).
+      3. Persists a deterministic `computed_line_item_sum` on the extract so
+         Phase 2's RULE_25 arithmetic-gap check has a stable input.
+
+    Idempotent. Returns new dicts, does not mutate inputs.
+    """
+    if not isinstance(extracted, dict) and not isinstance(audit, dict):
+        return extracted, audit
+    ext_in = extracted if isinstance(extracted, dict) else {}
+    aud_in = audit if isinstance(audit, dict) else {}
+    try:
+        new_ext, new_aud, _events = _dec1v5_apply_antifab(
+            ext_in, aud_in, raw_text or "",
+        )
+        # Backfill after anti-fab so any cleared fields also get v5 defaults.
+        new_ext = _dec1v5_backfill_extracted(new_ext)
+        new_aud = dict(new_aud)
+        new_aud["anomalies"] = _dec1v5_backfill_anomalies(
+            new_aud.get("anomalies") or [],
+        )
+        # Persist the deterministic line-item sum so downstream rules can
+        # reconcile without re-summing from scratch.
+        new_ext["computed_line_item_sum"] = _dec1v5_line_sum(
+            new_ext.get("line_items") or [],
+        )
+    except Exception:
+        # DEC-1 v5 Phase 1 is safe-by-default: any bug in the helpers must
+        # never block a decode. Log and pass through unchanged.
+        logger.exception("dec1_v5.phase1_hook failed; passing through")
+        return extracted, audit
+    return (
+        new_ext if isinstance(extracted, dict) else extracted,
+        new_aud if isinstance(audit, dict) else audit,
+    )
+
+
+async def _run_public_decode(text: str) -> dict:
+    """Two-pass statement decoder.
+    Pass 1 (Haiku 4.5): extract every line item with the full Wayly schema.
+    Pass 2 (Sonnet 4.6): audit the extraction against the 10 anomaly rules.
+    Both passes must complete before the response is returned.
+    """
+    from agents import extract_statement, audit_statement
+    extracted = await extract_statement(text, household_id="public")
+    audit = await audit_statement(extracted, household_id="public")
+    return _build_decode_payload(extracted, audit)
+
+
+def _render_plain_english_summary(extracted: dict, audit: dict) -> str:
+    """DEC-1 Phase 1: comprehensive plain-English narrative built
+    deterministically from the structured extract+audit record.
+
+    Same input → same output, no LLM call, no fabrication. Both pathways
+    (AI Tools + Statements upload) render the identical summary because
+    they consume the same structured data. Written in Australian English,
+    sentence case, no em dashes, dollar amounts as $1,847."""
+    ext = extracted or {}
+    aud = audit or {}
+    s = aud.get("statement_summary") or {}
+
+    def _aud(n) -> str:
+        try:
+            return f"${float(n or 0):,.2f}"
+        except Exception:
+            return "$0.00"
+
+    def _int(n) -> int:
+        try:
+            return int(n or 0)
+        except Exception:
+            return 0
+
+    participant = (s.get("participant_name") or ext.get("participant_name") or "the participant").strip() or "the participant"
+    provider = (s.get("provider") or ext.get("provider_name") or "the provider").strip() or "the provider"
+    period = (s.get("period") or ext.get("statement_period") or "this period").strip() or "this period"
+    classification = (s.get("classification") or ext.get("classification") or "").strip()
+
+    gross = float(s.get("total_gross") or 0)
+    contribution = float(s.get("total_participant_contribution") or 0)
+    government = float(s.get("total_government_paid") or 0)
+    line_count = _int(s.get("total_line_items") or len(ext.get("line_items") or []))
+    care_mgmt = float(s.get("care_management_fee") or 0)
+    care_mgmt_pct = ext.get("care_management_rate_pct")
+    budget_remaining = s.get("adjusted_budget_remaining")
+    if budget_remaining is None:
+        budget_remaining = s.get("budget_remaining")
+    rollover = float(s.get("rollover_applied") or 0)
+    lifetime_to_date = float(s.get("lifetime_contributions_to_date") or 0)
+    lifetime_cap_remaining = s.get("lifetime_cap_remaining")
+
+    # Contribution share as a percentage, anchored to gross so callers can
+    # explain the participant's out-of-pocket share in a single sentence.
+    if gross > 0:
+        pct = round((contribution / gross) * 100, 1)
+        share_line = f"That worked out to about {pct}% of the total bill coming out of {participant}'s own pocket."
+        if contribution == 0:
+            share_line = f"That means the government covered every service on this statement, {participant} did not have to pay anything out of pocket."
+    else:
+        pct = 0.0
+        share_line = ""
+
+    streams = [b for b in (aud.get("stream_breakdown") or []) if isinstance(b, dict)]
+    stream_display = {
+        "Clinical": "Clinical care",
+        "Independence": "Independence supports",
+        "EverydayLiving": "Everyday Living",
+        "Everyday Living": "Everyday Living",
+        "ATHM": "assistive tech and home mods",
+        "AT-HM": "assistive tech and home mods",
+        "CareMgmt": "Care Management",
+        "Care Management": "Care Management",
+    }
+
+    # ── Paragraph 1, the headline
+    if classification and classification.lower() not in ('unknown', 'none', '-', ''):
+        cls_disp = classification if not classification.isdigit() else f"Class {classification}"
+        cls_sentence = f" The classification on file is {cls_disp}."
+    else:
+        cls_sentence = ""
+    p1 = (
+        f"This is {participant}'s Support at Home statement for {period} from {provider}."
+        f"{cls_sentence}"
+        f" {provider} billed {_aud(gross)} across {line_count} line item{'s' if line_count != 1 else ''} for this period."
+        f" Of that, {participant} paid {_aud(contribution)} and the government paid {_aud(government)}."
+        f" {share_line}".strip()
+    )
+
+    # ── Paragraph 2, where the money went (streams)
+    if streams:
+        parts = []
+        for b in streams:
+            label = stream_display.get(b.get("stream"), b.get("stream") or "Other")
+            g = float(b.get("gross_total") or 0)
+            n = _int(b.get("line_item_count") or 0)
+            if g <= 0 and n == 0:
+                continue
+            parts.append(f"{_aud(g)} on {label} ({n} service{'s' if n != 1 else ''})")
+        if parts:
+            if len(parts) == 1:
+                streams_sentence = f"All of it went to {parts[0]}."
+            elif len(parts) == 2:
+                streams_sentence = f"The money was split between {parts[0]} and {parts[1]}."
+            else:
+                streams_sentence = "The money was spread across " + ", ".join(parts[:-1]) + f", and {parts[-1]}."
+        else:
+            streams_sentence = ""
+    else:
+        streams_sentence = ""
+    p2 = streams_sentence
+
+    # ── Paragraph 3, care management, rollover, budget position
+    p3_parts: List[str] = []
+    if care_mgmt > 0:
+        cm_pct_txt = f" (roughly {round(float(care_mgmt_pct), 1)}% of the services this period)" if care_mgmt_pct else ""
+        p3_parts.append(f"A care management fee of {_aud(care_mgmt)}{cm_pct_txt} was charged on top of the direct services.")
+    if rollover > 0:
+        p3_parts.append(f"{_aud(rollover)} of unused funding was rolled over from the previous quarter into this statement.")
+    if budget_remaining is not None:
+        try:
+            br = float(budget_remaining)
+            if br > 0:
+                p3_parts.append(f"After this period, {_aud(br)} of the quarterly budget is still available for the rest of the quarter.")
+            elif br == 0:
+                p3_parts.append("The quarterly budget has been fully used for this quarter.")
+            else:
+                p3_parts.append(f"Spending is over the quarterly budget by {_aud(abs(br))}, worth a conversation with the provider about the next quarter.")
+        except Exception:
+            pass
+    if lifetime_cap_remaining is not None:
+        try:
+            lcr = float(lifetime_cap_remaining)
+            if lcr > 0:
+                p3_parts.append(f"Lifetime contribution cap remaining: {_aud(lcr)} (contributed so far: {_aud(lifetime_to_date)}).")
+        except Exception:
+            pass
+    p3 = " ".join(p3_parts).strip()
+
+    # ── Paragraph 4, anomalies summary
+    counts = aud.get("anomaly_count") or {}
+    high = _int(counts.get("high"))
+    medium = _int(counts.get("medium"))
+    low = _int(counts.get("low"))
+    total_flags = high + medium + low
+    anoms = [a for a in (aud.get("anomalies") or []) if isinstance(a, dict)]
+    dollar_at_risk = 0.0
+    for a in anoms:
+        try:
+            dollar_at_risk += max(0.0, float(a.get("dollar_impact") or 0))
+        except Exception:
+            pass
+
+    if total_flags == 0:
+        p4 = "Wayly checked every line against the Support at Home rules and nothing looked out of order on this statement."
+    else:
+        pieces = []
+        if high:
+            pieces.append(f"{high} high-priority")
+        if medium:
+            pieces.append(f"{medium} medium-priority")
+        if low:
+            pieces.append(f"{low} low-priority or informational")
+        breakdown = ", ".join(pieces)
+        p4 = f"Wayly flagged {total_flags} thing{'s' if total_flags != 1 else ''} worth a closer look on this statement ({breakdown})."
+        if dollar_at_risk > 0:
+            p4 += f" Across those flags, roughly {_aud(dollar_at_risk)} is money that may be worth querying with {provider}."
+        # Name-check the top 2 flag headlines so the summary is concrete.
+        top = sorted(
+            [a for a in anoms if a.get("headline") or a.get("title")],
+            key=lambda a: {"high": 0, "medium": 1, "low": 2}.get((a.get("severity") or "").lower(), 3),
+        )[:2]
+        if top:
+            headlines = ", ".join(f"'{(a.get('headline') or a.get('title') or '').strip().rstrip('.').strip()}'" for a in top)
+            p4 += f" The main {'one' if len(top) == 1 else 'ones'} to review: {headlines}."
+
+    # ── Paragraph 5, what to do next
+    if total_flags == 0:
+        p5 = "There is nothing you need to action from this statement. Keep it filed for your records and check back next month."
+    else:
+        p5 = (
+            f"When you have a moment, work through the flagged items above with {provider}. "
+            f"Each flag includes what to check and suggested wording to raise it. "
+            f"This summary is generated by AI to help you understand your statement, so always cross-check important figures with your provider or My Aged Care before acting."
+        )
+
+    paragraphs = [p for p in (p1, p2, p3, p4, p5) if p]
+    return "\n\n".join(paragraphs)
+
+
+def _build_decode_payload(extracted: dict, audit: dict) -> dict:
+    """Shape the extract + audit pair into the UI response payload."""
+    period_label = extracted.get("statement_period") or audit.get("statement_summary", {}).get("period") or None
+
+    # DEC-1 v7.7 §Phase 2 #1 + AI-Tools transient fix.
+    # Normalise every line-item date to ISO (YYYY-MM-DD) BEFORE it reaches
+    # the frontend. Skip rows we cannot parse rather than silently returning
+    # the raw LLM string, those slip into the client PDF and render as
+    # MM/DD/YYYY when the LLM chose that format. Rows with unparseable
+    # dates are dropped from the transient payload; downstream persistence
+    # captures them as parsing_warnings.
+    if isinstance(extracted, dict):
+        cleaned_items: List[dict] = []
+        for li in extracted.get("line_items") or []:
+            if not isinstance(li, dict):
+                continue
+            iso = _parse_line_item_date(li.get("date"))
+            if iso is None:
+                # Preserve the row but blank the date so the frontend can show
+                # "-" rather than "1970-01-01" or the raw LLM string.
+                li = {**li, "date": ""}
+            else:
+                li = {**li, "date": iso}
+            cleaned_items.append(li)
+        extracted = {**extracted, "line_items": cleaned_items}
+
+    legacy_items: List[dict] = []
+    for li in extracted.get("line_items", []) or []:
+        if li.get("is_cancellation"):
+            continue
+        stream = li.get("stream") or "Everyday Living"
+        legacy_stream = {
+            "Clinical": "Clinical",
+            "Independence": "Independence",
+            "EverydayLiving": "Everyday Living",
+            "ATHM": "AT-HM",
+            "CareMgmt": "Care Management",
+        }.get(stream, stream)
+        try:
+            legacy_items.append({
+                "date": str(li.get("date") or ""),
+                "service_code": li.get("service_code"),
+                "service_name": li.get("service_description") or "Service",
+                "stream": legacy_stream,
+                "units": float(li.get("hours") or 0),
+                "unit_price": float(li.get("unit_rate") or 0),
+                "total": float(li.get("gross") or 0),
+                "contribution_paid": float(li.get("participant_contribution") or 0),
+                "government_paid": float(li.get("government_paid") or 0),
+                "confidence": 0.9,
+            })
+        except Exception as e:
+            logger.warning("public decode skipped line item: %s", e)
+
+    summary = _render_plain_english_summary(extracted, audit) if audit else None
+
+    # Strip underscore-prefixed internal fields (e.g. `_source_text`) from the
+    # payload returned to the client. They are only used by post-audit rules.
+    extracted_for_client = (
+        {k: v for k, v in extracted.items() if not (isinstance(k, str) and k.startswith("_"))}
+        if isinstance(extracted, dict) else extracted
+    )
+    return {
+        "summary": summary,
+        "period_label": period_label,
+        "line_items": legacy_items,
+        "anomalies": audit.get("anomalies", []),
+        "extracted": extracted_for_client,
+        "audit": audit,
+        "partial_result": bool(extracted.get("_extraction_error")) or bool(audit.get("_audit_error")),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Async job pattern for the public Statement Decoder.
+# The LLM pipeline can take 40-70s for long statements, exceeding the 60s
+# K8s ingress timeout. We return a job_id immediately and run the pipeline
+# as a background task; the frontend polls /api/public/decode-job/{job_id}.
+# ---------------------------------------------------------------------------
+
+DECODE_JOBS: Dict[str, dict] = {}  # job_id → {"status": "pending|running|done|error", "result": dict | None, "error": str | None, "created_at": float}
+_DECODE_JOB_TTL = 600  # 10 minutes
+
+# Authenticated dashboard upload jobs, same async pattern, scoped per-user.
+UPLOAD_JOBS: Dict[str, dict] = {}
+_UPLOAD_JOB_TTL = 1800  # 30 minutes
+
+_STREAM_DISPLAY_MAP = {
+    "Clinical": "Clinical",
+    "Independence": "Independence",
+    "EverydayLiving": "Everyday Living",
+    "Everyday Living": "Everyday Living",
+    # DEC-1 Phase 2 #7: preserve CareMgmt and ATHM as their own streams
+    # instead of folding them into Everyday Living. The frontend renders
+    # them with distinct badges via <DecoderResultView>.
+    "ATHM": "AT-HM",
+    "AT-HM": "AT-HM",
+    "CareMgmt": "Care Management",
+    "Care Management": "Care Management",
+}
+
+
+def _parse_line_item_date(raw) -> Optional[str]:
+    """DEC-1 Phase 2 #1: deterministic day-first (DD/MM/YYYY) → ISO parser.
+    Returns None when the value can't be parsed, so the caller can raise a
+    visible extraction error instead of silently emitting 1970-01-01."""
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if not s:
+        return None
+    # Already ISO (YYYY-MM-DD)?
+    m = re.match(r"^(\d{4})-(\d{2})-(\d{2})$", s[:10])
+    if m:
+        try:
+            from datetime import date as _date
+            _date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+        except Exception:
+            return None
+    # Day-first: DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, also 2-digit year
+    m = re.match(r"^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$", s)
+    if m:
+        try:
+            d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if y < 100:
+                y += 2000 if y < 70 else 1900
+            from datetime import date as _date
+            _date(y, mo, d)
+            return f"{y:04d}-{mo:02d}-{d:02d}"
+        except Exception:
+            return None
+    return None
+
+
+def _dec1_v5_backfill_short_form_date(raw, period_start_iso: Optional[str],
+                                       period_end_iso: Optional[str]) -> Optional[str]:
+    """DEC-1 v5 read-time helper: resolve DD/MM short-form dates against the
+    statement period. Returns the ISO date on success, or None if the raw
+    value doesn't match a short-form pattern (caller falls back to raw)."""
+    if raw is None or not period_start_iso:
+        return None
+    s = str(raw).strip()
+    if not s:
+        return None
+    # Match DD/MM (no year), DD-MM, DD.MM.
+    m = re.match(r"^(\d{1,2})[/\-.](\d{1,2})$", s)
+    if not m:
+        return None
+    try:
+        d, mo = int(m.group(1)), int(m.group(2))
+        # Prefer the year of period_start; if the month is beyond period_end
+        # month, fall back to period_end's year (handles quarterly straddles).
+        y_start = int(period_start_iso[:4])
+        y_end = int((period_end_iso or period_start_iso)[:4])
+        y = y_start
+        end_month = int((period_end_iso or period_start_iso)[5:7])
+        start_month = int(period_start_iso[5:7])
+        if mo < start_month and y_end > y_start:
+            # e.g. period 2025-11-15 to 2026-02-15, date 03/01 → 2026
+            y = y_end
+        elif mo > end_month and y_end == y_start:
+            # sanity: month falls outside period → likely a mis-extract
+            return None
+        from datetime import date as _date
+        _date(y, mo, d)
+        return f"{y:04d}-{mo:02d}-{d:02d}"
+    except Exception:
+        return None
+
+_SEVERITY_DISPLAY_MAP = {
+    "high": "alert",
+    "medium": "warning",
+    "low": "info",
+}
+
+
+def _new_job_id() -> str:
+    import uuid
+    return uuid.uuid4().hex[:20]
+
+
+def _prune_decode_jobs() -> None:
+    import time
+    cutoff = time.time() - _DECODE_JOB_TTL
+    stale = [jid for jid, job in DECODE_JOBS.items() if job.get("created_at", 0) < cutoff]
+    for jid in stale:
+        DECODE_JOBS.pop(jid, None)
+
+
+async def _run_decode_job(
+    job_id: str, text: str,
+    input_method: str = "text_paste",
+    document_pages: int = 1,
+    parsing_warnings: Optional[list] = None,
+    original_filename: Optional[str] = None,
+    persist_for_user_id: Optional[str] = None,
+) -> None:
+    """Background runner. Updates DECODE_JOBS[job_id] as it progresses.
+    Runs the wrapper (PII bypass + abuse classifier) FIRST so the POST handler
+    can return a job_id instantly without any LLM dependency on the synchronous
+    request path.
+
+    DEC-1 Phase 1: when `persist_for_user_id` is set, the decoded statement is
+    also written to db.statements against that user's household (same shape as
+    the /statements/upload pathway) so it appears in the Statements tab and
+    all subsequent renders / PDF downloads pull from the same canonical
+    record."""
+    from agents import extract_statement, audit_statement
+    from wrapper import run_wrapper
+    job = DECODE_JOBS.get(job_id)
+    if job is None:
+        return
+    try:
+        job["status"] = "running"
+        job["phase"] = "wrapper"
+        # PII redaction is OFF for the Statement Decoder, the visitor is uploading
+        # their own statement and needs to see their own name in the result.
+        # Abuse / distress / manipulation checks still run.
+        wrapped = await run_wrapper(text, pii_redact=False)
+        if wrapped.get("abuse_flag"):
+            # Surface the abuse response as the final result so the frontend can render it.
+            job["result"] = {
+                "abuse_flag": wrapped["abuse_flag"],
+                "abuse_response": wrapped["abuse_response"],
+            }
+            job["status"] = "done"
+            job["phase"] = "done"
+            return
+        decode_text = wrapped.get("redacted_input") or text
+        job["phase"] = "extract"
+        extracted = await extract_statement(decode_text, household_id="public")
+        job["phase"] = "audit"
+        audit = await audit_statement(extracted, household_id="public")
+        result = _build_decode_payload(extracted, audit)
+        result["input_method"] = input_method
+        result["document_pages"] = document_pages
+        result["original_filename"] = original_filename
+        if parsing_warnings:
+            result["parsing_warnings"] = list(parsing_warnings)
+        if wrapped.get("redaction_notice"):
+            result["redaction_notice"] = wrapped["redaction_notice"]
+            result["redaction_count"] = wrapped["redaction_count"]
+        job["result"] = result
+        job["status"] = "done"
+        job["phase"] = "done"
+        # DEC-1 Phase 1: opportunistically persist for signed-in users so the
+        # decoded statement appears in the Statements tab with the same
+        # summary, detail view, and PDF as an upload-pathway decode.
+        if persist_for_user_id:
+            try:
+                stmt_id = await _persist_decoded_statement_for_user(
+                    user_id=persist_for_user_id,
+                    extracted=extracted,
+                    audit=audit,
+                    input_method=input_method,
+                    original_filename=original_filename,
+                    document_pages=document_pages,
+                    parsing_warnings=list(parsing_warnings or []),
+                    raw_text=decode_text,
+                )
+                if stmt_id:
+                    result["persisted_statement_id"] = stmt_id
+            except Exception:
+                # Persistence is best-effort, never fail the decode over it.
+                logger.exception("failed to persist AI-Tools decode for user %s", persist_for_user_id)
+    except Exception as e:
+        logger.exception("decode job %s failed", job_id)
+        job["status"] = "error"
+        job["error"] = str(e)
+
+
+def _submit_decode_job(
+    text: str,
+    input_method: str = "text_paste",
+    document_pages: int = 1,
+    parsing_warnings: Optional[list] = None,
+    original_filename: Optional[str] = None,
+    persist_for_user_id: Optional[str] = None,
+) -> str:
+    """Submit a decode job. Returns the job_id. Runs the pipeline as a
+    fire-and-forget asyncio task."""
+    import time
+    _prune_decode_jobs()
+    job_id = _new_job_id()
+    DECODE_JOBS[job_id] = {
+        "status": "pending",
+        "phase": "pending",
+        "result": None,
+        "error": None,
+        "created_at": time.time(),
+    }
+    from lib.jobs import run_async as _run_async
+    _run_async(_run_decode_job(
+        job_id, text,
+        input_method=input_method,
+        document_pages=document_pages,
+        parsing_warnings=parsing_warnings,
+        original_filename=original_filename,
+        persist_for_user_id=persist_for_user_id,
+    ), name="public_decode_job", max_attempts=1)
+    return job_id
+
+
+async def _persist_decoded_statement_for_user(
+    *,
+    user_id: str,
+    extracted: dict,
+    audit: dict,
+    input_method: str,
+    original_filename: Optional[str],
+    document_pages: int,
+    parsing_warnings: List[str],
+    raw_text: str,
+) -> Optional[str]:
+    """DEC-1 Phase 1: shared canonical persistence.
+    Called by both the AI Tools pathway (when a signed-in user runs a
+    decode) and, indirectly, via the same shape, by the Statements
+    upload pathway. Writes a single Statement doc with the full rich
+    decoder payload so every render surface (Statements tab detail, PDF,
+    CSV) can hydrate from the same record."""
+    if not user_id:
+        return None
+    try:
+        h = await _require_household(user_id)
+    except Exception:
+        return None
+    household_id = h["id"]
+
+    # DEC-1 v7.7 addendum, dedup-bypass window.
+    # A super admin can open a time-limited window on a user's account for
+    # determinism / regression testing (see admin_phase_e.py section 17).
+    # When the window is active, we skip the fingerprint dedup check for
+    # that user only. Every use is logged so we can trace what got persisted.
+    dedup_bypass_active = False
+    try:
+        u = await db.users.find_one(
+            {"id": user_id},
+            {"_id": 0, "dedup_bypass_until": 1, "dedup_bypass_reason": 1},
+        )
+        until = (u or {}).get("dedup_bypass_until")
+        if until:
+            from datetime import datetime as _dt, timezone as _tz
+            try:
+                dedup_bypass_active = (
+                    _dt.fromisoformat(str(until).replace("Z", "+00:00")) > _dt.now(_tz.utc)
+                )
+            except Exception:
+                dedup_bypass_active = False
+    except Exception:
+        dedup_bypass_active = False
+
+    # Duplicate-guard against re-decoding the same content within a short window.
+    # Not a hard block, just avoids stacking a dozen "test decode" statements
+    # while the user experiments in AI Tools.
+    try:
+        from lib.statement_lifecycle import compute_extracted_fingerprint, find_active_for_period
+        period_label = (extracted or {}).get("statement_period") or None
+        fp_payload = {
+            "provider_name": (extracted or {}).get("provider_name") or (extracted or {}).get("provider"),
+            "statement_period": period_label,
+            "grand_total": (audit.get("statement_summary") or {}).get("grand_total"),
+        }
+        fp = compute_extracted_fingerprint(
+            fp_payload,
+            line_items=[{
+                "date": li.get("date"), "service_code": li.get("service_code"),
+                "units": li.get("hours") or li.get("units"),
+                "unit_price": li.get("unit_rate") or li.get("unit_price"),
+                "total": li.get("gross") or li.get("total"),
+            } for li in (extracted.get("line_items") or []) if isinstance(li, dict)],
+        )
+        existing = await db.statements.find_one(
+            {"household_id": household_id, "extracted_fingerprint": fp, "state": {"$ne": "deleted"}},
+            {"_id": 0, "id": 1},
+        )
+        if existing and not dedup_bypass_active:
+            return existing["id"]
+        if existing and dedup_bypass_active:
+            # Log every bypassed dedup so the audit trail is complete.
+            try:
+                await db.audit_log.insert_one({
+                    "actor": user_id,
+                    "action": "statement_dedup_bypassed",
+                    "target_id": existing["id"],
+                    "detail": {"fingerprint": fp, "household_id": household_id},
+                    "ts": now_iso(),
+                })
+            except Exception:
+                pass
+    except Exception:
+        fp = None
+
+    # Reuse the same line-item and anomaly mapping as _run_upload_job so both
+    # pathways produce identical records.
+    line_items: List[StatementLineItem] = []
+    date_parse_failures: List[str] = []
+    for li in (extracted.get("line_items") or []):
+        if not isinstance(li, dict):
+            continue
+        try:
+            stream_raw = (li.get("stream") or "Everyday Living").strip()
+            stream_disp = _STREAM_DISPLAY_MAP.get(stream_raw, "Everyday Living")
+            iso_date = _parse_line_item_date(li.get("date"))
+            if iso_date is None:
+                date_parse_failures.append(str(li.get("date") or "(missing)"))
+                continue
+            line_items.append(StatementLineItem(
+                date=iso_date,
+                service_code=li.get("service_code") or None,
+                service_name=str(li.get("service_description") or li.get("service_name") or "Service"),
+                stream=stream_disp,
+                units=float(li.get("hours") or li.get("units") or 0),
+                unit_price=float(li.get("unit_rate") or li.get("unit_price") or 0),
+                total=float(li.get("gross") or li.get("total") or 0),
+                contribution_paid=float(li.get("participant_contribution") or li.get("contribution_paid") or 0),
+                government_paid=float(li.get("government_paid") or 0),
+                confidence=0.9,
+            ))
+        except Exception as e:
+            logger.warning("Skipping bad line item in AI-Tools persist: %s, %s", li, e)
+
+    anomalies: List[Anomaly] = []
+    anomaly_dollar_total = 0.0
+    for a in (audit.get("anomalies") or []):
+        if not isinstance(a, dict):
+            continue
+        raw_sev = (a.get("severity") or "").lower() or None
+        sev = _SEVERITY_DISPLAY_MAP.get(raw_sev or "", "info")
+        try:
+            dollar_val = float(a.get("dollar_impact") or 0.0)
+        except Exception:
+            dollar_val = 0.0
+        evidence_raw = a.get("evidence") or []
+        evidence_list = [str(e) for e in evidence_raw if isinstance(evidence_raw, list) and e is not None]
+        anomalies.append(Anomaly(
+            severity=sev,
+            title=str(a.get("headline") or a.get("title") or "Item flagged"),
+            detail=str(a.get("detail") or ""),
+            suggested_action=a.get("suggested_action"),
+            rule=(a.get("rule") or None),
+            dollar_impact=dollar_val if dollar_val else None,
+            evidence=evidence_list,
+            raw_severity=raw_sev,
+        ))
+        anomaly_dollar_total += max(0.0, dollar_val)
+
+    informational_notes_raw = audit.get("informational_notes") or []
+    informational_notes_list = [n for n in informational_notes_raw if isinstance(n, dict)]
+
+    period_label = (extracted or {}).get("statement_period") or None
+    # DEC-1 v7.7 addendum: when the dedup-bypass window is active, decorate
+    # the period_label so both the app-level fingerprint check AND the
+    # `one_active_per_logical_statement` unique index treat each re-run as
+    # a distinct record. Without this, MongoDB rejects duplicates at
+    # insert-time even when we authorised the bypass.
+    if dedup_bypass_active and period_label:
+        from datetime import datetime as _dt2, timezone as _tz2
+        stamp = _dt2.now(_tz2.utc).strftime("%H%M%S")
+        period_label = f"{period_label} · bypass-{stamp}"
+    # DEC-1 v7.7 §Phase 1: same deterministic narrative as the upload pathway.
+    summary_text = _render_plain_english_summary(extracted, audit)
+    filename = original_filename or (f"AI Tools decode · {period_label}" if period_label else "AI Tools decode")
+
+    # DEC-1 v5 · Phase 1 (log-only telemetry + shape backfill). Safe by
+    # default (DEC1_V5_STRICT=false), behaviour on existing statements
+    # unchanged; new statements gain the v5 fields for downstream Phase 2.
+    extracted, audit = _apply_dec1_v5_phase1(extracted, audit, raw_text or "")
+
+    statement = Statement(
+        household_id=household_id,
+        filename=filename,
+        period_label=period_label,
+        line_items=line_items,
+        summary=summary_text or None,
+        anomalies=anomalies,
+        raw_text_preview=(raw_text or "")[:1500],
+        anomaly_dollar_impact_total=round(anomaly_dollar_total, 2),
+        informational_notes=informational_notes_list,
+        extracted_json=({k: v for k, v in extracted.items() if not (isinstance(k, str) and k.startswith("_"))} if isinstance(extracted, dict) else None),
+        audit_json=audit if isinstance(audit, dict) else None,
+        input_method=input_method,
+        document_pages=document_pages,
+        parsing_warnings=(
+            [f"Could not parse date on {len(date_parse_failures)} line item(s): {', '.join(date_parse_failures[:3])}"
+             + ("…" if len(date_parse_failures) > 3 else "")]
+            if date_parse_failures else list(parsing_warnings or [])
+        ),
+        origin_route="ai_tools_decoder",
+    )
+    doc = statement.model_dump()
+    # Match _run_upload_job persistence shape.
+    doc["state"] = "active"
+    doc["extracted_fingerprint"] = fp
+    doc["has_original_file"] = False
+    try:
+        await db.statements.insert_one(doc)
+    except Exception:
+        logger.exception("AI-Tools decode persistence insert failed")
+        return None
+    return statement.id
+
+
+def _prune_upload_jobs() -> None:
+    import time
+    cutoff = time.time() - _UPLOAD_JOB_TTL
+    stale = [jid for jid, job in UPLOAD_JOBS.items() if job.get("created_at", 0) < cutoff]
+    for jid in stale:
+        UPLOAD_JOBS.pop(jid, None)
+
+
+async def _run_upload_job(
+    job_id: str,
+    text: str,
+    filename: str,
+    household_id: str,
+    user_id: str,
+    user_name: str,
+    file_b64: Optional[str] = None,
+    file_mimetype: Optional[str] = None,
+    file_size: Optional[int] = None,
+    participant_id: Optional[str] = None,
+    file_sha256: Optional[str] = None,
+    upload_idempotency_key: Optional[str] = None,
+) -> None:
+    """Background runner for the dashboard statement upload, uses the same
+    chunked-parallel extraction + audit pipeline as the public Statement
+    Decoder, then persists a Statement document for the household."""
+    from agents import extract_statement, audit_statement
+    job = UPLOAD_JOBS.get(job_id)
+    if job is None:
+        return
+    try:
+        job["status"] = "running"
+        job["phase"] = "extract"
+        extracted = await extract_statement(
+            text, household_id=household_id,
+            user_id=user_id, participant_id=participant_id,
+        )
+        job["phase"] = "audit"
+        audit = await audit_statement(
+            extracted, household_id=household_id,
+            user_id=user_id, participant_id=participant_id,
+        )
+        # Phase 5 monitoring: check if this user has crossed the $20/60min decoder spend.
+        try:
+            await _alerter.check_decoder_cost(db, user_id=user_id)
+        except Exception:
+            pass
+        # Phase 5 monitoring: emit a structured DECODER_RUN summary log line.
+        try:
+            _obs.log_decoder_run(
+                user_id=user_id,
+                household_id=household_id,
+                participant_id=participant_id,
+                anomaly_count=int((audit.get("anomaly_count") or {}).get("high", 0)
+                                  + (audit.get("anomaly_count") or {}).get("medium", 0)
+                                  + (audit.get("anomaly_count") or {}).get("low", 0)),
+                input_tokens=len(text) // 4,
+                output_tokens=len(json.dumps(audit, default=str)) // 4,
+                cost_aud=0.0,  # detailed per-phase costs are in db.llm_calls
+                model="claude-haiku-4-5",
+            )
+        except Exception:
+            pass
+
+        # Map chunked-extraction line items into the dashboard's StatementLineItem shape.
+        line_items: List[StatementLineItem] = []
+        date_parse_failures: List[str] = []
+        for li in (extracted.get("line_items") or []):
+            if not isinstance(li, dict):
+                continue
+            try:
+                stream_raw = (li.get("stream") or "Everyday Living").strip()
+                stream_disp = _STREAM_DISPLAY_MAP.get(stream_raw, "Everyday Living")
+                # DEC-1 Phase 2 #1: day-first parse, no silent 1970-01-01 fallback.
+                iso_date = _parse_line_item_date(li.get("date"))
+                if iso_date is None:
+                    date_parse_failures.append(str(li.get("date") or "(missing)"))
+                    # Skip lines with unparseable dates so we never emit epoch;
+                    # they surface as a parsing warning on the statement.
+                    continue
+                line_items.append(StatementLineItem(
+                    date=iso_date,
+                    service_code=li.get("service_code") or None,
+                    service_name=str(li.get("service_description") or li.get("service_name") or "Service"),
+                    stream=stream_disp,
+                    units=float(li.get("hours") or li.get("units") or 0),
+                    unit_price=float(li.get("unit_rate") or li.get("unit_price") or 0),
+                    total=float(li.get("gross") or li.get("total") or 0),
+                    contribution_paid=float(li.get("participant_contribution") or li.get("contribution_paid") or 0),
+                    government_paid=float(li.get("government_paid") or 0),
+                    confidence=0.9,
+                ))
+            except Exception as e:
+                logger.warning("Skipping bad line item: %s, %s", li, e)
+
+        # Map audit anomalies to the existing Anomaly model. The decoder
+        # carries richer metadata (rule key, dollar_impact, evidence array,
+        # raw severity); persist all of it so historical reports can answer
+        # "how much in flagged overcharges this year" and "which rules fired
+        # in August". Old documents loaded back through this model simply
+        # have rule=None / dollar_impact=None / evidence=[] (extra="ignore"
+        # + defaults make that a no-op).
+        anomalies: List[Anomaly] = []
+        anomaly_dollar_total = 0.0
+        for a in (audit.get("anomalies") or []):
+            if not isinstance(a, dict):
+                continue
+            raw_sev = (a.get("severity") or "").lower() or None
+            sev = _SEVERITY_DISPLAY_MAP.get(raw_sev or "", "info")
+            try:
+                dollar_val = float(a.get("dollar_impact") or 0.0)
+            except Exception:
+                dollar_val = 0.0
+            evidence_raw = a.get("evidence") or []
+            evidence_list = [str(e) for e in evidence_raw if isinstance(evidence_raw, list) and e is not None]
+            anomalies.append(Anomaly(
+                severity=sev,
+                title=str(a.get("headline") or a.get("title") or "Item flagged"),
+                detail=str(a.get("detail") or ""),
+                suggested_action=a.get("suggested_action"),
+                rule=(a.get("rule") or None),
+                dollar_impact=dollar_val if dollar_val else None,
+                evidence=evidence_list,
+                raw_severity=raw_sev,
+            ))
+            anomaly_dollar_total += max(0.0, dollar_val)
+
+        informational_notes_raw = audit.get("informational_notes") or []
+        informational_notes_list = [n for n in informational_notes_raw if isinstance(n, dict)]
+
+        # DEC-1 Phase 1: swap the thin period-only summary for the rich
+        # deterministic narrative so every statement gets a proper AI-style
+        # summary, identical across pathways and useful without opening the
+        # rich decoder view.
+        summary_text = _render_plain_english_summary(extracted, audit)
+        period_label = extracted.get("statement_period") or None
+
+        # DEC-1 v5 · Phase 1 (log-only telemetry + shape backfill). Safe by
+        # default (DEC1_V5_STRICT=false).
+        extracted, audit = _apply_dec1_v5_phase1(extracted, audit, text or "")
+
+        statement = Statement(
+            household_id=household_id,
+            filename=filename,
+            period_label=period_label,
+            line_items=line_items,
+            summary=summary_text or None,
+            anomalies=anomalies,
+            raw_text_preview=text[:1500],
+            file_mimetype=file_mimetype,
+            file_size_bytes=file_size,
+            file_b64=file_b64,
+            anomaly_dollar_impact_total=round(anomaly_dollar_total, 2),
+            informational_notes=informational_notes_list,
+            # DEC-1 Phase 1: preserve the full decoder payload so the
+            # Statements tab renders the identical rich view + PDF as the
+            # AI Tools pathway. `extra="ignore"` keeps this safe for old
+            # documents that predate these fields. Underscore-prefixed keys
+            # (e.g. `_source_text` used by post-audit rules) are stripped
+            # before persistence so they never land in Mongo.
+            extracted_json=({k: v for k, v in extracted.items() if not (isinstance(k, str) and k.startswith("_"))} if isinstance(extracted, dict) else None),
+            audit_json=audit if isinstance(audit, dict) else None,
+            input_method="upload_dashboard",
+            document_pages=None,
+            parsing_warnings=(
+                [f"Could not parse date on {len(date_parse_failures)} line item(s): {', '.join(date_parse_failures[:3])}"
+                 + ("…" if len(date_parse_failures) > 3 else "")]
+                if date_parse_failures else []
+            ),
+            origin_route="statements_upload",
+        )
+
+        # ---- Phase 1: logical-duplicate check (semantic fingerprint) ----
+        # Compute fingerprint from the parsed content. If another ACTIVE
+        # statement with the same (household, participant, period_label)
+        # exists, react per the brief:
+        #   * same fingerprint  → DUPLICATE_LOGICAL_SAME_CONTENT, reject
+        #   * differs           → supersede the prior active version
+        from lib.statement_lifecycle import (
+            compute_extracted_fingerprint, find_active_for_period, write_audit,
+            STATE_ACTIVE, STATE_SUPERSEDED, PARSER_VERSION,
+            EVT_UPLOADED, EVT_ACCEPTED_ACTIVE, EVT_SUPERSEDED, EVT_DUPLICATE_REJECTED,
+            DUP_LOGICAL_SAME, DUP_LOGICAL_DIFF, _now_iso,
+        )
+        fp_payload = {
+            "provider_name": (extracted or {}).get("provider_name") or (extracted or {}).get("provider"),
+            "statement_period": period_label,
+            "grand_total": (audit.get("statement_summary") or {}).get("grand_total") or sum((li.total for li in line_items), 0.0),
+        }
+        extracted_fp = compute_extracted_fingerprint(
+            fp_payload,
+            line_items=[{
+                "date": li.date, "service_code": li.service_code,
+                "units": li.units, "unit_price": li.unit_price, "total": li.total,
+            } for li in line_items],
+        )
+
+        prior_active = await find_active_for_period(
+            db, household_id=household_id,
+            participant_id=participant_id,
+            period_label=period_label,
+        )
+        duplicate_kind: Optional[str] = None
+        supersedes_id: Optional[str] = None
+        if prior_active:
+            if prior_active.get("extracted_fingerprint") == extracted_fp:
+                # Semantic duplicate, reject, don't insert.
+                duplicate_kind = DUP_LOGICAL_SAME
+                try:
+                    await write_audit(
+                        db,
+                        statement_id=prior_active["id"],
+                        version_id=prior_active["id"],
+                        event_type=EVT_DUPLICATE_REJECTED,
+                        actor_user_id=user_id,
+                        actor_kind="user",
+                        metadata={
+                            "reason": "logical_same_content",
+                            "attempted_filename": filename,
+                            "attempted_fingerprint": extracted_fp,
+                        },
+                    )
+                except Exception:
+                    pass
+                job["status"] = "duplicate"
+                job["phase"] = "duplicate_logical_same"
+                job["duplicate_kind"] = DUP_LOGICAL_SAME
+                job["existing_statement_id"] = prior_active["id"]
+                return
+            else:
+                duplicate_kind = DUP_LOGICAL_DIFF
+                supersedes_id = prior_active["id"]
+
+        doc = {
+            **statement.model_dump(),
+            "participant_id": participant_id,
+            # F-streams-source: persist the per-stream quarterly allocation
+            # printed in the statement header (when present).
+            "header_stream_budgets": (extracted or {}).get("header_stream_budgets") or {},
+            # ---- Phase 1 lifecycle fields ----
+            "file_sha256": file_sha256,
+            "extracted_fingerprint": extracted_fp,
+            "parser_version": PARSER_VERSION,
+            "parsing_confidence": 0.9,
+            "state": STATE_ACTIVE,
+            "superseded_by": None,
+            "superseded_at": None,
+            "archived_at": None,
+            "deleted_at": None,
+            "row_version": 1,
+            "upload_idempotency_key": upload_idempotency_key,
+            "supersedes_version_id": supersedes_id,
+        }
+
+        # Insert + supersede (best-effort atomic, MongoDB stand-alone has no
+        # multi-doc transactions; we order operations so the new active
+        # exists before the old one is demoted, then the partial-unique
+        # index would block any third party from racing in).
+        if supersedes_id:
+            # Demote the prior active first to free the partial unique slot,
+            # then insert the new active. Audit both events.
+            await db.statements.update_one(
+                {"id": supersedes_id, "state": STATE_ACTIVE},
+                {"$set": {
+                    "state": STATE_SUPERSEDED,
+                    "superseded_by": doc["id"],
+                    "superseded_at": _now_iso(),
+                }, "$inc": {"row_version": 1}},
+            )
+            await db.statements.insert_one(doc)
+            try:
+                await write_audit(
+                    db, statement_id=supersedes_id, version_id=supersedes_id,
+                    event_type=EVT_SUPERSEDED, actor_user_id=user_id, actor_kind="user",
+                    prior_state=STATE_ACTIVE, new_state=STATE_SUPERSEDED,
+                    metadata={"superseded_by": doc["id"], "reason": "logical_different_content"},
+                )
+                await write_audit(
+                    db, statement_id=doc["id"], version_id=doc["id"],
+                    event_type=EVT_UPLOADED, actor_user_id=user_id, actor_kind="user",
+                    new_state=STATE_ACTIVE,
+                    metadata={"filename": filename, "supersedes": supersedes_id, "fingerprint": extracted_fp},
+                )
+                await write_audit(
+                    db, statement_id=doc["id"], version_id=doc["id"],
+                    event_type=EVT_ACCEPTED_ACTIVE, actor_user_id=user_id, actor_kind="system",
+                    prior_state=None, new_state=STATE_ACTIVE,
+                )
+            except Exception:
+                pass
+        else:
+            await db.statements.insert_one(doc)
+            try:
+                await write_audit(
+                    db, statement_id=doc["id"], version_id=doc["id"],
+                    event_type=EVT_UPLOADED, actor_user_id=user_id, actor_kind="user",
+                    new_state=STATE_ACTIVE,
+                    metadata={"filename": filename, "fingerprint": extracted_fp},
+                )
+                await write_audit(
+                    db, statement_id=doc["id"], version_id=doc["id"],
+                    event_type=EVT_ACCEPTED_ACTIVE, actor_user_id=user_id, actor_kind="system",
+                    new_state=STATE_ACTIVE,
+                )
+            except Exception:
+                pass
+
+        if duplicate_kind:
+            job["duplicate_kind"] = duplicate_kind
+            job["supersedes_version_id"] = supersedes_id
+        await _audit(
+            household_id, user_id, user_name, "STATEMENT_UPLOADED",
+            f"Uploaded {filename}, {len(line_items)} line items, {len(anomalies)} alerts",
+        )
+        if anomalies:
+            try:
+                await create_notification(
+                    user_id,
+                    "anomaly_alerts",
+                    f"{len(anomalies)} alert{'s' if len(anomalies) != 1 else ''} in {filename}",
+                    f"Wayly flagged {len(anomalies)} thing{'s' if len(anomalies) != 1 else ''} worth a look in the latest statement.",
+                    f"/app/statements/{statement.id}",
+                )
+            except Exception:
+                pass
+        # Phase 6, emit participant_events so the timeline captures the
+        # full journey. Always log statement_received; map decoder anomalies
+        # to typed events (events.py). Parse-only / data-quality rules
+        # (RULE_14, RULE_15, RULE_20, RULE_17/18 informational) are skipped.
+        if participant_id:
+            try:
+                from scenario_engine.events import (
+                    capture_event as _se_capture, EVENT_TYPES as _SE_EVENT_TYPES,
+                )
+                _ANOM_TO_EVENT = {
+                    # Care management cap breaches
+                    "RULE_1": "care_management_over_cap",
+                    "RULE_1B": "care_management_over_cap",
+                    "RULE_1_CARE_MGMT_CAP": "care_management_over_cap",
+                    "RULE_1B_CARE_MGMT_MONTHLY": "care_management_over_cap",
+                    # Stream / classification misallocation
+                    "RULE_4": "wrong_stream_billing",
+                    "RULE_9_WRONG_STREAM": "wrong_stream_billing",
+                    "RULE_9_CLINICAL_CONTRIB": "wrong_stream_billing",
+                    "RULE_9_CONTRIBUTION_MISMATCH": "wrong_stream_billing",
+                    "RULE_11": "wrong_stream_billing",
+                    "RULE_11_BROKERED_PREMIUM": "wrong_stream_billing",
+                    "RULE_16_STREAM_DISCREPANCY": "wrong_stream_billing",
+                    # Means / pension disclosure
+                    "RULE_9_PENSION_STATUS_UNKNOWN": "means_not_disclosed",
+                    # Backdated adjustments
+                    "RULE_10": "backdated_adjustment",
+                    "RULE_10_PREVIOUS_PERIOD_ADJUSTMENTS": "backdated_adjustment",
+                    # AT-HM
+                    "RULE_12_AT_HM_ACTIVE": "at_hm_expiring",
+                    "RULE_19_AT_HM_LARGE_CLAIM": "at_hm_purchased",
+                    # Quarter-end underspend
+                    "RULE_13_QUARTERLY_UNDERSPEND": "quarter_end_underspend_risk",
+                    "RULE_13_MID_QUARTER_UPDATE": "quarter_end_underspend_risk",
+                }
+                u = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+                actor_name = (u or {}).get("name")
+                today_iso = datetime.now(timezone.utc).date().isoformat()
+                # Always log one statement_received event per upload, the
+                # backbone of the timeline regardless of anomalies.
+                if participant_id:
+                    try:
+                        await _se_capture(
+                            db, participant_id=participant_id, account_id=None,
+                            event_type="statement_received", trigger_source="statement",
+                            effective_date=today_iso,
+                            note=f"{filename} · {len(line_items)} line items, {len(anomalies)} alerts",
+                            payload={"line_item_count": len(line_items),
+                                     "anomaly_count": len(anomalies)},
+                            source={"kind": "statement", "statement_id": statement.id,
+                                    "filename": filename},
+                            actor_id=user_id, actor_name=actor_name,
+                        )
+                    except Exception as _e:
+                        logger.debug("statement_received event skipped: %s", _e)
+                seen_event_keys: set = set()
+                for a in anomalies:
+                    rk = (a if isinstance(a, str) else a.get("rule_key") or a.get("rule") or "")
+                    et = _ANOM_TO_EVENT.get(rk)
+                    if not et or not participant_id:
+                        continue
+                    if et not in _SE_EVENT_TYPES:
+                        continue
+                    # Dedupe within this single upload (one event per type
+                    # even if multiple anomalies map to it).
+                    dedupe = (et, statement.id)
+                    if dedupe in seen_event_keys:
+                        continue
+                    seen_event_keys.add(dedupe)
+                    try:
+                        await _se_capture(
+                            db, participant_id=participant_id, account_id=None,
+                            event_type=et, trigger_source="statement",
+                            effective_date=today_iso,
+                            note=f"From {filename}",
+                            payload={"rule_key": rk},
+                            source={"kind": "statement_anomaly",
+                                    "statement_id": statement.id,
+                                    "rule_key": rk,
+                                    "filename": filename},
+                            actor_id=user_id, actor_name=actor_name,
+                        )
+                    except Exception as _e:
+                        logger.debug("scenario event emission skipped: %s", _e)
+            except Exception:
+                pass
+
+        job["statement_id"] = statement.id
+        job["status"] = "done"
+        job["phase"] = "done"
+        # Notify the caregiver their statement is decoded (they're often offline
+        # while it processes). Non-blocking: push failure must never fail upload.
+        try:
+            from push_notifications import send_push
+            _n_flags = len(anomalies or [])
+            if _n_flags > 0:
+                _title = "Statement ready — items to check"
+                _msg = f"{filename}: {_n_flags} flagged charge{'s' if _n_flags != 1 else ''} to review."
+            else:
+                _title = "Statement ready"
+                _msg = f"{filename} has been decoded. No issues found."
+            await send_push(
+                recipients=[user_id],
+                data={"title": _title, "message": _msg, "action_url": f"/statement/{statement.id}"},
+                idempotency_key=f"stmt-done-{statement.id}",
+            )
+        except Exception as _pe:
+            logger.warning("push (statement done) failed, non-blocking: %s", _pe)
+    except Exception as e:
+        logger.exception("upload job %s failed", job_id)
+        job["status"] = "error"
+        job["error"] = str(e)
+
+
+def _submit_upload_job(
+    text: str, filename: str, household_id: str, user_id: str, user_name: str,
+    file_b64: Optional[str] = None, file_mimetype: Optional[str] = None,
+    file_size: Optional[int] = None,
+    participant_id: Optional[str] = None,
+    file_sha256: Optional[str] = None,
+    upload_idempotency_key: Optional[str] = None,
+) -> str:
+    import time
+    _prune_upload_jobs()
+    job_id = _new_job_id()
+    UPLOAD_JOBS[job_id] = {
+        "status": "pending",
+        "phase": "pending",
+        "statement_id": None,
+        "error": None,
+        "user_id": user_id,
+        "created_at": time.time(),
+    }
+    from lib.jobs import run_async as _run_async
+    _run_async(
+        _run_upload_job(
+            job_id, text, filename, household_id, user_id, user_name,
+            file_b64=file_b64, file_mimetype=file_mimetype, file_size=file_size,
+            participant_id=participant_id,
+            file_sha256=file_sha256,
+            upload_idempotency_key=upload_idempotency_key,
+        ),
+        name="statement_upload_job",
+        max_attempts=1,
+    )
+    return job_id
+
+
+@api.get("/public/decode-job/{job_id}")
+async def public_decode_job_status(job_id: str):
+    job = DECODE_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+    out = {"status": job["status"], "phase": job.get("phase", job["status"])}
+    if job["status"] == "done":
+        out["result"] = job["result"]
+    elif job["status"] == "error":
+        out["error"] = job["error"] or "decode failed"
+    return out
+
+
+@api.post("/public/decode-statement-text")
+async def public_decode_text(
+    body: PublicTextBody, request: Request, response: Response,
+    caller_user_id: Optional[str] = Depends(get_current_user_id_optional),
+):
+    await _enforce_statement_decoder_limit(request, response)
+    job_id = _submit_decode_job(
+        body.text, input_method="text_paste", document_pages=1, parsing_warnings=[],
+        persist_for_user_id=caller_user_id,
+    )
+    return {"job_id": job_id, "status": "pending"}
+
+
+@api.post("/public/decode-statement")
+async def public_decode_file(
+    request: Request, response: Response, file: UploadFile = File(...),
+    caller_user_id: Optional[str] = Depends(get_current_user_id_optional),
+):
+    await _enforce_statement_decoder_limit(request, response)
+    # Phase 4: signature + virus scan + UUID rename before we touch it.
+    from upload_security import secure_read_upload, PROFILE_STATEMENT, sanitize_for_prompt
+    raw, safe_name, _kind = await secure_read_upload(
+        file, allowed_profiles=PROFILE_STATEMENT,
+    )
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty file")
+    from document_extract import (
+        extract_document, UnsupportedFormatError, FileTooLargeError,
+        CorruptFileError, PasswordProtectedError,
+    )
+    try:
+        text, input_method, page_count, parse_warnings = await extract_document(safe_name, raw)
+    except UnsupportedFormatError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileTooLargeError as e:
+        mb = e.limit_bytes // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"This {e.ext} file exceeds the {mb} MB limit. Try compressing it or splitting into smaller parts.")
+    except PasswordProtectedError:
+        raise HTTPException(status_code=400, detail="This PDF is password-protected. Open it in your PDF viewer, remove the password (File → Properties → Security), save a new copy, and upload the new file.")
+    except CorruptFileError as e:
+        raise HTTPException(status_code=400, detail=f"This file appears to be damaged or unreadable: {e}")
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract text from file. Try a clearer photo or paste the text directly.")
+    # Phase 4: prompt-injection sanitisation.
+    text = sanitize_for_prompt(text)
+    job_id = _submit_decode_job(
+        text, input_method=input_method, document_pages=page_count,
+        parsing_warnings=parse_warnings, original_filename=safe_name,
+        persist_for_user_id=caller_user_id,
+    )
+    return {"job_id": job_id, "status": "pending"}
+
+
+@api.post("/public/budget-calc")
+async def public_budget_calc(body: PublicBudgetBody, request: Request, response: Response):
+    """Compute the Support at Home quarterly + annual budget.
+
+    Aged Care Rules 2025 references:
+      - Ongoing classifications: section 194-5(2) + 238-5 (daily base
+        individual + base provider amounts).
+      - Transitional HCP: section 194-5(3). When ``is_grandfathered`` is True
+        and ``classification`` is in 1-4 (or ``transitional_classification``
+        is supplied), the route routes to the transitional figures instead
+        of the ongoing ones. Transitional levels 5+ do not exist ,
+        an error is returned.
+      - Primary supplements: sections 196-15 to 196-35 (and 205-15 for the
+        provider care-management supplement). The optional
+        ``applicable_supplements`` list adds these on top of the base
+        annual figure.
+    """
+    await _require_paid_plan(request, response, "Budget Calculator")
+
+    # BUD-1 v1 (Feb 2026, Phase 1 Rev A):
+    # Grandfathered only affects (a) the lifetime cap value and (b) which
+    # supplements are eligible. It DOES NOT switch classification daily rates
+    # to transitional HCP figures. The prior branch that routed classes 1-4
+    # into transitional annuals was removed after Antony's Rev A ruling ,
+    # matches the "no worse off" principle interpretation and unblocks
+    # class 5-8 grandfathered participants who previously got a 400 error.
+    trans_level: int | None = None
+    if body.transitional_classification is not None:
+        # Explicit transitional_classification is still respected for callers
+        # who really want the transitional table (e.g. programmatic access).
+        # UI toggling `is_grandfathered` alone no longer routes here.
+        trans_level = body.transitional_classification
+
+    if trans_level is not None:
+        annual = budget_lib.classification_annual_transitional(trans_level)
+        quarterly_usable = budget_lib.quarterly_budget_transitional(trans_level)
+        classification_label = f"Transitional HCP Level {trans_level}"
+        classification_for_display = body.classification
+    else:
+        classification = body.classification
+        annual = budget_lib.CLASSIFICATIONS[classification]["annual"]
+        quarterly_usable = budget_lib.quarterly_budget(classification)
+        classification_label = budget_lib.CLASSIFICATIONS[classification]["label"]
+        classification_for_display = classification
+
+    quarterly_gross = round(annual / 4.0, 2)
+    care_management_quarterly = round(quarterly_gross - quarterly_usable, 2)
+    allocations = budget_lib.stream_allocations(
+        trans_level if trans_level is not None else body.classification
+    ) if trans_level is None else {s: round(quarterly_usable / 3, 2) for s in budget_lib.STREAMS}
+    # BUD-1 v1 · rollover_cap now uses the current calendar quarter's days
+    # (per Rev A rollover formula alignment).
+    if trans_level is not None:
+        # HCP transitional also uses days_in_quarter (Rev A section 2.3).
+        q_start, q_end, _ = budget_lib.get_quarter_window()
+        days_in_q = (q_end - q_start).days + 1
+        daily = float(_pr.get_value(
+            f"transitional_hcp.{trans_level}.daily_base_individual", None, default=0.0,
+        ) or 0.0)
+        rollover = round(max(1000.0, daily * days_in_q * 0.10), 2)
+    else:
+        rollover = budget_lib.rollover_cap(body.classification)
+    cap_amount = budget_lib.lifetime_cap(body.is_grandfathered)
+    # BUD-1 v1 · surface BOTH caps so the UI can render an informative label
+    # ("your cap is $86,185.23 vs the standard $137,917.01") without another
+    # round-trip.
+    cap_grandfathered = budget_lib.lifetime_cap(True)
+    cap_standard = budget_lib.lifetime_cap(False)
+    contributions = max(0.0, body.current_lifetime_balance)
+    pct = (contributions / cap_amount * 100) if cap_amount else 0.0
+    remaining_lifetime = max(0.0, cap_amount - contributions)
+    years_to_cap = None
+    if body.expected_annual_burn and body.expected_annual_burn > 0:
+        years_to_cap = round(remaining_lifetime / body.expected_annual_burn, 2)
+
+    # ---- Primary supplements (Prompt N change 1) ----
+    annual_supplements_total = 0.0
+    applied_supplements: list[dict] = []
+    supplement_warnings: list[str] = []
+    daily_base_individual: float | None = None
+    if trans_level is not None:
+        daily_base_individual = float(_pr.get_value(
+            f"transitional_hcp.{trans_level}.daily_base_individual", None, default=0.0,
+        ) or 0.0)
+    else:
+        daily_base_individual = float(_pr.get_value(
+            f"classification.{body.classification}.daily_base_individual", None, default=0.0,
+        ) or 0.0)
+
+    for name in (body.applicable_supplements or []):
+        sup = _pr.get_supplement(name)
+        if sup is None:
+            supplement_warnings.append(
+                f"Supplement '{name}' is not recognised; ignored."
+            )
+            continue
+        if sup.get("applies_to_provider"):
+            supplement_warnings.append(
+                f"Supplement '{name}' is provider-based and does not appear on the participant's budget; ignored."
+            )
+            continue
+        if sup.get("grandfathered_only") and not body.is_grandfathered:
+            supplement_warnings.append(
+                f"Supplement '{name}' is only available to grandfathered HCP recipients; ignored."
+            )
+            continue
+        annual_aud = 0.0
+        if "daily_aud" in sup:
+            annual_aud = round(float(sup["daily_aud"]) * 365, 2)
+        elif "pct_of_base_individual" in sup and daily_base_individual > 0:
+            annual_aud = round(
+                daily_base_individual * (float(sup["pct_of_base_individual"]) / 100.0) * 365, 2
+            )
+        annual_supplements_total += annual_aud
+        applied_supplements.append({
+            "name": name,
+            "daily_aud": sup.get("daily_aud"),
+            "pct_of_base_individual": sup.get("pct_of_base_individual"),
+            "annual_aud": annual_aud,
+        })
+
+    annual_supplements_total = round(annual_supplements_total, 2)
+    annual_total_with_supplements = round(annual + annual_supplements_total, 2)
+
+    return {
+        "classification": classification_for_display,
+        "classification_label": classification_label,
+        "annual_total": annual,
+        # F9: GROSS quarterly is what users see on their statement, it leads.
+        "quarterly_gross": quarterly_gross,
+        "care_management_quarterly": care_management_quarterly,
+        "quarterly_usable": quarterly_usable,
+        "rollover_cap": rollover,
+        "streams": [
+            {"stream": s, "allocated": allocations[s], "indicative": True}
+            for s in budget_lib.STREAMS
+        ],
+        "allocation_source": "program_average",
+        "streams_note": (
+            "Indicative split only. Your participant's actual stream allocation is set in their "
+            "individualised budget and care plan, and may differ substantially. Check the quarterly "
+            "budget summary on your provider statement for the real split."
+        ),
+        "lifetime_cap": cap_amount,
+        # BUD-1 v1 F4/F5: surface both cap values + remaining balance so the UI
+        # can render an informative "Your cap is $X (grandfathered) vs the
+        # standard $Y" label without another API call.
+        "lifetime_cap_grandfathered": cap_grandfathered,
+        "lifetime_cap_standard": cap_standard,
+        "lifetime_remaining": round(remaining_lifetime, 2),
+        "lifetime_contributions": contributions,
+        "lifetime_pct": round(pct, 2),
+        "years_to_cap": years_to_cap,
+        "is_grandfathered": body.is_grandfathered,
+        "is_transitional_hcp": trans_level is not None,
+        # BUD-1 v1 T15: echo the caller's expected contribution so the UI can
+        # display it as "Estimated annual contribution: $X" without recomputing.
+        "expected_annual_contribution": (
+            round(float(body.expected_annual_burn), 2) if body.expected_annual_burn else None
+        ),
+        # Prompt N, supplements bundle.
+        "annual_supplements_total": annual_supplements_total,
+        "annual_total_with_supplements": annual_total_with_supplements,
+        "applied_supplements": applied_supplements,
+        "supplement_warnings": supplement_warnings,
+    }
+
+
+@api.post("/public/price-check")
+async def public_price_check(body: PublicPriceBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Provider Price Checker")
+    bench = PRICE_BENCHMARKS.get(body.service, {"median": body.rate})
+    median = bench["median"]
+    lower = bench.get("lower")
+    upper = bench.get("upper")
+    unit = bench.get("unit", "hour")
+    stream = bench.get("stream")
+    source = bench.get("source")
+    effective_from = bench.get("effective_from")
+    delta_pct = ((body.rate - median) / median * 100) if median else 0.0
+    unit_word = {"hour": "per hour", "trip": "per trip", "meal": "per meal"}.get(unit, "per unit")
+
+    # When the DoH PDF gives us an indicative range, use it. Otherwise fall
+    # back to the heuristic +/- 10/15% band.
+    if lower is not None and upper is not None:
+        if body.rate > upper:
+            verdict, label = "high", "Above the indicative range"
+            assessment = (
+                f"At ${body.rate:.2f} {unit_word}, this is {delta_pct:.0f}% above the indicative "
+                f"median (${median:.2f}) and outside the published indicative range "
+                f"of ${lower:.2f}-${upper:.2f} for {body.service.lower()}. Worth asking the "
+                "provider for a written explanation of how they set the rate."
+            )
+            suggested = "Email the provider asking for a written explanation of the rate."
+        elif body.rate < lower:
+            verdict, label = "low", "Below the indicative range"
+            assessment = (
+                f"At ${body.rate:.2f} {unit_word}, this is below the indicative range of "
+                f"${lower:.2f}-${upper:.2f} for {body.service.lower()}. That is often a good "
+                "outcome, confirm the service quality is what you would expect."
+            )
+            suggested = None
+        else:
+            verdict, label = "fair", "Within the indicative range"
+            assessment = (
+                f"At ${body.rate:.2f} {unit_word}, you are inside the published indicative "
+                f"range of ${lower:.2f}-${upper:.2f} (median ${median:.2f}) for {body.service.lower()}."
+            )
+            suggested = None
+    else:
+        # Heuristic fallback for unknown services.
+        if body.rate > median * 1.10:
+            verdict, label = "high", "Higher than the typical rate"
+            assessment = (
+                f"At ${body.rate:.2f} {unit_word}, this is about {delta_pct:.0f}% above the network median "
+                f"of ${median:.2f} for {body.service.lower()}. Worth asking the provider for a written "
+                "explanation of how they set the rate."
+            )
+            suggested = "Email the provider asking for a written explanation of the rate."
+        elif body.rate < median * 0.85:
+            verdict, label = "low", "Below the typical rate"
+            assessment = (
+                f"At ${body.rate:.2f} {unit_word}, this is below the network median of ${median:.2f}. "
+                "That is likely a good outcome, confirm the service quality is what you would expect."
+            )
+            suggested = None
+        else:
+            verdict, label = "fair", "About what you would expect"
+            assessment = (
+                f"At ${body.rate:.2f} {unit_word}, you are within the typical range for {body.service.lower()} "
+                f"(network median ${median:.2f})."
+            )
+            suggested = None
+
+    return {
+        "service": body.service,
+        "charged": body.rate,
+        "median": median,
+        "lower": lower,
+        "upper": upper,
+        "unit": unit,
+        "stream": stream,
+        "delta_pct": round(delta_pct, 2),
+        "verdict": verdict,
+        "verdict_label": label,
+        "assessment": assessment,
+        "suggested_action": suggested,
+        "source": source,
+        "effective_from": effective_from,
+        "caps_note": (
+            "Government price caps for Support at Home were deferred indefinitely in May 2026. "
+            "Providers will continue to set their own prices until further notice. This comparison "
+            "uses the official indicative ranges published by the Department of Health (October 2025). "
+            "If you believe you have been overcharged, the Aged Care Quality and Safety Commission "
+            "can order refunds."
+        ),
+    }
+
+
+# ---- Tool 4: Classification self-check (12-question quiz) ----
+class PublicClassificationBody(BaseModel):
+    answers: List[int] = Field(min_length=12, max_length=12)  # each 0-4
+    current_classification: int | None = None
+
+
+@api.post("/public/classification-check")
+async def public_classification_check(body: PublicClassificationBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Classification Self-Check")
+    if not all(0 <= a <= 4 for a in body.answers):
+        raise HTTPException(status_code=400, detail="Each answer must be 0,4")
+    score = sum(body.answers)  # 0..48
+    # Map to classification range
+    if score <= 6:
+        low, high = 1, 2
+    elif score <= 12:
+        low, high = 2, 3
+    elif score <= 18:
+        low, high = 3, 4
+    elif score <= 24:
+        low, high = 4, 5
+    elif score <= 30:
+        low, high = 5, 6
+    elif score <= 36:
+        low, high = 6, 7
+    else:
+        low, high = 7, 8
+    annual_low = budget_lib.CLASSIFICATIONS[low]["annual"]
+    annual_high = budget_lib.CLASSIFICATIONS[high]["annual"]
+    suggest_reassess = body.current_classification is not None and (
+        body.current_classification < low or body.current_classification > high + 1
+    )
+    return {
+        "score": score,
+        "score_max": 48,
+        "likely_low": low,
+        "likely_high": high,
+        "likely_label": f"Classification {low}" if low == high else f"Classification {low},{high}",
+        "annual_range": [annual_low, annual_high],
+        "current_classification": body.current_classification,
+        "suggest_reassessment": suggest_reassess,
+        "caveat": "This is informational only. Only the My Aged Care Independent Assessment Tool (IAT) determines the actual classification.",
+    }
+
+
+# ---- Tool 5: Reassessment letter drafter ----
+class PublicReassessmentBody(BaseModel):
+    participant_name: str = Field(min_length=1, max_length=120)
+    current_classification: int = Field(ge=1, le=8)
+    changes_summary: str = Field(min_length=10, max_length=4000)
+    recent_events: str | None = None
+    sender_name: str = Field(min_length=1, max_length=120)
+    relationship: str | None = "family caregiver"
+    # F13: three letter types share the same intake form.
+    letter_type: str = Field(
+        default="classification_reassessment",
+        pattern="^(classification_reassessment|rcp_assessment|care_plan_amendment)$",
+    )
+    # Optional context, used by rcp_assessment to reference the hospital
+    # discharge that prompted the request.
+    hospital_name: str | None = Field(default=None, max_length=200)
+    discharge_date: str | None = Field(default=None, max_length=40)
+    # LF-1 v1.3 hook, CSC-1 run id. When present, the server fetches the
+    # stored CSC payload and inlines the top-3 drivers + composite band into
+    # the LLM prompt. The letter is then anchored to the CSC evidence.
+    csc_run_id: str | None = Field(default=None, max_length=64)
+
+
+_REASSESS_BASE_RULES = (
+    "Draft a polite, factual letter for Australian Support at Home. Australian English. "
+    "250-400 words. Plain professional tone. Use the participant's name and the sender's "
+    "name. Use gender-neutral language unless explicitly told otherwise, never default to "
+    "'Mum'. Reference the Aged Care Act 2024 framework where relevant. Focus on functional "
+    "changes only, NEVER include a clinical diagnosis. End with a specific request and a "
+    "14-day response timeframe. Output ONLY the letter body, no preamble, no markdown. "
+    "NEVER claim a specific outcome (e.g. 'they should be on Classification 7' or "
+    "'they should be approved for RCP'), frame requests as 'we'd like an assessment / "
+    "we'd like the plan amended to reflect…'."
+)
+
+
+_LETTER_TYPE_SYSTEM = {
+    "classification_reassessment": (
+        "You are a paperwork drafter for Australian Support at Home. Draft a polite, "
+        "factual CLASSIFICATION REASSESSMENT request letter addressed to My Aged Care. "
+        f"{_REASSESS_BASE_RULES} Ask the assessor to consider whether the current "
+        "classification still fits given the functional changes described."
+    ),
+    "rcp_assessment": (
+        "You are a paperwork drafter for Australian Support at Home. Draft a polite, "
+        "factual RESTORATIVE CARE PATHWAY (RCP) ASSESSMENT request letter addressed to "
+        "the provider's care manager (or My Aged Care where the user has not nominated a "
+        f"care manager). {_REASSESS_BASE_RULES} The letter must: explicitly use the words "
+        "'Restorative Care Pathway' and 'RCP assessment'; reference the recent hospital "
+        "discharge (use the hospital name and discharge date when supplied) as the prompt "
+        "for the request; describe the FUNCTIONAL DECLINE (mobility, transfers, ADLs, falls "
+        "risk, cognition where stated) without a diagnosis; ask for the RCP assessment to "
+        "be scheduled within the next 14 days; and INCLUDE a single line noting that RCP "
+        "funding is separate from the participant's quarterly Support at Home budget so "
+        "scheduling an assessment does not reduce ongoing services."
+    ),
+    "care_plan_amendment": (
+        "You are a paperwork drafter for Australian Support at Home. Draft a polite, "
+        "factual CARE PLAN AMENDMENT request letter addressed to the provider's care "
+        f"manager. {_REASSESS_BASE_RULES} The letter must: explicitly reference 'the care "
+        "plan'; list the CHANGED NEEDS (functional changes only, no diagnoses) in a clear "
+        "paragraph; list the SPECIFIC SERVICE ADJUSTMENTS being requested (e.g. more "
+        "personal-care hours per week, addition of OT, change to weekend transport); ask "
+        "the care manager to issue an updated plan within 14 days; and confirm the "
+        "amendment must continue to respect the participant's stated goals and the rights "
+        "in the Aged Care Act 2024."
+    ),
+}
+
+
+@api.post("/public/reassessment-letter")
+async def public_reassessment_letter(body: PublicReassessmentBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Reassessment Letter Generator")
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail="LLM unavailable")
+    # Wrapper redacts PII from the free-text fields
+    free_text = f"{body.changes_summary}\n{body.recent_events or ''}"
+    wrapped = await run_wrapper(free_text)
+    if wrapped["abuse_flag"]:
+        return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
+    from lib import llm_wrapper
+    system = _LETTER_TYPE_SYSTEM[body.letter_type]
+
+    prompt_lines = [
+        f"Participant: {body.participant_name}",
+        f"Current classification: Classification {body.current_classification}",
+        f"What's changed: {wrapped['redacted_input']}",
+    ]
+    if body.letter_type == "rcp_assessment":
+        if body.hospital_name:
+            prompt_lines.append(f"Recent hospital discharge: {body.hospital_name}")
+        if body.discharge_date:
+            prompt_lines.append(f"Discharge date: {body.discharge_date}")
+    prompt_lines.append(
+        f"Letter sender: {body.sender_name} ({body.relationship or 'family caregiver'})"
+    )
+
+    # LF-1 v1.3, inline CSC-1 evidence when a run id was supplied. We
+    # fetch the stored payload (written by POST /public/csc/run) and
+    # surface the top drivers + composite band so the LLM anchors the
+    # letter to the self-check evidence rather than paraphrasing loosely.
+    if body.letter_type == "classification_reassessment" and body.csc_run_id:
+        try:
+            csc_doc = await db.csc_runs.find_one({"csc_run_id": body.csc_run_id}, {"_id": 0})
+            csc_payload = (csc_doc or {}).get("payload") or {}
+            if csc_payload:
+                cls = csc_payload.get("classification") or {}
+                range_lo = cls.get("range_low")
+                range_hi = cls.get("range_high")
+                range_txt = (
+                    f"Classification {cls.get('primary')}"
+                    if range_lo == range_hi
+                    else f"Classification {range_lo} to {range_hi}"
+                )
+                drivers = csc_payload.get("top_drivers") or []
+                domain_label = {
+                    "self_care": "self-care", "iadl": "IADLs",
+                    "cognition_behaviour": "cognition and behaviour",
+                    "safety_hospitalisation": "safety",
+                    "informal_support": "informal support",
+                    "home_environment": "home environment", "mood": "mood",
+                }
+                driver_lines = [
+                    f"    - {d.get('answer', '').lower()} in {domain_label.get(d.get('domain', ''), d.get('domain', ''))}"
+                    for d in drivers[:3]
+                ]
+                prompt_lines.extend([
+                    "",
+                    "Wayly Classification Self-Check (CSC) evidence:",
+                    f"  Indicative band: {range_txt}",
+                    f"  Confidence: {cls.get('confidence', 'unknown')}",
+                    f"  Composite score: {csc_payload.get('composite_score')}",
+                    f"  Run at: {csc_payload.get('run_at')}",
+                    "  Top drivers (highest-need signals):",
+                    *driver_lines,
+                    (
+                        "Anchor the letter to these functional signals. Cite them in your own words "
+                        "(the assessor sees the letter, not the CSC), and frame the CSC as 'a recent "
+                        "self-check I completed on Wayly' rather than a formal instrument."
+                    ),
+                ])
+        except Exception as e:
+            logger.warning("CSC payload fetch failed for run %s: %s", body.csc_run_id, e)
+
+    prompt = "\n".join(prompt_lines)
+
+    letter = await llm_wrapper.chat_send(
+        model="claude-sonnet-4-5-20250929",
+        system=system,
+        user_text=prompt,
+        session_id=f"reassess-{datetime.now(timezone.utc).timestamp()}",
+    )
+    out = {
+        "letter": letter.strip(),
+        "word_count": len(letter.split()),
+        "letter_type": body.letter_type,
+    }
+    if wrapped["redaction_notice"]:
+        out["redaction_notice"] = wrapped["redaction_notice"]
+    return out
+
+
+# ---- Tool 6: Contribution estimator ----
+# PENSION_RATES + band semantics live in ``lib.tool_helpers`` and are re-exported
+# above. The route below converts band cohorts to per-stream low/high values
+# (see iteration 42 F5/F6 for the design).
+
+
+class PublicContributionBody(BaseModel):
+    classification: int = Field(ge=1, le=8)
+    pension_status: str = Field(pattern="^(full|part|cshc|self)$")
+    is_grandfathered: bool = False
+    expected_mix_clinical_pct: float = Field(ge=0, le=100, default=30)
+    expected_mix_independence_pct: float = Field(ge=0, le=100, default=45)
+    expected_mix_everyday_pct: float = Field(ge=0, le=100, default=25)
+    # Optional: user can paste the exact rates from their Services Australia
+    # contribution letter so the estimate is precise rather than a band range.
+    independence_rate_pct: float | None = Field(default=None, ge=0, le=100)
+    everyday_rate_pct: float | None = Field(default=None, ge=0, le=100)
+
+
+@api.post("/public/contribution-estimator")
+async def public_contribution_estimator(body: PublicContributionBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Contribution Estimator")
+    total_pct = body.expected_mix_clinical_pct + body.expected_mix_independence_pct + body.expected_mix_everyday_pct
+    if total_pct < 95 or total_pct > 105:
+        raise HTTPException(status_code=400, detail="Service mix percentages should sum to 100")
+    rates = PENSION_RATES[body.pension_status]
+
+    clin_band = rates["clinical"]      # always (0.0, 0.0)
+    ind_band = rates["independence"]
+    ev_band = rates["everyday_living"]
+
+    is_ind_band = abs(ind_band[1] - ind_band[0]) > 1e-9
+    is_ev_band = abs(ev_band[1] - ev_band[0]) > 1e-9
+
+    # ---- Validate any user-supplied rates against the cohort band -------
+    user_ind = body.independence_rate_pct
+    user_ev = body.everyday_rate_pct
+
+    def _validate_rate(label: str, rate_pct: float, band: tuple[float, float]):
+        lo_pct = round(band[0] * 100, 2)
+        hi_pct = round(band[1] * 100, 2)
+        # Allow a 0.5 percentage-point tolerance to absorb rounding from
+        # the printed Services Australia letter.
+        if rate_pct < lo_pct - 0.5 or rate_pct > hi_pct + 0.5:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"{label} rate {rate_pct}% is outside the {lo_pct}%-{hi_pct}% range "
+                    f"that applies to a {body.pension_status} cohort. Double-check the "
+                    "rate on your Services Australia contribution letter."
+                ),
+            )
+
+    if user_ind is not None and is_ind_band:
+        _validate_rate("Independence", user_ind, ind_band)
+    if user_ev is not None and is_ev_band:
+        _validate_rate("Everyday Living", user_ev, ev_band)
+
+    # ---- Gross annual service base (F5 fix, no longer / 4 * 4 via post-CM) --
+    annual_service = budget_lib.classification_annual(body.classification)
+    clin = annual_service * (body.expected_mix_clinical_pct / 100)
+    ind = annual_service * (body.expected_mix_independence_pct / 100)
+    ev = annual_service * (body.expected_mix_everyday_pct / 100)
+
+    # ---- Decide rate_basis ----------------------------------------------
+    has_user_rates = (
+        (is_ind_band and user_ind is not None)
+        or (is_ev_band and user_ev is not None)
+    )
+    has_band = is_ind_band or is_ev_band
+    if not has_band:
+        rate_basis = "exact_rate"
+    elif (
+        (not is_ind_band or user_ind is not None)
+        and (not is_ev_band or user_ev is not None)
+    ):
+        rate_basis = "user_supplied" if has_user_rates else "exact_rate"
+    else:
+        rate_basis = "band_range"
+
+    # Clinical contribution is always $0, outside the band-vs-exact axis.
+    contrib_clin = 0.0
+
+    cap = budget_lib.lifetime_cap(body.is_grandfathered)
+
+    caveat: str | None = None
+    if rate_basis == "band_range":
+        caveat = (
+            "Your exact contribution rate is set by Services Australia based on your "
+            "income and assets. Enter the rates from your contribution letter for a "
+            "precise estimate, or call Services Australia on 1800 227 475."
+        )
+
+    def _resolve_rate(user_pct: float | None, band: tuple[float, float]) -> float:
+        if user_pct is not None:
+            return user_pct / 100
+        if abs(band[1] - band[0]) <= 1e-9:
+            return band[0]
+        # Band cohort with no user rate, caller must use low/high path.
+        return float("nan")
+
+    if rate_basis == "band_range":
+        # Range output. annual_contribution + per-stream rate_pct stay null.
+        ind_low_rate, ind_high_rate = ind_band
+        ev_low_rate, ev_high_rate = ev_band
+        if user_ind is not None:
+            ind_low_rate = ind_high_rate = user_ind / 100
+        if user_ev is not None:
+            ev_low_rate = ev_high_rate = user_ev / 100
+
+        contrib_ind_low = ind * ind_low_rate
+        contrib_ind_high = ind * ind_high_rate
+        contrib_ev_low = ev * ev_low_rate
+        contrib_ev_high = ev * ev_high_rate
+
+        annual_low = round(contrib_clin + contrib_ind_low + contrib_ev_low, 2)
+        annual_high = round(contrib_clin + contrib_ind_high + contrib_ev_high, 2)
+        quarterly_low = round(annual_low / 4, 2)
+        quarterly_high = round(annual_high / 4, 2)
+        years_to_cap_low = round(cap / annual_high, 1) if annual_high > 0 else None
+        years_to_cap_high = round(cap / annual_low, 1) if annual_low > 0 else None
+
+        per_stream = [
+            {
+                "stream": "Clinical",
+                "annual_charged": round(clin, 2),
+                "annual_contribution": 0.0,
+                "annual_contribution_low": 0.0,
+                "annual_contribution_high": 0.0,
+                "rate_pct": 0.0,
+                "rate_pct_low": 0.0,
+                "rate_pct_high": 0.0,
+                "rate_band_pct": [0.0, 0.0],
+                "is_band": False,
+            },
+            {
+                "stream": "Independence",
+                "annual_charged": round(ind, 2),
+                "annual_contribution": None,
+                "annual_contribution_low": round(contrib_ind_low, 2),
+                "annual_contribution_high": round(contrib_ind_high, 2),
+                "rate_pct": None if is_ind_band and user_ind is None else round(_resolve_rate(user_ind, ind_band) * 100, 2),
+                "rate_pct_low": round(ind_low_rate * 100, 2),
+                "rate_pct_high": round(ind_high_rate * 100, 2),
+                "rate_band_pct": [round(ind_band[0] * 100, 2), round(ind_band[1] * 100, 2)],
+                "is_band": is_ind_band,
+            },
+            {
+                "stream": "Everyday Living",
+                "annual_charged": round(ev, 2),
+                "annual_contribution": None,
+                "annual_contribution_low": round(contrib_ev_low, 2),
+                "annual_contribution_high": round(contrib_ev_high, 2),
+                "rate_pct": None if is_ev_band and user_ev is None else round(_resolve_rate(user_ev, ev_band) * 100, 2),
+                "rate_pct_low": round(ev_low_rate * 100, 2),
+                "rate_pct_high": round(ev_high_rate * 100, 2),
+                "rate_band_pct": [round(ev_band[0] * 100, 2), round(ev_band[1] * 100, 2)],
+                "is_band": is_ev_band,
+            },
+        ]
+        return {
+            "annual_service_total": round(annual_service, 2),
+            "annual_contribution": None,
+            "annual_contribution_low": annual_low,
+            "annual_contribution_high": annual_high,
+            "quarterly_contribution": None,
+            "quarterly_contribution_low": quarterly_low,
+            "quarterly_contribution_high": quarterly_high,
+            "per_stream": per_stream,
+            "lifetime_cap": cap,
+            "years_to_cap": None,
+            "years_to_cap_low": years_to_cap_low,
+            "years_to_cap_high": years_to_cap_high,
+            "pension_status": body.pension_status,
+            "rate_basis": rate_basis,
+            "caveat": caveat,
+        }
+
+    # ---- Exact / user-supplied path -------------------------------------
+    ind_rate = _resolve_rate(user_ind, ind_band)
+    ev_rate = _resolve_rate(user_ev, ev_band)
+
+    contrib_ind = ind * ind_rate
+    contrib_ev = ev * ev_rate
+    annual_contrib = round(contrib_clin + contrib_ind + contrib_ev, 2)
+    quarterly_contrib = round(annual_contrib / 4, 2)
+    years_to_cap = round(cap / annual_contrib, 1) if annual_contrib > 0 else None
+
+    per_stream = [
+        {
+            "stream": "Clinical",
+            "annual_charged": round(clin, 2),
+            "annual_contribution": 0.0,
+            "annual_contribution_low": None,
+            "annual_contribution_high": None,
+            "rate_pct": 0.0,
+            "rate_pct_low": None,
+            "rate_pct_high": None,
+            "rate_band_pct": [0.0, 0.0],
+            "is_band": False,
+        },
+        {
+            "stream": "Independence",
+            "annual_charged": round(ind, 2),
+            "annual_contribution": round(contrib_ind, 2),
+            "annual_contribution_low": None,
+            "annual_contribution_high": None,
+            "rate_pct": round(ind_rate * 100, 2),
+            "rate_pct_low": None,
+            "rate_pct_high": None,
+            "rate_band_pct": [round(ind_band[0] * 100, 2), round(ind_band[1] * 100, 2)],
+            "is_band": is_ind_band,
+        },
+        {
+            "stream": "Everyday Living",
+            "annual_charged": round(ev, 2),
+            "annual_contribution": round(contrib_ev, 2),
+            "annual_contribution_low": None,
+            "annual_contribution_high": None,
+            "rate_pct": round(ev_rate * 100, 2),
+            "rate_pct_low": None,
+            "rate_pct_high": None,
+            "rate_band_pct": [round(ev_band[0] * 100, 2), round(ev_band[1] * 100, 2)],
+            "is_band": is_ev_band,
+        },
+    ]
+    return {
+        "annual_service_total": round(annual_service, 2),
+        "annual_contribution": annual_contrib,
+        "annual_contribution_low": None,
+        "annual_contribution_high": None,
+        "quarterly_contribution": quarterly_contrib,
+        "quarterly_contribution_low": None,
+        "quarterly_contribution_high": None,
+        "per_stream": per_stream,
+        "lifetime_cap": cap,
+        "years_to_cap": years_to_cap,
+        "years_to_cap_low": None,
+        "years_to_cap_high": None,
+        "pension_status": body.pension_status,
+        "rate_basis": rate_basis,
+        "caveat": caveat,
+    }
+
+
+# ---- Tool 7: Care plan reviewer ----
+# CARE_PLAN_CHECK_KEYS + the small regex helpers (_parse_care_management_pct,
+# _try_parse_monthly_total, _estimate_monthly_total_from_plan_text) all live
+# in ``lib.tool_helpers`` and are re-exported above.
+class PublicCarePlanBody(BaseModel):
+    text: str = Field(min_length=50, max_length=20000)
+    # Optional context, improves the two numeric checks (budget_fit +
+    # care_management_cap). Omitting them leaves those checks status="unknown".
+    classification: int | None = Field(default=None, ge=1, le=8)
+    quarterly_budget: float | None = Field(default=None, ge=0)
+
+
+@api.post("/public/care-plan-review")
+async def public_care_plan_review(body: PublicCarePlanBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Care Plan Reviewer")
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail="LLM unavailable")
+    wrapped = await run_wrapper(body.text)
+    if wrapped["abuse_flag"]:
+        return {"abuse_flag": wrapped["abuse_flag"], "abuse_response": wrapped["abuse_response"]}
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    system = (
+        "You review Australian Support at Home care plans against six structured checks "
+        "plus a coverage / gap audit. Australian English. Use gender‑neutral language, "
+        "never default to 'Mum'. Output STRICT JSON only, no markdown, no preamble.\n\n"
+        "SHAPE:\n"
+        "{\"summary\":\"1 paragraph\","
+        "\"checks\":[{\"check\":\"budget_fit|care_management_cap|service_list|stream_alignment|review_date|goals_alignment\","
+        "\"status\":\"pass|flag|unknown\",\"note\":\"...\"}],"
+        "\"coverage\":[{\"item\":\"...\",\"present\":true|false,\"note\":\"...\"}],"
+        "\"gaps\":[\"...\"],\"questions_to_raise\":[\"...\"]}\n\n"
+        "The six checks (emit one entry per key, in this order):\n"
+        "1. budget_fit, Estimate the monthly cost of listed services where frequencies and "
+        "rates are stated. Quarterly estimate = monthly × 3. If a quarterly budget is "
+        "supplied in the user message context, flag when the estimate exceeds 90% of that "
+        "budget (the usable-after-care-management figure); otherwise status=unknown.\n"
+        "2. care_management_cap, If the plan states a care-management percentage, flag when "
+        "it is above 10%. If absent, status=unknown.\n"
+        "3. service_list, Verify each listed service belongs to a recognised Support at "
+        "Home category. Clinical: nursing, wound care, medication management, OT, physio, "
+        "podiatry, speech, dietetics, continence, dementia care, palliative care. "
+        "Independence: personal care, respite, social support, transport, AT-HM products, "
+        "community access. Everyday Living: domestic assistance, gardening, meal preparation, "
+        "shopping, minor home maintenance. Flag any service outside these categories.\n"
+        "4. stream_alignment, Personal care belongs to Independence until 1 October 2026 and "
+        "moves to Clinical from that date. Gardening is Everyday Living, never Independence. "
+        "Transport is Independence. Nursing is Clinical. Flag any miscoded item.\n"
+        "5. review_date, Flag when the review date is past or within 30 days of the current "
+        "date the plan is being read on. Status=unknown when no review date is present.\n"
+        "6. goals_alignment, Flag when listed services clearly do not connect to the stated "
+        "participant goals. Status=unknown when goals aren't stated.\n\n"
+        "COVERAGE, keep an item array for: goals stated; services listed with frequency; "
+        "review date set; restorative focus; cultural/language preferences; advance care "
+        "directive referenced; named worker preferences; complaint pathway; contribution "
+        "amounts; rights statement.\n\n"
+        "NEVER invent a clinical diagnosis or suggest a specific provider."
+    )
+    context_block = ""
+    if body.classification is not None:
+        context_block += f"Classification level: {body.classification}\n"
+    if body.quarterly_budget is not None:
+        context_block += f"Quarterly budget (AUD): {body.quarterly_budget:.2f}\n"
+
+    from lib import llm_wrapper
+    user_msg = f"Care plan:\n\n{wrapped['redacted_input'][:18000]}"
+    if context_block:
+        user_msg = f"Context:\n{context_block}\n{user_msg}"
+    raw = await llm_wrapper.chat_send(
+        model="claude-sonnet-4-5-20250929",
+        system=system,
+        user_text=user_msg,
+        session_id=f"careplan-{datetime.now(timezone.utc).timestamp()}",
+    )
+    import json as _json
+    try:
+        from agents import _strip_json
+        out = _json.loads(_strip_json(raw))
+    except Exception:
+        out = {"summary": raw[:500], "checks": [], "coverage": [], "gaps": [], "questions_to_raise": []}
+
+    # Normalise checks: ensure every key is present once, in canonical order.
+    existing_checks = {(c.get("check") or "").lower(): c
+                      for c in (out.get("checks") or []) if isinstance(c, dict)}
+    normalised: list[dict] = []
+    for key in _CARE_PLAN_CHECK_KEYS:
+        existing = existing_checks.get(key) or {"check": key, "status": "unknown", "note": ""}
+        if existing.get("check") != key:
+            existing["check"] = key
+        status = (existing.get("status") or "").lower()
+        if status not in ("pass", "flag", "unknown"):
+            existing["status"] = "unknown"
+        existing.setdefault("note", "")
+        normalised.append(existing)
+
+    # Deterministic post-pass: overwrite the LLM's verdict for the two numeric
+    # checks when the optional context is supplied. We trust code over the LLM
+    # for arithmetic (same pattern the decoder uses for Rule 9).
+    text_lower = body.text.lower()
+    if body.quarterly_budget is not None and body.quarterly_budget > 0:
+        usable = round(body.quarterly_budget * 0.90, 2)
+        budget_fit = next(c for c in normalised if c["check"] == "budget_fit")
+        # Try a simple numeric scan: pick up "$X" service lines + a per-week
+        # frequency hint. The wider review-quality estimation stays with the
+        # LLM in the note. Code only owns the verdict when the LLM gave us a
+        # plain-numeric monthly_estimate hint we can parse out of its note.
+        monthly_estimate = _try_parse_monthly_total(budget_fit.get("note") or "")
+        if monthly_estimate is None:
+            monthly_estimate = _estimate_monthly_total_from_plan_text(body.text)
+        if monthly_estimate is not None and monthly_estimate > 0:
+            quarterly_estimate = round(monthly_estimate * 3, 2)
+            if quarterly_estimate > usable:
+                budget_fit["status"] = "flag"
+                budget_fit["note"] = (
+                    f"Estimated monthly cost ${monthly_estimate:,.2f} → quarterly ${quarterly_estimate:,.2f}, "
+                    f"which exceeds 90% of the supplied quarterly budget (${usable:,.2f}). "
+                    "Ask the care manager to rebalance services or confirm the budget figure."
+                )
+            else:
+                budget_fit["status"] = "pass"
+                budget_fit["note"] = (
+                    f"Estimated monthly cost ${monthly_estimate:,.2f} → quarterly ${quarterly_estimate:,.2f}, "
+                    f"within 90% of the supplied quarterly budget (${usable:,.2f})."
+                )
+
+    cm_pct = _parse_care_management_pct(text_lower)
+    cm_check = next(c for c in normalised if c["check"] == "care_management_cap")
+    if cm_pct is not None:
+        if cm_pct > 10.0:
+            cm_check["status"] = "flag"
+            cm_check["note"] = (
+                f"Plan states care management at {cm_pct:.1f}%, above the 10% Support at Home cap. "
+                "Ask the care manager to bring this back to 10% or below in writing."
+            )
+        else:
+            cm_check["status"] = "pass"
+            cm_check["note"] = (
+                f"Plan states care management at {cm_pct:.1f}%, within the 10% cap."
+            )
+
+    out["checks"] = normalised
+    out.setdefault("coverage", [])
+    out.setdefault("gaps", [])
+    out.setdefault("questions_to_raise", [])
+
+    # OXY-1 v1 F4 · Oxygen certification callout. Deterministic post-pass: when
+    # the care plan text mentions oxygen therapy, append an advisory-tone
+    # question to raise. Kept short, cites the medical practitioner
+    # certification requirement, and never claims eligibility.
+    _OXYGEN_TERMS = ("oxygen therapy", "oxygen concentrator", "oxygen supplement", "continuous oxygen", "oxygen use")
+    _has_oxygen_mention = any(term in text_lower for term in _OXYGEN_TERMS) or (
+        " oxygen " in text_lower and any(hint in text_lower for hint in ("therapy", "concentrator", "l/min", "litres per minute", "prescrib"))
+    )
+    if _has_oxygen_mention:
+        out.setdefault("advisories", []).append({
+            "topic": "oxygen_certification",
+            "headline": "Confirm oxygen certification is on file",
+            "detail": (
+                "This plan mentions oxygen. Under Support at Home Rules section 196-15, "
+                "the Oxygen supplement is only paid when a medical practitioner has "
+                "certified that the participant needs continual oxygen. Ask your GP, "
+                "specialist, or provider's care manager to confirm the certification is "
+                "on file, especially if the plan lists an oxygen supplement charge."
+            ),
+        })
+
+    if wrapped["redaction_notice"]:
+        out["redaction_notice"] = wrapped["redaction_notice"]
+    return out
+
+
+_CARE_MGMT_PCT_RE = None  # See lib.tool_helpers; kept here for legacy import path.
+_MONTHLY_HINT_RE = None
+_PLAN_DOLLAR_LINE_RE = None
+
+
+# ---- Tool 8: Aged Care Q&A (public chat) ----
+# Public, unauthenticated tool. The assistant has NO access to the user's
+# account, household, statements or budget, it is a plain-English aged-care
+# Q&A surface. The authenticated /api/chat endpoint (CHAT_SYSTEM_TEMPLATE) is
+# the household-aware "Ask Wayly" and is intentionally separate.
+class PublicChatBody(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    session_id: str | None = None
+
+
+AGED_CARE_QA_SYSTEM = (
+    "You are Wayly's Aged Care Q&A, a friendly, expert chat assistant for "
+    "Australian families navigating the Support at Home program. Tone: the friendliest, "
+    "most patient, most well‑informed niece in Australia, calm, specific, never "
+    "breathless. Ground answers in: Aged Care Act 2024, Support at Home program manual, "
+    "National Quality Standards. Australian English. Use gender‑neutral language; refer "
+    "to 'the person you care for' or 'the participant', never default to 'Mum'. Lead "
+    "with the answer (1‑2 sentences), then one paragraph of context, then cite sources "
+    "where you can ('Aged Care Act 2024, section X'). NEVER invent dollar figures, "
+    "dates, or section numbers, say 'I don't have a current figure for that, the "
+    "authoritative source is My Aged Care on 1800 200 422'. NEVER give clinical or "
+    "financial‑product advice; redirect to the GP / a FAAA‑registered advisor. NEVER "
+    "recommend a specific provider. If asked, you are Wayly's AI; offer human handoff "
+    "with 'type human and I'll connect you'. Keep responses 50-150 words by default, "
+    "up to 250 only if needed. End with one soft next step (a relevant tool or guide). "
+    "\n\nDATA BOUNDARIES, READ CAREFULLY:\n"
+    "- You have NO access to the user's account, household, statements, budget, contributions, "
+    "care team, or any personal data. Never imply that you do, never invent a name, dollar "
+    "figure, or statement reference about them.\n"
+    "- If asked anything that requires their data (e.g. 'what is mum's budget', 'what did our "
+    "last statement say', 'how much have we paid this year'), explain you cannot see their "
+    "information here, and that signed-in Wayly members can ask these questions inside the app "
+    "where the assistant has their household context. Do NOT include any dollar figure when "
+    "replying to such a question.\n"
+    "- If the user asks about coordinating family members, inviting relatives, or roles and "
+    "permissions, answer generally about the responsibilities involved and point them to the "
+    "in-app Family features available on the Family plan, do not pretend to invite anyone, "
+    "manage permissions, or read a real family thread."
+)
+
+
+async def _aged_care_qa_handler(body: PublicChatBody, request: Request, response: Response):
+    await _require_paid_plan(request, response, "Aged Care Q&A")
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail="LLM unavailable")
+    wrapped = await run_wrapper(body.message)
+    if wrapped["abuse_flag"]:
+        return {
+            "reply": wrapped["abuse_response"],
+            "session_id": body.session_id or f"public-chat-{_client_ip(request)}",
+            "abuse_flag": wrapped["abuse_flag"],
+        }
+    from lib import llm_wrapper
+    sid = body.session_id or f"public-chat-{_client_ip(request)}"
+    reply = await llm_wrapper.chat_send(
+        model="claude-sonnet-4-5-20250929",
+        system=AGED_CARE_QA_SYSTEM,
+        user_text=wrapped["redacted_input"],
+        session_id=sid,
+        deterministic=False,
+    )
+    out: dict = {"reply": reply, "session_id": sid}
+    if wrapped["redaction_notice"]:
+        out["redaction_notice"] = wrapped["redaction_notice"]
+    return out
+
+
+@api.post("/public/aged-care-chat")
+async def public_aged_care_chat(body: PublicChatBody, request: Request, response: Response):
+    return await _aged_care_qa_handler(body, request, response)
+
+
+# Legacy POST /api/public/family-coordinator-chat removed after one-release
+# deprecation window. New clients call POST /api/public/aged-care-chat.
+
+
+# ---------------------------------------------------------------------------
+# Health / metrics / status routes extracted to routes/health.py
+# (Feb 2026 server-split, CSC-1 batch). Include added below at router wire-up.
+# WAYLY_VERSION constant retained here because other modules import it.
+# ---------------------------------------------------------------------------
+
+WAYLY_VERSION = os.environ.get("WAYLY_VERSION", "preview")
+
+
+
+
+# ---------------------------------------------------------------------------
+# Public Help Chat, anonymous floating help-bot for every visitor
+# ---------------------------------------------------------------------------
+class HelpChatBody(BaseModel):
+    message: str = Field(min_length=1, max_length=2000)
+    session_id: Optional[str] = None
+    page_path: Optional[str] = None  # current URL the user is on, for context
+
+
+HELP_CHAT_SYSTEM = (
+    "You are Wayly's help chat, sitting in the corner of every page on wayly.com.au. "
+    "You are speaking with a family caregiver who is trying to figure out aged care while also living a full life. "
+    "Be warm and direct, like a friend who actually knows this stuff, not a support bot. "
+    "Plain Australian English. Two or three sentences is usually enough, never more than about 80 words. "
+    "Do NOT use em-dashes, en-dashes, double asterisks, headings, or any markdown formatting. Plain sentences only.\n\n"
+    "WHAT WAYLY IS\n"
+    "Wayly is for the daughter or son who suddenly has to read their parent's monthly Support at Home statement and "
+    "make sense of it. Provider-agnostic, never takes commissions, never sells data. We work alongside the caregiver, "
+    "not on behalf of the provider.\n\n"
+    "PLANS\n"
+    "- Free $0/mo: 1 Statement Decoder use per calendar month. No card required.\n"
+    "- Solo $19/mo: unlimited tools, dashboard, statement uploads, 1 participant, 1 caregiver seat.\n"
+    "- Family $39/mo (most popular): everything in Solo + 2 participants included + 3 caregiver seats + priority support.\n"
+    "- Add extra participants on Family for $19/month each, billed separately, cancel anytime.\n"
+    "- Adviser $299/mo: up to 20 client households, 3 caregiver seats, scenario modeller, branded PDFs, priority support, offline mode.\n"
+    "- Adviser Pro $3500/mo: unlimited clients, white-label, custom domain, multi-advisor team.\n"
+    "- Paid plans get a 7-day free trial, 14 days with a referral code.\n\n"
+    "AI TOOLS (8 total)\n"
+    "1. Statement Decoder (free 1/month, unlimited on paid). Upload PDF, Word, photo (JPG/PNG/HEIC/WEBP), or paste text.\n"
+    "2. Budget & Lifetime Cap Calculator (Solo+).\n"
+    "3. Provider Price Checker (Solo+).\n"
+    "4. Classification Self-Check (Solo+).\n"
+    "5. Reassessment Letter Generator (Solo+).\n"
+    "6. Contribution Estimator (Solo+).\n"
+    "7. Care Plan Reviewer (Solo+).\n"
+    "8. Aged Care Q&A chat (Solo+).\n\n"
+    "KEY FEATURES\n"
+    "Caregiver dashboard with per-stream budget cards, lifetime cap progress, anomaly alerts. "
+    "Participant view designed for an older parent (huge text, voice-first, single-action UX). "
+    "Family thread plus immutable audit log on Family. Resources hub with glossary, templates, and articles. "
+    "Statement Decoder anomaly engine covers around 20 named rules including duplicates, weekend rates, brokered-rate premiums, and AT-HM tracking.\n\n"
+    "WHAT YOU NEVER DO\n"
+    "Never give clinical or financial advice. If a clinical question comes up, point them at their GP. "
+    "If a financial-product question comes up, point them at a FAAA-registered adviser or My Aged Care on 1800 200 422. "
+    "Never recommend a specific provider. Never invent dollar figures, dates, section numbers, or URLs. "
+    "If you genuinely don't know, say so and point them at My Aged Care on 1800 200 422.\n"
+    "- For account-specific questions (billing, password reset) point users to "
+    "Settings → Plan & Billing or Sign in.\n"
+    "- For crisis / distress: 1800ELDERHelp 1800 353 374, OPAN 1800 700 600, "
+    "Lifeline 13 11 14, Beyond Blue 1300 22 4636.\n\n"
+    "TONE\n"
+    "Lead with the answer. One soft next step at the end where helpful (e.g. "
+    "'Try the Statement Decoder free at /ai-tools/statement-decoder' or 'See plans at "
+    "/pricing'). Use gender-neutral language; never default to 'Mum'."
+)
+
+
+@api.post("/public/help-chat")
+async def public_help_chat(body: HelpChatBody, request: Request, response: Response):
+    """Anonymous help bot for every site visitor. Rate-limited per IP."""
+    _check_rate_limit(_client_ip(request))
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "Help chat is temporarily unavailable. Try again in a moment."})
+    wrapped = await run_wrapper(body.message)
+    sid = body.session_id or f"help-{_client_ip(request)}"
+    if wrapped.get("abuse_flag"):
+        return {
+            "reply": wrapped.get("abuse_response") or "I can only help with questions about Wayly and Support at Home.",
+            "session_id": sid,
+            "abuse_flag": True,
+        }
+    page_hint = ""
+    if body.page_path:
+        page_hint = f"\n\n[The user is currently on the page: {body.page_path[:200]}]"
+    from lib import llm_wrapper
+    try:
+        reply = await llm_wrapper.chat_send(
+            model="claude-haiku-4-5-20251001",
+            system=HELP_CHAT_SYSTEM + page_hint,
+            user_text=wrapped.get("redacted_input") or body.message,
+            session_id=sid,
+            deterministic=False,
+            model_params={"max_tokens": 400},
+        )
+    except Exception as e:
+        logger.warning("Help chat LLM call failed: %s", e)
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "I'm having trouble right now. Try again in a moment, or email help@wayly.com.au."})
+    out: dict = {"reply": _humanize_assistant_reply(str(reply or "")), "session_id": sid}
+    if wrapped.get("redaction_notice"):
+        out["redaction_notice"] = wrapped["redaction_notice"]
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Authenticated Help Chat, same widget, but injected with the user's actual
+# household context (classification, budget burn, recent anomalies, statements)
+# so it can answer "what's my biggest anomaly this quarter?" with real data.
+# ---------------------------------------------------------------------------
+async def _build_user_context(user_id: str) -> str:
+    """Returns a compact plain-text snapshot of the user's current Wayly state
+    for inclusion in the help-chat system prompt. Skips silently if no household."""
+    try:
+        u = await _get_user(user_id)
+    except Exception:
+        return ""
+    lines: list[str] = []
+    name = (u.get("name") or "").split(" ")[0] or "the caregiver"
+    lines.append(f"USER: {name} ({u.get('email','')}). Plan: {u.get('plan','free')}.")
+
+    h = await _get_user_household(user_id)
+    if not h:
+        lines.append("HOUSEHOLD: not yet set up, direct user to /onboarding when relevant.")
+        return "\n".join(lines)
+
+    classification = h.get("classification")
+    participant_name = h.get("participant_name") or "the participant"
+    provider = h.get("provider_name") or "their provider"
+    grandfathered = h.get("is_grandfathered", False)
+    lines.append(
+        f"HOUSEHOLD: caring for {participant_name}, Classification {classification} "
+        f"({budget_lib.CLASSIFICATIONS.get(classification, {}).get('label','')}), "
+        f"provider {provider}, grandfathered={grandfathered}."
+    )
+
+    # Budget snapshot (current quarter)
+    try:
+        q_start, q_end, q_label = budget_lib.get_quarter_window()
+        allocations = budget_lib.stream_allocations(classification)
+        quarterly_total = budget_lib.quarterly_budget(classification)
+        docs = await db.statements.find({"household_id": h["id"]}, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1).to_list(50)
+        all_items: list[dict] = []
+        for s in docs:
+            all_items.extend(s.get("line_items", []))
+        burn = budget_lib.compute_burn(all_items, q_start, q_end)
+        cap_amount = budget_lib.lifetime_cap(grandfathered)
+        contributions_total = budget_lib.compute_contributions(all_items)
+        lines.append(f"CURRENT QUARTER ({q_label}): quarterly budget ${quarterly_total:,.2f}.")
+        for s in budget_lib.STREAMS:
+            spent = burn.get(s, 0.0)
+            cap = allocations[s]
+            pct = (spent / cap * 100) if cap else 0
+            lines.append(f"  - {s}: spent ${spent:,.2f} of ${cap:,.2f} ({pct:.0f}%, ${max(cap - spent,0):,.2f} remaining)")
+        lifetime_pct = (contributions_total / cap_amount * 100) if cap_amount else 0
+        lines.append(
+            f"LIFETIME CAP: ${contributions_total:,.2f} of ${cap_amount:,.2f} contributed "
+            f"({lifetime_pct:.1f}% used)."
+        )
+    except Exception as e:
+        logger.warning("help-chat budget context failed: %s", e)
+
+    # Statements (latest 3)
+    try:
+        recent = await db.statements.find(
+            {"household_id": h["id"]},
+            {"_id": 0, "id": 1, "filename": 1, "period_label": 1, "uploaded_at": 1, "summary": 1, "anomalies": 1, "line_items": 1},
+        ).sort("uploaded_at", -1).to_list(3)
+        if recent:
+            lines.append(f"RECENT STATEMENTS ({len(recent)}):")
+            for s in recent:
+                gross = sum((li.get("total") or 0) for li in (s.get("line_items") or []))
+                anomalies = s.get("anomalies") or []
+                alerts = sum(1 for a in anomalies if (a.get("severity") or "").lower() == "alert")
+                warns = sum(1 for a in anomalies if (a.get("severity") or "").lower() == "warning")
+                infos = sum(1 for a in anomalies if (a.get("severity") or "").lower() == "info")
+                lines.append(
+                    f"  - {s.get('period_label') or s.get('filename')}: ${gross:,.2f} gross, "
+                    f"{len(s.get('line_items') or [])} line items, "
+                    f"anomalies {alerts}H/{warns}M/{infos}L."
+                )
+                # Top 3 anomalies for the most recent statement only
+                if s is recent[0] and anomalies:
+                    sorted_an = sorted(
+                        anomalies,
+                        key=lambda a: {"alert": 0, "warning": 1, "info": 2}.get((a.get("severity") or "").lower(), 3),
+                    )
+                    lines.append("    Top anomalies on the latest statement:")
+                    for a in sorted_an[:3]:
+                        sev = (a.get("severity") or "").upper()
+                        title = a.get("title") or ""
+                        detail = (a.get("detail") or "")[:200]
+                        lines.append(f"      • [{sev}] {title}, {detail}")
+        else:
+            lines.append("STATEMENTS: none uploaded yet.")
+    except Exception as e:
+        logger.warning("help-chat statements context failed: %s", e)
+
+    return "\n".join(lines)
+
+
+HELP_CHAT_AUTHED_SYSTEM = (
+    "You are Wayly's personal aged-care assistant for a logged-in caregiver. "
+    "You combine knowledge of the Australian Support at Home program with the user's "
+    "ACTUAL data (statements, budget, anomalies) which is provided below. Tone: the "
+    "friendliest, most patient, most well-informed niece in Australia, calm, specific, "
+    "never breathless. Australian English. Use gender-neutral language; never default to 'Mum'.\n\n"
+    "REPLY STYLE\n"
+    "- Lead with the answer in 1-2 sentences using their actual numbers when available.\n"
+    "- Cite the source (e.g. 'on your latest statement', 'this quarter so far').\n"
+    "- Keep replies under 120 words by default; up to 220 only if absolutely needed.\n"
+    "- End with one soft next step (a relevant page or action: '/app/statements', "
+    "'/app/audit', /settings/billing, /ai-tools/budget-calculator, etc.).\n\n"
+    "GROUNDING (HARD)\n"
+    "- Use ONLY the numbers from the USER CONTEXT block. NEVER invent dollar figures, "
+    "dates, line items, or anomalies. If the answer isn't in the context, say so plainly "
+    "('I don't see that on your latest statement, could you upload the most recent one?').\n"
+    "- NEVER give clinical or financial-product advice; redirect to a GP or "
+    "FAAA-registered adviser.\n"
+    "- NEVER recommend a specific provider.\n"
+    "- For crisis / distress mention: 1800ELDERHelp 1800 353 374, OPAN 1800 700 600, "
+    "Lifeline 13 11 14, Beyond Blue 1300 22 4636.\n\n"
+    "Reference info: ~20 anomaly rules cover duplicates, weekend rates, brokered-rate "
+    "premiums, AT-HM commitments, pension-status contribution checks, quarterly underspend "
+    "patterns, and care-plan review reminders. The 'lifetime cap' is the participant's "
+    "lifetime contribution cap under Support at Home. Streams: Clinical, Independence, "
+    "Everyday Living, ATHM (assistive technology / home modifications), CareMgmt.\n\n"
+    "USER CONTEXT (verbatim, never invent beyond this):\n"
+    "==========\n"
+    "{user_context}\n"
+    "=========="
+)
+
+
+@api.post("/help-chat")
+async def authed_help_chat(body: HelpChatBody, request: Request, user_id: str = Depends(get_current_user_id)):
+    """Authenticated help chat, same UX as the public bot, but with the
+    user's household + statement + budget context injected so it can answer
+    real questions about their data."""
+    key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not key:
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "The assistant is temporarily unavailable. Try again in a moment."})
+    wrapped = await run_wrapper(body.message, pii_redact=False)
+    sid = body.session_id or f"app-help-{user_id}"
+    if wrapped.get("abuse_flag"):
+        return {
+            "reply": wrapped.get("abuse_response") or "I can only help with questions about your Wayly account and Support at Home.",
+            "session_id": sid,
+            "abuse_flag": True,
+        }
+
+    user_context = await _build_user_context(user_id)
+    page_hint = f"\n\n[The user is currently on the page: {(body.page_path or '/app')[:200]}]"
+    system = HELP_CHAT_AUTHED_SYSTEM.format(user_context=user_context or "(no context available)") + page_hint
+    # PERSONA-1 §Ask Wayly, inject persona so replies mirror the caller's voice.
+    try:
+        from lib.persona import load_persona_context, render_persona_prompt_block
+        persona_ctx = await load_persona_context(db, user_id)
+        block = render_persona_prompt_block(persona_ctx)
+        if block:
+            system = f"{system}\n\n{block}"
+    except Exception:
+        pass
+
+    from lib import llm_wrapper
+    try:
+        reply = await llm_wrapper.chat_send(
+            model="claude-haiku-4-5-20251001",
+            system=system,
+            user_text=body.message,
+            session_id=sid,
+            deterministic=False,
+            model_params={"max_tokens": 600},
+        )
+    except Exception as e:
+        logger.warning("Authed help chat LLM call failed: %s", e)
+        raise HTTPException(status_code=503, detail={"error": "llm_unavailable", "message": "I'm having trouble right now. Try again in a moment."})
+    return {"reply": _humanize_assistant_reply(str(reply or "")), "session_id": sid}
+
+
+# ---------------------------------------------------------------------------
+# Contact / Book a demo
+# ---------------------------------------------------------------------------
+class ContactBody(BaseModel):
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    role: str
+    intent: str = "general"        # "general" | "demo"
+    context: Optional[str] = None
+    size: Optional[str] = None
+    biggest_pain: Optional[str] = None
+    success_in_six_months: Optional[str] = None
+    preferred_time: Optional[str] = None
+
+
+@api.post("/contact")
+async def contact_submit(body: ContactBody):
+    doc = body.model_dump()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    await db.contact_requests.insert_one(doc)
+    doc.pop("_id", None)
+    # Notify the team, graceful no-op if Resend isn't configured
+    try:
+        await email_service.notify_team_contact(doc)
+    except Exception as e:
+        logger.warning("Contact notification failed: %s", e)
+    return {"ok": True, "intent": body.intent}
+
+
+# ---------------------------------------------------------------------------
+# Email my result (public tools)
+# ---------------------------------------------------------------------------
+class EmailResultBody(BaseModel):
+    email: EmailStr
+    tool: str = Field(min_length=2, max_length=80)
+    headline: str = Field(min_length=1, max_length=240)
+    body_html: str = Field(min_length=1, max_length=80000)
+
+
+@api.post("/public/email-result")
+async def public_email_result(body: EmailResultBody, request: Request):
+    _check_rate_limit(_client_ip(request))
+    # Light HTML safety: forbid script/iframe tags in body_html
+    cleaned = body.body_html
+    for bad in ("<script", "</script>", "<iframe", "</iframe>", "javascript:"):
+        cleaned = cleaned.replace(bad, "")
+    res = await email_service.email_tool_result(
+        to=body.email,
+        tool_name=body.tool,
+        headline=body.headline,
+        body_html=cleaned,
+    )
+    # Persist for audit (24h TTL conceptually, we keep simple here)
+    await db.tool_email_log.insert_one({
+        "email": body.email,
+        "tool": body.tool,
+        "ok": bool(res.get("ok")),
+        "mocked": bool(res.get("mocked")),
+        "ts": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"ok": bool(res.get("ok")), "mocked": bool(res.get("mocked"))}
+
+
+# ---------------------------------------------------------------------------
+# Notifications
+# ---------------------------------------------------------------------------
+async def create_notification(user_id: str, category: str, title: str, body: str, link: Optional[str] = None) -> None:
+    """Respectful notification helper, checks user prefs before inserting."""
+    u = await db.users.find_one({"id": user_id}, {"_id": 0, "notification_prefs": 1})
+    prefs = (u or {}).get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS
+    if not prefs.get(category, True):
+        return
+    await db.notifications.insert_one({
+        "id": new_id(),
+        "user_id": user_id,
+        "category": category,
+        "title": title,
+        "body": body,
+        "link": link,
+        "read": False,
+        "created_at": now_iso(),
+    })
+
+
+@api.get("/notifications/legacy-removed")
+async def _notifications_extracted_marker():
+    """Notification endpoints moved to routes/notifications.py, this stub
+    exists only as a documentation breadcrumb during the modular refactor."""
+    return {"moved_to": "routes/notifications.py"}
+
+
+# ---------------------------------------------------------------------------
+# Family weekly digest
+# ---------------------------------------------------------------------------
+@api.get("/digest/preview")
+async def digest_preview(request: Request, user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        raise HTTPException(status_code=400, detail="Create a household first")
+    participant = await _resolve_active_participant(user_id, request)
+    return await digest_service.build_digest(db, household, participant=participant)
+
+
+@api.post("/digest/send")
+async def digest_send(request: Request, user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    if u.get("plan") != "family":
+        raise HTTPException(status_code=402, detail={"code": "plan_required", "message": "Family plan required to send digests."})
+    household = await _get_user_household(user_id)
+    if not household:
+        raise HTTPException(status_code=400, detail="Create a household first")
+    participant = await _resolve_active_participant(user_id, request)
+    recipients: List[str] = []
+    owner = await _get_user(household["owner_id"])
+    if (owner.get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS).get("weekly_digest", True):
+        recipients.append(owner["email"])
+    mem_cur = db.household_members.find({"household_id": household["id"], "status": "active"}, {"_id": 0})
+    async for m in mem_cur:
+        member_user = await db.users.find_one({"id": m.get("user_id")}, {"_id": 0}) if m.get("user_id") else None
+        if member_user:
+            if (member_user.get("notification_prefs") or DEFAULT_NOTIFICATION_PREFS).get("weekly_digest", True):
+                recipients.append(member_user["email"])
+        elif m.get("email"):
+            recipients.append(m["email"])
+    seen = set()
+    recipients = [r for r in recipients if not (r in seen or seen.add(r))]
+    if not recipients:
+        return {"ok": False, "reason": "No recipients opted in"}
+    digest = await digest_service.build_digest(db, household, participant=participant)
+    res = await digest_service.send_digest_to_members(db, household, recipients, digest, participant=participant)
+    pname = (participant or {}).get("first_name") or household.get("participant_name") or "household"
+    await _audit(household["id"], user_id, u["name"], "DIGEST_SENT", f"Sent {pname}'s digest to {len(recipients)} recipient(s)")
+    try:
+        await create_notification(user_id, "weekly_digest", f"Weekly digest sent, {pname}", f"Sent to {len(recipients)} people.", "/settings/digest")
+    except Exception:
+        pass
+    return {"ok": True, "recipients": recipients, "participant_id": (participant or {}).get("id"), "summary": res.get("results")}
+
+
+@api.get("/digest/history")
+async def digest_history(request: Request, user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        return {"items": []}
+    participant = await _resolve_active_participant(user_id, request)
+    q: Dict[str, Any] = {"household_id": household["id"]}
+    if participant:
+        pid = participant["id"]
+        if participant.get("is_primary"):
+            q["$or"] = [
+                {"participant_id": pid},
+                {"participant_id": None},
+                {"participant_id": {"$exists": False}},
+            ]
+        else:
+            q["participant_id"] = pid
+    cur = db.digest_sends.find(q, {"_id": 0}).sort("sent_at", -1).limit(12)
+    items = await cur.to_list(12)
+    return {"items": items}
+
+
+# ---------------------------------------------------------------------------
+# Usage stats
+# ---------------------------------------------------------------------------
+@api.get("/usage")
+async def my_usage(user_id: str = Depends(get_current_user_id)):
+    u = await _get_user(user_id)
+    household = await _get_user_household(user_id)
+    if household:
+        hid = household["id"]
+        # Cache for 60s, usage counters drive the dashboard pill and
+        # update fast enough on first refresh after a statement upload
+        # (writes invalidate via _cache.invalidate_household).
+        key = _cache.key_for("hh", hid, "usage", u["email"])
+        counts = await _cache.cache_aside(
+            "usage", key, ttl_seconds=60,
+            fetch=lambda: household_usage_counts(db, hid, u["email"]),
+        )
+    else:
+        counts = {
+            "chat_questions": 0, "statements_uploaded": 0, "family_messages": 0,
+            "wellbeing_checkins": 0, "digest_sends": 0,
+            "tool_emails_sent": await db.tool_email_log.count_documents(
+                {"email": u["email"], "ok": True}
+            ),
+        }
+    return {"plan": u.get("plan", "free"), "since": u.get("created_at"), "counts": counts}
+
+
+# ---------------------------------------------------------------------------
+# Danger Zone, soft-delete account
+# ---------------------------------------------------------------------------
+class AccountDeleteBody(BaseModel):
+    confirm: str = Field(min_length=1)
+
+
+@api.delete("/auth/account")
+async def delete_account(body: AccountDeleteBody, user_id: str = Depends(get_current_user_id)):
+    if body.confirm != "delete my account":
+        raise HTTPException(status_code=400, detail="Type 'delete my account' to confirm")
+    # Phase 9: full deletion cascade across every scoped collection +
+    # immediate anonymisation; final hard-delete fires 60 days later.
+    from privacy import soft_delete_account
+    result = await soft_delete_account(user_id)
+    _obs.log_account_deletion(user_id)
+    return {
+        "ok": True,
+        "deletion_completes_at": result.get("deletion_completes_at"),
+        "message": (
+            "Your account has been deactivated. All your personal data will "
+            "be permanently deleted from our systems in 60 days. If you change "
+            "your mind, contact support@wayly.com.au within that window."
+        ),
+    }
+
+
+@api.get("/auth/account/export")
+async def export_account_data(user_id: str = Depends(get_current_user_id)):
+    """Phase 9, Australian Privacy Act APP 12: user-initiated data export.
+
+    Returns every piece of personal data Wayly holds about this user, across
+    every collection that references their user / household / account scope.
+    Sensitive fields like `password_hash`, `totp_secret`, JWT material are
+    excluded, they're not "personal information" the user needs back."""
+    from privacy import SCOPED_COLLECTIONS
+    user = await db.users.find_one({"id": user_id}, {
+        "_id": 0,
+        "password_hash": 0, "totp_secret": 0, "totp_backup_codes": 0,
+        "user_lockout_until": 0, "user_failed_login_count": 0,
+        "token_invalid_before": 0, "token_invalid_reason": 0,
+    })
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    hid = user.get("household_id")
+    acct = await db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0})
+    acct_id = (acct or {}).get("id")
+
+    bundle: Dict[str, list] = {}
+    bundle["user"] = [user]
+    if acct:
+        bundle["account"] = [acct]
+
+    for coll, field in SCOPED_COLLECTIONS:
+        if coll in ("revoked_tokens", "user_sessions", "admin_sessions", "admin_login_devices", "password_resets"):
+            continue  # session/auth metadata, not personal data
+        # Build the OR query
+        clauses: list[dict] = []
+        if field == "user_id":
+            clauses.append({"user_id": user_id})
+        elif field == "owner_user_id":
+            clauses.append({"owner_user_id": user_id})
+        elif field == "generated_by":
+            clauses.append({"generated_by": user_id})
+        elif field == "client_user_id":
+            clauses.append({"client_user_id": user_id})
+        elif field == "household_id" and hid:
+            clauses.append({"household_id": hid})
+        if acct_id:
+            clauses.append({"account_id": acct_id})
+        if not clauses:
+            continue
+        q = clauses[0] if len(clauses) == 1 else {"$or": clauses}
+        cur = db[coll].find(q, {"_id": 0})
+        rows = await cur.to_list(2000)
+        # Strip raw file bytes from documents, let the user re-download
+        # individual files via the existing `/documents/{id}/download`
+        # endpoint if they want the binaries.
+        for r in rows:
+            for k in ("file_b64", "image_b64", "audio_b64"):
+                if k in r:
+                    r[k] = f"[redacted, re-download via /api/documents/{r.get('id', '')}/download]"
+        if rows:
+            bundle[coll] = rows
+
+    return {
+        "exported_at": now_iso(),
+        "user_id": user_id,
+        "note": "This is the complete personal data Wayly holds about you under Australian Privacy Act APP 12. File contents (PDFs, photos, audio) are referenced by ID, re-download them individually if needed.",
+        "data": bundle,
+    }
+
+
+
+# ---------------------------------------------------------------------------
+# Stripe billing
+# ---------------------------------------------------------------------------
+PLAN_PRICES = {
+    "solo": {"amount": 19.00, "currency": "aud", "label": "Wayly Solo"},
+    "family": {"amount": 39.00, "currency": "aud", "label": "Wayly Family"},
+    "adviser": {"amount": 299.00, "currency": "aud", "label": "Wayly Adviser"},
+}
+
+
+class CheckoutBody(BaseModel):
+    plan: _LiteralType["solo", "family", "adviser"]
+    origin_url: str = Field(min_length=8, max_length=200)
+
+
+class StartTrialBody(BaseModel):
+    plan: _LiteralType["solo", "family", "adviser"]
+
+
+async def _user_had_trial(user_id: str) -> bool:
+    """Returns True if the user has previously started or completed a trial OR
+    has an existing paid Stripe subscription. Free-plan users with no history
+    are eligible for the 7-day trial."""
+    sub = await db.subscriptions.find_one(
+        {"user_id": user_id, "$or": [{"had_trial": True}, {"trial_ends_at": {"$ne": None}}]},
+        {"_id": 0, "id": 1},
+    )
+    return bool(sub)
+
+
+@api.get("/billing/trial-eligibility")
+async def trial_eligibility(user_id: str = Depends(get_current_user_id)):
+    """Fast lookup: is this user eligible for a free trial right now?"""
+    used = await _user_had_trial(user_id)
+    return {"eligible": not used, "trial_days": TRIAL_DAYS}
+
+
+@api.post("/billing/start-trial")
+async def start_trial(body: StartTrialBody, user_id: str = Depends(get_current_user_id)):
+    """Start a 7-day free trial for the requested plan WITHOUT charging the
+    user. Eligibility: the user must never have started a trial before (no
+    `had_trial=True` subscription record). After the trial ends, the user
+    falls back to Free unless they upgrade via /billing/checkout."""
+    if body.plan not in PLAN_PRICES:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    if await _user_had_trial(user_id):
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "trial_used", "message": "You've already used your free trial. Subscribe via Stripe Checkout to continue."},
+        )
+    now = datetime.now(timezone.utc)
+    trial_ends = now + timedelta(days=TRIAL_DAYS)
+    sub_doc = {
+        "id": new_id(),
+        "user_id": user_id,
+        "plan": body.plan,
+        "status": "trialing",
+        "had_trial": True,
+        "trial_ends_at": trial_ends.isoformat(),
+        "current_period_end": trial_ends.isoformat(),
+        "cancel_at_period_end": False,
+        "stripe_session_id": None,
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+    }
+    await db.subscriptions.insert_one(sub_doc)
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": body.plan}})
+    try:
+        u = await _get_user(user_id)
+        plan_label = PLAN_PRICES[body.plan]["label"]
+        amount = PLAN_PRICES[body.plan]["amount"]
+        from wayly_email_branding import format_au_date
+        trial_ends_au = format_au_date(trial_ends)
+        await email_service.email_tool_result(
+            to=u["email"], tool_name=f"Your {TRIAL_DAYS}-day {plan_label} trial has started",
+            headline=f"Welcome to your free {plan_label} trial",
+            body_html=(
+                f"<p>Hi {u.get('name') or ''},</p>"
+                f"<p>Your <strong>{TRIAL_DAYS}-day free trial</strong> of {plan_label} is now active. "
+                f"You have full access to every feature in the {body.plan.capitalize()} plan until "
+                f"<strong>{trial_ends_au}</strong>.</p>"
+                "<p><strong>What's included:</strong></p>"
+                "<ul>"
+                "<li>Unlimited Statement Decoder uses (PDF, Word, photos, paste)</li>"
+                "<li>All 9 AI tools, budget calculator, price checker, invoice checker, reassessment letter, family coordinator chat and more</li>"
+                "<li>Caregiver dashboard with stream-by-stream budget burn and lifetime cap tracker</li>"
+                + ("<li>Up to 5 family members + weekly Sunday digest + concierge support</li>" if body.plan == "family" else "")
+                + ("<li>Multi-client portal, manage up to 25 clients, review-pack export, priority support</li>" if body.plan == "adviser" else "")
+                + "</ul>"
+                f"<p>No payment required during the trial. After {trial_ends_au}, your account "
+                f"reverts to the Free plan unless you choose to subscribe at "
+                f"<strong>${amount:.2f}/month</strong> from <em>Settings → Plan & Billing</em>.</p>"
+                "<p><strong>Get started:</strong> upload your latest Support at Home statement at "
+                "<a href='https://wayly.com.au/app/statements/upload'>app/statements/upload</a> "
+                "and we will decode it for you.</p>"
+                "<p>Questions? Just reply to this email.</p>"
+                "<p>, The Wayly team</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Trial-start email failed: %s", e)
+    return {
+        "ok": True,
+        "plan": body.plan,
+        "trial_days": TRIAL_DAYS,
+        "trial_ends_at": trial_ends.isoformat(),
+        "subscription_status": "trialing",
+    }
+
+
+@api.post("/billing/checkout")
+async def billing_checkout(body: CheckoutBody, request: Request, user_id: str = Depends(get_current_user_id)):
+    if body.plan not in PLAN_PRICES:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Billing unavailable")
+    host_url = str(request.base_url).rstrip("/")
+    webhook_url = f"{host_url}/api/webhook/stripe"
+    stripe = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
+    spec = PLAN_PRICES[body.plan]
+    # Emulate a 7-day trial by charging the first month upfront but
+    # recording trial_ends_at = now + 7 days. If the user cancels within the
+    # window, we refund via the ops inbox.
+    had_trial = await db.subscriptions.find_one({"user_id": user_id, "had_trial": True})
+    trial_days = 0 if had_trial else TRIAL_DAYS
+    success_url = f"{body.origin_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{body.origin_url}/pricing?cancelled=1"
+    metadata = {"user_id": user_id, "plan": body.plan, "kind": "kindred_subscription", "trial_days": str(trial_days)}
+    # Payment methods: "card" auto-enables Apple Pay (Safari iOS/macOS) and
+    # Google Pay (Chrome/Android) wallets on Stripe-hosted Checkout. PayPal
+    # must be turned on in the Stripe Dashboard (Settings → Payment methods
+    # → PayPal); flip ENABLE_PAYPAL=true in backend/.env once activated.
+    payment_methods = ["card"]
+    if os.environ.get("ENABLE_PAYPAL", "").lower() in ("1", "true", "yes"):
+        payment_methods.append("paypal")
+    req = CheckoutSessionRequest(
+        amount=float(spec["amount"]),
+        currency=spec["currency"],
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=metadata,
+        payment_methods=payment_methods,
+    )
+    session = await stripe.create_checkout_session(req)
+    await db.payment_transactions.insert_one({
+        "session_id": session.session_id, "user_id": user_id, "plan": body.plan,
+        "amount": float(spec["amount"]), "currency": spec["currency"],
+        "metadata": metadata, "trial_days": trial_days,
+        "payment_status": "initiated", "ts": now_iso(),
+    })
+    return {"url": session.url, "session_id": session.session_id, "trial_days": trial_days}
+
+
+@api.get("/billing/status/{session_id}")
+async def billing_status(session_id: str, user_id: str = Depends(get_current_user_id)):
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Billing unavailable")
+    tx = await db.payment_transactions.find_one({"session_id": session_id, "user_id": user_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(status_code=404, detail="Session not found")
+    stripe_client = StripeCheckout(api_key=api_key, webhook_url="")
+    try:
+        chk = await stripe_client.get_checkout_status(session_id)
+    except Exception as e:
+        logger.warning("Stripe status check failed for %s: %s", session_id, e)
+        return {"status": "unknown", "payment_status": "unknown",
+                "amount_total": None, "currency": None, "plan": tx["plan"]}
+    payment_status = (chk.payment_status or "").lower()
+    if payment_status == "paid" and tx["payment_status"] != "paid":
+        plan = tx["plan"]
+        trial_days = int(tx.get("trial_days", 0))
+        now = datetime.now(timezone.utc)
+        trial_ends_at = (now + timedelta(days=trial_days)).isoformat() if trial_days else None
+        period_end = (now + timedelta(days=30)).isoformat()
+        await db.users.update_one({"id": user_id}, {"$set": {"plan": plan, "plan_period_end": period_end}})
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {"payment_status": "paid", "paid_at": now_iso()}},
+        )
+        await db.subscriptions.update_one(
+            {"user_id": user_id},
+            {"$set": {
+                "user_id": user_id, "plan": plan,
+                "status": "trialing" if trial_days else "active",
+                "had_trial": bool(trial_days),
+                "trial_ends_at": trial_ends_at,
+                "current_period_end": period_end,
+                "updated_at": now_iso(),
+                "cancel_at_period_end": False,
+            }},
+            upsert=True,
+        )
+        try:
+            u = await _get_user(user_id)
+            await email_service.email_tool_result(
+                to=u["email"],
+                tool_name=f"Welcome to {plan.capitalize()}",
+                headline=f"You are on Wayly {plan.capitalize()}.",
+                body_html=(f"<p>Thanks {u['name'].split(' ')[0]}. "
+                           + (f"Your {TRIAL_DAYS}-day refund window starts today." if trial_days else "Payment received, thanks for renewing.")
+                           + "</p><p>Next step: complete onboarding to set up your household.</p>"),
+            )
+        except Exception as e:
+            logger.warning("Welcome email failed: %s", e)
+    elif chk.status == "expired":
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {"payment_status": "expired"}},
+        )
+    return {
+        "status": chk.status, "payment_status": chk.payment_status,
+        "amount_total": chk.amount_total, "currency": chk.currency,
+        "plan": tx["plan"], "trial_days": tx.get("trial_days", 0),
+    }
+
+
+@api.get("/billing/subscription")
+async def my_subscription(user_id: str = Depends(get_current_user_id)):
+    sub = await db.subscriptions.find_one({"user_id": user_id}, {"_id": 0}, sort=[("updated_at", -1)])
+    if not sub:
+        return {"plan": "free", "status": "none"}
+    return sub
+
+
+@api.post("/billing/cancel")
+async def cancel_subscription(user_id: str = Depends(get_current_user_id)):
+    sub = await db.subscriptions.find_one({"user_id": user_id, "status": {"$in": ["trialing", "active"]}}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="No active plan to cancel")
+    await db.subscriptions.update_one(
+        {"user_id": user_id},
+        {"$set": {"cancel_at_period_end": True, "updated_at": now_iso()}},
+    )
+    # Plan continues until current_period_end; we don't flip plan here.
+    try:
+        u = await _get_user(user_id)
+        await email_service.email_tool_result(
+            to=u["email"], tool_name="Cancellation confirmed",
+            headline="Your Wayly plan is cancelled",
+            body_html=f"<p>We've cancelled auto-renewal. Your {sub.get('plan','').capitalize()} plan stays active until {sub.get('current_period_end','').split('T')[0] or 'the end of your current period'}. Contact us any time to reactivate.</p>",
+        )
+    except Exception:
+        pass
+    return {"ok": True, "cancel_at_period_end": True}
+
+
+@api.post("/billing/downgrade-to-free")
+async def downgrade_to_free(user_id: str = Depends(get_current_user_id)):
+    """Immediate downgrade to the Free plan. Marks subscription as canceled
+    right now (no end-of-period grace) and flips user.plan to 'free' so the
+    UI updates the moment the user reloads or refreshUser() runs."""
+    u = await _get_user(user_id)
+    prev_plan = u.get("plan") or "free"
+    if prev_plan == "free":
+        return {"ok": True, "unchanged": True, "plan": "free"}
+    sub = await db.subscriptions.find_one({"user_id": user_id}, {"_id": 0}, sort=[("updated_at", -1)])
+    now = now_iso()
+    if sub:
+        await db.subscriptions.update_one(
+            {"user_id": user_id, "id": sub.get("id")} if sub.get("id") else {"user_id": user_id},
+            {"$set": {"status": "canceled", "cancel_at_period_end": True, "canceled_at": now, "updated_at": now}},
+        )
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": "free"}})
+    try:
+        await email_service.email_tool_result(
+            to=u["email"], tool_name="Plan changed to Free",
+            headline="You are now on the Free plan",
+            body_html=(
+                f"<p>Hi {u.get('name') or ''},</p>"
+                f"<p>You've been downgraded from <strong>{prev_plan.capitalize()}</strong> to the <strong>Free</strong> plan, effective immediately.</p>"
+                "<p><strong>What changes:</strong> the Statement Decoder remains free with one use per day. The other 7 AI tools, family members, weekly digest, and concierge support are no longer available on your account.</p>"
+                "<p>You can re-subscribe any time from <em>Settings → Plan & Billing</em>. Any household data, statements, and audit log entries you've already saved are kept and become available again as soon as you upgrade.</p>"
+                "<p>, The Wayly team</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Plan-change email failed: %s", e)
+    return {"ok": True, "plan": "free", "previous_plan": prev_plan}
+
+
+class UpgradeBody(BaseModel):
+    plan: _LiteralType["solo", "family", "adviser"]
+
+
+@api.post("/billing/upgrade")
+async def upgrade_downgrade(body: UpgradeBody, user_id: str = Depends(get_current_user_id)):
+    sub = await db.subscriptions.find_one({"user_id": user_id, "status": {"$in": ["trialing", "active"]}}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=400, detail="No active plan , start one from /pricing")
+    if sub.get("plan") == body.plan:
+        return {"ok": True, "unchanged": True}
+    prev_plan = sub.get("plan") or "free"
+    # Defense in depth: block Family→Solo when account has >1 active participant.
+    if prev_plan == "family" and body.plan == "solo":
+        acct = await db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0, "id": 1})
+        if acct:
+            active_count = await db.participants.count_documents({"account_id": acct["id"], "status": "ACTIVE"})
+            if active_count > 1:
+                raise HTTPException(status_code=409, detail={
+                    "code": "remove_participants_first",
+                    "message": f"Solo includes 1 participant. You currently have {active_count}. Remove the extras (or downgrade add-ons) before switching to Solo.",
+                    "active_participants": active_count,
+                })
+    # Simple swap; bill difference on next cycle.
+    await db.subscriptions.update_one({"user_id": user_id}, {"$set": {"plan": body.plan, "updated_at": now_iso()}})
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": body.plan}})
+    try:
+        u = await _get_user(user_id)
+        direction = "upgraded" if (prev_plan == "solo" and body.plan == "family") else "switched"
+        await email_service.email_tool_result(
+            to=u["email"], tool_name=f"Plan {direction} to {body.plan.capitalize()}",
+            headline=f"Your plan is now {body.plan.capitalize()}",
+            body_html=(
+                f"<p>Hi {u.get('name') or ''},</p>"
+                f"<p>You've {direction} from <strong>{prev_plan.capitalize()}</strong> to <strong>{body.plan.capitalize()}</strong>, effective immediately.</p>"
+                + (
+                    "<p>The Family plan unlocks up to 5 household members, the weekly digest, and concierge support. Add family from <em>Settings → Family members</em>.</p>"
+                    if body.plan == "family"
+                    else "<p>The Solo plan keeps your full Statement Decoder, AI tools, and dashboard active for one caregiver.</p>"
+                )
+                + "<p>The price difference is reflected on your next billing cycle. Manage your plan any time at <em>Settings → Plan & Billing</em>.</p>"
+                "<p>, The Wayly team</p>"
+            ),
+        )
+    except Exception as e:
+        logger.warning("Plan-change email failed: %s", e)
+    return {"ok": True, "plan": body.plan, "previous_plan": prev_plan}
+
+
+@api.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Phase 6 hardened Stripe webhook:
+      • Verifies the Stripe-Signature header. Unsigned / mis-signed → 400.
+      • Idempotent on `event.id` via Redis (24h hot path) + Mongo (durable
+        history). A replayed event is a no-op (returns `{ok:true,deduped:true}`).
+      • Every event is persisted into `stripe_webhook_events` for audit /
+        admin visibility / DLQ.
+    """
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        return {"ok": False, "error": "stripe_disabled"}
+
+    body = await request.body()
+    sig = request.headers.get("Stripe-Signature", "")
+    received_at = datetime.now(timezone.utc).isoformat()
+
+    # 1. Signature verification, reject anything we can't authenticate.
+    if not sig:
+        try:
+            await db.stripe_webhook_events.insert_one({
+                "received_at": received_at, "result": "rejected_no_signature",
+                "raw_len": len(body or b""),
+            })
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail="Missing Stripe-Signature header")
+
+    try:
+        webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+        stripe = StripeCheckout(api_key=api_key, webhook_secret=webhook_secret, webhook_url="")
+        ev = await stripe.handle_webhook(body, sig)
+    except Exception as e:
+        # `handle_webhook` raises on bad signatures.
+        logger.warning("Stripe webhook signature verification failed: %s", e)
+        try:
+            await db.stripe_webhook_events.insert_one({
+                "received_at": received_at, "result": "rejected_bad_signature",
+                "raw_len": len(body or b""), "error": str(e)[:200],
+            })
+        except Exception:
+            pass
+        raise HTTPException(status_code=400, detail="Invalid Stripe signature")
+
+    # Some emergentintegrations builds expose event.id; fall back to a hash
+    # of the body so we still dedupe replays even if the field is missing.
+    event_id = getattr(ev, "event_id", None) or getattr(ev, "id", None)
+    if not event_id:
+        import hashlib as _hash
+        event_id = "sha256:" + _hash.sha256(body).hexdigest()[:32]
+
+    # 2. Idempotency, Redis SET NX EX 24h (hot path) + Mongo (durable).
+    redis_marked = False
+    try:
+        import redis.asyncio as _redis_async
+        _r = _redis_async.from_url(os.environ["REDIS_URL"])
+        # `set(..., nx=True)` returns True only the first time.
+        redis_marked = bool(await _r.set(f"stripe:evt:{event_id}", "1", nx=True, ex=86400))
+        try:
+            await _r.aclose()
+        except Exception:
+            pass
+    except Exception as e:
+        logger.warning("Redis idempotency check failed (continuing): %s", e)
+
+    # Mongo dedupe, if we've already processed this event_id with result=processed,
+    # this is a no-op (defence even if Redis was unavailable).
+    existing = await db.stripe_webhook_events.find_one(
+        {"event_id": event_id, "result": "processed"},
+        {"_id": 0, "event_id": 1, "processed_at": 1},
+    )
+    if existing or not redis_marked:
+        try:
+            await db.stripe_webhook_events.insert_one({
+                "event_id": event_id, "received_at": received_at,
+                "event_type": ev.event_type, "result": "deduped",
+                "previously_processed_at": (existing or {}).get("processed_at"),
+            })
+        except Exception:
+            pass
+        return {"ok": True, "deduped": True}
+
+    # 3. Process the event (legacy logic preserved, wrapped with timing + status capture).
+    import time as _time
+    _t0 = _time.time()
+    handler_result = "no_op"
+    handler_error: Optional[str] = None
+    try:
+        if (ev.payment_status or "").lower() == "paid" and ev.session_id:
+            tx = await db.payment_transactions.find_one({"session_id": ev.session_id})
+            if tx and tx.get("payment_status") != "paid":
+                tx_kind = (tx.get("kind") or "")
+                md = tx.get("metadata") or {}
+                if tx_kind in ("plan_upgrade", "participant_addon"):
+                    from batch3_billing import handle_batch3_paid_event
+                    try:
+                        await handle_batch3_paid_event(md, ev.session_id)
+                        handler_result = f"paid:{tx_kind}"
+                    except Exception as e:
+                        logger.warning("Batch3 paid-event handler failed: %s", e)
+                        handler_result = "paid_handler_error"
+                        handler_error = str(e)[:300]
+                else:
+                    await db.users.update_one({"id": tx["user_id"]}, {"$set": {"plan": tx["plan"]}})
+                    handler_result = "paid:legacy_plan"
+                await db.payment_transactions.update_one(
+                    {"session_id": ev.session_id},
+                    {"$set": {"payment_status": "paid", "paid_at": now_iso(), "webhook_event": ev.event_type}},
+                )
+        # Mobile push trigger, failed payment
+        if (ev.payment_status or "").lower() in ("failed", "unpaid", "requires_payment_method") and ev.session_id:
+            tx = await db.payment_transactions.find_one({"session_id": ev.session_id}) or {}
+            try:
+                import push_service as _push
+                from lib.jobs import run_async as _run_async
+                user = await db.users.find_one({"id": tx.get("user_id")}, {"_id": 0, "email": 1}) or {}
+                _run_async(_push.notify_role(
+                    "payment_failed",
+                    title="💳 Payment failed",
+                    body=f"{user.get('email') or 'A customer'}, ${tx.get('amount', '')} {tx.get('currency', 'AUD').upper()}",
+                    data={"type": "payment_failed", "session_id": ev.session_id, "user_id": tx.get("user_id")},
+                ), name="push.payment_failed", max_attempts=2)
+                handler_result = "failed_push"
+            except Exception:
+                pass
+    except Exception as e:
+        logger.exception("Stripe webhook handler exception")
+        handler_result = "handler_exception"
+        handler_error = str(e)[:300]
+
+    # 4. Persist the durable history row.
+    try:
+        await db.stripe_webhook_events.insert_one({
+            "event_id": event_id,
+            "received_at": received_at,
+            "processed_at": datetime.now(timezone.utc).isoformat(),
+            "event_type": ev.event_type,
+            "payment_status": (ev.payment_status or None),
+            "session_id": getattr(ev, "session_id", None),
+            "result": "processed",
+            "handler_result": handler_result,
+            "handler_error": handler_error,
+            "duration_ms": int((_time.time() - _t0) * 1000),
+        })
+    except Exception:
+        pass
+
+    return {"ok": True, "event_id": event_id, "result": handler_result}
+
+
+from admin_routes import admin as admin_router
+from admin_auth import router as admin_auth_router
+from admin_phase_d import phase_d_admin, phase_d_user
+from admin_phase_e import phase_e, phase_e_public, phase_e_invite_public
+from admin_phase_e2 import cms_admin, cms_public
+from admin_devices import devices_router as admin_devices_router
+from seo_routes import seo_public as seo_public_router
+from adviser_routes import adviser_router, adviser_public_router, init_adviser_routes
+from documents_routes import documents_router, init_documents_routes
+from extended_routes import extended_router, init_extended_routes
+from batch2_routes import batch2_router, init_batch2_routes, migrate_existing_households
+from batch3_routes import (
+    batch3_router, init_batch3_routes, migrate_batch3, run_purge_job,
+    check_free_tool_usage, record_free_tool_usage,
+)
+from batch3_billing import billing_router as batch3_billing_router, init_billing_routes
+from participant_profile import (
+    participant_profile_router,
+    init_participant_profile_routes,
+    migrate_participants_to_v2,
+)
+from routes.notifications import (
+    notification_router,
+    init_notification_routes,
+)
+from routes.email_verification import (
+    email_verification_router,
+    init_email_verification_routes,
+    send_verification_email_for,
+    deadline_for,
+    is_past_deadline,
+    days_remaining,
+    migrate_existing_users_verified,
+)
+from routes.email_change import (
+    email_change_router,
+    init_email_change_routes,
+    ensure_email_change_indexes,
+)
+from routes.participant_share import (
+    participant_share_router,
+    init_participant_share_routes,
+    ensure_share_link_indexes,
+)
+from routes.onboarding_draft import (
+    onboarding_draft_router,
+    init_onboarding_draft_routes,
+    ensure_onboarding_draft_indexes,
+)
+from routes.ppc_milestones import (
+    ppc_milestones_router,
+    init_ppc_milestone_routes,
+    ensure_ppc_milestone_indexes,
+)
+from routes.persona import persona_router, init_persona_routes
+from routes.core1 import core1_router, init_core1_routes, ensure_core1_indexes, _assert_access as core1_assert_access, _write_timeline_event as core1_write_timeline
+from routes.loop1 import loop1_router, init_loop1_routes, ensure_loop1_indexes, _open_case as loop1_open_case, scan_participant_for_cases as loop1_scan_participant, run_lca1_scan_for_participant as loop1_lca1_scan
+from routes.loop1_addons import addons_router as loop1_addons_router, init_addons as init_loop1_addons
+from routes.loop1_extras import extras_router as loop1_extras_router, init_extras as init_loop1_extras, start_cron as loop1_start_cron, stop_cron as loop1_stop_cron
+from routes.lca1 import lca1_router, init_lca1, ensure_lca1_indexes, build_digest_for_user as lca1_build_digest, start_lca1_cron
+from routes.sd3 import sd3_router, init_sd3
+from routes.insights import insights_router, init_insights
+from routes.payments import payments_router, stripe_webhook_router, init_payments
+from routes.payments_advanced import router as payments_advanced_router, init as init_payments_advanced, run_reconciliation_once
+from routes.ce3 import ce3_router, init_ce3_routes, ensure_ce3_indexes
+from routes.cpr2 import cpr2_router, init_cpr2_routes, ensure_cpr2_indexes, cpr2_on_lca1_publish
+from routes.cmp1 import cmp1_router, init_cmp1_routes, ensure_cmp1_indexes
+from routes.ic2 import ic2_router, init_ic2_routes, ensure_ic2_indexes
+from routes.ppc3 import ppc3_router, init_ppc3_routes, ensure_ppc3_indexes
+from routes.cs1 import cs1_router, init_cs1_routes, ensure_cs1_indexes
+from routes.aw2 import aw2_router, init_aw2_routes, ensure_aw2_indexes
+from routes.psw1 import psw1_router, init_psw1_routes, ensure_psw1_indexes
+from routes.csc2 import csc2_router, init_csc2_routes, ensure_csc2_indexes
+from routes.athm1 import athm1_router, init_athm1_routes, ensure_athm1_indexes
+from routes.chsp1 import chsp1_router, init_chsp1_routes, ensure_chsp1_indexes
+from routes.bc2 import bc2_router, init_bc2_routes, ensure_bc2_indexes
+from routes.sdl1 import sdl1_router, init_sdl1_routes, ensure_sdl1_indexes
+from routes.fc2 import fc2_router, init_fc2_routes, ensure_fc2_indexes
+from routes.lf2 import lf2_router, init_lf2_routes, ensure_lf2_indexes
+from lib.persona.migration import backfill_persona
+from batch3_routes import _account_for_user as _batch3_account_for_user  # noqa: E402
+init_adviser_routes(
+    db=db,
+    require_adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
+    max_clients_for=lambda plan: ADVISER_MAX_CLIENTS.get((plan or "").lower(), 0),
+)
+
+
+async def _docvault_decode_statement(
+    *, household_id: str, owner_user_id: str, file_bytes: bytes,
+    filename: str, mimetype: str, source_document_id: str,
+):
+    """Bridge: when a vault doc with category='statement' is sent to the
+    decoder, run the same pipeline /api/statements/upload uses and return
+    the resulting job_id. The frontend polls /api/statements/upload-job/{id}
+    just like the normal upload path."""
+    import base64 as _b64
+    from document_extract import (
+        extract_document, UnsupportedFormatError, FileTooLargeError,
+        CorruptFileError, PasswordProtectedError,
+    )
+    try:
+        text, _input_method, _page_count, _warnings = await extract_document(filename or "", file_bytes)
+    except UnsupportedFormatError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileTooLargeError as e:
+        mb = e.limit_bytes // (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"This {e.ext} file exceeds the {mb} MB limit.")
+    except PasswordProtectedError:
+        raise HTTPException(status_code=400, detail="This PDF is password-protected.")
+    except CorruptFileError as e:
+        raise HTTPException(status_code=400, detail=f"File appears damaged: {e}")
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract text from file.")
+    owner = await _get_user(owner_user_id)
+    file_b64 = _b64.b64encode(file_bytes).decode("ascii")
+    job_id = _submit_upload_job(
+        text, filename, household_id, owner_user_id, owner["name"],
+        file_b64=file_b64, file_mimetype=mimetype, file_size=len(file_bytes),
+    )
+    return {"job_id": job_id, "status": "pending", "source_document_id": source_document_id}
+
+
+init_documents_routes(
+    db=db,
+    user_dep=_user_from_request_required,
+    decode_statement=_docvault_decode_statement,
+)
+init_extended_routes(db=db, user_dep=_user_from_request_required)
+init_batch2_routes(
+    db=db,
+    user_dep=_user_from_request_required,
+    adviser_dep=require_plan("adviser", feature_label="The Adviser portal"),
+    audit_log=_audit,
+)
+init_batch3_routes(db=db, user_dep=_user_from_request_required)
+init_billing_routes(db=db, user_dep=_user_from_request_required)
+init_participant_profile_routes(
+    db=db,
+    user_dep=_user_from_request_required,
+    account_for_user=_batch3_account_for_user,
+)
+init_notification_routes(
+    db=db,
+    get_user_helper=_get_user,
+    now_iso_helper=now_iso,
+    default_prefs=DEFAULT_NOTIFICATION_PREFS,
+    categories=NOTIFICATION_CATEGORIES,
+)
+init_email_verification_routes(
+    db=db,
+    frontend_url=(
+        os.environ.get("FRONTEND_URL")
+        or os.environ.get("PUBLIC_APP_URL")
+        or "https://wayly.com.au"
+    ),
+    grace_days=7,
+    token_ttl_hours=24,
+)
+init_email_change_routes(
+    db=db,
+    frontend_url=(
+        os.environ.get("FRONTEND_URL")
+        or os.environ.get("PUBLIC_APP_URL")
+        or "https://wayly.com.au"
+    ),
+    token_ttl_hours=24,
+)
+init_participant_share_routes(
+    db=db,
+    user_dep=_user_from_request_required,
+    account_for_user=_batch3_account_for_user,
+    frontend_url=(
+        os.environ.get("FRONTEND_URL")
+        or os.environ.get("PUBLIC_APP_URL")
+        or "https://wayly.com.au"
+    ),
+)
+init_onboarding_draft_routes(db=db, user_dep=_user_from_request_required)
+init_ppc_milestone_routes(db=db, user_dep=_user_from_request_required)
+init_persona_routes(db=db, user_dep=_user_from_request_required)
+init_core1_routes(db=db, user_dep=_user_from_request_required)
+init_loop1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline)
+try:
+    from email_service import send_email as _send_email_fn
+except Exception:
+    _send_email_fn = None
+init_loop1_addons(
+    db=db,
+    user_dep=_user_from_request_required,
+    core1_assert_access=core1_assert_access,
+    loop1_open_case=loop1_open_case,
+    loop1_scan_participant=loop1_scan_participant,
+    loop1_lca1_scan_for_participant=loop1_lca1_scan,
+    send_email=_send_email_fn,
+)
+init_loop1_extras(db=db, user_dep=_user_from_request_required, lca1_scan_for_participant=loop1_lca1_scan, send_email=_send_email_fn, build_digest_for_user=lca1_build_digest)
+init_lca1(db=db, user_dep=_user_from_request_required, core1_write_timeline_event=core1_write_timeline)
+init_sd3(db=db, user_dep=_user_from_request_required, core1_write_timeline_event=core1_write_timeline, core1_assert_access=core1_assert_access, loop1_open_case=loop1_open_case)
+init_insights(db=db, user_dep=_user_from_request_required)
+init_payments(db=db, user_dep=_user_from_request_required)
+init_payments_advanced(db=db, user_dep=_user_from_request_required)
+init_ce3_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline, loop1_open_case=loop1_open_case)
+init_cpr2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline)
+init_cmp1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline, loop1_open_case=loop1_open_case)
+init_ic2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline, loop1_open_case=loop1_open_case)
+init_ppc3_routes(db=db, user_dep=_user_from_request_required, core1_write_timeline=core1_write_timeline)
+init_cs1_routes(db=db, user_dep=_user_from_request_required, core1_write_timeline=core1_write_timeline)
+init_aw2_routes(db=db, user_dep=_user_from_request_required, core1_write_timeline=core1_write_timeline)
+init_psw1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline, loop1_open_case=loop1_open_case)
+init_csc2_routes(db=db, user_dep=_user_from_request_required, core1_write_timeline=core1_write_timeline)
+init_athm1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access)
+init_chsp1_routes(db=db, user_dep=_user_from_request_required, loop1_open_case=loop1_open_case)
+init_bc2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access)
+init_sdl1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline, loop1_open_case=loop1_open_case)
+init_fc2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, loop1_open_case=loop1_open_case)
+try:
+    from email_service import send_email as _lf2_send_email
+except Exception:
+    _lf2_send_email = None
+init_lf2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, send_email=_lf2_send_email)
+api.include_router(admin_auth_router)
+api.include_router(admin_router)
+api.include_router(phase_d_admin)
+api.include_router(phase_d_user)
+api.include_router(phase_e)
+api.include_router(phase_e_public)
+api.include_router(phase_e_invite_public)
+api.include_router(cms_admin)
+api.include_router(cms_public)
+api.include_router(admin_devices_router)
+api.include_router(seo_public_router)
+api.include_router(adviser_router)
+api.include_router(adviser_public_router)
+api.include_router(documents_router)
+api.include_router(extended_router)
+api.include_router(participant_profile_router)
+api.include_router(notification_router)
+api.include_router(email_verification_router)
+api.include_router(email_change_router)
+api.include_router(participant_share_router)
+api.include_router(onboarding_draft_router)
+api.include_router(ppc_milestones_router)
+api.include_router(persona_router)
+api.include_router(core1_router)
+api.include_router(loop1_router)
+api.include_router(loop1_addons_router)
+api.include_router(loop1_extras_router)
+api.include_router(lca1_router)
+api.include_router(sd3_router)
+api.include_router(insights_router)
+api.include_router(payments_router)
+api.include_router(payments_advanced_router)
+api.include_router(stripe_webhook_router)
+api.include_router(ce3_router)
+api.include_router(cpr2_router)
+api.include_router(cmp1_router)
+api.include_router(ic2_router)
+api.include_router(ppc3_router)
+api.include_router(cs1_router)
+api.include_router(aw2_router)
+api.include_router(psw1_router)
+api.include_router(csc2_router)
+api.include_router(athm1_router)
+api.include_router(chsp1_router)
+api.include_router(bc2_router)
+api.include_router(sdl1_router)
+api.include_router(fc2_router)
+api.include_router(lf2_router)
+api.include_router(batch2_router)
+api.include_router(batch3_router)
+api.include_router(batch3_billing_router)
+
+# Health / metrics / status routes (extracted from server.py in Feb 2026)
+try:
+    from routes.health import build_health_router
+    api.include_router(build_health_router(
+        db=db,
+        mongo_client=client,
+        admin_dep=get_current_admin_id,
+        app_started_at=APP_STARTED_AT,
+        versions={
+            "build": APP_BUILD_VERSION,
+            "anomaly_engine": ANOMALY_ENGINE_VERSION,
+            "document_extract": DOCUMENT_EXTRACT_VERSION,
+        },
+    ))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.health failed to load: {_e}")
+
+# CSC-1 v1 (Classification Self-Check rebuild, Feb 2026)
+try:
+    from routes.csc import build_csc_router
+    api.include_router(build_csc_router(
+        db=db,
+        require_paid_plan=_require_paid_plan,
+        user_dep_optional=_user_from_request,
+    ))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.csc failed to load: {_e}")
+
+# OJ-1 v1.1 Onboarding Journey (guided sequenced flow, Feb 2026)
+try:
+    from routes.journeys import build_journeys_router
+    api.include_router(build_journeys_router(db=db, user_dep=_user_from_request))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.journeys failed to load: {_e}")
+
+# QP-1 v1 (Quarterly Pacing MVP, Feb 2026)
+try:
+    from routes.qp1 import build_qp1_router
+    api.include_router(build_qp1_router(db=db, user_dep=_user_from_request))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.qp1 failed to load: {_e}")
+
+# INV-1 v1.2 WS16 · Tool Registry (public GET /api/tools)
+try:
+    from routes.tools import build_tools_router
+    api.include_router(build_tools_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.tools failed to load: {_e}")
+
+# INV-1 v1.2 WS1 · Invoice Checker upload + retrieve (Phase 1 skeleton)
+try:
+    from routes.invoices import build_invoices_router
+    api.include_router(build_invoices_router(
+        db=db,
+        user_dep=_user_from_request,
+        require_household=_require_household,
+        resolve_active_participant=_resolve_active_participant,
+    ))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.invoices failed to load: {_e}")
+
+# In-app nudges, dismissible dashboard prompts (Family second-participant, etc.)
+try:
+    from routes.nudges import build_nudges_router
+    api.include_router(build_nudges_router(
+        db=db,
+        user_dep=_user_from_request,
+    ))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.nudges failed to load: {_e}")
+
+# Admin Phase B - P0 nav pages (Flagged, Review Queue, Analytics, Funnels,
+# Cohorts) + shared /analytics rollup surface.
+try:
+    from routes.admin_phase_b import build_admin_phase_b_router
+    api.include_router(build_admin_phase_b_router(
+        db=db,
+        admin_dep=get_current_admin_id,
+    ))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.admin_phase_b failed to load: {_e}")
+
+# Decoded statement exports, server-rendered PDF + CSV (web/mobile parity)
+try:
+    from routes.statements import build_statements_router
+    api.include_router(build_statements_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.statements failed to load: {_e}")
+
+# Reports, 8 PDF reports + in-app preview
+try:
+    from reports_routes import router as reports_router
+    api.include_router(reports_router)
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"reports_routes failed to load: {_e}")
+
+# Support ticketing (SUP-0/1/2/3), canonical Wayly support flow
+try:
+    from routes.support import build_support_router
+    api.include_router(build_support_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.support failed to load: {_e}")
+
+# Participant Contacts (UI-1 §8)
+try:
+    from routes.participant_contacts import build_contacts_router
+    api.include_router(build_contacts_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.participant_contacts failed to load: {_e}")
+
+# CPR-1 Care Plan Reviewer (foundation iteration)
+try:
+    from routes.care_plans import build_care_plans_router
+    api.include_router(build_care_plans_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.care_plans failed to load: {_e}")
+
+# Switch Provider PDF download (UI-1 §9 follow-up)
+try:
+    from routes.switch_provider_pdf import build_switch_pdf_router
+    api.include_router(build_switch_pdf_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.switch_provider_pdf failed to load: {_e}")
+
+# PPC-1 v2 Provider Price Checker rebuild
+try:
+    from routes.price_check_v2 import build_ppc_v2_router
+    api.include_router(build_ppc_v2_router(
+        db=db,
+        get_current_user_id=get_current_user_id,
+        get_current_user_id_optional=get_current_user_id_optional,
+        require_paid_plan=_require_paid_plan,
+    ))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.price_check_v2 failed to load: {_e}")
+
+# LF-1 v1.2 Letters & Follow-ups (supersedes RLG-1)
+try:
+    from routes.lf1 import build_lf1_router
+    api.include_router(build_lf1_router(
+        db=db,
+        get_current_user_id=get_current_user_id,
+        get_current_user_id_optional=get_current_user_id_optional,
+        require_paid_plan=_require_paid_plan,
+    ))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.lf1 failed to load: {_e}")
+
+# CE-2 v1.1 Contribution Estimator rebuild (Phase 1, calculation engine only)
+try:
+    from routes.ce2 import build_ce2_router
+    api.include_router(build_ce2_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.ce2 failed to load: {_e}")
+
+# Smoke-test status, wires the GH Actions smoke runner into /api/admin/smoke-status.
+try:
+    from smoke_status import attach_router as _attach_smoke
+    _attach_smoke(api, db, get_current_admin_id)
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"smoke_status failed to load: {_e}")
+
+
+# Program reference, Phase 1 scenario engine. Public snapshot for the
+# front-end loader + admin mutation + history audit.
+try:
+    import program_reference as _pr_mod
+
+    @api.get("/program-reference/public", tags=["reference"])
+    async def _program_reference_public():
+        """Public-safe snapshot of current Support at Home figures. Used by
+        the front-end (Onboarding, Budget Calculator, Demo hero) so any
+        indexation update propagates without redeploy. No participant or
+        billing data here."""
+        try:
+            return _pr_mod.public_snapshot()
+        except Exception as e:
+            logger.warning("program_reference public snapshot failed: %s", e)
+            raise HTTPException(503, "Reference data temporarily unavailable")
+
+    @api.get("/admin/program-reference", tags=["admin"])
+    async def _program_reference_admin_list(
+        key: Optional[str] = None,
+        _admin_id: str = Depends(get_current_admin_id),
+    ):
+        """Admin-only, list all rows for one key (or all keys when no key is
+        passed) so the on-call can verify which figures are in force."""
+        if key:
+            rows = []
+            for eff_from, eff_to, value, row_id in (_pr_mod._CACHE.get(key) or []):
+                rows.append({"key": key, "value": value,
+                             "effective_from": eff_from,
+                             "effective_to": eff_to, "row_id": row_id})
+            return {"key": key, "rows": rows}
+        # All keys: return current-effective row for each
+        from datetime import datetime as _dt, timezone as _tz
+        today = _dt.now(_tz.utc).date().isoformat()
+        out = {}
+        for k, rows in _pr_mod._CACHE.items():
+            for eff_from, eff_to, value, row_id in rows:
+                if eff_from <= today and (eff_to is None or today < eff_to):
+                    out[k] = {"value": value, "effective_from": eff_from,
+                              "effective_to": eff_to, "row_id": row_id}
+                    break
+        return {"as_of": today, "current": out}
+
+    class _ProgramReferenceSet(BaseModel):
+        key: str
+        value: Any
+        effective_from: str  # YYYY-MM-DD
+        source_url: Optional[str] = None
+        notes: Optional[str] = None
+
+    @api.post("/admin/program-reference", tags=["admin"])
+    async def _program_reference_admin_set(
+        body: _ProgramReferenceSet,
+        admin_id: str = Depends(get_current_admin_id),
+    ):
+        """Admin-only, insert a new effective row, closes the previous one.
+        Refreshes the cache on success. Use this on indexation events."""
+        row = await _pr_mod.set_value(
+            body.key, body.value, body.effective_from,
+            source_url=body.source_url, notes=body.notes, created_by=admin_id,
+        )
+        return {"ok": True, "row": row}
+
+    @api.get("/admin/program-reference/history", tags=["admin"])
+    async def _program_reference_admin_history(
+        key: Optional[str] = None,
+        _admin_id: str = Depends(get_current_admin_id),
+    ):
+        """Admin-only, full insert/close history for one key or all."""
+        return {"items": await _pr_mod.list_history(key)}
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"program_reference routes failed to load: {_e}")
+
+
+# Scenario engine, Phase 2: lifecycle state machine + parallel flags + audit.
+# These are caregiver-facing endpoints, gated by ``assert_participant_access``.
+try:
+    from scenario_engine import lifecycle as _se_lifecycle
+    from scenario_engine import flags as _se_flags
+    from security_utils import assert_participant_access as _assert_pa  # type: ignore
+
+    @api.get("/scenario/participants/{participant_id}/state", tags=["scenario"])
+    async def _scenario_state(
+        participant_id: str,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Return current lifecycle_state + visible flags for the participant.
+        Restricted flags (e.g. SAFEGUARDING_ALERT) are stripped for non-owner
+        readers."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "lifecycle_state": 1,
+                                             "flags": 1, "account_id": 1,
+                                             "lifecycle_state_updated_at": 1})
+        if p is None:
+            raise HTTPException(404, "participant not found")
+        flags = await _se_flags.get_flags(db, participant_id,
+                                          requesting_user_id=user_id,
+                                          account_id=p.get("account_id"))
+        return {
+            "participant_id": participant_id,
+            "lifecycle_state": p.get("lifecycle_state"),
+            "lifecycle_state_updated_at": p.get("lifecycle_state_updated_at"),
+            "flags": flags,
+        }
+
+    class _LifecycleTransitionBody(BaseModel):
+        to_state: str
+        reason: Optional[str] = None
+        source: Optional[Dict[str, Any]] = None
+
+    @api.post("/scenario/participants/{participant_id}/lifecycle-transition", tags=["scenario"])
+    async def _scenario_lifecycle_transition(
+        participant_id: str,
+        body: _LifecycleTransitionBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Apply a lifecycle transition. Validates against the transition map
+        and writes an audited row. Rejected attempts also write an audit
+        row (kind=lifecycle_transition_rejected) so abuse is visible."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        u = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+        try:
+            res = await _se_lifecycle.apply_transition(
+                db, participant_id=participant_id, account_id=None,
+                to_state=body.to_state, actor_id=user_id,
+                actor_name=(u or {}).get("name"),
+                reason=body.reason, source=body.source,
+            )
+            return {"ok": True, **res}
+        except _se_lifecycle.TransitionRejected as e:
+            raise HTTPException(409, str(e))
+
+    class _FlagBody(BaseModel):
+        flag: str
+        value: bool
+        payload: Optional[Dict[str, Any]] = None
+        reason: Optional[str] = None
+        source: Optional[Dict[str, Any]] = None
+
+    @api.post("/scenario/participants/{participant_id}/flags", tags=["scenario"])
+    async def _scenario_set_flag(
+        participant_id: str,
+        body: _FlagBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Set or clear a parallel flag. SAFEGUARDING_ALERT may only be set by
+        account owners, non-owners get 403."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "account_id": 1})
+        if p is None:
+            raise HTTPException(404, "participant not found")
+        if body.flag in _se_flags.RESTRICTED_VISIBILITY:
+            is_owner = await _se_flags.is_account_owner(
+                db, user_id=user_id, account_id=p.get("account_id"))
+            if not is_owner:
+                raise HTTPException(403, "Only account owners can set this flag")
+        u = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+        try:
+            res = await _se_flags.set_flag(
+                db, participant_id=participant_id, account_id=p.get("account_id"),
+                flag=body.flag, value=body.value, payload=body.payload,
+                actor_id=user_id, actor_name=(u or {}).get("name"),
+                reason=body.reason, source=body.source,
+            )
+            return {"ok": True, **res}
+        except _se_flags.FlagRejected as e:
+            raise HTTPException(400, str(e))
+
+    @api.get("/scenario/participants/{participant_id}/state-audit", tags=["scenario"])
+    async def _scenario_state_audit(
+        participant_id: str,
+        limit: int = 50,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Return the participant's state-change history. Restricted flag
+        changes are stripped for non-owner readers."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        rows = await _se_lifecycle.get_state_audit(db, participant_id, limit=limit)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "account_id": 1})
+        is_owner = await _se_flags.is_account_owner(
+            db, user_id=user_id, account_id=(p or {}).get("account_id"))
+        if not is_owner:
+            visible: List[Dict[str, Any]] = []
+            for r in rows:
+                if r.get("kind") == "flag_change":
+                    tv = r.get("to_value") or {}
+                    fv = r.get("from_value") or {}
+                    if any(k in _se_flags.RESTRICTED_VISIBILITY for k in
+                           list(tv.keys()) + list(fv.keys())):
+                        continue
+                visible.append(r)
+            rows = visible
+        return {"participant_id": participant_id, "items": rows}
+
+    @api.get("/scenario/lifecycle-map", tags=["scenario"])
+    async def _scenario_lifecycle_map():
+        """Public read-only map of states and their allowed transitions. Used
+        by the timeline UI to render the 'what can happen next' picker."""
+        return {
+            "states": _se_lifecycle.LIFECYCLE_STATES,
+            "terminal": list(_se_lifecycle.TERMINAL_STATES),
+            "initial": list(_se_lifecycle.INITIAL_STATES),
+            "transitions": {k: sorted(v) for k, v in
+                            _se_lifecycle.ALLOWED_TRANSITIONS.items()},
+            "flag_groups": _se_flags.FLAG_GROUPS,
+            "restricted_flags": list(_se_flags.RESTRICTED_VISIBILITY),
+            "payload_keys": _se_flags.FLAG_PAYLOAD_KEYS,
+        }
+
+    # ---- Phase 3: event capture --------------------------------------------
+    from scenario_engine import events as _se_events
+
+    @api.get("/scenario/event-types", tags=["scenario"])
+    async def _scenario_event_types():
+        """Public event taxonomy, used by the caregiver capture UI."""
+        return _se_events.taxonomy()
+
+    class _EventCaptureBody(BaseModel):
+        event_type: str
+        sub_type: Optional[str] = None
+        effective_date: str  # YYYY-MM-DD
+        trigger_source: str = "caregiver"
+        note: Optional[str] = None
+        payload: Optional[Dict[str, Any]] = None
+        source: Optional[Dict[str, Any]] = None
+        apply_transitions: bool = True
+
+    @api.post("/scenario/participants/{participant_id}/events", tags=["scenario"])
+    async def _scenario_capture_event(
+        participant_id: str,
+        body: _EventCaptureBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Log an event for a participant. Applies the proposed lifecycle
+        transition and flag changes through the Phase 2 guard. If the
+        proposed transition is blocked, the event is still persisted with
+        ``proposed.transition_status='blocked'`` so the caregiver can confirm
+        a different action, never fails silently."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "account_id": 1})
+        if p is None:
+            raise HTTPException(404, "participant not found")
+        u = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+        try:
+            ev = await _se_events.capture_event(
+                db, participant_id=participant_id,
+                account_id=p.get("account_id"),
+                event_type=body.event_type, sub_type=body.sub_type,
+                trigger_source=body.trigger_source,
+                effective_date=body.effective_date,
+                note=body.note, payload=body.payload,
+                source=body.source,
+                actor_id=user_id, actor_name=(u or {}).get("name"),
+                apply_transitions=body.apply_transitions,
+            )
+            return {"ok": True, "event": ev}
+        except _se_events.EventRejected as e:
+            raise HTTPException(400, str(e))
+
+    @api.get("/scenario/participants/{participant_id}/events", tags=["scenario"])
+    async def _scenario_list_events(
+        participant_id: str,
+        limit: int = 100,
+        cursor_date: Optional[str] = None,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        await _assert_pa(user_id, participant_id, require_active=False)
+        items = await _se_events.list_events(db, participant_id,
+                                              limit=limit, cursor_date=cursor_date)
+        return {"participant_id": participant_id, "items": items}
+
+    # ---- Phase 4: alerts ---------------------------------------------------
+    from scenario_engine import alerts as _se_alerts
+
+    @api.get("/scenario/participants/{participant_id}/alerts", tags=["scenario"])
+    async def _scenario_list_alerts(
+        participant_id: str, status: Optional[str] = None, limit: int = 100,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        await _assert_pa(user_id, participant_id, require_active=False)
+        items = await _se_alerts.list_alerts(db, participant_id, status=status, limit=limit)
+        return {"participant_id": participant_id, "items": items}
+
+    class _AlertStatusBody(BaseModel):
+        status: str  # acknowledged | resolved | dismissed | open
+
+    @api.post("/scenario/alerts/{alert_id}/status", tags=["scenario"])
+    async def _scenario_update_alert_status(
+        alert_id: str, body: _AlertStatusBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        a = await db.scenario_alerts.find_one({"id": alert_id},
+                                                {"_id": 0, "participant_id": 1})
+        if not a:
+            raise HTTPException(404, "alert not found")
+        await _assert_pa(user_id, a["participant_id"], require_active=False)
+        ok = await _se_alerts.update_status(db, alert_id=alert_id,
+                                              new_status=body.status, actor_id=user_id)
+        return {"ok": ok}
+
+    @api.post("/admin/scenario/evaluate-clocks", tags=["admin"])
+    async def _scenario_evaluate_clocks_now(
+        _admin_id: str = Depends(get_current_admin_id),
+    ):
+        """Admin trigger to run the deadline clocks immediately."""
+        counts = await _se_alerts.evaluate_all_clocks(db)
+        return {"ok": True, "counts": counts}
+
+    # ---- Phase 5: route-out guardrails ------------------------------------
+    from scenario_engine import boundaries as _se_bound
+
+    @api.get("/scenario/contacts", tags=["scenario"])
+    async def _scenario_contacts():
+        """Public list of canonical contacts used by route-out and escalate
+        alerts. Surfaced on the timeline and on any blocked AI response."""
+        return {"contacts": _se_bound.CONTACTS}
+
+    @api.get("/scenario/participants/{participant_id}/timeline", tags=["scenario"])
+    async def _scenario_timeline(
+        participant_id: str, limit: int = 200,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Single chronological stream that merges events, lifecycle
+        transitions, and alerts. Restricted (safeguarding) items are stripped
+        for non-owner readers."""
+        await _assert_pa(user_id, participant_id, require_active=False)
+        p = await db.participants.find_one({"id": participant_id},
+                                            {"_id": 0, "account_id": 1, "first_name": 1,
+                                             "lifecycle_state": 1, "flags": 1})
+        if p is None:
+            raise HTTPException(404, "participant not found")
+        is_owner = await _se_flags.is_account_owner(
+            db, user_id=user_id, account_id=p.get("account_id"))
+
+        events = await _se_events.list_events(db, participant_id, limit=limit)
+        audit = await _se_lifecycle.get_state_audit(db, participant_id, limit=limit)
+        alerts = await _se_alerts.list_alerts(db, participant_id, limit=limit)
+
+        items = []
+        for ev in events:
+            items.append({
+                "type": "event", "at": ev.get("captured_date") or ev.get("created_at"),
+                "data": ev,
+            })
+        for a in audit:
+            # Drop restricted-flag changes for non-owners.
+            if not is_owner and a.get("kind") == "flag_change":
+                fv = list((a.get("from_value") or {}).keys())
+                tv = list((a.get("to_value") or {}).keys())
+                if any(k in _se_flags.RESTRICTED_VISIBILITY for k in fv + tv):
+                    continue
+            items.append({"type": "state", "at": a["created_at"], "data": a})
+        for al in alerts:
+            items.append({"type": "alert", "at": al["created_at"], "data": al})
+        items.sort(key=lambda x: x["at"] or "", reverse=True)
+        return {
+            "participant_id": participant_id,
+            "lifecycle_state": p.get("lifecycle_state"),
+            "first_name": p.get("first_name"),
+            "items": items[:limit],
+        }
+
+    @api.post("/scenario/boundary-probe", tags=["scenario"])
+    async def _scenario_boundary_probe(body: dict,
+                                         _user_id: str = Depends(get_current_user_id)):
+        """Inspect a free-text question without consulting any LLM. Returns
+        the boundary classification + the contacts the response would route
+        to. Used by the UI to preview before sending to Ask Wayly."""
+        q = (body or {}).get("query", "") if isinstance(body, dict) else ""
+        boundary, contacts, topic = _se_bound.classify_boundary_for_query(q)
+        return {"boundary": boundary, "topic": topic, "contacts": contacts}
+
+    # ---- Phase 6: guided caregiver workflows ------------------------------
+    from scenario_engine import workflows as _se_workflows
+
+    @api.get("/scenario/workflows", tags=["scenario"])
+    async def _scenario_list_workflows():
+        """Public catalogue of guided wizards (reassessment, hospitalisation,
+        death). The wizard UI renders each step inline and uses the existing
+        POST /scenario/participants/{id}/events endpoint to capture each
+        event_type, no separate mutation surface."""
+        return _se_workflows.list_workflows()
+
+    @api.get("/scenario/workflows/{workflow_key}", tags=["scenario"])
+    async def _scenario_get_workflow(workflow_key: str,
+                                       _user_id: str = Depends(get_current_user_id)):
+        w = _se_workflows.get_workflow(workflow_key)
+        if not w:
+            raise HTTPException(404, "unknown workflow")
+        return w
+
+    # ---- Phase 7: shared types contract for the mobile app ----------------
+    from scenario_engine import schema_export as _se_schema
+
+    @api.get("/scenario/schema", tags=["scenario"])
+    async def _scenario_schema():
+        """Single source-of-truth contract for the scenario engine.
+
+        Public, the schema is non-sensitive and identical for every
+        participant. Mobile clients pin a minimum ``schema_version`` and
+        compare ``section_revisions`` to skip downloading unchanged sections.
+        """
+        return _se_schema.build_schema()
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"scenario_engine routes failed to load: {_e}")
+
+app.include_router(api)
+
+# Emergent managed push notifications (mobile). push_router carries its own
+# /api prefix, so mount it directly on the app.
+from push_notifications import push_router  # noqa: E402
+app.include_router(push_router)
+
+# Phase 5, install the security-headers middleware AFTER CORS so the headers
+# attach to every response (including preflight 204s).
+# CORS: explicit allow-list. `allow_credentials=True` cannot safely coexist
+# with `allow_origins=["*"]`, so we fall back to the trusted frontend URL when
+# CORS_ORIGINS is not configured. Multiple hosts can be listed comma-separated.
+_cors_raw = (os.environ.get("CORS_ORIGINS") or "").strip()
+if _cors_raw and _cors_raw != "*":
+    _cors_allow = [o.strip().rstrip("/") for o in _cors_raw.split(",") if o.strip()]
+else:
+    _cors_allow = [
+        _trusted_frontend_url(),
+        "https://wayly.com.au",
+        "https://www.wayly.com.au",
+    ]
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=_cors_allow,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+import security_headers as _security_headers
+_security_headers.install(app)
+
+# ----------------------------------------------------------------------------
+# Read-only middleware, when an authenticated user has no paid plan and no
+# active trial, every write (POST/PUT/PATCH/DELETE) under /api/* returns 402.
+# Existing data stays readable (all GETs pass through). Reads, billing, auth,
+# user-preference toggles, and admin paths are explicitly exempt.
+# ----------------------------------------------------------------------------
+_READ_ONLY_WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+_READ_ONLY_EXEMPT_PREFIXES = (
+    "/api/auth/",           # login, signup, password reset, refresh, logout
+    "/api/billing/",        # Stripe checkout, portal, webhooks
+    "/api/payments/",       # Public subscription checkout (users need to subscribe to escape read-only)
+    "/api/webhook/stripe",  # Stripe webhook ingress (Flow B path)
+    "/api/stripe/",         # Legacy Stripe webhook ingress
+    "/api/users/me",        # /users/me preference toggles (appearance etc.)
+    "/api/admin/",          # super-admin endpoints (out-of-band)
+    "/api/health",          # liveness/readiness probes
+    "/api/metrics",         # observability scrape
+    "/api/public/",         # public unauthed surfaces (already gated)
+    "/api/support/tickets", # gated separately below, first ticket allowed?
+)
+# Support tickets are explicitly blocked for read-only users per spec ,
+# add no exemption for the create endpoint. (The middleware path-prefix
+# match needs the trailing slash to differentiate the list from create:
+# we match the prefix /api/support/ tickets and let the 402 fire.)
+_READ_ONLY_EXEMPT_PREFIXES = tuple(
+    p for p in _READ_ONLY_EXEMPT_PREFIXES if p != "/api/support/tickets"
+)
+
+
+@app.middleware("http")
+async def _enforce_read_only_for_unpaid(request, call_next):
+    if request.method not in _READ_ONLY_WRITE_METHODS:
+        return await call_next(request)
+    path = request.url.path or ""
+    if not path.startswith("/api/"):
+        return await call_next(request)
+    if any(path.startswith(p) for p in _READ_ONLY_EXEMPT_PREFIXES):
+        return await call_next(request)
+
+    # Unauthenticated writes fall through, existing route-level dependencies
+    # decide whether 401, 422, or 200 is correct. We only short-circuit
+    # AUTHENTICATED users with no paid plan.
+    try:
+        user = await _user_from_request(request)
+    except Exception:
+        user = None
+    if not user:
+        return await call_next(request)
+    plan = (user.get("plan") or "free").lower()
+    if plan in PAID_PLANS or _trial_active(user):
+        return await call_next(request)
+
+    # No paid plan + no active trial → read-only mode.
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=402,
+        content={
+            "detail": {
+                "error": "trial_expired",
+                "message": "Your trial has ended. Subscribe to add or change anything.",
+                "upgrade_url": "/settings/billing",
+                "read_only": True,
+            }
+        },
+    )
+
+# Phase-monitoring-1+2: Sentry + structured JSON logging + request IDs
+import observability as _observability
+_observability.install(app)
+
+# Phase 8, admin gate + IP allowlist + maintenance mode
+# (maintenance toggle endpoints already exist in admin_phase_e.py;
+# audit-chain verify is a fresh add)
+import admin_hardening as _admin_hardening
+_admin_hardening.install(app)
+
+
+@api.get("/admin/audit-log/verify")
+async def admin_verify_audit_chain(user_id: str = Depends(get_current_admin_id)):
+    ok, broken_at = await _admin_hardening.verify_chain()
+    await _admin_hardening.append_audit(
+        actor_id=user_id, action="audit_chain_verify",
+        result="success" if ok else "tampered",
+        detail={"broken_at_seq": broken_at} if not ok else {},
+    )
+    return {"ok": ok, "broken_at_seq": broken_at}
+
+
+@api.post("/admin/reconciliation/run")
+async def admin_reconciliation_run(user_id: str = Depends(get_current_admin_id)):
+    """Phase 4: on-demand trigger for the nightly reconciliation job.
+    Returns the sweep summary so admins can see drift in real time
+    instead of waiting for the scheduled run."""
+    from lib.statement_reconciliation import run_nightly_reconciliation
+    summary = await run_nightly_reconciliation(db)
+    await _admin_hardening.append_audit(
+        actor_id=user_id, action="reconciliation_run", result="success",
+        detail={"runs_persisted": summary.get("runs_persisted"), "drift_alerts": summary.get("drift_alerts")},
+    )
+    return summary
+
+
+# ---------------------------------------------------------------------------
+# IndexNow, push URL changes to Bing / Yandex / Naver / Seznam / Yep.
+# Google does NOT participate; keep Search Console/sitemaps for that side.
+# The key file is served both from the site root (React public/) and from
+# /api/public/seo/indexnow-key.txt as a backend fallback. See indexnow_service.
+#
+# Registered directly on `app` (not the /api router) so they take effect
+# regardless of the include_router snapshot order elsewhere in this file.
+# ---------------------------------------------------------------------------
+
+class _IndexNowPingBody(BaseModel):
+    urls: List[str] = Field(default_factory=list, description="Absolute or root-relative URLs on wayly.com.au")
+
+
+@app.post("/api/admin/indexnow/ping")
+async def admin_indexnow_ping(body: _IndexNowPingBody, user_id: str = Depends(get_current_admin_id)):
+    """Push a manual list of URLs to IndexNow. Useful right after publishing
+    a new marketing page or fixing a redirect-vs-canonical issue."""
+    from indexnow_service import submit_urls
+    if not body.urls:
+        raise HTTPException(status_code=400, detail="Provide at least one URL in `urls`.")
+    result = await submit_urls(body.urls)
+    try:
+        await _admin_hardening.append_audit(
+            actor_id=user_id, action="indexnow_ping",
+            result="success" if result.get("error") is None else "error",
+            detail={"submitted": result.get("submitted"), "status": result.get("status"), "error": result.get("error")},
+        )
+    except Exception:
+        pass  # audit failure must not break the ping response
+    return result
+
+
+@app.post("/api/admin/indexnow/ping-all")
+async def admin_indexnow_ping_all(user_id: str = Depends(get_current_admin_id)):
+    """Push every URL from the live sitemap to IndexNow in a single batch.
+    Idempotent, safe to run repeatedly. Bing accepts up to 10 000 URLs per
+    submission and we currently ship ~80, so batching is not required."""
+    from indexnow_service import submit_urls, all_sitemap_urls
+    urls = await all_sitemap_urls()
+    result = await submit_urls(urls)
+    try:
+        await _admin_hardening.append_audit(
+            actor_id=user_id, action="indexnow_ping_all",
+            result="success" if result.get("error") is None else "error",
+            detail={"submitted": result.get("submitted"), "status": result.get("status"), "error": result.get("error")},
+        )
+    except Exception:
+        pass
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Phase 4, Security Alerts admin API
+# Endpoints live in `admin_routes.py` (real admin-realm gate via
+# `get_current_admin`, which the AdminApp UI uses). Defined there so the
+# legacy `/api/admin/security-alerts/*` paths from this file are unused.
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Trial lifecycle scheduler, sends T-1 reminder + auto-downgrades on expiry.
+# Runs every 30 minutes. Idempotent via subscription doc flags.
+# ---------------------------------------------------------------------------
+import asyncio as _asyncio
+
+
+async def _process_trial_reminders_once() -> dict:
+    """Idempotent pass over trialing subscriptions:
+       - day-5 (~2 days remaining): send personalised mid-trial nudge with the
+         caregiver's top 3 wins so far.
+       - day-6 (~1 day remaining): send final personalised nudge with wins +
+         a stronger CTA to keep going.
+       - 24h-from-end: send reminder email, mark `trial_reminder_sent_at`.
+       - past-end: flip user.plan to 'free', mark sub status 'expired', send
+         expiry email, mark `trial_expired_handled_at`.
+    Returns {midtrial_sent, final_nudge_sent, reminders_sent, expired_handled}."""
+    now = datetime.now(timezone.utc)
+    in_24h = now + timedelta(hours=24)
+    in_36h = now + timedelta(hours=36)
+    in_4d = now + timedelta(days=4)
+    in_2d = now + timedelta(days=2)
+    midtrial_sent = 0
+    final_nudge_sent = 0
+    reminders_sent = 0
+    expired_handled = 0
+
+    try:
+        from services.trial_wins import compute_trial_wins, wins_to_html
+    except Exception:      # pragma: no cover, service missing shouldn't crash
+        compute_trial_wins = None
+        wins_to_html = None
+
+    def _sub_match(sub: dict) -> dict:
+        """Build a unique match filter for a sub doc, prefer `id`, fall back
+        to `user_id` for legacy records that don't have an `id`."""
+        return {"id": sub["id"]} if sub.get("id") else {"user_id": sub["user_id"], "status": sub.get("status")}
+
+    # Day 5, "Two days left in your Wayly trial", now personalised with the
+    # caregiver's top 3 wins so far. Brief §4.8: subject + body verbatim.
+    cursor_mid = db.subscriptions.find(
+        {
+            "status": "trialing",
+            "trial_ends_at": {"$gte": in_2d.isoformat(), "$lte": in_4d.isoformat()},
+            "trial_midtrial_sent_at": {"$exists": False},
+        },
+        {"_id": 0},
+    ).limit(50)
+    async for sub in cursor_mid:
+        try:
+            user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
+            if not user:
+                continue
+            first_name = (user.get("name") or "there").split(" ")[0]
+            wins_html = ""
+            if compute_trial_wins and wins_to_html:
+                try:
+                    wins = await compute_trial_wins(db, user)
+                    wins_html = wins_to_html(wins)
+                except Exception as _we:
+                    logger.debug("wins render skipped: %s", _we)
+            await email_service.email_tool_result(
+                to=user["email"],
+                tool_name="Two days left in your Wayly trial",
+                headline="Two days left in your Wayly trial",
+                body_html=(
+                    f"<p>Hi {first_name},</p>"
+                    "<p>Your Wayly free trial has two days to go. You still have full access to every tool, Ask Wayly, and your reports.</p>"
+                    + wins_html
+                    + "<p>If Wayly is helping you make sense of aged care, you can choose a plan now so nothing pauses. Solo is $19/month and Family is $39/month. You can change or cancel any time.</p>"
+                    "<p>Choose your plan: <a href='https://wayly.com.au/pricing'>https://wayly.com.au/pricing</a></p>"
+                    "<p>Warm regards,<br>The Wayly team</p>"
+                    "<p style='color:#666;font-size:12px'>Information only, not advice.</p>"
+                ),
+            )
+            await db.subscriptions.update_one(
+                _sub_match(sub),
+                {"$set": {"trial_midtrial_sent_at": now.isoformat()}},
+            )
+            midtrial_sent += 1
+        except Exception as e:
+            logger.warning("Mid-trial nudge failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
+
+    # Day 6, "One day left in your Wayly trial", final personalised nudge,
+    # sent when 24-36 hours remain (between the day-5 nudge and the 24h-out
+    # final reminder). Idempotent via `trial_final_nudge_sent_at`.
+    cursor_final = db.subscriptions.find(
+        {
+            "status": "trialing",
+            "trial_ends_at": {"$gt": in_24h.isoformat(), "$lte": in_36h.isoformat()},
+            "trial_final_nudge_sent_at": {"$exists": False},
+        },
+        {"_id": 0},
+    ).limit(50)
+    async for sub in cursor_final:
+        try:
+            user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
+            if not user:
+                continue
+            first_name = (user.get("name") or "there").split(" ")[0]
+            wins_html = ""
+            if compute_trial_wins and wins_to_html:
+                try:
+                    wins = await compute_trial_wins(db, user)
+                    wins_html = wins_to_html(wins)
+                except Exception as _we:
+                    logger.debug("wins render skipped: %s", _we)
+            await email_service.email_tool_result(
+                to=user["email"],
+                tool_name="One day left in your Wayly trial",
+                headline="One day left in your Wayly trial",
+                body_html=(
+                    f"<p>Hi {first_name},</p>"
+                    "<p>Just a quick heads-up, your Wayly free trial finishes tomorrow. Everything you've saved is safe, and picking a plan today keeps it all working without a break.</p>"
+                    + wins_html
+                    + "<p>Solo is $19/month for one caregiver. Family is $39/month and covers up to five family members plus a second participant. Change or cancel any time.</p>"
+                    "<p>Choose your plan: <a href='https://wayly.com.au/pricing'>https://wayly.com.au/pricing</a></p>"
+                    "<p>Warm regards,<br>The Wayly team</p>"
+                    "<p style='color:#666;font-size:12px'>Information only, not advice.</p>"
+                ),
+            )
+            await db.subscriptions.update_one(
+                _sub_match(sub),
+                {"$set": {"trial_final_nudge_sent_at": now.isoformat()}},
+            )
+            final_nudge_sent += 1
+        except Exception as e:
+            logger.warning("Day-6 nudge failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
+
+    # Day 7, "Your Wayly trial ends today". Sent in the final 24 hours.
+    # Brief §4.8: subject + body verbatim.
+    cursor = db.subscriptions.find(
+        {
+            "status": "trialing",
+            "trial_ends_at": {"$gte": now.isoformat(), "$lte": in_24h.isoformat()},
+            "trial_reminder_sent_at": {"$exists": False},
+        },
+        {"_id": 0},
+    ).limit(50)
+    async for sub in cursor:
+        try:
+            user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
+            if not user:
+                continue
+            first_name = (user.get("name") or "there").split(" ")[0]
+            await email_service.email_tool_result(
+                to=user["email"],
+                tool_name="Your Wayly trial ends today",
+                headline="Your Wayly trial ends today",
+                body_html=(
+                    f"<p>Hi {first_name},</p>"
+                    "<p>Your free trial ends today. To keep using your tools, reports and Ask Wayly without a break, choose a plan before the day is out.</p>"
+                    "<p>Solo is $19/month. Family is $39/month, and it lets you coordinate care across the whole family. You can change or cancel any time.</p>"
+                    "<p>Choose your plan: <a href='https://wayly.com.au/pricing'>https://wayly.com.au/pricing</a></p>"
+                    "<p>Warm regards,<br>The Wayly team</p>"
+                    "<p style='color:#666;font-size:12px'>Information only, not advice.</p>"
+                ),
+            )
+            await db.subscriptions.update_one(
+                _sub_match(sub),
+                {"$set": {"trial_reminder_sent_at": now.isoformat()}},
+            )
+            reminders_sent += 1
+        except Exception as e:
+            logger.warning("Trial reminder failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
+
+    # Trial expiries, past trial_ends_at, still status=trialing, not handled
+    cursor2 = db.subscriptions.find(
+        {
+            "status": "trialing",
+            "trial_ends_at": {"$lte": now.isoformat()},
+            "trial_expired_handled_at": {"$exists": False},
+        },
+        {"_id": 0},
+    ).limit(50)
+    async for sub in cursor2:
+        try:
+            user_id = sub["user_id"]
+            user = await db.users.find_one({"id": user_id}, {"_id": 0})
+            await db.subscriptions.update_one(
+                _sub_match(sub),
+                {"$set": {"status": "expired", "trial_expired_handled_at": now.isoformat(), "updated_at": now.isoformat()}},
+            )
+            await db.users.update_one({"id": user_id}, {"$set": {"plan": "free"}})
+            if user:
+                first_name = (user.get("name") or "there").split(" ")[0]
+                try:
+                    await email_service.email_tool_result(
+                        to=user["email"],
+                        tool_name="Your Wayly trial has ended",
+                        headline="Your Wayly trial has ended",
+                        body_html=(
+                            f"<p>Hi {first_name},</p>"
+                            "<p>Your free trial has ended, so your tools are now read-only. Your saved statements, care plans and family profiles are safe and still visible.</p>"
+                            "<p>When you are ready, choose a plan and everything switches back on straight away.</p>"
+                            "<p>Choose your plan: <a href='https://wayly.com.au/pricing'>https://wayly.com.au/pricing</a></p>"
+                            "<p>Warm regards,<br>The Wayly team</p>"
+                            "<p style='color:#666;font-size:12px'>Information only, not advice.</p>"
+                        ),
+                    )
+                except Exception as e:
+                    logger.warning("Trial-expired email failed: %s", e)
+            expired_handled += 1
+        except Exception as e:
+            logger.warning("Trial expiry handling failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
+
+    return {
+        "midtrial_sent": midtrial_sent,
+        "final_nudge_sent": final_nudge_sent,
+        "reminders_sent": reminders_sent,
+        "expired_handled": expired_handled,
+    }
+
+
+async def _trial_scheduler_loop():
+    """Runs every 30 minutes for the lifetime of the process."""
+    _last_purge_hour = -1
+    _last_rollup_day = -1
+    while True:
+        try:
+            res = await _process_trial_reminders_once()
+            if res["reminders_sent"] or res["expired_handled"]:
+                logger.info("Trial scheduler pass: %s", res)
+        except Exception as e:
+            logger.warning("Trial scheduler pass error: %s", e)
+        # Support-ticket attachment retention purge - once per hour is fine
+        # since eligibility is set months in advance via ``purge_after``.
+        try:
+            _hr = datetime.now(timezone.utc).hour
+            if _hr != _last_purge_hour:
+                _last_purge_hour = _hr
+                from routes.support import purge_expired_attachments as _purge
+                _n = await _purge()
+                if _n:
+                    logger.info("sup_attachments purge: %s attachments cleared", _n)
+        except Exception as e:
+            logger.warning("sup_attachments purge error: %s", e)
+        # Analytics rollup - once per day at ~02:00 UTC. Persists KPIs +
+        # funnels + cohorts into ``analytics_rollup`` so the admin pages
+        # do not re-aggregate on every load.
+        try:
+            _now_utc = datetime.now(timezone.utc)
+            if _now_utc.hour == 2 and _now_utc.day != _last_rollup_day:
+                _last_rollup_day = _now_utc.day
+                from routes.admin_phase_b import _live_kpis, _live_funnels, _live_cohorts
+                for kind, fn in (("kpi", _live_kpis), ("funnels", _live_funnels), ("cohorts", _live_cohorts)):
+                    payload = await fn(db, _now_utc)
+                    await db.analytics_rollup.update_one(
+                        {"kind": kind},
+                        {"$set": {"kind": kind, "payload": payload, "computed_at": _now_utc.isoformat()}},
+                        upsert=True,
+                    )
+                logger.info("analytics_rollup regenerated (kpi + funnels + cohorts)")
+        except Exception as e:
+            logger.warning("analytics_rollup regenerate error: %s", e)
+        await _asyncio.sleep(30 * 60)
+
+
+@app.on_event("startup")
+async def _log_resolved_domain_config():
+    """Print the resolved public URLs at boot so a misconfigured container
+    is visible in the first line of logs. Consumed by every email-generator
+    in the codebase, if these don't match ``wayly.com.au`` in production,
+    verification links, invites and adviser CTAs will point at the wrong host.
+
+    Warns only when running as production (``WAYLY_ENV=production``) so the
+    preview host's own URLs don't trip a false alarm.
+    """
+    fe    = os.environ.get("FRONTEND_URL")
+    pau   = os.environ.get("PUBLIC_APP_URL")
+    pao   = os.environ.get("PUBLIC_APP_ORIGIN")
+    env   = (os.environ.get("WAYLY_ENV") or "preview").lower()
+    resolved = (fe or pau or "https://wayly.com.au").rstrip("/")
+    site_home = (pau or "https://wayly.com.au").rstrip("/")
+    logger.info(
+        "[domain-guard] env=%s  |  resolved link base = %s  |  SITE_HOME = %s  |  FRONTEND_URL=%r PUBLIC_APP_URL=%r PUBLIC_APP_ORIGIN=%r",
+        env, resolved, site_home, fe, pau, pao,
+    )
+    if env == "production" and "wayly.com.au" not in resolved:
+        logger.warning(
+            "[domain-guard] PRODUCTION resolved link base does not include 'wayly.com.au'. "
+            "Verification emails, invites and CTAs will use %s. "
+            "Set PUBLIC_APP_URL=https://wayly.com.au on this container "
+            "(and clear any stale FRONTEND_URL pointing at emergent.host).",
+            resolved,
+        )
+
+
+@app.on_event("startup")
+async def _start_trial_scheduler():
+    from lib.jobs import run_async as _run_async
+    _run_async(_trial_scheduler_loop(), name="trial_scheduler_loop", max_attempts=1)
+
+
+@app.on_event("startup")
+async def _program_reference_bootstrap():
+    """Phase 1 scenario engine: seed program_reference and load the cache.
+
+    Idempotent. Runs before anything that reads program figures (budget calc,
+    statement decoder, adviser scenario modeller). If any step fails, the
+    cache stays empty and ``get_value()`` calls raise, surfaced rather than
+    masked with wrong literals.
+
+    Deployment hardening (Jun 2026): fire this whole task in the background
+    so the FastAPI app can answer health probes immediately. The Kubernetes
+    readiness probe was timing out (>120s) when Atlas was cold because this
+    block ran inline.
+    """
+    import asyncio as _aio
+    async def _run():
+        try:
+            import program_reference as _pr
+            from seed_program_reference import get_seed_rows as _seed_rows
+            _pr.init(db)
+            await _pr.ensure_seeded(_seed_rows())
+            await _pr.apply_data_migrations()
+            await _pr.apply_reseed_for_authoritative_keys(_seed_rows())
+            await _pr.preload_cache()
+            logger.info("program_reference ready")
+            # INDEX-1 v1 Deploy 1b, load the YAML registry so `render_prompt`
+            # substitutions are available to the LLM prompt builders.
+            try:
+                import monetary_constants as _mc
+                _mc.load_registry()
+                logger.info("monetary_constants registry loaded (%d keys)", len(_mc.REGISTRY.keys()))
+            except Exception as _mc_err:
+                logger.warning("monetary_constants registry load failed: %s", _mc_err)
+        except Exception as e:
+            logger.error("program_reference bootstrap failed: %s", e, exc_info=True)
+    _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _scenario_engine_bootstrap():
+    """Phase 2 scenario engine: ensure indexes, backfill lifecycle_state and
+    flags on existing participants. Phase 3: events index. Phase 4: alerts
+    index + scheduled deadline-clock evaluator. Idempotent.
+
+    Deployment hardening: backgrounded so readiness probe passes fast.
+    """
+    import asyncio as _aio
+    async def _run():
+        try:
+            from scenario_engine.lifecycle import ensure_indexes, backfill_initial_states
+            from scenario_engine.flags import backfill_empty_flags
+            from scenario_engine.events import ensure_indexes as ev_indexes
+            from scenario_engine.alerts import ensure_indexes as al_indexes
+            await ensure_indexes(db)
+            await ev_indexes(db)
+            await al_indexes(db)
+            state_counts = await backfill_initial_states(db)
+            flag_count = await backfill_empty_flags(db)
+            logger.info("scenario_engine ready, lifecycle_state backfill=%s, flags backfill=%d",
+                        state_counts, flag_count)
+        except Exception as e:
+            logger.error("scenario_engine bootstrap failed: %s", e, exc_info=True)
+    _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _scenario_alerts_scheduler():
+    """Phase 4, evaluate deadline clocks for every participant every hour.
+    First run fires 30s after boot so the smoke test sees consistent state."""
+    async def _loop():
+        import asyncio as _aio
+        await _aio.sleep(30)
+        while True:
+            try:
+                from scenario_engine.alerts import evaluate_all_clocks
+                counts = await evaluate_all_clocks(db)
+                logger.info("scenario_alerts evaluation: %s", counts)
+            except Exception as e:
+                logger.warning("scenario_alerts evaluation failed: %s", e)
+            await _aio.sleep(3600)  # one hour
+    from lib.jobs import run_async as _run_async
+    _run_async(_loop(), name="scenario_alerts_loop", max_attempts=1)
+
+
+@app.on_event("startup")
+async def _security_index_bootstrap():
+    """Phase 1: ensure revoked-token TTL index + per-user lockout indexes exist.
+    Backgrounded so readiness is fast on cold Atlas."""
+    import asyncio as _aio
+    async def _run():
+        try:
+            await ensure_security_indexes()
+        except Exception as e:
+            logger.warning("security index bootstrap failed: %s", e)
+    _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _performance_index_bootstrap():
+    """Performance hardening Section 1: ensure compound + TTL indexes for
+    every hot query path (ESR rule). Idempotent, Mongo no-ops on existing
+    indexes; conflicting opts log at DEBUG and don't abort startup.
+
+    See /app/INDEXES.md for the full index list + the query each one backs.
+
+    Deployment hardening: backgrounded, index creation across ~30 collections
+    on cold Atlas was the dominant cause of the K8s readiness timeout.
+    """
+    import asyncio as _aio
+    async def _run():
+        try:
+            from perf_indexes import ensure_performance_indexes
+            counts = await ensure_performance_indexes(db)
+            logger.info("perf_indexes ready, %d new indexes across %d collections",
+                        sum(counts.values()), len(counts))
+        except Exception as e:
+            logger.warning("perf_indexes bootstrap failed: %s", e)
+    _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _background_jobs_bootstrap():
+    """Section 4: kick off the in-process background-job consumer.
+    Idempotent, safe to call multiple times."""
+    try:
+        from lib.jobs import start_consumer
+        await start_consumer()
+    except Exception as e:
+        logger.warning("background-jobs bootstrap failed: %s", e)
+
+
+@app.on_event("shutdown")
+async def _background_jobs_shutdown():
+    try:
+        from lib.jobs import stop_consumer
+        await stop_consumer()
+    except Exception:
+        pass
+
+
+@app.on_event("startup")
+async def _rate_limit_bootstrap():
+    """Phase 3: warm up the Redis client so the first request doesn't pay
+    the connection cost (or, if Redis is unreachable, so we surface a
+    single startup warning instead of a per-request one).
+    Backgrounded, a slow Redis DNS or unreachable host must not block
+    Kubernetes readiness."""
+    import asyncio as _aio
+    async def _run():
+        try:
+            r = await _aio.wait_for(_rl._get_redis(), timeout=5.0)
+            if r is None:
+                logger.warning("rate limiter: Redis not configured (REDIS_URL missing), limits are fail-open")
+            else:
+                logger.info("rate limiter: Redis ready, %d buckets configured", len(_rl.LIMITS))
+        except _aio.TimeoutError:
+            logger.warning("rate limiter: Redis warm-up timed out, limits are fail-open")
+        except Exception as e:
+            logger.warning("rate limiter bootstrap failed: %s", e)
+    _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _privacy_purge_scheduler():
+    """Phase 9: kick off the 60-day hard-delete background task."""
+    try:
+        import privacy as _privacy
+        _privacy.start_scheduler()
+        logger.info("privacy purge scheduler started (interval=%ds, window=%dd)",
+                    _privacy._SCHEDULER_INTERVAL_S, _privacy.SOFT_DELETE_WINDOW_DAYS)
+    except Exception as e:
+        logger.warning("privacy purge scheduler failed to start: %s", e)
+
+
+@app.on_event("startup")
+async def _start_health_watchdog():
+    import health_watchdog
+    await health_watchdog.start()
+
+
+@app.on_event("startup")
+async def _start_reports_scheduler():
+    try:
+        import reports_scheduler
+        await reports_scheduler.start()
+    except Exception as e:
+        logger.warning(f"reports_scheduler failed to start: {e}")
+
+
+@app.on_event("startup")
+async def _start_statement_reconciliation_job():
+    """Phase 4 of the duplicate-statement lifecycle:
+
+    * recompute YTD per participant from raw ACTIVE statement line_items
+    * persist a `derived_calculation_runs` snapshot
+    * alert on drift vs. the prior snapshot (HIGH severity, system_alerts)
+
+    Runs once a day at +24h from startup. First run is delayed 120s so
+    app startup is fast.
+    """
+    import asyncio
+    from lib.statement_reconciliation import run_nightly_reconciliation
+
+    interval_s = 24 * 60 * 60
+
+    async def _loop() -> None:
+        await asyncio.sleep(120)
+        while True:
+            try:
+                summary = await run_nightly_reconciliation(db)
+                logger.info("statement reconciliation: %s", summary)
+            except Exception as e:
+                logger.warning("statement reconciliation failed: %s", e)
+            await asyncio.sleep(interval_s)
+
+    from lib.jobs import run_async as _run_async
+    _run_async(_loop(), name="statement_reconciliation_loop", max_attempts=1)
+    logger.info("statement reconciliation scheduler started (interval=%ds)", interval_s)
+
+
+@app.on_event("startup")
+async def _start_billing_reconciliation():
+    """BILLING-UI-1 v5 §7 — daily job that compares each user's plan field
+    against their Stripe subscription's base item and flags drift. Runs
+    24h after startup and every 24h thereafter."""
+    import asyncio
+    interval_s = 24 * 60 * 60
+
+    async def _loop() -> None:
+        # Give the app time to warm; pushing this out to 3 minutes puts it
+        # comfortably after Stripe reconnect + index build.
+        await asyncio.sleep(180)
+        while True:
+            try:
+                summary = await run_reconciliation_once()
+                logger.info("billing reconciliation: %s", summary)
+            except Exception as e:
+                logger.warning("billing reconciliation failed: %s", e)
+            await asyncio.sleep(interval_s)
+
+    from lib.jobs import run_async as _run_async
+    _run_async(_loop(), name="billing_reconciliation_loop", max_attempts=1)
+    logger.info("billing reconciliation scheduler started (interval=%ds)", interval_s)
+
+
+@app.on_event("startup")
+async def _start_statement_retention_sweeper():
+    """Phase 2 of the duplicate-statement lifecycle:
+
+    * hard-delete archived statements past the 30-day window
+    * run a storage cross-check (brief §Observability) and log drift
+
+    Runs every 6 hours. First run is delayed 60s so app startup is fast.
+    """
+    import asyncio
+    from lib.statement_actions import run_retention_sweep
+
+    interval_s = 6 * 60 * 60
+
+    async def _loop() -> None:
+        await asyncio.sleep(60)
+        while True:
+            try:
+                summary = await run_retention_sweep(db)
+                logger.info("statement retention sweep: %s", summary)
+            except Exception as e:
+                logger.warning("statement retention sweep failed: %s", e)
+            await asyncio.sleep(interval_s)
+
+    from lib.jobs import run_async as _run_async
+    _run_async(_loop(), name="statement_retention_loop", max_attempts=1)
+    logger.info("statement retention sweeper started (interval=%ds, window=30d)", interval_s)
+
+
+@app.on_event("startup")
+async def _start_batch2_migration():
+    """One-time idempotent migration: ensure every legacy household has a
+    primary participant row. Safe to call repeatedly, no-ops if already done.
+
+    Deployment hardening (Feb 2026): fire in the background so uvicorn can
+    answer /api/health immediately. Kubernetes readiness probes were timing
+    out on cold Atlas connections when this ran inline.
+    """
+    import asyncio as _aio
+
+    async def _run():
+        try:
+            res = await migrate_existing_households()
+            if res.get("migrated"):
+                logger.info("Batch2 startup migration: %s", res)
+        except Exception as e:
+            logger.warning("Batch2 migration failed: %s", e)
+
+    _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _start_batch3_migration_and_purge():
+    """Batch3 idempotent migration: backfill accounts, account_members, and
+    rebuild participants v2 from existing households. Then run the
+    pending-removal purge job for participants whose 60-day window has expired.
+
+    Deployment hardening (Feb 2026): all 11 sequential heavy ops (migrations,
+    purge, index creations, persona backfill) are backgrounded so the K8s
+    readiness probe can pass while Atlas warms up. First run is delayed 30s
+    so the app is fully serving before migration work begins.
+    """
+    import asyncio as _aio
+
+    async def _run():
+        await _aio.sleep(30)  # let uvicorn stabilise + serve /api/health first
+        try:
+            res = await migrate_batch3()
+            if any(res.values()):
+                logger.info("Batch3 startup migration: %s", res)
+        except Exception as e:
+            logger.warning("Batch3 migration failed: %s", e)
+        try:
+            purge_res = await run_purge_job()
+            if purge_res.get("purged"):
+                logger.info("Batch3 purge job: %s", purge_res)
+        except Exception as e:
+            logger.warning("Batch3 purge job failed: %s", e)
+        # Participant Profile v2 migration, idempotent, runs after batch3
+        # backfills so it sees every participant.
+        try:
+            pm_res = await migrate_participants_to_v2(db)
+            if pm_res.get("updated"):
+                logger.info("Participant profile v2 migration: %s", pm_res)
+        except Exception as e:
+            logger.warning("Participant profile v2 migration failed: %s", e)
+        # LOOP-1 v1.2 cron: nightly LCA-1 sweep + weekly digest audit
+        try:
+            loop1_start_cron()
+        except Exception as e:
+            logger.warning("LOOP1 cron failed to start: %s", e)
+        # LCA-1 indexes
+        try:
+            await ensure_lca1_indexes()
+        except Exception as e:
+            logger.warning("LCA-1 index creation failed: %s", e)
+        # Start LCA-1 weekly scrape cron
+        try:
+            start_lca1_cron()
+        except Exception as e:
+            logger.warning("LCA-1 cron start failed: %s", e)
+        # CE-3 indexes
+        try:
+            await ensure_ce3_indexes(db)
+        except Exception as e:
+            logger.warning("CE-3 index creation failed: %s", e)
+        # CPR-2 indexes
+        try:
+            await ensure_cpr2_indexes(db)
+        except Exception as e:
+            logger.warning("CPR-2 index creation failed: %s", e)
+        # CMP-1 indexes
+        try:
+            await ensure_cmp1_indexes(db)
+        except Exception as e:
+            logger.warning("CMP-1 index creation failed: %s", e)
+        # IC-2 indexes
+        try:
+            await ensure_ic2_indexes(db)
+        except Exception as e:
+            logger.warning("IC-2 index creation failed: %s", e)
+        # PPC-3 indexes
+        try:
+            await ensure_ppc3_indexes(db)
+        except Exception as e:
+            logger.warning("PPC-3 index creation failed: %s", e)
+        # CS-1 indexes
+        try:
+            await ensure_cs1_indexes(db)
+        except Exception as e:
+            logger.warning("CS-1 index creation failed: %s", e)
+        # AW-2 indexes
+        try:
+            await ensure_aw2_indexes(db)
+        except Exception as e:
+            logger.warning("AW-2 index creation failed: %s", e)
+        # PSW-1 indexes
+        try:
+            await ensure_psw1_indexes(db)
+        except Exception as e:
+            logger.warning("PSW-1 index creation failed: %s", e)
+        # CSC-2 indexes
+        try:
+            await ensure_csc2_indexes(db)
+        except Exception as e:
+            logger.warning("CSC-2 index creation failed: %s", e)
+        # ATHM-1 indexes
+        try:
+            await ensure_athm1_indexes(db)
+        except Exception as e:
+            logger.warning("ATHM-1 index creation failed: %s", e)
+        # CHSP-1 indexes
+        try:
+            await ensure_chsp1_indexes(db)
+        except Exception as e:
+            logger.warning("CHSP-1 index creation failed: %s", e)
+        # BC-2 indexes
+        try:
+            await ensure_bc2_indexes()
+        except Exception as e:
+            logger.warning("BC-2 index creation failed: %s", e)
+        # SDL-1 indexes
+        try:
+            await ensure_sdl1_indexes(db)
+        except Exception as e:
+            logger.warning("SDL-1 index creation failed: %s", e)
+        # FC-2 indexes
+        try:
+            await ensure_fc2_indexes(db)
+        except Exception as e:
+            logger.warning("FC-2 index creation failed: %s", e)
+        # LF-2 indexes
+        try:
+            await ensure_lf2_indexes()
+        except Exception as e:
+            logger.warning("LF-2 index creation failed: %s", e)
+
+        # Email verification, backfill `email_verified=True` on every legacy
+        # user row so existing accounts aren't suddenly locked out.
+        try:
+            ev_res = await migrate_existing_users_verified(db)
+            if ev_res.get("updated"):
+                logger.info("Email verification grandfather migration: %s", ev_res)
+        except Exception as e:
+            logger.warning("Email verification migration failed: %s", e)
+        # Ensure email-change indexes exist so lookups on token/user_id stay fast.
+        try:
+            await ensure_email_change_indexes(db)
+        except Exception as e:
+            logger.warning("Email-change indexes skipped: %s", e)
+        try:
+            await ensure_share_link_indexes(db)
+        except Exception as e:
+            logger.warning("Share-link indexes skipped: %s", e)
+        try:
+            await ensure_onboarding_draft_indexes(db)
+        except Exception as e:
+            logger.warning("Onboarding-draft indexes skipped: %s", e)
+        try:
+            await ensure_ppc_milestone_indexes(db)
+        except Exception as e:
+            logger.warning("PPC milestone indexes skipped: %s", e)
+        try:
+            result = await backfill_persona(db)
+            logger.info("PERSONA-1 backfill on boot: %s", result)
+        except Exception as e:
+            logger.warning("PERSONA-1 backfill skipped: %s", e)
+
+    _aio.create_task(_run())
+
+
+# Manual trigger for testing/debugging.
+@app.post("/api/internal/trial-tick")
+async def trial_tick_manual(request: Request):
+    """Internal endpoint to fire the trial pass on demand. Gated behind
+    `INTERNAL_TICK_TOKEN` env var when set (otherwise open in dev)."""
+    expected = os.environ.get("INTERNAL_TICK_TOKEN")
+    if expected:
+        provided = request.headers.get("X-Internal-Token", "")
+        if provided != expected:
+            raise HTTPException(status_code=403, detail="forbidden")
+    return await _process_trial_reminders_once()
+
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    import health_watchdog
+    await health_watchdog.stop()
+    try:
+        import reports_scheduler
+        await reports_scheduler.stop()
+    except Exception:
+        pass
+    try:
+        await loop1_stop_cron()
+    except Exception:
+        pass
+    client.close()

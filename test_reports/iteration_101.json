@@ -1,0 +1,22 @@
+{
+  "summary": "Regression verification of iteration_100 SD-3 create_pair fix. The 2-line insertion in /app/backend/routes/sd3.py (re-order a,b to match ids_sorted before invoking detectors) is present and correct. Ran /app/backend/tests/lca1/test_iteration_112.py 5 times consecutively — 5/5 GREEN (4 passed each run, no flakes). Full backend suite (backend/tests/lca1 + loop1 + core1) = 60 passed, 3 skipped. Frontend regression verified: /settings/notifications page renders with Digest frequency + Channels + Topics + Targeted sections; radio & toggle interactions PATCH /api/lca1/preferences with 200 and 'Saved' indicator appears. LCA1AlertsBell gear icon (lca1-alerts-settings-link inside lca1-alerts-bell-btn dropdown) navigates to /settings/notifications. Bug confirmed CLOSED.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/lca1/test_iteration_112.py",
+    "/app/test_reports/pytest/iter101.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix in /app/backend/routes/sd3.py::create_pair (lines 265-268) is minimal & correct: after computing ids_sorted, swaps a,b when payload order differs. draft_letter now consistently resolves both provider name and line-item description/amount.",
+    "Note: two unrelated 500s observed post-login: GET /api/statements and GET /api/budget/current (dashboard loads). Outside scope of this iteration but worth flagging for a future pass."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (60/60 passed, 3 skipped; 5/5 stable runs of test_iteration_112)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None; tests use their own seeded statements with cleanup.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The SD-3 sorted-order bug from iteration_100 is fully resolved. If future changes touch /app/backend/routes/sd3.py::create_pair, re-run test_iteration_112.py 5x to guard against regression. FYI: dashboard shows 500s on /api/statements and /api/budget/current for cathy@example.com — orthogonal to this fix.",
+  "rca of the issue": "Original RCA (iteration_100): create_pair fetched a,b in payload order but stored the pair with sorted statement_a_id/statement_b_id — so candidate.statement_a_line_id could reference a line in the pair's stored statement_b, causing draft_letter to return {} for _line_by_id. Fix: after computing ids_sorted, swap a,b (a,b = b,a) when ids_sorted[0] != payload.statement_a_id, ensuring candidate line_ids align with the pair's stored (sorted) order. Verified via 5 consecutive full runs of test_iteration_112.py and full 60-test suite."
+}

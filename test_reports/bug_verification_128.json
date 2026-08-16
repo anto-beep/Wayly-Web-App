@@ -1,0 +1,33 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "https://wayly-rn-build.preview.emergentagent.com/tools/care-plan-reviewer should be going to the Support Plan Reviewer. The Care Plan Reviewer is now the Support Plan Reviewer. This should be fixed and updated. Also I want that when users log into the backend, the sidebar dashboard with all the categories, the category names are a bit bigger and bolded - I want them to stand out. Also the sidebar dashboard isnt extended showing all the items under each category. it should be folded on default so users have to click to expand each category so its not overwhelming",
+  "summary": "Focused frontend retest passed. No relevant testing skill found. Verified /features visibly contains exact 'Support Plan Reviewer' and not 'Care Plan Reviewer'; both /tools/care-plan-reviewer and /tools/support-plan-reviewer redirect to /ai-tools/support-plan-reviewer with the correct heading; after caregiver login with clean sessionStorage, Today is expanded and all other sidebar groups are collapsed by default, headers are 14px/700 bold, clicking AI Tools expands it, and Command Palette shows 'Support Plan Reviewer'. Console capture only showed non-blocking Cloudflare RUM aborts.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/bug_verification_128_playwright.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/test_reports/bug_verification_128_playwright.py",
+    "/app/test_reports/bug_verification_128.json",
+    "/app/test_reports/iteration_128.json"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend only",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 128 focused only on the user-reported Support Plan Reviewer rename/redirect and sidebar collapse/styling flow. Use clean sessionStorage because sidebar group state persists under wayly_nav_group_<key>.",
+  "rca_of_the_issue": "Regression target from iteration 127 was /features missing the exact visible label. Retest confirms the Care Management card now renders 'Support Plan Reviewer' and links to /ai-tools/support-plan-reviewer. Browser reproduction covered: /features, legacy redirects, caregiver login, sidebar default collapse, sidebar expansion, and Command Palette. No mocked APIs were used."
+}

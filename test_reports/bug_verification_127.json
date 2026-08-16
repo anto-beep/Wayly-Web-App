@@ -1,0 +1,47 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "https://wayly-rn-build.preview.emergentagent.com/tools/care-plan-reviewer should be going to the Support Plan Reviewer. The Care Plan Reviewer is now the Support Plan Reviewer. This should be fixed and updated. Also I want that when users log into the backend, the sidebar dashboard with all the categories, the category names are a bit bigger and bolded - I want them to stand out. Also the sidebar dashboard isnt extended showing all the items under each category. it should be folded on default so users have to click to expand each category so its not overwhelming",
+  "summary": "No relevant testing skill found. Focused frontend verification found route redirects, tool page rename, sidebar default collapse, sidebar styling, group expansion, and Command Palette label working. However, the public Features page does not show an exact 'Support Plan Reviewer' label anywhere, so the rename/update is incomplete.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Features page",
+        "issue": "The /features page body does not contain an exact 'Support Plan Reviewer' label. It also no longer shows 'Care Plan Reviewer', but the required replacement label is absent from the rendered page.",
+        "selector": "body",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/support_plan_sidebar_iter127_playwright.py",
+    "/app/test_reports/bug_verification_127.json",
+    "/app/test_reports/iteration_127.json"
+  ],
+  "action_items": [
+    "Update the rendered /features content to include the exact user-facing tool label 'Support Plan Reviewer' for the renamed tool; the current local TOOLS array entry appears unused by the rendered grouped feature sections.",
+    "Re-run focused checks for /features, legacy tool redirects, Command Palette, and sidebar collapsed defaults after the Features page label is fixed."
+  ],
+  "critical_code_review_comments": [
+    "frontend/src/pages/Features.jsx defines a TOOLS array with title 'Support Plan Reviewer', but the rendered page uses later ToolGroup sections and does not display that exact label, causing the runtime feature-page check to fail."
+  ],
+  "updated_files": [
+    "/app/test_reports/support_plan_sidebar_iter127_playwright.py",
+    "/app/test_reports/bug_verification_127.json",
+    "/app/test_reports/iteration_127.json"
+  ],
+  "success_rate": {
+    "backend": "not tested - frontend-only bug verification",
+    "frontend": "80%"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use a clean browser/sessionStorage context. Login with cathy@example.com / testpass123. Verified passing: /tools/care-plan-reviewer and /tools/support-plan-reviewer redirect to /ai-tools/support-plan-reviewer; page heading is Support Plan Reviewer with no old exact label; sidebar Today expanded, guided_journeys/ai_tools/money/care collapsed and children absent until click; headers have text-sm font-bold; Command Palette contains Support Plan Reviewer and not Care Plan Reviewer. Failing: /features body text does not contain exact Support Plan Reviewer.",
+  "rca_of_the_issue": "The Features page still does not expose the renamed tool as an exact visible label. Code review suggests the updated TOOLS entry in frontend/src/pages/Features.jsx is dead/unrendered; the visible grouped feature content omits the exact Support Plan Reviewer title. No mocked APIs were used."
+}

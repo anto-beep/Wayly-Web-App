@@ -1,0 +1,32 @@
+{
+  "summary": "Verified all three bug fixes in this iteration. (1) Cancel-URL rollback: navigating to /app/participants?cancelled=1 while authenticated does POST /api/billing/v2/cancel-pending-addon on mount, shows a toast, and cleans the URL via history.replaceState — confirmed. (2) Over-limit banner: flipped cathy@example.com (3 active participants) to plan=solo temporarily; /settings/billing rendered the terracotta banner with copy 'You're over the Solo plan limit … $73.50 per fortnight … more than Family ($49.50)', both CTAs (over-limit-switch-family, over-limit-manage-participants) present. Restored plan to family after test. (3) Participants counter: tile reads '3 / 1 included' on Solo (was '3 / 2 included' in bug); current-plan-price shows '$73.50 per fortnight' and current-plan-breakdown reads '$24.50 base + 2 additional participants at $24.50 per fortnight each · Includes GST'. (4) DONE button code-review verified: skip-payment-btn shown when lastAdded.addon?.id present, add-done-btn shown otherwise (Participants.jsx L751-777). Backend cancel endpoint contract verified via 4 pytest cases (200 shape, idempotent second call = 0 cancellations, unauth 401/403, participants regression).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "?cancelled=1 rollback", "issue": "Cancel-pending-addon toast fires twice on mount (React StrictMode double-invokes the useEffect since it has no guard/ref). Not visible in production build but is visible in dev. Consider a useRef guard.", "affected_selectors": ["[data-sonner-toast]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter149_cancel_rollback.py",
+    "/app/test_reports/pytest/iter149.xml",
+    "/app/test_reports/iter149_billing.png"
+  ],
+  "action_items": [
+    "Optional: guard the /app/participants ?cancelled=1 useEffect with a useRef so React StrictMode dev double-mount doesn't fire two toasts (only affects dev builds; production single-mounts are fine)."
+  ],
+  "critical_code_review_comments": [
+    "Participants.jsx L180-199 cancel-URL rollback useEffect has no in-flight guard; StrictMode dev double-invoke fires two POSTs (both return cancelled_count=0 the second time, but two success/info toasts render). Recommend a useRef sentinel: const ran = useRef(false); if (ran.current) return; ran.current = true;",
+    "Settings.jsx L432 still reads acctSummary.participants_active as the source of truth for count, but the fix intentionally moves participantsIncluded to PLANS[currentPlan].included_participants. That asymmetry is fine but worth a code comment noting that active count is authoritative from backend while included count is derived from the plan constant.",
+    "batch3_billing.py cancel_pending_addon does two updates in sequence (participant_add_ons then participants) without a transaction. If the process dies between the two writes, an add-on row is CANCELLED but the participant remains ACTIVE. Low probability but consider Mongo multi-document transactions or a single $set on both collections via a background reconciler."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter149_cancel_rollback.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 — during T1/T2/T3 the account plan was flipped to 'solo' via mongo, then restored to 'family'. Account has 3 active participants (Dorothy primary, Robert, Patricia).",
+  "seed_data_creation": "Temporarily set users.plan=solo on cathy@example.com to trigger the Solo over-limit banner (>1 participant). Reverted back to family after tests.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All three billing bug fixes are working. The skip-payment-btn add flow was verified by code review only (would have required opening real Stripe checkout to exercise fully); the backend POST it calls is the same /api/billing/v2/cancel-pending-addon that is verified by pytest and by the ?cancelled=1 e2e. Test data note: cathy has 3 active participants which are the baseline for future iterations.",
+  "rca of the issue": "N/A this iteration — verification only. All three fixes from iter148/149 are in place: participantsIncluded derived from PLANS constant (not backend field), over-limit banner rendered when Solo+>1 participants, Participants.jsx modal swaps Done→Skip-payment CTA when pending addon exists, and mount-time useEffect handles ?cancelled=1 rollback."
+}

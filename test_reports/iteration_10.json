@@ -1,0 +1,25 @@
+{
+  "summary": "Iter10 RETEST of the 3 fixes from iter9. All three fixes verified: (1) NotificationsBell now mounted in authenticated Layout with data-testid='nav-bell' and renders correctly on /app, /app/statements, /app/chat, /settings/profile; dropdown opens; unread badge (count=1) visible; mark-all-read clears it. (2) POST /api/household/invite now returns 402 plan_required for Solo & Free users BEFORE the household check (plan gate first). (3) Cmd+K CommandDialog opens with no Radix DialogTitle/aria-describedby a11y warnings. Backend 8/8, Frontend 100%.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter10_retest.py",
+    "/app/test_reports/pytest/iter10_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py now ~1802 lines — previously flagged; still recommend splitting into routers (digest/notifications/billing/household/auth).",
+    "NotificationsBell polling improvement shipped (pause on document.hidden) — good.",
+    "tone='light' vs 'dark' approach is clean and avoids prop-drilling CSS — OK."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter10_retest.py (NEW — 8 tests, 8 pass)"
+  ],
+  "success_rate": {"backend": "100% (8/8)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan). Throwaway Solo/Free signups for invite plan-gate verification.",
+  "seed_data_creation": "Triggered one POST /api/digest/send during retest (creates a weekly_digest notification + marks it read). Marked notifications as read via API and UI.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All iter9 issues closed. Bell present on every authenticated route tested; mark-all-read works; invite plan-gate now 402 for Solo/Free before 400 household-check; CommandDialog has sr-only DialogTitle+DialogDescription so Radix console warnings are gone. No regressions seen on cathy login, auth/me, digest/preview, digest/send, notifications/list, notifications/read.",
+  "rca of the issue": "N/A — all three fixes verified."
+}

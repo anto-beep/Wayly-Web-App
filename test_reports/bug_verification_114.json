@@ -1,0 +1,38 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "Across the backend pages, dashes have been used. I want this to be removed - this makes it look like its AI generated content. no dashes or em dashes in the UI",
+  "summary": "No relevant testing skill found. Verified the focused dash-removal bug end to end: logged in as cathy@example.com and checked all 11 requested /app pages plus the 3 anonymous /ai-tools pages; visible document.body.innerText contained 0 em dashes (U+2014) and 0 en dashes (U+2013) on every page. Also verified personalised /ai-tools CTAs, ATHM OT referral UI/API, and production build/smoke rendering.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/bug_verification_114_dash_ui_test.py",
+    "/app/test_reports/bug_verification_114_playwright_results.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Relevant changed files inspected: frontend/src/components/ToolExplainer.jsx, frontend/src/pages/AthmProjects.jsx, backend/routes/athm1.py, backend/documents_routes.py. Git shows these files are uncommitted/added in this workspace. Recent relevant commits: f4daa38 and 4604c23.",
+    "Frontend build completed successfully with warnings only; no React page errors or 'Compiled with problems' overlays were observed in the tested UI. Console contained a few non-blocking HTTP resource/auth errors, but no tested flow failed."
+  ],
+  "updated_files": [
+    "/app/test_reports/bug_verification_114_dash_ui_test.py",
+    "/app/test_reports/bug_verification_114_playwright_results.json",
+    "/app/test_reports/bug_verification_114.json",
+    "/app/test_reports/iteration_114.json"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "Created ATHM project 'Dash QA OT Referral 1786022346' (project_id 0bc56f63-c41b-46d2-b918-0b5d0b5a3383) for Cathy to verify the OT referral section and API endpoints.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Primary dash checks passed on /app, /app/csc/stream-mix-and-iat, /app/athm/projects, /app/chsp/tools, /app/ask-wayly, /app/carer/self-assessment, /app/statements, /app/documents, /app/reports, /app/care-plans, /app/wall, /ai-tools, /ai-tools/invoice-checker, and /ai-tools/statement-decoder. Authed CTAs appeared for invoice-checker and statement-decoder with /app/* hrefs; anonymous CTAs showed the 7-day trial button. ATHM GET returned {'referrals': []}; unauth GET/attach returned 401; authed fake document attach returned 404 Document not found, proving endpoint/auth path exists without using a MOCKED API.",
+  "rca_of_the_issue": "Focused reproduction: compare visible body text for U+2014/U+2013 on the exact requested routes after the dash-removal pass. All requested routes now return zero counts. Regression checks confirmed the personalised CTA switch and ATHM OT referral upload/list controls still work."
+}

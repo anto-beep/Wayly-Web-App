@@ -1,0 +1,665 @@
+{
+  "base_url": "https://wayly-rn-build.preview.emergentagent.com",
+  "steps": [
+    {
+      "name": "Login",
+      "ok": true,
+      "details": {
+        "url": "https://wayly-rn-build.preview.emergentagent.com/app"
+      }
+    },
+    {
+      "name": "Set light theme",
+      "ok": true,
+      "details": {
+        "htmlClass": "",
+        "url": "https://wayly-rn-build.preview.emergentagent.com/app"
+      }
+    },
+    {
+      "name": "light: dashboard Complete now CTA contrast",
+      "ok": true,
+      "details": {
+        "text": "Complete now",
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(192, 57, 43)",
+        "effectiveBackground": "rgb(192, 57, 43)",
+        "contrast": 5.44,
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "className": "flex-1 sm:flex-none bg-terracotta text-white rounded-md px-3 py-2 text-xs hover:bg-terracotta/90 inline-flex items-center justify-center gap-1",
+        "tagName": "A",
+        "rect": {
+          "x": 1159,
+          "y": 125,
+          "w": 124,
+          "h": 32
+        }
+      }
+    },
+    {
+      "name": "light: voice-check radio selected/unselected contrast",
+      "ok": true,
+      "details": {
+        "before": [
+          {
+            "testid": "voice-check-answer-0-yes_i_wanted_this",
+            "checked": false,
+            "label": "Yes, they wanted this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "testid": "voice-check-answer-0-yes_but_not_exactly",
+            "checked": false,
+            "label": "Yes, but not exactly like this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "testid": "voice-check-answer-0-no_this_was_the_providers_idea",
+            "checked": false,
+            "label": "No, this was the provider's idea",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "testid": "voice-check-answer-0-i_dont_remember_discussing_this",
+            "checked": false,
+            "label": "I don't remember discussing this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "testid": "voice-check-answer-0-skipped",
+            "checked": false,
+            "label": "Skip this goal",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          }
+        ],
+        "after": [
+          {
+            "testid": "voice-check-answer-0-yes_i_wanted_this",
+            "checked": true,
+            "label": "Yes, they wanted this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "testid": "voice-check-answer-0-yes_but_not_exactly",
+            "checked": false,
+            "label": "Yes, but not exactly like this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "testid": "voice-check-answer-0-no_this_was_the_providers_idea",
+            "checked": false,
+            "label": "No, this was the provider's idea",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "testid": "voice-check-answer-0-i_dont_remember_discussing_this",
+            "checked": false,
+            "label": "I don't remember discussing this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          },
+          {
+            "testid": "voice-check-answer-0-skipped",
+            "checked": false,
+            "label": "Skip this goal",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(231, 223, 213)",
+            "accentColor": "auto",
+            "contrast": 14.66,
+            "color": "rgb(28, 43, 45)",
+            "effectiveBackground": "rgb(255, 255, 255)"
+          }
+        ],
+        "selectedDistinct": false,
+        "neutralUnselected": true
+      }
+    },
+    {
+      "name": "light: statement detail loads",
+      "ok": true,
+      "details": {
+        "url": "https://wayly-rn-build.preview.emergentagent.com/app/statements/408fcbf3-c126-4897-a9b1-c76628c49ca7",
+        "title": "Statement Detail | Wayly",
+        "h1": "iter58_stmt_728357.csv \u00b7 Unknown provider",
+        "textLength": 8972,
+        "notFound": false,
+        "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAI TOOLS\nMONEY & STATEMENTS\nTHEIR CARE\nPROVIDER"
+      }
+    },
+    {
+      "name": "light: anomaly AI disclaimer contrast",
+      "ok": true,
+      "details": {
+        "count": 5,
+        "minContrast": 7.09,
+        "measurements": [
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 7.09,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2369,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 7.09,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2734,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 7.09,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3073,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 7.09,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3371,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 7.09,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3627,
+              "w": 404,
+              "h": 16
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "light: priority pill badge contrast",
+      "ok": true,
+      "details": {
+        "minContrast": 5.44,
+        "badges": [
+          {
+            "text": "Medium",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "contrast": 5.51,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-gold text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2150,
+              "w": 56,
+              "h": 18
+            }
+          },
+          {
+            "text": "High",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(192, 57, 43)",
+            "effectiveBackground": "rgb(192, 57, 43)",
+            "contrast": 5.44,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-terracotta text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2445,
+              "w": 40,
+              "h": 18
+            }
+          },
+          {
+            "text": "Medium",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(165, 81, 43)",
+            "effectiveBackground": "rgb(165, 81, 43)",
+            "contrast": 5.51,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-gold text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2811,
+              "w": 56,
+              "h": 18
+            }
+          },
+          {
+            "text": "Low",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(66, 95, 71)",
+            "effectiveBackground": "rgb(66, 95, 71)",
+            "contrast": 7.1,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-sage text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3150,
+              "w": 38,
+              "h": 18
+            }
+          },
+          {
+            "text": "Low",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(66, 95, 71)",
+            "effectiveBackground": "rgb(66, 95, 71)",
+            "contrast": 7.1,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-sage text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3448,
+              "w": 38,
+              "h": 18
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "light: Your Rights panel text contrast",
+      "ok": true,
+      "details": {
+        "minContrast": 5.44,
+        "measurements": [
+          {
+            "text": "Your rights",
+            "color": "rgb(82, 75, 66)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 8.59,
+            "fontSize": "11.52px",
+            "fontWeight": "600",
+            "className": "inline-flex items-center gap-2 overline",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 305,
+              "y": 4025,
+              "w": 125,
+              "h": 18
+            }
+          },
+          {
+            "text": "This is general information about your rights, not legal advice.",
+            "color": "rgb(82, 75, 66)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 8.59,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "mt-2 text-xs text-muted-k",
+            "tagName": "P",
+            "rect": {
+              "x": 305,
+              "y": 4052,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to clear information about your care and its cost",
+            "color": "rgb(14, 77, 82)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 9.54,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4084,
+              "w": 385,
+              "h": 20
+            }
+          },
+          {
+            "text": "Relevant here",
+            "color": "rgb(192, 57, 43)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 5.44,
+            "fontSize": "10px",
+            "fontWeight": "400",
+            "className": "text-[10px] uppercase tracking-wider rounded-full bg-terracotta/10 text-terracotta px-2 py-0.5 shrink-0",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1241,
+              "y": 4084,
+              "w": 102,
+              "h": 20
+            }
+          },
+          {
+            "text": "You have the right to a statement you can understand, showing what you were charged and why.",
+            "color": "rgb(82, 75, 66)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 8.59,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4106,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Ask your provider to explain any charge in plain language. They must respond.",
+            "color": "rgb(14, 77, 82)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 9.54,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4128,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to be told about changes to your care and fees",
+            "color": "rgb(14, 77, 82)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 9.54,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4169,
+              "w": 376,
+              "h": 20
+            }
+          },
+          {
+            "text": "Relevant here",
+            "color": "rgb(192, 57, 43)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 5.44,
+            "fontSize": "10px",
+            "fontWeight": "400",
+            "className": "text-[10px] uppercase tracking-wider rounded-full bg-terracotta/10 text-terracotta px-2 py-0.5 shrink-0",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1241,
+              "y": 4169,
+              "w": 102,
+              "h": 20
+            }
+          },
+          {
+            "text": "Your provider should tell you before your fees or services change, not surprise you afterwards.",
+            "color": "rgb(82, 75, 66)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 8.59,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4191,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Ask for written notice of any backdated adjustment or fee change and the reason for it.",
+            "color": "rgb(14, 77, 82)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 9.54,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4213,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to raise concerns without it affecting your care",
+            "color": "rgb(14, 77, 82)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 9.54,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4254,
+              "w": 376,
+              "h": 20
+            }
+          },
+          {
+            "text": "You can give feedback or make a complaint, and your provider cannot treat you differently for doing so.",
+            "color": "rgb(82, 75, 66)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 8.59,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4276,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Raise it with your provider first. If it is not resolved, the Aged Care Quality and Safety Commission can help.",
+            "color": "rgb(14, 77, 82)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 9.54,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4298,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to a free independent advocate",
+            "color": "rgb(14, 77, 82)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 9.54,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4339,
+              "w": 273,
+              "h": 20
+            }
+          },
+          {
+            "text": "You can have someone speak up alongside you, at no cost, through the Older Persons Advocacy Network.",
+            "color": "rgb(82, 75, 66)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 8.59,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4361,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Call OPAN on 1800 700 600 for free, confidential advocacy support.",
+            "color": "rgb(14, 77, 82)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 9.54,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4383,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "Aged care Statement of Rights (plain-language summary)",
+            "color": "rgb(82, 75, 66)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(255, 255, 255)",
+            "contrast": 8.59,
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "className": "mt-3 text-[11px] text-muted-k",
+            "tagName": "P",
+            "rect": {
+              "x": 305,
+              "y": 4423,
+              "w": 1038,
+              "h": 18
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "console_errors": [],
+  "network_failures": [],
+  "ok": true
+}
