@@ -2,6 +2,24 @@
 
 
 ---
+## Mobile Iteration (Jun 2026) — Auth screen refresh (login + signup branding & validation)
+
+### Shipped (mobile /app/mobile)
+- **Login & Signup** (`app/login.tsx`, `app/signup.tsx`): prominent Wayly logo (`WaylyMark`) at top with the word "Wayly" beneath, and a bold, large tagline **"AGED CARE, MADE EASY"** (uppercase) replacing "Calm, clear aged-care support". Both screens converted to `useTheme()` for dark-mode support.
+- **Signup password parity** with web `PasswordStrength.jsx`: 8+ chars, uppercase, lowercase, number, symbol, and must not contain the user's name/email; live requirements checklist (testID `signup-password-rules`). AU mobile format validation (04XXXXXXXX / +614XXXXXXXX / blank).
+
+### Verified
+- testing_agent iteration_158: all 8 checks PASS in light AND dark mode (branding, weak-password block, identity-in-password rejection, AU mobile validation, happy-path signup + login). No dashes in error copy.
+
+### NOT YET DONE — remaining from user's request (next phases)
+- **Full onboarding replication**: web `Onboarding.jsx` + `OnboardingRouter.jsx` + steps (StepEssentials, StepRecommended, StepAuthorisation, StepAllDone), persona/role selection, care-recipient fields, second-participant (Family) branch. Mobile currently goes straight to tabs after signup.
+- **Plan selection + Stripe SetupIntent card capture**: replicate web `Pricing.jsx` plan tiers/pricing/features, then a Stripe card screen (save card via SetupIntent, no charge). NOTE: `@stripe/stripe-react-native` CardField/PaymentSheet needs a NATIVE build; it cannot be validated on Expo Go or the web preview. Must route via integration_expert for the SetupIntent playbook.
+- **Family Members in Settings**: add web's members list + invite management.
+- **Visual audit pass**: per-screen spacing/contrast match to web in both themes.
+
+
+
+---
 ## Mobile Iteration (Jun 2026) — Remaining journeys + Their Care completion + scroll-to-top + header wrap
 
 ### Shipped (mobile /app/mobile) — theme-aware, real backend

@@ -12,11 +12,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { LogIn } from "lucide-react-native";
 
 import { Button, Field, Loading, Screen, T } from "@/src/components/ui";
+import { WaylyMark } from "@/src/components/WaylyMark";
 import { useAuth } from "@/src/context/AuthContext";
+import { useTheme } from "@/src/theme/ThemeContext";
 import { ApiError } from "@/src/lib/api";
-import { colors, fonts, radius, spacing } from "@/src/theme";
+import { fonts, radius, spacing } from "@/src/theme/tokens";
 
 export default function LoginScreen() {
+  const { colors, isDark } = useTheme();
   const { login, loginWithGoogle, loading: authLoading, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -80,11 +83,15 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.brandMark}>
-            <T variant="h1" style={{ fontSize: 40, color: colors.primary }}>
+            <WaylyMark size={78} white={isDark} />
+            <T style={{ fontFamily: fonts.heading, fontSize: 34, color: colors.primary, marginTop: 10 }}>
               Wayly
             </T>
-            <T variant="bodyMuted" style={{ marginTop: 4 }}>
-              Calm, clear aged-care support
+            <T
+              testID="brand-tagline"
+              style={{ fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, letterSpacing: 1, color: colors.gold, marginTop: 12, textAlign: "center" }}
+            >
+              AGED CARE, MADE EASY
             </T>
           </View>
 
@@ -131,7 +138,7 @@ export default function LoginScreen() {
             </View>
 
             {error ? (
-              <View testID="login-error" style={styles.errorBox}>
+              <View testID="login-error" style={[styles.errorBox, { backgroundColor: colors.errorSoft }]}>
                 <Ionicons name="alert-circle" size={18} color={colors.terracotta} />
                 <T variant="small" style={{ color: colors.terracotta, flex: 1 }}>
                   {error}
@@ -148,9 +155,9 @@ export default function LoginScreen() {
             />
 
             <View style={styles.divider}>
-              <View style={styles.line} />
+              <View style={[styles.line, { backgroundColor: colors.border }]} />
               <T variant="small">or</T>
-              <View style={styles.line} />
+              <View style={[styles.line, { backgroundColor: colors.border }]} />
             </View>
 
             <Button
@@ -193,7 +200,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     alignItems: "center",
-    backgroundColor: "#FBE6E4",
     borderRadius: radius.md,
     padding: spacing.md,
     marginTop: spacing.md,
@@ -204,5 +210,5 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginVertical: spacing.lg,
   },
-  line: { flex: 1, height: 1, backgroundColor: colors.border },
+  line: { flex: 1, height: 1 },
 });

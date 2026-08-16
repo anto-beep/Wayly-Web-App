@@ -5,11 +5,31 @@ import { Ionicons } from "@expo/vector-icons";
 import { LogIn } from "lucide-react-native";
 
 import { AppHeader, Button, Field, Screen, T } from "@/src/components/ui";
+import { WaylyMark } from "@/src/components/WaylyMark";
 import { useAuth } from "@/src/context/AuthContext";
+import { useTheme } from "@/src/theme/ThemeContext";
 import { ApiError } from "@/src/lib/api";
-import { colors, fonts, radius, spacing } from "@/src/theme";
+import { fonts, radius, spacing } from "@/src/theme/tokens";
+
+const PW_RULES = [
+  { id: "len", label: "8+ characters", test: (p: string) => p.length >= 8 },
+  { id: "upper", label: "An uppercase letter (A-Z)", test: (p: string) => /[A-Z]/.test(p) },
+  { id: "lower", label: "A lowercase letter (a-z)", test: (p: string) => /[a-z]/.test(p) },
+  { id: "num", label: "A number (0-9)", test: (p: string) => /[0-9]/.test(p) },
+  { id: "sym", label: "A symbol (!@#$)", test: (p: string) => /[!@#$%^&*()_+\-=[\]{}|;':".<>?/]/.test(p) },
+];
+function evaluatePassword(password: string, email: string, name: string) {
+  const passed = PW_RULES.filter((r) => r.test(password));
+  const lower = password.toLowerCase();
+  const containsIdentity = Boolean(
+    (email && lower.includes(email.toLowerCase().split("@")[0])) ||
+    (name && name.trim().length > 2 && lower.includes(name.toLowerCase().split(" ")[0]))
+  );
+  return { valid: passed.length === PW_RULES.length && !containsIdentity, containsIdentity, rules: PW_RULES.map((r) => ({ id: r.id, label: r.label, ok: r.test(password) })) };
+}
 
 export default function SignupScreen() {
+  const { colors, isDark } = useTheme();
   const { signup, loginWithGoogle } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -27,8 +47,15 @@ export default function SignupScreen() {
       setError("Please fill in your name, email and password.");
       return;
     }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    const mobileClean = mobile.replace(/\s+/g, "");
+    if (mobileClean && !/^(\+614\d{8}|04\d{8})$/.test(mobileClean)) {
+      setError("Enter an Australian mobile (04XXXXXXXX or +614XXXXXXXX), or leave blank.");
+      return;
+    }
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const pw = evaluatePassword(password, email, fullName);
+    if (!pw.valid) {
+      setError(pw.containsIdentity ? "Password should not include your name or email." : "Password needs 8+ characters with an uppercase, a lowercase, a number, and a symbol.");
       return;
     }
     setBusy(true);
@@ -36,10 +63,10 @@ export default function SignupScreen() {
       await signup({
         email,
         password,
-        name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+        name: fullName,
         first_name: firstName.trim(),
         last_name: lastName.trim() || undefined,
-        mobile: mobile.trim() || undefined,
+        mobile: mobileClean || undefined,
       });
       router.replace("/(tabs)");
     } catch (e) {
@@ -67,7 +94,14 @@ export default function SignupScreen() {
       <AppHeader title="Create account" onBack={() => router.back()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <T variant="bodyMuted" style={{ marginBottom: spacing.lg }}>
+          <View style={{ alignItems: "center", marginBottom: spacing.lg }}>
+            <WaylyMark size={64} white={isDark} />
+            <T style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.primary, marginTop: 8 }}>Wayly</T>
+            <T testID="brand-tagline" style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, letterSpacing: 1, color: colors.gold, marginTop: 10, textAlign: "center" }}>
+              AGED CARE, MADE EASY
+            </T>
+          </View>
+          <T variant="bodyMuted" style={{ marginBottom: spacing.lg, textAlign: "center" }}>
             Join Wayly to make sense of Support at Home statements, invoices and budgets.
           </T>
 
@@ -127,8 +161,19 @@ export default function SignupScreen() {
             </Pressable>
           </View>
 
+          {password ? (
+            <View testID="signup-password-rules" style={{ marginTop: spacing.sm, gap: 4 }}>
+              {evaluatePassword(password, email, `${firstName} ${lastName}`.trim()).rules.map((r) => (
+                <View key={r.id} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Ionicons name={r.ok ? "checkmark-circle" : "ellipse-outline"} size={15} color={r.ok ? colors.sage : colors.muted} />
+                  <T variant="small" style={{ color: r.ok ? colors.text : colors.muted }}>{r.label}</T>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           {error ? (
-            <View testID="signup-error" style={styles.errorBox}>
+            <View testID="signup-error" style={[styles.errorBox, { backgroundColor: colors.errorSoft }]}>
               <Ionicons name="alert-circle" size={18} color={colors.terracotta} />
               <T variant="small" style={{ color: colors.terracotta, flex: 1 }}>
                 {error}
@@ -145,9 +190,9 @@ export default function SignupScreen() {
           />
 
           <View style={styles.divider}>
-            <View style={styles.line} />
+            <View style={[styles.line, { backgroundColor: colors.border }]} />
             <T variant="small">or</T>
-            <View style={styles.line} />
+            <View style={[styles.line, { backgroundColor: colors.border }]} />
           </View>
 
           <Button
@@ -179,11 +224,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     alignItems: "center",
-    backgroundColor: "#FBE6E4",
     borderRadius: radius.md,
     padding: spacing.md,
     marginTop: spacing.md,
   },
   divider: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginVertical: spacing.lg },
-  line: { flex: 1, height: 1, backgroundColor: colors.border },
+  line: { flex: 1, height: 1 },
 });
