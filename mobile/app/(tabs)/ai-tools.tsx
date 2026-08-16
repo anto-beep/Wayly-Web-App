@@ -24,15 +24,15 @@ type Tool = { slug: string; name: string; blurb: string; icon: LucideIcon; route
 
 // Mirrors the web AI Tools registry (config/toolRegistry.js), same order + icons.
 const TOOLS: Tool[] = [
-  { slug: "statement-decoder", name: "Statement Decoder", blurb: "Turn a Support at Home statement into plain English, line by line.", icon: FileSearch, route: "/(tabs)/statements" },
-  { slug: "invoice-checker", name: "Invoice Checker", blurb: "Check a care invoice for overcharges before you pay.", icon: ReceiptText, route: "/invoices" },
+  { slug: "statement-decoder", name: "Statement Decoder", blurb: "Turn a Support at Home statement into plain English, line by line.", icon: FileSearch },
+  { slug: "invoice-checker", name: "Invoice Checker", blurb: "Check a care invoice for overcharges before you pay.", icon: ReceiptText },
   { slug: "budget-calculator", name: "Budget & Lifetime Cap Calculator", blurb: "See where the budget is heading and track the lifetime cap.", icon: Wallet },
   { slug: "provider-price-checker", name: "Provider Price Checker", blurb: "Compare provider prices against the market.", icon: BarChart3 },
   { slug: "classification-self-check", name: "Classification Self-Check", blurb: "Sense-check the assessed classification level.", icon: ListChecks },
   { slug: "letters-and-follow-ups", name: "Letters & Follow-ups", blurb: "Draft clear letters and follow-ups to providers.", icon: FileEdit },
   { slug: "contribution-estimator", name: "Contribution Estimator", blurb: "Estimate the participant contribution and any hardship options.", icon: Receipt },
   { slug: "care-plan-reviewer", name: "Support Plan Reviewer", blurb: "Review a support plan for gaps and questions to ask.", icon: ClipboardCheck },
-  { slug: "family-coordinator", name: "Aged Care Q&A", blurb: "Ask anything about aged care and get a friendly, expert answer.", icon: MessageCircle, route: "/(tabs)/ask" },
+  { slug: "family-coordinator", name: "Aged Care Q&A", blurb: "Ask anything about aged care and get a friendly, expert answer.", icon: MessageCircle },
 ];
 
 export default function AiToolsHub() {

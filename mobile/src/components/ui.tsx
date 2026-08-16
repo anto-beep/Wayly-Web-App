@@ -250,9 +250,17 @@ export const T = ({
 }) => {
   const { colors } = useTheme();
   const color = MUTED_VARIANTS.has(variant as string) ? colors.muted : colors.text;
+  const callerFlat = StyleSheet.flatten(style) as TextStyle | undefined;
+  const merged: TextStyle = { ...(typeScale[variant] as TextStyle), ...(callerFlat || {}) };
+  // When a caller overrides fontSize but not lineHeight, the base variant's
+  // smaller lineHeight would clip tall/descending glyphs (Fraunces headings).
+  // Recompute a proportional lineHeight so nothing gets cut off.
+  if (callerFlat?.fontSize != null && callerFlat?.lineHeight == null) {
+    merged.lineHeight = Math.round((callerFlat.fontSize as number) * 1.3);
+  }
   return (
     <Text
-      style={[typeScale[variant] as TextStyle, { color }, style as TextStyle]}
+      style={[merged, { color }]}
       numberOfLines={numberOfLines}
       onPress={onPress}
       testID={testID}
@@ -278,8 +286,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
   },
-  headerTitle: { fontFamily: fonts.heading, fontSize: 26 },
-  headerSubtitle: { fontFamily: fonts.body, fontSize: 14, marginTop: 2 },
+  headerTitle: { fontFamily: fonts.heading, fontSize: 26, lineHeight: 34 },
+  headerSubtitle: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 2 },
   card: { borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1 },
   btn: {
     minHeight: 52,

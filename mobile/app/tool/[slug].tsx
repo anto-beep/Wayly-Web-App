@@ -73,6 +73,14 @@ const TOOLS: Record<string, ToolCfg> = {
   },
 };
 
+// Launcher tools: their page shows the same web explainer content plus a button
+// that opens the working feature (statements, invoices, chat). No form.
+const LAUNCHERS: Record<string, { title: string; subtitle: string; launchLabel: string; launchRoute: string }> = {
+  "statement-decoder": { title: "Statement Decoder", subtitle: "Decode a statement, line by line", launchLabel: "Open Statement Decoder", launchRoute: "/(tabs)/statements" },
+  "invoice-checker": { title: "Invoice Checker", subtitle: "Check an invoice before you pay", launchLabel: "Open Invoice Checker", launchRoute: "/invoices" },
+  "family-coordinator": { title: "Aged Care Q&A", subtitle: "Ask anything about aged care", launchLabel: "Open Aged Care Q&A", launchRoute: "/(tabs)/ask" },
+};
+
 export default function ToolScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const cfg = TOOLS[slug || ""];
@@ -81,6 +89,24 @@ export default function ToolScreen() {
   const [result, setResult] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const launcher = LAUNCHERS[slug || ""];
+  if (launcher) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <AppHeader title={launcher.title} subtitle={launcher.subtitle} onBack={() => router.back()} />
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
+          {TOOL_CONTENT[slug || ""]?.heroOneLiner ? (
+            <Card testID="tool-intro" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
+              <T variant="body" style={{ color: colors.text, lineHeight: 24 }}>{TOOL_CONTENT[slug || ""].heroOneLiner}</T>
+            </Card>
+          ) : null}
+          <Button label={launcher.launchLabel} testID="tool-launch" icon={Sparkles} onPress={() => router.push(launcher.launchRoute as any)} />
+          <ToolExplainer toolKey={slug || ""} />
+        </ScrollView>
+      </View>
+    );
+  }
 
   if (!cfg) {
     return <View style={{ flex: 1, backgroundColor: colors.bg }}><AppHeader title="Tool" onBack={() => router.back()} /><T style={{ padding: spacing.lg }}>Unknown tool.</T></View>;

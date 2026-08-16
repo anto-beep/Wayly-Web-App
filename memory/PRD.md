@@ -2,6 +2,20 @@
 
 
 ---
+## Mobile Iteration (Jun 2026) — Full AI-tool parity + header truncation fix
+
+### Fixed
+- **Text truncation** (app-wide): the `T` component (`src/components/ui.tsx`) inherited the base `body` lineHeight (24) even when a caller passed a larger `fontSize`, clipping Fraunces headings (e.g. "Cathy, this quarter"). `T` now recomputes lineHeight = fontSize * 1.3 when a caller overrides fontSize without lineHeight. Also added explicit `lineHeight` to `headerTitle`/`headerSubtitle`, fixing clipped "AI Tools", "Statements", "Settings" headers.
+
+### Shipped
+- **All 9 AI tools now have the full web explainer**: added `statement-decoder`, `invoice-checker`, `family-coordinator` (Aged Care Q&A) content (verbatim from web `toolContent.js`) to `src/data/toolContent.ts`. These 3 are "launcher" tools in `app/tool/[slug].tsx`: their page shows intro + What This Tool Does + How It Works + What You'll Need/Get + FAQ + CTA, plus an "Open …" button into the working feature (Statements / Invoices / Ask). The AI Tools hub (`app/(tabs)/ai-tools.tsx`) now routes all 9 tools through `/tool/{slug}`.
+
+### Verified (screenshots)
+- Dashboard greeting and tab headers no longer clip. Statement Decoder, Invoice Checker, and Aged Care Q&A launcher pages all render intro + Open button + full explainer.
+
+
+
+---
 ## Mobile Iteration (Jun 2026) — Their Care + Journeys & Paperwork (11 screens)
 
 ### Shipped (mobile /app/mobile) — all theme-aware (dark mode), real backend data

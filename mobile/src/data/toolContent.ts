@@ -227,6 +227,111 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     ctaHeading: "See Your Care Plan in Plain English",
     ctaBody: "Walk into your next review knowing exactly what to ask.",
   },
+
+  "statement-decoder": {
+    name: "Statement Decoder",
+    heroOneLiner:
+      "Upload a Support at Home statement and get a plain-English read on every charge, with anything unusual flagged for you.",
+    whatItDoes: [
+      "Your monthly Support at Home statement lists the services you received, what the government paid, and what you contributed. It is meant to be clear, but the line items, service IDs and contribution rates can be hard to follow.",
+      "Statement Decoder reads your statement and explains it in plain English. It tells you what each charge is for, which service category it sits in (clinical, independence or everyday living), and how your contribution was worked out. Clinical care should show a $0 contribution, so if it does not, the tool points that out.",
+      "It also flags anything that looks off, like a charge for a service you do not recognise, a contribution rate that seems high for your situation, or a possible duplicate. Flagged items are prompts to ask a question, not conclusions. You always check anything important with your provider or My Aged Care.",
+    ],
+    howItWorks: [
+      { title: "Upload Your Statement", body: "Add a recent monthly statement as a PDF or a clear photo. Your provider must send you one each month." },
+      { title: "Wayly Reads It", body: "The tool pulls out each line item, the service category, the price, and your contribution." },
+      { title: "See It in Plain English", body: "Every charge is explained in plain words, with clinical, independence and everyday living grouped clearly." },
+      { title: "Review the Flags", body: "Anything unusual is highlighted with a short note on why, so you know what to ask your provider." },
+    ],
+    whatYouNeed: [
+      "A recent monthly Support at Home statement (PDF or a clear photo)",
+      "If you have it, your classification level (1 to 8) and your contribution rate, for a closer read",
+    ],
+    whatYouGet: [
+      "A plain-English explanation of every charge on the statement",
+      "Each service sorted into clinical, independence or everyday living",
+      "Flags on anything unusual, with a short reason for each",
+      "A short list of questions you can take to your provider",
+    ],
+    faqs: [
+      { q: "What kind of statement can I upload?", a: "A monthly Support at Home statement from your provider. Providers must send one each month, even in months with no services." },
+      { q: "Does a flag mean I have been overcharged?", a: "No. A flag means something is worth a closer look. It is a prompt to ask your provider or My Aged Care, not a finding." },
+      { q: "Should clinical care ever have a contribution?", a: "Clinical supports like nursing and allied health are fully government funded, so they should show a $0 contribution. From 1 October 2026, personal care also becomes fully funded." },
+      { q: "Is my statement stored safely?", a: "Your data stays in your account and is not shared. See our privacy information for detail." },
+    ],
+    ctaHeading: "See What Your Statement Is Really Telling You",
+    ctaBody: "Upload a statement and get a clear, calm read in minutes.",
+  },
+
+  "invoice-checker": {
+    name: "Invoice Checker",
+    heroOneLiner:
+      "Upload the separate contribution invoice your provider sends and Wayly checks it against your funding, the current program rules and your expected contribution.",
+    whatItDoes: [
+      "Your Support at Home provider sends you two documents each month: a statement (information only) and a separate invoice for the contribution you actually pay. The invoice is where overcharging, stale rates and billing errors live, and it carries your dispute and refund rights.",
+      "Invoice Checker reads your invoice line by line and checks eleven things: clinical care contributions should be nil, personal-care contributions dated on or after 1 October 2026 should be nil, care management should be a flat 10% with no separate admin or exit fees, contributions should only be billed after a service is delivered, the total should reconcile to your statement, GST should not appear on ordinary care lines, and no line should be duplicated or priced above your provider's published rate.",
+      "Every flag is framed as a question to ask, never an accusation. If a flag is not resolved, Wayly points you to the Aged Care Quality and Safety Commission on 1800 951 822.",
+    ],
+    howItWorks: [
+      { title: "Upload Your Invoice", body: "Add the invoice your provider sent as a PDF, a photo or a screenshot. If your provider sends a single document that combines the statement and the invoice, that works too." },
+      { title: "Confirm Your Situation", body: "A handful of quick questions about pension status, grandfathering and any hardship arrangements so Wayly can check the right contribution rate for you." },
+      { title: "Wayly Checks Line by Line", body: "The tool applies eleven checks against the current Support at Home rules, your funding and your expected contribution." },
+      { title: "See What Is Worth Raising", body: "Each finding shows what was seen, why it matters, and the exact question to ask your provider. Where appropriate, Wayly points you to the ACQSC on 1800 951 822." },
+    ],
+    whatYouNeed: [
+      "The contribution invoice your provider sent (PDF, photo or screenshot)",
+      "Optional: your most recent monthly statement, for a full invoice-to-statement reconciliation",
+      "Optional: a recent Contribution Estimator run, so Wayly can compare against your expected rate",
+    ],
+    whatYouGet: [
+      "A plain-language verdict for the whole invoice",
+      "A prioritised list of anything worth raising, with the exact question to ask",
+      "A clean summary of everything that checked out, so you can see the tool was thorough",
+      "A one-tap bridge to the Letters & Follow-ups tool to draft the query to your provider",
+    ],
+    faqs: [
+      { q: "Is the invoice the same as the monthly statement?", a: "No. The monthly statement is information only. The invoice is what you actually pay, and your provider sends it as a separate document. Wayly checks the two against each other when both are available." },
+      { q: "Will Wayly say my provider is overcharging me?", a: "No. Wayly is careful to describe what it saw, why it might matter, and the specific question to ask your provider. It never accuses your provider of wrongdoing. Many flags turn out to have a legitimate explanation." },
+      { q: "What happens on 1 October 2026?", a: "From 1 October 2026, personal care under Support at Home becomes fully government funded. Wayly flags any personal-care contribution on invoices dated on or after that date." },
+      { q: "Are exit fees allowed?", a: "No. Support at Home does not permit exit fees. If your invoice includes one, Wayly flags it and suggests the exact wording to ask your provider to remove it." },
+    ],
+    ctaHeading: "Check Your Provider's Invoice",
+    ctaBody: "Upload the invoice you were sent and Wayly tells you whether anything is worth raising before you pay.",
+  },
+
+  "family-coordinator": {
+    name: "Aged Care Q&A",
+    heroOneLiner: "Ask a plain-English question about Support at Home, CHSP, or aged care funding, and get a clear answer grounded in current rules.",
+    whatItDoes: [
+      "Aged Care Q&A is a chat-style assistant that answers everyday questions about Support at Home, the Commonwealth Home Support Programme (CHSP), classifications, contribution rates, the Schedule of Subsidies and Supplements, and how the transition from Home Care Packages works.",
+      "Ask anything: How does the no-worse-off guarantee work? Why is clinical care free? Can my parent carry over unused funding? What is the difference between independence and everyday living services? The tool answers in plain English and cites the rule or fact sheet it is drawing from.",
+      "It is grounded in the public rules and our own checked notes, but it is not a decision-making tool. For anything that affects your parent's funding, always confirm with My Aged Care, your provider, or Services Australia before acting.",
+    ],
+    howItWorks: [
+      { title: "Type Your Question", body: "Use everyday language. No need to know the right jargon." },
+      { title: "Get a Plain-English Answer", body: "The assistant responds with a clear explanation and links to source material where it matters." },
+      { title: "Ask Follow-Ups", body: "Keep the conversation going. The assistant remembers what you have already asked in this session." },
+      { title: "Take It Forward", body: "Copy the answer, save it to your account, or use it to prepare questions for your next call with My Aged Care." },
+    ],
+    whatYouNeed: [
+      "A question. That is it.",
+      "Optional: context about your situation (classification, current services, recent changes) for a closer answer",
+    ],
+    whatYouGet: [
+      "A clear, plain-English answer to your question",
+      "Citations or pointers to the relevant fact sheet or rule",
+      "A short list of follow-up questions you might want to ask",
+      "A copyable transcript you can share with siblings or your provider",
+    ],
+    faqs: [
+      { q: "Is this advice?", a: "No. It is information. For anything that affects your funding, confirm with My Aged Care, your provider, or Services Australia before acting." },
+      { q: "Is my conversation private?", a: "Yes. Your chat history is stored in your account and is not shared. See our privacy information for detail." },
+      { q: "Can it answer questions about my specific statement?", a: "For statement-specific questions, the Statement Decoder is more accurate. Use Aged Care Q&A for general questions about the program." },
+      { q: "Does it know about the 1 October 2026 changes?", a: "Yes. Personal care becoming fully government funded, the lifetime cap framework, and the CHSP transition timeline are all in the assistant's working knowledge." },
+    ],
+    ctaHeading: "Ask Anything About Support at Home",
+    ctaBody: "Get a calm, plain-English answer in seconds.",
+  },
 };
 
 export default TOOL_CONTENT;
