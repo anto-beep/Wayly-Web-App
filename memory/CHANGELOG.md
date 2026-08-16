@@ -1957,3 +1957,12 @@ Session: MOBILE ONLY. Closed the remaining web→mobile parity gap. All 8 featur
 - **Trial banner + Plan & Billing** copy aligned to "card on file" model.
 - **BACKEND_HANDOFF.md** (`/app/mobile/BACKEND_HANDOFF.md`) expanded with exact signup fields/labels/required flags, card-at-signup flow, plans×participants×seats, DD/MM/YYYY rules, 9-tool catalogue, onboarding constants, product-wide workflows/system behaviours, and a remaining-gaps list. Full 580-endpoint appendix retained.
 - Remaining mobile gaps: Support tickets, CE3 pension-change wizard, SD3 statement-pair review, Loop cases, participant sub-tabs, email-verification.
+
+## [2026-06] Mobile parity round 2: Support, Cases, Pension wizard, email verify, Reports PDF (iter 163-164)
+- **Support tickets** (`/support` + `/support/[id]`): list, raise request (category + note), thread with replies, close/reopen. Verified.
+- **Loop Cases** (`/cases` + `/case/[id]`): list, scan (query-param fix), status flow, timeline, add note. Verified.
+- **Contribution Position pension-change wizard**: 3-step modal preview→commit (`/ce3/.../pension-change/preview|commit`). Verified.
+- **Email verification parity**: `EmailVerifyBanner` (shared backend already sends the signup verification email; banner shows status + resend via /auth/send-verification-email). Wired into WaylyHeader.
+- **Reports**: generate (8 types) + open PDF via token-signed `/reports/{id}/download` in browser.
+- Bugs fixed & retested (iter164, 3/3): support thread read {ticket,thread}; close/reopen status flip; cases scan 422 → query param.
+- BACKEND_HANDOFF.md: added §19 (emails/reporting/PDFs), refreshed §18 remaining gaps (now only SD3 pair review + participant sub-tabs + verify landing pages remain).

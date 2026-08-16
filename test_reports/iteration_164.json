@@ -1,0 +1,36 @@
+{
+  "summary": "Mobile retest of the 3 iter163 bug fixes on wayly-rn-build Expo preview (390x844) with cathy@example.com. All 3 fixes PASS: (BUG1) Support reply now renders as support-msg-0 after send; (BUG2) Close flips status RECEIVED->CLOSED and shows support-reopen, Reopen flips back to UNDER REVIEW and shows support-close; (BUG3) POST /loop/cases/scan?participant_id=... now returns 200 (no more 422) and the list refreshes.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter164/21_support_list.jpeg",
+    "/app/test_reports/iter164/22_detail.jpeg",
+    "/app/test_reports/iter164/23_after_reply.jpeg",
+    "/app/test_reports/iter164/24_after_close.jpeg",
+    "/app/test_reports/iter164/25_after_reopen.jpeg",
+    "/app/test_reports/iter164/26_cases.jpeg",
+    "/app/test_reports/iter164/27_after_scan.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "/app/mobile/app/cases.tsx:37-42 — scan() still swallows errors silently (`catch { /* ignore */ }`). Even though the 422 is fixed, please surface future failures via a Toast/StatePanel for user feedback.",
+    "/app/mobile/app/support/[id].tsx:46-52 — setStatus() surfaces errors via setErr (good) but the Field/Button below is only rendered when !isClosed, so an error message from close/reopen may not display when the ticket is already closed. Consider hoisting the error row above the message list."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only run)", "frontend": "100% (3/3 fixes verified)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "Reused existing open ticket WAY-0036 (was RECEIVED); posted a reply, closed it, then reopened it (now UNDER REVIEW).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login: fill [data-testid=login-email-input] + login-password-input, click login-submit-button. Drawer accordion labels are UPPERCASE ('YOUR ACCOUNT','THEIR CARE'); clicking them expands the group before you can tap Support/Cases. GET /support/tickets/{id} returns {ticket, thread, events}; detail screen uses `thread` (no visibility filter). Backend close sets status='closed', reopen sets 'under_review'. Cases scan POST expects participant_id as query param (?participant_id=...).",
+  "rca of the issue": "All three iter163 defects were client-side wiring bugs; the fixes are consistent with the observed post-fix network + UI: (BUG1) SupportDetailScreen now consumes {ticket, thread} from GET /support/tickets/{id} and no longer filters by visibility, so the newly-created message renders as support-msg-0. (BUG2) The mobile close/reopen flow now correctly refetches and derives isClosed from status ∈ {closed, resolved}; POSTs succeed (badge flipped to CLOSED, then UNDER REVIEW). (BUG3) POST /loop/cases/scan now sends participant_id in the query string, matching FastAPI's Query(...) signature and returning 200 instead of 422."
+}

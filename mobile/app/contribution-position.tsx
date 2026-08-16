@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { AlertTriangle, Info, RefreshCw, TrendingUp } from "lucide-react-native";
+import { AlertTriangle, Info, RefreshCw, Repeat, TrendingUp, X } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -25,6 +25,115 @@ const FLAG_TONE: Record<string, "success" | "alert" | "error" | "neutral"> = {
   step_change_variance: "error", none_reconciled: "neutral",
 };
 const CONF_TONE: Record<string, "success" | "alert" | "neutral"> = { high: "success", medium: "alert", low: "neutral" };
+
+const PENSION_OPTS = [
+  { v: "full_pension", label: "Full Age Pension" },
+  { v: "part_pension", label: "Part Age Pension" },
+  { v: "cshc", label: "Commonwealth Seniors Health Card" },
+  { v: "self_funded", label: "Self-funded retiree" },
+  { v: "unsure", label: "Not sure" },
+];
+const PENSION_LABEL: Record<string, string> = Object.fromEntries(PENSION_OPTS.map((o) => [o.v, o.label]));
+
+function PensionWizard({ participantId, onCommitted }: { participantId: string; onCommitted: () => void }) {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(1);
+  const [newStatus, setNewStatus] = useState("");
+  const [preview, setPreview] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const reset = () => { setOpen(false); setStep(1); setNewStatus(""); setPreview(null); setError(""); };
+  const today = new Date().toISOString().slice(0, 10);
+
+  const runPreview = async () => {
+    setBusy(true); setError("");
+    try {
+      const r = await apiFetch<any>(`/ce3/participants/${participantId}/pension-change/preview`, { method: "POST", body: { new_pension_status: newStatus, effective_date: today } });
+      setPreview(r); setStep(2);
+    } catch (e: any) { setError(e?.message || "Could not preview the change."); }
+    finally { setBusy(false); }
+  };
+
+  const commit = async () => {
+    setBusy(true); setError("");
+    try {
+      await apiFetch(`/ce3/participants/${participantId}/pension-change/commit`, { method: "POST", body: { new_pension_status: newStatus, effective_date: today } });
+      reset(); onCommitted();
+    } catch (e: any) { setError(e?.message || "Could not apply the change."); }
+    finally { setBusy(false); }
+  };
+
+  const delta = preview?.delta || {};
+
+  return (
+    <>
+      <Button label="Change pension status" testID="ce3-pension-change-open" variant="outline" icon={Repeat} onPress={() => setOpen(true)} />
+      <Modal visible={open} transparent animationType="slide" onRequestClose={reset}>
+        <View style={{ flex: 1, backgroundColor: colors.overlay, justifyContent: "flex-end" }}>
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, maxHeight: "85%" }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md }}>
+              <T style={{ fontFamily: fonts.heading, fontSize: 22 }}>Change pension status</T>
+              <Pressable testID="ce3-pension-close" hitSlop={8} onPress={reset}><X size={22} color={colors.muted} /></Pressable>
+            </View>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {step === 1 ? (
+                <View style={{ gap: spacing.sm }}>
+                  <T variant="small">If circumstances change, update the pension status so estimates stay accurate.</T>
+                  {PENSION_OPTS.map((o) => {
+                    const active = newStatus === o.v;
+                    return (
+                      <Pressable key={o.v} testID={`ce3-pension-opt-${o.v}`} onPress={() => setNewStatus(o.v)}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: spacing.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.sageSoft : "transparent" }}>
+                        <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: active ? colors.primary : colors.muted, alignItems: "center", justifyContent: "center" }}>
+                          {active ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} /> : null}
+                        </View>
+                        <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>{o.label}</T>
+                      </Pressable>
+                    );
+                  })}
+                  {error ? <T variant="small" style={{ color: colors.terracotta }}>{error}</T> : null}
+                  <Button label="Preview impact" testID="ce3-pension-preview-btn" onPress={runPreview} loading={busy} disabled={!newStatus} style={{ marginTop: spacing.sm }} />
+                </View>
+              ) : (
+                <View style={{ gap: spacing.md }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>
+                    {PENSION_LABEL[preview?.current_pension_status] || "Current"} → {PENSION_LABEL[preview?.new_pension_status] || newStatus}
+                  </T>
+                  {preview?.no_prior_projection ? (
+                    <T variant="small">We do not have a prior projection to compare, but the new status will be applied from today.</T>
+                  ) : (
+                    <Card style={{ backgroundColor: colors.surface2, borderColor: colors.surface2 }}>
+                      {[["Annual", "annual"], ["Quarterly", "quarterly"], ["Weekly", "weekly"]].map(([label, k]) => (
+                        delta[k as string] != null ? (
+                          <View key={k} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 4 }}>
+                            <T variant="small">{label} contribution</T>
+                            <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: delta[k as string] > 0 ? colors.terracotta : colors.success }}>
+                              {delta[k as string] > 0 ? "+" : ""}{money(delta[k as string])}
+                            </T>
+                          </View>
+                        ) : null
+                      ))}
+                    </Card>
+                  )}
+                  {preview?.lifetime_cap_impact?.new_years_at_current_pace ? (
+                    <T variant="small">New pace: approximately {Math.round(preview.lifetime_cap_impact.new_years_at_current_pace)} years until the lifetime cap.</T>
+                  ) : null}
+                  {error ? <T variant="small" style={{ color: colors.terracotta }}>{error}</T> : null}
+                  <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                    <Button label="Back" testID="ce3-pension-back" variant="ghost" onPress={() => setStep(1)} style={{ flex: 1 }} />
+                    <Button label="Apply change" testID="ce3-pension-commit-btn" onPress={commit} loading={busy} style={{ flex: 2 }} />
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+}
 
 export default function ContributionPositionScreen() {
   const { colors } = useTheme();
@@ -151,6 +260,9 @@ export default function ContributionPositionScreen() {
               ))}
             </View>
           </Card>
+
+          {/* Pension change wizard */}
+          {activeId ? <PensionWizard participantId={activeId} onCommitted={load} /> : null}
 
           {/* Reconciliation */}
           <Card testID="ce3-reconciliation-card">

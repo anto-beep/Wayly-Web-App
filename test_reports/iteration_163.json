@@ -1,0 +1,53 @@
+{
+  "summary": "Mobile parity smoke on wayly-rn-build Expo preview at 390x844 with cathy@example.com. Verified: Support create+list, Cases (scan/list/detail/status change/timeline/add note), Contribution Position with Pension-change Wizard (step1 -> preview -> back -> commit), Reports generate (HOUSEHOLD_SUMMARY row appears, download icons rendered), Email-verify banner correctly hidden (cathy is VERIFIED), and 9 AI tools rendering with 3 tool detail screens loading cleanly. Two support-thread deficiencies found (reply not visible + close/reopen toggle did not flip). Drawer testID check was inconclusive (groups collapsed by default).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/loop/cases/scan", "issue": "Returns 422 in browser console during cases scan (participant_id likely rejected as query/body mismatch); scan still returned to a rendered list, so UI works. Reproduction: navigate to /cases as cathy and tap 'Scan for new issues'."},
+      {"endpoint": "/support/tickets/{id}/messages (POST) OR /support/tickets/{id} (GET messages)", "issue": "After a successful reply POST, the returned ticket.messages either omits the new user message or returns it with visibility='internal', causing the client filter (m.visibility !== 'internal') to hide it. Result: support-msg-0 never appears in the thread on mobile. Web parity should be checked."},
+      {"endpoint": "/support/tickets/{id}/close (POST)", "issue": "Tapping 'Close request' does not flip status to closed/resolved on refresh — support-reopen never renders. Either endpoint 200s without persisting status, or returns non-closed status, or the mobile UI ignores the new state. Verify via GET /support/tickets/{id} after POST close."}
+    ]
+  },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "SupportDetailScreen", "issue": "After POST /support/tickets/{id}/messages succeeds, the reply bubble never renders in the thread (testID support-msg-0 not visible). Likely a mismatch with backend visibility default OR msgs filter is too strict. Reference: /app/mobile/app/support/[id].tsx:51 (msgs filter drops m.visibility !== 'internal') and :76-88 (render loop).", "testID": "support-msg-0", "priority": "HIGH"},
+        {"component": "SupportDetailScreen", "issue": "Close → Reopen toggle does not fire visually. Tapping support-close never surfaces support-reopen on next load, so users cannot resolve or reopen tickets from mobile. Reference: /app/mobile/app/support/[id].tsx:43-48 (setStatus swallows errors), :50 (isClosed derived from status), :65 (button testID switch).", "testID": "support-close / support-reopen", "priority": "HIGH"}
+      ],
+      "integration_issues": [
+        {"flow": "Cases scan", "issue": "POST /loop/cases/scan returns 422 (browser network console). UI still shows the case list from cache, but the scan action itself is failing silently (catch block eats the error). Reference: /app/mobile/app/cases.tsx:37-42.", "affected_testIDs": ["cases-scan-btn"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Support thread reply", "platform": "mobile", "issue": "Web posts reply and shows the message immediately; mobile posts but the message never renders.", "expected": "support-msg-0 visible after send", "actual": "support-msg-0 not visible"},
+    {"flow": "Support ticket close/reopen", "platform": "mobile", "issue": "Status action does not flip on mobile", "expected": "After tapping support-close, support-reopen renders; and vice versa", "actual": "support-reopen never appeared after close"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter163_v3_00_login.jpeg through iter163_v3_14_drawer.jpeg"
+  ],
+  "action_items": [
+    "Debug SupportDetailScreen thread rendering — either (a) mobile must set visibility='caregiver'/'user' on POST body, or (b) filter should be m.visibility === undefined || m.visibility !== 'internal'. Verify web parity in web SupportDetail component.",
+    "Debug close/reopen — surface backend response, refetch, and verify status is actually persisted. Consider removing the empty catch (`catch { /* ignore */ }`) so the error is at least logged.",
+    "Fix POST /loop/cases/scan 422 — the mobile call sends { participant_id: activeId } in body but backend likely expects participant_id as query param. Confirm and align.",
+    "The Reports list already has ~315 rows from prior smoke runs; consider adding a cleanup step or admin purge so the mobile FlatList performance remains healthy.",
+    "Drawer verification note: parity flag confirmed via /app/mobile/src/config/navGroups.ts — Support, Cases, Contribution Position, Referrals, and Audit Log all exist as implemented: true items in Your Account / Their Care / Money groups. Automated body-innerText scan only found 'Support' likely because groups are collapsed by default; visual screenshot 14_drawer.jpeg should be checked. No functional issue; groups just need expansion."
+  ],
+  "critical_code_review_comments": [
+    "/app/mobile/app/support/[id].tsx:43-48 — setStatus swallows all errors silently. Please surface via setErr and log for debugging; users will otherwise never know when close/reopen fails.",
+    "/app/mobile/app/support/[id].tsx:51 — msgs filter (m.visibility !== 'internal') will drop every message whose visibility field is undefined. Confirm backend always sets visibility on caregiver messages; safer default is `visibility === 'internal' ? false : true` after an explicit check.",
+    "/app/mobile/app/cases.tsx:37-42 — scan() eats errors; user gets no feedback if 422/500 happens. Should show a Toast/StatePanel.",
+    "/app/mobile/app/reports.tsx:39-46 — load() has `activeId` in the dep array but the fetch does not send participant_id; either drop the dep or scope the query to activeId."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only run)", "frontend": "80%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, participant Dorothy/Mum). cathy IS email-verified (verify-email-banner correctly hidden).",
+  "seed_data_creation": "One support ticket + one reply attempt were created (couldn't confirm reply visibility). Reports created 1 HOUSEHOLD_SUMMARY report. One case status was flipped to in_progress and a note added.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login: click text 'Sign In' (case-sensitive). Preview URL: https://wayly-rn-build.expo.preview.emergentagent.com. localStorage token key is 'kindred_token'. Backend base for API is https://wayly-rn-build.preview.emergentagent.com. CORS on the plain backend host blocks in-page fetch from expo preview host, so verification-status must be checked via the app itself (banner testID). Drawer nav sections are collapsed by default — do NOT rely on innerText scan; open each accordion group to verify visibility.",
+  "rca of the issue": "Support reply invisibility: the mobile detail screen filters `messages` with `m.visibility !== 'internal'`. If backend either (a) does not include the new user message in the immediately-refetched ticket, or (b) returns it with visibility unset/'internal', it is filtered out. Confirmed via 401->200 flow that the POST succeeded (no console error surfaced). Fix: align backend response to include the caregiver-authored message with an explicit non-internal visibility, OR update filter to `m.visibility === 'internal' ? false : true` (defaulting undefined to visible). Close/reopen: `setStatus` catch is empty; likely POST is returning non-2xx or backend does not update status. Add error surfacing and confirm endpoint behaviour via curl against /support/tickets/{id}/close."
+}

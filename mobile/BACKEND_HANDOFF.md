@@ -338,10 +338,25 @@ Steps: **Essentials → Authorisation → Recommended → All done** (`STEPS`). 
 - **Nudges**: `GET /api/nudges` returns dismissible server-computed nudges (e.g. Family second-participant reminder); dismiss via `POST /api/nudges/{key}/dismiss`.
 
 ## 18. Remaining mobile parity gaps (as of this handoff)
-- **Support tickets** (`/support`) — web `MySupport.jsx` (list/create/thread/messages/attachments/close/reopen/CSAT). Endpoints `GET/POST /api/support/tickets…`. Drawer link hidden (`implemented` unset) until built.
-- **CE3 pension-change wizard** — the 3-step "Change pension status" modal on web ContributionPosition (`/ce3/participants/{id}/pension-change/preview|commit`) is not yet on the mobile Contribution Position screen (view + reconcile only).
-- **Statement pair review (SD3)**, **Loop cases** (`/participants/:id/cases`), **participant sub-tabs** (attendance/complaints/coordinator/voice-check), and **email verification** screens are web-only so far.
-- Everything else (dashboard, statements+detail+compare+audit+upload, invoices, pacing, budget-alerts/scenarios, calendar, care-plans, care-team, documents, correspondence, letters, hospital, amendments, scenarios, timeline, provider-switch, ratings, compare-providers, journeys, ATHM, CHSP tools, handover pack, carer self-check, classification prep, key contacts, family wall/thread, weekly digest, family members, security, usage, danger zone, profile, plan-select, plan-billing, onboarding, audit, referrals, contribution-position) has a mobile screen.
+Now DONE on mobile (this + prior sessions): Support tickets (`/support` + `/support/[id]` thread, create/reply/close/reopen), Loop **Cases** (`/cases` + `/case/[id]`, scan/status/notes), **Contribution Position** incl. the 3-step **pension-change wizard** (preview→commit), **Referrals**, **Audit Log**, **Reports** (generate + open PDF), and the **email-verification banner** (resend).
+
+Still web-only (P2 backlog):
+- **Statement pair review (SD3)** — `/participants/:id/statement-pairs/:pid` (candidate month-to-month change review). Mobile has the simpler `statement-compare/[id]`; the full SD3 pair candidate workflow (POST /sd3/pairs, PATCH /sd3/candidates/{id}, draft-letter) is not yet ported. Needs a pair-creation entry point (pick two statements).
+- **Participant sub-tabs**: attendance, complaints, coordinator, voice-check, participant self-view (`/participant`).
+- **Email verify landing pages** (`/verify-email`, `/verify-email-change`) — the tap-through link opens the web page which performs verification; mobile only needs the banner + resend (done).
+
+## 19. Emails, reporting & PDFs (how mobile mirrors web)
+- **Emails are sent by the SHARED backend** (Resend). Mobile triggers the exact same endpoints as web, so identical emails are sent:
+  - **Signup → verification email**: `POST /api/auth/signup` auto-calls `send_verification_email_for(user)` (server.py). Mobile signup uses the same endpoint → same email. Mobile shows `EmailVerifyBanner` (GET `/api/auth/verification-status` → `{email_verified, days_remaining, past_deadline}`) with resend via `POST /api/auth/send-verification-email` (cooldown 429). Verify link in the email opens the web `/verify-email?token=` page.
+  - **Email change**: `POST /api/auth/email/change-request` sends the confirm link (profile-edit screen).
+  - **Password reset**: `POST /api/auth/forgot` sends the reset link (security screen + login "forgot").
+  - **Weekly digest**: `POST /api/digest/send` emails the household (weekly-digest screen).
+  - **Tool result emails**: e.g. CSC `POST /api/public/csc/email`, letters PDFs, etc.
+  - Mobile never renders/sends email itself; it only calls these endpoints. Email templates/branding live in the backend (`wayly_email_branding.py`).
+- **Reporting**: `GET /api/reports` (list), `POST /api/reports/generate {report_type, participant_id}` (async; poll `GET /api/reports` for status READY). 8 report types: HOUSEHOLD_SUMMARY, QUARTERLY_BUDGET, ANNUAL_FINANCIAL, ANOMALY_SAVINGS, PROVIDER_PERFORMANCE, COMPLAINT_DOSSIER, CARE_TIMELINE, STATEMENT_DIGEST.
+- **PDFs**: server returns a token-signed URL — `GET /api/reports/{id}/download` → `{url, expires_in_seconds}` (url is absolute S3 or relative `/api/reports/file/{token}` which is public). Mobile pattern: fetch the download endpoint (authed) → open `url` via `WebBrowser.openBrowserAsync` (prefix `EXPO_PUBLIC_BACKEND_URL` if relative). Same pattern for statement PDFs (`/statements/{id}/download`), journey PDFs (`/journeys/{id}/pdf`), handover pack (`/cs1/handover-packs/{id}/export.pdf`), CSC/letters PDFs. For binary-with-auth downloads use the existing `mobile/src/lib/download.ts` (`downloadAndShare`) which streams the file with the auth header and hands to the native share sheet.
+
+## 20. Legacy — remaining gaps history
 
 ---
 
