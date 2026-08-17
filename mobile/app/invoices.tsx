@@ -5,6 +5,7 @@ import { AlertCircle, ChevronRight, Receipt, Upload } from "lucide-react-native"
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -93,12 +94,17 @@ export default function InvoicesScreen() {
         <Button label="Check a new invoice" testID="invoices-list-upload-btn" icon={Upload} onPress={() => router.push("/tool/invoice-checker")} style={{ flex: 1 }} />
       </View>
       {items.length > 0 ? (
-        <Card testID="invoices-summary" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
-          <T variant="label" style={{ color: colors.sage }}>YOUR WAYLY INSIGHT</T>
-          <T style={{ fontFamily: fonts.body, fontSize: 14, marginTop: 4, color: colors.text }}>
-            {items.length} invoice{items.length === 1 ? "" : "s"} checked. {totals.openIssues > 0 ? `${totals.openIssues} open issue${totals.openIssues === 1 ? "" : "s"} and ${money(totals.refund)} potential refund found.` : "No open issues, everything looks correct."}
-          </T>
-        </Card>
+        <SmartAISummary
+          pageKey="invoices-list"
+          context={{
+            total_invoices: items.length,
+            providers: Array.from(new Set(items.map((i) => i.provider_name).filter(Boolean))).slice(0, 6),
+            latest_provider: items[0]?.provider_name || null,
+            latest_amount_aud: items[0] ? invoiceTotal(items[0]) : null,
+            open_issue_count_total: totals.openIssues,
+            potential_refund_aud_total: Math.round(totals.refund * 100) / 100,
+          }}
+        />
       ) : null}
     </View>
   );

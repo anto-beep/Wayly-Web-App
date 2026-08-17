@@ -7,6 +7,7 @@ import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useParticipants } from "@/src/context/ParticipantContext";
+import { usePersonaVoice } from "@/src/hooks/usePersonaVoice";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money } from "@/src/utils/format";
@@ -40,6 +41,7 @@ const CLASSIFICATION_OPTIONS: [string, string][] = [
 export default function ContributionEstimator() {
   const { colors } = useTheme();
   const { active } = useParticipants();
+  const voice = usePersonaVoice();
   const [form, setForm] = useState<any>({
     person_name: active?.display_name || "", assessment_status: "have_classification", entry_path: "post_nov_2025",
     hcp_paid_fees: null, hcp_level_when_grandfathered: null, pension_status: "full_pension",
@@ -113,10 +115,10 @@ export default function ContributionEstimator() {
 
               {showHcpFeeQuestion ? (
                 <View testID="ce-hcp-fee-followup">
-                  <Label colors={colors} top>Did you pay any fees under your Home Care Package?</Label>
+                  <Label colors={colors} top>{`Did ${voice.subject} pay any fees under ${voice.possessive} Home Care Package?`}</Label>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-                    <Pill active={form.hcp_paid_fees === false} onPress={() => set({ hcp_paid_fees: false })} colors={colors} testID="ce-hcp-fees-no">No, I never paid fees</Pill>
-                    <Pill active={form.hcp_paid_fees === true} onPress={() => set({ hcp_paid_fees: true })} colors={colors} testID="ce-hcp-fees-yes">Yes, I paid fees</Pill>
+                    <Pill active={form.hcp_paid_fees === false} onPress={() => set({ hcp_paid_fees: false })} colors={colors} testID="ce-hcp-fees-no">{`No, ${voice.isCaregiver ? "they" : "I"} never paid fees`}</Pill>
+                    <Pill active={form.hcp_paid_fees === true} onPress={() => set({ hcp_paid_fees: true })} colors={colors} testID="ce-hcp-fees-yes">{`Yes, ${voice.isCaregiver ? "they" : "I"} paid fees`}</Pill>
                   </View>
                   {form.hcp_paid_fees === false ? (
                     <View testID="ce-hcp-exempt-hint" style={[styles.hint, { backgroundColor: colors.sageSoft }]}>
@@ -235,6 +237,7 @@ export default function ContributionEstimator() {
 }
 
 function ResultScreen({ result, form, colors, onEdit }: any) {
+  const voice = usePersonaVoice();
   const govtPct = Math.max(0, Math.min(100, result.government_share_percent || 0));
   const youPct = 100 - govtPct;
   const saving = (result.contribution_weekly || 0) - (result.contribution_post_october_2026_weekly || 0);
@@ -296,17 +299,17 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
               {govtPct >= 14 ? <T style={{ color: "#fff", fontSize: 12, fontFamily: fonts.bodySemi }}>Govt {govtPct.toFixed(0)}%</T> : null}
             </View>
             <View testID="ce-govt-share-you" style={{ width: `${youPct}%`, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }}>
-              {youPct >= 10 ? <T style={{ color: "#fff", fontSize: 12, fontFamily: fonts.bodySemi }}>You {youPct.toFixed(0)}%</T> : null}
+              {youPct >= 10 ? <T style={{ color: "#fff", fontSize: 12, fontFamily: fonts.bodySemi }}>{voice.subjectTitle} {youPct.toFixed(0)}%</T> : null}
             </View>
           </View>
-          <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm }}>Government pays {money(result.government_share_annual)} / year · You pay {money(result.contribution_annual)} / year</T>
+          <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm }}>{`Government pays ${money(result.government_share_annual)} / year · ${voice.subjectTitle} pay ${money(result.contribution_annual)} / year`}</T>
         </Card>
       ) : null}
 
       {/* Rate breakdown */}
       {!result.is_fee_exempt ? (
         <Card testID="ce-rate-breakdown">
-          <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, marginBottom: spacing.sm }}>YOUR RATES BY SERVICE TYPE</T>
+          <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, marginBottom: spacing.sm }}>{voice.possessiveTitle.toUpperCase()} RATES BY SERVICE TYPE</T>
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
             <RateCard label="Clinical care" rate="0%" note="Always free" colors={colors} testID="ce-rate-clinical" />
             <RateCard label="Independence" rate={`${result.independence_rate?.toFixed(1)}%`} note="Personal care, meals" colors={colors} testID="ce-rate-independence" />
@@ -314,8 +317,8 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
           </View>
           <T variant="small" style={{ marginTop: spacing.sm, lineHeight: 20 }} testID="ce-rate-prose">
             {result.is_no_worse_off
-              ? "You are on the no-worse-off track, which caps your rates at 25% for both Independence and Everyday Living. Clinical care is always free."
-              : `Under standard arrangements, Independence services cost you ${result.independence_rate?.toFixed(1)}% and Everyday Living services cost you ${result.everyday_rate?.toFixed(1)}%. Clinical care is always fully funded.`}
+              ? `${voice.subjectTitle} are on the no-worse-off track, which caps ${voice.possessive} rates at 25% for both Independence and Everyday Living. Clinical care is always free.`
+              : `Under standard arrangements, Independence services cost ${voice.object} ${result.independence_rate?.toFixed(1)}% and Everyday Living services cost ${voice.object} ${result.everyday_rate?.toFixed(1)}%. Clinical care is always fully funded.`}
           </T>
         </Card>
       ) : null}
@@ -326,8 +329,8 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
             <ShieldCheck size={20} color={colors.sage} />
             <View style={{ flex: 1 }}>
-              <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>Your lifetime cap: {money(result.applicable_lifetime_cap)}</T>
-              <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>{"This is the total amount you'll ever pay for the Independence and Everyday Living components. Once you've contributed this much, you pay nothing further. Clinical care never counts towards this cap."}</T>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>{voice.possessiveTitle} lifetime cap: {money(result.applicable_lifetime_cap)}</T>
+              <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>{`This is the total amount ${voice.subject}'ll ever pay for the Independence and Everyday Living components. Once ${voice.subject}'ve contributed this much, ${voice.subject} pay nothing further. Clinical care never counts towards this cap.`}</T>
             </View>
           </View>
         </Card>
@@ -362,7 +365,7 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
             <TrendingUp size={20} color={colors.gold} />
             <View style={{ flex: 1 }}>
-              <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5 }}>COMPARED TO YOUR HOME CARE PACKAGE</T>
+              <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5 }}>{`COMPARED TO ${voice.possessiveTitle.toUpperCase()} HOME CARE PACKAGE`}</T>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, marginTop: 2 }}>Level {result.hcp_comparison.hcp_level} · September 2025 fees</T>
               <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
                 <RateCard label="HCP would-be" rate={money(result.hcp_comparison.hcp_weekly)} note={`${money(result.hcp_comparison.hcp_annual)}/yr`} colors={colors} testID="ce-hcp-would-be" />
@@ -380,11 +383,11 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
           <LifeBuoy size={20} color={colors.gold} />
           <View style={{ flex: 1 }}>
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>Also worth knowing</T>
-            <T variant="small" style={{ marginTop: spacing.sm, lineHeight: 20 }}><T variant="small" style={{ fontFamily: fonts.bodySemi }}>Financial hardship. </T>If paying your contribution would cause serious financial difficulty, you can apply to Services Australia for a hardship reduction.</T>
+            <T variant="small" style={{ marginTop: spacing.sm, lineHeight: 20 }}><T variant="small" style={{ fontFamily: fonts.bodySemi }}>Financial hardship. </T>{`If paying ${voice.possessive} contribution would cause serious financial difficulty, ${voice.subject} can apply to Services Australia for a hardship reduction.`}</T>
             <Pressable testID="ce-lf-link" onPress={() => router.push("/tool/letters-and-follow-ups")} style={{ marginTop: spacing.sm }}>
               <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{"Reassessment: Wayly's Letters & Follow-ups tool can draft the request →"}</T>
             </Pressable>
-            <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm, fontSize: 12, lineHeight: 18 }}>This is a plain-English estimate for your household planning. Your final rate is set by Services Australia based on your assessed income and assets.</T>
+            <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm, fontSize: 12, lineHeight: 18 }}>{`This is a plain-English estimate for your household planning. ${voice.possessiveTitle} final rate is set by Services Australia based on ${voice.possessive} assessed income and assets.`}</T>
           </View>
         </View>
       </Card>

@@ -19,7 +19,7 @@ export function PageIntro({
   whatYouGet?: string[];
 }) {
   const { colors } = useTheme();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const hasDetail = !!(whatItDoes || howToUse?.length || whatYouGet?.length);
 
   return (

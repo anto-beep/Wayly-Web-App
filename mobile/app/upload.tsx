@@ -7,6 +7,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
@@ -156,6 +157,23 @@ export default function UploadScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Upload a Statement" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
+        <PageIntro
+          eyebrow="Upload"
+          title="Drop In a Statement"
+          description="Forward the statement your provider sent. Same formats as our other tools: PDF, DOC/DOCX, TXT, CSV, JPG, PNG, HEIC, WEBP. We handle the rest, extract every line item, check for anomalies, and explain it in plain English."
+          whatItDoes="Reads the raw file, pulls out each charge, matches it against your budget and prior statements, and flags anything unusual."
+          howToUse={[
+            "Choose a file or take a clear photo of the statement.",
+            "Wait a moment while the file is decoded (usually under 30 seconds).",
+            "If a duplicate is detected we'll ask what to do before saving.",
+            "Open the decoded statement to see the plain-English breakdown.",
+          ]}
+          whatYouGet={[
+            "A plain-English summary of every charge on the statement.",
+            "Automatic flags for over-charges, missing services, and duplicate entries.",
+            "A permanent record in your Statements ledger.",
+          ]}
+        />
         <T variant="bodyMuted">
           Upload a Support at Home statement (PDF or a clear photo). Wayly will decode the charges for you.
         </T>

@@ -24,16 +24,27 @@
 ## Shared Backend API Surface
 The mobile app will reuse the existing FastAPI backend (`/app/backend`) with `Authorization: Bearer <token>` and `X-Participant-Id` headers. Key endpoints for the remaining port:
 - **Onboarding & Participants**:
-  - `POST /api/participants` (Body: participant details) - Creates a new participant.
-  - `GET /api/participants` - Lists available participants.
-  - `GET /api/account` - Retrieves account-level settings and persona.
+  - `POST /api/participants`
+    - Request: `{"name": string, "classification": integer, "provider_name": string, "is_grandfathered": boolean, "relationship": string|null, "dob": string|null}`
+    - Response: The created participant JSON object.
+  - `GET /api/participants`
+    - Response: Array of participant JSON objects.
+  - `GET /api/account`
+    - Response: `{"summary": object, "participants": array, "members": array, "addons": array, "is_owner": boolean}`
 - **Family / Household Management**:
-  - `GET /api/household/members` - Lists current household members.
-  - `POST /api/household/invite` (Body: email, role) - Sends an invitation email.
-  - `DELETE /api/household/members/{member_user_id}` - Revokes access.
+  - `GET /api/household/members`
+    - Response: Array of household member JSON objects.
+  - `POST /api/household/invite`
+    - Request: `{"email": string(email), "role": "family_member"|"advisor", "note": string|null}`
+    - Response: Success indicator.
+  - `DELETE /api/household/members/{member_user_id}`
+    - Response: Success indicator.
 - **Payments / Billing**:
-  - `POST /api/payments/checkout` - Initializes a Stripe web checkout session.
-  - `GET /api/payments/invoices` - Lists historical invoices.
+  - `POST /api/payments/checkout`
+    - Request: `{"plan": string, "origin_url": string, "trial_days": integer, "promo_code": string|null}`
+    - Response: `{ "url": "<stripe_checkout_url>" }`
+  - `GET /api/payments/invoices`
+    - Response: Array of Stripe invoice objects.
   - *(Note: Mobile will likely require a new endpoint for Stripe SetupIntents, e.g., `POST /api/payments/setup-intent`)*.
 
 ## Data Models & Integrations
@@ -64,6 +75,6 @@ To complete the React Native / Expo build (`/app/mobile`), the following must be
   - Ensure all new screens support the existing `useTheme()` hook for seamless Light/Dark mode transitions.
 
 ## Open Questions / Risks
-1. **Stripe SetupIntent Backend**: The frontend PRD mentions a Stripe SetupIntent flow, but it's unclear if the `/api/payments/setup-intent` endpoint exists in `/app/backend` or if it must be created as part of this port.
+1. **Stripe SetupIntent Backend**: The frontend PRD mentions a Stripe SetupIntent flow, but it's unclear if the `/api/payments/setup-intent` endpoint exists in `/app/backend` or if it must be created as part of this port (a quick check shows it currently does not exist).
 2. **Testing Native Modules**: Because `@stripe/stripe-react-native` requires a native build, how should automated agents or developers test this locally? Will the `integration_expert` handle compiling the native dev client?
 3. **Deep Linking**: Family member invites send an email with a web URL (`/invite/accept`). Universal Links (iOS) and App Links (Android) will need to be configured in `app.json` so tapping the email link on a mobile device opens the Expo app directly.

@@ -103,6 +103,18 @@ export default function ReportsScreen() {
                     eyebrow="Reports"
                     title="Reports"
                     description="Eight reports built for caregivers. Each one becomes a polished PDF you can email, print, or hand to a GP, family member, or accountant."
+                    whatItDoes="Turns the data already in Wayly, statements, care plans, cases, into professionally formatted PDFs that speak the language of clinicians, accountants, and providers."
+                    howToUse={[
+                      "Pick the report type that matches who you're sending it to.",
+                      "Preview the report in-app before generating the PDF.",
+                      "Download the PDF or share the link.",
+                      "Return anytime, previously generated reports stay available for download.",
+                    ]}
+                    whatYouGet={[
+                      "Print-ready PDFs formatted for busy professionals.",
+                      "A saved history of everything you've generated.",
+                      "Confidence that you're not leaving anything out.",
+                    ]}
                   />
                   <Button label="Generate a report" testID="reports-generate-btn" icon={Plus} onPress={() => setShowPicker(true)} style={{ marginTop: spacing.md, marginBottom: spacing.md }} />
                 </>

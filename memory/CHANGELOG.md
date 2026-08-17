@@ -1,3 +1,19 @@
+## Iteration 182-186 (Jun 2026) — Mobile ↔ Web parity sweep (Smart Summaries, intros, Stripe, persona) + Ask Wayly 502 fix
+
+### Shipped (batch-tested — iterations 182/183/184/186)
+- **Smart Summary parity (mobile)** — new shared `mobile/src/components/SmartAISummary.tsx` mirroring web `SmartAISummary.jsx` (eyebrow + "Your Wayly Insight" + body + up to 3 severity-tinted alerts + Refresh, theme-aware). Rolled onto all 11 screens that use it on web (dashboard, statements-list, statement-detail, invoices-list, invoice-detail, budget-scenarios, provider-comparison, letters-mailbox, audit-log, complaints-list, provider-switches) with web-matching page_key + context. Replaced 2 simplified inline versions (dashboard/statements) that lacked alerts+refresh. iter182 all PASS.
+- **Full-screen intro parity (mobile)** — mobile `PageIntro` now renders its three info cards (What This Does / How to Use It / What You Get) EXPANDED by default (was collapsed behind a toggle) to match web. Added the full intro anatomy to screens that were missing it or only passed `whatItDoes`: budget-scenarios, reports, provider-switch, cases, contribution-position, classification-prep, upload, ask (empty state), documents, care-plans, athm, compare-providers. iter183 all PASS.
+- **Stripe parity (mobile)** — rebuilt `mobile/app/participants.tsx` add/remove flows to be plan/billing-aware like web: preview→branch (upgrade_required / solo_to_family / family_addons / adviser_included)→form→done, with add-on checkout, upgrade checkout, cancel-pending-addon, and a downgrade-aware Remove modal; fires `/payments/sync-plan-to-participants` after add/remove. Reads `account.summary.base_plan` (was reading a null top-level field). Checkout opens Stripe Checkout in an external browser via WebBrowser. iter184: 13/14 backend (1 miss = env seed drift, not code), 100% UI PASS.
+- **Persona depth (mobile)** — new `mobile/src/hooks/usePersonaVoice.ts` (rich caregiver/participant voice, resolves from journey persona → user.role). Threaded through ContributionEstimator result panels ("They pay", "Their lifetime cap", "the total amount they'll ever pay…", HCP fee question). Fixed an iter185 blocker (voice referenced in peer `ResultScreen` — now calls the hook locally). iter186 PASS.
+
+### Fixed
+- **Ask Wayly `/chat` 502 (web + mobile)** — chat agent used `claude-sonnet-4-5` which routinely took 50-110s and was killed by the 60s ingress read timeout (Ask Wayly showed no answer). Switched to env-overridable `KINDRED_CHAT_MODEL` defaulting to `claude-haiku-4-5-20251001` (now ~3s, 200) and bounded the call with `asyncio.wait_for(KINDRED_CHAT_TIMEOUT_SECONDS=50)` so a stalled upstream can't pin the single uvicorn worker. `backend/agents.py`. Verified end-to-end on mobile (grounded answer bubble renders).
+- **Care Plan Reviewer** — confirmed working (POST /public/care-plans/review returns findings+extraction in ~46s, under the 60s ingress limit). No code change; iter185/186 spinner "hang" was the tester not waiting long enough.
+
+### Note / follow-up
+- Backend runs uvicorn `--workers 1`; LLM handlers make blocking calls, so a single slow/hung AI request can freeze all requests (incl. login). The `/chat` timeout mitigates the worst case; a fuller fix (offload blocking LLM calls to a threadpool, or raise worker count) is recommended as a separate performance task.
+
+
 ## Iteration 126 (9 Aug 2026) - Round 3 spec closure: SDL-1, FC-2, SD-3 SoR + backend page titles
 
 ### Shipped (Round 3, batch-tested — iteration_126.json)

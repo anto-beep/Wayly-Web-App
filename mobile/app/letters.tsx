@@ -5,6 +5,7 @@ import { Mail, Clock, AlertTriangle, PenLine, ArrowUpRight, ArrowDownLeft } from
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -85,6 +86,22 @@ export default function LettersMailboxScreen() {
             whatItDoes="Groups drafts by the chain that generated them (hardship application, provider switch, CHSP dispute, complaint escalation) and gives you edit + send controls per draft."
           />
           <Button label="Draft a new letter" testID="letters-new" icon={PenLine} onPress={() => router.push("/tool/letters-and-follow-ups")} />
+
+          {entries.length > 0 || overdue.length > 0 || upcoming.length > 0 ? (
+            <SmartAISummary
+              pageKey="letters-mailbox"
+              context={{
+                entry_count: entries.length,
+                overdue_followups: overdue.length,
+                upcoming_followups: upcoming.length,
+                by_status: entries.reduce((acc: Record<string, number>, e) => {
+                  const k = e.status || "unknown";
+                  acc[k] = (acc[k] || 0) + 1;
+                  return acc;
+                }, {}),
+              }}
+            />
+          ) : null}
 
           {overdue.length > 0 ? (
             <Card testID="letters-overdue" style={{ backgroundColor: colors.errorSoft, borderColor: colors.errorSoft }}>

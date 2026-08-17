@@ -31,6 +31,17 @@ EXTRACTOR_MODEL = os.environ.get("KINDRED_EXTRACTOR_MODEL", "claude-haiku-4-5-20
 # KINDRED_AUDITOR_MODEL=claude-sonnet-4-5-20250929 once infra is tuned.
 AUDITOR_MODEL = os.environ.get("KINDRED_AUDITOR_MODEL", "claude-haiku-4-5-20251001")
 
+# Ask Wayly conversational replies. Sonnet 4.5 routinely takes 50-110s which
+# blows past the 60s Kubernetes ingress read timeout and returns 502 to the
+# client (Ask Wayly then shows no answer). Haiku 4.5 answers the same grounded
+# Q&A in a few seconds, comfortably inside the gateway limit. Flip back to
+# Sonnet by exporting KINDRED_CHAT_MODEL=claude-sonnet-4-5-20250929 once the
+# gateway read timeout is raised.
+CHAT_MODEL = os.environ.get("KINDRED_CHAT_MODEL", "claude-haiku-4-5-20251001")
+# Hard ceiling on a single chat LLM call so a stalled upstream can never pin
+# the (single) uvicorn worker indefinitely and freeze the whole app.
+CHAT_TIMEOUT_SECONDS = float(os.environ.get("KINDRED_CHAT_TIMEOUT_SECONDS", "50"))
+
 
 def _key() -> str:
     return os.environ.get("EMERGENT_LLM_KEY", "")
@@ -254,8 +265,18 @@ async def chat_with_kindred(
         api_key=key,
         session_id=session_id,
         system_message=system,
-    ).with_model(MODEL_PROVIDER, MODEL_NAME)
-    reply = await chat.send_message(UserMessage(text=user_text))
+    ).with_model(MODEL_PROVIDER, CHAT_MODEL)
+    try:
+        reply = await asyncio.wait_for(
+            chat.send_message(UserMessage(text=user_text)),
+            timeout=CHAT_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("chat_with_kindred timed out after %ss", CHAT_TIMEOUT_SECONDS)
+        return (
+            "Sorry, that took longer than expected to look into. Please try asking "
+            "again, and if it keeps happening, try a shorter or more specific question."
+        )
     if strip_wayly_dashes and isinstance(reply, str):
         reply = strip_wayly_dashes(reply)
     return reply

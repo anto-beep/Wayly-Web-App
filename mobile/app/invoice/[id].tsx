@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CloudOff, MessageCircle } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
@@ -85,6 +86,20 @@ export default function InvoiceDetail() {
               <Badge label={v.label} tone={v.tone} testID="invoice-verdict" />
             </View>
           </Card>
+
+          <SmartAISummary
+            pageKey="invoice-detail"
+            context={{
+              provider: inv.provider_name,
+              invoice_date: inv.invoice_date,
+              finding_count: findings.length,
+              findings_summary: findings.slice(0, 6).map((f) => ({
+                check_id: f.check_id,
+                tier: f.tier,
+                question: f.suggested_question || f.narrative,
+              })),
+            }}
+          />
 
           {rec?.summary_md ? (
             <Card testID="invoice-summary" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>

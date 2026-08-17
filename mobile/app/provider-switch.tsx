@@ -7,6 +7,7 @@ import {
 
 import { AppHeader, Button, Card, Field, Loading, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { shareTextFile } from "@/src/lib/download";
@@ -149,7 +150,36 @@ export default function ProviderSwitchScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Switch Provider" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
-        <PageIntro eyebrow="Switch Provider" title="Switch Provider" description="A guided path to changing providers, with Wayly tracking the handover so nothing falls through the cracks." />
+        <PageIntro
+          eyebrow="Provider Switches"
+          title="Managing a Provider Switch, End-to-End"
+          description="Switching provider is one of the most stressful things a family can do. Wayly holds your hand from the notice letter through the overlap period to the final settlement, so nothing gets lost between the two providers."
+          whatItDoes="Tracks each switch as a workflow: notice served, transition window, service overlap, and post-switch settlement of refunds or top-up invoices."
+          howToUse={[
+            "Start a new switch and pick your outgoing / incoming providers.",
+            "Follow the guided steps to serve notice and log the transition dates.",
+            "Use the settlement view for anything owed after the switch date.",
+            "Close out the switch when both providers confirm the change is complete.",
+          ]}
+          whatYouGet={[
+            "A single ledger of every provider switch in progress or history.",
+            "Clear next-step prompts so you don't miss a legislated deadline.",
+            "A settlement paper trail for refunds, top-ups, and outstanding balances.",
+          ]}
+        />
+
+        {row ? (
+          <SmartAISummary
+            pageKey="provider-switches"
+            context={{
+              has_active_switch: !!row,
+              stage: row.stage || "considering",
+              current_provider: intro.current_provider || null,
+              target_provider: intro.target_provider || null,
+              reason: intro.reason || null,
+            }}
+          />
+        ) : null}
 
         {/* Stepper */}
         <View testID="switch-stepper" style={styles.stepper}>

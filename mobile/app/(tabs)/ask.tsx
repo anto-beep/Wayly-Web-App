@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -13,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 
 import { AppHeader, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -77,30 +79,49 @@ export default function AskWayly() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         {messages.length === 0 ? (
-          <View style={styles.empty}>
-            <View style={styles.orb}>
-              <Ionicons name="sparkles" size={30} color={colors.primary} />
+          <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }} keyboardShouldPersistTaps="handled">
+            <PageIntro
+              eyebrow="Ask Wayly"
+              title="Your Context-Aware Aged Care Assistant"
+              description="Ask anything about Support at Home, budgets, statements, care plans, or the transition from CHSP. Ask Wayly answers using what you've explicitly consented to share, nothing more."
+              whatItDoes="Grounds every answer in the Aged Care Act 2024 and, when you grant consent per data source, the participant's real budget, statements, and care plan. Declines to give clinical, financial, or legal advice."
+              howToUse={[
+                "Open Settings and grant consent for the data sources you want Ask Wayly to read.",
+                "Choose how long the conversation is kept (session only, 14, 30, or 90 days).",
+                "Ask your question in plain English. Follow up naturally, Ask Wayly remembers the thread.",
+                "Use the thumbs up / down to help us improve answer quality.",
+              ]}
+              whatYouGet={[
+                "Answers grounded in real data (when consented), not generic advice.",
+                "Citations for the sources used so you can double-check.",
+                "A safe boundary, no medical, financial, or legal recommendations.",
+              ]}
+            />
+            <View style={[styles.empty, { flex: 0, padding: 0, paddingTop: spacing.lg }]}>
+              <View style={styles.orb}>
+                <Ionicons name="sparkles" size={30} color={colors.primary} />
+              </View>
+              <T variant="h2" style={{ textAlign: "center", marginTop: spacing.md }}>
+                How can I help today?
+              </T>
+              <T variant="bodyMuted" style={{ textAlign: "center", marginTop: 6 }}>
+                Ask about statements, budgets, charges or your Support at Home plan.
+              </T>
+              <View style={{ marginTop: spacing.xl, gap: spacing.sm, alignSelf: "stretch" }}>
+                {SUGGESTIONS.map((s) => (
+                  <Pressable
+                    key={s}
+                    testID={`ask-suggestion-${s.slice(0, 10)}`}
+                    onPress={() => send(s)}
+                    style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.85 }]}
+                  >
+                    <Ionicons name="arrow-forward-circle" size={20} color={colors.gold} />
+                    <T style={{ flex: 1, fontFamily: fonts.bodyMedium, color: colors.text }}>{s}</T>
+                  </Pressable>
+                ))}
+              </View>
             </View>
-            <T variant="h2" style={{ textAlign: "center", marginTop: spacing.md }}>
-              How can I help today?
-            </T>
-            <T variant="bodyMuted" style={{ textAlign: "center", marginTop: 6 }}>
-              Ask about statements, budgets, charges or your Support at Home plan.
-            </T>
-            <View style={{ marginTop: spacing.xl, gap: spacing.sm, alignSelf: "stretch" }}>
-              {SUGGESTIONS.map((s) => (
-                <Pressable
-                  key={s}
-                  testID={`ask-suggestion-${s.slice(0, 10)}`}
-                  onPress={() => send(s)}
-                  style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.85 }]}
-                >
-                  <Ionicons name="arrow-forward-circle" size={20} color={colors.gold} />
-                  <T style={{ flex: 1, fontFamily: fonts.bodyMedium, color: colors.text }}>{s}</T>
-                </Pressable>
-              ))}
-            </View>
-          </View>
+          </ScrollView>
         ) : (
           <FlatList
             ref={listRef}

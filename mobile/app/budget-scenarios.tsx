@@ -5,6 +5,7 @@ import { Wallet } from "lucide-react-native";
 
 import { AppHeader, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -52,6 +53,20 @@ export default function BudgetScenariosScreen() {
             eyebrow="Budget · What-if"
             title="Budget Scenarios"
             description="Model what happens to the budget if the classification, spending pace, or indexation changed, then save and compare scenarios."
+            whatItDoes="Recomputes the quarterly budget projection using your what-if adjustments, without changing the participant's real record."
+            howToUse={["Move the sliders to set your assumptions", "Watch the adjusted projection update against the baseline", "Save a scenario and compare two side-by-side"]}
+            whatYouGet={["A live baseline vs adjusted comparison", "Named scenarios you can revisit and compare"]}
+          />
+          <SmartAISummary
+            pageKey="budget-scenarios"
+            context={{
+              quarter_budget_aud: usable,
+              quarter_spent_aud: spent,
+              headroom_aud: usable - spent,
+              projected_quarter_aud: projected,
+              projected_annual_aud: projAnnual,
+              lifetime_headroom_aud: capLeft,
+            }}
           />
           <Card testID="scenario-current">
             <T variant="label" style={{ color: colors.muted }}>AT CURRENT PACE</T>

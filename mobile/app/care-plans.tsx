@@ -72,6 +72,17 @@ export default function CarePlansScreen() {
             title="Every Care Plan, Reviewed"
             description="Every support plan you have uploaded through the Support Plan Reviewer, with the latest findings and rights checks. Upload a new plan to run a fresh review before your next meeting."
             whatItDoes="Stores each plan version, runs Statement-of-Rights checks against it, and surfaces the findings by severity so you know what to raise with the provider."
+            howToUse={[
+              "Upload a new plan using the button.",
+              "Wayly runs a rights and quality-standard review.",
+              "Open a plan to see the findings and take action.",
+              "Compare two plans side-by-side to see what changed.",
+            ]}
+            whatYouGet={[
+              "A rights-informed review of every plan you've received.",
+              "Change tracking between plan versions.",
+              "A quiet nudge if a plan is due for review.",
+            ]}
           />
           {plans.length === 0 ? (
             <StatePanel

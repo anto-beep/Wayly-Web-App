@@ -4,6 +4,7 @@ import { router, useFocusEffect } from "expo-router";
 import { AlertTriangle, Info, RefreshCw, Repeat, TrendingUp, X } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -198,6 +199,23 @@ export default function ContributionPositionScreen() {
         <StatePanel icon={TrendingUp} title="Nothing to show yet" message="Decode a statement first, then your lifetime cap and projection will appear here." />
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
+          <PageIntro
+            eyebrow="Contribution Position"
+            title="Where You Stand on Contributions"
+            description="One page that answers three questions: how much of the lifetime cap have I used, how much will I likely pay this year, and does what I've been charged actually match the estimate?"
+            whatItDoes="Combines the lifetime cap accumulator, an annual projection with a confidence band, and month-by-month reconciliation of expected vs actual contributions."
+            howToUse={[
+              "Review your lifetime cap headroom at the top.",
+              "Compare this year's projection with what's been charged so far.",
+              "Open any month with a variance to investigate the underlying invoices.",
+              "If contributions are causing hardship, open the hardship walkthrough.",
+            ]}
+            whatYouGet={[
+              "Certainty about how much you've paid vs what remains.",
+              "Early warning if this year's contributions are running high.",
+              "A direct hand-off to the hardship pathway when needed.",
+            ]}
+          />
           {/* Lifetime cap */}
           <Card testID="ce3-lifetime-cap-card">
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>

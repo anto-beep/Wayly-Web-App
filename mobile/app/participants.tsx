@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from "react";
 import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import {
-  Users, Plus, Star, Trash2, Copy, X, Activity, Edit3, Crown, RotateCcw, AlertTriangle, ArrowUpRight,
+  Users, Plus, Star, Trash2, Copy, X, Activity, Edit3, Crown, RotateCcw, AlertTriangle, ArrowUpRight, CheckCircle2,
 } from "lucide-react-native";
 
 import { AppHeader, Button, Field, Loading, StatePanel, T } from "@/src/components/ui";
@@ -14,6 +15,7 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDate } from "@/src/utils/format";
 
 const COLOR_SWATCHES = ["#0E2A47", "#2BC4D6", "#7C9B82", "#C76B5A", "#5F4E76"];
+const SITE_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "";
 
 type PP = {
   id: string; first_name?: string; last_name?: string; preferred_name?: string;
@@ -22,11 +24,26 @@ type PP = {
   removal_confirmed_at?: string; data_purge_scheduled_at?: string;
 };
 
+type AddPreview = {
+  branch?: string; current_plan?: string; new_plan?: string;
+  addons_needed?: number; base_price_monthly?: number; addon_price_monthly?: number;
+};
+
+type AddResult = {
+  participant?: PP;
+  plan_upgraded_to?: string | null;
+  addon?: { id?: string } | null;
+};
+
+type AccountSummary = { base_plan?: string; participants_included?: number };
+
 function copyText(text: string, onDone: () => void) {
   const nav = (globalThis as any).navigator;
   if (nav?.clipboard?.writeText) { nav.clipboard.writeText(text); onDone(); }
   else Alert.alert("Forwarding email", text);
 }
+
+const EMPTY_FORM = { first_name: "", last_name: "", date_of_birth: "", classification: "", provider_name: "", statement_format: "unknown" };
 
 export default function ParticipantsScreen() {
   const { user } = useAuth();
@@ -34,33 +51,79 @@ export default function ParticipantsScreen() {
   const { colors, shadow } = useTheme();
   const [active, setActive] = useState<PP[]>([]);
   const [removed, setRemoved] = useState<PP[]>([]);
-  const [account, setAccount] = useState<{ base_plan?: string } | null>(null);
+  const [summary, setSummary] = useState<AccountSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Add flow
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ first_name: "", last_name: "", classification: "", provider_name: "" });
+  const [step, setStep] = useState<"preview" | "form" | "done">("preview");
+  const [addPreview, setAddPreview] = useState<AddPreview | null>(null);
+  const [extraCount, setExtraCount] = useState(1);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [lastAdded, setLastAdded] = useState<AddResult | null>(null);
   const [addErr, setAddErr] = useState("");
+
+  // Remove flow
+  const [removeTarget, setRemoveTarget] = useState<PP | null>(null);
+  const [removeChoice, setRemoveChoice] = useState<"stay" | "downgrade">("stay");
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
       const [pRes, aRes] = await Promise.all([
         apiFetch<{ items?: PP[] }>("/v2/participants?include_removed=true").catch(() => ({ items: [] as PP[] })),
-        apiFetch<{ base_plan?: string }>("/account").catch(() => null),
+        apiFetch<{ summary?: AccountSummary }>("/account").catch(() => null),
       ]);
       const all = pRes?.items || [];
       setActive(all.filter((p) => p.status === "ACTIVE"));
       setRemoved(all.filter((p) => p.status === "PENDING_REMOVAL" || p.status === "REMOVED"));
-      setAccount(aRes);
+      setSummary(aRes?.summary || null);
     } finally { setLoading(false); }
   }, []);
 
   useFocusEffect(useCallback(() => { loadAll(); }, [loadAll]));
 
-  const basePlan = (account?.base_plan || user?.plan || "free").toUpperCase();
+  const basePlan = (summary?.base_plan || user?.plan || "free").toUpperCase();
+  const included = summary?.participants_included ?? (basePlan === "FAMILY" ? 2 : 1);
   const baseFortnight = basePlan === "FAMILY" ? 49.5 : 24.5;
-  const addonCount = Math.max(0, active.length - (basePlan === "FAMILY" ? 2 : 1));
+  const addonCount = Math.max(0, active.length - included);
   const fortnightTotal = baseFortnight + addonCount * 24.5;
+
+  // ---- Add flow ----
+  const openAdd = async () => {
+    setForm(EMPTY_FORM); setStep("preview"); setExtraCount(1); setAddErr(""); setLastAdded(null);
+    try {
+      const data = await apiFetch<AddPreview>("/v2/participants/preview?count=1", { method: "POST", body: {} });
+      setAddPreview(data);
+      setShowAdd(true);
+    } catch (e) {
+      Alert.alert("Could not preview", e instanceof ApiError ? e.message : "Please try again.");
+    }
+  };
+
+  const refreshPreview = async (count: number) => {
+    try { setAddPreview(await apiFetch<AddPreview>(`/v2/participants/preview?count=${count}`, { method: "POST", body: {} })); }
+    catch { /* ignore */ }
+  };
+
+  const openUrl = async (url?: string) => { if (url) await WebBrowser.openBrowserAsync(url); };
+
+  const startUpgradeToFamily = async () => {
+    setBusy(true); setAddErr("");
+    try {
+      const data = await apiFetch<{ url?: string; instant_upgrade?: boolean }>("/billing/v2/upgrade-checkout", {
+        method: "POST", body: { target_plan: "FAMILY", origin_url: SITE_BASE, delta_only: true },
+      });
+      if (data.url) { await openUrl(data.url); return; }
+      if (data.instant_upgrade) setStep("form");
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : "Could not start checkout";
+      if (msg.includes("Billing unavailable")) setStep("form");
+      else setAddErr(msg);
+    } finally { setBusy(false); }
+  };
 
   const submitAdd = async () => {
     setAddErr("");
@@ -68,26 +131,72 @@ export default function ParticipantsScreen() {
     if (!form.last_name.trim()) { setAddErr("Last name is required."); return; }
     setSaving(true);
     try {
-      await apiFetch("/v2/participants", { method: "POST", body: {
+      const data = await apiFetch<AddResult>("/v2/participants", { method: "POST", body: {
         first_name: form.first_name.trim(), last_name: form.last_name.trim(),
+        date_of_birth: form.date_of_birth || null,
         classification: form.classification ? Number(form.classification) : null,
-        provider_name: form.provider_name.trim() || null, statement_format: "unknown",
+        provider_name: form.provider_name.trim() || null, statement_format: form.statement_format,
       } });
-      setShowAdd(false); setForm({ first_name: "", last_name: "", classification: "", provider_name: "" });
+      setLastAdded(data);
+      setStep("done");
       await loadAll(); await reload();
+      // Defence-in-depth: reconcile Stripe subscription shape with the new count.
+      apiFetch("/payments/sync-plan-to-participants", { method: "POST", body: {} }).catch(() => {});
     } catch (e) { setAddErr(e instanceof ApiError ? e.message : "Could not add participant."); }
     finally { setSaving(false); }
   };
 
+  const payAddon = async () => {
+    if (!lastAdded?.addon?.id) return;
+    setBusy(true);
+    try {
+      const data = await apiFetch<{ url?: string; already_paid?: boolean }>("/billing/v2/addon-checkout", {
+        method: "POST", body: { addon_id: lastAdded.addon.id, origin_url: SITE_BASE },
+      });
+      if (data.url) { await openUrl(data.url); return; }
+      if (data.already_paid) Alert.alert("Add-on already paid");
+    } catch (e) { Alert.alert("Could not start add-on checkout", e instanceof ApiError ? e.message : ""); }
+    finally { setBusy(false); }
+  };
+
+  const skipAddonPayment = () => {
+    const name = lastAdded?.participant?.first_name || "This person";
+    Alert.alert("Skip payment for now?", `${name} will be removed from your account so you're not charged. You can add them again any time.`, [
+      { text: "Keep", style: "cancel" },
+      { text: "Skip & remove", style: "destructive", onPress: async () => {
+        try { await apiFetch("/billing/v2/cancel-pending-addon", { method: "POST", body: {} }); }
+        catch { /* silent */ }
+        closeAdd(); await loadAll(); await reload();
+      } },
+    ]);
+  };
+
+  const closeAdd = () => { setShowAdd(false); setStep("preview"); setLastAdded(null); setForm(EMPTY_FORM); setAddErr(""); };
+
+  // ---- Other actions ----
   const promote = (p: PP) => Alert.alert("Make primary", `Set ${p.first_name} as the primary participant?`, [
     { text: "Cancel", style: "cancel" },
     { text: "Make primary", onPress: async () => { try { await apiFetch(`/participants/${p.id}/promote`, { method: "POST", body: {} }); await loadAll(); await reload(); } catch { Alert.alert("Could not promote"); } } },
   ]);
 
-  const remove = (p: PP) => Alert.alert("Remove participant", `Remove ${p.first_name}? Data is kept for 60 days.`, [
-    { text: "Cancel", style: "cancel" },
-    { text: "Remove", style: "destructive", onPress: async () => { try { await apiFetch(`/v2/participants/${p.id}`, { method: "DELETE", body: { downgrade: false } }); await loadAll(); await reload(); } catch { Alert.alert("Could not remove"); } } },
-  ]);
+  const openRemove = (p: PP) => { setRemoveChoice("stay"); setRemoveTarget(p); };
+
+  const confirmRemove = async () => {
+    if (!removeTarget) return;
+    setBusy(true);
+    try {
+      const data = await apiFetch<{ plan_downgrade_scheduled?: { effective?: string } }>(`/v2/participants/${removeTarget.id}`, {
+        method: "DELETE", body: { downgrade: removeChoice === "downgrade" },
+      });
+      setRemoveTarget(null); setRemoveChoice("stay");
+      await loadAll(); await reload();
+      apiFetch("/payments/sync-plan-to-participants", { method: "POST", body: {} }).catch(() => {});
+      if (data?.plan_downgrade_scheduled?.effective) {
+        Alert.alert("Participant removed", `Plan downgrades to Solo on ${formatDate(data.plan_downgrade_scheduled.effective)}.`);
+      }
+    } catch (e) { Alert.alert("Could not remove", e instanceof ApiError ? e.message : ""); }
+    finally { setBusy(false); }
+  };
 
   const restore = async (p: PP) => { try { await apiFetch(`/v2/participants/${p.id}/restore`, { method: "POST", body: {} }); await loadAll(); await reload(); } catch { Alert.alert("Could not restore"); } };
 
@@ -107,6 +216,8 @@ export default function ParticipantsScreen() {
     } catch { Alert.alert("Could not create a share link right now."); }
   };
 
+  const canDowngradeOnRemove = basePlan === "FAMILY" && active.length === 2 && !!removeTarget && !removeTarget.is_primary;
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Participants" subtitle={`${active.length} active`} onBack={() => router.back()} />
@@ -122,14 +233,14 @@ export default function ParticipantsScreen() {
             </T>
           </View>
 
-          <Button label="Add participant" testID="participants-add-btn" icon={Plus} variant="secondary" onPress={() => setShowAdd(true)} />
+          <Button label="Add participant" testID="participants-add-btn" icon={Plus} variant="secondary" onPress={openAdd} />
 
           {active.length === 0 ? (
             <StatePanel testID="participants-empty" icon={Users} title="Add your first participant to get started." />
           ) : (
             active.map((p, idx) => {
               const color = COLOR_SWATCHES[(p.color_index ?? idx) % 5];
-              const planTag = basePlan === "SOLO" ? "Covered by Solo plan" : idx < 2 ? "Covered by Family plan" : "Additional participant · $24.50 per fortnight";
+              const planTag = basePlan === "SOLO" ? "Covered by Solo plan" : idx < included ? "Covered by Family plan" : "Additional participant · $24.50 per fortnight";
               return (
                 <View key={p.id} testID={`participant-card-${p.id}`} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
                   <View style={{ height: 4, backgroundColor: color, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }} />
@@ -158,7 +269,7 @@ export default function ParticipantsScreen() {
                       <ActionLink icon={Edit3} label="Edit details" testID={`participant-edit-${p.id}`} onPress={() => router.push(`/participant/${p.id}`)} color={colors.primary} />
                       <ActionLink icon={ArrowUpRight} label="Share view" testID={`participant-share-${p.id}`} onPress={() => shareView(p)} color={colors.primary} />
                       {!p.is_primary ? <ActionLink icon={Crown} label="Make primary" testID={`participant-promote-${p.id}`} onPress={() => promote(p)} color={colors.primary} /> : null}
-                      {!p.is_primary ? <ActionLink icon={Trash2} label="Remove" testID={`participant-remove-${p.id}`} onPress={() => remove(p)} color={colors.terracotta} /> : null}
+                      {!p.is_primary ? <ActionLink icon={Trash2} label="Remove" testID={`participant-remove-${p.id}`} onPress={() => openRemove(p)} color={colors.terracotta} /> : null}
                     </View>
                   </View>
                 </View>
@@ -203,26 +314,157 @@ export default function ParticipantsScreen() {
         </ScrollView>
       )}
 
-      {/* Add participant modal */}
-      <Modal visible={showAdd} transparent animationType="slide" onRequestClose={() => setShowAdd(false)}>
+      {/* Add participant modal (branched, billing-aware — mirrors web) */}
+      <Modal visible={showAdd} transparent animationType="slide" onRequestClose={closeAdd}>
         <View style={[styles.modalWrap, { backgroundColor: colors.overlay }]}>
           <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md }}>
-              <T style={{ fontFamily: fonts.headingSemi, fontSize: 18 }}>Add a participant</T>
-              <Pressable onPress={() => setShowAdd(false)} hitSlop={10}><X size={20} color={colors.muted} /></Pressable>
+              <T style={{ fontFamily: fonts.headingSemi, fontSize: 18 }}>{step === "preview" ? "Add a participant" : step === "form" ? "Their details" : "All set"}</T>
+              <Pressable onPress={closeAdd} hitSlop={10} testID="add-modal-close"><X size={20} color={colors.muted} /></Pressable>
             </View>
-            <View style={{ gap: spacing.sm }}>
-              <Field label="First name" required testID="form-first-name" value={form.first_name} onChangeText={(v) => setForm({ ...form, first_name: v })} />
-              <Field label="Last name" required testID="form-last-name" value={form.last_name} onChangeText={(v) => setForm({ ...form, last_name: v })} />
-              <Field label="Classification" optional testID="form-classification" value={form.classification} onChangeText={(v) => setForm({ ...form, classification: v.replace(/[^0-9]/g, "") })} keyboardType="number-pad" placeholder="1-8" />
-              <Field label="Provider" optional testID="form-provider" value={form.provider_name} onChangeText={(v) => setForm({ ...form, provider_name: v })} />
+
+            <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 520 }} contentContainerStyle={{ gap: spacing.sm }}>
               {addErr ? <T variant="small" style={{ color: colors.terracotta }}>{addErr}</T> : null}
-              <Button label="Add participant" testID="form-submit-add" onPress={submitAdd} loading={saving} style={{ marginTop: spacing.sm }} />
+
+              {/* PREVIEW step */}
+              {step === "preview" && addPreview ? (
+                <View testID="add-preview-step" style={{ gap: spacing.sm }}>
+                  {addPreview.branch === "upgrade_required" ? (
+                    <View style={{ gap: spacing.sm }} testID="branch-upgrade-required">
+                      <T style={{ fontFamily: fonts.body, fontSize: 14 }}>Adding a participant requires a paid plan.</T>
+                      <T variant="small">Upgrade to Solo ($24.50 per fortnight) for 1 participant, or Family ($49.50 per fortnight) for 2 participants and 3 caregiver seats.</T>
+                      <Button label="See plans" testID="upgrade-family" onPress={() => { closeAdd(); router.push("/plan-select"); }} />
+                    </View>
+                  ) : null}
+
+                  {addPreview.branch === "solo_to_family" ? (
+                    <View style={{ gap: spacing.sm }} testID="branch-solo-to-family">
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Adding a second participant upgrades your plan to Family.</T>
+                      {["Plan: Solo $24.50 → Family $49.50 per fortnight", "Participants: 1 → 2", "Caregiver seats: 1 → 3", "All features remain the same"].map((l, i) => (
+                        <View key={i} style={{ flexDirection: "row", gap: 8 }}>
+                          <CheckCircle2 size={15} color={colors.sage} style={{ marginTop: 2 }} />
+                          <T variant="small" style={{ flex: 1 }}>{l}</T>
+                        </View>
+                      ))}
+                      <T variant="small" style={{ color: colors.muted }}>You will be charged the prorated difference now, then $49.50 per fortnight from your next charge.</T>
+                      <Button label="Upgrade to Family" testID="confirm-solo-to-family" onPress={startUpgradeToFamily} loading={busy} />
+                      <Button label="Skip checkout (test mode)" testID="skip-checkout-solo-to-family" variant="ghost" onPress={() => setStep("form")} />
+                    </View>
+                  ) : null}
+
+                  {addPreview.branch === "family_addons" || addPreview.branch === "covered_by_family" ? (
+                    <View style={{ gap: spacing.sm }} testID="branch-family">
+                      <T variant="small">You can add as many participants as you need. Each additional participant is $24.50 per fortnight and cancels independently.</T>
+                      <T variant="label">HOW MANY TO ADD?</T>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+                        <Pressable testID="extra-count-minus" onPress={() => { const v = Math.max(1, extraCount - 1); setExtraCount(v); refreshPreview(v); }} style={[styles.stepBtn, { borderColor: colors.border }]}>
+                          <T style={{ fontFamily: fonts.bodyBold, fontSize: 18, color: colors.primary }}>−</T>
+                        </Pressable>
+                        <T testID="extra-count-value" style={{ fontFamily: fonts.heading, fontSize: 22, minWidth: 28, textAlign: "center" }}>{extraCount}</T>
+                        <Pressable testID="extra-count-plus" onPress={() => { const v = Math.min(10, extraCount + 1); setExtraCount(v); refreshPreview(v); }} style={[styles.stepBtn, { borderColor: colors.border }]}>
+                          <T style={{ fontFamily: fonts.bodyBold, fontSize: 18, color: colors.primary }}>+</T>
+                        </Pressable>
+                      </View>
+                      {(() => {
+                        const needed = Number(addPreview.addons_needed || 0);
+                        const addonFortnight = needed * 24.5;
+                        const totalFortnight = 49.5 + addonFortnight;
+                        return (
+                          <View testID="add-preview-summary" style={{ backgroundColor: colors.surface2, borderColor: colors.border, borderWidth: 1, borderRadius: radius.md, padding: spacing.md, gap: 2 }}>
+                            <T variant="small" style={{ color: colors.text }}>{needed} × $24.50 per fortnight = <T style={{ fontFamily: fonts.bodySemi }}>${addonFortnight.toFixed(2)} per fortnight</T> added</T>
+                            <T variant="small">Base Family plan: $49.50 per fortnight</T>
+                            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text, marginTop: 4 }}>New total: ${totalFortnight.toFixed(2)} per fortnight</T>
+                            <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted, marginTop: 2 }}>Includes GST. Prorated for the rest of your current fortnight, then billed in full from your next charge.</T>
+                          </View>
+                        );
+                      })()}
+                      <Button label="Continue" testID="confirm-family-add" onPress={() => setStep("form")} />
+                    </View>
+                  ) : null}
+
+                  {addPreview.branch === "adviser_included" ? (
+                    <View style={{ gap: spacing.sm }} testID="branch-adviser">
+                      <T variant="small">Your Adviser plan includes participant management at no extra cost.</T>
+                      <Button label="Continue" testID="confirm-adviser-add" onPress={() => setStep("form")} />
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
+
+              {/* FORM step */}
+              {step === "form" ? (
+                <View testID="add-form-step" style={{ gap: spacing.sm }}>
+                  <Field label="First name" required testID="form-first-name" value={form.first_name} onChangeText={(v) => setForm({ ...form, first_name: v })} />
+                  <Field label="Last name" required testID="form-last-name" value={form.last_name} onChangeText={(v) => setForm({ ...form, last_name: v })} />
+                  <Field label="Classification" optional testID="form-classification" value={form.classification} onChangeText={(v) => setForm({ ...form, classification: v.replace(/[^0-9]/g, "") })} keyboardType="number-pad" placeholder="1-8" />
+                  <Field label="Provider" optional testID="form-provider" value={form.provider_name} onChangeText={(v) => setForm({ ...form, provider_name: v })} />
+                  <Button label="Add participant" testID="form-submit-add" onPress={submitAdd} loading={saving} style={{ marginTop: spacing.sm }} />
+                </View>
+              ) : null}
+
+              {/* DONE step */}
+              {step === "done" && lastAdded?.participant ? (
+                <View testID="add-done-step" style={{ gap: spacing.md, alignItems: "stretch" }}>
+                  <CheckCircle2 size={40} color={colors.sage} style={{ alignSelf: "center" }} />
+                  <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, textAlign: "center" }}>{lastAdded.participant.first_name} added!</T>
+                  {lastAdded.participant.household_email ? (
+                    <View style={{ backgroundColor: colors.surface2, borderColor: colors.border, borderWidth: 1, borderRadius: radius.md, padding: spacing.md }}>
+                      <T variant="label">THEIR FORWARDING EMAIL</T>
+                      <T style={{ fontFamily: fonts.mono, fontSize: 13, marginTop: 4 }}>{lastAdded.participant.household_email}</T>
+                      <Pressable onPress={() => copyText(lastAdded.participant!.household_email as string, () => Alert.alert("Copied"))} style={{ marginTop: 6 }}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>Copy</T>
+                      </Pressable>
+                    </View>
+                  ) : null}
+                  <T variant="small" style={{ textAlign: "center" }}>Forward their monthly statements here and Wayly will decode them automatically.</T>
+                  {lastAdded.addon?.id ? (
+                    <>
+                      <Button label="Pay $24.50 per fortnight add-on now" testID="pay-addon-btn" onPress={payAddon} loading={busy} />
+                      <Button label="Skip payment and remove them" testID="skip-payment-btn" variant="outline" onPress={skipAddonPayment} />
+                    </>
+                  ) : (
+                    <Button label="Done" testID="add-done-btn" onPress={closeAdd} />
+                  )}
+                </View>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Remove participant modal (downgrade-aware — mirrors web) */}
+      <Modal visible={!!removeTarget} transparent animationType="slide" onRequestClose={() => setRemoveTarget(null)}>
+        <View style={[styles.modalWrap, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.modalCard, { backgroundColor: colors.surface }]} testID="remove-participant-modal">
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md }}>
+              <T style={{ fontFamily: fonts.headingSemi, fontSize: 18 }}>Remove {removeTarget?.first_name}?</T>
+              <Pressable onPress={() => setRemoveTarget(null)} hitSlop={10}><X size={20} color={colors.muted} /></Pressable>
             </View>
+            {canDowngradeOnRemove ? (
+              <View style={{ gap: spacing.sm }}>
+                <T variant="small">{"You'll have 1 participant remaining. You can downgrade from Family to Solo and save $25 per fortnight."}</T>
+                <RemoveOption testID="rm-downgrade" label="Remove + downgrade to Solo at next billing date" active={removeChoice === "downgrade"} onPress={() => setRemoveChoice("downgrade")} colors={colors} />
+                <RemoveOption testID="rm-stay" label="Remove + stay on Family $49.50 per fortnight" active={removeChoice === "stay"} onPress={() => setRemoveChoice("stay")} colors={colors} />
+              </View>
+            ) : (
+              <T variant="small">Their data is kept for 60 days. You can restore them or export their data anytime within that window.</T>
+            )}
+            <Button label="Confirm removal" testID="confirm-remove" onPress={confirmRemove} loading={busy} style={{ marginTop: spacing.md }} />
           </View>
         </View>
       </Modal>
     </View>
+  );
+}
+
+function RemoveOption({ label, active, onPress, colors, testID }: any) {
+  return (
+    <Pressable testID={testID} onPress={onPress} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", padding: spacing.sm, borderRadius: radius.md, borderWidth: 1, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.sageSoft : "transparent" }}>
+      <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: active ? colors.primary : colors.muted, alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+        {active ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} /> : null}
+      </View>
+      <T variant="small" style={{ flex: 1, color: colors.text }}>{label}</T>
+    </Pressable>
   );
 }
 
@@ -242,6 +484,7 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.xs, paddingTop: spacing.sm },
   removedRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, borderRadius: radius.md, borderWidth: 1, padding: spacing.md },
   smallBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 6 },
+  stepBtn: { width: 40, height: 40, borderRadius: radius.md, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   modalWrap: { flex: 1, justifyContent: "flex-end" },
   modalCard: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: Platform.OS === "ios" ? spacing.xxl : spacing.lg },
 });

@@ -94,6 +94,17 @@ export default function DocumentsScreen() {
             title="All Your Aged-Care Paperwork, in One Place"
             description="Assessments, statements, care plans, medical letters, correspondence, everything lives here, safely encrypted and always to hand when a provider or clinician asks for it."
             whatItDoes="Stores every document by category and lets you send statements straight to the Statement Decoder in one tap."
+            howToUse={[
+              "Upload PDFs, images, or Word documents, max 25 MB each.",
+              "Tag with a category so it's easy to find later.",
+              "Tap Send to Decoder on any statement to auto-parse it.",
+              "Share a document with your family or a provider using a time-limited link.",
+            ]}
+            whatYouGet={[
+              "One tidy place for every piece of paperwork.",
+              "Instant search across every file.",
+              "Secure sharing without emailing attachments around.",
+            ]}
           />
           <StatePanel testID="documents-empty" icon={FolderArchive} title="No documents yet" message="Reports you generate, like invoice checks and letters, are saved here so everything lives in one place." />
         </View>
@@ -107,6 +118,17 @@ export default function DocumentsScreen() {
             title="All Your Aged-Care Paperwork, in One Place"
             description="Assessments, statements, care plans, medical letters, correspondence, everything lives here, safely encrypted and always to hand when a provider or clinician asks for it."
             whatItDoes="Stores every document by category and lets you send statements straight to the Statement Decoder in one tap."
+            howToUse={[
+              "Upload PDFs, images, or Word documents, max 25 MB each.",
+              "Tag with a category so it's easy to find later.",
+              "Tap Send to Decoder on any statement to auto-parse it.",
+              "Share a document with your family or a provider using a time-limited link.",
+            ]}
+            whatYouGet={[
+              "One tidy place for every piece of paperwork.",
+              "Instant search across every file.",
+              "Secure sharing without emailing attachments around.",
+            ]}
           />
           {dlError ? <T variant="small" style={{ color: colors.terracotta }}>{dlError}</T> : null}
           {docs.map((d) => {

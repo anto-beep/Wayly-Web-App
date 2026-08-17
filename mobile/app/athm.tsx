@@ -96,6 +96,17 @@ export default function AthmScreen() {
             title="AT & HM Projects"
             description="Track every step of buying assistive technology or modifying the home, from OT referral through quotes, funding, delivery, and trial period. Nothing important slips through the cracks."
             whatItDoes="Groups related AT items and HM modifications into a single project. Compares supplier quotes side-by-side. Counts down each trial period so you never miss a return window."
+            howToUse={[
+              "Start a new project (AT only, HM only, or combined).",
+              "Add items or modifications and log at least two quotes each.",
+              "Advance the project through OT assessment, quoting, funding, install, and trial.",
+              "When a trial starts, we schedule reminders at 7 / 3 / 1 days before the return deadline.",
+            ]}
+            whatYouGet={[
+              "A side-by-side view of every quote with cheapest and dearest highlighted.",
+              "A variance flag when quotes differ by more than 30%.",
+              "Trial countdown cards that turn amber then red as the return date approaches.",
+            ]}
           />
 
           {showForm ? (

@@ -6,6 +6,7 @@ import { FileText, Plus, CloudOff, FileSearch, Search, StickyNote, Download, Arc
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
 import { PageIntro } from "@/src/components/PageIntro";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
@@ -50,7 +51,6 @@ export default function StatementsScreen() {
   const [offline, setOffline] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
-  const [insight, setInsight] = useState<string | null>(null);
   const [archivedCount, setArchivedCount] = useState(0);
   const listRef = useRef<FlatList>(null);
   useScrollToTop(listRef);
@@ -63,11 +63,6 @@ export default function StatementsScreen() {
       setItems(list);
       setOffline(false);
       cacheSet(`statements:${activeId || "all"}`, list);
-      if (list.length > 0) {
-        apiFetch<{ summary?: string }>("/insights/summarise", { method: "POST", body: { page_key: "statements-list", context: { total_statements: list.length } } })
-          .then((r) => setInsight(r?.summary || null))
-          .catch(() => setInsight(null));
-      }
     } catch {
       const cached = await cacheGet<Stmt[]>(`statements:${activeId || "all"}`);
       if (cached?.data?.length) { setItems(cached.data); setOffline(true); } else setError(true);
@@ -160,12 +155,20 @@ export default function StatementsScreen() {
         <Button label="Export CSV" testID="statements-export-csv-btn" icon={Download} variant="outline" onPress={exportCsv} style={{ flexGrow: 1 }} />
         <Button label={archivedCount > 0 ? `Archived (${archivedCount})` : "Archived"} testID="statements-archived-link" icon={Archive} variant="outline" onPress={() => router.push("/statements-archived" as any)} style={{ flexGrow: 1 }} />
       </View>
-      {insight ? (
-        <Card testID="smart-ai-summary-statements-list" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.primary }}>SMART SUMMARY</T>
-          <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, marginTop: 2, color: colors.primary }}>Your Wayly Insight</T>
-          <T style={{ fontFamily: fonts.body, fontSize: 14, marginTop: 8, lineHeight: 22, color: colors.text }}>{sanitizeAI(insight)}</T>
-        </Card>
+      {items.length > 0 ? (
+        <SmartAISummary
+          pageKey="statements-list"
+          context={{
+            total_statements: items.length,
+            filtered_count: sorted.length,
+            providers: Array.from(new Set(items.map((s) => providerName(s)).filter(Boolean))).slice(0, 6),
+            latest_provider: sorted[0] ? providerName(sorted[0]) : null,
+            latest_period: sorted[0] ? periodCompact(sorted[0]) : null,
+            latest_gross_aud: sorted[0] ? grossTotal(sorted[0]) : null,
+            archived_count: archivedCount,
+            anomaly_flagged: sorted.filter((s) => flagsCount(s) > 0).length,
+          }}
+        />
       ) : null}
       {/* Search + status filter */}
       <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>

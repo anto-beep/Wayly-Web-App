@@ -5,6 +5,7 @@ import { Star, Trophy, Plus, ThumbsUp } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -88,12 +89,30 @@ export default function CompareProvidersScreen() {
             title="Side-by-Side Quality Context"
             description="Compare 2 or 3 providers on the signals that actually matter. Every price sits next to a quality context, because the cheapest provider is not always the best value, and the dearest is not always safer."
             whatItDoes={`Pulls published complaint, workforce, and rating signals for each named provider and lines them up in one view. Wayly does not compute a "best" provider, you decide.`}
+            howToUse={[
+              "Enter 2 or 3 provider names.",
+              "Tap Compare, signals are fetched from public regulator sources.",
+              "Read the quality summary chip and drill into any concerning signal.",
+              "Use the take-away with your family to make an informed choice.",
+            ]}
+            whatYouGet={[
+              "A quality chip for each provider (positive / mixed / concerns).",
+              "Signal-level context, not a hollow star rating.",
+              "A shareable comparison you can save or send to family.",
+            ]}
           />
-          <Card style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
-            <T variant="small" style={{ color: colors.text, lineHeight: 20 }}>
-              {`This ranking is built from the ratings you've saved. Rate more providers to make the comparison richer.`}
-            </T>
-          </Card>
+          <SmartAISummary
+            pageKey="provider-comparison"
+            context={{
+              providers: aggregates.slice(0, 6).map((a) => ({
+                name: a.provider,
+                average_stars: Math.round(a.avg * 10) / 10,
+                rating_count: a.count,
+                recommend_pct: a.recommendPct,
+              })),
+              compared_count: aggregates.length,
+            }}
+          />
 
           {aggregates.map((a, i) => (
             <Card key={a.provider} testID={`compare-provider-${i}`}>

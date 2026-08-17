@@ -10,6 +10,7 @@ import {
 import { WaylyHeader } from "@/src/components/WaylyHeader";
 import { MissingDetailsBanner } from "@/src/components/MissingDetailsBanner";
 import { StreamProgress, Stream } from "@/src/components/StreamProgress";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -37,7 +38,6 @@ type Pathway = { pathway: string; title: string; episode_aud?: number; duration_
 type AuditEntry = { id: string; actor_name?: string; action?: string; detail?: string; created_at?: string };
 type ChatMsg = { id: string; role?: string; content?: string; created_at?: string };
 type FamilyMsg = { id: string; author_name?: string; body?: string; created_at?: string; read?: boolean };
-type Insight = { summary?: string; alerts?: { level: string; text: string }[] };
 
 const Overline = ({ children }: { children: React.ReactNode }) => {
   const { colors } = useTheme();
@@ -54,7 +54,6 @@ export default function Dashboard() {
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMsg[]>([]);
   const [familyMsgs, setFamilyMsgs] = useState<FamilyMsg[]>([]);
-  const [insight, setInsight] = useState<Insight | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
@@ -82,9 +81,6 @@ export default function Dashboard() {
       setAudit(Array.isArray(au) ? au : []);
       setChatHistory(Array.isArray(chat) ? chat : []);
       setFamilyMsgs(Array.isArray(fam) ? fam : []);
-      apiFetch<Insight>("/insights/summarise", { method: "POST", body: { page_key: "dashboard", context: { plan: user?.plan } } })
-        .then(setInsight)
-        .catch(() => setInsight(null));
     } catch {
       setError(true);
     } finally {
@@ -158,28 +154,25 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Smart AI summary (Your Wayly Insight) */}
-            {insight?.summary ? (
-              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-                <Card testID="smart-ai-summary-dashboard" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
-                  <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-                    <View style={[styles.summaryIcon, { backgroundColor: colors.primary }]}>
-                      <Sparkles size={18} color="#fff" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.primary }}>SMART SUMMARY</T>
-                      <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, marginTop: 2, color: colors.primary }}>Your Wayly Insight</T>
-                      <T style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, marginTop: 8 }}>{sanitizeAI(insight.summary)}</T>
-                      {insight.alerts?.map((a, i) => (
-                        <View key={i} style={{ flexDirection: "row", gap: 8, marginTop: spacing.sm, alignItems: "flex-start" }}>
-                          <ArrowRight size={16} color={colors.sage} style={{ marginTop: 3 }} />
-                          <T variant="small" style={{ flex: 1, color: colors.text }}>{sanitizeAI(a.text)}</T>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                </Card>
-              </View>
-            ) : null}
+            <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+              <SmartAISummary
+                pageKey="dashboard"
+                context={{
+                  participant_name: displayName || null,
+                  provider: displayProvider || null,
+                  plan,
+                  quarter_label: budget?.quarter_label,
+                  quarterly_usable_aud: usable,
+                  quarterly_spent_aud: spent,
+                  quarterly_headroom_aud: left,
+                  statements_count: statements.length,
+                  latest_statement_period: latest?.period_label || null,
+                  latest_statement_provider: latest?.provider_name || null,
+                  open_anomaly_count: allAnomalies.length,
+                  unread_family_messages: familyMsgs.filter((m) => !m.read).length,
+                }}
+              />
+            </View>
 
             {/* Free plan paywall */}
             {isFree ? (

@@ -4,6 +4,8 @@ import { router, useFocusEffect } from "expo-router";
 import { ListChecks, RefreshCw } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -48,7 +50,39 @@ export default function CasesScreen() {
         <Loading label="Loading cases…" />
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
+          <PageIntro
+            eyebrow="Complaints"
+            title="Open Complaints and Resolutions"
+            description="Something went wrong? Track every complaint from the first phone call to your provider through to ACQSC referral and final resolution, with dates, evidence, and follow-up dates in one place."
+            whatItDoes="Manages each complaint as a case with staged status: raised, with provider, escalated, ACQSC, resolved. Prompts you before deadlines slip."
+            howToUse={[
+              "Start a new complaint and describe what happened.",
+              "Log every response and phone call as the case progresses.",
+              "Escalate to ACQSC directly from the case when appropriate.",
+              "Close the case once resolved, with a written summary.",
+            ]}
+            whatYouGet={[
+              "A clear evidence trail if you need to escalate.",
+              "Deadline reminders so nothing gets forgotten.",
+              "Peace of mind that you're following the right process.",
+            ]}
+          />
           <Button label="Scan for new issues" testID="cases-scan-btn" icon={RefreshCw} variant="outline" onPress={scan} loading={scanning} />
+          {cases.length > 0 ? (
+            <SmartAISummary
+              pageKey="complaints-list"
+              context={{
+                total: cases.length,
+                by_status: cases.reduce((acc: Record<string, number>, c) => {
+                  const k = c.status || "unknown";
+                  acc[k] = (acc[k] || 0) + 1;
+                  return acc;
+                }, {}),
+                high_severity: cases.filter((c) => c.severity === "high").length,
+                open_not_closed: cases.filter((c) => !["resolved", "dismissed"].includes(c.status || "")).length,
+              }}
+            />
+          ) : null}
           {cases.length === 0 ? (
             <StatePanel icon={ListChecks} title="No open cases" message="When Wayly spots something worth following up, a case appears here so nothing slips through the cracks." />
           ) : (

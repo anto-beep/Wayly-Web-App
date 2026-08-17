@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { ClipboardList, Sparkles, CheckCircle2, Phone } from "lucide-react-native";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -28,6 +29,23 @@ export default function ClassificationPrepScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Classification Prep" subtitle="Get ready for your assessment" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg }}>
+        <PageIntro
+          eyebrow="Classification Self-Check"
+          title="Prepare for Your SAH Assessment"
+          description="Walk into your Initial Assessment Tool (IAT) knowing which Support at Home streams may fit, what documents to bring, and what to ask. No paperwork gets submitted here, this is your private prep space."
+          whatItDoes="Suggests which SAH streams to discuss with your assessor based on a short self-check, and gives you a 6-step wizard to prepare your questions, evidence, and advocacy notes before the appointment."
+          howToUse={[
+            "Tick the fit signals that apply to see which streams may suit.",
+            "Start the 6-step IAT prep wizard below.",
+            "Work through documents, questions, evidence, and advocacy at your pace.",
+            "After the assessment, record the classification received.",
+          ]}
+          whatYouGet={[
+            "A ranked list of streams likely to be a fit (with rationale).",
+            "A confidence-building checklist you can bring to the appointment.",
+            "An early warning if the classification you receive is unexpected.",
+          ]}
+        />
         <Card style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
           <T variant="body" style={{ color: colors.text, lineHeight: 24 }}>
             Your Support at Home classification is decided by a trained assessor through the Single Assessment System. You cannot set it yourself, but walking in prepared helps the assessor see the full picture. Here is how to get ready.

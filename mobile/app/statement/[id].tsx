@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CloudOff, Sparkles, MessageCircle, Download, FileDown, History, GitCompare } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { apiFetch } from "@/src/lib/api";
 import { cacheGet, cacheSet } from "@/src/lib/cache";
 import { downloadAndShare } from "@/src/lib/download";
@@ -128,6 +129,18 @@ export default function StatementDetail() {
               </View>
             </View>
           </Card>
+
+          {/* Smart AI summary (Your Wayly Insight) */}
+          <SmartAISummary
+            pageKey="statement-detail"
+            context={{
+              period: stmt.period_label || null,
+              line_item_count: (stmt.line_items || []).length,
+              total_aud: grandTotal,
+              anomaly_count: (stmt.anomalies || []).length,
+              anomaly_dollar_impact_total: stmt.anomaly_dollar_impact_total || 0,
+            }}
+          />
 
           {/* AI insights */}
           {stmt.summary ? (
