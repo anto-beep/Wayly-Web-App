@@ -431,6 +431,42 @@ def _fallback_response() -> str:
             "You might want to try rephrasing, or check the related tool in Wayly.")
 
 
+def _aw2_system_prompt(context_data: Dict[str, Any]) -> str:
+    """Shared Ask Wayly (AW-2) system prompt. Used by the blocking composer and
+    the streaming endpoint so both speak identically."""
+    system_prompt = (
+        "You are Ask Wayly, an assistant embedded in the Wayly aged-care platform for Australian users. "
+        "You help users of the Support at Home (SAH) programme understand their situation. "
+        "Rules you must follow, no exceptions:\n"
+        "1. NEVER provide clinical or medical advice. Redirect to a doctor, pharmacist, or qualified health professional.\n"
+        "2. NEVER provide personalised financial advice. You may explain how SAH works, but redirect specific investment or tax-planning questions to a licensed financial adviser.\n"
+        "3. NEVER provide personalised legal advice. You may explain what the Aged Care Act 2024 generally says, but redirect specific legal questions to a solicitor.\n"
+        "4. NEVER recommend a specific provider. You may explain what Wayly's Provider Price Checker shows.\n"
+        "5. If the user asks about their own participant data (budget, care plan, statements, contributions, cases, goals) and you do NOT have that data in context, say clearly: \"I don't have that information here. Please check the relevant tool in Wayly.\"\n"
+        "6. Answer in Australian English, plain language, sentence case body text, warm and clear.\n"
+        "7. Do NOT invent facts. If you are not confident, say you don't know and suggest where the user can check.\n"
+        "8. Keep answers concise. 3-6 sentences unless the user asks for more detail.\n"
+        "9. Always write money as digit figures with a dollar sign and two decimals (for example $6,681.60) and percentages as a number with a percent sign (for example 10%). Never spell out money or percentages as words."
+    )
+    if context_data:
+        import json as _json
+        context_lines = []
+        for k, v in context_data.items():
+            try:
+                payload = _json.dumps(v, default=str)
+            except Exception:
+                payload = str(v)
+            if len(payload) > 1200:
+                payload = payload[:1200] + " …(truncated)"
+            context_lines.append(f"- {k}: {payload}")
+        system_prompt += (
+            "\n\nParticipant context sources you have consent to read (real data below). "
+            "Use these figures directly. If a value is None or missing, say so honestly.\n"
+            + "\n".join(context_lines)
+        )
+    return system_prompt
+
+
 async def _compose_response(message: str, context_data: Dict[str, Any], session_id: str = "aw2") -> Dict[str, Any]:
     """Deterministic v1 response composer. Hallucination-safe defaults per Section K."""
     guardrail = _scope_guardrail(message)
@@ -453,37 +489,7 @@ async def _compose_response(message: str, context_data: Dict[str, Any], session_
     if key:
         try:
             from emergentintegrations.llm.chat import LlmChat, UserMessage
-            system_prompt = (
-                "You are Ask Wayly, an assistant embedded in the Wayly aged-care platform for Australian users. "
-                "You help users of the Support at Home (SAH) programme understand their situation. "
-                "Rules you must follow, no exceptions:\n"
-                "1. NEVER provide clinical or medical advice. Redirect to a doctor, pharmacist, or qualified health professional.\n"
-                "2. NEVER provide personalised financial advice. You may explain how SAH works, but redirect specific investment or tax-planning questions to a licensed financial adviser.\n"
-                "3. NEVER provide personalised legal advice. You may explain what the Aged Care Act 2024 generally says, but redirect specific legal questions to a solicitor.\n"
-                "4. NEVER recommend a specific provider. You may explain what Wayly's Provider Price Checker shows.\n"
-                "5. If the user asks about their own participant data (budget, care plan, statements, contributions, cases, goals) and you do NOT have that data in context, say clearly: \"I don't have that information here. Please check the relevant tool in Wayly.\"\n"
-                "6. Answer in Australian English, plain language, sentence case body text, warm and clear.\n"
-                "7. Do NOT invent facts. If you are not confident, say you don't know and suggest where the user can check.\n"
-                "8. Keep answers concise. 3-6 sentences unless the user asks for more detail."
-            )
-            if context_data:
-                # Render actual data (not just consent flags) so the model can answer
-                # with real numbers instead of the v1 "consent but no data" fallback.
-                import json as _json
-                context_lines = []
-                for k, v in context_data.items():
-                    try:
-                        payload = _json.dumps(v, default=str)
-                    except Exception:
-                        payload = str(v)
-                    if len(payload) > 1200:
-                        payload = payload[:1200] + " …(truncated)"
-                    context_lines.append(f"- {k}: {payload}")
-                system_prompt += (
-                    "\n\nParticipant context sources you have consent to read (real data below). "
-                    "Use these figures directly. If a value is None or missing, say so honestly.\n"
-                    + "\n".join(context_lines)
-                )
+            system_prompt = _aw2_system_prompt(context_data)
             chat = LlmChat(api_key=key, session_id=session_id, system_message=system_prompt).with_model("anthropic", "claude-sonnet-4-6")
             resp = await chat.send_message(UserMessage(text=message))
             content = str(resp)
@@ -628,6 +634,78 @@ async def send_message(cid: str, body: SendMsgIn, request: Request):
         {"$push": {"messages": {"$each": [user_msg, asst_msg]}},
          "$set": {"last_activity_at": now}})
     return {"user_message": user_msg, "assistant_message": asst_msg}
+
+
+@aw2_router.post("/conversations/{cid}/messages/stream")
+async def send_message_stream(cid: str, body: SendMsgIn, request: Request):
+    """SSE variant of send_message so web Ask Wayly renders word-by-word.
+    Emits `data: {"delta": "..."}` frames then a final
+    `data: {"done": true, "assistant_message": {...}, "user_message": {...}}`."""
+    from fastapi.responses import StreamingResponse
+    import json as _json
+
+    await _assert_flag()
+    uid = await _user_id(request)
+    conv = await _db.aw_conversations.find_one({"id": cid, "user_id": uid})
+    if not conv:
+        raise HTTPException(status_code=404, detail="Not found")
+    ctx = await _get_or_create_context(uid)
+    now = _now()
+    context_data: Dict[str, Any] = await _gather_context_data(ctx, conv.get("participant_context_id"), uid)
+    session_id = conv.get("session_id", cid)
+    guardrail = _scope_guardrail(body.user_message)
+    cited = [{"source_type": k, "source_id": None, "citation_reference": f"internal:{k}"} for k in context_data.keys()]
+    flags = list(context_data.keys())
+
+    async def _gen():
+        full = ""
+        try:
+            if guardrail:
+                full = guardrail["response"]
+                cited_local, flags_local = [], []
+                yield f"data: {_json.dumps({'delta': full})}\n\n"
+            else:
+                cited_local, flags_local = cited, flags
+                key = os.environ.get("EMERGENT_LLM_KEY")
+                if not key:
+                    full = _fallback_response()
+                    yield f"data: {_json.dumps({'delta': full})}\n\n"
+                else:
+                    from emergentintegrations.llm.chat import LlmChat, UserMessage
+                    system_prompt = _aw2_system_prompt(context_data)
+                    chat = LlmChat(api_key=key, session_id=session_id, system_message=system_prompt).with_model("anthropic", "claude-sonnet-4-6")
+                    buf = []
+                    async for event in chat.stream_message(UserMessage(text=body.user_message)):
+                        name = type(event).__name__
+                        content = getattr(event, "content", None)
+                        if name == "TextDelta" and content:
+                            buf.append(content)
+                            yield f"data: {_json.dumps({'delta': content})}\n\n"
+                        elif name == "StreamDone":
+                            break
+                    full = "".join(buf)
+        except Exception as e:
+            logger.warning("aw2 stream failed: %s", e)
+            cited_local, flags_local = [], []
+            if not full:
+                full = _fallback_response()
+
+        user_msg = {"id": str(uuid.uuid4()), "role": "user", "content": body.user_message,
+                    "timestamp": _iso(now), "cited_sources": [], "context_flags_used": [],
+                    "structured_answer": None, "user_feedback": None}
+        asst_msg = {"id": str(uuid.uuid4()), "role": "assistant", "content": full,
+                    "timestamp": _iso(now), "cited_sources": cited_local, "context_flags_used": flags_local,
+                    "structured_answer": None, "user_feedback": None}
+        try:
+            await _db.aw_conversations.update_one(
+                {"id": cid},
+                {"$push": {"messages": {"$each": [user_msg, asst_msg]}}, "$set": {"last_activity_at": now}})
+        except Exception:
+            pass
+        yield f"data: {_json.dumps({'done': True, 'full': full, 'user_message': user_msg, 'assistant_message': asst_msg}, default=str)}\n\n"
+
+    return StreamingResponse(_gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
 
 
 @aw2_router.get("/conversations")

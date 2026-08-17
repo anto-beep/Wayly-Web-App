@@ -4,10 +4,66 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "@/lib/api";
+import { api, API } from "@/lib/api";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { ChevronLeft, Send, ShieldCheck, ThumbsUp, ThumbsDown, AlertCircle, Settings2 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
+
+/**
+ * Stream an Ask Wayly (AW-2) reply over SSE so it renders word-by-word.
+ * Falls back gracefully via onError. Resolves when the stream completes.
+ */
+async function streamAw2(cid, userMessage, { onDelta, onDone, onError }) {
+    const token = localStorage.getItem("kindred_token");
+    const pid = localStorage.getItem("wayly_active_participant_id");
+    let res;
+    try {
+        res = await fetch(`${API}/aw2/conversations/${cid}/messages/stream`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                ...(pid ? { "X-Participant-Id": pid } : {}),
+            },
+            body: JSON.stringify({ user_message: userMessage }),
+        });
+    } catch {
+        onError("Sorry, something went wrong. Please try again.");
+        return;
+    }
+    if (!res.ok || !res.body) {
+        onError("Sorry, something went wrong. Please try again.");
+        return;
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = "";
+    let finished = false;
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        pending += decoder.decode(value, { stream: true });
+        let idx;
+        while ((idx = pending.indexOf("\n\n")) !== -1) {
+            const frame = pending.slice(0, idx);
+            pending = pending.slice(idx + 2);
+            const line = frame.split("\n").find((l) => l.startsWith("data:"));
+            if (!line) continue;
+            try {
+                const evt = JSON.parse(line.slice(5).trim());
+                if (evt.done) {
+                    finished = true;
+                    onDone(evt.full || "", evt.assistant_message);
+                } else if (typeof evt.delta === "string") {
+                    onDelta(evt.delta);
+                }
+            } catch {
+                /* ignore partial frame */
+            }
+        }
+    }
+    if (!finished) onError("The reply ended unexpectedly. Please try again.");
+}
 
 const DATA_SOURCES = [
     { key: "participant_profile", label: "Participant Profile" },
@@ -189,14 +245,22 @@ export default function AskWaylyV2() {
 
     const sendMore = async () => {
         if (!input.trim() || !conv) return;
+        const q = input;
         setBusy(true);
+        setInput("");
+        const userMsg = { id: `u-${Date.now()}`, role: "user", content: q, cited_sources: [], context_flags_used: [] };
+        const asstId = `a-${Date.now()}`;
+        setConv(c => ({ ...c, messages: [...c.messages, userMsg, { id: asstId, role: "assistant", content: "", cited_sources: [], context_flags_used: [] }] }));
+        const updateAsst = (fn) => setConv(c => ({ ...c, messages: c.messages.map(m => m.id === asstId ? fn(m) : m) }));
         try {
-            const { data } = await api.post(`/aw2/conversations/${conv.id}/messages`, {
-                user_message: input,
+            await streamAw2(conv.id, q, {
+                onDelta: (t) => updateAsst(m => ({ ...m, content: (m.content || "") + t })),
+                onDone: (full, asstMsg) => updateAsst(m => (asstMsg ? asstMsg : { ...m, content: full || m.content })),
+                onError: (msg) => updateAsst(m => ({ ...m, content: m.content || msg })),
             });
-            setConv(c => ({ ...c, messages: [...c.messages, data.user_message, data.assistant_message] }));
-            setInput("");
-        } finally { setBusy(false); }
+        } finally {
+            setBusy(false);
+        }
     };
 
     const handleSend = () => (conv ? sendMore() : start());

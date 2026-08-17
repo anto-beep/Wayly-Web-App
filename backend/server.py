@@ -98,6 +98,16 @@ load_dotenv(ROOT_DIR / ".env")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("kindred")
 
+# Install the global LLM timeout guard as early as possible so every LlmChat
+# call (Ask Wayly, decoder, tools, insights, reports) is protected from an
+# indefinitely-hung upstream provider call. See lib/llm_guard.py.
+try:
+    from lib import llm_guard as _llm_guard
+    _llm_guard.install()
+except Exception as _guard_install_err:  # pragma: no cover - defensive
+    logger.warning("llm guard install failed: %s", _guard_install_err)
+
+
 mongo_url = os.environ["MONGO_URL"]
 # Section 6, explicit connection pool sizing.
 # Defaults are 100 max / 0 min; for our load (multi-pod, mostly read) a
@@ -2350,8 +2360,11 @@ def _humanize_assistant_reply(text: str) -> str:
     t = _re.sub(r"(?<!\*)\*(?!\s)([^*\n]+?)\*(?!\*)", r"\1", t)
     # Heading markers
     t = _re.sub(r"^\s{0,3}#{1,6}\s+", "", t, flags=_re.M)
-    # Em/en/hyphen-bar variants → comma+space, but as a sentence break if line-leading
-    t = _re.sub(r"\s*[,―]\s*", ", ", t)
+    # Horizontal-bar / stray separator variants → comma+space. NOTE: a literal
+    # comma is deliberately excluded here so numeric thousands separators like
+    # "$6,681.60" are left untouched (a comma-in-class rule was inserting a
+    # space after every thousands comma, e.g. "$6, 681.60").
+    t = _re.sub(r"\s*[―]\s*", ", ", t)
     # Two or more dashes used as a separator
     t = _re.sub(r"\s*-{2,}\s*", ", ", t)
     # Collapse paragraph breaks
@@ -2392,6 +2405,24 @@ async def chat(payload: ChatRequest, request: Request, user_id: str = Depends(ge
     except Exception as _guard_err:
         logger.warning("route-out guard failed; proceeding to LLM: %s", _guard_err)
 
+    h, p, pid_part, session_id, context = await _prepare_chat_context(user_id, request, payload)
+    reply_text = await chat_with_kindred(payload.message, session_id, context)
+    reply_text = _humanize_assistant_reply(reply_text)
+
+    # persist
+    user_turn = ChatTurn(household_id=h["id"], role="user", content=payload.message)
+    asst_turn = ChatTurn(household_id=h["id"], role="assistant", content=reply_text)
+    await db.chat_turns.insert_many([
+        {**user_turn.model_dump(), "participant_id": pid_part if p else None},
+        {**asst_turn.model_dump(), "participant_id": pid_part if p else None},
+    ])
+    return {"reply": reply_text, "session_id": session_id}
+
+
+async def _prepare_chat_context(user_id: str, request: Request, payload: "ChatRequest"):
+    """Build the Ask Wayly grounding context (household, active participant,
+    statement summary, budget burn, persona) and the scoped session id. Shared
+    by the blocking /chat and the streaming /chat/stream endpoints."""
     h = await _require_household(user_id)
     user = await _get_user(user_id)
     # Honour the active participant, classification + provider follow them
@@ -2403,10 +2434,7 @@ async def chat(payload: ChatRequest, request: Request, user_id: str = Depends(ge
 
     base_q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
 
-    # STMT-UI-1 v2 · statement-scoped Ask Wayly. When the client sends a
-    # statement_id (from the Statement detail page's Ask Wayly card), we
-    # ground the AI on THAT specific statement instead of the household's
-    # latest. Any id that isn't in the caller's household is silently ignored.
+    # STMT-UI-1 v2 · statement-scoped Ask Wayly.
     focused_stmt = None
     if getattr(payload, "statement_id", None):
         try:
@@ -2418,8 +2446,6 @@ async def chat(payload: ChatRequest, request: Request, user_id: str = Depends(ge
             focused_stmt = None
 
     if focused_stmt:
-        # Compact per-statement grounding: summary + top few anomalies + line-item
-        # roll-up. Keep this well under 2 KB to stay inside the model context.
         lines = focused_stmt.get("line_items") or []
         anomalies = focused_stmt.get("anomalies") or []
         streams_agg: Dict[str, float] = {}
@@ -2441,7 +2467,6 @@ async def chat(payload: ChatRequest, request: Request, user_id: str = Depends(ge
             f"Stream totals: {stream_str}\n"
             f"Flags: {flag_str}"
         )
-        # Reuse the household-latest fallback path for the aggregate context.
         docs = [focused_stmt]
     else:
         latest = await db.statements.find(base_q, STATEMENT_LIGHT_PROJECTION) \
@@ -2470,29 +2495,87 @@ async def chat(payload: ChatRequest, request: Request, user_id: str = Depends(ge
         "statement_summary": latest_summary or "No statements uploaded yet.",
     }
     pid_part = (p or {}).get("id") or "default"
-    # STMT-UI-1 v2 · scope the session id to the focused statement so a
-    # multi-turn conversation on Statement A never bleeds into Statement B.
     stmt_part = f"-stmt-{focused_stmt['id']}" if focused_stmt else ""
     session_id = payload.session_id or f"chat-{h['id']}-{pid_part}{stmt_part}"
-    # PERSONA-1 §Ask Wayly, inject the caller's persona so the assistant
-    # answers in the right voice (first-person for participant, third-person
-    # for caregiver with the correct pronouns + care recipient name).
     try:
         from lib.persona import load_persona_context
         context["persona_context"] = await load_persona_context(db, user_id)
     except Exception:
         context["persona_context"] = None
-    reply_text = await chat_with_kindred(payload.message, session_id, context)
-    reply_text = _humanize_assistant_reply(reply_text)
+    return h, p, pid_part, session_id, context
 
-    # persist
-    user_turn = ChatTurn(household_id=h["id"], role="user", content=payload.message)
-    asst_turn = ChatTurn(household_id=h["id"], role="assistant", content=reply_text)
-    await db.chat_turns.insert_many([
-        {**user_turn.model_dump(), "participant_id": pid_part if p else None},
-        {**asst_turn.model_dump(), "participant_id": pid_part if p else None},
-    ])
-    return {"reply": reply_text, "session_id": session_id}
+
+@api.post("/chat/stream")
+async def chat_stream(payload: ChatRequest, request: Request, user_id: str = Depends(get_current_user_id)):
+    """Server-Sent Events variant of /chat. Streams the reply token-by-token so
+    Ask Wayly renders word-by-word. Event stream:
+      data: {"delta": "..."}            (many)
+      data: {"done": true, "full": "<clean reply>", "session_id": "..."}
+    On a route-out/guarded topic, emits the canonical reply as a single done
+    event (no LLM streaming)."""
+    from fastapi.responses import StreamingResponse
+    from agents import stream_chat_with_kindred
+
+    # Route-out guard BEFORE the LLM (same as /chat).
+    guarded_reply = None
+    guarded_extra = {}
+    try:
+        from scenario_engine.boundaries import classify_boundary_for_query, route_out_response
+        boundary, contacts, topic = classify_boundary_for_query(payload.message or "")
+        if boundary in ("ROUTE_OUT", "ESCALATE"):
+            guarded_reply = route_out_response(payload.message or "", contacts, boundary, topic)
+            guarded_extra = {"advice_boundary": boundary, "topic": topic, "contacts": contacts, "guarded": True}
+    except Exception as _guard_err:
+        logger.warning("route-out guard failed (stream); proceeding to LLM: %s", _guard_err)
+
+    if guarded_reply is not None:
+        try:
+            await db.chat_history.insert_one({
+                "id": str(uuid.uuid4()), "user_id": user_id, "role": "user",
+                "content": payload.message, "created_at": datetime.now(timezone.utc).isoformat()})
+            await db.chat_history.insert_one({
+                "id": str(uuid.uuid4()), "user_id": user_id, "role": "assistant",
+                "content": guarded_reply, "advice_boundary": guarded_extra.get("advice_boundary"),
+                "topic": guarded_extra.get("topic"), "created_at": datetime.now(timezone.utc).isoformat()})
+        except Exception:
+            pass
+
+        async def _guarded_gen():
+            payload_done = {"done": True, "full": guarded_reply, **guarded_extra}
+            yield f"data: {json.dumps(payload_done, default=str)}\n\n"
+        return StreamingResponse(_guarded_gen(), media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+
+    h, p, pid_part, session_id, context = await _prepare_chat_context(user_id, request, payload)
+
+    async def _gen():
+        full_clean = ""
+        try:
+            async for chunk in stream_chat_with_kindred(payload.message, session_id, context):
+                if isinstance(chunk, dict) and chunk.get("done"):
+                    full_clean = _humanize_assistant_reply(chunk.get("full") or "")
+                    yield f"data: {json.dumps({'done': True, 'full': full_clean, 'session_id': session_id}, default=str)}\n\n"
+                elif isinstance(chunk, str) and chunk:
+                    yield f"data: {json.dumps({'delta': chunk}, default=str)}\n\n"
+        except Exception as e:
+            logger.warning("chat_stream generator error: %s", e)
+            yield f"data: {json.dumps({'done': True, 'full': full_clean or 'Sorry, something went wrong. Please try again.', 'session_id': session_id})}\n\n"
+            return
+        # persist both turns once streaming completes
+        try:
+            user_turn = ChatTurn(household_id=h["id"], role="user", content=payload.message)
+            asst_turn = ChatTurn(household_id=h["id"], role="assistant", content=full_clean)
+            await db.chat_turns.insert_many([
+                {**user_turn.model_dump(), "participant_id": pid_part if p else None},
+                {**asst_turn.model_dump(), "participant_id": pid_part if p else None},
+            ])
+        except Exception:
+            pass
+
+    return StreamingResponse(_gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+
+
 
 
 @api.get("/chat/history")

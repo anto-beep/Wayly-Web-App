@@ -71,6 +71,87 @@ type ReqOptions = {
   _retried?: boolean;
 };
 
+type StreamHandlers = {
+  onDelta: (text: string) => void;
+  onDone: (full: string, sessionId?: string, extra?: any) => void;
+  onError: (message: string) => void;
+};
+
+/**
+ * Stream Ask Wayly replies token-by-token over Server-Sent Events.
+ *
+ * React Native's fetch cannot read a streaming response body, so we use
+ * XMLHttpRequest and parse incremental `responseText` in onprogress. Returns
+ * an abort() function. The backend emits `data: {"delta":"..."}` frames and a
+ * final `data: {"done":true,"full":"<clean reply>","session_id":"..."}`.
+ */
+export async function streamChat(body: Record<string, any>, h: StreamHandlers): Promise<() => void> {
+  const token = await getToken();
+  const pid = await getActiveParticipantId();
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", `${API}/chat/stream`);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+  if (pid) xhr.setRequestHeader("X-Participant-Id", pid);
+
+  let processed = 0; // index into responseText already consumed
+  let pending = "";
+  let finished = false;
+
+  const handleFrame = (frame: string) => {
+    const line = frame.split("\n").find((l) => l.startsWith("data:"));
+    if (!line) return;
+    const jsonStr = line.slice(5).trim();
+    if (!jsonStr) return;
+    try {
+      const evt = JSON.parse(jsonStr);
+      if (evt.done) {
+        finished = true;
+        h.onDone(evt.full || "", evt.session_id, evt);
+      } else if (typeof evt.delta === "string") {
+        h.onDelta(evt.delta);
+      }
+    } catch {
+      /* ignore partial/non-JSON */
+    }
+  };
+
+  const consume = () => {
+    const text = xhr.responseText || "";
+    if (text.length <= processed) return;
+    pending += text.slice(processed);
+    processed = text.length;
+    let idx: number;
+    while ((idx = pending.indexOf("\n\n")) !== -1) {
+      const frame = pending.slice(0, idx);
+      pending = pending.slice(idx + 2);
+      if (frame.trim()) handleFrame(frame);
+    }
+  };
+
+  xhr.onprogress = consume;
+  xhr.onload = () => {
+    consume();
+    if (!finished) h.onError("The reply ended unexpectedly. Please try again.");
+  };
+  xhr.onerror = () => {
+    if (!finished) h.onError("Sorry, something went wrong. Please try again.");
+  };
+  xhr.ontimeout = () => {
+    if (!finished) h.onError("That took too long. Please try a shorter question.");
+  };
+  xhr.timeout = 90000;
+  xhr.send(JSON.stringify(body));
+
+  return () => {
+    try {
+      xhr.abort();
+    } catch {
+      /* noop */
+    }
+  };
+}
+
 export async function apiFetch<T = any>(path: string, opts: ReqOptions = {}): Promise<T> {
   const { method = "GET", body, headers = {}, auth = true, isForm = false } = opts;
   const h: Record<string, string> = { ...headers };

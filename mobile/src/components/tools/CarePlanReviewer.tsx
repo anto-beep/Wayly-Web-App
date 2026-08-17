@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import { Sparkles, AlertOctagon, ShieldAlert, Shield, ShieldCheck } from "lucide-react-native";
 
@@ -80,6 +80,18 @@ export default function CarePlanReviewer() {
 
           {error ? <View style={[styles.err, { backgroundColor: colors.errorSoft }]}><AlertOctagon size={18} color={colors.terracotta} /><T variant="small" style={{ color: colors.terracotta, flex: 1 }}>{error}</T></View> : null}
           <Button label="Review my care plan" testID="cp-submit" icon={Sparkles} onPress={submit} loading={busy} disabled={text.trim().length < 50} />
+
+          {busy ? (
+            <Card testID="cp-progress" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
+              <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "center" }}>
+                <ActivityIndicator color={colors.primary} />
+                <View style={{ flex: 1 }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>Reviewing the care plan…</T>
+                  <T variant="small" style={{ color: colors.text, marginTop: 2, lineHeight: 19 }}>This usually takes about a minute. We're checking it against the Statement of Rights and the National Quality Standards, hang tight.</T>
+                </View>
+              </View>
+            </Card>
+          ) : null}
 
           {result ? (
             <View testID="cp-result" style={{ gap: spacing.md }}>

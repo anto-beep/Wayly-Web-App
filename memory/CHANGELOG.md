@@ -1,3 +1,18 @@
+## Iteration 187 (Jun 2026) — Ask Wayly streaming + formatting, Reviewer progress, LLM resilience
+
+Verified green on web + mobile (iteration_187.json; backend pytest 8/8, test_iter187_streaming.py).
+
+- **Ask Wayly number formatting ($ and %)** — chat system prompt was instructing the model to "spell out money figures". Flipped it to mandate digit money (`$6,681.60`) and `%` percentages, never spelled-out words (`backend/agents.py`). Same rule added to the web AW-2 prompt (`routes/aw2.py`). Also fixed `_humanize_assistant_reply` which was inserting a space after every comma (`$6, 681.60`) — the dash-normaliser regex no longer matches literal commas (`server.py`).
+- **Streaming (word-by-word) on both platforms** —
+  - Backend: new SSE `POST /api/chat/stream` (mobile) + `POST /api/aw2/conversations/{id}/messages/stream` (web AW-2). Added `agents.stream_chat_with_kindred` (yields TextDelta then a clean humanised `full`), extracted shared `_build_chat_system_message` and `_prepare_chat_context`; extracted `_aw2_system_prompt`. Streams raw deltas live, replaces with the humanised final on done.
+  - Mobile: `streamChat` XHR-based SSE consumer in `src/lib/api.ts`; `app/(tabs)/ask.tsx` fills the assistant bubble live (thinking indicator hides on first token). Closes the iter186 "no answer bubble" bug.
+  - Web: `streamAw2` fetch/ReadableStream consumer in `AskWaylyV2.jsx`; follow-up messages stream (first message still via create), citations + feedback preserved. Streaming also sidesteps the 60s ingress idle-timeout.
+- **Care Plan Reviewer progress** — friendly "Reviewing the care plan… this takes about a minute" panel (testID `cp-progress`) during the ~46-51s review on mobile (`CarePlanReviewer.tsx`) and web (`pages/tools/CarePlanReviewer.jsx`).
+- **Concurrency / resilience** — empirically the event loop is NOT blocked by LLM calls (12 concurrent 46s calls → `/auth/me` ~0.15s, login ~0.9s), so no thread-offload needed. The only real freeze cause was an untimed hung upstream call (an 18-min zombie). Added `lib/llm_guard.py` — installs a global `LlmChat.send_message` timeout (`KINDRED_LLM_TIMEOUT_SECONDS=90`) so any stalled call self-releases. Ask Wayly `/chat` also switched to Haiku (`KINDRED_CHAT_MODEL`) with a 50s ceiling.
+- **Add-participant branches verified** — FREE→upgrade_required, SOLO→solo_to_family, FAMILY→family_addons, ADVISER→adviser_included (tests/verify_add_branches.py, all PASS).
+- **Intro cards** — confirmed KEPT expanded on mobile to match web (user chose full parity).
+
+
 ## Iteration 182-186 (Jun 2026) — Mobile ↔ Web parity sweep (Smart Summaries, intros, Stripe, persona) + Ask Wayly 502 fix
 
 ### Shipped (batch-tested — iterations 182/183/184/186)

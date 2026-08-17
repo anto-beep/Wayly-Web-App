@@ -286,6 +286,16 @@ export default function CarePlanReviewer() {
                     </button>
                 </div>
 
+                {loading && (
+                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary-k/20 bg-cream/60 p-4 animate-fade-up" data-testid="cp-progress">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary-k shrink-0 mt-0.5" />
+                        <div>
+                            <div className="font-semibold text-primary-k">Reviewing the care plan…</div>
+                            <div className="text-sm text-primary-k/70 mt-0.5">This usually takes about a minute. We're checking it against the Statement of Rights and the National Quality Standards, hang tight.</div>
+                        </div>
+                    </div>
+                )}
+
                 {/* File-upload result: Section B.3 Preview + Section E findings */}
                 {fileResult && (
                     <div className="mt-6 space-y-5 animate-fade-up" data-testid="cp-file-result">

@@ -139,7 +139,8 @@ Recent statement notes:
 How to sound:
 - Write the way you would speak to a sibling who is also helping out: warm, direct, real Australian English, no hedging, no fluff.
 - Do not use em-dashes, en-dashes, double asterisks, headings, bullet markers, or any markdown styling. Plain sentences only, with the occasional short line for a list when truly needed.
-- Stay short. Two or three sentences is usually enough. Spell out money figures, never invent them.
+- Stay short. Two or three sentences is usually enough. Never invent numbers.
+- Always write money as digit figures with a dollar sign and two decimals, for example $6,681.60 or $137,917.01. Always write percentages as a number followed by the percent sign, for example 10% or 11.5%. Never spell out money or percentages as words (never write "six thousand dollars", "ten percent", "dollars", or "percent"). Use commas as thousands separators.
 - If you genuinely do not know, say so. Clinical questions belong with their care team, not with you.
 - Streams (Clinical, Independence, Everyday Living) cannot cross-subsidise. Be clear about that whenever it matters.
 - If the topic is provider pricing or fees, explain that the government has deferred the planned national price caps indefinitely (announced May 2026), so providers set their own prices. Encourage the caregiver to compare quotes and, if they suspect overcharging, contact the Aged Care Quality and Safety Commission (ACQSC).
@@ -243,22 +244,9 @@ async def chat_with_kindred(
     key = _key()
     if not key:
         return "Chat is not configured. Please add an LLM key."
-    system = _render_chat_system(context)
-    # PERSONA-1 §Ask Wayly, append a persona block so the assistant speaks
-    # in the correct voice for the caller.
-    persona_ctx = context.get("persona_context") if isinstance(context, dict) else None
-    if persona_ctx:
-        try:
-            from lib.persona import render_persona_prompt_block
-            block = render_persona_prompt_block(persona_ctx)
-            if block:
-                system = f"{system}\n\n{block}"
-        except Exception:
-            pass
-    # Wayly voice rules apply to every conversational reply.
+    system = _build_chat_system_message(context)
     try:
-        from lib.text_sanitiser import append_tone_rules, strip_wayly_dashes
-        system = append_tone_rules(system)
+        from lib.text_sanitiser import strip_wayly_dashes
     except Exception:
         strip_wayly_dashes = None  # type: ignore
     chat = LlmChat(
@@ -280,6 +268,82 @@ async def chat_with_kindred(
     if strip_wayly_dashes and isinstance(reply, str):
         reply = strip_wayly_dashes(reply)
     return reply
+
+
+def _build_chat_system_message(context: Dict[str, Any]) -> str:
+    """Render the Ask Wayly system prompt: registry values + runtime context,
+    plus the persona voice block and the shared Wayly tone rules. Shared by the
+    blocking (chat_with_kindred) and streaming (stream_chat_with_kindred) paths
+    so both speak in exactly the same voice."""
+    system = _render_chat_system(context)
+    # PERSONA-1 §Ask Wayly, append a persona block so the assistant speaks
+    # in the correct voice for the caller.
+    persona_ctx = context.get("persona_context") if isinstance(context, dict) else None
+    if persona_ctx:
+        try:
+            from lib.persona import render_persona_prompt_block
+            block = render_persona_prompt_block(persona_ctx)
+            if block:
+                system = f"{system}\n\n{block}"
+        except Exception:
+            pass
+    # Wayly voice rules apply to every conversational reply.
+    try:
+        from lib.text_sanitiser import append_tone_rules
+        system = append_tone_rules(system)
+    except Exception:
+        pass
+    return system
+
+
+async def stream_chat_with_kindred(
+    user_text: str,
+    session_id: str,
+    context: Dict[str, Any],
+):
+    """Streaming variant of chat_with_kindred. Yields incremental text deltas
+    (str) as tokens arrive, then finally yields a dict
+    ``{"done": True, "full": <clean full reply>}`` where the full reply has the
+    Wayly dash/number formatting applied. Callers stream the deltas live and
+    replace the bubble with ``full`` on done."""
+    key = _key()
+    if not key:
+        yield {"done": True, "full": "Chat is not configured. Please add an LLM key."}
+        return
+    system = _build_chat_system_message(context)
+    try:
+        from lib.text_sanitiser import strip_wayly_dashes
+    except Exception:
+        strip_wayly_dashes = None  # type: ignore
+    chat = LlmChat(
+        api_key=key,
+        session_id=session_id,
+        system_message=system,
+    ).with_model(MODEL_PROVIDER, CHAT_MODEL)
+
+    buf: List[str] = []
+    try:
+        async for event in chat.stream_message(UserMessage(text=user_text)):
+            content = getattr(event, "content", None)
+            ev_name = type(event).__name__
+            if ev_name == "TextDelta" and content:
+                buf.append(content)
+                yield content
+            elif ev_name == "StreamDone":
+                break
+    except Exception as e:
+        logger.warning("stream_chat_with_kindred failed: %s", e)
+        if not buf:
+            yield {"done": True, "full": (
+                "Sorry, that took longer than expected to look into. Please try asking "
+                "again, and if it keeps happening, try a shorter or more specific question."
+            )}
+            return
+    full = "".join(buf)
+    if strip_wayly_dashes and isinstance(full, str):
+        full = strip_wayly_dashes(full)
+    yield {"done": True, "full": full}
+
 
 
 def _render_chat_system(context: dict) -> str:

@@ -16,7 +16,7 @@ import { useLocalSearchParams } from "expo-router";
 import { AppHeader, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { streamChat } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
 
@@ -43,30 +43,44 @@ export default function AskWayly() {
     const q = text.trim();
     if (!q || sending) return;
     const userMsg: Msg = { id: `u-${Date.now()}`, role: "user", content: q };
-    setMessages((m) => [...m, userMsg]);
+    const asstId = `a-${Date.now()}`;
+    setMessages((m) => [...m, userMsg, { id: asstId, role: "assistant", content: "" }]);
     setInput("");
     setSending(true);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+
+    const updateAsst = (content: string) =>
+      setMessages((m) => m.map((msg) => (msg.id === asstId ? { ...msg, content } : msg)));
+
+    let streamed = "";
     try {
-      const res = await apiFetch<{ reply: string; session_id?: string }>("/chat", {
-        method: "POST",
-        body: {
+      await streamChat(
+        {
           message: q,
           ...(sessionId ? { session_id: sessionId } : {}),
           ...(statement_id ? { statement_id } : {}),
         },
-      });
-      if (res.session_id) setSessionId(res.session_id);
-      setMessages((m) => [
-        ...m,
-        { id: `a-${Date.now()}`, role: "assistant", content: res.reply || "…" },
-      ]);
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.message : "Sorry, something went wrong. Please try again.";
-      setMessages((m) => [...m, { id: `e-${Date.now()}`, role: "assistant", content: msg }]);
-    } finally {
+        {
+          onDelta: (t) => {
+            streamed += t;
+            updateAsst(streamed);
+            listRef.current?.scrollToEnd({ animated: true });
+          },
+          onDone: (full, sid) => {
+            if (sid) setSessionId(sid);
+            updateAsst(full || streamed || "…");
+            setSending(false);
+            setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+          },
+          onError: (msg) => {
+            updateAsst(streamed || msg);
+            setSending(false);
+          },
+        }
+      );
+    } catch {
+      updateAsst("Sorry, something went wrong. Please try again.");
       setSending(false);
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
     }
   };
 
@@ -125,7 +139,7 @@ export default function AskWayly() {
         ) : (
           <FlatList
             ref={listRef}
-            data={messages}
+            data={messages.filter((m) => m.role === "user" || m.content.length > 0)}
             keyExtractor={(m) => m.id}
             contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
             renderItem={({ item }) => <Bubble msg={item} />}
@@ -133,7 +147,7 @@ export default function AskWayly() {
           />
         )}
 
-        {sending ? (
+        {sending && !(messages.length > 0 && messages[messages.length - 1].role === "assistant" && messages[messages.length - 1].content.length > 0) ? (
           <View style={styles.typing}>
             <ActivityIndicator size="small" color={colors.primary} />
             <T variant="small">Wayly is thinking…</T>
