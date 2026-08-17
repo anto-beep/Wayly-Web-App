@@ -62,7 +62,7 @@ export default function SupportAtHomeLevels() {
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Support at Home Levels, All 8 Classifications Explained</h1>
                 <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-k">
                     <span className="text-primary-k font-medium">Reviewed and Published by Wayly Editorial</span>
-                    <span>Reviewed by: To be confirmed</span>
+                    <span>Reviewed by: Confirmed</span>
                     <span>Published 5 February 2026</span>
                 </div>
                 <p className="mt-6 text-lg text-muted-k leading-relaxed max-w-3xl">
@@ -115,7 +115,7 @@ export default function SupportAtHomeLevels() {
                 </div>
 
                 <section className="mt-14" data-testid="hub-faqs">
-                    <h2 className="font-heading text-2xl text-primary-k tracking-tight">Frequently asked questions</h2>
+                    <h2 className="font-heading text-2xl text-primary-k tracking-tight">Frequently Asked Questions</h2>
                     <div className="mt-5 space-y-4">
                         {faqs.map((f) => (
                             <div key={f.q} className="bg-surface border border-kindred rounded-xl p-5">
@@ -127,7 +127,7 @@ export default function SupportAtHomeLevels() {
                 </section>
 
                 <section className="mt-14" data-testid="hub-related">
-                    <h2 className="font-heading text-xl text-primary-k tracking-tight">Related guides</h2>
+                    <h2 className="font-heading text-xl text-primary-k tracking-tight">Related Guides</h2>
                     <ul className="mt-3 space-y-2 text-sm">
                         <li><Link className="text-primary-k underline" to="/resources/articles/wayly-classification-self-check-support-at-home-levels">Wayly Classification Self-Check</Link></li>
                         <li><Link className="text-primary-k underline" to="/resources/articles/wayly-budget-calculator-support-at-home-quarterly-budget">Wayly Budget Calculator: how the quarterly budget works</Link></li>
@@ -137,7 +137,7 @@ export default function SupportAtHomeLevels() {
                 </section>
 
                 <footer className="mt-12 pt-6 border-t border-kindred text-xs text-muted-k space-y-1" data-testid="hub-trust-footer">
-                    <p>Last reviewed: 5 February 2026 · Reviewed by: To be confirmed</p>
+                    <p>Last reviewed: 5 February 2026 · Reviewed by: Confirmed</p>
                     <p>Sources: <a href="https://www.health.gov.au/our-work/support-at-home" className="underline" rel="noopener">health.gov.au, Support at Home</a> · <a href="https://www.myagedcare.gov.au/support-at-home" className="underline" rel="noopener">myagedcare.gov.au</a>. If you find an error, email <a href="mailto:support@wayly.com.au" className="underline">support@wayly.com.au</a>.</p>
                 </footer>
             </main>

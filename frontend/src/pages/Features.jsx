@@ -6,11 +6,12 @@ import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 import {
     ArrowRight, FileSearch, Wallet, BarChart3, ListChecks, FileEdit, Receipt, ClipboardCheck,
-    MessageCircle, Users2, AlertTriangle, Calendar, Mic, ShieldCheck, Check, X, FileText, Lock,
-    Wrench, HeartPulse, Repeat,
+    MessageCircle, Users2, AlertTriangle, Calendar, Mic, ShieldCheck, Check, FileText, Lock,
+    Wrench, HeartPulse, Repeat, Sparkles,
 } from "lucide-react";
 import { BrowserFrame, ScreenshotMultiParticipant } from "@/components/Screenshots";
 import { TOOL_COUNT, toolCountWord } from "@/config/toolRegistry";
+import Reveal from "@/components/Reveal";
 
 const TABS = [
     { id: "tools", label: "AI Tools" },
@@ -65,17 +66,6 @@ const TRUST = [
     { icon: AlertTriangle, title: "Independent Oversight", body: "We list the ACQSC complaints pathway prominently, always. We don't gatekeep your right to escalate." },
 ];
 
-const PLAN_MATRIX = [
-    { feature: "Public AI tools", values: [`1 of ${TOOL_COUNT}`, `All ${TOOL_COUNT}`, `All ${TOOL_COUNT}`] },
-    { feature: "Saved tool history", values: [false, true, true] },
-    { feature: "Statement Auto-Decode (forward email)", values: [false, true, true] },
-    { feature: "Anomaly Watch", values: [false, true, true] },
-    { feature: "Family seats", values: [false, "1", "5"] },
-    { feature: "Audit Log + advisor finance-only view", values: [false, true, true] },
-    { feature: "Care Plan Store", values: [false, true, true] },
-];
-const PLAN_HEADERS = ["Free", "Solo $24.50/fortnight", "Family $49.50/fortnight"];
-
 const Section = ({ id, eyebrow, title, sub, children }) => (
     <section id={id} className="mx-auto max-w-7xl px-6 py-16" data-testid={`features-section-${id}`}>
         <span className="overline">{eyebrow}</span>
@@ -86,7 +76,8 @@ const Section = ({ id, eyebrow, title, sub, children }) => (
 );
 
 const Card = ({ icon: Icon, title, body, plan }) => (
-    <div className="rounded-xl border border-kindred bg-surface p-6 transition-all hover:-translate-y-1 hover:shadow-md" data-testid={`feat-card-${title.replace(/\W+/g, "-").toLowerCase()}`}>
+    <Reveal className="h-full">
+    <div className="h-full rounded-xl border border-kindred bg-surface p-6 transition-all hover:-translate-y-1 hover:shadow-md" data-testid={`feat-card-${title.replace(/\W+/g, "-").toLowerCase()}`}>
         <div className="flex items-start justify-between gap-3">
             <div className="h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center">
                 <Icon className="h-5 w-5 text-primary-k" />
@@ -100,6 +91,7 @@ const Card = ({ icon: Icon, title, body, plan }) => (
         <h3 className="font-heading text-xl text-primary-k mt-4">{title}</h3>
         <p className="mt-2 text-sm text-muted-k leading-relaxed">{body}</p>
     </div>
+    </Reveal>
 );
 
 function ToolGroup({ title, description, testId, items }) {
@@ -168,75 +160,66 @@ export default function Features() {
                 </div>
             </div>
 
-            <Section id="tools" eyebrow="Wayly Toolkit" title="The Full Wayly Toolkit, Grouped By Job To Be Done." sub="Every module you unlock on a paid plan, organised by the outcome it drives. Start free with the Statement Decoder, then upgrade to Solo or Family for the full library.">
-                {/* Featured tool: Invoice Checker */}
+            <Section id="tools" eyebrow="Wayly Toolkit" title="Every Tool, Grouped by the Moment You Need It." sub="Start free with the Statement Decoder and its Smart Summaries. Upgrade to Solo or Family and the rest of the toolkit unlocks, grouped by the problem you are trying to solve.">
+                {/* Featured: Statement Decoder + Smart Summaries */}
                 <div className="mb-8" data-testid="features-featured">
                     <div className="relative rounded-3xl border border-primary-k/15 bg-white p-6 sm:p-8 shadow-md">
-                        <span className="absolute -top-3 left-6 inline-flex items-center gap-1 text-[10px] uppercase tracking-widest bg-clay text-white px-3 py-1 rounded-full" data-testid="features-featured-badge">Featured</span>
+                        <span className="absolute -top-3 left-6 inline-flex items-center gap-1 text-[10px] uppercase tracking-widest bg-clay text-white px-3 py-1 rounded-full" data-testid="features-featured-badge">Start Here</span>
                         <div className="grid sm:grid-cols-2 gap-6 items-start">
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-full bg-primary-k/5"><Receipt className="w-6 h-6 text-primary-k"/></div>
-                                    <h3 className="text-2xl font-heading text-primary-k">Invoice Checker</h3>
+                                    <div className="p-2 rounded-full bg-primary-k/5"><FileSearch className="w-6 h-6 text-primary-k"/></div>
+                                    <h3 className="text-2xl font-heading text-primary-k">Statement Decoder + Smart Summaries</h3>
                                 </div>
-                                <p className="text-sm text-muted-k mt-3 leading-relaxed">Two ways in: drop a PDF or photo of any provider invoice, or key line items in by hand. Wayly cross-checks every charge against the price checker medians and your budget, then flags anything worth disputing.</p>
+                                <p className="text-sm text-muted-k mt-3 leading-relaxed">The 12-page statement lands every month and nobody explains it. Paste it or upload the PDF and Wayly returns a plain-English breakdown in about 60 seconds, then writes a Smart Summary, your one clear note on what changed, what to watch, and what to do next.</p>
                                 <ul className="text-sm text-primary-k mt-4 space-y-1.5">
-                                    <li className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-600 mt-0.5"/> AI parsing of PDF and image invoices</li>
-                                    <li className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-600 mt-0.5"/> Manual line-item entry when a scan is not available</li>
-                                    <li className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-600 mt-0.5"/> Auto-generated dispute letter draft for anything above tolerance</li>
+                                    <li className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-600 mt-0.5"/> Plain-English decode of every line: PDF, photo, DOCX or text</li>
+                                    <li className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-600 mt-0.5"/> 15 anomaly rules catch rate spikes, duplicates and missing entitlements</li>
+                                    <li className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-600 mt-0.5"/> Smart Summaries turn the numbers into one calm &quot;here is what matters&quot; note</li>
                                 </ul>
-                                <Link to="/ai-tools/invoice-checker" data-testid="features-featured-cta"
+                                <Link to="/ai-tools/statement-decoder" data-testid="features-featured-cta"
                                     className="inline-flex items-center gap-1 mt-5 px-5 py-2.5 rounded-full bg-primary-k text-white text-sm font-medium">
-                                    Try Invoice Checker <ArrowRight className="w-4 h-4"/>
+                                    Try Statement Decoder Free <ArrowRight className="w-4 h-4"/>
                                 </Link>
                             </div>
-                            <div className="rounded-2xl border border-primary-k/10 bg-surface-2 p-5 space-y-3" data-testid="features-invoice-dual">
-                                <div className="rounded-xl border border-dashed border-primary-k/25 p-5 text-center bg-white">
-                                    <FileText className="w-8 h-8 text-primary-k/40 mx-auto"/>
-                                    <p className="text-sm text-primary-k mt-2 font-medium">Drop A PDF Or Image</p>
-                                    <p className="text-xs text-muted-k mt-1">Or click to browse. Max 25 MB.</p>
+                            <div className="rounded-2xl border border-primary-k/10 bg-surface-2 p-5 space-y-3" data-testid="features-smart-summary-preview">
+                                <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold" style={{ color: "#A5512B" }}>
+                                    <Sparkles className="w-3.5 h-3.5"/> Your Wayly Insight
                                 </div>
-                                <p className="text-[11px] text-center text-muted-k uppercase tracking-wider">Or</p>
-                                <div className="rounded-xl border border-primary-k/10 p-4 bg-white space-y-2">
-                                    <p className="text-sm text-primary-k font-medium">Enter Line Items Manually</p>
-                                    <div className="grid grid-cols-3 gap-1 text-[11px]">
-                                        <span className="text-muted-k">Description</span>
-                                        <span className="text-muted-k">Rate</span>
-                                        <span className="text-muted-k">Amount</span>
-                                    </div>
-                                    <div className="h-8 rounded bg-primary-k/[0.04]"/>
-                                    <div className="h-8 rounded bg-primary-k/[0.04]"/>
+                                <p className="text-sm text-primary-k leading-relaxed">This month&apos;s statement is $6,681.60. Your Everyday Living stream rose 12% on last quarter, driven by a domestic assistance rate change from $72.00 to $80.60 an hour.</p>
+                                <div className="rounded-xl border p-3" style={{ borderColor: "rgba(165,81,43,0.3)", background: "#FBEEE7" }}>
+                                    <p className="text-xs text-primary-k"><span className="font-semibold" style={{ color: "#A5512B" }}>Worth checking:</span> a cleaning visit on the 14th appears billed twice. We have drafted a query letter for you.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Grouped modules */}
-                <ToolGroup title="Professional Toolkit" description="The daily-driver modules that pay for the subscription in a single use." testId="features-group-professional" items={[
+                {/* Grouped by pain-point */}
+                <ToolGroup title="When the Statement Doesn't Add Up" description="Every dollar in and out, checked against medians and your budget the moment it lands." testId="features-group-money" items={[
                     { icon: Receipt, title: "Invoice Checker", body: "Verify every line item against medians and budget the moment the invoice lands.", to: "/ai-tools/invoice-checker", plan: "Solo+" },
-                    { icon: Wrench, title: "AT & HM Projects", body: "Track OT referrals, compare quotes side-by-side, and never miss a trial-return window.", to: "/app/athm/projects", plan: "Solo+" },
-                    { icon: HeartPulse, title: "CHSP Tools", body: "Verify Commonwealth Home Support billing and walk through a transition to Support at Home.", to: "/app/chsp/tools", plan: "Solo+" },
-                    { icon: Repeat, title: "Provider Switcher", body: "Manage every switch end-to-end: notice, overlap, settlement, and refund tracking.", to: "/app/provider-switch", plan: "Solo+" },
-                ]}/>
-
-                <ToolGroup title="Care Management" description="Keep the whole care team on the same page without another group chat." testId="features-group-care" items={[
-                    { icon: Users2, title: "Profile Management", body: "One profile per participant, with financial, care, and complaint history side by side.", to: "/app/me", plan: "Solo+" },
-                    { icon: ClipboardCheck, title: "Support Plan Reviewer", body: "Checks a support plan against the Statement of Rights and the National Quality Standards.", to: "/ai-tools/support-plan-reviewer", plan: "Solo+" },
-                    { icon: FileText, title: "Care Notes And Plans", body: "Support plan reviewer plus goal ledger, so every change is captured and diffed.", to: "/app/care-plans", plan: "Solo+" },
-                    { icon: ClipboardCheck, title: "Medication And Voice Check", body: "Micro voice check-ins on goals and meds to spot missed doses or drifting priorities early.", to: "/app/wall", plan: "Solo+" },
-                ]}/>
-
-                <ToolGroup title="Financial Operations" description="Every dollar in and out, tracked automatically." testId="features-group-financial" items={[
                     { icon: FileSearch, title: "Bank-CSV Parsing", body: "Import a CSV once and Wayly maps every debit to the right provider, invoice, and stream.", to: "/app/statements", plan: "Solo+" },
                     { icon: BarChart3, title: "Financial Position Tracking", body: "Lifetime cap, quarterly burn, and contributions in one glanceable card.", to: "/app/pacing", plan: "Solo+" },
                     { icon: Wallet, title: "Multi-Quarter Budgeting", body: "Project the next 3 quarters, save scenarios, and compare them side-by-side.", to: "/app/pacing", plan: "Solo+" },
                 ]}/>
 
-                <ToolGroup title="Compliance And Trust" description="The paper trail that stands up when you need it." testId="features-group-compliance" items={[
-                    { icon: MessageCircle, title: "Complaint Wizard", body: "A 4-step guided intake that opens a LOOP-1 case and drafts every follow-up letter.", to: "/app/participants", plan: "Solo+" },
+                <ToolGroup title="When You Need to Get the Care Right" description="Keep the plan, the price, and the whole care team on the same page." testId="features-group-care" items={[
+                    { icon: ClipboardCheck, title: "Support Plan Reviewer", body: "Checks a support plan against the Statement of Rights and the National Quality Standards.", to: "/ai-tools/support-plan-reviewer", plan: "Solo+" },
+                    { icon: FileText, title: "Care Notes And Plans", body: "Support plan reviewer plus goal ledger, so every change is captured and diffed.", to: "/app/care-plans", plan: "Solo+" },
+                    { icon: Wrench, title: "AT & HM Projects", body: "Track OT referrals, compare quotes side-by-side, and never miss a trial-return window.", to: "/app/athm/projects", plan: "Solo+" },
+                    { icon: Repeat, title: "Provider Switcher", body: "Manage every switch end-to-end: notice, overlap, settlement, and refund tracking.", to: "/app/provider-switch", plan: "Solo+" },
+                    { icon: HeartPulse, title: "CHSP Tools", body: "Verify Commonwealth Home Support billing and walk through a transition to Support at Home.", to: "/app/chsp/tools", plan: "Solo+" },
+                ]}/>
+
+                <ToolGroup title="When You Need to Push Back" description="The polite, firm paper trail that stands up when you need it." testId="features-group-pushback" items={[
+                    { icon: MessageCircle, title: "Complaint Wizard", body: "A 4-step guided intake that opens a case and drafts every follow-up letter.", to: "/app/participants", plan: "Solo+" },
                     { icon: ShieldCheck, title: "ACQSC Bundle", body: "Bundle every complaint artefact ready to hand to the Aged Care regulator.", to: "/ai-tools/letters-and-follow-ups", plan: "Solo+" },
                     { icon: Lock, title: "Digital Signatures And Audit", body: "Every consent, every letter, every send is signed, timestamped, and immutable.", to: "/app/audit", plan: "Solo+" },
+                ]}/>
+
+                <ToolGroup title="When the Whole Family's Involved" description="One shared view, so nobody is the only one paying attention." testId="features-group-family" items={[
+                    { icon: Users2, title: "Profile Management", body: "One profile per participant, with financial, care, and complaint history side by side.", to: "/app/me", plan: "Solo+" },
+                    { icon: ClipboardCheck, title: "Medication And Voice Check", body: "Micro voice check-ins on goals and meds to spot missed doses or drifting priorities early.", to: "/app/wall", plan: "Solo+" },
                 ]}/>
             </Section>
 
@@ -290,53 +273,6 @@ export default function Features() {
                     {TRUST.map((w) => <Card key={w.title} {...w} />)}
                 </div>
             </Section>
-
-            {/* COMPARISON */}
-            <section className="mx-auto max-w-6xl px-6 pb-16" data-testid="features-plan-matrix">
-                <span className="overline">Plans</span>
-                <h2 className="font-heading text-4xl text-primary-k mt-3 tracking-tight">What you get at every tier</h2>
-                <div className="mt-8 overflow-x-auto rounded-2xl border border-kindred bg-surface">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-kindred">
-                                <th className="text-left py-4 px-5 font-medium text-muted-k">Feature</th>
-                                {PLAN_HEADERS.map((h) => (
-                                    <th key={h} className="text-left py-4 px-5 font-heading text-primary-k">{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {PLAN_MATRIX.map((row) => (
-                                <tr key={row.feature} className="border-b border-kindred last:border-0">
-                                    <td className="py-3 px-5 text-primary-k">{row.feature}</td>
-                                    {row.values.map((v, i) => (
-                                        <td key={i} className="py-3 px-5 text-primary-k tabular-nums">
-                                            {v === true ? (
-                                                <>
-                                                    <Check className="h-4 w-4 text-primary-k inline" aria-hidden="true" />
-                                                    <span className="sr-only">Included</span>
-                                                </>
-                                            ) : v === false ? (
-                                                <>
-                                                    <X
-                                                        className="h-4 w-4 inline"
-                                                        style={{ color: "#C2683D" }}
-                                                        aria-hidden="true"
-                                                        data-testid={`plan-matrix-not-included-${i}`}
-                                                    />
-                                                    <span className="sr-only">Not included</span>
-                                                </>
-                                            ) : (
-                                                v
-                                            )}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
 
             {/* CLOSING CTA */}
             <section className="bg-primary-k">

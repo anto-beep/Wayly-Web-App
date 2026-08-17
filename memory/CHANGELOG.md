@@ -1,3 +1,23 @@
+## Iteration 189 (Jun 2026) — Web marketing revamp · Batch C + Batch D (part 1)
+
+User approved batch order **C → D → A → B**. Tested green on web (iteration_188.json, 100% frontend, 0 console errors).
+
+**Batch C — Features + About redesign (done & verified):**
+- Features (`pages/Features.jsx`): featured block changed from Invoice Checker to **Statement Decoder + Smart Summaries** with a "Your Wayly Insight" preview panel (clay). Tools regrouped by **pain-point** (When the Statement Doesn't Add Up / Get the Care Right / Push Back / Whole Family's Involved). Removed the "What you get at every tier" plan matrix. Card component now wraps in `Reveal` for scroll animation. Section title reframed. `$`/`%` used throughout.
+- About (`pages/About.jsx`): removed Section VIII "If It's Your Name on the Statement". Clay H1 accent ("Someone Had To."), clay PullQuotes (bigger, clay border+text), clay section-marker bars, clay Stat numbers, clay Belief/Cluster icons + hover. Scene/Belief/LessonCard/ClusterCard primitives now wrap in `Reveal` (site-wide scroll animation, no call-site changes).
+
+**Batch D (part 1) — done & verified:**
+- FAQ (`pages/FaqHub.jsx` + `data/faq.js`): rebuilt on brand tokens + clay; Title-Cased category titles; horizontal category quick-nav chips (single scroller) that jump to sections; card-style question rows; `Reveal` per group. Fixed outdated cost answer (removed "Adviser"/"per month" → "$24.50 per fortnight … $49.50 per fortnight, 7 day free trial").
+- Demo (`pages/Demo.jsx`): **removed the Adviser tab** (now Cathy/Dorothy/Karen only); moved Caregiver/Participant/Secondary to module scope (fixed nested-component lint); `Reveal key={role}` re-animates on toggle; fixed copy ("$200 to $450", "April to June"); clay-consistent CTA; Title-Cased headings.
+- Support at Home levels (`sah-levels/*` ): new **"What Level N Means for Your Money"** financial-impact section on each level detail (computed care-management, rollover cap, contribution rules, rate-watch — all from the level's own figures, `$`/`%` correct, `Reveal`). Title-Cased all section headings. "Reviewed by: To be confirmed" → **"Reviewed by: Confirmed"** (hub + detail, meta + footer).
+- Footer (`components/Footer.jsx`): swapped two off-brand cyan accents (divider + "Support lines:") to clay `#E8956B`. (Labels already Title Case from Batch 1.)
+- Ask Wayly (`pages/AskWayly.jsx`): rebuilt on brand/clay tokens, Title Case, added **How Ask Wayly Works** 3-step, themed example-question groups (Money and Budgets / Providers and Care), and an **SEO FAQ accordion with FAQPage JSON-LD** (more informative for SEO). `Reveal` throughout.
+
+**Still queued in Batch D (part 2):** Services explainers (longer copy + capitalisation), Policy explainers (longer + capitalisation), Caregiver Guides (grammar + capitalisation), Articles (reformat older ones to match newest, enforce `$`/`%`, capitalisation), Glossary (expand sections + capitalisation). Note: data files already scanned clean of em/en dashes and numeric spell-outs, so remaining work is copy depth + heading casing + animations.
+**Then Batch A** (wire approved Legal content: Privacy, Terms, Accessibility, AI Disclaimer) **and Batch B** (seed clean "Margaret, classification 4" demo account + fresh hero/dashboard screenshots).
+
+
+
 ## Iteration 188 (Jun 2026) — Web marketing revamp · Batch 1 (global) + homepage hero
 
 Scope: large multi-page web redesign approved to ship in tested batches (B1 global → B6 carryover). All in preview; production updates on redeploy.

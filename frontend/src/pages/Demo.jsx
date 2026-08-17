@@ -3,16 +3,15 @@ import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { formatAUD, formatAUD2 } from "@/lib/api";
-import { lifetimeCapStandard, loadProgramReference } from "@/lib/programReference";
-import { ArrowRight, Phone, AlertOctagon, Clock, AlertTriangle, Check, Wallet, FileText, MessageCircle } from "lucide-react";
+import Reveal from "@/components/Reveal";
+import { ArrowRight, Phone, AlertOctagon, Clock, AlertTriangle } from "lucide-react";
 
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 const ROLES = [
-    { v: "primary", label: "Cathy (Primary caregiver)" },
+    { v: "primary", label: "Cathy (Primary Caregiver)" },
     { v: "participant", label: "Dorothy (Participant)" },
     { v: "secondary", label: "Karen (Sibling)" },
-    { v: "advisor", label: "Mark (Advisor)" },
 ];
 
 const STATEMENT = {
@@ -39,19 +38,12 @@ const ANOMALY = {
 const FAMILY = [
     { who: "Cathy", when: "Sat 9:14am", body: "Just saw the OT report from last week, Priya thinks we should put a handrail in the laundry. Anyone got opinions?" },
     { who: "Karen", when: "Sat 11:02am", body: "Yes please, she's been complaining about that step for months. Can we use AT-HM funding for it?" },
-    { who: "Wayly", when: "Sat 11:04am", body: "Hand rails are eligible under AT-HM Tier 1. Dorothy's tier was assessed Tier 1 in November. Estimated cost $200,$450 in Geelong. Want me to draft a request to Bluebell?" },
+    { who: "Wayly", when: "Sat 11:04am", body: "Hand rails are eligible under AT-HM Tier 1. Dorothy's tier was assessed Tier 1 in November. Estimated cost $200 to $450 in Geelong. Want me to draft a request to Bluebell?" },
     { who: "Cathy", when: "Sat 12:30pm", body: "Yes please. Get a non-Bluebell quote too so we can compare." },
 ];
 
-export default function Demo() {
-    // Pull the live lifetime cap from /api/program-reference/public.
-    const [capStandard, setCapStandard] = React.useState(lifetimeCapStandard());
-    React.useEffect(() => {
-        loadProgramReference().then(() => setCapStandard(lifetimeCapStandard()));
-    }, []);
-    const [role, setRole] = useState("primary");
-
-    const Caregiver = () => (
+function Caregiver() {
+    return (
         <div className="space-y-6">
             <div className="grid sm:grid-cols-3 gap-4">
                 {[
@@ -116,8 +108,10 @@ export default function Demo() {
             </div>
         </div>
     );
+}
 
-    const Participant = () => (
+function Participant() {
+    return (
         <div className="space-y-6">
             <div className="bg-surface border border-kindred rounded-3xl p-8">
                 <div className="flex items-center gap-3 text-muted-k"><Clock className="h-5 w-5" /><span className="text-xl">Today, Sunday 27 April</span></div>
@@ -129,7 +123,7 @@ export default function Demo() {
             <div className="bg-surface-2 border border-kindred rounded-3xl p-8">
                 <span className="overline">Your budget this quarter</span>
                 <p className="mt-3 font-heading text-5xl text-primary-k tabular-nums">{formatAUD(5184.30)}</p>
-                <p className="mt-2 text-xl text-primary-k">Plenty for the rest of April, June.</p>
+                <p className="mt-2 text-xl text-primary-k">Plenty for the rest of April to June.</p>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
                 <div className="bg-primary-k text-white rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-2 min-h-[160px]">
@@ -138,17 +132,19 @@ export default function Demo() {
                 </div>
                 <div className="bg-terracotta text-white rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-2 min-h-[160px]">
                     <AlertOctagon className="h-10 w-10" />
-                    <span className="text-2xl font-semibold">Something's not right</span>
+                    <span className="text-2xl font-semibold">Something&apos;s not right</span>
                 </div>
             </div>
         </div>
     );
+}
 
-    const Secondary = () => (
+function Secondary() {
+    return (
         <div className="space-y-6">
             <div className="bg-surface-2 rounded-xl p-6 border border-kindred">
                 <span className="overline">Sunday digest, read-only</span>
-                <p className="mt-3 font-medium text-primary-k">Dorothy's week, Sun 27 April 2026</p>
+                <p className="mt-3 font-medium text-primary-k">Dorothy&apos;s week, Sun 27 April 2026</p>
                 <p className="mt-2 text-sm text-muted-k leading-relaxed">It was a steady week, four appointments, no issues. Cleaning rate flagged for Cathy to query. Q3 budget at 47% used. Handrail install booked for Tuesday.</p>
             </div>
             <div className="bg-surface border border-kindred rounded-xl p-5">
@@ -165,38 +161,23 @@ export default function Demo() {
             </div>
         </div>
     );
+}
 
-    const Advisor = () => (
-        <div className="space-y-6">
-            <div className="bg-surface border border-kindred rounded-xl p-6">
-                <span className="overline">Dorothy Anderson, financial position</span>
-                <div className="mt-4 grid sm:grid-cols-3 gap-4">
-                    <div><div className="text-xs text-muted-k">Classification</div><div className="font-heading text-xl text-primary-k">L4</div></div>
-                    <div><div className="text-xs text-muted-k">Annual funding</div><div className="font-heading text-xl text-primary-k tabular-nums">{formatAUD(29696)}</div></div>
-                    <div><div className="text-xs text-muted-k">Pension status</div><div className="font-heading text-xl text-primary-k">Full</div></div>
-                </div>
-            </div>
-            <div className="bg-surface border border-kindred rounded-xl p-6">
-                <span className="overline">Lifetime contribution cap</span>
-                <div className="mt-3"><div className="font-heading text-2xl text-primary-k tabular-nums">{formatAUD2(487.20)} <span className="text-sm font-sans text-muted-k">of {formatAUD(capStandard)}</span></div></div>
-                <div className="mt-3 h-2 w-full bg-surface-2 rounded-full overflow-hidden"><div className="bg-primary-k h-full" style={{ width: "0.36%" }} /></div>
-                <p className="mt-3 text-sm text-muted-k">At current pace, projected to reach cap in <span className="text-primary-k tabular-nums">23.4 years</span>. No near-term action required.</p>
-            </div>
-            <div className="bg-surface-2 rounded-xl p-5 border border-kindred"><p className="text-sm text-primary-k">As Mark (advisor), you see Dorothy's financial picture only. The care plan, family thread, and personal communications are not visible to you, Cathy granted finance-only access.</p></div>
-        </div>
-    );
-
+export default function Demo() {
+    const [role, setRole] = useState("primary");
     return (
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.demo} />
             <MarketingHeader />
             <section className="mx-auto max-w-6xl px-6 pt-12 pb-6" data-testid="demo-page">
-                <span className="overline">Interactive sample household</span>
-                <h1 className="font-heading text-5xl text-primary-k tracking-tight mt-3 leading-tight">Meet the Anderson family.</h1>
-                <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    Dorothy is 79, lives alone in Geelong, on Classification 4. Her daughter Cathy runs her care from Melbourne. Her sister Karen lives in Sydney. Their advisor Mark sees only the financial picture. Toggle between their views.
-                </p>
-                <p className="mt-3 text-sm text-muted-k italic">All data on this page is fabricated. Dorothy isn't a real person, the provider isn't a real provider, but the experience is exactly what real Wayly families see.</p>
+                <Reveal>
+                    <span className="overline">Interactive Sample Household</span>
+                    <h1 className="font-heading text-5xl text-primary-k tracking-tight mt-3 leading-tight">Meet the Anderson Family.</h1>
+                    <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
+                        Dorothy is 79, lives alone in Geelong, on Classification 4. Her daughter Cathy runs her care from Melbourne. Her sister Karen keeps an eye from Sydney. Tap between their views to see how the same account looks to each of them.
+                    </p>
+                    <p className="mt-3 text-sm text-muted-k italic">All data on this page is fabricated. Dorothy is not a real person and the provider is not a real provider, but the experience is exactly what real Wayly families see.</p>
+                </Reveal>
             </section>
 
             <section className="mx-auto max-w-6xl px-6 pb-4">
@@ -215,16 +196,17 @@ export default function Demo() {
             </section>
 
             <section className="mx-auto max-w-6xl px-6 pb-16 mt-6">
-                {role === "primary" && <Caregiver />}
-                {role === "participant" && <Participant />}
-                {role === "secondary" && <Secondary />}
-                {role === "advisor" && <Advisor />}
+                <Reveal key={role}>
+                    {role === "primary" && <Caregiver />}
+                    {role === "participant" && <Participant />}
+                    {role === "secondary" && <Secondary />}
+                </Reveal>
             </section>
 
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-14 text-center">
-                    <h2 className="font-heading text-4xl text-white tracking-tight">Want this for your family?</h2>
-                    <Link to="/signup" className="mt-6 inline-flex items-center gap-2 bg-gold text-white font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]">Start free trial <ArrowRight className="h-4 w-4" /></Link>
+                    <h2 className="font-heading text-4xl text-white tracking-tight">Want This for Your Family?</h2>
+                    <Link to="/signup" data-testid="demo-cta-trial" className="mt-6 inline-flex items-center gap-2 bg-gold text-white font-medium rounded-full px-6 py-3 hover:brightness-95 transition">Start Free Trial <ArrowRight className="h-4 w-4" /></Link>
                 </div>
             </section>
             <Footer />

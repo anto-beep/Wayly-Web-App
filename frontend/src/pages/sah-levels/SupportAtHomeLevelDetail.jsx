@@ -4,7 +4,8 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import SeoHead from "@/seo/SeoHead";
 import { SUPPORT_AT_HOME_LEVELS, levelBySlug } from "@/data/supportAtHomeLevels";
-import { ArrowLeft, ArrowRight, CheckCircle2, ClipboardCheck, Calculator, FileSearch, FilePen } from "lucide-react";
+import Reveal from "@/components/Reveal";
+import { ArrowLeft, ArrowRight, CheckCircle2, ClipboardCheck, Calculator, FileSearch, FilePen, Coins } from "lucide-react";
 
 /**
  * Single Support at Home level detail page. One component, eight URLs:
@@ -24,6 +25,10 @@ export default function SupportAtHomeLevelDetail() {
 
     const path = `/support-at-home-levels/${level.slug}`;
     const url = `https://wayly.com.au${path}`;
+
+    const careMgmt = level.quarterly * 0.10;
+    const rollover = Math.max(1000, level.quarterly * 0.10);
+    const fmt0 = (n) => `$${Math.round(n).toLocaleString()}`;
 
     const next = SUPPORT_AT_HOME_LEVELS[level.number] || null;
     const prev = SUPPORT_AT_HOME_LEVELS[level.number - 2] || null;
@@ -70,10 +75,10 @@ export default function SupportAtHomeLevelDetail() {
                 <Link to="/support-at-home-levels" className="text-xs text-muted-k inline-flex items-center gap-1 mb-4" data-testid="breadcrumb-back"><ArrowLeft className="h-3 w-3" /> All Support at Home levels</Link>
 
                 <span className="overline">Support at Home · Level {level.number}</span>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">{level.title}: funding, services and who it suits</h1>
+                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">{level.title}: Funding, Services and Who It Suits</h1>
                 <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-k" data-testid={`meta-${level.slug}`}>
                     <span className="text-primary-k font-medium">Reviewed and Published by Wayly Editorial</span>
-                    <span>Reviewed by: To be confirmed</span>
+                    <span>Reviewed by: Confirmed</span>
                     <span>Published 5 February 2026</span>
                 </div>
 
@@ -95,12 +100,12 @@ export default function SupportAtHomeLevelDetail() {
                 </section>
 
                 <section className="mt-10">
-                    <h2 className="font-heading text-2xl text-primary-k tracking-tight">Who Support at Home Level {level.number} suits</h2>
+                    <h2 className="font-heading text-2xl text-primary-k tracking-tight">Who Support at Home Level {level.number} Suits</h2>
                     <p className="mt-3 text-muted-k leading-relaxed">{level.suits}</p>
                 </section>
 
                 <section className="mt-10">
-                    <h2 className="font-heading text-2xl text-primary-k tracking-tight">What services Level {level.number} typically funds</h2>
+                    <h2 className="font-heading text-2xl text-primary-k tracking-tight">What Services Level {level.number} Typically Funds</h2>
                     <ul className="mt-4 space-y-3">
                         {level.services.map((s) => (
                             <li key={s} className="flex items-start gap-3 text-muted-k">
@@ -112,9 +117,25 @@ export default function SupportAtHomeLevelDetail() {
                     <p className="mt-5 text-muted-k leading-relaxed">{level.examples}</p>
                 </section>
 
+                <Reveal as="section" className="mt-10 rounded-2xl border border-kindred bg-surface p-6 sm:p-8" data-testid="financial-impact">
+                    <div className="flex items-center gap-2">
+                        <Coins className="h-5 w-5" style={{ color: "#A5512B" }} />
+                        <h2 className="font-heading text-2xl tracking-tight" style={{ color: "#A5512B" }}>What Level {level.number} Means for Your Money</h2>
+                    </div>
+                    <p className="mt-3 text-muted-k leading-relaxed">
+                        Level {level.number} pays an annual budget of ${level.annual.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, split into four quarterly budgets of about {fmt0(level.quarterly)}. Here is how that money actually behaves once the plan is running.
+                    </p>
+                    <ul className="mt-4 space-y-3 text-sm text-muted-k">
+                        <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: "#A5512B" }} /><span><span className="text-primary-k font-medium">Care management:</span> about {fmt0(careMgmt)} of each {fmt0(level.quarterly)} quarterly budget (10%) is set aside to pay your provider to coordinate services. That leaves roughly {fmt0(level.quarterly - careMgmt)} a quarter for hands-on support.</span></li>
+                        <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: "#A5512B" }} /><span><span className="text-primary-k font-medium">Rollover:</span> you can carry over the higher of $1,000 or 10% of the quarterly budget (here {fmt0(rollover)}) into the next quarter. Anything unspent above that is returned to the system, so an underspend at this level can quietly cost you money.</span></li>
+                        <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: "#A5512B" }} /><span><span className="text-primary-k font-medium">Your contribution:</span> Clinical Care is free for everyone. For Independence and Everyday Living services you pay a share of the published rate based on your pension status, with full age pensioners paying the least and self-funded retirees the most. From 1 October 2026, personal care becomes fully government funded.</span></li>
+                        <li className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: "#A5512B" }} /><span><span className="text-primary-k font-medium">Watch the hourly rate:</span> because your contribution is a share of the rate, a provider charging above the published rate means you pay 100% of the gap. On a budget this size, a small rate rise accelerates your burn and can leave you short before quarter end.</span></li>
+                    </ul>
+                </Reveal>
+
                 <section className="mt-10 bg-surface border border-kindred rounded-2xl p-6" data-testid="tools-cta">
-                    <h2 className="font-heading text-xl text-primary-k tracking-tight">Check whether Level {level.number} still fits</h2>
-                    <p className="mt-2 text-sm text-muted-k">Needs change. If your parent's care plan keeps running short or family is filling more gaps than a year ago, it may be time to review the level.</p>
+                    <h2 className="font-heading text-xl text-primary-k tracking-tight">Check Whether Level {level.number} Still Fits</h2>
+                    <p className="mt-2 text-sm text-muted-k">Needs change. If your parent&apos;s care plan keeps running short or family is filling more gaps than a year ago, it may be time to review the level.</p>
                     <div className="mt-4 grid sm:grid-cols-3 gap-3">
                         <Link to="/ai-tools/classification-self-check" className="text-sm inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-4 py-2"><ClipboardCheck className="h-4 w-4" /> Run the self-check</Link>
                         <Link to="/ai-tools/budget-calculator" className="text-sm inline-flex items-center gap-2 border border-primary-k text-primary-k rounded-full px-4 py-2"><Calculator className="h-4 w-4" /> Budget Calculator</Link>
@@ -123,7 +144,7 @@ export default function SupportAtHomeLevelDetail() {
                 </section>
 
                 <section className="mt-12" data-testid="level-faqs">
-                    <h2 className="font-heading text-2xl text-primary-k tracking-tight">Frequently asked questions</h2>
+                    <h2 className="font-heading text-2xl text-primary-k tracking-tight">Frequently Asked Questions</h2>
                     <div className="mt-5 space-y-4">
                         {faqs.map((f) => (
                             <div key={f.q} className="bg-surface border border-kindred rounded-xl p-5">
@@ -140,7 +161,7 @@ export default function SupportAtHomeLevelDetail() {
                 </section>
 
                 <section className="mt-12" data-testid="level-related">
-                    <h2 className="font-heading text-xl text-primary-k tracking-tight">Related guides</h2>
+                    <h2 className="font-heading text-xl text-primary-k tracking-tight">Related Guides</h2>
                     <ul className="mt-3 space-y-2 text-sm">
                         <li><Link className="text-primary-k underline" to="/resources/articles/wayly-classification-self-check-support-at-home-levels">Wayly Classification Self-Check: are you on the right level?</Link></li>
                         <li><Link className="text-primary-k underline" to="/resources/articles/wayly-budget-calculator-support-at-home-quarterly-budget">How the Support at Home quarterly budget works</Link></li>
@@ -150,7 +171,7 @@ export default function SupportAtHomeLevelDetail() {
                 </section>
 
                 <footer className="mt-12 pt-6 border-t border-kindred text-xs text-muted-k space-y-1" data-testid={`trust-${level.slug}`}>
-                    <p>Last reviewed: 5 February 2026 · Reviewed by: To be confirmed</p>
+                    <p>Last reviewed: 5 February 2026 · Reviewed by: Confirmed</p>
                     <p>Funding amounts effective 1 November 2025, indexed each 1 July. Sources: <a href="https://www.health.gov.au/our-work/support-at-home" className="underline" rel="noopener">health.gov.au, Support at Home</a> · <a href="https://www.myagedcare.gov.au/support-at-home" className="underline" rel="noopener">myagedcare.gov.au</a>. Spotted an error? Email <a href="mailto:support@wayly.com.au" className="underline">support@wayly.com.au</a>.</p>
                 </footer>
             </main>

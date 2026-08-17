@@ -14,6 +14,7 @@ import { SEO } from "@/seo/pageConfig";
 import { track } from "@/lib/analytics";
 import { TOOL_COUNT } from "@/config/toolRegistry";
 import INDEX1 from "@/data/index1";
+import Reveal from "@/components/Reveal";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -272,8 +273,8 @@ export default function Pricing() {
             <main id="main-content">
             <section className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
                 <span className="overline">Pricing</span>
-                <h1 className="font-heading text-4xl sm:text-6xl text-primary-k mt-3 tracking-tight leading-[1.05]">
-                    Two Plans. Both Cost <span style={{ color: "#A5512B" }}>Less Than One Hour</span><br />With a Consultant.
+                <h1 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight leading-[1.1]">
+                    Two Plans. Both <span className="underline decoration-2 underline-offset-4" style={{ color: "#A5512B", textDecorationColor: "#A5512B" }}>Cost Less Than One Hour</span><br />With a Consultant.
                 </h1>
                 <p className="mt-4 text-xs text-muted-k max-w-xl mx-auto">
                     Wayly is fortnightly billing. All prices in AUD including GST. Card required at signup. 7 day free trial, then $24.50 or $49.50 per fortnight. Cancel any time from your account.

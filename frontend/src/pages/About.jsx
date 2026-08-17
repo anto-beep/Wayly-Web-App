@@ -18,6 +18,7 @@ import {
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import SeoHead from "@/seo/SeoHead";
+import Reveal from "@/components/Reveal";
 
 // About page v7 (July 2026 rewrite, wide editorial layout).
 // Voice notes:
@@ -80,7 +81,7 @@ export default function About() {
                                     data-testid="about-h1"
                                     className="font-heading text-5xl sm:text-6xl text-primary-k tracking-tight mt-4 leading-tight max-w-3xl"
                                 >
-                                    We Built Wayly Because Someone Had To.
+                                    We Built Wayly Because <span style={{ color: "#A5512B" }}>Someone Had To.</span>
                                 </h1>
                             </div>
                             <aside className="col-span-12 lg:col-span-4 mt-10 lg:mt-24 lg:pt-12 lg:border-l lg:border-kindred lg:pl-8">
@@ -437,39 +438,6 @@ export default function About() {
                         </P>
                     </Section>
 
-                    {/* -------------- Section VIII -------------- */}
-                    <Section num="VIII" title="If It&apos;s Your Name on the Statement" testid="about-section-your-name">
-                        <P>Hello.</P>
-                        <P>We built Wayly with you in mind, not just around you.</P>
-                        <P>
-                            You&apos;ve been running your own life for a long time. You&apos;ve paid
-                            mortgages, made hard decisions, kept people fed, held things together in
-                            years harder than most of us have lived through. You don&apos;t need
-                            this system to be explained to you. You need it to be explained plainly.
-                        </P>
-                        <P>
-                            The Wayly view is large because it should be. Clear because it should
-                            be. Nothing is hidden from you, whether you set up this account yourself
-                            or someone in your family did.
-                        </P>
-                        <P>
-                            If you&apos;d rather use it on your own, that&apos;s how it works. If
-                            you&apos;d rather share it with a family member so someone can help keep
-                            an eye, that&apos;s also how it works. If you&apos;d rather someone else
-                            use it and read you the summary once a month over the phone,
-                            that&apos;s also how it works. It bends to how you want to live.
-                        </P>
-                        <PullQuote>
-                            You are not a burden. You are the person this whole program exists to
-                            serve.
-                        </PullQuote>
-                        <P>
-                            Wayly is trying to be the calm layer between you and the paperwork, so
-                            more of your energy can go into the parts of life that are actually
-                            yours.
-                        </P>
-                    </Section>
-
                     {/* -------------- Section IX -------------- */}
                     <Section num="IX" title="The Small Thing We Want for You" testid="about-section-small-thing">
                         <P>
@@ -626,7 +594,7 @@ function Section({ num: _num, title, testid, first = false, children }) {
         >
             <div className="grid grid-cols-12 gap-x-8 lg:gap-x-16">
                 <div className="col-span-12 lg:col-span-4 lg:sticky lg:top-24 lg:self-start">
-                    <span className="block h-px w-16 bg-primary-k/40" aria-hidden />
+                    <span className="block h-1 w-16 rounded-full" style={{ background: "#A5512B" }} aria-hidden />
                     <h2 className="mt-6 font-heading text-3xl sm:text-4xl text-primary-k tracking-tight leading-tight">
                         {title}
                     </h2>
@@ -651,7 +619,7 @@ function WideSection({ num: _num, title, testid, lead, children }) {
         >
             <div className="grid grid-cols-12 gap-x-8 lg:gap-x-16">
                 <div className="col-span-12 lg:col-span-5">
-                    <span className="block h-px w-16 bg-primary-k/40" aria-hidden />
+                    <span className="block h-1 w-16 rounded-full" style={{ background: "#A5512B" }} aria-hidden />
                     <h2 className="mt-6 font-heading text-3xl sm:text-4xl lg:text-5xl text-primary-k tracking-tight leading-tight">
                         {title}
                     </h2>
@@ -677,8 +645,8 @@ function P({ children, className = "" }) {
 
 function PullQuote({ children }) {
     return (
-        <blockquote className="my-10 sm:my-12 border-l-2 border-primary-k pl-6 max-w-3xl">
-            <p className="font-heading italic text-lg sm:text-xl text-primary-k leading-snug">
+        <blockquote className="my-10 sm:my-12 border-l-4 pl-6 max-w-3xl" style={{ borderColor: "#A5512B" }}>
+            <p className="font-heading italic text-xl sm:text-2xl leading-snug" style={{ color: "#A5512B" }}>
                 {children}
             </p>
         </blockquote>
@@ -687,6 +655,7 @@ function PullQuote({ children }) {
 
 function Scene({ icon: Icon, label, children }) {
     return (
+        <Reveal className="h-full">
         <div className="rounded-2xl border border-kindred bg-surface p-6 sm:p-8 h-full">
             <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-k">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-primary-k">
@@ -696,6 +665,7 @@ function Scene({ icon: Icon, label, children }) {
             </div>
             <div className="mt-5 space-y-5">{children}</div>
         </div>
+        </Reveal>
     );
 }
 
@@ -710,7 +680,7 @@ function StatRow({ children }) {
 function Stat({ value, label }) {
     return (
         <div className="text-center">
-            <div className="font-heading text-3xl sm:text-4xl text-primary-k tabular-nums">
+            <div className="font-heading text-3xl sm:text-4xl tabular-nums" style={{ color: "#A5512B" }}>
                 {value}
             </div>
             <div className="mt-1 text-xs uppercase tracking-wider text-muted-k leading-tight">
@@ -722,38 +692,43 @@ function Stat({ value, label }) {
 
 function LessonCard({ n, children }) {
     return (
-        <div className="flex gap-5 rounded-2xl border border-kindred bg-surface p-5 sm:p-6 h-full">
+        <Reveal className="h-full">
+        <div className="flex gap-5 rounded-2xl border border-kindred bg-surface p-5 sm:p-6 h-full transition-colors hover:border-[#A5512B]/40">
             <span
-                className="font-heading text-2xl text-muted-k/60 tabular-nums select-none"
+                className="font-heading text-2xl tabular-nums select-none"
+                style={{ color: "rgba(165,81,43,0.55)" }}
                 aria-hidden
             >
                 {n}
             </span>
             <p className="text-sm sm:text-base text-primary-k leading-relaxed">{children}</p>
         </div>
+        </Reveal>
     );
 }
 
 function Belief({ icon: Icon, title, children }) {
     return (
-        <div className="rounded-2xl border border-kindred bg-surface p-6 sm:p-8 h-full">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-2 text-primary-k">
+        <Reveal className="h-full">
+        <div className="rounded-2xl border border-kindred bg-surface p-6 sm:p-8 h-full transition-colors hover:border-[#A5512B]/40">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full" style={{ background: "#FBEEE7", color: "#A5512B" }}>
                 <Icon className="h-5 w-5" aria-hidden />
             </span>
-            <h3 className="mt-5 font-heading text-lg sm:text-xl text-primary-k tracking-tight leading-snug">
+            <h3 className="mt-5 font-heading text-lg sm:text-xl tracking-tight leading-snug" style={{ color: "#A5512B" }}>
                 {title}
             </h3>
             <p className="mt-4 text-sm sm:text-base text-primary-k leading-relaxed">{children}</p>
         </div>
+        </Reveal>
     );
 }
 
 function ClusterCard({ icon: Icon, title, to, children }) {
     const cardCls =
-        "group rounded-2xl border border-kindred bg-surface p-6 transition-all h-full flex flex-col hover:border-primary-k/40 hover:shadow-sm";
+        "group rounded-2xl border border-kindred bg-surface p-6 transition-all h-full flex flex-col hover:border-[#A5512B]/40 hover:shadow-sm";
     const inner = (
         <>
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-2 text-primary-k">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full" style={{ background: "#FBEEE7", color: "#A5512B" }}>
                 <Icon className="h-5 w-5" aria-hidden />
             </span>
             <h3 className="mt-5 font-heading text-lg sm:text-xl text-primary-k tracking-tight leading-snug">
@@ -761,26 +736,29 @@ function ClusterCard({ icon: Icon, title, to, children }) {
             </h3>
             <p className="mt-3 text-sm sm:text-base text-primary-k leading-relaxed">{children}</p>
             {to && (
-                <span className="mt-5 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-primary-k/80 group-hover:text-primary-k">
+                <span className="mt-5 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em]" style={{ color: "#A5512B" }}>
                     Open the Tool
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
                 </span>
             )}
         </>
     );
+    let el;
     if (to) {
         // Append ?from=about so the destination tool page can show a
         // "Back to About" breadcrumb (see components/AboutBackLink.jsx).
         const withFrom = to.includes("?") ? `${to}&from=about` : `${to}?from=about`;
-        return (
+        el = (
             <Link to={withFrom} className={cardCls} data-testid="about-cluster-card">
                 {inner}
             </Link>
         );
+    } else {
+        el = (
+            <div className={cardCls} data-testid="about-cluster-card">
+                {inner}
+            </div>
+        );
     }
-    return (
-        <div className={cardCls} data-testid="about-cluster-card">
-            {inner}
-        </div>
-    );
+    return <Reveal className="h-full">{el}</Reveal>;
 }

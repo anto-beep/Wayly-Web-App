@@ -1,0 +1,26 @@
+{
+  "summary": "Frontend-only regression of Wayly marketing redesign (Batch C + partial D). Tested /features, /about, /faq, /demo, /support-at-home-levels + /support-at-home-levels/level-4, and /ask-wayly on desktop (1920x4000) against the external preview URL. All 7 review acceptance criteria pass: featured Statement Decoder + Smart Summaries block with Wayly Insight preview renders; all 4 pain-point tool groups present; features-plan-matrix and 'What you get at every tier' text are absent; About H1 correct with clay-accented 'Someone Had To.' and about-section-your-name removed; FAQ has all 5 Title Case categories, working search filter and category chips (chip ids are the category slug, e.g. faq-chip-money-budgets-rates), cost answer says '$24.50 per fortnight' and '$49.50 per fortnight' with NO 'Adviser' and NO 'per month' text anywhere on the page; Demo has exactly 3 roles (primary/participant/secondary), demo-role-advisor absent, toggling swaps content cleanly; SAH level-4 financial-impact section renders, 'Reviewed by: Confirmed' present, 'To be confirmed' absent (hub page same); Ask Wayly rebuild renders askwayly-how, askwayly-examples, askwayly-faq (4 items) and both CTAs. Footer renders on every page. Zero console errors captured on every route.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor nit: review request mentioned chip id like 'faq-chip-money' but implementation uses the full category slug (e.g. 'faq-chip-money-budgets-rates'). Not a bug — just heads-up for any external test snippets that hardcoded shorter ids.",
+    "About.jsx is ~765 lines; consider extracting Section/Scene/PullQuote/Belief/ClusterCard primitives into a small components file if the page grows further."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All marketing pages public — no auth required. Chip test ids use full category slug (faq-chip-support-at-home-basics, faq-chip-money-budgets-rates, faq-chip-providers-quality, faq-chip-carers-family, faq-chip-wayly-software). AskWayly FAQ items are askwayly-faq-0..3 (4 items). Level detail financial-impact section is at /support-at-home-levels/level-4. Preview URL: https://mobile-exact-parity.preview.emergentagent.com",
+  "rca of the issue": "N/A — no failures."
+}
