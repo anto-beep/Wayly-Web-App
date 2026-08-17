@@ -158,6 +158,7 @@ import FloatingHelpChat from "@/components/FloatingHelpChat";
 import TrialEndingModal from "@/components/TrialEndingModal";
 import AddToHomeScreenPrompt from "@/components/AddToHomeScreenPrompt";
 import AccessibilityWidget, { bootAccessibilityPrefs } from "@/components/AccessibilityWidget";
+import ScrollHideWidgets from "@/components/ScrollHideWidgets";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import { ParticipantsProvider } from "@/context/ParticipantsContext";
 import OfflineIndicator from "@/components/OfflineIndicator";
@@ -226,10 +227,12 @@ function ConsumerWidgets() {
         <>
             <ImpersonationBanner />
             <CommandPalette />
-            <FloatingHelpChat />
+            <ScrollHideWidgets>
+                <FloatingHelpChat />
+                <AccessibilityWidget />
+            </ScrollHideWidgets>
             <TrialEndingModal />
             <AddToHomeScreenPrompt />
-            <AccessibilityWidget />
         </>
     );
 }

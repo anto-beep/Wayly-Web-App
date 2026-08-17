@@ -1,3 +1,19 @@
+## Iteration 188 (Jun 2026) — Web marketing revamp · Batch 1 (global) + homepage hero
+
+Scope: large multi-page web redesign approved to ship in tested batches (B1 global → B6 carryover). All in preview; production updates on redeploy.
+
+**Batch 1 — global quick wins (done, verified):**
+- ABN/ACN corrected everywhere → `ABN 66 701 311 373 · ACN 701 311 373` (Footer.jsx, legal/Privacy.jsx; replaced `[ABN placeholder]`).
+- Footer: Title-Cased labels ("Policy Explainers", "Caregiver Guides", "Support at Home Levels"); removed **Templates**, **Trust & Security**, **Cookie Policy** links; tagline "Aged Care, Made Clear." enlarged (font-heading text-2xl/3xl) with clay "Made Clear.".
+- Floating Help + Accessibility widgets now fade out while scrolling and return when idle (`components/ScrollHideWidgets.jsx`, wired in App.js). Reduced-motion aware.
+- Reusable scroll-reveal component (`components/Reveal.jsx`, IntersectionObserver, reduced-motion aware) for use across all marketing pages.
+
+**Homepage hero (B2, in progress):**
+- "Aged Care, Made Clear." promoted from a tiny eyebrow to the dominant H1 display: font-black uppercase up to text-8xl, clay "MADE CLEAR." with a clay→peach gradient underline flourish, Reveal entrance. Prior value-prop headline demoted to a supporting line. (`components/DualFlagshipHero.jsx`)
+
+**Remaining (queued): B2 rest** (move Ask Wayly into tools, fresh clean screenshots, problem cards + Title Case, "Six People. One Shared Calm." clay + copy, tools redesign, how-it-works flow, "Try Wayly" fix, richer pricing cards + savings) · **B3 legal artifacts** · **B4 Pricing/Features/About** · **B5 Services/Policy/Guides/FAQ/SAH-levels/Ask-Wayly/Demo/Articles/Glossary** · **B6 carryover** (Streamed Reviewer, Faster First Web Reply, AW-2-on-mobile).
+
+
 ## Iteration 187 (Jun 2026) — Ask Wayly streaming + formatting, Reviewer progress, LLM resilience
 
 Verified green on web + mobile (iteration_187.json; backend pytest 8/8, test_iter187_streaming.py).

@@ -14,6 +14,7 @@ import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, FileSearch, ReceiptText, MessageCircle, Sparkles, MapPin, Scale, Info } from "lucide-react";
 import PersonaToggle from "@/components/PersonaToggle";
+import Reveal from "@/components/Reveal";
 import { track } from "@/lib/analytics";
 
 const COPY = {
@@ -54,23 +55,43 @@ export default function DualFlagshipHero() {
 
             <div className="relative mx-auto max-w-7xl px-6 pt-14 pb-20 lg:pt-20 lg:pb-24">
                 {/* Persona toggle above the fold */}
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-accent-aa-bold" data-testid="hero-eyebrow">
-                        <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                        {copy.eyebrow}
-                    </div>
+                <div className="flex items-center justify-end">
                     <PersonaToggle onChange={setPersona} defaultPersona={persona} />
                 </div>
 
-                <h1
-                    className="mt-6 font-heading text-4xl sm:text-5xl lg:text-6xl text-primary-k tracking-tight leading-[1.05] max-w-4xl"
-                    data-testid="hero-headline"
-                >
-                    {copy.headline}
-                </h1>
-                <p className="mt-5 text-lg text-primary-k/85 max-w-2xl leading-relaxed">
-                    {copy.subhead}
-                </p>
+                <Reveal>
+                    <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-accent-aa-bold" data-testid="hero-kicker">
+                        <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                        Wayly
+                    </div>
+                    <h1
+                        className="mt-3 font-heading font-black uppercase tracking-[-0.02em] leading-[0.9] text-[3.25rem] sm:text-7xl lg:text-8xl text-primary-k"
+                        data-testid="hero-eyebrow"
+                        style={{ textShadow: "0 1px 0 rgba(14,77,82,0.06)" }}
+                    >
+                        Aged Care,<br className="hidden sm:block" />{" "}
+                        <span className="relative inline-block" style={{ color: "#A5512B" }}>
+                            Made Clear.
+                            <span
+                                aria-hidden="true"
+                                className="block h-[6px] sm:h-2 rounded-full mt-1"
+                                style={{ background: "linear-gradient(90deg,#A5512B,#E8956B)", width: "62%" }}
+                            />
+                        </span>
+                    </h1>
+                </Reveal>
+
+                <Reveal delay={140}>
+                    <p
+                        className="mt-7 font-heading text-2xl sm:text-3xl lg:text-4xl text-primary-k/90 tracking-tight leading-[1.12] max-w-3xl"
+                        data-testid="hero-headline"
+                    >
+                        {copy.headline}
+                    </p>
+                    <p className="mt-5 text-lg text-primary-k/85 max-w-2xl leading-relaxed">
+                        {copy.subhead}
+                    </p>
+                </Reveal>
 
                 {/* Dual-flagship card row, Statement Decoder + Invoice Checker */}
                 <div className="mt-10 grid lg:grid-cols-2 gap-5" data-testid="dual-flagship-cards">

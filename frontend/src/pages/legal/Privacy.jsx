@@ -6,7 +6,7 @@ export default function Privacy() {
         <LegalPage title="Privacy Policy" path="/legal/privacy" description="How Wayly handles your aged-care data: Australian-hosted, never sold, never used to train third-party models without your consent. Privacy Act compliant." lastUpdated="February 2026">
             <h2>1. Who we are</h2>
             <p>
-                Wayly Pty Ltd (ABN: [ABN placeholder]). Privacy Officer: <a href="mailto:privacy@wayly.com.au">privacy@wayly.com.au</a>.
+                Wayly Pty Ltd (ABN 66 701 311 373, ACN 701 311 373). Privacy Officer: <a href="mailto:privacy@wayly.com.au">privacy@wayly.com.au</a>.
             </p>
 
             <h2>2. What information we collect</h2>

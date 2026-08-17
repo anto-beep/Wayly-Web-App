@@ -7,19 +7,18 @@ const PRODUCT = [
     { to: "/features", label: "Features" },
     { to: "/ai-tools", label: "AI Tools" },
     { to: "/services", label: "Services" },
-    { to: "/policy", label: "Policy explainers" },
+    { to: "/policy", label: "Policy Explainers" },
     { to: "/pricing", label: "Pricing" },
     { to: "/demo", label: "Demo" },
 ];
 
 const RESOURCES = [
-    { to: "/guides", label: "Caregiver guides" },
+    { to: "/guides", label: "Caregiver Guides" },
     { to: "/faq", label: "FAQ" },
     { to: "/ask-wayly", label: "Ask Wayly" },
-    { to: "/support-at-home-levels", label: "Support at Home levels" },
+    { to: "/support-at-home-levels", label: "Support at Home Levels" },
     { to: "/resources/articles", label: "Articles" },
     { to: "/resources/glossary", label: "Glossary" },
-    { to: "/resources/templates", label: "Templates" },
 ];
 
 const LEGAL_COMPANY = [
@@ -28,8 +27,6 @@ const LEGAL_COMPANY = [
     { to: "/legal/privacy", label: "Privacy Policy" },
     { to: "/legal/ai-disclaimer", label: "AI Disclaimer" },
     { to: "/legal/accessibility", label: "Accessibility Statement" },
-    { to: "/legal/cookies", label: "Cookie Policy" },
-    { to: "/trust", label: "Trust & Security" },
     { to: "/contact", label: "Contact" },
 ];
 
@@ -55,13 +52,13 @@ export default function Footer() {
                         <WaylyLogo size={36} className="rounded-lg" />
                         <span className="font-heading text-xl text-white">Wayly</span>
                     </Link>
-                    <p className="text-sm text-white/80 mt-4 leading-relaxed">
-                        Aged Care, Made Clear.
+                    <p className="font-heading text-2xl sm:text-3xl text-white mt-4 leading-tight tracking-tight">
+                        Aged Care, <span style={{ color: "#E8956B" }}>Made Clear.</span>
                     </p>
                     <div className="mt-5">
                         <AppStoreBadges align="start" />
                     </div>
-                    <p className="text-xs text-white/60 mt-5">ABN: [ABN placeholder]</p>
+                    <p className="text-xs text-white/60 mt-5">ABN 66 701 311 373 · ACN 701 311 373</p>
                     <p className="text-xs text-white/60 mt-1">© 2026 Wayly Pty Ltd. All rights reserved.</p>
                 </div>
 
