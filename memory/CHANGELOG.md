@@ -18,7 +18,12 @@ Scope: large multi-page web redesign approved to ship in tested batches (B1 glob
 - Tools cluster: "Seven More Tools, Grouped the Way Families Think." + bolder text-3xl category headings (Money & Statements, Care Coordination).
 - Pricing teaser: clay "Less Than One Hour With a Consultant." headline, savings framing, 6-point tier cards, per-person value line, Reveal.
 
-**Still queued in B2:** fresh hero + dashboard screenshots from a clean demo account; replace Step 1-3 screenshots with a short how-it-works flow.
+**Still queued in B2:** fresh hero + dashboard screenshots from a clean demo account.
+
+**How It Works (B2, done):** replaced the three large Step 1-3 screenshots on the homepage with a skimmable icon-based 3-step flow (Decode → Check → Understand) with scroll-reveal + a "Try it now, free" CTA (`Landing.jsx`).
+
+**Pricing page (B4, done & verified):** clay headline "…Less Than One Hour With a Consultant."; "Compare the Two Plans" table trimmed (removed Security & Privacy + Adviser Tools groups) with clay category rows and an emphasised Family column; "Managing More Than 2 Participants?" made prominent; removed the "$24.50 each" line under the cards and the "Statement Decoder without creating an account" FAQ. Family plan reads as the obvious pick (RECOMMENDED badge + clearer copy).
+
 
 
 **Remaining (queued): B2 rest** (move Ask Wayly into tools, fresh clean screenshots, problem cards + Title Case, "Six People. One Shared Calm." clay + copy, tools redesign, how-it-works flow, "Try Wayly" fix, richer pricing cards + savings) · **B3 legal artifacts** · **B4 Pricing/Features/About** · **B5 Services/Policy/Guides/FAQ/SAH-levels/Ask-Wayly/Demo/Articles/Glossary** · **B6 carryover** (Streamed Reviewer, Faster First Web Reply, AW-2-on-mobile).

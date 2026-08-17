@@ -147,24 +147,6 @@ const SECTIONS = [
         ],
     },
     {
-        label: "Adviser Tools",
-        rows: [
-            ["Multi-household adviser dashboard", false, false, true],
-            ["Scenario modeller (means test)", false, false, true],
-            ["Client-branded PDF reports", false, false, true],
-            ["Read-only client household access", false, false, true],
-        ],
-    },
-    {
-        label: "Security & Privacy",
-        rows: [
-            ["Australian data hosting (AWS Sydney)", true, true, true],
-            ["AES-256 encryption at rest", true, true, true],
-            ["In-app account & data deletion", true, true, true],
-            ["Privacy Act 1988 compliant", true, true, true],
-        ],
-    },
-    {
         label: "Support",
         rows: [
             ["Help centre access", true, true, true],
@@ -185,8 +167,6 @@ const FAQS = [
       a: "No. Removals take effect at the end of your current fortnightly billing period. You keep full access until then, so nobody loses features mid-cycle. Your next charge simply drops by $24.50 per participant removed." },
     { q: "Can I downgrade from Family to Solo?",
       a: "Yes. If you have exactly one participant on Family, you can switch to Solo directly from Settings and the change takes effect at the end of your current fortnight. If you have two or more participants, remove the extras first, then the switch to Solo becomes available (or we'll automatically move you to Solo when your participant count drops to one)." },
-    { q: "Can I use the Statement Decoder without creating an account?",
-      a: "Yes. You can decode one statement every 120 days without creating an account. The result is shown in full. Features that save or track your results require an account." },
     { q: "What happens if my payment fails?",
       a: "We retry your payment for a few days and email you immediately. Your account stays active during the retry window. If the payment still hasn't gone through after the grace period, the plan moves to PAST_DUE and read-only access continues for 7 days so you don't lose data while you sort it out." },
 ];
@@ -292,8 +272,8 @@ export default function Pricing() {
             <main id="main-content">
             <section className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
                 <span className="overline">Pricing</span>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">
-                    Two Plans. Both Cost Less<br />Than One Hour With a Consultant.
+                <h1 className="font-heading text-4xl sm:text-6xl text-primary-k mt-3 tracking-tight leading-[1.05]">
+                    Two Plans. Both Cost <span style={{ color: "#A5512B" }}>Less Than One Hour</span><br />With a Consultant.
                 </h1>
                 <p className="mt-4 text-xs text-muted-k max-w-xl mx-auto">
                     Wayly is fortnightly billing. All prices in AUD including GST. Card required at signup. 7 day free trial, then $24.50 or $49.50 per fortnight. Cancel any time from your account.
@@ -349,16 +329,13 @@ export default function Pricing() {
                         </div>
                     ))}
                 </div>
-
-                <div className="mt-4 text-center text-xs text-muted-k">
-                    Need more than 2 participants? <a href="#addons" className="underline text-primary-k">Add additional participants at $24.50 per fortnight each</a>
-                </div>
             </section>
 
             {/* Add-on explainer */}
-            <section id="addons" className="mx-auto max-w-6xl px-6 py-12 border-y border-kindred bg-surface" data-testid="addons-section">
-                <h2 className="font-heading text-2xl text-primary-k">Managing more than 2 participants?</h2>
-                <p className="text-sm text-muted-k mt-2">On the Family plan, add each additional participant for $24.50 per fortnight. Everyone shares the same three caregiver seats and the full feature set.</p>
+            <section id="addons" className="mx-auto max-w-6xl px-6 py-14 border-y border-kindred bg-surface" data-testid="addons-section">
+                <span className="overline">Bigger Households</span>
+                <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-2 tracking-tight">Managing More Than <span style={{ color: "#A5512B" }}>2 Participants</span>?</h2>
+                <p className="text-base text-muted-k mt-3 max-w-2xl">On the Family plan, add each additional participant for just $24.50 per fortnight. Everyone shares the same three caregiver seats and the full feature set.</p>
                 <div className="grid sm:grid-cols-3 gap-5 mt-6 text-sm">
                     {[
                         { icon: Plus, title: "Add from your account settings", body: "No new logins needed. Manage everyone from one dashboard." },
@@ -378,29 +355,28 @@ export default function Pricing() {
 
             {/* Feature comparison */}
             <section className="mx-auto max-w-6xl px-6 py-16" data-testid="pricing-table">
-                <h2 className="font-heading text-3xl text-primary-k">Full Feature Comparison</h2>
-                <p className="text-sm text-muted-k mt-1 mb-6">Every feature, mapped to every plan.</p>
+                <h2 className="font-heading text-3xl sm:text-4xl text-primary-k tracking-tight">Compare the <span style={{ color: "#A5512B" }}>Two Plans</span></h2>
+                <p className="text-sm text-muted-k mt-1 mb-6">The Family plan does everything Solo does, for two people and up to three caregivers.</p>
                 <div className="overflow-x-auto rounded-2xl border border-kindred bg-surface">
                     <table className="w-full text-sm">
                         <thead className="bg-surface-2 sticky top-0">
                             <tr>
                                 <th className="text-left px-4 py-3 font-medium text-primary-k">Feature</th>
-                                {["Solo", "Family"].map((h) => (
-                                    <th key={h} className="px-3 py-3 text-center font-medium text-primary-k">{h}</th>
-                                ))}
+                                <th className="px-3 py-3 text-center font-medium text-primary-k">Solo</th>
+                                <th className="px-3 py-3 text-center font-semibold text-white bg-primary-k rounded-t-lg">Family <span className="text-gold">★</span></th>
                             </tr>
                         </thead>
                         <tbody>
                             {SECTIONS.filter((s) => !/adviser/i.test(s.label)).map((s) => (
                                 <React.Fragment key={s.label}>
-                                    <tr className="bg-primary-k/5">
-                                        <td colSpan={3} className="px-4 py-2 text-[11px] uppercase tracking-wider text-primary-k font-semibold">{s.label}</td>
+                                    <tr className="bg-[#A5512B]/8">
+                                        <td colSpan={3} className="px-4 py-2.5 text-xs uppercase tracking-wider font-bold" style={{ color: "#A5512B" }}>{s.label}</td>
                                     </tr>
                                     {s.rows.map(([label, ...vals], idx) => (
                                         <tr key={`${s.label}-${idx}`} className="border-t border-kindred">
                                             <td className="px-4 py-2.5 text-primary-k">{label}</td>
                                             {vals.slice(0, 2).map((v, i) => (
-                                                <td key={i} className="px-3 py-2.5 text-center">
+                                                <td key={i} className={`px-3 py-2.5 text-center ${i === 1 ? "bg-primary-k/[0.03]" : ""}`}>
                                                     <Cell v={v} />
                                                 </td>
                                             ))}

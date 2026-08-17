@@ -103,7 +103,7 @@ export default function Landing() {
                         <span className="overline">Three quick ways in</span>
                         <h2 className="font-heading text-3xl sm:text-4xl text-[#0E2A47] mt-3">Which describes you best?</h2>
                         <p className="mt-3 text-base text-[#4A5A75] max-w-xl leading-relaxed">
-                            Australia's aged-care system was rebuilt on 1 November 2025. Pick the path that fits your household and we will tailor the next step for you.
+                            Australia&apos;s aged-care system was rebuilt on 1 November 2025. Pick the path that fits your household and we will tailor the next step for you.
                         </p>
 
                         {/* Persona on-ramp */}
@@ -142,7 +142,7 @@ export default function Landing() {
 
             {/* PROBLEM */}
             <section className="mx-auto max-w-7xl px-6 py-16">
-                <span className="overline">The Problem We're Solving</span>
+                <span className="overline">The Problem We&apos;re Solving</span>
                 <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">
                     The new Support at Home program is more flexible, and <span style={{ color: "#A5512B" }}>far more complex</span>.
                 </h2>
@@ -233,77 +233,42 @@ export default function Landing() {
                 <ToolClusterGrid />
             )}
 
-            {/* HOW IT WORKS, three screenshot steps */}
+            {/* HOW IT WORKS, skimmable step flow (no screenshots) */}
             <section className="mx-auto max-w-7xl px-6 py-16" data-testid="how-it-works">
-
-                {/* Step 1, screenshot RIGHT, copy LEFT.
-                    Sized to match the "Reports" section (lg:col-span-7 image). */}
-                <div className="mt-14 grid lg:grid-cols-12 gap-10 items-center">
-                    <div className="lg:col-span-5 min-w-0">
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-accent-aa-bold">Step 01</div>
-                        <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Forward your statement. Get plain English in 90 seconds.</h3>
-                        <p className="mt-4 text-muted-k leading-relaxed">Drop in your provider's monthly PDF, CSV or pasted text. Wayly extracts every line item, breaks it down by stream, and explains it like a friend who's been through this before.</p>
-                    </div>
-                    <div className="lg:col-span-7 min-w-0">
-                        <RevealOnScroll>
-                            <img
-                                src="/marketing/03-statement-decoder-tool.png"
-                                alt="Statement decoder result with line-by-line breakdown and anomaly flags"
-                                width="1440"
-                                height="900"
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full aspect-[16/10] object-cover object-top rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-kindred"
-                                data-testid="step-1-screenshot"
-                            />
-                        </RevealOnScroll>
-                    </div>
+                <div className="max-w-2xl">
+                    <span className="overline">How It Works</span>
+                    <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">
+                        Three Steps to <span style={{ color: "#A5512B" }}>Calm</span>.
+                    </h2>
+                    <p className="mt-3 text-base text-muted-k leading-relaxed">
+                        No spreadsheets, no jargon, no finance degree. Here is the whole thing, start to finish.
+                    </p>
                 </div>
-
-                {/* Step 2, screenshot LEFT, copy RIGHT. */}
-                <div className="mt-20 grid lg:grid-cols-12 gap-10 items-center">
-                    <div className="lg:col-span-7 min-w-0 lg:order-1 order-2">
-                        <RevealOnScroll>
-                            <img
-                                src="/marketing/07-budget-alerts.png"
-                                alt="Budget alert detail showing a flagged rate increase against the published price"
-                                width="1440"
-                                height="900"
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full aspect-[16/10] object-cover object-top rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-kindred"
-                                data-testid="step-2-screenshot"
-                            />
+                <ol className="mt-10 grid gap-6 md:grid-cols-3" data-testid="how-it-works-steps">
+                    {[
+                        { n: "01", t: "Decode", Icon: FileSearch, h: "Drop in a statement", b: "Forward your provider's monthly PDF, photo or pasted text. Wayly reads every line and explains it in plain English in about 60 seconds, no account needed for your first one." },
+                        { n: "02", t: "Check", Icon: ShieldCheck, h: "Catch what's off", b: "Wayly checks each charge against the published price and your budget, flagging rate rises, duplicates and unused funding, with the receipts, so you know exactly what to query before you pay." },
+                        { n: "03", t: "Understand", Icon: MessageCircle, h: "Ask anything, share with family", b: "Ask Wayly a plain question (\"is a handrail covered?\") grounded in the Aged Care Act 2024, then loop in siblings or an adviser so everyone sees the same clear picture." },
+                    ].map((s, i) => (
+                        <RevealOnScroll key={s.n} delay={i * 90}>
+                            <li className="h-full rounded-2xl border border-kindred bg-surface p-6 hover:-translate-y-1 hover:shadow-lg transition-all">
+                                <div className="flex items-center justify-between">
+                                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#A5512B]/12" style={{ color: "#A5512B" }}>
+                                        <s.Icon className="h-5 w-5" aria-hidden="true" />
+                                    </span>
+                                    <span className="font-heading text-4xl text-primary-k/10">{s.n}</span>
+                                </div>
+                                <div className="mt-4 text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: "#A5512B" }}>{s.t}</div>
+                                <h3 className="mt-1 font-heading text-2xl text-primary-k tracking-tight">{s.h}</h3>
+                                <p className="mt-3 text-sm text-muted-k leading-relaxed">{s.b}</p>
+                            </li>
                         </RevealOnScroll>
-                    </div>
-                    <div className="lg:col-span-5 min-w-0 lg:order-2 order-1">
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-accent-aa-bold">Step 02</div>
-                        <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Wayly watches for anything unusual, so you don't have to.</h3>
-                        <p className="mt-4 text-muted-k leading-relaxed">Rate increases. Duplicate visits. Rollover risk. Lifetime cap creep. We compare every charge against the published price and flag what doesn't add up, with the receipts.</p>
-                    </div>
-                </div>
-
-                {/* Step 3, screenshot RIGHT, copy LEFT. */}
-                <div className="mt-20 grid lg:grid-cols-12 gap-10 items-center">
-                    <div className="lg:col-span-5 min-w-0">
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-accent-aa-bold">Step 03</div>
-                        <h3 className="font-heading text-3xl text-primary-k mt-3 tracking-tight leading-tight">Your whole family, on the same page.</h3>
-                        <p className="mt-4 text-muted-k leading-relaxed">Loop in siblings, advisors, and even your parent's GP. Wayly answers the practical questions ("is a handrail covered?") so the conversation stays on what really matters.</p>
-                    </div>
-                    <div className="lg:col-span-7 min-w-0">
-                        <RevealOnScroll>
-                            <img
-                                src="/marketing/09-family-wall.png"
-                                alt="Family wall with shared notes, photos and voice updates from siblings"
-                                width="1440"
-                                height="900"
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full aspect-[16/10] object-cover object-top rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-kindred"
-                                data-testid="step-3-screenshot"
-                            />
-                        </RevealOnScroll>
-                    </div>
+                    ))}
+                </ol>
+                <div className="mt-8">
+                    <Link to="/ai-tools/statement-decoder" className="inline-flex items-center gap-2 rounded-full bg-primary-k text-white px-6 py-3 text-sm font-semibold hover:bg-[#091D33] transition-colors" data-testid="how-it-works-cta">
+                        Try it now, free <ArrowRight className="h-4 w-4" />
+                    </Link>
                 </div>
             </section>
 
@@ -432,7 +397,7 @@ export default function Landing() {
                             Decode a Statement Now, <span style={{ color: "#A5512B" }}>No Signup Needed</span>.
                         </h2>
                         <p className="mt-3 text-base text-muted-k leading-relaxed max-w-2xl">
-                            Paste any Support at Home statement and get plain English in about 60 seconds, no account required. The rest of Wayly's tools are included free with your account.
+                            Paste any Support at Home statement and get plain English in about 60 seconds, no account required. The rest of Wayly&apos;s tools are included free with your account.
                         </p>
                     </div>
                     <Link to="/ai-tools" className="text-[#A5512B] font-semibold underline text-sm">See all {TOOL_COUNT} tools →</Link>
@@ -467,7 +432,7 @@ export default function Landing() {
                             Less Than One Hour With a <span style={{ color: "#A5512B" }}>Consultant</span>.
                         </h2>
                         <p className="mt-4 text-base text-muted-k leading-relaxed max-w-2xl mx-auto">
-                            An aged-care consultant charges $150 to $250 for a single hour. Wayly is a few dollars a week, and it's there every day, catching overcharges and unused funding that can quietly cost hundreds each quarter.
+                            An aged-care consultant charges $150 to $250 for a single hour. Wayly is a few dollars a week, and it&apos;s there every day, catching overcharges and unused funding that can quietly cost hundreds each quarter.
                         </p>
                     </div>
                     <div className="mt-12 grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
