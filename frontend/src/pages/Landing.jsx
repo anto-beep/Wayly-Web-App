@@ -142,20 +142,22 @@ export default function Landing() {
 
             {/* PROBLEM */}
             <section className="mx-auto max-w-7xl px-6 py-16">
-                <span className="overline">The problem we're solving</span>
+                <span className="overline">The Problem We're Solving</span>
                 <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">
-                    The new Support at Home program is more flexible, and far more complex.
+                    The new Support at Home program is more flexible, and <span style={{ color: "#A5512B" }}>far more complex</span>.
                 </h2>
                 <div className="mt-10 grid md:grid-cols-3 gap-6">
                     {[
-                        { t: "For the family caregiver", b: "You are working full-time. Your parent's statement is in your inbox. You don't know what 80% of it means. The siblings are calling with opinions." },
-                        { t: "For the participant", b: "Eight classifications, three streams, dozens of service codes. Government calculators don't help; the funding goes underused." },
-                        { t: "For the financial advisor", b: "Lifetime caps, quarterly budgets, contribution scaling, indexation. Your spreadsheet just got a lot more complex." },
+                        { t: "For the Family Caregiver", b: "You love someone who needs help, so you stepped in. Now a statement lands in your inbox and you're not sure what most of it means, whether a charge is fair, or what to do next. You just want to get it right for them." },
+                        { t: "For the Participant", b: "You want to stay in control of your own care and your own money. But eight classifications, three funding streams and dozens of service codes make it hard to see what you're entitled to, or whether your budget is being used well." },
+                        { t: "For the Family", b: "You live in another suburb, or another state. You want to help without taking over, and to know that nothing important is being missed, without living in a group chat of half-answers and worry." },
                     ].map((c) => (
-                        <div key={c.t} className="bg-surface border border-kindred rounded-xl p-6">
-                            <h3 className="font-heading text-xl text-primary-k">{c.t}</h3>
-                            <p className="mt-3 text-sm text-muted-k leading-relaxed">{c.b}</p>
-                        </div>
+                        <RevealOnScroll key={c.t}>
+                            <div className="h-full bg-surface border border-kindred rounded-xl p-6 hover:border-[#A5512B]/40 transition-colors">
+                                <h3 className="font-heading text-xl text-[#A5512B]">{c.t}</h3>
+                                <p className="mt-3 text-sm text-muted-k leading-relaxed">{c.b}</p>
+                            </div>
+                        </RevealOnScroll>
                     ))}
                 </div>
             </section>
@@ -164,9 +166,9 @@ export default function Landing() {
                 Design ref: verify-athlete "Six users. One shared truth." */}
             <section className="mx-auto max-w-7xl px-6 py-20" data-testid="ecosystem-section">
                 <div className="text-center max-w-2xl mx-auto">
-                    <span className="overline">Built for the whole household</span>
-                    <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight leading-tight">
-                        Six people. One shared calm.
+                    <span className="overline">Built for the Whole Household</span>
+                    <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight leading-tight">
+                        Six People. <span style={{ color: "#A5512B" }}>One Shared Calm.</span>
                     </h2>
                     <p className="mt-4 text-base text-muted-k leading-relaxed">
                         Aged care is never just one person&apos;s problem. Wayly gives each
@@ -175,19 +177,19 @@ export default function Landing() {
                 </div>
                 <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {[
-                        { name: "Participants", body: "Own your care record. Read your statement over breakfast without a translator." },
-                        { name: "Caregivers", body: "Read the paperwork once, act with confidence. The 11pm envelope handled in ten minutes." },
-                        { name: "Family", body: "Everyone on the same page without three group chats. See what mum sees." },
-                        { name: "Advisers", body: "White-label reports, contribution modelling, and letters your clients can send." },
-                        { name: "Providers", body: "A calmer conversation with participants who arrive already understanding their statement." },
-                        { name: "Clinicians", body: "See the classification, care plan, and services in one glance before the next review." },
+                        { name: "Participants", body: "It's your care and your money. Read your own statement over breakfast, see where your budget is going, and stay in charge, no translator needed." },
+                        { name: "Caregivers", body: "That 11pm envelope, understood in ten minutes. Know what's fair, what to query, and what to do next, without a finance degree." },
+                        { name: "Family", body: "Everyone on the same page without three group chats. See exactly what your loved one sees, even from another state." },
+                        { name: "Advisers", body: "White-label reports, contribution modelling and ready-to-send letters, so clients act on clear numbers, not guesswork." },
+                        { name: "Providers", body: "Calmer conversations with participants who arrive already understanding their statement and their budget." },
+                        { name: "Clinicians", body: "Classification, care plan and services in one glance before the next review, so nothing gets missed." },
                     ].map((p) => (
+                        <RevealOnScroll key={p.name}>
                         <div
-                            key={p.name}
                             data-testid={`ecosystem-card-${p.name.toLowerCase()}`}
-                            className="rounded-2xl border border-kindred bg-surface p-6 hover:border-primary-k/40 transition-colors"
+                            className="h-full rounded-2xl border border-kindred bg-surface p-6 hover:border-[#A5512B]/50 transition-colors"
                         >
-                            <div className="text-xs uppercase tracking-[0.18em] text-muted-k">
+                            <div className="text-xs uppercase tracking-[0.18em] text-[#A5512B] font-semibold">
                                 Wayly for
                             </div>
                             <h3 className="mt-2 font-heading text-2xl text-primary-k tracking-tight">
@@ -197,6 +199,7 @@ export default function Landing() {
                                 {p.body}
                             </p>
                         </div>
+                        </RevealOnScroll>
                     ))}
                 </div>
             </section>
@@ -331,8 +334,8 @@ export default function Landing() {
             {/* SEE THE DASHBOARD, full-width strip with wipe reveal */}
             <section className="mx-auto max-w-7xl px-6 py-16" data-testid="dashboard-strip">
                 <div className="text-center max-w-2xl mx-auto">
-                    <span className="overline">The product</span>
-                    <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">One calm dashboard for everything.</h2>
+                    <span className="overline">The Product</span>
+                    <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">One Calm Dashboard for <span style={{ color: "#A5512B" }}>Everything</span>.</h2>
                 </div>
                 <div className="mt-10 max-w-5xl mx-auto">
                     <RevealOnScroll>
@@ -424,26 +427,33 @@ export default function Landing() {
             <section className="mx-auto max-w-7xl px-6 py-16">
                 <div className="flex items-end justify-between flex-wrap gap-4">
                     <div>
-                        <span className="overline">Free AI tools</span>
-                        <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight max-w-2xl">
-                            Try Wayly without signing up.
+                        <span className="overline">Free to Try</span>
+                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight max-w-2xl">
+                            Decode a Statement Now, <span style={{ color: "#A5512B" }}>No Signup Needed</span>.
                         </h2>
+                        <p className="mt-3 text-base text-muted-k leading-relaxed max-w-2xl">
+                            Paste any Support at Home statement and get plain English in about 60 seconds, no account required. The rest of Wayly's tools are included free with your account.
+                        </p>
                     </div>
-                    <Link to="/ai-tools" className="text-primary-k underline text-sm">See all {TOOL_COUNT} tools →</Link>
+                    <Link to="/ai-tools" className="text-[#A5512B] font-semibold underline text-sm">See all {TOOL_COUNT} tools →</Link>
                 </div>
                 <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {[
-                        { to: "/ai-tools/statement-decoder", title: "Statement Decoder", body: "Paste any monthly statement. Get plain English in 60 seconds." },
-                        { to: "/ai-tools/budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual, quarterly, per-stream, lifetime cap projection." },
-                        { to: "/ai-tools/provider-price-checker", title: "Provider Price Checker", body: "Tell us what you are charged. We will tell you whether it's fair." },
+                        { to: "/ai-tools/statement-decoder", title: "Statement Decoder", body: "Paste any monthly statement. Get plain English in 60 seconds.", free: true },
+                        { to: "/ai-tools/budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual, quarterly, per-stream and lifetime-cap projection.", free: false },
+                        { to: "/ai-tools/provider-price-checker", title: "Provider Price Checker", body: "Tell us what you're charged. We'll tell you whether it's fair.", free: false },
                     ].map((t) => (
-                        <Link key={t.to} to={t.to} className="bg-surface border border-kindred rounded-xl p-6 hover:-translate-y-1 hover:shadow-lg transition-all" data-testid={`tool-teaser-${t.to.split('/').pop()}`}>
-                            <h3 className="font-heading text-xl text-primary-k">{t.title}</h3>
+                        <RevealOnScroll key={t.to}>
+                        <Link to={t.to} className="block h-full bg-surface border border-kindred rounded-xl p-6 hover:-translate-y-1 hover:shadow-lg transition-all" data-testid={`tool-teaser-${t.to.split('/').pop()}`}>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-heading text-xl text-primary-k">{t.title}</h3>
+                            </div>
                             <p className="mt-2 text-sm text-muted-k leading-relaxed">{t.body}</p>
-                            <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary-k">
-                                Try free <ArrowRight className="h-3.5 w-3.5" />
+                            <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold" style={{ color: "#A5512B" }}>
+                                {t.free ? "Try free, no signup" : "Free with your account"} <ArrowRight className="h-3.5 w-3.5" />
                             </div>
                         </Link>
+                        </RevealOnScroll>
                     ))}
                 </div>
             </section>
@@ -453,9 +463,12 @@ export default function Landing() {
                 <div className="mx-auto max-w-7xl px-6 py-16">
                     <div className="text-center">
                         <span className="overline">Pricing</span>
-                        <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
-                            Choose how Wayly helps your family.
+                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">
+                            Less Than One Hour With a <span style={{ color: "#A5512B" }}>Consultant</span>.
                         </h2>
+                        <p className="mt-4 text-base text-muted-k leading-relaxed max-w-2xl mx-auto">
+                            An aged-care consultant charges $150 to $250 for a single hour. Wayly is a few dollars a week, and it's there every day, catching overcharges and unused funding that can quietly cost hundreds each quarter.
+                        </p>
                     </div>
                     <div className="mt-12 grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
                         {[
@@ -466,7 +479,7 @@ export default function Landing() {
                                 cadence: "per fortnight",
                                 href: "/signup?plan=solo",
                                 cta: "Get started",
-                                bullets: ["All nine Wayly tools", "One participant, one caregiver seat", "Data stays in Australia"],
+                                bullets: ["All nine Wayly tools, unlocked", "Statement Decoder + anomaly flagging", "Budget, contribution and lifetime-cap tracking", "Ask Wayly, grounded in the Aged Care Act 2024", "One participant, one caregiver seat", "Your data stays in Australia"],
                             },
                             {
                                 key: "family",
@@ -475,15 +488,15 @@ export default function Landing() {
                                 cadence: "per fortnight",
                                 href: "/signup?plan=family",
                                 cta: "Get started",
-                                badge: "Recommended",
+                                badge: "Most families choose this",
                                 featured: true,
-                                bullets: ["Everything in Solo", "Two full participants, three caregiver seats", "Additional participants at $24.50 per fortnight each"],
+                                bullets: ["Everything in Solo, for two people", "Two full participants included", "Three caregiver seats, share with siblings", "One shared, always-current source of truth", "Ideal for couples or two parents", "Best value per person"],
                             },
                         ].map((t) => (
+                            <RevealOnScroll key={t.key}>
                             <div
-                                key={t.key}
                                 data-testid={`landing-tier-${t.key}`}
-                                className={`relative rounded-2xl border p-6 ${t.featured ? "bg-primary-k text-white border-gold shadow-xl" : "bg-surface border-kindred"}`}
+                                className={`relative h-full rounded-2xl border p-6 ${t.featured ? "bg-primary-k text-white border-gold shadow-xl" : "bg-surface border-kindred"}`}
                             >
                                 {t.badge && (
                                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-white text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-semibold whitespace-nowrap">
@@ -495,6 +508,9 @@ export default function Landing() {
                                     <span className={`font-heading text-4xl ${t.featured ? "text-white" : "text-primary-k"}`}>{t.price}</span>
                                     <span className={`text-sm ${t.featured ? "text-white/70" : "text-muted-k"}`}>{t.cadence || "/month"}</span>
                                 </div>
+                                {t.featured && (
+                                    <p className="mt-1 text-xs text-gold font-semibold">Just $24.75 per person, per fortnight</p>
+                                )}
                                 <ul className="mt-4 space-y-2 text-sm">
                                     {t.bullets.map((b) => (
                                         <li key={b} className={`flex gap-2 ${t.featured ? "text-white/90" : "text-muted-k"}`}>
@@ -511,10 +527,12 @@ export default function Landing() {
                                     {user ? `Buy ${t.name}` : t.cta}
                                 </Link>
                             </div>
+                            </RevealOnScroll>
                         ))}
                     </div>
-                    <div className="text-center mt-10">
-                        <Link to="/pricing" className="text-primary-k underline">See full pricing &rarr;</Link>
+                    <div className="text-center mt-8">
+                        <p className="text-sm text-muted-k">Every plan starts with a free 7-day trial. Cancel anytime.</p>
+                        <Link to="/pricing" className="inline-block mt-3 text-[#A5512B] font-semibold underline">See full pricing &rarr;</Link>
                     </div>
                 </div>
             </section>

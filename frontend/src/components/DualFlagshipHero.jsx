@@ -42,10 +42,6 @@ export default function DualFlagshipHero() {
         try { track?.event?.("hero_flagship_click", { flagship, persona }); } catch { /* non-fatal */ }
     }, [persona]);
 
-    const onAskWaylyClick = useCallback(() => {
-        try { track?.event?.("ask_wayly_home_click", { persona }); } catch { /* non-fatal */ }
-    }, [persona]);
-
     return (
         <section
             className="relative overflow-hidden bg-gradient-to-br from-surface-2 via-surface to-surface-2 border-b border-kindred"
@@ -117,23 +113,6 @@ export default function DualFlagshipHero() {
                         onClick={() => onFlagshipClick("invoice_checker")}
                         accent="clay"
                     />
-                </div>
-
-                {/* Ask Wayly, tertiary conversational entry */}
-                <div className="mt-8 flex flex-wrap items-center gap-3" data-testid="hero-ask-wayly-row">
-                    <Link
-                        to="/ai-tools/family-coordinator"
-                        onClick={onAskWaylyClick}
-                        data-testid="hero-ask-wayly-cta"
-                        className="inline-flex items-center gap-2 rounded-full border border-primary-k bg-surface text-primary-k px-5 py-2.5 text-sm font-medium hover:bg-primary-k hover:text-white transition-colors"
-                    >
-                        <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                        Ask Wayly a question
-                        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </Link>
-                    <span className="text-xs text-muted-k">
-                        Plain-English answers grounded in the Aged Care Act 2024
-                    </span>
                 </div>
 
                 {/* Trust strip: three promises presented as high-contrast pills with icons. */}

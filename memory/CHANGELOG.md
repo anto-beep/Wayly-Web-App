@@ -8,8 +8,18 @@ Scope: large multi-page web redesign approved to ship in tested batches (B1 glob
 - Floating Help + Accessibility widgets now fade out while scrolling and return when idle (`components/ScrollHideWidgets.jsx`, wired in App.js). Reduced-motion aware.
 - Reusable scroll-reveal component (`components/Reveal.jsx`, IntersectionObserver, reduced-motion aware) for use across all marketing pages.
 
-**Homepage hero (B2, in progress):**
-- "Aged Care, Made Clear." promoted from a tiny eyebrow to the dominant H1 display: font-black uppercase up to text-8xl, clay "MADE CLEAR." with a clay→peach gradient underline flourish, Reveal entrance. Prior value-prop headline demoted to a supporting line. (`components/DualFlagshipHero.jsx`)
+**Homepage (B2, done & verified):**
+- Hero "Aged Care, Made Clear." promoted to dominant H1 (font-black, up to text-8xl, clay + gradient underline, Reveal).
+- Removed the poorly-placed hero "Ask Wayly a question" row (Ask Wayly is already featured in the tools cluster).
+- "The Problem We're Solving" cards: Title Case + relatable, less-specific copy ("For the Family Caregiver/Participant/Family"), clay headings + hover.
+- "Six People. One Shared Calm." Title Case, larger, clay accent, rewritten relatable per-persona copy, RevealOnScroll.
+- "One Calm Dashboard for Everything." Title Case + clay.
+- "Try Wayly without signing up" replaced with accurate "Decode a Statement Now, No Signup Needed" (only Decoder is no-signup; others "Free with your account").
+- Tools cluster: "Seven More Tools, Grouped the Way Families Think." + bolder text-3xl category headings (Money & Statements, Care Coordination).
+- Pricing teaser: clay "Less Than One Hour With a Consultant." headline, savings framing, 6-point tier cards, per-person value line, Reveal.
+
+**Still queued in B2:** fresh hero + dashboard screenshots from a clean demo account; replace Step 1-3 screenshots with a short how-it-works flow.
+
 
 **Remaining (queued): B2 rest** (move Ask Wayly into tools, fresh clean screenshots, problem cards + Title Case, "Six People. One Shared Calm." clay + copy, tools redesign, how-it-works flow, "Try Wayly" fix, richer pricing cards + savings) · **B3 legal artifacts** · **B4 Pricing/Features/About** · **B5 Services/Policy/Guides/FAQ/SAH-levels/Ask-Wayly/Demo/Articles/Glossary** · **B6 carryover** (Streamed Reviewer, Faster First Web Reply, AW-2-on-mobile).
 

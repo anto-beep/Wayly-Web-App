@@ -77,12 +77,12 @@ export default function ToolClusterGrid() {
 
     return (
         <section className="mx-auto max-w-7xl px-6 py-20" data-testid="tool-cluster-grid">
-            <span className="overline">Everything else Wayly does</span>
-            <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">
-                Seven more tools, grouped the way families think.
+            <span className="overline">Everything Else Wayly Does</span>
+            <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 max-w-3xl tracking-tight">
+                Seven More Tools, <span style={{ color: "#A5512B" }}>Grouped the Way Families Think</span>.
             </h2>
             <p className="mt-3 text-base text-muted-k max-w-2xl leading-relaxed">
-                The Statement Decoder and Invoice Checker are the front door. Once you&apos;re inside, these are the tools waiting to help with the rest of your parent&apos;s care.
+                The Statement Decoder is your front door. Once you&apos;re inside, these are the tools waiting to help with the rest of your loved one&apos;s care.
             </p>
 
             <div className="mt-12 space-y-14" data-testid="clusters">
@@ -92,7 +92,7 @@ export default function ToolClusterGrid() {
                     return (
                         <div key={cluster.id} data-testid={`cluster-${cluster.id}`}>
                             <div className="flex-1 min-w-0">
-                                <h3 className={`font-heading text-2xl ${tone.eyebrow} tracking-tight`}>{cluster.title}</h3>
+                                <h3 className={`font-heading text-3xl font-bold ${tone.eyebrow} tracking-tight`}>{cluster.title}</h3>
                                 <p className="mt-2 text-sm text-muted-k leading-relaxed max-w-2xl">{cluster.blurb}</p>
                             </div>
                             <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
