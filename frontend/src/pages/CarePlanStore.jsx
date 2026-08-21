@@ -141,6 +141,16 @@ export default function CarePlanStore() {
         }
     };
 
+    const hardDelete = async (id) => {
+        if (!window.confirm("Delete this review permanently? This can't be undone. The plan document itself is not deleted from wherever you got it.")) return;
+        try {
+            await api.delete(`/care-plans/${id}?hard=true`);
+            await load();
+        } catch (e) {
+            alert(e?.response?.data?.detail || e?.message || "Delete failed.");
+        }
+    };
+
     const toggleSelectForCompare = (id) => {
         setSelected((prev) => {
             if (prev.includes(id)) return prev.filter((p) => p !== id);
@@ -386,6 +396,7 @@ export default function CarePlanStore() {
                                 {!compareMode && (
                                 <div className="flex items-center gap-1.5">
                                     {plan.status === "deleted" ? (
+                                        <>
                                         <button
                                             type="button"
                                             onClick={() => restore(plan.id)}
@@ -395,6 +406,17 @@ export default function CarePlanStore() {
                                             <ArchiveRestore className="h-3.5 w-3.5" />
                                             Restore
                                         </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => hardDelete(plan.id)}
+                                            className="inline-flex items-center gap-1.5 text-xs text-muted-k hover:text-terracotta transition-colors"
+                                            data-testid={`btn-hard-delete-${plan.id}`}
+                                            title="Delete permanently"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                            Delete forever
+                                        </button>
+                                        </>
                                     ) : (
                                         <button
                                             type="button"

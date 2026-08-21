@@ -149,6 +149,6 @@ def test_registry_seeded_min_30_rules_across_6_categories():
     assert len(rules) >= 30, f"expected >= 30 seeded rules, got {len(rules)}"
     cats = {r.get("category_id") for r in rules}
     assert len(cats) >= 6, f"expected rules across >= 6 categories, got {cats}"
-    # Every category awaits solicitor sign-off at category level.
+    # Category sign-off received (20/06/2026); registry-bound citations now flow.
     for c in cpr_rules.load_categories().values():
-        assert c.get("solicitor_signed_off") is False
+        assert c.get("solicitor_signed_off") is True

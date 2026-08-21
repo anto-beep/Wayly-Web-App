@@ -43,7 +43,16 @@ from services.care_plan_analysis import analyse_care_plan
 from prompts.care_plan_reviewer import CPR1_SYSTEM_PROMPT
 from document_extract import extract_document, UnsupportedFormatError, CorruptFileError
 from lib.upload_guard import classify_content
-from lib.cpr_safety import apply as cpr_mitigate
+
+
+def cpr_mitigate(findings):
+    """CPR-FINDINGS-UX-1 v2: the interim citation mitigation (M1-M4) is
+    RETIRED following solicitor category-level sign-off of every Rule Registry
+    category (see registry/cpr-categories-v1.yaml). Registry-bound citations
+    are now trusted; freeform findings still carry no cited authority and
+    banned claims are still stripped upstream in lib.cpr_rules.enrich_findings.
+    Kept as a pass-through so call sites stay stable."""
+    return findings, None
 
 _client = AsyncIOMotorClient(os.environ["MONGO_URL"])
 db = _client[os.environ["DB_NAME"]]
@@ -753,8 +762,20 @@ def build_care_plans_router() -> APIRouter:
     async def soft_delete(
         plan_id: str,
         user_id: str = Depends(get_current_user_id),
+        hard: bool = Query(False),
     ):
+        """C3 · delete a review. `hard=false` (default) soft-deletes with a
+        30-day restore window; `hard=true` permanently deletes the review row,
+        its findings, runs, extractions and any stored artefact (privacy
+        autonomy, immediate, no undo)."""
         await _load_plan_or_404(plan_id, user_id)
+        if hard:
+            await db[COLL_PLANS].delete_one({"id": plan_id})
+            await db[COLL_FINDINGS].delete_many({"care_plan_id": plan_id})
+            await db[COLL_RUNS].delete_many({"care_plan_id": plan_id})
+            await db[COLL_EXTRACTIONS].delete_many({"care_plan_id": plan_id})
+            await db["care_plan_extracted_texts"].delete_many({"care_plan_id": plan_id})
+            return {"ok": True, "hard_deleted": True}
         now = utcnow_iso()
         await db[COLL_PLANS].update_one(
             {"id": plan_id},

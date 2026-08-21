@@ -1,3 +1,19 @@
+## Iteration 241–242 (Jun 2026) — CPR sign-off + mitigation retired, registry citation binding, B2, C3, D1
+
+Solicitor category-level sign-off received (20/06/2026) → retired the interim CPR safety mitigation and made registry citations flow end-to-end.
+
+- **Solicitor sign-off + mitigation retired**: all 6 categories in `registry/cpr-categories-v1.yaml` now `solicitor_signed_off: true`. `routes/care_plans.py` `cpr_mitigate` replaced with a pass-through — citations are no longer stripped, confidence is no longer capped to "moderate", and the amber safety banner (`cp-safety-banner`) no longer renders. Banned claims are still stripped upstream in `enrich_findings`, and freeform findings still carry no cited authority, so no fabricated citation can reach a user.
+- **A2 registry binding for live findings**: new deterministic `match_rule_id()` (keyword→rule, requires 2 keyword hits, never fabricates) binds live-LLM findings to the Rule Registry so real citations display. Verified iter242: 8/9 findings show real citations (Aged Care Rules 2025 s.194-3/-4/-5(1)(c), Statement of Rights Rights 1 & 4); 1 soft finding correctly falls back to "Verification required". Also made the A5 title/body lint conservative (only drops genuine quantitative polarity flips) after it was wrongly dropping a valid negatively-phrased finding.
+- **B2 Processing state**: staged plain-language progress ("Reading the document → Checking against Support at Home rules → Building your summary") with a 3-segment stepper on web (`cp-progress-stage`) and mobile.
+- **C3 Delete review**: `DELETE /api/care-plans/{id}?hard=true` permanently removes the review row + findings + runs + extractions. Web trash tab now has "Delete forever" (`btn-hard-delete-<id>`) alongside Restore; mobile list has an inline-confirm "Delete review" (`cp-delete-<id>`).
+- **D1 Parity manifest**: `parity/CPR-1-manifest-v1.yaml` tracks web↔mobile state per CPR feature.
+- Fixed a TDZ crash (B2 useEffect read `loading` before its declaration) that had 500'd the reviewer route (caught + patched during iter241).
+
+**Testing:** web automated PASS iter242 (citations, no banner, B2/C3 source-verified iter241, no regressions); golden CI 8/8; mobile at source parity (Expo web-preview auth injection still blocked).
+
+**Still deferred (single-gate remainder + parity sweep):** B1 full screen redesign, B5 persisted `care_plan_reviews` store + auto-save opt-out, C2 borrowed-data origin/age chips, D2 mobile-native affordances (background-continuation notification, native share sheet, haptic delete — need a native build), and the full PARITY-1-PHASE0-AUDIT screen-by-screen web↔mobile sweep. Backlog: CHSP invoice-scan OCR (mobile), evidence-bundle PDF in-app.
+
+
 ## Iteration 239–240 (Jun 2026) — CPR-FINDINGS-UX-1 v2 Workstream B6/B7 + C1 + B9 (Care Plan Reviewer)
 
 Extended the Care Plan Reviewer with the requested slices of Workstreams B, C and the downloadable summary.

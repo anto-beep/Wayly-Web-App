@@ -6,46 +6,50 @@
 # New rules added inside an already-signed-off category do not require
 # re-sign-off unless they introduce a new `source_type` or a new legal claim
 # (see `introduces_new_source_type` / `introduces_new_legal_claim` on the rule).
+#
+# 20/06/2026 — Solicitor category-level sign-off received for all six
+# categories (founder-relayed). The interim citation mitigation (M1-M4) is
+# retired; registry-bound citations now flow to participants.
 version: 1
 categories:
   - category_id: financial
     category_description: "Care management cap, rollover cap, contribution rates by category, quarterly budget vs INDEX-1, AT-HM ring-fence, means-tested contribution placement."
-    solicitor_signed_off: false
-    signed_off_by: null
-    signed_off_date: null
+    solicitor_signed_off: true
+    signed_off_by: "Solicitor (category-level, relayed by Antony)"
+    signed_off_date: "2026-06-20"
     signed_off_scope: "All rules within this category as of the sign-off date."
 
   - category_id: category_placement
     category_description: "Personal care reclassification 01/10/2026, service categorisation (Clinical Care / Independence / Everyday Living), grandfathered HCP transitional rates."
-    solicitor_signed_off: false
-    signed_off_by: null
-    signed_off_date: null
+    solicitor_signed_off: true
+    signed_off_by: "Solicitor (category-level, relayed by Antony)"
+    signed_off_date: "2026-06-20"
     signed_off_scope: "All rules within this category as of the sign-off date."
 
   - category_id: assessment
     category_description: "Reassessment triggers, review cadence, early reassessment for changed needs."
-    solicitor_signed_off: false
-    signed_off_by: null
-    signed_off_date: null
+    solicitor_signed_off: true
+    signed_off_by: "Solicitor (category-level, relayed by Antony)"
+    signed_off_date: "2026-06-20"
     signed_off_scope: "All rules within this category as of the sign-off date."
 
   - category_id: consumer_directed_care
     category_description: "Statement of Rights (choice, voice, respect, carer recognition), goal ownership, participant-selected services."
-    solicitor_signed_off: false
-    signed_off_by: null
-    signed_off_date: null
+    solicitor_signed_off: true
+    signed_off_by: "Solicitor (category-level, relayed by Antony)"
+    signed_off_date: "2026-06-20"
     signed_off_scope: "All rules within this category as of the sign-off date."
 
   - category_id: clinical_best_practice
     category_description: "Restorative and reablement framing (National Aged Care Quality Standards, Standard 5), medication safety, allied health input for specific conditions."
-    solicitor_signed_off: false
-    signed_off_by: null
-    signed_off_date: null
+    solicitor_signed_off: true
+    signed_off_by: "Solicitor (category-level, relayed by Antony)"
+    signed_off_date: "2026-06-20"
     signed_off_scope: "All rules within this category as of the sign-off date."
 
   - category_id: cross_tool_reconciliation
     category_description: "Consistency of assessed needs vs approved services, goal-service alignment."
-    solicitor_signed_off: false
-    signed_off_by: null
-    signed_off_date: null
+    solicitor_signed_off: true
+    signed_off_by: "Solicitor (category-level, relayed by Antony)"
+    signed_off_date: "2026-06-20"
     signed_off_scope: "All rules within this category as of the sign-off date."

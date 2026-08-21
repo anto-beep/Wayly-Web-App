@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { ClipboardList, Sparkles, FileText, Search } from "lucide-react-native";
+import { ClipboardList, Sparkles, FileText, Search, Trash2 } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
@@ -40,6 +40,21 @@ export default function CarePlansScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
   const [classFilter, setClassFilter] = useState<number | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deletePlan = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await apiFetch(`/care-plans/${id}?hard=true`, { method: "DELETE" });
+      setPendingDeleteId(null);
+      setPlans((prev) => prev.filter((p) => p.id !== id));
+    } catch {
+      setError(true);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const load = useCallback(async () => {
     if (!activeId) return;
@@ -149,6 +164,20 @@ export default function CarePlansScreen() {
                   {p.classification_at_review ? ` · Class ${p.classification_at_review}` : ""}
                 </T>
                 {p.summary ? <T variant="small" style={{ marginTop: 6, lineHeight: 20 }} numberOfLines={4}>{p.summary}</T> : null}
+                {pendingDeleteId === p.id ? (
+                  <View testID={`cp-delete-confirm-${p.id}`} style={{ marginTop: 10, gap: 8 }}>
+                    <T variant="small" style={{ color: colors.terracotta }}>Delete this review permanently? This can&apos;t be undone.</T>
+                    <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                      <Button label="Cancel" variant="outline" onPress={() => setPendingDeleteId(null)} style={{ flex: 1 }} />
+                      <Button label="Delete" testID={`cp-delete-confirm-yes-${p.id}`} loading={deletingId === p.id} onPress={() => deletePlan(p.id)} style={{ flex: 1 }} />
+                    </View>
+                  </View>
+                ) : (
+                  <Pressable testID={`cp-delete-${p.id}`} onPress={() => setPendingDeleteId(p.id)} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, alignSelf: "flex-start" }}>
+                    <Trash2 size={14} color={colors.muted} />
+                    <T variant="small" style={{ color: colors.muted }}>Delete review</T>
+                  </Pressable>
+                )}
               </Card>
             ))}
             </>

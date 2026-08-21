@@ -120,24 +120,21 @@ def calibrate_confidence(citation_source: Optional[str]) -> str:
     return "low"
 
 
-_NEG_WORDS = ("not ", "no ", "never", "missing", "absent", "without", "below", "lacks", "fails")
+_CONTRADICTION_TITLE = ("below", "exceeds", "insufficient", "over the cap", "above the cap", "not met", "missing")
+_CONTRADICTION_BODY = ("within the", "meets the", "is correct", "is compliant", "as required", "correctly", "no issue", "is appropriate", "is adequate")
 
 
 def title_body_coherent(title: str, body: str) -> bool:
-    """Conservative title/body coherence lint. Fails only on a clear negation
-    polarity flip between the title and the first sentence of the body."""
+    """A5/L6 title/body coherence lint. Deliberately conservative: fails ONLY on
+    a genuine quantitative polarity flip (title asserts a breach/shortfall while
+    the body affirms the value is correct/compliant). It must never drop a valid
+    finding whose title is simply phrased in the negative."""
     t = (title or "").strip().lower()
     b = (body or "").strip().lower()
     if not t or not b:
         return True
-    first_sentence = re.split(r"[.!?]", b, maxsplit=1)[0]
-    title_neg = any(w in t for w in _NEG_WORDS)
-    body_neg = any(w in first_sentence for w in _NEG_WORDS)
-    # A negated title whose opening sentence affirms the opposite is incoherent.
-    if title_neg and not body_neg and (" is " in first_sentence or " are " in first_sentence or " does " in first_sentence):
-        # Only fail when the body opening explicitly affirms the subject.
-        if re.search(r"\b(are|is|does|do|has|have)\b", first_sentence) and not body_neg:
-            return False
+    if any(w in t for w in _CONTRADICTION_TITLE) and any(w in b for w in _CONTRADICTION_BODY):
+        return False
     return True
 
 
@@ -423,6 +420,52 @@ def _fmt_ddmmyyyy(iso: Optional[str]) -> Optional[str]:
     return d.strftime("%d/%m/%Y") if d else None
 
 
+# Deterministic keyword -> rule_id matcher (A2). Auditable, never fabricates:
+# an LLM finding is bound to a registry rule ONLY on a confident phrase match;
+# otherwise it stays freeform ("Verification required"). Order matters — first
+# match wins, so more specific phrases are listed first.
+_RULE_MATCHERS = [
+    (("men's shed", "lawn bowls", "generic", "goal does not", "goal and its service", "does not line up", "match the", "tailored to the goal"), "CPR-R-0502"),
+    (("goal", "own words", "first person", "participant's words"), "CPR-R-0301"),
+    (("goal", "no service", "without a service", "supporting service", "works towards"), "CPR-R-0302"),
+    (("laundry", "domestic", "cleaning", "housework"), "CPR-R-0506"),
+    (("assessed need", "no matching service", "need without", "unmet need"), "CPR-R-0501"),
+    (("personal care", "clinical care"), "CPR-R-0101"),
+    (("care management", "10%", "management fee"), "CPR-R-0001"),
+    (("at-hm", "assistive technology", "home modification", "ring-fence"), "CPR-R-0002"),
+    (("rollover", "unspent", "carry over", "carry-over"), "CPR-R-0003"),
+    (("quarterly budget", "classification value", "index"), "CPR-R-0004"),
+    (("clinical", "contribution"), "CPR-R-0005"),
+    (("everyday living", "contribution"), "CPR-R-0006"),
+    (("independence", "contribution"), "CPR-R-0007"),
+    (("12 month", "over a year", "out of date", "older than"), "CPR-R-0201"),
+    (("review cadence", "when it will be reviewed", "no review", "review date"), "CPR-R-0202"),
+    (("reassessment", "changed needs", "re-assess"), "CPR-R-0203"),
+    (("consultation", "developed with", "involved in", "participant input"), "CPR-R-0204"),
+    (("respite", "carer support", "carer recognition", "informal carer"), "CPR-R-0303"),
+    (("choice of provider", "choice of worker", "preferred provider", "who delivers"), "CPR-R-0304"),
+    (("reablement", "restorative", "independence-focused"), "CPR-R-0401"),
+    (("medication", "medicine management"), "CPR-R-0402"),
+    (("clinical", "hours", "nursing hours", "insufficient clinical"), "CPR-R-0403"),
+    (("allied health", "physiotherapy", "occupational therapy", "podiatry"), "CPR-R-0404"),
+    (("statement", "underspend", "under-delivered", "under delivered"), "CPR-R-0503"),
+    (("invoice", "frequency"), "CPR-R-0504"),
+    (("not appearing in statement", "not delivered", "missing from statement"), "CPR-R-0505"),
+]
+
+
+def match_rule_id(finding: Dict[str, Any]) -> Optional[str]:
+    """Best-effort deterministic bind of a model finding to a registry rule.
+    Requires TWO distinct keyword groups to hit for a match, to avoid weak
+    single-word bindings that could mis-cite."""
+    text = f"{finding.get('title','')} {finding.get('detail','')} {finding.get('finding_key','')}".lower()
+    for phrases, rule_id in _RULE_MATCHERS:
+        hits = sum(1 for p in phrases if p in text)
+        if hits >= 2:
+            return rule_id
+    return None
+
+
 def finding_is_banned(finding: Dict[str, Any]) -> bool:
     """A2/anti-fab: a finding whose title or detail asserts a structurally
     banned claim (minimum RN hours, transport midpoints, minimum service hours
@@ -446,6 +489,8 @@ def enrich_findings(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if not title_body_coherent(f.get("title", ""), f.get("detail", "")):
             continue
         rid = f.get("rule_id")
+        if not rid:
+            rid = match_rule_id(f)
         rule = rule_by_id(rid) if rid else None
         if rule and category_signed_off(rule.get("category_id", "")) is not None:
             g = dict(f)

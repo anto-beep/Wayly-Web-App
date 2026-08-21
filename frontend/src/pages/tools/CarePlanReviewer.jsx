@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
@@ -48,10 +48,17 @@ export default function CarePlanReviewer() {
     const navigate = useNavigate();
     const [downloadBusy, setDownloadBusy] = useState(false);
     const [letterBusyKey, setLetterBusyKey] = useState(null);
+    const PROGRESS_STAGES = ["Reading the document", "Checking against Support at Home rules", "Building your summary"];
+    const [progressStage, setProgressStage] = useState(0);
     const [text, setText] = useState("");
     const [classification, setClassification] = useState("");
     const [quarterlyBudget, setQuarterlyBudget] = useState("");
     const [loading, setLoading] = useState(false);
+    useEffect(() => {
+        if (!loading) { setProgressStage(0); return undefined; }
+        const id = setInterval(() => setProgressStage((s) => Math.min(s + 1, PROGRESS_STAGES.length - 1)), 7000);
+        return () => clearInterval(id);
+    }, [loading]);   // eslint-disable-line react-hooks/exhaustive-deps
     const [result, setResult] = useState(null);
     const [saving, setSaving] = useState(false);
     const [savedPlanId, setSavedPlanId] = useState(null);
@@ -352,9 +359,14 @@ export default function CarePlanReviewer() {
                 {loading && (
                     <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary-k/20 bg-cream/60 p-4 animate-fade-up" data-testid="cp-progress">
                         <Loader2 className="h-5 w-5 animate-spin text-primary-k shrink-0 mt-0.5" />
-                        <div>
-                            <div className="font-semibold text-primary-k">Reviewing the care plan…</div>
-                            <div className="text-sm text-primary-k/70 mt-0.5">This usually takes about a minute. We&apos;re checking it against the Statement of Rights and the National Quality Standards, hang tight.</div>
+                        <div className="flex-1">
+                            <div className="font-semibold text-primary-k" data-testid="cp-progress-stage">{PROGRESS_STAGES[progressStage]}…</div>
+                            <div className="text-sm text-primary-k/70 mt-0.5">This usually takes about a minute. You can leave this screen and come back; we&apos;ll save the result to your list.</div>
+                            <div className="mt-2 flex items-center gap-1.5">
+                                {PROGRESS_STAGES.map((_, i) => (
+                                    <span key={i} className={`h-1.5 rounded-full transition-all ${i <= progressStage ? "w-8 bg-primary-k" : "w-4 bg-primary-k/20"}`} />
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}

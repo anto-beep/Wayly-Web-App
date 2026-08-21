@@ -50,6 +50,13 @@ export default function CarePlanReviewer() {
   const [savedPlanId, setSavedPlanId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState("");
   const [letterBusyKey, setLetterBusyKey] = useState<string | null>(null);
+  const PROGRESS_STAGES = ["Reading the document", "Checking against Support at Home rules", "Building your summary"];
+  const [progressStage, setProgressStage] = useState(0);
+  useEffect(() => {
+    if (!busy) { setProgressStage(0); return; }
+    const id = setInterval(() => setProgressStage((s) => Math.min(s + 1, PROGRESS_STAGES.length - 1)), 7000);
+    return () => clearInterval(id);
+  }, [busy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const draftLetter = async (finding: any, key: string, addressee?: string) => {
     setLetterBusyKey(key);
@@ -262,8 +269,13 @@ export default function CarePlanReviewer() {
               <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "center" }}>
                 <ActivityIndicator color={colors.primary} />
                 <View style={{ flex: 1 }}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>Reviewing the care plan…</T>
-                  <T variant="small" style={{ color: colors.text, marginTop: 2, lineHeight: 19 }}>{"This usually takes about a minute. We're checking it against the Statement of Rights and the National Quality Standards, hang tight."}</T>
+                  <T testID="cp-progress-stage" style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>{PROGRESS_STAGES[progressStage]}…</T>
+                  <T variant="small" style={{ color: colors.text, marginTop: 2, lineHeight: 19 }}>{"This usually takes about a minute. You can leave this screen and come back; we'll save the result to your list."}</T>
+                  <View style={{ flexDirection: "row", gap: 6, marginTop: 8 }}>
+                    {PROGRESS_STAGES.map((_, i) => (
+                      <View key={i} style={{ height: 5, borderRadius: 3, width: i <= progressStage ? 28 : 14, backgroundColor: i <= progressStage ? colors.primary : colors.border }} />
+                    ))}
+                  </View>
                 </View>
               </View>
             </Card>
