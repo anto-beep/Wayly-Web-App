@@ -1,10 +1,10 @@
 import React, { useCallback, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { CloudOff, MessageCircle } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
-import { InvoiceResultBanner, InvoiceMetadataStrip, WaylySummaryCard, InvoiceIssueRegister } from "@/src/components/invoices/InvoiceResultView";
+import { InvoiceResultBanner, InvoiceMetadataStrip, WaylySummaryCard, InvoiceIssueRegister, InvoiceChargesTable, InvoiceDownloadBar } from "@/src/components/invoices/InvoiceResultView";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, spacing } from "@/src/theme/tokens";
@@ -59,6 +59,18 @@ export default function InvoiceDetail() {
   const rec = inv?.reconciliation;
   const findings = rec?.findings || [];
 
+  const onDraftLetter = async (findingIndex: number) => {
+    try {
+      await apiFetch(`/invoices/${id}/findings/${findingIndex}/letter`, { method: "POST" });
+      Alert.alert("Letter drafted", "We created a draft letter for this issue. Find it in Letters & Follow-ups.", [
+        { text: "View letters", onPress: () => router.push("/correspondence") },
+        { text: "OK" },
+      ]);
+    } catch {
+      Alert.alert("Could not draft letter", "Please try again in a moment.");
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Invoice" subtitle={inv?.provider_name || inv?.filename} onBack={() => router.back()} />
@@ -67,7 +79,7 @@ export default function InvoiceDetail() {
       ) : error || !inv ? (
         <StatePanel testID="invoice-error" icon={CloudOff} title="Couldn't load this invoice" actionLabel="Retry" onAction={load} />
       ) : (
-        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
+        <ScrollView testID="inv1-result" contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
           <Card testID="invoice-overview">
             <T variant="label">PROVIDER</T>
             <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, marginTop: 2 }}>{inv.provider_name || "Care provider"}</T>
@@ -76,9 +88,12 @@ export default function InvoiceDetail() {
 
           <InvoiceResultBanner result={inv} />
           <InvoiceMetadataStrip result={inv} />
+          <InvoiceDownloadBar invoiceId={id} />
 
           <WaylySummaryCard summary={rec?.summary_md} />
-          <InvoiceIssueRegister findings={findings} />
+          <InvoiceIssueRegister findings={findings} onDraftLetter={onDraftLetter} />
+          <InvoiceChargesTable result={inv} />
+
 
           <Button
             label="Ask Wayly about this invoice"

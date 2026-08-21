@@ -1,3 +1,15 @@
+## Iteration 232 (Jun 2026) — INV-1 Parity Phase 2: Invoice Checker → Statement-Decoder grade (web + mobile)
+
+Brought the Invoice Checker result view up to Statement-Decoder depth on BOTH surfaces (web is source of truth). User asks addressed: show what's been charged (line items), collapsible High/Medium/Low issues, download original + decoded PDF/CSV + compare side-by-side, and draft a source-aware letter from any issue.
+
+- **Backend** (`routes/invoices.py`): `GET /invoices/{id}/download?kind=original|report` (streams the raw uploaded file inline / the Wayly check-report PDF via `services.inv1_check_report_pdf`), `GET /invoices/{id}/export.csv` (header + line items + issue register with C1..C12 titles). The existing `POST /invoices/{id}/findings/{i}/letter` LF-1 bridge (source-aware `source_import`) is now the canonical draft-letter path.
+- **Web** (`components/invoices/InvoiceResultView.jsx` + `InvoiceDetail.jsx` + `tools/InvoiceCheckerTool.jsx`): `InvoiceIssueRegister` rebuilt into collapsible High/Medium/Low `SeverityGroup`s (mirrors Decoder), per-issue **Draft letter** now POSTs the finding endpoint and navigates to the LF-1 editor (was the dead `/app/letters?compose=1` URL). New `InvoiceChargesTable` (collapsible line-item table, disputed lines flagged), `InvoiceDownloadBar` (Original / CSV / PDF), `InvoiceCompareView` (original PDF beside decoded charges).
+- **Mobile** (`src/components/invoices/InvoiceResultView.tsx` + `app/invoice/[id].tsx` + `src/components/tools/InvoiceChecker.tsx`): mirrored collapsible severity groups, `InvoiceChargesTable` (per-line cards), `InvoiceDownloadBar` (Original/CSV/PDF via `downloadAndShare`), per-issue Draft letter → creates LF-1 entry → confirm → `/correspondence`.
+- **Verified** iteration_232: backend 6/6 pytest (`test_inv1_phase2_parity_iter232.py`), web 100% (all testIDs, collapse/expand, downloads, compare, draft-letter nav), mobile ~92% (parity confirmed; added `inv1-result` testID post-test). retest_needed=false.
+
+**Still queued (from user's Phase list):** Letters compose parity (web can't draft ad-hoc letters like mobile) + fully source-aware templates everywhere; Invoices list filters (web+mobile) matching Statements; decode-in-progress message parity; CHSP invoice-photo OCR (mobile); complaint evidence-bundle in-app PDF viewer; web Contribution Position nav discoverability; Reports screen parity (show available reports before Generate).
+
+
 ## Iteration 228 (Jun 2026) — ATHM-1 AT & Home Mods: full mobile parity (parity trio COMPLETE)
 
 Replaced the legacy mobile `/athm` tracker with the participant-scoped ATHM-1 workflow (`/api/athm1/*`), matching web `AthmProjects.jsx`. Two screens:

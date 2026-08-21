@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import { Upload, ArrowRight, AlertTriangle, FileText, ReceiptText } from "lucide-react-native";
@@ -104,7 +104,20 @@ export default function InvoiceChecker() {
 
         {result && !isStatement && result.document_shape ? (
           <View onLayout={onResultLayout} style={{ gap: spacing.md }}>
-            <InvoiceResultView result={result} />
+            <InvoiceResultView
+              result={result}
+              onDraftLetter={async (findingIndex: number) => {
+                try {
+                  await apiFetch(`/invoices/${result.invoice_id}/findings/${findingIndex}/letter`, { method: "POST" });
+                  Alert.alert("Letter drafted", "We created a draft letter for this issue. Find it in Letters & Follow-ups.", [
+                    { text: "View letters", onPress: () => router.push("/correspondence") },
+                    { text: "OK" },
+                  ]);
+                } catch {
+                  Alert.alert("Could not draft letter", "Please try again in a moment.");
+                }
+              }}
+            />
             <ResultActions mode="payload" tool="invoice" payload={result} personName={result.provider_name || undefined} fileBaseName="wayly-invoice-check" testIDPrefix="inv1-export" />
             <Button label="Check another invoice" variant="outline" testID="inv1-check-another" onPress={reset} />
           </View>

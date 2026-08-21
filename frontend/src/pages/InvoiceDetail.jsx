@@ -11,7 +11,7 @@
  * page just fetches and renders.
  */
 import React, { useEffect, useState, useCallback } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
 import { ChevronLeft, Sparkles, Loader2, Save, CheckCircle2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,14 +20,19 @@ import {
     InvoiceResultBanner,
     InvoiceIssueRegister,
     InvoiceMetadataStrip,
+    InvoiceChargesTable,
+    InvoiceDownloadBar,
+    InvoiceCompareView,
 } from "@/components/invoices/InvoiceResultView";
 
 export default function InvoiceDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [inv, setInv] = useState(null);
     const [error, setError] = useState(null);
     const [savingToVault, setSavingToVault] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [comparing, setComparing] = useState(false);
 
     const load = useCallback(async () => {
         try {
@@ -101,38 +106,16 @@ export default function InvoiceDetail() {
         window.location.href = `/app/letters?compose=1&${params.toString()}`;
     };
 
-    // Draft an escalation letter pre-filled with the specific finding. We
-    // route the caregiver to Letters Mailbox with URL parameters seeded
-    // from the finding so the composer can pre-fill the subject and body.
-    // This avoids inventing a new backend endpoint while still keeping the
-    // one-click "Draft letter" promise from the Issue Register.
-    const onDraftLetter = (findingIndex) => {
-        const finding = (inv?.reconciliation?.findings || [])[findingIndex];
-        if (!finding) return;
-        const provider = inv?.provider_name || "your provider";
-        const invNo = inv?.invoice_number || inv?.reconciliation?.invoice_number || "";
-        const subject = `Query about ${finding.check_id} on invoice ${invNo || "(reference to follow)"}`.trim();
-        const bodyLines = [
-            `Hello ${provider},`,
-            "",
-            `I have reviewed invoice ${invNo ? "#" + invNo : ""} using Wayly and I would like to raise the following concern:`,
-            "",
-            finding.narrative || finding.suggested_question || "The line does not look correct.",
-            "",
-            finding.suggested_question ? `My question: ${finding.suggested_question}` : "",
-            "",
-            "Could you please review this and confirm the correct amount, or issue an adjustment if appropriate?",
-            "",
-            "Kind regards,",
-        ].filter(Boolean).join("\n");
-        const params = new URLSearchParams({
-            source_type: "inv1_finding",
-            source_id: `${id}::${finding.check_id || "issue"}::${findingIndex}`,
-            provider_name: provider,
-            subject,
-            body: bodyLines,
-        });
-        window.location.href = `/app/letters?compose=1&${params.toString()}`;
+    // Draft an escalation letter pre-filled with the specific finding. Uses
+    // the source-aware backend bridge (POST /invoices/{id}/findings/{i}/letter)
+    // so the letter template + prefill knows it came from this invoice finding.
+    const onDraftLetter = async (findingIndex) => {
+        try {
+            const { data } = await api.post(`/invoices/${id}/findings/${findingIndex}/letter`);
+            if (data?.editor_path) navigate(data.editor_path);
+        } catch (e) {
+            toast.error(extractErrorMessage(e, "Could not draft the letter."));
+        }
     };
 
     if (error) {
@@ -195,6 +178,15 @@ export default function InvoiceDetail() {
 
             <InvoiceMetadataStrip result={result} />
 
+            <InvoiceDownloadBar
+                invoiceId={id}
+                onCompare={() => setComparing((c) => !c)}
+                comparing={comparing}
+            />
+
+            {comparing && <InvoiceCompareView invoiceId={id} result={result} />}
+
+
             {inv?.reconciliation?.summary_md && (
                 <section className="rounded-3xl border border-primary-k/10 bg-white p-6 sm:p-8 shadow-sm" data-testid="invoice-detail-summary">
                     <div className="flex items-center gap-2 mb-3">
@@ -223,6 +215,8 @@ export default function InvoiceDetail() {
             )}
 
             <InvoiceIssueRegister findings={inv?.reconciliation?.findings || []} onDraftLetter={onDraftLetter} />
+
+            <InvoiceChargesTable result={result} />
         </div>
     );
 }

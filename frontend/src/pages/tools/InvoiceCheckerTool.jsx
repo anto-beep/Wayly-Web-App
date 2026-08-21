@@ -45,7 +45,7 @@ import SeoHead, {
 import { SEO } from "@/seo/pageConfig";
 import { AutomatedDecisionDisclosure, isEnabled } from "@/uxf";
 import { ConsequenceLadderList } from "@/uxf/components/ConsequenceLadder";
-import { InvoiceResultBanner, InvoiceIssueRegister, InvoiceMetadataStrip } from "@/components/invoices/InvoiceResultView";
+import { InvoiceResultBanner, InvoiceIssueRegister, InvoiceMetadataStrip, InvoiceChargesTable, InvoiceDownloadBar, InvoiceCompareView } from "@/components/invoices/InvoiceResultView";
 
 const _toolJsonLd = (cfg) => {
     const blocks = [softwareApplicationLd({
@@ -372,6 +372,7 @@ export default function InvoiceCheckerTool() {
     const [reconcilingCombined, setReconcilingCombined] = useState(false);
     const [savingToVault, setSavingToVault] = useState(false);
     const [vaultSaved, setVaultSaved] = useState(null);
+    const [comparing, setComparing] = useState(false);
     const fileRef = useRef(null);
     const resultRef = useScrollToResult(Boolean(result));
     const navigate = useNavigate();
@@ -655,6 +656,19 @@ export default function InvoiceCheckerTool() {
                         {/* 2. Metadata strip (provider, invoice date, due date, invoice #) */}
                         <InvoiceMetadataStrip result={result} />
 
+                        {/* Download + compare bar (parity with Statement Decoder) */}
+                        {result.invoice_id && (
+                            <InvoiceDownloadBar
+                                invoiceId={result.invoice_id}
+                                onCompare={() => setComparing((c) => !c)}
+                                comparing={comparing}
+                            />
+                        )}
+                        {comparing && result.invoice_id && (
+                            <InvoiceCompareView invoiceId={result.invoice_id} result={result} />
+                        )}
+
+
                         {/* 3. Verdict tier chip row */}
                         <VerdictBanner
                             verdict={result.reconciliation?.overall_verdict || "all_clear"}
@@ -743,6 +757,10 @@ export default function InvoiceCheckerTool() {
                             findings={result.reconciliation?.findings || []}
                             onDraftLetter={onDraftLetter}
                         />
+
+                        {/* 4a. What's been charged — line-item table (parity with Decoder) */}
+                        <InvoiceChargesTable result={result} />
+
 
                         {/* 4b. Legacy consequence-ladder view (kept for the "next steps" chips) */}
                         {result.reconciliation?.findings?.length > 0 && (

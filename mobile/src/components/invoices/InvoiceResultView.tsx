@@ -2,14 +2,15 @@
 // components/invoices/InvoiceResultView.jsx + the result composition in
 // pages/tools/InvoiceCheckerTool.jsx. Same sections, same wording, same
 // arithmetic, same check codes and refund figures. No mobile-invented labels.
-import React from "react";
-import { StyleSheet, View } from "react-native";
-import { AlertTriangle, AlertOctagon, Info, CheckCircle2, Receipt, Building2, Calendar, Hash, HelpCircle, Sparkles } from "lucide-react-native";
+import React, { useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { AlertTriangle, AlertOctagon, Info, CheckCircle2, Receipt, Building2, Calendar, Hash, HelpCircle, Sparkles, ChevronDown, ChevronUp, Shield, ShieldAlert, Download, FileText, PenLine } from "lucide-react-native";
 
 import { Card, T } from "@/src/components/ui";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { sanitizeAI } from "@/src/utils/format";
+import { downloadAndShare } from "@/src/lib/download";
 
 function aud(n: any): string {
   const v = Number(n);
@@ -92,21 +93,6 @@ function severityKey(f: any): string {
   if (s.includes("low")) return "low";
   if (s.includes("info") || s.includes("watch")) return "info";
   return "medium";
-}
-function sevStyle(sev: string, colors: any): { pill: string; text: string; border: string; bg: string; Icon: any } {
-  switch (sev) {
-    case "blocker":
-    case "critical":
-      return { pill: colors.terracotta, text: colors.terracotta, border: colors.terracotta, bg: colors.errorSoft, Icon: AlertOctagon };
-    case "high":
-      return { pill: colors.alert, text: colors.alert, border: colors.alert, bg: colors.alertSoft, Icon: AlertTriangle };
-    case "medium":
-      return { pill: colors.gold, text: colors.gold, border: colors.gold, bg: colors.goldSoft, Icon: AlertTriangle };
-    case "low":
-      return { pill: colors.sage, text: colors.sage, border: colors.sage, bg: colors.sageSoft, Icon: Info };
-    default:
-      return { pill: colors.muted, text: colors.muted, border: colors.border, bg: colors.surface2, Icon: Info };
-  }
 }
 
 const VERDICT_META: Record<string, { heading: string; body: string; icon: any; tone: (c: any) => string }> = {
@@ -213,80 +199,207 @@ export function VerdictBanner({ verdict, findings = [], lineCount = 0 }: { verdi
   );
 }
 
-export function InvoiceIssueRegister({ findings }: { findings: any[] }) {
+// Collapse the six raw severities into the three plain-English bands the
+// user asked for (mirrors the Statement Decoder): High / Medium / Low.
+const BANDS = ["high", "medium", "low"] as const;
+type Band = (typeof BANDS)[number];
+const BAND_LABEL: Record<Band, string> = { high: "High priority", medium: "Medium", low: "Low" };
+function bandOf(f: any): Band {
+  const s = severityKey(f);
+  if (s === "blocker" || s === "critical" || s === "high") return "high";
+  if (s === "medium") return "medium";
+  return "low";
+}
+function bandStyle(band: Band, colors: any): { pill: string; Icon: any } {
+  if (band === "high") return { pill: colors.terracotta, Icon: AlertOctagon };
+  if (band === "medium") return { pill: colors.gold, Icon: ShieldAlert };
+  return { pill: colors.sage, Icon: Shield };
+}
+
+const CATEGORY_LABEL: Record<string, string> = {
+  clinical_care: "Clinical care", personal_care: "Personal care", everyday_living: "Everyday living",
+  care_management: "Care management", assistive_technology: "Assistive technology",
+  home_modifications: "Home modifications", nursing: "Nursing", allied_health: "Allied health",
+  transport: "Transport", unknown: "Other",
+};
+const catLabel = (c: any) => (c ? CATEGORY_LABEL[String(c)] || String(c).replace(/_/g, " ") : "");
+
+function IssueCard({ f, idx, band, onDraftLetter }: { f: any; idx: number; band: Band; onDraftLetter?: (i: number) => void }) {
+  const { colors } = useTheme();
+  const bs = bandStyle(band, colors);
+  const impact = findingImpact(f);
+  const ref = f?.check_id || f?.rule_id || f?.code || `#${idx + 1}`;
+  const lineIds = f?.line_ids?.length ? f.line_ids : (f?.affected_line_ids || (f?.line_number ? [f.line_number] : []));
+  const lineHints = lineIds && lineIds.length
+    ? (typeof lineIds[0] === "number" ? `Line ${lineIds.join(", ")}` : `Line ${lineIds.map((x: any) => String(x).slice(0, 8)).join(", ")}`)
+    : null;
+  const title = f?.title || f?.headline || f?.label || titleForCheck(ref);
+  const description = f?.description || f?.narrative || null;
+  const action = f?.recommended_action || f?.suggested_question || f?.escalation || null;
+  return (
+    <View testID={`inv1-issue-${idx}`} style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md }}>
+      <View style={{ flexDirection: "row", gap: spacing.sm }}>
+        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: bs.pill, alignItems: "center", justifyContent: "center" }}>
+          <bs.Icon size={16} color="#fff" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+            <View style={{ backgroundColor: bs.pill, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2 }}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.4, color: "#fff" }}>{BAND_LABEL[band].toUpperCase()}</T>
+            </View>
+            <T style={{ fontFamily: fonts.mono, fontSize: 11, color: colors.muted }}>{String(ref)}</T>
+            {lineHints ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>{lineHints}</T> : null}
+          </View>
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text, marginTop: 6 }}>{sanitizeAI(title)}</T>
+          {description ? <T variant="small" style={{ marginTop: 3, lineHeight: 19 }}>{sanitizeAI(description)}</T> : null}
+          {action ? (
+            <View testID={`inv1-issue-action-${idx}`} style={{ marginTop: 8, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 7 }}>
+              <T style={{ fontFamily: fonts.body, fontSize: 13, color: colors.text }}><T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>What to do: </T>{sanitizeAI(action)}</T>
+            </View>
+          ) : null}
+          <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 12, marginTop: 10 }}>
+            {impact > 0 ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>Potential refund: {aud(impact)}</T> : null}
+            {onDraftLetter ? (
+              <Pressable testID={`inv1-issue-letter-${idx}`} onPress={() => onDraftLetter(idx)} style={{ flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
+                <PenLine size={13} color={colors.primary} />
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>Draft letter</T>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function SeverityGroup({ band, entries, onDraftLetter }: { band: Band; entries: { f: any; i: number }[]; onDraftLetter?: (i: number) => void }) {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState(true);
+  const bs = bandStyle(band, colors);
+  return (
+    <View testID={`inv1-severity-group-${band}`} style={{ marginTop: spacing.sm }}>
+      <Pressable testID={`inv1-severity-toggle-${band}`} onPress={() => setOpen((o) => !o)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 10 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: bs.pill, alignItems: "center", justifyContent: "center" }}>
+            <bs.Icon size={13} color="#fff" />
+          </View>
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{BAND_LABEL[band]}</T>
+          <T variant="small" style={{ color: colors.muted }}>({entries.length})</T>
+        </View>
+        {open ? <ChevronUp size={16} color={colors.muted} /> : <ChevronDown size={16} color={colors.muted} />}
+      </Pressable>
+      {open ? (
+        <View testID={`inv1-severity-items-${band}`} style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+          {entries.map(({ f, i }) => <IssueCard key={f.id || i} f={f} idx={i} band={band} onDraftLetter={onDraftLetter} />)}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+export function InvoiceIssueRegister({ findings, onDraftLetter }: { findings: any[]; onDraftLetter?: (i: number) => void }) {
   const { colors } = useTheme();
   if (!findings || findings.length === 0) {
     return (
       <Card testID="inv1-no-findings" style={{ borderStyle: "dashed", borderWidth: 2, borderColor: colors.sage, backgroundColor: colors.sageSoft, alignItems: "center" }}>
         <CheckCircle2 size={34} color={colors.sage} />
         <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 8 }}>Nothing worth raising</T>
-        <T variant="small" style={{ textAlign: "center", marginTop: 4 }}>Every check passed on this invoice. See the reconciliation below for the full list of what we looked at.</T>
+        <T variant="small" style={{ textAlign: "center", marginTop: 4 }}>Every check passed on this invoice. See the charges below for the full list of what we looked at.</T>
       </Card>
     );
   }
-  const sorted = [...findings].sort((a, b) => SEVERITY_ORDER.indexOf(severityKey(a)) - SEVERITY_ORDER.indexOf(severityKey(b)));
-  const counts = SEVERITY_ORDER.map((s) => ({ s, n: sorted.filter((f) => severityKey(f) === s).length })).filter((x) => x.n > 0);
+  const withIdx = findings.map((f, i) => ({ f, i }));
+  const bandGroups = BANDS
+    .map((band) => ({ band, entries: withIdx.filter(({ f }) => bandOf(f) === band) }))
+    .filter((g) => g.entries.length > 0);
   return (
-    <View testID="inv1-issue-register" style={{ gap: spacing.sm }}>
-      <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 6, justifyContent: "space-between" }}>
+    <View testID="inv1-issue-register" style={{ gap: 2 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, justifyContent: "space-between" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Receipt size={18} color={colors.primary} />
           <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text }}>Issue Register</T>
         </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 5, alignItems: "center" }}>
-          {counts.map(({ s, n }) => {
-            const st = sevStyle(s, colors);
+        <T variant="small" style={{ color: colors.muted }}>{findings.length} total</T>
+      </View>
+      {bandGroups.map((g) => (
+        <SeverityGroup key={g.band} band={g.band} entries={g.entries} onDraftLetter={onDraftLetter} />
+      ))}
+    </View>
+  );
+}
+
+export function InvoiceChargesTable({ result }: { result: any }) {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState(false);
+  const rec = result?.reconciliation || {};
+  const lines: any[] = rec.lines || [];
+  if (lines.length === 0) return null;
+  const disputed = new Set((rec.findings || []).flatMap((f: any) => f?.line_ids || f?.affected_line_ids || []));
+  return (
+    <View testID="inv1-charges">
+      <Pressable testID="inv1-charges-toggle" onPress={() => setOpen((s) => !s)} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        {open ? <ChevronUp size={16} color={colors.primary} /> : <ChevronDown size={16} color={colors.primary} />}
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }}>{open ? "Hide" : "Show"} what&apos;s been charged ({lines.length} line{lines.length === 1 ? "" : "s"})</T>
+      </Pressable>
+      {open ? (
+        <View testID="inv1-charges-table" style={{ marginTop: spacing.sm, gap: spacing.sm }}>
+          {lines.map((ln, i) => {
+            const isDisputed = ln.line_id && disputed.has(ln.line_id);
             return (
-              <View key={s} style={[styles.pill, { backgroundColor: st.pill }]}>
-                <st.Icon size={11} color="#fff" />
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.4, color: "#fff" }}>{n} {s.toUpperCase()}</T>
+              <View key={ln.line_id || i} style={{ borderWidth: 1, borderColor: isDisputed ? colors.terracotta : colors.border, backgroundColor: isDisputed ? colors.errorSoft : colors.surface, borderRadius: radius.md, padding: spacing.md }}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", gap: spacing.sm }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text, flex: 1 }}>{ln.service_type || String(ln.raw_text || "").slice(0, 40) || "Service"}</T>
+                  <T style={{ fontFamily: fonts.mono, fontSize: 14, color: colors.text }}>{ln.gross_cost != null ? aud(ln.gross_cost) : "—"}</T>
+                </View>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+                  {ln.service_date ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>{auDate(ln.service_date)}</T> : null}
+                  {ln.service_category ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>{catLabel(ln.service_category)}</T> : null}
+                  {ln.units_or_hours != null ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>{ln.units_or_hours} x {ln.unit_price != null ? aud(ln.unit_price) : "—"}</T> : null}
+                  {ln.gst_amount != null ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>GST {aud(ln.gst_amount)}</T> : null}
+                  {ln.contribution_amount != null ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>You: {aud(ln.contribution_amount)}</T> : null}
+                </View>
               </View>
             );
           })}
-          <T variant="small" style={{ color: colors.muted }}>{sorted.length} total</T>
         </View>
-      </View>
-      <View testID="inv1-issues-list" style={{ gap: spacing.sm }}>
-        {sorted.map((f, i) => {
-          const sev = severityKey(f);
-          const st = sevStyle(sev, colors);
-          const impact = findingImpact(f);
-          const ref = f?.check_id || f?.rule_id || f?.code || `#${i + 1}`;
-          const lineIds = f?.line_ids?.length ? f.line_ids : (f?.affected_line_ids || (f?.line_number ? [f.line_number] : []));
-          const lineHints = lineIds && lineIds.length
-            ? (typeof lineIds[0] === "number" ? `Line ${lineIds.join(", ")}` : `Line ${lineIds.map((x: any) => String(x).slice(0, 8)).join(", ")}`)
-            : null;
-          const title = f?.title || f?.headline || f?.label || f?.narrative || titleForCheck(ref);
-          const description = f?.description || (f?.narrative && f.narrative !== title ? f.narrative : null);
-          const action = f?.recommended_action || f?.suggested_question || f?.escalation || null;
-          return (
-            <View key={f.id || i} testID={`inv1-issue-${i}`} style={{ borderWidth: 1, borderColor: st.border, backgroundColor: st.bg, borderRadius: radius.md, padding: spacing.md }}>
-              <View style={{ flexDirection: "row", gap: spacing.sm }}>
-                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: st.pill, alignItems: "center", justifyContent: "center" }}>
-                  <st.Icon size={15} color="#fff" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.4, color: st.text }}>{sev.toUpperCase()}</T>
-                    <T style={{ fontFamily: fonts.mono, fontSize: 11, color: colors.muted }}>{String(ref)}</T>
-                    {lineHints ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>{lineHints}</T> : null}
-                    {f?.confidence ? <T style={{ fontFamily: fonts.body, fontSize: 10, letterSpacing: 0.4, color: colors.muted }}>{String(f.confidence).toUpperCase()} CONFIDENCE</T> : null}
-                  </View>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: st.text, marginTop: 3 }}>{sanitizeAI(title)}</T>
-                  {description ? <T variant="small" style={{ marginTop: 3, lineHeight: 19 }}>{sanitizeAI(description)}</T> : null}
-                  {impact > 0 ? (
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: st.text, marginTop: 6 }}>Refund: {aud(impact)}</T>
-                  ) : null}
-                  {action ? (
-                    <View testID={`inv1-issue-action-${i}`} style={{ marginTop: 8, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 7 }}>
-                      <T style={{ fontFamily: fonts.body, fontSize: 13, color: colors.text }}><T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>What to do: </T>{sanitizeAI(action)}</T>
-                    </View>
-                  ) : null}
-                </View>
-              </View>
-            </View>
-          );
-        })}
+      ) : null}
+    </View>
+  );
+}
+
+export function InvoiceDownloadBar({ invoiceId }: { invoiceId?: string }) {
+  const { colors } = useTheme();
+  const [busy, setBusy] = useState<string | null>(null);
+  if (!invoiceId) return null;
+  const go = async (kind: "original" | "report" | "csv") => {
+    setBusy(kind);
+    try {
+      if (kind === "csv") {
+        await downloadAndShare(`/invoices/${invoiceId}/export.csv`, "Wayly-Invoice-Check.csv");
+      } else {
+        await downloadAndShare(`/invoices/${invoiceId}/download?kind=${kind}`, kind === "report" ? "Wayly-Invoice-Report.pdf" : "invoice.pdf");
+      }
+    } catch { /* surfaced by share sheet failure; keep quiet */ }
+    finally { setBusy(null); }
+  };
+  const btn = (label: string, kind: "original" | "report" | "csv", Icon: any, primary?: boolean) => (
+    <Pressable
+      testID={`inv1-download-${kind === "report" ? "pdf" : kind}-btn`}
+      onPress={() => go(kind)}
+      disabled={busy === kind}
+      style={{ flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: primary ? colors.primary : colors.surface, borderWidth: primary ? 0 : 1, borderColor: colors.border, opacity: busy === kind ? 0.5 : 1 }}
+    >
+      <Icon size={14} color={primary ? "#fff" : colors.text} />
+      <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: primary ? "#fff" : colors.text }}>{label}</T>
+    </Pressable>
+  );
+  return (
+    <View testID="inv1-download-bar" style={{ backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }}>
+      <T variant="small" style={{ color: colors.muted }}>Save or view this checked invoice.</T>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+        {btn("Original", "original", FileText)}
+        {btn("CSV", "csv", Download)}
+        {btn("PDF report", "report", Download, true)}
       </View>
     </View>
   );
@@ -332,16 +445,19 @@ export function InvoiceMetaCard({ result }: { result: any }) {
   );
 }
 
-export default function InvoiceResultView({ result }: { result: any }) {
+export default function InvoiceResultView({ result, onDraftLetter }: { result: any; onDraftLetter?: (i: number) => void }) {
   const rec = result?.reconciliation || {};
+  const invoiceId = result?.invoice_id || result?.id;
   return (
     <View testID="inv1-result" style={{ gap: spacing.md }}>
       <InvoiceResultBanner result={result} />
       <InvoiceMetadataStrip result={result} />
+      <InvoiceDownloadBar invoiceId={invoiceId} />
       <VerdictBanner verdict={rec.overall_verdict || "all_clear"} findings={rec.findings || []} lineCount={(rec.lines || []).length} />
       <WaylySummaryCard summary={rec.summary_md} />
       <InvoiceMetaCard result={result} />
-      <InvoiceIssueRegister findings={rec.findings || []} />
+      <InvoiceIssueRegister findings={rec.findings || []} onDraftLetter={onDraftLetter} />
+      <InvoiceChargesTable result={result} />
     </View>
   );
 }

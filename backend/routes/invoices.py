@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import Response
 
 from lib.inv1 import (
     INV1_SCHEMA_VERSION,
@@ -826,5 +827,151 @@ def build_invoices_router(
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Invoice not found")
         return {"invoice_id": invoice_id, "state": "deleted"}
+
+    # Human-friendly titles for the C1..C12 checks (mirror the frontend map).
+    _CHECK_TITLES = {
+        "C1": "Clinical care contribution should be nil",
+        "C2": "Personal care contribution after 1 October 2026 should be nil",
+        "C3": "Rate looks asymmetric between weekday and weekend",
+        "C4": "Care management or prohibited fees",
+        "C5": "Charged after the service was delivered",
+        "C6": "Line arithmetic error (quantity x rate does not match total)",
+        "C7": "Invoice does not match statement side",
+        "C8": "GST charged on a GST-free service",
+        "C9": "Adjustment or refund line",
+        "C10": "Lifetime cap indicative check",
+        "C11": "Duplicate line",
+        "C12": "Rate exceeds published price",
+    }
+
+    @router.get("/invoices/{invoice_id}/download")
+    async def download_invoice_file(
+        invoice_id: str,
+        kind: str = "original",
+        user: dict = Depends(_current_user),
+    ):
+        """Stream a PDF for the invoice. ``kind=original`` returns the raw
+        uploaded file; ``kind=report`` renders the Wayly check-report PDF.
+        Used by the web + mobile download bar and the side-by-side compare
+        view (original vs decoded)."""
+        user_id = user.get("id") or user.get("user_id")
+        doc = await db.invoices.find_one(
+            {"id": invoice_id, "user_id": user_id, "state": "active"},
+        )
+        if not doc:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+
+        provider = (doc.get("provider_name") or "Provider").strip().replace(" ", "-")[:40]
+        inv_date = doc.get("invoice_date") or ""
+
+        if kind == "report":
+            try:
+                from services.inv1_check_report_pdf import render_invoice_check_report
+                report_bytes = render_invoice_check_report(
+                    invoice=doc, reconciliation=doc.get("reconciliation") or {},
+                )
+            except Exception as e:  # pragma: no cover - defensive
+                logger.warning("check-report PDF render failed: %s", e)
+                raise HTTPException(status_code=500, detail="Could not build the report.")
+            filename = f"Wayly-Invoice-Report_{provider}{('_' + inv_date) if inv_date else ''}.pdf"
+            return Response(
+                content=report_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            )
+
+        # kind == "original"
+        file_b64 = doc.get("file_b64")
+        if not file_b64:
+            raise HTTPException(status_code=404, detail="Original file is no longer available.")
+        raw = base64.b64decode(file_b64)
+        mimetype = "application/pdf"
+        fn = (doc.get("filename") or "invoice.pdf").lower()
+        if fn.endswith((".png",)):
+            mimetype = "image/png"
+        elif fn.endswith((".jpg", ".jpeg")):
+            mimetype = "image/jpeg"
+        elif fn.endswith((".webp",)):
+            mimetype = "image/webp"
+        elif fn.endswith((".heic", ".heif")):
+            mimetype = "image/heic"
+        elif not fn.endswith(".pdf"):
+            mimetype = "application/octet-stream"
+        return Response(
+            content=raw,
+            media_type=mimetype,
+            headers={"Content-Disposition": f'inline; filename="{doc.get("filename") or "invoice.pdf"}"'},
+        )
+
+    @router.get("/invoices/{invoice_id}/export.csv")
+    async def export_invoice_csv(
+        invoice_id: str,
+        user: dict = Depends(_current_user),
+    ):
+        """Return a CSV of the decoded invoice: header block, every line item,
+        then the issue register. Mirrors the Statement Decoder CSV export so the
+        two tools feel like one product."""
+        user_id = user.get("id") or user.get("user_id")
+        doc = await db.invoices.find_one(
+            {"id": invoice_id, "user_id": user_id, "state": "active"},
+        )
+        if not doc:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        import csv as _csv
+        import io as _io
+
+        recon = doc.get("reconciliation") or {}
+        lines = recon.get("lines") or []
+        findings = recon.get("findings") or []
+        buf = _io.StringIO()
+        w = _csv.writer(buf)
+        w.writerow(["Wayly - Invoice Check"])
+        if doc.get("provider_name"):
+            w.writerow(["Provider", doc.get("provider_name")])
+        if doc.get("invoice_number") or recon.get("invoice_number"):
+            w.writerow(["Invoice number", doc.get("invoice_number") or recon.get("invoice_number")])
+        if doc.get("invoice_date"):
+            w.writerow(["Invoice date", doc.get("invoice_date")])
+        if doc.get("due_date"):
+            w.writerow(["Due date", doc.get("due_date")])
+        w.writerow(["Amount billed", recon.get("invoice_total")])
+        w.writerow(["Verdict", recon.get("overall_verdict")])
+        w.writerow([])
+        w.writerow([
+            "Line", "Service", "Category", "Date", "Qty/Hours",
+            "Unit price", "Gross", "GST", "Contribution",
+        ])
+        for i, ln in enumerate(lines, start=1):
+            w.writerow([
+                i,
+                ln.get("service_type") or "",
+                ln.get("service_category") or "",
+                ln.get("service_date") or "",
+                ln.get("units_or_hours"),
+                ln.get("unit_price"),
+                ln.get("gross_cost"),
+                ln.get("gst_amount"),
+                ln.get("contribution_amount"),
+            ])
+        w.writerow([])
+        w.writerow(["Issues"])
+        w.writerow(["Check", "Title", "Tier", "What we saw", "Suggested question"])
+        for f in findings:
+            cid = str(f.get("check_id") or "").upper()
+            w.writerow([
+                cid,
+                _CHECK_TITLES.get(cid, cid),
+                f.get("tier"),
+                f.get("narrative") or "",
+                f.get("suggested_question") or "",
+            ])
+        provider = (doc.get("provider_name") or "Provider").strip().replace(" ", "-")[:40]
+        inv_date = doc.get("invoice_date") or ""
+        filename = f"Wayly-Invoice-Check_{provider}{('_' + inv_date) if inv_date else ''}.csv"
+        return Response(
+            content=buf.getvalue(),
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     return router

@@ -1,5 +1,8 @@
-import React from "react";
-import { AlertTriangle, AlertOctagon, Info, CheckCircle2, Receipt, Building2, Calendar, Hash } from "lucide-react";
+import React, { useState } from "react";
+import { AlertTriangle, AlertOctagon, Info, CheckCircle2, Receipt, Building2, Calendar, Hash, ChevronDown, ChevronUp, FileDown, Download, Columns2, Loader2, ShieldAlert, Shield } from "lucide-react";
+import { api } from "@/lib/api";
+import { formatDate } from "@/lib/formatDate";
+import { toast } from "sonner";
 
 /**
  * InvoiceResultBanner — mirrors the Statement Decoder summary banner so the
@@ -142,21 +145,106 @@ function _severityKey(f) {
     return "medium";
 }
 
-function _sevStyle(sev) {
-    switch (sev) {
-        case "blocker":
-        case "critical":
-            return { bg: "bg-terracotta-50", border: "border-terracotta-200", text: "text-terracotta-800", pill: "bg-terracotta text-white", Icon: AlertOctagon };
-        case "high":
-            return { bg: "bg-gold-50", border: "border-gold-200", text: "text-gold-800", pill: "bg-gold text-white", Icon: AlertTriangle };
-        case "medium":
-            return { bg: "bg-clay-50", border: "border-clay-200", text: "text-clay-dark", pill: "bg-clay text-white", Icon: AlertTriangle };
-        case "low":
-            return { bg: "bg-cream", border: "border-primary-k/15", text: "text-primary-k", pill: "bg-primary-k/70 text-white", Icon: Info };
-        case "info":
-        default:
-            return { bg: "bg-primary-k/[0.04]", border: "border-primary-k/15", text: "text-primary-k", pill: "bg-primary-k/40 text-white", Icon: Info };
-    }
+// Collapse the six raw severities into the three plain-English bands the
+// user asked for (mirrors the Statement Decoder): High / Medium / Low.
+const BANDS = ["high", "medium", "low"];
+const BAND_META = {
+    high:   { label: "High priority", bg: "bg-terracotta", fg: "text-white", Icon: AlertOctagon },
+    medium: { label: "Medium",        bg: "bg-gold",       fg: "text-white", Icon: ShieldAlert },
+    low:    { label: "Low",           bg: "bg-sage",       fg: "text-white", Icon: Shield },
+};
+function _bandOf(f) {
+    const s = _severityKey(f);
+    if (s === "blocker" || s === "critical" || s === "high") return "high";
+    if (s === "medium") return "medium";
+    return "low";
+}
+
+function IssueCard({ f, idx, band, onDraftLetter }) {
+    const meta = BAND_META[band];
+    const impact = _findingImpact(f);
+    const ref = f?.check_id || f?.rule_id || f?.code || `#${idx + 1}`;
+    const lineIds = f?.line_ids?.length ? f.line_ids : (f?.affected_line_ids || (f?.line_number ? [f.line_number] : []));
+    const lineHints = lineIds && lineIds.length
+        ? (typeof lineIds[0] === "number"
+            ? `Line ${lineIds.join(", ")}`
+            : `Line ${lineIds.map((x) => String(x).slice(0, 8)).join(", ")}`)
+        : null;
+    const title = f?.title || f?.headline || f?.label || _titleForCheck(ref);
+    const description = f?.description || f?.narrative || null;
+    const action = f?.recommended_action || f?.suggested_question || f?.escalation || null;
+    return (
+        <li className="bg-surface border border-kindred rounded-xl p-5" data-testid={`inv1-issue-${idx}`}>
+            <div className="flex items-start gap-3">
+                <span className={`inline-flex items-center justify-center rounded-full ${meta.bg} ${meta.fg} h-9 w-9 flex-none`}>
+                    <meta.Icon className="h-4 w-4" />
+                </span>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 ${meta.bg} ${meta.fg}`}>{meta.label}</span>
+                        <span className="text-[10px] uppercase tracking-wide text-muted-k font-mono">{ref}</span>
+                        {lineHints && <span className="text-[11px] text-muted-k inline-flex items-center gap-1"><Hash className="h-3 w-3" /> {lineHints}</span>}
+                    </div>
+                    <div className="mt-2 font-medium text-primary-k">{title}</div>
+                    {description && <p className="text-sm text-muted-k mt-1.5 leading-relaxed whitespace-pre-line">{description}</p>}
+                    {action && (
+                        <div className="mt-3 rounded-lg bg-surface-2 border border-kindred px-3 py-2 text-[13px] text-primary-k" data-testid={`inv1-issue-action-${idx}`}>
+                            <span className="font-semibold">What to do: </span>{action}
+                        </div>
+                    )}
+                    <div className="mt-3 flex items-center gap-3 flex-wrap">
+                        {impact > 0 && (
+                            <span className="text-sm text-primary-k">
+                                Potential refund: <span className="font-semibold tabular-nums">{aud(impact)}</span>
+                            </span>
+                        )}
+                        {onDraftLetter && (
+                            <button
+                                type="button"
+                                onClick={() => onDraftLetter(idx)}
+                                data-testid={`inv1-issue-letter-${idx}`}
+                                className="text-xs inline-flex items-center gap-1 rounded-full border border-primary-k/25 bg-white px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white transition-colors"
+                            >
+                                Draft letter
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </li>
+    );
+}
+
+function SeverityGroup({ band, entries, onDraftLetter }) {
+    const [open, setOpen] = useState(true);
+    const meta = BAND_META[band];
+    return (
+        <div className="mt-4" data-testid={`inv1-severity-group-${band}`}>
+            <button
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                aria-expanded={open}
+                className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 bg-surface-2 border border-kindred hover:bg-surface transition-colors"
+                data-testid={`inv1-severity-toggle-${band}`}
+            >
+                <span className="flex items-center gap-2">
+                    <span className={`h-6 w-6 rounded-full ${meta.bg} ${meta.fg} flex items-center justify-center flex-shrink-0`}>
+                        <meta.Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="font-medium text-primary-k text-sm">{meta.label}</span>
+                    <span className="text-xs text-muted-k">({entries.length})</span>
+                </span>
+                {open ? <ChevronUp className="h-4 w-4 text-muted-k" /> : <ChevronDown className="h-4 w-4 text-muted-k" />}
+            </button>
+            {open && (
+                <ul className="mt-3 space-y-3" data-testid={`inv1-severity-items-${band}`}>
+                    {entries.map(({ f, i }) => (
+                        <IssueCard key={f.id || i} f={f} idx={i} band={band} onDraftLetter={onDraftLetter} />
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
 }
 
 export function InvoiceIssueRegister({ findings, onDraftLetter }) {
@@ -166,101 +254,47 @@ export function InvoiceIssueRegister({ findings, onDraftLetter }) {
                 <CheckCircle2 className="h-10 w-10 text-sage mx-auto" />
                 <div className="mt-3 font-heading text-xl text-primary-k">Nothing worth raising</div>
                 <p className="mt-1.5 text-sm text-muted-k max-w-md mx-auto">
-                    Every check passed on this invoice. See the reconciliation below for the full list of what we looked at.
+                    Every check passed on this invoice. See the charges below for the full list of what we looked at.
                 </p>
             </section>
         );
     }
-    const sorted = [...findings].sort(
-        (a, b) => SEVERITY_ORDER.indexOf(_severityKey(a)) - SEVERITY_ORDER.indexOf(_severityKey(b))
-    );
-    const counts = SEVERITY_ORDER.map((s) => ({ s, n: sorted.filter((f) => _severityKey(f) === s).length })).filter((x) => x.n > 0);
+    // Preserve the original finding index so the draft-letter callback keeps
+    // pointing at the right backend finding, then group into High/Med/Low.
+    const withIdx = findings.map((f, i) => ({ f, i }));
+    const bandGroups = BANDS
+        .map((band) => ({ band, entries: withIdx.filter(({ f }) => _bandOf(f) === band) }))
+        .filter((g) => g.entries.length > 0);
+    const topBand = bandGroups[0]?.band;
+    const bannerMeta = topBand ? BAND_META[topBand] : BAND_META.low;
+    const highCount = bandGroups.find((g) => g.band === "high")?.entries.length || 0;
 
     return (
-        <section data-testid="inv1-issue-register" className="space-y-3">
+        <section data-testid="inv1-issue-register" className="space-y-2">
             <header className="flex items-baseline justify-between flex-wrap gap-2">
                 <h3 className="font-heading text-xl text-primary-k inline-flex items-center gap-2">
                     <Receipt className="h-5 w-5" /> Issue Register
                 </h3>
-                <div className="flex items-center gap-1.5 text-xs">
-                    {counts.map(({ s, n }) => {
-                        const st = _sevStyle(s);
-                        return (
-                            <span key={s} className={`inline-flex items-center gap-1 rounded-full ${st.pill} px-2 py-0.5 font-semibold uppercase tracking-wide`}>
-                                <st.Icon className="h-3 w-3" /> {n} {s}
-                            </span>
-                        );
-                    })}
-                    <span className="text-muted-k ml-1">{sorted.length} total</span>
-                </div>
+                <span className="text-xs text-muted-k">{findings.length} total</span>
             </header>
-            <ol className="space-y-3" data-testid="inv1-issues-list">
-                {sorted.map((f, i) => {
-                    const sev = _severityKey(f);
-                    const st = _sevStyle(sev);
-                    const impact = _findingImpact(f);
-                    const ref = f?.check_id || f?.rule_id || f?.code || `#${i + 1}`;
-                    const lineIds = f?.line_ids?.length ? f.line_ids : (f?.affected_line_ids || (f?.line_number ? [f.line_number] : []));
-                    const lineHints = lineIds && lineIds.length
-                        ? (typeof lineIds[0] === "number"
-                            ? `Line ${lineIds.join(", ")}`
-                            : `Line ${lineIds.map((x) => String(x).slice(0, 8)).join(", ")}`)
-                        : null;
-                    const title = f?.title || f?.headline || f?.label || f?.narrative || _titleForCheck(ref);
-                    const description = f?.description || (f?.narrative && f.narrative !== title ? f.narrative : null);
-                    const action = f?.recommended_action || f?.suggested_question || f?.escalation || null;
-                    return (
-                        <li
-                            key={f.id || i}
-                            className={`rounded-xl border ${st.border} ${st.bg} p-4`}
-                            data-testid={`inv1-issue-${i}`}
-                        >
-                            <div className="flex items-start gap-3">
-                                <span className={`inline-flex items-center justify-center rounded-full ${st.pill} h-7 w-7 flex-none`}>
-                                    <st.Icon className="h-4 w-4" />
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`text-[10px] font-semibold uppercase tracking-wide ${st.text}`}>{sev}</span>
-                                        <span className="text-[11px] uppercase tracking-wide text-muted-k font-mono">{ref}</span>
-                                        {lineHints && <span className="text-[11px] text-muted-k inline-flex items-center gap-1"><Hash className="h-3 w-3" /> {lineHints}</span>}
-                                        {f?.confidence && (
-                                            <span className="text-[10px] uppercase tracking-wide text-muted-k">
-                                                {f.confidence} confidence
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className={`mt-1 font-medium ${st.text}`}>{title}</div>
-                                    {description && <p className="text-sm text-primary-k/80 mt-1 leading-snug whitespace-pre-line">{description}</p>}
-                                    {action && (
-                                        <div className="mt-2 rounded-lg bg-white/70 border border-primary-k/10 px-3 py-2 text-[13px] text-primary-k" data-testid={`inv1-issue-action-${i}`}>
-                                            <span className="font-semibold">What to do: </span>{action}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="text-right flex-none">
-                                    {impact > 0 && (
-                                        <div className="text-xs uppercase tracking-wide text-muted-k">Refund</div>
-                                    )}
-                                    {impact > 0 && (
-                                        <div className={`font-heading text-lg ${st.text} tabular-nums`}>{aud(impact)}</div>
-                                    )}
-                                    {onDraftLetter && (
-                                        <button
-                                            type="button"
-                                            onClick={() => onDraftLetter(i)}
-                                            data-testid={`inv1-issue-letter-${i}`}
-                                            className="mt-2 text-xs inline-flex items-center gap-1 rounded-full border border-primary-k/25 bg-white px-2.5 py-1 text-primary-k hover:bg-primary-k hover:text-white"
-                                        >
-                                            Draft letter
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </li>
-                    );
-                })}
-            </ol>
+            <div className={`border-l-4 rounded-r-lg p-4 flex items-start gap-3 ${highCount > 0 ? "bg-terracotta text-white border-terracotta" : topBand === "medium" ? "bg-gold/20 text-primary-k border-gold" : "bg-sage/15 text-[#0F5648] border-sage"}`} data-testid="inv1-issue-top-banner">
+                <bannerMeta.Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div className="text-sm font-medium">
+                    {highCount > 0
+                        ? `${highCount} high-priority thing${highCount === 1 ? "" : "s"} to raise before you pay.`
+                        : topBand === "medium"
+                        ? `${bandGroups[0].entries.length} thing${bandGroups[0].entries.length === 1 ? "" : "s"} worth a closer look.`
+                        : `${findings.length} small note${findings.length === 1 ? "" : "s"}, mostly informational.`}
+                </div>
+            </div>
+            {bandGroups.map((g) => (
+                <SeverityGroup
+                    key={g.band}
+                    band={g.band}
+                    entries={g.entries}
+                    onDraftLetter={onDraftLetter}
+                />
+            ))}
         </section>
     );
 }
@@ -287,5 +321,213 @@ export function InvoiceMetadataStrip({ result }) {
                 </div>
             ))}
         </div>
+    );
+}
+
+const _CATEGORY_LABEL = {
+    clinical_care: "Clinical care",
+    personal_care: "Personal care",
+    everyday_living: "Everyday living",
+    care_management: "Care management",
+    assistive_technology: "Assistive technology",
+    home_modifications: "Home modifications",
+    nursing: "Nursing",
+    allied_health: "Allied health",
+    transport: "Transport",
+    unknown: "Other",
+};
+function _catLabel(c) {
+    if (!c) return "";
+    return _CATEGORY_LABEL[String(c)] || String(c).replace(/_/g, " ");
+}
+
+/**
+ * InvoiceChargesTable — the "what's been charged" breakdown, mirroring the
+ * Statement Decoder line-item table. Collapsed by default. Renders every
+ * extracted invoice line with qty, unit price, gross, GST, and contribution.
+ */
+export function InvoiceChargesTable({ result, defaultOpen = false }) {
+    const [open, setOpen] = useState(defaultOpen);
+    const rec = result?.reconciliation || {};
+    const lines = rec.lines || [];
+    if (lines.length === 0) return null;
+    const disputed = new Set(
+        (rec.findings || []).flatMap((f) => f?.line_ids || f?.affected_line_ids || [])
+    );
+    return (
+        <section data-testid="inv1-charges">
+            <button
+                type="button"
+                onClick={() => setOpen((s) => !s)}
+                data-testid="inv1-charges-toggle"
+                className="inline-flex items-center gap-2 text-sm text-primary-k hover:underline"
+            >
+                {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {open ? "Hide" : "Show"} what&apos;s been charged ({lines.length} line{lines.length === 1 ? "" : "s"})
+            </button>
+            {open && (
+                <div className="mt-3 overflow-x-auto bg-surface border border-kindred rounded-xl">
+                    <table className="min-w-full text-xs" data-testid="inv1-charges-table">
+                        <thead className="bg-surface-2">
+                            <tr className="text-left text-muted-k uppercase tracking-wider text-[10px]">
+                                <th className="p-2.5">Date</th>
+                                <th className="p-2.5">Service</th>
+                                <th className="p-2.5">Category</th>
+                                <th className="p-2.5 text-right">Qty / hrs</th>
+                                <th className="p-2.5 text-right">Unit price</th>
+                                <th className="p-2.5 text-right">Gross</th>
+                                <th className="p-2.5 text-right">GST</th>
+                                <th className="p-2.5 text-right">Your contribution</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-kindred">
+                            {lines.map((ln, i) => {
+                                const isDisputed = ln.line_id && disputed.has(ln.line_id);
+                                return (
+                                    <tr key={ln.line_id || i} className={isDisputed ? "bg-terracotta/5 text-primary-k" : "text-primary-k"}>
+                                        <td className="p-2.5 tabular-nums whitespace-nowrap">{formatDate(ln.service_date) || "—"}</td>
+                                        <td className="p-2.5">
+                                            <span className="inline-flex items-center gap-1.5">
+                                                {isDisputed && <AlertTriangle className="h-3 w-3 text-terracotta flex-shrink-0" />}
+                                                {ln.service_type || ln.raw_text?.slice(0, 40) || "Service"}
+                                            </span>
+                                        </td>
+                                        <td className="p-2.5">{_catLabel(ln.service_category)}</td>
+                                        <td className="p-2.5 text-right tabular-nums">{ln.units_or_hours ?? "—"}</td>
+                                        <td className="p-2.5 text-right tabular-nums">{ln.unit_price != null ? aud(ln.unit_price) : "—"}</td>
+                                        <td className="p-2.5 text-right tabular-nums font-medium">{ln.gross_cost != null ? aud(ln.gross_cost) : "—"}</td>
+                                        <td className="p-2.5 text-right tabular-nums">{ln.gst_amount != null ? aud(ln.gst_amount) : "—"}</td>
+                                        <td className="p-2.5 text-right tabular-nums">{ln.contribution_amount != null ? aud(ln.contribution_amount) : "—"}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </section>
+    );
+}
+
+/**
+ * InvoiceDownloadBar — mirrors the Statement Decoder download bar. Lets the
+ * user download the original file, the Wayly check-report PDF, a CSV of the
+ * decoded invoice, and open a side-by-side compare (original vs decoded).
+ */
+export function InvoiceDownloadBar({ invoiceId, onCompare, comparing }) {
+    const [busy, setBusy] = useState(null);
+    if (!invoiceId) return null;
+
+    const download = async (kind) => {
+        setBusy(kind);
+        try {
+            const isCsv = kind === "csv";
+            const url = isCsv
+                ? `/invoices/${invoiceId}/export.csv`
+                : `/invoices/${invoiceId}/download?kind=${kind}`;
+            const res = await api.get(url, { responseType: "blob" });
+            const cd = res.headers?.["content-disposition"] || "";
+            const m = /filename="?([^"]+)"?/.exec(cd);
+            const fallback = isCsv ? "Wayly-Invoice-Check.csv" : kind === "report" ? "Wayly-Invoice-Report.pdf" : "invoice.pdf";
+            const filename = m ? m[1] : fallback;
+            const blob = new Blob([res.data], { type: res.data.type || (isCsv ? "text/csv" : "application/pdf") });
+            const objUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = objUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(objUrl);
+        } catch (e) {
+            toast.error(e?.response?.status === 404 ? "That file is no longer available." : "Could not download. Please try again.");
+        } finally {
+            setBusy(null);
+        }
+    };
+
+    return (
+        <div className="flex items-center justify-between flex-wrap gap-3 bg-surface-2 border border-kindred rounded-lg px-4 py-3" data-testid="inv1-download-bar">
+            <div className="text-sm text-muted-k">Save or compare this checked invoice.</div>
+            <div className="flex items-center gap-2 flex-wrap">
+                {onCompare && (
+                    <button
+                        onClick={onCompare}
+                        className={`inline-flex items-center gap-1.5 text-sm border rounded-md px-3 py-1.5 transition-colors ${comparing ? "bg-primary-k text-white border-primary-k" : "border-primary-k text-primary-k hover:bg-primary-k hover:text-white"}`}
+                        data-testid="inv1-compare-btn"
+                    >
+                        <Columns2 className="h-3.5 w-3.5" /> {comparing ? "Hide compare" : "Compare"}
+                    </button>
+                )}
+                <button
+                    onClick={() => download("original")}
+                    disabled={busy === "original"}
+                    className="inline-flex items-center gap-1.5 text-sm border border-kindred rounded-md px-3 py-1.5 hover:bg-surface text-primary-k disabled:opacity-50"
+                    data-testid="inv1-download-original-btn"
+                >
+                    {busy === "original" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />} Original
+                </button>
+                <button
+                    onClick={() => download("csv")}
+                    disabled={busy === "csv"}
+                    className="inline-flex items-center gap-1.5 text-sm border border-kindred rounded-md px-3 py-1.5 hover:bg-surface text-primary-k disabled:opacity-50"
+                    data-testid="inv1-download-csv-btn"
+                >
+                    {busy === "csv" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />} CSV
+                </button>
+                <button
+                    onClick={() => download("report")}
+                    disabled={busy === "report"}
+                    className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#091D33] disabled:opacity-50"
+                    data-testid="inv1-download-pdf-btn"
+                >
+                    {busy === "report" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />} PDF
+                </button>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * InvoiceCompareView — side-by-side original file (left) vs decoded charges
+ * table (right), mirroring the Statement Compare screen.
+ */
+export function InvoiceCompareView({ invoiceId, result }) {
+    const [objUrl, setObjUrl] = useState(null);
+    const [err, setErr] = useState(false);
+    React.useEffect(() => {
+        let revoked = null;
+        (async () => {
+            try {
+                const res = await api.get(`/invoices/${invoiceId}/download?kind=original`, { responseType: "blob" });
+                const blob = new Blob([res.data], { type: res.data.type || "application/pdf" });
+                const url = window.URL.createObjectURL(blob);
+                revoked = url;
+                setObjUrl(url);
+            } catch {
+                setErr(true);
+            }
+        })();
+        return () => { if (revoked) window.URL.revokeObjectURL(revoked); };
+    }, [invoiceId]);
+    return (
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="inv1-compare-view">
+            <div className="rounded-xl border border-kindred bg-surface overflow-hidden">
+                <div className="overline px-4 py-2 border-b border-kindred bg-surface-2">Original invoice</div>
+                {err ? (
+                    <div className="p-6 text-sm text-muted-k">The original file is no longer available.</div>
+                ) : objUrl ? (
+                    <object data={objUrl} type="application/pdf" className="w-full h-[600px]" data-testid="inv1-compare-original">
+                        <div className="p-6 text-sm text-muted-k">Preview not supported. Use the Original download button above.</div>
+                    </object>
+                ) : (
+                    <div className="p-6 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                )}
+            </div>
+            <div className="rounded-xl border border-kindred bg-surface p-4">
+                <div className="overline mb-3">Decoded charges</div>
+                <InvoiceChargesTable result={result} defaultOpen={true} />
+            </div>
+        </section>
     );
 }

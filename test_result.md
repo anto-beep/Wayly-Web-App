@@ -1091,3 +1091,75 @@ agent_communication:
       product surfaces. Combined regression: 47 passed, 9 skipped (older
       suite rate-limit collisions).
 
+
+## INV-1 Parity v1 (Invoice Checker → Statement-Decoder-grade, web + mobile)
+backend:
+  - task: "Invoice download/export endpoints: GET /invoices/{id}/download?kind=original|report, GET /invoices/{id}/export.csv"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/invoices.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          New endpoints stream the original uploaded invoice (kind=original,
+          inline), the Wayly check-report PDF (kind=report, via
+          services.inv1_check_report_pdf), and a CSV of the decoded invoice
+          (header + line items + issue register). Verified via curl on
+          cathy@example.com invoice 2acaf9f3-...: CSV 200 + correct filename,
+          report PDF 20642 bytes, original PDF 9435 bytes. /findings/{i}/letter
+          bridge returns editor_path (source-aware LF-1 entry).
+frontend:
+  - task: "Web Invoice Checker result: collapsible High/Med/Low issue groups + charges (line items) table + download/compare bar + source-aware draft-letter"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/invoices/InvoiceResultView.jsx, /app/frontend/src/pages/InvoiceDetail.jsx, /app/frontend/src/pages/tools/InvoiceCheckerTool.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          InvoiceIssueRegister rebuilt into collapsible severity bands
+          (High/Medium/Low) mirroring the Decoder SeverityGroup, per-issue
+          Draft letter (now POSTs /invoices/{id}/findings/{i}/letter →
+          navigates to LF-1 editor, source-aware), refund + line hints. New
+          InvoiceChargesTable (collapsible line-item table), InvoiceDownloadBar
+          (Original / CSV / PDF), InvoiceCompareView (original PDF side-by-side
+          with decoded charges). Wired into InvoiceDetail + InvoiceCheckerTool.
+          Smoke-verified via authenticated screenshot: banner, download bar
+          (Compare/Original/CSV/PDF), 3 severity groups, charges table render.
+  - task: "Mobile Invoice Checker parity: collapsible groups + charges + download bar + draft-letter"
+    implemented: true
+    working: "NA"
+    file: "/app/mobile/src/components/invoices/InvoiceResultView.tsx, /app/mobile/app/invoice/[id].tsx, /app/mobile/src/components/tools/InvoiceChecker.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          Mirrored web: collapsible High/Med/Low SeverityGroup, IssueCard with
+          Draft letter (POST /findings/{i}/letter → Alert → /correspondence),
+          InvoiceChargesTable (per-line cards), InvoiceDownloadBar
+          (Original/CSV/PDF via downloadAndShare). Lint clean. Not yet runtime-
+          verified on Expo preview.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Phase 2 (Invoice Checker → Statement-Decoder parity) built on web + mobile.
+      Please test BOTH platforms. Test creds cathy@example.com / testpass123
+      (Family). Web route /app/invoices/{id} and tool /ai-tools/invoice-checker;
+      mobile /invoice/{id} and /tool/invoice-checker. Existing seeded invoices
+      for cathy include 2acaf9f3-0190-47e7-b9c7-c939c579b49b (Glorious Services,
+      18 findings, 29 lines). Verify: collapsible High/Med/Low groups toggle;
+      charges/line-item table shows; downloads (Original/CSV/PDF) succeed;
+      per-issue Draft letter creates an LF-1 entry (web navigates to editor,
+      mobile shows confirm + routes to /correspondence); web Compare shows the
+      original PDF beside decoded charges. Parity across surfaces.
