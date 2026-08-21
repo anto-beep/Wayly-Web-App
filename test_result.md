@@ -1297,3 +1297,44 @@ agent_communication:
       chsp-service-continuity-letter, chsp-hardship-letter, chsp-hardship-hint.
       WS-3: service continuity + hardship buttons create an LF-1 draft (web
       navigates to editor; mobile Alert → /correspondence).
+
+## CHSP WS-2/WS-5/WS-6 + DD/MM/YYYY + dropdown capitalisation + agreed-rate prefill (iter 236, web + mobile)
+backend:
+  - task: "WS-6 canonical fixture set + CI runner; golden suite now 8/8 (adds test_canonical_fixture_set)"
+    implemented: true
+    working: true
+    file: "/app/backend/tests/fixtures/chsp_fee_check_fixtures.json, /app/backend/tests/test_chsp_fee_check_golden.py, /app/backend/scripts/ci_chsp.sh"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "8/8 pass; ci_chsp.sh runs golden + WS-1 API suites."
+frontend:
+  - task: "WS-2 reframe: headline 'Check your CHSP billing.', two-sided step 2, Transition walkthrough demoted behind 'Is CHSP still the right fit?' self-check, not-advice disclaimer (web + mobile)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/ChspTools.jsx, /app/mobile/app/chsp-tools.tsx"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Web screenshot: new headline, self-check present, walkthrough hidden until chsp-needs-change ticked (0→1), disclaimer present."
+  - task: "WS-5 date+enum sweep: DD/MM/YYYY on CHSP dates (display + inputs), capitalised dropdown labels (serviceTypeLabel/chspStatusLabel), 'Transitioning to Support at Home'. Shared labels util web+mobile"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/lib/labels.js, /app/mobile/src/utils/labels.ts, ChspTools.jsx, chsp-tools.tsx"
+  - task: "Agreed Rate Schedule prefill: selecting a saved service entry pre-fills agreed_rate + rate_effective_date so the degraded state clears (web + mobile)"
+    implemented: true
+    working: "NA"
+    file: "ChspTools.jsx, chsp-tools.tsx"
+agent_communication:
+  - agent: "main"
+    message: |
+      iter236. Test web (auth injectable) + backend; mobile is a mirror.
+      Creds cathy@example.com/testpass123 (has CHSP profile). Web /app/chsp/tools.
+      Verify: (WS-2) headline 'Check your CHSP billing.'; chsp-fit-self-check present;
+      chsp-transition-walkthrough hidden until chsp-needs-change checkbox ticked;
+      tw-two-sided note in step 2; chsp-disclaimer present. (WS-5) CHSP service-type
+      dropdown options are capitalised ('Domestic assistance' etc.); status option
+      'Transitioning to Support at Home'; profile summary date renders DD/MM/YYYY;
+      WS-1 date fields accept DD/MM/YYYY text. (Agreed rate) picking a service entry
+      in chsp-ws1-service-entry prefills chsp-ws1-agreed-rate. Do NOT re-run the
+      iter235 WS-1 golden verdicts (unchanged) beyond a sanity check.

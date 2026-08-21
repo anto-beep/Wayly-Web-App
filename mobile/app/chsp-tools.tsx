@@ -8,17 +8,19 @@ import { PageIntro } from "@/src/components/PageIntro";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
+import { shortDate } from "@/src/utils/format";
+import { serviceTypeLabel, chspStatusLabel, labelize } from "@/src/utils/labels";
 
 const STATUS_OPTIONS = [
   { value: "on_chsp", label: "On CHSP" },
   { value: "considering_transition", label: "Considering transition" },
-  { value: "transitioning_to_sah", label: "Transitioning to SAH" },
+  { value: "transitioning_to_sah", label: "Transitioning to Support at Home" },
 ];
 const SERVICE_TYPES = [
   "domestic_assistance", "personal_care", "meals", "transport", "social_support_individual",
   "social_support_group", "allied_health", "nursing", "home_maintenance", "home_modifications_minor",
   "goods_equipment_assistive_technology", "respite", "specialised_support_services", "other",
-].map((v) => ({ value: v, label: v.replace(/_/g, " ") }));
+].map((v) => ({ value: v, label: serviceTypeLabel(v) }));
 const REASONS = [
   "current_supports_insufficient", "needs_increased_after_hospital_or_health_change",
   "need_specific_services_chsp_can't_provide", "want_greater_service_choice",
@@ -101,7 +103,7 @@ function WS1FeeCheck({ services, colors }: any) {
 
   const onServiceChange = (id: string) => {
     const svc = services.find((s: any) => s.id === id);
-    if (svc) set({ service_type: svc.service_type, provider_name: svc.provider_name, agreed_rate: svc.hourly_rate_or_fee?.amount != null ? String(svc.hourly_rate_or_fee.amount) : form.agreed_rate });
+    if (svc) set({ service_type: svc.service_type, provider_name: svc.provider_name, agreed_rate: svc.hourly_rate_or_fee?.amount != null ? String(svc.hourly_rate_or_fee.amount) : form.agreed_rate, rate_effective_date: svc.start_date ? (shortDate(svc.start_date) || form.rate_effective_date) : form.rate_effective_date });
   };
 
   const submit = async () => {
@@ -127,7 +129,7 @@ function WS1FeeCheck({ services, colors }: any) {
     finally { setBusy(false); }
   };
 
-  const serviceOpts = [{ value: "", label: "Manual entry" }, ...services.map((s: any) => ({ value: s.id, label: `${s.service_type} · ${s.provider_name}` }))];
+  const serviceOpts = [{ value: "", label: "Manual entry" }, ...services.map((s: any) => ({ value: s.id, label: `${serviceTypeLabel(s.service_type)} · ${s.provider_name}` }))];
   const verdictTone = result ? (result.overall_verdict === "within" ? "success" : result.overall_verdict === "no_verdict" ? "neutral" : "alert") : "neutral";
   const VIcon = result ? (result.overall_verdict === "within" ? CheckCircle2 : result.overall_verdict === "material" ? ShieldAlert : result.overall_verdict === "no_verdict" ? HelpCircle : AlertTriangle) : HelpCircle;
 
@@ -200,6 +202,7 @@ export default function ChspToolsScreen() {
   const [profile, setProfile] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [ws1, setWs1] = useState(false);
+  const [needsChange, setNeedsChange] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -217,9 +220,9 @@ export default function ChspToolsScreen() {
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg }} keyboardShouldPersistTaps="handled" testID="chsp-tools-root">
           <PageIntro
             eyebrow="Commonwealth Home Support Programme"
-            title="Verify CHSP Billing. Consider a Move to Support at Home."
-            description="Two decisions matter on CHSP: was I actually billed correctly, and should I transition to Support at Home? This tool walks you through both without pressure."
-            whatItDoes="Runs a variance check on any CHSP invoice against what you expected to pay, and gives you a 3-step walkthrough for thinking through whether transitioning to SAH is right for you."
+            title="Check your CHSP billing."
+            description="See whether your CHSP invoice looks right. CHSP may be exactly the right program for you. If your needs have changed, you can also think through a move to Support at Home, without pressure."
+            whatItDoes="Checks any CHSP invoice against your provider's agreed per-unit rate, and drafts letters to keep services running or apply for hardship. An optional walkthrough helps only if your needs have changed."
           />
 
           {loading ? <Loading label="Loading your CHSP profile…" /> : (
@@ -229,7 +232,22 @@ export default function ChspToolsScreen() {
                 <>
                   <ChspServicesCard services={services} onAdded={load} colors={colors} />
                   {ws1 ? <WS1FeeCheck services={services} colors={colors} /> : <FeeCheckForm services={services} colors={colors} />}
-                  <TransitionWalkthrough colors={colors} />
+
+                  <Card testID="chsp-fit-self-check">
+                    <T variant="label">IS CHSP STILL THE RIGHT FIT?</T>
+                    <T variant="small" style={{ marginTop: 4, lineHeight: 20 }}>Most people on CHSP are on the right program. You only need the transition walkthrough if your care needs have genuinely changed.</T>
+                    <Pressable testID="chsp-needs-change" onPress={() => setNeedsChange((v) => !v)} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.md }}>
+                      <Checkbox checked={needsChange} colors={colors} />
+                      <T variant="small" style={{ flex: 1, color: colors.text }}>My care needs have changed recently (for example after a hospital stay or a health change).</T>
+                    </Pressable>
+                  </Card>
+
+                  {needsChange ? <TransitionWalkthrough colors={colors} /> : null}
+
+                  <View testID="chsp-disclaimer" style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.md }}>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>Not financial or legal advice.</T>
+                    <T variant="small" style={{ marginTop: 4, lineHeight: 19 }}>Wayly helps you understand and organise your aged-care information. It is not a substitute for professional financial, legal, or clinical advice. Verdicts and letters may contain errors, always check the detail against your own records before acting.</T>
+                  </View>
                 </>
               ) : null}
 
@@ -258,7 +276,7 @@ function ChspProfileCard({ profile, onCreate, colors }: any) {
     return (
       <Card testID="chsp-profile-summary">
         <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>CHSP PROFILE</T>
-        <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text, marginTop: 4 }}>Status: {String(profile.current_chsp_status || "").replace(/_/g, " ")}{profile.chsp_start_date ? ` · started ${profile.chsp_start_date}` : ""}</T>
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text, marginTop: 4 }}>Status: {chspStatusLabel(profile.current_chsp_status)}{profile.chsp_start_date ? ` · started ${shortDate(profile.chsp_start_date)}` : ""}</T>
       </Card>
     );
   }
@@ -323,7 +341,7 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
         <View style={{ marginTop: spacing.md, gap: spacing.sm }} testID="chsp-services-list">
           {services.map((s: any) => (
             <View key={s.id} testID={`chsp-service-${s.id}`} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm }}>
-              <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{String(s.service_type || "").replace(/_/g, " ")}</T>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{serviceTypeLabel(s.service_type)}</T>
               <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
                 {s.provider_name}{s.hourly_rate_or_fee?.amount != null ? ` · $${s.hourly_rate_or_fee.amount}` : ""}{s.weekly_frequency ? ` · ${s.weekly_frequency}` : ""}
               </T>
@@ -408,7 +426,7 @@ function FeeCheckForm({ services, colors }: any) {
     } catch { setDisputeMsg("Could not open dispute."); }
   };
 
-  const serviceOpts = [{ value: "", label: "Manual entry" }, ...services.map((s: any) => ({ value: s.id, label: `${s.service_type} · ${s.provider_name}` }))];
+  const serviceOpts = [{ value: "", label: "Manual entry" }, ...services.map((s: any) => ({ value: s.id, label: `${serviceTypeLabel(s.service_type)} · ${s.provider_name}` }))];
 
   return (
     <Card testID="chsp-fee-check-form">
@@ -505,7 +523,7 @@ function TransitionWalkthrough({ colors }: any) {
             {REASONS.map((r) => (
               <Pressable key={r} testID={`tw-reason-${r}`} onPress={() => toggleReason(r)} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
                 <Checkbox checked={reasons.includes(r)} colors={colors} />
-                <T variant="small" style={{ flex: 1, color: colors.text }}>{r.replace(/_/g, " ")}</T>
+                <T variant="small" style={{ flex: 1, color: colors.text }}>{labelize(r)}</T>
               </Pressable>
             ))}
             <TextInput testID="tw-reasons-notes" value={reasonsNotes} onChangeText={setReasonsNotes} multiline placeholder="Anything else?" placeholderTextColor={colors.muted}
@@ -514,7 +532,11 @@ function TransitionWalkthrough({ colors }: any) {
         ) : null}
         {step === 1 ? (
           <>
-            <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>Tick each concept you feel comfortable with. Nothing is submitted yet — this is just for your own confidence.</T>
+            <View testID="tw-two-sided" style={{ backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.gold, borderRadius: radius.md, padding: spacing.md }}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>Support at Home is not automatically better.</T>
+              <T variant="small" style={{ marginTop: 4, lineHeight: 19 }}>Compared with CHSP, Support at Home can cost more, is means tested, and can involve waitlists. For many people, CHSP remains the right program.</T>
+            </View>
+            <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>Tick each concept you feel comfortable with. Nothing is submitted yet, this is just for your own confidence.</T>
             {CONSIDERATIONS.map((c) => (
               <Pressable key={c.key} testID={`tw-consideration-${c.key}`} onPress={() => toggleConsideration(c.key)} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
                 <Checkbox checked={!!considerations[c.key]} colors={colors} />

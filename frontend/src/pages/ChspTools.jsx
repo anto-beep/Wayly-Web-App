@@ -12,6 +12,8 @@ import {
     ShieldAlert, ClipboardCheck, Home, Clock, LifeBuoy, Mail, HelpCircle,
 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
+import { serviceTypeLabel, chspStatusLabel, labelize } from "@/lib/labels";
+import { formatDate } from "@/lib/formatDate";
 
 const SERVICE_TYPES = [
     "domestic_assistance", "personal_care", "meals", "transport",
@@ -110,6 +112,7 @@ function WS1FeeCheck({ services }) {
                 service_type: svc.service_type || f.service_type,
                 provider_name: svc.provider_name || f.provider_name,
                 agreed_rate: svc.hourly_rate_or_fee?.amount != null ? String(svc.hourly_rate_or_fee.amount) : f.agreed_rate,
+                rate_effective_date: svc.start_date ? (formatDate(svc.start_date) || f.rate_effective_date) : f.rate_effective_date,
             }));
         }
     };
@@ -151,7 +154,7 @@ function WS1FeeCheck({ services }) {
                     <label className="text-xs text-muted-k sm:col-span-2">Service entry (pre-fills provider, type, rate)
                         <select onChange={(e) => onServiceChange(e.target.value)} data-testid="chsp-ws1-service-entry" className="mt-1 w-full px-3 py-2 text-sm border rounded">
                             <option value="">Manual entry</option>
-                            {services.map((s) => <option key={s.id} value={s.id}>{s.service_type} · {s.provider_name}</option>)}
+                            {services.map((s) => <option key={s.id} value={s.id}>{serviceTypeLabel(s.service_type)} · {s.provider_name}</option>)}
                         </select>
                     </label>
                 )}
@@ -163,14 +166,14 @@ function WS1FeeCheck({ services }) {
                 </label>
                 <label className="text-xs text-muted-k">Service type
                     <select value={form.service_type} data-testid="chsp-ws1-service-type" onChange={(e) => setForm({ ...form, service_type: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded">
-                        {SERVICE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
+                        {SERVICE_TYPES.map((t) => <option key={t} value={t}>{serviceTypeLabel(t)}</option>)}
                     </select>
                 </label>
                 <label className="text-xs text-muted-k">Agreed per-unit rate (AUD)
                     <input type="number" value={form.agreed_rate} data-testid="chsp-ws1-agreed-rate" placeholder="e.g. 6.00" onChange={(e) => setForm({ ...form, agreed_rate: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Rate effective date
-                    <input type="date" value={form.rate_effective_date} data-testid="chsp-ws1-rate-date" onChange={(e) => setForm({ ...form, rate_effective_date: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                <label className="text-xs text-muted-k">Rate effective date (DD/MM/YYYY)
+                    <input type="text" inputMode="numeric" value={form.rate_effective_date} data-testid="chsp-ws1-rate-date" placeholder="DD/MM/YYYY" onChange={(e) => setForm({ ...form, rate_effective_date: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
                 <label className="text-xs text-muted-k">Units billed
                     <input type="number" value={form.units_billed} data-testid="chsp-ws1-units-billed" placeholder="e.g. 4" onChange={(e) => setForm({ ...form, units_billed: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
@@ -178,11 +181,11 @@ function WS1FeeCheck({ services }) {
                 <label className="text-xs text-muted-k">Units received
                     <input type="number" value={form.units_received} data-testid="chsp-ws1-units-received" placeholder="e.g. 4" onChange={(e) => setForm({ ...form, units_received: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Billed period start
-                    <input type="date" value={form.billed_period_start} data-testid="chsp-ws1-period-start" onChange={(e) => setForm({ ...form, billed_period_start: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                <label className="text-xs text-muted-k">Billed period start (DD/MM/YYYY)
+                    <input type="text" inputMode="numeric" value={form.billed_period_start} data-testid="chsp-ws1-period-start" placeholder="DD/MM/YYYY" onChange={(e) => setForm({ ...form, billed_period_start: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Billed period end
-                    <input type="date" value={form.billed_period_end} data-testid="chsp-ws1-period-end" onChange={(e) => setForm({ ...form, billed_period_end: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                <label className="text-xs text-muted-k">Billed period end (DD/MM/YYYY)
+                    <input type="text" inputMode="numeric" value={form.billed_period_end} data-testid="chsp-ws1-period-end" placeholder="DD/MM/YYYY" onChange={(e) => setForm({ ...form, billed_period_end: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
                 <label className="text-xs text-muted-k">Billed amount (AUD)
                     <input type="number" value={form.billed_amount} data-testid="chsp-ws1-billed" onChange={(e) => setForm({ ...form, billed_amount: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
@@ -257,8 +260,8 @@ function ChspProfileCard({ profile, onCreate }) {
         return (
             <div className="rounded-2xl border border-primary-k/10 bg-white p-5" data-testid="chsp-profile-summary">
                 <p className="text-xs uppercase tracking-wide text-primary-k/50">CHSP profile</p>
-                <p className="text-sm text-primary-k mt-1">Status: {profile.current_chsp_status?.replace(/_/g, " ")}
-                    {profile.chsp_start_date ? ` · started ${profile.chsp_start_date}` : ""}</p>
+                <p className="text-sm text-primary-k mt-1">Status: {chspStatusLabel(profile.current_chsp_status)}
+                    {profile.chsp_start_date ? ` · started ${formatDate(profile.chsp_start_date)}` : ""}</p>
             </div>
         );
     }
@@ -281,7 +284,7 @@ function ChspProfileCard({ profile, onCreate }) {
                             className="mt-1 w-full px-3 py-2 text-sm border rounded">
                         <option value="on_chsp">On CHSP</option>
                         <option value="considering_transition">Considering transition</option>
-                        <option value="transitioning_to_sah">Transitioning to SAH</option>
+                        <option value="transitioning_to_sah">Transitioning to Support at Home</option>
                     </select>
                 </label>
                 <label className="text-xs text-muted-k">CHSP start date (optional)
@@ -392,7 +395,7 @@ function FeeCheckForm({ services, onSubmitted }) {
                             data-testid="chsp-fc-service-type"
                             onChange={e => setForm({ ...form, service_type: e.target.value })}
                             className="mt-1 w-full px-3 py-2 text-sm border rounded">
-                        {SERVICE_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
+                        {SERVICE_TYPES.map(t => <option key={t} value={t}>{serviceTypeLabel(t)}</option>)}
                     </select>
                 </label>
                 <label className="text-xs text-muted-k">Units billed
@@ -497,7 +500,7 @@ function TransitionWalkthrough() {
                             <input type="checkbox" checked={reasons.includes(r)}
                                    data-testid={`tw-reason-${r}`}
                                    onChange={() => toggleReason(r)}/>
-                            <span>{r.replace(/_/g, " ")}</span>
+                            <span>{labelize(r)}</span>
                         </label>
                     ))}
                     <textarea rows={2} value={reasonsNotes} onChange={e => setReasonsNotes(e.target.value)}
@@ -511,6 +514,10 @@ function TransitionWalkthrough() {
             title: "Understand the differences",
             content: (
                 <div className="space-y-2">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" data-testid="tw-two-sided">
+                        <p className="font-medium">Support at Home is not automatically better.</p>
+                        <p className="mt-1">Compared with CHSP, Support at Home <strong>can cost more</strong>, is <strong>means tested</strong>, and can involve <strong>waitlists</strong>. For many people, CHSP remains the right program.</p>
+                    </div>
                     <p className="text-xs text-muted-k">Tick each concept you feel comfortable with. Nothing gets submitted yet, this is just for your own confidence.</p>
                     {CONSIDERATIONS.map(c => (
                         <label key={c.key} className="flex items-center gap-2 text-sm">
@@ -592,6 +599,7 @@ export default function ChspTools() {
     const [profile, setProfile] = useState(null);
     const [services, setServices] = useState([]);
     const [ws1, setWs1] = useState(false);
+    const [needsChange, setNeedsChange] = useState(false);
 
     const load = async () => {
         try {
@@ -616,19 +624,19 @@ export default function ChspTools() {
             </Link>
             <PageIntro
                 eyebrow="Commonwealth Home Support Programme"
-                title="Verify CHSP Billing. Consider a Move to Support at Home."
-                description="Two decisions matter on CHSP: was I actually billed correctly, and should I transition to Support at Home? This tool walks you through both without pressure."
-                whatItDoes="Checks any CHSP invoice against your provider's agreed per-unit rate, drafts letters to keep services running or apply for hardship, and gives you a 3-step walkthrough for thinking through whether transitioning to SAH is right for you."
+                title="Check your CHSP billing."
+                description="See whether your CHSP invoice looks right. CHSP may be exactly the right program for you. If your needs have changed, you can also think through a move to Support at Home, without pressure."
+                whatItDoes="Checks any CHSP invoice against your provider's agreed per-unit rate, and drafts letters to keep services running or apply for hardship. If your needs have changed, an optional walkthrough helps you think through Support at Home."
                 howToUse={[
-                    "Set your CHSP profile (status + start date).",
+                    "Set your CHSP profile (status and start date).",
                     "Enter the agreed per-unit rate, units billed and received, and the billed amount.",
                     "Draft a service-continuity or hardship letter, or dispute a material overcharge.",
-                    "When ready, work through the 3-step transition walkthrough to record a considered decision.",
+                    "Only if your needs have changed, work through the optional transition self-check.",
                 ]}
                 whatYouGet={[
-                    "A per-unit verdict on every fee check (within tolerance / minor / material).",
+                    "A per-unit verdict on every fee check (within tolerance, minor, or material).",
                     "Ready-to-send service-continuity and hardship / fee-waiver letters.",
-                    "A documented decision on whether to stay on CHSP or move to SAH.",
+                    "An optional, documented decision on whether to stay on CHSP or move to Support at Home.",
                 ]}
             />
 
@@ -636,7 +644,22 @@ export default function ChspTools() {
             {profile && (
                 <>
                     {ws1 ? <WS1FeeCheck services={services} /> : <FeeCheckForm services={services} onSubmitted={() => load()}/>}
-                    <TransitionWalkthrough/>
+
+                    <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-3" data-testid="chsp-fit-self-check">
+                        <p className="text-xs uppercase tracking-wide text-primary-k/50">Is CHSP still the right fit?</p>
+                        <p className="text-sm text-muted-k">Most people on CHSP are on the right program. You only need the transition walkthrough if your care needs have genuinely changed.</p>
+                        <label className="flex items-center gap-2 text-sm text-primary-k">
+                            <input type="checkbox" checked={needsChange} onChange={(e) => setNeedsChange(e.target.checked)} data-testid="chsp-needs-change" />
+                            <span>My care needs have changed recently (for example after a hospital stay or a health change).</span>
+                        </label>
+                    </div>
+
+                    {needsChange && <TransitionWalkthrough/>}
+
+                    <div className="rounded-xl border border-primary-k/15 bg-primary-k/[0.03] p-4 text-xs text-muted-k" data-testid="chsp-disclaimer">
+                        <p className="font-medium text-primary-k">Not financial or legal advice.</p>
+                        <p className="mt-1">Wayly helps you understand and organise your aged-care information. It is not a substitute for professional financial, legal, or clinical advice. Verdicts and letters are generated to assist you and may contain errors, always check the detail against your own records before acting.</p>
+                    </div>
                 </>
             )}
         </div>

@@ -1,3 +1,14 @@
+## Iteration 236 (Jun 2026) — CHSP WS-2 / WS-5 / WS-6 (signed off) + DD/MM/YYYY + dropdown capitalisation + Agreed Rate Schedule (web + mobile)
+
+- **WS-2 reframed transition flow**: headline → "Check your CHSP billing." with the softened subtitle; Transition walkthrough demoted behind an "Is CHSP still the right fit?" self-check (`chsp-needs-change` reveals it); step 2 now two-sided (`tw-two-sided`: Support at Home can cost more, is means tested, can involve waitlists); a not-advice disclaimer (`chsp-disclaimer`) on the tool. Mirrored on mobile.
+- **WS-5 date/enum sweep**: shared label helpers `frontend/src/lib/labels.js` + `mobile/src/utils/labels.ts` (`serviceTypeLabel`, `chspStatusLabel`, `labelize`). All CHSP dropdown options render capitalised ("Domestic assistance", "Transitioning to Support at Home"); CHSP dates render DD/MM/YYYY (display via `formatDate`/`shortDate`, and WS-1 date fields are DD/MM/YYYY text inputs the backend parses); service-entry option labels capitalised; field already "Invoice reference".
+- **WS-6 fixtures/CI**: canonical `tests/fixtures/chsp_fee_check_fixtures.json` + data-driven `test_canonical_fixture_set` (golden suite 8/8) + `scripts/ci_chsp.sh` gate (17/17 with WS-1 API tests).
+- **Agreed Rate Schedule**: selecting a saved CHSP service entry pre-fills the Fee Check agreed rate + effective date (normalised to DD/MM/YYYY), clearing the degraded state.
+- Verified: backend 8/8 golden + 17/17 CI; web all WS-2/WS-5 checks pass (headline, self-check gating, two-sided, disclaimer, capitalised dropdowns, DD/MM/YYYY, 181-day staleness, prefill). Two 1-line WS-5 label/format defects the tester flagged were fixed on both surfaces.
+
+**Still pending from this request:** mobile per-entry LF-1 letter editor deep-link (CHSP/invoice letters currently route to /correspondence), CHSP invoice-photo OCR (mobile), extending dropdown capitalisation beyond CHSP, and the full web↔mobile screen-parity sweep per PARITY-1-PHASE0-AUDIT.md.
+
+
 ## Iteration 235 (Jun 2026) — CHSP-TOOLS-1 WS-1 per-unit Fee Check + WS-3 Access & Hardship (web + mobile, behind `chsp_tools_v1`)
 
 Implemented the golden-gated WS-1 Fee Check and WS-3 access/hardship letters from CHSP-TOOLS-1 v1.1 / CHSP-FIX-golden-v1.

@@ -3,7 +3,12 @@
 Every numeric expectation here is copied from CHSP-FIX-golden-v1. A mismatch
 on any assertion is a build failure and blocks the CHSP-TOOLS-1 WS-1 flag flip.
 """
+import json
+import os
+
 from lib.chsp1.fee_check import rate_tier, run_fee_check
+
+_FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures", "chsp_fee_check_fixtures.json")
 
 
 def test_fix_1_clean_invoice():
@@ -83,3 +88,13 @@ def test_directionality_guards():
     underbill = run_fee_check(agreed_rate="6.00", units_received=4, units_billed=3, billed_amount="18.00")
     assert underbill["units_tier"] == "within"
     assert underbill["dispute_offered"] is False
+
+
+def test_canonical_fixture_set():
+    """WS-6 · Data-driven pass over the canonical CHSP fixture JSON."""
+    with open(_FIXTURES) as fh:
+        data = json.load(fh)
+    for fx in data["fixtures"]:
+        result = run_fee_check(**fx["input"])
+        for key, expected in fx["expect"].items():
+            assert result[key] == expected, f"{fx['id']} · {key}: {result[key]!r} != {expected!r}"

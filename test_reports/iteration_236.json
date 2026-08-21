@@ -1,0 +1,58 @@
+{
+  "summary": "CHSP-TOOLS-1 WS-2/WS-5/WS-6 + Agreed Rate Schedule verified. Backend golden suite passes 8/8 (incl. test_canonical_fixture_set); backend/scripts/ci_chsp.sh passes 17/17. Web /app/chsp/tools (cathy): headline 'Check your CHSP billing.' correct; chsp-fit-self-check present; chsp-transition-walkthrough correctly HIDDEN until chsp-needs-change is ticked; step 2 shows tw-two-sided with all three phrases ('cost more', 'means tested', 'waitlists'); chsp-disclaimer present. WS-5: chsp-ws1-service-type options are capitalised (e.g. 'Domestic assistance', 'Personal care'); status option 'Transitioning to Support at Home' correct; chsp-profile-summary renders start date as DD/MM/YYYY (01/01/2025); WS-1 date inputs are DD/MM/YYYY text fields; FIX-5 case (6/01-01-2026/01-07-2026/4/4/24) yields chsp-ws1-staleness with exactly '181 days'. Agreed Rate Schedule: selecting the saved service entry pre-fills chsp-ws1-agreed-rate (verdict changed from degraded to 'Within tolerance, provisional'). TWO WS-5 defects found (web + mobile parity): (a) chsp-ws1-service-entry option label displays raw enum 'domestic_assistance · BlueBerry Care' instead of capitalised 'Domestic assistance · …'; (b) service-entry prefill writes svc.start_date as ISO ('2025-07-01') into chsp-ws1-rate-date DD/MM/YYYY text input. Mobile: source-level parity 1:1 with web for all WS-2 test-ids and DD/MM/YYYY placeholders + serviceTypeLabel usage; same two WS-5 bugs mirrored in /app/mobile/app/chsp-tools.tsx. Mobile web-preview auth injection remains blocked (SecureStore key wrapping, unchanged from iter235) so mobile UI could not be automated end-to-end; parity verified via backend contract + source review.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "WS1FeeCheck service-entry <select>", "issue": "Option label uses raw enum ('domestic_assistance · BlueBerry Care') instead of capitalised serviceTypeLabel per WS-5 rule. Reference: /app/frontend/src/pages/ChspTools.jsx:157.", "selector": "[data-testid='chsp-ws1-service-entry']", "priority": "MEDIUM"},
+        {"component": "WS1FeeCheck onServiceChange prefill", "issue": "rate_effective_date is set to svc.start_date raw ISO ('2025-07-01'), leaking into the DD/MM/YYYY text input and breaking WS-5 date rendering. Should format via formatDate(...) before assigning. Reference: /app/frontend/src/pages/ChspTools.jsx:115.", "selector": "[data-testid='chsp-ws1-rate-date']", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "ChspTools /app/chsp/tools", "issues": ["(Carry-over from iter235) Dev instrumentation renders <span> inside <option> causing a React hydration warning on the service-entry <select>. Dev-only cosmetic."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "WS1FeeCheck serviceOpts", "issue": "Same WS-5 defect as web: option label uses raw `s.service_type` instead of serviceTypeLabel. Reference: /app/mobile/app/chsp-tools.tsx:132.", "testID": "chsp-ws1-service-entry", "priority": "MEDIUM"},
+        {"component": "WS1FeeCheck onServiceChange prefill", "issue": "Same WS-5 defect as web: writes svc.start_date raw ISO into chsp-ws1-rate-date instead of DD/MM/YYYY. Reference: /app/mobile/app/chsp-tools.tsx:106.", "testID": "chsp-ws1-rate-date", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [
+        {"flow": "Authenticated /chsp-tools on Expo web preview", "issue": "Carry-over from iter235: cannot inject kindred_token into SecureStore namespace on web preview, blocking UI automation. Not a shipped-code bug. Source-level parity for WS-2/WS-5/agreed-rate is verified 1:1.", "affected_testIDs": ["chsp-tools-root", "chsp-ws1-fee-check"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Service-entry dropdown option label capitalisation", "platform": "both", "issue": "Both web and mobile show raw service_type enum in the dropdown; WS-5 requires capitalised labels via serviceTypeLabel.", "expected": "'Domestic assistance · BlueBerry Care'", "actual": "'domestic_assistance · BlueBerry Care'"},
+    {"flow": "Service-entry prefill of rate_effective_date", "platform": "both", "issue": "Both web and mobile leak ISO date into DD/MM/YYYY text field on prefill.", "expected": "01/07/2025 (DD/MM/YYYY)", "actual": "2025-07-01 (ISO)"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_chsp_fee_check_golden.py",
+    "/app/backend/scripts/ci_chsp.sh",
+    "/app/test_reports/pytest/iter236_chsp_golden.xml",
+    "/app/test_reports/iter236_chsp_web.jpeg",
+    "/app/test_reports/iter236_chsp_web2.jpeg"
+  ],
+  "action_items": [
+    "Wrap the service-entry option label with serviceTypeLabel on web (ChspTools.jsx line 157) and mobile (chsp-tools.tsx line 132): `${serviceTypeLabel(s.service_type)} · ${s.provider_name}`.",
+    "In both onServiceChange handlers, run svc.start_date through formatDate/shortDate before assigning to rate_effective_date so the DD/MM/YYYY text input stays canonical (web ChspTools.jsx line 115; mobile chsp-tools.tsx line 106).",
+    "(Carry-over) Suppress dev-only hydration warning on WS-1 service-entry <select> caused by dev instrumentation <span> inside <option>."
+  ],
+  "critical_code_review_comments": [
+    "Golden suite is data-driven via fixtures/chsp_fee_check_fixtures.json — clean WS-6 setup, easy to extend.",
+    "WS-2 reframe cleanly demotes the transition walkthrough behind a self-check checkbox, matching the signed-off shape.",
+    "formatDate + serviceTypeLabel utils are correctly mirrored across web and mobile — a good pattern.",
+    "The two WS-5 defects above are the only regressions found; both are 1-liners with the same fix on each surface."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (17/17 CI, 8/8 golden)", "frontend": "web ~90% (2 WS-5 defects); mobile source parity confirmed, UI automation blocked (env)"},
+  "test_credentials": "cathy@example.com / testpass123 (has CHSP profile, family plan)",
+  "seed_data_creation": "None new. Cathy has 1 CHSP service entry (bc7dc229… · BlueBerry Care · domestic_assistance) used to validate service-entry prefill.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Once E1 fixes the two WS-5 defects (service-entry label capitalisation + rate_effective_date DD/MM/YYYY prefill on web + mobile), re-run the interactive block from iter236_chsp_web2 and assert entry_opts[1].t startswith 'Domestic assistance' and rate_effective_date value == '01/07/2025'. Backend + WS-2 flows are green, no need to retest.",
+  "rca of the issue": "Root cause of both WS-5 defects: the WS-1 form was refactored to DD/MM/YYYY text inputs and WS-5 introduced serviceTypeLabel, but the service-entry dropdown path (both the option label render and the onServiceChange prefill) was not migrated. The label continues to interpolate raw `s.service_type`, and the prefill continues to copy `svc.start_date` (ISO YYYY-MM-DD from the Pydantic date model) verbatim. Fix: use serviceTypeLabel in the option label and formatDate/shortDate for the prefill — one-line changes each on both surfaces."
+}
