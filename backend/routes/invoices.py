@@ -553,6 +553,78 @@ def build_invoices_router(
             "editor_path": f"/tools/letters-and-follow-ups/{entry_id}",
         }
 
+    @router.post("/invoices/{invoice_id}/letter")
+    async def create_letter_from_all_findings(
+        invoice_id: str,
+        user: dict = Depends(_current_user),
+    ) -> dict:
+        """Draft ONE LF-1 correspondence covering every finding on this
+        invoice, so a caregiver can raise the whole invoice in a single
+        email. Aggregates all findings into the source_import so the letter
+        generator can list each issue and its suggested question."""
+        user_id = user.get("id") or user.get("user_id")
+        doc = await db.invoices.find_one(
+            {"id": invoice_id, "user_id": user_id, "state": "active"},
+        )
+        if not doc:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        recon = doc.get("reconciliation") or {}
+        findings = recon.get("findings") or []
+        if not findings:
+            raise HTTPException(status_code=400, detail="This invoice has no issues to raise.")
+
+        # If any finding escalates to the regulator, route the whole letter
+        # to situation 10; otherwise the provider dispute situation (3).
+        situation_id = 10 if any(f.get("escalation") == "acqsc" for f in findings) else 3
+
+        issues = [
+            {
+                "check_id": f.get("check_id"),
+                "tier": f.get("tier"),
+                "narrative": f.get("narrative"),
+                "suggested_question": f.get("suggested_question"),
+            }
+            for f in findings
+        ]
+        source_import = {
+            "tool": "invoice-checker",
+            "record_id": invoice_id,
+            "all_issues": True,
+            "issue_count": len(findings),
+            "issues": issues,
+            "invoice_number": doc.get("invoice_number") or recon.get("invoice_number"),
+            "invoice_filename": doc.get("filename"),
+        }
+
+        import uuid as _uuid
+        entry_id = str(_uuid.uuid4())
+        now = _now_iso()
+        entry = {
+            "id": entry_id,
+            "user_id": user_id,
+            "participant_id": doc.get("participant_id"),
+            "situation_id": situation_id,
+            "archetype": "escalation" if situation_id == 10 else "dispute",
+            "direction": "outbound",
+            "recipient_type": "acqsc" if situation_id == 10 else "provider_cm",
+            "sender_identity": None,
+            "sender_authority_basis": None,
+            "complaint_mode": None,
+            "atsi_preference": False,
+            "source_import": source_import,
+            "intake": {},
+            "status": "draft",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.lf1_correspondence.insert_one(entry)
+        return {
+            "entry_id": entry_id,
+            "situation_id": situation_id,
+            "issue_count": len(findings),
+            "editor_path": f"/tools/letters-and-follow-ups/{entry_id}",
+        }
+
     @router.post("/invoices/{invoice_id}/reconcile-combined")
     async def reconcile_combined(
         invoice_id: str,

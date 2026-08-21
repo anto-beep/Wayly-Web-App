@@ -18,6 +18,7 @@ import { FileText, Upload, AlertCircle, ChevronUp, ChevronDown, Receipt, Downloa
 import { toast } from "sonner";
 import PageIntro from "@/components/PageIntro";
 import SmartAISummary from "@/components/SmartAISummary";
+import InvoiceFilters from "@/components/invoices/InvoiceFilters";
 
 // Escapes a single CSV field. Wraps in quotes and doubles inner quotes to
 // keep spreadsheets happy on commas and multi-line narratives.
@@ -81,6 +82,26 @@ function refundOwed(inv) {
 function verdictOf(inv) {
     return inv?.reconciliation?.overall_verdict || (findingCount(inv) === 0 ? "all_clear" : "issues");
 }
+// Collapse the raw verdict into the four status-filter buckets used by the
+// filter bar (mirrors the Statements status filter behaviour).
+function statusKey(inv) {
+    const v = String(verdictOf(inv)).toLowerCase();
+    if (v === "all_clear" || (findingCount(inv) === 0)) return "all_clear";
+    if (v === "watch") return "watch";
+    if (v.includes("block") || v.includes("critical") || v.includes("check_before")) return "critical";
+    return "issues";
+}
+function invoicePeriodMatches(inv, period) {
+    if (!period || period === "all") return true;
+    const raw = inv.invoice_date || inv.created_at;
+    const d = raw ? new Date(raw) : null;
+    if (!d || Number.isNaN(d.getTime())) return true;
+    const now = new Date();
+    if (period === "last_6m") { const cut = new Date(now); cut.setMonth(now.getMonth() - 6); return d >= cut; }
+    if (period === "last_12m") { const cut = new Date(now); cut.setMonth(now.getMonth() - 12); return d >= cut; }
+    if (period === "this_quarter") { const q = Math.floor(now.getMonth() / 3); return d >= new Date(now.getFullYear(), q * 3, 1); }
+    return true;
+}
 function verdictBadge(v) {
     const map = {
         all_clear: { label: "All clear", cls: "bg-sage-100 text-sage-800 border-sage-200" },
@@ -106,6 +127,18 @@ export default function InvoicesList() {
     const [sortKey, setSortKey] = useState("date");
     const [sortDir, setSortDir] = useState("desc");
 
+    // Filter state (mirrors StatementsList)
+    const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [selectedProviders, setSelectedProviders] = useState([]);
+    const [period, setPeriod] = useState("all");
+    const [statuses, setStatuses] = useState([]);
+
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(search), 250);
+        return () => clearTimeout(t);
+    }, [search]);
+
     const load = useCallback(async () => {
         setLoading(true);
         setErrored(false);
@@ -121,10 +154,34 @@ export default function InvoicesList() {
     }, []);
     useEffect(() => { load(); }, [load]);
 
+    const providers = useMemo(() => {
+        const set = new Set();
+        items.forEach((i) => { if (i.provider_name) set.add(i.provider_name); });
+        return Array.from(set).sort();
+    }, [items]);
+
+    const filtered = useMemo(() => {
+        const q = debouncedSearch.trim().toLowerCase();
+        return items.filter((inv) => {
+            if (q) {
+                const haystack = [
+                    inv.provider_name || "",
+                    inv.invoice_number || inv?.reconciliation?.invoice_number || "",
+                    inv.filename || "",
+                ].join(" ").toLowerCase();
+                if (!haystack.includes(q)) return false;
+            }
+            if (selectedProviders.length > 0 && !selectedProviders.includes(inv.provider_name)) return false;
+            if (!invoicePeriodMatches(inv, period)) return false;
+            if (statuses.length > 0 && !statuses.includes(statusKey(inv))) return false;
+            return true;
+        });
+    }, [items, debouncedSearch, selectedProviders, period, statuses]);
+
     const sorted = useMemo(() => {
         const key = SORT_KEYS[sortKey];
-        if (!key) return items;
-        const arr = [...items].sort((a, b) => {
+        if (!key) return filtered;
+        const arr = [...filtered].sort((a, b) => {
             const va = key.accessor(a);
             const vb = key.accessor(b);
             if (key.numeric) return (Number(va) || 0) - (Number(vb) || 0);
@@ -132,7 +189,9 @@ export default function InvoicesList() {
         });
         if (sortDir === "desc") arr.reverse();
         return arr;
-    }, [items, sortKey, sortDir]);
+    }, [filtered, sortKey, sortDir]);
+
+    const clearAll = () => { setSearch(""); setSelectedProviders([]); setPeriod("all"); setStatuses([]); };
 
     const toggleSort = (k) => {
         if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -214,6 +273,23 @@ export default function InvoicesList() {
                 />
             )}
 
+            {items.length > 0 && !loading && (
+                <InvoiceFilters
+                    search={search}
+                    onSearchChange={setSearch}
+                    providers={providers}
+                    selectedProviders={selectedProviders}
+                    onProvidersChange={setSelectedProviders}
+                    period={period}
+                    onPeriodChange={setPeriod}
+                    statuses={statuses}
+                    onStatusesChange={setStatuses}
+                    onClearAll={clearAll}
+                    resultCount={sorted.length}
+                    totalCount={items.length}
+                />
+            )}
+
             {errored ? (
                 <div className="rounded-2xl border border-terracotta-200 bg-terracotta-50 p-4 text-sm text-charcoal inline-flex items-center gap-2" data-testid="invoices-list-error">
                     <AlertCircle className="h-4 w-4" /> Could not load invoices. Please refresh.
@@ -233,6 +309,18 @@ export default function InvoicesList() {
                     >
                         <Upload className="h-4 w-4" /> Check your first invoice
                     </Link>
+                </div>
+            ) : sorted.length === 0 ? (
+                <div className="rounded-2xl border border-primary-k/10 bg-white p-10 text-center" data-testid="invoices-list-no-results">
+                    <p className="text-muted-k">No invoices match these filters.</p>
+                    <button
+                        type="button"
+                        onClick={clearAll}
+                        className="mt-3 inline-block text-primary-k underline hover:no-underline"
+                        data-testid="invoices-no-results-clear"
+                    >
+                        Clear filters
+                    </button>
                 </div>
             ) : (
                 <div className="rounded-2xl border border-primary-k/10 bg-white overflow-x-auto" data-testid="invoices-list-table">

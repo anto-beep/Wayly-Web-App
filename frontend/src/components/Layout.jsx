@@ -8,7 +8,7 @@ import {
     UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
     ShieldCheck, FolderArchive, Calendar, Bell, Repeat, Wrench, Mail, Share2, Star, FileBarChart,
     HeartPulse, Heart, FilePenLine, UserPlus, ChevronDown, ChevronRight, Wallet, ClipboardEdit, ClipboardList, Activity,
-    LifeBuoy, Phone, Timer, User as UserIcon, ReceiptText,
+    LifeBuoy, Phone, Timer, User as UserIcon, ReceiptText, TrendingUp,
 } from "lucide-react";
 import NotificationsBell from "@/components/NotificationsBell";
 import LCA1AlertsBell from "@/components/LCA1AlertsBell";
@@ -59,6 +59,7 @@ const navGroups = [
             { to: "/app/pacing", label: "Quarterly Pacing", icon: Timer },
             { to: "/app/statements", label: "Statements", icon: FileText, mobile: true },
             { to: "/app/invoices", label: "Invoices", icon: ReceiptText },
+            { to: "/app/contribution-position", label: "Contribution Position", icon: TrendingUp },
             { to: "/app/budget-alerts", label: "Budget Alerts", icon: Bell },
             { to: "/app/budget-scenarios", label: "Budget Scenarios", icon: Wallet },
             { to: "/app/reports", label: "Reports", icon: FileBarChart },

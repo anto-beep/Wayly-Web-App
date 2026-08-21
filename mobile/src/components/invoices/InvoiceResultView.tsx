@@ -297,7 +297,7 @@ function SeverityGroup({ band, entries, onDraftLetter }: { band: Band; entries: 
   );
 }
 
-export function InvoiceIssueRegister({ findings, onDraftLetter }: { findings: any[]; onDraftLetter?: (i: number) => void }) {
+export function InvoiceIssueRegister({ findings, onDraftLetter, onDraftAll }: { findings: any[]; onDraftLetter?: (i: number) => void; onDraftAll?: () => void }) {
   const { colors } = useTheme();
   if (!findings || findings.length === 0) {
     return (
@@ -321,6 +321,16 @@ export function InvoiceIssueRegister({ findings, onDraftLetter }: { findings: an
         </View>
         <T variant="small" style={{ color: colors.muted }}>{findings.length} total</T>
       </View>
+      {onDraftAll && findings.length > 1 ? (
+        <Pressable
+          testID="inv1-draft-all-btn"
+          onPress={onDraftAll}
+          style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 11, marginTop: spacing.sm }}
+        >
+          <Receipt size={15} color="#fff" />
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>Draft one letter for all issues</T>
+        </Pressable>
+      ) : null}
       {bandGroups.map((g) => (
         <SeverityGroup key={g.band} band={g.band} entries={g.entries} onDraftLetter={onDraftLetter} />
       ))}
@@ -445,7 +455,7 @@ export function InvoiceMetaCard({ result }: { result: any }) {
   );
 }
 
-export default function InvoiceResultView({ result, onDraftLetter }: { result: any; onDraftLetter?: (i: number) => void }) {
+export default function InvoiceResultView({ result, onDraftLetter, onDraftAll }: { result: any; onDraftLetter?: (i: number) => void; onDraftAll?: () => void }) {
   const rec = result?.reconciliation || {};
   const invoiceId = result?.invoice_id || result?.id;
   return (
@@ -456,7 +466,7 @@ export default function InvoiceResultView({ result, onDraftLetter }: { result: a
       <VerdictBanner verdict={rec.overall_verdict || "all_clear"} findings={rec.findings || []} lineCount={(rec.lines || []).length} />
       <WaylySummaryCard summary={rec.summary_md} />
       <InvoiceMetaCard result={result} />
-      <InvoiceIssueRegister findings={rec.findings || []} onDraftLetter={onDraftLetter} />
+      <InvoiceIssueRegister findings={rec.findings || []} onDraftLetter={onDraftLetter} onDraftAll={onDraftAll} />
       <InvoiceChargesTable result={result} />
     </View>
   );

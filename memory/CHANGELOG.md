@@ -1,3 +1,17 @@
+## Iteration 233-234 (Jun 2026) — Cross-platform parity batch (Letters, Invoice filters, Draft-all, Decode copy, Contribution Position nav, Reports catalog)
+
+Six user-requested parity items, all built on web + mobile and verified by the testing agent (iter233 + iter234, no blockers).
+
+- **Letters Drafting Parity (web)**: `LettersMailbox.jsx` rebuilt on the LF-1 system to match mobile — a "Draft a new letter" button (`letters-new-btn`) opens `/ai-tools/letters-and-follow-ups`, LF-1 entries link to the editor, overdue/upcoming follow-up cards; legacy LF-2 chains kept below when present. Source-aware templates come from LF-1 `source_import`.
+- **Invoice Filters (web + mobile)**: new `InvoiceFilters.jsx` (search + provider + period + status) mirroring `StatementFilters`; `InvoicesList.jsx` now filters/sorts + no-results state. Mobile `invoices.tsx` gets a search box + status chips + provider chips + clear-filters + no-results.
+- **Draft one letter for all issues (web + mobile)**: new backend `POST /api/invoices/{id}/letter` aggregates every finding into one LF-1 draft; `inv1-draft-all-btn` in the Issue Register header (web navigates to the editor; mobile confirms → `/correspondence`).
+- **Decode-in-progress copy parity**: statement decode reads "Reading the statement…" and invoice reads "Reading your invoice…" identically on web + mobile (`mobile/app/upload.tsx`, web `InvoiceCheckerTool.jsx`; web `StatementUpload.jsx` already matched).
+- **Web Contribution Position discoverability**: nav item under Money & Statements → `/app/contribution-position` alias route resolves the active participant (page already existed at `/app/participants/:id/contribution-position`).
+- **Reports catalog upfront (mobile)**: `reports.tsx` now shows all 8 report cards (name + description + "Best for" + Generate) on load, matching web, instead of hiding them behind a "Generate a report" picker; history renders below and the catalog stays visible even if the history fetch fails.
+
+**Still pending — CHSP-TOOLS-1 v1.1 + CHSP-FIX-golden-v1 (attached specs).** Large gated workstream: WS-1 per-unit Fee Check (golden fixtures CHSP-FIX-1..5 + boundary/directionality guards), WS-5 date defects, WS-4 nav visibility, WS-6 CI fixtures — all behind feature flag `chsp_tools_v1` (off in prod). WS-2 transition copy is hard-gated on solicitor sign-off; WS-3 access/hardship additions. To be tackled as a dedicated effort.
+
+
 ## Iteration 232 (Jun 2026) — INV-1 Parity Phase 2: Invoice Checker → Statement-Decoder grade (web + mobile)
 
 Brought the Invoice Checker result view up to Statement-Decoder depth on BOTH surfaces (web is source of truth). User asks addressed: show what's been charged (line items), collapsible High/Medium/Low issues, download original + decoded PDF/CSV + compare side-by-side, and draft a source-aware letter from any issue.

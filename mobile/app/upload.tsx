@@ -103,7 +103,7 @@ export default function UploadScreen() {
           isForm: true,
           body: form,
         });
-        setPhase("Decoding your statement…");
+        setPhase("Reading the statement…");
         const statementId = await pollJob(res.job_id);
         setBusy(false);
         if (statementId) {
@@ -112,6 +112,7 @@ export default function UploadScreen() {
           router.replace("/(tabs)/statements");
         }
       } else {
+        setPhase("Reading your invoice…");
         const res = await apiFetch<{ invoice_id?: string; document_shape?: string }>("/invoices/upload", {
           method: "POST",
           isForm: true,
@@ -217,12 +218,17 @@ export default function UploadScreen() {
 
         {picked ? (
           <Button
-            label={busy ? phase || "Working…" : `Upload ${docType}`}
+            label={busy ? phase || "Reading the statement…" : `Upload ${docType}`}
             testID="upload-submit-button"
             onPress={doUpload}
             loading={busy}
             icon={UploadCloud}
           />
+        ) : null}
+        {busy ? (
+          <T variant="small" testID="upload-decoding-note" style={{ textAlign: "center", color: colors.muted }}>
+            This usually takes 30-90 seconds. We&apos;re extracting every line item, checking against your history, and writing a plain-English summary.
+          </T>
         ) : null}
       </ScrollView>
     </View>
@@ -231,13 +237,13 @@ export default function UploadScreen() {
 
 function prettyPhase(p: string): string {
   const map: Record<string, string> = {
-    processing: "Decoding your statement…",
-    extracting: "Reading the document…",
-    parsing: "Reading the document…",
-    auditing: "Checking for issues…",
+    processing: "Reading the statement…",
+    extracting: "Reading the statement…",
+    parsing: "Reading the statement…",
+    auditing: "Reading the statement…",
     done: "Done",
   };
-  return map[p] || "Decoding your statement…";
+  return map[p] || "Reading the statement…";
 }
 
 function SourceRow({

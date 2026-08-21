@@ -482,6 +482,7 @@ function App() {
                     <Route path="/settings/notifications" element={<RequireAuth><Layout><NotificationSettings /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/statement-pairs/:pid" element={<RequireAuth><Layout><StatementPairReview /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/contribution-position" element={<RequireAuth><Layout><ContributionPosition /></Layout></RequireAuth>} />
+                    <Route path="/app/contribution-position" element={<RequireAuth><Layout><ContributionPosition /></Layout></RequireAuth>} />
                     <Route path="/app/tools/contribution-estimator/hardship-walkthrough" element={<RequireAuth><Layout><HardshipWalkthrough /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/voice-check" element={<RequireAuth><Layout><VoiceCheck /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/complaints" element={<RequireAuth><Layout><ComplaintsList /></Layout></RequireAuth>} />

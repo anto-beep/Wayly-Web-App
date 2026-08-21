@@ -11,6 +11,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "@/lib/api";
+import { useParticipants } from "@/context/ParticipantsContext";
 import Skeleton from "@/components/Skeleton";
 import { formatDate } from "@/lib/formatDate";
 import { ChevronLeft, RefreshCw, Info, TrendingUp, AlertTriangle, ArrowRightLeft, X } from "lucide-react";
@@ -515,7 +516,12 @@ function PensionChangeModal({ pid, currentStatus, onClose, onCommitted }) {
 }
 
 export default function ContributionPosition() {
-    const { id: participantId } = useParams();
+    const { id: routeId } = useParams();
+    const { active } = useParticipants();
+    // Reachable both from a participant profile (/app/participants/:id/...)
+    // and from the nav alias (/app/contribution-position), where we resolve
+    // the active participant.
+    const participantId = routeId || active?.id;
     const [cap, setCap] = useState(null);
     const [ap, setAp] = useState(null);
     const [rows, setRows] = useState([]);
@@ -528,6 +534,7 @@ export default function ContributionPosition() {
 
     const load = useCallback(async () => {
         setError(null);
+        if (!participantId) return;
         try {
             const [capR, apR, listR, partR, hardR] = await Promise.all([
                 api.get(`/ce3/participants/${participantId}/lifetime-cap`),

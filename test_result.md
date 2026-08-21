@@ -1163,3 +1163,85 @@ agent_communication:
       per-issue Draft letter creates an LF-1 entry (web navigates to editor,
       mobile shows confirm + routes to /correspondence); web Compare shows the
       original PDF beside decoded charges. Parity across surfaces.
+
+## Letters Parity + Invoice Filters + Draft-All (iter 233, web + mobile)
+backend:
+  - task: "POST /api/invoices/{id}/letter — draft ONE LF-1 letter covering all findings"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/invoices.py"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Verified curl: returns entry_id, situation_id, issue_count=18, editor_path. Aggregates all findings into source_import.issues."
+frontend:
+  - task: "Web Letters Mailbox rebuilt on LF-1 (parity with mobile): 'Draft a new letter' button → /ai-tools/letters-and-follow-ups, LF-1 entries list → editor, overdue/upcoming follow-ups; legacy LF-2 chains kept below"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/LettersMailbox.jsx"
+  - task: "Web Invoices list filters (search + provider + period + status) matching Statements"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/InvoicesList.jsx, /app/frontend/src/components/invoices/InvoiceFilters.jsx"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Smoke screenshot confirms filter bar (search/provider/period/status + result count) renders on /app/invoices."
+  - task: "Web + mobile 'Draft one letter for all issues' button in Issue Register"
+    implemented: true
+    working: "NA"
+    file: "InvoiceResultView.jsx/.tsx, InvoiceDetail.jsx, tools/InvoiceCheckerTool.jsx, mobile invoice/[id].tsx, tools/InvoiceChecker.tsx"
+  - task: "Mobile Invoices list filters (search + status chips + provider chips)"
+    implemented: true
+    working: "NA"
+    file: "/app/mobile/app/invoices.tsx"
+agent_communication:
+  - agent: "main"
+    message: |
+      iter 233 batch. Test BOTH platforms. Creds cathy@example.com/testpass123.
+      1) Letters Mailbox web (/app/letters): 'Draft a new letter' (testid letters-new-btn)
+         opens /ai-tools/letters-and-follow-ups; LF-1 entries (letter-{id}) link to
+         /tools/letters-and-follow-ups/{id}; follow-ups cards. Confirm parity with
+         mobile /letters (letters-new button → /tool/letters-and-follow-ups).
+      2) Invoice filters web (/app/invoices): invoices-search-input, invoices-provider-filter,
+         invoices-period-filter, invoices-status-filter, invoices-clear-filters,
+         invoices-result-count, invoices-list-no-results. Mobile /invoices:
+         invoices-search-input, invoices-status-{all|issues|all_clear}, provider chips,
+         invoices-clear-filters, invoices-list-no-results.
+      3) Draft-all: inv1-draft-all-btn appears when >1 finding on both invoice detail
+         and the tool result (web → navigates to letter editor; mobile → Alert →
+         /correspondence). Backend POST /api/invoices/{id}/letter.
+      Do not re-test the iter232 invoice result view internals (already passed) beyond
+      confirming the new draft-all button.
+
+## Parity items 4-6 (iter 234): decode-message parity, Contribution Position nav, Reports catalog
+frontend:
+  - task: "Decode-in-progress message parity — statement shows 'Reading the statement…' on web + mobile; invoice shows 'Reading your invoice…' on web + mobile"
+    implemented: true
+    working: "NA"
+    file: "/app/mobile/app/upload.tsx, /app/frontend/src/pages/tools/InvoiceCheckerTool.jsx (web StatementUpload already correct)"
+  - task: "Web Contribution Position discoverable in nav (Money & Statements → Contribution Position → /app/contribution-position, resolves active participant)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/Layout.jsx, /app/frontend/src/App.js, /app/frontend/src/pages/ContributionPosition.jsx"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Screenshot: /app/contribution-position loads CE-3 page with lifetime cap ($800 of $137,917), no id in URL — falls back to active participant."
+  - task: "Mobile Reports catalog visible upfront (report cards with name/desc/best-for + Generate) matching web, instead of hidden behind 'Generate a report' picker"
+    implemented: true
+    working: "NA"
+    file: "/app/mobile/app/reports.tsx"
+agent_communication:
+  - agent: "main"
+    message: |
+      iter234. Test BOTH platforms. Creds cathy@example.com/testpass123.
+      4) Decode message: mobile /upload during statement decode shows 'Reading the statement…'
+         (upload-submit-button label + upload-decoding-note); invoice tool 'Reading your invoice…'.
+         Web statement upload already 'Reading the statement…'; web invoice tool button 'Reading your invoice…'.
+         Just confirm wording matches across surfaces.
+      5) Web nav: Money & Statements group has 'Contribution Position' → /app/contribution-position
+         (data-testid ce3-contribution-position-page loads, resolves active participant, no ce3-error).
+      6) Mobile /reports: catalog (reports-catalog with report-card-{TYPE} x8, each generate-{TYPE} button)
+         is visible upfront on load WITHOUT tapping a Generate button first; 'Your reports' history below.
+         Confirm parity with web /app/reports catalog (report-card-{TYPE}, generate-{TYPE}).

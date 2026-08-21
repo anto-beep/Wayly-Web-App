@@ -247,7 +247,7 @@ function SeverityGroup({ band, entries, onDraftLetter }) {
     );
 }
 
-export function InvoiceIssueRegister({ findings, onDraftLetter }) {
+export function InvoiceIssueRegister({ findings, onDraftLetter, onDraftAll }) {
     if (!findings || findings.length === 0) {
         return (
             <section className="rounded-2xl border-2 border-dashed border-sage/40 bg-sage/5 p-8 text-center" data-testid="inv1-no-findings">
@@ -275,7 +275,19 @@ export function InvoiceIssueRegister({ findings, onDraftLetter }) {
                 <h3 className="font-heading text-xl text-primary-k inline-flex items-center gap-2">
                     <Receipt className="h-5 w-5" /> Issue Register
                 </h3>
-                <span className="text-xs text-muted-k">{findings.length} total</span>
+                <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-k">{findings.length} total</span>
+                    {onDraftAll && findings.length > 1 && (
+                        <button
+                            type="button"
+                            onClick={onDraftAll}
+                            data-testid="inv1-draft-all-btn"
+                            className="text-xs inline-flex items-center gap-1.5 rounded-full bg-primary-k text-white px-3 py-1.5 hover:bg-[#091D33] transition-colors"
+                        >
+                            <Receipt className="h-3.5 w-3.5" /> Draft one letter for all issues
+                        </button>
+                    )}
+                </div>
             </header>
             <div className={`border-l-4 rounded-r-lg p-4 flex items-start gap-3 ${highCount > 0 ? "bg-terracotta text-white border-terracotta" : topBand === "medium" ? "bg-gold/20 text-primary-k border-gold" : "bg-sage/15 text-[#0F5648] border-sage"}`} data-testid="inv1-issue-top-banner">
                 <bannerMeta.Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />

@@ -118,6 +118,16 @@ export default function InvoiceDetail() {
         }
     };
 
+    // Draft ONE letter covering every issue on this invoice.
+    const onDraftAll = async () => {
+        try {
+            const { data } = await api.post(`/invoices/${id}/letter`);
+            if (data?.editor_path) navigate(data.editor_path);
+        } catch (e) {
+            toast.error(extractErrorMessage(e, "Could not draft the letter."));
+        }
+    };
+
     if (error) {
         return (
             <div className="max-w-3xl mx-auto py-16 text-center" data-testid="invoice-detail-error">
@@ -214,7 +224,7 @@ export default function InvoiceDetail() {
                 </div>
             )}
 
-            <InvoiceIssueRegister findings={inv?.reconciliation?.findings || []} onDraftLetter={onDraftLetter} />
+            <InvoiceIssueRegister findings={inv?.reconciliation?.findings || []} onDraftLetter={onDraftLetter} onDraftAll={onDraftAll} />
 
             <InvoiceChargesTable result={result} />
         </div>

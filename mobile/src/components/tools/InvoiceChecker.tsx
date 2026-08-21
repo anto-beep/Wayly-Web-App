@@ -117,6 +117,17 @@ export default function InvoiceChecker() {
                   Alert.alert("Could not draft letter", "Please try again in a moment.");
                 }
               }}
+              onDraftAll={async () => {
+                try {
+                  await apiFetch(`/invoices/${result.invoice_id}/letter`, { method: "POST" });
+                  Alert.alert("Letter drafted", "We created one draft letter covering all issues on this invoice. Find it in Letters & Follow-ups.", [
+                    { text: "View letters", onPress: () => router.push("/correspondence") },
+                    { text: "OK" },
+                  ]);
+                } catch {
+                  Alert.alert("Could not draft letter", "Please try again in a moment.");
+                }
+              }}
             />
             <ResultActions mode="payload" tool="invoice" payload={result} personName={result.provider_name || undefined} fileBaseName="wayly-invoice-check" testIDPrefix="inv1-export" />
             <Button label="Check another invoice" variant="outline" testID="inv1-check-another" onPress={reset} />

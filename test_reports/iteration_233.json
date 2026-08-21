@@ -1,0 +1,44 @@
+{
+  "summary": "iter233 tested on both web + mobile with cathy@example.com. Backend: 6/6 pytest PASS — POST /api/invoices/{id}/letter (draft-all) returns entry_id + issue_count + editor_path=/tools/letters-and-follow-ups/{entry_id}; 401 unauth; 404 unknown invoice; GET /api/invoices lists 33 seeded rows with provider_name+created_at fields (filter-ready); GET /api/lf1/correspondence returns entries (14+); GET /api/lf1/follow-ups returns {overdue,upcoming}. Web: /app/letters has letters-new-btn (14 LF-1 letter-{id} rows visible, click navigates to /ai-tools/letters-and-follow-ups); /app/invoices filters all present (invoices-search-input, provider (2 options: Glorious/Meridian), period, status (4 options)); typing 'zzzz' shows invoices-list-no-results + invoices-clear-filters + 'result-count=0 of 33 shown'; clearing resets to '33 shown'; status=issues narrows to '5 of 33'; inv1-draft-all-btn present on /app/invoices/{id} and one-click navigates to /tools/letters-and-follow-ups/{new_entry_id} (Correspondence editor loads with Archetype=Escalation, ACQSC recipient, Pre-fill panel). Mobile: /letters letters-new works (routes to /tool/letters-and-follow-ups); /invoices filter-bar+search+status chips (all/issues/all_clear)+provider chips (Glorious/Meridian) all render, fake search shows invoices-list-no-results; /invoice/{id} shows inv1-draft-all-btn on the seeded invoice (18 issues, refund $180.86). Parity across web + mobile is intact. Two minor observations flagged below, no blockers.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "InvoiceCheckerTool", "issue": "inv1-draft-all-btn not present on /tool/invoice-checker (upload landing screen). Expected only after an invoice with >1 finding is uploaded/loaded — so this may be by design, but I could not confirm the button appears mid-flow without seeding an active result in the tool. Web has the same behaviour (btn not present on /ai-tools/invoice-checker landing).", "testID": "inv1-draft-all-btn", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter233_letters_invfilters_draftall.py",
+    "/app/test_reports/pytest/iter233.xml",
+    "/app/test_reports/iter233_mobile_inv_draftall.jpeg"
+  ],
+  "action_items": [
+    "(Verify manually) On web + mobile Invoice Checker Tool pages the inv1-draft-all-btn should appear after an invoice with >1 finding is loaded — not testable via automation without a fresh upload. Backend endpoint is confirmed working end-to-end.",
+    "(Optional carry-over from iter232) Mobile draft-all tap → Alert.alert('OK') → router.push('/correspondence') can't be observed in automated Expo web preview (RN Web Alert renders custom UI). Consider adding testID on the OK button to enable full E2E automation."
+  ],
+  "critical_code_review_comments": [
+    "backend/routes/invoices.py:556 create_letter_from_all_findings correctly aggregates every finding into source_import.issues[] + issue_count and routes to situation 10 when any finding escalates to ACQSC (else situation 3). Uses uuid4 for entry_id and inserts into lf1_correspondence with archetype='escalation' or 'dispute'. HTTP 400 for zero-finding case is correct.",
+    "InvoiceFilters.jsx: MultiSelect + SingleSelect both use click-outside listeners with useRef + document.mousedown — clean; each option carries a stable data-testid (invoices-<name>-filter-option-<value>). Result count is rendered ml-auto with tabular-nums and only shows '{n} of {total} shown' when filtered — good affordance. Consider debouncing search input for very large lists (33 is fine here).",
+    "LettersMailbox.jsx correctly separates LF-1 entries (letter-{id} → /tools/letters-and-follow-ups/{id}) from LF-2 auto-generated chains (rendered below), preserving legacy while migrating UX. draftNew() navigates to /ai-tools/letters-and-follow-ups (tool landing) — matches mobile parity. Empty state includes letters-empty-draft-btn — great redundancy.",
+    "Draft-all letter web flow: caregiver clicks inv1-draft-all-btn on /app/invoices/{id} → POST /api/invoices/{id}/letter → 200 with entry_id → navigate to /tools/letters-and-follow-ups/{entry_id}. Editor loads with pre-fill panel showing linked Price check + Contribution estimate and correct participant name (Dorothy Smith) — end-to-end integration is solid."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "web 100% / mobile ~95%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family)",
+  "seed_data_creation": "None — reused seeded invoice 2acaf9f3-0190-47e7-b9c7-c939c579b49b (18 findings, Glorious Services Pty Ltd, $27,850.25, refund $180.86). The draft-all backend test creates a new lf1_correspondence entry each run (retained in DB for LettersMailbox listing verification).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "iter233 GREEN on both surfaces. Backend test file: /app/backend/tests/test_iter233_letters_invfilters_draftall.py (needs REACT_APP_BACKEND_URL exported). Seeded invoice id: 2acaf9f3-0190-47e7-b9c7-c939c579b49b. Mobile draft-all Alert 'OK' handler is the only untested path (RN Alert on Expo web preview can't be clicked via Playwright).",
+  "rca of the issue": ""
+}

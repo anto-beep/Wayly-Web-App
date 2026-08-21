@@ -71,6 +71,18 @@ export default function InvoiceDetail() {
     }
   };
 
+  const onDraftAll = async () => {
+    try {
+      await apiFetch(`/invoices/${id}/letter`, { method: "POST" });
+      Alert.alert("Letter drafted", "We created one draft letter covering all issues on this invoice. Find it in Letters & Follow-ups.", [
+        { text: "View letters", onPress: () => router.push("/correspondence") },
+        { text: "OK" },
+      ]);
+    } catch {
+      Alert.alert("Could not draft letter", "Please try again in a moment.");
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Invoice" subtitle={inv?.provider_name || inv?.filename} onBack={() => router.back()} />
@@ -91,7 +103,7 @@ export default function InvoiceDetail() {
           <InvoiceDownloadBar invoiceId={id} />
 
           <WaylySummaryCard summary={rec?.summary_md} />
-          <InvoiceIssueRegister findings={findings} onDraftLetter={onDraftLetter} />
+          <InvoiceIssueRegister findings={findings} onDraftLetter={onDraftLetter} onDraftAll={onDraftAll} />
           <InvoiceChargesTable result={inv} />
 
 

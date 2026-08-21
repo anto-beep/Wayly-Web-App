@@ -1,10 +1,12 @@
 import React, { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { Download, FileBarChart, Plus, X } from "lucide-react-native";
+import {
+  Download, FileBarChart, FileText, DollarSign, AlertTriangle, Award, Folder, Clock, Layers, Loader2,
+} from "lucide-react-native";
 
-import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { AppHeader, Badge, Button, Loading, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
@@ -16,15 +18,17 @@ const SITE_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "";
 
 type Report = { id: string; report_name?: string; report_type?: string; status?: string; created_at?: string; generated_at?: string };
 
-const REPORT_TYPES: { v: string; label: string }[] = [
-  { v: "HOUSEHOLD_SUMMARY", label: "Household Summary" },
-  { v: "QUARTERLY_BUDGET", label: "Quarterly Budget Report" },
-  { v: "ANNUAL_FINANCIAL", label: "Annual Financial Summary" },
-  { v: "ANOMALY_SAVINGS", label: "Anomaly & Savings Report" },
-  { v: "PROVIDER_PERFORMANCE", label: "Provider Performance Report" },
-  { v: "COMPLAINT_DOSSIER", label: "Complaint & Correspondence Dossier" },
-  { v: "CARE_TIMELINE", label: "Care Timeline" },
-  { v: "STATEMENT_DIGEST", label: "Statement Digest" },
+// Catalog mirrors the web Reports screen so caregivers can see every report
+// they can create (name + what it is + who it is for) BEFORE tapping Generate.
+const REPORT_CATALOG: { type: string; icon: any; name: string; desc: string; bestFor: string; tone: "navy" | "gold" | "red" | "teal" }[] = [
+  { type: "HOUSEHOLD_SUMMARY", icon: FileText, name: "Household Summary", desc: "Current care snapshot at a glance.", bestFor: "GP visits, family meetings", tone: "navy" },
+  { type: "QUARTERLY_BUDGET", icon: FileBarChart, name: "Quarterly Budget", desc: "Stream-by-stream spending for the quarter.", bestFor: "Understanding your spending this quarter", tone: "gold" },
+  { type: "ANNUAL_FINANCIAL", icon: DollarSign, name: "Annual Financial Summary", desc: "Whole financial year. Built for accountants.", bestFor: "Tax time, accountant, financial adviser", tone: "navy" },
+  { type: "ANOMALY_SAVINGS", icon: AlertTriangle, name: "Anomaly & Savings", desc: "Every billing error caught, and what it returned.", bestFor: "Understanding what Wayly has caught", tone: "gold" },
+  { type: "PROVIDER_PERFORMANCE", icon: Award, name: "Provider Performance", desc: "Private scorecard of your provider.", bestFor: "Deciding whether to stay or switch", tone: "navy" },
+  { type: "COMPLAINT_DOSSIER", icon: Folder, name: "Complaint Dossier", desc: "Formal evidence pack for OPAN or ACQSC.", bestFor: "Formal complaint to OPAN or ACQSC", tone: "red" },
+  { type: "CARE_TIMELINE", icon: Clock, name: "Care Timeline", desc: "Chronological history at a glance.", bestFor: "GP appointments, new care managers", tone: "teal" },
+  { type: "STATEMENT_DIGEST", icon: Layers, name: "Statement Digest", desc: "Every statement compiled. For records or switching.", bestFor: "Full records, switching provider, data export", tone: "navy" },
 ];
 
 export default function ReportsScreen() {
@@ -33,7 +37,6 @@ export default function ReportsScreen() {
   const [items, setItems] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
 
@@ -47,12 +50,12 @@ export default function ReportsScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const generate = async (report_type: string) => {
-    setGenerating(report_type); setShowPicker(false);
+    setGenerating(report_type);
     try {
       await apiFetch("/reports/generate", { method: "POST", body: { report_type, participant_id: activeId } });
-      setTimeout(load, 1500);
+      setTimeout(load, 1800);
     } catch { /* ignore */ }
-    finally { setGenerating(null); }
+    finally { setTimeout(() => setGenerating(null), 1800); }
   };
 
   const openReport = async (r: Report) => {
@@ -68,90 +71,112 @@ export default function ReportsScreen() {
     finally { setDownloading(null); }
   };
 
+  const toneBg = (tone: string) =>
+    tone === "gold" ? colors.goldSoft : tone === "red" ? colors.errorSoft : tone === "teal" ? colors.sageSoft : colors.sageSoft;
+  const toneFg = (tone: string) =>
+    tone === "gold" ? colors.gold : tone === "red" ? colors.terracotta : colors.primary;
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader onBack={() => router.back()} />
-      {loading ? <Loading /> : (
-        <>
-          {showPicker ? (
-            <Card testID="reports-type-picker" style={{ margin: spacing.lg, marginBottom: 0 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Choose a report</T>
-                <Pressable testID="reports-picker-close" hitSlop={8} onPress={() => setShowPicker(false)}><X size={20} color={colors.muted} /></Pressable>
-              </View>
-              <View style={{ gap: spacing.sm }}>
-                {REPORT_TYPES.map((t) => (
-                  <Button key={t.v} label={t.label} testID={`report-type-${t.v}`} variant="outline" loading={generating === t.v} onPress={() => generate(t.v)} />
-                ))}
-              </View>
-            </Card>
-          ) : null}
+      {loading ? (
+        <Loading />
+      ) : (
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
+          <PageIntro
+            eyebrow="Reports"
+            title="Reports"
+            description="Eight reports built for caregivers. Each one becomes a polished PDF you can email, print, or hand to a GP, family member, or accountant."
+            whatItDoes="Turns the data already in Wayly, statements, care plans, cases, into professionally formatted PDFs that speak the language of clinicians, accountants, and providers."
+            howToUse={[
+              "Pick the report type that matches who you're sending it to.",
+              "Tap Generate and we build the PDF.",
+              "Download the PDF or share the link.",
+              "Return anytime, previously generated reports stay available for download.",
+            ]}
+            whatYouGet={[
+              "Print-ready PDFs formatted for busy professionals.",
+              "A saved history of everything you've generated.",
+              "Confidence that you're not leaving anything out.",
+            ]}
+          />
 
+          {/* Catalog — visible upfront so users see what they can create */}
+          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: spacing.sm }}>Generate a Report</T>
+          <View testID="reports-catalog" style={{ gap: spacing.md }}>
+            {REPORT_CATALOG.map((rt) => (
+              <View key={rt.type} testID={`report-card-${rt.type}`} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
+                <View style={{ flexDirection: "row", gap: spacing.md }}>
+                  <View style={[styles.icon, { backgroundColor: toneBg(rt.tone) }]}>
+                    <rt.icon size={20} color={toneFg(rt.tone)} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }}>{rt.name}</T>
+                    <T variant="small" style={{ marginTop: 2 }}>{rt.desc}</T>
+                    <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted, marginTop: 6 }}>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.muted }}>Best for: </T>{rt.bestFor}
+                    </T>
+                    <Button
+                      label="Generate"
+                      testID={`generate-${rt.type}`}
+                      variant="outline"
+                      loading={generating === rt.type}
+                      onPress={() => generate(rt.type)}
+                      style={{ marginTop: spacing.sm, alignSelf: "flex-start" }}
+                    />
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* History */}
+          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: spacing.md }}>Your reports</T>
           {error ? (
-            <StatePanel testID="reports-error" icon={FileBarChart} title="Couldn't load reports" actionLabel="Retry" onAction={load} />
-          ) : items.length === 0 && !showPicker ? (
-            <View style={{ flex: 1 }}>
-              <StatePanel testID="reports-empty" icon={FileBarChart} title="No reports yet" message="Generate a PDF summary to keep or share with family, an adviser, or a GP." actionLabel="Generate a report" onAction={() => setShowPicker(true)} />
+            <View testID="reports-error" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: spacing.lg, alignItems: "center" }}>
+              <FileBarChart size={28} color={colors.muted} />
+              <T variant="small" style={{ marginTop: spacing.sm, textAlign: "center" }}>Couldn&apos;t load your saved reports.</T>
+              <Button label="Retry" testID="reports-retry" variant="outline" onPress={load} style={{ marginTop: spacing.sm }} />
+            </View>
+          ) : items.length === 0 ? (
+            <View testID="reports-empty" style={{ borderWidth: 1, borderStyle: "dashed", borderColor: colors.border, borderRadius: radius.lg, padding: spacing.lg, alignItems: "center" }}>
+              <FileBarChart size={28} color={colors.muted} />
+              <T variant="small" style={{ marginTop: spacing.sm, textAlign: "center" }}>No reports yet. Generate one above, it takes less than 30 seconds.</T>
             </View>
           ) : (
-            <FlatList
-              data={items}
-              keyExtractor={(r) => r.id}
-              ListHeaderComponent={!showPicker ? (
-                <>
-                  <PageIntro
-                    eyebrow="Reports"
-                    title="Reports"
-                    description="Eight reports built for caregivers. Each one becomes a polished PDF you can email, print, or hand to a GP, family member, or accountant."
-                    whatItDoes="Turns the data already in Wayly, statements, care plans, cases, into professionally formatted PDFs that speak the language of clinicians, accountants, and providers."
-                    howToUse={[
-                      "Pick the report type that matches who you're sending it to.",
-                      "Preview the report in-app before generating the PDF.",
-                      "Download the PDF or share the link.",
-                      "Return anytime, previously generated reports stay available for download.",
-                    ]}
-                    whatYouGet={[
-                      "Print-ready PDFs formatted for busy professionals.",
-                      "A saved history of everything you've generated.",
-                      "Confidence that you're not leaving anything out.",
-                    ]}
-                  />
-                  <Button label="Generate a report" testID="reports-generate-btn" icon={Plus} onPress={() => setShowPicker(true)} style={{ marginTop: spacing.md, marginBottom: spacing.md }} />
-                </>
-              ) : null}
-              contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
-              renderItem={({ item }) => {
-                const ready = item.status === "READY" || item.status === "COMPLETED";
-                return (
-                  <Pressable testID={`report-${item.id}`} onPress={() => openReport(item)} disabled={!ready}>
-                    <View style={[styles.row, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
-                      <View style={[styles.icon, { backgroundColor: colors.sageSoft }]}>
-                        <FileBarChart size={20} color={colors.primary} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }} numberOfLines={2}>{item.report_name || item.report_type}</T>
-                        <T variant="small">{shortDate(item.generated_at || item.created_at)}</T>
-                      </View>
-                      {ready ? (
-                        downloading === item.id
-                          ? <T variant="small" style={{ color: colors.primary }}>Opening…</T>
-                          : <Download size={20} color={colors.primary} testID={`report-download-${item.id}`} />
-                      ) : (
-                        <Badge label={(item.status || "").toLowerCase()} tone="neutral" />
-                      )}
-                    </View>
-                  </Pressable>
-                );
-              }}
-            />
+            items.map((item) => {
+              const ready = item.status === "READY" || item.status === "COMPLETED";
+              return (
+                <View key={item.id} testID={`report-${item.id}`} style={[styles.row, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
+                  <View style={[styles.iconSm, { backgroundColor: colors.sageSoft }]}>
+                    <FileBarChart size={18} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }} numberOfLines={2}>{item.report_name || item.report_type}</T>
+                    <T variant="small">{shortDate(item.generated_at || item.created_at)}</T>
+                  </View>
+                  {ready ? (
+                    downloading === item.id ? (
+                      <Loader2 size={18} color={colors.primary} />
+                    ) : (
+                      <Button label="Open" testID={`report-download-${item.id}`} variant="outline" onPress={() => openReport(item)} icon={Download} />
+                    )
+                  ) : (
+                    <Badge label={(item.status || "generating").toLowerCase()} tone="neutral" />
+                  )}
+                </View>
+              );
+            })
           )}
-        </>
+        </ScrollView>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.md },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.md, borderRadius: radius.lg, borderWidth: 1, padding: spacing.md },
   icon: { width: 44, height: 44, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
+  iconSm: { width: 40, height: 40, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
 });

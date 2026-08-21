@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, RefreshControl, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { AlertCircle, ChevronRight, Receipt, Upload } from "lucide-react-native";
+import { AlertCircle, ChevronRight, Receipt, Search, Upload, X } from "lucide-react-native";
 
-import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { AppHeader, Badge, Button, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -28,6 +28,15 @@ function invoiceTotal(i: Invoice): number | null {
 }
 function findingCount(i: Invoice): number { return i.reconciliation?.findings?.length || 0; }
 function refundOwed(i: Invoice): number { return i.reconciliation?.refund_owed_aud || 0; }
+function statusKey(i: Invoice): "all_clear" | "issues" {
+  return findingCount(i) === 0 ? "all_clear" : "issues";
+}
+
+const STATUS_CHIPS: { value: "all" | "issues" | "all_clear"; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "issues", label: "Issues" },
+  { value: "all_clear", label: "All clear" },
+];
 
 export default function InvoicesScreen() {
   const { activeId } = useParticipants();
@@ -36,6 +45,9 @@ export default function InvoicesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "issues" | "all_clear">("all");
+  const [providerFilter, setProviderFilter] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(false);
@@ -46,6 +58,27 @@ export default function InvoicesScreen() {
     finally { setLoading(false); setRefreshing(false); }
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load, activeId]));
+
+  const providers = useMemo(
+    () => Array.from(new Set(items.map((i) => i.provider_name).filter(Boolean))).sort() as string[],
+    [items]
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((i) => {
+      if (q) {
+        const hay = [i.provider_name || "", i.filename || ""].join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (providerFilter && i.provider_name !== providerFilter) return false;
+      if (statusFilter !== "all" && statusKey(i) !== statusFilter) return false;
+      return true;
+    });
+  }, [items, search, providerFilter, statusFilter]);
+
+  const hasFilter = search.trim() !== "" || statusFilter !== "all" || providerFilter != null;
+  const clearAll = () => { setSearch(""); setStatusFilter("all"); setProviderFilter(null); };
 
   const totals = useMemo(() => {
     let openIssues = 0, refund = 0;
@@ -93,6 +126,60 @@ export default function InvoicesScreen() {
       <View style={{ flexDirection: "row", gap: spacing.sm }}>
         <Button label="Check a new invoice" testID="invoices-list-upload-btn" icon={Upload} onPress={() => router.push("/tool/invoice-checker")} style={{ flex: 1 }} />
       </View>
+
+      {items.length > 0 ? (
+        <View testID="invoices-filter-bar" style={{ gap: spacing.sm }}>
+          <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: spacing.md }}>
+            <Search size={16} color={colors.muted} />
+            <TextInput
+              testID="invoices-search-input"
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search provider or filename"
+              placeholderTextColor={colors.muted}
+              style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 8, fontFamily: fonts.body, fontSize: 14, color: colors.text }}
+            />
+            {search ? (
+              <Pressable testID="invoices-search-clear" onPress={() => setSearch("")} hitSlop={8}><X size={16} color={colors.muted} /></Pressable>
+            ) : null}
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingVertical: 2 }}>
+            {STATUS_CHIPS.map((c) => {
+              const on = statusFilter === c.value;
+              return (
+                <Pressable
+                  key={c.value}
+                  testID={`invoices-status-${c.value}`}
+                  onPress={() => setStatusFilter(c.value)}
+                  style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }}
+                >
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: on ? "#fff" : colors.text }}>{c.label}</T>
+                </Pressable>
+              );
+            })}
+            {providers.map((p) => {
+              const on = providerFilter === p;
+              return (
+                <Pressable
+                  key={p}
+                  testID={`invoices-provider-${p}`}
+                  onPress={() => setProviderFilter(on ? null : p)}
+                  style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }}
+                >
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: on ? "#fff" : colors.text }} numberOfLines={1}>{p}</T>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <T variant="small" style={{ color: colors.muted }}>{filtered.length === items.length ? `${items.length} shown` : `${filtered.length} of ${items.length} shown`}</T>
+            {hasFilter ? (
+              <Pressable testID="invoices-clear-filters" onPress={clearAll}><T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary, textDecorationLine: "underline" }}>Clear filters</T></Pressable>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
+
       {items.length > 0 ? (
         <SmartAISummary
           pageKey="invoices-list"
@@ -135,10 +222,18 @@ export default function InvoicesScreen() {
         />
       ) : (
         <FlatList
-          data={items}
+          data={filtered}
           keyExtractor={(i) => i.id}
           renderItem={renderItem}
           ListHeaderComponent={Header}
+          ListEmptyComponent={
+            <View testID="invoices-list-no-results" style={{ padding: spacing.xl, alignItems: "center" }}>
+              <T variant="small" style={{ color: colors.muted }}>No invoices match these filters.</T>
+              <Pressable testID="invoices-no-results-clear" onPress={clearAll} style={{ marginTop: spacing.sm }}>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary, textDecorationLine: "underline" }}>Clear filters</T>
+              </Pressable>
+            </View>
+          }
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
         />

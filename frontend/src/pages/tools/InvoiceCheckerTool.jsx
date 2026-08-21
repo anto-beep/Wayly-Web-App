@@ -398,6 +398,19 @@ export default function InvoiceCheckerTool() {
         setResult((prev) => prev ? { ...prev, reconciliation: data.reconciliation } : prev);
     };
 
+    const onDraftAll = async () => {
+        if (!result?.invoice_id) return;
+        setDrafting(true);
+        try {
+            const { data } = await api.post(`/invoices/${result.invoice_id}/letter`);
+            if (data?.editor_path) navigate(data.editor_path);
+        } catch (e) {
+            setError(extractErrorMessage(e) || "Could not draft the letter.");
+        } finally {
+            setDrafting(false);
+        }
+    };
+
     const onReconcileCombined = async () => {
         if (!result?.invoice_id) return;
         setReconcilingCombined(true);
@@ -565,7 +578,7 @@ export default function InvoiceCheckerTool() {
                                     data-testid="inv1-upload-submit"
                                 >
                                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                                    {loading ? "Reading your invoice..." : "Check my invoice"}
+                                    {loading ? "Reading your invoice…" : "Check my invoice"}
                                 </button>
                                 <button
                                     type="button"
@@ -756,6 +769,7 @@ export default function InvoiceCheckerTool() {
                         <InvoiceIssueRegister
                             findings={result.reconciliation?.findings || []}
                             onDraftLetter={onDraftLetter}
+                            onDraftAll={onDraftAll}
                         />
 
                         {/* 4a. What's been charged — line-item table (parity with Decoder) */}
