@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Platform, Pres
 import { router } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import { Sparkles, AlertOctagon, ShieldAlert, Shield, ShieldCheck, Upload, Camera, File as FileIcon, Trash2, Check, BookmarkPlus, FolderOpen } from "lucide-react-native";
+import { Sparkles, AlertOctagon, ShieldAlert, Shield, ShieldCheck, Upload, Camera, File as FileIcon, Trash2, Check, BookmarkPlus, FolderOpen, Mail } from "lucide-react-native";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
@@ -49,6 +49,26 @@ export default function CarePlanReviewer() {
   const [saving, setSaving] = useState(false);
   const [savedPlanId, setSavedPlanId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState("");
+  const [letterBusyKey, setLetterBusyKey] = useState<string | null>(null);
+
+  const draftLetter = async (finding: any, key: string, addressee?: string) => {
+    setLetterBusyKey(key);
+    try {
+      const data: any = await apiFetch("/care-plans/letter-from-finding", {
+        method: "POST",
+        body: {
+          finding,
+          addressee: addressee || finding?.addressee_primary || "provider",
+          provider_name: result?.extraction?.provider_name || null,
+        },
+      });
+      if (data?.entry_id) router.push(`/correspondence/${data.entry_id}` as any);
+    } catch {
+      setError("Could not start the letter. Please try again.");
+    } finally {
+      setLetterBusyKey(null);
+    }
+  };
 
   useEffect(() => {
     if (active?.classification_level) setClassification((c) => c || String(active.classification_level));
@@ -293,6 +313,14 @@ export default function CarePlanReviewer() {
                 ) : null}
               </Card>
 
+              {/* B7 Plan summary */}
+              {result?.plan_summary ? (
+                <Card testID="cp-plan-summary" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
+                  <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5 }}>PLAN SUMMARY</T>
+                  <T variant="small" style={{ marginTop: 4, lineHeight: 20, color: colors.text }}>{sanitizeAI(result.plan_summary)}</T>
+                </Card>
+              ) : null}
+
               {/* A3 Flagship Verification panel — always visible */}
               {(result?.verification_panel?.checks || []).length > 0 ? (
                 <Card testID="cp-verification-panel">
@@ -349,6 +377,17 @@ export default function CarePlanReviewer() {
                           {f.detail ? <T variant="small" style={{ marginTop: 2, lineHeight: 19 }}>{sanitizeAI(f.detail)}</T> : null}
                           {f.citation_source ? <T variant="small" style={{ color: colors.muted, marginTop: 2, fontSize: 11 }}>Source: {f.citation_source}</T> : null}
                           {f.suggested_question ? <T variant="small" style={{ fontStyle: "italic", color: colors.primary, marginTop: 4 }}>→ {sanitizeAI(f.suggested_question)}</T> : null}
+                          {(f.addressee_primary || f.rule_id) ? (
+                            <Pressable
+                              testID={`cp-draft-letter-${i}`}
+                              onPress={() => draftLetter(f, `f${i}`, f.addressee_primary)}
+                              disabled={letterBusyKey === `f${i}`}
+                              style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, alignSelf: "flex-start", borderWidth: 1, borderColor: colors.primary, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, opacity: letterBusyKey === `f${i}` ? 0.6 : 1 }}
+                            >
+                              <Mail size={13} color={colors.primary} />
+                              <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.primary }}>Draft letter about this</T>
+                            </Pressable>
+                          ) : null}
                         </View>
                       );
                     })}

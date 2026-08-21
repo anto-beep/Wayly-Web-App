@@ -378,6 +378,51 @@ def run_verification_panel(facts: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def plan_summary(extraction: Optional[Dict[str, Any]], verification_panel: Optional[Dict[str, Any]]) -> str:
+    """B7 Plan Summary panel — one plain-language paragraph for a family
+    caregiver who has never read a care plan, plus a one-sentence verdict."""
+    ex = extraction or {}
+    name = ex.get("participant_first_name") or "the participant"
+    cls = ex.get("classification")
+    services = ex.get("services") or []
+    n = len(services)
+    streams = sorted({(s.get("stream") or "").strip() for s in services if s.get("stream") and s.get("stream") != "Unknown"})
+    stream_txt = ", ".join(streams) if streams else "Clinical Care, Independence and Everyday Living"
+    eff_from = _fmt_ddmmyyyy(ex.get("effective_from"))
+    eff_to = _fmt_ddmmyyyy(ex.get("effective_to"))
+    budget = ex.get("quarterly_budget")
+
+    parts = [f"This is a Support at Home care plan for {name}"]
+    if cls:
+        parts[0] += f", Classification {cls}"
+    parts[0] += "."
+    if eff_from and eff_to:
+        parts.append(f"It covers {eff_from} to {eff_to}.")
+    if n:
+        line = f"The plan provides {n} service{'s' if n != 1 else ''} across {stream_txt}"
+        if budget:
+            try:
+                line += f", with a quarterly budget of ${_q2(Decimal(str(budget)))}"
+            except Exception:      # noqa: BLE001
+                pass
+        parts.append(line + ".")
+
+    flagged = (verification_panel or {}).get("flagged_count", 0) or 0
+    if flagged == 0:
+        verdict = "Overall, the plan appears to meet the flagship checks. See the findings below."
+    elif flagged == 1:
+        verdict = "Overall, the plan has flagged issues in one flagship check. See the findings below."
+    else:
+        verdict = f"Overall, the plan has flagged issues in {flagged} flagship checks. See the findings below."
+    parts.append(verdict)
+    return " ".join(parts)
+
+
+def _fmt_ddmmyyyy(iso: Optional[str]) -> Optional[str]:
+    d = _parse_iso(iso)
+    return d.strftime("%d/%m/%Y") if d else None
+
+
 def finding_is_banned(finding: Dict[str, Any]) -> bool:
     """A2/anti-fab: a finding whose title or detail asserts a structurally
     banned claim (minimum RN hours, transport midpoints, minimum service hours
@@ -423,7 +468,7 @@ def enrich_findings(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             g["confidence"] = "low"
             g["citation_source"] = "Verification required"
             g["citation_url"] = ""
-            g["addressee_primary"] = None
+            g["addressee_primary"] = "provider"
             g["addressee_secondary"] = []
             g["registry_bound"] = False
             out.append(g)
@@ -450,5 +495,5 @@ __all__ = [
     "load_rules", "load_categories", "rule_by_id", "category_signed_off",
     "banned_rule_violations", "calibrate_confidence", "title_body_coherent",
     "build_facts", "run_verification_panel", "CONFIDENCE_BY_SOURCE_TYPE",
-    "finding_is_banned", "enrich_findings",
+    "finding_is_banned", "enrich_findings", "plan_summary",
 ]

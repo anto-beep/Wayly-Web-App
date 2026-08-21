@@ -91,6 +91,9 @@ export default function CarePlanStore() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showArchived, setShowArchived] = useState(false);
+    const [query, setQuery] = useState("");
+    const [classFilter, setClassFilter] = useState("");
+    const [flaggedOnly, setFlaggedOnly] = useState(false);
     // Compare mode
     const [compareMode, setCompareMode] = useState(false);
     const [selected, setSelected] = useState([]);   // [id, id]
@@ -152,6 +155,16 @@ export default function CarePlanStore() {
     };
 
     const list = showArchived ? archived : plans;
+    const filtered = list.filter((p) => {
+        if (query) {
+            const q = query.toLowerCase();
+            const hay = `${p.provider_name || ""} ${p.effective_from || ""} ${p.effective_to || ""}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+        }
+        if (classFilter && String(p.classification_at_review) !== classFilter) return false;
+        if (flaggedOnly && !((p.latest_findings_by_severity?.compliance || 0) > 0)) return false;
+        return true;
+    });
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8" data-testid="care-plan-store">
@@ -266,6 +279,37 @@ export default function CarePlanStore() {
                 </div>
             )}
 
+            {/* B6 filter + search */}
+            {!compareMode && (
+                <div className="mb-4 flex items-center gap-2 flex-wrap" data-testid="cp-filters">
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search provider or date…"
+                        data-testid="cp-search"
+                        className="flex-1 min-w-[180px] rounded-full border border-kindred bg-surface px-4 py-1.5 text-sm focus:outline-none focus:ring-2 ring-primary-k"
+                    />
+                    <select
+                        value={classFilter}
+                        onChange={(e) => setClassFilter(e.target.value)}
+                        data-testid="cp-filter-classification"
+                        className="rounded-full border border-kindred bg-surface px-3 py-1.5 text-sm focus:outline-none focus:ring-2 ring-primary-k"
+                    >
+                        <option value="">All classifications</option>
+                        {[1,2,3,4,5,6,7,8].map((c) => <option key={c} value={c}>Classification {c}</option>)}
+                    </select>
+                    <button
+                        type="button"
+                        onClick={() => setFlaggedOnly((v) => !v)}
+                        data-testid="cp-filter-flagged"
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${flaggedOnly ? "bg-terracotta text-white" : "text-muted-k hover:bg-surface-2 border border-kindred"}`}
+                    >
+                        Compliance flags only
+                    </button>
+                </div>
+            )}
+
             {loading && (
                 <div className="text-sm text-muted-k" data-testid="loading">
                     Loading…
@@ -279,18 +323,20 @@ export default function CarePlanStore() {
                     {error}
                 </div>
             )}
-            {!loading && !error && list.length === 0 && (
+            {!loading && !error && filtered.length === 0 && (
                 <div
                     className="rounded-xl border border-kindred bg-surface p-8 text-center"
                     data-testid="empty-state"
                 >
                     <FileText className="h-8 w-8 mx-auto text-muted-k mb-3" />
                     <div className="text-sm text-muted-k">
-                        {showArchived
-                            ? "No archived or deleted plans."
-                            : "You have not uploaded a care plan yet."}
+                        {(query || classFilter || flaggedOnly)
+                            ? "No plans match your filters."
+                            : showArchived
+                                ? "No archived or deleted plans."
+                                : "You have not uploaded a care plan yet."}
                     </div>
-                    {!showArchived && (
+                    {!showArchived && !(query || classFilter || flaggedOnly) && (
                         <Link
                             to="/ai-tools/care-plan-reviewer"
                             className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary-k underline underline-offset-4"
@@ -301,9 +347,9 @@ export default function CarePlanStore() {
                 </div>
             )}
 
-            {!loading && !error && list.length > 0 && (
+            {!loading && !error && filtered.length > 0 && (
                 <ul className="space-y-3" data-testid="care-plan-list">
-                    {list.map((plan) => (
+                    {filtered.map((plan) => (
                         <li
                             key={plan.id}
                             className={`rounded-xl border bg-surface p-4 transition-colors ${

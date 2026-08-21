@@ -14,7 +14,8 @@ import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import UploadGuardNotice from "@/components/UploadGuardNotice";
 import { api } from "@/lib/api";
-import { Loader2, Sparkles, Check, X, FolderOpen, BookmarkPlus, Upload, File as FileIcon, Trash2, AlertOctagon, ShieldAlert, Shield, ShieldCheck } from "lucide-react";
+import { Loader2, Sparkles, Check, X, FolderOpen, BookmarkPlus, Upload, File as FileIcon, Trash2, AlertOctagon, ShieldAlert, Shield, ShieldCheck, Download, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { AutomatedDecisionDisclosure, isEnabled } from "@/uxf";
 
 import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
@@ -44,6 +45,9 @@ const _ddmmyyyy = (iso) => {
 
 export default function CarePlanReviewer() {
     const access = useToolAccess();
+    const navigate = useNavigate();
+    const [downloadBusy, setDownloadBusy] = useState(false);
+    const [letterBusyKey, setLetterBusyKey] = useState(null);
     const [text, setText] = useState("");
     const [classification, setClassification] = useState("");
     const [quarterlyBudget, setQuarterlyBudget] = useState("");
@@ -166,6 +170,48 @@ export default function CarePlanReviewer() {
             setSaving(false);
         }
     };
+
+    const draftLetter = async (finding, key, addressee) => {
+        setLetterBusyKey(key);
+        try {
+            const { data } = await api.post("/care-plans/letter-from-finding", {
+                finding,
+                addressee: addressee || finding.addressee_primary || "provider",
+                provider_name: fileResult?.extraction?.provider_name || null,
+            });
+            if (data?.editor_path) navigate(data.editor_path);
+        } catch (e) {
+            alert(e?.response?.data?.detail || e?.message || "Could not start the letter.");
+        } finally {
+            setLetterBusyKey(null);
+        }
+    };
+
+    const downloadSummary = async () => {
+        setDownloadBusy(true);
+        try {
+            const { data } = await api.post("/care-plans/summary.pdf", {
+                extraction: fileResult?.extraction || {},
+                findings: fileResult?.findings || [],
+                verification_panel: fileResult?.verification_panel || null,
+                plan_summary: fileResult?.plan_summary || null,
+                provider_name: fileResult?.extraction?.provider_name || null,
+            }, { responseType: "blob" });
+            const url = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `wayly-care-plan-review-${new Date().toISOString().slice(0, 10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            alert(e?.response?.data?.detail || e?.message || "Download failed.");
+        } finally {
+            setDownloadBusy(false);
+        }
+    };
+
 
     const submit = async () => {
         setLoading(true);
@@ -374,6 +420,27 @@ export default function CarePlanReviewer() {
                             )}
                         </div>
 
+                        {/* B7 Plan summary + B9 download */}
+                        {(fileResult.plan_summary || fileResult.findings?.length > 0) && (
+                            <div className="bg-cream border border-kindred rounded-xl p-5" data-testid="cp-plan-summary">
+                                <div className="flex items-start justify-between gap-3 flex-wrap">
+                                    <div className="overline">Plan summary</div>
+                                    <button
+                                        onClick={downloadSummary}
+                                        disabled={downloadBusy}
+                                        data-testid="cp-download-summary"
+                                        className="inline-flex items-center gap-1.5 text-xs bg-primary-k text-white rounded-full px-3 py-1.5 hover:bg-[#091D33] disabled:opacity-60"
+                                    >
+                                        {downloadBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                                        {downloadBusy ? "Preparing…" : "Download summary"}
+                                    </button>
+                                </div>
+                                {fileResult.plan_summary && (
+                                    <p className="mt-2 text-sm text-primary-k leading-relaxed">{fileResult.plan_summary}</p>
+                                )}
+                            </div>
+                        )}
+
                         {/* A3 Flagship Verification panel — always visible */}
                         {fileResult.verification_panel?.checks?.length > 0 && (
                             <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="cp-verification-panel">
@@ -437,6 +504,30 @@ export default function CarePlanReviewer() {
                                                 )}
                                                 {f.suggested_question && (
                                                     <div className="mt-2 text-xs italic text-primary-k">→ {f.suggested_question}</div>
+                                                )}
+                                                {access === "allowed" && (f.addressee_primary || f.rule_id) && (
+                                                    <div className="mt-2 flex items-center gap-2 flex-wrap" data-testid={`cp-finding-actions-${i}`}>
+                                                        <button
+                                                            onClick={() => draftLetter(f, `f${i}`, f.addressee_primary)}
+                                                            disabled={letterBusyKey === `f${i}`}
+                                                            data-testid={`cp-draft-letter-${i}`}
+                                                            className="inline-flex items-center gap-1.5 text-xs border border-primary-k text-primary-k rounded-full px-3 py-1 hover:bg-primary-k hover:text-white transition-colors disabled:opacity-60"
+                                                        >
+                                                            {letterBusyKey === `f${i}` ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                                                            Draft letter about this
+                                                        </button>
+                                                        {(f.addressee_secondary || []).map((sec) => (
+                                                            <button
+                                                                key={sec}
+                                                                onClick={() => draftLetter(f, `f${i}-${sec}`, sec)}
+                                                                disabled={letterBusyKey === `f${i}-${sec}`}
+                                                                data-testid={`cp-draft-letter-${i}-${sec}`}
+                                                                className="text-[10px] uppercase tracking-wider text-muted-k hover:text-primary-k underline"
+                                                            >
+                                                                to {sec.replace(/_/g, " ")}
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 )}
                                             </li>
                                         );

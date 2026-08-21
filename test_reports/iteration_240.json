@@ -1,0 +1,35 @@
+{
+  "summary": "FOCUSED RETEST of CPR-FINDINGS-UX-1 v2 C1 'Draft letter about this' handoff on WEB (cathy@example.com, Robert Henderson golden fixture, Classification 5, quarterly budget $9924.25). Backend enrich_findings fix verified end-to-end: previously the FE gate at CarePlanReviewer.jsx:508 (`f.addressee_primary || f.rule_id`) rejected all 9 LLM findings on this fixture because none carried an addressee/rule_id — now backend defaults every freeform finding to addressee_primary='provider', so the gate always passes. Observed on live review: 9 findings rendered (cp-finding-0..8) and 9 cp-draft-letter-<i> buttons (cp-draft-letter-0..8) rendered — 100% coverage, up from 0% in iter239. Clicking cp-draft-letter-0 fired POST /api/care-plans/letter-from-finding → 200 and navigated to /tools/letters-and-follow-ups/2067624a-8a34-4e94-b1b2-21d14cfddeeb; the LF-1 editor loaded with header 'Correspondence', 'Archetype: Request', 'Recipient: provider cm', pre-fill chips (Price check / Contribution estimate), sender-authority textarea, intake form (participant 'Dorothy Smith' auto-populated, type-of-request select, 'What has changed and what are you asking for?' textarea) — real editor, not a stub. Regression spot-check: cp-plan-summary=True, cp-download-summary=True, cp-verification-panel=True — all still render alongside the new draft-letter buttons; no regressions detected. All three requested checks PASS.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter239_cpr_web.py",
+    "/app/test_reports/iter240_result.jpeg",
+    "/app/test_reports/iter240_lf1_editor.jpeg"
+  ],
+  "action_items": [
+    "(Optional / carry-over from iter239) Mobile /app/mobile/src/components/tools/CarePlanReviewer.tsx still pushes to /correspondence/${entry_id} instead of /tools/letters-and-follow-ups/${entry_id}; if intentional, document — otherwise reconcile with the web/backend editor_path.",
+    "(Optional / carry-over) Suppress the dev-only React hydration warning on <span> inside <option> in CarePlanReviewer.jsx (console shows: 'In HTML, <span> cannot be a child of <option>')."
+  ],
+  "critical_code_review_comments": [
+    "Backend fix (enrich_findings defaulting addressee_primary='provider' for freeform findings) is a pragmatic minimum-fix; consider also populating a lightweight rule_id (e.g. 'freeform:<slug>') so downstream analytics/registry filters can distinguish LLM-derived findings from registry rules.",
+    "FE gate at CarePlanReviewer.jsx:508 is still defensively narrow (`f.addressee_primary || f.rule_id`). Since backend now always sets addressee_primary, the gate is effectively `access === 'allowed'` — consider simplifying to that to reduce cognitive load, or keep the belt-and-braces gate documented."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "web: C1 button renders 9/9 findings (100%), click → POST 200 → navigation to /tools/letters-and-follow-ups/<id> → editor loads (100%). Regression: cp-plan-summary, cp-download-summary, cp-verification-panel all still render (100%)."},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "C1 'Draft letter about this' handoff is fully working on web after the backend enrich_findings fix. All 9 findings on the Robert Henderson golden fixture render the cp-draft-letter-<i> button; click → POST /api/care-plans/letter-from-finding → nav to /tools/letters-and-follow-ups/<entry_id> → editor loads (Correspondence page, intake form, participant auto-populated). No regressions on cp-plan-summary, cp-download-summary, cp-verification-panel. Only carry-over items: (a) mobile route divergence /correspondence/<id> vs web /tools/letters-and-follow-ups/<id>, (b) React <span>-in-<option> hydration warning in CarePlanReviewer.jsx (dev-only, non-blocking).",
+  "rca of the issue": "Iter239 root cause was that the FE render gate at CarePlanReviewer.jsx:508 required `f.addressee_primary || f.rule_id`, but the live LLM output on freeform findings did not populate either. Backend fix: lib/cpr_rules.py enrich_findings now sets addressee_primary='provider' as a default for every freeform (non-registry-bound) finding, so the gate is now satisfied on every finding. Verified on this run: 9/9 findings display the button, click flow works end-to-end to the LF-1 editor."
+}

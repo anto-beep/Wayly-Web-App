@@ -71,6 +71,8 @@ def render_artefact_pdf(
     plan: Dict[str, Any],
     extraction: Dict[str, Any],
     findings: List[Dict[str, Any]],
+    verification_panel: Dict[str, Any] | None = None,
+    plan_summary_text: str | None = None,
 ) -> None:
     styles = getSampleStyleSheet()
     H1 = ParagraphStyle(
@@ -145,7 +147,44 @@ def render_artefact_pdf(
     ]))
     story.append(t)
 
-    # ---------------- Findings summary ----------------
+    # ---------------- Plan summary (B7) ----------------
+    if plan_summary_text:
+        story.append(Paragraph("PLAN SUMMARY", H_LABEL))
+        story.append(Paragraph(plan_summary_text, BODY))
+
+    # ---------------- Verification panel (A3) ----------------
+    vp_checks = (verification_panel or {}).get("checks") or []
+    if vp_checks:
+        story.append(Paragraph("VERIFICATION CHECKS", H2))
+        story.append(Paragraph(
+            "Five Support at Home checks we run on every plan. A pass is confirmed correct, not just silence.",
+            BODY,
+        ))
+        story.append(Spacer(1, 4))
+        _status_label = {"pass": "CONFIRMED", "flag": "FLAGGED", "cannot_run": "MISSING INFO"}
+        _status_colour = {"pass": SAGE, "flag": TERRACOTTA, "cannot_run": GOLD}
+        vp_rows = []
+        for c in vp_checks:
+            col = _status_colour.get(c.get("status"), GOLD)
+            vp_rows.append([
+                Paragraph(
+                    f"<b>{c.get('label','')}</b> "
+                    f"<font color='{col.hexval()}' size='8'>· {_status_label.get(c.get('status'), c.get('status',''))}</font><br/>"
+                    f"<font size='9'>{c.get('detail','')}</font>",
+                    BODY,
+                ),
+            ])
+        vt = Table(vp_rows, colWidths=[17 * cm])
+        vt.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#E8E1D5")),
+            ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.white, CREAM]),
+        ]))
+        story.append(vt)
     by_sev = {"compliance": 0, "choice": 0, "efficiency": 0, "info": 0}
     for f in findings:
         s = f.get("severity") or "info"
@@ -255,6 +294,16 @@ def render_artefact_pdf(
         content_width_cm=18.0,
     ))
 
+    def _watermark(canvas, _doc):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7)
+        canvas.setFillColor(colors.HexColor("#B0A99B"))
+        canvas.drawCentredString(
+            A4[0] / 2.0, 0.7 * cm,
+            "General information only, not legal advice.",
+        )
+        canvas.restoreState()
+
     SimpleDocTemplate(
         buf,
         pagesize=A4,
@@ -262,7 +311,7 @@ def render_artefact_pdf(
         topMargin=1.5 * cm, bottomMargin=1.5 * cm,
         title="Care Plan Meeting Artefact",
         author="Wayly",
-    ).build(story)
+    ).build(story, onFirstPage=_watermark, onLaterPages=_watermark)
 
 
 __all__ = ["render_artefact_pdf"]

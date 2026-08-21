@@ -94,6 +94,41 @@ class PublicReviewBody(BaseModel):
     quarterly_budget: Optional[float] = Field(default=None, ge=0)
 
 
+class FindingLetterBody(BaseModel):
+    """C1 · draft-a-letter-from-a-finding. Works for both saved and unsaved
+    reviews — the finding context is passed in the body so no persisted plan
+    is required."""
+    finding: Dict[str, Any]
+    addressee: Optional[str] = None          # override; else finding.addressee_primary
+    provider_name: Optional[str] = None
+    participant_id: Optional[str] = None
+
+
+class SummaryPdfBody(BaseModel):
+    """B9 · downloadable summary PDF for an (un)saved review."""
+    extraction: Dict[str, Any] = Field(default_factory=dict)
+    findings: List[Dict[str, Any]] = Field(default_factory=list)
+    verification_panel: Optional[Dict[str, Any]] = None
+    plan_summary: Optional[str] = None
+    provider_name: Optional[str] = None
+    participant_name: Optional[str] = None
+
+
+# C1 addressee → LF-1 (situation_id, recipient_type). The user can switch the
+# addressee inside the LF-1 editor; this picks a sensible default per finding.
+_ADDRESSEE_TO_LF1 = {
+    "provider": (6, "provider_cm"),
+    "named_care_partner": (6, "provider_cm"),
+    "nominated_representative": (6, "provider_cm"),
+    "my_aged_care": (8, "mac"),
+    "acqsc": (10, "acqsc"),
+    "opan": (10, "opan"),
+    "services_australia": (9, "services_australia_aged_care"),
+    "ombudsman": (10, "ombudsman"),
+    "elder_abuse": (11, "elder_abuse_helpline"),
+}
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -180,10 +215,12 @@ def build_care_plans_router() -> APIRouter:
             llm_client=client,
         )
         _findings, _notice = cpr_mitigate(result["findings"])
+        from lib import cpr_rules as _cpr
         return {
             "findings": _findings,
             "safety_notice": _notice,
             "verification_panel": result.get("verification_panel"),
+            "plan_summary": _cpr.plan_summary(extraction.model_dump(), result.get("verification_panel")),
             "review_run": result["review_run"],
             "extraction": extraction.model_dump(),
         }
@@ -266,10 +303,12 @@ def build_care_plans_router() -> APIRouter:
             llm_client=client,
         )
         _findings, _notice = cpr_mitigate(result["findings"])
+        from lib import cpr_rules as _cpr
         return {
             "findings": _findings,
             "safety_notice": _notice,
             "verification_panel": result.get("verification_panel"),
+            "plan_summary": _cpr.plan_summary(extraction.model_dump(), result.get("verification_panel")),
             "review_run": result["review_run"],
             "extraction": extraction.model_dump(),
             "per_file_meta": per_file_meta,
@@ -791,7 +830,18 @@ def build_care_plans_router() -> APIRouter:
             findings, _ = cpr_mitigate(findings)
 
         buf = io.BytesIO()
-        render_artefact_pdf(buf, plan=plan, extraction=ext or {}, findings=findings)
+        from lib import cpr_rules as _cpr
+        _facts = _cpr.build_facts(
+            extraction=ext, plan_text="",
+            classification=plan.get("classification_at_review"),
+            quarterly_budget=plan.get("quarterly_budget_at_review"),
+        )
+        _vp = _cpr.run_verification_panel(_facts)
+        render_artefact_pdf(
+            buf, plan=plan, extraction=ext or {}, findings=findings,
+            verification_panel=_vp,
+            plan_summary_text=_cpr.plan_summary(ext or {}, _vp),
+        )
         buf.seek(0)
         from lib.artifact_naming import build_filename
         filename = build_filename(
@@ -1094,6 +1144,99 @@ def build_care_plans_router() -> APIRouter:
             seen.add(key)
             deduped.append(p)
         return {"prompts": deduped, "count": len(deduped)}
+
+    # ---------------- C1 · Draft letter from a finding -------------
+    @r.post("/care-plans/letter-from-finding")
+    async def letter_from_finding(
+        body: FindingLetterBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Hand a CPR-1 finding off to LF-1: create a pre-filled correspondence
+        keyed to the finding's addressee and return the entry id + editor path.
+        CPR-1 does not embed letter drafting (L12)."""
+        from lib.lf1 import get_situation
+
+        finding = body.finding or {}
+        addressee = (body.addressee or finding.get("addressee_primary") or "provider").strip().lower()
+        situation_id, recipient_type = _ADDRESSEE_TO_LF1.get(addressee, (6, "provider_cm"))
+        archetype = (get_situation(situation_id) or {}).get("archetype") or "request"
+
+        source_import = {
+            "tool": "care-plan-reviewer",
+            "finding_title": finding.get("title"),
+            "finding_body": finding.get("detail"),
+            "citation_source": finding.get("citation_source"),
+            "rule_id": finding.get("rule_id"),
+            "severity": finding.get("severity"),
+            "suggested_question": finding.get("suggested_question"),
+            "addressee": addressee,
+            "provider_name": body.provider_name,
+        }
+        entry_id = str(uuid4())
+        now = utcnow_iso()
+        entry = {
+            "id": entry_id,
+            "user_id": user_id,
+            "participant_id": body.participant_id,
+            "situation_id": situation_id,
+            "archetype": archetype,
+            "direction": "outbound",
+            "recipient_type": recipient_type,
+            "sender_identity": None,
+            "sender_authority_basis": None,
+            "complaint_mode": None,
+            "atsi_preference": False,
+            "source_import": source_import,
+            "intake": {},
+            "status": "draft",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.lf1_correspondence.insert_one(entry)
+        return {
+            "entry_id": entry_id,
+            "situation_id": situation_id,
+            "addressee": addressee,
+            "editor_path": f"/tools/letters-and-follow-ups/{entry_id}",
+        }
+
+    # ---------------- B9 · Downloadable summary PDF (unsaved review) ------
+    @r.post("/care-plans/summary.pdf")
+    async def summary_pdf(
+        body: SummaryPdfBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        from fastapi.responses import StreamingResponse
+        import io as _io
+        from services.care_plan_pdf import render_artefact_pdf as _render
+        from lib.artifact_naming import build_filename
+
+        plan = {
+            "provider_name": body.provider_name or body.extraction.get("provider_name"),
+            "effective_from": body.extraction.get("effective_from"),
+            "effective_to": body.extraction.get("effective_to"),
+            "classification_at_review": body.extraction.get("classification"),
+            "quarterly_budget_at_review": body.extraction.get("quarterly_budget"),
+        }
+        buf = _io.BytesIO()
+        _render(
+            buf, plan=plan, extraction=body.extraction, findings=body.findings,
+            verification_panel=body.verification_panel,
+            plan_summary_text=body.plan_summary,
+        )
+        buf.seek(0)
+        filename = build_filename(
+            "care_plan",
+            {"participant_name": body.participant_name,
+             "title": body.provider_name,
+             "date": None},
+            "pdf",
+        )
+        return StreamingResponse(
+            buf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     return r
 

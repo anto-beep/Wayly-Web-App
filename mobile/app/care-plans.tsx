@@ -1,14 +1,14 @@
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { ClipboardList, Sparkles, FileText } from "lucide-react-native";
+import { ClipboardList, Sparkles, FileText, Search } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
-import { fonts, spacing } from "@/src/theme/tokens";
+import { fonts, radius, spacing } from "@/src/theme/tokens";
 
 type Plan = {
   id: string;
@@ -38,6 +38,8 @@ export default function CarePlansScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [query, setQuery] = useState("");
+  const [classFilter, setClassFilter] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     if (!activeId) return;
@@ -92,7 +94,47 @@ export default function CarePlansScreen() {
               message="Add your support plan and Wayly reads it in plain English, groups every service, and flags gaps to raise at your next review."
             />
           ) : (
-            plans.map((p) => (
+            <>
+            {/* B6 filter + search */}
+            <View testID="cp-filters" style={{ gap: spacing.sm }}>
+              <View style={[styles.search, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+                <Search size={16} color={colors.muted} />
+                <TextInput
+                  testID="cp-search"
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder="Search plan, provider or date…"
+                  placeholderTextColor={colors.muted}
+                  style={{ flex: 1, fontFamily: fonts.body, fontSize: 14, color: colors.text }}
+                />
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.xs, paddingRight: spacing.lg }}>
+                {[null, 1, 2, 3, 4, 5, 6, 7, 8].map((c) => {
+                  const on = classFilter === c;
+                  return (
+                    <View key={c ?? "all"} testID={`cp-filter-class-${c ?? "all"}`} style={{ flexShrink: 0 }}>
+                      <T
+                        onPress={() => setClassFilter(c)}
+                        style={{ fontFamily: fonts.bodyMedium, fontSize: 12, overflow: "hidden", color: on ? "#fff" : colors.text, backgroundColor: on ? colors.primary : "transparent", borderWidth: 1, borderColor: on ? colors.primary : colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}
+                      >
+                        {c ? `Class ${c}` : "All"}
+                      </T>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </View>
+            {plans
+              .filter((p) => {
+                if (query) {
+                  const q = query.toLowerCase();
+                  const hay = `${p.title || ""} ${p.filename || ""} ${p.uploaded_at || ""}`.toLowerCase();
+                  if (!hay.includes(q)) return false;
+                }
+                if (classFilter && p.classification_at_review !== classFilter) return false;
+                return true;
+              })
+              .map((p) => (
               <Card key={p.id} testID={`care-plan-${p.id}`}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
@@ -108,7 +150,8 @@ export default function CarePlansScreen() {
                 </T>
                 {p.summary ? <T variant="small" style={{ marginTop: 6, lineHeight: 20 }} numberOfLines={4}>{p.summary}</T> : null}
               </Card>
-            ))
+            ))}
+            </>
           )}
 
           <Button
@@ -124,4 +167,6 @@ export default function CarePlansScreen() {
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  search: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 },
+});

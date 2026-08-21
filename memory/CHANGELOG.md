@@ -1,3 +1,17 @@
+## Iteration 239–240 (Jun 2026) — CPR-FINDINGS-UX-1 v2 Workstream B6/B7 + C1 + B9 (Care Plan Reviewer)
+
+Extended the Care Plan Reviewer with the requested slices of Workstreams B, C and the downloadable summary.
+
+- **B7 Plan Summary panel**: `lib/cpr_rules.plan_summary(extraction, verification_panel)` builds a plain-English paragraph + one-sentence verdict ("meets the flagship checks" / "flagged issues in N checks"). Returned as `plan_summary` from both public review endpoints; rendered as `cp-plan-summary` on web + mobile.
+- **C1 Draft-letter handoff**: `POST /api/care-plans/letter-from-finding` creates a pre-filled LF-1 correspondence keyed to the finding's addressee (registry `addressee_primary`, else `provider`) and returns `entry_id` + `editor_path`. Addressee→LF-1 map (`_ADDRESSEE_TO_LF1`) covers provider/MAC/ACQSC/OPAN/Services Australia/Ombudsman/Elder Abuse. Per-finding "Draft letter about this" button (`cp-draft-letter-<i>` + secondary-addressee links) on web (navigates to `/tools/letters-and-follow-ups/<id>`) and mobile (pushes to `/correspondence/<id>` — the correct per-surface LF-1 editor route). Fix: freeform (non-registry) findings now default to `provider` addressee so the button renders on every finding (was 0/9 → 9/9 in iter240).
+- **B9 Downloadable summary PDF**: `care_plan_pdf.render_artefact_pdf` extended with a Verification-panel section, the Plan Summary, findings already ordered by severity, and a "General information only, not legal advice" watermark stamped on every page. New `POST /api/care-plans/summary.pdf` renders the unsaved review to a watermarked PDF (`wayly-care-plan-review-YYYY-MM-DD.pdf`); the saved-plan `artefact.pdf` now also embeds the verification panel + summary. `cp-download-summary` button on web.
+- **B6 Saved-reviews filter/search**: web register (`CarePlanStore.jsx`) + mobile list (`care-plans.tsx`) gained search (provider/date/filename), classification filter, and (web) a "Compliance flags only" toggle. Empty state reads "No plans match your filters." when filters exclude everything.
+
+**Testing:** web fully automated PASS (iter239 + iter240): plan-summary, 23KB watermarked PDF download, 9/9 draft-letter buttons → live LF-1 editor, register filters (40→24→14→40 rows). Mobile at 1:1 source parity (Expo web-preview SecureStore auth injection still blocked, same env limit as iter235–238). Backend: golden CI 8/8, both new endpoints curl-verified with cathy's token.
+
+**Still pending (single-gate remainder):** B1 full screen redesign, B2 processing state, B5 persisted `care_plan_reviews` + auto-save opt-out, C2 borrowed-data chips, C3 delete-review, D1 parity manifest + D2 mobile-native affordances, and category-level solicitor sign-off (gates flipping the interim mitigation flag off). Backlog: CHSP invoice-scan OCR (mobile), evidence-bundle PDF in-app.
+
+
 ## Iteration 238 (Jun 2026) — CPR-FINDINGS-UX-1 v2 Workstream A: Care Plan Reviewer findings-engine correctness (permanent safety fix)
 
 Delivered the safety-critical Workstream A of the CPR redesign — the structural, permanent replacement for the interim M1–M4 citation-stripping mitigation (mitigation stays ON until solicitor category sign-off, since all registry categories are `solicitor_signed_off: false`).
