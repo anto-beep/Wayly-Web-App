@@ -24,6 +24,8 @@ from typing import Any, Callable, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from lib.chsp1.fee_check import run_fee_check
+
 logger = logging.getLogger("wayly.chsp1")
 
 chsp1_router = APIRouter(prefix="/chsp1", tags=["chsp1"])
@@ -42,6 +44,12 @@ def init_chsp1_routes(*, db, user_dep, loop1_open_case=None):
 
 def _flag_enabled() -> bool:
     return os.environ.get("CHSP1_ENABLED", "1") != "0"
+
+
+def _ws1_enabled() -> bool:
+    """CHSP-TOOLS-1 WS-1 feature flag (`chsp_tools_v1`). Defaulted OFF in
+    production per the spec; enabled elsewhere so it is testable."""
+    return os.environ.get("CHSP_TOOLS_V1", "1") != "0"
 
 
 async def _assert_flag():
@@ -305,6 +313,111 @@ async def open_fee_dispute(fc_id: str, request: Request):
     if case_id:
         await _db.chsp_fee_checks.update_one({"id": fc_id}, {"$set": {"case_id": case_id}})
     return {"case_id": case_id}
+
+
+# ---------------------------------------------------------------------------
+# WS-1 · Per-unit Fee Check (CHSP-TOOLS-1) + WS-3 access/hardship letters
+# ---------------------------------------------------------------------------
+
+
+@chsp1_router.get("/config")
+async def chsp_config():
+    """Feature-flag state so the frontends can gate the WS-1 experience."""
+    return {"chsp_tools_v1": _ws1_enabled(), "chsp1_enabled": _flag_enabled()}
+
+
+class FeeCheckPreviewIn(BaseModel):
+    invoice_reference: Optional[str] = None
+    provider_name: Optional[str] = None
+    service_type: Optional[str] = None
+    units_billed: float
+    units_received: float
+    billed_amount: float
+    agreed_rate: Optional[float] = None
+    rate_effective_date: Optional[str] = None
+    billed_period_start: Optional[str] = None
+    billed_period_end: Optional[str] = None
+    spans_contribution_change: bool = False
+
+
+@chsp1_router.post("/fee-check/preview")
+async def fee_check_preview(body: FeeCheckPreviewIn, request: Request):
+    """Stateless WS-1 per-unit Fee Check. Requires auth but persists nothing;
+    the caller decides whether to act on the verdict."""
+    await _assert_flag()
+    if not _ws1_enabled():
+        raise HTTPException(status_code=404, detail="Not found")
+    await _user_id(request)
+    result = run_fee_check(
+        agreed_rate=body.agreed_rate,
+        units_received=body.units_received,
+        units_billed=body.units_billed,
+        billed_amount=body.billed_amount,
+        rate_effective_date=body.rate_effective_date,
+        billed_period_start=body.billed_period_start,
+        spans_contribution_change=body.spans_contribution_change,
+    )
+    result["invoice_reference"] = body.invoice_reference
+    result["provider_name"] = body.provider_name
+    result["service_type"] = body.service_type
+    return {"result": result}
+
+
+class ChspLetterIn(BaseModel):
+    kind: str = "service_continuity"  # or "hardship"
+    provider_name: Optional[str] = None
+    context: Dict[str, Any] = Field(default_factory=dict)
+
+
+@chsp1_router.post("/letter")
+async def create_chsp_letter(body: ChspLetterIn, request: Request):
+    """WS-3 · Create an LF-1 correspondence draft for a CHSP access/hardship
+    situation and return the editor path. ``service_continuity`` asks the
+    provider to keep services running (situation 6); ``hardship`` raises a
+    fee-waiver / contribution-hardship notification (situation 9)."""
+    await _assert_flag()
+    uid = await _user_id(request)
+    profile = await _db.chsp_profiles.find_one({"user_id": uid})
+    participant_id = (profile or {}).get("represents_participant_id")
+
+    if body.kind == "hardship":
+        situation_id, archetype, recipient = 9, "notification", "services_australia_aged_care"
+    else:
+        situation_id, archetype, recipient = 6, "request", "provider_cm"
+
+    entry_id = str(uuid.uuid4())
+    now = _iso(_now())
+    entry = {
+        "id": entry_id,
+        "user_id": uid,
+        "participant_id": participant_id,
+        "situation_id": situation_id,
+        "archetype": archetype,
+        "direction": "outbound",
+        "recipient_type": recipient,
+        "sender_identity": None,
+        "sender_authority_basis": None,
+        "complaint_mode": None,
+        "atsi_preference": False,
+        "source_import": {
+            "tool": "chsp-tools",
+            "letter_kind": body.kind,
+            "provider_name": body.provider_name,
+            **body.context,
+        },
+        "intake": {},
+        "status": "draft",
+        "created_at": now,
+        "updated_at": now,
+    }
+    await _db.lf1_correspondence.insert_one(entry)
+    return {
+        "entry_id": entry_id,
+        "situation_id": situation_id,
+        "kind": body.kind,
+        "editor_path": f"/tools/letters-and-follow-ups/{entry_id}",
+    }
+
 
 
 # ---------------------------------------------------------------------------

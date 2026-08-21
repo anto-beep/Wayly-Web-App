@@ -1245,3 +1245,55 @@ agent_communication:
       6) Mobile /reports: catalog (reports-catalog with report-card-{TYPE} x8, each generate-{TYPE} button)
          is visible upfront on load WITHOUT tapping a Generate button first; 'Your reports' history below.
          Confirm parity with web /app/reports catalog (report-card-{TYPE}, generate-{TYPE}).
+
+## CHSP-TOOLS-1 WS-1 per-unit Fee Check + WS-3 Access/Hardship (iter 235, web + mobile, behind chsp_tools_v1 flag)
+backend:
+  - task: "WS-1 per-unit Fee Check engine lib/chsp1/fee_check.py + golden pytest (CHSP-FIX-1..5 + boundary + directionality)"
+    implemented: true
+    working: true
+    file: "/app/backend/lib/chsp1/fee_check.py, /app/backend/tests/test_chsp_fee_check_golden.py"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "7/7 golden pytest pass. Decimal half-up; rate bands max(2%,$0.50)/max(10%,$2.00) per unit; units within/minor(<1)/material(>=1); directionality guards; 90-day staleness → provisional; degraded (no agreed rate) → no_verdict + prompt_add_agreed_rate."
+  - task: "Endpoints: GET /api/chsp1/config (flag), POST /api/chsp1/fee-check/preview (WS-1), POST /api/chsp1/letter (WS-3 service_continuity/hardship → LF-1 editor_path)"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/chsp1.py"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Verified curl: config chsp_tools_v1=true; preview material (verdict material, per_unit 10.00, delta 4.00, dispute true) + degraded (prompt_add_agreed_rate true); letter returns editor_path."
+frontend:
+  - task: "Web CHSP Tools WS-1 fee check form + result (verdict/per-unit/expected/delta/rate+units tier), degraded state, staleness prompt, WS-3 Access & Hardship card (hardship emphasised on material)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/ChspTools.jsx"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Screenshot at /app/chsp/tools: FIX-2 inputs → Material verdict, Difference $4.00, billed/unit $10.00, expected $6.00, rate Material/units Within; hardship card emphasised with material hint."
+  - task: "Mobile CHSP Tools WS-1 + WS-3 parity"
+    implemented: true
+    working: "NA"
+    file: "/app/mobile/app/chsp-tools.tsx"
+agent_communication:
+  - agent: "main"
+    message: |
+      iter235 CHSP WS-1/WS-3. Behind flag chsp_tools_v1 (GET /api/chsp1/config
+      → {chsp_tools_v1:true} in this env). Creds cathy@example.com/testpass123
+      (has a CHSP profile; the fee-check form only shows once a profile exists).
+      Web route /app/chsp/tools; mobile /tool/chsp-tools (chsp-tools.tsx).
+      Test the WS-1 engine via golden cases through the UI:
+        FIX-1 agreed 6 / recv 4 / billed 4 / amount 24 → Within, no dispute.
+        FIX-2 agreed 6 / 1 / 1 / 10 → Material, diff $4.00, dispute, hardship emphasised.
+        FIX-3 agreed 6 / recv 4 / billed 5 / amount 30 → units Material, diff $6.00.
+        FIX-4 no agreed rate / 4 / 4 / 24 → degraded, prompt to add rate, no verdict.
+        FIX-5 agreed 6 effective 01/01/2026, period start 01/07/2026, 4/4/24 → Within but provisional (181 days).
+      testIDs: chsp-ws1-fee-check, chsp-ws1-agreed-rate, chsp-ws1-units-billed,
+      chsp-ws1-units-received, chsp-ws1-billed, chsp-ws1-rate-date,
+      chsp-ws1-period-start, chsp-ws1-submit, chsp-ws1-result, chsp-ws1-verdict,
+      chsp-ws1-degraded, chsp-ws1-staleness, chsp-access-hardship,
+      chsp-service-continuity-letter, chsp-hardship-letter, chsp-hardship-hint.
+      WS-3: service continuity + hardship buttons create an LF-1 draft (web
+      navigates to editor; mobile Alert → /correspondence).

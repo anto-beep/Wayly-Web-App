@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { router } from "expo-router";
-import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, ClipboardCheck, Plus, Wrench } from "lucide-react-native";
+import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, ClipboardCheck, Plus, Wrench, Clock, HelpCircle, LifeBuoy, Mail, AlertTriangle } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, Select, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
@@ -55,14 +55,155 @@ function Checkbox({ checked, colors }: any) {
   return <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : "transparent", alignItems: "center", justifyContent: "center" }}>{checked ? <CheckCircle2 size={13} color="#fff" /> : null}</View>;
 }
 
+const aud = (v: any) => `$${Number(v ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// WS-3 · Access & Hardship letters (mobile parity).
+function AccessHardship({ colors, providerName, emphasise }: any) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const draft = async (kind: string) => {
+    setBusy(kind);
+    try {
+      await apiFetch("/chsp1/letter", { method: "POST", body: { kind, provider_name: providerName || null } });
+      Alert.alert("Letter drafted", "Find it in Letters & Follow-ups.", [
+        { text: "View letters", onPress: () => router.push("/correspondence") },
+        { text: "OK" },
+      ]);
+    } catch { Alert.alert("Could not draft letter", "Please try again."); }
+    finally { setBusy(null); }
+  };
+  return (
+    <Card testID="chsp-access-hardship">
+      <T variant="label">ACCESS AND HARDSHIP</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Keep services running, and get help with fees</T>
+      <T variant="small" style={{ marginTop: 4 }}>Draft a letter to keep your services going, or start a hardship / fee-waiver request.</T>
+      <Button label="Service continuity letter" variant="outline" icon={Mail} testID="chsp-service-continuity-letter" loading={busy === "service_continuity"} onPress={() => draft("service_continuity")} style={{ marginTop: spacing.md }} />
+      <Button label="Apply for hardship / fee waiver" icon={LifeBuoy} testID="chsp-hardship-letter" loading={busy === "hardship"} variant={emphasise ? undefined : "outline"} onPress={() => draft("hardship")} style={{ marginTop: spacing.sm }} />
+      {emphasise ? (
+        <View testID="chsp-hardship-hint" style={{ marginTop: spacing.sm, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md }}>
+          <T variant="small" style={{ color: colors.text }}>A material overcharge can add up. If contributions are hard to meet, a hardship or fee-waiver request may help.</T>
+        </View>
+      ) : null}
+    </Card>
+  );
+}
+
+// WS-1 · Per-unit Fee Check (mobile parity).
+function WS1FeeCheck({ services, colors }: any) {
+  const [form, setForm] = useState<any>({
+    invoice_reference: "", provider_name: "", service_type: "domestic_assistance",
+    units_billed: "", units_received: "", agreed_rate: "",
+    rate_effective_date: "", billed_period_start: "", billed_amount: "",
+  });
+  const set = (patch: any) => setForm((f: any) => ({ ...f, ...patch }));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<any>(null);
+
+  const onServiceChange = (id: string) => {
+    const svc = services.find((s: any) => s.id === id);
+    if (svc) set({ service_type: svc.service_type, provider_name: svc.provider_name, agreed_rate: svc.hourly_rate_or_fee?.amount != null ? String(svc.hourly_rate_or_fee.amount) : form.agreed_rate });
+  };
+
+  const submit = async () => {
+    setError("");
+    for (const k of ["units_billed", "units_received", "billed_amount"]) {
+      if (!form[k]) { setError("Enter units billed, units received and billed amount."); return; }
+    }
+    setBusy(true);
+    try {
+      const data = await apiFetch<any>("/chsp1/fee-check/preview", { method: "POST", body: {
+        invoice_reference: form.invoice_reference || null,
+        provider_name: form.provider_name || null,
+        service_type: form.service_type,
+        units_billed: Number(form.units_billed),
+        units_received: Number(form.units_received),
+        billed_amount: Number(form.billed_amount),
+        agreed_rate: form.agreed_rate === "" ? null : Number(form.agreed_rate),
+        rate_effective_date: form.rate_effective_date || null,
+        billed_period_start: form.billed_period_start || null,
+      } });
+      setResult(data.result);
+    } catch (e) { setError(e instanceof ApiError ? e.message : "Could not check the fee."); }
+    finally { setBusy(false); }
+  };
+
+  const serviceOpts = [{ value: "", label: "Manual entry" }, ...services.map((s: any) => ({ value: s.id, label: `${s.service_type} · ${s.provider_name}` }))];
+  const verdictTone = result ? (result.overall_verdict === "within" ? "success" : result.overall_verdict === "no_verdict" ? "neutral" : "alert") : "neutral";
+  const VIcon = result ? (result.overall_verdict === "within" ? CheckCircle2 : result.overall_verdict === "material" ? ShieldAlert : result.overall_verdict === "no_verdict" ? HelpCircle : AlertTriangle) : HelpCircle;
+
+  return (
+    <Card testID="chsp-ws1-fee-check">
+      <T variant="label">FEE CHECK</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Was this CHSP invoice correct?</T>
+      <T variant="small" style={{ marginTop: 4 }}>We compare what you were billed against your provider&apos;s agreed per-unit rate.</T>
+
+      {services.length > 0 ? (
+        <View style={{ marginTop: spacing.md }}>
+          <Select label="Service entry" value={""} onChange={onServiceChange} options={serviceOpts} testID="chsp-ws1-service-entry" />
+        </View>
+      ) : null}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.md }}>
+        <LInput label="Invoice reference" value={form.invoice_reference} onChangeText={(v: string) => set({ invoice_reference: v })} testID="chsp-ws1-reference" colors={colors} />
+        <LInput label="Provider" value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-ws1-provider" colors={colors} />
+        <LInput label="Agreed per-unit rate" value={form.agreed_rate} onChangeText={(v: string) => set({ agreed_rate: v })} placeholder="6.00" keyboardType="decimal-pad" testID="chsp-ws1-agreed-rate" colors={colors} />
+        <LInput label="Rate effective (DD/MM/YYYY)" value={form.rate_effective_date} onChangeText={(v: string) => set({ rate_effective_date: v })} placeholder="01/01/2026" testID="chsp-ws1-rate-date" colors={colors} />
+        <LInput label="Units billed" value={form.units_billed} onChangeText={(v: string) => set({ units_billed: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-billed" colors={colors} />
+        <LInput label="Units received" value={form.units_received} onChangeText={(v: string) => set({ units_received: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-received" colors={colors} />
+        <LInput label="Billed period start (DD/MM/YYYY)" value={form.billed_period_start} onChangeText={(v: string) => set({ billed_period_start: v })} placeholder="01/07/2026" testID="chsp-ws1-period-start" colors={colors} />
+        <LInput label="Billed amount" value={form.billed_amount} onChangeText={(v: string) => set({ billed_amount: v })} keyboardType="decimal-pad" testID="chsp-ws1-billed" colors={colors} />
+      </View>
+      {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
+      <Button label="Check fee" icon={ReceiptText} testID="chsp-ws1-submit" loading={busy} onPress={submit} style={{ marginTop: spacing.md }} />
+
+      {result ? (
+        <View testID="chsp-ws1-result" style={{ marginTop: spacing.md, gap: spacing.sm }}>
+          {result.degraded ? (
+            <View testID="chsp-ws1-degraded" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, backgroundColor: colors.surface2 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><HelpCircle size={16} color={colors.text} /><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>No verdict yet</T></View>
+              <T variant="small" style={{ marginTop: 4 }}>We can&apos;t give an authoritative verdict without your provider&apos;s agreed per-unit rate. Add the agreed fee schedule, then run the check again.</T>
+            </View>
+          ) : (
+            <>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <VIcon size={16} color={verdictTone === "success" ? colors.sage : verdictTone === "alert" ? colors.terracotta : colors.muted} />
+                  <T testID="chsp-ws1-verdict" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{result.verdict_label}</T>
+                </View>
+                <T style={{ fontFamily: fonts.heading, color: colors.text }}>Diff {aud(result.amount_delta)}</T>
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+                {[["Billed / unit", aud(result.billed_per_unit)], ["Expected", aud(result.expected_amount)], ["Rate", result.rate_tier], ["Units", result.units_tier]].map(([l, v]: any) => (
+                  <View key={l} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm, minWidth: "45%" }}>
+                    <T style={{ fontFamily: fonts.body, fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>{l}</T>
+                    <T style={{ fontFamily: fonts.bodySemi, color: colors.text, marginTop: 2, textTransform: "capitalize" }}>{v}</T>
+                  </View>
+                ))}
+              </View>
+              {result.provisional ? (
+                <View testID="chsp-ws1-staleness" style={{ borderWidth: 1, borderColor: colors.gold, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Clock size={14} color={colors.gold} /><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Confirm this rate is current</T></View>
+                  <T variant="small" style={{ marginTop: 4 }}>{result.rate_age_days != null ? `This agreed rate is ${result.rate_age_days} days old.` : "This billed period may span a contribution change."} This verdict is provisional until you confirm the rate still applies.</T>
+                </View>
+              ) : null}
+            </>
+          )}
+        </View>
+      ) : null}
+      <AccessHardship colors={colors} providerName={form.provider_name} emphasise={Boolean(result && !result.degraded && result.overall_verdict === "material")} />
+    </Card>
+  );
+}
+
 export default function ChspToolsScreen() {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
+  const [ws1, setWs1] = useState(false);
 
   const load = async () => {
     setLoading(true);
+    try { const c = await apiFetch<any>("/chsp1/config"); setWs1(Boolean(c?.chsp_tools_v1)); } catch { setWs1(false); }
     try { const p = await apiFetch<any>("/chsp1/profile"); setProfile(p?.profile || null); } catch { setProfile(null); }
     try { const s = await apiFetch<any>("/chsp1/service-entries"); setServices(s?.service_entries || []); } catch { setServices([]); }
     setLoading(false);
@@ -87,7 +228,7 @@ export default function ChspToolsScreen() {
               {profile ? (
                 <>
                   <ChspServicesCard services={services} onAdded={load} colors={colors} />
-                  <FeeCheckForm services={services} colors={colors} />
+                  {ws1 ? <WS1FeeCheck services={services} colors={colors} /> : <FeeCheckForm services={services} colors={colors} />}
                   <TransitionWalkthrough colors={colors} />
                 </>
               ) : null}

@@ -4,12 +4,12 @@
  */
 import React, { useEffect, useState } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import {
     ChevronLeft, Receipt, ArrowRight, CheckCircle2, AlertTriangle,
-    ShieldAlert, ClipboardCheck, Home,
+    ShieldAlert, ClipboardCheck, Home, Clock, LifeBuoy, Mail, HelpCircle,
 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
 
@@ -34,6 +34,206 @@ const CONSIDERATIONS = [
     { key: "understand_lifetime_cap", label: "Understand the lifetime contribution cap" },
     { key: "understand_ras_reassessment_vs_iat_direct", label: "Understand RAS reassessment vs going directly to IAT" },
 ];
+
+const AUD = (v) => `$${Number(v ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const WS1_VERDICT = {
+    within: { tone: "bg-emerald-50 text-emerald-800 border-emerald-200", label: "Within tolerance", Icon: CheckCircle2 },
+    minor: { tone: "bg-amber-50 text-amber-800 border-amber-200", label: "Minor", Icon: AlertTriangle },
+    material: { tone: "bg-red-50 text-red-800 border-red-200", label: "Material", Icon: ShieldAlert },
+    no_verdict: { tone: "bg-primary-k/5 text-primary-k/70 border-primary-k/15", label: "No verdict", Icon: HelpCircle },
+};
+
+// WS-3 · Access & Hardship. The service-continuity letter is always available;
+// the hardship / fee-waiver letter is emphasised when a material overcharge is
+// detected (spec E8).
+function AccessHardshipCard({ providerName, emphasiseHardship }) {
+    const navigate = useNavigate();
+    const [busy, setBusy] = useState(null);
+    const draft = async (kind) => {
+        setBusy(kind);
+        try {
+            const { data } = await api.post("/chsp1/letter", { kind, provider_name: providerName || null });
+            if (data?.editor_path) navigate(data.editor_path);
+        } catch { toast.error("Could not draft the letter."); }
+        finally { setBusy(null); }
+    };
+    return (
+        <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-3" data-testid="chsp-access-hardship">
+            <p className="text-xs uppercase tracking-wide text-primary-k/50">Access and hardship</p>
+            <h2 className="font-heading text-xl text-primary-k">Keep services running, and get help with fees</h2>
+            <p className="text-sm text-muted-k">The pain most CHSP clients feel is about access, not billing. Draft a letter to keep your services going, or start a hardship / fee-waiver request.</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+                <button
+                    onClick={() => draft("service_continuity")}
+                    disabled={busy === "service_continuity"}
+                    data-testid="chsp-service-continuity-letter"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary-k/25 bg-white px-4 py-3 text-sm text-primary-k hover:bg-primary-k hover:text-white transition-colors disabled:opacity-50"
+                >
+                    <Mail className="w-4 h-4" /> Service continuity letter
+                </button>
+                <button
+                    onClick={() => draft("hardship")}
+                    disabled={busy === "hardship"}
+                    data-testid="chsp-hardship-letter"
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm transition-colors disabled:opacity-50 ${emphasiseHardship ? "bg-gold text-white hover:brightness-95" : "border border-primary-k/25 bg-white text-primary-k hover:bg-primary-k hover:text-white"}`}
+                >
+                    <LifeBuoy className="w-4 h-4" /> Apply for hardship / fee waiver
+                </button>
+            </div>
+            {emphasiseHardship && (
+                <p className="text-xs text-gold-800 bg-gold/10 border border-gold rounded-lg px-3 py-2" data-testid="chsp-hardship-hint">
+                    A material overcharge can add up. If contributions are hard to meet, a hardship or fee-waiver request may help.
+                </p>
+            )}
+        </div>
+    );
+}
+
+// WS-1 · Per-unit Fee Check. Anchored on the provider's agreed per-unit rate,
+// with a graceful degraded state and a staleness prompt.
+function WS1FeeCheck({ services }) {
+    const [form, setForm] = useState({
+        invoice_reference: "", provider_name: "", service_type: "domestic_assistance",
+        units_billed: "", units_received: "", agreed_rate: "",
+        rate_effective_date: "", billed_period_start: "", billed_period_end: "", billed_amount: "",
+    });
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState(null);
+    const resultRef = useScrollToResult(Boolean(result));
+
+    const onServiceChange = (id) => {
+        const svc = services.find((s) => s.id === id);
+        if (svc) {
+            setForm((f) => ({
+                ...f,
+                service_type: svc.service_type || f.service_type,
+                provider_name: svc.provider_name || f.provider_name,
+                agreed_rate: svc.hourly_rate_or_fee?.amount != null ? String(svc.hourly_rate_or_fee.amount) : f.agreed_rate,
+            }));
+        }
+    };
+
+    const submit = async () => {
+        for (const k of ["units_billed", "units_received", "billed_amount"]) {
+            if (form[k] === "" || form[k] == null) { toast.error(`Missing: ${k.replace(/_/g, " ")}`); return; }
+        }
+        setBusy(true);
+        try {
+            const { data } = await api.post("/chsp1/fee-check/preview", {
+                invoice_reference: form.invoice_reference || null,
+                provider_name: form.provider_name || null,
+                service_type: form.service_type,
+                units_billed: Number(form.units_billed),
+                units_received: Number(form.units_received),
+                billed_amount: Number(form.billed_amount),
+                agreed_rate: form.agreed_rate === "" ? null : Number(form.agreed_rate),
+                rate_effective_date: form.rate_effective_date || null,
+                billed_period_start: form.billed_period_start || null,
+                billed_period_end: form.billed_period_end || null,
+            });
+            setResult(data.result);
+        } catch (e) {
+            toast.error(e?.response?.data?.detail || "Could not check the fee.");
+        } finally { setBusy(false); }
+    };
+
+    const verdict = result ? (WS1_VERDICT[result.overall_verdict] || WS1_VERDICT.no_verdict) : null;
+
+    return (
+        <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-4" data-testid="chsp-ws1-fee-check">
+            <p className="text-xs uppercase tracking-wide text-primary-k/50">Fee check</p>
+            <h2 className="font-heading text-xl text-primary-k">Was this CHSP invoice correct?</h2>
+            <p className="text-sm text-muted-k">We compare what you were billed against your provider&apos;s agreed per-unit rate. Enter the agreed rate so we can give you an authoritative verdict.</p>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+                {services.length > 0 && (
+                    <label className="text-xs text-muted-k sm:col-span-2">Service entry (pre-fills provider, type, rate)
+                        <select onChange={(e) => onServiceChange(e.target.value)} data-testid="chsp-ws1-service-entry" className="mt-1 w-full px-3 py-2 text-sm border rounded">
+                            <option value="">Manual entry</option>
+                            {services.map((s) => <option key={s.id} value={s.id}>{s.service_type} · {s.provider_name}</option>)}
+                        </select>
+                    </label>
+                )}
+                <label className="text-xs text-muted-k">Invoice reference
+                    <input value={form.invoice_reference} data-testid="chsp-ws1-reference" onChange={(e) => setForm({ ...form, invoice_reference: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+                <label className="text-xs text-muted-k">Provider
+                    <input value={form.provider_name} data-testid="chsp-ws1-provider" onChange={(e) => setForm({ ...form, provider_name: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+                <label className="text-xs text-muted-k">Service type
+                    <select value={form.service_type} data-testid="chsp-ws1-service-type" onChange={(e) => setForm({ ...form, service_type: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded">
+                        {SERVICE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
+                    </select>
+                </label>
+                <label className="text-xs text-muted-k">Agreed per-unit rate (AUD)
+                    <input type="number" value={form.agreed_rate} data-testid="chsp-ws1-agreed-rate" placeholder="e.g. 6.00" onChange={(e) => setForm({ ...form, agreed_rate: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+                <label className="text-xs text-muted-k">Rate effective date
+                    <input type="date" value={form.rate_effective_date} data-testid="chsp-ws1-rate-date" onChange={(e) => setForm({ ...form, rate_effective_date: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+                <label className="text-xs text-muted-k">Units billed
+                    <input type="number" value={form.units_billed} data-testid="chsp-ws1-units-billed" placeholder="e.g. 4" onChange={(e) => setForm({ ...form, units_billed: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+                <label className="text-xs text-muted-k">Units received
+                    <input type="number" value={form.units_received} data-testid="chsp-ws1-units-received" placeholder="e.g. 4" onChange={(e) => setForm({ ...form, units_received: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+                <label className="text-xs text-muted-k">Billed period start
+                    <input type="date" value={form.billed_period_start} data-testid="chsp-ws1-period-start" onChange={(e) => setForm({ ...form, billed_period_start: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+                <label className="text-xs text-muted-k">Billed period end
+                    <input type="date" value={form.billed_period_end} data-testid="chsp-ws1-period-end" onChange={(e) => setForm({ ...form, billed_period_end: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+                <label className="text-xs text-muted-k">Billed amount (AUD)
+                    <input type="number" value={form.billed_amount} data-testid="chsp-ws1-billed" onChange={(e) => setForm({ ...form, billed_amount: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                </label>
+            </div>
+
+            <button onClick={submit} disabled={busy} data-testid="chsp-ws1-submit" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2 text-sm disabled:opacity-50">
+                <Receipt className="w-4 h-4" /> Check fee
+            </button>
+
+            {result && (
+                <div ref={resultRef} className="mt-2 space-y-3 scroll-mt-20" data-testid="chsp-ws1-result">
+                    {result.degraded ? (
+                        <div className="rounded-xl border border-primary-k/20 bg-primary-k/[0.03] p-4" data-testid="chsp-ws1-degraded">
+                            <div className="flex items-center gap-2 text-primary-k font-medium"><HelpCircle className="w-4 h-4" /> No verdict yet</div>
+                            <p className="text-sm text-muted-k mt-1">We can&apos;t give an authoritative verdict without your provider&apos;s agreed per-unit rate. Add the agreed fee schedule for this provider and service, then run the check again.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className={`rounded-xl border p-4 ${verdict.tone}`}>
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <span className="inline-flex items-center gap-1.5 font-semibold" data-testid="chsp-ws1-verdict">
+                                        <verdict.Icon className="w-4 h-4" /> {result.verdict_label}
+                                    </span>
+                                    <span className="text-sm font-heading tabular-nums">Difference {AUD(result.amount_delta)}</span>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                                <div className="rounded-lg border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Billed per unit</div><div className="text-primary-k tabular-nums mt-0.5">{AUD(result.billed_per_unit)}</div></div>
+                                <div className="rounded-lg border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Expected amount</div><div className="text-primary-k tabular-nums mt-0.5">{AUD(result.expected_amount)}</div></div>
+                                <div className="rounded-lg border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Rate check</div><div className="text-primary-k mt-0.5 capitalize">{result.rate_tier}</div></div>
+                                <div className="rounded-lg border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Units check</div><div className="text-primary-k mt-0.5 capitalize">{result.units_tier}</div></div>
+                            </div>
+                            {result.provisional && (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" data-testid="chsp-ws1-staleness">
+                                    <div className="flex items-center gap-1.5 font-medium"><Clock className="w-4 h-4" /> Confirm this rate is current</div>
+                                    <p className="mt-1">{result.rate_age_days != null ? `This agreed rate is ${result.rate_age_days} days old.` : "This billed period may span a contribution change."} This verdict is provisional until you confirm the rate still applies.</p>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            )}
+
+            <AccessHardshipCard
+                providerName={form.provider_name}
+                emphasiseHardship={Boolean(result && !result.degraded && result.overall_verdict === "material")}
+            />
+        </div>
+    );
+}
 
 function VarianceBadge({ status }) {
     const map = {
@@ -391,8 +591,13 @@ function TransitionWalkthrough() {
 export default function ChspTools() {
     const [profile, setProfile] = useState(null);
     const [services, setServices] = useState([]);
+    const [ws1, setWs1] = useState(false);
 
     const load = async () => {
+        try {
+            const { data } = await api.get("/chsp1/config");
+            setWs1(Boolean(data?.chsp_tools_v1));
+        } catch { setWs1(false); }
         try {
             const { data } = await api.get("/chsp1/profile");
             setProfile(data.profile);
@@ -413,16 +618,16 @@ export default function ChspTools() {
                 eyebrow="Commonwealth Home Support Programme"
                 title="Verify CHSP Billing. Consider a Move to Support at Home."
                 description="Two decisions matter on CHSP: was I actually billed correctly, and should I transition to Support at Home? This tool walks you through both without pressure."
-                whatItDoes="Runs a variance check on any CHSP invoice against what you expected to pay, and gives you a 3-step walkthrough for thinking through whether transitioning to SAH is right for you."
+                whatItDoes="Checks any CHSP invoice against your provider's agreed per-unit rate, drafts letters to keep services running or apply for hardship, and gives you a 3-step walkthrough for thinking through whether transitioning to SAH is right for you."
                 howToUse={[
                     "Set your CHSP profile (status + start date).",
-                    "Enter what your provider billed vs what you expected, we flag anything outside a 2% or $5 tolerance.",
-                    "Open a dispute case straight from the result if the variance is material.",
+                    "Enter the agreed per-unit rate, units billed and received, and the billed amount.",
+                    "Draft a service-continuity or hardship letter, or dispute a material overcharge.",
                     "When ready, work through the 3-step transition walkthrough to record a considered decision.",
                 ]}
                 whatYouGet={[
-                    "A variance verdict on every fee check (within tolerance / minor / material).",
-                    "A ready-to-send dispute case if the invoice looks wrong.",
+                    "A per-unit verdict on every fee check (within tolerance / minor / material).",
+                    "Ready-to-send service-continuity and hardship / fee-waiver letters.",
                     "A documented decision on whether to stay on CHSP or move to SAH.",
                 ]}
             />
@@ -430,7 +635,7 @@ export default function ChspTools() {
             <ChspProfileCard profile={profile} onCreate={load}/>
             {profile && (
                 <>
-                    <FeeCheckForm services={services} onSubmitted={() => load()}/>
+                    {ws1 ? <WS1FeeCheck services={services} /> : <FeeCheckForm services={services} onSubmitted={() => load()}/>}
                     <TransitionWalkthrough/>
                 </>
             )}

@@ -1,3 +1,16 @@
+## Iteration 235 (Jun 2026) — CHSP-TOOLS-1 WS-1 per-unit Fee Check + WS-3 Access & Hardship (web + mobile, behind `chsp_tools_v1`)
+
+Implemented the golden-gated WS-1 Fee Check and WS-3 access/hardship letters from CHSP-TOOLS-1 v1.1 / CHSP-FIX-golden-v1.
+
+- **Engine** `lib/chsp1/fee_check.py`: per-unit model in `Decimal` (half-up, 2dp). Rate bands per unit `within=max(2%,$0.50)`, `minor=max(10%,$2.00)`, else material; units `within/minor(<1 unit)/material(>=1 unit)`; overall = worse of the two; directionality guards (undercharge/underbill never escalate or offer dispute); 90-day staleness → provisional + confirm prompt; no agreed rate → degraded `no_verdict` + `prompt_add_agreed_rate`. Golden pytest `test_chsp_fee_check_golden.py` (FIX-1..5 + boundary + directionality) passes 7/7 and gates the flag.
+- **API** `routes/chsp1.py`: `GET /api/chsp1/config` (flag), `POST /api/chsp1/fee-check/preview` (stateless WS-1), `POST /api/chsp1/letter` (WS-3 `service_continuity`→situation 6 / `hardship`→situation 9, returns LF-1 `editor_path`). Testing agent added `test_chsp_tools_v1_api.py` (9/9).
+- **Web** `ChspTools.jsx`: WS-1 form + result (verdict badge, billed/unit, expected, delta, rate & units tiers), degraded state, staleness prompt, and a single Access & Hardship card (hardship emphasised on material). Old 2%/$5 total FeeCheckForm kept only as the flag-off fallback.
+- **Mobile** `chsp-tools.tsx`: full parity port (verified via shared backend + web; device QA recommended — Expo web preview blocks SecureStore token injection).
+- Flag `CHSP_TOOLS_V1` defaults ON in preview, OFF in production per spec.
+
+**Remaining CHSP:** WS-2 reframed transition (hard-gated on solicitor sign-off), WS-5 date/enum defect sweep, WS-6 CI wiring; plus CHSP invoice-photo OCR and complaint evidence-bundle in-app viewer.
+
+
 ## Iteration 233-234 (Jun 2026) — Cross-platform parity batch (Letters, Invoice filters, Draft-all, Decode copy, Contribution Position nav, Reports catalog)
 
 Six user-requested parity items, all built on web + mobile and verified by the testing agent (iter233 + iter234, no blockers).
