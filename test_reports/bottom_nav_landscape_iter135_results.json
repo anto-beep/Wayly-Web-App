@@ -1,0 +1,464 @@
+{
+  "checks": [
+    {
+      "portrait_393x852_bottom_nav_labels": [
+        "Dashboard",
+        "AI Tools",
+        "Statements",
+        "Settings"
+      ]
+    },
+    {
+      "portrait_393x852_bottom_nav_state": {
+        "exists": true,
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 393,
+        "height": 65,
+        "top": 787,
+        "bottom": 852,
+        "left": 0,
+        "right": 393,
+        "visible": true
+      },
+      "portrait_393x852_sidebar_state": {
+        "exists": true,
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      }
+    },
+    {
+      "portrait_393x852_[data-testid='help-chat-launcher']": {
+        "exists": true,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      }
+    },
+    {
+      "portrait_393x852_[data-testid='a11y-launcher']": {
+        "exists": true,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      }
+    },
+    {
+      "portrait_393x852_dashboard_bottom_spacing": {
+        "checked": true,
+        "path": "/app",
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "scrollY": 5245,
+        "documentHeight": 8714,
+        "navVisible": true,
+        "navTop": 787,
+        "navBottom": 852,
+        "navHeight": 65,
+        "mainBottom": 3449.36,
+        "mainPaddingBottom": "80px",
+        "mainPaddingBottomPx": 80,
+        "lastContentBottom": 3369.36,
+        "lastContent": {
+          "tag": "div",
+          "testid": "family-preview-card",
+          "text": "FAMILY THREAD Open thread CATHY \u00b7 13/07/2026 07:32 \u26a0 Concern flagged: TEST_concern CATHY \u00b7 13/07/202",
+          "top": 3123.02,
+          "bottom": 3369.36,
+          "height": 246.34,
+          "width": 361
+        },
+        "geometryClear": false,
+        "paddingClear": true,
+        "noOverlapByContract": true
+      }
+    },
+    {
+      "portrait_393x852_statements_bottom_spacing": {
+        "checked": true,
+        "path": "/app/statements",
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "scrollY": 2645,
+        "documentHeight": 3497,
+        "navVisible": true,
+        "navTop": 787,
+        "navBottom": 852,
+        "navHeight": 65,
+        "mainBottom": 832.34,
+        "mainPaddingBottom": "80px",
+        "mainPaddingBottomPx": 80,
+        "lastContentBottom": 752.34,
+        "lastContent": {
+          "tag": "div",
+          "testid": null,
+          "text": "Showing 1,25 of 36 Prev Page 1 of 2 Next",
+          "top": 722.34,
+          "bottom": 752.34,
+          "height": 30,
+          "width": 361
+        },
+        "geometryClear": true,
+        "paddingClear": true,
+        "noOverlapByContract": true
+      }
+    },
+    {
+      "portrait_393x852_pacing_bottom_spacing": {
+        "checked": true,
+        "path": "/app/pacing",
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "scrollY": 72,
+        "documentHeight": 924,
+        "navVisible": true,
+        "navTop": 787,
+        "navBottom": 852,
+        "navHeight": 65,
+        "mainBottom": 832.34,
+        "mainPaddingBottom": "80px",
+        "mainPaddingBottomPx": 80,
+        "lastContentBottom": 1216.59,
+        "lastContent": {
+          "tag": "div",
+          "testid": null,
+          "text": "Actual spent = reconciled + confirmed + assumed + ad-hoc totals. Reconciled comes from decoded state",
+          "top": 751.34,
+          "bottom": 1216.59,
+          "height": 465.25,
+          "width": 359
+        },
+        "geometryClear": false,
+        "paddingClear": true,
+        "noOverlapByContract": true
+      }
+    },
+    {
+      "landscape_852x393_bottom_nav_labels": [
+        "Dashboard",
+        "AI Tools",
+        "Statements",
+        "Settings"
+      ]
+    },
+    {
+      "landscape_852x393_bottom_nav_state": {
+        "exists": true,
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 852,
+        "height": 65,
+        "top": 328,
+        "bottom": 393,
+        "left": 0,
+        "right": 852,
+        "visible": true
+      },
+      "landscape_852x393_sidebar_state": {
+        "exists": true,
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      }
+    },
+    {
+      "landscape_852x393_[data-testid='help-chat-launcher']": {
+        "exists": true,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      }
+    },
+    {
+      "landscape_852x393_[data-testid='a11y-launcher']": {
+        "exists": true,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      }
+    },
+    {
+      "landscape_852x393_dashboard_bottom_spacing": {
+        "checked": true,
+        "path": "/app",
+        "viewport": {
+          "width": 852,
+          "height": 393
+        },
+        "scrollY": 5330,
+        "documentHeight": 6190,
+        "navVisible": true,
+        "navTop": 328,
+        "navBottom": 393,
+        "navHeight": 65,
+        "mainBottom": 839.72,
+        "mainPaddingBottom": "80px",
+        "mainPaddingBottomPx": 80,
+        "lastContentBottom": 759.72,
+        "lastContent": {
+          "tag": "div",
+          "testid": "family-preview-card",
+          "text": "FAMILY THREAD Open thread CATHY \u00b7 13/07/2026 07:32 \u26a0 Concern flagged: TEST_concern CATHY \u00b7 13/07/202",
+          "top": 511.3,
+          "bottom": 759.72,
+          "height": 248.42,
+          "width": 820
+        },
+        "geometryClear": false,
+        "paddingClear": true,
+        "noOverlapByContract": true
+      }
+    },
+    {
+      "landscape_852x393_statements_bottom_spacing": {
+        "checked": true,
+        "path": "/app/statements",
+        "viewport": {
+          "width": 852,
+          "height": 393
+        },
+        "scrollY": 2456,
+        "documentHeight": 2849,
+        "navVisible": true,
+        "navTop": 328,
+        "navBottom": 393,
+        "navHeight": 65,
+        "mainBottom": 372.89,
+        "mainPaddingBottom": "80px",
+        "mainPaddingBottomPx": 80,
+        "lastContentBottom": 292.89,
+        "lastContent": {
+          "tag": "div",
+          "testid": null,
+          "text": "Showing 1,25 of 36 Prev Page 1 of 2 Next",
+          "top": 262.89,
+          "bottom": 292.89,
+          "height": 30,
+          "width": 820
+        },
+        "geometryClear": true,
+        "paddingClear": true,
+        "noOverlapByContract": true
+      }
+    },
+    {
+      "landscape_852x393_pacing_bottom_spacing": {
+        "checked": true,
+        "path": "/app/pacing",
+        "viewport": {
+          "width": 852,
+          "height": 393
+        },
+        "scrollY": 329,
+        "documentHeight": 722,
+        "navVisible": true,
+        "navTop": 328,
+        "navBottom": 393,
+        "navHeight": 65,
+        "mainBottom": 372.97,
+        "mainPaddingBottom": "80px",
+        "mainPaddingBottomPx": 80,
+        "lastContentBottom": 575.22,
+        "lastContent": {
+          "tag": "div",
+          "testid": null,
+          "text": "Actual spent = reconciled + confirmed + assumed + ad-hoc totals. Reconciled comes from decoded state",
+          "top": 291.97,
+          "bottom": 575.22,
+          "height": 283.25,
+          "width": 818
+        },
+        "geometryClear": false,
+        "paddingClear": true,
+        "noOverlapByContract": true
+      }
+    },
+    {
+      "desktop_dashboard_main_padding_bottom_px": 0,
+      "desktop_dashboard_bottom_nav_state": {
+        "exists": true,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      },
+      "desktop_dashboard_sidebar_state": {
+        "exists": true,
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 224,
+        "height": 493,
+        "top": 109.1875,
+        "bottom": 602.1875,
+        "left": 32,
+        "right": 256,
+        "visible": true
+      }
+    },
+    {
+      "desktop_statements_main_padding_bottom_px": 0,
+      "desktop_statements_bottom_nav_state": {
+        "exists": true,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      },
+      "desktop_statements_sidebar_state": {
+        "exists": true,
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 224,
+        "height": 493,
+        "top": 109.1875,
+        "bottom": 602.1875,
+        "left": 32,
+        "right": 256,
+        "visible": true
+      }
+    },
+    {
+      "desktop_pacing_main_padding_bottom_px": 0,
+      "desktop_pacing_bottom_nav_state": {
+        "exists": true,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "visible": false
+      },
+      "desktop_pacing_sidebar_state": {
+        "exists": true,
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 224,
+        "height": 493,
+        "top": 109.1875,
+        "bottom": 602.1875,
+        "left": 32,
+        "right": 256,
+        "visible": true
+      }
+    },
+    {
+      "desktop_[data-testid='help-chat-launcher']": {
+        "exists": true,
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 98.03125,
+        "height": 48,
+        "top": 772,
+        "bottom": 820,
+        "left": 1321.96875,
+        "right": 1420,
+        "visible": true
+      }
+    },
+    {
+      "desktop_[data-testid='a11y-launcher']": {
+        "exists": true,
+        "display": "flex",
+        "visibility": "visible",
+        "opacity": "1",
+        "width": 48,
+        "height": 48,
+        "top": 832,
+        "bottom": 880,
+        "left": 20,
+        "right": 68,
+        "visible": true
+      }
+    }
+  ],
+  "failures": [],
+  "console_errors": [
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+  ],
+  "network_errors": [],
+  "passed": true
+}

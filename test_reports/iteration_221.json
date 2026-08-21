@@ -1,0 +1,44 @@
+{
+  "summary": "Mobile PPC-3 Provider Quality Detail (mobile) tested end-to-end on Expo web preview at 390x844 as cathy@example.com. Navigation from Price History quality chip now correctly routes to /provider-quality/<name> (verified: chip ppc-quality-chip-blueberry care navigated to /provider-quality/BlueBerry%20Care — previous regression that bounced to Price Checker is FIXED). Detail screen renders all required testIDs: ppc3-provider-name ('BlueBerry Care'), ppc3-composite-summary + ppc3-composite-explanation (rendered because backend returns overall_signal='insufficient_data_for_summary' which is still non-null — shows the 'Insufficient data' tone), ppc3-signals with all four rows (ppc3-signal-acqsc, -stars, -wayly, -ombudsman), ppc3-survey-form with all four ppc3-rating-* rows and both ppc3-recommend-yes/no toggles and ppc3-survey-submit, and ppc3-opan-referral + ppc3-opan-call. Survey POST /api/ppc3/survey-responses returns 200. HOWEVER the ppc3-survey-done thank-you card is NEVER visible after a successful submit — see bug below.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "ProviderQualityDetail (SurveyForm)", "issue": "After a successful survey submit (POST /ppc3/survey-responses → 200) the thank-you card ppc3-survey-done is never rendered. Root cause: SurveyForm.submit() runs `setDone(true); onSubmitted?.()`. `onSubmitted` = parent `load()` which sets `loading=true`, and the parent's JSX renders `<Loading />` in place of the ScrollView (and thus unmounts SurveyForm). When loading finishes and SurveyForm remounts, its `done` state resets to `false`, so the user only sees the form again (with defaults) and never sees 'Thanks , your rating helps other families.' Verified live: network shows POST 200 followed by a GET /quality-profile, and ppc3-survey-done count is 0 after submit. Reference: /app/mobile/app/provider-quality/[name].tsx:80-95 (SurveyForm) and :133-141,152-157 (load + loading branch that unmounts).", "testID": "ppc3-survey-done", "priority": "HIGH"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "provider-quality/[name]", "issues": ["Thank-you card copy has a stray space before the comma: 'Thanks , your rating helps other families.' (should be 'Thanks, your rating…'). Reference: /app/mobile/app/provider-quality/[name].tsx:92"]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Survey submit acknowledgement", "platform": "mobile", "issue": "Mobile introduces a ppc3-survey-done thank-you state that the web version does not have; on mobile it never becomes visible because the parent load() unmounts the form during reload. Web simply re-renders after submit (no explicit thank-you). Recommend: (a) don't set loading=true on background reloads (use a separate 'refreshing' flag) or (b) keep SurveyForm rendered and only overlay a spinner, or (c) hoist `done` state into the parent so it survives the reload. Web has no thank-you card either — consider adding one for parity if intended.", "expected": "ppc3-survey-done visible after successful POST /ppc3/survey-responses", "actual": "ppc3-survey-done count=0 immediately after 200; SurveyForm re-mounts with default state and shows the empty form again"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/pq_iter221_detail.jpeg",
+    "/app/test_reports/pq_iter221_history.jpeg",
+    "/app/test_reports/pq_iter221_after_chip.jpeg",
+    "/app/test_reports/pq_iter221_submit2.jpeg"
+  ],
+  "action_items": [
+    "Fix ppc3-survey-done never rendering on mobile: either (a) split parent state into loading (initial) vs refreshing (silent) so the ScrollView isn't unmounted on onSubmitted's reload, or (b) hoist `done` up to the parent, or (c) skip calling onSubmitted() until user acknowledges the thank-you card. /app/mobile/app/provider-quality/[name].tsx:80-95 + 133-157.",
+    "Fix stray space in thank-you copy: 'Thanks , your rating…' → 'Thanks, your rating…'. /app/mobile/app/provider-quality/[name].tsx:92.",
+    "Consider parity: web ProviderQualityDetail has no thank-you card — either add ppc3-survey-done on web too, or drop it on mobile, so the two surfaces match."
+  ],
+  "critical_code_review_comments": [
+    "SurveyForm holds the `done` flag locally but its parent unmounts it during reload — the flag is inherently fragile. Prefer lifting terminal UX state to the owner that decides mount lifetime.",
+    "CompositeCard renders whenever `summary.overall_signal` is truthy, including 'insufficient_data_for_summary'. The task description says 'composite card may not render if overall_signal missing' — that's technically respected, but for insufficient-data BlueBerry Care the composite card DOES render (with 'Insufficient data' tone). Confirm this is intended vs web behavior — web appears to render it too. No action needed unless product wants to hide it for insufficient-data.",
+    "ppc-quality-chip testID uses raw normalised name with a space ('ppc-quality-chip-blueberry care'). Spaces in data-testid are technically valid but unusual; consider hyphenating for cleaner selectors."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "85% (chip nav + rendering + POST all pass; survey-done thank-you state broken; minor copy issue)"},
+  "test_credentials": "cathy@example.com / testpass123 (mobile Expo preview https://decoder-export.expo.preview.emergentagent.com)",
+  "seed_data_creation": "None. Existing saved price checks for cathy already include BlueBerry Care so /price-history renders the ppc-quality-chip-blueberry care chip.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The chip-navigation fix and all required PPC-3 testIDs on /provider-quality/[name] are working. Only the ppc3-survey-done thank-you card and a stray-space copy issue remain. When retesting, submit the survey and immediately re-query [data-testid='ppc3-survey-done']; also observe that the parent's load()->setLoading(true) unmounts the ScrollView (repro is deterministic).",
+  "rca of the issue": "SurveyForm.submit() calls setDone(true) then onSubmitted() (= parent load()). Parent renders <Loading /> when loading===true, which is not a sibling of the ScrollView but its replacement — so SurveyForm unmounts. When load() resolves, SurveyForm re-mounts with useState defaults (done=false), and the thank-you card is never visible."
+}

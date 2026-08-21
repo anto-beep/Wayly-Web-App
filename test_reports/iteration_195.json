@@ -1,0 +1,40 @@
+{
+  "summary": "Mobile-primary iter195: (1) full backend Stripe API sweep against the shared FastAPI backend — 12/12 pass (POST /api/payments/checkout returns real cs_test_ Stripe hosted URLs for solo+family, rejects unknown plans; GET /api/billing/subscription returns plan for mobpay.solo/family/free; POST /api/payments/portal & /api/billing/cancel correctly 200/400 without a live sub; /api/billing/v2/upgrade-checkout (target_plan FAMILY), /api/billing/v2/addon-checkout (addon_id required), /api/billing/v2/cancel-pending-addon, /api/payments/sync-plan-to-participants all reachable). (2) Mobile UI regressions from iter194 all VERIFIED on the Expo web preview: (a) /provider-switch AppHeader is chevron-only — only visible top-90px text is the PageIntro eyebrow 'Provider Switches' plus the hero title 'Managing a Provider Switch, End-to-End' — the iter194 duplicate 'Switch Provider' AppHeader title is gone; (b) /(tabs)/family (route /family) now exposes testID=header-back-button and tapping it navigates back to /(tabs); (c) testID=header-logo is present on the tabs header and tapping it stays on /(tabs); (d) /signup exposes testID=signup-plan-solo, signup-plan-family, signup-submit-button and calls startCheckout(plan,7) which POSTs to /api/payments/checkout (URL contract verified on backend). (3) /plan-billing for cathy (family, cancel-at-period-end) renders 'Family / $49.50 / fortnight' with 'CANCELS SOON' badge, 'Auto-renew is off. You keep Family until 01/01/2027.' copy, base-plan breakdown ($49.50 / fortnight), Solo/Family switch cards, Manage participants link, Change plan (testID=billing-change-plan) and Manage card & billing (testID=billing-portal) buttons — all present. NOTE: the mobpay.family & mobpay.solo seed users land on /onboarding after login (they never completed the test-mode Stripe hosted checkout, so backend plan is still 'free'); backend checkout endpoints still work for them and return real cs_test_ URLs — this is data drift, not a regression. Not attempted: driving the Stripe HOSTED checkout with test card 4242 in Playwright (previous iterations documented this can accumulate real cs_test_ sessions; the URL contract and downstream billing endpoints are already covered). Regression checks for MoneyBig '$' rendering and web /ai-tools chip hiding are unchanged since iter194 green run — not re-executed.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "web": { "ui_bugs": [], "integration_issues": [], "design_issues": [] },
+    "mobile": { "ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": [] }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter195_mobile_stripe.py",
+    "/app/test_reports/pytest/iter195.xml",
+    "/app/test_reports/iter195_dashboard.jpeg",
+    "/app/test_reports/iter195_plan_billing.jpeg",
+    "/app/test_reports/iter195_provider_switch.jpeg",
+    "/app/test_reports/iter195_family2.jpeg",
+    "/app/test_reports/iter195_cathy_billing.jpeg",
+    "/app/test_reports/iter195_signup.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL DATA-SEED HYGIENE: mobpay.family@example.com and mobpay.solo@example.com currently return plan='free' from /api/billing/subscription and land on /onboarding — the mobile Stripe hosted-checkout was never completed for them. If future tests need these users to render a real Family/Solo plan in /plan-billing, either (a) complete the hosted Stripe test-mode checkout once with card 4242 for each user, or (b) directly set db.users.updateOne({email:'mobpay.family@example.com'}, {$set:{plan:'family', subscription_status:'active', current_period_end:<future ISO>}}). Not a code bug."
+  ],
+  "critical_code_review_comments": [
+    "/app/mobile/src/lib/plans.ts:startCheckout uses process.env.EXPO_PUBLIC_BACKEND_URL for origin_url — matches spec; POST body {plan, origin_url, trial_days} is exactly what /api/payments/checkout expects.",
+    "/app/mobile/app/plan-billing.tsx openPortal() calls /payments/portal with origin_url from EXPO_PUBLIC_BACKEND_URL and correctly handles both {url} and {portal_url} response shapes — resilient.",
+    "/app/mobile/app/participants.tsx v2 endpoints use target_plan='FAMILY' (uppercase) matching backend regex ^(SOLO|FAMILY|ADVISER)$ — good; addon-checkout requires addon_id (obtained from participant.addon.id, not arbitrary quantity).",
+    "/app/mobile/app/(tabs)/family.tsx AppHeader onBack handler correctly falls back to router.replace('/(tabs)') when canGoBack() is false — dashboard return works from a deep-linked entry.",
+    "/app/mobile/app/provider-switch.tsx AppHeader on line 151 no longer passes title — iter194 regression fully closed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter195_mobile_stripe.py (new — 12 tests, 12 passing)"
+  ],
+  "success_rate": { "backend": "100% (12/12)", "frontend": "100% (5/5 regression checks passed)" },
+  "test_credentials": "mobpay.solo@example.com / MobPay1! · mobpay.family@example.com / MobPay1! · mobpay.free@example.com / MobPay1! · cathy@example.com / testpass123 (Family, cancel-at-period-end)",
+  "seed_data_creation": "None. Backend Stripe test-mode created a couple of harmless cs_test_ sessions during the checkout API assertions.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile Stripe backend contract fully covered by /app/backend/tests/test_iter195_mobile_stripe.py — safe to re-run (idempotent, only creates test-mode Stripe sessions). Mobile UI regressions from iter194 are all green. If you need to drive the hosted Stripe checkout end-to-end via Playwright: the URL is returned in POST /api/payments/checkout .url and lives on checkout.stripe.com — use test card 4242 4242 4242 4242 exp any future / CVC any. On success Stripe redirects the browser to origin_url (EXPO_PUBLIC_BACKEND_URL), NOT to /onboarding directly, so if that flow is retested the return URL/handler on the app side would need verification. mobpay.family and mobpay.solo are NOT actually on paid plans in the DB — they land on /onboarding after login; cathy is the working real Family user.",
+  "rca of the issue": "N/A — no bugs found."
+}

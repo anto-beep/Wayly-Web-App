@@ -1,0 +1,439 @@
+import React, { useEffect, useRef, useState } from "react";
+import useScrollToResult from "@/hooks/useScrollToResult";
+import { Link } from "react-router-dom";
+import AboutBackLink from "@/components/AboutBackLink";
+import MarketingHeader from "@/components/MarketingHeader";
+import Footer from "@/components/Footer";
+import ToolRelatedLinks from "@/components/ToolRelatedLinks";
+import ToolExplainer from "@/components/ToolExplainer";
+import { api } from "@/lib/api";
+import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, ChevronDown } from "lucide-react";
+import EmailResultButton from "@/components/EmailResultButton";
+import { useAuth } from "@/context/AuthContext";
+import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
+import DecoderResultView from "@/components/DecoderResultView";
+import DecoderProgress from "@/components/DecoderProgress";
+import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
+import ProfileInlinePrompts from "@/components/ProfileInlinePrompts";
+import AcceptedFormatsPanel from "@/components/AcceptedFormatsPanel";
+import PhotoTipsAccordion from "@/components/PhotoTipsAccordion";
+import EmailForwardingPanel from "@/components/EmailForwardingPanel";
+import FilePreviewPanel from "@/components/FilePreviewPanel";
+import ReportIssueButton from "@/components/ReportIssueButton";
+import { usePlanState } from "@/hooks/usePlanState";
+import { ToolSummary } from "@/components/ToolShell";
+
+import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
+import { AutomatedDecisionDisclosure, isEnabled } from "@/uxf";
+import { TOOL_COUNT } from "@/config/toolRegistry";
+
+const _toolJsonLd = (cfg) => {
+    const blocks = [softwareApplicationLd({
+        name: cfg.toolName,
+        description: cfg.toolDesc,
+        url: `https://wayly.com.au${cfg.path}`,
+    })];
+    if (cfg.howTo) blocks.push(howToLd(cfg.howTo));
+    if (cfg.faqs) blocks.push(faqLd(cfg.faqs));
+    blocks.push(breadcrumbLd([
+        { name: "Home", url: "/" },
+        { name: "AI Tools", url: "/ai-tools" },
+        { name: cfg.toolName, url: cfg.path },
+    ]));
+    return blocks;
+};
+
+export default function StatementDecoderTool() {
+    const { user } = useAuth();
+    const plan = usePlanState();
+    const isPaidUser = plan.isPaid || plan.isTrialing;  // both hide the free-decode gate + upgrade CTAs
+    const [mode, setMode] = useState("text");  // "text" | "file" | "email"
+    const [text, setText] = useState("");
+    const [file, setFile] = useState(null);
+    const [active, setActive] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
+    const [error, setError] = useState(null);
+    const [limitInfo, setLimitInfo] = useState(null); // { reset_at, period_month }
+    const [usage, setUsage] = useState(null); // { allowed, used_count, remaining, reset_at }
+    const [countdown, setCountdown] = useState("");
+    const resultRef = useScrollToResult(Boolean(result));
+    const fileRef = useRef(null);
+
+    // Fetch monthly usage counter on mount (server-side fingerprint or user_id)
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            try {
+                const { data } = await api.get("/free-tool/usage?tool=STATEMENT_DECODER");
+                if (alive) setUsage(data);
+            } catch { /* ignore */ }
+        })();
+        return () => { alive = false; };
+    }, []);
+
+    // Countdown ticker for the monthly limit gate
+    useEffect(() => {
+        if (!limitInfo?.reset_at) return;
+        const tick = () => {
+            const ms = new Date(limitInfo.reset_at).getTime() - Date.now();
+            if (ms <= 0) { setCountdown("Available now"); return; }
+            const d = Math.floor(ms / 86_400_000);
+            const h = Math.floor((ms % 86_400_000) / 3_600_000);
+            setCountdown(d > 0 ? `${d}d ${h}h` : `${h}h`);
+        };
+        tick();
+        const id = setInterval(tick, 60_000);
+        return () => clearInterval(id);
+    }, [limitInfo]);
+
+    const submit = async () => {
+        setError(null);
+        setResult(null);
+        setLimitInfo(null);
+        setLoading(true);
+        try {
+            let initial;
+            // POST with retry on transient ingress errors (502/503/504/network).
+            let postAttempt = 0;
+             
+            while (true) {
+                try {
+                    if (mode === "file" && file) {
+                        const fd = new FormData();
+                        fd.append("file", file);
+                        ({ data: initial } = await api.post("/public/decode-statement", fd, { headers: { "Content-Type": "multipart/form-data" }, timeout: 90_000 }));
+                    } else {
+                        ({ data: initial } = await api.post("/public/decode-statement-text", { text }, { timeout: 90_000 }));
+                    }
+                    break;
+                } catch (postErr) {
+                    const code = postErr?.response?.status;
+                    const isTransient = !code || code === 502 || code === 503 || code === 504;
+                    if (isTransient && postAttempt < 2) {
+                        postAttempt += 1;
+                        await new Promise((r) => setTimeout(r, 3000 * postAttempt));
+                        continue;
+                    }
+                    throw postErr;
+                }
+            }
+            // Abuse-flag short-circuit (no job)
+            if (initial.abuse_flag) {
+                setResult(initial);
+                return;
+            }
+            const jobId = initial.job_id;
+            if (!jobId) {
+                setResult(initial);
+                return;
+            }
+            // Poll for job completion, the decode pipeline takes ~45-70s.
+            // Transient 502/503/504s and network blips at the K8s ingress are
+            // tolerated, we keep polling until we either see status=done/error
+            // or hit the deadline.
+            const deadline = Date.now() + 180_000; // 3-minute cap
+            let final = null;
+            while (Date.now() < deadline) {
+                await new Promise((r) => setTimeout(r, 2000));
+                let status;
+                try {
+                    ({ data: status } = await api.get(`/public/decode-job/${jobId}`));
+                } catch (pollErr) {
+                    const code = pollErr?.response?.status;
+                    if (code === 404) { throw new Error("Decode job expired. Please try again."); }
+                    // 502/503/504 from ingress, axios timeout, or network blip, retry
+                    continue;
+                }
+                if (status.status === "done") { final = status.result; break; }
+                if (status.status === "error") { throw new Error(status.error || "Decode failed."); }
+            }
+            if (!final) throw new Error("Decode timed out. Please try again with a shorter statement.");
+            if (initial.redaction_notice) {
+                final.redaction_notice = initial.redaction_notice;
+                final.redaction_count = initial.redaction_count;
+            }
+            // abuse_flag (if any) is now inside the polled result; setResult passes through.
+            setResult(final);
+        } catch (err) {
+            const detail = err?.response?.data?.detail;
+            if (detail && typeof detail === "object" && (detail.error === "cooldown_active" || detail.error === "monthly_limit" || detail.error === "daily_limit")) {
+                setLimitInfo(detail);
+                setError(detail.message);
+                setUsage((u) => u ? { ...u, allowed: false, used_count: (detail.used_count ?? (u.used_count + 1)), remaining: 0, days_until_next_use: detail.days_until_next_use ?? u.days_until_next_use } : u);
+            } else {
+                setError(typeof detail === "string" ? detail : detail?.message || err?.message || "Could not decode the statement.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.toolStatementDecoder} jsonLd={_toolJsonLd(SEO.toolStatementDecoder)} />
+            <MarketingHeader />
+
+            <section className="mx-auto max-w-[1720px] px-6 pt-12 pb-6">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
+                    <AboutBackLink />
+                </div>
+                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Statement Decoder</h1>
+                <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
+                    Upload, photograph, or paste any Support at Home monthly statement.
+                    We accept PDF, Word, photos, and more. Get a plain-English breakdown
+                    in under 2 minutes.
+                </p>
+            </section>
+
+            <section className="mx-auto max-w-[1720px] px-6 pb-20" data-testid="statement-decoder-tool">
+                <ProfileInlinePrompts where="statement_decoder" />
+                {usage && !user && (
+                    <div className={`mb-4 rounded-xl border px-4 py-3 text-sm flex items-center justify-between gap-3 flex-wrap ${usage.remaining > 0 ? "bg-sage/10 border-sage/30 text-primary-k" : "bg-gold/10 border-gold/40 text-primary-k"}`} data-testid="usage-counter-banner">
+                        <div>
+                            <strong>{usage.remaining} of 1</strong> free decode{usage.remaining === 1 ? "" : "s"} remaining in your 120-day window
+                            {usage.reset_at && usage.days_until_next_use > 0 && ` · next opens in ${usage.days_until_next_use} day${usage.days_until_next_use === 1 ? "" : "s"}`}
+                        </div>
+                        {usage.remaining === 0 && (
+                            <div className="flex gap-2">
+                                <Link to="/login" className="text-xs underline">Sign in</Link>
+                                <Link to="/signup?plan=solo" className="text-xs font-semibold bg-primary-k text-white rounded-full px-3 py-1 hover:bg-[#091D33]" data-testid="usage-upgrade-btn">Upgrade · $19/mo</Link>
+                            </div>
+                        )}
+                    </div>
+                )}
+                <div className="bg-surface border border-kindred rounded-2xl p-6">
+                    <div className="flex gap-2 flex-wrap" role="tablist">
+                        {[
+                            { v: "text", label: "Paste text" },
+                            { v: "file", label: "Upload file or photo" },
+                            { v: "email", label: "Forward by email" },
+                        ].map((m) => (
+                            <button
+                                key={m.v}
+                                onClick={() => { setMode(m.v); setResult(null); }}
+                                data-testid={`mode-${m.v}`}
+                                className={`px-4 py-2 rounded-full text-sm transition-colors ${
+                                    mode === m.v ? "bg-primary-k text-white" : "bg-surface-2 text-muted-k hover:text-primary-k"
+                                }`}
+                            >
+                                {m.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {mode === "text" && (
+                        <>
+                            <textarea
+                                value={text}
+                                onChange={(e) => setText(e.target.value)}
+                                rows={12}
+                                placeholder="Paste your statement text here..."
+                                data-testid="decoder-textarea"
+                                className="mt-4 w-full font-mono text-xs leading-relaxed rounded-md border border-kindred bg-surface-2 p-3 focus:outline-none focus:ring-2 ring-primary-k"
+                            />
+                            <AcceptedFormatsPanel />
+                        </>
+                    )}
+
+                    {mode === "file" && (
+                        <>
+                            {!file ? (
+                                <div
+                                    className={`mt-4 rounded-xl border-2 border-dashed bg-surface-2 p-10 text-center cursor-pointer transition-all ${active ? "border-gold bg-surface scale-[1.01]" : "border-kindred hover:bg-surface"}`}
+                                    onDragOver={(e) => { e.preventDefault(); setActive(true); }}
+                                    onDragLeave={() => setActive(false)}
+                                    onDrop={(e) => { e.preventDefault(); setActive(false); setFile(e.dataTransfer.files?.[0] || null); }}
+                                    onClick={() => fileRef.current?.click()}
+                                    data-testid="decoder-dropzone"
+                                >
+                                    <input
+                                        ref={fileRef}
+                                        type="file"
+                                        accept=".pdf.doc.docx.txt.jpg.jpeg.png.heic.heif.webp"
+                                        className="hidden"
+                                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                    />
+                                    <Upload className={`h-12 w-12 mx-auto text-primary-k transition-transform ${active ? "scale-110" : ""}`} />
+                                    <div className="font-heading text-xl text-primary-k mt-3">Drag your statement here</div>
+                                    <div className="text-sm text-muted-k mt-1">or click to browse files</div>
+                                    <div className="text-xs text-muted-k mt-3">PDF · Word · TXT · JPG · PNG · HEIC · WEBP</div>
+                                </div>
+                            ) : (
+                                <div className="mt-4">
+                                    <FilePreviewPanel file={file} onClear={() => { setFile(null); fileRef.current && (fileRef.current.value = ""); }} />
+                                </div>
+                            )}
+                            <AcceptedFormatsPanel defaultOpen={!file} />
+                            <PhotoTipsAccordion />
+                        </>
+                    )}
+
+                    {mode === "email" && (
+                        <EmailForwardingPanel onSwitchToFile={() => setMode("file")} />
+                    )}
+
+                    <button
+                        onClick={submit}
+                        disabled={loading || !!limitInfo || mode === "email" || (mode === "file" && !file) || (mode === "text" && !text.trim())}
+                        data-testid="decoder-submit"
+                        className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                    >
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        {loading ? "Reading your statement…" : "Decode this statement"}
+                    </button>
+
+                    {loading && <DecoderProgress active={loading} />}
+
+                    {limitInfo && !isPaidUser && (
+                        <div className="mt-4 rounded-xl border border-gold/40 bg-gold/10 p-5" data-testid="sd-daily-limit">
+                            <div className="flex items-start gap-3">
+                                <Clock className="h-5 w-5 text-primary-k mt-0.5 flex-shrink-0" />
+                                <div className="flex-1">
+                                    <div className="font-medium text-primary-k">You have used your free decode.</div>
+                                    <p className="text-sm text-muted-k mt-1">
+                                        {limitInfo?.days_until_next_use > 0
+                                            ? `The next free one is available in ${limitInfo.days_until_next_use} day${limitInfo.days_until_next_use === 1 ? "" : "s"}. Or start a 7-day free trial to run unlimited decodes.`
+                                            : "Start a 7-day free trial to run unlimited decodes."}
+                                    </p>
+                                    {countdown && (
+                                        <p className="text-xs text-muted-k mt-2 tabular-nums">Resets in: <span className="font-semibold text-primary-k">{countdown}</span></p>
+                                    )}
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        <Link to="/signup?plan=solo" data-testid="sd-limit-trial" className="text-sm bg-gold text-white font-semibold rounded-md px-4 py-2 hover:brightness-95">Start free trial →</Link>
+                                        <Link to="/login" data-testid="sd-limit-signin" className="text-sm border border-kindred rounded-md px-4 py-2 text-primary-k hover:bg-surface-2">Sign in →</Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && !limitInfo && (
+                        <div className="mt-4 flex items-start gap-2 text-sm text-terracotta bg-[#fbf2eb] border border-[#e8c6b0] rounded-md p-3">
+                            <AlertTriangle className="h-4 w-4 mt-0.5" /><span>{error}</span>
+                        </div>
+                    )}
+
+                    {result && (
+                        <div ref={resultRef} className="mt-6 animate-fade-up scroll-mt-20" data-testid="decoder-result">
+                            <ToolSummary
+                                toolName="Statement Decoder"
+                                headline={result.summary?.split(/[.!?]/)[0] ? `${result.summary.split(/[.!?]/)[0]}.` : "Your statement, decoded."}
+                                body={`We checked every line against Support at Home rules. ${(result.anomalies || []).length ? `We found ${result.anomalies.length} thing${result.anomalies.length === 1 ? "" : "s"} worth checking with your provider.` : "Nothing looked out of order."} ${result.summary || ""}`.trim()}
+                                tone={(result.anomalies || []).length ? "alert" : "success"}
+                                testId="decoder-summary"
+                            />
+                            <div className="mt-5" />
+                            <DecoderResultView result={result} />
+
+                            <ReportIssueButton variant="inline" toolName="Statement Decoder" toolOutput={result} />
+
+                            {/* UXF-1 v3 spec 3.23, automated decision disclosure. */}
+                            {isEnabled("uxf_v3.disclosure") && (
+                                <div className="mt-6">
+                                    <AutomatedDecisionDisclosure
+                                        body="This decode and its anomaly list were produced automatically by comparing every line of your statement to Support at Home rules. Confidence varies per finding, shown on each anomaly card. You can ask any Wayly team member to review anything that looks wrong."
+                                        contactUrl="/contact"
+                                        testId="decoder-automated-decision"
+                                    />
+                                </div>
+                            )}
+
+                            {!isPaidUser && (
+                                <div className="bg-surface-2 rounded-xl p-5 border border-kindred mt-6">
+                                    <div className="font-medium text-primary-k">Want this every month, automatically?</div>
+                                    <p className="text-sm text-muted-k mt-1">Wayly watches every statement, alerts you when something's off, and tracks your quarterly budget across all three streams.</p>
+                                    <div className="mt-3 flex items-center gap-3 flex-wrap">
+                                        <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]" data-testid="decoder-upgrade">
+                                            Start 7-day free trial
+                                        </Link>
+                                        <Link to="/ai-tools/budget-calculator" className="text-sm text-primary-k underline inline-flex items-center gap-1">
+                                            Calculate your budget <ArrowRight className="h-3.5 w-3.5" />
+                                        </Link>
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t border-kindred">
+                                        <EmailResultButton
+                                            tool="Statement Decoder"
+                                            headline={result.summary?.slice(0, 200) || "Your statement, decoded"}
+                                            bodyHtml={`<h3 style="font-family:Georgia,serif;color:#0E2A47">Plain-English summary</h3><p>${(result.summary || "").replace(/</g, "&lt;")}</p><h3 style="font-family:Georgia,serif;color:#0E2A47;margin-top:24px">Line items</h3><ul>${(result.line_items || []).map(li => `<li>${li.date}, ${li.service_name} (${li.stream}), $${(li.total || 0).toFixed(2)}</li>`).join("")}</ul>${(result.anomalies || []).length ? `<h3 style="font-family:Georgia,serif;color:#E07A5F;margin-top:24px">Things to check</h3><ul>${(result.anomalies || []).map(a => `<li><strong>${a.headline || a.title}</strong>, ${a.detail || ""}${a.suggested_action ? ` → <em>${a.suggested_action}</em>` : ""}</li>`).join("")}</ul>` : ""}`}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {isPaidUser && (
+                                <div className="bg-surface-2 rounded-xl p-5 border border-kindred mt-6">
+                                    <div className="font-medium text-primary-k">Save this decode to your account</div>
+                                    <p className="text-sm text-muted-k mt-1">Wayly will keep it with your other statements so you can compare month-to-month.</p>
+                                    <div className="mt-4">
+                                        <EmailResultButton
+                                            tool="Statement Decoder"
+                                            headline={result.summary?.slice(0, 200) || "Your statement, decoded"}
+                                            bodyHtml={`<h3 style="font-family:Georgia,serif;color:#0E2A47">Plain-English summary</h3><p>${(result.summary || "").replace(/</g, "&lt;")}</p><h3 style="font-family:Georgia,serif;color:#0E2A47;margin-top:24px">Line items</h3><ul>${(result.line_items || []).map(li => `<li>${li.date}, ${li.service_name} (${li.stream}), $${(li.total || 0).toFixed(2)}</li>`).join("")}</ul>${(result.anomalies || []).length ? `<h3 style="font-family:Georgia,serif;color:#E07A5F;margin-top:24px">Things to check</h3><ul>${(result.anomalies || []).map(a => `<li><strong>${a.headline || a.title}</strong>, ${a.detail || ""}${a.suggested_action ? ` → <em>${a.suggested_action}</em>` : ""}</li>`).join("")}</ul>` : ""}`}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {!isPaidUser && (
+                                <div className="bg-primary-k text-white rounded-2xl p-7 mt-6" data-testid="sd-conversion-panel">
+                                    <p className="text-[11px] uppercase tracking-[0.18em] text-gold">One free decode every 120 days</p>
+                                    <h3 className="font-heading text-2xl mt-2 leading-snug">Want to keep an eye on every statement?</h3>
+                                    <p className="mt-3 text-white/85 leading-relaxed">Solo, Family and Adviser plans include unlimited Statement Decoder runs, so Wayly can watch every statement automatically and alert you the moment something looks wrong.</p>
+                                    <ul className="mt-5 space-y-2 text-sm text-white/90">
+                                        <li className="flex items-start gap-2"><span className="text-gold">✦</span> All {TOOL_COUNT} AI tools, unlimited</li>
+                                        <li className="flex items-start gap-2"><span className="text-gold">✦</span> Anomaly detection on every statement</li>
+                                        <li className="flex items-start gap-2"><span className="text-gold">✦</span> Budget tracking plus lifetime cap monitor</li>
+                                        <li className="flex items-start gap-2"><span className="text-gold">✦</span> Family sharing (Family plan)</li>
+                                    </ul>
+                                    <Link to="/signup?plan=solo" data-testid="sd-conversion-cta" className="mt-6 w-full bg-gold text-white font-semibold rounded-md py-3 hover:brightness-95 inline-flex items-center justify-center gap-2">
+                                        Start free 7-day trial <ArrowRight className="h-4 w-4" />
+                                    </Link>
+                                    <p className="text-center text-xs text-white/70 mt-3">No card required. Cancel anytime.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* What you'll see after a decode, real screenshot of the statement decoder result. */}
+                <section className="mt-16" data-testid="sd-screenshot-tour" aria-label="Screenshot tour">
+                    <div className="text-center max-w-2xl mx-auto">
+                        <span className="overline">What you'll see after a decode</span>
+                        <h2 className="font-heading text-3xl text-primary-k tracking-tight mt-3">Plain English. Numbers that add up. Anomalies you can act on.</h2>
+                    </div>
+                    <div className="mt-10 max-w-4xl mx-auto">
+                        <img
+                            src="/marketing/ai-tool-statement-decoder.png"
+                            alt="Statement decoder result with stream breakdown, anomaly flags, and contribution amount"
+                            width="1440"
+                            height="900"
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full aspect-[16/10] object-cover object-top rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-kindred"
+                            data-testid="sd-result-screenshot"
+                        />
+                    </div>
+                </section>
+
+                <div className="mt-6 grid sm:grid-cols-2 gap-4">
+                    <Link to="/ai-tools/budget-calculator" className="bg-surface border border-kindred rounded-xl p-4 hover:bg-surface-2 transition-colors">
+                        <div className="overline">Related tool</div>
+                        <div className="font-heading text-lg text-primary-k mt-1">Budget Calculator →</div>
+                    </Link>
+                    <Link to="/ai-tools/provider-price-checker" className="bg-surface border border-kindred rounded-xl p-4 hover:bg-surface-2 transition-colors">
+                        <div className="overline">Related tool</div>
+                        <div className="font-heading text-lg text-primary-k mt-1">Provider Price Checker →</div>
+                    </Link>
+                </div>
+            </section>
+            <section className="max-w-5xl mx-auto px-4 sm:px-8">
+                <ToolExplainer toolKey="statement-decoder" />
+            </section>
+            <ToolRelatedLinks slug="statement-decoder" />
+            <Footer />
+        </div>
+    );
+}

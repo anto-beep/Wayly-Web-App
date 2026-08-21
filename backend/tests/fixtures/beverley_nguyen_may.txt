@@ -1,0 +1,437 @@
+════════════════════════════════════════════════════════════════════
+         SUPPORT AT HOME — MONTHLY STATEMENT
+════════════════════════════════════════════════════════════════════
+
+STATEMENT PERIOD:    1 May 2026 – 31 May 2026
+STATEMENT DATE:      4 June 2026
+STATEMENT NUMBER:    GHC-2026-05-0089
+
+────────────────────────────────────────────────────────────────────
+PARTICIPANT DETAILS
+────────────────────────────────────────────────────────────────────
+Participant Name:       Beverley Anne Nguyen
+Date of Birth:          18 June 1938
+My Aged Care ID:        MAC-3317-5502
+Classification:         Support at Home — Level 7 (Ongoing)
+Address:                8 Jacaranda Court, Kenmore QLD 4069
+
+────────────────────────────────────────────────────────────────────
+REGISTERED PROVIDER
+────────────────────────────────────────────────────────────────────
+Provider Name:          Golden Years Home Care Pty Ltd
+ABN:                    44 619 morse 774 331
+Provider ID:            PRV-01124
+Care Manager:           Susan Tran
+Care Manager Phone:     (07) 3378 4400
+Billing Enquiries:      billing@goldenyearshomecare.com.au
+
+────────────────────────────────────────────────────────────────────
+QUARTERLY BUDGET SUMMARY (Q3 2026: 1 April – 30 June 2026)
+────────────────────────────────────────────────────────────────────
+Annual Classification Budget (L7):                   $63,000.00
+Quarterly Budget (Annual ÷ 4):                       $15,750.00
+
+Care Management Deduction (10%):                    - $1,575.00
+Available for Services This Quarter:                 $14,175.00
+
+Budget Used — April 2026:                            $4,614.20
+Budget Used — May 2026 (this statement):             $5,109.75
+Total Budget Used Q3 to date:                        $9,723.95
+Budget Remaining Q3 after May:                       $4,451.05
+
+Rollover from Q2 2026:                                   $0.00
+  (Q2 budget was fully utilised — no rollover applicable)
+
+────────────────────────────────────────────────────────────────────
+CARE MANAGEMENT DETAIL
+────────────────────────────────────────────────────────────────────
+Monthly Care Management Fee (May):                     $525.00
+  Calculated as: 10% of quarterly budget
+  Monthly apportionment: $1,575.00 ÷ 3 = $525.00
+
+────────────────────────────────────────────────────────────────────
+SERVICE STREAM ALLOCATIONS — MAY 2026
+────────────────────────────────────────────────────────────────────
+
+Stream 1: CLINICAL CARE
+  Quarterly Allocation:                               $6,300.00
+  Used April:                                        $1,950.00
+  Used May (this statement):                         $2,145.00
+  Total Q3 Used:                                     $4,095.00
+  Remaining:                                         $2,205.00
+  Participant Contribution Rate (self-funded):            0.00%
+  Participant Contribution This Month:                    $0.00
+
+Stream 2: INDEPENDENCE SUPPORT
+  Quarterly Allocation:                               $5,512.50
+  Used April:                                        $1,764.20
+  Used May (this statement):                         $1,984.75
+  Total Q3 Used:                                     $3,748.95
+  Remaining:                                         $1,763.55
+  Participant Contribution Rate (self-funded):           50.00%
+  Participant Contribution This Month:                 $992.38
+
+Stream 3: EVERYDAY LIVING
+  Quarterly Allocation:                               $2,362.50
+  Used April:                                        $1,125.00 (*)
+  Used May (this statement):                           $455.00
+  Total Q3 Used:                                     $1,580.00
+  Remaining:                                           $782.50
+  Participant Contribution Rate (self-funded):           80.00%
+  Participant Contribution This Month:                 $364.00
+  (*) April Everyday Living usage appears high relative
+  to May. No explanation provided. Recommend querying
+  with care manager if April statement not yet reviewed.
+
+────────────────────────────────────────────────────────────────────
+LIFETIME CONTRIBUTION CAP
+────────────────────────────────────────────────────────────────────
+Lifetime Cap (new entrant):                        $135,318.69
+Total Contributions to Date (all periods):          $28,441.90
+Contributions Added This Month:                      $1,356.38
+Updated Lifetime Contributions Balance:             $29,798.28
+Remaining Lifetime Cap Headroom:                   $105,520.41
+
+────────────────────────────────────────────────────────────────────
+ITEMISED SERVICES — MAY 2026
+────────────────────────────────────────────────────────────────────
+
+── CLINICAL CARE STREAM ─────────────────────────────────────────
+
+Date       Service                          Code    Hrs   Rate/Hr    Gross    Contrib   Gov Paid
+─────────────────────────────────────────────────────────────────────────────────────────────
+04-May     Registered Nursing —             RN-001  1.0   $148.00   $148.00    $0.00   $148.00
+           Medication management and
+           wound review
+           Worker: Nurse J. Kaur RN
+           (brokered: Brisbane Nursing Solutions)
+
+07-May     Physiotherapy — Home session     PT-002  1.0   $178.00   $178.00    $0.00   $178.00
+           (balance and mobility programme,
+           post-fall recovery ongoing)
+           Worker: M. Deluca PT
+           (brokered: Allied Care QLD)
+
+11-May     Registered Nursing —             RN-001  1.0   $148.00   $148.00    $0.00   $148.00
+           Medication management and
+           wound review
+           Worker: Nurse J. Kaur RN
+
+14-May     Podiatry — Routine care          PD-005  1.0   $142.00   $142.00    $0.00   $142.00
+           (nail care, skin assessment,
+           diabetic foot review)
+           Worker: C. Park Pod
+           (brokered: Footcare QLD)
+
+           NOTE: Golden Years published rate
+           for podiatry is $135.00/hr.
+           Brokered provider charged $142.00/hr.
+           Premium: $7.00/hr above published rate.
+
+14-May     Physiotherapy — Home session     PT-002  1.0   $178.00   $178.00    $0.00   $178.00
+           Worker: M. Deluca PT
+
+18-May     Registered Nursing —             RN-001  1.0   $148.00   $148.00    $0.00   $148.00
+           Medication management
+           Worker: Nurse P. Osei RN
+           (NOTE: usual worker Nurse Kaur
+           on leave. Replacement arranged.
+           Participant notified same morning
+           — less than 24 hours notice.)
+
+21-May     Physiotherapy — Home session     PT-002  1.0   $178.00   $178.00    $0.00   $178.00
+           Worker: M. Deluca PT
+
+21-May     Occupational Therapy —           OT-002  1.0   $198.00   $198.00    $0.00   $198.00
+           Follow-up review
+           (falls prevention equipment
+           check, bathroom modifications
+           assessment)
+           Worker: A. Singh OT
+           (brokered: Allied Care QLD)
+
+           NOTE: Golden Years published rate
+           for OT is $195.00/hr. Brokered
+           provider charged $198.00/hr.
+           Premium: $3.00/hr above published rate.
+
+25-May     Registered Nursing —             RN-001  1.0   $148.00   $148.00    $0.00   $148.00
+           Medication management and
+           wound review
+           Worker: Nurse J. Kaur RN
+
+28-May     Registered Nursing —             RN-001  1.0   $148.00   $148.00    $0.00   $148.00
+           Medication management
+           Worker: Nurse J. Kaur RN
+
+28-May     Physiotherapy — Home session     PT-002  1.0   $178.00   $178.00    $0.00   $178.00
+           Worker: M. Deluca PT
+
+           NOTE: Two services on 28 May —
+           nursing and physiotherapy. Participant
+           confirmed both visits occurred.
+           No scheduling conflict.
+
+           ── Stream 1 Subtotal ──────────────────────────────────────
+           Gross: $2,145.00    Contribution: $0.00    Gov Paid: $2,145.00
+
+── INDEPENDENCE SUPPORT STREAM ──────────────────────────────────
+
+Date       Service                          Code    Hrs   Rate/Hr    Gross    Contrib   Gov Paid
+─────────────────────────────────────────────────────────────────────────────────────────────
+01-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming, Medication
+           prompt (extended session)
+           Worker: Linda C. (Golden Years direct)
+
+04-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+06-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+08-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+11-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+13-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Yuki M.
+           (Linda on leave — replacement,
+           no prior notice to participant)
+
+15-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+18-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+20-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+22-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+25-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+27-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+29-May     Personal Care — Showering,       PC-001  1.5   $102.00   $153.00   $76.50    $76.50
+           Dressing, Grooming
+           Worker: Linda C.
+
+05-May     Community Transport —            TR-003   —     $89.00    $89.00   $44.50    $44.50
+           GP appointment (Kenmore
+           to Chapel Hill Medical Centre
+           and return)
+           Worker: Golden Years Transport
+
+05-May     Community Transport —            TR-003   —     $89.00    $89.00   $44.50    $44.50
+           GP appointment (Kenmore
+           to Chapel Hill Medical Centre
+           and return)
+
+           NOTE: Two identical transport
+           charges on 05 May. Provider advises
+           one charge is for outbound journey
+           and one for return journey. Golden
+           Years published rate lists community
+           transport as a return trip inclusive
+           at $89.00 per trip. Billing of two
+           separate $89.00 charges for one
+           return trip may be a duplicate.
+           Verify with provider.
+
+19-May     Community Transport —            TR-003   —     $89.00    $89.00   $44.50    $44.50
+           Specialist appointment
+           (Kenmore to Wesley Hospital
+           Auchenflower — cardiology review)
+           Worker: Golden Years Transport
+
+           ── Stream 2 Subtotal ──────────────────────────────────────
+           Gross: $1,984.75    Contribution: $992.38    Gov Paid: $992.38
+
+── EVERYDAY LIVING STREAM ───────────────────────────────────────
+
+Date       Service                          Code    Hrs   Rate/Hr    Gross    Contrib   Gov Paid
+─────────────────────────────────────────────────────────────────────────────────────────────
+09-May     Domestic Assistance —            DA-001  2.0   $74.50   $149.00  $119.20    $29.80
+           General cleaning, kitchen,
+           bathroom, laundry
+           Worker: Golden Years Cleaning Team
+
+23-May     Domestic Assistance —            DA-001  2.0   $74.50   $149.00  $119.20    $29.80
+           General cleaning, kitchen,
+           bathroom, laundry
+           Worker: Golden Years Cleaning Team
+
+           NOTE: Domestic assistance
+           contribution calculated at 80%
+           (self-funded rate). $149.00 × 80%
+           = $119.20. Verified correct.
+
+10-May     Meal Preparation and Delivery    MP-004  1.0   $74.50    $74.50   $59.60    $14.90
+           (batch cook, weekly portions,
+           freezer ready)
+           Worker: Linda C.
+
+24-May     Meal Preparation and Delivery    MP-004  1.0   $74.50    $74.50   $59.60    $14.90
+           Worker: Linda C.
+
+16-May     Social Support — Individual      SS-002  1.0   $79.00    $79.00   $63.20    $15.80
+           (accompanied outing, botanic
+           gardens, social engagement)
+           Worker: Yuki M. (Golden Years direct)
+
+           ── Stream 3 Subtotal ──────────────────────────────────────
+           Gross: $526.00    Contribution: $420.80    Gov Paid: $105.20
+
+           NOTE: Stream 3 subtotal above
+           shows $526.00 gross but the
+           header budget section shows
+           $455.00 used in May for
+           Everyday Living. Discrepancy
+           of $71.00. Reconciliation
+           required.
+
+── AT-HM COMMITMENTS ────────────────────────────────────────────
+
+AT-HM Ref:   ATHM-2026-0103
+Item:        Grab rails — shower recess (supply and installation)
+Approval:    3 April 2026
+Tier:        Tier 2
+Spend Limit: $1,200.00
+Amount:      $987.50 (claimed and delivered April 2026)
+Remaining:   $212.50
+Expiry:      2 April 2027
+
+AT-HM Ref:   ATHM-2026-0118
+Item:        Ramp — front entry (supply and installation)
+Approval:    28 April 2026
+Tier:        Tier 2
+Spend Limit: $2,500.00
+Amount Claimed This Period: $2,500.00
+Invoice:     Kenmore Mobility Solutions — INV-8841
+             Dated: 22 May 2026
+
+             QUERY: AT-HM Tier 2 spend limit
+             for this item was $2,500.00 and
+             the full $2,500.00 has been
+             claimed in May. The invoice from
+             Kenmore Mobility Solutions is
+             dated 22 May 2026 but the
+             approval date was 28 April 2026.
+             No issue with timing. However
+             the invoice amount should be
+             verified — AT-HM Tier 2 claims
+             are subject to a reasonable cost
+             assessment. A front-entry ramp
+             for $2,500 is at the upper end
+             of typical. Recommend participant
+             retain the invoice and obtain
+             one comparative quote if possible.
+
+────────────────────────────────────────────────────────────────────
+PREVIOUS PERIOD ADJUSTMENTS
+────────────────────────────────────────────────────────────────────
+Adjustment Ref: ADJ-2026-04-07
+Description:    April 2026 — Physiotherapy (PT-002, 28-Apr)
+                Session duration recorded as 1.5hrs.
+                Therapist timesheet confirmed 1.0hr only.
+                Original charge: 1.5hrs × $178.00 = $267.00
+                Corrected charge: 1.0hr × $178.00 = $178.00
+                Credit applied this period:              -$89.00
+                (Government share adjusted — no participant
+                 contribution impact as Clinical stream
+                 contribution is 0%)
+
+────────────────────────────────────────────────────────────────────
+STATEMENT TOTALS — MAY 2026
+────────────────────────────────────────────────────────────────────
+
+                              Gross        Contrib      Gov Paid
+Clinical Care:             $2,145.00        $0.00     $2,145.00
+Independence Support:      $1,984.75      $992.38       $992.38
+Everyday Living:             $526.00      $420.80       $105.20
+Care Management:             $525.00        $0.00       $525.00
+AT-HM (ATHM-2026-0118):   $2,500.00        $0.00     $2,500.00
+Previous Adjustments:        -$89.00        $0.00       -$89.00
+                           ──────────    ─────────    ──────────
+TOTAL:                     $7,591.75    $1,413.18     $6,178.58
+
+Total charged to service budget this period:
+  (excluding AT-HM and care management):   $4,584.75
+Add care management:                         $525.00
+Total budget impact May:                   $5,109.75
+
+────────────────────────────────────────────────────────────────────
+DIRECT DEBIT NOTICE
+────────────────────────────────────────────────────────────────────
+Your participant contribution of $1,413.18 will be direct debited
+from your nominated account on 18 June 2026.
+BSB/Account: ••• ••• / •••• ••63
+
+────────────────────────────────────────────────────────────────────
+PROVIDER NOTES
+────────────────────────────────────────────────────────────────────
+1. Beverley's falls prevention programme continues. The physiotherapy
+   team (Allied Care QLD) has noted good progress in balance
+   assessment scores since March. Three sessions per month are
+   planned for June.
+
+2. The cardiology review on 19 May identified a medication
+   adjustment. The nursing team has been briefed. Medication
+   management visits will increase to weekly from June.
+   This may trigger a care plan review to ensure Clinical
+   stream allocation is sufficient for the additional nursing
+   visits. Care manager Susan Tran will contact the family.
+
+3. Golden Years published rates for May 2026:
+   Personal care:     $102.00/hr (weekday)
+                      $128.00/hr (weekend/public holiday)
+   Domestic assist:    $74.50/hr
+   Social support:     $79.00/hr
+   Community transport: $89.00 per return trip (inclusive)
+   Nursing (direct):  $148.00/hr
+   Note: brokered allied health services are charged at
+   the brokered provider's rate, which may differ from
+   Golden Years' direct rates.
+
+4. Beverley's care plan is due for its 6-monthly review in
+   June 2026. The current plan was last reviewed December 2025.
+   Susan Tran will schedule this with the family.
+
+5. AT-HM front entry ramp (ATHM-2026-0118) has been installed.
+   Beverley reports satisfaction with the installation.
+   The $212.50 remaining on ATHM-2026-0103 (shower rails) will
+   carry forward and expires April 2027.
+
+────────────────────────────────────────────────────────────────────
+COMPLAINTS AND FEEDBACK
+────────────────────────────────────────────────────────────────────
+To raise a concern with Golden Years Home Care:
+Phone: (07) 3378 4400
+Email: feedback@goldenyearshomecare.com.au
+
+Aged Care Quality and Safety Commission:
+Phone: 1800 951 822 | agedcarequality.gov.au
+
+Your rights are protected under the Aged Care Act 2024.
+
+════════════════════════════════════════════════════════════════════
+END OF STATEMENT — GHC-2026-05-0089
+════════════════════════════════════════════════════════════════════

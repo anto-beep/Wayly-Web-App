@@ -1,0 +1,46 @@
+{
+  "summary": "Iter 202: verified Mobile Signup Parity (Family second-participant block) + Cross-App Resume via shared /api/onboarding/draft on web + mobile. Backend 6/6 pytest pass covering 401 unauth (GET+PUT), full PUT/GET/DELETE round-trip with {tier1,tier2,auth,step}, 413 for >32KB payload, user-scoped isolation (user A's draft not visible to user B), and cross-app interop shape assertion. Mobile signup: signup-second-participant-block visible only when Family selected; toggling signup-second-participant-toggle reveals signup-second-participant-first-name + 9 relationship chips (rel-daughter, rel-son, rel-spouse_partner, ...); switching to Solo hides+resets block, back to Family shows block with fields collapsed (state reset confirmed). Mobile onboarding Cross-App Resume KEY TEST: pre-seeded a draft via API for a fresh signup {tier1.first_name='CrossApp', tier1.last_name='Resume', dob=1948-04-11, pension_status=full_pension, class=4, provider='BlueBerry Care', delivery=email, auth.confirmed=true, step=2}; opened /onboarding on the Expo mobile preview — onboarding-draft-status pill showed 'We restored your saved progress', progress-2 was active, onboarding-step-authorisation rendered, and clicking onboarding-step2-back navigated to step-essentials with all Tier1 fields correctly hydrated (CrossApp / Resume / 11/04/1948 / Full Age Pension pre-selected). This proves the shared server draft is fully interoperable across web (Onboarding.jsx) and mobile (onboarding.tsx). Web regression: Onboarding.jsx unchanged from iter200/201; still saves+restores drafts via /onboarding/draft with identical shape (verified via source read + shared backend passing all 6 tests). Web Signup.jsx pre-create at /v2/participants (line 213-224) still present, no regression.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_onboarding_draft_iter202.py",
+    "/app/test_reports/pytest/iter202.xml",
+    "/app/test_reports/iter202_mobile_onboarding.jpeg",
+    "/app/test_reports/iter202_mobile_signup.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "onboarding.tsx:105 spreads draft.tier1 onto local t1 with (t) => ({...t, ...d.tier1}) — if draft was written from web with slightly different keys (extra fields), they'll be preserved on the next PUT round-trip which is intended (opaque data). OK.",
+    "onboarding.tsx:107 checks typeof d.auth.confirmed === 'boolean' before applying — good defensive check.",
+    "signup.tsx:92-108 second-participant pre-create is wrapped in try/catch and non-fatal — user is not blocked if /v2/participants fails, they can add from Participants later. Mirrors Signup.jsx:213-224 web behaviour. OK.",
+    "onboarding_draft.py:77-79 uses len(json.dumps(data)) — this is the serialized JSON length, not raw bytes; if data contains non-ASCII characters the actual UTF-8 byte size could be slightly larger, but the 32KB limit is generous and this is not a practical concern for the ~40 short-string onboarding fields.",
+    "Mobile submit was rate-limited during E2E (12 min lockout from earlier pytest signups) so /v2/participants network capture wasn't observed live. Code path is straight-line and verified by review; strongly recommend future testing agents run with a longer inter-signup delay or clear the rate-limit collection to avoid this."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_onboarding_draft_iter202.py (new — 6 pytest tests, all passing)"
+  ],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "95% (mobile signup submit was rate-limited but pre-submit UI + code path verified; cross-app resume fully verified end-to-end)"},
+  "test_credentials": "TEST_iter202_mob_4c4d2a0c@example.com / Iter202-d35dd4!Zx (family plan, seeded draft written via API to test cross-app hydrate on mobile)",
+  "seed_data_creation": "Created one fresh family user + PUT a step=2 draft via /api/onboarding/draft to exercise cross-app resume from mobile.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Signup rate-limit is aggressive (12-min lockout after ~5 attempts from one IP). To capture the /v2/participants pre-create network call live on mobile signup submit, either wait out the rate-limit or add a Playwright route intercept that stubs /auth/signup with a successful token so the pre-create fires deterministically. All other flows (draft CRUD, cross-app resume hydration on mobile, mobile signup UI toggle+fields+chips) are proven and repeatable.",
+  "rca of the issue": "N/A — no issues found. Both features work as specified and mirror each other cross-platform."
+}

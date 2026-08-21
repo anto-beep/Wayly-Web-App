@@ -1,0 +1,409 @@
+import React, { useEffect, useState } from "react";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
+import { router } from "expo-router";
+import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, ClipboardCheck, Plus, Wrench } from "lucide-react-native";
+
+import { AppHeader, Badge, Button, Card, Loading, Select, T } from "@/src/components/ui";
+import { PageIntro } from "@/src/components/PageIntro";
+import { apiFetch, ApiError } from "@/src/lib/api";
+import { useTheme } from "@/src/theme/ThemeContext";
+import { fonts, radius, spacing } from "@/src/theme/tokens";
+
+const STATUS_OPTIONS = [
+  { value: "on_chsp", label: "On CHSP" },
+  { value: "considering_transition", label: "Considering transition" },
+  { value: "transitioning_to_sah", label: "Transitioning to SAH" },
+];
+const SERVICE_TYPES = [
+  "domestic_assistance", "personal_care", "meals", "transport", "social_support_individual",
+  "social_support_group", "allied_health", "nursing", "home_maintenance", "home_modifications_minor",
+  "goods_equipment_assistive_technology", "respite", "specialised_support_services", "other",
+].map((v) => ({ value: v, label: v.replace(/_/g, " ") }));
+const REASONS = [
+  "current_supports_insufficient", "needs_increased_after_hospital_or_health_change",
+  "need_specific_services_chsp_can't_provide", "want_greater_service_choice",
+  "cost_of_current_services_burdensome", "recommended_by_health_professional", "family_recommendation", "other",
+];
+const CONSIDERATIONS = [
+  { key: "understand_iat_process", label: "Understand the IAT (Initial Assessment Tool) process" },
+  { key: "understand_classification_meaning", label: "Understand what SAH classifications 1-8 mean" },
+  { key: "understand_contribution_will_change", label: "Understand my contribution will change on SAH" },
+  { key: "understand_quarterly_budget_model", label: "Understand SAH's quarterly budget model" },
+  { key: "understand_lifetime_cap", label: "Understand the lifetime contribution cap" },
+  { key: "understand_ras_reassessment_vs_iat_direct", label: "Understand RAS reassessment vs going directly to IAT" },
+];
+const DECISION_OPTIONS = [
+  { value: "", label: "Not decided yet" },
+  { value: "stay_on_chsp_no_change", label: "Stay on CHSP, no change" },
+  { value: "stay_on_chsp_review_services", label: "Stay on CHSP, review services" },
+  { value: "proceed_with_transition_seek_ras_reassessment", label: "Proceed, request RAS reassessment" },
+  { value: "proceed_with_transition_seek_iat_directly", label: "Proceed, request IAT directly" },
+  { value: "need_more_information", label: "Need more information" },
+];
+
+function LInput({ label, value, onChangeText, placeholder, keyboardType, testID, colors }: any) {
+  return (
+    <View style={{ flex: 1, minWidth: "45%" }}>
+      <T variant="small" style={{ color: colors.muted, fontSize: 11, marginBottom: 4 }}>{label}</T>
+      <TextInput testID={testID} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.muted} keyboardType={keyboardType}
+        style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, minHeight: 44, color: colors.text, fontFamily: fonts.body, backgroundColor: colors.bg }} />
+    </View>
+  );
+}
+
+function Checkbox({ checked, colors }: any) {
+  return <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : "transparent", alignItems: "center", justifyContent: "center" }}>{checked ? <CheckCircle2 size={13} color="#fff" /> : null}</View>;
+}
+
+export default function ChspToolsScreen() {
+  const { colors } = useTheme();
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [services, setServices] = useState<any[]>([]);
+
+  const load = async () => {
+    setLoading(true);
+    try { const p = await apiFetch<any>("/chsp1/profile"); setProfile(p?.profile || null); } catch { setProfile(null); }
+    try { const s = await apiFetch<any>("/chsp1/service-entries"); setServices(s?.service_entries || []); } catch { setServices([]); }
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <AppHeader title="CHSP Tools" onBack={() => router.back()} />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg }} keyboardShouldPersistTaps="handled" testID="chsp-tools-root">
+          <PageIntro
+            eyebrow="Commonwealth Home Support Programme"
+            title="Verify CHSP Billing. Consider a Move to Support at Home."
+            description="Two decisions matter on CHSP: was I actually billed correctly, and should I transition to Support at Home? This tool walks you through both without pressure."
+            whatItDoes="Runs a variance check on any CHSP invoice against what you expected to pay, and gives you a 3-step walkthrough for thinking through whether transitioning to SAH is right for you."
+          />
+
+          {loading ? <Loading label="Loading your CHSP profile…" /> : (
+            <>
+              <ChspProfileCard profile={profile} onCreate={load} colors={colors} />
+              {profile ? (
+                <>
+                  <ChspServicesCard services={services} onAdded={load} colors={colors} />
+                  <FeeCheckForm services={services} colors={colors} />
+                  <TransitionWalkthrough colors={colors} />
+                </>
+              ) : null}
+
+              <Card style={{ backgroundColor: colors.goldSoft }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <HeartPulse size={18} color={colors.gold} />
+                  <T style={{ fontFamily: fonts.bodySemi, color: colors.text, flex: 1 }}>Need to talk it through?</T>
+                </View>
+                <T variant="small" style={{ marginTop: 6, lineHeight: 20 }}>Call My Aged Care on 1800 200 422 to discuss CHSP, a reassessment, or moving to Support at Home.</T>
+              </Card>
+            </>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+function ChspProfileCard({ profile, onCreate, colors }: any) {
+  const [status, setStatus] = useState("on_chsp");
+  const [start, setStart] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  if (profile) {
+    return (
+      <Card testID="chsp-profile-summary">
+        <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>CHSP PROFILE</T>
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text, marginTop: 4 }}>Status: {String(profile.current_chsp_status || "").replace(/_/g, " ")}{profile.chsp_start_date ? ` · started ${profile.chsp_start_date}` : ""}</T>
+      </Card>
+    );
+  }
+
+  const submit = async () => {
+    setBusy(true); setError("");
+    try { await apiFetch("/chsp1/profile", { method: "POST", body: { current_chsp_status: status, chsp_start_date: start || null } }); onCreate?.(); }
+    catch (e) { setError(e instanceof ApiError ? e.message : "Could not save profile."); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <Card testID="chsp-profile-form">
+      <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>START A CHSP PROFILE</T>
+      <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>Set your current CHSP status so we can check fees and walk through transition to Support at Home.</T>
+      <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+        <Select label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} testID="chsp-status" />
+        <LInput label="CHSP start date (optional, YYYY-MM-DD)" value={start} onChangeText={setStart} placeholder="2024-03-01" testID="chsp-start-date" colors={colors} />
+      </View>
+      {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
+      <Button label="Save profile" icon={Home} testID="chsp-profile-save" loading={busy} onPress={submit} style={{ marginTop: spacing.md }} />
+    </Card>
+  );
+}
+
+function ChspServicesCard({ services, onAdded, colors }: any) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<any>({ service_type: "domestic_assistance", provider_name: "", hourly_rate_or_fee: "", weekly_frequency: "", client_contribution_per_unit: "", start_date: "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const set = (patch: any) => setForm((f: any) => ({ ...f, ...patch }));
+
+  const submit = async () => {
+    if (!form.provider_name || !form.hourly_rate_or_fee || !form.start_date) { setError("Provider, rate and start date are required."); return; }
+    setBusy(true); setError("");
+    try {
+      await apiFetch("/chsp1/service-entries", { method: "POST", body: {
+        service_type: form.service_type,
+        provider_name: form.provider_name,
+        hourly_rate_or_fee: Number(form.hourly_rate_or_fee),
+        weekly_frequency: form.weekly_frequency,
+        client_contribution_per_unit: form.client_contribution_per_unit ? Number(form.client_contribution_per_unit) : 0,
+        start_date: form.start_date,
+      } });
+      setForm({ service_type: "domestic_assistance", provider_name: "", hourly_rate_or_fee: "", weekly_frequency: "", client_contribution_per_unit: "", start_date: "" });
+      setOpen(false);
+      onAdded?.();
+    } catch (e) { setError(e instanceof ApiError ? e.message : "Could not add service."); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <Card testID="chsp-services-card">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Wrench size={18} color={colors.primary} />
+        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, flex: 1 }}>Your CHSP services</T>
+        <T variant="small" style={{ color: colors.muted }} testID="chsp-services-count">{services.length}</T>
+      </View>
+      <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Record each service so fee checks pre-fill the provider and rate for you.</T>
+
+      {services.length > 0 ? (
+        <View style={{ marginTop: spacing.md, gap: spacing.sm }} testID="chsp-services-list">
+          {services.map((s: any) => (
+            <View key={s.id} testID={`chsp-service-${s.id}`} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm }}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{String(s.service_type || "").replace(/_/g, " ")}</T>
+              <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
+                {s.provider_name}{s.hourly_rate_or_fee?.amount != null ? ` · $${s.hourly_rate_or_fee.amount}` : ""}{s.weekly_frequency ? ` · ${s.weekly_frequency}` : ""}
+              </T>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <T variant="small" style={{ color: colors.muted, marginTop: spacing.md }} testID="chsp-services-empty">No services yet. Add the ones your parent receives.</T>
+      )}
+
+      {open ? (
+        <View style={{ marginTop: spacing.md, gap: spacing.sm }} testID="chsp-service-form">
+          <Select label="Service type" value={form.service_type} onChange={(v: string) => set({ service_type: v })} options={SERVICE_TYPES} testID="chsp-svc-type" />
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+            <LInput label="Provider" value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-svc-provider" colors={colors} />
+            <LInput label="Hourly rate / fee (AUD)" value={form.hourly_rate_or_fee} onChangeText={(v: string) => set({ hourly_rate_or_fee: v })} keyboardType="decimal-pad" testID="chsp-svc-rate" colors={colors} />
+          </View>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+            <LInput label="Weekly frequency (optional)" value={form.weekly_frequency} onChangeText={(v: string) => set({ weekly_frequency: v })} placeholder="e.g. 2 hrs / week" testID="chsp-svc-frequency" colors={colors} />
+            <LInput label="Your contribution / unit (optional)" value={form.client_contribution_per_unit} onChangeText={(v: string) => set({ client_contribution_per_unit: v })} keyboardType="decimal-pad" testID="chsp-svc-contribution" colors={colors} />
+          </View>
+          <LInput label="Start date (YYYY-MM-DD)" value={form.start_date} onChangeText={(v: string) => set({ start_date: v })} placeholder="2025-07-01" testID="chsp-svc-start" colors={colors} />
+          {error ? <T variant="small" style={{ color: colors.terracotta }} testID="chsp-svc-error">{error}</T> : null}
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            <Button label="Cancel" variant="outline" onPress={() => { setOpen(false); setError(""); }} style={{ flexGrow: 1 }} />
+            <Button label="Save service" icon={Plus} testID="chsp-svc-save" loading={busy} onPress={submit} style={{ flexGrow: 1 }} />
+          </View>
+        </View>
+      ) : (
+        <Button label="Add a service" variant="outline" icon={Plus} testID="chsp-svc-add" onPress={() => setOpen(true)} style={{ marginTop: spacing.md }} />
+      )}
+    </Card>
+  );
+}
+
+function VarianceBadge({ status }: { status: string }) {
+  const map: Record<string, { tone: any; label: string }> = {
+    within_tolerance: { tone: "success", label: "Within tolerance" },
+    minor_variance: { tone: "alert", label: "Minor variance" },
+    material_variance: { tone: "error", label: "Material variance" },
+  };
+  const cfg = map[status] || map.within_tolerance;
+  return <Badge label={cfg.label} tone={cfg.tone} testID={`variance-badge-${status}`} />;
+}
+
+function FeeCheckForm({ services, colors }: any) {
+  const [form, setForm] = useState<any>({
+    chsp_service_entry_id: "", invoice_or_statement_reference: "", service_type: "domestic_assistance",
+    provider_name: "", billed_period_start: "", billed_period_end: "", billed_amount: "", units_billed: "", expected_amount: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [disputeMsg, setDisputeMsg] = useState("");
+  const set = (patch: any) => setForm((f: any) => ({ ...f, ...patch }));
+
+  const onServiceChange = (id: string) => {
+    const svc = services.find((s: any) => s.id === id);
+    if (svc) set({ chsp_service_entry_id: id, service_type: svc.service_type || form.service_type, provider_name: svc.provider_name || form.provider_name });
+    else set({ chsp_service_entry_id: "" });
+  };
+
+  const submit = async () => {
+    const required = ["invoice_or_statement_reference", "provider_name", "billed_period_start", "billed_period_end", "billed_amount", "expected_amount", "units_billed"];
+    for (const k of required) { if (!form[k]) { setError(`Missing: ${k.replace(/_/g, " ")}`); return; } }
+    setBusy(true); setError(""); setDisputeMsg("");
+    try {
+      const data = await apiFetch<any>("/chsp1/fee-checks", { method: "POST", body: {
+        ...form, billed_amount: Number(form.billed_amount), expected_amount: Number(form.expected_amount),
+        chsp_service_entry_id: form.chsp_service_entry_id || null,
+      } });
+      setResult(data);
+    } catch (e) { setError(e instanceof ApiError ? e.message : "Could not check fee."); }
+    finally { setBusy(false); }
+  };
+
+  const openDispute = async () => {
+    if (!result?.fee_check?.id) return;
+    try {
+      const data = await apiFetch<any>(`/chsp1/fee-checks/${result.fee_check.id}/dispute`, { method: "POST" });
+      setDisputeMsg(data?.case_id ? "Dispute case opened." : "Recorded. Case creation isn't wired in this environment.");
+    } catch { setDisputeMsg("Could not open dispute."); }
+  };
+
+  const serviceOpts = [{ value: "", label: "Manual entry" }, ...services.map((s: any) => ({ value: s.id, label: `${s.service_type} · ${s.provider_name}` }))];
+
+  return (
+    <Card testID="chsp-fee-check-form">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <ReceiptText size={18} color={colors.primary} />
+        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, flex: 1 }}>Was this CHSP invoice correct?</T>
+      </View>
+      <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Enter what you were billed and what you expected. We&apos;ll flag anything outside a 2% or $5 tolerance.</T>
+
+      <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+        {services.length > 0 ? <Select label="Service entry (pre-fills provider / type)" value={form.chsp_service_entry_id} onChange={onServiceChange} options={serviceOpts} testID="chsp-fc-service-entry" /> : null}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+          <LInput label="Invoice / statement reference" value={form.invoice_or_statement_reference} onChangeText={(v: string) => set({ invoice_or_statement_reference: v })} testID="chsp-fc-reference" colors={colors} />
+          <LInput label="Provider" value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-fc-provider" colors={colors} />
+        </View>
+        <Select label="Service type" value={form.service_type} onChange={(v: string) => set({ service_type: v })} options={SERVICE_TYPES} testID="chsp-fc-service-type" />
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+          <LInput label="Units billed" value={form.units_billed} onChangeText={(v: string) => set({ units_billed: v })} placeholder="e.g. 4 hours" testID="chsp-fc-units" colors={colors} />
+          <LInput label="Billed amount (AUD)" value={form.billed_amount} onChangeText={(v: string) => set({ billed_amount: v })} keyboardType="decimal-pad" testID="chsp-fc-billed" colors={colors} />
+        </View>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+          <LInput label="Expected amount (AUD)" value={form.expected_amount} onChangeText={(v: string) => set({ expected_amount: v })} keyboardType="decimal-pad" testID="chsp-fc-expected" colors={colors} />
+          <LInput label="Billed period start (YYYY-MM-DD)" value={form.billed_period_start} onChangeText={(v: string) => set({ billed_period_start: v })} placeholder="2026-01-01" testID="chsp-fc-period-start" colors={colors} />
+        </View>
+        <LInput label="Billed period end (YYYY-MM-DD)" value={form.billed_period_end} onChangeText={(v: string) => set({ billed_period_end: v })} placeholder="2026-01-31" testID="chsp-fc-period-end" colors={colors} />
+      </View>
+
+      {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }} testID="chsp-fc-error">{error}</T> : null}
+      <Button label="Check fee" icon={ReceiptText} testID="chsp-fc-submit" loading={busy} onPress={submit} style={{ marginTop: spacing.md }} />
+
+      {result ? (
+        <View testID="chsp-fc-result" style={{ marginTop: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Variance ${result.fee_check?.variance_amount?.amount} ({result.fee_check?.variance_percentage}%)</T>
+            <VarianceBadge status={result.fee_check?.variance_status} />
+          </View>
+          {result.requires_explanation ? (
+            <Button label="Open dispute case" variant="outline" icon={ShieldAlert} testID="chsp-fc-open-dispute" onPress={openDispute} style={{ alignSelf: "flex-start" }} />
+          ) : (
+            <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}><CheckCircle2 size={14} color={colors.sage} /><T variant="small" style={{ color: colors.muted }}>Within tolerance — nothing to action.</T></View>
+          )}
+          {disputeMsg ? <T variant="small" style={{ color: colors.muted }} testID="chsp-fc-dispute-msg">{disputeMsg}</T> : null}
+        </View>
+      ) : null}
+    </Card>
+  );
+}
+
+function TransitionWalkthrough({ colors }: any) {
+  const [step, setStep] = useState(0);
+  const [reasons, setReasons] = useState<string[]>([]);
+  const [reasonsNotes, setReasonsNotes] = useState("");
+  const [considerations, setConsiderations] = useState<Record<string, boolean>>({});
+  const [decision, setDecision] = useState("");
+  const [decisionNotes, setDecisionNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState<any>(null);
+  const [error, setError] = useState("");
+
+  const toggleReason = (r: string) => setReasons((l) => l.includes(r) ? l.filter((x) => x !== r) : [...l, r]);
+  const toggleConsideration = (k: string) => setConsiderations((c) => ({ ...c, [k]: !c[k] }));
+
+  const submit = async () => {
+    setBusy(true); setError("");
+    try {
+      const data = await apiFetch<any>("/chsp1/transition-considerations", { method: "POST", body: {
+        reasons_for_considering_transition: reasons, reasons_notes: reasonsNotes || null,
+        considerations_reviewed: considerations, decision: decision || null, decision_notes: decisionNotes || null,
+      } });
+      setSubmitted(data?.transition_consideration || {});
+    } catch (e) { setError(e instanceof ApiError ? e.message : "Could not save."); }
+    finally { setBusy(false); }
+  };
+
+  const titles = ["Why the change?", "Understand differences", "Make a decision"];
+
+  return (
+    <Card testID="chsp-transition-walkthrough">
+      <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>CONSIDERING A MOVE TO SUPPORT AT HOME?</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Transition walkthrough</T>
+
+      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, flexWrap: "wrap" }}>
+        {titles.map((t, i) => (
+          <Pressable key={i} testID={`tw-step-${i}`} onPress={() => setStep(i)}
+            style={{ borderWidth: 1, borderColor: step === i ? colors.primary : colors.border, backgroundColor: step === i ? colors.primary : "transparent", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
+            <T variant="small" style={{ fontSize: 11, color: step === i ? "#fff" : colors.muted }}>{i + 1}. {t}</T>
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+        {step === 0 ? (
+          <>
+            {REASONS.map((r) => (
+              <Pressable key={r} testID={`tw-reason-${r}`} onPress={() => toggleReason(r)} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                <Checkbox checked={reasons.includes(r)} colors={colors} />
+                <T variant="small" style={{ flex: 1, color: colors.text }}>{r.replace(/_/g, " ")}</T>
+              </Pressable>
+            ))}
+            <TextInput testID="tw-reasons-notes" value={reasonsNotes} onChangeText={setReasonsNotes} multiline placeholder="Anything else?" placeholderTextColor={colors.muted}
+              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, minHeight: 70, textAlignVertical: "top", color: colors.text, fontFamily: fonts.body }} />
+          </>
+        ) : null}
+        {step === 1 ? (
+          <>
+            <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>Tick each concept you feel comfortable with. Nothing is submitted yet — this is just for your own confidence.</T>
+            {CONSIDERATIONS.map((c) => (
+              <Pressable key={c.key} testID={`tw-consideration-${c.key}`} onPress={() => toggleConsideration(c.key)} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                <Checkbox checked={!!considerations[c.key]} colors={colors} />
+                <T variant="small" style={{ flex: 1, color: colors.text, lineHeight: 19 }}>{c.label}</T>
+              </Pressable>
+            ))}
+          </>
+        ) : null}
+        {step === 2 ? (
+          <>
+            <Select label="Decision" value={decision} onChange={setDecision} options={DECISION_OPTIONS} testID="tw-decision" />
+            <TextInput testID="tw-decision-notes" value={decisionNotes} onChangeText={setDecisionNotes} multiline placeholder="Notes about this decision" placeholderTextColor={colors.muted}
+              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, minHeight: 70, textAlignVertical: "top", color: colors.text, fontFamily: fonts.body }} />
+          </>
+        ) : null}
+      </View>
+
+      {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
+      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
+        {step > 0 ? <Button label="Back" variant="outline" onPress={() => setStep(step - 1)} style={{ flexGrow: 1 }} /> : null}
+        {step < 2 ? <Button label="Next" icon={ArrowRight} testID="tw-next" onPress={() => setStep(step + 1)} style={{ flexGrow: 1 }} /> : null}
+        {step === 2 ? <Button label="Save decision" icon={ClipboardCheck} testID="tw-submit" loading={busy} onPress={submit} style={{ flexGrow: 1 }} /> : null}
+      </View>
+
+      {submitted ? (
+        <View testID="tw-saved" style={{ marginTop: spacing.md, borderWidth: 1, borderColor: colors.sage, backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.md, flexDirection: "row", gap: 8 }}>
+          <CheckCircle2 size={16} color={colors.sage} style={{ marginTop: 1 }} />
+          <T variant="small" style={{ flex: 1, color: colors.text, lineHeight: 19 }}>Decision recorded. Reasons: {reasons.length}. Considerations reviewed: {Object.values(considerations).filter(Boolean).length} / {CONSIDERATIONS.length}.</T>
+        </View>
+      ) : null}
+    </Card>
+  );
+}

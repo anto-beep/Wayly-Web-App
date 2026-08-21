@@ -1,0 +1,367 @@
+════════════════════════════════════════════════════════════════════
+         SUPPORT AT HOME — MONTHLY STATEMENT
+════════════════════════════════════════════════════════════════════
+
+STATEMENT PERIOD:    1 March 2026 – 31 March 2026
+STATEMENT DATE:      7 April 2026
+STATEMENT NUMBER:    HWC-2026-03-0112
+
+────────────────────────────────────────────────────────────────────
+PARTICIPANT DETAILS
+────────────────────────────────────────────────────────────────────
+Participant Name:       Robert James Okafor
+Date of Birth:          3 February 1950
+My Aged Care ID:        MAC-5523-8841
+Classification:         Support at Home — Level 3 (Ongoing)
+Address:                22 Fernhill Avenue, Penrith NSW 2750
+
+────────────────────────────────────────────────────────────────────
+REGISTERED PROVIDER
+────────────────────────────────────────────────────────────────────
+Provider Name:          Hillview Wellness Care Pty Ltd
+ABN:                    71 408 223 557
+Provider ID:            PRV-00887
+Care Manager:           Patricia Dunne
+Care Manager Phone:     (02) 4731 6600
+Billing Enquiries:      billing@hillviewwellnesscare.com.au
+
+────────────────────────────────────────────────────────────────────
+QUARTERLY BUDGET SUMMARY (Q1 2026: 1 January – 31 March 2026)
+────────────────────────────────────────────────────────────────────
+Annual Classification Budget (L3):                   $19,300.00
+Quarterly Budget (Annual ÷ 4):                        $4,825.00
+
+Care Management Deduction (10%):                       -$482.50
+Available for Services This Quarter:                  $4,342.50
+
+Budget Used — January 2026:                           $1,104.80
+Budget Used — February 2026:                          $1,209.60
+Budget Used — March 2026 (this statement):            $1,387.40
+Total Budget Used Q1 2026:                            $3,701.80
+
+Budget Remaining End of Quarter:                        $640.70
+Rollover Cap (greater of $1,000 or 10% quarterly):    $1,000.00
+
+NOTE: Remaining balance of $640.70 is below the rollover cap of
+$1,000.00. The full $640.70 will roll over to Q2 2026.
+
+────────────────────────────────────────────────────────────────────
+CARE MANAGEMENT DETAIL
+────────────────────────────────────────────────────────────────────
+Quarterly Care Management Fee (Q1 2026):               $482.50
+Apportioned to March (final month of quarter):         $160.83
+  January portion previously charged:                  $160.83
+  February portion previously charged:                 $160.84
+  March portion (this statement):                      $160.83
+  Q1 Total care management charged:                    $482.50
+
+────────────────────────────────────────────────────────────────────
+SERVICE STREAM ALLOCATIONS — MARCH 2026
+────────────────────────────────────────────────────────────────────
+
+Stream 1: CLINICAL CARE
+  Quarterly Allocation:                               $1,447.50
+  Used January + February:                             $645.00
+  Used This Month (March):                             $390.00
+  Total Q1 Used:                                     $1,035.00
+  Remaining:                                           $412.50
+  Participant Contribution Rate:                          0.00%
+  Participant Contribution This Month:                    $0.00
+
+Stream 2: INDEPENDENCE SUPPORT
+  Quarterly Allocation:                               $1,736.25
+  Used January + February:                             $827.40
+  Used This Month (March):                             $686.50
+  Total Q1 Used:                                     $1,513.90
+  Remaining:                                           $222.35
+  Participant Contribution Rate (part Age Pension):      17.50%
+  Participant Contribution This Month:                 $120.14
+
+Stream 3: EVERYDAY LIVING
+  Quarterly Allocation:                               $1,158.75
+  Used January + February:                             $302.00
+  Used This Month (March):                             $310.90
+  Total Q1 Used:                                       $612.90
+  Remaining:                                           $545.85
+  Participant Contribution Rate (part Age Pension):      50.00%
+  Participant Contribution This Month:                 $155.45
+
+────────────────────────────────────────────────────────────────────
+LIFETIME CONTRIBUTION CAP
+────────────────────────────────────────────────────────────────────
+Lifetime Cap (new entrant):                        $135,318.69
+Total Contributions to Date (all periods):           $3,214.67
+Contributions Added This Month:                        $275.59
+Updated Lifetime Contributions Balance:              $3,490.26
+Remaining Lifetime Cap Headroom:                   $131,828.43
+
+────────────────────────────────────────────────────────────────────
+ITEMISED SERVICES — MARCH 2026
+────────────────────────────────────────────────────────────────────
+
+── CLINICAL CARE STREAM ─────────────────────────────────────────
+
+Date       Service                          Code    Hrs   Rate/Hr    Gross    Contrib   Gov Paid
+─────────────────────────────────────────────────────────────────────────────────────────────
+05-Mar     Allied Health Assistant —        AHA-003 1.5   $89.00   $133.50    $0.00   $133.50
+           Exercise Programme (falls
+           prevention, supervised exercises
+           per physiotherapist care plan)
+           Worker: D. Mensah AHA
+           (brokered: Western Sydney Allied Health)
+
+           NOTE: Allied Health Assistant services
+           may attract participant contribution
+           depending on stream classification.
+           Classified Clinical per care plan —
+           verify with care manager.
+
+12-Mar     Allied Health Assistant —        AHA-003 1.5   $89.00   $133.50    $0.00   $133.50
+           Exercise Programme
+           Worker: D. Mensah AHA
+
+19-Mar     Allied Health Assistant —        AHA-003 1.5   $89.00   $133.50    $0.00   $133.50
+           Exercise Programme
+           Worker: D. Mensah AHA
+
+26-Mar     CANCELLED — Allied Health        AHA-003 1.5   $89.00     $0.00    $0.00     $0.00
+           Assistant Exercise Programme
+           (worker unavailable — no replacement
+            offered, no prior notice to participant)
+
+           ── Stream 1 Subtotal ──────────────────────────────────────
+           Gross: $390.00    Contribution: $0.00    Gov Paid: $390.00
+
+── INDEPENDENCE SUPPORT STREAM ──────────────────────────────────
+
+Date       Service                          Code    Hrs   Rate/Hr    Gross    Contrib   Gov Paid
+─────────────────────────────────────────────────────────────────────────────────────────────
+02-Mar     Personal Care — Showering,       PC-001  1.0   $95.00    $95.00   $16.63    $78.38
+           Dressing, Grooming
+           Worker: Amara S. (Hillview direct)
+
+05-Mar     Personal Care — Showering,       PC-001  1.0   $95.00    $95.00   $16.63    $78.38
+           Dressing, Grooming
+           Worker: Amara S.
+
+09-Mar     Personal Care — Showering,       PC-001  1.0   $95.00    $95.00   $16.63    $78.38
+           Dressing, Grooming
+           Worker: Amara S.
+
+12-Mar     Personal Care — Showering,       PC-001  1.0   $95.00    $95.00   $16.63    $78.38
+           Dressing, Grooming
+           Worker: Amara S.
+
+14-Mar     Personal Care — Showering,       PC-001  1.0   $95.00    $95.00   $16.63    $78.38
+           Dressing, Grooming
+           Worker: James O. (Amara on leave —
+           replacement, no prior notice)
+
+16-Mar     Personal Care — Showering,       PC-001  1.0   $95.00    $95.00   $16.63    $78.38
+           Dressing, Grooming
+           Worker: Amara S.
+
+           NOTE: Robert travelled to Brisbane
+           19-23 March to visit family. Services
+           during this period were suspended.
+           See cancellation notices below.
+
+19-Mar     CANCELLED — Personal Care        PC-001  —      —          $0.00    $0.00     $0.00
+           (participant interstate 19-23 Mar)
+
+23-Mar     CANCELLED — Personal Care        PC-001  —      —          $0.00    $0.00     $0.00
+           (participant interstate 19-23 Mar)
+
+26-Mar     Personal Care — Showering,       PC-001  1.0   $95.00    $95.00   $16.63    $78.38
+           Dressing, Grooming
+           Worker: Amara S.
+
+30-Mar     Personal Care — Showering,       PC-001  1.0   $95.00    $95.00   $16.63    $78.38
+           Dressing, Grooming
+           Worker: Amara S.
+
+20-Mar     Community Transport —            TR-003   —    $74.00    $74.00   $12.95    $61.05
+           Medical appointment
+           (Penrith to Nepean Hospital
+            and return, oncology review)
+
+           NOTE: Transport charged 20 March.
+           Participant was noted as interstate
+           19-23 March per provider records.
+           Verify whether this transport
+           occurred or is a billing error.
+
+           ── Stream 2 Subtotal ──────────────────────────────────────
+           Gross: $734.00    Contribution: $128.45    Gov Paid: $605.55
+
+── EVERYDAY LIVING STREAM ───────────────────────────────────────
+
+Date       Service                          Code    Hrs   Rate/Hr    Gross    Contrib   Gov Paid
+─────────────────────────────────────────────────────────────────────────────────────────────
+06-Mar     Domestic Assistance —            DA-001  2.0   $71.50   $143.00   $71.50    $71.50
+           General cleaning, kitchen,
+           bathroom, floors
+           Worker: Hillview Cleaning Team
+
+20-Mar     Domestic Assistance —            DA-001  2.0   $71.50   $143.00   $71.50    $71.50
+           General cleaning, kitchen,
+           bathroom, floors
+           Worker: Hillview Cleaning Team
+
+           NOTE: Domestic assistance charged
+           20 March. Participant was interstate
+           19-23 March. Confirm service occurred.
+
+07-Mar     Social Support — Individual      SS-002  2.0   $76.00   $152.00   $76.00    $76.00
+           (accompanied walk, coffee,
+           community engagement)
+           Worker: Rita F. (Hillview direct)
+
+21-Mar     Social Support — Individual      SS-002  2.0   $76.00   $152.00   $76.00    $76.00
+           Worker: Rita F.
+
+           NOTE: Social Support charged
+           21 March. Participant was interstate
+           19-23 March. Confirm service occurred.
+
+07-Mar     Meal Preparation — In-home       MP-004  0.5   $71.50    $35.75   $17.88    $17.88
+           (weekly batch cook assist)
+           Worker: Amara S.
+
+21-Mar     Meal Preparation — In-home       MP-004  0.5   $71.50    $35.75   $17.88    $17.88
+           Worker: Amara S.
+
+           ── Stream 3 Subtotal ──────────────────────────────────────
+           Gross: $661.50    Contribution: $330.76    Gov Paid: $330.74
+
+── SERVICES NOT IN CURRENT CARE PLAN ───────────────────────────
+
+Date       Service                          Code    Hrs   Rate/Hr    Gross    Contrib   Gov Paid
+─────────────────────────────────────────────────────────────────────────────────────────────
+28-Mar     Gardening — Lawn maintenance     GM-006  2.0   $71.50   $143.00   $71.50    $71.50
+           and path clearing
+           Stream: Everyday Living
+           Worker: Hillview Garden Team
+
+           IMPORTANT: This service is not
+           listed in Robert's current care
+           plan (reviewed January 2026).
+           Care manager Patricia Dunne
+           verbally approved this service
+           on 25 March. Written care plan
+           amendment has not yet been issued.
+           This charge should not appear on
+           a statement for a service not in
+           the written care plan.
+
+           ── Unapproved Services Subtotal ───────────────────────────
+           Gross: $143.00    Contribution: $71.50    Gov Paid: $71.50
+
+────────────────────────────────────────────────────────────────────
+AT-HM COMMITMENTS AND TRACKER
+────────────────────────────────────────────────────────────────────
+AT-HM Tier 1 Approval Reference:   ATHM-2026-0044
+Item Approved:   Shower chair (supply and delivery)
+Approval Date:   15 January 2026
+Spend Limit:     $350.00
+Amount Claimed:  $298.50 (claimed February 2026)
+Remaining:       $51.50
+Commitment Expiry: 14 January 2027
+
+AT-HM Tier 1 Approval Reference:   ATHM-2026-0071
+Item Approved:   Non-slip bathroom mat (supply)
+Approval Date:   28 February 2026
+Spend Limit:     $85.00
+Amount Claimed:  $0.00 (not yet claimed)
+Remaining:       $85.00
+Commitment Expiry: 27 February 2027
+
+NOTE: ATHM-2026-0071 approved 28 February.
+No claim has been made in March. Participant
+should be aware this commitment must be claimed
+before 27 February 2027 or it lapses.
+Recommend follow-up with care manager.
+
+────────────────────────────────────────────────────────────────────
+PREVIOUS PERIOD ADJUSTMENTS
+────────────────────────────────────────────────────────────────────
+Adjustment Ref: ADJ-2026-02-04
+Description:    February 2026 — Social Support (SS-002, 21-Feb)
+                charged at $82.00/hr (brokered rate).
+                Hillview published rate: $76.00/hr.
+                Overbilling identified by accounts team.
+                Credit: 2.0hrs × $6.00 = $12.00
+                Credit applied this period:              -$12.00
+
+NOTE: The brokered provider (Western Sydney Social
+Connections) charged Hillview $82.00/hr for this
+session. Hillview has a policy of passing only its
+own published rate to participants. The brokered
+rate discrepancy was an internal processing error.
+Participant was overcharged $12.00 in February.
+Credit applied here.
+
+────────────────────────────────────────────────────────────────────
+STATEMENT TOTALS — MARCH 2026
+────────────────────────────────────────────────────────────────────
+
+                              Gross        Contrib      Gov Paid
+Clinical Care:               $390.00        $0.00       $390.00
+Independence Support:        $734.00      $128.45       $605.55
+Everyday Living:             $661.50      $330.76       $330.74
+Unapproved Services:         $143.00       $71.50        $71.50
+Care Management (March):     $160.83        $0.00       $160.83
+Previous Adjustments:        -$12.00        $0.00       -$12.00
+                           ──────────    ─────────    ──────────
+TOTAL:                     $2,077.33      $530.71     $1,546.62
+
+Total charged to quarterly budget this month:   $1,387.40
+  (excluding participant contributions and
+   previous period credit)
+Net quarterly budget impact March:              $1,387.40
+
+────────────────────────────────────────────────────────────────────
+DIRECT DEBIT NOTICE
+────────────────────────────────────────────────────────────────────
+Your participant contribution of $530.71 will be direct debited
+from your nominated account on 20 April 2026.
+BSB/Account: ••• ••• / •••• ••19
+
+Note: Contribution is higher than prior months due to inclusion
+of unapproved gardening service ($71.50 contribution). If you
+dispute this charge, contact us before 15 April 2026.
+
+────────────────────────────────────────────────────────────────────
+PROVIDER NOTES
+────────────────────────────────────────────────────────────────────
+1. Robert's Q1 2026 budget has $640.70 remaining. This will roll
+   over fully to Q2 2026 as it is below the $1,000 cap. Robert's
+   Q2 budget (from 1 April) will be $4,825.00 plus $640.70 rollover.
+
+2. Care plan review is due. The current plan was last reviewed
+   January 2026. A review is recommended given the verbal approval
+   of gardening services in March and the upcoming Q2 period.
+   Patricia Dunne will contact Robert to schedule.
+
+3. The Allied Health Assistant programme is brokered through Western
+   Sydney Allied Health. Their rate of $89.00/hr is consistent with
+   Hillview's contracted brokered rate. However, Hillview's own
+   published rate for equivalent services is $84.50/hr. The brokered
+   rate premium is $4.50/hr.
+
+4. Robert's oncology review at Nepean Hospital is ongoing. The care
+   team should be advised of any changes to his treatment plan that
+   may affect his care needs and classification.
+
+────────────────────────────────────────────────────────────────────
+COMPLAINTS AND FEEDBACK
+────────────────────────────────────────────────────────────────────
+To raise a concern with Hillview Wellness Care:
+Phone: (02) 4731 6600 | Email: feedback@hillviewwellnesscare.com.au
+
+To raise a concern with the Aged Care Quality and Safety Commission:
+Phone: 1800 951 822 | Website: agedcarequality.gov.au
+
+════════════════════════════════════════════════════════════════════
+END OF STATEMENT — HWC-2026-03-0112
+════════════════════════════════════════════════════════════════════

@@ -1,0 +1,2069 @@
+{
+  "base_url": "https://statement-checker-3.preview.emergentagent.com",
+  "steps": [
+    {
+      "name": "Login",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/app"
+      }
+    },
+    {
+      "name": "Set dark theme",
+      "ok": true,
+      "details": {
+        "htmlClass": "theme-dark",
+        "url": "https://statement-checker-3.preview.emergentagent.com/app"
+      }
+    },
+    {
+      "name": "dark: dashboard Complete now CTA contrast",
+      "ok": false,
+      "details": {
+        "text": "Complete now",
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(232, 154, 111)",
+        "effectiveBackground": "rgb(232, 154, 111)",
+        "contrast": 2.26,
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "className": "flex-1 sm:flex-none bg-terracotta text-white rounded-md px-3 py-2 text-xs hover:bg-terracotta/90 inline-flex items-center justify-center gap-1",
+        "tagName": "A",
+        "rect": {
+          "x": 1159,
+          "y": 125,
+          "w": 124,
+          "h": 32
+        }
+      }
+    },
+    {
+      "name": "dark: voice-check radio selected/unselected contrast",
+      "ok": true,
+      "details": {
+        "before": [
+          {
+            "testid": "voice-check-answer-0-yes_i_wanted_this",
+            "checked": false,
+            "label": "Yes, they wanted this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          },
+          {
+            "testid": "voice-check-answer-0-yes_but_not_exactly",
+            "checked": false,
+            "label": "Yes, but not exactly like this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          },
+          {
+            "testid": "voice-check-answer-0-no_this_was_the_providers_idea",
+            "checked": false,
+            "label": "No, this was the provider's idea",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          },
+          {
+            "testid": "voice-check-answer-0-i_dont_remember_discussing_this",
+            "checked": false,
+            "label": "I don't remember discussing this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          },
+          {
+            "testid": "voice-check-answer-0-skipped",
+            "checked": false,
+            "label": "Skip this goal",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          }
+        ],
+        "after": [
+          {
+            "testid": "voice-check-answer-0-yes_i_wanted_this",
+            "checked": true,
+            "label": "Yes, they wanted this",
+            "directBackground": "rgba(244, 166, 116, 0.22)",
+            "borderColor": "rgb(70, 89, 91)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 10.19,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(70, 65, 54)"
+          },
+          {
+            "testid": "voice-check-answer-0-yes_but_not_exactly",
+            "checked": false,
+            "label": "Yes, but not exactly like this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          },
+          {
+            "testid": "voice-check-answer-0-no_this_was_the_providers_idea",
+            "checked": false,
+            "label": "No, this was the provider's idea",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          },
+          {
+            "testid": "voice-check-answer-0-i_dont_remember_discussing_this",
+            "checked": false,
+            "label": "I don't remember discussing this",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          },
+          {
+            "testid": "voice-check-answer-0-skipped",
+            "checked": false,
+            "label": "Skip this goal",
+            "directBackground": "rgba(0, 0, 0, 0)",
+            "borderColor": "rgb(165, 81, 43)",
+            "accentColor": "rgb(244, 166, 116)",
+            "contrast": 16.02,
+            "color": "rgb(255, 255, 255)",
+            "effectiveBackground": "rgb(21, 36, 37)"
+          }
+        ],
+        "selectedDistinct": true,
+        "neutralUnselected": true
+      }
+    },
+    {
+      "name": "dark: statement detail loads",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/app/statements/408fcbf3-c126-4897-a9b1-c76628c49ca7",
+        "title": "Statement Detail | Wayly",
+        "h1": "iter58_stmt_728357.csv \u00b7 Unknown provider",
+        "textLength": 8972,
+        "notFound": false,
+        "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAI TOOLS\nMONEY & STATEMENTS\nTHEIR CARE\nPROVIDER"
+      }
+    },
+    {
+      "name": "dark: anomaly AI disclaimer contrast",
+      "ok": false,
+      "details": {
+        "count": 5,
+        "minContrast": 2.26,
+        "measurements": [
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 2.26,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2369,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 2.26,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2734,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 2.26,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3073,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 2.26,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3371,
+              "w": 404,
+              "h": 16
+            }
+          },
+          {
+            "text": "This flag is AI-generated and may be incorrect. Verify before acting.",
+            "color": "rgb(146, 64, 14)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 2.26,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "inline-flex items-center gap-1.5 text-xs ",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3627,
+              "w": 404,
+              "h": 16
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark: priority pill badge contrast",
+      "ok": false,
+      "details": {
+        "minContrast": 2.26,
+        "badges": [
+          {
+            "text": "Medium",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(232, 154, 111)",
+            "effectiveBackground": "rgb(232, 154, 111)",
+            "contrast": 2.26,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-gold text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2150,
+              "w": 56,
+              "h": 18
+            }
+          },
+          {
+            "text": "High",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(232, 154, 111)",
+            "effectiveBackground": "rgb(232, 154, 111)",
+            "contrast": 2.26,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-terracotta text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2445,
+              "w": 40,
+              "h": 18
+            }
+          },
+          {
+            "text": "Medium",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgb(232, 154, 111)",
+            "effectiveBackground": "rgb(232, 154, 111)",
+            "contrast": 2.26,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-gold text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 2811,
+              "w": 56,
+              "h": 18
+            }
+          },
+          {
+            "text": "Low",
+            "color": "rgb(11, 20, 22)",
+            "background": "rgb(168, 199, 171)",
+            "effectiveBackground": "rgb(168, 199, 171)",
+            "contrast": 10.15,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-sage text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3150,
+              "w": 38,
+              "h": 18
+            }
+          },
+          {
+            "text": "Low",
+            "color": "rgb(11, 20, 22)",
+            "background": "rgb(168, 199, 171)",
+            "effectiveBackground": "rgb(168, 199, 171)",
+            "contrast": 10.15,
+            "fontSize": "9px",
+            "fontWeight": "600",
+            "className": "text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 bg-sage text-white",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 349,
+              "y": 3448,
+              "w": 38,
+              "h": 18
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark: Your Rights panel text contrast",
+      "ok": true,
+      "details": {
+        "minContrast": 12.79,
+        "measurements": [
+          {
+            "text": "Your rights",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "11.52px",
+            "fontWeight": "600",
+            "className": "inline-flex items-center gap-2 overline",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 305,
+              "y": 4025,
+              "w": 125,
+              "h": 18
+            }
+          },
+          {
+            "text": "This is general information about your rights, not legal advice.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "mt-2 text-xs text-muted-k",
+            "tagName": "P",
+            "rect": {
+              "x": 305,
+              "y": 4052,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to clear information about your care and its cost",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4084,
+              "w": 385,
+              "h": 20
+            }
+          },
+          {
+            "text": "Relevant here",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "10px",
+            "fontWeight": "400",
+            "className": "text-[10px] uppercase tracking-wider rounded-full bg-terracotta/10 text-terracotta px-2 py-0.5 shrink-0",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1241,
+              "y": 4084,
+              "w": 102,
+              "h": 20
+            }
+          },
+          {
+            "text": "You have the right to a statement you can understand, showing what you were charged and why.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4106,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Ask your provider to explain any charge in plain language. They must respond.",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4128,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to be told about changes to your care and fees",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4169,
+              "w": 376,
+              "h": 20
+            }
+          },
+          {
+            "text": "Relevant here",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "10px",
+            "fontWeight": "400",
+            "className": "text-[10px] uppercase tracking-wider rounded-full bg-terracotta/10 text-terracotta px-2 py-0.5 shrink-0",
+            "tagName": "SPAN",
+            "rect": {
+              "x": 1241,
+              "y": 4169,
+              "w": 102,
+              "h": 20
+            }
+          },
+          {
+            "text": "Your provider should tell you before your fees or services change, not surprise you afterwards.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4191,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Ask for written notice of any backdated adjustment or fee change and the reason for it.",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4213,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to raise concerns without it affecting your care",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4254,
+              "w": 376,
+              "h": 20
+            }
+          },
+          {
+            "text": "You can give feedback or make a complaint, and your provider cannot treat you differently for doing so.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4276,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Raise it with your provider first. If it is not resolved, the Aged Care Quality and Safety Commission can help.",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4298,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "The right to a free independent advocate",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "className": "font-medium text-primary-k text-sm",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4339,
+              "w": 273,
+              "h": 20
+            }
+          },
+          {
+            "text": "You can have someone speak up alongside you, at no cost, through the Older Persons Advocacy Network.",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-muted-k mt-0.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4361,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "\u2192 Call OPAN on 1800 700 600 for free, confidential advocacy support.",
+            "color": "rgb(255, 255, 255)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 16.02,
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "className": "text-xs text-primary-k mt-1.5",
+            "tagName": "DIV",
+            "rect": {
+              "x": 305,
+              "y": 4383,
+              "w": 1038,
+              "h": 16
+            }
+          },
+          {
+            "text": "Aged care Statement of Rights (plain-language summary)",
+            "color": "rgb(240, 228, 213)",
+            "background": "rgba(0, 0, 0, 0)",
+            "effectiveBackground": "rgb(21, 36, 37)",
+            "contrast": 12.79,
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "className": "mt-3 text-[11px] text-muted-k",
+            "tagName": "P",
+            "rect": {
+              "x": 305,
+              "y": 4423,
+              "w": 1038,
+              "h": 18
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sidebar expanded groups route sweep",
+      "ok": true,
+      "details": {
+        "count": 43,
+        "broken": [],
+        "routes": [
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app",
+            "title": "Dashboard | Wayly",
+            "h1": "Dorothy Smith, this quarter",
+            "textLength": 2164,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Dashboard",
+            "path": "/app",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb",
+            "title": "Dorothy Smith | Wayly",
+            "h1": "Mum's Profile",
+            "textLength": 4062,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Profile",
+            "path": "/app/me",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/wall",
+            "title": "Family Wall | Wayly",
+            "h1": "A Digital Fridge Door for Dorothy Smith",
+            "textLength": 1953,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Family Wall",
+            "path": "/app/wall",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools",
+            "title": "Wayly AI Tools for Aged Care",
+            "h1": "Nine Tools. Built for Australian Families.",
+            "textLength": 4064,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:All AI Tools",
+            "path": "/ai-tools",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/ask-wayly",
+            "title": "Ask Wayly | Wayly",
+            "h1": "Your Context-Aware Aged Care Assistant",
+            "textLength": 2191,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Ask Wayly",
+            "path": "/app/ask-wayly",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/carer/self-assessment",
+            "title": "Carer Self-Check | Wayly",
+            "h1": "Your Space to Check In With Yourself",
+            "textLength": 2129,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Carer Self-Check",
+            "path": "/app/carer/self-assessment",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/carer/handover-pack",
+            "title": "Carer Handover Pack | Wayly",
+            "h1": "Carer Handover Pack",
+            "textLength": 1965,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Handover Pack",
+            "path": "/app/carer/handover-pack",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/csc/stream-mix-and-iat",
+            "title": "Classification Prep | Wayly",
+            "h1": "Prepare for Your SAH Assessment",
+            "textLength": 2619,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Classification Prep",
+            "path": "/app/csc/stream-mix-and-iat",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/athm/projects",
+            "title": "AT & Home Modifications | Wayly",
+            "h1": "AT & HM Projects",
+            "textLength": 1890,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:AT & HM Projects",
+            "path": "/app/athm/projects",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/chsp/tools",
+            "title": "CHSP Tools | Wayly",
+            "h1": "Verify CHSP Billing. Consider a Move to Support at Home.",
+            "textLength": 2072,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:CHSP Tools",
+            "path": "/app/chsp/tools",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/letters",
+            "title": "Letters Mailbox | Wayly",
+            "h1": "Your Letter Mailbox",
+            "textLength": 10194,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Letters Mailbox",
+            "path": "/app/letters",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/provider-switch",
+            "title": "Switch Provider | Wayly",
+            "h1": "Switch Provider",
+            "textLength": 2151,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Switch Provider",
+            "path": "/app/provider-switch",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/statement-decoder",
+            "title": "Support at Home Statement Decoder \u00b7 Wayly",
+            "h1": "Statement Decoder",
+            "textLength": 5361,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Statement Decoder",
+            "path": "/ai-tools/statement-decoder",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/invoice-checker",
+            "title": "Aged Care Invoice Checker \u00b7 Wayly",
+            "h1": "Invoice Checker",
+            "textLength": 6024,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Invoice Checker\nNEW",
+            "path": "/ai-tools/invoice-checker",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/budget-calculator",
+            "title": "Support at Home Budget Calculator \u00b7 Wayly",
+            "h1": "Budget & Lifetime Cap Calculator",
+            "textLength": 6529,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Budget & Lifetime Cap Calculator",
+            "path": "/ai-tools/budget-calculator",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/provider-price-checker",
+            "title": "Aged Care Provider Price Checker \u00b7 Wayly",
+            "h1": "Provider Price Checker",
+            "textLength": 6508,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Provider Price Checker",
+            "path": "/ai-tools/provider-price-checker",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/classification-self-check",
+            "title": "Support at Home Classification Self-Check | Wayly",
+            "h1": "Is your parent on the right classification?",
+            "textLength": 7656,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Classification Self-Check",
+            "path": "/ai-tools/classification-self-check",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/letters-and-follow-ups",
+            "title": "Letters & Follow-ups | Wayly",
+            "h1": "Letters & Follow-ups",
+            "textLength": 5835,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Letters & Follow-ups",
+            "path": "/ai-tools/letters-and-follow-ups",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/contribution-estimator",
+            "title": "Support at Home Contribution Estimator | Wayly",
+            "h1": "Contribution Estimator",
+            "textLength": 6626,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Contribution Estimator",
+            "path": "/ai-tools/contribution-estimator",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/care-plan-reviewer",
+            "title": "Aged Support Plan Reviewer \u00b7 Wayly",
+            "h1": "Support Plan Reviewer",
+            "textLength": 5396,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Support Plan Reviewer",
+            "path": "/ai-tools/care-plan-reviewer",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/family-coordinator",
+            "title": "Aged Care Q&A \u00b7 Wayly",
+            "h1": "Aged Care Q&A",
+            "textLength": 5323,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Aged Care Q&A",
+            "path": "/ai-tools/family-coordinator",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/pacing",
+            "title": "Quarterly Pacing | Wayly",
+            "h1": "Dorothy, this quarter",
+            "textLength": 1072,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Quarterly Pacing",
+            "path": "/app/pacing",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/statements",
+            "title": "Statements | Wayly",
+            "h1": "Your Support at Home Statements",
+            "textLength": 3494,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Statements",
+            "path": "/app/statements",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/budget-alerts",
+            "title": "Budget Alerts | Wayly",
+            "h1": "Get notified before you overspend",
+            "textLength": 1166,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Budget Alerts",
+            "path": "/app/budget-alerts",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/budget-scenarios",
+            "title": "Budget Scenarios | Wayly",
+            "h1": "Budget Scenarios",
+            "textLength": 2165,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Budget Scenarios",
+            "path": "/app/budget-scenarios",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/reports",
+            "title": "Reports | Wayly",
+            "h1": "Reports \u00b7 Dorothy",
+            "textLength": 16620,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Reports",
+            "path": "/app/reports",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/family",
+            "title": "Care Team | Wayly",
+            "h1": "Shared With the People Who Care",
+            "textLength": 2287,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Care Team",
+            "path": "/app/family",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app",
+            "title": "Dashboard | Wayly",
+            "h1": "Dorothy Smith, this quarter",
+            "textLength": 8157,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Key Contacts",
+            "path": "/app?contacts=open",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/calendar",
+            "title": "Calendar | Wayly",
+            "h1": "Appointments and Home Visits",
+            "textLength": 1272,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Calendar",
+            "path": "/app/calendar",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/hospital",
+            "title": "Hospital Mode | Wayly",
+            "h1": "Hospital Liaison",
+            "textLength": 1630,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Hospital Mode",
+            "path": "/app/hospital",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/care-plans",
+            "title": "Care Plans | Wayly",
+            "h1": "Every Care Plan, Reviewed",
+            "textLength": 3419,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Care Plans",
+            "path": "/app/care-plans",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/amendments",
+            "title": "Care-Plan Changes | Wayly",
+            "h1": "Care-Plan Changes",
+            "textLength": 2952,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Care-Plan Changes",
+            "path": "/app/amendments",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/scenarios",
+            "title": "Log a Scenario | Wayly",
+            "h1": "Log a Scenario",
+            "textLength": 4234,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Log a Scenario",
+            "path": "/app/scenarios",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/timeline",
+            "title": "Timeline | Wayly",
+            "h1": "Your Timeline",
+            "textLength": 3372,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Timeline",
+            "path": "/app/timeline",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/documents",
+            "title": "Document Vault, Wayly",
+            "h1": "All Your Aged-Care Paperwork, in One Place",
+            "textLength": 3414,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Documents",
+            "path": "/app/documents",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/correspondence",
+            "title": "Correspondence | Wayly",
+            "h1": "A complete record of every conversation",
+            "textLength": 1159,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Correspondence",
+            "path": "/app/correspondence",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/tools/provider-price-checker/compare",
+            "title": "Compare Providers | Wayly",
+            "h1": "Side-by-Side Quality Context",
+            "textLength": 1772,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Compare Providers",
+            "path": "/app/tools/provider-price-checker/compare",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/ratings",
+            "title": "Provider Ratings | Wayly",
+            "h1": "Your own honest opinions on providers",
+            "textLength": 1177,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Ratings",
+            "path": "/app/ratings",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/participants",
+            "title": "Participants | Wayly",
+            "h1": "Participants \u00b7 27 active",
+            "textLength": 4513,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Participants",
+            "path": "/app/participants",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/referrals",
+            "title": "Referrals | Wayly",
+            "h1": "GP, allied health, and specialist referrals",
+            "textLength": 1206,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Referrals",
+            "path": "/app/referrals",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/app/audit",
+            "title": "Audit Log | Wayly",
+            "h1": "Audit Log",
+            "textLength": 10977,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Audit Log",
+            "path": "/app/audit",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/support",
+            "title": "Support | Wayly",
+            "h1": "My Support",
+            "textLength": 4872,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Support",
+            "path": "/support",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/settings/profile",
+            "title": "Settings | Wayly",
+            "h1": "",
+            "textLength": 1182,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "sidebar:Settings",
+            "path": "/settings/profile",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Features named CTAs and footer route sweep",
+      "ok": true,
+      "details": {
+        "named": [
+          {
+            "name": "Featured Invoice Checker CTA href",
+            "ok": true,
+            "href": "/ai-tools/invoice-checker"
+          },
+          {
+            "name": "Support Plan Reviewer card href",
+            "ok": true,
+            "href": "/ai-tools/support-plan-reviewer"
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/invoice-checker",
+            "title": "Aged Care Invoice Checker \u00b7 Wayly",
+            "h1": "Invoice Checker",
+            "textLength": 6024,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "features featured invoice",
+            "path": "/ai-tools/invoice-checker",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ai-tools/support-plan-reviewer",
+            "title": "Aged Support Plan Reviewer \u00b7 Wayly",
+            "h1": "Support Plan Reviewer",
+            "textLength": 5396,
+            "notFound": false,
+            "snippet": "Help\nWayly\nSearch\n\u2318K\n9+\nD\nDorothy\nL4\nDorothy Smith\nClassification 4 \u00b7 Test Provider 8c1af9aa\nFAMILY\nplan\nParticipant view\nCathy\nTODAY\nDashboard\nProfile\nFamily Wall\nAll AI Tools\nGUIDED JOURNEYS\nAsk Wayly\nCarer Self-Check\nHandover Pack\nClassi",
+            "source": "features support plan reviewer",
+            "path": "/ai-tools/support-plan-reviewer",
+            "ok": true
+          }
+        ],
+        "footerCount": 21,
+        "broken": [],
+        "footerRoutes": [
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/",
+            "title": "Wayly \u00b7 AI for Australian Support at Home",
+            "h1": "Read the statement. Check the invoice. Sleep on Sunday.",
+            "textLength": 8738,
+            "notFound": false,
+            "snippet": "You've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. You've reached the usage limit. Sign up fre",
+            "source": "footer:Wayly",
+            "path": "/",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/features",
+            "title": "Features \u00b7 Wayly",
+            "h1": "Nine AI tools, plus a connected co\u2011pilot for the whole household.",
+            "textLength": 9011,
+            "notFound": false,
+            "snippet": "You've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. You've reached the usage limit. Sign up free for more.\nYou've reached the usage limit\nYou've reach",
+            "source": "footer:Features",
+            "path": "/features",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/services",
+            "title": "Just a moment...",
+            "h1": "spec-closure-r2.preview.emergentagent.com",
+            "textLength": 289,
+            "notFound": false,
+            "snippet": "spec-closure-r2.preview.emergentagent.com\nPerforming security verification\n\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.\n\nRay ID: a28b97ac9bd708",
+            "source": "footer:Services",
+            "path": "/services",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/policy",
+            "title": "Support at Home policy explainers | Wayly",
+            "h1": "The policies that affect your funding",
+            "textLength": 2650,
+            "notFound": false,
+            "snippet": "You've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. You've reached the usage limit. Sign up free for more.\nYou've reached the usage limit\nYou've reach",
+            "source": "footer:Policy explainers",
+            "path": "/policy",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/pricing",
+            "title": "Pricing \u00b7 Wayly",
+            "h1": "Simple, Honest Pricing.Start Your 7-Day Free Trial.",
+            "textLength": 5544,
+            "notFound": false,
+            "snippet": "You've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. Sign up free for more.\nYou've reached the usage limit. You've reached the usage limit. Sign up fre",
+            "source": "footer:Pricing",
+            "path": "/pricing",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/demo",
+            "title": "See Wayly in Action \u00b7 Demo",
+            "h1": "Meet the Anderson family.",
+            "textLength": 3061,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nINTERACTIVE SAMPLE HOUSEHOLD\nMeet the Anderson family.\n\nDorothy is 79, lives alone in Geelong, on Classification 4. Her daughter Cath",
+            "source": "footer:Demo",
+            "path": "/demo",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/guides",
+            "title": "Caregiver guides for Australian families | Wayly",
+            "h1": "Guides for the family carer",
+            "textLength": 3463,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nCAREGIVER GUIDES\nGuides for the family carer\n\nTwo kinds of guide. Practical guides for the situations you can act on. Emotional guide",
+            "source": "footer:Caregiver guides",
+            "path": "/guides",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/faq",
+            "title": "Frequently asked questions about Support at Home and Wayly |",
+            "h1": "Frequently asked questions",
+            "textLength": 2958,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nFAQ\nFrequently asked questions\n\nForty answers across five themes. If you cannot find what you are looking for, try the Wayly AI tools",
+            "source": "footer:FAQ",
+            "path": "/faq",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/ask-wayly",
+            "title": "Ask Wayly, plain-English answers about Support at Home | Way",
+            "h1": "Plain-English answers about Support at Home",
+            "textLength": 2793,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nASK WAYLY\nPlain-English answers about Support at Home\n\nAsk Wayly is a free chat that answers questions from the public Support at Hom",
+            "source": "footer:Ask Wayly",
+            "path": "/ask-wayly",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/support-at-home-levels",
+            "title": "Support at Home Levels, All 8 Classifications Explained \u00b7 Wa",
+            "h1": "Support at Home Levels, All 8 Classifications Explained",
+            "textLength": 5229,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nSUPPORT AT HOME\nSupport at Home Levels, All 8 Classifications Explained\nReviewed and Published by Wayly Editorial\nReviewed by: To be ",
+            "source": "footer:Support at Home levels",
+            "path": "/support-at-home-levels",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/resources/articles",
+            "title": "Articles \u00b7 Wayly Aged Care Resources",
+            "h1": "38 pieces, no fluff.",
+            "textLength": 9979,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nResources\nARTICLES\n38 pieces, no fluff.\n\nThe things Australian families ask us most often about Support at Home and Home Care Package",
+            "source": "footer:Articles",
+            "path": "/resources/articles",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/resources/glossary",
+            "title": "Aged Care Glossary \u00b7 Wayly",
+            "h1": "Every term, defined.",
+            "textLength": 4357,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nResources\nGLOSSARY\nEvery term, defined.\n\n16 Australian aged-care terms, the acronyms, classifications, contribution rates and Support",
+            "source": "footer:Glossary",
+            "path": "/resources/glossary",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/resources/templates",
+            "title": "Aged Care Templates \u00b7 Wayly",
+            "h1": "The conversations you weren't sure how to start.",
+            "textLength": 2304,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nResources\nTEMPLATES\nThe conversations you weren't sure how to start.\n\nAustralian aged-care letter and conversation templates, reasses",
+            "source": "footer:Templates",
+            "path": "/resources/templates",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/about",
+            "title": "We Built Wayly Because Someone Had To | About Wayly",
+            "h1": "We Built Wayly Because Someone Had To.",
+            "textLength": 14479,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nABOUT WAYLY\nWe Built Wayly Because Someone Had To.\n\nA calm, plain-English layer on top of Australia's Support at Home aged care syste",
+            "source": "footer:About Wayly",
+            "path": "/about",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/legal/terms",
+            "title": "Terms of Service \u00b7 Wayly",
+            "h1": "Terms of Service",
+            "textLength": 2594,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\n\u2190 Back to Wayly\nTerms of Service\n\nLast updated: February 2026\n\n1. What Wayly is and is not\n\nWayly is an information tool. It is not a",
+            "source": "footer:Terms of Service",
+            "path": "/legal/terms",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/legal/privacy",
+            "title": "Privacy Policy \u00b7 Wayly",
+            "h1": "Privacy Policy",
+            "textLength": 3311,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\n\u2190 Back to Wayly\nPrivacy Policy\n\nLast updated: February 2026\n\n1. Who we are\n\nWayly Pty Ltd (ABN: [ABN placeholder]). Privacy Officer: ",
+            "source": "footer:Privacy Policy",
+            "path": "/legal/privacy",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/legal/ai-disclaimer",
+            "title": "AI Accuracy Disclaimer \u00b7 Wayly",
+            "h1": "AI Accuracy Disclaimer",
+            "textLength": 2865,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\n\u2190 Back to Wayly\nAI Accuracy Disclaimer\n\nLast updated: February 2026\n\nWhat our AI tools do\n\nWayly's AI tools use large language models",
+            "source": "footer:AI Disclaimer",
+            "path": "/legal/ai-disclaimer",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/legal/accessibility",
+            "title": "Accessibility Statement \u00b7 Wayly",
+            "h1": "Accessibility Statement",
+            "textLength": 2345,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\n\u2190 Back to Wayly\nAccessibility Statement\n\nLast updated: February 2026\n\nWayly is committed to making our product accessible to all Aust",
+            "source": "footer:Accessibility Statement",
+            "path": "/legal/accessibility",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/legal/cookies",
+            "title": "Cookie Policy \u00b7 Wayly",
+            "h1": "Cookie Policy",
+            "textLength": 2008,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\n\u2190 Back to Wayly\nCookie Policy\n\nLast updated: February 2026\n\nWayly uses a small number of cookies to make the product work. We do not ",
+            "source": "footer:Cookie Policy",
+            "path": "/legal/cookies",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/trust",
+            "title": "Trust & Safety \u00b7 Wayly",
+            "h1": "Built for the most vulnerable data of all.",
+            "textLength": 3152,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nTRUST & PRIVACY\nBuilt for the most vulnerable data of all.\n\nWayly handles health information for older Australians and detailed finan",
+            "source": "footer:Trust & Security",
+            "path": "/trust",
+            "ok": true
+          },
+          {
+            "url": "https://statement-checker-3.preview.emergentagent.com/contact",
+            "title": "Contact Wayly Support",
+            "h1": "Talk to a real person.",
+            "textLength": 1805,
+            "notFound": false,
+            "snippet": "Help\nSkip to main content\nWayly\nAbout\nFeatures\nAI Tools\nPricing\nResources\nContact\nSign in\nStart free trial\nCONTACT\nTalk to a real person.\n\nFill in the form for a written reply, or scroll down to pick a time and we will meet you there.\n\nYour",
+            "source": "footer:Contact",
+            "path": "/contact",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unhandled test exception",
+      "ok": false,
+      "details": {
+        "error": "TimeoutError('Page.wait_for_selector: Timeout 12000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=\\\\\"ppc3-compare-root\\\\\"]\") to be visible\\n')",
+        "trace": "Traceback (most recent call last):\n  File \"/app/test_reports/bug_verification_131_playwright.py\", line 362, in main\n    await test_routing(page, results)\n  File \"/app/test_reports/bug_verification_131_playwright.py\", line 333, in test_routing\n    await page.wait_for_selector('[data-testid=\"ppc3-compare-root\"]', timeout=12000)\n  File \"/root/.venv/lib/python3.11/site-packages/playwright/async_api/_generated.py\", line 8795, in wait_for_selector\n    await self._impl_obj.wait_for_selector(\n  File \"/root/.venv/lib/python3.11/site-packages/playwright/_impl/_page.py\", line 424, in wait_for_selector\n    return await self._main_frame.wait_for_selector(**locals_to_params(locals()))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/.venv/lib/python3.11/site-packages/playwright/_impl/_frame.py\", line 372, in wait_for_selector\n    await self._channel.send(\n  File \"/root/.venv/lib/python3.11/site-packages/playwright/_impl/_connection.py\", line 69, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/.venv/lib/python3.11/site-packages/playwright/_impl/_connection.py\", line 559, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Page.wait_for_selector: Timeout 12000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-testid=\\\"ppc3-compare-root\\\"]\") to be visible\n\n"
+      }
+    }
+  ],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "type": "error",
+      "text": "In HTML, %s cannot be a child of <%s>.%s\nThis will cause a hydration error.%s <span> option  \n\n  ...\n    <RenderedRoute match={{params:{}, ...}} routeContext={{outlet:null, ...}}>\n      <AIToolsRoute x-file-name=\"App\" x-line-number=\"380\" x-column=\"79\" x-component=\"AIToolsRoute\" x-id=\"App_380_79\" ...>\n        <Layout x-file-name=\"App\" x-line-number=\"212\" x-column=\"15\" x-component=\"Layout\" x-id=\"App_212_15\" ...>\n          <div className=\"min-h-scre...\" x-file-name=\"Layout\" x-line-number=\"163\" x-column=\"8\" x-component=\"div\" ...>\n            <ReadOnlyBanner>\n            <header>\n            <div className=\"mx-auto ma...\" x-file-name=\"Layout\" x-line-number=\"226\" x-column=\"12\" x-component=\"div\" ...>\n              <aside>\n              <main className=\"flex-1 min...\" x-file-name=\"Layout\" x-line-number=\"240\" x-column=\"16\" x-component=\"main\" ...>\n                <TrialCountdownBanner>\n                <ClassificationCheck x-file-name=\"App\" x-line-number=\"380\" x-column=\"93\" x-component=\"Classifica...\" ...>\n                  <div className=\"min-h-scre...\" x-file-name=\"Classifica...\" x-line-number=\"485\" x-column=\"8\" ...>\n                    <SeoHead>\n                    <MarketingHeader>\n                    <section>\n                    <section className=\"mx-auto ma...\" x-file-name=\"Classifica...\" x-line-number=\"501\" x-column=\"16\" ...>\n                      <div className=\"bg-surface...\" data-testid=\"csc-quiz\" x-file-name=\"Classifica...\" ...>\n                        <div className=\"mb-6 pb-5 ...\" x-file-name=\"Classifica...\" x-line-number=\"504\" x-column=\"24\" ...>\n                          <label>\n                          <select value=\"\" onChange={function onChange} data-testid=\"csc-current\" ...>\n                            <option>\n>                           <option\n>                             value={1}\n>                             x-file-name=\"ClassificationCheck\"\n>                             x-line-number=\"513\"\n>                             x-column=\"69\"\n>                             x-component=\"option\"\n>                             x-id=\"ClassificationCheck_513_69\"\n>                             x-dynamic=\"true\"\n>                             x-source-type=\"static-local\"\n>                             x-source-file=\"/app/frontend/src/pages/tools/ClassificationCheck.jsx\"\n>                             x-source-file-abs=\"/app/frontend/src/pages/tools/ClassificationCheck.jsx\"\n>                             x-source-line=\"513\"\n>                             x-source-editable=\"true\"\n>                             x-array-file=\"/app/frontend/src/pages/tools/ClassificationCheck.jsx\"\n>                             x-array-line=\"513\"\n>                             x-array-item-param=\"n\"\n>                             x-array-inline=\"true\"\n>                           >\n>                             <span\n>                               data-ve-dynamic=\"true\"\n>                               x-excluded=\"true\"\n>                               style={{display:\"contents\"}}\n>                               x-file-name=\"ClassificationCheck\"\n>                               x-line-number=\"513\"\n>                               x-column=\"69\"\n>                               x-component=\"option\"\n>                               x-id=\"ClassificationCheck_513_69_expr1\"\n>                               x-dynamic=\"true\"\n>                               x-source-type=\"static-local\"\n>                               x-source-file=\"/app/frontend/src/pages/tools/ClassificationCheck.jsx\"\n>                               x-source-file-abs=\"/app/frontend/src/pages/tools/ClassificationCheck.jsx\"\n>                               x-source-line=\"513\"\n>                               x-source-editable=\"true\"\n>                               x-array-file=\"/app/frontend/src/pages/tools/ClassificationCheck.jsx\"\n>                               x-array-line=\"513\"\n>                               x-array-item-param=\"n\"\n>                             >\n                            ...\n                        ...\n                    ...\n            ...\n"
+    },
+    {
+      "type": "error",
+      "text": "In HTML, %s cannot be a child of <%s>.%s\nThis will cause a hydration error.%s <span> option  \n\n  ...\n    <AIToolsRoute x-file-name=\"App\" x-line-number=\"386\" x-column=\"72\" x-component=\"AIToolsRoute\" x-id=\"App_386_72\" ...>\n      <Layout x-file-name=\"App\" x-line-number=\"212\" x-column=\"15\" x-component=\"Layout\" x-id=\"App_212_15\" x-dynamic=\"true\" ...>\n        <div className=\"min-h-scre...\" x-file-name=\"Layout\" x-line-number=\"163\" x-column=\"8\" x-component=\"div\" ...>\n          <ReadOnlyBanner>\n          <header>\n          <div className=\"mx-auto ma...\" x-file-name=\"Layout\" x-line-number=\"226\" x-column=\"12\" x-component=\"div\" ...>\n            <aside>\n            <main className=\"flex-1 min...\" x-file-name=\"Layout\" x-line-number=\"240\" x-column=\"16\" x-component=\"main\" ...>\n              <TrialCountdownBanner>\n              <CarePlanReviewer x-file-name=\"App\" x-line-number=\"386\" x-column=\"86\" x-component=\"CarePlanRe...\" ...>\n                <div className=\"min-h-scre...\" x-file-name=\"CarePlanRe...\" x-line-number=\"181\" x-column=\"8\" ...>\n                  <SeoHead>\n                  <MarketingHeader>\n                  <section>\n                  <section className=\"mx-auto ma...\" x-file-name=\"CarePlanRe...\" x-line-number=\"202\" x-column=\"12\" ...>\n                    <div className=\"bg-surface...\" data-testid=\"care-plan-...\" x-file-name=\"CarePlanRe...\" ...>\n                      <div>\n                      <div>\n                      <textarea>\n                      <div className=\"mt-3 grid ...\" data-testid=\"cp-optiona...\" x-file-name=\"CarePlanRe...\" ...>\n                        <label className=\"block\" x-file-name=\"CarePlanRe...\" x-line-number=\"271\" x-column=\"24\" ...>\n                          <span>\n                          <select value=\"\" onChange={function onChange} data-testid=\"cp-classif...\" ...>\n                            <option>\n>                           <option\n>                             value={1}\n>                             x-file-name=\"CarePlanReviewer\"\n>                             x-line-number=\"275\"\n>                             x-column=\"62\"\n>                             x-component=\"option\"\n>                             x-id=\"CarePlanReviewer_275_62\"\n>                             x-dynamic=\"true\"\n>                             x-source-type=\"static-local\"\n>                             x-source-file=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                             x-source-file-abs=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                             x-source-line=\"275\"\n>                             x-source-editable=\"true\"\n>                             x-array-file=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                             x-array-line=\"275\"\n>                             x-array-item-param=\"c\"\n>                             x-array-inline=\"true\"\n>                           >\n>                             <span\n>                               data-ve-dynamic=\"true\"\n>                               x-excluded=\"true\"\n>                               style={{display:\"contents\"}}\n>                               x-file-name=\"CarePlanReviewer\"\n>                               x-line-number=\"275\"\n>                               x-column=\"62\"\n>                               x-component=\"option\"\n>                               x-id=\"CarePlanReviewer_275_62_expr1\"\n>                               x-dynamic=\"true\"\n>                               x-source-type=\"static-local\"\n>                               x-source-file=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                               x-source-file-abs=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                               x-source-line=\"275\"\n>                               x-source-editable=\"true\"\n>                               x-array-file=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                               x-array-line=\"275\"\n>                               x-array-item-param=\"c\"\n>                             >\n                            ...\n                        ...\n                      ...\n                  ...\n          ...\n"
+    },
+    {
+      "type": "error",
+      "text": "In HTML, %s cannot be a child of <%s>.%s\nThis will cause a hydration error.%s <span> option  \n\n  ...\n    <RenderedRoute match={{params:{}, ...}} routeContext={{outlet:null, ...}}>\n      <RequireAuth x-file-name=\"App\" x-line-number=\"473\" x-column=\"65\" x-component=\"RequireAuth\" x-id=\"App_473_65\" ...>\n        <Layout x-file-name=\"App\" x-line-number=\"473\" x-column=\"78\" x-component=\"Layout\" x-id=\"App_473_78\" ...>\n          <Helmet>\n          <div className=\"min-h-scre...\" x-file-name=\"Layout\" x-line-number=\"163\" x-column=\"8\" x-component=\"div\" ...>\n            <ReadOnlyBanner>\n            <header>\n            <div className=\"mx-auto ma...\" x-file-name=\"Layout\" x-line-number=\"226\" x-column=\"12\" x-component=\"div\" ...>\n              <aside>\n              <main className=\"flex-1 min...\" x-file-name=\"Layout\" x-line-number=\"240\" x-column=\"16\" x-component=\"main\" ...>\n                <TrialCountdownBanner>\n                <BudgetScenarios x-file-name=\"App\" x-line-number=\"473\" x-column=\"86\" x-component=\"BudgetScen...\" ...>\n                  <div className=\"max-w-5xl ...\" data-testid=\"budget-sce...\" x-file-name=\"BudgetScen...\" ...>\n                    <PageIntro>\n                    <div className=\"rounded-2x...\" data-testid=\"bc2-sliders\" x-file-name=\"BudgetScen...\" ...>\n                      <div>\n                      <div className=\"grid gap-5...\" x-file-name=\"BudgetScen...\" x-line-number=\"217\" x-column=\"24\" ...>\n                        <label className=\"space-y-1....\" x-file-name=\"BudgetScen...\" x-line-number=\"218\" x-column=\"28\" ...>\n                          <span>\n                          <select value={4} onChange={function onChange} data-testid=\"bc2-slider...\" ...>\n>                           <option\n>                             value={1}\n>                             x-file-name=\"BudgetScenarios\"\n>                             x-line-number=\"227\"\n>                             x-column=\"40\"\n>                             x-component=\"option\"\n>                             x-id=\"BudgetScenarios_227_40\"\n>                             x-dynamic=\"true\"\n>                             x-source-type=\"static-local\"\n>                             x-source-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-source-file-abs=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-source-line=\"226\"\n>                             x-source-editable=\"true\"\n>                             x-array-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                             x-array-line=\"226\"\n>                             x-array-item-param=\"n\"\n>                             x-array-inline=\"true\"\n>                           >\n>                             <span\n>                               data-ve-dynamic=\"true\"\n>                               x-excluded=\"true\"\n>                               style={{display:\"contents\"}}\n>                               x-file-name=\"BudgetScenarios\"\n>                               x-line-number=\"227\"\n>                               x-column=\"40\"\n>                               x-component=\"option\"\n>                               x-id=\"BudgetScenarios_227_40_expr1\"\n>                               x-dynamic=\"true\"\n>                               x-source-type=\"static-local\"\n>                               x-source-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-source-file-abs=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-source-line=\"226\"\n>                               x-source-editable=\"true\"\n>                               x-array-file=\"/app/frontend/src/pages/BudgetScenarios.jsx\"\n>                               x-array-line=\"226\"\n>                               x-array-item-param=\"n\"\n>                             >\n                              ...\n                            ...\n                        ...\n                      ...\n                    ...\n                    ...\n            ...\n"
+    },
+    {
+      "type": "warning",
+      "text": "Your app (or one of its dependencies) is using an outdated JSX transform. Update to the modern JSX transform for faster performance: https://react.dev/link/new-jsx-transform"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    },
+    {
+      "type": "error",
+      "text": "In HTML, %s cannot be a child of <%s>.%s\nThis will cause a hydration error.%s <span> option  \n\n  ...\n    <AIToolsRoute x-file-name=\"App\" x-line-number=\"390\" x-column=\"75\" x-component=\"AIToolsRoute\" x-id=\"App_390_75\" ...>\n      <Layout x-file-name=\"App\" x-line-number=\"212\" x-column=\"15\" x-component=\"Layout\" x-id=\"App_212_15\" x-dynamic=\"true\" ...>\n        <div className=\"min-h-scre...\" x-file-name=\"Layout\" x-line-number=\"163\" x-column=\"8\" x-component=\"div\" ...>\n          <ReadOnlyBanner>\n          <header>\n          <div className=\"mx-auto ma...\" x-file-name=\"Layout\" x-line-number=\"226\" x-column=\"12\" x-component=\"div\" ...>\n            <aside>\n            <main className=\"flex-1 min...\" x-file-name=\"Layout\" x-line-number=\"240\" x-column=\"16\" x-component=\"main\" ...>\n              <TrialCountdownBanner>\n              <CarePlanReviewer x-file-name=\"App\" x-line-number=\"390\" x-column=\"89\" x-component=\"CarePlanRe...\" ...>\n                <div className=\"min-h-scre...\" x-file-name=\"CarePlanRe...\" x-line-number=\"181\" x-column=\"8\" ...>\n                  <SeoHead>\n                  <MarketingHeader>\n                  <section>\n                  <section className=\"mx-auto ma...\" x-file-name=\"CarePlanRe...\" x-line-number=\"202\" x-column=\"12\" ...>\n                    <div className=\"bg-surface...\" data-testid=\"care-plan-...\" x-file-name=\"CarePlanRe...\" ...>\n                      <div>\n                      <div>\n                      <textarea>\n                      <div className=\"mt-3 grid ...\" data-testid=\"cp-optiona...\" x-file-name=\"CarePlanRe...\" ...>\n                        <label className=\"block\" x-file-name=\"CarePlanRe...\" x-line-number=\"271\" x-column=\"24\" ...>\n                          <span>\n                          <select value=\"\" onChange={function onChange} data-testid=\"cp-classif...\" ...>\n                            <option>\n>                           <option\n>                             value={1}\n>                             x-file-name=\"CarePlanReviewer\"\n>                             x-line-number=\"275\"\n>                             x-column=\"62\"\n>                             x-component=\"option\"\n>                             x-id=\"CarePlanReviewer_275_62\"\n>                             x-dynamic=\"true\"\n>                             x-source-type=\"static-local\"\n>                             x-source-file=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                             x-source-file-abs=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                             x-source-line=\"275\"\n>                             x-source-editable=\"true\"\n>                             x-array-file=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                             x-array-line=\"275\"\n>                             x-array-item-param=\"c\"\n>                             x-array-inline=\"true\"\n>                           >\n>                             <span\n>                               data-ve-dynamic=\"true\"\n>                               x-excluded=\"true\"\n>                               style={{display:\"contents\"}}\n>                               x-file-name=\"CarePlanReviewer\"\n>                               x-line-number=\"275\"\n>                               x-column=\"62\"\n>                               x-component=\"option\"\n>                               x-id=\"CarePlanReviewer_275_62_expr1\"\n>                               x-dynamic=\"true\"\n>                               x-source-type=\"static-local\"\n>                               x-source-file=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                               x-source-file-abs=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                               x-source-line=\"275\"\n>                               x-source-editable=\"true\"\n>                               x-array-file=\"/app/frontend/src/pages/tools/CarePlanReviewer.jsx\"\n>                               x-array-line=\"275\"\n>                               x-array-item-param=\"c\"\n>                             >\n                            ...\n                        ...\n                      ...\n                  ...\n          ...\n"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "warning",
+      "text": "No available adapters."
+    },
+    {
+      "type": "warning",
+      "text": "No available adapters."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    }
+  ],
+  "network_failures": [
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/nudges",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/nudges",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/scenario/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb/timeline?limit=5",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/scenario/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb/timeline?limit=5",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/scenario/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb/timeline?limit=5",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/scenario/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb/timeline?limit=5",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/api/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYmFmOWNlYi05YmUzLTRjOWItYjFkNi1iY2ZlNGUxM2Q4NTIiLCJpYXQiOjE3ODYzMjkwOTgsImV4cCI6MTc4NjMzMjY5OCwidHlwZSI6ImFjY2VzcyIsImp0aSI6IkNCdU5VbTBFTW0xamtWcEZ4VUhFcGcifQ.cHuF_8pBixa9Yw8SjfQbux0yT6PZ_QbeaGP1nH1g26Q",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://brunhild.challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/i/a28b97aebcf479d9/P640cTjUGU6g6Jb3u8RIb6reJe8333OJZbIb.KqxqC8-1786329172-1.2.1.1-n7C4Eym4Ju4F_qahvcsz5u5EcBLigi5LoMUoKBMqTrsR930mPXdXQMiba68Ykell",
+      "failure": "net::ERR_NAME_NOT_RESOLVED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://statement-checker-3.preview.emergentagent.com/cdn-cgi/rum?",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "ok": false
+}

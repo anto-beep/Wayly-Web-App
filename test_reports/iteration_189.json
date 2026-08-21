@@ -1,0 +1,36 @@
+{
+  "summary": "Frontend-only regression for dashboard redesign + homepage hero size fix. Verified on BOTH web and Expo mobile with cathy@example.com. Hero title renders at reduced size (48px desktop / 29.6px mobile) with no layout breakage. New DashboardActionBar (search + 6 shortcut tiles), at-a-glance panel (money-left + 3 mini-stat links), and the collapsible 'Budget detail, insights and history' toggle all work on both surfaces. Section ordering matches the requested pattern on both. Search + tile navigation route to the correct pages.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Dashboard at-a-glance mini-stats", "issues": ["'LIFETIME CAP' label wraps and the '%' after '5' falls to a new line on 390px viewport — very minor, purely cosmetic"]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "DashboardActionBar.jsx uses `h-4.5 w-4.5` and `mt-4.5` in a couple of places — these are non-standard Tailwind sizes and won't compile to real classes unless custom spacing is set. Icon size falls back but should be verified/replaced with `h-5 w-5` for consistency.",
+    "dashboardDestinations.js: `Key contacts` route is `/app?contacts=open` (query param, not a page). Search result click will land on /app but caregivers may not see the intended contacts drawer opening — worth a quick manual check.",
+    "CaregiverDashboard.jsx uses a native <details>/<summary> for the collapsible which is a11y-friendly and works, but the animated 'Show/Hide' state relies on `group-open:` classes — verified working."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Web preview: https://statement-checker-3.preview.emergentagent.com  Mobile Expo preview: https://aged-care-overhaul.expo.preview.emergentagent.com . On mobile login screen use placeholder-based selectors: page.get_by_placeholder('you@example.com') and get_by_placeholder('Your password'); Sign In is a Pressable — click via get_by_text('Sign In'). Dashboard testIDs verified: dashboard-action-bar, dashboard-action-search, dashboard-quick-actions, dashboard-action-result-0, dashboard-at-a-glance, glance-left/alerts/statements/cap, dashboard-more-detail (web details) / dashboard-more-detail-toggle (mobile), dashboard-more-detail-btn (web).",
+  "rca of the issue": ""
+}

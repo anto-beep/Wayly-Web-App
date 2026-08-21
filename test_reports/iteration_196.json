@@ -1,0 +1,45 @@
+{
+  "summary": "iter196 verified all iteration deliverables end-to-end. (A) MOBILE RENDER SANITY: Expo web preview loads a fully-rendered login screen (AGED CARE MADE EASY / Welcome Back / email+password/Sign In/Continue with Google/Create an account) — body HTML 10.7KB, zero console errors. The Platform.OS!=='web' guarded require of @react-native-community/datetimepicker in mobile/src/components/ui.tsx does NOT crash the web bundle. (B) MOBILE ONBOARDING: /onboarding renders after login as fresh mobtrial+ts user; testIDs onboarding-first-name, onboarding-last-name, onboarding-dob, onboarding-provider all present; 7 'Required' markers visible (First name, Last name, DOB, PENSION STATUS, SUPPORT AT HOME CLASSIFICATION, Registered provider, Statement delivery); on web DateField renders as DD/MM/YYYY text input — typing '15/06/1950' is accepted and the stored ISO is emitted by the onWebText handler. Native builds would show the calendar widget (DateTimePicker only loaded off-web). (C) WEB ONBOARDING DATE: [data-testid=onboarding-dob] on /onboarding is a button showing 'DD/MM/YYYY' as placeholder; clicking opens a shadcn calendar popover with month/year dropdowns; selecting January 1 1950 populated the button label with '01/01/1950' — ISO storage is exercised through the format() call in DateField.jsx. 14 'REQUIRED' markers detected across the Essentials step. (D) BACKEND bounce endpoint pytest 4/4 pass: GET /api/payments/app-return?to=wayly://billing-return&status=success&session_id=cs_test_xyz returns 200 HTML containing 'Return to Wayly' anchor, window.location.replace JS redirect, and the encoded deep-link with status+session_id appended; cancel status variant also passes. (E) MOBILE deep-link checkout wiring VERIFIED at runtime: startCheckout POST /api/payments/checkout with app_return_url='wayly://billing-return' returns cs_test_ hosted URL for both solo and family; the resulting hosted checkout, after successful payment with card 4242, redirected the browser to https://<preview>/api/payments/app-return?status=success&to=wayly%3A%2F%2Fbilling-return&session_id=cs_test_b1QV... — the 'Payment received. Returning you to the Wayly app…' bounce page rendered exactly as intended. (F) COMPLETE CHECKOUT drive-through with card 4242: created mobtrial+1786972023@example.com / MobTrial1!, drove the real Stripe test-mode hosted checkout to completion (billing address 500 Test St, New York 10001, phone 2015550123). Stripe confirms via /api/payments/checkout/status/{sid}: payment_status=paid, status=complete, subscription_id=sub_1U5QL9FXu1wTzvp0e6a2JNmv, plan=solo. HOWEVER /api/billing/subscription still returns {plan:'free', status:'none'} for this user — the Stripe webhook is NOT being delivered to this preview slug (STRIPE_WEBHOOK_SECRET is set but the Stripe dashboard test-mode webhook endpoint isn't pointed here). Same environmental limitation confirmed in iter195 for mobpay.family / mobpay.solo. This is NOT a regression from this iteration's code changes — Stripe-side subscription is genuinely trialing. Recommend a manual DB reconciliation (or a checkout-status-triggered sync) if the mobile app needs to render a real trial billing screen for this user post-return. (G) REGRESSION spot-checks: mobile signup Expo preview loads, no red screen, safeAreaView & theme colors render, header logo + provider-switch chrome unchanged since iter195 green.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/payments/app-return", "issue": "Cold-start response is slow (~40s first request via ingress; subsequent hits are <1s). Pytest timeouts were raised to 60-90s to accommodate."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter196_bounce_checkout.py",
+    "/app/test_reports/pytest/iter196.xml",
+    "/app/test_reports/iter196_mobile_launch.jpeg",
+    "/app/test_reports/iter196_mobile_onboarding.jpeg",
+    "/app/test_reports/iter196_web_onboarding.jpeg",
+    "/app/test_reports/iter196_web_dob_popover.jpeg",
+    "/app/test_reports/iter196_stripe_after2.jpeg"
+  ],
+  "action_items": [
+    "ENVIRONMENTAL (not a code bug): Stripe test-mode webhook endpoint isn't reaching this preview slug, so /api/billing/subscription doesn't sync from Stripe after a successful hosted-checkout completion. Either (a) point the Stripe test-mode webhook at https://statement-checker-3.preview.emergentagent.com/api/webhook/stripe with the whsec_HUtDD... secret, (b) add an active-sync call in /api/payments/checkout/status/{sid} that upserts the trialing state into users on payment_status=paid, or (c) manually db.users.updateOne({email:'mobtrial+1786972023@example.com'}, {$set:{plan:'solo', subscription_status:'trialing', stripe_subscription_id:'sub_1U5QL9FXu1wTzvp0e6a2JNmv', trial_ends_at:'2026-08-24T13:07:00Z'}}) to render a real trial billing screen for QA.",
+    "OPTIONAL: consider warming the /api/payments/app-return route so its cold-start latency (~40s first hit) doesn't strand a real user's in-app browser waiting on the bounce page."
+  ],
+  "critical_code_review_comments": [
+    "mobile/src/components/ui.tsx:22-24 — Platform.OS!=='web' guarded require of @react-native-community/datetimepicker is exactly the right approach; verified no runtime crash / no console error / no blank white screen on Expo web preview.",
+    "mobile/src/components/ui.tsx:272-286 — DateField web fallback uses a plain TextInput accepting DD/MM/YYYY with an onWebText regex that emits ISO yyyy-MM-dd via onChange — matches the backend contract.",
+    "backend/routes/payments.py:225-248 — /app-return endpoint safely encodes the deep link into the meta-refresh, the anchor, and the JS window.location.replace fallback. Consider also adding rel='noopener' but not blocking.",
+    "backend/routes/payments.py:138-145 — success_url/cancel_url only point at /api/payments/app-return when body.app_return_url is provided, otherwise the legacy origin-based success page is used. Backwards compatible for web signup.",
+    "mobile/src/lib/plans.ts:60-73 — startCheckout uses Linking.createURL('billing-return') to derive the app deep link and WebBrowser.openAuthSessionAsync auto-closes the in-app browser when Stripe → /api/payments/app-return → wayly://billing-return round-trip completes. Correct on native. On the Expo WEB preview, WebBrowser.openAuthSessionAsync opens a new tab and returns immediately — not a native round-trip, but that is expected and not a bug."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter196_bounce_checkout.py",
+    "/app/memory/test_credentials.md"
+  ],
+  "success_rate": {"backend": "100% (4/4 pytest)", "frontend": "100% mobile render + web DOB + mobile onboarding + Stripe drive-through succeeded"},
+  "test_credentials": "mobtrial+1786972023@example.com / MobTrial1! (Stripe test-mode Solo trial sub_1U5QL9FXu1wTzvp0e6a2JNmv is active on Stripe side; local /api/billing/subscription lags because webhook delivery isn't configured — see action_items).",
+  "seed_data_creation": "Created mobtrial+1786972023@example.com via /api/auth/signup plan=solo and drove one real Stripe test-mode hosted-checkout to completion. Also spawned two ephemeral iter196.solo.* / iter196.family.* signups during pytest (harmless).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All iter196 acceptance criteria met at the code/UI level. Only outstanding item is the Stripe webhook not being delivered to this preview slug — same env gap present since iter195. If future work needs the DB to actually reflect trialing state after a hosted-checkout completion, either (a) fix the webhook endpoint configuration in the Stripe dashboard, or (b) have /api/payments/checkout/status upsert the trialing subscription into users when session.status=='complete' && session.subscription is set. mobtrial+1786972023@example.com is safe to reuse as a fixture — it already has a real Stripe subscription attached, so a manual mongo update to reflect trialing locally will produce a fully-functional trial billing screen."
+}

@@ -1,0 +1,40 @@
+{
+  "summary": "UPLOAD-GUARD-1 (v1) e2e verified across backend, web, and mobile (both surfaces). Backend 11/11 pytest pass (existing suite backend/tests/test_upload_guard.py). WEB: all 7 flows pass — Invoice Checker with care-plan .txt renders 'Wrong document?' notice + upload-guard-open-right-tool 'Open the Care Plan Reviewer' that redirects to /ai-tools/care-plan-reviewer; unrelated .txt renders block notice ('We couldn't use this file') with NO open-right-tool and upload-guard-choose-another present; valid invoice .txt bypasses guard and renders inv1-result; confirm-tier weak invoice renders 'Just checking' + upload-guard-continue and clicking Continue anyway re-submits with override and reaches inv1-result; Care Plan Reviewer with invoice .txt renders wrong-tool 'Open the Invoice Checker' + redirects to /ai-tools/invoice-checker; genuine care-plan .txt reaches cp-file-result; paste-text of a genuine care plan completes and renders findings (visible in screenshot). MOBILE: both tool screens (/tool/invoice-checker, /tool/care-plan-reviewer) load without runtime errors after guard wiring — all expected testIDs render (inv1-upload-card, inv1-pick-file on invoice; care-plan-form, cp-pick-files, cp-text, cp-submit on CPR). The Expo web preview does not expose a driveable HTML file input (0 <input type=file> nodes; expo-document-picker uses the native picker), so end-to-end drive of the mobile guard verdict is out of scope for the web preview — the shared backend classify_upload() is the same code path both surfaces call, and it's covered by backend tests + web e2e.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Care Plan Reviewer (/ai-tools/care-plan-reviewer)", "issues": ["Non-blocking React hydration console warning: '<span> cannot be a child of <option>' — pre-existing, unrelated to UPLOAD-GUARD-1"]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_upload_guard.py",
+    "/app/test_reports/pytest/iter214_upload_guard.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "UploadGuardNotice (mobile) uses router.replace on wrong-tool tap — good, avoids leaving a wrong tool behind in nav stack.",
+    "InvoiceCheckerTool.jsx onUpload(override=true) appends form field 'override_guard=true' — matches server contract in routes/invoices.py.",
+    "Web guard 'Choose a different file' button (upload-guard-choose-another) resets both file and guard state via onReset — correct.",
+    "Care Plan Reviewer passes onChooseAnother that clears files+guard but does NOT wire onContinue for confirm tier (guard is only rendered for blocks); acceptable because CP flow currently only surfaces block/wrong-tool from backend per registry weights, but if a confirm verdict ever leaks through the UI would only show 'Choose a different file' — worth a defensive onContinue if CP thresholds change."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, works)",
+  "seed_data_creation": "Created disposable fixtures in /tmp: ug_careplan.txt (care-plan signals), ug_unrelated.txt (unrelated block), ug_invoice.txt (valid invoice), ug_weak.txt (confirm-tier), ug_careplan_rich.txt (accept care plan). No DB seed changes.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Guard verdict UI ships identically on web (UploadGuardNotice.jsx) and mobile (UploadGuardNotice.tsx). Mobile file-drive is not achievable on Expo web preview (native picker). To exercise mobile guard verdicts end-to-end, use a real Expo Go/native build or drive the backend directly (already covered by backend/tests/test_upload_guard.py 11/11). Statement→StatementDecoder redirect on Invoice Checker is a separate pre-existing path (inv1-statement-redirect) and is NOT part of UPLOAD-GUARD-1 — do not conflate.",
+  "rca of the issue": ""
+}

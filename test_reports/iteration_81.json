@@ -1,0 +1,34 @@
+{
+  "summary": "ITER-81 signup carryover retest — ALL FIXES CONFIRMED. Backend: 6/6 pytests PASS. (1) UserPublic model exposes first_name/last_name/mobile on /auth/signup, /auth/login, /auth/me — verified for both freshly signed-up participant AND caregiver. (2) PUT /api/persona with viewer_persona='participant' + is_self=true returns care_recipient containing BOTH first_name AND last_name (iter80 regression fixed). Frontend E2E: Signup → land on /onboarding → StepEssentials first_name='Louisa', last_name='Davids' pre-filled from care_recipient at signup ✅. Navigated to /settings/profile → phone number pre-filled with '+61412345678' from signup mobile ✅. Fields remain editable. Overall: iter80 gap has been fully closed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter81_signup_carryover.py",
+    "/app/test_reports/pytest/iter81_carryover.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "UserPublic in backend/models.py now correctly exposes first_name/last_name/mobile with sensible defaults (None). The Feb 2026 carryover work is now end-to-end functional.",
+    "routes/persona.py participant-mirror block now preserves both first_name AND last_name from user doc (with legacy name-split fallback), matching the payload semantics documented in the code comments. No further action required."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter81_signup_carryover.py (NEW — 6 pytest cases: 4 for UserPublic first/last/mobile exposure across signup/login/me for both participant + caregiver; 2 for PUT/GET persona last_name preservation)"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 pytests, all four UserPublic + both persona last_name cases PASS)",
+    "frontend": "100% (StepEssentials name prefill PASS, Settings profile phone prefill PASS; both editable; no console errors on happy path)"
+  },
+  "test_credentials": "Freshly created via signup: iter81pnew1784697091@example.com (participant, plan=solo) / X9!kLpQr2vW#nzY7 · iter81ui1784697294@example.com (caregiver, plan=family) / X9!kLpQr2vW#nzY7. Cleanup: db.users.deleteMany({email:{$regex:'^iter81'}}).",
+  "seed_data_creation": "3 test accounts created (2 during pytest module fixture + 1 during Playwright E2E). No fixtures injected into other collections.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter80 → iter81 loop is closed. All four features from the review request now work end-to-end: (a) signup carryover of participant first/last name → StepEssentials prefill; (b) caregiver relationship pre-selected on StepRecommended (verified via schema/curl on prior iter80); (c) participant self-name uses signup values (participant path also fixed for last_name); (d) signup mobile → Settings > Profile phone field. Rate limiting note: signup endpoint has an IP+email budget of ~5/min; wait ~90s between fresh signup tests to avoid 429s. The pytest file /app/backend/tests/test_iter81_signup_carryover.py can be re-used as regression suite.",
+  "rca of the issue": "Iter80 flagged two backend serializer gaps: (1) UserPublic dropped `mobile` (and first_name/last_name weren't declared) → E1 added them explicitly to models.py UserPublic and mapped them in server.py:_user_public(). (2) routes/persona.py:96-104 (participant branch) rebuilt CareRecipient using only user.first_name, dropping last_name → E1 fixed the block to prefer user.last_name and fall back to splitting the legacy `name` field. Both fixes verified live via curl AND pytest AND end-to-end via Playwright UI probes. No new issues discovered."
+}

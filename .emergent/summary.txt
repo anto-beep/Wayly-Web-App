@@ -1,0 +1,109 @@
+<analysis>**original_problem_statement**: The user requested a comprehensive Mobile ↔ Web parity sweep (completed), followed by a massive list of Web Marketing, Content, SEO, and Legal page updates. PRODUCT REQUIREMENTS: Web and Mobile must share exact parity. The web marketing site needs a major visual overhaul with more clay colors, better typography/capitalization, scroll animations using , and updated content to improve conversions and SEO. Ensure  and  are always used instead of spelled out words.
+
+**User's preferred language**: English (INSTRUCT next agent to respond in English)
+
+**what currently exists?**: A mature, cross-platform aged-care SaaS application consisting of a React web frontend, an Expo (React Native) mobile app, and a shared FastAPI/MongoDB backend. The core AI tools and Stripe billing flows are fully at parity between Web and Mobile. The web marketing pages are undergoing a massive visual and content redesign in structured batches. Batches 1, 2, 3, C, and part of D are complete.
+
+**Last working item**:
+- **Last item agent was working**: Fixing quick UI issues requested by the user: reducing the homepage hero font size, ensuring the footer tagline is on a single line, and adding explicit scroll-to-top behavior when clicking the Wayly logo/name in the header and sidebar/menu.
+- **Status**: NOT STARTED (The quick UI fixes were completed and verified; the agent is now ready to begin the next pending task: Batch D part 2)
+- **Agent Testing Done**: Y (for the UI fixes)
+- **Which testing method agent to use?**: NA (testing for UI fixes complete. Use  or  for upcoming content/SEO pages).
+- **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+None.
+
+**In progress Task List**:
+- Task 1: Content + SEO Polish (Batch D - Part 2)
+   - **Where to resume**: Update files inside  (like , , , , , ).
+   - **What will be achieved with this?**: Deepen Services, Policy, and Caregiver Guides copy; reformat older Articles to match new structures; expand the Glossary with proper capitalization and scroll animations. 
+   - **Status**: NOT STARTED
+   - **Should Test frontend/backend/both after fix?**: frontend
+   - **Blocked on something**: None
+
+**Upcoming and Future Tasks**:
+- **P0: Legal Pages Implementation (Batch A)**: Wire in the new approved legal content to the existing frontend legal pages. Use the provided artifacts (,  (source of truth for Privacy), , , ).
+- **P0: Fresh Screenshots (Batch B)**: Seed a clean demo account on the backend using the persona Margaret, classification 4 with tidy statements/numbers. Capture fresh screenshots of the live preview dashboard to replace the outdated hero and dashboard images on the Homepage.
+- **P1: Provider Comparison Explainer**: Add a plain-English page showing how the Provider Price Checker fairness score is calculated, designed to win more SEO traffic.
+
+*(Note: The user explicitly approved the execution order: C → D → A → B. C and D-part-1 are done. D-part-2 is next, followed by A, then B).*
+
+**Completed work in this session**:
+- Finalized Pricing page redesign tweaks (smaller headline, clay underline, scroll animations) in  (DONE)
+- Batch C: Features page redesign (re-grouped around Statement Decoder & Smart Summaries by pain-point, removed plan matrix) in  (DONE)
+- Batch C: About page redesign (tighter text, clay contrast, removed Section VIII) in  (DONE)
+- Batch D (Part 1): FAQ Hub redesign (Title Case, category quick-nav, animations) in  (DONE)
+- Batch D (Part 1): Demo page redesign (removed Adviser tab, fixed copy, added animations) in  (DONE)
+- Batch D (Part 1): Support at Home levels updated (detailed financial impacts, Title Case, Reviewed by: confirmed) in  and  (DONE)
+- Batch D (Part 1): Ask Wayly page redesign (brand tokens, expanded SEO, mini-FAQ, animations) in  (DONE)
+- Quick UI Fixes: Reduced Homepage Hero font size (), made footer tagline one line (), added explicit  to logos (, ) (DONE)
+
+**Earlier issues found/mentioned but not fixed**:
+None.
+
+**Known issue recurrence from previous fork**:
+None.
+
+**Code Architecture**:
+- : FastAPI server (), LLM agents (), LLM guards ().
+- : React web frontend using Tailwind CSS. Marketing pages in . Reusable components in . Content data in .
+- : Expo React Native app.
+
+**Key Technical Concepts**:
+React, Expo (React Native), FastAPI, MongoDB, LiteLLM (Token Streaming / Server-Sent Events), Tailwind CSS, Framer Motion/CSS Animations (via ).
+
+**key DB schema**:
+- : base_plan, summary
+- 
+
+**changes in tech stack**:
+None.
+
+**All files of reference**:
+- , , , , ,  (Target files for Batch D part 2)
+- Uploaded Artifacts (Accessible via URL or ): , , , ,  (Target files for Batch A)
+
+**Areas that need refactoring**:
+None explicitly required at the moment.
+
+**key api endpoints**:
+- : SSE streaming endpoint for mobile Ask Wayly
+- : SSE streaming endpoint for Web Ask Wayly
+- : Care Plan Reviewer backend
+
+**Critical Info for New Agent**:
+- **Execution Order**: The user has requested the batches be executed in the exact order: **C → D → A → B**. C and D (Part 1) are complete. Start immediately on **D (Part 2)** (Content + SEO polish).
+- **Styling Rules**: Apply more clay color usage, proper Title Case capitalization, and widespread use of scroll animations () across the frontend. ALWAYS use  and  in text, never spell out dollars or percent.
+- **Scroll to top rule**: The user explicitly requested: every link clicked on the website frontend or backend should always take it to the top of the screen. The previous agent added this specifically to the logos. Keep an eye out if other nav links require explicit scrolling, though  is mounted globally.
+
+**documents and test reports created in this job**:
+-  (Passed frontend tests for Batch C & D part 1)
+- 
+
+**Last 10 User Messages and any pending HUMAN messages**:
+- User requested clarification on execution order, approved Margaret demo persona, and provided order C -> D -> A -> B.
+- Agent executed Batch C (Features/About redesign) and verified.
+- Agent executed Batch D Part 1 (FAQ, Demo, Support at Home, Ask Wayly) and verified via .
+- User requested 3 quick UI fixes (Hero font size, Footer 1-liner, logo scroll-to-top) and reminded agent of remaining tasks (Batch D part 2, Legal pages, Screenshots, Provider Comparison Explainer).
+- Agent implemented and verified the 3 quick UI fixes.
+- **Pending**: Agent needs to proceed with Batch D Part 2 (Content + SEO Polish).
+
+**Project Health Check**:
+Healthy. No mocked APIs.
+
+**3rd Party Integrations**:
+- Stripe (Payments) — requires User API Key (present in env)
+- LLMs via Emergent Integrations (Claude Sonnet/Haiku) — uses Emergent LLM Key
+
+**Testing status**:
+- Testing agent used after significant changes: YES (Verified frontend regressions in iteration_188.json with 100% pass).
+- Troubleshoot agent used after agent stuck in loop: NO
+- Test files created: None this session.
+- Known regressions: None
+
+**Credentials to test flow**:
+Use  (from ) for general testing.
+
+**What agent forgot to execute**:
+The agent implemented the explicit scroll-to-top on the *logos*, but the user stated: this applies to every nav and footer link. it should always go to the top. Verify if  handles in-page anchor/nav clicks correctly, or if explicit  needs to be added to the rest of the navigation links.</analysis>

@@ -1,0 +1,45 @@
+{
+  "summary": "Frontend-only verification of Wave 2 follow-up: §4.5 read-only banner, §4.7 Ask Wayly disabled state, §10 Timeline redesign. All 14 acceptance points pass. Single backend 402 regression on /api/public/budget-calc also passes.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "read_only_banner_public_hidden": "PASS — banner absent on /, /pricing, /ai-tools/budget-calculator (logged out)",
+    "read_only_banner_expired_user": "PASS — banner visible on /app, /app/statements, /app/timeline with exact copy 'Your trial has ended. Subscribe to use this tool.' Subscribe button (data-testid read-only-banner-subscribe) links to /pricing",
+    "read_only_banner_paid_user_hidden": "PASS — banner not present for cathy (family plan) on /app",
+    "ask_wayly_disabled_expired": "PASS — textarea placeholder exactly 'Subscribe to ask Wayly questions', textarea disabled=true, send button disabled=true",
+    "ask_wayly_active_paid": "PASS — placeholder 'Ask anything…', textarea not disabled for cathy",
+    "timeline_header": "PASS — data-testid timeline-h1 with text 'Your Timeline' + calm intro paragraph",
+    "timeline_filter_chips": "PASS — container timeline-filters present; all 6 chips in order: all, statements, care_plan, reassessments, contributions, providers; aria-pressed & data-selected toggle correctly on click",
+    "timeline_event_cards": "PASS — 20 cards rendered for cathy with large date column (Jun + day), Title Case title with category icon, plain-English summary, 13 'Tell Me More' buttons, detail panel toggles correctly with timeline-detail testid",
+    "timeline_month_grouping": "PASS — h2 with id 'timeline-month-June 2026' text 'June 2026'",
+    "timeline_empty_filtered": "NOT TRIGGERED — cathy has a reassessment event in seed, so empty-filtered state can't be exercised. Code path is implemented and correctly returns timeline-empty-filtered + timeline-empty-clear-filter with 'Show All Events' label when filteredItems.length === 0 && filter !== 'all'",
+    "timeline_empty_no_events": "NOT TRIGGERED in run — would require fresh user with no household. Component code implements timeline-empty with h2 'Nothing Here Yet' and the §10 verbatim body copy.",
+    "timeline_sticky_add_event_expired": "PASS — link data-testid timeline-add-event has aria-disabled='true' and cursor-not-allowed + opacity-reduced class for expired user; onClick preventDefault stops navigation",
+    "timeline_sticky_add_event_paid": "PASS — link href='/app/scenario/new', no aria-disabled, Clay background (#A5512B via bg-wayly-clay-500), white label, Plus icon",
+    "timeline_skeleton": "CODE VERIFIED — component renders TimelineSkeleton with data-testid timeline-skeleton (animate-pulse shimmer, no spinner). Could not visually catch during run due to fast API response on the preview environment; CDP network throttling did not delay the timeline GET enough to observe.",
+    "backend_402_regression": "PASS — POST /api/public/budget-calc {classification:4} with expired-trial bearer returns HTTP 402 with body detail.error='trial_expired', detail.message='Your trial has ended. Subscribe to continue.', detail.upgrade_url='/pricing'"
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ParticipantTimeline data-testid uses a non-URL-friendly id ('timeline-month-June 2026' contains a space). h2 id and aria-labelledby work but querySelector by id needs CSS.escape. Consider slugifying the id like the data-testid already does (timeline-month-june-2026). Not a blocker.",
+    "useExpiredTrial correctly hides banner for solo/family/adviser plans even when stale subscription_status='expired' lingers, matching brief §4.6. Good defensive fallback.",
+    "Timeline IntersectionObserver sentinel created without filtering on errored state — minor: if errored=true and tl=null, sentinelRef is null so observe() is skipped. Safe.",
+    "FloatingHelpChat: disabled state is correctly enforced on both textarea and send button. Good."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (1/1 regression)", "frontend": "100% (12/12 testable points; 2 empty-state branches not exercisable with current seed but code verified)"},
+  "test_credentials": "Used trial30909@example.com / TrialPass1! (expired-trial) and cathy@example.com / testpass123 (family) — both worked.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Wave 2 §4.5 (read-only banner), §4.7 (Ask Wayly disabled), and §10 (Timeline redesign) are fully verified at 100%. Empty-state branches (timeline-empty for brand-new accounts, timeline-empty-filtered when filter has no matches) were not visually exercised but code paths are correct. Login API returns token under key 'token' (NOT 'access_token'); localStorage key is 'kindred_token'. The timeline-month section id contains a space ('timeline-month-June 2026') — selectors must escape or use attribute matchers.",
+  "rca_of_the_issue": "N/A — no issues found."
+}

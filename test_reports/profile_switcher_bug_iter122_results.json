@@ -1,0 +1,22 @@
+{
+  "primary_profile_flow": [
+    "Cathy login succeeded",
+    "Backend profile APIs exposed Dorothy/Mum and Robert profile truth",
+    "Dorothy direct profile loaded and persisted active id 0c538637-b0dd-4982-8f78-b32814c6a5eb",
+    "Direct Robert URL won over persisted Dorothy: URL /app/participants/seed-robert_kowalski-f0844844, localStorage Robert, chip Robert, H1 Robert's profile",
+    "Profile nav highlighted on Robert canonical route",
+    "Switcher click from Robert to Dorothy updated URL path /app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb, localStorage Dorothy, chip Dorothy, H1 Mum's profile",
+    "Profile nav remained highlighted after switcher click",
+    "Direct Robert URL still won after Dorothy persisted",
+    "/app/me redirected to active Robert and Profile nav was highlighted"
+  ],
+  "cascade_flow": [
+    "ATHM projects request used /api/athm1/participants/seed-robert_kowalski-f0844844/projects with X-Participant-Id Robert",
+    "CSC switch to Dorothy cleared HCP/hospital toggle state",
+    "Ask Wayly /api/aw2/context request carried X-Participant-Id Robert",
+    "LF-2 generate-chain POST payload contained participant_id 0c538637-b0dd-4982-8f78-b32814c6a5eb and not Robert",
+    "BC-2 dashboard widget fetched /api/bc2/participants/seed-robert_kowalski-f0844844/projection with X-Participant-Id Robert"
+  ],
+  "failures": [],
+  "mocked_apis": false
+}

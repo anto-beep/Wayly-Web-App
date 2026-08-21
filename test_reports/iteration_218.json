@@ -1,0 +1,35 @@
+{
+  "summary": "Mobile-only testing of the login screen changes and new /forgot-password screen. Verified: (1) 'Welcome Back' and 'Sign in to your account' texts are REMOVED from /login. (2) 'Forgot Password?' link (testID login-forgot-password) is present on /login, correctly navigates to /forgot-password. (3) /forgot-password shows initial title 'Forgot your password?' (forgot-title), email field (forgot-email-input), 'Send reset link' (forgot-submit), and top back link (forgot-back). (4) Empty-submit shows inline error (forgot-error 'Please enter your email.') and does NOT transition. (5) Submitting a unique QA email successfully POSTs /api/auth/forgot (200 {ok:true}) and transitions to sent state — title becomes 'Check your email', resend button (forgot-resend) present, shows 'Resend in 57s' text and is disabled during 60s cooldown, and 'Back to Sign In' (forgot-goto-login) returns to /login via router.replace. (6) Regression: cathy@example.com / testpass123 logs in successfully. Backend /api/auth/forgot verified via curl (returns {ok:true}, 200).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter218_login_screen.png",
+    "/app/test_reports/iter218_forgot_screen.png",
+    "/app/test_reports/iter218_forgot_sent.png",
+    "/app/test_reports/iter218_after_login.png"
+  ],
+  "action_items": [
+    "Optional/minor: forgot-back (top 'Back to Sign In' link on the initial state of /forgot-password) uses router.back(). If a user deep-links directly to /forgot-password (no navigation history), the button becomes a no-op and logs 'The action GO_BACK was not handled by any navigator.' In the normal user flow (login → tap Forgot Password), history exists and back() works correctly. Consider using router.replace('/login') as a fallback for the deep-link case (mirrors the sent-state forgot-goto-login handler). Not a blocker — from the requested flow (login → forgot → back) the button works."
+  ],
+  "critical_code_review_comments": [
+    "forgot-password.tsx line 46: router.back() is not resilient to deep-link entry; consider `router.canGoBack() ? router.back() : router.replace('/login')` for parity with the sent-state Back-to-Sign-In handler that already uses router.replace.",
+    "Enumeration-safe copy on the sent state is correctly neutral ('If an account with that email exists…'), matching backend behaviour of always returning {ok:true}. Good parity with web /forgot page."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (login regression). Unique qa+<rand>@example.com used for /forgot-password submit to avoid 429 rate limit.",
+  "seed_data_creation": "None. Used throwaway qa+<random>@example.com per system-prompt guidance.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All requested acceptance criteria for the mobile login + forgot-password changes pass. Only cosmetic follow-up is the optional deep-link fallback for forgot-back described in action_items. /api/auth/forgot is enumeration-safe and rate-limited (~3/hr per email) — always use unique qa+<rand>@example.com for repeated submit tests.",
+  "rca of the issue": ""
+}

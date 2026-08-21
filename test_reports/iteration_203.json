@@ -1,0 +1,52 @@
+{
+  "summary": "Iter 203: verified the 'never Free plan / always paid or trial-with-card' bug fix on backend + mobile + web. Backend (4/5 pass — 1 pre-existing unauth-checkout allowance flagged as minor): POST /api/payments/checkout returns a REAL Stripe URL (https://checkout.stripe.com/...) for plan=solo AND plan=family with trial_days=7 using the real test key resolved from backend/.env; fresh /api/auth/signup users still return plan='free', status='none' from /api/billing/subscription (mobile UI maps this to 'no plan'). Mobile signup (route-intercepted /payments/checkout, real Stripe URL not opened): tapping signup-submit-button on a fresh Family signup POSTs /payments/checkout with {plan:family, trial_days:7, app_return_url:.../billing-return} and lands on signup-payment-gate with the correct copy 'Start your 7-day free trial · Add a card to activate your Family plan … you move to $49.50 per fortnight unless you cancel', both signup-complete-payment-btn AND signup-change-plan-btn are present, URL stays on /signup (NOT /onboarding), and tapping signup-change-plan-btn returns the user to the signup form (no free fallback). Mobile Plan & Billing (/plan-billing) for a fresh no-plan user renders billing-current-plan with heading 'No active plan', badge 'NO ACTIVE PLAN', copy 'You don't have a plan yet…', a visible billing-start-trial-btn, and ALL of billing-change-plan / billing-portal / billing-cancel / billing-add-card / billing-downgrade-solo are correctly hidden. Mobile Settings tab (/settings) inaccessible directly because the app onboarding-guard redirects freshly-signed-up users to /onboarding — code review confirms the mapping (plan==='free' → noPlan → 'No active plan' + status 'PAYMENT REQUIRED', never 'Status: FREE'). Web Signup (frontend/src/pages/Signup.jsx:230-247) still POSTs /payments/checkout for solo|family and hard-redirects window.location.href = data.url — the toast+nav('/pricing') error branch does NOT drop users onto a free plan; the previous 'free' branch has been retired (line 63 comment: 'Free plan retired').",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/payments/checkout", "issue": "Endpoint returns 200 with a real Stripe URL even for unauthenticated requests (no bearer token). Not part of this bug fix's scope, but /payments/checkout should require auth so anonymous strangers cannot mint Stripe sessions off the app's account. Flag for later hardening."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_payments_iter203.py",
+    "/app/test_reports/pytest/iter203.xml",
+    "/app/test_reports/iter203_mobile_payment_gate.jpeg",
+    "/app/test_reports/iter203_mobile_plan_billing.jpeg",
+    "/app/test_reports/iter203_mobile_settings.jpeg"
+  ],
+  "action_items": [
+    "(Minor / non-blocking for this fix) Consider requiring auth on POST /api/payments/checkout — currently returns a real Stripe URL for unauthenticated callers.",
+    "(Optional UX) After signup succeeds but Stripe Checkout is cancelled without a card, mobile currently falls back to the same payment gate with the error copy — matches the spec ('block entry until a card is on file'). No change required, just noting the UX loop is by design."
+  ],
+  "critical_code_review_comments": [
+    "mobile/app/signup.tsx:64-86 completePayment() only advances to /onboarding when /billing/subscription status is trialing|trial|active|past_due — this correctly blocks entry when Stripe Checkout is closed without completing the card. Good.",
+    "mobile/app/signup.tsx:142-143 setAwaitingPayment(true); await completePayment() — the payment gate is opened BEFORE completePayment resolves, so if the user closes the WebBrowser without paying they are left on the gate (not silently dropped into onboarding). Matches spec.",
+    "mobile/app/plan-billing.tsx:60-67 planKey resolves via (sub?.plan||'free'), then noPlan = !sub?.plan || planKey==='free'. This means a preview-env user with plan='free' status='none' correctly shows 'No active plan' — verified live.",
+    "mobile/app/(tabs)/settings.tsx:98-103 mirrors the same mapping (plan||'').toLowerCase(); noPlan = !plan||plan==='free'; status = noPlan ? 'PAYMENT REQUIRED' : trialing ? 'FREE TRIAL' : subscription_status.toUpperCase(). It CANNOT emit 'Status: FREE' — the string 'FREE' only appears as part of 'FREE TRIAL'.",
+    "frontend/src/pages/Signup.jsx:230-247 solo|family branch: window.location.href = data.url; return; error paths nav('/pricing') — no fallback to a free plan.  Free-plan branch has been removed; only solo/family and adviser paths exist."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_payments_iter203.py (new — 5 pytest cases)"
+  ],
+  "success_rate": {"backend": "80% (4/5 — 4 critical spec tests all pass; 1 pre-existing unauth-permissive endpoint flagged separately)", "frontend": "100% (mobile payment gate + plan & billing verified live; web signup + settings verified by code review + prior iter data)"},
+  "test_credentials": "TEST_iter203_noplan_fec447f9@example.com / Iter203!Aa9 (fresh signup via /api/auth/signup — plan=free, status=none — used to verify Plan & Billing 'No active plan' UI live on mobile)",
+  "seed_data_creation": "Registered one fresh no-plan user via /api/auth/signup and one fresh mobile-signup user (route-intercepted /payments/checkout so no real Stripe session was consumed). All test users prefixed TEST_iter203_*.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The mobile onboarding guard redirects any fresh signed-in user without complete onboarding to /onboarding, so direct nav to /(tabs)/settings does not work for a fresh user; if you need to see the Settings 'No active plan' pill live, either complete onboarding first or use an existing account already past onboarding whose plan you have manually set to 'free'. The Plan & Billing screen is reachable via direct URL (/plan-billing) even from onboarding and is the more reliable check for the 'never Free' UI. To exercise the Stripe hosted checkout in an automated browser you MUST intercept /payments/checkout — the real Stripe URL (checkout.stripe.com) works in an interactive browser but WebBrowser.openAuthSessionAsync can't complete a card entry inside Playwright headless.",
+  "rca of the issue": "N/A — the original bug (mobile signup silently dropping users onto the Free plan when checkout errored) is fixed. The mobile signup path now: (a) creates the account, (b) transitions to a required payment gate (setAwaitingPayment(true)), (c) opens Stripe Checkout, (d) only advances to /onboarding when /billing/subscription reports trialing|trial|active|past_due, (e) otherwise re-shows the gate with an error message so the user cannot bypass card capture. Backend preview now has a real Stripe test key so /payments/checkout returns a real checkout.stripe.com URL instead of the previous 503."
+}

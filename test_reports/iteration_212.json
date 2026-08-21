@@ -1,0 +1,44 @@
+{
+  "summary": "PARITY-1 follow-ups verified on WEB (mobile already self-verified by main agent). (1) SUMMARY UNIFICATION — SmartAISummary now renders a single 'Wayly Summary' heading (no eyebrow) on every list/dashboard page tested (InvoicesList, StatementsList, Dashboard, BudgetScenarios). No occurrences of 'Your Wayly Insight' or 'SMART SUMMARY' anywhere. Statement Detail correctly renders NO SmartAISummary card (only DecoderResultView area with 'In plain English' when stmt.summary is set) and still loads with SD3V2StreamPanel + DecoderResultView + StatementRightsPanel (no runtime error from removed import). Invoice Detail shows EXACTLY ONE 'Wayly Summary' (the native summary_md card). (2) REAL INVOICE TOTALS — Invoice Detail banner on cathy's invoice a0b36408 shows Amount billed $1,791.36 / Net payable $1,658.46 (real, non-zero). Backend test confirms GET /api/invoices/{id} returns reconciliation.invoice_total == sum(line.gross_cost) for cathy's invoices.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_parity1_wayly_summary.py",
+    "/app/test_reports/pytest/iter212_parity1.xml",
+    "/app/test_reports/iter212_invoice_detail_v2.jpg",
+    "/app/test_reports/iter212_statement_detail_v2.jpg"
+  ],
+  "action_items": [
+    "Optional cleanup: /app/frontend/src/components/SmartAISummary.jsx JSDoc (lines 17-18) still documents old defaults ('Your Wayly Insight' / 'SMART SUMMARY'). Update the docstring to reflect the new default title='Wayly Summary' and eyebrow=''. No functional impact.",
+    "Unrelated pre-existing console warning on BudgetScenarios: React hydration warning about <span> nested inside <option> (BudgetScenarios.jsx:280). Not introduced by this change but visible in console — worth cleaning up when touching that page."
+  ],
+  "critical_code_review_comments": [
+    "SmartAISummary now renders no eyebrow by default (empty string), which matches the founder directive ('single heading Wayly Summary'). All 9 caller pages leave title/eyebrow at default — good.",
+    "Backend backfill in /app/backend/routes/invoices.py (line 348-357) correctly patches legacy invoice docs missing reconciliation.invoice_total on GET.",
+    "StatementDetail.jsx no longer imports SmartAISummary — verified no reference remains; page renders cleanly."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_parity1_wayly_summary.py (new pytest module)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Web parity fully validated for PARITY-1 follow-ups: unified 'Wayly Summary' heading + real invoice totals ($1,791.36 / $1,658.46 confirmed). Backend test in /app/backend/tests/test_parity1_wayly_summary.py can be re-run with REACT_APP_BACKEND_URL env var. Mobile side was self-verified by main agent per iteration_211 context and not re-tested here.",
+  "rca of the issue": ""
+}

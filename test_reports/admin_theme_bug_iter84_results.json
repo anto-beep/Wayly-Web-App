@@ -1,0 +1,246 @@
+{
+  "base_url": "https://statement-checker-3.preview.emergentagent.com",
+  "admin_email_used": "hello@techglove.com.au",
+  "checks": [
+    {
+      "name": "admin login renders light theme",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/login",
+        "rootTheme": "light",
+        "storedTheme": null,
+        "rootBg": "rgb(251, 248, 243)",
+        "rootColor": "rgb(14, 42, 44)",
+        "topbarLightPressed": null,
+        "topbarSystemPressed": null,
+        "topbarDarkPressed": null,
+        "prefsLightChecked": null,
+        "prefsSystemChecked": null,
+        "prefsDarkChecked": null,
+        "activeThemeText": null,
+        "root_contrast": 14.3
+      }
+    },
+    {
+      "name": "first authenticated admin visit defaults to light when localStorage theme is absent",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin",
+        "rootTheme": "light",
+        "storedTheme": null,
+        "rootBg": "rgb(251, 248, 243)",
+        "rootColor": "rgb(14, 42, 44)",
+        "topbarLightPressed": "true",
+        "topbarSystemPressed": "false",
+        "topbarDarkPressed": "false",
+        "prefsLightChecked": null,
+        "prefsSystemChecked": null,
+        "prefsDarkChecked": null,
+        "activeThemeText": null,
+        "root_contrast": 14.3
+      }
+    },
+    {
+      "name": "preferences page exists with both theme controls visible",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/preferences",
+        "rootTheme": "light",
+        "storedTheme": null,
+        "rootBg": "rgb(251, 248, 243)",
+        "rootColor": "rgb(14, 42, 44)",
+        "topbarLightPressed": "true",
+        "topbarSystemPressed": "false",
+        "topbarDarkPressed": "false",
+        "prefsLightChecked": "true",
+        "prefsSystemChecked": "false",
+        "prefsDarkChecked": "false",
+        "activeThemeText": "Active themelight"
+      }
+    },
+    {
+      "name": "repro A prefs dark updates top-bar dark immediately",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/preferences",
+        "rootTheme": "dark",
+        "storedTheme": "dark",
+        "rootBg": "rgb(5, 35, 39)",
+        "rootColor": "rgb(251, 248, 243)",
+        "topbarLightPressed": "false",
+        "topbarSystemPressed": "false",
+        "topbarDarkPressed": "true",
+        "prefsLightChecked": "false",
+        "prefsSystemChecked": "false",
+        "prefsDarkChecked": "true",
+        "activeThemeText": "Active themedark"
+      }
+    },
+    {
+      "name": "repro A prefs light updates top-bar light immediately",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/preferences",
+        "rootTheme": "light",
+        "storedTheme": "light",
+        "rootBg": "rgb(251, 248, 243)",
+        "rootColor": "rgb(14, 42, 44)",
+        "topbarLightPressed": "true",
+        "topbarSystemPressed": "false",
+        "topbarDarkPressed": "false",
+        "prefsLightChecked": "true",
+        "prefsSystemChecked": "false",
+        "prefsDarkChecked": "false",
+        "activeThemeText": "Active themelight"
+      }
+    },
+    {
+      "name": "repro B top-bar dark updates prefs dark immediately",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/preferences",
+        "rootTheme": "dark",
+        "storedTheme": "dark",
+        "rootBg": "rgb(5, 35, 39)",
+        "rootColor": "rgb(251, 248, 243)",
+        "topbarLightPressed": "false",
+        "topbarSystemPressed": "false",
+        "topbarDarkPressed": "true",
+        "prefsLightChecked": "false",
+        "prefsSystemChecked": "false",
+        "prefsDarkChecked": "true",
+        "activeThemeText": "Active themedark"
+      }
+    },
+    {
+      "name": "repro B top-bar light updates prefs light immediately",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/preferences",
+        "rootTheme": "light",
+        "storedTheme": "light",
+        "rootBg": "rgb(251, 248, 243)",
+        "rootColor": "rgb(14, 42, 44)",
+        "topbarLightPressed": "true",
+        "topbarSystemPressed": "false",
+        "topbarDarkPressed": "false",
+        "prefsLightChecked": "true",
+        "prefsSystemChecked": "false",
+        "prefsDarkChecked": "false",
+        "activeThemeText": "Active themelight"
+      }
+    },
+    {
+      "name": "prefs system updates top-bar system immediately",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/preferences",
+        "rootTheme": "system",
+        "storedTheme": "system",
+        "rootBg": "rgb(5, 35, 39)",
+        "rootColor": "rgb(251, 248, 243)",
+        "topbarLightPressed": "false",
+        "topbarSystemPressed": "true",
+        "topbarDarkPressed": "false",
+        "prefsLightChecked": "false",
+        "prefsSystemChecked": "true",
+        "prefsDarkChecked": "false",
+        "activeThemeText": "Active themesystem"
+      }
+    },
+    {
+      "name": "top-bar system updates prefs system immediately",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/preferences",
+        "rootTheme": "system",
+        "storedTheme": "system",
+        "rootBg": "rgb(5, 35, 39)",
+        "rootColor": "rgb(251, 248, 243)",
+        "topbarLightPressed": "false",
+        "topbarSystemPressed": "true",
+        "topbarDarkPressed": "false",
+        "prefsLightChecked": "false",
+        "prefsSystemChecked": "true",
+        "prefsDarkChecked": "false",
+        "activeThemeText": "Active themesystem"
+      }
+    },
+    {
+      "name": "theme choice persists after full reload",
+      "ok": true,
+      "details": {
+        "url": "https://statement-checker-3.preview.emergentagent.com/admin/preferences",
+        "rootTheme": "dark",
+        "storedTheme": "dark",
+        "rootBg": "rgb(5, 35, 39)",
+        "rootColor": "rgb(251, 248, 243)",
+        "topbarLightPressed": "false",
+        "topbarSystemPressed": "false",
+        "topbarDarkPressed": "true",
+        "prefsLightChecked": "false",
+        "prefsSystemChecked": "false",
+        "prefsDarkChecked": "true",
+        "activeThemeText": "Active themedark"
+      }
+    },
+    {
+      "name": "dark overview h1 and stat labels meet requested contrast",
+      "ok": true,
+      "details": {
+        "overview_h1": {
+          "selector": "h1",
+          "bgSelector": ".admin-root",
+          "text": "Overview",
+          "color": "rgb(251, 248, 243)",
+          "backgroundColor": "rgb(5, 35, 39)",
+          "rootTheme": "dark"
+        },
+        "total_label": {
+          "selector": "[data-testid=\"card-total-users\"] .admin-stat-label",
+          "bgSelector": "[data-testid=\"card-total-users\"]",
+          "text": "Total users",
+          "color": "rgb(184, 221, 222)",
+          "backgroundColor": "rgb(7, 46, 49)",
+          "rootTheme": "dark"
+        },
+        "mrr_label": {
+          "selector": "[data-testid=\"card-mrr\"] .admin-stat-label",
+          "bgSelector": "[data-testid=\"card-mrr\"]",
+          "text": "MRR (AUD)",
+          "color": "rgb(184, 221, 222)",
+          "backgroundColor": "rgb(7, 46, 49)",
+          "rootTheme": "dark"
+        },
+        "ratios": {
+          "h1": 15.53,
+          "total_users_label": 10.0,
+          "mrr_label": 10.0
+        }
+      }
+    },
+    {
+      "name": "dark feature flags h1 meets requested contrast",
+      "ok": true,
+      "details": {
+        "feature_flags_h1": {
+          "selector": "h1",
+          "bgSelector": ".admin-root",
+          "text": "Feature Flags (0)",
+          "color": "rgb(251, 248, 243)",
+          "backgroundColor": "rgb(5, 35, 39)",
+          "rootTheme": "dark"
+        },
+        "contrast": 15.53
+      }
+    }
+  ],
+  "failures": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "passed": true
+}

@@ -1,0 +1,41 @@
+{
+  "summary": "Mobile-only round covering (a) MOBILE participant switcher visibility + switching, (b) MOBILE notifications open + decrement flow, (c) full MOBILE Stripe billing mirror of web iter138/iter148 against the shared backend, and (d) SEO-2 403 regression. Backend pytest: 15 passed, 1 skipped (see notes). Mobile Expo web preview: participant-switcher renders as full-width bar at the very top of the scroll (bbox y=214, height=82) with 'VIEWING CARE FOR Mum' + 'Switch' pill; tapping opens the switch sheet with testID 'participant-option-<id>' options, and selecting Patricia Holloway (Classification 3, Acacia Aged Care) re-scopes the dashboard header to 'Patricia Holloway's care' as expected. Header bell (testID 'header-notifications') opens NotificationsSheet with 30 items, each carrying testID 'notification-item-<id>'; tapping the first item navigates to /statements (the item's link) and the read is POSTed. 'notifications-mark-all-read' is correctly conditionally-rendered only when unread > 0 (verified in /app/mobile/src/components/NotificationsSheet.tsx:38–43); the empty state 'notifications-empty' testID is wired. Stripe checkout returns real cs_test_ URLs for solo AND family for authenticated + guest + free (read-only middleware EXEMPTS /api/payments/); unknown plan rejected 4xx; webhook rejects both missing-signature (400) and bogus-signature (400 'Invalid Stripe signature'); portal/cancel/reactivate correctly return 400 for a user with no Stripe subscription; invoices returns {invoices:[]}. GET /api/billing/subscription and /api/billing/trial-eligibility both 200 with sane payloads. Internal SEO endpoint returns 403 for a wrong X-Internal-Token as required (no external IndexNow ping performed).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter192_mobile_stripe_notifications.py",
+    "/app/test_reports/pytest/iter192.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "cathy@example.com currently exposes only 2 ACTIVE participants (Mum + Patricia Holloway) in the mobile participant switcher — the credentials note claims 3 (Mum, Robert Kowalski, Patricia Holloway). Robert Kowalski is not shown. Not a UI bug; may be state drift in the seed data. If the intent is 3, the seed script for cathy needs to re-add Robert Kowalski as ACTIVE.",
+    "backend/routes/payments.py webhook responds with 'Invalid Stripe signature' (and separately 'Missing Stripe-Signature header' when the header is absent). The problem statement mentions the phrase 'invalid signature' — matches functionally, wording differs. Consider aligning the two error messages if any client-side match relies on the exact 'invalid signature' string.",
+    "NotificationsSheet.tsx:38 correctly hides 'Mark all read' when unread==0. Recommend also showing a subtle disabled placeholder or 'You're all caught up' hint to keep the header layout stable.",
+    "Read-only middleware exemption for /api/payments/ is confirmed by the free-user checkout test — good, this is the exact behavior needed so free/expired users can start a subscription without hitting a 402."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter192_mobile_stripe_notifications.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 executed; 1 skipped intentionally due to prior test zeroing unread)",
+    "frontend": "100% mobile checks passed (participant switcher, notifications open+decrement+navigate, participant switching re-scopes dashboard)"
+  },
+  "test_credentials": "cathy@example.com/testpass123, mobpay.family@example.com/MobPay1!, mobpay.solo@example.com/MobPay1!, mobpay.free@example.com/MobPay1! — all valid",
+  "seed_data_creation": "None — all mobpay.* test users already existed from prior iterations; three Stripe cs_test_ sessions were created (harmless test-mode sessions). Notifications for cathy were mark-all-read'd by the backend suite; if the next mobile UI run needs unread badge visible again, re-seed via db.notifications.updateMany({user_id: <cathy_id>}, {$set:{read:false}}).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile login is at /login (NOT /signin). Cathy has only 2 active participants in the current preview state (Mum + Patricia Holloway); if the switcher spec demands 3, re-add Robert Kowalski. Backend pytest suite for this round is at /app/backend/tests/test_iter192_mobile_stripe_notifications.py and is safe to re-run (idempotent except for the mark-all-read side effect on cathy's notifications). Stripe is in test mode; POST /api/payments/checkout returns a real cs_test_ URL — do NOT try to complete the hosted checkout via automation, just verify the URL is returned. NotificationsSheet.tsx conditionally renders 'Mark all read' only when unread>0 — to test that testID, seed at least one unread first.",
+  "rca of the issue": "N/A — no bugs found. The one 'skipped' backend test (test_notifications_mark_single_decrements_unread) initially PASSED in the first execution; the skip on the second run is expected because the immediately-preceding mark-all-zero test drained unread to 0. Test order (decrement → mark-all) matches the spec's stated flow and both behaviors are individually verified."
+}

@@ -1,0 +1,48 @@
+{
+  "summary": "Frontend-only verification of Wayly greeting + mobile trial banner + Plan & Billing polish + shadow* console cleanup. Web and mobile dashboard greetings work (Good morning/afternoon/evening + first name, testID dashboard-greeting). Mobile trial banner logic is correct: absent for non-trial cathy@example.com; present as amber strip on dashboard AND on other tabs (statements) once a fresh account starts a trial; tap routes to /plan-billing. Plan & Billing trial countdown (billing-trial-countdown = '7 days left in your free trial ... Ends 23 August 2026...') and billing-add-card ('Add a card now') render correctly, and billing-portal is still present. Zero 'shadow*' RN-web deprecation warnings observed on dashboard, statements, or plan-billing screens. ONE HIGH-PRIORITY BUG: tapping billing-add-card (and billing-portal) on mobile hits /api/portal which returns 404 — the correct backend endpoint is /api/payments/portal. This blocks the 'one-tap Add a card now' Stripe portal flow.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "PlanBillingScreen", "issue": "Tapping 'Add a card now' (testID billing-add-card) and 'Manage card & billing' (testID billing-portal) calls apiFetch('/portal', ...) which resolves to GET/POST /api/portal → 404 Not Found. Screen shows red 'Not Found' error under the trial countdown. The actual Stripe portal endpoint is /api/payments/portal. Fix in /app/mobile/app/plan-billing.tsx:71 by changing apiFetch<>('/portal', ...) to apiFetch<>('/payments/portal', ...).", "testID": "billing-add-card", "priority": "HIGH"}
+      ],
+      "integration_issues": [
+        {"flow": "Stripe billing portal (Add a card now / Manage card & billing)", "issue": "/api/portal → 404. Should call /api/payments/portal. Confirmed via network log: '404 https://statement-checker-3.preview.emergentagent.com/api/portal'.", "affected_testIDs": ["billing-add-card", "billing-portal"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Stripe billing portal", "platform": "mobile", "issue": "Web opens Stripe portal successfully; mobile fails with 404 because mobile calls /api/portal instead of /api/payments/portal.", "expected": "Tapping 'Add a card now' opens external Stripe portal in expo-web-browser.", "actual": "Mobile shows 'Not Found' error message under the trial countdown."}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter161_web_dashboard.jpeg",
+    "/app/test_reports/iter161_mobile_cathy_dashboard.jpeg",
+    "/app/test_reports/iter161_trial_dash_final.jpeg",
+    "/app/test_reports/iter161_trial_billing.jpeg",
+    "/app/test_reports/iter161_trial_stmts.jpeg",
+    "/app/test_reports/iter161_addcard_tap.jpeg"
+  ],
+  "action_items": [
+    "Change /app/mobile/app/plan-billing.tsx line 71 from apiFetch<{...}>('/portal', ...) to apiFetch<{...}>('/payments/portal', ...) so 'Add a card now' and 'Manage card & billing' both hit the working backend endpoint. (Confirmed via curl: /api/payments/portal returns a valid response; /api/portal returns 404.)"
+  ],
+  "critical_code_review_comments": [
+    "Mobile portal call path drifts from backend route: TrialBanner and PlanBillingScreen depend on the same /portal path — a shared constant (e.g. BILLING_PORTAL_PATH = '/payments/portal') would prevent future drift.",
+    "TrialBanner cache TTL is 45s (good), but starting a trial in /plan-select correctly calls invalidateTrialCache() — verified: banner appeared on dashboard within one navigation cycle after start-trial."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "95%"},
+  "test_credentials": "Cathy (non-trial): cathy@example.com / testpass123. Fresh trialing account created this run: mobtest1786870394@example.com / Wayly!2026x (Family, trialing, trial_ends_at 2026-08-23).",
+  "seed_data_creation": "Created via API: signup mobtest1786870394@example.com, POST /api/billing/start-trial (family, 7 days), POST /api/household (participant MobTest Cato, Classification 4, BlueBerry Care, full_pension).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Greeting (web + mobile) and trial banner (mobile) are fully working. Only remaining issue is the /portal → /payments/portal path in /app/mobile/app/plan-billing.tsx (line 71). Same file also uses openPortal for the 'Manage card & billing' outline button so both testIDs (billing-add-card, billing-portal) will be fixed by the single path change. After E1 fixes, retest by logging in as the trial user above and tapping billing-add-card — should open Stripe portal in expo-web-browser (external) instead of showing 'Not Found'.",
+  "rca of the issue": "In /app/mobile/app/plan-billing.tsx openPortal() calls apiFetch<>('/portal', ...) which becomes ${EXPO_PUBLIC_BACKEND_URL}/api/portal. The backend only exposes the Stripe billing portal at /api/payments/portal (confirmed in /app/backend/routes/payments.py line 211). Result: 404 Not Found, surfaced in the UI as a red 'Not Found' line. Reproduction: login as trialing user → /plan-billing → tap 'Add a card now'. Mitigation: change the path string to '/payments/portal'."
+}

@@ -1,0 +1,79 @@
+{
+  "base_url": "https://statement-checker-3.preview.emergentagent.com",
+  "skill_lookup": "Loaded ai-testing-core; AI generation features were not in scope for this UI/auth CTA regression.",
+  "code_review": {
+    "ToolExplainer.jsx": "imports useAuth, reads { user }, wraps tool CTA in {!user && (...)}, and outer data-testid tool-explainer container has class 'space-y-16 mt-16 pb-20'.",
+    "AuthContext.jsx": "login stores user in context/localStorage token; bootstrap uses /auth/me when kindred_token exists. AIToolsRoute waits for loading before rendering tools."
+  },
+  "api_auth_smoke": {
+    "POST /api/auth/login": 200,
+    "email": "cathy@example.com",
+    "has_token": true
+  },
+  "anonymous_ui": [
+    {
+      "slug": "invoice-checker",
+      "selector": "[data-testid='tool-cta-invoice-checker']",
+      "prefix_count": 2,
+      "exact_count": 1,
+      "visible": true,
+      "explainer_class": "space-y-16 mt-16 pb-20",
+      "padding_bottom": "80px",
+      "footer_exists": true,
+      "gap_last_to_footer_px": 80,
+      "cta_text_contains": "Start Your 7-Day Free Trial"
+    },
+    {
+      "slug": "statement-decoder",
+      "selector": "[data-testid='tool-cta-statement-decoder']",
+      "prefix_count": 2,
+      "exact_count": 1,
+      "visible": true,
+      "explainer_class": "space-y-16 mt-16 pb-20",
+      "padding_bottom": "80px",
+      "footer_exists": true,
+      "gap_last_to_footer_px": 455,
+      "cta_text_contains": "Start Your 7-Day Free Trial"
+    }
+  ],
+  "authenticated_ui": {
+    "login": {
+      "email": "cathy@example.com",
+      "token_present": true,
+      "path_after_login": "/app"
+    },
+    "pages": [
+      {
+        "slug": "invoice-checker",
+        "selector": "[data-testid^='tool-cta-']",
+        "prefix_count": 0,
+        "exact_count": 0,
+        "explainer_class": "space-y-16 mt-16 pb-20",
+        "padding_bottom": "80px",
+        "footer_exists": true,
+        "gap_last_to_footer_px": 80
+      },
+      {
+        "slug": "statement-decoder",
+        "selector": "[data-testid^='tool-cta-']",
+        "prefix_count": 0,
+        "exact_count": 0,
+        "explainer_class": "space-y-16 mt-16 pb-20",
+        "padding_bottom": "80px",
+        "footer_exists": true,
+        "gap_last_to_footer_px": 455
+      },
+      {
+        "slug": "care-plan-reviewer",
+        "selector": "[data-testid^='tool-cta-']",
+        "prefix_count": 0,
+        "exact_count": 0,
+        "explainer_class": "space-y-16 mt-16 pb-20",
+        "padding_bottom": "80px",
+        "footer_exists": true,
+        "gap_last_to_footer_px": 455
+      }
+    ]
+  },
+  "browser_automation_note": "Direct Python Playwright script could not launch because Chromium browser binary was not installed in this container; the same flows were executed with the provided mcp_browser_automation Playwright runner."
+}
