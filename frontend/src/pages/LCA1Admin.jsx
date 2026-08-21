@@ -11,6 +11,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import Skeleton from "@/components/Skeleton";
 import { formatDate } from "@/lib/formatDate";
+import { labelize } from "@/lib/labels";
 import { AlertOctagon, Plus, Eye, Send, X as XIcon, ChevronLeft } from "lucide-react";
 
 const CATEGORIES = [
@@ -230,7 +231,7 @@ function ChangeEditor({ data, setData, onCancel, onSave, busy }) {
             </Field>
             <Field label="Category" required>
                 <select data-testid="lca1-admin-editor-category" value={data.category} onChange={(e) => set("category", e.target.value)} className="w-full input">
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{c.replace(/_/g, " ")}</option>)}
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{labelize(c)}</option>)}
                 </select>
             </Field>
             <Field label="Effective date" required>

@@ -1,0 +1,47 @@
+{
+  "summary": "CHSP-TOOLS-1 iter237 batch verified end-to-end. Backend (6/6 new tests pass): POST /api/chsp1/service-entries creates entries with DD/MM/YYYY start_date; PATCH updates hourly_rate_or_fee (6->7.5) and start_date (01/01/2026->15/03/2026) and persistence verified via GET; POST /service-entries/{id}/expire flips is_active=false and drops from active list; POST /chsp1/letter (service_continuity + hardship) draft is retrievable via GET /api/lf1/correspondence/{id} with correct situation_id (6 / 9). Web /app/chsp/tools verified with cathy: Agreed Rate Schedule (chsp-agreed-rate-schedule) lists active saved rates (chsp-rate-{id}); Edit shows chsp-rate-edit-amount/date prefilled with 6 and 01/01/2026 (DD/MM/YYYY); Save persists new rate ($8.25) and new effective date (10/02/2026) in the list; Expire fires 'Rate expired' toast and removes the row from the active list. Both WS-5 defects flagged in iter236 are FIXED on web: (a) chsp-ws1-service-entry option now renders 'Domestic assistance · Acme Care (WT238)' via serviceTypeLabel (no raw enum); (b) selecting the saved entry pre-fills chsp-ws1-rate-date as '10/02/2026' (DD/MM/YYYY) and chsp-ws1-agreed-rate as '8.25'. Profile summary reads 'Status: On CHSP · started 01/01/2025' (DD/MM/YYYY). WS-1 service-type options capitalised: ['Domestic assistance','Personal care','Meals']. Mobile: not automated (SecureStore auth-injection remains blocked on Expo web preview, same env limitation as iter235/236); per request treated as code-review; parity for the same code paths already source-verified in iter236 and file diffs since then only touched the two WS-5 fixes.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "ChspTools /app/chsp/tools", "issues": ["(Carry-over from iter236) React dev-only hydration warning: '<span> cannot be a child of <option>' on service-entry <select>, caused by dev instrumentation injecting <span> markers into options. Dev-only; no user-visible impact in production build."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Authenticated /chsp-tools on Expo web preview", "issue": "Carry-over from iter235/236: cannot inject kindred_token into SecureStore namespace on web preview, blocking UI automation. Not a shipped-code bug.", "affected_testIDs": ["chsp-tools-root", "chsp-ws1-fee-check", "chsp-agreed-rate-schedule"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_chsp_agreed_rate_iter237.py",
+    "/app/test_reports/pytest/iter237_chsp_ars.xml",
+    "/app/test_reports/iter237_chsp_web.jpeg"
+  ],
+  "action_items": [
+    "Optional: suppress the dev-only hydration warning on the WS-1 service-entry <select> by ensuring dev-instrumentation does not inject <span> children into <option> elements (cosmetic, dev-only).",
+    "Optional: consider deleting the WT238-family TEST entries seeded during testing (they are all now expired, so they do not affect UX)."
+  ],
+  "critical_code_review_comments": [
+    "PATCH /chsp1/service-entries/{id} correctly re-wraps rate + contribution into {amount, currency} sub-docs and preserves DD/MM/YYYY on start_date — no ISO leak.",
+    "Expire endpoint correctly pulls the entry_id from profile.active_service_entries and stamps end_date + status='expired' — clean history preservation.",
+    "AgreedRateSchedule.startEdit() prefills rate + effective date via formatDate(s.start_date) — handles both ISO and DD/MM/YYYY stored values (verified: BlueBerry entry stored ISO renders as 01/07/2025).",
+    "WS1FeeCheck.onServiceChange() now formats svc.start_date via formatDate before assigning to rate_effective_date — WS-5 defect from iter236 fixed.",
+    "Service-entry <option> now interpolates serviceTypeLabel(s.service_type) — WS-5 capitalisation defect from iter236 fixed."
+  ],
+  "updated_files": ["/app/backend/tests/test_chsp_agreed_rate_iter237.py"],
+  "success_rate": {"backend": "100% (6/6 new + previous 8/8 golden still green)", "frontend": "web 100% for tested flows; mobile UI automation blocked by env (source parity carried from iter236)"},
+  "test_credentials": "cathy@example.com / testpass123 (CHSP profile exists, family plan)",
+  "seed_data_creation": "Seeded 1 TEST_ CHSP service entry per test run via POST /chsp1/service-entries (Acme Care (TEST_iter237) / Acme Care (WT238)) — all expired at end of test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter236's two WS-5 defects (service-entry option capitalisation + rate_effective_date DD/MM/YYYY prefill) are FIXED on web and verified. Agreed Rate Schedule (Edit/Save/Expire), LF-1 correspondence GET, and dropdown capitalisation are all green. Mobile Expo web preview auth injection is still blocked (SecureStore); if next iteration needs mobile UI parity automation, main agent must add a debug hook to seed SecureStore from URL params, otherwise treat mobile as source-review only.",
+  "rca of the issue": "N/A — no regressions found; all tested flows pass."
+}

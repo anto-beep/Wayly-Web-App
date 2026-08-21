@@ -1,3 +1,14 @@
+## Iteration 237 (Jun 2026) — Mobile letter deep-link + Agreed-rate management + dropdown-cap sweep + DD/MM/YYYY passthrough
+
+- **Mobile Letter Deep-Link**: new per-entry LF-1 editor `mobile/app/correspondence/[id].tsx` (load entry, Generate draft, edit body, autosave, regenerate). Invoice draft-letter / draft-all and CHSP service-continuity / hardship flows now `router.push('/correspondence/{entry_id}')` straight to the draft instead of dropping the user on the list. Backend read (`GET /api/lf1/correspondence/{id}`) verified for entries created via the invoice + CHSP letter bridges.
+- **Agreed Rate Schedule management**: backend `PATCH /api/chsp1/service-entries/{id}` (edit rate + effective date) and `POST /api/chsp1/service-entries/{id}/expire`. Web `AgreedRateSchedule` card (list active rates, inline edit, expire) on `/app/chsp/tools`; mobile `ChspServicesCard` gains per-entry Edit/Expire. Verified backend 6/6 + web flows.
+- **WS-2 record-decision analytics**: already implemented on both surfaces (Transition walkthrough posts to `/api/chsp1/transition-considerations`).
+- **Dropdown capitalisation sweep**: last raw-enum web dropdown (LCA1Admin categories) now uses `labelize`; other dropdowns already carried human labels.
+- **DD/MM/YYYY passthrough**: `formatDate` (web) and `shortDate` (mobile) now parse an already-formatted DD/MM/YYYY string correctly, so dates render stably when stored values are mixed ISO / DD/MM/YYYY. Fixed the two iter236 WS-5 defects (capitalised service-entry option label + DD/MM/YYYY prefill of the effective-date field).
+
+**Still pending:** the full web↔mobile Screen Parity Pass per PARITY-1-PHASE0-AUDIT.md; CHSP invoice-photo OCR (mobile). Minor: dev-only React hydration warning on the WS-1 service-entry `<option>` (no production impact).
+
+
 ## Iteration 236 (Jun 2026) — CHSP WS-2 / WS-5 / WS-6 (signed off) + DD/MM/YYYY + dropdown capitalisation + Agreed Rate Schedule (web + mobile)
 
 - **WS-2 reframed transition flow**: headline → "Check your CHSP billing." with the softened subtitle; Transition walkthrough demoted behind an "Is CHSP still the right fit?" self-check (`chsp-needs-change` reveals it); step 2 now two-sided (`tw-two-sided`: Support at Home can cost more, is means tested, can involve waitlists); a not-advice disclaimer (`chsp-disclaimer`) on the tool. Mirrored on mobile.

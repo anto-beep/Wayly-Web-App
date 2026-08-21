@@ -222,6 +222,69 @@ async def list_services(request: Request, is_active: Optional[bool] = None):
     return {"service_entries": items}
 
 
+class ServiceEntryPatch(BaseModel):
+    hourly_rate_or_fee: Optional[float] = None
+    client_contribution_per_unit: Optional[float] = None
+    fee_structure_note: Optional[str] = None
+    weekly_frequency: Optional[str] = None
+    start_date: Optional[str] = None
+
+
+async def _owned_service_entry(uid: str, entry_id: str) -> Dict[str, Any]:
+    profile = await _db.chsp_profiles.find_one({"user_id": uid})
+    if not profile:
+        raise HTTPException(status_code=404, detail="No CHSP profile")
+    row = await _db.chsp_service_entries.find_one({"id": entry_id, "chsp_profile_id": profile["id"]})
+    if not row:
+        raise HTTPException(status_code=404, detail="Service entry not found")
+    return row
+
+
+@chsp1_router.patch("/service-entries/{entry_id}")
+async def update_service(entry_id: str, body: ServiceEntryPatch, request: Request):
+    """Agreed Rate Schedule management, edit a saved provider's per-unit rate
+    and related fields."""
+    await _assert_flag()
+    uid = await _user_id(request)
+    await _owned_service_entry(uid, entry_id)
+    update: Dict[str, Any] = {"updated_at": _now()}
+    if body.hourly_rate_or_fee is not None:
+        update["hourly_rate_or_fee"] = {"amount": body.hourly_rate_or_fee, "currency": "AUD"}
+    if body.client_contribution_per_unit is not None:
+        update["client_contribution_per_unit"] = {"amount": body.client_contribution_per_unit, "currency": "AUD"}
+    if body.fee_structure_note is not None:
+        update["fee_structure_note"] = body.fee_structure_note
+    if body.weekly_frequency is not None:
+        update["weekly_frequency"] = body.weekly_frequency
+    if body.start_date is not None:
+        update["start_date"] = body.start_date
+    await _db.chsp_service_entries.update_one({"id": entry_id}, {"$set": update})
+    row = await _db.chsp_service_entries.find_one({"id": entry_id})
+    row.pop("_id", None)
+    for k in ("created_at", "updated_at"):
+        if row.get(k):
+            row[k] = _iso(row[k])
+    return {"service_entry": row}
+
+
+@chsp1_router.post("/service-entries/{entry_id}/expire")
+async def expire_service(entry_id: str, request: Request):
+    """Expire (deactivate) a saved rate so it stops pre-filling the Fee Check
+    without deleting the history."""
+    await _assert_flag()
+    uid = await _user_id(request)
+    await _owned_service_entry(uid, entry_id)
+    now = _now()
+    await _db.chsp_service_entries.update_one(
+        {"id": entry_id},
+        {"$set": {"is_active": False, "status": "expired", "end_date": _iso(now), "updated_at": now}},
+    )
+    profile = await _db.chsp_profiles.find_one({"user_id": uid})
+    if profile:
+        await _db.chsp_profiles.update_one({"id": profile["id"]}, {"$pull": {"active_service_entries": entry_id}})
+    return {"entry_id": entry_id, "status": "expired"}
+
+
 # ---------------------------------------------------------------------------
 # Fee checks
 # ---------------------------------------------------------------------------

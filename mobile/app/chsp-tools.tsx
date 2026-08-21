@@ -65,11 +65,8 @@ function AccessHardship({ colors, providerName, emphasise }: any) {
   const draft = async (kind: string) => {
     setBusy(kind);
     try {
-      await apiFetch("/chsp1/letter", { method: "POST", body: { kind, provider_name: providerName || null } });
-      Alert.alert("Letter drafted", "Find it in Letters & Follow-ups.", [
-        { text: "View letters", onPress: () => router.push("/correspondence") },
-        { text: "OK" },
-      ]);
+      const data = await apiFetch<any>("/chsp1/letter", { method: "POST", body: { kind, provider_name: providerName || null } });
+      if (data?.entry_id) router.push(`/correspondence/${data.entry_id}`);
     } catch { Alert.alert("Could not draft letter", "Please try again."); }
     finally { setBusy(null); }
   };
@@ -308,6 +305,28 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const set = (patch: any) => setForm((f: any) => ({ ...f, ...patch }));
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editRate, setEditRate] = useState("");
+  const [editEff, setEditEff] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const startEdit = (s: any) => {
+    setEditId(s.id);
+    setEditRate(s.hourly_rate_or_fee?.amount != null ? String(s.hourly_rate_or_fee.amount) : "");
+    setEditEff(s.start_date ? shortDate(s.start_date) : "");
+  };
+  const saveEdit = async (id: string) => {
+    setBusyId(id);
+    try {
+      await apiFetch(`/chsp1/service-entries/${id}`, { method: "PATCH", body: { hourly_rate_or_fee: editRate === "" ? undefined : Number(editRate), start_date: editEff || undefined } });
+      setEditId(null); onAdded?.();
+    } catch { /* keep open */ } finally { setBusyId(null); }
+  };
+  const expire = async (id: string) => {
+    setBusyId(id);
+    try { await apiFetch(`/chsp1/service-entries/${id}/expire`, { method: "POST" }); onAdded?.(); }
+    catch { /* ignore */ } finally { setBusyId(null); }
+  };
 
   const submit = async () => {
     if (!form.provider_name || !form.hourly_rate_or_fee || !form.start_date) { setError("Provider, rate and start date are required."); return; }
@@ -343,8 +362,25 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
             <View key={s.id} testID={`chsp-service-${s.id}`} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm }}>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{serviceTypeLabel(s.service_type)}</T>
               <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
-                {s.provider_name}{s.hourly_rate_or_fee?.amount != null ? ` · $${s.hourly_rate_or_fee.amount}` : ""}{s.weekly_frequency ? ` · ${s.weekly_frequency}` : ""}
+                {s.provider_name}{s.hourly_rate_or_fee?.amount != null ? ` · $${s.hourly_rate_or_fee.amount} / unit` : ""}{s.start_date ? ` · effective ${shortDate(s.start_date)}` : ""}
               </T>
+              {editId === s.id ? (
+                <View style={{ marginTop: spacing.sm, gap: spacing.sm }}>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+                    <LInput label="Rate (AUD)" value={editRate} onChangeText={setEditRate} keyboardType="decimal-pad" testID={`chsp-rate-edit-amount-${s.id}`} colors={colors} />
+                    <LInput label="Effective (DD/MM/YYYY)" value={editEff} onChangeText={setEditEff} placeholder="DD/MM/YYYY" testID={`chsp-rate-edit-date-${s.id}`} colors={colors} />
+                  </View>
+                  <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                    <Button label="Cancel" variant="outline" onPress={() => setEditId(null)} style={{ flexGrow: 1 }} />
+                    <Button label="Save" testID={`chsp-rate-save-${s.id}`} loading={busyId === s.id} onPress={() => saveEdit(s.id)} style={{ flexGrow: 1 }} />
+                  </View>
+                </View>
+              ) : (
+                <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
+                  <Button label="Edit" variant="outline" testID={`chsp-rate-edit-${s.id}`} onPress={() => startEdit(s)} style={{ flexGrow: 1 }} />
+                  <Button label="Expire" variant="ghost" testID={`chsp-rate-expire-${s.id}`} loading={busyId === s.id} onPress={() => expire(s.id)} style={{ flexGrow: 1 }} />
+                </View>
+              )}
             </View>
           ))}
         </View>
@@ -363,7 +399,7 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
             <LInput label="Weekly frequency (optional)" value={form.weekly_frequency} onChangeText={(v: string) => set({ weekly_frequency: v })} placeholder="e.g. 2 hrs / week" testID="chsp-svc-frequency" colors={colors} />
             <LInput label="Your contribution / unit (optional)" value={form.client_contribution_per_unit} onChangeText={(v: string) => set({ client_contribution_per_unit: v })} keyboardType="decimal-pad" testID="chsp-svc-contribution" colors={colors} />
           </View>
-          <LInput label="Start date (YYYY-MM-DD)" value={form.start_date} onChangeText={(v: string) => set({ start_date: v })} placeholder="2025-07-01" testID="chsp-svc-start" colors={colors} />
+          <LInput label="Start date (DD/MM/YYYY)" value={form.start_date} onChangeText={(v: string) => set({ start_date: v })} placeholder="01/07/2025" testID="chsp-svc-start" colors={colors} />
           {error ? <T variant="small" style={{ color: colors.terracotta }} testID="chsp-svc-error">{error}</T> : null}
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
             <Button label="Cancel" variant="outline" onPress={() => { setOpen(false); setError(""); }} style={{ flexGrow: 1 }} />

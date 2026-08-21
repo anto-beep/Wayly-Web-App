@@ -16,6 +16,13 @@ const _toDate = (value) => {
         return isNaN(d.getTime()) ? null : d;
     }
     if (typeof value === "string") {
+        // Already-formatted DD/MM/YYYY (AU) parses wrongly via new Date();
+        // convert it explicitly so display stays stable when values are mixed.
+        const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
+        if (m) {
+            const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+            return isNaN(d.getTime()) ? null : d;
+        }
         const d = new Date(value);
         return isNaN(d.getTime()) ? null : d;
     }

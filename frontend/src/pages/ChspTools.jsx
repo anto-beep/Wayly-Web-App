@@ -238,6 +238,84 @@ function WS1FeeCheck({ services }) {
     );
 }
 
+// Agreed Rate Schedule management (edit / expire a saved per-unit rate).
+function AgreedRateSchedule({ services, onChanged }) {
+    const [editing, setEditing] = useState(null);
+    const [rate, setRate] = useState("");
+    const [eff, setEff] = useState("");
+    const [busy, setBusy] = useState(false);
+    const active = services.filter((s) => s.is_active !== false);
+
+    const startEdit = (s) => {
+        setEditing(s.id);
+        setRate(s.hourly_rate_or_fee?.amount != null ? String(s.hourly_rate_or_fee.amount) : "");
+        setEff(formatDate(s.start_date) || "");
+    };
+    const saveEdit = async (id) => {
+        setBusy(true);
+        try {
+            await api.patch(`/chsp1/service-entries/${id}`, {
+                hourly_rate_or_fee: rate === "" ? undefined : Number(rate),
+                start_date: eff || undefined,
+            });
+            toast.success("Rate updated");
+            setEditing(null);
+            onChanged?.();
+        } catch { toast.error("Could not update rate."); }
+        finally { setBusy(false); }
+    };
+    const expire = async (id) => {
+        setBusy(true);
+        try {
+            await api.post(`/chsp1/service-entries/${id}/expire`);
+            toast.success("Rate expired");
+            onChanged?.();
+        } catch { toast.error("Could not expire rate."); }
+        finally { setBusy(false); }
+    };
+
+    return (
+        <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-3" data-testid="chsp-agreed-rate-schedule">
+            <p className="text-xs uppercase tracking-wide text-primary-k/50">Agreed rate schedule</p>
+            <h2 className="font-heading text-xl text-primary-k">Your saved provider rates</h2>
+            <p className="text-sm text-muted-k">These pre-fill the Fee Check so you don&apos;t have to type the agreed rate each time. Keep them current, edit when a rate changes, expire one that no longer applies.</p>
+            {active.length === 0 ? (
+                <p className="text-sm text-muted-k italic" data-testid="chsp-rate-empty">No saved rates yet. Add a service on the mobile app, or enter the agreed rate directly in the Fee Check below.</p>
+            ) : (
+                <ul className="space-y-2" data-testid="chsp-rate-list">
+                    {active.map((s) => (
+                        <li key={s.id} className="rounded-xl border border-kindred p-3" data-testid={`chsp-rate-${s.id}`}>
+                            {editing === s.id ? (
+                                <div className="flex flex-wrap items-end gap-2">
+                                    <label className="text-xs text-muted-k">Rate (AUD)
+                                        <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} data-testid={`chsp-rate-edit-amount-${s.id}`} className="mt-1 block w-28 px-2 py-1.5 text-sm border rounded" />
+                                    </label>
+                                    <label className="text-xs text-muted-k">Effective (DD/MM/YYYY)
+                                        <input type="text" value={eff} placeholder="DD/MM/YYYY" onChange={(e) => setEff(e.target.value)} data-testid={`chsp-rate-edit-date-${s.id}`} className="mt-1 block w-36 px-2 py-1.5 text-sm border rounded" />
+                                    </label>
+                                    <button onClick={() => saveEdit(s.id)} disabled={busy} data-testid={`chsp-rate-save-${s.id}`} className="text-xs rounded-full bg-primary-k text-white px-3 py-1.5">Save</button>
+                                    <button onClick={() => setEditing(null)} className="text-xs rounded-full border border-primary-k/20 px-3 py-1.5">Cancel</button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <div className="min-w-0">
+                                        <div className="text-sm font-medium text-primary-k">{serviceTypeLabel(s.service_type)} · {s.provider_name}</div>
+                                        <div className="text-xs text-muted-k">{AUD(s.hourly_rate_or_fee?.amount ?? 0)} per unit{s.start_date ? ` · effective ${formatDate(s.start_date)}` : ""}</div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => startEdit(s)} data-testid={`chsp-rate-edit-${s.id}`} className="text-xs rounded-full border border-primary-k/25 px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white">Edit</button>
+                                        <button onClick={() => expire(s.id)} disabled={busy} data-testid={`chsp-rate-expire-${s.id}`} className="text-xs rounded-full border border-terracotta-200 text-terracotta-800 px-3 py-1.5 hover:bg-terracotta-50">Expire</button>
+                                    </div>
+                                </div>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}
+
 function VarianceBadge({ status }) {
     const map = {
         within_tolerance: { tone: "bg-emerald-50 text-emerald-800 border-emerald-200", label: "Within tolerance", Icon: CheckCircle2 },
@@ -643,6 +721,7 @@ export default function ChspTools() {
             <ChspProfileCard profile={profile} onCreate={load}/>
             {profile && (
                 <>
+                    {ws1 && <AgreedRateSchedule services={services} onChanged={load} />}
                     {ws1 ? <WS1FeeCheck services={services} /> : <FeeCheckForm services={services} onSubmitted={() => load()}/>}
 
                     <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-3" data-testid="chsp-fit-self-check">

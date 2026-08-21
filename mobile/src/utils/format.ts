@@ -24,7 +24,8 @@ const _pad = (n: number) => String(n).padStart(2, "0");
 
 export function shortDate(iso?: string | null): string {
   if (!iso) return "";
-  const d = new Date(iso);
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(iso).trim());
+  const d = m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])) : new Date(iso);
   if (isNaN(d.getTime())) return "";
   return `${_pad(d.getDate())}/${_pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 }

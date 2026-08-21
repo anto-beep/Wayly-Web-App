@@ -1338,3 +1338,40 @@ agent_communication:
       WS-1 date fields accept DD/MM/YYYY text. (Agreed rate) picking a service entry
       in chsp-ws1-service-entry prefills chsp-ws1-agreed-rate. Do NOT re-run the
       iter235 WS-1 golden verdicts (unchanged) beyond a sanity check.
+
+## iter 237: Mobile LF-1 deep-link editor + Agreed-rate management UI + dropdown-cap sweep + DD/MM/YYYY passthrough
+backend:
+  - task: "CHSP service-entry management: PATCH /api/chsp1/service-entries/{id} (edit rate/effective date), POST /{id}/expire"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/chsp1.py"
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "curl verified: create→PATCH rate 7.25→expire ok; LF-1 GET /lf1/correspondence/{id} returns the created draft for the mobile editor deep-link."
+frontend:
+  - task: "Web Agreed Rate Schedule card (list saved rates, inline edit, expire) on /app/chsp/tools"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/ChspTools.jsx"
+  - task: "Mobile per-entry LF-1 editor /correspondence/[id] (load, generate, edit body, autosave); invoice + CHSP draft flows deep-link to it instead of the list"
+    implemented: true
+    working: "NA"
+    file: "/app/mobile/app/correspondence/[id].tsx, /app/mobile/app/invoice/[id].tsx, /app/mobile/src/components/tools/InvoiceChecker.tsx, /app/mobile/app/chsp-tools.tsx"
+  - task: "Dropdown capitalisation sweep (web LCA1Admin categories via labelize) + DD/MM/YYYY passthrough in formatDate/shortDate for mixed stored formats"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/LCA1Admin.jsx, /app/frontend/src/lib/formatDate.js, /app/mobile/src/utils/format.ts"
+agent_communication:
+  - agent: "main"
+    message: |
+      iter237. WEB is authoritative (auth injectable); MOBILE letter-editor is
+      backend-verified + a mirror (Expo web preview can't inject SecureStore auth).
+      Creds cathy@example.com/testpass123 (CHSP profile). Test:
+      1) Web /app/chsp/tools → Agreed Rate Schedule card (chsp-agreed-rate-schedule):
+         if a saved rate exists (chsp-rate-{id}), Edit (chsp-rate-edit-{id}) reveals
+         amount+date inputs, Save (chsp-rate-save-{id}) PATCHes, Expire
+         (chsp-rate-expire-{id}) removes it from the list. Empty state chsp-rate-empty.
+      2) Backend PATCH /api/chsp1/service-entries/{id} and POST /{id}/expire.
+      3) DD/MM/YYYY renders correctly for both ISO and DD/MM/YYYY stored dates.
+      Do NOT hard-fail on mobile auth-gated screens; report mobile as code-review only.
