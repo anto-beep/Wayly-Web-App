@@ -36,6 +36,12 @@ const _toolJsonLd = (cfg) => {
     return blocks;
 };
 
+const _ddmmyyyy = (iso) => {
+    if (!iso) return iso;
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+};
+
 export default function CarePlanReviewer() {
     const access = useToolAccess();
     const [text, setText] = useState("");
@@ -324,9 +330,9 @@ export default function CarePlanReviewer() {
                                 <div>
                                     <div className="text-xs uppercase tracking-wider text-muted-k mb-1">Plan header</div>
                                     <div className="space-y-0.5">
-                                        <div><strong>Provider:</strong> {fileResult.extraction?.provider_name || ","}</div>
-                                        <div><strong>Effective:</strong> {fileResult.extraction?.effective_from || ","}{fileResult.extraction?.effective_to && ` → ${fileResult.extraction.effective_to}`}</div>
-                                        <div><strong>Classification:</strong> {fileResult.extraction?.classification || ","}</div>
+                                        <div><strong>Provider:</strong> {fileResult.extraction?.provider_name || "Not stated in document"}</div>
+                                        <div><strong>Effective:</strong> {_ddmmyyyy(fileResult.extraction?.effective_from) || "Not stated in document"}{fileResult.extraction?.effective_to && ` → ${_ddmmyyyy(fileResult.extraction.effective_to)}`}</div>
+                                        <div><strong>Classification:</strong> {fileResult.extraction?.classification || "Not stated in document"}</div>
                                         {fileResult.extraction?.quarterly_budget && (
                                             <div><strong>Quarterly budget:</strong> ${fileResult.extraction.quarterly_budget.toLocaleString()}</div>
                                         )}
@@ -368,9 +374,45 @@ export default function CarePlanReviewer() {
                             )}
                         </div>
 
+                        {/* A3 Flagship Verification panel — always visible */}
+                        {fileResult.verification_panel?.checks?.length > 0 && (
+                            <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="cp-verification-panel">
+                                <div className="overline">Verification checks</div>
+                                <p className="mt-1 text-xs text-muted-k">Five Support at Home checks we run on every plan. A pass is confirmed correct, not just silence.</p>
+                                <ul className="mt-3 space-y-2">
+                                    {fileResult.verification_panel.checks.map((c) => {
+                                        const meta = {
+                                            pass: { pill: "bg-sage/15 text-sage", Icon: ShieldCheck, label: "Confirmed" },
+                                            flag: { pill: "bg-terracotta/15 text-terracotta", Icon: AlertOctagon, label: "Flagged" },
+                                            cannot_run: { pill: "bg-amber-100 text-primary-k", Icon: ShieldAlert, label: "Missing info" },
+                                        }[c.status] || { pill: "bg-amber-100 text-primary-k", Icon: ShieldAlert, label: c.status };
+                                        const Icon = meta.Icon;
+                                        return (
+                                            <li key={c.check} data-testid={`cp-check-${c.check}`} className="flex items-start gap-3 border-b border-kindred pb-2 last:border-0">
+                                                <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${c.status === "pass" ? "text-sage" : c.status === "flag" ? "text-terracotta" : "text-gold"}`} />
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-sm text-primary-k font-medium">{c.label}</span>
+                                                        <span className={`text-[9px] uppercase tracking-wider rounded-full px-2 py-0.5 ${meta.pill}`}>{meta.label}</span>
+                                                    </div>
+                                                    <div className="text-xs text-muted-k mt-0.5 leading-relaxed">{c.detail}</div>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        )}
+
                         {/* Findings */}
                         <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="cp-file-findings">
                             <div className="overline">Findings ({(fileResult.findings || []).length})</div>
+                            {(result?.safety_notice || fileResult?.safety_notice) && (
+                                <div className="mt-3 rounded-lg bg-amber-50 border border-amber-300 p-3" data-testid="cp-safety-banner">
+                                    <div className="text-sm font-semibold text-amber-900">{(result?.safety_notice || fileResult?.safety_notice).title}</div>
+                                    <p className="text-xs text-amber-900 mt-1 leading-relaxed">{(result?.safety_notice || fileResult?.safety_notice).body}</p>
+                                </div>
+                            )}
                             {(fileResult.findings || []).length === 0 ? (
                                 <div className="mt-3 text-sm text-muted-k">No issues surfaced in this review.</div>
                             ) : (

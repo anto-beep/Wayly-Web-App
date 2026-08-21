@@ -43,6 +43,7 @@ from services.care_plan_analysis import analyse_care_plan
 from prompts.care_plan_reviewer import CPR1_SYSTEM_PROMPT
 from document_extract import extract_document, UnsupportedFormatError, CorruptFileError
 from lib.upload_guard import classify_content
+from lib.cpr_safety import apply as cpr_mitigate
 
 _client = AsyncIOMotorClient(os.environ["MONGO_URL"])
 db = _client[os.environ["DB_NAME"]]
@@ -178,8 +179,11 @@ def build_care_plans_router() -> APIRouter:
             reference_snapshot_id=REFERENCE_SNAPSHOT_ID,
             llm_client=client,
         )
+        _findings, _notice = cpr_mitigate(result["findings"])
         return {
-            "findings": result["findings"],
+            "findings": _findings,
+            "safety_notice": _notice,
+            "verification_panel": result.get("verification_panel"),
             "review_run": result["review_run"],
             "extraction": extraction.model_dump(),
         }
@@ -261,8 +265,11 @@ def build_care_plans_router() -> APIRouter:
             reference_snapshot_id=REFERENCE_SNAPSHOT_ID,
             llm_client=client,
         )
+        _findings, _notice = cpr_mitigate(result["findings"])
         return {
-            "findings": result["findings"],
+            "findings": _findings,
+            "safety_notice": _notice,
+            "verification_panel": result.get("verification_panel"),
             "review_run": result["review_run"],
             "extraction": extraction.model_dump(),
             "per_file_meta": per_file_meta,
@@ -594,11 +601,13 @@ def build_care_plans_router() -> APIRouter:
                 {"$set": {"status": "active", "updated_at": utcnow_iso()}},
             )
 
+        _fmit, _notice = cpr_mitigate([_strip(d) for d in finding_docs])
         return {
             "review_run_id": review_run.id,
             "status": review_run.status,
             "findings_count": len(finding_docs),
-            "findings": [_strip(d) for d in finding_docs],
+            "findings": _fmit,
+            "safety_notice": _notice,
         }
 
     # ---------------- List / register ----------------------------
@@ -669,11 +678,13 @@ def build_care_plans_router() -> APIRouter:
         for run in all_runs:
             _strip(run)
 
+        _fmit, _notice = cpr_mitigate(_sort_findings(findings))
         return {
             "plan": plan,
             "extraction": ext,
             "latest_run": latest_run,
-            "findings": _sort_findings(findings),
+            "findings": _fmit,
+            "safety_notice": _notice,
             "history": all_runs,
         }
 
@@ -777,6 +788,7 @@ def build_care_plans_router() -> APIRouter:
             }).to_list(length=200)
             for f in findings:
                 _strip(f)
+            findings, _ = cpr_mitigate(findings)
 
         buf = io.BytesIO()
         render_artefact_pdf(buf, plan=plan, extraction=ext or {}, findings=findings)
@@ -819,6 +831,7 @@ def build_care_plans_router() -> APIRouter:
             }).to_list(length=200)
             for f in findings:
                 _strip(f)
+            findings, _ = cpr_mitigate(findings)
 
         from services.care_plan_email import draft_follow_up_email
         subject, body = draft_follow_up_email(

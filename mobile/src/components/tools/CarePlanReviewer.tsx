@@ -24,6 +24,11 @@ const SEV_META: Record<string, { label: string; icon: any; color: (c: any) => st
 };
 
 const ALLOWED_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/*", "text/plain"];
+const ddmmyyyy = (iso?: string) => {
+  if (!iso) return iso;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+};
 const MAX_BYTES = 20 * 1024 * 1024;
 const MAX_FILES = 5;
 type PickedFile = { uri: string; name: string; mimeType?: string; size?: number };
@@ -251,7 +256,7 @@ export default function CarePlanReviewer() {
                 <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5 }}>PREVIEW, WHAT WE READ</T>
                 <View style={{ marginTop: spacing.sm, gap: 3 }}>
                   {ex.provider_name ? <T variant="small"><T variant="small" style={{ fontFamily: fonts.bodySemi }}>Provider: </T>{ex.provider_name}</T> : null}
-                  {ex.effective_from ? <T variant="small"><T variant="small" style={{ fontFamily: fonts.bodySemi }}>Effective: </T>{ex.effective_from}{ex.effective_to ? ` → ${ex.effective_to}` : ""}</T> : null}
+                  {ex.effective_from ? <T variant="small"><T variant="small" style={{ fontFamily: fonts.bodySemi }}>Effective: </T>{ddmmyyyy(ex.effective_from)}{ex.effective_to ? ` → ${ddmmyyyy(ex.effective_to)}` : ""}</T> : null}
                   {ex.classification ? <T variant="small"><T variant="small" style={{ fontFamily: fonts.bodySemi }}>Classification: </T>{ex.classification}</T> : null}
                   {ex.quarterly_budget ? <T variant="small"><T variant="small" style={{ fontFamily: fonts.bodySemi }}>Quarterly budget: </T>${Number(ex.quarterly_budget).toLocaleString()}</T> : null}
                 </View>
@@ -288,8 +293,43 @@ export default function CarePlanReviewer() {
                 ) : null}
               </Card>
 
+              {/* A3 Flagship Verification panel — always visible */}
+              {(result?.verification_panel?.checks || []).length > 0 ? (
+                <Card testID="cp-verification-panel">
+                  <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5 }}>VERIFICATION CHECKS</T>
+                  <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>Five Support at Home checks we run on every plan. A pass is confirmed correct, not just silence.</T>
+                  <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+                    {result.verification_panel.checks.map((c: any) => {
+                      const isPass = c.status === "pass";
+                      const isFlag = c.status === "flag";
+                      const Icon = isPass ? ShieldCheck : isFlag ? AlertOctagon : ShieldAlert;
+                      const col = isPass ? colors.sage : isFlag ? colors.terracotta : colors.gold;
+                      const label = isPass ? "Confirmed" : isFlag ? "Flagged" : "Missing info";
+                      return (
+                        <View key={c.check} testID={`cp-check-${c.check}`} style={{ flexDirection: "row", gap: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingBottom: spacing.sm }}>
+                          <Icon size={16} color={col} style={{ marginTop: 2 }} />
+                          <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>{c.label}</T>
+                              <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.5, color: col }}>{label.toUpperCase()}</T>
+                            </View>
+                            <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 18 }}>{c.detail}</T>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </Card>
+              ) : null}
+
               <Card testID="cp-file-findings">
                 <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5 }}>FINDINGS ({findings.length})</T>
+                {result?.safety_notice ? (
+                  <View testID="cp-safety-banner" style={{ marginTop: spacing.sm, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.gold, borderRadius: radius.md, padding: spacing.md }}>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>{result.safety_notice.title}</T>
+                    <T variant="small" style={{ marginTop: 4, lineHeight: 19 }}>{result.safety_notice.body}</T>
+                  </View>
+                ) : null}
                 {findings.length === 0 ? (
                   <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm }}>No issues surfaced in this review.</T>
                 ) : (

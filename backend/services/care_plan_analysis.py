@@ -221,6 +221,7 @@ def normalise_finding(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         "citation_url": citation_url,
         "suggested_question": suggested_question,
         "related_tool_slug": related,
+        "rule_id": (str(raw.get("rule_id")).strip() or None) if raw.get("rule_id") else None,
     }
 
 
@@ -282,6 +283,7 @@ def deterministic_budget_checks(
             "confidence": "high",
             "finding_key": "budget_care_mgmt_cap_exceeded",
             "title": "Care Management Fee Above 10% Cap",
+            "rule_id": "CPR-R-0001",
             "detail": (
                 f"The plan states a care management fee of {cm_pct:.1f}%. "
                 "The Support at Home cap is 10%. Ask the provider to explain "
@@ -314,6 +316,7 @@ def deterministic_budget_checks(
                     "confidence": "high",
                     "finding_key": "timebound_plan_age_over_12mo",
                     "title": "Care Plan Older Than 12 Months",
+                    "rule_id": "CPR-R-0201",
                     "detail": (
                         f"This plan came into effect on {extraction.effective_from}, "
                         f"which is about {months_old:.1f} months ago. Plans should be "
@@ -346,6 +349,7 @@ def deterministic_budget_checks(
                     "confidence": "high",
                     "finding_key": "timebound_straddles_oct_2026",
                     "title": "Plan Spans 1 October 2026 Change",
+                    "rule_id": "CPR-R-0103",
                     "detail": (
                         "The personal-care funding change lands on 01/10/2026. "
                         "The plan spans that date, so re-run the review after "
@@ -460,8 +464,27 @@ async def analyse_care_plan(
     # ------------------------------------------------------------------
     findings = merge_findings(llm_findings, det_findings)
 
+    # CPR-FINDINGS-UX-1 v2 · Workstream A: bind findings to the Rule Registry
+    # (citation/severity/confidence/addressees from the registry, not the
+    # model), drop banned claims + title-body-incoherent findings, and compute
+    # the deterministic flagship Verification panel (A3).
+    verification_panel: Dict[str, Any] = {}
+    try:
+        from lib import cpr_rules
+        findings = cpr_rules.enrich_findings(findings)
+        facts = cpr_rules.build_facts(
+            extraction=extraction.model_dump() if extraction else None,
+            plan_text=plan_text,
+            classification=classification,
+            quarterly_budget=quarterly_budget,
+        )
+        verification_panel = cpr_rules.run_verification_panel(facts)
+    except Exception:      # noqa: BLE001 — never block a review on the panel
+        verification_panel = {}
+
     return {
         "findings": findings,
+        "verification_panel": verification_panel,
         "review_run": {
             "model_used": model,
             "prompt_version": PROMPT_VERSION,
