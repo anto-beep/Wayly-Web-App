@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { Star, Trophy, Plus, ThumbsUp } from "lucide-react-native";
+import { Star, Trophy, Plus, ThumbsUp, ShieldCheck, ShieldAlert, Shield } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
@@ -30,6 +30,35 @@ export default function CompareProvidersScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [comparison, setComparison] = useState<any[] | null>(null);
+  const [comparing, setComparing] = useState(false);
+  const [cmpError, setCmpError] = useState("");
+
+  const toggleSelect = (name: string) => {
+    setCmpError("");
+    setSelected((prev) => {
+      if (prev.includes(name)) return prev.filter((n) => n !== name);
+      if (prev.length >= 3) return prev;
+      return [...prev, name];
+    });
+  };
+
+  const runComparison = async () => {
+    if (selected.length < 2) { setCmpError("Pick 2 or 3 providers to compare."); return; }
+    setComparing(true); setCmpError(""); setComparison(null);
+    try {
+      const data = await apiFetch<{ comparison: any[] }>("/ppc3/provider-comparison", {
+        method: "POST",
+        body: { provider_names: selected },
+      });
+      setComparison(data?.comparison || []);
+    } catch {
+      setCmpError("Couldn't load the quality signals for those providers. Please try again.");
+    } finally {
+      setComparing(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setError(false);
@@ -114,6 +143,59 @@ export default function CompareProvidersScreen() {
             }}
           />
 
+          {/* PPC-3 quality-signal comparison (regulator sources) */}
+          <Card testID="ppc3-compare-panel">
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>Compare quality signals</T>
+            <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 19 }}>
+              Pick 2 or 3 providers to line up published complaint, workforce and rating signals from public regulator sources.
+            </T>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginTop: spacing.sm }}>
+              {aggregates.map((a) => {
+                const on = selected.includes(a.provider);
+                return (
+                  <Card key={a.provider} testID={`ppc3-select-${a.provider}`} style={{ padding: 0 }}>
+                    <T
+                      onPress={() => toggleSelect(a.provider)}
+                      style={{ fontFamily: fonts.bodyMedium, fontSize: 12, overflow: "hidden", color: on ? "#fff" : colors.text, backgroundColor: on ? colors.primary : "transparent", borderWidth: 1, borderColor: on ? colors.primary : colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 7 }}
+                    >
+                      {a.provider}
+                    </T>
+                  </Card>
+                );
+              })}
+            </View>
+            {cmpError ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }} testID="ppc3-compare-error">{cmpError}</T> : null}
+            <Button label={comparing ? "Comparing…" : `Compare ${selected.length || ""} providers`.trim()} testID="ppc3-compare-run" icon={ShieldCheck} loading={comparing} disabled={selected.length < 2} onPress={runComparison} style={{ marginTop: spacing.sm }} />
+
+            {comparison?.map((p) => {
+              const sig = (p.composite_quality_summary?.overall_signal || "unknown") as string;
+              const SigIcon = sig === "positive" ? ShieldCheck : sig === "concerns" ? ShieldAlert : Shield;
+              const sigColor = sig === "positive" ? colors.sage : sig === "concerns" ? colors.terracotta : colors.gold;
+              return (
+                <Card key={p.id} testID={`ppc3-compare-card-${p.provider_name_normalised}`} style={{ marginTop: spacing.sm, backgroundColor: colors.surface2 }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>{p.provider_official_name}</T>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
+                    <SigIcon size={15} color={sigColor} />
+                    <T variant="small" style={{ color: sigColor, fontFamily: fonts.bodySemi, textTransform: "uppercase", letterSpacing: 0.4, fontSize: 11 }}>{sig.replace(/_/g, " ")}</T>
+                  </View>
+                  <View style={{ marginTop: spacing.sm, gap: 6 }}>
+                    <SignalRow label="ACQSC" value={(p.acqsc_compliance_status?.current_status || "unknown").replace(/_/g, " ")} colors={colors} />
+                    <SignalRow label="Star rating" value={p.star_ratings?.overall_rating ? `${p.star_ratings.overall_rating}/5` : "not published"} colors={colors} />
+                    <SignalRow label="Wayly recommend %" value={p.wayly_aggregated_feedback?.threshold_met_for_publication ? `${p.wayly_aggregated_feedback.would_recommend_percentage}%` : "insufficient data"} colors={colors} />
+                    <SignalRow label="Public referrals" value={String((p.ombudsman_public_referrals || []).length)} colors={colors} />
+                  </View>
+                  <T
+                    testID={`ppc3-compare-details-${p.provider_name_normalised}`}
+                    onPress={() => router.push(`/provider-quality/${encodeURIComponent(p.provider_official_name)}` as any)}
+                    style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 13, marginTop: spacing.sm }}
+                  >
+                    See full details →
+                  </T>
+                </Card>
+              );
+            })}
+          </Card>
+
           {aggregates.map((a, i) => (
             <Card key={a.provider} testID={`compare-provider-${i}`}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
@@ -145,3 +227,12 @@ export default function CompareProvidersScreen() {
 const styles = StyleSheet.create({
   rank: { width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
 });
+
+function SignalRow({ label, value, colors }: { label: string; value: string; colors: any }) {
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+      <T variant="small" style={{ color: colors.muted }}>{label}</T>
+      <T variant="small" style={{ color: colors.text, fontFamily: fonts.bodyMedium }}>{value}</T>
+    </View>
+  );
+}

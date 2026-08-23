@@ -55,6 +55,39 @@ export default function ContributionEstimator() {
   const { scrollRef, onResultLayout, scrollToResult } = useScrollToResult();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [savedState, setSavedState] = useState<any>(null);
+
+  // CE-2 saved-state parity with web: load prior inputs (for the staleness
+  // note) and persist rates after each estimate so Provider Price Checker can
+  // read them through /tools/ce/state.
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<{ state: any }>("/tools/ce/state")
+      .then((d) => {
+        if (cancelled || !d?.state) return;
+        setSavedState(d.state);
+        setForm((f: any) => ({
+          ...f,
+          pension_status: f.pension_status || d.state.pension_status || f.pension_status,
+          classification: (!f.classification || f.classification === "class_5") && d.state.classification ? `class_${d.state.classification}` : f.classification,
+        }));
+      })
+      .catch(() => { /* signed-out or none saved — ignore */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const classToInt = (c: string): number | null => {
+    const m = /^class_(\d)$/.exec(c || "");
+    return m ? Number(m[1]) : null;
+  };
+  const stateIsStale = (iso?: string): boolean => {
+    if (!iso) return false;
+    const d = new Date(iso);
+    const now = new Date();
+    const fyStart = new Date(now.getFullYear(), 6, 1); // 1 July this year
+    const lastJuly = now < fyStart ? new Date(now.getFullYear() - 1, 6, 1) : fyStart;
+    return d < lastJuly;
+  };
 
   const set = (patch: any) => setForm((f: any) => ({ ...f, ...patch }));
 
@@ -89,6 +122,20 @@ export default function ContributionEstimator() {
       const data = await apiFetch("/ce2/calculate", { method: "POST", body: payload });
       setResult(data);
       scrollToResult();
+      // Persist for cross-tool read-through (PPC). Best-effort; ignore failures.
+      try {
+        const saved: any = await apiFetch("/tools/ce/state", {
+          method: "PUT",
+          body: {
+            pension_status: form.pension_status,
+            is_grandfathered: !!(data as any)?.is_no_worse_off,
+            classification: form.assessment_status === "have_classification" ? classToInt(form.classification) : null,
+            independence_rate_pct: (data as any)?.independence_rate ?? null,
+            everyday_rate_pct: (data as any)?.everyday_rate ?? null,
+          },
+        });
+        if (saved?.state) setSavedState(saved.state);
+      } catch { /* noop */ }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not estimate contribution.");
     } finally { setBusy(false); }
@@ -105,6 +152,12 @@ export default function ContributionEstimator() {
 
           {!result ? (
             <Card testID="ce-form">
+              {savedState && stateIsStale(savedState.created_at) ? (
+                <View testID="ce-stale-note" style={[styles.hint, { backgroundColor: colors.surface2, marginTop: 0, marginBottom: spacing.sm }]}>
+                  <Calendar size={16} color={colors.gold} />
+                  <T variant="small" style={{ flex: 1, lineHeight: 19 }}>{`Your saved inputs are from ${new Date(savedState.created_at).toLocaleDateString("en-AU")}. Contribution rates change each year on 1 July — re-run to confirm the current rate applies.`}</T>
+                </View>
+              ) : null}
               <Label colors={colors}>{"Person's name (optional)"}</Label>
               <TextInput testID="ce-person-name" value={form.person_name} onChangeText={(v) => set({ person_name: v })} placeholder="e.g. Louisa Davids" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
 

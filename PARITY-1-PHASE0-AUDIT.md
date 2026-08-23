@@ -106,3 +106,41 @@
 Web capture → build manifest (columns: `item_id, category, description, web_present, mobile_present, match_type, evidence_ref, notes`) → confirm payload identity → mobile capture → compare → remediate (additive to mobile only) → re-run & verify → evidence bundle → gate → independent double-check pass. Delivery evidence per tool: captured-payloads, parity-manifest, screenshots, artefacts, parity-report.md, remediation-log.
 
 **Rollback:** all Phase-1 changes are additive to the mobile client.
+
+
+---
+
+## 10. Closure update — 20 Jun 2026 (post-remediation sweep)
+
+Re-audited the mobile client against §2/§4. Most Phase-0 gaps have since been remediated (additive to mobile). Current state:
+
+| Gap (from §0) | 18 Jun status | Now | Evidence |
+|---|---|---|---|
+| 1. CHSP-1 mobile | ❌ info-only, 0 API | ✅ CLOSED | `mobile/app/chsp-tools.tsx` calls `/chsp1/profile`, `/chsp1/service-entries` (POST/PATCH/expire) — fee-check + agreed-rate management live |
+| 2. CSC-1 PDF/email/IAT mobile | ❌ missing | ✅ CLOSED | `ClassificationSelfCheck.tsx` calls `/public/csc/pdf`, `/public/csc/email`, `/public/csc/iat` |
+| 3. Care Plan Reviewer file upload mobile | ⚠️ text-only | ✅ CLOSED | `CarePlanReviewer.tsx` uses `DocumentPicker` + `ImagePicker` → `/public/care-plans/review-files` |
+| 5. LF-1 cross-tool-signals mobile | ⚠️ missing | ✅ CLOSED | `mobile/app/letters/[id].tsx` calls `/lf1/cross-tool-signals`; `letters.tsx` calls `/lf1/follow-ups` |
+| 6. CE-2 saved state mobile | ⚠️ partial | ✅ CLOSED (20 Jun) | `ContributionEstimator.tsx` now GET/PUT `/tools/ce/state` (persists rates for PPC read-through + staleness note) |
+| 4. Provider Price Checker history/milestones mobile | ⚠️ partial | ⏳ OPEN | mobile PPC has `/ppc/checks` + `/ppc/snapshots` + `/ppc/services`; still missing `/ppc/checks/history` (grouped provider history + rate-increase flag + bulk delete) and `/ppc/milestones` (savings-milestone celebration). Dedicated screen port pending. |
+| 7. Sidebar endpoint aliases (CMP-1/PSW-1/ATHM-1) | confirm | ⏳ CONFIRM | mobile `cases.tsx`/`provider-switch.tsx`/`athm.tsx` present; verify each resolves to the same router during that tool's capture |
+| AW-2 (Ask Wayly) | out of scope | ⏳ CLARIFY | mobile Ask tab still uses `/public/aged-care-chat`; full `/aw2/*` consent+memory stack not ported — needs product decision |
+
+**Remaining grid-tool parity work:** Provider Price Checker history + milestones screen (item 4). All other 8 grid tools are at feature/payload/artefact parity. Remaining sidebar work is confirmation-only.
+
+---
+
+## 11. Category sweep — 20 Jun 2026 ("Their Care" · "Providers & Paperwork" · "Your Account")
+
+Audited every screen under the three requested sidebar categories by diffing the API endpoints each screen calls on web vs mobile. All screens exist on both surfaces; findings:
+
+**Their Care** — Care Team, Key Contacts, Calendar, Hospital Mode, Care Plans, Care-Plan Changes, Log a Scenario, Timeline: all present and at endpoint parity (`/hospital/admissions*`, `/amendments*`, `/scenario/*`, `/fc2|/core .../timeline`, `/care-plans*`). No functional gap found. (Timeline uses `/core/participants/:id/timeline` on mobile vs web `/timeline` — same data, per-surface route.)
+
+**Providers & Paperwork:**
+- **Documents** — ✅ CLOSED (20 Jun): mobile advertised "Send to Decoder" in its empty-state but never wired it. Added a `Send to Decoder` action (`document-decode-<id>`) on `statement`-category docs → `POST /documents/{id}/send-to-decoder` → navigates to Statements. Download was already present.
+- **Compare Providers** — ✅ CLOSED (20 Jun): mobile only aggregated user star-ratings while its own copy promised regulator signals. Added the real `/ppc3/provider-comparison` flow: multi-select 2–3 providers → side-by-side quality-signal cards (overall signal, ACQSC status, star rating, Wayly recommend %, public referrals) each linking to the existing `provider-quality/[name]` detail. Ratings ranking retained.
+- **Correspondence, Ratings** — present; core endpoints parity (`/lf1/correspondence`, `/provider-ratings`). Follow-ups live in mobile `letters.tsx`; escalate in `correspondence/[id].tsx`.
+
+**Your Account** — Participants, Referrals, Audit Log, Support, Settings: all present and at strong endpoint parity. Minor residuals (non-blocking): mobile Participants lacks `/share-link/rotate` and `/billing/v2/cancel-pending-addon`; Support ticket detail (messages/close/reopen/csat) lives in `support/[id].tsx` — confirm depth.
+
+**Net:** the two functional gaps in these categories (Documents send-to-decoder, Compare Providers quality signals) are now closed on mobile. Remaining residuals are minor account-management actions, flagged for a later pass.
+

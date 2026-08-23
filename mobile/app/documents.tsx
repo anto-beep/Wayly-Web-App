@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { Alert, Linking, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { FolderArchive, FileText, Download, FileSpreadsheet, Image as ImageIcon, LucideIcon, Plus, UploadCloud, X } from "lucide-react-native";
+import { FolderArchive, FileText, Download, FileSpreadsheet, Image as ImageIcon, LucideIcon, Plus, UploadCloud, X, Sparkles } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
@@ -98,6 +98,19 @@ export default function DocumentsScreen() {
       await downloadAndShare(`/documents/${d.id}/download`, d.filename || d.title || "document");
     } catch {
       setDlError("Couldn't download that document. Please try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const sendToDecoder = async (d: Doc) => {
+    setBusyId(d.id);
+    setDlError("");
+    try {
+      await apiFetch(`/documents/${d.id}/send-to-decoder`, { method: "POST" });
+      router.push("/(tabs)/statements" as any);
+    } catch (e) {
+      setDlError(e instanceof ApiError ? e.message : "Could not send to the decoder. Statements can be decoded once their category is set to Statement.");
     } finally {
       setBusyId(null);
     }
@@ -269,10 +282,18 @@ export default function DocumentsScreen() {
                       {d.category ? <Badge label={d.category.toUpperCase()} tone={CAT_TONE[d.category] || "neutral"} /> : null}
                       <T variant="small">{fmt(d.created_at)}{d.file_size_bytes ? ` · ${sizeLabel(d.file_size_bytes)}` : ""}</T>
                     </View>
-                    <Pressable testID={`document-download-${d.id}`} onPress={() => download(d)} style={[styles.dlBtn, { borderColor: colors.border }]}>
-                      <Download size={16} color={colors.primary} />
-                      <T variant="small" style={{ color: colors.primary }}>{busyId === d.id ? "Downloading…" : "Download"}</T>
-                    </Pressable>
+                    <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap", alignItems: "center" }}>
+                      <Pressable testID={`document-download-${d.id}`} onPress={() => download(d)} style={[styles.dlBtn, { borderColor: colors.border }]}>
+                        <Download size={16} color={colors.primary} />
+                        <T variant="small" style={{ color: colors.primary }}>{busyId === d.id ? "Working…" : "Download"}</T>
+                      </Pressable>
+                      {d.category === "statement" ? (
+                        <Pressable testID={`document-decode-${d.id}`} onPress={() => sendToDecoder(d)} disabled={busyId === d.id} style={[styles.dlBtn, { borderColor: colors.primary, backgroundColor: colors.sageSoft }]}>
+                          <Sparkles size={16} color={colors.primary} />
+                          <T variant="small" style={{ color: colors.primary }}>Send to Decoder</T>
+                        </Pressable>
+                      ) : null}
+                    </View>
                   </View>
                 </View>
               </Card>

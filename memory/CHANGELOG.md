@@ -1,3 +1,17 @@
+## Iteration 243 (Jun 2026) — Parity sweep: "Their Care" · "Providers & Paperwork" · "Your Account" + CE-2 saved-state
+
+Audited every screen under the three requested sidebar categories (endpoint-diff web vs mobile). All screens already exist on both surfaces; closed the real functional gaps found (all additive to mobile):
+
+- **CE-2 saved-state (Contribution Estimator, mobile)**: now GET/PUT `/tools/ce/state` — persists pension/classification/rates after each estimate so Provider Price Checker can read them through, and shows a staleness note when saved inputs predate the last 1 July. Round-trip curl-verified.
+- **Documents "Send to Decoder" (mobile)**: the empty-state advertised it but it was never wired. Added a `Send to Decoder` action on `statement`-category docs → `POST /documents/{id}/send-to-decoder` → navigates to Statements.
+- **Compare Providers quality signals (mobile)**: previously only aggregated user star-ratings despite copy promising regulator signals. Added the real `/ppc3/provider-comparison` flow — multi-select 2–3 providers → side-by-side cards (overall signal, ACQSC status, star rating, Wayly recommend %, public referrals) linking to `provider-quality/[name]`. Endpoint verified (returns 2 profiles for cathy). Ratings ranking retained.
+- **Audit doc**: `PARITY-1-PHASE0-AUDIT.md` §10 (Phase-0 gaps mostly closed — CHSP-1, CSC artefacts, CarePlan upload, LF signals/follow-ups, CE-2 state) and new §11 (this category sweep).
+
+**Verification:** mobile Metro bundle healthy (login renders, no redbox); lint clean; backend endpoints curl-verified. Mobile UI not automatable (Expo web-preview auth injection blocked since iter235) — closures are source + endpoint verified.
+
+**Remaining parity residuals (minor, flagged):** PPC history/milestones screen on mobile (`/ppc/checks/history`, `/ppc/milestones`); Participants `/share-link/rotate` + `/billing/v2/cancel-pending-addon`; sidebar endpoint-alias confirmation; AW-2 full stack (product decision). **CPR redesign B1/B5/C2/D2 remain deferred** (B1 full redesign; B5 needs an auto-save-vs-opt-in product decision; C2 needs data-origin plumbing; D2 needs a native build).
+
+
 ## Iteration 241–242 (Jun 2026) — CPR sign-off + mitigation retired, registry citation binding, B2, C3, D1
 
 Solicitor category-level sign-off received (20/06/2026) → retired the interim CPR safety mitigation and made registry citations flow end-to-end.
