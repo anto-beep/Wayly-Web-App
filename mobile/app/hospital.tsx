@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Switch, View } from "react-native";
+import { RefreshControl, ScrollView, Switch, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { HeartPulse, Plus, X, Building2, CalendarDays } from "lucide-react-native";
 
-import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
+import { AppHeader, Badge, Button, Card, DateField, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -118,7 +118,7 @@ export default function HospitalScreen() {
               <T variant="h3" style={{ marginBottom: spacing.sm }}>Log a hospital admission</T>
               <View style={{ gap: spacing.sm }}>
                 <Field label="Hospital name" testID="hospital-name" value={form.hospital_name} onChangeText={(v) => setForm({ ...form, hospital_name: v })} placeholder="e.g. Royal Melbourne" />
-                <Field label="Admission date (YYYY-MM-DD)" testID="hospital-date" value={form.admission_date} onChangeText={(v) => setForm({ ...form, admission_date: v })} placeholder="2026-06-01" />
+                <DateField label="Admission date" testID="hospital-date" value={form.admission_date} onChange={(iso) => setForm({ ...form, admission_date: iso })} />
                 <Field label="Ward (optional)" value={form.ward} onChangeText={(v) => setForm({ ...form, ward: v })} placeholder="e.g. Ward 4B" />
                 <Field label="Reason (optional)" value={form.reason} onChangeText={(v) => setForm({ ...form, reason: v })} placeholder="e.g. Fall, fractured hip" />
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -172,5 +172,3 @@ export default function HospitalScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({});

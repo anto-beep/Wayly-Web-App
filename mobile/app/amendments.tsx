@@ -48,6 +48,15 @@ export default function CarePlanChangesScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [form, setForm] = useState({ service_name: "", change_type: "increase", reason: "", provider_name: "" });
+  const [statusBusy, setStatusBusy] = useState<string | null>(null);
+
+  const setStatus = async (id: string, status: string) => {
+    setStatusBusy(id);
+    try {
+      await apiFetch(`/amendments/${id}/status`, { method: "POST", body: { status } });
+      setItems((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
+    } catch { /* ignore */ } finally { setStatusBusy(null); }
+  };
 
   const load = useCallback(async () => {
     if (!activeId) return;
@@ -156,6 +165,17 @@ export default function CarePlanChangesScreen() {
                     <T variant="small" style={{ lineHeight: 20 }} numberOfLines={6}>{sanitizeAI(a.generated_letter)}</T>
                   </View>
                 ) : null}
+                <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm, flexWrap: "wrap" }}>
+                  {(a.status || "draft") === "draft" ? (
+                    <Button label="Mark as sent" testID={`amend-mark-sent-${a.id}`} variant="outline" onPress={() => setStatus(a.id, "sent")} loading={statusBusy === a.id} style={{ minHeight: 40, paddingHorizontal: 14 }} />
+                  ) : null}
+                  {a.status === "sent" ? (
+                    <>
+                      <Button label="Mark accepted" testID={`amend-mark-accepted-${a.id}`} variant="outline" onPress={() => setStatus(a.id, "accepted")} loading={statusBusy === a.id} style={{ minHeight: 40, paddingHorizontal: 14 }} />
+                      <Button label="Mark rejected" testID={`amend-mark-rejected-${a.id}`} variant="outline" onPress={() => setStatus(a.id, "rejected")} loading={statusBusy === a.id} style={{ minHeight: 40, paddingHorizontal: 14 }} />
+                    </>
+                  ) : null}
+                </View>
               </Card>
             ))
           )}

@@ -1,3 +1,21 @@
+## Iteration 245 (Aug 2026) — Web↔Mobile parity Phase 2 (backlog burn-down)
+
+All mobile, aligned to web; verified iter245 (mobile). Full audit: `/app/PARITY-THEIRCARE-PAPERWORK-ACCOUNT-AUDIT.md`.
+
+- **Care Plans** (`care-plans.tsx`) — added Active/Trash tabs (`GET /care-plans/archived/list`), soft delete → trash, Restore (`POST .../restore`), permanent delete (`?hard=true`), and Compare mode → NEW `care-plan-compare/[left]/[right].tsx` (`GET /care-plans/compare/{l}/{r}`: only-left / only-right / in-both findings).
+- **Plan & Billing** (`plan-billing.tsx`) — added Billing history card (`GET /payments/invoices`, receipt links). BUGFIX: reactivate was calling `/reactivate-subscription` (404); now `/payments/reactivate-subscription`.
+- **Support** (`support/[id].tsx`) — added message attachments: upload (multipart `POST /support/tickets/{id}/attachments`, PDF/PNG/JPEG/WebP) + authenticated download.
+- **Amendments** — status actions (Mark sent / accepted / rejected → `POST /amendments/{id}/status`).
+- **Scenarios** — current-status panel (`GET /scenario/participants/{id}/state`, lifecycle + flags) + native date picker.
+- **Hospital** — admission date now a `DateField` (was YYYY-MM-DD text).
+- **Participants** — share-link **rotate** (`POST /participants/{id}/share-link/rotate`).
+- **Compare Providers** — verified already at depth parity (ACQSC, official star ratings, recommend %, referrals, drill-in) — no change.
+
+### Deferred (need product/backend decision, documented in audit)
+- Timeline: mobile `/core` feed vs web `/scenario` feed are different aggregations; recommend aligning web to `/core` rather than regressing mobile.
+- Care Team / Key Contacts: web "Care Team" = Family Thread messages, mobile = contacts list — canonical mapping needs a product call. Also `/v2/cancel-pending-addon` not yet on mobile.
+
+
 ## Iteration 244 (Aug 2026) — Web↔Mobile parity Phase 1 (Their Care / Providers & Paperwork / Your Account) + 3 SEO/AEO articles
 
 User: make web and mobile identical across the "Their Care", "Providers & Paperwork" and "Your Account" categories (every screen, function, workflow), and publish 3 attached articles. Web is source of truth. Full gap audit in `/app/PARITY-THEIRCARE-PAPERWORK-ACCOUNT-AUDIT.md`.

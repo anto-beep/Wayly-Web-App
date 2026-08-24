@@ -224,6 +224,23 @@ export default function ParticipantsScreen() {
     } catch { Alert.alert("Could not create a share link right now."); }
   };
 
+  const rotateShareLink = (p: PP) => {
+    Alert.alert(
+      "Rotate share link",
+      "This creates a new read-only link and immediately invalidates the old one. Anyone using the old link will lose access.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Rotate", style: "destructive", onPress: async () => {
+          try {
+            const res = await apiFetch<{ url?: string; share_url?: string; link?: string }>(`/participants/${p.id}/share-link/rotate`, { method: "POST", body: {} });
+            const url = res?.url || res?.share_url || res?.link;
+            Alert.alert("New share link", url ? `The old link is now invalid. New read-only link:\n\n${url}` : "Share link rotated.");
+          } catch { Alert.alert("Could not rotate the share link right now."); }
+        } },
+      ],
+    );
+  };
+
   const canDowngradeOnRemove = basePlan === "FAMILY" && active.length === 2 && !!removeTarget && !removeTarget.is_primary;
 
   return (
@@ -275,6 +292,7 @@ export default function ParticipantsScreen() {
                       <ActionLink icon={Activity} label="Timeline" testID={`participant-timeline-${p.id}`} onPress={() => router.push("/timeline")} color={colors.primary} />
                       <ActionLink icon={Edit3} label="Edit details" testID={`participant-edit-${p.id}`} onPress={() => router.push(`/participant/${p.id}`)} color={colors.primary} />
                       <ActionLink icon={ArrowUpRight} label="Share view" testID={`participant-share-${p.id}`} onPress={() => shareView(p)} color={colors.primary} />
+                      <ActionLink icon={RotateCcw} label="Rotate link" testID={`participant-rotate-share-${p.id}`} onPress={() => rotateShareLink(p)} color={colors.primary} />
                       {!p.is_primary ? <ActionLink icon={Crown} label="Make primary" testID={`participant-promote-${p.id}`} onPress={() => promote(p)} color={colors.primary} /> : null}
                       {!p.is_primary ? <ActionLink icon={Trash2} label="Remove" testID={`participant-remove-${p.id}`} onPress={() => openRemove(p)} color={colors.terracotta} /> : null}
                     </View>

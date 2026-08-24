@@ -1,16 +1,19 @@
 import React, { useCallback, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { Send, Star } from "lucide-react-native";
+import { Send, Star, Paperclip, Download } from "lucide-react-native";
+import * as DocumentPicker from "expo-document-picker";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { downloadAndShare } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDateTime } from "@/src/utils/format";
 import { Pressable } from "react-native";
 
 type Msg = { id: string; author_type?: string; body?: string; created_at?: string; visibility?: string };
+type Attachment = { id: string; filename?: string; mime_type?: string; size_bytes?: number; uploaded_at?: string; uploaded_by_type?: string; purged_at?: string | null };
 type Ticket = { id: string; reference?: string; category?: string; status?: string; user_note?: string; created_at?: string; csat_score?: number | null };
 
 export default function SupportDetailScreen() {
@@ -18,22 +21,44 @@ export default function SupportDetailScreen() {
   const { colors } = useTheme();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [thread, setThread] = useState<Msg[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [attaching, setAttaching] = useState(false);
   const [csat, setCsat] = useState(0);
   const [csatComment, setCsatComment] = useState("");
   const [csatBusy, setCsatBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const res = await apiFetch<{ ticket: Ticket; thread: Msg[] }>(`/support/tickets/${id}`);
-      setTicket(res.ticket); setThread(res.thread || []);
+      const res = await apiFetch<{ ticket: Ticket; thread: Msg[]; attachments?: Attachment[] }>(`/support/tickets/${id}`);
+      setTicket(res.ticket); setThread(res.thread || []); setAttachments(res.attachments || []);
     } catch { setTicket(null); }
     finally { setLoading(false); }
   }, [id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const attach = async () => {
+    setErr("");
+    const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/png", "image/jpeg", "image/webp"], copyToCacheDirectory: true });
+    if (res.canceled || !res.assets?.[0]) return;
+    const a = res.assets[0];
+    setAttaching(true);
+    try {
+      const form = new FormData();
+      form.append("file", { uri: a.uri, name: a.name || "attachment", type: a.mimeType || "application/octet-stream" } as any);
+      await apiFetch(`/support/tickets/${id}/attachments`, { method: "POST", isForm: true, body: form });
+      await load();
+    } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not attach that file."); }
+    finally { setAttaching(false); }
+  };
+
+  const downloadAttachment = async (att: Attachment) => {
+    try { await downloadAndShare(`/support/tickets/${id}/attachments/${att.id}/download`, att.filename || "attachment"); }
+    catch { setErr("Could not download that file."); }
+  };
 
   const send = async () => {
     setErr("");
@@ -107,10 +132,26 @@ export default function SupportDetailScreen() {
               );
             })}
 
+            {attachments.length > 0 ? (
+              <Card testID="support-attachments">
+                <T variant="label" style={{ color: colors.muted }}>ATTACHMENTS</T>
+                {attachments.map((att) => (
+                  <Pressable key={att.id} testID={`support-attachment-${att.id}`} onPress={() => att.purged_at ? undefined : downloadAttachment(att)} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 8 }}>
+                    <Paperclip size={16} color={colors.muted} />
+                    <T variant="small" style={{ flex: 1 }} numberOfLines={1}>{att.filename || "attachment"}{att.purged_at ? " (expired)" : ""}</T>
+                    {!att.purged_at ? <Download size={16} color={colors.primary} /> : null}
+                  </Pressable>
+                ))}
+              </Card>
+            ) : null}
+
             {!isClosed ? (
               <Card>
                 <Field label="Add a reply" testID="support-reply-input" value={reply} onChangeText={setReply} multiline placeholder="Type your message…" />
-                <Button label="Send" testID="support-send" icon={Send} onPress={send} loading={busy} disabled={!reply.trim()} style={{ marginTop: spacing.sm }} />
+                <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
+                  <Button label="Attach file" testID="support-attach" icon={Paperclip} variant="outline" onPress={attach} loading={attaching} style={{ flex: 1 }} />
+                  <Button label="Send" testID="support-send" icon={Send} onPress={send} loading={busy} disabled={!reply.trim()} style={{ flex: 1 }} />
+                </View>
               </Card>
             ) : null}
 

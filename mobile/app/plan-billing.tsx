@@ -23,6 +23,8 @@ type Sub = {
   pending_effective?: string | null;
 };
 
+type Invoice = { id: string; created?: number; description?: string; amount_paid?: number; amount_due?: number; currency?: string; status?: string; invoice_pdf?: string | null; hosted_invoice_url?: string | null };
+
 const PLAN_META: Record<string, { name: string; price: string; features: string[] }> = {
   free: { name: "Free", price: "$0", features: ["Limited access", "Upgrade any time for the full toolkit"] },
   solo: { name: "Solo", price: "$24.50 / fortnight", features: ["1 Caregiver seat, 1 Participant tracked", "All AI tools", "Unlimited Statement Decoder"] },
@@ -37,6 +39,7 @@ function fmt(s?: string | null): string {
 export default function PlanBillingScreen() {
   const { colors } = useTheme();
   const [sub, setSub] = useState<Sub | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,7 +50,12 @@ export default function PlanBillingScreen() {
     setError(false);
     try {
       invalidateTrialCache();
-      setSub(await apiFetch<Sub>("/billing/subscription"));
+      const [s, inv] = await Promise.all([
+        apiFetch<Sub>("/billing/subscription"),
+        apiFetch<{ invoices: Invoice[] }>("/payments/invoices").catch(() => ({ invoices: [] })),
+      ]);
+      setSub(s);
+      setInvoices(inv?.invoices || []);
     } catch {
       setError(true);
     } finally {
@@ -88,7 +96,7 @@ export default function PlanBillingScreen() {
 
   const reactivate = async () => {
     setBusy("reactivate"); setActionError("");
-    try { await apiFetch("/reactivate-subscription", { method: "POST", body: {} }); load(); }
+    try { await apiFetch("/payments/reactivate-subscription", { method: "POST", body: {} }); load(); }
     catch (e) { setActionError(e instanceof ApiError ? e.message : "Could not reactivate right now. Please try again."); }
     finally { setBusy(null); }
   };
@@ -238,6 +246,37 @@ export default function PlanBillingScreen() {
             </View>
           ) : null}
 
+
+          {/* Invoice history */}
+          {!noPlan ? (
+            <Card testID="billing-history">
+              <T variant="label">BILLING HISTORY</T>
+              {invoices === null ? (
+                <T variant="small" style={{ marginTop: spacing.sm, color: colors.muted }}>Loading…</T>
+              ) : invoices.length === 0 ? (
+                <T variant="small" style={{ marginTop: spacing.sm, color: colors.muted }}>No invoices yet. Your first charge will appear here once your trial converts.</T>
+              ) : (
+                invoices.map((inv) => {
+                  const amt = ((inv.amount_paid ?? inv.amount_due ?? 0) / 100).toFixed(2);
+                  const when = inv.created ? new Date(inv.created * 1000).toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" }) : "";
+                  const url = inv.invoice_pdf || inv.hosted_invoice_url;
+                  return (
+                    <View key={inv.id} testID={`billing-history-row-${inv.id}`} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <View style={{ flex: 1 }}>
+                        <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>{when}</T>
+                        <T variant="small" style={{ color: colors.muted }}>{inv.description || "Subscription"} · {(inv.currency || "AUD")} ${amt} · {(inv.status || "").toUpperCase()}</T>
+                      </View>
+                      {url ? (
+                        <Pressable testID={`billing-history-pdf-${inv.id}`} onPress={() => WebBrowser.openBrowserAsync(url)} hitSlop={8}>
+                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>Receipt</T>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  );
+                })
+              )}
+            </Card>
+          ) : null}
 
           {actionError ? (
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>

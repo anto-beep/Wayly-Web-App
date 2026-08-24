@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-n
 import { router, useFocusEffect } from "expo-router";
 import { ClipboardEdit, Plus, X, ChevronDown } from "lucide-react-native";
 
-import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
+import { AppHeader, Badge, Button, Card, DateField, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -33,6 +33,15 @@ export default function ScenariosScreen() {
   const [saveError, setSaveError] = useState("");
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [form, setForm] = useState({ event_type: "", label: "", effective_date: today(), note: "" });
+  const [state, setState] = useState<{ lifecycle_state?: string; flags?: string[] } | null>(null);
+
+  const loadState = useCallback(async () => {
+    if (!activeId) return;
+    try {
+      const d = await apiFetch<{ lifecycle_state?: string; flags?: string[] }>(`/scenario/participants/${activeId}/state`);
+      setState(d || null);
+    } catch { setState(null); }
+  }, [activeId]);
 
   const load = useCallback(async () => {
     if (!activeId) return;
@@ -52,7 +61,7 @@ export default function ScenariosScreen() {
     apiFetch<{ groups: Group[] }>("/scenario/event-types").then((d) => setGroups(d?.groups || [])).catch(() => setGroups([]));
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { load(); loadState(); }, [load, loadState]));
 
   const save = async () => {
     if (!form.event_type || !activeId) return;
@@ -65,6 +74,7 @@ export default function ScenariosScreen() {
       setForm({ event_type: "", label: "", effective_date: today(), note: "" });
       setShowForm(false);
       load();
+      loadState();
     } catch { setSaveError("Couldn't log that event. Please try again."); }
     finally { setSaving(false); }
   };
@@ -97,6 +107,22 @@ export default function ScenariosScreen() {
             </T>
           </Card>
 
+          {state?.lifecycle_state ? (
+            <Card testID="scenario-state-panel">
+              <T variant="label" style={{ color: colors.muted }}>CURRENT STATUS</T>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, marginTop: 4 }}>
+                {(state.lifecycle_state || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              </T>
+              {state.flags && state.flags.length > 0 ? (
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: spacing.sm }}>
+                  {state.flags.map((f) => (
+                    <Badge key={f} label={f.replace(/_/g, " ").toUpperCase()} tone="alert" />
+                  ))}
+                </View>
+              ) : null}
+            </Card>
+          ) : null}
+
           {showForm ? (
             <Card testID="scenario-form">
               <T variant="h3" style={{ marginBottom: spacing.sm }}>Log an event</T>
@@ -128,7 +154,7 @@ export default function ScenariosScreen() {
                     </View>
                   ))
                 )}
-                <Field label="When (YYYY-MM-DD)" testID="scenario-date" value={form.effective_date} onChangeText={(v) => setForm({ ...form, effective_date: v })} placeholder={today()} />
+                <DateField label="When" testID="scenario-date" value={form.effective_date} onChange={(iso) => setForm({ ...form, effective_date: iso })} />
                 <Field label="Note (optional)" value={form.note} onChangeText={(v) => setForm({ ...form, note: v })} placeholder="Anything to remember" multiline />
                 {saveError ? <T variant="small" style={{ color: colors.terracotta }}>{saveError}</T> : null}
                 <Button label="Log event" testID="scenario-save" icon={Plus} onPress={save} loading={saving} disabled={!form.event_type} />

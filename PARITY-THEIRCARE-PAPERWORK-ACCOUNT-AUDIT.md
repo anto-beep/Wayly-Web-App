@@ -43,15 +43,16 @@ Status legend: ✅ done & tested this iteration · 🟡 partial · ⬜ remaining
 
 ---
 
-## Remaining backlog (worst-first for a Phase 2)
-1. Care Plans: archived list + restore + compare two plans (mobile).
-2. Settings/Billing: full payments-management parity verification on mobile (`plan-billing.tsx`).
-3. Compare Providers: official ratings / quality-profile depth.
-4. Support: message attachments (upload + authenticated download).
-5. Participants: share-link rotate + cancel-pending-addon.
-6. Timeline endpoint alignment (`/core` vs `/scenario`).
-7. Hospital date picker (DD/MM/YYYY); Amendments status update; Scenarios `/state`.
-8. Care Team / Key Contacts field-level parity pass vs web.
+## Remaining backlog — Phase 2 status
+1. ✅ Care Plans: archived (Trash) list + restore + permanent delete + side-by-side compare (mobile). DONE iter245.
+2. ✅ Settings/Billing: invoice history added + reactivate path bug fixed (was `/reactivate-subscription` → 404; now `/payments/reactivate-subscription`). Change/cancel/downgrade/keep/portal already present. DONE iter245.
+3. ✅ Compare Providers: already at depth parity (ACQSC compliance, official star ratings, Wayly recommend %, public referrals, quality signal chip, drill-in to `/provider-quality/[name]`). No change needed.
+4. ✅ Support: message attachments (upload PDF/PNG/JPEG/WebP + authenticated download). DONE iter245.
+5. ✅ Participants: share-link rotate. DONE iter245. (⬜ `/v2/cancel-pending-addon` still not surfaced on mobile.)
+6. 🟡 Timeline endpoint: mobile `/core/.../timeline` (persona-rendered, artefact-linked) vs web `/scenario/.../timeline` (merged events+state+alerts, `{items:[{type,at,data}]}`). DIFFERENT shapes. Swapping mobile to `/scenario` would REGRESS the richer mobile feed. RECOMMENDATION: align web to `/core` (backend/product decision), do not swap mobile. Deferred.
+7. ✅ Hospital DateField; ✅ Amendments status update; ✅ Scenarios state panel. DONE iter245.
+8. 🟡 Care Team / Key Contacts: SEMANTIC MISMATCH — web "Care Team" (`/app/family`) = Family **Thread** (`/family-thread` messages); mobile "Care Team" (`/care-team`) = a **contacts** list (ContactsView). Web "Key Contacts" = dashboard contacts modal; mobile = a full contacts screen. Needs a product decision on which mapping is canonical before porting. Deferred. NOTE: mobile "Their Care" also has an extra "Cases" item not present in web's Their Care nav.
+
 
 ## Publishing (web) — done this iteration
 - 3 SEO/AEO articles added to `/resources/articles` via `frontend/src/data/seoArticles2026.js`
