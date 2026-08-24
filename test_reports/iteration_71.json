@@ -1,0 +1,43 @@
+{
+  "summary": "Iteration 71 comprehensive review of the four-feature drop (onboarding rework, editable participants, caregiver share link, email change flow) plus signup mobile-optional. All 16 pytest backend tests PASS on a live preview URL. All frontend Playwright flows PASS: email-change UI (same-email/wrong-password/success/pending banner/cancel), participants edit modal (all 13 extended fields + required-name validation + persistence), share-link modal (create/rotate/revoke + public /view/:token elderly-friendly landing with 'Hello, Dottie.' greeting, care summary, location Ashfield NSW), and Signup mobile-optional (label reads 'Mobile Number (optional)', no required attr, backend accepts null mobile — verified via curl /auth/me showing mobile:None). Onboarding router deep-links a partially-complete participant correctly. No critical bugs found. Minor UX polish item logged.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Settings/Profile → Email change", "issues": ["After a successful change-request, BOTH the yellow 'Verification pending' banner and the green 'We sent a confirmation link' success message are rendered simultaneously and repeat the same information. Consider hiding the transient success line once the pending banner appears (or vice versa) to avoid redundant copy."]},
+      {"screen": "SharedParticipantView (/view/:token)", "issues": ["Copy 'Trial is looking after you' surfaces because caregiver.name is derived from the user's first_name (in test data the user's first name is 'Trial'). Functionally correct, but if any real user picks an unusual first name/handle the phrase may read oddly. Consider using name || 'Your caregiver' as a fallback, and confirm the caregiver.name derivation strategy in production seed data."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter71_email_share_participant.py",
+    "/app/test_reports/pytest/iter71.xml"
+  ],
+  "action_items": [
+    "OPTIONAL POLISH: In Settings/EmailChangeSection, suppress the transient `success` message once `status.pending` is true so users don't see the same info twice.",
+    "OPTIONAL POLISH: In SharedParticipantView, guard against unusual first_name values (e.g., 'Trial') in the caregiver greeting sentence."
+  ],
+  "critical_code_review_comments": [
+    "email_change.py: Solid design — token TTL, single-use, revoked-on-rotate, redirect statuses (success/expired/invalid/email_taken), and idempotent re-use path. Only nit: `expires_at` is stored as a datetime object in inserts (line 154-165) but sometimes surfaced as ISO string in list; the read code handles both. Consider standardising on ISO string to keep the collection homogeneous.",
+    "participant_share.py: Clean ownership guard via _guard_owner. `p.get('status') not in (None, 'ACTIVE')` correctly returns 404 for REMOVED participants — verified in tests. Consider adding an audit event when a link is rotated/revoked so caregivers can see when access changed.",
+    "Extended Participants.jsx edit modal (750-880) is comprehensive — every new field wired with data-testid. Recommend extracting the shared <select> option arrays (states, classifications, statement-delivery) into a shared constants module so onboarding + edit stay in sync.",
+    "Signup.jsx mobile field: correctly labelled '(optional)' and lacks `required`; backend accepts null mobile. Verified end-to-end.",
+    "Reminder from prior iterations: server.py + support.py + AdminSupport.jsx all still exceed the 700-line file-size guideline. Non-blocking, pre-existing."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter71_email_share_participant.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 pytest)",
+    "frontend": "100% (email-change UI, participants edit + share modal, /view/:token, signup mobile-optional all green)"
+  },
+  "test_credentials": "trial30909@example.com / TrialPass1!  (family plan, 2 participants — Dot and one other). Signup password 'StrongPass1!' is rejected by breach-list check → use a random strong password like 'Xz9!Kw3@Mq7#Aq' for signup tests.",
+  "seed_data_creation": "Created transient users iter71-rando-*@example.com (share-link ownership test), iter71blank*@example.com (signup blank-mobile UI), and iter71-nomob-a1@example.com (curl signup blank-mobile verification). Participant 12af403e (Dot) edited to first_name='Dot', last_name='TestUser', preferred_name='Dottie', suburb='Ashfield', state='NSW', classification=4, provider='BlueBerry Care', mac_reference_number='AC7654321', pension_status='full_pension', is_grandfathered_hcp='yes', hcp_level=3, caregiver_relationship='daughter', caregiver_phone='+61412345678'. Email change tokens created during test are revoked or used; user email restored to trial30909@example.com at the end (test_z_restore_email).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter71 backend suite lives at /app/backend/tests/test_iter71_email_share_participant.py — 16 tests, ~6s, covers every path in email-change and share-link plus a happy-path PATCH with all extended onboarding fields. Uses trial30909@example.com. NOTE: test 'test_patch_all_onboarding_fields' mutates the seeded participant Dot; downstream tests that assume the original name would need to be rerun after resetting. Onboarding-router selector state (2 incomplete participants → selector page) was NOT exercised via UI because the trial account only had 1 incomplete → router auto-deep-linked to that pid. If future testing needs to exercise the selector page, temporarily flip a second participant to authorisation_confirmed=false via mongo.",
+  "rca_of_the_issue": "n/a — this iteration is a feature-drop verification, not a bug fix. No critical failures. Two optional-polish items reported for the main agent."
+}

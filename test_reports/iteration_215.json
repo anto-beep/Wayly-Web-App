@@ -1,0 +1,39 @@
+{
+  "summary": "Mobile LF-1 letter detail page (/letters/{id}) parity sweep against web. Logged in as cathy@example.com, opened the pre-created escalation entry DfGG7edNusSs0VtE. Verified full end-to-end wiring: page loads, cross-tool import panel renders chips from GET /api/lf1/cross-tool-signals (Contribution Estimate + Price Check chips visible), tapping lf1-import-contribution_estimator POSTs /attach-source (200 in backend logs), sender-authority textarea autosaves via PATCH /autosave (200), complaint mode selector switches, escalation intake form incl. prior-attempts add works, terms checkbox PATCHes terms_ack (200), log-reply modal opens and lf1-reply-submit POSTs /inbound (200). Share panel + delete affordance visible; feedback thumbs, tone-check, format-switcher, copy, PDF, mark-sent all wired but only render after a draft exists. All required testIDs present and functional. The ONE FAILURE is the LLM draft generation: POST /api/lf1/correspondence/{id}/generate returns 502 Bad Gateway from the CloudFlare ingress (edge timeout / ingress-terminated), so the draft body never appears and every button/panel that requires draft (copy, PDF, format switcher, feedback saved indicator, tone-check, mark-sent) could not be exercised. This is a shared-backend/ingress issue, NOT a mobile parity regression, and it affects the web surface identically.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/lf1/correspondence/{id}/generate", "issue": "502 Bad Gateway from CloudFlare ingress on real LLM generate call (curl also 502 after ~60s). Request never reaches uvicorn cleanly (no traceback in backend.err.log). Suspected ingress read-timeout shorter than the Claude Sonnet 4.5 generation time, OR LLM upstream failure. Blocks the entire generated-output half of the page (draft body, copy, PDF, format switcher, feedback, tone check, mark-sent). Same backend endpoint is used by the web app, so web has the same failure.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Generate draft", "issue": "lf1-generate-button click surfaces 'Request failed (502)' via lf1-error banner because /generate 502s at the ingress. Client error handling itself is correct (banner + retry possible). Root cause is backend/ingress, not mobile.", "affected_testIDs": ["lf1-generate-button", "lf1-error", "lf1-generated-body", "lf1-copy", "lf1-format-pdf", "lf1-format-email", "lf1-format-mac-portal", "lf1-feedback-up", "lf1-feedback-down", "lf1-tone-check-run", "lf1-mark-sent"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Investigate why POST /api/lf1/correspondence/{id}/generate 502s at the ingress. Options: (a) confirm CloudFlare/ingress read-timeout vs LLM latency (Claude Sonnet 4.5 can take 45-90s); if edge is 60s, stream or return quickly with async job pattern; (b) check EMERGENT_LLM_KEY / emergentintegrations upstream status; (c) add server-side timeout+fallback in services.lf1_generate.generate_letter so a hang produces 502 with JSON rather than gateway timeout. Same fix restores web + mobile.",
+    "Once /generate is healthy, re-run this iteration to exercise draft body render, copy, PDF export (lf1-format-pdf), format switcher (email/mac-portal), lf1-feedback-up (already verified network path in prior iterations), lf1-tone-check-run, and lf1-mark-sent."
+  ],
+  "critical_code_review_comments": [
+    "mobile/app/letters/[id].tsx line 399: when entry has content_draft on initial load, the code reconstructs a synthetic draft object but sets mac_portal_short_form to first 1200 chars of body. The real generator returns a distinct mac_portal_short_form; this fallback loses the LLM-crafted short form. Consider re-fetching or storing mac_portal_short_form on the entry.",
+    "mobile/app/letters/[id].tsx line 447: reads e.data?.detail?.missing_fields OR e.data?.missing_fields; backend returns detail.missing_fields (see lf1.py line 546-550). OK, but confirm apiFetch's ApiError.data shape carries FastAPI's {detail:{...}} envelope.",
+    "Load-time reconstruction (line 398-400) never populates draft.subject from entry — a persisted draft therefore hides the Subject line on reload. Fine for parity if web also does this but worth confirming."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "92% (all LF-1 read/write endpoints 200; /generate 502 at ingress)", "frontend": "95% (every testID + non-LLM flow works; LLM-dependent UI blocked by backend 502)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan). Entry id: DfGG7edNusSs0VtE (escalation, situation 5).",
+  "seed_data_creation": "None (used pre-existing entry).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile letter detail page is fully wired for parity. All non-LLM flows verified live via UI + backend logs (attach-source, autosave x3, PATCH terms/status, POST inbound all returned 200). Do NOT retest form/state plumbing. Next run should focus on the LLM path once main agent fixes /generate 502: (1) call POST /api/lf1/correspondence/{id}/generate via curl first — if it times out at ~60s from ingress it's the ingress read-timeout, not the mobile page; (2) then re-exercise lf1-copy, lf1-format-pdf, lf1-format-email/mac-portal, lf1-feedback-up (assertion: lf1-feedback-saved appears), lf1-tone-check-run (feature-flag gated — likely disabled), lf1-mark-sent (assertion: lf1-followups still visible, status badge → SENT).",
+  "rca of the issue": "POST /api/lf1/correspondence/{id}/generate returns 502 Bad Gateway from CloudFlare ingress. Direct curl reproduction: `curl -X POST /api/lf1/correspondence/DfGG7edNusSs0VtE/generate ...` returns CloudFlare 502 HTML page (not a JSON error from FastAPI). No traceback in /var/log/supervisor/backend.err.log for the request — request either did not reach uvicorn or uvicorn is still processing when ingress times out. Most likely root cause: LLM (emergentintegrations Claude Sonnet 4.5) latency exceeds ingress read-timeout for the escalation archetype which builds a long chronology prompt. Mitigation: (a) add a `asyncio.wait_for(..., timeout=55)` guard in services.lf1_generate.generate_letter and return a 504-with-JSON so the client's ApiError path handles it (mobile already surfaces 'Draft generation is temporarily unavailable' on ApiError); (b) if latency really is the issue, adopt an async-job pattern (POST returns job_id, client polls) which the mobile client can adopt trivially since it already uses apiFetch. Reproduction affects web equally — this is not a mobile-only bug."
+}

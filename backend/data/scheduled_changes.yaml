@@ -1,0 +1,40 @@
+# INDEX-1 v1 · Deploy 1a — Scheduled Legislative Changes
+# Known future changes with certain effective dates. CI drift detection cannot
+# find these because no interim government publication moves ahead of them;
+# they need to be seeded here explicitly.
+#
+# Format mirrors monetary_constants.yaml but keys are effective dates so the
+# "30 days lookahead" CI check can produce a chronological report.
+version: 1
+scheduled_changes:
+  - id: personal_care_funding_1_oct_2026
+    effective_from: 2026-10-01
+    title: "Personal care funding change (Support at Home reforms)"
+    summary: >
+      Personal care hourly funding split changes on 1 October 2026 under the
+      Aged Care Rules 2025 transitional provisions. All existing statements
+      before that date use the current rate table; statements dated on or
+      after 1 October 2026 use the new rates.
+    affected_keys:
+      - classification.1.daily_base_individual
+      - classification.2.daily_base_individual
+      - classification.3.daily_base_individual
+      - classification.4.daily_base_individual
+      - classification.5.daily_base_individual
+      - classification.6.daily_base_individual
+      - classification.7.daily_base_individual
+      - classification.8.daily_base_individual
+    action_required: >
+      Antony to publish the new rates in monetary_constants.yaml by
+      15 September 2026 (a fortnight before commencement). CI drift check
+      will alert 30 days out (approximately 1 September 2026).
+    source_type: primary_legislation
+    source_url: "PENDING"
+    source_citation: >
+      Placeholder pending publication of the DoH indexation table for
+      1 October 2026. Track via
+      https://www.health.gov.au/our-work/support-at-home
+    lookahead_alert_days: 30
+    review_owner: antony
+    added_at: 2026-07-08
+    added_by: antony

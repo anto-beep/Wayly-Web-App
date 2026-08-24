@@ -1,0 +1,31 @@
+{
+  "summary": "Iteration 39 — focused regression for the May 2026 Support-at-Home price-caps deferral sweep. All 6 static unit tests in tests/test_price_caps_removed.py pass. Created tests/test_price_caps_integration.py (9 live cases). Live tests verified: /api/public/price-check returns correct verdicts (high/low/fair), median, caps_note text containing 'deferred indefinitely' + 'May 2026', and NO top-level 'cap' key — for all three required scenarios. /api/public/program-reference/public exposes policy_status.price_caps = 'deferred_indefinitely'. Mongo program_reference has policy_date.price_caps_start closed at 2026-05-19 and an open policy.price_caps_status='deferred_indefinitely' row. CMS article 'support-at-home-price-caps-july-2026' has new title 'Support at Home price caps deferred indefinitely: what families need to know' and body no longer presents caps as a live upcoming event. Article 'what-changes-for-hcp-families-july-2026' title now mentions 'deferred'. Glossary 'Price cap' entry states 'deferred indefinitely'. Frontend Playwright: pc-caps-note element renders in BOTH unauth/blocked state AND after cathy@example.com paid family login with text 'Price caps deferred. ... deferred indefinitely ... Aged Care Quality and Safety Commission can order refunds.' Submit-flow UI wiring confirmed (form fields populated, submit clicked) — pc-result-caps-note JSX render verified in source (renders result.caps_note). The live result render could not be observed end-to-end in the browser only because the rate-limit (5 uses/hour) had been exhausted by the prior pytest hits — backend response shape itself is already validated by the integration tests, so the rendering path is intact. Repo-wide grep: only one remaining mention of '1 July 2026 price caps' in /app/frontend/src/data/seoArticles2026.js line 308, and it is in deferral context ('Price caps were due to start on 1 July 2026... In May 2026 the Minister... announced the caps were being deferred'). No active future-event references remain.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_price_caps_removed.py",
+    "/app/backend/tests/test_price_caps_integration.py",
+    "/app/test_reports/pytest/iter39_price_caps.xml",
+    "/app/test_reports/pytest/iter39_price_caps_integration.xml",
+    "/app/test_reports/pytest/iter39_price_caps_full.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Provider Price Checker rate-limit message ('You've made too many attempts. Please wait 51 minute(s)') is shown inline near the submit button (good UX) — verified the lockout window is per-IP/per-user; consider exposing in admin tooling whether limits can be reset for QA/testing flows.",
+    "/api/public/cms response shapes are inconsistent (articles uses key 'articles', glossary uses key 'terms'). Not a defect but adds friction for clients. Documented in the integration test fallback chain."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_price_caps_integration.py (new)"
+  ],
+  "success_rate": { "backend": "100% (14/14 clean-run; 1 transient 429 from rate-limit only)", "frontend": "100% on caps-note rendering (static + post-login); submit→result render not directly observed due to env rate-limit, but JSX and backend contract both verified" },
+  "test_credentials": "cathy@example.com / testpass123 (family paid plan) — login succeeded and redirected to /app",
+  "seed_data_creation": "None — used existing seeded data. Verified Mongo program_reference rows already present (policy_date.price_caps_start effective_to='2026-05-19'; policy.price_caps_status='deferred_indefinitely' open).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "If you need to re-run the price-check live end-to-end via the browser, the /api/public/price-check endpoint is rate-limited to 5 hits/hour per user. Run the Playwright submit-flow FIRST (before pytest) or use a different paid-plan caregiver account. The static pc-caps-note renders even in the rate-limited/blocked state, so it's a good first verification. The pytest file tests/test_price_caps_integration.py covers the API + Mongo + CMS + glossary contracts; tests/test_price_caps_removed.py covers static code-level invariants.",
+  "rca of the issue": "No bugs found. The single transient 429 during repeated test runs is the documented rate-limit on /api/public/price-check (5/hour), not a regression."
+}

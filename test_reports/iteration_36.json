@@ -1,0 +1,32 @@
+{
+  "summary": "Iter 36 — Validated all 6 user-requested deliverables. Backend (4/4 pytest pass): (1) GET /api/digest/preview returns participant-scoped digest with participant_id matching X-Participant-Id header and household_name reflecting that participant's first_name — verified for both Dorothy (primary) and Lebron (non-primary); (2) POST /api/digest/send returns participant_id and GET /api/digest/history filtered correctly (primary participant gets $or with legacy null rows, non-primary only matching pid); (3) Reports notification fix — POST /api/reports/generate {HOUSEHOLD_SUMMARY} → polled to READY → new notification appears in GET /api/notifications with non-empty `link` field pointing at /app/reports?report_id={id} (no longer 'url'); (4) sitemap.xml at /api/public/seo/sitemap.xml contains all 8 new article slugs. Frontend (all green): (5) Articles index /resources/articles lists all 8 new slugs; each individual /resources/articles/{slug} page renders with: NO author byline, NO Published date, NO 'Reviewed by', NO hero img >400x200, NO em/en-dash; JSON-LD @graph carries Article+FAQPage+BreadcrumbList for all 8, plus HowTo on exactly the 6 expected (statement-decoder, budget-calculator, classification-self-check, reassessment-letter, contribution-estimator, care-plan-reviewer) and HowTo correctly ABSENT from provider-price-checker and family-coordinator; (6) Caregiver dashboard stat cards stat-anomalies, stat-statements, stat-cap all clickable Links routing to /app/budget-alerts, /app/statements, /app/reports respectively; (7) NotificationsBell dropdown shows item links — clicking 'Your Household Summary is ready' routed to /app/reports?report_id=... and weekly-digest item to /settings/digest, confirming backend `link` field is consumed correctly by the bell; (8) /settings/billing renders new billing-participants-card with BASE PLAN FAMILY $39.00/mo, PARTICIPANTS 2/2 included, 0 add-ons, MONTHLY TOTAL $39.00 plus 2 billing-participant-* rows (Dorothy PRIMARY + Lebron); (9) Switch-to-Solo click with 2 active participants fired ZERO /api/billing/upgrade requests and surfaced toast 'Remove additional participants before downgrading — Solo includes 1 participant. You currently have 2…'",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "NotificationsBell dropdown / dashboard", "issues": ["Repeated React warning in console: 'Encountered two children with the same key, %s' (text fragments 'May', 'Apr'). Triggered on /app dashboard render — likely a list keyed by a month/string field with duplicates (e.g. statements stream cards or notification items sharing a created-at month). Not a blocker but should be cleaned up by main agent to silence noise."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter36_features.py",
+    "/app/test_reports/pytest/iter36_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Investigate the React 'duplicate key' warning on the caregiver dashboard — likely in a statements/notifications/audit list where the key is a month string instead of a unique id."
+  ],
+  "critical_code_review_comments": [
+    "digest/history filter for primary participant uses $or with {participant_id: null} + {participant_id: $exists:false} to keep legacy rows visible. Acceptable backward-compat but means a primary participant view leaks any digest sent before the participant_id column existed. Once historic rows are backfilled, the $or branch can be removed.",
+    "Test for notification 'link' field was matched against backed string presence — works, but consider asserting `n.get('url') is None` to prevent accidental regressions where both keys are written. (Current server.py creates only `link`, fine.)",
+    "BillingTab's Switch-to-Solo guard runs purely client-side (toast + early return). Safe defense-in-depth would also have the backend POST /api/billing/upgrade reject {plan: 'solo'} when active_participants > 1, otherwise a curl can still downgrade.",
+    "SEO_TOOL_ARTICLES file (/app/frontend/src/data/seoToolArticles.js) is ~900+ lines for 8 articles — fine for now, but at >700 lines per code-review guideline it would be cleaner to split per-article files and re-export."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter36_features.py (new)"],
+  "success_rate": {"backend": "100% (4/4 pytest)", "frontend": "100% (all 9 UI/integration checks green)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, 2 active participants — Dorothy PRIMARY + Lebron James)",
+  "seed_data_creation": "None. Re-used the Lebron participant created in iter35. The reports-generate test created one HOUSEHOLD_SUMMARY report for Dorothy (soft-deleted retention applies). One digest send was queued; Resend logs it as `mocked` for non-verified domain (cathy@example.com).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 6 deliverables in this batch are working end-to-end. Run: `pytest /app/backend/tests/test_iter36_features.py -v`. Key facts: (a) X-Participant-Id header drives digest/preview, digest/send, digest/history scoping via _resolve_active_participant; (b) primary-participant history uses $or to surface legacy rows with null pid — adjust tests accordingly; (c) backend notifications now write `link` not `url`; NotificationsBell renders <Link to={n.link}> when present; (d) BillingTab loads /api/account to populate billing-participants-card and uses participants_active count to gate the Solo downgrade with a client-side toast — recommend adding server-side guard too (see review comments). One stray React duplicate-key warning on the dashboard remains.",
+  "rca of the issue": "n/a — all features verified."
+}

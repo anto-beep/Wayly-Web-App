@@ -1,0 +1,31 @@
+{
+  "summary": "Regression pass for SEO-1.1 + prior dashboard/legal/explainer/CHSP work. All 9 public pages render (HTTP 200, non-blank, zero console errors). Provider Price Checker explainer shows all four required testids (title/steps/faqs/cta). Caregiver dashboard for cathy@example.com renders end-to-end: action-bar, search, quick-actions, at-a-glance, all four glance panels, and Budget-detail toggle are present and visible. Dashboard search for 'invoice' returns 4 results and selecting the first navigates to /app/invoices. CHSP pillar page renders full content (h1 + key facts + next-steps). AI Tools index renders 18 tool anchors including Statement Decoder and Price Checker (hydration-gated badge OK). Backend healthy after INDEXNOW_KEY env change: /api/public/seo/indexnow-key.txt returns exactly the expected key (9a677bbf...2ef7) with HTTP 200, and /api/public/seo/robots.txt no longer disallows /press.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter190_dashboard.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor UX note (not a bug): [data-testid='dashboard-more-detail'] on the caregiver dashboard is present and visible both before and after clicking [data-testid='dashboard-more-detail-btn']. This is consistent with a shadcn Collapsible where the wrapper always mounts and only its inner data-state changes — no functional issue observed and the visual toggle worked in the screenshot. Confirm intent (default open vs. closed) matches product spec."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, participant Dorothy) — worked",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "SEO-1.1 prerender pipeline lives in /app/frontend/scripts and only affects production build/; preview environment is dev SPA — do not validate prerendered raw HTML here. Backend endpoints of interest: /api/public/seo/indexnow-key.txt, /api/public/seo/robots.txt, /api/public/seo/sitemap.xml. Caregiver dashboard flow verified via cathy@example.com landing at /app after login.",
+  "rca of the issue": "N/A — regression pass, no defects found."
+}

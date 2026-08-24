@@ -1,0 +1,38 @@
+{
+  "summary": "Iteration 112 review (Letter-from-Duplicate + Notification Settings). Frontend fully passes: /settings/notifications renders 4 sections with all required data-testids (4 freq radios, 3 channel toggles, 12 topic buttons, targeted toggle, back link), each interaction PATCHes /api/lca1/preferences and shows the 'Saved' indicator. LCA1AlertsBell gear icon (lca1-alerts-settings-link) reliably navigates to /settings/notifications. Preferences GET/PATCH APIs behave as spec'd (defaults merge, 422 on bad frequency). However, POST /api/sd3/candidates/{id}/draft-letter has a FLAKY line-item resolution bug that causes acceptance test test_draft_letter_from_candidate_creates_lf1_and_is_idempotent to fail intermittently (~60-80% of runs). Root cause identified in /app/backend/routes/sd3.py::create_pair.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/sd3/pairs  +  POST /api/sd3/candidates/{id}/draft-letter",
+        "issue": "In create_pair(), statements a and b are fetched using the original payload order but `ids_sorted = sorted([a_id,b_id])` is used when writing statement_a_id/statement_b_id on the pair doc. Duplicate candidates are then generated from (a,b) in payload order, so candidate.statement_a_line_id refers to whichever statement had the original payload's a-position — which may actually be stored as the pair's statement_b. In draft-letter, we re-fetch statements by pair.statement_a_id / pair.statement_b_id (sorted order) and try _line_by_id — the line often lives in the OTHER statement, so lookup returns {} and the letter content shows 'line item — $? on an unknown date' instead of the real description/amount/date. This is UUID-order dependent, hence flaky. Repro: 3-of-5 runs failed with `assert 'Personal Care Support' in letter['content_draft']`. Fix: fetch a,b using ids_sorted order (or store the pair with the original payload order), so line_ids align. Suggested one-line fix inside create_pair after computing ids_sorted:\n    a = await _db.statements.find_one({'id': ids_sorted[0]}, {'_id': 0})\n    b = await _db.statements.find_one({'id': ids_sorted[1]}, {'_id': 0})",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/lca1/test_iteration_112.py",
+    "/app/test_reports/pytest/iter100.xml"
+  ],
+  "action_items": [
+    "Fix SD-3 create_pair statement ordering so that duplicate_candidate.statement_a_line_id / statement_b_line_id align with the sorted statement_a_id / statement_b_id stored on the pair. Simplest fix: re-fetch a,b using ids_sorted before calling _detect_duplicate_candidates(a,b) (and _ai_detect_duplicates)."
+  ],
+  "critical_code_review_comments": [
+    "SD-3 create_pair sort/detection ordering mismatch (see backend_issues.critical) — causes draft-letter prefill to intermittently omit line item description/amount/date.",
+    "draft_letter response returns provider_name only in the create branch; idempotent branch omits provider_name field. Minor consistency issue — main-agent's spec says it should be returned in both.",
+    "content_draft template hardcodes 'Mum' fallback for participants without preferred/first name — fine for now but consider referencing participant.name."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "97% (59/60 pytest stable + 1 flaky fail 60-80% rate)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (from review_request)",
+  "seed_data_creation": "None; used test's own seeded statements. Cleanup by test fixture works.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Full pytest across core1/loop1/lca1 = 60 passed 3 skipped when run as a suite (flake hid). Run backend/tests/lca1/test_iteration_112.py in isolation 5+ times to catch the flake. Frontend notification settings + gear-link flows are verified.",
+  "rca of the issue": "In /app/backend/routes/sd3.py create_pair (~line 251-268): a=find_one(payload.statement_a_id); b=find_one(payload.statement_b_id); ids_sorted=sorted([...]); pair stores statement_a_id=ids_sorted[0], statement_b_id=ids_sorted[1]; but _detect_duplicate_candidates(a,b) uses the payload-ordered a,b to compute a_line_id/b_line_id. When payload.statement_a_id > payload.statement_b_id lexically, the pair's stored statement_a corresponds to what was passed as b — so candidate.statement_a_line_id points to a line that lives in pair.statement_b, and vice versa. draft_letter_from_candidate then does _line_by_id(stmt_a_from_pair, cand.statement_a_line_id) → returns None. Prefill becomes 'line item — $? on an unknown date'. Mitigation: after ids_sorted computed, fetch a=find_one(ids_sorted[0]) and b=find_one(ids_sorted[1]) before detection. Reproduction: run pytest backend/tests/lca1/test_iteration_112.py::test_draft_letter_from_candidate_creates_lf1_and_is_idempotent 5 times — 3-4 will fail."
+}

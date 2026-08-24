@@ -1,0 +1,49 @@
+{
+  "summary": "iter197 backend billing consolidation drive-through. 10/12 tests pass. Two critical issues found: (1) DUPLICATE /api/webhook/stripe ROUTE — the older server.py:6118 handler wins over the new routes/payments.py:655 handler, so `_upsert_sub_doc` + subscription.updated → db.subscriptions sync from the webhook is dead code; only the legacy checkout.session.completed path is actually hit. (2) /api/payments/schedule-downgrade FAILS at Stripe with 'Phase 0 is invalid. Each phase must specify either `duration` or `end_date`, unless it is the last phase and end_behavior is release.' — root cause is that in the current Stripe API version, `current_period_start` / `current_period_end` are on `subscription.items[0]`, not on the subscription object itself. routes/payments.py:550-551 reads them off `sub.get(...)` and gets None → sends `start_date: null, end_date: null` to Stripe → 400 rejection. PASSED: bad-signature webhook → 400; missing-signature → 400; fresh solo & family checkouts return cs_test_ URLs; reconcile-on-return (GET /api/payments/checkout/status/{sid}) idempotently upserts users + db.subscriptions and GET /api/billing/subscription now returns {plan:solo, status:trialing} for mobtrial+1786972023 (that was previously plan=free in iter196); regressions on cancel/reactivate/portal (needs origin_url not return_url)/invoices all sensible.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/payments/schedule-downgrade", "issue": "Stripe rejects phases with 'Phase 0 is invalid. Each phase must specify either `duration` (recommended) or `end_date` (advanced)…'. Backend passes start_date=None,end_date=None because `sub.get('current_period_start'/'current_period_end')` returns None on the current Stripe API version — those fields moved onto `subscription.items[0]`. Fix routes/payments.py:550-551 to read cpe/cps from `sub['items']['data'][0]` (with a fallback to sub.get for older API versions). Also switch to Stripe-recommended `duration` (iterations=1) for phase 1 instead of explicit start/end dates.", "priority": "CRITICAL"},
+      {"endpoint": "/api/webhook/stripe", "issue": "TWO handlers registered for the same path: server.py:6118 @api.post('/webhook/stripe') (legacy StripeCheckout wrapper) AND routes/payments.py:655 stripe_webhook_router.post('/stripe'). The server.py one is registered first (module-level decorator vs. later include_router at line 6521) so FastAPI resolves to it. This means: (a) the NEW `_upsert_sub_doc` bridge on customer.subscription.updated/created never runs — db.subscriptions won't auto-sync from Stripe webhook; (b) the two idempotency stores (stripe_webhook_events.id vs stripe_webhook_events.event_id) are incompatible; (c) trial_will_end reminder emailer in routes/payments.py is dead. Confirmed via 400 response detail 'Invalid Stripe signature' (server.py capitalisation) vs. routes/payments.py 'invalid signature' lowercase.", "priority": "CRITICAL"}
+    ],
+    "minor": [
+      {"endpoint": "/api/payments/portal", "issue": "Requires body field `origin_url`, not `return_url`. Consider aligning naming with reactivate/cancel or accepting both."},
+      {"endpoint": "/api/auth/signup", "issue": "Aggressive per-IP rate limit (~5 signups then 12-min lockout) blocks pytest reruns; used /api/auth/login on pre-existing accounts to work around."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/billing/test_iter197_billing_consolidation.py",
+    "/app/test_reports/pytest/iter197.xml"
+  ],
+  "action_items": [
+    "FIX ROUTE CONFLICT: delete the legacy `@api.post('/webhook/stripe')` at /app/backend/server.py:6118-6265 (or gate it behind a feature flag) so /app/backend/routes/payments.py:655 stripe_webhook_router becomes the single source of truth. Verify by re-hitting POST /api/webhook/stripe with bad sig — the 400 detail should read 'invalid signature' (lowercase) from routes/payments.py.",
+    "FIX schedule-downgrade Stripe phases at /app/backend/routes/payments.py:545-566: (a) read cpe/cps from `sub['items']['data'][0].get('current_period_end'/'start')` first, falling back to `sub.get(...)` for older API versions; (b) safer: use Stripe-recommended `phases=[{'items':[{'price':current_price,'quantity':1}],'iterations':1},{'items':[{'price':target_price,'quantity':1}],'iterations':1}]` with `end_behavior='release'` — Stripe computes the boundary automatically from the current period.",
+    "After fix: rerun /app/backend/tests/billing/test_iter197_billing_consolidation.py — expect all 12 to pass. Then observe real Stripe test-mode webhook delivery to we_1U5QblFXu1wTzvp0F0onYAf7 populates db.subscriptions via _upsert_sub_doc (currently blocked by the route conflict).",
+    "OPTIONAL: /api/payments/portal should accept both `return_url` and `origin_url` for backwards compatibility."
+  ],
+  "critical_code_review_comments": [
+    "backend/server.py:6118 vs backend/routes/payments.py:655 — DUPLICATE ROUTE, only one runs. This silently defeats the whole consolidation goal.",
+    "backend/routes/payments.py:550-551 — `sub.get('current_period_end')` returns None on Stripe API 2025-06+ (fields moved to sub.items[0]). Same latent bug in the checkout_status reconcile path at line 310-312 & 339 — mongo now stores current_period_end=null, so the UI can't render 'renews on <date>' for subs created against the newer API. Fix in both places.",
+    "backend/routes/payments.py:597 — `_db.subscriptions.find_one` inside cancel-scheduled-change won't find a schedule_id if the schedule was created by a different code path (e.g. Stripe dashboard). Consider also querying `stripe.Subscription.retrieve(sub_id).schedule` as a fallback.",
+    "backend/routes/payments.py:637 — WebhookEndpoint.list(limit=100) does not paginate; for orgs with >100 endpoints the idempotent lookup will miss existing entries. Not blocking, but flag it.",
+    "backend/routes/payments.py:598-599 — When there's no scheduled change, 400 is returned. Consider 200 + {cancelled:false, message:'no scheduled change'} for idempotent client behaviour."
+  ],
+  "updated_files": [
+    "/app/backend/tests/billing/test_iter197_billing_consolidation.py"
+  ],
+  "success_rate": {
+    "backend": "83% (10/12 pytest passing — 2 real backend bugs: schedule-downgrade + webhook route conflict; the 3 ERRORs in the second rerun were a rate-limited signup fixture, not a code bug)",
+    "frontend": "n/a (backend-only iteration)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 · mobtrial+1786972023@example.com / MobTrial1! (this account now shows plan=solo/trialing after reconcile — bumped from plan=free in iter196). Test-mode signups iter197.solo.* / iter197.family.* / iter197.famsub.* were created and each has a real Stripe test-mode customer + subscription attached; they are harmless.",
+  "seed_data_creation": "Created Stripe test-mode customers + trialing family subscriptions programmatically (stripe.Customer.create + stripe.Subscription.create with pm_card_visa + trial_period_days=7). These subscriptions were auto-cancelled in the fixture teardown.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Two blocking backend bugs to fix before the billing consolidation spec is met: (1) delete/gate the duplicate `@api.post('/webhook/stripe')` in server.py so the new routes/payments.py webhook handler with _upsert_sub_doc runs; (2) fix schedule-downgrade to source current_period_start/end from sub.items[0] (Stripe 2025-06+ moved them). After both fixes, re-run /app/backend/tests/billing/test_iter197_billing_consolidation.py — expect 12/12 pass. To exercise the webhook path, ping Stripe dashboard `Send test webhook` from we_1U5QblFXu1wTzvp0F0onYAf7 with a customer.subscription.updated event; db.subscriptions for that user should refresh (currently doesn't because the routes/payments.py handler is unreachable). Signup rate limiter is aggressive (12-min lockout after ~5 hits) — throttle test reruns or reset via db.rate_limits collection.",
+  "rca of the issue": "schedule-downgrade — Stripe API version bump: `Subscription.current_period_start`/`current_period_end` were moved onto `subscription.items[].current_period_start/end` in the 2025-06+ API. Backend still reads them off the top-level sub object → gets None → sends `phases=[{start_date:None,end_date:None,...}]` → Stripe 400: 'Phase 0 is invalid'. Fix: prefer duration/iterations in phase specs (no manual boundaries needed) OR read cpe/cps from `sub['items']['data'][0]`. WEBHOOK — Route collision: two @post handlers on '/webhook/stripe' declared in different modules; server.py:6118 is registered first via module-level decorator, so include_router(stripe_webhook_router) later never overrides. FastAPI matches the first registered route on a path collision, so all deliveries flow through the legacy handler and the new _upsert_sub_doc bridge is dead code."
+}

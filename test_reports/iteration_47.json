@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 55 — Email verification (soft-block + 7-day grace). Backend: all 9 pytest cases pass. Frontend: VerifyEmail page (success/expired/invalid) renders correctly, public resend works, EmailVerificationBanner shows on /app for fresh unverified signup with email + 6 days remaining + Resend (200) + Hide, and is hidden for legacy verified user (cathy). One critical backend bug found and fixed during this run: GET /api/auth/verify-email crashed with HTTP 500 when comparing token expires_at because Motor/PyMongo returns naive datetimes while _now() is offset-aware — fix re-attaches tzinfo before the comparison in /app/backend/routes/email_verification.py.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_email_verification.py",
+    "/app/test_reports/pytest/iter55_email_verification.xml"
+  ],
+  "action_items": [
+    "(already fixed) Backend timezone bug in /app/backend/routes/email_verification.py verify_email — naive vs aware datetime. Confirm fix is acceptable; consider also normalising 'used_at' / 'created_at' stored datetimes to ISO strings for full consistency.",
+    "Optional: backend currently has BOTH the new /api/auth/verify-email + /api/auth/send-verification-email (routes/email_verification.py) AND legacy /api/auth/verify + /api/auth/verify/send (server.py:782-821) on db.email_verifications. The legacy endpoints are now dead code in the soft-block flow and should be removed or marked deprecated to avoid drift."
+  ],
+  "critical_code_review_comments": [
+    "CRITICAL BUG (fixed by tester): routes/email_verification.py verify_email() compared an offset-aware _now() against a Mongo-returned naive datetime — every valid verify-link click would 500 in production. Fix: re-attach timezone.utc before comparison.",
+    "DRY: legacy email-verification endpoints in server.py (lines 782-821) duplicate functionality now owned by routes/email_verification.py — should be retired.",
+    "Cooldown is in-memory (_last_send_at dict) — fine for single-pod preview, but will not survive a restart and is per-pod, not per-cluster. Move to Redis or the DB if going multi-replica.",
+    "Public /auth/resend-verification-email is anti-enum but is NOT IP-rate-limited — a single attacker can hit it indefinitely (60s cooldown only applies to known accounts). Consider adding _rl.enforce on IP."
+  ],
+  "updated_files": [
+    "/app/backend/routes/email_verification.py (timezone fix in verify_email)",
+    "/app/backend/tests/test_email_verification.py (new)"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% (verify-email page + dashboard banner + cathy negative)"},
+  "test_credentials": "cathy@example.com / testpass123 (legacy verified, grandfathered). Fresh signups created per test run with TEST_ev_* / TEST_banner_* prefixes.",
+  "seed_data_creation": "Per-test fresh signup emails (TEST_ev_*@example.com, TEST_banner_*@example.com) created via /api/auth/signup; teardown_module deletes them.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Email verification soft-block flow is fully wired end-to-end. Backend route is registered at /api/auth/{verification-status, send-verification-email, verify-email, resend-verification-email}. Tokens live in db.email_verification_tokens (used flag). Resend integration runs in mocked mode in preview — assertions only check {ok:true}. The legacy /api/auth/verify and /api/auth/verify/send (using db.email_verifications) still exist in server.py but are unused by the new soft-block UX. Tester fixed a tz-naive comparison bug in routes/email_verification.py.",
+  "rca of the issue": "RCA — verify-email 500: Motor/PyMongo returns BSON datetimes as offset-naive Python datetimes (no tzinfo) on read. routes/email_verification.py wrote expires_at as offset-aware (datetime.now(timezone.utc) + timedelta), but on read the value lost its tzinfo. The branch `if not expires_at or _now() > expires_at:` then raised TypeError. Reproduce: signup → grab token row from db.email_verification_tokens → GET /api/auth/verify-email?token=… → response is 500 and backend log shows `can't compare offset-naive and offset-aware datetimes`. Mitigation applied: after parsing the str-fallback path, also coerce a naive datetime to UTC: `if isinstance(expires_at, datetime) and expires_at.tzinfo is None: expires_at = expires_at.replace(tzinfo=timezone.utc)`. After fix, all 9 pytest cases pass including the new test_verify_email_valid_token which round-trips a real token + asserts users.email_verified=true."
+}
