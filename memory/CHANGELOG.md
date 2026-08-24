@@ -1,3 +1,20 @@
+## Iteration 246 (Aug 2026) — Solo plan enforcement (web + mobile)
+
+BUG: Solo accounts could add a 2nd participant and were shown Solo base + one add-on = $49.00/fortnight. Solo must cover ONE participant only; Family ($49.50/fortnight) is the correct plan for >1 participant.
+
+Backend (`batch3_routes.py`, `batch3_models.py`):
+- `ParticipantCreateV2.confirm_upgrade` (bool). `POST /v2/participants`: when base_plan=SOLO and adding #2, returns **409 solo_upgrade_required** unless `confirm_upgrade:true`. On consent it upgrades to Family AND syncs `db.subscriptions.plan → family` + `users.plan` (previously only flipped base_plan, leaving billing reading "solo" → the $49.00 add-on bug). No add-on created for participant #2 on the newly-Family plan.
+- NEW `GET /v2/plan-compliance` → `{violation, base_plan, active_participants, prices}`; NEW `POST /v2/resolve-solo-to-family` (idempotent force-fix).
+
+Web (`extended/Participants.jsx`, new `components/PlanComplianceGuard.jsx` mounted in `Layout.jsx`):
+- Add flow solo→family branch rewritten to the required copy + two buttons: "Switch to Family and continue" (sends confirm_upgrade) / "Cancel and stay on Solo". 409 handled by returning to the choice.
+- Blocking compliance guard on login + every authenticated page (incl. Plan & Billing): Switch to Family / Remove a participant instead.
+
+Mobile (`app/participants.tsx`, new `src/components/PlanComplianceGuard.tsx` mounted in `(tabs)/_layout.tsx` + `plan-billing.tsx`): identical intercept + guard, same testIDs and copy.
+
+Copy: exact prices $24.50 / $24.50 / $49.50 and combined $49.00 warning, single $, no dashes. Verified iter246 (web live PASS both scenarios; backend curl-verified; mobile source-reviewed for parity). Test accounts (pw SoloTest1!): `test+1777810269@example.com` (Solo,1) and `uitest+1777810403@example.com` (Solo,2).
+
+
 ## Iteration 245 (Aug 2026) — Web↔Mobile parity Phase 2 (backlog burn-down)
 
 All mobile, aligned to web; verified iter245 (mobile). Full audit: `/app/PARITY-THEIRCARE-PAPERWORK-ACCOUNT-AUDIT.md`.

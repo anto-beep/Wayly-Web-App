@@ -149,6 +149,7 @@ export default function ParticipantsPage() {
     const [step, setStep] = useState("preview"); // preview | form | done
     const [saving, setSaving] = useState(false);
     const [lastAdded, setLastAdded] = useState(null);
+    const [confirmUpgrade, setConfirmUpgrade] = useState(false);
 
     const [removeTarget, setRemoveTarget] = useState(null);
     const [removeChoice, setRemoveChoice] = useState("stay"); // stay | downgrade
@@ -235,6 +236,7 @@ export default function ParticipantsPage() {
                     last_name: "",
                     statement_format: "unknown",
                     is_primary: false,
+                    confirm_upgrade: true,
                 });
                 try { localStorage.removeItem("wayly_second_participant_intent"); } catch { /* noop */ }
                 toast.success(`Added ${wanted} to your Family plan.`);
@@ -248,6 +250,7 @@ export default function ParticipantsPage() {
         setForm(EMPTY_FORM);
         setStep("preview");
         setExtraCount(1);
+        setConfirmUpgrade(false);
         try {
             const { data } = await api.post(`/v2/participants/preview?count=1`);
             setAddPreview(data);
@@ -276,6 +279,7 @@ export default function ParticipantsPage() {
                 classification: form.classification ? Number(form.classification) : null,
                 provider_name: form.provider_name.trim() || null,
                 statement_format: form.statement_format,
+                confirm_upgrade: confirmUpgrade,
             };
             const { data } = await api.post("/v2/participants", payload);
             setLastAdded(data);
@@ -293,7 +297,14 @@ export default function ParticipantsPage() {
             else toast.success("Participant added");
         } catch (e) {
             const err = e?.response?.data?.detail;
-            if (err?.error === "upgrade_required") {
+            if (err?.error === "solo_upgrade_required") {
+                // Server refused because Solo covers one participant only.
+                // Send the user back to the choice so they can switch to Family.
+                setConfirmUpgrade(false);
+                setStep("preview");
+                setAddPreview((prev) => ({ ...(prev || {}), branch: "solo_to_family", new_plan: "FAMILY" }));
+                toast.error(err.message || "Solo covers one participant only.");
+            } else if (err?.error === "upgrade_required") {
                 toast.error(err.message || "Upgrade required");
             } else {
                 toast.error(extractErrorMessage(e, "Could not add"));
@@ -306,6 +317,7 @@ export default function ParticipantsPage() {
         setStep("preview");
         setLastAdded(null);
         setForm(EMPTY_FORM);
+        setConfirmUpgrade(false);
     };
 
     const confirmRemove = async () => {
@@ -598,17 +610,20 @@ export default function ParticipantsPage() {
                                 )}
                                 {addPreview.branch === "solo_to_family" && (
                                     <div className="space-y-3" data-testid="branch-solo-to-family">
-                                        <p className="text-sm text-primary-k font-medium">Adding a second Participant upgrades your plan to Family.</p>
+                                        <p className="text-sm text-primary-k font-medium">Solo covers one participant only.</p>
+                                        <p className="text-sm text-muted-k">Adding another would cost $49.00 per fortnight (Solo $24.50 plus an additional participant $24.50). The Family plan at $49.50 per fortnight covers everyone and is the better choice.</p>
                                         <ul className="text-sm text-muted-k space-y-1 list-disc pl-5">
-                                            <li>Plan: Solo $24.50 per fortnight → <strong className="text-primary-k">Family $49.50 per fortnight</strong></li>
-                                            <li>Participants: 1 → 2</li>
+                                            <li>Participants: 1 → 2 (and more if you need them)</li>
                                             <li>Caregiver seats: 1 → 3</li>
-                                            <li>All features remain the same</li>
+                                            <li>All features stay the same</li>
                                         </ul>
-                                        <p className="text-xs text-muted-k">You&apos;ll be charged the prorated difference for the rest of your current fortnight now, applied straight to your subscription. From your next charge, you&apos;ll be billed $49.50 per fortnight instead of $24.50.</p>
+                                        <p className="text-xs text-muted-k">Switch to Family and you will be billed $49.50 per fortnight from your next charge, with the prorated difference for the rest of your current fortnight applied now. Includes GST.</p>
                                         <div className="flex gap-2 flex-wrap">
-                                            <button onClick={() => setStep("form")} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]" data-testid="confirm-solo-to-family">
-                                                Continue
+                                            <button onClick={() => { setConfirmUpgrade(true); setStep("form"); }} className="bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95" data-testid="confirm-solo-to-family">
+                                                Switch to Family and continue
+                                            </button>
+                                            <button onClick={closeAdd} className="rounded-md border border-kindred px-4 py-2 text-sm text-muted-k hover:text-primary-k" data-testid="cancel-stay-solo">
+                                                Cancel and stay on Solo
                                             </button>
                                         </div>
                                     </div>

@@ -153,6 +153,11 @@ class ParticipantCreateV2(BaseModel):
     # role) or the care recipient (caregiver role), whichever the onboarding
     # flow creates afterward.
     is_primary: Optional[bool] = None
+    # Plan-enforcement consent. Solo covers one participant only. When the
+    # account is on Solo and this is participant #2, the client MUST re-send
+    # with confirm_upgrade=True after the user agrees to switch to Family.
+    # Without it the server refuses with a 409 solo_upgrade_required.
+    confirm_upgrade: bool = False
 
 
 class ParticipantRemoveBody(BaseModel):

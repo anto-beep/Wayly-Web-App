@@ -114,6 +114,7 @@ export default function ParticipantsScreen() {
   const [busy, setBusy] = useState(false);
   const [lastAdded, setLastAdded] = useState<AddResult | null>(null);
   const [addErr, setAddErr] = useState("");
+  const [confirmUpgrade, setConfirmUpgrade] = useState(false);
 
   // Remove flow
   const [removeTarget, setRemoveTarget] = useState<PP | null>(null);
@@ -143,7 +144,7 @@ export default function ParticipantsScreen() {
 
   // ---- Add flow ----
   const openAdd = async () => {
-    setForm(EMPTY_FORM); setStep("preview"); setExtraCount(1); setAddErr(""); setLastAdded(null);
+    setForm(EMPTY_FORM); setStep("preview"); setExtraCount(1); setAddErr(""); setLastAdded(null); setConfirmUpgrade(false);
     try {
       const data = await apiFetch<AddPreview>("/v2/participants/preview?count=1", { method: "POST", body: {} });
       setAddPreview(data);
@@ -169,17 +170,29 @@ export default function ParticipantsScreen() {
         date_of_birth: form.date_of_birth || null,
         classification: form.classification ? Number(form.classification) : null,
         provider_name: form.provider_name.trim() || null, statement_format: form.statement_format,
+        confirm_upgrade: confirmUpgrade,
       } });
       setLastAdded(data);
       setStep("done");
       await loadAll(); await reload();
       // Defence-in-depth: reconcile Stripe subscription shape with the new count.
       apiFetch("/payments/sync-plan-to-participants", { method: "POST", body: {} }).catch(() => {});
-    } catch (e) { setAddErr(e instanceof ApiError ? e.message : "Could not add participant."); }
+    } catch (e) {
+      const detail = e instanceof ApiError ? (e.data as any)?.detail : null;
+      if (detail?.error === "solo_upgrade_required") {
+        // Solo covers one participant only. Send them back to choose Family.
+        setConfirmUpgrade(false);
+        setStep("preview");
+        setAddPreview((prev) => ({ ...(prev || {}), branch: "solo_to_family", new_plan: "FAMILY" } as AddPreview));
+        setAddErr(detail.message || "Solo covers one participant only.");
+      } else {
+        setAddErr(e instanceof ApiError ? e.message : "Could not add participant.");
+      }
+    }
     finally { setSaving(false); }
   };
 
-  const closeAdd = () => { setShowAdd(false); setStep("preview"); setLastAdded(null); setForm(EMPTY_FORM); setAddErr(""); };
+  const closeAdd = () => { setShowAdd(false); setStep("preview"); setLastAdded(null); setForm(EMPTY_FORM); setAddErr(""); setConfirmUpgrade(false); };
 
   // ---- Other actions ----
   const promote = (p: PP) => Alert.alert("Make primary", `Set ${p.first_name} as the primary participant?`, [
@@ -364,15 +377,17 @@ export default function ParticipantsScreen() {
 
                   {addPreview.branch === "solo_to_family" ? (
                     <View style={{ gap: spacing.sm }} testID="branch-solo-to-family">
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Adding a second Participant upgrades your plan to Family.</T>
-                      {["Plan: Solo $24.50 → Family $49.50 per fortnight", "Participants: 1 → 2", "Caregiver seats: 1 → 3", "All features remain the same"].map((l, i) => (
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Solo covers one participant only.</T>
+                      <T variant="small" style={{ color: colors.muted, lineHeight: 20 }}>Adding another would cost $49.00 per fortnight (Solo $24.50 plus an additional participant $24.50). The Family plan at $49.50 per fortnight covers everyone and is the better choice.</T>
+                      {["Participants: 1 → 2 (and more if you need them)", "Caregiver seats: 1 → 3", "All features stay the same"].map((l, i) => (
                         <View key={i} style={{ flexDirection: "row", gap: 8 }}>
                           <CheckCircle2 size={15} color={colors.sage} style={{ marginTop: 2 }} />
                           <T variant="small" style={{ flex: 1 }}>{l}</T>
                         </View>
                       ))}
-                      <T variant="small" style={{ color: colors.muted }}>You will be charged the prorated difference now, applied straight to your subscription, then $49.50 per fortnight from your next charge.</T>
-                      <Button label="Continue" testID="confirm-solo-to-family" onPress={() => setStep("form")} />
+                      <T variant="small" style={{ color: colors.muted }}>Switch to Family and you will be billed $49.50 per fortnight from your next charge, with the prorated difference for the rest of your current fortnight applied now.</T>
+                      <Button label="Switch to Family and continue" testID="confirm-solo-to-family" onPress={() => { setConfirmUpgrade(true); setStep("form"); }} />
+                      <Button label="Cancel and stay on Solo" testID="cancel-stay-solo" variant="outline" onPress={closeAdd} />
                     </View>
                   ) : null}
 

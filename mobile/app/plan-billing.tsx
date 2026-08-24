@@ -8,6 +8,7 @@ import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/co
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { invalidateTrialCache } from "@/src/components/TrialBanner";
+import { PlanComplianceGuard } from "@/src/components/PlanComplianceGuard";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { daysUntil, formatDate } from "@/src/utils/format";
@@ -131,6 +132,7 @@ export default function PlanBillingScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Plan & Billing" subtitle="Your Wayly subscription" onBack={() => router.back()} />
+      <PlanComplianceGuard />
       {loading ? (
         <Loading label="Loading your plan…" />
       ) : error ? (

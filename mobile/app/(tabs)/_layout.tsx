@@ -6,6 +6,7 @@ import { Platform } from "react-native";
 import { useAuth } from "@/src/context/AuthContext";
 import { DrawerProvider, useDrawer } from "@/src/context/DrawerContext";
 import { AppDrawer } from "@/src/components/AppDrawer";
+import { PlanComplianceGuard } from "@/src/components/PlanComplianceGuard";
 import { Loading, Screen } from "@/src/components/ui";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts } from "@/src/theme/tokens";
@@ -74,6 +75,7 @@ function TabsInner() {
         <Tabs.Screen name="ask" options={{ href: null }} />
       </Tabs>
       <AppDrawer />
+      <PlanComplianceGuard />
     </>
   );
 }

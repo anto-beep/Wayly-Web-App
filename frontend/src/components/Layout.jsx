@@ -17,6 +17,7 @@ import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 import ReadOnlyBanner from "@/components/ReadOnlyBanner";
 import GlobalSearch from "@/components/GlobalSearch";
 import ParticipantSwitcher from "@/components/ParticipantSwitcher";
+import PlanComplianceGuard from "@/components/PlanComplianceGuard";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { LayoutContext } from "@/context/LayoutContext";
 import { TOOLS_ORDERED, isBadgeActive } from "@/config/toolRegistry";
@@ -305,6 +306,7 @@ export default function Layout({ children }) {
                     {children}
                 </main>
             </div>
+            <PlanComplianceGuard />
 
             {/* ---- MOBILE BOTTOM NAV ---- */}
             <nav

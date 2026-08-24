@@ -292,16 +292,44 @@ async def add_v2_participant(payload: ParticipantCreateV2, request: Request):
             "message": f"This account already has {MAX_PARTICIPANTS_PER_ACCOUNT} active participants.",
         })
 
-    # Auto-upgrade Solo → Family when adding participant #2
+    # Auto-upgrade Solo → Family when adding participant #2, but ONLY with
+    # explicit consent. Solo covers one participant only. Adding another on
+    # Solo would cost $49.00 per fortnight (Solo $24.50 plus an additional
+    # participant $24.50), whereas Family at $49.50 per fortnight covers
+    # everyone. We refuse to create the second participant until the user
+    # agrees to switch to Family, so the account can never sit on Solo with
+    # more than one participant.
     plan_upgraded_to = None
     if base_plan == "SOLO" and target_count >= 2:
+        if not payload.confirm_upgrade:
+            raise HTTPException(status_code=409, detail={
+                "error": "solo_upgrade_required",
+                "current_plan": "SOLO",
+                "recommended_plan": "FAMILY",
+                "solo_price_fortnight": 24.50,
+                "addon_price_fortnight": 24.50,
+                "family_price_fortnight": 49.50,
+                "message": (
+                    "Solo covers one participant only. Adding another would cost "
+                    "$49.00 per fortnight (Solo $24.50 plus an additional participant "
+                    "$24.50). The Family plan at $49.50 per fortnight covers everyone "
+                    "and is the better choice."
+                ),
+            })
         await _db.accounts.update_one(
             {"id": acct["id"]},
             {"$set": {"base_plan": "FAMILY", "updated_at": _now_iso()}},
         )
         plan_upgraded_to = "FAMILY"
-        # Update legacy user.plan field too so existing gates keep working
+        # Keep the legacy user.plan gate AND the Stripe-facing subscription
+        # record in sync, otherwise the Plan & Billing screen keeps reading
+        # "solo" and renders Solo base plus an add-on (the exact state this
+        # enforcement exists to prevent).
         await _db.users.update_one({"id": acct["owner_user_id"]}, {"$set": {"plan": "family"}})
+        await _db.subscriptions.update_many(
+            {"user_id": acct["owner_user_id"], "status": {"$in": ["trialing", "active"]}},
+            {"$set": {"plan": "family", "updated_at": _now_iso()}},
+        )
 
     # Create participant
     # `is_first` is normally derived from count == 0, but the signup flow's
@@ -340,6 +368,48 @@ async def add_v2_participant(payload: ParticipantCreateV2, request: Request):
         addon_created = addon.model_dump()
 
     return {"participant": p.model_dump(), "plan_upgraded_to": plan_upgraded_to, "addon": addon_created}
+
+
+@batch3_router.post("/v2/resolve-solo-to-family")
+async def resolve_solo_to_family(request: Request):
+    """Force-resolve the illegal 'Solo with more than one participant' state by
+    switching the account to Family. Solo covers one participant only, so this
+    is the fix when an account is found holding more than one participant on
+    Solo. Idempotent: safe to call when already on Family."""
+    user = await _user_dep(request)
+    acct = await _require_owner(user)
+    await _db.accounts.update_one(
+        {"id": acct["id"]},
+        {"$set": {"base_plan": "FAMILY", "updated_at": _now_iso()}},
+    )
+    await _db.users.update_one({"id": acct["owner_user_id"]}, {"$set": {"plan": "family"}})
+    await _db.subscriptions.update_many(
+        {"user_id": acct["owner_user_id"], "status": {"$in": ["trialing", "active"]}},
+        {"$set": {"plan": "family", "updated_at": _now_iso()}},
+    )
+    return {"ok": True, "base_plan": "FAMILY"}
+
+
+@batch3_router.get("/v2/plan-compliance")
+async def plan_compliance(request: Request):
+    """Report whether the account is in the illegal Solo-with-more-than-one
+    participant state, so web and mobile can force a resolution prompt on login
+    and on the Plan & Billing screen."""
+    user = await _user_dep(request)
+    acct = await _account_for_user(user)
+    parts = await _active_participants(acct["id"])
+    base_plan = (acct.get("base_plan") or "FREE").upper()
+    active_count = len(parts)
+    violation = base_plan == "SOLO" and active_count > 1
+    return {
+        "violation": violation,
+        "base_plan": base_plan,
+        "active_participants": active_count,
+        "included": PARTICIPANT_BASE_INCLUDED.get(base_plan, 1),
+        "solo_price_fortnight": 24.50,
+        "addon_price_fortnight": 24.50,
+        "family_price_fortnight": 49.50,
+    }
 
 
 @batch3_router.delete("/v2/participants/{pid}")
