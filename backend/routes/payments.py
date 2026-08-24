@@ -554,6 +554,24 @@ async def schedule_downgrade(body: DowngradeBody, request: Request):
         raise HTTPException(status_code=503, detail="Billing unavailable")
     stripe.api_key = api_key
     user = await _require_user(request)
+    # Guardrail: Solo covers one participant only. Never schedule a downgrade to
+    # Solo while the account still has more than one active participant, or the
+    # account would land back in the blocked Solo-with-many state. Ask them to
+    # remove the extra participant first, or stay on Family.
+    if body.plan == "solo" and _db is not None:
+        acct = await _db.accounts.find_one({"owner_user_id": user.get("id")}, {"_id": 0, "id": 1})
+        active_count = await _db.participants.count_documents({"account_id": acct["id"], "status": "ACTIVE"}) if acct else 0
+        if active_count > 1:
+            raise HTTPException(status_code=409, detail={
+                "error": "solo_downgrade_blocked",
+                "active_participants": active_count,
+                "family_price_fortnight": 49.50,
+                "message": (
+                    "Solo covers one participant only. You have "
+                    f"{active_count} participants, so switching to Solo is not possible yet. "
+                    "Remove the additional participant first, or stay on Family at $49.50 per fortnight so everyone stays covered."
+                ),
+            })
     sub_id = user.get("stripe_subscription_id")
     if not sub_id and _db is not None:
         u = await _db.users.find_one({"id": user.get("id")})

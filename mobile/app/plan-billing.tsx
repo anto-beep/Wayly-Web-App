@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { RefreshControl, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { RefreshControl, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { CreditCard, CheckCircle2, ExternalLink, AlertTriangle, Sparkles, Clock } from "lucide-react-native";
@@ -103,9 +103,24 @@ export default function PlanBillingScreen() {
   };
 
   const downgradeToSolo = async () => {
+    if (activeCount > 1) {
+      Alert.alert(
+        "Solo covers one participant only",
+        `You have ${activeCount} participants, so switching to Solo is not possible yet. Remove the additional participant first, or stay on Family at $49.50 per fortnight so everyone stays covered.`,
+        [
+          { text: "Stay on Family", style: "cancel" },
+          { text: "Manage participants", onPress: () => router.push("/participants") },
+        ],
+      );
+      return;
+    }
     setBusy("downgrade"); setActionError("");
     try { await apiFetch("/payments/schedule-downgrade", { method: "POST", body: { plan: "solo" } }); load(); }
-    catch (e) { setActionError(e instanceof ApiError ? e.message : "Could not schedule the downgrade. Please try again."); }
+    catch (e) {
+      const detail = e instanceof ApiError ? (e.data as any)?.detail : null;
+      if (detail?.error === "solo_downgrade_blocked") setActionError(detail.message);
+      else setActionError(e instanceof ApiError ? e.message : "Could not schedule the downgrade. Please try again.");
+    }
     finally { setBusy(null); }
   };
 

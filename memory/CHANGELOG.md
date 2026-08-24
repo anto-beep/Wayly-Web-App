@@ -1,3 +1,11 @@
+## Iteration 247 (Aug 2026) — Solo enforcement follow-ups (live mobile guard + downgrade guardrail + mobile add-on cancel)
+
+- **Live mobile PlanComplianceGuard** — verified live on Expo preview: logging in as a Solo-with-2 account renders the blocking guard on the dashboard immediately + over Plan & Billing, with exact copy and both actions (Switch to Family / Remove a participant instead).
+- **Downgrade guardrail** (`routes/payments.py` schedule_downgrade) — `POST /payments/schedule-downgrade {plan:"solo"}` now returns **409 solo_downgrade_blocked** when the account has >1 active participant, so an account can never be scheduled back into the blocked Solo-with-many state. Mobile `plan-billing.tsx` also shows a pre-flight Alert (Stay on Family / Manage participants) and handles the 409.
+- **Mobile add-on cancel** (`app/participants.tsx`) — pending (unconfirmed, no Stripe sub) extra-participant add-ons now surface a `pending-addon-banner` with a "Cancel pending add-on" action → `POST /billing/v2/cancel-pending-addon` (archives the participant it created), matching the web rollback.
+- Copy: single $, no dashes, exact pricing ($24.50 / $24.50 / $49.50, combined $49.00). Verified iter247 (testing_agent, live mobile + backend). New test account: `test+1777812589@example.com` / `SoloTest1!` (Family, 3 pts, 1 pending add-on).
+
+
 ## Iteration 246 (Aug 2026) — Solo plan enforcement (web + mobile)
 
 BUG: Solo accounts could add a 2nd participant and were shown Solo base + one add-on = $49.00/fortnight. Solo must cover ONE participant only; Family ($49.50/fortnight) is the correct plan for >1 participant.

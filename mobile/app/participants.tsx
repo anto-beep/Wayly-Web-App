@@ -5,7 +5,7 @@ import {
   Users, Plus, Star, Trash2, Copy, X, Activity, Edit3, Crown, RotateCcw, AlertTriangle, ArrowUpRight, CheckCircle2,
 } from "lucide-react-native";
 
-import { AppHeader, Button, DateField, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
+import { AppHeader, Button, Card, DateField, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -102,6 +102,8 @@ export default function ParticipantsScreen() {
   const [active, setActive] = useState<PP[]>([]);
   const [removed, setRemoved] = useState<PP[]>([]);
   const [summary, setSummary] = useState<AccountSummary | null>(null);
+  const [pendingAddons, setPendingAddons] = useState<any[]>([]);
+  const [cancelingAddon, setCancelingAddon] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Add flow
@@ -125,14 +127,27 @@ export default function ParticipantsScreen() {
     try {
       const [pRes, aRes] = await Promise.all([
         apiFetch<{ items?: PP[] }>("/v2/participants?include_removed=true").catch(() => ({ items: [] as PP[] })),
-        apiFetch<{ summary?: AccountSummary }>("/account").catch(() => null),
+        apiFetch<{ summary?: AccountSummary; addons?: any[] }>("/account").catch(() => null),
       ]);
       const all = pRes?.items || [];
       setActive(all.filter((p) => p.status === "ACTIVE"));
       setRemoved(all.filter((p) => p.status === "PENDING_REMOVAL" || p.status === "REMOVED"));
       setSummary(aRes?.summary || null);
+      // A pending add-on is an extra-participant charge that was started but
+      // never confirmed (no Stripe subscription stamped yet). Surface it so the
+      // owner can cancel it, matching the web rollback behaviour.
+      setPendingAddons((aRes?.addons || []).filter((a) => !a?.stripe_subscription_id && a?.status !== "CANCELLED"));
     } finally { setLoading(false); }
   }, []);
+
+  const cancelPendingAddon = async () => {
+    setCancelingAddon(true);
+    try {
+      await apiFetch("/billing/v2/cancel-pending-addon", { method: "POST", body: {} });
+      await loadAll(); await reload();
+    } catch (e) { Alert.alert("Could not cancel", e instanceof ApiError ? e.message : "Please try again."); }
+    finally { setCancelingAddon(false); }
+  };
 
   useFocusEffect(useCallback(() => { loadAll(); }, [loadAll]));
 
@@ -271,6 +286,16 @@ export default function ParticipantsScreen() {
           </View>
 
           <Button label="Add participant" testID="participants-add-btn" icon={Plus} variant="secondary" onPress={openAdd} />
+
+          {pendingAddons.length > 0 ? (
+            <Card testID="pending-addon-banner" style={{ backgroundColor: colors.goldSoft, borderColor: colors.goldSoft }}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Pending add-on to confirm</T>
+              <T variant="small" style={{ marginTop: 4, color: colors.text, lineHeight: 20 }}>
+                You have {pendingAddons.length === 1 ? "an extra-participant add-on" : `${pendingAddons.length} extra-participant add-ons`} at $24.50 per fortnight that has not been confirmed yet. You can cancel it and the participant it added will be removed so you are not charged.
+              </T>
+              <Button label="Cancel pending add-on" testID="cancel-pending-addon" variant="outline" onPress={cancelPendingAddon} loading={cancelingAddon} style={{ marginTop: spacing.sm }} />
+            </Card>
+          ) : null}
 
           {active.length === 0 ? (
             <StatePanel testID="participants-empty" icon={Users} title="Add your first participant to get started." />
