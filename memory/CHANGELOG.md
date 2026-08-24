@@ -1,3 +1,22 @@
+## Iteration 244 (Aug 2026) — Web↔Mobile parity Phase 1 (Their Care / Providers & Paperwork / Your Account) + 3 SEO/AEO articles
+
+User: make web and mobile identical across the "Their Care", "Providers & Paperwork" and "Your Account" categories (every screen, function, workflow), and publish 3 attached articles. Web is source of truth. Full gap audit in `/app/PARITY-THEIRCARE-PAPERWORK-ACCOUNT-AUDIT.md`.
+
+### Shipped (mobile, aligned to web; all tested)
+- **Calendar** (`app/calendar.tsx`) — was READ-ONLY (`/fc2/.../calendar`); rebuilt to full `/api/visits` CRUD like web VisitCalendar: add/edit/cancel/restore/archive/delete, form (title/kind/date/time/duration/provider/location/notes), grouped-by-day agenda, status badges. (iter243 PASS)
+- **Care Plan detail** — NEW `app/care-plan/[id].tsx` (`GET /care-plans/{id}`): summary, findings sorted by severity (compliance/choice/efficiency/info) with detail+citation, services, editable notes (`PATCH .../notes`), re-run review (`POST .../analyse`), follow-up-email modal + copy (`GET .../follow-up-email`), PDF download (`GET .../artefact.pdf`). List (`care-plans.tsx`) got header title + tap-to-open. (iter243 PASS)
+- **Cases** header title added. (iter243 PASS)
+- **Correspondence** (`app/correspondence.tsx`) — REBUILT from LF-1 letters to the web contact-log on the SAME `/api/correspondence` endpoint (direction/channel/counterparty/subject/when/notes, add + delete) so both platforms share data. LF-1 letter editor stays at `correspondence/[id].tsx` for deep-links + `/letters`. (iter244 PASS)
+- **Documents** (`app/documents.tsx`) — added EDIT metadata modal (title/category/notes → `PATCH /documents/{id}`) + notes on card. (iter244 PASS)
+- **Support CSAT** (`app/support/[id].tsx`) — resolved/closed tickets show a 5-star rating + comment → `POST /support/tickets/{id}/csat`, read-only after submit. (iter244 PASS)
+
+### Shipped (web)
+- 3 SEO/AEO articles at `/resources/articles` (data in `frontend/src/data/seoArticles2026.js`): `chsp-extension-2029-what-it-means`, `support-at-home-personal-care-free-1-october-2026`, `support-at-home-statement-vs-invoice-explained`. Auto-render full Article+FAQPage+HowTo+Breadcrumb JSON-LD, TOC, key takeaways, related, trust footer. Added to `backend/seo_routes.py` sitemap. Editorial rules followed (DD/MM/YYYY, no em/en dashes, AU English). Screenshot-verified.
+
+### Remaining (Phase 2 backlog — see audit doc)
+Care Plans archived/restore/compare · Settings billing-parity verification · Compare Providers depth · Support attachments · Participants share-link rotate + cancel-pending-addon · Timeline endpoint alignment · Hospital DateField · Amendments status · Scenarios /state · Care Team/Key Contacts field parity.
+
+
 ## Iteration 243 (Jun 2026) — Parity sweep: "Their Care" · "Providers & Paperwork" · "Your Account" + CE-2 saved-state
 
 Audited every screen under the three requested sidebar categories (endpoint-diff web vs mobile). All screens already exist on both surfaces; closed the real functional gaps found (all additive to mobile):

@@ -16,6 +16,335 @@
  */
 export const SEO_ARTICLES_2026 = [
     {
+        slug: "chsp-extension-2029-what-it-means",
+        title: "The CHSP Extension to 30 June 2029: What It Means for Older Australians and Their Families",
+        excerpt: "The Commonwealth Home Support Program has been extended to 30/06/2029 and will stay separate from Support at Home. Here is what changes, what does not, and what it means for your household.",
+        published_at: "2026-08-23",
+        updated_at: "2026-08-23",
+        author: { name: "Wayly Editorial", role: "Financial clarity for Support at Home" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        hero_alt: "Older woman at home receiving help from a CHSP support worker",
+        canonical_path: "/resources/articles/chsp-extension-2029-what-it-means",
+        tags: ["CHSP", "Support at Home", "aged care changes 2026", "CHSP extension 2029", "home care"],
+        related: ["support-at-home-personal-care-free-1-october-2026", "support-at-home-statement-vs-invoice-explained"],
+        meta: {
+            title: "CHSP extension to 30 June 2029: what it means",
+            description: "CHSP has been extended to 30/06/2029 and stays a standalone program. What changes, what does not, and what it means for your household.",
+        },
+        key_takeaways: [
+            "CHSP is extended two more years, from 30/06/2027 to 30/06/2029.",
+            "CHSP will remain a standalone program and will not be merged into Support at Home as previously planned.",
+            "If you currently receive CHSP services, nothing changes: your services and provider contracts continue without interruption to 2029.",
+            "Support at Home is not directly affected by this announcement.",
+            "The financial change most likely to affect your invoice is the personal care reclassification on 01/10/2026, which is unrelated to this CHSP news.",
+        ],
+        intro_md: `On 20/08/2026, the Australian Government announced that the Commonwealth Home Support Program (CHSP) will be extended for another two years, to 30/06/2029. The government has also stepped away from the plan to fold CHSP into Support at Home, and said it now believes CHSP should remain a standalone program.
+
+If you or someone you love uses CHSP for help around the home, or you are on Support at Home and worried about how the two systems fit together, this announcement matters. It is also easy to misread. Below is a plain English summary of what changed on 20/08/2026, what did not change, and what to think about for your household.
+
+*Wayly provides information, not financial or legal advice. For personalised advice, speak with My Aged Care on 1800 200 422, an Aged Care Specialist Officer at Services Australia, or an aged care advocate through OPAN.*`,
+        sections: [
+            {
+                heading: "What was announced on 20/08/2026",
+                body_md: `Health and Ageing Minister Mark Butler and Aged Care Minister Sam Rae confirmed three things:
+
+1. CHSP funding will be extended for another two years, from 30/06/2027 to 30/06/2029.
+2. CHSP will remain a standalone program, rather than being merged into Support at Home from mid 2027 as previously planned.
+3. Consultation on the long term design of CHSP will begin later in 2026, including how block funding continues, how contributions to home care costs are set fairly across programs, and how early intervention services can reduce pressure on the wider aged care system.
+
+Around 830,000 older Australians rely on CHSP, and about 1,300 providers deliver its services. Almost 40% of CHSP recipients live outside major cities, and in many rural and remote communities the CHSP provider is a local council with no other option nearby.`,
+            },
+            {
+                heading: "What CHSP actually is (and how it differs from Support at Home)",
+                body_md: `CHSP is entry level support. Its services are things like domestic cleaning, meal delivery, transport to medical appointments, home maintenance, garden work, allied health, and social support. It is block funded, meaning providers receive a grant to deliver a set volume of services to a community, rather than a personal budget allocated to each recipient.
+
+Support at Home is different. It replaced Home Care Packages on 01/11/2025 and it works as an individual, means tested budget with eight classification levels. A participant is allocated a quarterly budget out of a personal allocation, and services are drawn down against it. Support at Home is the higher intensity system for people with more complex needs.
+
+Both programs exist under the Aged Care Act 2024. The plan until now was that CHSP would be absorbed into Support at Home no earlier than 01/07/2027. That plan is what the government has stepped back from.`,
+            },
+            {
+                heading: "What actually changes for you on 20/08/2026",
+                body_md: `Practically, the answer for most people is: not much this week, and a lot of certainty for the next few years.
+
+**If you currently receive CHSP services.** Your services continue. There is no interruption. CHSP will continue as a standalone program through to 30/06/2029. Council contracts and other provider contracts continue without interruption to 2029, and the government has explicitly said providers can no longer cite uncertainty about the future of CHSP as a reason for withdrawing services. You will still make any co-contributions you were already making.
+
+**If you are on the Support at Home program.** Your program is not affected by this announcement in any direct way. The eight classification levels, the three service categories (Clinical Supports, Independence, Everyday Living), the quarterly budget cycle, and the participant contribution rules all remain in place. There is a separate change coming to Support at Home on 01/10/2026 that is unrelated to the CHSP announcement, and that is far more likely to affect your monthly invoice: personal care moves to Clinical Supports and becomes fully government funded for approved participants.
+
+**If you are waiting for an assessment or are new to the system.** My Aged Care remains the entry point (1800 200 422 or myagedcare.gov.au). An assessment determines whether you are best supported through CHSP entry level services or through Support at Home. That triage does not change.`,
+            },
+            {
+                heading: "Why the government reversed course",
+                body_md: `Two forces did most of the work. First, a June 2026 Senate committee recommended that CHSP remain a separate block funded program. Second, local councils and other providers began withdrawing from CHSP through 2025 and 2026, citing uncertainty about whether the program would still exist after 2027. In some regional and remote communities, this left older people with no viable alternative.
+
+Ageing Australia, the Older Persons Advocacy Network (OPAN), the Australian Local Government Association, and the CHSP Alliance all publicly supported the decision. The government has been careful to say the extension is not the end state. Consultation is still coming, and the ministers have flagged that fair contribution arrangements across the two programs will be part of that discussion.`,
+            },
+            {
+                heading: "What this announcement does not do",
+                body_md: `Three things are worth calling out.
+
+It does not increase CHSP funding. Provider bodies have already noted that thousands of older Australians are on CHSP waiting lists, and that the 20/08/2026 announcement did not include a new funding injection.
+
+It does not undo the 01/10/2026 change to personal care under Support at Home. That reform was announced back in April 2026 and is on a separate track.
+
+It does not merge CHSP into Support at Home at some later date automatically. The government's stated position now is that CHSP should remain standalone.`,
+            },
+            {
+                heading: "What Wayly does about all this",
+                body_md: `Wayly is built for Support at Home participants and family caregivers, so the immediate operational impact of the 20/08/2026 announcement on our tools is small. What changes is the medium term picture: there is no longer a firm 01/07/2027 sunset date for CHSP, and households with one person on CHSP and another on Support at Home will be dealing with two systems for longer.
+
+Practically, that means our Support at Home Invoice Checker and Statement Decoder continue as designed, our CHSP tooling continues with an updated horizon out to 30/06/2029, and the 2026 consultation on long term CHSP design is the thing worth watching.
+
+For the average family, the honest headline is: no drama this month, more certainty for the next three years, and the real financial change coming out of Canberra is the personal care reclassification on 01/10/2026, not this one.`,
+            },
+        ],
+        faqs: [
+            { q: "Is CHSP being cancelled?", a: "No. CHSP is being extended for another two years to 30/06/2029, and the government has said it should remain a standalone program." },
+            { q: "Was CHSP supposed to be merged into Support at Home?", a: "Yes. The previous plan was that CHSP would be absorbed into Support at Home no earlier than 01/07/2027. That plan has been paused, and the government now believes CHSP should stay separate." },
+            { q: "Do I need to do anything if I currently receive CHSP services?", a: "No. Your services continue as they are. Contracts with providers, including local councils, continue without interruption to 2029." },
+            { q: "Will my CHSP fees or co-contributions change?", a: "The 20/08/2026 announcement did not change CHSP contribution arrangements. Consultation on long term contribution rules across CHSP and Support at Home is expected later in 2026." },
+            { q: "Does this affect Support at Home?", a: "Not directly. Support at Home continues to operate as it has since 01/11/2025. Note that a separate change to personal care under Support at Home is coming on 01/10/2026, which is unrelated to the CHSP announcement." },
+            { q: "Who should I call if I have questions?", a: "My Aged Care (1800 200 422) is the entry point. For advocacy and independent advice, contact the Older Persons Advocacy Network (OPAN) on 1800 700 600. Aged Care Specialist Officers at Services Australia can help with fees and contributions on 1800 227 475." },
+        ],
+    },
+    {
+        slug: "support-at-home-personal-care-free-1-october-2026",
+        title: "Personal Care Under Support at Home Becomes Free on 1 October 2026: What to Check on Your First Invoice",
+        excerpt: "From 01/10/2026, personal care under Support at Home is fully government funded. Here is exactly what changes, what stays the same, and what to check on your first invoice and monthly statement after that date.",
+        published_at: "2026-08-23",
+        updated_at: "2026-08-23",
+        author: { name: "Wayly Editorial", role: "Financial clarity for Support at Home" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        hero_alt: "Family caregiver checking a Support at Home invoice at the kitchen table",
+        canonical_path: "/resources/articles/support-at-home-personal-care-free-1-october-2026",
+        tags: ["Support at Home", "personal care", "clinical supports", "participant contributions", "Support at Home invoice", "Support at Home statement"],
+        related: ["support-at-home-statement-vs-invoice-explained", "chsp-extension-2029-what-it-means"],
+        meta: {
+            title: "Personal care free under Support at Home from 1 October 2026",
+            description: "From 01/10/2026 personal care under Support at Home is fully funded. What changes, what stays the same, and what to check on your first invoice and statement.",
+        },
+        key_takeaways: [
+            "From 01/10/2026, personal care moves from Independence to Clinical Supports and is fully government funded for approved participants: your contribution goes to $0.00.",
+            "The change is automatic. You do not need to reapply, and your classification, budget and support plan do not change.",
+            "The change applies to services delivered from 01/10/2026, not services invoiced from that date.",
+            "Personal care delivered on or before 30/09/2026 still attracts your old means tested contribution, even if it is invoiced later.",
+            "Contributions for Independence and Everyday Living services (transport, gardening, cleaning, meals) continue at your assessed rate.",
+        ],
+        intro_md: `From 01/10/2026, personal care services delivered under the Support at Home program will be fully funded by the Australian Government. If personal care is on your support plan and you have available Support at Home budget, you will pay no out of pocket contribution for it from that date. That is a real change to your monthly costs. It is also a change that is easy to get wrong on an invoice, because personal care delivered on 30/09/2026 is still billed the old way, personal care delivered on 01/10/2026 is billed the new way, and both can appear on the same statement.
+
+This article walks through what is changing, what is not, and what to check on the first invoice and monthly statement you receive after 01/10/2026. It is written for participants and family caregivers, not providers.
+
+*Wayly provides information, not financial or legal advice. Contribution amounts are set by Services Australia based on your individual income and assets assessment. For personalised advice, speak with My Aged Care on 1800 200 422 or an Aged Care Specialist Officer at Services Australia.*`,
+        sections: [
+            {
+                heading: "What is changing on 01/10/2026",
+                body_md: `Support at Home has three service categories, each with a different contribution rate:
+
+| Category | Participant contribution |
+|---|---|
+| Clinical Supports | Fully funded by the government. You pay 0% |
+| Independence | Moderate, means tested, roughly 5% to 50% of the service price |
+| Everyday Living | Higher, means tested, roughly 17.5% to 80% of the service price |
+
+From 01/10/2026, personal care moves from the Independence category into the Clinical Supports category. That is the entire change. Personal care becomes fully funded for approved participants, with no participant contribution.
+
+Personal care in this context means help with showering and bathing, help with dressing and grooming, non clinical continence management, help with eating and personal hygiene, and assistance with self administration of medication.
+
+The service list, service IDs, the workers who deliver personal care, and the way it is booked and delivered do not change. Only the contribution category changes. Personal care will still be drawn down from your Support at Home budget, but your out of pocket share of that cost goes from a means tested % to zero. The reform is estimated to cost around $1 billion over four years and was announced on 22/04/2026.`,
+            },
+            {
+                heading: "What is not changing on 01/10/2026",
+                body_md: `Six things stay the same, and it is worth being clear about them because they cause confusion.
+
+1. **You do not need to reapply or ask for the change.** It happens automatically for anyone approved for personal care in their support plan.
+2. **Your assessment does not change.** Your classification level, your quarterly budget, and your support plan are not adjusted. Personal care is still drawn from your budget, but the government pays 100% of that draw.
+3. **Contributions for other services continue.** Independence services like transport or social support, and Everyday Living services like domestic assistance, gardening or meals, still attract your assessed rate.
+4. **The definition of personal care is not changing.** Clinical continence management (for example, catheter care by a registered nurse) is a separate service type that was already in Clinical Supports.
+5. **The way personal care is delivered is not changing.** Same workers, same qualifications, same visits.
+6. **Services delivered before 01/10/2026 still attract a contribution.** This is the most common source of invoice confusion.`,
+            },
+            {
+                heading: "The invoice trap: services delivered before 01/10/2026 are still charged the old way",
+                body_md: `The change applies to services delivered from 01/10/2026, not services invoiced from 01/10/2026. Two examples make this clear.
+
+**Example A: personal care visit on 30/09/2026, invoiced on 08/10/2026.** Delivered before the change. Your participant contribution still applies at your old means tested Independence rate. Correct behaviour.
+
+**Example B: personal care visit on 03/10/2026, invoiced on 15/10/2026.** Delivered after the change. Your participant contribution is 0%. Correct behaviour.
+
+If both visits appear on your October or November statement, you should see two different treatments of the same service type. That is not an error. It becomes an error when a provider bills the 03/10/2026 visit at the old contribution rate, or bills the 30/09/2026 visit at the new rate. Both happen during transitions and both are worth catching.`,
+            },
+            {
+                heading: "Your first invoice and statement after 01/10/2026: a checklist",
+                body_md: `When your first monthly statement or contribution invoice arrives after 01/10/2026, check the following.
+
+**On the monthly statement (the summary document):**
+
+- Is personal care listed under Clinical Supports for services delivered on or after 01/10/2026? It should be.
+- Is the participant contribution on those personal care services shown as $0.00? It should be.
+- Are personal care services delivered on or before 30/09/2026 still shown with your old contribution rate? They should be. If they are shown at $0.00, the provider has misapplied the effective date.
+- Are Independence and Everyday Living contributions unchanged from your normal rate? They should be.
+
+*The monthly statement is not a bill. It is a summary of services delivered and how the cost was split. Read it as an audit document, not as something to pay.*
+
+**On the contribution invoice (the separate payable document):**
+
+- Are you being charged for personal care delivered on or after 01/10/2026? You should not be.
+- Is the invoice using your correct means tested rate for Independence and Everyday Living services?
+- Does the invoice separate services by delivery date around 01/10/2026? During the transition month, expect personal care split across the old and new arrangements.
+- Does the invoice list an ABN and the correct provider name? A mismatch is a valid reason to hold payment while it is resolved.
+
+If something looks off, raise it with your provider first. Ask for the delivery date, the service ID, and the contribution category applied. If the provider cannot resolve it, contact Services Australia on 1800 227 475, or the Older Persons Advocacy Network (OPAN) on 1800 700 600 for independent help.`,
+            },
+            {
+                heading: "What this does not fix",
+                body_md: `It does not reduce Everyday Living contributions. Domestic assistance, gardening, meal preparation and shopping assistance still carry the highest participant contribution rate. If your out of pocket costs are dominated by these services rather than personal care, the 01/10/2026 change will not move your monthly total much.
+
+It does not change the lifetime cap. The cap on lifetime non clinical contributions applies to Independence and Everyday Living services. Any contributions you made toward personal care before 01/10/2026 still count toward the cap, but new personal care from 01/10/2026 will not accrue further.
+
+It does not fix invoice quality across the sector. The Aged Care Quality and Safety Commission gained new enforcement powers in May 2026, including the power to order refunds for overcharging, but the day to day burden of catching an incorrect invoice still sits with participants and their families. That is exactly the gap Wayly was built to close.`,
+            },
+            {
+                heading: "What Wayly does with this",
+                body_md: `Wayly's SAH Invoice Checker and Statement Decoder are designed for exactly this kind of transition. Both tools reflect the 01/10/2026 change automatically from that date, and both flag mismatches such as personal care wrongly charged at the old rate, or personal care delivered on 30/09/2026 wrongly shown as free.
+
+Upload a contribution invoice to the SAH Invoice Checker and Wayly runs it against the rule engine and flags anything to raise before you pay. Upload the monthly statement to the Statement Decoder and Wayly explains it line by line so you can see how the personal care reclassification is being applied. Neither tool is a substitute for Services Australia or your provider. Both exist to give you a second set of eyes on what lands in your inbox.`,
+            },
+        ],
+        howto: {
+            name: "How to check your first Support at Home invoice after 1 October 2026",
+            description: "Step by step checks for personal care after it becomes fully government funded on 01/10/2026.",
+            steps: [
+                { name: "Check the category", text: "Confirm personal care delivered on or after 01/10/2026 is listed under Clinical Supports on the statement." },
+                { name: "Check the contribution", text: "Confirm the participant contribution on that personal care is $0.00." },
+                { name: "Check the delivery dates", text: "Confirm personal care delivered on or before 30/09/2026 still shows your old means tested rate." },
+                { name: "Reconcile the invoice", text: "Confirm the contribution invoice does not charge you for personal care delivered on or after 01/10/2026, and that ABN and provider name are correct." },
+                { name: "Raise anything off", text: "If something looks wrong, ask your provider for the delivery date, service ID and contribution category before you pay." },
+            ],
+        },
+        faqs: [
+            { q: "Is personal care actually becoming free from 01/10/2026?", a: "For approved Support at Home participants with available budget, yes. The service is drawn from your budget, but the government pays 100% of that draw. Your out of pocket contribution is $0.00." },
+            { q: "What personal care services are included?", a: "Help with showering and bathing, dressing, non clinical continence management, eating, personal hygiene, and assistance with self administration of medication." },
+            { q: "Do I need to reapply or update my support plan?", a: "No. The change is automatic for anyone approved for personal care in their support plan." },
+            { q: "Will my budget be reduced because personal care is now free?", a: "No. Your quarterly and annual budgets are not changing. Personal care is still deducted from your budget, but the government pays 100% of the deduction." },
+            { q: "What about personal care delivered before 01/10/2026 but invoiced after?", a: "You still pay the old contribution rate on services delivered before 01/10/2026, even if they appear on an invoice dated after that date. This is the most common source of confusion during the transition." },
+            { q: "Does this change apply to CHSP or residential aged care?", a: "No. This change is specific to the Support at Home program. CHSP fees continue under CHSP rules, and personal care in residential aged care is treated separately." },
+            { q: "What if I think my provider has billed personal care incorrectly after 01/10/2026?", a: "Raise it with the provider first. Ask them to confirm the delivery date, the service ID, and the contribution category applied. If it is not resolved, call Services Australia on 1800 227 475 or contact the Aged Care Quality and Safety Commission." },
+        ],
+    },
+    {
+        slug: "support-at-home-statement-vs-invoice-explained",
+        title: "Support at Home Statement vs Invoice: What's the Difference and Why It Matters",
+        excerpt: "Your Support at Home monthly statement and your contribution invoice are two different documents doing two different jobs. Getting them confused is where money leaks out. Here is how each works and what to check.",
+        published_at: "2026-08-23",
+        updated_at: "2026-08-23",
+        author: { name: "Wayly Editorial", role: "Financial clarity for Support at Home" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        hero_alt: "A Support at Home monthly statement and a contribution invoice side by side",
+        canonical_path: "/resources/articles/support-at-home-statement-vs-invoice-explained",
+        tags: ["Support at Home", "monthly statement", "contribution invoice", "participant contributions", "Support at Home billing", "aged care fees"],
+        related: ["support-at-home-personal-care-free-1-october-2026", "chsp-extension-2029-what-it-means"],
+        meta: {
+            title: "Support at Home statement vs invoice explained",
+            description: "The monthly statement is not a bill. The contribution invoice is. How each Support at Home document works, what to check, and what to do when they do not match.",
+        },
+        key_takeaways: [
+            "The monthly statement is an audit document. The contribution invoice is the bill. You audit the statement and pay the invoice, never the other way around.",
+            "Most billing errors show up on the invoice, which is the document you actually pay.",
+            "Reconcile the invoice against the statement every month before you pay.",
+            "The statement is the source of truth for what actually happened; the invoice is what you are being asked to pay.",
+            "If the two do not agree, do not pay yet: contact your provider and ask them to reconcile the specific lines in writing.",
+        ],
+        intro_md: `If you receive Support at Home services, or you are a family caregiver helping someone who does, two documents will land in your inbox each month. One is called a monthly statement. The other is called a contribution invoice. They look similar. They reference the same services. But they are two different documents doing two very different jobs, and getting them confused is where money leaks out.
+
+The single most useful sentence in this article is the one people usually hear from Wayly first: the monthly statement is not a bill. The contribution invoice is. Everything below flows from that one distinction.
+
+*Wayly provides information, not financial or legal advice. Contribution amounts are set by Services Australia based on your income and assets assessment. For personalised advice, speak with My Aged Care on 1800 200 422 or an Aged Care Specialist Officer at Services Australia.*`,
+        sections: [
+            {
+                heading: "The one-line difference",
+                body_md: `The monthly statement is a summary. It tells you what services were delivered, what they cost, how the government funded them, and what portion (if any) sits with you as a contribution. Think of it as an audit document from your provider.
+
+The contribution invoice is a bill. It is the separate document your provider issues asking you to pay a specific amount by a specific date.
+
+You audit the statement. You pay the invoice. Never the other way around.`,
+            },
+            {
+                heading: "Why the distinction matters",
+                body_md: `Most Support at Home billing errors do not show up on the statement. They show up on the invoice, which is the document you actually pay. Because both documents reference the same underlying services, it is easy to glance at the statement, see that everything looks reasonable, and pay whatever the invoice asks for without noticing that the two do not agree.
+
+Three common patterns:
+
+- The statement correctly shows a personal care visit as fully government funded (from 01/10/2026, the default for anyone with personal care in their support plan), but the invoice charges a contribution against it anyway.
+- The statement correctly shows a domestic assistance service at your assessed Everyday Living contribution rate, but the invoice applies a higher rate.
+- The statement shows a service you never received, and the invoice charges you a contribution against it.`,
+            },
+            {
+                heading: "The monthly statement, in detail",
+                body_md: `Under the Support at Home program, providers are required to give participants a monthly statement showing how funds and contributions moved through their budget in that month. A compliant monthly statement will show your name and Support at Home participant ID, the statement period, your quarterly budget total and how much is remaining, and every service delivered in the month itemised by service ID and description, date delivered, contribution category (Clinical Supports, Independence, or Everyday Living), the provider's price, the government funded amount, and your participant contribution amount. It will also show any care management charges, any package management or administrative fees, and your running totals for the quarter and the year.
+
+*Care management is a flat 10% of the quarterly budget with no floor. The $1,000 floor sometimes mentioned elsewhere applies to the unspent funds carryover cap, not to care management.*
+
+Read this twice: the monthly statement is showing you the outcome of a set of Services Australia claim decisions after the services were delivered. The government has already paid the government funded amount directly to your provider through the Aged Care Provider Portal (ACPP). Your provider will separately issue a contribution invoice for your share. The statement itself has no due date and no payment instructions. If yours does, ask your provider why.`,
+            },
+            {
+                heading: "What to check on your monthly statement",
+                body_md: `Do this monthly, ideally within a week of the statement arriving. It should take five to ten minutes.
+
+1. Cross-check services against your own memory or your caregiver diary. Every service listed should be one you actually received.
+2. Check contribution categories. Clinical Supports should show $0.00. Independence and Everyday Living services should show your assessed rates. From 01/10/2026, personal care should show under Clinical Supports for services delivered from that date.
+3. Check the delivery date on every line. If a personal care visit on 30/09/2026 shows $0.00 contribution, that is wrong. If a personal care visit on 03/10/2026 shows a contribution, that is also wrong.
+4. Check the quarterly budget running total against the previous month's statement.
+5. Check care management is exactly 10% of the quarterly budget line, not lower, not higher, and not a fee stack unless both parts are separately itemised and make sense.`,
+            },
+            {
+                heading: "The contribution invoice, in detail",
+                body_md: `The contribution invoice is the separate document your provider issues asking you to pay a specific amount by a specific date. It is the only document you actually pay against.
+
+A compliant contribution invoice will show your name and address, the provider's registered business name, ABN and GST status, an invoice number and invoice date, a due date and accepted payment methods, a line by line breakdown of what you are being charged for, the contribution amount per line and the invoice total, and where the contribution amounts came from.
+
+The ABN, business name, and GST status must match the Australian Business Register. Support at Home requires all billing to be traceable and auditable, and a mismatch here is a valid reason to hold payment while it is resolved.
+
+When an invoice arrives, before paying: check that it matches the statement, that the contribution rates are correct, that every line is a service you received, that it includes no fees not listed on the statement, that the ABN and provider name are correct, and that the due date gives you reasonable time to check it.`,
+            },
+            {
+                heading: "Statement vs invoice: side by side",
+                body_md: `| | Monthly statement | Contribution invoice |
+|---|---|---|
+| Purpose | Summary of services delivered and how costs were split | Request for payment of your contribution |
+| Is it a bill? | No | Yes |
+| Due date | No | Yes |
+| Where errors usually hide | Wrong service category, wrong contribution rate, service not delivered | Wrong contribution rate, ABN mismatch, contributions that do not reconcile |
+| What you do with it | Read, check, keep for records | Reconcile against the statement, then pay |
+| Source of truth if they disagree | Statement (audit document) | Invoice is what you are asked to pay, but the statement is the record of what happened |`,
+            },
+            {
+                heading: "When the statement and the invoice do not agree",
+                body_md: `If the numbers on the invoice do not reconcile to the numbers on the statement for the same period, one of them is wrong, and the invoice is the one you are about to pay. Do this in order:
+
+1. Do not pay the invoice yet. You are within your rights to hold payment while the discrepancy is resolved.
+2. Contact your provider. Ask them to explain the specific line items that do not reconcile.
+3. Ask for a written response for anything more than a small clerical fix.
+4. Escalate if unresolved. Services Australia can be contacted on 1800 227 475 for contribution amounts. The Aged Care Quality and Safety Commission accepts billing complaints. OPAN on 1800 700 600 can support you. The Commonwealth Ombudsman handles complaints where a provider or agency has not resolved the matter.`,
+            },
+            {
+                heading: "How Wayly's tools work with each document",
+                body_md: `Wayly's two most used tools are built directly around this distinction.
+
+The Statement Decoder takes your monthly statement, parses it line by line, and explains what each entry means in plain English. It flags anything that looks off, including services in the wrong category, contribution rates that do not match your assessed rate, and care management calculated other than at a flat 10%.
+
+The SAH Invoice Checker takes your contribution invoice and runs it through Wayly's rule engine. It compares the invoice to your statement, flags contributions that do not reconcile, catches ABN mismatches, and identifies any lines that should be $0.00 but are not. Neither tool is a substitute for Services Australia, your provider, or an aged care advocate.`,
+            },
+        ],
+        faqs: [
+            { q: "Is my monthly Support at Home statement a bill?", a: "No. The monthly statement is an audit document showing what services were delivered and how the cost was split between the government and your contribution. It has no due date and no payment instructions. Your provider will send a separate contribution invoice for the amount you owe." },
+            { q: "What is a Support at Home contribution invoice?", a: "It is the separate document your provider issues asking you to pay your share of the cost of the services you received. It should reconcile to the contributions shown on your monthly statement for the same period." },
+            { q: "What should I do if my statement and my invoice do not match?", a: "Do not pay the invoice yet. Contact your provider and ask them to explain the specific line items that do not reconcile. Ask for a written response. If it cannot be resolved, contact Services Australia on 1800 227 475 or lodge a complaint with the Aged Care Quality and Safety Commission." },
+            { q: "Does my provider have to give me both documents?", a: "Yes. Under the Support at Home program, providers must issue a monthly statement to participants, and they also issue a contribution invoice for the amount you owe. These are two separate documents." },
+            { q: "Can my provider debit my account without sending an invoice?", a: "Only if you have specifically agreed to that arrangement. Even then, you are entitled to a document showing what you were charged for and when, and you can withdraw that agreement." },
+            { q: "Are there errors that show up on the statement but not the invoice, or the other way around?", a: "Yes, both. Category errors show up on the statement. Rate errors can show up on either. ABN and provider name errors show up on the invoice. Services claimed but not delivered show up on the statement. Reconciling the two catches errors that neither alone would catch." },
+            { q: "Do I need to keep old statements and invoices?", a: "Yes. Keep at least the current financial year. They help if you ever need to reconcile a discrepancy, apply for financial hardship, calculate lifetime contribution caps, or claim medical related expenses at tax time. Wayly's document vault stores both automatically." },
+        ],
+    },
+    {
         slug: "support-at-home-statement",
         title: "How to Read Your Support at Home Statement and Spot When Something Looks Off",
         excerpt: "A plain English guide to reading your Support at Home monthly statement, checking the 10% care fee and spotting charges that look wrong.",

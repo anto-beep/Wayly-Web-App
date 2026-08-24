@@ -1,12 +1,12 @@
 import React, { useCallback, useState } from "react";
 import { Alert, Linking, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { FolderArchive, FileText, Download, FileSpreadsheet, Image as ImageIcon, LucideIcon, Plus, UploadCloud, X, Sparkles } from "lucide-react-native";
+import { FolderArchive, FileText, Download, FileSpreadsheet, Image as ImageIcon, LucideIcon, Plus, UploadCloud, X, Sparkles, Pencil } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
-import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
+import { AppHeader, Badge, Button, Card, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { downloadAndShare } from "@/src/lib/download";
@@ -70,6 +70,9 @@ export default function DocumentsScreen() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [dlError, setDlError] = useState("");
   const [showUpload, setShowUpload] = useState(false);
+  const [editing, setEditing] = useState<Doc | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", category: "other", notes: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
   const [picked, setPicked] = useState<Picked | null>(null);
   const [category, setCategory] = useState("other");
   const [docTitle, setDocTitle] = useState("");
@@ -91,8 +94,25 @@ export default function DocumentsScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const download = async (d: Doc) => {
-    setBusyId(d.id);
+  const openEdit = (d: Doc) => {
+    setEditing(d);
+    setEditForm({ title: d.title || d.filename || "", category: d.category || "other", notes: d.notes || "" });
+  };
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSavingEdit(true);
+    try {
+      await apiFetch(`/documents/${editing.id}`, { method: "PATCH", body: {
+        title: editForm.title.trim() || null,
+        category: editForm.category,
+        notes: editForm.notes.trim() || null,
+      } });
+      setEditing(null);
+      await load();
+    } catch { /* keep modal open */ } finally { setSavingEdit(false); }
+  };
+
+  const download = async (d: Doc) => {    setBusyId(d.id);
     setDlError("");
     try {
       await downloadAndShare(`/documents/${d.id}/download`, d.filename || d.title || "document");
@@ -287,6 +307,10 @@ export default function DocumentsScreen() {
                         <Download size={16} color={colors.primary} />
                         <T variant="small" style={{ color: colors.primary }}>{busyId === d.id ? "Working…" : "Download"}</T>
                       </Pressable>
+                      <Pressable testID={`document-edit-${d.id}`} onPress={() => openEdit(d)} style={[styles.dlBtn, { borderColor: colors.border }]}>
+                        <Pencil size={16} color={colors.primary} />
+                        <T variant="small" style={{ color: colors.primary }}>Edit</T>
+                      </Pressable>
                       {d.category === "statement" ? (
                         <Pressable testID={`document-decode-${d.id}`} onPress={() => sendToDecoder(d)} disabled={busyId === d.id} style={[styles.dlBtn, { borderColor: colors.primary, backgroundColor: colors.sageSoft }]}>
                           <Sparkles size={16} color={colors.primary} />
@@ -294,6 +318,7 @@ export default function DocumentsScreen() {
                         </Pressable>
                       ) : null}
                     </View>
+                    {d.notes ? <T variant="small" style={{ marginTop: 6, color: colors.muted, lineHeight: 19 }}>{d.notes}</T> : null}
                   </View>
                 </View>
               </Card>
@@ -375,6 +400,24 @@ export default function DocumentsScreen() {
                 disabled={!picked || uploading}
                 icon={UploadCloud}
               />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit metadata modal */}
+      <Modal visible={!!editing} animationType="slide" transparent onRequestClose={() => setEditing(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
+            <View style={styles.sheetHeader}>
+              <T variant="h3">Edit document</T>
+              <Pressable testID="docvault-edit-close" onPress={() => setEditing(null)} hitSlop={12}><X size={22} color={colors.muted} /></Pressable>
+            </View>
+            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: spacing.sm }}>
+              <Field label="Title" testID="docvault-edit-title" value={editForm.title} onChangeText={(v) => setEditForm({ ...editForm, title: v })} placeholder="Document title" />
+              <Select label="Category" testID="docvault-edit-category" value={editForm.category} onChange={(v) => setEditForm({ ...editForm, category: v })} options={UPLOAD_CATEGORIES} />
+              <Field label="Notes" optional testID="docvault-edit-notes" value={editForm.notes} onChangeText={(v) => setEditForm({ ...editForm, notes: v })} placeholder="Notes about this document" multiline style={{ minHeight: 80 } as any} />
+              <Button label="Save changes" testID="docvault-edit-save" onPress={saveEdit} loading={savingEdit} />
             </ScrollView>
           </View>
         </View>

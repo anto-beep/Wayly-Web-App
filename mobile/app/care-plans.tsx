@@ -74,7 +74,7 @@ export default function CarePlansScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader onBack={() => router.back()} />
+      <AppHeader title="Care Plans" subtitle={active?.name ? `${active.name}'s support plans` : "Support plans"} onBack={() => router.back()} />
       {loading ? (
         <Loading label="Loading care plans…" />
       ) : error ? (
@@ -151,6 +151,7 @@ export default function CarePlansScreen() {
               })
               .map((p) => (
               <Card key={p.id} testID={`care-plan-${p.id}`}>
+                <Pressable testID={`care-plan-open-${p.id}`} onPress={() => router.push(`/care-plan/${p.id}`)}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                     <FileText size={18} color={colors.primary} />
@@ -164,6 +165,7 @@ export default function CarePlansScreen() {
                   {p.classification_at_review ? ` · Class ${p.classification_at_review}` : ""}
                 </T>
                 {p.summary ? <T variant="small" style={{ marginTop: 6, lineHeight: 20 }} numberOfLines={4}>{p.summary}</T> : null}
+                </Pressable>
                 {pendingDeleteId === p.id ? (
                   <View testID={`cp-delete-confirm-${p.id}`} style={{ marginTop: 10, gap: 8 }}>
                     <T variant="small" style={{ color: colors.terracotta }}>Delete this review permanently? This can&apos;t be undone.</T>

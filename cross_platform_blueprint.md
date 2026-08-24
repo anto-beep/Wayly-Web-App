@@ -1,64 +1,68 @@
-# Cross-Platform Blueprint: Web to Mobile
+# Cross-Platform Port Blueprint
 
-## Detection
-- **Source Platform**: Web (`/app/frontend`). Validated by the presence of a mature React application with `package.json`, Tailwind config, and `src/pages` containing over 80+ `.jsx` files.
-- **Target Platform**: Mobile (`/app/mobile`). Validated by the presence of an Expo / React Native scaffolding using `expo-router` under `app/`.
-- **Assumption**: We are building the remaining missing flows on the mobile app to achieve full parity with the web version, specifically focusing on full onboarding, plan selection, Stripe integration, and household management, as identified in `PRD.md`.
+## 1. Detection
+- **Source Platform**: Web (`/app/frontend`). Evidenced by React CRA setup (`react-scripts`, `react-snap`), `src/pages` containing 70+ components (`.jsx`), and DOM-based styling (Tailwind CSS, Radix UI).
+- **Target Platform**: Mobile (`/app/mobile`). Evidenced by Expo Router initialization (`app/`, `app.json`), React Native dependencies (`react-native`, `expo`), and `BACKEND_HANDOFF.md` stipulating exact parity with the web app specifically for the caregiver surface.
 
-## Existing App Map (Web)
-- **Screens & Routes**:
-  - **Marketing/Onboarding**: `/login`, `/signup`, `/onboarding` (multi-step `OnboardingRouter.jsx` handling persona, role, care-recipient details, and secondary family members).
-  - **Billing**: `/pricing` (displays plans and handles Stripe checkout redirects).
-  - **Settings**: `/settings` (handles household member lists, invites, email/phone modifications, notification prefs).
-- **Components & State**:
-  - Uses `AuthContext` and `ParticipantContext` for global state.
-  - `api.js` provides Axios interceptors for JWT token lifecycle.
-  - Responsive layouts via Tailwind CSS; robust UI component library (cards, inputs, badges).
-- **User Flows**:
-  - **Auth & Onboarding**: Sign up -> Select Persona -> Care Recipient Details -> Add Family Member (if Family Plan) -> Dashboard.
-  - **Billing & Subscription**: View Pricing -> Select Tier -> Stripe Hosted Checkout -> Success Redirect.
-  - **Household Management**: Settings -> Family Members -> Send Invite -> Manage Access.
+## 2. Existing App Map (Web)
+### Screens & Routes
+- **Marketing / Public**: `/features`, `/pricing`, `/about`, `/contact`, `/trust`, `/legal/*` (pre-rendered via `react-snap`).
+- **Authentication**: `Login.jsx`, `Signup.jsx`, `VerifyEmail.jsx`, `PasswordReset.jsx`, `AuthCallback.jsx`.
+- **Caregiver Core Flows**: 
+  - `CaregiverDashboard.jsx` (Central hub)
+  - `ParticipantProfile.jsx`, `ParticipantCases.jsx` (Loved one details)
+  - `StatementsList.jsx`, `StatementDetail.jsx`, `StatementCompare.jsx` (Decoding & managing aged care statements)
+  - `InvoicesList.jsx`, `InvoiceDetail.jsx` (Tracking expenses)
+  - `DocumentVault.jsx` (Secure storage for care docs)
+- **Specialized AI Tools**: `BudgetScenarios.jsx`, `CarePlanDetail.jsx`, `ProviderSwitches.jsx`, `Reports.jsx`, `ChspTools.jsx`, `CarerSelfAssessment.jsx`, `FamilyCoordinator.jsx`.
 
-## Shared Backend API Surface
-The mobile app will reuse the `/app/backend` FastAPI endpoints with JWT `Authorization: Bearer <token>`.
-- **Auth & Accounts**:
-  - `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/auth/me`
-- **Onboarding & Participants**:
-  - `GET`, `PUT`, `DELETE /api/onboarding/draft`: Manages onboarding wizard state.
-  - `POST /api/participants`: Creates participant.
-  - `GET /api/participants`: Lists current user's participants.
-- **Household Management**:
-  - `GET /api/household`: Fetches current household.
-  - `GET /api/household/members`: Lists members.
-  - `POST /api/household/invite`: Sends email invite.
-  - `DELETE /api/household/members/{member_user_id}`: Revokes access.
-- **Payments**:
-  - `POST /api/payments/checkout`: Starts a new Stripe session returning `{ "url": "..." }`.
+### Components & State
+- **UI Kit**: Relies heavily on Radix UI primitives and Tailwind CSS. Forms powered by `react-hook-form` and `zod`.
+- **State/API**: Centralized via `api.js` (Axios) wrapping the `/api` prefix, with JWT token rotation stored in `localStorage`. Includes a read-only trial-expired interceptor.
 
-## Data Models & Integrations
-- **Data Models**: Users, Participants, Households, Household Members, Statements.
-- **Integrations**:
-  - **Stripe**: Currently wired for web using a hosted checkout redirection model.
-  - **Target-Platform Variants Needed**: The web flow relies on a browser redirect to Stripe Checkout (`/api/payments/checkout`). For native mobile parity without WebView redirects, we require the `@stripe/stripe-react-native` SDK to perform native card capture using a SetupIntent. **A new `/api/payments/setup-intent` or similar endpoint must be created** to issue the client secret.
+## 3. Shared Backend API Surface
+The FastAPI backend (`/app/backend`) is mounted at `/api` and serves both platforms. The mobile app MUST reuse these exact endpoints. Key reusable routes:
+- **Auth**: `POST /auth/login`, `POST /auth/signup`, `GET /auth/me`, `POST /auth/refresh`
+- **Participants**: `GET /participants`, `GET /v2/participants`, `POST /participants/{id}/share-link`
+- **Statements**: `GET /statements`, `GET /statements/{id}`, `POST /statements/upload-job/{id}`
+- **Invoices**: `GET /invoices`, `POST /invoices/{id}/save-to-vault`
+- **Budgets & Pacing**: `GET /qp1/schedules`, `GET /qp1/pacing`, `GET /qp1/ledger`
+- **Documents**: `GET /documents`, `POST /documents/upload`
+- **Support / Feedback**: `GET /support/tickets`, `POST /support/tickets`
+- **Account / Billing**: `GET /account`, `POST /payments/reactivate-subscription`
 
-## Port Requirements (Target Platform - Mobile)
-To achieve full parity in `/app/mobile`, the following must be implemented using React Native and Expo:
-- **Full Onboarding Replication**:
-  - Implement `app/onboarding.tsx` mimicking the web `OnboardingRouter.jsx`.
-  - Wire steps to `GET/PUT/DELETE /api/onboarding/draft`.
-  - *Platform Notes*: Use `KeyboardAvoidingView` and `ScrollView`. Replace web `onClick` with `onPress`.
-- **Plan Selection & Stripe Card Capture**:
-  - Replicate the web `Pricing.jsx` tiers natively.
-  - Integrate `@stripe/stripe-react-native` `PaymentSheet` or `CardField`.
-  - *Platform Notes*: Requires custom dev client to test the native Stripe module. Do not rely on Expo Go.
-- **Family Members in Settings**:
-  - Replicate the household list and invite form under `app/settings/family-members.tsx` or similar.
-  - Consume `/api/household/members` and `/api/household/invite`.
-  - *Platform Notes*: Use native bottom sheets or modals for the invite form.
-- **Visual Audit Pass**:
-  - Ensure dark mode / light mode compatibility using existing `useTheme()` hooks.
-  - Match web per-screen spacing and resolve any truncation with `numberOfLines`.
+## 4. Data Models & Integrations
+### Core MongoDB Collections
+- `users` (Auth & profiles)
+- `participants` (Care recipient details)
+- `statements`, `invoices` (Financial docs)
+- `documents` (Vault storage)
+- `cases`, `lf1_correspondence`, `provider_switches`, `chsp_profiles` (Tooling data)
+- `subscriptions`, `stripe_webhook_events` (Billing status)
 
-## Open Questions / Risks
-1. **Stripe SetupIntent Endpoint**: The backend currently only has `checkout` for web redirection. A `setup-intent` (or equivalent `payment-intent` for native flows) endpoint is missing and must be developed by the integration agent.
-2. **Native Testing Environment**: Validating `@stripe/stripe-react-native` requires a native build environment since it cannot be mocked effectively in pure web or Expo Go fallback modes.
+### Integrations (Needs Mobile Translation)
+- **Auth**: Web uses `@react-oauth/google`. Mobile needs `expo-auth-session` or Google Sign-In SDK.
+- **Payments**: Web uses Stripe Elements. Mobile subscriptions might violate Apple/Google IAP policies unless properly bridged or shifted to out-of-app purchase.
+- **Storage**: AWS Boto3 (S3). Mobile must upload using `expo-file-system` and multipart/form-data.
+- **AI**: OpenAI & Google Generative AI (Server-side, opaque to the client).
+
+## 5. Port Requirements (Target Platform - Mobile)
+- **Framework Setup**: Use Expo Router (`app/`) with Stack and Tabs navigation (`app/(tabs)`).
+- **Styling**: Replace Tailwind CSS with React Native `StyleSheet` mappings reading from a shared color token system (`theme/tokens.ts` mirroring web). Avoid hardcoding hex values.
+- **API Client**: Replace `localStorage` token storage in `api.js` with `expo-secure-store` or `@react-native-async-storage/async-storage`. Keep the request/response interceptors (401 rotation, read-only mode).
+- **Component Replacements**:
+  - `<div>` / `<span>` → `<View>` / `<Text>`
+  - `<input type="file">` → `expo-document-picker`
+  - Charting (`Recharts`) → Need to evaluate an RN alternative (e.g., `react-native-svg-charts` or `victory-native`).
+  - Web Modals (Radix Dialog) → React Native Modal or `react-native-bottom-sheet`.
+- **Keyboard & Safeties**: Ensure all forms use `KeyboardAvoidingView` or `react-native-keyboard-aware-scroll-view`. Use `useSafeAreaInsets()` for top/bottom padding instead of web padding variables.
+- **Navigation Flows**:
+  - `CaregiverDashboard.jsx` maps to `app/(tabs)/index.tsx`.
+  - `DocumentVault.jsx` maps to `app/(tabs)/documents.tsx`.
+  - Deep linking from email requires configuring `expo-linking` schemes matching the web routes.
+
+## 6. Open Questions / Risks
+- **In-App Purchases vs Stripe**: Will the caregiver app allow subscription upgrades inside the mobile app? If so, Apple/Google IAP requires significant backend modeling changes. If not, users must be sent to the web version to pay.
+- **PDF Viewing**: Web relies heavily on `react-pdf`. React Native does not natively render PDFs without `react-native-pdf` (which can be hard to link in Expo Go) or opening them in a `<WebView>`.
+- **Push Notifications**: Web notifications are limited. Mobile will likely need robust integration with `expo-notifications`.
+- **Marketing Pages Scope**: Should marketing routes (`/features`, `/pricing`) be strictly excluded from the mobile bundle, or shown via WebView if accessed?

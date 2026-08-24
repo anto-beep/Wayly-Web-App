@@ -74,6 +74,10 @@ STATIC_PAGES = [
     # Jul 2026 · high-value editorial batch (contributions + switching providers)
     ("/resources/articles/how-much-will-i-pay-for-support-at-home", "0.9", "monthly"),
     ("/resources/articles/how-to-switch-support-at-home-provider", "0.9", "monthly"),
+    # Aug 2026 · policy + billing editorial batch
+    ("/resources/articles/chsp-extension-2029-what-it-means", "0.9", "monthly"),
+    ("/resources/articles/support-at-home-personal-care-free-1-october-2026", "0.9", "monthly"),
+    ("/resources/articles/support-at-home-statement-vs-invoice-explained", "0.9", "monthly"),
     # Phase 4 Batch 1, Support at Home levels hub + 8 level pages (Feb 2026)
     ("/support-at-home-levels", "0.9", "monthly"),
     ("/support-at-home-levels/level-1", "0.7", "monthly"),

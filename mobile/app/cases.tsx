@@ -45,7 +45,7 @@ export default function CasesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader onBack={() => router.back()} />
+      <AppHeader title="Complaints & Cases" subtitle="Track issues to resolution" onBack={() => router.back()} />
       {loading ? (
         <Loading label="Loading cases…" />
       ) : (

@@ -1,16 +1,17 @@
 import React, { useCallback, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { Send } from "lucide-react-native";
+import { Send, Star } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDateTime } from "@/src/utils/format";
+import { Pressable } from "react-native";
 
 type Msg = { id: string; author_type?: string; body?: string; created_at?: string; visibility?: string };
-type Ticket = { id: string; reference?: string; category?: string; status?: string; user_note?: string; created_at?: string };
+type Ticket = { id: string; reference?: string; category?: string; status?: string; user_note?: string; created_at?: string; csat_score?: number | null };
 
 export default function SupportDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,6 +22,9 @@ export default function SupportDetailScreen() {
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [csat, setCsat] = useState(0);
+  const [csatComment, setCsatComment] = useState("");
+  const [csatBusy, setCsatBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -49,6 +53,16 @@ export default function SupportDetailScreen() {
     try { await apiFetch(`/support/tickets/${id}/${action}`, { method: "POST", body: {} }); await load(); }
     catch (e) { setErr(e instanceof ApiError ? e.message : `Could not ${action} this request.`); }
     finally { setBusy(false); }
+  };
+
+  const submitCsat = async () => {
+    if (csat < 1) return;
+    setCsatBusy(true);
+    try {
+      await apiFetch(`/support/tickets/${id}/csat`, { method: "POST", body: { csat_score: csat, csat_comment: csatComment.trim() || null } });
+      await load();
+    } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not submit your rating."); }
+    finally { setCsatBusy(false); }
   };
 
   const isClosed = ticket?.status === "closed" || ticket?.status === "resolved";
@@ -97,6 +111,33 @@ export default function SupportDetailScreen() {
               <Card>
                 <Field label="Add a reply" testID="support-reply-input" value={reply} onChangeText={setReply} multiline placeholder="Type your message…" />
                 <Button label="Send" testID="support-send" icon={Send} onPress={send} loading={busy} disabled={!reply.trim()} style={{ marginTop: spacing.sm }} />
+              </Card>
+            ) : null}
+
+            {isClosed && ticket.csat_score ? (
+              <Card testID="support-csat-done">
+                <T variant="label">YOUR RATING</T>
+                <View style={{ flexDirection: "row", gap: 4, marginTop: 6 }}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star key={n} size={20} color={colors.gold} fill={n <= (ticket.csat_score || 0) ? colors.gold : "transparent"} />
+                  ))}
+                </View>
+              </Card>
+            ) : null}
+
+            {isClosed && !ticket.csat_score ? (
+              <Card testID="support-csat">
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>How did we do?</T>
+                <T variant="small" style={{ marginTop: 4, color: colors.muted }}>Rate the support you received on this request.</T>
+                <View style={{ flexDirection: "row", gap: 6, marginTop: spacing.sm }}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Pressable key={n} testID={`support-csat-star-${n}`} onPress={() => setCsat(n)} hitSlop={6}>
+                      <Star size={30} color={colors.gold} fill={n <= csat ? colors.gold : "transparent"} />
+                    </Pressable>
+                  ))}
+                </View>
+                <Field label="Comment" testID="support-csat-comment" value={csatComment} onChangeText={setCsatComment} multiline placeholder="Anything to add? (optional)" style={{ marginTop: spacing.sm }} />
+                <Button label="Submit rating" testID="support-csat-submit" onPress={submitCsat} loading={csatBusy} disabled={csat < 1} style={{ marginTop: spacing.sm }} />
               </Card>
             ) : null}
           </ScrollView>
