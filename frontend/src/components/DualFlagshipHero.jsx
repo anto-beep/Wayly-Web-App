@@ -16,17 +16,25 @@ import { ArrowRight, FileSearch, ReceiptText, MessageCircle, Sparkles, MapPin, S
 import PersonaToggle from "@/components/PersonaToggle";
 import Reveal from "@/components/Reveal";
 import { track } from "@/lib/analytics";
+import { BRAND_TAGLINE } from "@/lib/brand";
+
+// Landing header tagline, sourced from the shared BRAND_TAGLINE constant so it
+// stays identical to mobile (login + signup). Split into two tone-styled parts
+// without altering the wording; CSS uppercases it to match mobile.
+const TAGLINE_PARTS = BRAND_TAGLINE.split(", ");
+const TAGLINE_HEAD = `${TAGLINE_PARTS[0]},`;
+const TAGLINE_TAIL = TAGLINE_PARTS.slice(1).join(", ");
 
 const COPY = {
     caregiver: {
-        eyebrow: "Aged Care, Made Clear",
+        eyebrow: "Aged Care, Made Easy",
         headline: "Read the statement. Check the invoice. Sleep on Sunday.",
         subhead: "Wayly is the calm dashboard families use to make sense of every Support at Home statement and every provider invoice, before the money goes out the door.",
         flagship_statement_sub: "Upload the monthly statement. Get a plain-English breakdown of every stream, every rate, every flag.",
         flagship_invoice_sub: "Upload the contribution invoice. Wayly runs the C1 to C12 rule engine and tells you what to raise before you pay.",
     },
     participant: {
-        eyebrow: "Aged Care, Made Clear",
+        eyebrow: "Aged Care, Made Easy",
         headline: "Your Care. Your Statement. Your Call.",
         subhead: "Wayly reads your Support at Home statement and any provider invoice with you, in plain English, so you know exactly where your funding goes and what is worth questioning.",
         flagship_statement_sub: "Drop in your monthly statement. See what every line means and where your quarterly budget stands.",
@@ -65,9 +73,9 @@ export default function DualFlagshipHero() {
                         data-testid="hero-eyebrow"
                         style={{ textShadow: "0 1px 0 rgba(14,77,82,0.06)" }}
                     >
-                        Aged Care,{" "}
+                        {TAGLINE_HEAD}{" "}
                         <span className="relative inline-block" style={{ color: "#A5512B" }}>
-                            Made Clear.
+                            {TAGLINE_TAIL}
                         </span>
                     </h1>
                 </Reveal>

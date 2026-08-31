@@ -158,6 +158,8 @@ export default function ParticipantsPage() {
     const [editSaving, setEditSaving] = useState(false);
     const [editError, setEditError] = useState("");
     const [shareTarget, setShareTarget] = useState(null);
+    const [pendingAddons, setPendingAddons] = useState([]);
+    const [cancellingAddon, setCancellingAddon] = useState(false);
     const isExpired = useExpiredTrial();
 
     const loadAll = useCallback(async () => {
@@ -170,7 +172,26 @@ export default function ParticipantsPage() {
         } catch (e) {
             toast.error(extractErrorMessage(e, "Could not load participants"));
         } finally { setLoading(false); }
+        // A pending add-on is an extra-participant charge that was started but
+        // never confirmed (no Stripe subscription stamped). Surface it so the
+        // owner can cancel it, matching the mobile Participants banner.
+        try {
+            const { data: acct } = await api.get("/account");
+            setPendingAddons((acct?.addons || []).filter((a) => !a?.stripe_subscription_id && a?.status !== "CANCELLED"));
+        } catch { /* non-fatal */ }
     }, []);
+
+    const cancelPendingAddon = async () => {
+        setCancellingAddon(true);
+        try {
+            await api.post("/billing/v2/cancel-pending-addon");
+            toast.success("Pending add-on cancelled. You have not been charged for it.");
+            await loadAll();
+            await refresh();
+        } catch (e) {
+            toast.error(extractErrorMessage(e, "Could not cancel the add-on"));
+        } finally { setCancellingAddon(false); }
+    };
 
     useEffect(() => { loadAll(); }, [loadAll]);
 
@@ -406,6 +427,24 @@ export default function ParticipantsPage() {
                 </button>
                 )}
             </div>
+
+            {pendingAddons.length > 0 && (
+                <div className="rounded-xl border border-gold/50 bg-gold/10 p-4 space-y-2" data-testid="pending-addon-banner">
+                    <p className="text-sm font-medium text-primary-k">Pending add-on to confirm</p>
+                    <p className="text-sm text-muted-k">
+                        You have {pendingAddons.length === 1 ? "an extra-participant add-on" : `${pendingAddons.length} extra-participant add-ons`} at $24.50 per fortnight that has not been confirmed yet. You have not been charged. You can cancel it and the participant it added will be removed.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={cancelPendingAddon}
+                        disabled={cancellingAddon}
+                        data-testid="cancel-pending-addon"
+                        className="inline-flex items-center gap-2 rounded-md border border-kindred px-4 py-2 text-sm text-primary-k hover:bg-surface-2 disabled:opacity-60"
+                    >
+                        {cancellingAddon ? "Cancelling…" : "Cancel pending add-on"}
+                    </button>
+                </div>
+            )}
 
             {loading && <div className="text-sm text-muted-k">Loading…</div>}
 

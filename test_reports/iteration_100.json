@@ -1,38 +1,45 @@
 {
-  "summary": "Iteration 112 review (Letter-from-Duplicate + Notification Settings). Frontend fully passes: /settings/notifications renders 4 sections with all required data-testids (4 freq radios, 3 channel toggles, 12 topic buttons, targeted toggle, back link), each interaction PATCHes /api/lca1/preferences and shows the 'Saved' indicator. LCA1AlertsBell gear icon (lca1-alerts-settings-link) reliably navigates to /settings/notifications. Preferences GET/PATCH APIs behave as spec'd (defaults merge, 422 on bad frequency). However, POST /api/sd3/candidates/{id}/draft-letter has a FLAKY line-item resolution bug that causes acceptance test test_draft_letter_from_candidate_creates_lf1_and_is_idempotent to fail intermittently (~60-80% of runs). Root cause identified in /app/backend/routes/sd3.py::create_pair.",
-  "backend_issues": {
-    "critical": [
-      {
-        "endpoint": "POST /api/sd3/pairs  +  POST /api/sd3/candidates/{id}/draft-letter",
-        "issue": "In create_pair(), statements a and b are fetched using the original payload order but `ids_sorted = sorted([a_id,b_id])` is used when writing statement_a_id/statement_b_id on the pair doc. Duplicate candidates are then generated from (a,b) in payload order, so candidate.statement_a_line_id refers to whichever statement had the original payload's a-position — which may actually be stored as the pair's statement_b. In draft-letter, we re-fetch statements by pair.statement_a_id / pair.statement_b_id (sorted order) and try _line_by_id — the line often lives in the OTHER statement, so lookup returns {} and the letter content shows 'line item — $? on an unknown date' instead of the real description/amount/date. This is UUID-order dependent, hence flaky. Repro: 3-of-5 runs failed with `assert 'Personal Care Support' in letter['content_draft']`. Fix: fetch a,b using ids_sorted order (or store the pair with the original payload order), so line_ids align. Suggested one-line fix inside create_pair after computing ids_sorted:\n    a = await _db.statements.find_one({'id': ids_sorted[0]}, {'_id': 0})\n    b = await _db.statements.find_one({'id': ids_sorted[1]}, {'_id': 0})",
-        "priority": "HIGH"
-      }
-    ],
-    "minor": []
-  },
+  "summary": "Item 5 (AI dashes sanitizer) and Item 8 (tagline) verified via code review + live smoke test on web landing and mobile login/signup. Mobile login + signup taglines render identical ('AGED CARE, MADE EASY') from shared BRAND_TAGLINE. Footer no longer says 'Made Clear' — now 'Aged Care, Made Easy.'. Sanitizer is applied to SmartAISummary body/alerts, CarePlanDetail finding titles/details, and meeting-artefact grouped titles. Two parity/coverage gaps found: (a) web hero-eyebrow renders 'AGED CARE, MADE EASY.' (trailing period) and both web hero + web footer HARDCODE the tagline instead of importing BRAND_TAGLINE — so they can silently drift from mobile; (b) sanitizeAI is NOT applied to `suggested_question` fields in CarePlanDetail (both FindingCard hint and MeetingArtefact verbatim question script), so an em/en dash in that LLM field would render un-sanitized. Regression: web landing loads clean, mobile login + signup load clean and both taglines render.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
   "frontend_issues": {
-    "ui_bugs": [],
-    "integration_issues": [],
-    "design_issues": []
+    "web": {
+      "ui_bugs": [
+        {"component": "DualFlagshipHero", "issue": "hero-eyebrow renders 'Aged Care, Made Easy.' with a trailing period; spec wants 'AGED CARE, MADE EASY' (no period). CSS uppercase gets the casing right but the period is still visible. Reference: /app/frontend/src/components/DualFlagshipHero.jsx:68-71", "selector": "[data-testid='hero-eyebrow']", "priority": "LOW"},
+        {"component": "DualFlagshipHero + Footer", "issue": "Tagline is HARDCODED ('Aged Care, Made Easy.') in both places instead of importing BRAND_TAGLINE from /app/frontend/src/lib/brand.js. The stated goal of Item 8 (single source of truth so web + mobile cannot drift) is not achieved on web — mobile uses BRAND_TAGLINE, web does not. Reference: DualFlagshipHero.jsx:68-71, Footer.jsx:55-57", "selector": "[data-testid='hero-eyebrow'], [data-testid='site-footer']", "priority": "MEDIUM"},
+        {"component": "DualFlagshipHero COPY object", "issue": "COPY.caregiver.eyebrow and COPY.participant.eyebrow both hold a duplicate 'Aged Care, Made Easy' string that is currently unused by the JSX (h1 hardcodes the same words again). Dead/duplicate copy — remove and drive from BRAND_TAGLINE. Reference: DualFlagshipHero.jsx:22, 29", "selector": "n/a", "priority": "LOW"}
+      ],
+      "integration_issues": [
+        {"flow": "AI text sanitization (Care Plan detail)", "issue": "sanitizeAI() is applied to finding.title and finding.detail, but NOT to finding.suggested_question. The suggested question is LLM-generated and is rendered in two places without sanitization: (1) FindingCard 'Ask the provider' box, (2) MeetingArtefact verbatim question script (ordered list). Per Item 5, ANY AI-origin text must be run through sanitizeAI. Reference: /app/frontend/src/pages/CarePlanDetail.jsx line ~89 (FindingCard suggested_question) and line 211 ({f.suggested_question} inside <ol data-testid='question-script'>). Follow-up email modal (emailDraft.subject/body) is also un-sanitized LLM output.", "affected_selectors": ["[data-testid='question-script']", "[data-testid^='finding-card-']", "[data-testid='email-body']"]}
+      ],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
   },
-  "test_report_links": [
-    "/app/backend/tests/lca1/test_iteration_112.py",
-    "/app/test_reports/pytest/iter100.xml"
+  "parity_issues": [
+    {"flow": "Brand tagline", "platform": "web", "issue": "Web hero-eyebrow renders 'AGED CARE, MADE EASY.' (with a period), mobile login + signup render 'AGED CARE, MADE EASY' (no period). Not identical, contrary to Item 8.", "expected": "Identical wording on web landing, web footer, mobile login, mobile signup — sourced from a single constant.", "actual": "Web hero: 'AGED CARE, MADE EASY.' (period, hardcoded). Web footer: 'Aged Care, Made Easy.' (period, hardcoded, Title Case). Mobile login/signup: 'AGED CARE, MADE EASY' (no period, from BRAND_TAGLINE)."}
   ],
+  "test_report_links": [],
   "action_items": [
-    "Fix SD-3 create_pair statement ordering so that duplicate_candidate.statement_a_line_id / statement_b_line_id align with the sorted statement_a_id / statement_b_id stored on the pair. Simplest fix: re-fetch a,b using ids_sorted before calling _detect_duplicate_candidates(a,b) (and _ai_detect_duplicates)."
+    "In /app/frontend/src/components/DualFlagshipHero.jsx: import BRAND_TAGLINE from '@/lib/brand' and render it inside the hero-eyebrow h1 (drop the trailing period, drop the split 'Aged Care,' / 'Made Easy.' spans, or keep the coloured second half but generate both halves from the constant). Remove the unused COPY.caregiver.eyebrow / COPY.participant.eyebrow duplicates.",
+    "In /app/frontend/src/components/Footer.jsx: import BRAND_TAGLINE and render it (footer intentionally shows Title Case + coloured 'Made Easy'; use CSS `capitalize` or derive Title Case from the constant instead of hardcoding).",
+    "In /app/frontend/src/pages/CarePlanDetail.jsx: wrap f.suggested_question with sanitizeAI(...) in BOTH the FindingCard 'Ask the provider' block AND the MeetingArtefact verbatim question script <ol data-testid='question-script'>. Also wrap emailDraft.subject / emailDraft.body in the follow-up email modal — those are LLM output too."
   ],
   "critical_code_review_comments": [
-    "SD-3 create_pair sort/detection ordering mismatch (see backend_issues.critical) — causes draft-letter prefill to intermittently omit line item description/amount/date.",
-    "draft_letter response returns provider_name only in the create branch; idempotent branch omits provider_name field. Minor consistency issue — main-agent's spec says it should be returned in both.",
-    "content_draft template hardcodes 'Mum' fallback for participants without preferred/first name — fine for now but consider referencing participant.name."
+    "sanitizeAI coverage on web is partial: title + detail are covered, suggested_question and the follow-up email draft are not. Any em/en dash the model returns in those fields will bypass the sanitizer entirely.",
+    "Item 8 states the tagline is 'centralised into a shared constant'. On web, both hero and footer still hardcode the string. If someone edits BRAND_TAGLINE it will not update the web surface — the two platforms can and will drift.",
+    "Consistency: web hero has a trailing period ('AGED CARE, MADE EASY.'), mobile does not. Pick one and enforce via the shared constant."
   ],
   "updated_files": [],
-  "success_rate": {"backend": "97% (59/60 pytest stable + 1 flaky fail 60-80% rate)", "frontend": "100%"},
-  "test_credentials": "cathy@example.com / testpass123 (from review_request)",
-  "seed_data_creation": "None; used test's own seeded statements. Cleanup by test fixture works.",
+  "success_rate": {"backend": "n/a (frontend-only run)", "frontend": "80%"},
+  "seed_data_creation": "None",
   "retest_needed": true,
-  "main_agent_can_self_test": true,
-  "context_for_next_testing_agent": "Full pytest across core1/loop1/lca1 = 60 passed 3 skipped when run as a suite (flake hid). Run backend/tests/lca1/test_iteration_112.py in isolation 5+ times to catch the flake. Frontend notification settings + gear-link flows are verified.",
-  "rca of the issue": "In /app/backend/routes/sd3.py create_pair (~line 251-268): a=find_one(payload.statement_a_id); b=find_one(payload.statement_b_id); ids_sorted=sorted([...]); pair stores statement_a_id=ids_sorted[0], statement_b_id=ids_sorted[1]; but _detect_duplicate_candidates(a,b) uses the payload-ordered a,b to compute a_line_id/b_line_id. When payload.statement_a_id > payload.statement_b_id lexically, the pair's stored statement_a corresponds to what was passed as b — so candidate.statement_a_line_id points to a line that lives in pair.statement_b, and vice versa. draft_letter_from_candidate then does _line_by_id(stmt_a_from_pair, cand.statement_a_line_id) → returns None. Prefill becomes 'line item — $? on an unknown date'. Mitigation: after ids_sorted computed, fetch a=find_one(ids_sorted[0]) and b=find_one(ids_sorted[1]) before detection. Reproduction: run pytest backend/tests/lca1/test_iteration_112.py::test_draft_letter_from_candidate_creates_lf1_and_is_idempotent 5 times — 3-4 will fail."
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Item 5 + Item 8 verified via code review + smoke test on web landing (hero-eyebrow, footer) and mobile /login + /signup (brand-tagline). Did NOT log in as Cathy because the two gaps are visible without auth. If retesting, log in as cathy@example.com / testpass123 and open a care plan with findings that include suggested_question strings to confirm the sanitizer gap on question-script. Mobile Expo preview: https://wayly-care-review.expo.preview.emergentagent.com (/login and /signup routes work directly).",
+  "rca of the issue": "Item 8 (tagline centralisation) was completed on mobile (login.tsx and signup.tsx both consume BRAND_TAGLINE from mobile/src/config/brand.ts) but the parallel web change stopped at creating /app/frontend/src/lib/brand.js — the file exports BRAND_TAGLINE but no web component imports it. The hero (DualFlagshipHero.jsx:68-71) and Footer (Footer.jsx:55-57) still render literal strings, and the hero string has a trailing period the mobile string does not. Item 5 (AI dashes) was applied to summary/alerts (SmartAISummary) and finding title/detail (CarePlanDetail) but the sanitizer was not threaded into suggested_question (rendered twice on the CarePlanDetail page) or the follow-up email draft."
 }

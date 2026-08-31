@@ -12,7 +12,7 @@
  *   - /app/timeline                 → active participant
  *   - /app/participants/:id/timeline → pinned to that participant
  *
- * Backend API: GET /api/scenario/participants/{pid}/timeline?limit=80
+ * Backend API: GET /api/core/participants/{pid}/timeline?limit=80 (canonical, shared with mobile)
  */
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -139,8 +139,34 @@ export default function ParticipantTimeline() {
                 }
                 if (cancelled) return;
                 if (!pid) { setErrored(true); setLoading(false); return; }
-                const r = await api.get(`/scenario/participants/${pid}/timeline?limit=80`);
-                if (!cancelled) { setTl(r.data); setLoading(false); }
+                // CORE-1 canonical timeline: one source for web + mobile. The
+                // endpoint returns {events:[{event_type, event_timestamp,
+                // summary, event_source, linked_artefact_*}]}. We adapt it to
+                // the {items:[{type, at, data}]} shape this view renders.
+                const r = await api.get(`/core/participants/${pid}/timeline?limit=80`);
+                const events = r.data?.events || [];
+                const items = events.map((e) => {
+                    const src = e.event_source;
+                    const type = e.event_type === "alert" ? "alert"
+                        : e.event_type === "lifecycle_change" ? "state"
+                        : "event";
+                    return {
+                        type,
+                        at: e.event_timestamp,
+                        data: {
+                            id: e.id,
+                            event_type: e.event_type,
+                            event_source: src,
+                            note: e.summary,
+                            title: e.summary,
+                            body: e.summary,
+                            kind: e.event_type,
+                            linked_artefact_type: e.linked_artefact_type,
+                            linked_artefact_id: e.linked_artefact_id,
+                        },
+                    };
+                });
+                if (!cancelled) { setTl({ items, persona: r.data?.persona }); setLoading(false); }
             } catch (_e) {
                 if (!cancelled) { setErrored(true); setLoading(false); }
             }

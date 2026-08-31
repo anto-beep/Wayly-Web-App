@@ -16,6 +16,7 @@ import { Link, useParams } from "react-router-dom";
 import { AlertOctagon, ArrowLeft, ChevronDown, ChevronUp, FileDown, Loader2, Mail, Printer, RefreshCw, Save, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
+import { sanitizeAI } from "@/lib/sanitizeAI";
 
 const SEV_META = {
     compliance: { label: "Compliance", cls: "bg-terracotta text-white", Icon: AlertOctagon, ring: "ring-terracotta/40" },
@@ -61,8 +62,8 @@ function FindingCard({ f, testid }) {
                             confidence: {f.confidence}
                         </span>
                     </div>
-                    <div className="mt-1.5 text-sm font-medium text-primary-k">{f.title}</div>
-                    <div className="mt-1 text-sm text-primary-k/85">{f.detail}</div>
+                    <div className="mt-1.5 text-sm font-medium text-primary-k">{sanitizeAI(f.title)}</div>
+                    <div className="mt-1 text-sm text-primary-k/85">{sanitizeAI(f.detail)}</div>
                     {f.citation_source && (
                         <div className="mt-2 text-xs text-muted-k">
                             {f.citation_url ? (
@@ -85,7 +86,7 @@ function FindingCard({ f, testid }) {
                                 Ask the provider
                             </div>
                             <div className="text-primary-k italic">
-                                {f.suggested_question}
+                                {sanitizeAI(f.suggested_question)}
                             </div>
                         </div>
                     )}
@@ -207,7 +208,7 @@ function MeetingArtefact({ data, extraction, planId, onDownloadPdf, onDraftEmail
                         .filter((f) => f.suggested_question)
                         .map((f, i) => (
                             <li key={i}>
-                                <span className="italic">{f.suggested_question}</span>
+                                <span className="italic">{sanitizeAI(f.suggested_question)}</span>
                                 {f.citation_source && (
                                     <span className="text-xs text-muted-k ml-1">
                                         ({f.citation_source})
@@ -230,7 +231,7 @@ function MeetingArtefact({ data, extraction, planId, onDownloadPdf, onDraftEmail
                                 </div>
                                 <ul className="pl-5 list-disc text-sm text-primary-k space-y-1">
                                     {g.items.map((f, i) => (
-                                        <li key={i}>{f.title}</li>
+                                        <li key={i}>{sanitizeAI(f.title)}</li>
                                     ))}
                                 </ul>
                             </div>
@@ -331,7 +332,7 @@ export default function CarePlanDetail() {
     const closeEmailDraft = () => setEmailDraft(null);
     const copyEmailBody = async () => {
         if (!emailDraft) return;
-        const full = `Subject: ${emailDraft.subject}\n\n${emailDraft.body}`;
+        const full = `Subject: ${sanitizeAI(emailDraft.subject)}\n\n${sanitizeAI(emailDraft.body)}`;
         try {
             await navigator.clipboard.writeText(full);
             alert("Copied to clipboard");
@@ -651,7 +652,7 @@ export default function CarePlanDetail() {
                             </div>
                             <input
                                 readOnly
-                                value={emailDraft.subject}
+                                value={sanitizeAI(emailDraft.subject)}
                                 className="w-full bg-transparent text-sm text-primary-k focus:outline-none"
                                 data-testid="email-subject"
                             />
@@ -662,7 +663,7 @@ export default function CarePlanDetail() {
                             </div>
                             <textarea
                                 readOnly
-                                value={emailDraft.body}
+                                value={sanitizeAI(emailDraft.body)}
                                 rows={16}
                                 className="w-full bg-transparent text-sm text-primary-k focus:outline-none resize-none"
                                 data-testid="email-body"

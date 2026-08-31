@@ -78,6 +78,7 @@ from agents import parse_statement, explain_anomalies, chat_with_kindred
 from wrapper import run_wrapper
 import email_service
 import asyncio
+import uuid
 import json
 from auth_emergent import exchange_session_id
 from emergentintegrations.payments.stripe.checkout import (
@@ -3588,7 +3589,6 @@ _SEVERITY_DISPLAY_MAP = {
 
 
 def _new_job_id() -> str:
-    import uuid
     return uuid.uuid4().hex[:20]
 
 
@@ -5252,8 +5252,8 @@ async def public_care_plan_review(body: PublicCarePlanBody, request: Request, re
         existing = existing_checks.get(key) or {"check": key, "status": "unknown", "note": ""}
         if existing.get("check") != key:
             existing["check"] = key
-        status = (existing.get("status") or "").lower()
-        if status not in ("pass", "flag", "unknown"):
+        check_status = (existing.get("status") or "").lower()
+        if check_status not in ("pass", "flag", "unknown"):
             existing["status"] = "unknown"
         existing.setdefault("note", "")
         normalised.append(existing)
@@ -7422,7 +7422,6 @@ async def _enforce_read_only_for_unpaid(request, call_next):
         return await call_next(request)
 
     # No paid plan + no active trial → read-only mode.
-    from fastapi.responses import JSONResponse
     return JSONResponse(
         status_code=402,
         content={
@@ -8025,7 +8024,6 @@ async def _start_statement_reconciliation_job():
     Runs once a day at +24h from startup. First run is delayed 120s so
     app startup is fast.
     """
-    import asyncio
     from lib.statement_reconciliation import run_nightly_reconciliation
 
     interval_s = 24 * 60 * 60
@@ -8050,7 +8048,6 @@ async def _start_billing_reconciliation():
     """BILLING-UI-1 v5 §7 — daily job that compares each user's plan field
     against their Stripe subscription's base item and flags drift. Runs
     24h after startup and every 24h thereafter."""
-    import asyncio
     interval_s = 24 * 60 * 60
 
     async def _loop() -> None:
@@ -8079,7 +8076,6 @@ async def _start_statement_retention_sweeper():
 
     Runs every 6 hours. First run is delayed 60s so app startup is fast.
     """
-    import asyncio
     from lib.statement_actions import run_retention_sweep
 
     interval_s = 6 * 60 * 60

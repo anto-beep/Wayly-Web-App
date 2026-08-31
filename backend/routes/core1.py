@@ -534,6 +534,59 @@ async def _derived_events_for_participant(pid: str) -> List[dict]:
             "linked_artefact_type": "letter",
         })
 
+    # Scenario life-events, lifecycle transitions and alerts. These unify the
+    # legacy web /scenario/.../timeline stream into the one canonical source so
+    # both platforms read the same timeline. flag_change audit rows are dropped
+    # here to avoid leaking restricted safeguarding detail.
+    try:
+        from scenario_engine import events as _se_events, lifecycle as _se_lifecycle, alerts as _se_alerts
+
+        def _state_label(v):
+            if isinstance(v, dict):
+                return ", ".join(str(x) for x in v.values()) or "updated"
+            return str(v) if v else "updated"
+
+        for ev in await _se_events.list_events(_db, pid, limit=50):
+            lbl = ev.get("label_au") or ev.get("label") or (ev.get("event_type") or "life event").replace("_", " ")
+            out.append({
+                "id": f"se-{ev.get('id')}",
+                "participant_id": pid,
+                "event_type": ev.get("event_type") or "life_event",
+                "event_source": "scenario",
+                "event_timestamp": ev.get("captured_date") or ev.get("created_at"),
+                "actor_type": "user",
+                "summary_tokens": {"caregiver": f"{name}: {lbl}", "participant_self": f"You logged: {lbl}"},
+                "metadata": {"note": ev.get("note")} if ev.get("note") else {},
+            })
+        for a in await _se_lifecycle.get_state_audit(_db, pid, limit=50):
+            if a.get("kind") == "flag_change":
+                continue
+            summ = f"Status changed to {_state_label(a.get('to_value'))}"
+            out.append({
+                "id": f"state-{a.get('id') or a.get('created_at')}",
+                "participant_id": pid,
+                "event_type": "lifecycle_change",
+                "event_source": "scenario",
+                "event_timestamp": a.get("created_at"),
+                "actor_type": "system",
+                "summary_tokens": {"caregiver": summ, "participant_self": summ},
+                "metadata": {"reason": a.get("reason")} if a.get("reason") else {},
+            })
+        for al in await _se_alerts.list_alerts(_db, pid, limit=50):
+            msg = al.get("message") or al.get("title") or al.get("label") or "New alert to review"
+            out.append({
+                "id": f"alert-{al.get('id')}",
+                "participant_id": pid,
+                "event_type": "alert",
+                "event_source": "scenario",
+                "event_timestamp": al.get("created_at"),
+                "actor_type": "system",
+                "summary_tokens": {"caregiver": msg, "participant_self": msg},
+                "metadata": {"severity": al.get("severity"), "status": al.get("status")},
+            })
+    except Exception as e:
+        logger.debug("scenario timeline merge failed: %s", e)
+
     return out
 
 

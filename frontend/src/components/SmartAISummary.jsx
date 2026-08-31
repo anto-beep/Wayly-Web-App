@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { api } from "@/lib/api";
+import { sanitizeAI } from "@/lib/sanitizeAI";
 
 /**
  * SmartAISummary
@@ -66,7 +67,7 @@ export default function SmartAISummary({
     };
   }, [autoLoad, pageKey, JSON.stringify(context)]);
 
-  const summary = state.data?.summary || (state.status === "loading" ? fallback : fallback);
+  const summary = sanitizeAI(state.data?.summary) || (state.status === "loading" ? fallback : fallback);
   const alerts = state.data?.alerts || [];
   const isLoading = state.status === "loading";
 
@@ -138,7 +139,7 @@ export default function SmartAISummary({
                       <Info className="h-4 w-4 text-primary-k" />
                     )}
                   </span>
-                  <span className="leading-snug">{a.text}</span>
+                  <span className="leading-snug">{sanitizeAI(a.text)}</span>
                 </li>
               ))}
             </ul>

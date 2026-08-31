@@ -11,6 +11,7 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { ApiError, apiFetch } from "@/src/lib/api";
 import { PLAN_OPTIONS, PlanKey, startCheckout } from "@/src/lib/plans";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
+import { BRAND_TAGLINE } from "@/src/config/brand";
 
 const RELATIONSHIPS = [
   { v: "daughter", label: "Daughter" }, { v: "son", label: "Son" },
@@ -234,7 +235,7 @@ export default function SignupScreen() {
           <View style={{ alignItems: "center", marginBottom: spacing.lg }}>
             <WaylyMark size={64} white={isDark} />
             <T testID="brand-tagline" style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, letterSpacing: 1, color: colors.gold, marginTop: 12, textAlign: "center" }}>
-              AGED CARE, MADE EASY
+              {BRAND_TAGLINE}
             </T>
           </View>
 

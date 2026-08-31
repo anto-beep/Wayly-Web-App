@@ -207,7 +207,9 @@ export default function Onboarding() {
                         setStep(draft.data.step);
                     }
                     setDraftStatus({ state: "saved", savedAt: draft.updated_at });
-                    const rel = _relativeTime(draft.updated_at);
+                    const savedDate = new Date(draft.updated_at);
+                    const mins = Math.round((Date.now() - savedDate.getTime()) / 60000);
+                    const rel = mins < 1 ? "just now" : mins < 60 ? `${mins} minute${mins === 1 ? "" : "s"} ago` : savedDate.toLocaleString("en-AU");
                     toast(`We restored your draft from ${rel}.`, { icon: <Cloud className="h-4 w-4" /> });
                 }
             } catch { /* ignore, no draft is fine */ }

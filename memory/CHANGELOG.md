@@ -1,3 +1,19 @@
+## Iteration 250 (Aug 2026) — Priority-list run (Items 1,2,3,5,8 done & tested)
+
+Worked the outstanding priority list top-down. All items below verified by the testing agent.
+
+- **Item 1 — Web pending add-on cancel + downgrade guard:** added `pending-addon-banner` + `cancel-pending-addon` to web `extended/Participants.jsx` (POST `/billing/v2/cancel-pending-addon`), matching mobile. Web Settings downgrade already blocks Solo when >1 participant with a Manage-participants action. (iter248 PASS)
+- **Item 2 — Timeline unified:** canonical source = `GET /api/core/participants/{pid}/timeline` returning `{events:[...]}`; enriched `core1._derived_events_for_participant` with scenario life-events, lifecycle transitions and alerts (flag_change excluded). Web `ParticipantTimeline` repointed off `/scenario` onto `/core` (adapts events→items). Mobile already on `/core`. (iter249 PASS)
+- **Item 3 — Care Team / Key Contacts remap (mobile):** `care-team.tsx` rewritten into a family message thread (`/family-thread`); `key-contacts.tsx` now shows ALL contacts via ContactsView `variant="all"`. (iter249 PASS)
+- **Item 5 — AI punctuation:** added web `lib/sanitizeAI.js` (mirrors mobile) applied to Smart AI Summary, Care Plan findings + suggested questions + follow-up email (view & copy); removed a stray em dash in Settings billing copy. (iter251 PASS)
+- **Item 8 — Tagline parity:** centralised `BRAND_TAGLINE="AGED CARE, MADE EASY"` in `frontend/src/lib/brand.js` + `mobile/src/config/brand.ts`; wired web landing hero (no trailing period) and mobile login+signup to the shared constant; footer copy aligned. (iter251 PASS)
+
+### NOT done this run (documented for follow-up)
+- **Item 4 — Money & Statements parity sweep (mobile):** verified gaps by endpoint diff — mobile **Pacing** lacks the ledger, ad-hoc entries, reconciliations and payment schedules (web `/qp1/ledger*`, `/qp1/reconciliations*`, `/qp1/schedules*`); mobile **Budget Scenarios** uses `/budget/current`+`/qp1/pacing` instead of the web **BC2** scenario system (`/bc2/participants/{id}/scenarios` CRUD + projection); mobile **Reports** lacks the report detail data view (`/reports/{id}/data`). Statements, Invoices, Budget Alerts and Contribution Position are already at parity. Each of Pacing and Budget Scenarios is a substantial screen build.
+- **Item 6 — Broken-link/404 crawl (both):** not performed.
+- **Item 7 — Forms & validation audit (both):** not performed.
+
+
 ## Iteration 247 (Aug 2026) — Solo enforcement follow-ups (live mobile guard + downgrade guardrail + mobile add-on cancel)
 
 - **Live mobile PlanComplianceGuard** — verified live on Expo preview: logging in as a Solo-with-2 account renders the blocking guard on the dashboard immediately + over Plan & Billing, with exact copy and both actions (Switch to Family / Remove a participant instead).

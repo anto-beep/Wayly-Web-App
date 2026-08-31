@@ -38,7 +38,7 @@ export const CARE_KINDS = new Set([
 export default function ContactsView({
   variant, title, subtitle, kindOptions, testPrefix,
 }: {
-  variant: "care" | "personal";
+  variant: "care" | "personal" | "all";
   title: string;
   subtitle: string;
   kindOptions: { label: string; value: string }[];
@@ -70,7 +70,7 @@ export default function ContactsView({
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const items = all.filter((c) => (variant === "care") === CARE_KINDS.has(c.kind || "other"));
+  const items = variant === "all" ? all : all.filter((c) => (variant === "care") === CARE_KINDS.has(c.kind || "other"));
 
   const save = async () => {
     if (!form.name.trim() || !activeId) return;

@@ -17,6 +17,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { ApiError } from "@/src/lib/api";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
+import { BRAND_TAGLINE } from "@/src/config/brand";
 
 export default function LoginScreen() {
   const { colors, isDark } = useTheme();
@@ -88,7 +89,7 @@ export default function LoginScreen() {
               testID="brand-tagline"
               style={{ fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, letterSpacing: 1, color: colors.gold, marginTop: 14, textAlign: "center" }}
             >
-              AGED CARE, MADE EASY
+              {BRAND_TAGLINE}
             </T>
           </View>
 

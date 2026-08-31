@@ -490,7 +490,7 @@ function BillingTab() {
                         <div>
                             <div className="font-heading text-lg text-primary-k">You&apos;re over the Solo plan limit</div>
                             <p className="text-sm text-muted-k mt-1">
-                                Solo covers one participant, but your account has <strong>{participantsActive}</strong>. You&apos;re being charged ${fortnightTotal.toFixed(2)} per fortnight (Solo base + {addonCount} extra) — that&apos;s more than Family ($49.50) which would cover all of them.
+                                Solo covers one participant, but your account has <strong>{participantsActive}</strong>. You&apos;re being charged ${fortnightTotal.toFixed(2)} per fortnight (Solo base plus {addonCount} extra), which is more than Family at $49.50 per fortnight, and Family would cover all of them.
                             </p>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 shrink-0">

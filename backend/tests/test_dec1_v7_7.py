@@ -563,7 +563,7 @@ class TestDedupCrossStream:
         assert len(deduped) == 1
 
 
-class TestCadenceInference:
+class TestCadenceInferencePersisted:
     """Cadence must always be persisted on the summary even when an LLM
     RULE_14 anomaly is already in the audit result."""
 
