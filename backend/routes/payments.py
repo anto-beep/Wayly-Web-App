@@ -71,6 +71,17 @@ def _stripe_is_live() -> bool:
     return (os.environ.get("STRIPE_API_KEY") or "").startswith(("sk_live", "rk_live"))
 
 
+def _webhook_secret() -> Optional[str]:
+    """The Stripe webhook signing secret for the active mode. Under a LIVE key
+    prefer STRIPE_WEBHOOK_SECRET_LIVE (the live endpoint's whsec_), falling back
+    to STRIPE_WEBHOOK_SECRET so a single-secret config still works."""
+    if _stripe_is_live():
+        live = os.environ.get("STRIPE_WEBHOOK_SECRET_LIVE")
+        if live:
+            return live
+    return os.environ.get("STRIPE_WEBHOOK_SECRET")
+
+
 def _price_env_value(base_key: str) -> Optional[str]:
     """Return the price id for a base env key, preferring the LIVE variant when
     running under a live key (falls back to the base value if no _LIVE is set)."""
@@ -785,7 +796,7 @@ async def stripe_webhook(request: Request):
     types.
     """
     api_key = os.environ.get("STRIPE_API_KEY")
-    secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    secret = _webhook_secret()
     if not api_key or not secret:
         raise HTTPException(status_code=503, detail="Stripe webhook not configured")
     stripe.api_key = api_key

@@ -53,3 +53,17 @@ def test_plan_for_price_matches_both_modes(monkeypatch):
     assert payments._plan_for_price("price_live_family") == "family"
     assert payments._plan_for_price("price_test_family") == "family"
     assert payments._plan_for_price("price_unknown") is None
+
+
+def test_webhook_secret_is_mode_aware(monkeypatch):
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_base")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET_LIVE", "whsec_live_val")
+    # Test key → base secret
+    monkeypatch.setenv("STRIPE_API_KEY", "sk_test_abc")
+    assert payments._webhook_secret() == "whsec_test_base"
+    # Live key → live secret
+    monkeypatch.setenv("STRIPE_API_KEY", "sk_live_abc")
+    assert payments._webhook_secret() == "whsec_live_val"
+    # Live key but no _LIVE set → falls back to base
+    monkeypatch.delenv("STRIPE_WEBHOOK_SECRET_LIVE", raising=False)
+    assert payments._webhook_secret() == "whsec_test_base"

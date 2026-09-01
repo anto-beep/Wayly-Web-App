@@ -1,3 +1,15 @@
+## Iteration 257-258 (Jun 2026) — Stripe go-live: mode-aware price IDs + webhook secret (production checkout 502 fix)
+
+Production checkout was 502-ing after the live key was set. Root cause: the checkout code always used the TEST price ids regardless of key mode, so a live key + test price id fails (the gateway masked the resulting error as a 502).
+
+- **Mode-aware price selection** (`routes/payments.py`): new `_stripe_is_live()` (detects `sk_live_*`/`rk_live_*`) + `_price_env_value()`. `_price_for_plan` now uses `STRIPE_PRICE_ID_*_LIVE` under a live key (falls back to the base id if a `_LIVE` var is unset); `_plan_for_price` matches both live+test ids. `payments_advanced.resolve_price_id` env fallback made mode-aware too.
+- **Clear errors** (`create_checkout`): Stripe failures now raise HTTP 400 with the real Stripe message instead of a 502 the gateway masks.
+- **Mode-aware webhook secret**: new `_webhook_secret()` — under a live key prefer `STRIPE_WEBHOOK_SECRET_LIVE`, else `STRIPE_WEBHOOK_SECRET`. Added the live `whsec_` to `backend/.env` as `STRIPE_WEBHOOK_SECRET_LIVE` so preview keeps its test webhook while production uses the live one automatically. The single active webhook route is `/api/webhook/stripe`.
+- **Verified iter257/258 (testing_agent, backend, TEST-mode preview)**: 5/5 unit tests for price + webhook mode selection; no regression — preview checkout still returns `cs_test_` urls and the preview webhook still verifies with the test secret (unsigned → 400, not 503); iter256 access-state enforcement intact. Live path is unit-verified only (preview has no live key); auto-switches at request time when `STRIPE_API_KEY` is `sk_live_*`.
+- **Production diagnosis (wayly.com.au)**: confirmed checkout 502 (test price + live key), `/api/payments/prices` returns an empty live-price map (no live prices resolve by lookup key → app uses the `_LIVE` env ids), webhook route live (unsigned → 400). Requires a re-publish to pick up these code changes + the live webhook secret; live price ids must belong to the same live account as the live key.
+
+
+
 ## Iteration 256 (Jun 2026) — Subscription access-state enforcement (web + mobile + backend)
 
 Unified all billing/trial gating behind ONE canonical backend field `access_state` = `active` | `trial` | `view_only`, surfaced on `/api/auth/me` (`UserPublic.access_state`). `active`+`trial` = full access; `view_only` = read-only (data visible, all writes locked, only Plan & Billing writable). Admins are ALWAYS `active`.
