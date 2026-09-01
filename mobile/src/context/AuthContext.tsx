@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 
-import { apiFetch, clearTokens, getToken, setTokens } from "@/src/lib/api";
+import { apiFetch, clearTokens, getToken, setTokens, setReadOnlyMode } from "@/src/lib/api";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -23,11 +23,14 @@ export type WaylyUser = {
   subscription_status?: string | null;
   trial_ends_at?: string | null;
   cancel_at_period_end?: boolean | null;
+  // "active" | "trial" → full access; "view_only" → read-only. Admins: "active".
+  access_state?: string | null;
 };
 
 type AuthState = {
   user: WaylyUser | null;
   loading: boolean; // initial session check
+  viewOnly: boolean; // access_state === "view_only" → read-only mode
   login: (email: string, password: string) => Promise<void>;
   signup: (payload: SignupPayload) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -52,6 +55,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<WaylyUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Set the user AND keep the api-layer read-only flag in sync.
+  const applyUser = useCallback((u: WaylyUser | null) => {
+    setUser(u);
+    setReadOnlyMode(!!u && u.access_state === "view_only");
+  }, []);
+
   // Wayly's own Google OAuth (native client id). Yields a Google ID token
   // which we verify server-side at POST /auth/google and swap for a Wayly JWT.
   // Wayly's own Google OAuth (native client ids). On iOS the native iOS
@@ -67,9 +76,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       const me = await apiFetch<WaylyUser>("/auth/me");
-      setUser(me);
+      applyUser(me);
     } catch {
-      setUser(null);
+      applyUser(null);
     }
   }, []);
 
@@ -88,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       { method: "POST", auth: false, body: { credential: idToken } }
     );
     await setTokens(data.token, data.refresh_token);
-    setUser(data.user);
+    applyUser(data.user);
   }, []);
 
   // React to the Google auth response (id_token comes back here).
@@ -107,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       { method: "POST", auth: false, body: { email: email.trim().toLowerCase(), password } }
     );
     await setTokens(data.token, data.refresh_token);
-    setUser(data.user);
+    applyUser(data.user);
   }, []);
 
   const signup = useCallback(async (payload: SignupPayload) => {
@@ -129,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
     await setTokens(data.token, data.refresh_token);
-    setUser(data.user);
+    applyUser(data.user);
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
@@ -145,12 +154,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /* best-effort */
     }
     await clearTokens();
-    setUser(null);
-  }, []);
+    applyUser(null);
+  }, [applyUser]);
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, signup, loginWithGoogle, logout, refreshUser }}
+      value={{
+        user,
+        loading,
+        viewOnly: !!user && user.access_state === "view_only",
+        login,
+        signup,
+        loginWithGoogle,
+        logout,
+        refreshUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

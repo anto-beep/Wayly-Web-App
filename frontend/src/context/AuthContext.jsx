@@ -9,6 +9,9 @@ const AuthContext = createContext(null);
 // interceptor in sync with the latest user state.
 function _syncReadOnly(u) {
     if (!u) { setReadOnlyMode(false); return; }
+    // Canonical access_state from the backend. Admins are always "active".
+    if (u.access_state) { setReadOnlyMode(u.access_state === "view_only"); return; }
+    // Legacy fallback (older /auth/me without access_state).
     const plan = (u.plan || "").toLowerCase();
     const isPaid = plan === "solo" || plan === "family" || plan === "adviser";
     setReadOnlyMode(!isPaid && u.subscription_status === "expired");

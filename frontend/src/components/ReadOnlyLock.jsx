@@ -22,8 +22,8 @@ import { useExpiredTrial } from "@/hooks/useExpiredTrial";
 
 export default function ReadOnlyLock({
     children,
-    label = "Subscribe to add or change anything",
-    sub = "Your trial has ended. You can still view everything you've already saved.",
+    label = "Reactivate to add or change anything",
+    sub = "Your plan is inactive. You can still view everything you've already saved.",
     className = "",
     testId = "read-only-lock",
 }) {

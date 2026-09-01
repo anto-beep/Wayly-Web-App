@@ -17,10 +17,12 @@ import { useAuth } from "@/context/AuthContext";
 export function useExpiredTrial() {
     const { user } = useAuth();
     if (!user) return false;
-    // A user is in read-only mode when their subscription is expired AND they
-    // are not on a paid plan. Users on Solo/Family/Adviser with an active
-    // subscription must never see the read-only banner, even if a stale
-    // `expired` flag is left over from a previous trial.
+    // Canonical: the backend computes access_state ("active" | "trial" |
+    // "view_only") from the Stripe subscription status (admins always
+    // "active"). view_only = cancelled trial, cancelled/ended paid plan, or an
+    // unresolved payment failure → read-only.
+    if (user.access_state) return user.access_state === "view_only";
+    // Legacy fallback (older /auth/me without access_state).
     const plan = (user.plan || "").toLowerCase();
     const isPaid = plan === "solo" || plan === "family" || plan === "adviser";
     if (isPaid) return false;

@@ -60,6 +60,12 @@ class UserPublic(BaseModel):
     subscription_status: Optional[str] = None  # "trialing" | "active" | "cancelled" | None
     trial_ends_at: Optional[str] = None        # ISO datetime when trial expires (if trialing)
     cancel_at_period_end: Optional[bool] = None
+    # Canonical access state derived from subscription status + admin role.
+    # "active" (paid, current) | "trial" (trial active) → full access.
+    # "view_only" (cancelled trial, cancelled/ended paid sub, or unresolved
+    # payment failure) → read-only: data visible, all writes blocked.
+    # Admins are always "active".
+    access_state: Optional[str] = None
     # Phase 1 security: surfaced so the Settings UI can show 2FA state.
     totp_enabled: Optional[bool] = None
 

@@ -267,6 +267,7 @@ def _user_public(u: dict, sub: Optional[dict] = None) -> UserPublic:
         subscription_status=(sub or {}).get("status"),
         trial_ends_at=(sub or {}).get("trial_ends_at"),
         cancel_at_period_end=(sub or {}).get("cancel_at_period_end"),
+        access_state=_compute_access_state(u, sub),
         totp_enabled=bool(u.get("totp_enabled", False)),
     )
 
@@ -2895,6 +2896,81 @@ def _trial_active(u: dict) -> bool:
     return False
 
 
+# Subscription statuses that mean the account is NOT entitled: a cancelled
+# trial, a cancelled/ended paid subscription, or an unresolved payment failure.
+_VIEW_ONLY_SUB_STATUSES = {
+    "past_due", "unpaid", "canceled", "cancelled", "expired",
+    "incomplete", "incomplete_expired",
+}
+
+
+def _trial_end_dt(*vals):
+    """Parse a trial-end value that may be an epoch int, a numeric string, or
+    an ISO datetime string. Returns the first parseable value as an aware
+    datetime, else None."""
+    for v in vals:
+        if v is None:
+            continue
+        try:
+            if isinstance(v, (int, float)):
+                return datetime.fromtimestamp(int(v), tz=timezone.utc)
+            if isinstance(v, str):
+                s = v.strip()
+                if not s:
+                    continue
+                if s.isdigit():
+                    return datetime.fromtimestamp(int(s), tz=timezone.utc)
+                return datetime.fromisoformat(s.replace("Z", "+00:00"))
+        except Exception:
+            continue
+    return None
+
+
+def _compute_access_state(user: dict, sub: Optional[dict] = None) -> str:
+    """Canonical access state for a user: "active" | "trial" | "view_only".
+
+    - Admins ALWAYS get "active" (never restricted).
+    - Stripe subscription status is the source of truth: active → "active",
+      trialing → "trial", cancelled/past_due/unpaid/expired → "view_only".
+    - When no subscription record exists yet (legacy/seed accounts) we fall
+      back to the plan field + the trial window.
+
+    "active" and "trial" grant full access; "view_only" is read-only.
+    """
+    if not user:
+        return "view_only"
+    if user.get("is_admin"):
+        return "active"
+    sub_status = ""
+    if sub:
+        sub_status = (sub.get("status") or "").lower()
+    if not sub_status:
+        sub_status = (user.get("subscription_status") or "").lower()
+    if sub_status == "active":
+        return "active"
+    if sub_status == "trialing":
+        # A trial only grants access while the trial window is still open.
+        # Guard against a stale "trialing" status left behind after the
+        # window elapsed (e.g. a missed webhook) → drop to view-only.
+        te = _trial_end_dt(
+            (sub or {}).get("trial_ends_at"),
+            (sub or {}).get("trial_end"),
+            user.get("trial_ends_at"),
+        )
+        if te is not None and te <= datetime.now(timezone.utc):
+            return "view_only"
+        return "trial"
+    if sub_status in _VIEW_ONLY_SUB_STATUSES:
+        return "view_only"
+    # Unknown / no subscription status → legacy fallback on plan + trial window.
+    plan = (user.get("plan") or "free").lower()
+    if plan in PAID_PLANS:
+        return "active"
+    if _trial_active(user):
+        return "trial"
+    return "view_only"
+
+
 async def _user_from_request(request: Request) -> Optional[dict]:
     """Best-effort: return the calling user from Bearer JWT, else None."""
     auth = request.headers.get("authorization") or ""
@@ -2936,16 +3012,15 @@ async def _require_paid_plan(request: Request, response: Response, tool_label: s
             status_code=401,
             detail={"error": "unauthenticated", "message": "Sign in required.", "redirect": "/signup"},
         )
-    plan = (user.get("plan") or "free").lower()
-    if plan in PAID_PLANS or _trial_active(user):
+    if user.get("is_admin") or _compute_access_state(user) != "view_only":
         return user
-    # Wave 2: trial expired or no active subscription. Return 402 so the
+    # View-only (cancelled/expired/payment-failed). Return 402 so the
     # frontend interceptor mounts the hard paywall modal (§4.4/§4.6).
     raise HTTPException(
         status_code=402,
         detail={
             "error": "trial_expired",
-            "message": "Your trial has ended. Subscribe to continue.",
+            "message": "Your plan is inactive. Reactivate to continue.",
             "upgrade_url": "/settings/billing",
         },
     )
@@ -7417,17 +7492,20 @@ async def _enforce_read_only_for_unpaid(request, call_next):
         user = None
     if not user:
         return await call_next(request)
-    plan = (user.get("plan") or "free").lower()
-    if plan in PAID_PLANS or _trial_active(user):
+    # Admins are never restricted.
+    if user.get("is_admin"):
+        return await call_next(request)
+    if _compute_access_state(user) != "view_only":
         return await call_next(request)
 
-    # No paid plan + no active trial → read-only mode.
+    # View-only account (cancelled trial, cancelled/ended paid subscription,
+    # or unresolved payment failure) → block writes. Reads still pass.
     return JSONResponse(
         status_code=402,
         content={
             "detail": {
                 "error": "trial_expired",
-                "message": "Your trial has ended. Subscribe to add or change anything.",
+                "message": "Your plan is inactive. Reactivate to add or change anything.",
                 "upgrade_url": "/settings/billing",
                 "read_only": True,
             }

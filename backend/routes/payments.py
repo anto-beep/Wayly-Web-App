@@ -499,17 +499,47 @@ async def cancel_subscription(request: Request):
         sub_id = (u or {}).get("stripe_subscription_id")
     if not sub_id:
         raise HTTPException(status_code=400, detail="No active subscription on record.")
+    # Determine whether the user is still in their trial. Cancelling DURING a
+    # trial drops the account to view-only immediately (nothing was paid, so
+    # there's no period to honour). Cancelling a PAID subscription keeps full
+    # access until the current period ends (never view-only while paid + current).
+    is_trialing = False
     try:
-        sub = stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
+        current = stripe.Subscription.retrieve(sub_id)
+        is_trialing = (getattr(current, "status", None) == "trialing")
+    except stripe.error.StripeError:  # type: ignore[attr-defined]
+        is_trialing = False
+    try:
+        if is_trialing:
+            sub = stripe.Subscription.cancel(sub_id)  # cancel now → status "canceled"
+        else:
+            sub = stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
     except stripe.error.StripeError as e:  # type: ignore[attr-defined]
         logger.warning("Stripe cancel failed: %s", e)
         raise HTTPException(status_code=502, detail=str(getattr(e, "user_message", None) or e))
     if _db is not None:
-        await _db.users.update_one(
-            {"id": user.get("id")},
-            {"$set": {"cancel_at_period_end": True, "current_period_end": sub.current_period_end}},
-        )
-    return {"ok": True, "cancel_at_period_end": True, "current_period_end": sub.current_period_end}
+        if is_trialing:
+            # Immediate view-only. Mirror into the read-model so the app
+            # reflects it without waiting on webhook delivery (preview safe).
+            from datetime import datetime, timezone
+            await _db.users.update_one(
+                {"id": user.get("id")},
+                {"$set": {"subscription_status": "canceled", "plan": "free",
+                          "cancel_at_period_end": False}},
+            )
+            await _db.subscriptions.update_one(
+                {"user_id": user.get("id")},
+                {"$set": {"status": "canceled", "plan": "free",
+                          "cancel_at_period_end": False,
+                          "updated_at": datetime.now(timezone.utc).isoformat()}},
+            )
+        else:
+            await _db.users.update_one(
+                {"id": user.get("id")},
+                {"$set": {"cancel_at_period_end": True, "current_period_end": _sub_period_end(sub)}},
+            )
+    return {"ok": True, "cancel_at_period_end": (not is_trialing),
+            "canceled_now": is_trialing, "current_period_end": _sub_period_end(sub)}
 
 
 @payments_router.post("/reactivate-subscription")
@@ -534,9 +564,9 @@ async def reactivate_subscription(request: Request):
     if _db is not None:
         await _db.users.update_one(
             {"id": user.get("id")},
-            {"$set": {"cancel_at_period_end": False, "current_period_end": sub.current_period_end}},
+            {"$set": {"cancel_at_period_end": False, "current_period_end": _sub_period_end(sub)}},
         )
-    return {"ok": True, "cancel_at_period_end": False, "current_period_end": sub.current_period_end}
+    return {"ok": True, "cancel_at_period_end": False, "current_period_end": _sub_period_end(sub)}
 
 
 class DowngradeBody(BaseModel):

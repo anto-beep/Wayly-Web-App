@@ -31,6 +31,38 @@ export async function setActiveParticipantId(id: string): Promise<void> {
   else await storage.removeItem(ACTIVE_PARTICIPANT_KEY);
 }
 
+// ---- View-only (read-only) mode ------------------------------------------
+// Mirrors the web api.js guard. AuthContext flips this whenever /auth/me
+// reports access_state === "view_only" (cancelled trial, cancelled/ended paid
+// plan, or an unresolved payment failure). When ON, any write that isn't an
+// allow-listed prefix is rejected locally with a friendly 402 before hitting
+// the network — a defense-in-depth layer alongside the backend 402 middleware.
+let _readOnlyMode = false;
+export function setReadOnlyMode(flag: boolean): void {
+  _readOnlyMode = !!flag;
+}
+export function isReadOnlyMode(): boolean {
+  return _readOnlyMode;
+}
+export const READ_ONLY_MESSAGE =
+  "Your plan is inactive. Reactivate to add or change anything.";
+const _READ_ONLY_ALLOW_PREFIXES = [
+  "/auth/",
+  "/billing/",
+  "/payments/", // reactivation / checkout — view-only users must be able to subscribe
+  "/stripe/",
+  "/users/me",
+  "/admin/",
+  "/health",
+  "/public/",
+  "/contact",
+  "/support/",
+];
+function _isAllowedReadOnlyWrite(path = ""): boolean {
+  const u = path.replace(/^\/api/, "");
+  return _READ_ONLY_ALLOW_PREFIXES.some((p) => u.startsWith(p));
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   const refresh = await storage.secureGet<string>(REFRESH_KEY, "");
   if (!refresh) return null;
@@ -98,6 +130,10 @@ export async function streamAw2(cid: string, userMessage: string, h: StreamHandl
 }
 
 async function streamPost(path: string, body: Record<string, any>, h: StreamHandlers): Promise<() => void> {
+  if (_readOnlyMode && !_isAllowedReadOnlyWrite(path)) {
+    h.onError(READ_ONLY_MESSAGE);
+    return () => {};
+  }
   const token = await getToken();
   const pid = await getActiveParticipantId();
   const xhr = new XMLHttpRequest();
@@ -166,6 +202,19 @@ async function streamPost(path: string, body: Record<string, any>, h: StreamHand
 
 export async function apiFetch<T = any>(path: string, opts: ReqOptions = {}): Promise<T> {
   const { method = "GET", body, headers = {}, auth = true, isForm = false } = opts;
+  const m = method.toUpperCase();
+
+  // View-only guard: block writes locally (except allow-listed billing/auth).
+  if (
+    _readOnlyMode &&
+    ["POST", "PUT", "PATCH", "DELETE"].includes(m) &&
+    !_isAllowedReadOnlyWrite(path)
+  ) {
+    throw new ApiError(402, READ_ONLY_MESSAGE, {
+      detail: { error: "trial_expired", message: READ_ONLY_MESSAGE, read_only: true },
+    });
+  }
+
   const h: Record<string, string> = { ...headers };
   if (!isForm && body !== undefined) h["Content-Type"] = "application/json";
 

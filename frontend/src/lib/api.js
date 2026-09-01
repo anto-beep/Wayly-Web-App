@@ -18,6 +18,7 @@ export function setReadOnlyMode(flag) { _readOnlyMode = !!flag; }
 const _READ_ONLY_ALLOW_PREFIXES = [
     "/auth/",
     "/billing/",
+    "/payments/", // reactivation / checkout — view-only users must be able to subscribe
     "/stripe/",
     "/users/me",
     "/admin/",
@@ -45,7 +46,7 @@ api.interceptors.request.use((config) => {
         const method = (config.method || "get").toLowerCase();
         if (_readOnlyMode && ["post", "put", "patch", "delete"].includes(method)) {
             if (!_isAllowedReadOnlyWrite(config.url || "")) {
-                toast.warning("Your trial has ended. Subscribe to add or change anything.");
+                toast.warning("Your plan is inactive. Reactivate to add or change anything.");
                 return Promise.reject({
                     config,
                     response: {
@@ -53,7 +54,7 @@ api.interceptors.request.use((config) => {
                         data: {
                             detail: {
                                 error: "trial_expired",
-                                message: "Your trial has ended. Subscribe to add or change anything.",
+                                message: "Your plan is inactive. Reactivate to add or change anything.",
                                 upgrade_url: "/settings/billing",
                                 read_only: true,
                             },

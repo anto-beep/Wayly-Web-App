@@ -21,14 +21,14 @@ export default function ReadOnlyBanner() {
         >
             <Lock className="h-4 w-4 flex-none" aria-hidden="true" />
             <p className="flex-1 text-sm leading-relaxed font-medium">
-                Your trial has ended. Subscribe to add or change anything. You can still view your existing data.
+                Your plan is inactive. Reactivate to add or change anything. You can still view all of your data.
             </p>
             <Link
                 to="/settings/billing"
                 data-testid="read-only-banner-subscribe"
                 className="inline-flex items-center gap-1.5 rounded-md bg-white text-[#1C2B2D] font-semibold text-xs px-3.5 py-1.5 hover:bg-kindred focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-wayly-clay-500"
             >
-                Subscribe
+                Reactivate
             </Link>
         </div>
     );
