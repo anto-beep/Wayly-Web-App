@@ -64,6 +64,23 @@ def init_payments(*, db, user_dep):
     _db = db
 
 
+def _stripe_is_live() -> bool:
+    """True when the configured Stripe secret key is a LIVE key. Drives which
+    set of price IDs to use (Stripe test and live are separate universes — a
+    live key cannot use a test-mode price id and vice versa)."""
+    return (os.environ.get("STRIPE_API_KEY") or "").startswith(("sk_live", "rk_live"))
+
+
+def _price_env_value(base_key: str) -> Optional[str]:
+    """Return the price id for a base env key, preferring the LIVE variant when
+    running under a live key (falls back to the base value if no _LIVE is set)."""
+    if _stripe_is_live():
+        live = os.environ.get(f"{base_key}_LIVE")
+        if live:
+            return live
+    return os.environ.get(base_key)
+
+
 def _price_for_plan(plan: str) -> str:
     plan = (plan or "").lower()
     env_key = {
@@ -74,7 +91,7 @@ def _price_for_plan(plan: str) -> str:
     }.get(plan)
     if not env_key:
         raise HTTPException(status_code=400, detail=f"Unknown plan: {plan}")
-    price = os.environ.get(env_key)
+    price = _price_env_value(env_key)
     if not price:
         raise HTTPException(
             status_code=503,
@@ -84,7 +101,9 @@ def _price_for_plan(plan: str) -> str:
 
 
 def _plan_for_price(price_id: str) -> Optional[str]:
-    """Reverse of _price_for_plan: map a Stripe price id back to a plan key."""
+    """Reverse of _price_for_plan: map a Stripe price id back to a plan key.
+    Checks BOTH the live and test price ids so webhook mapping works in either
+    mode regardless of which key is active."""
     if not price_id:
         return None
     for plan, env_key in (
@@ -92,7 +111,7 @@ def _plan_for_price(price_id: str) -> Optional[str]:
         ("family", "STRIPE_PRICE_ID_FAMILY"),
         ("adviser", "STRIPE_PRICE_ID_ADVISER"),
     ):
-        if os.environ.get(env_key) == price_id:
+        if price_id in (os.environ.get(env_key), os.environ.get(f"{env_key}_LIVE")):
             return plan
     return None
 
@@ -273,8 +292,17 @@ async def create_checkout(body: CheckoutBody, request: Request):
     try:
         session = stripe.checkout.Session.create(**session_kwargs)
     except stripe.error.StripeError as e:  # type: ignore[attr-defined]
-        logger.warning("Stripe checkout create failed: %s", e)
-        raise HTTPException(status_code=502, detail=str(getattr(e, "user_message", None) or e))
+        # Surface as 400 (not 502) so the client + logs get the real Stripe
+        # message instead of an opaque gateway 502 page. The most common cause
+        # in production is a live key paired with a test-mode price id (or a
+        # missing live price / tax-registration) — the message makes that clear.
+        msg = str(getattr(e, "user_message", None) or e)
+        logger.warning("Stripe checkout create failed (live=%s, price=%s): %s",
+                       _stripe_is_live(), price_id, msg)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not start checkout: {msg}",
+        )
 
     if _db is not None:
         try:

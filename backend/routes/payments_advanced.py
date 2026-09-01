@@ -87,7 +87,8 @@ async def resolve_price_id(plan_key: str) -> Optional[str]:
         if pid:
             return pid
 
-    # Legacy .env fallback so existing subscriptions keep working.
+    # Legacy .env fallback so existing subscriptions keep working. Prefer the
+    # _LIVE price id when running under a live Stripe key.
     env_key = {
         "solo": "STRIPE_PRICE_ID_SOLO",
         "family": "STRIPE_PRICE_ID_FAMILY",
@@ -95,6 +96,10 @@ async def resolve_price_id(plan_key: str) -> Optional[str]:
         "adviser": "STRIPE_PRICE_ID_ADVISER",
     }.get(plan_key)
     if env_key:
+        if api_key.startswith(("sk_live", "rk_live")):
+            live = os.environ.get(f"{env_key}_LIVE")
+            if live:
+                return live
         return os.environ.get(env_key)
     return None
 
