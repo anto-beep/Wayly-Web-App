@@ -1,0 +1,35 @@
+{
+  "summary": "Mobile parity verification for Correspondence (rebuild on /api/correspondence), Documents edit metadata (PATCH /api/documents/{id}), and Support CSAT (POST /api/support/tickets/{id}/csat). All three flows PASS end-to-end on the Expo web preview using cathy@example.com.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter244_11_correspondence.jpeg",
+    "/app/test_reports/iter244_12_corr_form.jpeg",
+    "/app/test_reports/iter244_13_corr_created.jpeg",
+    "/app/test_reports/iter244_20_doc_saved.jpeg",
+    "/app/test_reports/iter244_21_way0042.jpeg",
+    "/app/test_reports/iter244_22_after_csat.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "correspondence.tsx: DateField sends date as 'YYYY-MM-DDT00:00:00' with no timezone — backend accepts, but consider ISO with Z for parity with web.",
+    "documents.tsx openEdit(): sets category to 'other' if doc has no category — matches web behaviour."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "Created + deleted one correspondence entry ('TEST Subject Iter244'); renamed document a79d8d25 to 'TEST Iter244 Renamed Title' with notes 'TEST notes iter244'; submitted 5-star CSAT on WAY-0042.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Verified on Expo web preview at mobile viewport 390x844. All testIDs from the request are present and functional: corr-add-btn, corr-form, corr-form-{direction,channel,counterparty,subject,when,notes,submit}, corr-row-<id>, corr-del-<id>; document-edit-<id>, docvault-edit-{title,category,notes,save}; support-csat, support-csat-star-1..5, support-csat-comment, support-csat-submit, support-csat-done. Backend endpoints /correspondence (GET/POST/DELETE), /documents/{id} (PATCH), /support/tickets/{id}/csat (POST) responded correctly. Note: WAY-0042 now has a 5-star CSAT recorded (used for the test); if future CSAT tests are needed, resolve another ticket first. Doc a79d8d25 has been renamed — restore if this pollutes further test runs.",
+  "rca of the issue": ""
+}

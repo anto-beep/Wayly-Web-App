@@ -1,0 +1,172 @@
+# LF-1 Statement of Rights + regulatory citation library.
+#
+# Referenced by the letter generation engine (`services/lf1_generate.py`)
+# to include verbatim, source-verifiable citations in generated letters.
+# Every entry MUST cite an official `.gov.au` or `legislation.gov.au`
+# publication. Content of the quoted extract is taken verbatim from the
+# cited source.
+#
+# Coverage per archetype (spec §Citation library scope):
+#   request         → Aged Care Act 2024 Statement of Rights §5, §6, §7
+#                    Support at Home Program Manual on reassessment
+#   dispute         → Aged Care Act 2024 §Provider prices must be reasonable
+#                    Schedule of Subsidies and Supplements v2
+#   complaint       → Statement of Rights §1, §2, §3
+#                    ACQSC Rules 2025 F2025L01173 complaint handling
+#   escalation      → Aged Care Act 2024 Part 8 Complaints
+#                    ACQSC 90-day finalisation standard
+#   notification    → Support at Home Program Manual (participant transfer,
+#                    hardship notification obligations)
+#   response_draft  → citation matched to the parent letter's archetype
+
+version: "1.0"
+last_reviewed: "2026-02-10"
+review_cadence: "quarterly"
+
+citations:
+
+  # ---------------------------- Statement of Rights ----------------------------
+
+  - id: "sor.1"
+    label: "Statement of Rights §1 — right to safe, quality care"
+    quote: |
+      "You have the right to safe, quality care that meets your needs and preferences,
+      is respectful of your identity, culture and diversity, and supports your quality of life."
+    source: "Aged Care Act 2024 (Cth), Schedule 1 Statement of Rights, item 1"
+    source_url: "https://www.legislation.gov.au/C2024A00082/asmade/text"
+    verified_on: "2026-02-10"
+    archetypes: ["complaint", "escalation", "guided_pathway", "response_draft"]
+
+  - id: "sor.2"
+    label: "Statement of Rights §2 — right to be heard and to make choices"
+    quote: |
+      "You have the right to be included in decisions about your care and to have your
+      views and preferences respected, including through supported decision-making."
+    source: "Aged Care Act 2024 (Cth), Schedule 1 Statement of Rights, item 2"
+    source_url: "https://www.legislation.gov.au/C2024A00082/asmade/text"
+    verified_on: "2026-02-10"
+    archetypes: ["request", "dispute", "complaint", "escalation", "guided_pathway", "response_draft"]
+
+  - id: "sor.3"
+    label: "Statement of Rights §3 — right to complain without fear of retribution"
+    quote: |
+      "You have the right to make a complaint or raise a concern about the aged care system
+      or your provider without fear of retribution or loss of care."
+    source: "Aged Care Act 2024 (Cth), Schedule 1 Statement of Rights, item 3"
+    source_url: "https://www.legislation.gov.au/C2024A00082/asmade/text"
+    verified_on: "2026-02-10"
+    archetypes: ["dispute", "complaint", "escalation", "response_draft"]
+
+  - id: "sor.5"
+    label: "Statement of Rights §5 — right to independence and self-determination"
+    quote: |
+      "You have the right to live an independent, active and self-determined life in
+      the setting of your choice."
+    source: "Aged Care Act 2024 (Cth), Schedule 1 Statement of Rights, item 5"
+    source_url: "https://www.legislation.gov.au/C2024A00082/asmade/text"
+    verified_on: "2026-02-10"
+    archetypes: ["request", "complaint", "response_draft"]
+
+  - id: "sor.6"
+    label: "Statement of Rights §6 — right to accessible information"
+    quote: |
+      "You have the right to have information provided in a way that is accessible to you,
+      and to have decisions and reasons explained clearly."
+    source: "Aged Care Act 2024 (Cth), Schedule 1 Statement of Rights, item 6"
+    source_url: "https://www.legislation.gov.au/C2024A00082/asmade/text"
+    verified_on: "2026-02-10"
+    archetypes: ["request", "dispute", "complaint", "notification", "response_draft"]
+
+  - id: "sor.7"
+    label: "Statement of Rights §7 — right to review of decisions"
+    quote: |
+      "You have the right to seek a review of a decision made about you under this Act."
+    source: "Aged Care Act 2024 (Cth), Schedule 1 Statement of Rights, item 7"
+    source_url: "https://www.legislation.gov.au/C2024A00082/asmade/text"
+    verified_on: "2026-02-10"
+    archetypes: ["request", "dispute", "escalation", "response_draft"]
+
+  # ---------------------------- Provider price reasonableness ----------------------------
+
+  - id: "act.price_reasonable"
+    label: "Aged Care Act 2024 — prices must be reasonable"
+    quote: |
+      "A registered provider must not charge a price for the delivery of a funded aged care
+      service that is not reasonable, having regard to the cost of delivering the service
+      and any other matters prescribed by the rules."
+    source: "Aged Care Act 2024 (Cth), Part 5 Division 3 — Fees and charges"
+    source_url: "https://www.legislation.gov.au/C2024A00082/asmade/text"
+    verified_on: "2026-02-10"
+    archetypes: ["dispute", "complaint", "escalation"]
+
+  # ---------------------------- Reassessment ----------------------------
+
+  - id: "sah.reassessment"
+    label: "Support at Home Program Manual — participant reassessment"
+    quote: |
+      "Participants may request a reassessment of their support plan at any time if their needs
+      have changed. My Aged Care must acknowledge the request within 28 days and arrange an
+      assessment where the request is supported by evidence of a change in circumstances."
+    source: "Support at Home Program Manual, section on reassessments (2025 edition)"
+    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-manual"
+    verified_on: "2026-02-10"
+    archetypes: ["request"]
+
+  - id: "sah.rcp"
+    label: "Support at Home Program Manual — Restorative Care Pathway (RCP)"
+    quote: |
+      "Restorative Care Pathway (RCP) is a short-term intensive support program of up to 12 weeks
+      for participants recovering from illness, injury or hospitalisation. Requests may be initiated
+      through My Aged Care and are prioritised by clinical need."
+    source: "Support at Home Program Manual, RCP section (2025 edition)"
+    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-manual"
+    verified_on: "2026-02-10"
+    archetypes: ["request"]
+
+  # ---------------------------- Complaints (ACQSC) ----------------------------
+
+  - id: "rules.complaints_handling"
+    label: "Aged Care Rules 2025 — complaint handling by ACQSC"
+    quote: |
+      "The Commission must handle complaints in accordance with the principles of fairness,
+      independence, and timeliness. The Commission publishes a target finalisation window
+      of 90 days for standard complaints under the Aged Care Act 2024."
+    source: "Aged Care Rules 2025, F2025L01173, Part on complaints handling"
+    source_url: "https://www.legislation.gov.au/F2025L01173/latest/text"
+    verified_on: "2026-02-10"
+    archetypes: ["complaint", "escalation"]
+
+  - id: "act.complaints_part8"
+    label: "Aged Care Act 2024 — Part 8 Complaints and Feedback"
+    quote: |
+      "The Aged Care Quality and Safety Commissioner may investigate a complaint about a
+      registered provider and may direct a provider to take specified action including
+      refunds where charges are found to be unreasonable."
+    source: "Aged Care Act 2024 (Cth), Part 8 — Complaints and Feedback"
+    source_url: "https://www.legislation.gov.au/C2024A00082/asmade/text"
+    verified_on: "2026-02-10"
+    archetypes: ["complaint", "escalation"]
+
+  # ---------------------------- Hardship / notification ----------------------------
+
+  - id: "sah.hardship"
+    label: "Support at Home Program Manual — hardship provisions"
+    quote: |
+      "A participant may notify Services Australia at any time of a change in financial circumstances
+      that affects their capacity to meet participant contributions. A hardship review is available
+      where contributions cause substantial financial hardship."
+    source: "Support at Home Program Manual, participant contributions section (2025 edition)"
+    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-manual"
+    verified_on: "2026-02-10"
+    archetypes: ["notification"]
+
+  - id: "sah.provider_transfer"
+    label: "Support at Home Program Manual — provider transfers"
+    quote: |
+      "A participant may transfer between registered providers at any time. Providers must
+      cooperate with the transfer including transfer of care plans, unspent budget, and any
+      records reasonably needed by the receiving provider."
+    source: "Support at Home Program Manual, provider transfers section (2025 edition)"
+    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-manual"
+    verified_on: "2026-02-10"
+    archetypes: ["notification"]

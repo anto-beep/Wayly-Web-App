@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 27 — Adviser plan ($299/mo, 25-client cap, 7-day trial), plan-gating, and minimal multi-client portal. 20/20 backend pytest cases pass; all 5 critical frontend flows verified visually + via selectors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Login → /app dashboard", "issues": ["Pre-existing console errors observed when navigating to /app after login: 10+ HTTP 400 responses to dashboard data calls and React 'Encountered two children with the same key' warnings for month abbreviations (Apr, May). Not introduced by this iteration but worth fixing in a follow-up."]},
+      {"screen": "Adviser portal", "issues": ["Adviser logging in via /login lands on /app (general dashboard). Consider redirecting adviser-plan users to /adviser on login for parity with the post-signup flow."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter27_adviser.py",
+    "/app/test_reports/pytest/iter27_adviser.xml"
+  ],
+  "action_items": [
+    "(Low priority) Investigate the 10 HTTP 400s on /app dashboard for the adviser user — they don't break the page but pollute the console.",
+    "(Low priority) Investigate the 'two children with the same key' warnings for month abbreviations (Apr/May) in the dashboard charts (pre-existing).",
+    "(Optional UX) Redirect adviser-plan users to /adviser after /login, mirroring the post-signup flow."
+  ],
+  "critical_code_review_comments": [
+    "Plan-gating dependency `require_plan(...)` correctly returns 401 (unauthenticated) and 403 (plan_required with current_plan, required_plans, redirect:/pricing) — matches spec exactly.",
+    "Adviser routes properly exclude MongoDB `_id` via projection `{_id: 0}` on all list and find_one calls — no serialisation issues.",
+    "Soft-link logic for /adviser/clients POST works: when a Wayly user with that email already exists, linked_user_id is set and status='active'; otherwise status='invited'. Verified end-to-end.",
+    "Stripe checkout returns a real Stripe Checkout URL for adviser/solo/family with sk_test_emergent (never charges). All three plans confirmed.",
+    "Trial idempotency: second /billing/start-trial returns 400 'trial_used' — prevents abuse.",
+    "Pydantic Literal expansion ['free','solo','family','adviser'] correctly validates: invalid plan returns 422 (not 400 — minor spec deviation, but stricter and correct)."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter27_adviser.py"],
+  "success_rate": {"backend": "100% (20/20)", "frontend": "100% on tested flows (5/5)"},
+  "test_credentials": "Adviser: mark.adviser@example.com / AdviserPass1! (plan flipped to adviser via /api/auth/plan in the fixture). Family regression: cathy@example.com / testpass123. Fresh TEST_*@example.com users created per test for trial flow.",
+  "seed_data_creation": "All test users prefixed TEST_; test adviser clients use test_*@example.com email pattern. Cleanup runs per test class for adviser_clients collection. mark.adviser user is reused across runs.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend test file: /app/backend/tests/test_iter27_adviser.py (20 cases, ~85s — slowed by Stripe checkout HTTPS round-trips). The fixture force-flips mark.adviser plan to 'adviser' via PUT /api/auth/plan if it isn't already (idempotent). Frontend testids: signup-plan-adviser, advisor-tier-adviser, adviser-locked, adviser-summary, adviser-add-form (hidden until 'Add client' click), adviser-client-list, adviser-empty, adviser-roadmap. Note: invalid checkout plan returns 422 (Pydantic), not 400."
+}

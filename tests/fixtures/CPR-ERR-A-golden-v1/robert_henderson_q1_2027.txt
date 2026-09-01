@@ -1,0 +1,46 @@
+SUPPORT AT HOME CARE PLAN — Capital Aged Care Services Pty Ltd
+
+Provider: Capital Aged Care Services Pty Ltd
+Participant: Robert Henderson
+Classification: 5
+Effective from: 01/01/2027
+Effective to: 31/03/2027
+Quarterly budget: $9,924.25
+Pension status: part-pensioner
+
+BUDGET SUMMARY
+Care services base (excludes AT-HM): $9,000.00
+Care management fee (10% of care services base): $900.00
+AT-HM allocation (ring-fenced separately): $1,200.00
+Rollover cap: $1,000.00
+
+SERVICE CATEGORIES
+Personal care: Clinical Care (0% participant contribution)
+Domestic assistance: Everyday Living
+Social support group: Independence
+
+SERVICES DELIVERED
+Personal care        Clinical Care       3 hr / week      $900.00
+Social support group Independence        1 session / week $396.00
+Nursing (wound care) Clinical Care       0.5 hr / week    $360.00
+
+ASSESSED NEEDS
+- Assistance with showering and dressing (personal care).
+- Wound care management following a leg ulcer.
+- Laundry assistance required weekly (participant cannot manage heavy loads).
+- Wishes to stay connected socially, specifically the men's shed and lawn bowls.
+
+GOALS
+Goal 1: I want to keep showering safely on my own with a little help.
+Goal 2: I want my leg ulcer to heal and stay healed.
+Goal 3: I want clean clothes and bedding each week.
+Goal 4: I want to get back to the men's shed and my Tuesday lawn bowls.
+
+NARRATIVE
+Robert is a 78 year old part-pensioner living alone. He was reclassified for
+personal care from 01/10/2026 into Clinical Care. He is social and misses his
+men's shed group and lawn bowls. He needs weekly laundry help.
+
+CONSULTATION
+This plan was developed in consultation with Robert and his daughter on 15/12/2026.
+Review cadence: reviewed every 12 months or on changed needs.

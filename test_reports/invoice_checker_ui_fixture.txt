@@ -1,0 +1,15 @@
+Glorious Services Pty Ltd
+ABN 12 345 678 901
+TAX INVOICE
+Invoice No: INV-2026-07-4471
+Invoice Date: 05/10/2026
+Due Date: 20/10/2026
+
+AMOUNT PAYABLE
+Nursing 10/10/2026 1 hours @ $120.00 25% $30.00
+Exit fee 05/10/2026 $250.00
+Domestic assistance 10/10/2026 2 hours @ $70.00 20% $28.00 including GST
+Personal care 15/10/2026 1 hours @ $75.00 15% $11.25
+Personal care 15/10/2026 1 hours @ $75.00 15% $11.25
+
+Total Amount Payable: $494.25

@@ -1,0 +1,189 @@
+import React, { useCallback, useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { Send, Star, Paperclip, Download } from "lucide-react-native";
+import * as DocumentPicker from "expo-document-picker";
+
+import { AppHeader, Badge, Button, Card, Field, Loading, T } from "@/src/components/ui";
+import { apiFetch, ApiError } from "@/src/lib/api";
+import { downloadAndShare } from "@/src/lib/download";
+import { useTheme } from "@/src/theme/ThemeContext";
+import { fonts, radius, spacing } from "@/src/theme/tokens";
+import { formatDateTime } from "@/src/utils/format";
+import { Pressable } from "react-native";
+
+type Msg = { id: string; author_type?: string; body?: string; created_at?: string; visibility?: string };
+type Attachment = { id: string; filename?: string; mime_type?: string; size_bytes?: number; uploaded_at?: string; uploaded_by_type?: string; purged_at?: string | null };
+type Ticket = { id: string; reference?: string; category?: string; status?: string; user_note?: string; created_at?: string; csat_score?: number | null };
+
+export default function SupportDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
+  const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [thread, setThread] = useState<Msg[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [reply, setReply] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [attaching, setAttaching] = useState(false);
+  const [csat, setCsat] = useState(0);
+  const [csatComment, setCsatComment] = useState("");
+  const [csatBusy, setCsatBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await apiFetch<{ ticket: Ticket; thread: Msg[]; attachments?: Attachment[] }>(`/support/tickets/${id}`);
+      setTicket(res.ticket); setThread(res.thread || []); setAttachments(res.attachments || []);
+    } catch { setTicket(null); }
+    finally { setLoading(false); }
+  }, [id]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const attach = async () => {
+    setErr("");
+    const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/png", "image/jpeg", "image/webp"], copyToCacheDirectory: true });
+    if (res.canceled || !res.assets?.[0]) return;
+    const a = res.assets[0];
+    setAttaching(true);
+    try {
+      const form = new FormData();
+      form.append("file", { uri: a.uri, name: a.name || "attachment", type: a.mimeType || "application/octet-stream" } as any);
+      await apiFetch(`/support/tickets/${id}/attachments`, { method: "POST", isForm: true, body: form });
+      await load();
+    } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not attach that file."); }
+    finally { setAttaching(false); }
+  };
+
+  const downloadAttachment = async (att: Attachment) => {
+    try { await downloadAndShare(`/support/tickets/${id}/attachments/${att.id}/download`, att.filename || "attachment"); }
+    catch { setErr("Could not download that file."); }
+  };
+
+  const send = async () => {
+    setErr("");
+    if (!reply.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/support/tickets/${id}/messages`, { method: "POST", body: { body: reply.trim() } });
+      setReply("");
+      await load();
+    } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not send your message."); }
+    finally { setBusy(false); }
+  };
+
+  const setStatus = async (action: "close" | "reopen") => {
+    setErr("");
+    setBusy(true);
+    try { await apiFetch(`/support/tickets/${id}/${action}`, { method: "POST", body: {} }); await load(); }
+    catch (e) { setErr(e instanceof ApiError ? e.message : `Could not ${action} this request.`); }
+    finally { setBusy(false); }
+  };
+
+  const submitCsat = async () => {
+    if (csat < 1) return;
+    setCsatBusy(true);
+    try {
+      await apiFetch(`/support/tickets/${id}/csat`, { method: "POST", body: { csat_score: csat, csat_comment: csatComment.trim() || null } });
+      await load();
+    } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not submit your rating."); }
+    finally { setCsatBusy(false); }
+  };
+
+  const isClosed = ticket?.status === "closed" || ticket?.status === "resolved";
+  const msgs = thread;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <AppHeader title={ticket?.reference || "Request"} subtitle={(ticket?.category || "").replace(/_/g, " ")} onBack={() => router.back()} />
+      {loading ? (
+        <Loading label="Loading request…" />
+      ) : !ticket ? (
+        <View style={{ padding: spacing.lg }}><T>Request not found.</T></View>
+      ) : (
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <Badge label={(ticket.status || "").replace(/_/g, " ").toUpperCase()} tone={isClosed ? "neutral" : "brand"} testID="support-detail-status" />
+              <Button label={isClosed ? "Reopen" : "Close request"} testID={isClosed ? "support-reopen" : "support-close"} variant="ghost" onPress={() => setStatus(isClosed ? "reopen" : "close")} loading={busy} />
+            </View>
+
+            {err ? <T variant="small" testID="support-detail-error" style={{ color: colors.terracotta }}>{err}</T> : null}
+
+            {ticket.user_note ? (
+              <Card>
+                <T variant="label">YOUR REQUEST</T>
+                <T style={{ fontFamily: fonts.body, fontSize: 14, marginTop: 4 }}>{ticket.user_note}</T>
+                <T variant="small" style={{ marginTop: 6, color: colors.muted }}>{formatDateTime(ticket.created_at)}</T>
+              </Card>
+            ) : null}
+
+            {msgs.map((m, i) => {
+              const mine = m.author_type === "user";
+              return (
+                <View key={m.id || i} testID={`support-msg-${i}`} style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "88%" }}>
+                  <View style={{ padding: spacing.md, borderRadius: radius.md, backgroundColor: mine ? colors.primary : colors.surface2 }}>
+                    <T style={{ fontFamily: fonts.body, fontSize: 14, color: mine ? "#fff" : colors.text }}>{m.body}</T>
+                  </View>
+                  <T variant="small" style={{ marginTop: 2, color: colors.muted, alignSelf: mine ? "flex-end" : "flex-start" }}>
+                    {mine ? "You" : "Wayly"} · {formatDateTime(m.created_at)}
+                  </T>
+                </View>
+              );
+            })}
+
+            {attachments.length > 0 ? (
+              <Card testID="support-attachments">
+                <T variant="label" style={{ color: colors.muted }}>ATTACHMENTS</T>
+                {attachments.map((att) => (
+                  <Pressable key={att.id} testID={`support-attachment-${att.id}`} onPress={() => att.purged_at ? undefined : downloadAttachment(att)} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 8 }}>
+                    <Paperclip size={16} color={colors.muted} />
+                    <T variant="small" style={{ flex: 1 }} numberOfLines={1}>{att.filename || "attachment"}{att.purged_at ? " (expired)" : ""}</T>
+                    {!att.purged_at ? <Download size={16} color={colors.primary} /> : null}
+                  </Pressable>
+                ))}
+              </Card>
+            ) : null}
+
+            {!isClosed ? (
+              <Card>
+                <Field label="Add a reply" testID="support-reply-input" value={reply} onChangeText={setReply} multiline placeholder="Type your message…" />
+                <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
+                  <Button label="Attach file" testID="support-attach" icon={Paperclip} variant="outline" onPress={attach} loading={attaching} style={{ flex: 1 }} />
+                  <Button label="Send" testID="support-send" icon={Send} onPress={send} loading={busy} disabled={!reply.trim()} style={{ flex: 1 }} />
+                </View>
+              </Card>
+            ) : null}
+
+            {isClosed && ticket.csat_score ? (
+              <Card testID="support-csat-done">
+                <T variant="label">YOUR RATING</T>
+                <View style={{ flexDirection: "row", gap: 4, marginTop: 6 }}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star key={n} size={20} color={colors.gold} fill={n <= (ticket.csat_score || 0) ? colors.gold : "transparent"} />
+                  ))}
+                </View>
+              </Card>
+            ) : null}
+
+            {isClosed && !ticket.csat_score ? (
+              <Card testID="support-csat">
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>How did we do?</T>
+                <T variant="small" style={{ marginTop: 4, color: colors.muted }}>Rate the support you received on this request.</T>
+                <View style={{ flexDirection: "row", gap: 6, marginTop: spacing.sm }}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Pressable key={n} testID={`support-csat-star-${n}`} onPress={() => setCsat(n)} hitSlop={6}>
+                      <Star size={30} color={colors.gold} fill={n <= csat ? colors.gold : "transparent"} />
+                    </Pressable>
+                  ))}
+                </View>
+                <Field label="Comment" testID="support-csat-comment" value={csatComment} onChangeText={setCsatComment} multiline placeholder="Anything to add? (optional)" style={{ marginTop: spacing.sm }} />
+                <Button label="Submit rating" testID="support-csat-submit" onPress={submitCsat} loading={csatBusy} disabled={csat < 1} style={{ marginTop: spacing.sm }} />
+              </Card>
+            ) : null}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      )}
+    </View>
+  );
+}

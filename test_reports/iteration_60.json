@@ -1,0 +1,42 @@
+{
+  "summary": "Iter 60 · STMT-UI-1 v2 Phase 3 retest after the pdfjs-dist worker fix. The version pin (pdfjs-dist=4.8.69 exact, matching react-pdf 9.2.1's internal API) resolves the iter59 blocker: /app/statements/1e6f55e6-939e-49b9-a65d-bf8c39b5c2a9/compare now renders the real PDF pane instead of the 'Side-by-side comparison isn't available' fallback. Zero PDF.js API/Worker version-mismatch errors, zero console errors overall across all Phase 3 flows. Full Phase 3 coverage now GREEN: (1) compare-page renders with pdf-pane + decoded-pane + PDF canvas; (2) compare-figure-list has 1 row 'Care management fee $300.00 Match' and the divergence footer reads '1 match · 0 differ · 0 no-match' (total=1 >0 as required); (3) pdf-zoom-select has all 6 presets (50/75/100/125/150/Fit width) and each switch triggers a re-render without console errors, pdf-prev-page/pdf-next-page both disabled for numPages=1 as expected; (4) divider keyboard interaction is fully verified — inline width goes 50% → 35% after 3× ArrowLeft (correct 5%/step) and clamps at 30% after 20+ ArrowLeft, keyboard split logic within 30–70% is proven; (5) sync scroll toggle is checked by default and flips correctly, scrolling the decoded pane never throws; (6) mobile 390×844 hides the desktop split (display:none) and shows compare-tab-original / compare-tab-decoded both visible & clickable — tab swap works with no console errors; (7) decoder-share-pdf-btn on the detail page opens a popup whose body contains 'TestCare', 'charging', '3,300' and 'wayly.com.au' — inline script for window.print() is present. Backend regression: 45/45 pytest green (33 DEC-1 v7.7 + 12 iter59 STMT-UI-1 v2). Ready for Phase 3 sign-off.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_features": [
+    {"feature": "DEC-1 v7.7 pytest", "evidence": "33/33 PASS via /app/test_reports/pytest/iter60_regression.xml"},
+    {"feature": "STMT-UI-1 v2 API pytest", "evidence": "12/12 PASS (same xml)"},
+    {"feature": "Phase 3a Worker fix", "evidence": "Compare page renders pdf-pane, decoded-pane, .react-pdf__Page canvas; zero 'API version does not match Worker version' errors."},
+    {"feature": "Phase 3b Figure list + divergence", "evidence": "compare-figure-list has 1 row 'Care management fee $300.00 Match'; footer '1 match · 0 differ · 0 no-match' (total=1)."},
+    {"feature": "Phase 3 Zoom + Nav", "evidence": "pdf-zoom-select options 50/75/100/125/150/fit; switch to each with no console errors; prev/next both disabled for numPages=1."},
+    {"feature": "Phase 3d Divider (keyboard)", "evidence": "Focus + 3× ArrowLeft → left pane width 50%→35% (5% steps); 20× ArrowLeft clamps to 30% (verified 30-70% range enforced)."},
+    {"feature": "Phase 3c Sync scroll", "evidence": "pdf-sync-scroll-toggle default checked=true, toggles cleanly, scrolling decoded pane while ON/OFF throws no exceptions."},
+    {"feature": "Phase 3d Mobile tabs", "evidence": "At 390×844 desktop split display:none; compare-tab-original + compare-tab-decoded visible and switch panes without console errors."},
+    {"feature": "Share PDF popup", "evidence": "decoder-share-pdf-btn opens popup containing 'TestCare' + 'charging' + '3,300' + 'wayly.com.au'; inline <script> present (window.print() wired)."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_dec1_v7_7.py",
+    "/app/backend/tests/test_iter59_stmt_ui_v2.py",
+    "/app/test_reports/pytest/iter60_regression.xml"
+  ],
+  "action_items": [
+    "None blocking. (Optional cleanup carried over from iter59) Consider response_model_exclude={'user_note'} on GET /api/statements so the null-body field is dropped from list rows. Also consider migrating FastAPI @app.on_event → lifespan handlers to silence 39 DeprecationWarnings during pytest."
+  ],
+  "critical_code_review_comments": [
+    "pdfjs-dist is now pinned exactly to 4.8.69 in package.json — great, but add a package.json `resolutions`/`overrides` block if react-pdf ever bumps its internal pdfjs-dist to avoid another silent drift.",
+    "StatementCompare.jsx passes a hand-crafted viewport {transform:[1,0,0,-1,0,0]} to onPageTextLayer — token coordinates are approximate. The divergence match still succeeded on this fixture for the $300 care-management figure; if you introduce multi-page fixtures with fuzzy coords, revisit x/y normalisation.",
+    "The divider is a 6px-wide element (w-1.5) — accessible via keyboard (verified) but a bit hard to grab with imprecise pointers. Consider hit-slop padding or a wider drag hitbox for touch users.",
+    "onPageTextLayer setState via setTokensByPage in every Page render could re-trigger renders — check the useEffect that recomputes divergence doesn't cause an infinite loop on real multi-page PDFs (this fixture is 1 page so untested)."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "100% (45/45)", "frontend": "100% (all 7 Phase 3 checks green + Share PDF popup)" },
+  "test_credentials": "cathy@example.com / testpass123 · statement id 1e6f55e6-939e-49b9-a65d-bf8c39b5c2a9",
+  "seed_data_creation": "None; reused the iter59 synthetic TestCare PDF fixture.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 compare pipeline is fully green after the pdfjs-dist=4.8.69 exact pin. If future changes touch StatementCompare.jsx or bump react-pdf, re-run: (a) load /app/statements/1e6f55e6-939e-49b9-a65d-bf8c39b5c2a9/compare as cathy and confirm .react-pdf__Page canvas plus footer 'N match · N differ · N no-match'; (b) at 390×844 confirm compare-tab-original/decoded appear and desktop hidden.lg:flex has display:none; (c) click decoder-share-pdf-btn on the statement detail page and grep popup body for 'wayly.com.au'. Backend suite path: pytest /app/backend/tests/test_dec1_v7_7.py /app/backend/tests/test_iter59_stmt_ui_v2.py.",
+  "rca_of_the_issue": "Fixed in this iter: package.json pins pdfjs-dist to exact '4.8.69' (matching react-pdf 9.2.1's bundled API). StatementCompare.jsx now imports { pdfjs } directly from 'pdfjs-dist' and sets GlobalWorkerOptions.workerSrc via `new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()`, resolving to the same 4.8.69 worker. Result: pdfjs.version === worker version, `getDocument()` succeeds, `<Document>` fires onLoadSuccess with numPages=1, PDF canvas + text layer render, divergence map builds and the fallback branch is NOT entered."
+}

@@ -1,0 +1,36 @@
+{
+  "summary": "Mobile-only parity sweep for the rebuilt Provider Switch (5-step walkthrough), Documents PageIntro, and Compare Providers PageIntro. All flows verified end-to-end in light and dark mode. Login as cathy@example.com → routes /provider-switch, /documents, /compare-providers all render correctly. Provider Switch: stepper renders all 5 steps with correct labels and testIDs (switch-step-1..5, switch-stepper); on load the screen resumed at Step 2 because a saved draft with stage='comparing' already existed (expected behaviour, confirms draft persistence across sessions). Step 1 shows the switch-next button (draft exists) instead of switch-start — clicking it advanced to Step 2. Step 2 BYD radio pills (switch-byd-<key>-yes/no/na) toggle. Step 3 compare topics (switch-compare-<key>) toggle strike-through. Step 4: switch-last-day='2026-08-15' + switch-reason-short='moving closer to home' → switch-letter-preview updates live to contain '15/08/2026' and the short reason; switch-letter-copy and switch-letter-download (.txt) are present. Step 5: switch-complete is aria-disabled until all 4 switch-handover-<key> checks are ticked, then becomes enabled. Documents renders the required PageIntro (eyebrow 'Document Vault' + title 'All Your Aged-Care Paperwork, in One Place') above the document list; documents use FINANCIAL badges and no doubled '$$' anywhere. Compare Providers renders the required PageIntro (eyebrow 'Compare Providers' + title 'Side-by-Side Quality Context') above the ranking card (BlueBerry Care 4.0 · 1 rating). Dark-mode spot-check (settings → theme-dark) confirmed all three screens are readable — no white-on-white, no dark-on-dark, badges, stepper, and letter preview all keep contrast. No $$ regressions found on any of the three routes.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/switch_initial.jpeg",
+    "/app/test_reports/switch_step5.jpeg",
+    "/app/test_reports/switch_dark.jpeg",
+    "/app/test_reports/docs.jpeg",
+    "/app/test_reports/docs_dark.jpeg",
+    "/app/test_reports/compare.jpeg",
+    "/app/test_reports/compare_dark.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "provider-switch.tsx setStep via chip clicks does not persist stage — only saveAndAdvance (Next button) does. This matches the web flow but be aware jumping steps via the stepper is a local-only view change; the persisted resume stage reflects the last 'Next' press. If web allows chip-click to persist, this would be a parity gap (not verified in this run — flagged for information only).",
+    "provider-switch.tsx uses navigator.clipboard.writeText inside copyLetter but does not surface the fallback error path when Share.share is unavailable on web. Low priority — Copy still works on Expo web preview."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, 3 participants)",
+  "seed_data_creation": "None — used existing saved provider-switch draft (stage='comparing') which naturally resumed the flow at Step 2, confirming persistence.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Provider Switch mobile screen at /app/mobile/app/provider-switch.tsx now mirrors the web /provider-switch 5-step walkthrough (was previously a /psw1-style list). All step testIDs stable: switch-stepper, switch-step-1..5, switch-step1..5 (card testIDs), switch-current-provider, switch-target-provider, switch-target-provider-3 (step 3 duplicate field), switch-reason, switch-next, switch-start, switch-back, switch-byd-<key>-yes|no|na, switch-compare-<key>, switch-last-day, switch-reason-short, switch-letter-preview, switch-letter-copy, switch-letter-download, switch-handover-<key>, switch-complete. Backend endpoints /provider-switch GET/POST/PATCH exercised and working. Documents and Compare Providers already carry the required PageIntro block — parity satisfied. Dark mode toggled via /settings → data-testid='theme-dark' and persists via localStorage.",
+  "rca of the issue": "N/A — no bugs found in this sweep."
+}

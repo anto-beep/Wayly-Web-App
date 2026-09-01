@@ -1,0 +1,416 @@
+# DoH Support at Home indicative price snapshot — October 2025.
+#
+# Source: Department of Health, "Summary of indicative Support at Home prices",
+# published October 2025. The figures reflect a February 2025 survey of ~300
+# HCP providers (~one third of the market) and describe standard business
+# hours only. Nursing hourly figures include the cost of everyday nursing
+# consumables the nurse carries.
+#
+# PPC-1 v2 §WS1 — this file is IMMUTABLE once a snapshot ships. Future
+# quarterly publications from DoH land as new files (e.g. doh-2026-q1.yaml).
+# Errata to an existing snapshot follow the documented process, not silent
+# edits.
+#
+# Fields per row:
+#   service              — display name matching the SAH service list.
+#   service_code         — internal stable slug (kebab-case).
+#   stream               — Clinical | Independence | Everyday Living.
+#   unit                 — hour | trip | meal.
+#   median               — AUD.
+#   range_lower          — AUD; nullable when the DoH row does not publish one.
+#   range_upper          — AUD; nullable when the DoH row does not publish one.
+#   available            — true when DoH publishes a range for this service.
+#   checkable            — false when comparison is inappropriate regardless of
+#                          range availability (flat-fee monthly, per-km, etc.).
+#   notes                — inline caveat surfaced on the result card.
+#   source_citation      — page reference within the DoH PDF.
+snapshot_id: "doh-2025-10"
+source_publication: "DoH Summary of indicative Support at Home prices"
+source_date: "2025-10-01"
+source_url: "https://www.health.gov.au/resources/publications/summary-of-indicative-support-at-home-prices"
+regional: false
+sample_note: "Based on a February 2025 DoH survey of ~300 HCP providers, roughly one third of the market. Standard business hours only."
+
+services:
+
+  # ---------- Clinical ----------
+  - service: "Nursing care"
+    service_code: "nursing-care"
+    stream: "Clinical"
+    unit: "hour"
+    median: 150.0
+    range_lower: 125.0
+    range_upper: 179.0
+    available: true
+    checkable: true
+    notes: "Includes the cost of everyday nursing consumables the nurse carries. Comparisons against provider rates that itemise consumables separately will read as false below-range."
+    source_citation: "DoH indicative prices, page 3"
+
+  - service: "Registered nurse"
+    service_code: "registered-nurse"
+    stream: "Clinical"
+    unit: "hour"
+    median: 160.0
+    range_lower: 144.0
+    range_upper: 186.0
+    available: true
+    checkable: true
+    notes: "Includes the cost of everyday nursing consumables the nurse carries."
+    source_citation: "DoH indicative prices, page 3"
+
+  - service: "Enrolled nurse"
+    service_code: "enrolled-nurse"
+    stream: "Clinical"
+    unit: "hour"
+    median: 140.0
+    range_lower: 120.0
+    range_upper: 163.0
+    available: true
+    checkable: true
+    notes: "Includes the cost of everyday nursing consumables the nurse carries."
+    source_citation: "DoH indicative prices, page 3"
+
+  - service: "Nursing assistant"
+    service_code: "nursing-assistant"
+    stream: "Clinical"
+    unit: "hour"
+    median: 110.0
+    range_lower: 92.0
+    range_upper: 143.0
+    available: true
+    checkable: true
+    notes: "Includes the cost of everyday nursing consumables the nurse carries."
+    source_citation: "DoH indicative prices, page 3"
+
+  - service: "Allied health and other therapeutic services"
+    service_code: "allied-health-general"
+    stream: "Clinical"
+    unit: "hour"
+    median: 195.0
+    range_lower: 160.0
+    range_upper: 220.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Allied health therapy assistant"
+    service_code: "allied-health-therapy-assistant"
+    stream: "Clinical"
+    unit: "hour"
+    median: 122.0
+    range_lower: 105.0
+    range_upper: 167.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Counsellor or psychotherapist"
+    service_code: "counsellor-psychotherapist"
+    stream: "Clinical"
+    unit: "hour"
+    median: 208.0
+    range_lower: 160.0
+    range_upper: 225.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Dietitian or nutritionist"
+    service_code: "dietitian-nutritionist"
+    stream: "Clinical"
+    unit: "hour"
+    median: 200.0
+    range_lower: 165.0
+    range_upper: 219.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Exercise physiologist"
+    service_code: "exercise-physiologist"
+    stream: "Clinical"
+    unit: "hour"
+    median: 190.0
+    range_lower: 165.0
+    range_upper: 219.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Occupational therapist"
+    service_code: "occupational-therapist"
+    stream: "Clinical"
+    unit: "hour"
+    median: 200.0
+    range_lower: 174.0
+    range_upper: 220.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Physiotherapist"
+    service_code: "physiotherapist"
+    stream: "Clinical"
+    unit: "hour"
+    median: 185.0
+    range_lower: 160.0
+    range_upper: 210.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Podiatrist"
+    service_code: "podiatrist"
+    stream: "Clinical"
+    unit: "hour"
+    median: 180.0
+    range_lower: 153.0
+    range_upper: 208.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Psychologist"
+    service_code: "psychologist"
+    stream: "Clinical"
+    unit: "hour"
+    median: 228.0
+    range_lower: 210.0
+    range_upper: 250.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Social worker"
+    service_code: "social-worker"
+    stream: "Clinical"
+    unit: "hour"
+    median: 200.0
+    range_lower: 163.0
+    range_upper: 238.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  - service: "Speech pathologist"
+    service_code: "speech-pathologist"
+    stream: "Clinical"
+    unit: "hour"
+    median: 208.0
+    range_lower: 187.0
+    range_upper: 236.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 4"
+
+  # ---------- Independence ----------
+  - service: "Care management"
+    service_code: "care-management"
+    stream: "Independence"
+    unit: "hour"
+    median: 120.0
+    range_lower: 80.0
+    range_upper: 150.0
+    available: true
+    checkable: true
+    notes: "DoH publishes an indicative range for care management charged by the hour. If your provider charges care management as a flat monthly fee or a percentage of the package, use the Statement Decoder for a full breakdown."
+    source_citation: "DoH indicative prices, page 5"
+
+  - service: "Restorative care management"
+    service_code: "restorative-care-management"
+    stream: "Independence"
+    unit: "hour"
+    median: 150.0
+    range_lower: 120.0
+    range_upper: 173.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 5"
+
+  - service: "Personal care"
+    service_code: "personal-care"
+    stream: "Independence"
+    unit: "hour"
+    median: 100.0
+    range_lower: 85.0
+    range_upper: 115.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 5"
+
+  - service: "Therapeutic services for independent living"
+    service_code: "therapeutic-services-independent-living"
+    stream: "Independence"
+    unit: "hour"
+    median: 165.0
+    range_lower: 140.0
+    range_upper: 220.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 5"
+
+  - service: "Remedial masseuse"
+    service_code: "remedial-masseuse"
+    stream: "Independence"
+    unit: "hour"
+    median: 150.0
+    range_lower: 134.0
+    range_upper: 206.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 5"
+
+  - service: "Respite"
+    service_code: "respite"
+    stream: "Independence"
+    unit: "hour"
+    median: 99.0
+    range_lower: 85.0
+    range_upper: 112.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 5"
+
+  # ---------- Everyday Living ----------
+  - service: "Social support and community engagement"
+    service_code: "social-support-community"
+    stream: "Everyday Living"
+    unit: "hour"
+    median: 99.0
+    range_lower: 82.0
+    range_upper: 110.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 6"
+
+  - service: "Transport"
+    service_code: "transport-per-trip"
+    stream: "Everyday Living"
+    unit: "trip"
+    median: 70.0
+    range_lower: 40.0
+    range_upper: 97.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 6"
+
+  - service: "Domestic assistance"
+    service_code: "domestic-assistance"
+    stream: "Everyday Living"
+    unit: "hour"
+    median: 95.0
+    range_lower: 83.0
+    range_upper: 109.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 6"
+
+  - service: "Home maintenance and repairs"
+    service_code: "home-maintenance-repairs"
+    stream: "Everyday Living"
+    unit: "hour"
+    median: 103.0
+    range_lower: 85.0
+    range_upper: 120.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 6"
+
+  - service: "Meal delivery"
+    service_code: "meal-delivery"
+    stream: "Everyday Living"
+    unit: "meal"
+    median: 15.0
+    range_lower: 11.0
+    range_upper: 22.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 6"
+
+  - service: "Meal preparation"
+    service_code: "meal-preparation"
+    stream: "Everyday Living"
+    unit: "hour"
+    median: 97.0
+    range_lower: 82.0
+    range_upper: 110.0
+    available: true
+    checkable: true
+    notes: null
+    source_citation: "DoH indicative prices, page 6"
+
+  # ---------- Non-checkable fee types (WS1 + WS5) ----------
+  # These appear in the SAH service list but DoH does not publish an
+  # indicative range for them, or the fee structure they typically use
+  # (monthly flat, percentage of package, per-km) is not comparable to
+  # the DoH per-hour / per-trip / per-meal ranges. Emergent proposal
+  # per PPC-1 v2 §WS1 for Antony's sign-off.
+
+  - service: "Package management (monthly flat fee)"
+    service_code: "package-management-monthly"
+    stream: "Independence"
+    unit: "month"
+    median: null
+    range_lower: null
+    range_upper: null
+    available: false
+    checkable: false
+    notes: "Package management fees are charged as a monthly flat fee by most providers. DoH does not publish an indicative range for this fee type."
+    source_citation: null
+
+  - service: "Care management (monthly flat fee)"
+    service_code: "care-management-monthly"
+    stream: "Independence"
+    unit: "month"
+    median: null
+    range_lower: null
+    range_upper: null
+    available: false
+    checkable: false
+    notes: "Some providers charge care management as a flat monthly fee rather than by the hour. DoH publishes an hourly indicative range only, so a comparison against that range is not appropriate for monthly-fee providers."
+    source_citation: null
+
+  - service: "Wraparound advisor fee"
+    service_code: "wraparound-advisor-fee"
+    stream: "Independence"
+    unit: "month"
+    median: null
+    range_lower: null
+    range_upper: null
+    available: false
+    checkable: false
+    notes: "Wraparound advisor is a role introduced with the November 2025 SAH launch. DoH has not yet published an indicative range for wraparound advisor fees."
+    source_citation: null
+
+  - service: "Transport (per kilometre)"
+    service_code: "transport-per-km"
+    stream: "Everyday Living"
+    unit: "kilometre"
+    median: null
+    range_lower: null
+    range_upper: null
+    available: false
+    checkable: false
+    notes: "DoH publishes transport as a per-trip figure. Per-kilometre rates cannot be compared against the per-trip range without knowing the trip distance."
+    source_citation: null

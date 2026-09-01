@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 3: full review of new route-wiring + plan-gating + Book-a-Demo intake. Backend: 11/11 pytest cases pass on /api/contact (demo + general intents) and full regression on the 8 public AI-tool endpoints + cathy login. Frontend: /features renders with Book-a-demo CTA correctly linking to /contact?intent=demo; /demo role toggle (Cathy/Dorothy/Karen/Mark) all switch panels and zero default 'Mum' wording detected; /contact default + ?intent=demo flows both submit and surface success state with all demo-specific fields (phone, size, biggest_pain required, success_in_six_months, 4 preferred_time chips); /ai-tools shows 8 cards with no 'Soon' labels; UpgradeGate (data-testid='upgrade-gate' + upgrade-gate-trial + upgrade-gate-signin) renders for all 6 Solo+ tools as anonymous user and is correctly absent on the 2 Free tools; /for-advisors and /for-gps both 200; cathy@example.com login still routes to /app dashboard with full UI.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/contact", "issue": "MOCKED — persists to MongoDB (db.contact_requests) but does not yet send email/Slack notification (already documented as P1 backlog)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_contact_iter3.py",
+    "/app/test_reports/pytest/iter3_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now ~965 lines — same recommendation from iter2 stands: split into routers (auth/household/statements/budget/chat/family/audit/participant/public/contact). Single-file maintenance risk is real.",
+    "ContactBody uses str for email — no EmailStr validation. A malformed email currently lands in Mongo as-is. Consider using pydantic EmailStr for the contact endpoint.",
+    "Plan-gating is intentionally UI-only (per agent_to_agent_context_note) — endpoints remain public so anonymous users can still execute Solo+ tools. NOT A BUG, but worth noting that the gate is purely a visual upsell; revenue-protection requires server-side enforcement when monetisation goes live.",
+    "Demo.jsx data is hard-coded (Anderson family) — acknowledged as intentional MVP per spec.",
+    "Public Tool Wrapper (Haiku 4.5 PII redaction) documented in /app/memory/EMERGENT_PROMPT.md is NOT YET WIRED on public endpoints — flagged P1 backlog.",
+    "Contact form persists to localStorage as a fallback even on backend success — minor: redundant duplicate state, low priority."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_contact_iter3.py (new — 11 tests covering /api/contact + 8 public-tool regressions + login)"
+  ],
+  "success_rate": {"backend": "100% (11/11 new + verified)", "frontend": "100% — all routes, plan-gating, contact intents, role toggle, login regression"},
+  "test_credentials": "cathy@example.com / testpass123 (seeded). Public/contact endpoints require no auth. Rate-limit test isolation via x-forwarded-for (10.123.0.x).",
+  "seed_data_creation": "Tests insert TEST-prefixed contact records into db.contact_requests. No cleanup performed — non-blocking, can be purged if needed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend regression file for iter3 is at /app/backend/tests/test_contact_iter3.py. Iter2 file (/app/backend/tests/backend_test.py) still at 32 cases — combined coverage now ~43 tests. Frontend UpgradeGate testids: 'upgrade-gate' (card), 'upgrade-gate-trial' (start free trial), 'upgrade-gate-signin' (sign in). Contact form testids: contact-name, contact-email, contact-phone, contact-pain, contact-success-q, contact-context, contact-size, contact-role-{family|advisor|...}, contact-time-{morning|lunch|afternoon|evening}, contact-submit, contact-success, contact-heading. Free vs Solo+ split: Free=[statement-decoder, budget-calculator]; Solo+=[provider-price-checker, classification-self-check, reassessment-letter, contribution-estimator, care-plan-reviewer, family-coordinator]. Plan-gating is UI-only — endpoints still publicly callable; do not flag as bug.",
+  "rca of the issue": "No bugs to RCA — iteration 3 is clean. New routes wired, plan-gating UpgradeGate working on all 6 Solo+ tools, demo intake form fully functional, no default 'Mum' wording detected on rendered DOM."
+}

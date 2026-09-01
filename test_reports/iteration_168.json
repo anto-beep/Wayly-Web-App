@@ -1,0 +1,41 @@
+{
+  "summary": "Mobile Participant Profile hub CRASHES on load for bibi@test.com. Root cause: /api/core/participants/{id}/profile returns participant.provider as an object {primary, additional, last_updated} and financial_position.lifetime_cap_total as an object {amount, currency, effective_date_of_underlying_rule}, but /app/mobile/app/participant/[id].tsx renders p.provider directly inside <T> (React Native throws 'Objects are not valid as a React child'). Also, classification is {band, confidence, ...} but classLabel() only reads .level/.label — Classification renders as '—'. Lifetime Cap passes an object to money() and shows $0.00 instead of $137,917.01. Web parity screen (frontend/src/pages/ParticipantProfile.jsx) correctly uses p.provider?.primary, p.classification?.band, and financial.lifetime_cap_total?.amount. Because the screen crashes at render time, NONE of the required testIDs (pp-personal-details, pp-financial-position, pp-see-contribution, pp-follow-ups, pp-household, pp-latest-activity, pp-timeline, and all 8 pp-tool-*) are present in the DOM — the whole hub is unusable.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "ParticipantProfileScreen / Personal Details", "issue": "CRASH: renders p.provider (object {primary, additional, last_updated}) inside <T>. React error: 'Objects are not valid as a React child (found: object with keys {primary, additional, last_updated})'. Whole hub fails to mount; user sees red LogBox error. Reference: /app/mobile/app/participant/[id].tsx:91 — line `[['Provider', p?.provider || '—'], ...]`. Fix: use `p?.provider?.primary` (title-cased for parity with web ParticipantProfile.jsx:574).", "testID": "pp-personal-details", "priority": "CRITICAL"},
+        {"component": "ParticipantProfileScreen / classLabel", "issue": "Classification always shows '—' because classLabel() checks c.level/c.label, but API payload is {band, confidence, source, effective_date, last_updated}. Web uses `Level ${classification.band}` (ParticipantProfile.jsx:581). Fix: classLabel should return `Level ${c.band}` when c.band != null.", "testID": "pp-personal-details", "priority": "HIGH"},
+        {"component": "ParticipantProfileScreen / Financial Position — Lifetime Cap", "issue": "Lifetime Cap renders as $0.00. API returns financial_position.lifetime_cap_total as {amount: 137917.01, currency: 'AUD', ...}. money() receives an object, coerces to 0. Fix: pass `fp.lifetime_cap_total?.amount` (matches web ParticipantProfile.jsx:46). Reference: /app/mobile/app/participant/[id].tsx:113.", "testID": "pp-financial-position", "priority": "HIGH"}
+      ],
+      "integration_issues": [
+        {"flow": "Tap participant card → hub", "issue": "Navigation itself works (participant-card-<id> → /participant/{id}) and GET /core/participants/{id}/profile is called successfully, but the screen crashes during render before any of the required sections mount.", "affected_testIDs": ["pp-personal-details","pp-financial-position","pp-see-contribution","pp-follow-ups","pp-household","pp-latest-activity","pp-timeline","pp-tool-statement","pp-tool-invoice_check","pp-tool-care_plan_review","pp-tool-classification_check","pp-tool-contribution_estimate","pp-tool-letter","pp-tool-price_check","pp-tool-budget_projection"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Participant Profile hub", "platform": "mobile", "issue": "Mobile does not read the nested object shapes the API returns (provider.primary, classification.band, lifetime_cap_total.amount). Web parity screen (ParticipantProfile.jsx) handles them correctly.", "expected": "Provider = 'Something' (title-cased), Classification = 'Level 4', Lifetime Cap = $137,917.01", "actual": "Screen crashes; if the crash is fixed, Classification would still show '—' and Lifetime Cap would show $0.00"}
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "In /app/mobile/app/participant/[id].tsx (Profile type + JSX): treat participant.provider as {primary, additional, last_updated} and render p?.provider?.primary (title-cased to match web).",
+    "Update classLabel() to also handle {band}: `if (c.band != null) return `Level ${c.band}``. Alternatively pass `p?.classification?.band` directly.",
+    "In the Financial Position card, pass `fp?.lifetime_cap_total?.amount` (a number) to money() instead of the whole object; consider showing the effective_date_of_underlying_rule as a sublabel to mirror web.",
+    "After the fix, re-verify: hub renders without crash, header shows 'PARTICIPANT PROFILE' + \"Bibi's Profile\", pp-personal-details shows Provider=Something, Classification=Level 4, Pension Status=Full Pension; pp-financial-position shows LIFETIME CAP=$137,917.01; all 7 section testIDs and 8 pp-tool-* testIDs are present; tapping pp-see-contribution navigates to /contribution-position."
+  ],
+  "critical_code_review_comments": [
+    "Profile type in /app/mobile/app/participant/[id].tsx does not match the actual API contract — provider is typed as `string` but backend returns an object; lifetime_cap_total is typed as `number|null` but backend returns an object. Tighten types against the real /api/core/participants/{id}/profile response (mirror what ParticipantProfile.jsx reads).",
+    "Consider a defensive `typeof x === 'object'` guard in classLabel and where financial numbers are rendered, so a future backend shape change doesn't crash the whole screen."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "0% (hub does not render)"},
+  "test_credentials": "bibi@test.com / CarTest123$ (participant id eabfb742-da66-415f-8e62-b5ff94aaf752, Bibi Chiware, Family, Classification band 4, Provider primary 'Something')",
+  "seed_data_creation": "",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login flow: /login → 2 inputs (email, password) → 'Sign In' button (no data-testid). After login, /participants shows exactly one card `participant-card-eabfb742-da66-415f-8e62-b5ff94aaf752`. Tapping it navigates to /participant/{id} and immediately crashes with 'Objects are not valid as a React child' on the provider field. GET /api/core/participants/{id}/profile is 200 and returns provider={primary,additional,last_updated}, classification={band:4,...}, financial_position.lifetime_cap_total={amount:137917.01,...}. Once fixes land, re-run the full testID checklist including all 8 pp-tool-* rows and confirm navigation targets.",
+  "rca of the issue": "The mobile hub was built against an older / assumed API shape where provider is a string, classification is a number, and lifetime_cap_total is a number. The live /core/participants/{id}/profile returns nested objects for all three fields (already used correctly by the web ParticipantProfile.jsx). The provider mismatch is fatal because rendering an object as a React child throws immediately, which unmounts the entire ScrollView before any of the required pp-* testIDs are attached. Verified in the Expo web preview under mobile viewport 390x844 — pageerror captured with exact keys {primary, additional, last_updated} and component stack pointing at ParticipantProfileScreen (app/participant/[id].tsx:44) / T / Card."
+}

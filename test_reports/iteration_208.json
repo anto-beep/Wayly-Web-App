@@ -1,0 +1,55 @@
+{
+  "summary": "Verified mobile Participants add-participant modal after wrapping in KeyboardAvoidingView + automaticallyAdjustKeyboardInsets. No regression: modal opens, preview step (family branch) renders correctly, Continue → 'Their details' form step renders all 4 inputs, typing into fields works (first_name='TestKB', last_name='Avoid'), the ScrollView is a real scrollable container (overflow-y:auto), close (add-modal-close) fully dismisses, and reopen shows a clean preview. Actual keyboard-occluding fix is a native effect that must be validated on-device (Expo web preview cannot fully reproduce software keyboard behaviour).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_scenarios": [
+    {"case": "Open modal via participants-add-btn (cathy@example.com, Family, 2 participants)", "expected": "add-preview-step visible with branch-family", "actual": "add-modal-close=1, add-preview-step=1, branch-family=1", "result": "PASS"},
+    {"case": "Continue to form step", "expected": "add-form-step visible with 4 Field inputs + submit", "actual": "all 5 testIDs present and visible", "result": "PASS"},
+    {"case": "Type into form-first-name and form-last-name", "expected": "values reflect typed text (focus works, no crash)", "actual": "first_name='TestKB', last_name='Avoid'", "result": "PASS"},
+    {"case": "ScrollView is scrollable ancestor of form", "expected": "overflow-y auto/scroll container present", "actual": "overflowY=auto, scrollHeight=420, clientHeight=420", "result": "PASS"},
+    {"case": "Close via add-modal-close", "expected": "modal disappears fully", "actual": "preview+form count = 0 after close", "result": "PASS"},
+    {"case": "Reopen modal after close", "expected": "clean preview step re-renders", "actual": "add-preview-step count=1", "result": "PASS"}
+  ],
+  "testIDs_verified": [
+    "participants-add-btn",
+    "add-modal-close",
+    "add-preview-step",
+    "branch-family",
+    "confirm-family-add",
+    "add-form-step",
+    "form-first-name",
+    "form-last-name",
+    "form-classification",
+    "form-provider",
+    "form-submit-add"
+  ],
+  "seed_data_creation": "None (baseline cathy@example.com Family/2 participants used; no data was persisted — the form was filled but the Add participant button was NOT submitted).",
+  "test_report_links": [
+    "/app/test_reports/iter208_modal_preview.jpeg",
+    "/app/test_reports/iter208_form_step.jpeg",
+    "/app/test_reports/iter208_reopened.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "participants.tsx L274: KeyboardAvoidingView chosen behavior 'padding' for iOS / 'height' for Android is the standard recommendation — good.",
+    "participants.tsx L281: automaticallyAdjustKeyboardInsets on the inner ScrollView correctly complements KAV so nested inputs stay visible; keyboardShouldPersistTaps='handled' preserved.",
+    "Note (not a bug, deferred per request): the FORM step still uses free-text TextInputs for Classification and Provider — the tester was told NOT to test dropdown parity there (separate upcoming item).",
+    "Note: no keyboardVerticalOffset is set on KeyboardAvoidingView. On iOS with a translucent header/navigation bar this can leave ~44-88px of the field still under the keyboard. Not blocking (the modal is a bottom-sheet inside a native Modal so there is no parent header), but worth confirming on a real device — if the user still reports occlusion on iOS, add keyboardVerticalOffset={0} or a small platform-specific offset."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only run)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, 2 active participants: Dorothy, Patricia)",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The add-participant modal in /app/mobile/app/participants.tsx is now wrapped in KeyboardAvoidingView (iOS padding / Android height) with automaticallyAdjustKeyboardInsets on the inner ScrollView. Web preview cannot reproduce native keyboard behaviour, so treat 'no regression + form works' as the mobile CI assertion — the on-device 'keyboard doesn't cover field' behaviour must be user-verified. cathy@example.com in preview has 2 participants (Dorothy, Patricia); a soft-removed 'Robert Kowalski' still appears in the Removed section.",
+  "rca of the issue": "Original issue: bottom-sheet Modal for add-participant had no keyboard avoidance, so on device the software keyboard overlapped the input fields. Fix (already applied by main agent): wrap the Modal's content container in KeyboardAvoidingView with platform-appropriate behavior and add automaticallyAdjustKeyboardInsets + paddingBottom to the inner ScrollView. This test iteration confirms the wrapper does not break rendering, focus, typing, scrolling, close, or reopen of the modal."
+}

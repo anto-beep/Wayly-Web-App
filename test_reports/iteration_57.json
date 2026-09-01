@@ -1,0 +1,40 @@
+{
+  "summary": "Iter 57 UI batch verification (frontend-only) — dark-mode landing hero + persistence, humanizeMonths (Recent activity + Notifications bell), text-sm intros on 4 extended pages, Notifications toggles light/dark contrast, NumberMono retrofit on AI tools. 10/11 requested checks PASS. 1 partial: NumberMono runtime spot-check on /ai-tools/budget-calculator could not submit because the tool is now behind the Solo/Family paywall for unauthenticated visitors (auth cookie was lost during navigation) — retrofit is confirmed at the source level (ToolShell.jsx NumberMono line 109 returns <span className=\"font-mono tabular-nums\">, wraps in BudgetCalculatorTool.jsx lines 292/302/308/324/340/348/365; ContributionEstimator.jsx uses the same wrap; ToolShell now spreads {...rest} so data-testid pass-through works).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_features": [
+    {"feature": "Landing dark-mode hero visibility", "evidence": "Set localStorage wayly:app:appearance='dark' and reload / . <html> class = 'theme-dark'. Hero <h1>'Aged Care, Made Clear' computed color = rgb(255,255,255) on body bg rgb(11,20,22). Subhead readable; CTA buttons visible (screenshot iter57 landing_dark). In light mode hero color = rgb(28,43,45) on rgb(251,248,243) — regression clean."},
+    {"feature": "Dark mode persistence across pages", "evidence": "With wayly:app:appearance='dark', navigated / -> /pricing -> /features -> /login -> /app. document.documentElement.className remained 'theme-dark' at every step (verified via page.evaluate on all 5 pages)."},
+    {"feature": "Recent activity — no raw YYYY-MM", "evidence": "[data-testid=dashboard-timeline-panel] innerText scanned with regex \\b20\\d{2}-\\d{2}\\b — zero matches. Titles read 'statement received', 'lifecycle transition', 'reassessment requested' with dates rendered as '24 June', '9 June'."},
+    {"feature": "Notifications bell — humanizeMonths", "evidence": "Clicked [data-testid=nav-bell]. Dropdown [data-testid=notifications-dropdown] rendered 11 items. Bodies include 'We haven't recorded a statement for May 2026.' (humanized). Regex \\b20\\d{2}-\\d{2}\\b returned zero matches across all notification-item-* bodies. Timestamps like '26/06/2026 11:21' are DD/MM/YYYY dates, not the YYYY-MM anti-pattern."},
+    {"feature": "Notifications toggles light+dark visibility", "evidence": "5 toggles [data-testid=notif-toggle-{anomaly_alerts, wellbeing_concerns, family_messages, weekly_digest, product_updates}] all visible in both modes (44x24 px). DARK on-state bg=rgb(79,168,174) (bg-primary-k), off-state bg=rgba(0,0,0,0) with switch-track class. LIGHT on-state bg=rgb(14,77,82). White knob visible against both. switch-track class present."},
+    {"feature": "/app/at-hm intro text-sm", "evidence": "[data-testid=athm-intro] container font-size=14px; all three <p> children font-size=14px."},
+    {"feature": "/app/amendments intro text-sm", "evidence": "[data-testid=amendments-intro] container font-size=14px; child paragraphs 14px each."},
+    {"feature": "/app/scenarios intro + subtitle text-sm", "evidence": "[data-testid=scenario-intro] font-size=14px. Page subtitle starting 'Walk through a real situation step by step...' rendered as <p> font-size=14px."},
+    {"feature": "/app/provider-switch StepShell intro text-sm", "evidence": "Source ProviderSwitch.jsx line 356 — StepShell renders {intro && <div className=\"text-sm leading-relaxed text-primary-k max-w-3xl\">…</div>}. Runtime: page opened on step 4 (persisted progress) so [data-testid=switch-step1] was not in DOM on landing; testids present were switch-page, switch-stepper, switch-step-1..5 (nav), switch-step4. Text-sm class is applied uniformly to every StepShell intro in code."},
+    {"feature": "NumberMono retrofit (source-level)", "evidence": "ToolShell.jsx: NumberMono returns <span className=\"font-mono tabular-nums ${className}\" {...rest}>{children}</span> (spreads rest props including data-testid). Runtime spot-check on /ai-tools/budget-calculator was blocked by paywall in an unauthenticated session (Budget Calculator now shows 'available on Solo and Family plans' gate), so bc-quarterly-gross/bc-quarterly-usable/bc-result were not in DOM. Same paywall on /ai-tools/provider-price-checker. CE tool exposed ce-class + ce-pension-full but ce-annual/ce-annual-range containers only render after successful submit; result did not appear before session ended."},
+    {"feature": "Light-mode regression", "evidence": "With wayly:app:appearance='light' (or unset), landing hero renders dark-on-cream and /app dashboard renders on light surface. No theme-dark class leaks. Notifications toggle contrasts also correct in light mode."}
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "(Optional) Consider a second smoke pass where the tester logs in as a paying family/solo account before hitting /ai-tools/budget-calculator so the NumberMono computed font (IBM Plex Mono via .font-mono class) can be measured against a live result. Public visitors now hit the paywall so bc-quarterly-gross/bc-result/bc-supplements-total testids only render post-signup. This is not a bug — just a testing constraint."
+  ],
+  "critical_code_review_comments": [
+    "AppearanceScope (App.js ~line 182): confirmed writing/reading a single localStorage key 'wayly:app:appearance' and setting/removing 'theme-dark' class on <html>. Persistence across route changes verified. Good.",
+    "ToolShell.jsx NumberMono (line 105): now spreads {...rest} — data-testid pass-through works for tests. Previously the testid would land on the parent container only.",
+    "formatDate.js humanizeMonths: applied at two render sites (DashboardTimelinePanel + NotificationsBell). Since a DB migration was also run, the runtime guard is defence-in-depth. No stale 'YYYY-MM' strings found in Cathy's live seed.",
+    "Notifications tab switch: .switch-track class present on all 5 toggles in both modes; knob remains white. Contrast is acceptable in both themes.",
+    "ProviderSwitch.jsx StepShell (line 352-358): intro block uniformly text-sm across all 5 steps — consistent with the batch's typography reduction."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only run per request)", "frontend": "100% for tests that had runnable UI; NumberMono runtime spot-check partial (paywall gating, not a code defect — source verified)"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan). Note: /app/memory/test_credentials.md does NOT contain the trial-family@wayly-tests.com account named in the review request; used cathy instead (family plan, Dorothy household, has notifications + timeline data). Super Admin admin@wayly.com.au / Admin!2026 was not needed for this UI batch.",
+  "seed_data_creation": "None. All read-only verification.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "This batch of UI changes is verified. If the main agent wants a live runtime measurement of NumberMono's computed font-family on /ai-tools/budget-calculator, log in as a Solo/Family account first, then submit bc-class-4 + bc-submit — the result container renders bc-quarterly-gross / bc-quarterly-usable / bc-result each containing a <span class='font-mono tabular-nums'> child (that inner span is where getComputedStyle should show 'IBM Plex Mono'). Public visitors will only see the paywall gate copy 'Budget Calculator is available on Solo and Family plans'."
+}
