@@ -94,16 +94,13 @@ export function extractHeadTags(html) {
     return tags;
 }
 
-/** react-helmet-async marks the head tags it manages with `data-rh`. On
- * hydration it only de-dupes tags carrying this marker; unmarked server tags
- * are treated as foreign and helmet APPENDS its own copies → the SEO-1.1.1
- * duplicate-head bug. Marking the prerendered title/meta/link tags lets helmet
- * recognise and replace them instead of duplicating. Idempotent. Scripts
- * (JSON-LD) are intentionally left unmarked — helmet must not remove them if a
- * given route doesn't re-render that exact script. */
+/** Mark a prerendered SEO tag so the runtime de-duplicator (src/seo/dedupeHead.js)
+ * can identify the react-snap copy and drop it once React 19 hoists its own
+ * live copy on hydration. Applies to title/meta/link only; JSON-LD scripts are
+ * left untouched. Idempotent. */
 export function markManaged(tag) {
-    if (/\sdata-rh(\b|=)/i.test(tag)) return tag;
-    return tag.replace(/^<(title|meta|link)\b/i, '<$1 data-rh="true"');
+    if (/\sdata-prerendered(\b|=)/i.test(tag)) return tag;
+    return tag.replace(/^<(title|meta|link)\b/i, '<$1 data-prerendered="1"');
 }
 
 /** The eight head tags SEO-1.1.1 requires to appear exactly once and be
@@ -121,8 +118,9 @@ export const SEO_TAG_MATCHERS = [
 
 /** Audit a rendered page's <head> for the SEO-1.1.1 invariants. Returns a list
  * of human-readable issues (empty = clean): any of the eight tags appearing
- * more than once (static duplication) OR present without a `data-rh` marker
- * (which would duplicate after react-helmet-async hydrates). */
+ * more than once (static duplication) OR present without a `data-prerendered`
+ * marker (which the runtime de-duplicator needs to strip the react-snap copy
+ * after React 19 hoists its live one). */
 export function auditSeoTags(html) {
     const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
     let head = headMatch ? headMatch[1] : html;
@@ -136,8 +134,8 @@ export function auditSeoTags(html) {
             issues.push(`${matches.length}× ${name} (duplicate in static HTML)`);
         }
         for (const m of matches) {
-            if (!/\sdata-rh(\b|=)/i.test(m)) {
-                issues.push(`${name} missing data-rh (would duplicate after hydration)`);
+            if (!/\sdata-prerendered(\b|=)/i.test(m)) {
+                issues.push(`${name} missing data-prerendered marker (runtime de-dupe would fail)`);
             }
         }
     }
@@ -145,14 +143,41 @@ export function auditSeoTags(html) {
 }
 
 /** Stable identity of a head tag for de-duplication. Null = never de-dupe
- * (JSON-LD scripts and anything unrecognised are kept as-is). */
+ * (anything unrecognised is kept as-is). Identical JSON-LD blocks collapse to
+ * one; JSON-LD blocks of different content are all kept (multiple @types are
+ * valid). */
 function tagKey(tag) {
     if (/^<title\b/i.test(tag)) return "title";
+    if (/type=["']application\/ld\+json["']/i.test(tag)) {
+        const inner = (tag.match(/>([\s\S]*?)<\/script>/i) || [, ""])[1].replace(/\s+/g, " ").trim();
+        return "ld:" + inner;
+    }
     let m;
     if ((m = tag.match(/\bproperty=["']([^"']+)["']/i))) return "prop:" + m[1].toLowerCase();
     if (/\brel=["']canonical["']/i.test(tag)) return "link:canonical";
     if ((m = tag.match(/\bname=["']([^"']+)["']/i))) return "name:" + m[1].toLowerCase();
     return null;
+}
+
+/** Audit a page's JSON-LD scripts: flags EXACT-duplicate blocks (identical
+ * structured data emitted more than once), which muddies rich results. Blocks
+ * of differing content (e.g. Organization + WebSite + Article) are allowed. */
+export function auditJsonLd(html) {
+    const scripts = html.match(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || [];
+    const seen = new Map();
+    const issues = [];
+    for (const s of scripts) {
+        const inner = (s.match(/>([\s\S]*?)<\/script>/i) || [, ""])[1].replace(/\s+/g, " ").trim();
+        const count = (seen.get(inner) || 0) + 1;
+        seen.set(inner, count);
+        if (count === 2) {
+            let type = "";
+            const tm = inner.match(/"@type"\s*:\s*"([^"]+)"/);
+            if (tm) type = ` (@type ${tm[1]})`;
+            issues.push(`duplicate JSON-LD block${type}`);
+        }
+    }
+    return issues;
 }
 
 /** Collapse duplicate SEO head tags (keep first per identity). Fixes artifacts

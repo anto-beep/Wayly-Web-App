@@ -15,7 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
     BUILD, PRERENDER_FILE, CRITICAL_ROUTES, routeToFile, sourceHash,
-    extractRoot, auditSeoTags,
+    extractRoot, auditSeoTags, auditJsonLd,
 } from "./prerender-lib.mjs";
 
 const SKIP = process.env.SKIP_PRERENDER_GATE === "1";
@@ -42,10 +42,9 @@ if (!fs.existsSync(PRERENDER_FILE)) {
         if (!/<h1[\s>]/i.test(html)) failures.push(`${route}: missing <h1>`);
     }
 
-    // SEO-1.1.1 GATE — sweep EVERY applied route for duplicate/unmanaged head
-    // tags. Duplicate <title>/description/canonical/og:*/twitter:* tags (or
-    // tags missing the data-rh marker that lets react-helmet-async de-dupe them
-    // at hydration) are what Bing flagged. This is the check that would have
+    // SEO-1.1.1 GATE — sweep EVERY applied route for duplicate SEO head tags,
+    // unmarked (data-prerendered) tags that the runtime de-duplicator relies
+    // on, and duplicate JSON-LD blocks. This is the check that would have
     // caught SEO-1.1.1 before it shipped.
     let sweptRoutes = 0;
     let dupRoutes = 0;
@@ -55,16 +54,51 @@ if (!fs.existsSync(PRERENDER_FILE)) {
         const file = routeToFile(route);
         if (!fs.existsSync(file)) continue;
         sweptRoutes += 1;
-        const issues = auditSeoTags(fs.readFileSync(file, "utf8"));
+        const html = fs.readFileSync(file, "utf8");
+        const issues = [...auditSeoTags(html), ...auditJsonLd(html)];
         if (issues.length) {
             dupRoutes += 1;
-            failures.push(`${route}: duplicate/unmanaged head tags → ${issues.join("; ")}`);
+            failures.push(`${route}: ${issues.join("; ")}`);
         }
     }
-    console.log(`SEO-1.1.1 head-tag sweep: checked ${sweptRoutes} prerendered routes, ${dupRoutes} with issues.`);
-}
+    console.log(`SEO-1.1.1 head-tag + JSON-LD sweep: checked ${sweptRoutes} prerendered routes, ${dupRoutes} with issues.`);
 
-if (!fs.existsSync(path.join(BUILD, "..", "public", "sitemap.xml"))) failures.push("public/sitemap.xml missing");
+    // SITEMAP FRESHNESS — every indexable prerendered route must appear in
+    // sitemap.xml so new pages always get discovered. noindex routes are exempt.
+    const sitemapPath = [path.join(BUILD, "sitemap.xml"), path.join(BUILD, "..", "public", "sitemap.xml")]
+        .find((p) => fs.existsSync(p));
+    if (!sitemapPath) {
+        failures.push("sitemap.xml missing");
+    } else {
+        const xml = fs.readFileSync(sitemapPath, "utf8");
+        const sitemapPaths = new Set(
+            (xml.match(/<loc>\s*([^<]+?)\s*<\/loc>/gi) || []).map((loc) => {
+                const url = loc.replace(/<\/?loc>/gi, "").trim();
+                let p;
+                try { p = new URL(url).pathname; } catch { p = url; }
+                return p !== "/" ? p.replace(/\/$/, "") : "/";
+            }),
+        );
+        let missing = 0;
+        const SITEMAP_EXEMPT_PREFIXES = ["/app/", "/app", "/login", "/signup", "/logout"];
+        for (const route of Object.keys(manifest.routes || {})) {
+            const data = manifest.routes[route];
+            if (!data || !data.rootHtml) continue;
+            const file = routeToFile(route);
+            if (!fs.existsSync(file)) continue;
+            // Exempt authenticated app + auth routes (not meant for the sitemap).
+            if (SITEMAP_EXEMPT_PREFIXES.some((p) => route === p || route.startsWith(p + "/") || route.startsWith(p))) continue;
+            const html = fs.readFileSync(file, "utf8");
+            if (/<meta[^>]*\bname=["']robots["'][^>]*\bnoindex/i.test(html)) continue; // exempt noindex
+            const norm = route !== "/" ? route.replace(/\/$/, "") : "/";
+            if (!sitemapPaths.has(norm)) {
+                missing += 1;
+                failures.push(`${route}: indexable public route missing from sitemap.xml — add it so it gets discovered`);
+            }
+        }
+        console.log(`Sitemap freshness: ${sitemapPaths.size} sitemap URLs, ${missing} indexable routes missing.`);
+    }
+}
 
 if (failures.length === 0) {
     console.log(`SEO verify passed: ${CRITICAL_ROUTES.length} critical routes have title + description + canonical + H1 in raw HTML; prerender fresh.`);

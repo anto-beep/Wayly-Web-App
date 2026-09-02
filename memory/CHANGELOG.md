@@ -1,3 +1,15 @@
+## Iteration 260 (Jun 2026) — SEO-1.1.1 CORRECTED root cause (React 19 hoisting) + sitemap/JSON-LD guards
+
+Production audit after the iter259 deploy showed pages STILL doubled post-hydration (2 of each tag; static HTML = 1). Real root cause: the site runs **React 19 + react-helmet-async v3**, which use React 19's NATIVE metadata hoisting. react-snap prerenders one copy of each SEO tag into `<head>`; on hydration React 19 re-hoists the same `<title>/<meta>/<link>` from the component tree and does NOT reuse the react-snap copies → duplicates. `data-rh` marking (iter259) could not help because helmet v3 delegates these tags to React, not its legacy DOM path.
+
+- **Corrected fix:** (1) prerender-apply now marks the react-snap SEO tags with `data-prerendered="1"` (`markManaged`); (2) new runtime module `src/seo/dedupeHead.js`, called via `scheduleDedupeHead()` after `hydrateRoot` in `src/index.js` (prerendered pages only) — once React hoists its own live copy it removes the `data-prerendered` duplicate (always keeps one, so never drops to zero) and collapses exact-duplicate JSON-LD; (3) `injectIntoShell` also strips pre-existing shell SEO tags and de-dupes baked-in artifact duplicates (fixed `/chsp`).
+- **Structured-Data guard:** `auditJsonLd` flags exact-duplicate JSON-LD blocks (distinct @types allowed); runtime dedup + apply-time dedup collapse identical blocks.
+- **Sitemap-freshness gate:** `seo-verify.mjs` now fails the build if any indexable prerendered public route is missing from `sitemap.xml` (exempts `/app/*`, `/login`, `/signup`, and noindex routes). Surfaced 15 genuinely-missing public pages (4 AI tools, 10 articles, `/legal/dpa`) — added to `public/sitemap.xml`.
+- **Verified:** injectIntoShell→auditSeoTags+auditJsonLd over all 114 routes = 0 issues; sitemap gate = 0 public routes missing; 4 jsdom unit tests for `dedupeHead` pass; testing_agent iter260 = no runtime regression, client nav still updates `<title>`. NOTE: the prerender/hydration path can't run in the preview dev server (createRoot into empty #root), so the live dedup is validated on production after re-publish. The iter259 `data-rh` approach is superseded.
+- **Pending:** requires ANOTHER re-publish to deploy this corrected fix; IndexNow ping-all should run AFTER that (pinging now would recrawl still-broken pages). IndexNow endpoints (`/api/admin/indexnow/ping-all`) require admin/TOTP.
+
+
+
 ## Iteration 259 (Jun 2026) — SEO-1.1.1 hotfix: duplicate head tags on prerendered pages
 
 Bing flagged public pages serving duplicate `<title>`/description/canonical/og/twitter tags. Root cause confirmed via production diagnosis: static HTML had 1 of each, but the POST-HYDRATION DOM had 2 of each. react-helmet-async marks its managed tags with `data-rh` and only de-dupes tags carrying that marker; the prerender-apply step injected the committed head tags WITHOUT `data-rh`, so on hydration helmet treated them as foreign and APPENDED a second copy. One route (`/chsp`) also had duplicates baked into the committed artifact (captured while the bug was live).
