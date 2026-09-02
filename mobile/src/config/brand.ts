@@ -2,4 +2,4 @@
 // Web mirrors this in frontend/src/lib/brand.js so the two platforms cannot
 // drift apart.
 export const BRAND_NAME = "Wayly";
-export const BRAND_TAGLINE = "AGED CARE, MADE EASY";
+export const BRAND_TAGLINE = "AGED CARE, MADE CLEAR";

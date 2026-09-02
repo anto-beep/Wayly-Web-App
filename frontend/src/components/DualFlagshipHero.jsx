@@ -27,14 +27,14 @@ const TAGLINE_TAIL = TAGLINE_PARTS.slice(1).join(", ");
 
 const COPY = {
     caregiver: {
-        eyebrow: "Aged Care, Made Easy",
+        eyebrow: "Aged Care, Made Clear",
         headline: "Read the statement. Check the invoice. Sleep on Sunday.",
         subhead: "Wayly is the calm dashboard families use to make sense of every Support at Home statement and every provider invoice, before the money goes out the door.",
         flagship_statement_sub: "Upload the monthly statement. Get a plain-English breakdown of every stream, every rate, every flag.",
         flagship_invoice_sub: "Upload the contribution invoice. Wayly runs the C1 to C12 rule engine and tells you what to raise before you pay.",
     },
     participant: {
-        eyebrow: "Aged Care, Made Easy",
+        eyebrow: "Aged Care, Made Clear",
         headline: "Your Care. Your Statement. Your Call.",
         subhead: "Wayly reads your Support at Home statement and any provider invoice with you, in plain English, so you know exactly where your funding goes and what is worth questioning.",
         flagship_statement_sub: "Drop in your monthly statement. See what every line means and where your quarterly budget stands.",

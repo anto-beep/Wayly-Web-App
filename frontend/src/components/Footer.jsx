@@ -53,7 +53,7 @@ export default function Footer() {
                         <span className="font-heading text-xl text-white">Wayly</span>
                     </Link>
                     <p className="font-heading text-xl sm:text-2xl text-white mt-4 leading-tight tracking-tight whitespace-nowrap">
-                        Aged Care, <span style={{ color: "#E8956B" }}>Made Easy.</span>
+                        Aged Care, <span style={{ color: "#E8956B" }}>Made Clear.</span>
                     </p>
                     <div className="mt-5">
                         <AppStoreBadges align="start" />

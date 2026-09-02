@@ -96,7 +96,7 @@ def _email_html(subject: str) -> str:
 <table align="center" style="width:600px;max-width:100%;background:#fff;border-radius:12px;border:1px solid #E7E0D5;overflow:hidden">
 <tr><td style="padding:20px 28px;background:#0E4D52;color:#fff">
   <div style="font-family:Georgia,serif;font-size:22px">Wayly</div>
-  <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-top:4px">Aged care, made easy</div>
+  <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-top:4px">Aged care, made clear</div>
 </td></tr>
 <tr><td style="padding:24px 28px">
   <h2 style="margin:0 0 12px;font-family:Georgia,serif;color:#0E4D52">{subject}</h2>
