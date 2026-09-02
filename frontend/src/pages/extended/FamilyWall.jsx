@@ -186,7 +186,7 @@ export default function FamilyWall() {
             />
 
             {/* composer, hidden completely when trial expired */}
-            <ReadOnlyLock testId="wall-composer-lock" label="Subscribe to share moments" sub="Reading the wall is still free, subscribing lets you post photos, voice notes and messages again.">
+            <ReadOnlyLock testId="wall-composer-lock" label="Reactivate to share moments" sub="Reading the wall is still free, reactivating lets you post photos, voice notes and messages again.">
             <div className="bg-surface border border-kindred rounded-2xl p-4 space-y-3" data-testid="wall-composer">
                 <textarea
                     rows={2}

@@ -96,7 +96,7 @@ export default function FamilyThread() {
                 )}
             </div>
 
-            <ReadOnlyLock testId="family-thread-composer-lock" label="Subscribe to post to the family thread" sub="You can keep reading existing messages. Subscribing turns posting back on for everyone in the household.">
+            <ReadOnlyLock testId="family-thread-composer-lock" label="Reactivate to post to the family thread" sub="You can keep reading existing messages. Reactivating turns posting back on for everyone in the household.">
             <form onSubmit={send} className="flex items-center gap-2">
                 <input
                     value={body}

@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from "react";
 import "@/App.css";
 import "@/index.css";
 import "@/uxf/tokens.css";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useExpiredTrial } from "@/hooks/useExpiredTrial";
@@ -175,6 +175,7 @@ import RouteSkeleton from "@/components/RouteSkeleton";
 import StubRedirect from "@/components/StubRedirect";
 import { Helmet } from "react-helmet-async";
 import { titleForPath } from "@/lib/appPageTitles";
+import { startReactivateCheckout } from "@/lib/reactivate";
 
 function Loading() {
     return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
@@ -215,10 +216,22 @@ function PublicAuthOnly({ children }) {
 }
 
 function ToolLockGate({ children }) {
-    /** When the user's plan is inactive (view-only), AI tools stay visible but
-     * are fully non-interactive — no running, uploading, or editing. */
+    /** When the user's plan is inactive (view-only), tools stay visible but
+     * are fully non-interactive — no running, uploading, or editing. The
+     * Reactivate button goes STRAIGHT to Stripe Checkout for a real payment. */
     const viewOnly = useExpiredTrial();
+    const { user } = useAuth();
+    const [busy, setBusy] = React.useState(false);
     if (!viewOnly) return children;
+    const reactivate = async () => {
+        if (busy) return;
+        setBusy(true);
+        try {
+            await startReactivateCheckout(user?.plan);
+        } catch {
+            window.location.assign("/settings/billing");
+        }
+    };
     return (
         <div data-testid="tool-lock-gate">
             <div
@@ -232,13 +245,15 @@ function ToolLockGate({ children }) {
                 <span style={{ flex: 1 }}>
                     This tool is locked while your plan is inactive. You can view it, but reactivate to run or change anything.
                 </span>
-                <Link
-                    to="/settings/billing"
+                <button
+                    type="button"
+                    onClick={reactivate}
+                    disabled={busy}
                     data-testid="tool-locked-reactivate"
-                    style={{ background: "#7A3B12", color: "#fff", borderRadius: 8, padding: "8px 14px", fontWeight: 700, textDecoration: "none" }}
+                    style={{ background: "#7A3B12", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.7 : 1 }}
                 >
-                    Reactivate
-                </Link>
+                    {busy ? "Opening secure checkout…" : "Reactivate"}
+                </button>
             </div>
             <div inert="" aria-disabled="true" style={{ opacity: 0.55, pointerEvents: "none", userSelect: "none" }}>
                 {children}
@@ -491,7 +506,7 @@ function App() {
                     <Route path="/app/calendar" element={<RequireAuth><Layout><VisitCalendar /></Layout></RequireAuth>} />
                     <Route path="/app/budget-alerts" element={<RequireAuth><Layout><BudgetAlerts /></Layout></RequireAuth>} />
                     <Route path="/app/budget" element={<Navigate to="/app/budget-alerts" replace />} />
-                    <Route path="/app/provider-switch" element={<RequireAuth><Layout><ProviderSwitch /></Layout></RequireAuth>} />
+                    <Route path="/app/provider-switch" element={<RequireAuth><Layout><ToolLockGate><ProviderSwitch /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/at-hm" element={<RequireAuth><Layout><AthmTracker /></Layout></RequireAuth>} />
                     <Route path="/app/care-plans" element={<RequireAuth><Layout><CarePlanStore /></Layout></RequireAuth>} />
                     <Route path="/app/care-plans/compare/:leftId/:rightId" element={<RequireAuth><Layout><CarePlanCompare /></Layout></RequireAuth>} />
@@ -522,16 +537,16 @@ function App() {
                     <Route path="/app/participants/:id/complaints" element={<RequireAuth><Layout><ComplaintsList /></Layout></RequireAuth>} />
                     <Route path="/app/tools/provider-price-checker/quality/:providerName" element={<RequireAuth><Layout><ProviderQualityDetail /></Layout></RequireAuth>} />
                     <Route path="/app/tools/provider-price-checker/compare" element={<RequireAuth><Layout><ProviderComparison /></Layout></RequireAuth>} />
-                    <Route path="/app/carer/self-assessment" element={<RequireAuth><Layout><CarerSelfAssessment /></Layout></RequireAuth>} />
-                    <Route path="/app/carer/handover-pack" element={<RequireAuth><Layout><HandoverPack /></Layout></RequireAuth>} />
+                    <Route path="/app/carer/self-assessment" element={<RequireAuth><Layout><ToolLockGate><CarerSelfAssessment /></ToolLockGate></Layout></RequireAuth>} />
+                    <Route path="/app/carer/handover-pack" element={<RequireAuth><Layout><ToolLockGate><HandoverPack /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/budget-scenarios" element={<RequireAuth><Layout><BudgetScenarios /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/attendance" element={<RequireAuth><Layout><AttendanceLog /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/coordinator" element={<RequireAuth><Layout><FamilyCoordinatorHub /></Layout></RequireAuth>} />
-                    <Route path="/app/csc/stream-mix-and-iat" element={<RequireAuth><Layout><CscStreamMixIat /></Layout></RequireAuth>} />
-                    <Route path="/app/athm/projects" element={<RequireAuth><Layout><AthmProjects /></Layout></RequireAuth>} />
-                    <Route path="/app/chsp/tools" element={<RequireAuth><Layout><ChspTools /></Layout></RequireAuth>} />
-                    <Route path="/app/letters" element={<RequireAuth><Layout><LettersMailbox /></Layout></RequireAuth>} />
-                    <Route path="/app/ask-wayly" element={<RequireAuth><Layout><AskWaylyV2 /></Layout></RequireAuth>} />
+                    <Route path="/app/csc/stream-mix-and-iat" element={<RequireAuth><Layout><ToolLockGate><CscStreamMixIat /></ToolLockGate></Layout></RequireAuth>} />
+                    <Route path="/app/athm/projects" element={<RequireAuth><Layout><ToolLockGate><AthmProjects /></ToolLockGate></Layout></RequireAuth>} />
+                    <Route path="/app/chsp/tools" element={<RequireAuth><Layout><ToolLockGate><ChspTools /></ToolLockGate></Layout></RequireAuth>} />
+                    <Route path="/app/letters" element={<RequireAuth><Layout><ToolLockGate><LettersMailbox /></ToolLockGate></Layout></RequireAuth>} />
+                    <Route path="/app/ask-wayly" element={<RequireAuth><Layout><ToolLockGate><AskWaylyV2 /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/ask-wayly-v2" element={<Navigate to="/app/ask-wayly" replace />} />
                     <Route path="/app/participants/:id/switches" element={<RequireAuth><Layout><SwitchesList /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/switches/:sid/decision" element={<RequireAuth><Layout><SwitchDecisionWalkthrough /></Layout></RequireAuth>} />

@@ -20,6 +20,7 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money, moneyWhole, sanitizeAI } from "@/src/utils/format";
 import { TOOL_CONTENT } from "@/src/data/toolContent";
+import { ViewOnlyToolGate } from "@/src/components/ViewOnlyToolGate";
 
 type FieldType = "number" | "text" | "textarea" | "switch" | "select" | "scale12";
 type FormField = { key: string; label: string; type: FieldType; placeholder?: string; options?: { label: string; value: any }[]; default?: any; help?: string };
@@ -93,16 +94,19 @@ const LAUNCHERS: Record<string, { title: string; subtitle: string; launchLabel: 
 export default function ToolScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const s = slug || "";
-  if (s === "statement-decoder") return <StatementDecoderTool />;
-  if (s === "budget-calculator") return <BudgetCalculatorTool />;
-  if (s === "classification-self-check") return <ClassificationSelfCheck />;
-  if (s === "provider-price-checker") return <ProviderPriceChecker />;
-  if (s === "contribution-estimator") return <ContributionEstimator />;
-  if (s === "letters-and-follow-ups") return <LettersFollowUps />;
-  if (s === "care-plan-reviewer") return <CarePlanReviewer />;
-  if (s === "invoice-checker") return <InvoiceChecker />;
-  if (s === "family-coordinator") return <AgedCareQA />;
-  return <FormTool slug={s} />;
+  const inner = (() => {
+    if (s === "statement-decoder") return <StatementDecoderTool />;
+    if (s === "budget-calculator") return <BudgetCalculatorTool />;
+    if (s === "classification-self-check") return <ClassificationSelfCheck />;
+    if (s === "provider-price-checker") return <ProviderPriceChecker />;
+    if (s === "contribution-estimator") return <ContributionEstimator />;
+    if (s === "letters-and-follow-ups") return <LettersFollowUps />;
+    if (s === "care-plan-reviewer") return <CarePlanReviewer />;
+    if (s === "invoice-checker") return <InvoiceChecker />;
+    if (s === "family-coordinator") return <AgedCareQA />;
+    return <FormTool slug={s} />;
+  })();
+  return <ViewOnlyToolGate>{inner}</ViewOnlyToolGate>;
 }
 
 function StatementDecoderTool() {

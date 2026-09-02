@@ -43,7 +43,7 @@ export default function Referrals() {
             title="GP, allied health, and specialist referrals"
             description="Keep track of who referred whom, when, and what came of it, invaluable when a new GP asks for history."
         >
-            <ReadOnlyLock testId="ref-form-lock" label="Subscribe to log new referrals" sub="All previously logged referrals stay visible below.">
+            <ReadOnlyLock testId="ref-form-lock" label="Reactivate to log new referrals" sub="All previously logged referrals stay visible below.">
             <form onSubmit={add} className="bg-surface border border-kindred rounded-xl p-5 grid sm:grid-cols-6 gap-3" data-testid="ref-form">
                 <input required value={form.referred_to} onChange={(e) => setForm({ ...form, referred_to: e.target.value })} placeholder="Referred to (e.g. Dr Lee)" data-testid="ref-form-to" className="sm:col-span-2 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} data-testid="ref-form-kind" className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm">

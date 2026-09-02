@@ -239,7 +239,7 @@ export default function VisitCalendar() {
 
                     <div className="pt-3 border-t border-kindred flex flex-wrap items-center gap-2">
                         {isExpired ? (
-                            <p className="text-xs text-muted-k italic">Subscribe to edit, cancel, archive or delete appointments.</p>
+                            <p className="text-xs text-muted-k italic">Reactivate to edit, cancel, archive or delete appointments.</p>
                         ) : (<>
                         <button type="button" onClick={startEdit} data-testid="visits-detail-edit" className="inline-flex items-center gap-1.5 text-xs rounded-full border border-kindred px-3 py-1.5 hover:border-primary-k hover:bg-surface-2"><Pencil className="h-3.5 w-3.5" /> Edit</button>
 

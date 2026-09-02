@@ -142,7 +142,7 @@ export default function Chat() {
                 )}
             </div>
 
-            <ReadOnlyLock testId="chat-composer-lock" label="Subscribe to keep talking to Wayly" sub="Your previous answers are still visible above. Subscribing reopens the chat.">
+            <ReadOnlyLock testId="chat-composer-lock" label="Reactivate to keep talking to Wayly" sub="Your previous answers are still visible above. Reactivating reopens the chat.">
             <form
                 onSubmit={(e) => {
                     e.preventDefault();

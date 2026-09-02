@@ -137,7 +137,7 @@ export default function CarePlanAmendments() {
             </div>
 
             {/* Builder */}
-            <ReadOnlyLock testId="amendments-builder-lock" label="Subscribe to draft amendment letters" sub="You can still browse every past amendment below.">
+            <ReadOnlyLock testId="amendments-builder-lock" label="Reactivate to draft amendment letters" sub="You can still browse every past amendment below.">
             <div className="bg-surface border border-kindred rounded-2xl p-5 space-y-4" data-testid="amendment-builder">
                 <h2 className="font-heading text-lg text-primary-k">New Amendment Request</h2>
                 <div className="grid sm:grid-cols-3 gap-3">

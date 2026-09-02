@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { api, extractErrorMessage } from "@/lib/api";
+import { startReactivateCheckout } from "@/lib/reactivate";
 import { formatDate } from "@/lib/formatDate";
 import { track } from "@/lib/analytics";
 import { toast } from "sonner";
@@ -307,8 +308,8 @@ function BillingTab() {
     const startCheckout = async (plan) => {
         setBusy(true);
         try {
-            // Try the free 7-day trial first. Falls back to Stripe Checkout when
-            // the user has already used their trial.
+            // Try the free 7-day trial first. Falls back to a paid Stripe
+            // Checkout when the user has already used their trial (reactivation).
             try {
                 const { data } = await api.post("/billing/start-trial", { plan });
                 if (data?.ok) {
@@ -324,6 +325,11 @@ function BillingTab() {
                     toast.error(extractErrorMessage(errTrial, "Could not start trial"));
                     return;
                 }
+                // Trial already used → reactivation is an immediate paid purchase,
+                // so send them straight to Stripe Checkout with no new trial.
+                const { data } = await api.post("/payments/checkout", { plan, origin_url: window.location.origin, trial_days: 0 });
+                if (data?.url) { window.location.href = data.url; return; }
+                return;
             }
             const { data } = await api.post("/payments/checkout", { plan, origin_url: window.location.origin, trial_days: 7 });
             if (data?.url) { window.location.href = data.url; return; }
@@ -452,6 +458,15 @@ function BillingTab() {
             }
             toast.error("Could not open the billing portal.");
         } catch (err) {
+            const msg = extractErrorMessage(err, "");
+            // No Stripe customer yet (never subscribed, or a lapsed account with
+            // no live subscription) → don't dead-end. Send them to reactivate
+            // with a real payment instead of showing "start a subscription first".
+            if (/no stripe customer/i.test(msg) || /start a subscription/i.test(msg)) {
+                toast.info("Let's get your plan active first — opening secure checkout.");
+                await startReactivateCheckout(currentPlan);
+                return;
+            }
             toast.error(extractErrorMessage(err, "Could not open the billing portal."));
         } finally { setBusy(false); }
     };
@@ -679,7 +694,7 @@ function BillingTab() {
                                     </>
                                 ) : (
                                     <button onClick={() => startCheckout(p)} disabled={busy} data-testid={`billing-start-${p}`} className="mt-4 w-full text-sm bg-primary-k text-white rounded-md py-2 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2">
-                                        Start {PLANS[p].name} <ArrowUpRight className="h-3.5 w-3.5" />
+                                        Reactivate {PLANS[p].name} <ArrowUpRight className="h-3.5 w-3.5" />
                                     </button>
                                 )}
                             </div>

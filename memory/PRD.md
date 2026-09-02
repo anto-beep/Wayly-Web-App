@@ -7025,3 +7025,13 @@ Backend unchanged. Changes:
 - P1: CHSP invoice-photo OCR via LLM vision model.
 - P2: `noindex` on logged-in `/app` pages; auto-generate sitemap at build.
 - Refactor: remove dead admin placeholder screens (currently hidden, not deleted).
+
+## Iter265 — Guided Journeys gating + reactivate-to-payment (Jun 2026) ✅ DONE (web + mobile, testing_agent PASS after 1 fix)
+Backend unchanged. Fixes for user punchlist:
+- **Guided Journeys locked (web)**: wrapped all 8 Guided Journeys routes in `ToolLockGate` (App.js): /app/letters, /app/carer/self-assessment, /app/carer/handover-pack, /app/csc/stream-mix-and-iat, /app/athm/projects, /app/chsp/tools, /app/ask-wayly, /app/provider-switch. view_only users get inert content + Reactivate banner; active users unaffected.
+- **Guided Journeys locked (mobile)**: new `ViewOnlyToolGate` wraps the `/tool/[slug]` dispatcher, so every tool screen (all Guided-Journeys destinations) shows a lock screen with Reactivate (→/plan-select) + "View tool (read-only)". Writes still blocked by api guard + backend 402.
+- **Reactivate not Subscribe**: `ReadOnlyLock` CTA + all 13 lock-label pages now say "Reactivate" (was "Subscribe"); ToolLockGate + billing plan buttons ("Reactivate {plan}") reworded.
+- **Reactivate triggers real payment**: new `frontend/src/lib/reactivate.js#startReactivateCheckout` → POST /payments/checkout trial_days:0 → redirect to Stripe hosted Checkout. Wired into ReadOnlyLock, ToolLockGate, PaywallModal, and Settings billing.
+- **"Manage payment method" no longer dead-ends**: Settings openPortal catches the 400 "No Stripe customer" and falls back to `startReactivateCheckout(currentPlan)` (verified: redirects to checkout.stripe.com). Mobile plan-billing openPortal routes to /plan-select on the same error.
+- **Mobile Family seats** corrected 3 → up to 5 (plan-billing.tsx).
+- Testing: 16/16 backend (`test_reactivate_flow_iter265.py`), web+mobile UI verified. Report: `/app/test_reports/iteration_265.json`. One high bug (openPortal fallback used start-trial→500) fixed by switching to startReactivateCheckout; re-verified via screenshot (lands on Stripe checkout).

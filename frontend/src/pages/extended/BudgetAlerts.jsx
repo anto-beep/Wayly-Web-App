@@ -35,7 +35,7 @@ export default function BudgetAlerts() {
             title="Get notified before you overspend"
             description="Set per-stream thresholds, we will email you (and surface a notification) when your spend approaches the limit."
         >
-            <ReadOnlyLock testId="alerts-form-lock" label="Subscribe to add or change budget alerts" sub="Existing alerts keep firing, you just can't add or edit them on an expired trial.">
+            <ReadOnlyLock testId="alerts-form-lock" label="Reactivate to add or change budget alerts" sub="Existing alerts keep firing, you just can't add or edit them on an expired trial.">
             <form onSubmit={add} className="bg-surface border border-kindred rounded-xl p-5 grid sm:grid-cols-5 gap-3 items-end" data-testid="alerts-form">
                 <label className="block sm:col-span-2">
                     <span className="text-xs text-muted-k">Stream</span>

@@ -53,7 +53,7 @@ export default function ProviderRatings() {
             title="Your own honest opinions on providers"
             description="These ratings are private to you, not shared with providers or other Wayly users. Use them as a memory aid when comparing or switching."
         >
-            <ReadOnlyLock testId="ratings-form-lock" label="Subscribe to add new ratings" sub="All your previous ratings stay visible below.">
+            <ReadOnlyLock testId="ratings-form-lock" label="Reactivate to add new ratings" sub="All your previous ratings stay visible below.">
             <form onSubmit={add} className="bg-surface border border-kindred rounded-xl p-5 grid sm:grid-cols-6 gap-3" data-testid="ratings-form">
                 <input required value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} placeholder="Provider name" data-testid="ratings-form-name" className="sm:col-span-2 rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 <div className="sm:col-span-2 flex items-center gap-2" data-testid="ratings-form-stars">

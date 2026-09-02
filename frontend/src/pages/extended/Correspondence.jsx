@@ -36,7 +36,7 @@ export default function Correspondence() {
             title="A complete record of every conversation"
             description="Log letters, emails, phone calls, and SMS in one timeline so nothing slips between the cracks during a complaint or review."
         >
-            <ReadOnlyLock testId="corr-form-lock" label="Subscribe to log new correspondence" sub="All previously logged calls, letters and emails stay visible below.">
+            <ReadOnlyLock testId="corr-form-lock" label="Reactivate to log new correspondence" sub="All previously logged calls, letters and emails stay visible below.">
             <form onSubmit={add} className="bg-surface border border-kindred rounded-xl p-5 grid sm:grid-cols-6 gap-3" data-testid="corr-form">
                 <select value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })} data-testid="corr-form-direction" className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm">
                     <option value="in">Inbound</option>

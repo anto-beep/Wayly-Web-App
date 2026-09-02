@@ -260,7 +260,7 @@ export default function ProviderSwitch() {
                 title="Switch Provider"
                 description="A guided path to changing providers, with Wayly tracking the handover so nothing falls through the cracks."
             >
-                <ReadOnlyLock testId="switch-lock" label="Subscribe to start or continue a provider switch" sub="The full 5-step guided workflow, including the draft notice letter, turns back on the moment you subscribe." />
+                <ReadOnlyLock testId="switch-lock" label="Reactivate to start or continue a provider switch" sub="The full 5-step guided workflow, including the draft notice letter, turns back on the moment you reactivate." />
             </PageShell>
         );
     }

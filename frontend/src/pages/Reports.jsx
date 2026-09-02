@@ -165,7 +165,7 @@ export default function Reports() {
 
             <section data-testid="reports-catalog">
                 <h2 className="font-heading text-lg text-primary-k mb-3">Generate a Report</h2>
-                <ReadOnlyLock testId="reports-catalog-lock" label="Subscribe to generate new reports" sub="All previously generated reports stay available for download below.">
+                <ReadOnlyLock testId="reports-catalog-lock" label="Reactivate to generate new reports" sub="All previously generated reports stay available for download below.">
                 <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-3">
                     {REPORT_CATALOG.map((rt) => {
                         const locked = rt.min && statementsCount < rt.min;

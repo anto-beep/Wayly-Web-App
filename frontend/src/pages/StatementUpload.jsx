@@ -136,7 +136,7 @@ export default function StatementUpload() {
                 ]}
             />
 
-            <ReadOnlyLock testId="upload-lock" label="Subscribe to upload new statements" sub="All previously uploaded statements are still readable in the Statements list.">
+            <ReadOnlyLock testId="upload-lock" label="Reactivate to upload new statements" sub="All previously uploaded statements are still readable in the Statements list.">
             <div
                 className={`dropzone relative rounded-2xl border-2 border-dashed border-kindred bg-surface p-12 text-center cursor-pointer ${active ? "active" : ""}`}
                 onDragOver={(e) => {

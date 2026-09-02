@@ -127,7 +127,7 @@ export default function ScenarioCapture() {
 
             <WorkflowsPanel participant={participant} />
 
-            <ReadOnlyLock testId="scenario-form-lock" label="Subscribe to log a new scenario" sub="Previously logged events stay visible below so you can keep the history.">
+            <ReadOnlyLock testId="scenario-form-lock" label="Reactivate to log a new scenario" sub="Previously logged events stay visible below so you can keep the history.">
             <form onSubmit={submit} className="rounded-2xl border border-wayly-neutral-200 bg-white p-6 wayly-card-shadow space-y-5">
                 <div>
                     <label className="text-xs uppercase tracking-wide text-muted-k font-medium">Category</label>

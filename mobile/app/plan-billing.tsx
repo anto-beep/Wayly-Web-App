@@ -29,7 +29,7 @@ type Invoice = { id: string; created?: number; description?: string; amount_paid
 const PLAN_META: Record<string, { name: string; price: string; features: string[] }> = {
   free: { name: "Free", price: "$0", features: ["Limited access", "Upgrade any time for the full toolkit"] },
   solo: { name: "Solo", price: "$24.50 / fortnight", features: ["1 Caregiver seat, 1 Participant tracked", "All AI tools", "Unlimited Statement Decoder"] },
-  family: { name: "Family", price: "$49.50 / fortnight", features: ["2 Participants included and 3 Caregiver seats", "Everything in Solo, all AI tools", "Family Wall for shared updates & notes", "Sunday digest emails to the whole family", "Audit log & household coordination"] },
+  family: { name: "Family", price: "$49.50 / fortnight", features: ["2 Participants included and up to 5 Caregiver seats", "Everything in Solo, all AI tools", "Family Wall for shared updates & notes", "Sunday digest emails to the whole family", "Audit log & household coordination"] },
   adviser: { name: "Adviser", price: "Contact us", features: ["For aged-care specialist advisers", "Client export & audit trail", "Branded reports"] },
 };
 
@@ -84,7 +84,14 @@ export default function PlanBillingScreen() {
       if (url) await WebBrowser.openBrowserAsync(url);
       else setActionError("Could not open billing right now. Please try again.");
     } catch (e) {
-      setActionError(e instanceof ApiError ? e.message : "Could not open billing. Please try again.");
+      const msg = e instanceof ApiError ? e.message : "";
+      // No Stripe customer yet → don't dead-end. Send them to reactivate with a
+      // real payment via the plan picker (which opens Stripe Checkout).
+      if (/no stripe customer/i.test(msg) || /start a subscription/i.test(msg)) {
+        router.push("/plan-select");
+      } else {
+        setActionError(msg || "Could not open billing. Please try again.");
+      }
     } finally { setBusy(null); }
   };
 
