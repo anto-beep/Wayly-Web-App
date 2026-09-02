@@ -94,10 +94,102 @@ export function extractHeadTags(html) {
     return tags;
 }
 
-/** Inject committed head tags + root body into a fresh shell index.html string. */
+/** react-helmet-async marks the head tags it manages with `data-rh`. On
+ * hydration it only de-dupes tags carrying this marker; unmarked server tags
+ * are treated as foreign and helmet APPENDS its own copies → the SEO-1.1.1
+ * duplicate-head bug. Marking the prerendered title/meta/link tags lets helmet
+ * recognise and replace them instead of duplicating. Idempotent. Scripts
+ * (JSON-LD) are intentionally left unmarked — helmet must not remove them if a
+ * given route doesn't re-render that exact script. */
+export function markManaged(tag) {
+    if (/\sdata-rh(\b|=)/i.test(tag)) return tag;
+    return tag.replace(/^<(title|meta|link)\b/i, '<$1 data-rh="true"');
+}
+
+/** The eight head tags SEO-1.1.1 requires to appear exactly once and be
+ * helmet-managed (so hydration cannot duplicate them). */
+export const SEO_TAG_MATCHERS = [
+    { name: "title", re: /<title\b[^>]*>[\s\S]*?<\/title>/gi },
+    { name: "meta description", re: /<meta\b[^>]*\bname=["']description["'][^>]*>/gi },
+    { name: "link canonical", re: /<link\b[^>]*\brel=["']canonical["'][^>]*>/gi },
+    { name: "og:title", re: /<meta\b[^>]*\bproperty=["']og:title["'][^>]*>/gi },
+    { name: "og:description", re: /<meta\b[^>]*\bproperty=["']og:description["'][^>]*>/gi },
+    { name: "og:url", re: /<meta\b[^>]*\bproperty=["']og:url["'][^>]*>/gi },
+    { name: "twitter:title", re: /<meta\b[^>]*\bname=["']twitter:title["'][^>]*>/gi },
+    { name: "twitter:description", re: /<meta\b[^>]*\bname=["']twitter:description["'][^>]*>/gi },
+];
+
+/** Audit a rendered page's <head> for the SEO-1.1.1 invariants. Returns a list
+ * of human-readable issues (empty = clean): any of the eight tags appearing
+ * more than once (static duplication) OR present without a `data-rh` marker
+ * (which would duplicate after react-helmet-async hydrates). */
+export function auditSeoTags(html) {
+    const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+    let head = headMatch ? headMatch[1] : html;
+    // Ignore HTML comments (the shell documents these tags in a comment; the
+    // production build strips comments, but be robust either way).
+    head = head.replace(/<!--[\s\S]*?-->/g, "");
+    const issues = [];
+    for (const { name, re } of SEO_TAG_MATCHERS) {
+        const matches = head.match(re) || [];
+        if (matches.length > 1) {
+            issues.push(`${matches.length}× ${name} (duplicate in static HTML)`);
+        }
+        for (const m of matches) {
+            if (!/\sdata-rh(\b|=)/i.test(m)) {
+                issues.push(`${name} missing data-rh (would duplicate after hydration)`);
+            }
+        }
+    }
+    return issues;
+}
+
+/** Stable identity of a head tag for de-duplication. Null = never de-dupe
+ * (JSON-LD scripts and anything unrecognised are kept as-is). */
+function tagKey(tag) {
+    if (/^<title\b/i.test(tag)) return "title";
+    let m;
+    if ((m = tag.match(/\bproperty=["']([^"']+)["']/i))) return "prop:" + m[1].toLowerCase();
+    if (/\brel=["']canonical["']/i.test(tag)) return "link:canonical";
+    if ((m = tag.match(/\bname=["']([^"']+)["']/i))) return "name:" + m[1].toLowerCase();
+    return null;
+}
+
+/** Collapse duplicate SEO head tags (keep first per identity). Fixes artifacts
+ * that were captured while the SEO-1.1.1 duplication bug was live. */
+export function dedupeHeadTags(tags) {
+    const seen = new Set();
+    const out = [];
+    for (const t of tags || []) {
+        const k = tagKey(t);
+        if (k) {
+            if (seen.has(k)) continue;
+            seen.add(k);
+        }
+        out.push(t);
+    }
+    return out;
+}
+
+/** Inject committed head tags + root body into a fresh shell index.html string.
+ * Strips any pre-existing title/description/canonical/og/twitter tags from the
+ * shell first so the injected (helmet-managed) tags are the only copy. */
 export function injectIntoShell(shell, { headTags, rootHtml }) {
-    let out = shell.replace(/<title[^>]*>[\s\S]*?<\/title>/i, "");
-    out = out.replace("</head>", `${headTags.join("\n")}\n</head>`);
+    const headMatch = shell.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+    let out = shell;
+    if (headMatch) {
+        let head = headMatch[1];
+        head = head.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, "");
+        head = head.replace(/<meta\b[^>]*\bname=["'](?:description|twitter:[^"']+)["'][^>]*>/gi, "");
+        head = head.replace(/<meta\b[^>]*\bproperty=["']og:[^"']+["'][^>]*>/gi, "");
+        head = head.replace(/<link\b[^>]*\brel=["']canonical["'][^>]*>/gi, "");
+        out = shell.slice(0, headMatch.index) +
+              shell.slice(headMatch.index).replace(headMatch[1], head);
+    } else {
+        out = shell.replace(/<title[^>]*>[\s\S]*?<\/title>/i, "");
+    }
+    const marked = dedupeHeadTags((headTags || []).map(markManaged));
+    out = out.replace("</head>", `${marked.join("\n")}\n</head>`);
     out = out.replace('<div id="root"></div>', `<div id="root">${rootHtml}</div>`);
     return out;
 }

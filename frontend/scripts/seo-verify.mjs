@@ -15,7 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
     BUILD, PRERENDER_FILE, CRITICAL_ROUTES, routeToFile, sourceHash,
-    extractRoot,
+    extractRoot, auditSeoTags,
 } from "./prerender-lib.mjs";
 
 const SKIP = process.env.SKIP_PRERENDER_GATE === "1";
@@ -41,6 +41,27 @@ if (!fs.existsSync(PRERENDER_FILE)) {
         if (!/<link[^>]*rel=["']canonical["']/i.test(html)) failures.push(`${route}: missing canonical`);
         if (!/<h1[\s>]/i.test(html)) failures.push(`${route}: missing <h1>`);
     }
+
+    // SEO-1.1.1 GATE — sweep EVERY applied route for duplicate/unmanaged head
+    // tags. Duplicate <title>/description/canonical/og:*/twitter:* tags (or
+    // tags missing the data-rh marker that lets react-helmet-async de-dupe them
+    // at hydration) are what Bing flagged. This is the check that would have
+    // caught SEO-1.1.1 before it shipped.
+    let sweptRoutes = 0;
+    let dupRoutes = 0;
+    for (const route of Object.keys(manifest.routes || {})) {
+        const data = manifest.routes[route];
+        if (!data || !data.rootHtml) continue; // only prerendered routes
+        const file = routeToFile(route);
+        if (!fs.existsSync(file)) continue;
+        sweptRoutes += 1;
+        const issues = auditSeoTags(fs.readFileSync(file, "utf8"));
+        if (issues.length) {
+            dupRoutes += 1;
+            failures.push(`${route}: duplicate/unmanaged head tags → ${issues.join("; ")}`);
+        }
+    }
+    console.log(`SEO-1.1.1 head-tag sweep: checked ${sweptRoutes} prerendered routes, ${dupRoutes} with issues.`);
 }
 
 if (!fs.existsSync(path.join(BUILD, "..", "public", "sitemap.xml"))) failures.push("public/sitemap.xml missing");

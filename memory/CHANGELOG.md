@@ -1,3 +1,14 @@
+## Iteration 259 (Jun 2026) — SEO-1.1.1 hotfix: duplicate head tags on prerendered pages
+
+Bing flagged public pages serving duplicate `<title>`/description/canonical/og/twitter tags. Root cause confirmed via production diagnosis: static HTML had 1 of each, but the POST-HYDRATION DOM had 2 of each. react-helmet-async marks its managed tags with `data-rh` and only de-dupes tags carrying that marker; the prerender-apply step injected the committed head tags WITHOUT `data-rh`, so on hydration helmet treated them as foreign and APPENDED a second copy. One route (`/chsp`) also had duplicates baked into the committed artifact (captured while the bug was live).
+
+- **Fix (`frontend/scripts/prerender-lib.mjs`, build-time only):** `injectIntoShell` now (a) strips any pre-existing title/description/canonical/og/twitter tags from the shell before injecting, (b) marks injected title/meta/link tags with `data-rh="true"` (new `markManaged`) so react-helmet-async recognises and replaces them at hydration instead of duplicating, and (c) de-dupes baked-in duplicate SEO tags (new `dedupeHeadTags`). JSON-LD scripts are intentionally left unmarked so helmet can't delete them. `SeoHead.jsx` emits all 8 tags via `<Helmet prioritizeSeoTags>`, so every marked server tag maps to a client-rendered tag (no deletion risk).
+- **Permanent QA gate (`frontend/scripts/seo-verify.mjs`):** new `auditSeoTags` sweep over EVERY prerendered route (all 114) in postbuild — fails the build if any of the 8 SEO tags appears more than once OR lacks `data-rh` (the exact condition that caused SEO-1.1.1). Comment-safe. This would have caught the bug before it shipped.
+- **Verified:** ran the exact `injectIntoShell → auditSeoTags` deploy transform over all 114 committed routes → 0 issues (each of the 8 tags single + `data-rh`); gate proven to fail on a duplicate/unmarked sample; scripts pass `node --check`. testing_agent (iter259, web) confirmed no runtime regression — 5 public routes render cleanly with exactly one of each head tag. NOTE: the build scripts don't run in the preview dev server, so the deployed duplicate-head fix is validated by the transform simulation; full production View Source / Bing recrawl is post-deploy.
+- **Post-deploy actions (user/owner):** re-publish, then confirm View Source shows one of each tag on a couple of routes, ping IndexNow (`/api/admin/indexnow/ping-all`) and request Bing recrawl.
+
+
+
 ## Iteration 257-258 (Jun 2026) — Stripe go-live: mode-aware price IDs + webhook secret (production checkout 502 fix)
 
 Production checkout was 502-ing after the live key was set. Root cause: the checkout code always used the TEST price ids regardless of key mode, so a live key + test price id fails (the gateway masked the resulting error as a 502).
