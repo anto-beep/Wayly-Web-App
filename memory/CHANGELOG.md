@@ -1,3 +1,16 @@
+## Iteration 261-262 (Jun 2026) — Admin console cleanup + IndexNow ping-all
+
+- **IndexNow ping-all DONE:** submitted all 127 production sitemap URLs to IndexNow (HTTP 200, accepted — validated against the production-hosted key file). Ran server-side (admin TOTP is encrypted at rest so the admin button couldn't be driven directly); functionally identical to Admin → SEO → IndexNow → Ping all.
+- **Overview fixed:** `/api/admin/activity` was throwing 500 (events from different collections mixed `datetime` and `str` `ts`, breaking the sort) — normalised `ts` to ISO strings in `admin_routes.activity_feed`. Overview also decoupled its two fetches and guards missing keys so a partial/failed response never blanks the page.
+- **Global error boundary:** new `AdminErrorBoundary` wraps the admin content — any screen that throws now shows a friendly, recoverable card (with Retry) instead of white-screening the whole console; resets on navigation.
+- **Sidebar decluttered:** the 19-item "System" group split into `Platform`, `Cost & Usage`, `Data & Platform`; removed redundant/legacy nav entries (`Tickets (Legacy)`, `IndexNow (Ext)`, `Global Search`, `Support (SUP)`→`Support`).
+- **Broken/unfinished screens hidden from nav** (routes still exist): Funnels, Cohorts (no data / stubs), Scenario Clocks (description-only stub), V2 Add-ons + V2 Free-tier (endpoints 401 for admin — auth mismatch).
+- **Statements table fixed:** columns were bound to non-existent fields (`participant_name`/`statement_period`/`reported_total_gross`) → blank cells; remapped to the real fields (`period_label`, `filename`, `household_id`, anomaly count, `uploaded_at`).
+- **Verified (testing_agent iter261 catalog + iter262):** Overview loads with data; sidebar clean; statements shows 25 real rows; ALL 43 visible screens render with 0 error-boundary hits and 0 page errors. Admin test login documented in test_credentials.md.
+- Known minor (non-blocking): a few background 401 console warnings during the sweep (some endpoints 401 for super-admin or fire before the auth header attaches on first paint).
+
+
+
 ## Iteration 260 (Jun 2026) — SEO-1.1.1 CORRECTED root cause (React 19 hoisting) + sitemap/JSON-LD guards
 
 Production audit after the iter259 deploy showed pages STILL doubled post-hydration (2 of each tag; static HTML = 1). Real root cause: the site runs **React 19 + react-helmet-async v3**, which use React 19's NATIVE metadata hoisting. react-snap prerenders one copy of each SEO tag into `<head>`; on hydration React 19 re-hoists the same `<title>/<meta>/<link>` from the component tree and does NOT reuse the react-snap copies → duplicates. `data-rh` marking (iter259) could not help because helmet v3 delegates these tags to React, not its legacy DOM path.

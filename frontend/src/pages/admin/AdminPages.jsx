@@ -55,15 +55,15 @@ export function AdminAnalytics() {
     const [activity, setActivity] = useState([]);
     const [err, setErr] = useState(null);
     useEffect(() => {
-        Promise.all([
-            adminApi.get("/admin/overview").then((r) => setData(r.data)),
-            adminApi.get("/admin/activity?limit=30").then((r) => setActivity(r.data.events)),
-        ]).catch((e) => setErr(extractMsg(e)));
+        adminApi.get("/admin/overview").then((r) => setData(r.data)).catch((e) => setErr(extractMsg(e)));
+        // Activity is non-critical: a failure here must not blank the Overview.
+        adminApi.get("/admin/activity?limit=30").then((r) => setActivity(r.data.events || [])).catch(() => setActivity([]));
     }, []);
     if (err) return <p style={{ color: "var(--admin-critical)" }} data-testid="admin-analytics-error">{err}</p>;
     if (!data) return <p style={{ color: "var(--admin-muted)" }}>Loading…</p>;
 
-    const c = data.cards, h = data.ai_health;
+    const c = data.cards || {}, h = data.ai_health || {};
+    const plans = data.plans || {}, subs = data.subscriptions || {};
     const evtColor = {
         green: "var(--admin-success)",
         blue: "var(--admin-info)",
@@ -110,7 +110,7 @@ export function AdminAnalytics() {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                         <div>
                             <div style={{ fontSize: 10, color: "var(--admin-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Plans</div>
-                            {Object.entries(data.plans).map(([k, v]) => (
+                            {Object.entries(plans).map(([k, v]) => (
                                 <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13 }}>
                                     <span style={{ textTransform: "capitalize" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span>
                                 </div>
@@ -118,7 +118,7 @@ export function AdminAnalytics() {
                         </div>
                         <div>
                             <div style={{ fontSize: 10, color: "var(--admin-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Subs</div>
-                            {Object.entries(data.subscriptions).map(([k, v]) => (
+                            {Object.entries(subs).map(([k, v]) => (
                                 <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13 }}>
                                     <span style={{ textTransform: "capitalize" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span>
                                 </div>
@@ -402,12 +402,12 @@ export function AdminPayments() {
 
 export function AdminStatements() {
     return <SimpleTable endpoint="/admin/statements" testid="admin-statements" exportPath="/api/admin/export/statements.csv"
-        searchPlaceholder="Search by participant…"
+        searchPlaceholder="Search by period or file…"
         columns={[
-            { key: "participant_name", label: "Participant" },
-            { key: "statement_period", label: "Period" },
-            { key: "reported_total_gross", label: "Gross", render: (r) => fmtMoney(r.reported_total_gross), tdStyle: { textAlign: "right" }, thStyle: { textAlign: "right" } },
-            { key: "anomaly_count", label: "Anomalies", render: (r) => r.anomaly_count ?? (r.anomalies?.length ?? ", "), tdStyle: { textAlign: "right" }, thStyle: { textAlign: "right" } },
+            { key: "period_label", label: "Period", render: (r) => r.period_label || "—" },
+            { key: "filename", label: "File", render: (r) => <span className="admin-mono" style={{ fontSize: 12 }}>{r.filename || "—"}</span> },
+            { key: "household_id", label: "Household", render: (r) => <span className="admin-mono" style={{ fontSize: 12, color: "var(--admin-muted)" }}>{(r.household_id || "—").slice(0, 8)}</span> },
+            { key: "anomaly_count", label: "Anomalies", render: (r) => r.anomaly_count ?? (r.anomalies?.length ?? 0), tdStyle: { textAlign: "right" }, thStyle: { textAlign: "right" } },
             { key: "uploaded_at", label: "Uploaded", render: (r) => <span className="admin-mono" style={{ fontSize: 12, color: "var(--admin-muted)" }}>{fmtDate(r.uploaded_at)}</span> },
         ]}
     />;

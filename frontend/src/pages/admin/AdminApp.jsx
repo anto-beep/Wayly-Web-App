@@ -5,7 +5,7 @@ import "./admin.css";
 import {
     LayoutDashboard, Users, CreditCard, Bot, Headphones, Megaphone, FileText,
     LineChart, Lock, Settings, UserCog, Search, Bell, LogOut, ShieldAlert,
-    Menu, PlayCircle,
+    Menu,
 } from "lucide-react";
 import { AdminAuthProvider, useAdminAuth, adminApi } from "./AdminAuthContext";
 import AdminLogin from "./AdminLogin";
@@ -47,8 +47,7 @@ const NAV = [
     {
         section: "Support",
         items: [
-            { to: "/admin/support", label: "Support (SUP)", icon: Headphones, testid: "admin-nav-support" },
-            { to: "/admin/tickets", label: "Tickets (Legacy)", icon: Headphones, testid: "admin-nav-tickets" },
+            { to: "/admin/support", label: "Support", icon: Headphones, testid: "admin-nav-support" },
             { to: "/admin/macros", label: "Macros", icon: FileText, testid: "admin-nav-macros" },
         ],
     },
@@ -74,8 +73,6 @@ const NAV = [
         section: "Analytics",
         items: [
             { to: "/admin/analytics-product", label: "Product Analytics", icon: LineChart, testid: "admin-nav-pa" },
-            { to: "/admin/funnels", label: "Funnels", icon: LineChart, testid: "admin-nav-funnels" },
-            { to: "/admin/cohorts", label: "Cohorts", icon: LineChart, testid: "admin-nav-cohorts" },
         ],
     },
     {
@@ -88,27 +85,34 @@ const NAV = [
         ],
     },
     {
-        section: "System",
+        section: "Platform",
         items: [
-            { to: "/admin/feature-flags", label: "Feature Flags", icon: Settings, testid: "admin-nav-ff" },
             { to: "/admin/health", label: "System Health", icon: Settings, testid: "admin-nav-health" },
             { to: "/admin/health-watchdog", label: "Health Watchdog", icon: Settings, testid: "admin-nav-watchdog" },
             { to: "/admin/jobs", label: "Jobs Queue", icon: Settings, testid: "admin-nav-jobs" },
             { to: "/admin/cache", label: "Cache", icon: Settings, testid: "admin-nav-cache" },
+            { to: "/admin/feature-flags", label: "Feature Flags", icon: Settings, testid: "admin-nav-ff" },
+            { to: "/admin/maintenance", label: "Maintenance", icon: Settings, testid: "admin-nav-maint" },
+        ],
+        rolesAllowed: ["super_admin", "operations_admin"],
+    },
+    {
+        section: "Cost & Usage",
+        items: [
             { to: "/admin/decoder-cost", label: "Decoder Cost", icon: LineChart, testid: "admin-nav-decoder-cost" },
             { to: "/admin/llm-cost", label: "LLM Cost & Breaker", icon: LineChart, testid: "admin-nav-llm-cost" },
-            { to: "/admin/scenario-clocks", label: "Scenario Clocks", icon: PlayCircle, testid: "admin-nav-scenario" },
+        ],
+        rolesAllowed: ["super_admin", "operations_admin"],
+    },
+    {
+        section: "Data & Platform",
+        items: [
             { to: "/admin/program-reference", label: "INDEX-1 Registry", icon: FileText, testid: "admin-nav-index1" },
             { to: "/admin/exports", label: "Data Exports", icon: FileText, testid: "admin-nav-exports" },
             { to: "/admin/devices", label: "Push Devices", icon: Bell, testid: "admin-nav-devices" },
             { to: "/admin/cms/reviewers", label: "CMS Reviewers", icon: UserCog, testid: "admin-nav-reviewers" },
-            { to: "/admin/v2/addons", label: "V2 Add-ons", icon: CreditCard, testid: "admin-nav-v2-addons" },
-            { to: "/admin/v2/free-tier", label: "V2 Free-tier", icon: CreditCard, testid: "admin-nav-v2-freetier" },
             { to: "/admin/v2/purge-queue", label: "V2 Purge Queue", icon: ShieldAlert, testid: "admin-nav-v2-purge" },
-            { to: "/admin/seo/indexnow-ext", label: "IndexNow (Ext)", icon: FileText, testid: "admin-nav-indexnow-ext" },
-            { to: "/admin/search", label: "Global Search", icon: Search, testid: "admin-nav-search" },
             { to: "/admin/preferences", label: "Preferences", icon: Settings, testid: "admin-nav-preferences" },
-            { to: "/admin/maintenance", label: "Maintenance", icon: Settings, testid: "admin-nav-maint" },
         ],
         rolesAllowed: ["super_admin", "operations_admin"],
     },
@@ -235,7 +239,7 @@ function AdminShell({ children }) {
                         </div>
                     </div>
                 </header>
-                <main style={{ padding: 24 }}>{children}</main>
+                <main style={{ padding: 24 }}><AdminErrorBoundary>{children}</AdminErrorBoundary></main>
             </div>
 
             {cmdkOpen && <CmdK onClose={() => setCmdkOpen(false)} />}
@@ -301,6 +305,7 @@ import {
 } from "./AdminPhaseE2";
 import AdminIndexNow from "./AdminIndexNow";
 import AdminSecurityAlerts from "./AdminSecurityAlerts";
+import AdminErrorBoundary from "./AdminErrorBoundary";
 import { AdminSupport, AdminSupportDetail, AdminSupportDefects, AdminSupportMacros } from "./AdminSupport";
 
 function AdminRoutes() {

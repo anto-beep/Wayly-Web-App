@@ -568,6 +568,19 @@ async def activity_feed(_: dict = Depends(get_current_admin), limit: int = 50):
             "summary": f"{(u or {}).get('email', 'unknown')} {verb} {p.get('plan', '')} ({p.get('currency', 'AUD')} {p.get('amount')})",
         })
 
+    # Normalise ts to an ISO string (events come from collections that store
+    # ts as either a str or a datetime; mixing them breaks the sort).
+    def _ts_str(v):
+        if v is None:
+            return ""
+        if isinstance(v, str):
+            return v
+        try:
+            return v.isoformat()
+        except Exception:
+            return str(v)
+    for e in events:
+        e["ts"] = _ts_str(e.get("ts"))
     # Sort by ts desc, take limit
     events = sorted(events, key=lambda e: e.get("ts") or "", reverse=True)[:limit]
     return {"events": events}
