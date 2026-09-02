@@ -55,7 +55,10 @@ export function EmailVerifyBanner() {
     try { await AsyncStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* ignore */ }
   }, []);
 
-  if (!status || status.email_verified || hidden) return null;
+  // Once past the 7-day grace period the banner is NON-dismissible so the
+  // "resend verification email" action is always reachable (web parity).
+  if (!status || status.email_verified) return null;
+  if (hidden && !status.past_deadline) return null;
   const days = status.days_remaining ?? 0;
 
   return (
@@ -82,9 +85,11 @@ export function EmailVerifyBanner() {
               : `Verify your email${days > 0 ? ` within ${days} day${days === 1 ? "" : "s"}` : ""} · tap to resend`}
         </T>
       </Pressable>
-      <Pressable testID="verify-email-dismiss" hitSlop={10} onPress={dismiss}>
-        <X size={16} color={status.past_deadline ? colors.terracotta : colors.alert} />
-      </Pressable>
+      {status.past_deadline ? null : (
+        <Pressable testID="verify-email-dismiss" hitSlop={10} onPress={dismiss}>
+          <X size={16} color={colors.alert} />
+        </Pressable>
+      )}
     </View>
   );
 }

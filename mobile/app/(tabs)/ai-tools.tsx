@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { useScrollToTop } from "@react-navigation/native";
@@ -13,6 +13,8 @@ import {
   Receipt,
   ClipboardCheck,
   MessageCircle,
+  Lock,
+  X,
   LucideIcon,
 } from "lucide-react-native";
 
@@ -46,9 +48,10 @@ const INFO_CHIPS = [
 
 export default function AiToolsHub() {
   const { colors, shadow } = useTheme();
-  const { user } = useAuth();
+  const { user, viewOnly } = useAuth();
   const scrollRef = useRef<ScrollView>(null);
   useScrollToTop(scrollRef);
+  const [lockDismissed, setLockDismissed] = useState(false);
   const hasFullAccess = !!user?.plan && user.plan !== "free";
   // Any signed-in user with a plan (active paid OR on a free trial) should not
   // see the free-trial marketing chips. Only show for free / logged-out.
@@ -62,6 +65,33 @@ export default function AiToolsHub() {
         <T variant="bodyMuted" style={{ marginTop: 10, lineHeight: 23 }}>
           Drop in a statement, paste a care plan, or run the numbers. Every tool below turns 30 minutes of paperwork into a 2-minute plain-English answer.
         </T>
+
+        {viewOnly && !lockDismissed ? (
+          <View
+            testID="ai-tools-locked-notice"
+            style={[styles.lockCard, { backgroundColor: colors.goldSoft, borderColor: colors.gold }]}
+          >
+            <Lock size={16} color={colors.gold} style={{ marginTop: 2 }} />
+            <View style={{ flex: 1 }}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>
+                Tools are locked while your plan is inactive
+              </T>
+              <T variant="small" style={{ marginTop: 3, lineHeight: 19, color: colors.textSecondary }}>
+                You can still open and read everything. Reactivate to run any tool again.
+              </T>
+              <Pressable
+                testID="ai-tools-locked-reactivate"
+                onPress={() => router.push("/plan-select")}
+                style={[styles.lockBtn, { backgroundColor: colors.gold }]}
+              >
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#FFFFFF" }}>Reactivate</T>
+              </Pressable>
+            </View>
+            <Pressable testID="ai-tools-locked-dismiss" hitSlop={10} onPress={() => setLockDismissed(true)}>
+              <X size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        ) : null}
 
         {showInfoChips ? (
           <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
@@ -127,4 +157,6 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.lg },
   iconWrap: { width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   planChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  lockCard: { flexDirection: "row", gap: 10, alignItems: "flex-start", borderRadius: radius.lg, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
+  lockBtn: { alignSelf: "flex-start", marginTop: spacing.sm, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 },
 });

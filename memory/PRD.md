@@ -7008,3 +7008,20 @@ PENDING (requested, NOT yet done — next up):
 - Plan & Billing (mobile/app/plan-billing.tsx) now shows a real breakdown from ParticipantContext: Base plan, Participants (N, M included), Extra participants (K × $24.50) when K>0, and correct Fortnightly total (base + K×24.50). Family 2 = $49.50; Family 3 = $74.00. Refreshes on focus. (iter207)
 - Add-participant bottom-sheet modal (participants.tsx) wrapped in KeyboardAvoidingView (iOS padding / Android height) + ScrollView automaticallyAdjustKeyboardInsets so the keyboard no longer covers fields. Native-only effect; verified no regression on web preview. (iter208)
 STILL PENDING: add-participant FORM field parity with web (Classification dropdown, Provider dropdown + "add a different provider", Statement delivery dropdown).
+
+---
+
+## Iter264 — View-only lock UI/UX punchlist (Jun 2026) ✅ DONE (web + mobile, testing_agent PASS)
+Backend unchanged. Changes:
+- **Web `PaywallModal.jsx`**: state-agnostic heading "Your Wayly plan is inactive" (covers cancelled paid plans & failed payments); warmer subcopy; plan cards now show exact inclusions (Solo: 1 Participant tracked, 1 Caregiver seat; Family: 2 Participants tracked, Up to 5 Caregiver seats); "Continue to Payment" now hits `POST /api/payments/checkout` (trial_days:0, reactivation) and redirects straight to Stripe Checkout (no `/settings/billing` detour); modal is now DISMISSIBLE (X + "Keep viewing my data") and reappears on the next blocked write. Backend 402 write-block still fully enforces read-only regardless of dismissal.
+- **Mobile `ViewOnlyBanner.tsx`**: fixed dark-mode Reactivate contrast (was white-on-white via colors.text; now fixed white pill + navy #1C2B2D text); Reactivate → `/plan-select` (direct-Stripe plan cards); banner dismissible.
+- **Mobile `EmailVerifyBanner.tsx`**: once past the 7-day grace (`past_deadline`), banner is NON-dismissible so the resend action stays reachable (web parity).
+- **Mobile `ai-tools.tsx`**: dismissible locked notice for view_only users (Reactivate → /plan-select). Tool `/public/*` writes already 402-blocked client + server side.
+- **Mobile `plans.ts`**: Family caregiver seats corrected 3 → 5 (matches web/backend max-5).
+- Verified: `POST /api/payments/checkout {trial_days:0}` returns real `checkout.stripe.com/cs_test_` URL for view_only user; write enforcement 402 clean; `/api/public/budget-calc` now also 402 for view_only.
+- Regression test: `/app/backend/tests/test_paywall_checkout_iter264.py` (9/9 pass). Report: `/app/test_reports/iteration_264*`.
+
+### Backlog (unchanged, still pending)
+- P1: CHSP invoice-photo OCR via LLM vision model.
+- P2: `noindex` on logged-in `/app` pages; auto-generate sitemap at build.
+- Refactor: remove dead admin placeholder screens (currently hidden, not deleted).
