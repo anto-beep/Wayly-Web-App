@@ -7495,7 +7495,14 @@ async def _enforce_read_only_for_unpaid(request, call_next):
     # Admins are never restricted.
     if user.get("is_admin"):
         return await call_next(request)
-    if _compute_access_state(user) != "view_only":
+    # Use the authoritative subscription doc (same source as /auth/me) so the
+    # middleware and the UI banner always agree — the users.subscription_status
+    # mirror can lag, which previously let tools run while showing view-only.
+    try:
+        sub = await db.subscriptions.find_one({"user_id": user.get("id")}, {"_id": 0})
+    except Exception:
+        sub = None
+    if _compute_access_state(user, sub) != "view_only":
         return await call_next(request)
 
     # View-only account (cancelled trial, cancelled/ended paid subscription,

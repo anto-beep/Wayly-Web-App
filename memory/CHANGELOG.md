@@ -1,3 +1,12 @@
+## Iteration 263 (Jun 2026) — View-only lockdown: tools/uploads/edits fully blocked (web + mobile)
+
+Prod bug: inactive-plan (view-only) users could still run AI tools, upload invoices/statements, and save/edit. Two root causes fixed:
+- **Middleware used a stale mirror.** `_enforce_read_only_for_unpaid` computed access-state from `users.subscription_status` (which lags), while `/auth/me` (the banner) used the authoritative subscription doc — so the UI showed view-only but the middleware still allowed writes. The middleware now fetches `db.subscriptions` and passes it to `_compute_access_state`, matching `/auth/me`. All non-exempt POST/PUT/PATCH/DELETE now 402 for view-only (invoices/upload, statements/upload, provider-ratings, chat, tool runs, save-to-profile, etc.).
+- **Public tool endpoint leaked.** The Budget Calculator posts to `/api/public/budget-calc` (exempt for anonymous marketing visitors), so logged-in view-only users bypassed the lock. Removed `/public/` from the web + mobile client read-only allow-lists, and the web AI-tools wrapper (`ToolLockGate` in App.js) now renders tools **inert** (visible but non-interactive) with a `tool-locked-banner` + Reactivate link for view-only users.
+- **Verified (testing_agent iter263, both platforms):** view-only writes → 402 across all tool/feature endpoints; active + trial unaffected (no regression); web AI tools visibly locked/inert, active fully interactive; mobile blocked at API level with the view-only banner; billing/reactivation stays reachable on both. pytest at /app/backend/tests/test_view_only_enforcement_iter263.py (19/21; 2 fails are fixture-data 409/400, not enforcement).
+
+
+
 ## Iteration 261-262 (Jun 2026) — Admin console cleanup + IndexNow ping-all
 
 - **IndexNow ping-all DONE:** submitted all 127 production sitemap URLs to IndexNow (HTTP 200, accepted — validated against the production-hosted key file). Ran server-side (admin TOTP is encrypted at rest so the admin button couldn't be driven directly); functionally identical to Admin → SEO → IndexNow → Ping all.

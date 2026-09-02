@@ -2,9 +2,10 @@ import React, { lazy, Suspense } from "react";
 import "@/App.css";
 import "@/index.css";
 import "@/uxf/tokens.css";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { useExpiredTrial } from "@/hooks/useExpiredTrial";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "sonner";
 
@@ -213,12 +214,45 @@ function PublicAuthOnly({ children }) {
     return children;
 }
 
+function ToolLockGate({ children }) {
+    /** When the user's plan is inactive (view-only), AI tools stay visible but
+     * are fully non-interactive — no running, uploading, or editing. */
+    const viewOnly = useExpiredTrial();
+    if (!viewOnly) return children;
+    return (
+        <div data-testid="tool-lock-gate">
+            <div
+                data-testid="tool-locked-banner"
+                style={{
+                    display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+                    background: "#FBEFE6", border: "1px solid #E8956B", color: "#7A3B12",
+                    borderRadius: 12, padding: "12px 16px", marginBottom: 16, fontSize: 14, fontWeight: 600,
+                }}
+            >
+                <span style={{ flex: 1 }}>
+                    This tool is locked while your plan is inactive. You can view it, but reactivate to run or change anything.
+                </span>
+                <Link
+                    to="/settings/billing"
+                    data-testid="tool-locked-reactivate"
+                    style={{ background: "#7A3B12", color: "#fff", borderRadius: 8, padding: "8px 14px", fontWeight: 700, textDecoration: "none" }}
+                >
+                    Reactivate
+                </Link>
+            </div>
+            <div inert="" aria-disabled="true" style={{ opacity: 0.55, pointerEvents: "none", userSelect: "none" }}>
+                {children}
+            </div>
+        </div>
+    );
+}
+
 function AIToolsRoute({ children }) {
     /** AI Tools pages, wrap in the dashboard Layout for logged-in users (so the sidebar + participant switcher stay visible), or render bare for visitors. */
     const { user, loading } = useAuth();
     if (loading) return <Loading />;
     if (user && user.plan !== "adviser") {
-        return <Layout>{children}</Layout>;
+        return <Layout><ToolLockGate>{children}</ToolLockGate></Layout>;
     }
     return children;
 }

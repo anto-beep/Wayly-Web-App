@@ -54,7 +54,6 @@ const _READ_ONLY_ALLOW_PREFIXES = [
   "/users/me",
   "/admin/",
   "/health",
-  "/public/",
   "/contact",
   "/support/",
 ];

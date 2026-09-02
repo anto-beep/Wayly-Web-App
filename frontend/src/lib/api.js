@@ -24,7 +24,6 @@ const _READ_ONLY_ALLOW_PREFIXES = [
     "/admin/",
     "/health",
     "/metrics",
-    "/public/",
     "/contact",
     "/support/", // expired users still need to talk to support
 ];

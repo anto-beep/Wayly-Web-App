@@ -1,0 +1,38 @@
+{
+  "summary": "Verified the view-only (INACTIVE plan) fix on BOTH web and mobile against the shared backend. Backend middleware now correctly reads the authoritative subscriptions doc: view-only writes are blocked with 402 read_only:true across all tested tool/edit endpoints (provider-ratings, documents, v2/participants, participant/wellbeing, participant/concern, chat, family-thread, invoices/upload multipart, statements/upload multipart). Active (cathy) and Trial (trialactive) writes are NOT hit by the read_only middleware (regression clean). Web UI: view-only user visiting /ai-tools/budget-calculator and /ai-tools/invoice-checker sees the top ReadOnlyBanner AND the in-tool tool-locked-banner + tool-lock-gate with a Reactivate CTA; the tool body renders inert (opacity 0.55, pointer-events:none) and the marketing paywall inside the greyed body cannot be interacted with. Active user sees NO lock banner and the tool is fully interactive. Settings/Billing is reachable for view-only users with no lock banner. Mobile: could not seed AsyncStorage token to drive the UI, but API calls made from the mobile-preview origin confirm identical enforcement — view-only POST /provider-ratings returns 402 read_only:true, active POST returns 422 (route-level, NOT 402), GET /billing/subscription returns 200. Mobile allow-list confirmed by code: /public/ removed from _READ_ONLY_ALLOW_PREFIXES in /app/mobile/src/lib/api.ts. Web allow-list confirmed in /app/frontend/src/lib/api.js. Backend /api/public/budget-calc remains exempt at middleware level (client-side ToolLockGate + client allow-list are the enforcement layer for that route, as described in the fix).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_view_only_enforcement_iter263.py",
+    "/app/test_reports/pytest/iter263_view_only.xml",
+    "/app/test_reports/iter263_web_budget_viewonly.jpeg",
+    "/app/test_reports/iter263_web_invoice_viewonly.jpeg",
+    "/app/test_reports/iter263_web_billing_viewonly.jpeg",
+    "/app/test_reports/iter263_web_budget_active.jpeg",
+    "/app/test_reports/iter263_web_invoice_active.jpeg",
+    "/app/test_reports/iter263_mobile_after_login.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py:7502 correctly fetches db.subscriptions before calling _compute_access_state — matches /auth/me source of truth. Confirmed working end-to-end.",
+    "App.js:217-247 ToolLockGate wraps AI tool routes for logged-in non-adviser users; renders tool-locked-banner + inert body. Visually verified working.",
+    "Both api.js (web) and api.ts (mobile) allow-lists no longer contain /public/ — Budget Calculator (which posts to /api/public/budget-calc) is blocked client-side for view_only users.",
+    "Non-blocking: /app/frontend/src/lib/api.js:26 still allow-lists /metrics — worth verifying that endpoint doesn't accept destructive writes; low risk.",
+    "Non-blocking: two 2xx-expected GETs (/api/documents, /api/statements) returned 409/400 for the view_only fixture because that fixture has no household context — not related to the bug; simply a fixture data limitation."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_view_only_enforcement_iter263.py (NEW — 21 test cases, 19 pass, 2 non-related fixture GET failures)"
+  ],
+  "success_rate": {"backend": "90% (19/21; 2 GET fails are fixture-level, not the fix)", "frontend": "100% (all web view-only + regression checks pass; mobile API-level parity confirmed)"},
+  "test_credentials": "cancelled.vo@example.com/AccessTest1! (view_only), cathy@example.com/testpass123 (active), trialactive@example.com/AccessTest1! (trial). Localstorage token key for web = kindred_token. Mobile Expo uses AsyncStorage so seeding tokens via browser localStorage is not sufficient to drive the mobile UI screens — validate mobile through API calls made from the Expo-preview origin (works fine) or add a mobile login helper.",
+  "seed_data_creation": "None (used existing fixtures)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Regression asset: /app/backend/tests/test_view_only_enforcement_iter263.py covers all documented view-only writes returning 402 read_only:true + active/trial not blocked + billing reachable. Web ToolLockGate visible for view-only at /ai-tools/*. Two low-priority non-fix related findings: (1) view-only fixture cancelled.vo@example.com lacks a household so GET /statements and /documents return 400/409 — fixture-level; (2) mobile UI navigation from a browser-driven Playwright session is blocked by AsyncStorage token seeding — future mobile UI tests should log in through the visible form or expose a testing shim.",
+  "rca of the issue": "Original bug: /_enforce_read_only_for_unpaid computed access_state from users.subscription_status mirror which lagged behind the authoritative subscriptions doc, so view-only users could POST while UI showed view-only. Fix (verified iter263): middleware now fetches db.subscriptions and passes it into _compute_access_state, matching /auth/me. Second sub-bug: /api/public/budget-calc was exempt server-side and additionally allow-listed on both clients — removed /public/ from client allow-lists AND web wraps AI tool routes in ToolLockGate (inert body + reactivate CTA). All three surfaces verified working."
+}
