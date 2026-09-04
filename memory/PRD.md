@@ -7035,3 +7035,15 @@ Backend unchanged. Fixes for user punchlist:
 - **"Manage payment method" no longer dead-ends**: Settings openPortal catches the 400 "No Stripe customer" and falls back to `startReactivateCheckout(currentPlan)` (verified: redirects to checkout.stripe.com). Mobile plan-billing openPortal routes to /plan-select on the same error.
 - **Mobile Family seats** corrected 3 → up to 5 (plan-billing.tsx).
 - Testing: 16/16 backend (`test_reactivate_flow_iter265.py`), web+mobile UI verified. Report: `/app/test_reports/iteration_265.json`. One high bug (openPortal fallback used start-trial→500) fixed by switching to startReactivateCheckout; re-verified via screenshot (lands on Stripe checkout).
+
+## Iter266 — Persona-aware copy + removal of participant kiosk view (Jun 2026) ✅ DONE (web, testing_agent PASS)
+- New `frontend/src/hooks/usePersonaCopy.js`: single source of truth keyed on `user.role`. Participant → "you/your" + self-consent; caregiver → participant's name + "their".
+- Applied: onboarding `StepAuthorisation` (participant heading "Confirm consent" + self-consent checkbox; caregiver unchanged), Onboarding completion note/banner, CaregiverDashboard chat empty-state + pathways label.
+- Removed the `/participant` kiosk view ENTIRELY (user decision): deleted `ParticipantView.jsx` + route + lazy import; all redirects (Login, AuthCallback, Onboarding.finish, journey/Journey, OnboardingRouter, PublicAuthOnly) now send participant-role users to `/app`; removed both "Participant view" nav links from Layout; removed stale `/participant` title in appPageTitles.js. Backend `/participant/today` fake "Sarah/personal care" stub replaced with a real `db.visits` lookup (null → empty state), and self-referential "Call {self}" hidden when the account owner IS the participant.
+- Report: `/app/test_reports/iteration_266.json`.
+
+## Iter267 — Ask Wayly markdown rendering (Jun 2026) ✅ DONE (web + mobile, testing_agent PASS)
+- Bug: chat answers leaked raw markdown (`**Home Support**` etc. with visible asterisks) on web + mobile.
+- Web: new `frontend/src/components/MarkdownText.jsx` (react-markdown + remark-gfm) wraps assistant bubbles in `AskWaylyV2`. Verified bold/lists render, no literal `**`.
+- Mobile: new dependency-free `mobile/src/components/MarkdownText.tsx` (handles **bold**, bullets, numbered lists, strips `#`). Wired into `app/(tabs)/ask.tsx` and `src/components/tools/AgedCareQA.tsx`. Verified on Expo preview: semibold headings, no literal `**`.
+- Report: `/app/test_reports/iteration_267.json`.

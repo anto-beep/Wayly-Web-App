@@ -2806,13 +2806,45 @@ async def participant_today(user_id: str = Depends(get_current_user_id)):
     today = datetime.now(timezone.utc).date()
     days_left = (q_end - today).days + 1
 
-    # Static sample appointment for MVP, calendar agent comes later.
-    appt = {
-        "time": "10:00 AM",
-        "name": "Sarah",
-        "service": "Personal care",
-        "duration": "1 hour",
-    }
+    # Real calendar lookup: the next active visit scheduled for today. No more
+    # hardcoded sample data — if nothing is booked, appointment is null and the
+    # client shows a calm empty state.
+    appt = None
+    try:
+        _now = datetime.now(timezone.utc)
+        day_start = _now.strftime("%Y-%m-%dT00:00:00")
+        day_end = _now.strftime("%Y-%m-%dT23:59:59")
+        v = await db.visits.find_one(
+            {"household_id": h["id"], "status": "active",
+             "starts_at": {"$gte": day_start, "$lte": day_end}},
+            sort=[("starts_at", 1)],
+        )
+        if v:
+            try:
+                _dt = datetime.fromisoformat(str(v.get("starts_at")).replace("Z", "+00:00"))
+                time_label = _dt.strftime("%I:%M %p").lstrip("0")
+            except Exception:
+                time_label = ""
+            mins = int(v.get("duration_minutes") or 60)
+            if mins % 60 == 0:
+                hrs = mins // 60
+                duration = f"{hrs} hour" + ("" if hrs == 1 else "s")
+            else:
+                duration = f"{mins} minutes"
+            appt = {
+                "time": time_label,
+                "name": v.get("provider") or v.get("title") or "A visitor",
+                "service": v.get("title") or (v.get("kind") or "appointment").replace("_", " "),
+                "duration": duration,
+            }
+    except Exception:
+        appt = None
+
+    owner = await _get_user(h["owner_id"])
+    owner_name = (owner or {}).get("name") or ""
+    # Self-managed participant: the account owner IS the participant, so there's
+    # no separate caregiver to call. Return null rather than "Call yourself".
+    caregiver_name = owner_name if owner_name and owner_name != h.get("participant_name") else None
 
     return {
         "participant_name": h["participant_name"],
@@ -2824,7 +2856,7 @@ async def participant_today(user_id: str = Depends(get_current_user_id)):
             if remaining > spent * 0.2 or days_left < 30
             else f"Just keep an eye on it, {days_left} days to go this quarter."
         ),
-        "caregiver_name": (await _get_user(h["owner_id"]))["name"],
+        "caregiver_name": caregiver_name,
     }
 
 

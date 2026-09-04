@@ -93,19 +93,19 @@ export default function PaywallModal() {
 
     return (
         <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/65 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[10000] flex items-start sm:items-center justify-center bg-black/65 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto overscroll-contain"
             data-testid="paywall-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="paywall-heading"
         >
-            <div className="relative bg-surface rounded-2xl max-w-3xl w-full p-6 sm:p-10 shadow-2xl">
+            <div className="relative bg-surface rounded-2xl max-w-3xl w-full my-3 sm:my-0 max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 sm:p-10 shadow-2xl">
                 <button
                     type="button"
                     onClick={() => setOpen(false)}
                     data-testid="paywall-dismiss"
                     aria-label="Close and keep viewing"
-                    className="absolute top-4 right-4 h-9 w-9 inline-flex items-center justify-center rounded-full text-muted-k hover:bg-surface-2 hover:text-primary-k focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k"
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4 h-9 w-9 inline-flex items-center justify-center rounded-full bg-surface-2/80 backdrop-blur text-muted-k hover:bg-surface-2 hover:text-primary-k focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k z-10"
                 >
                     <X className="h-5 w-5" />
                 </button>

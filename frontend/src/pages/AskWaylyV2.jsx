@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, API } from "@/lib/api";
+import MarkdownText from "@/components/MarkdownText";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { ChevronLeft, Send, ShieldCheck, ThumbsUp, ThumbsDown, AlertCircle, Settings2 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
@@ -177,7 +178,11 @@ function Message({ msg, cid, onFeedback }) {
         <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[85%] rounded-2xl px-4 py-3 border ${isUser ? "bg-primary-k text-white border-primary-k" : "bg-white border-primary-k/10 text-primary-k"}`}
                  data-testid={`aw2-msg-${msg.role}-${msg.id}`}>
-                <p className="text-sm whitespace-pre-wrap" data-testid={`aw2-msg-content-${msg.id}`}>{msg.content}</p>
+                {isUser ? (
+                    <p className="text-sm whitespace-pre-wrap" data-testid={`aw2-msg-content-${msg.id}`}>{msg.content}</p>
+                ) : (
+                    <div className="text-sm" data-testid={`aw2-msg-content-${msg.id}`}><MarkdownText>{msg.content}</MarkdownText></div>
+                )}
                 {!isUser && <CitationList cites={msg.cited_sources} />}
                 {!isUser && (
                     <div className="mt-2 flex items-center gap-2">

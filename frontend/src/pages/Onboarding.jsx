@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { usePersonaCopy } from "@/hooks/usePersonaCopy";
 import { toast } from "sonner";
 import { ArrowRight, Cloud, AlertCircle, Check, Loader2 } from "lucide-react";
 import WaylyLogo from "@/components/WaylyLogo";
@@ -18,6 +19,7 @@ export default function Onboarding() {
     const [searchParams] = useSearchParams();
     const editPid = searchParams.get("pid");
     const { user, refreshHousehold } = useAuth();
+    const persona = usePersonaCopy();
     const [step, setStep] = useState(1);
     const [participantId, setParticipantId] = useState(null);
     const [participantDoc, setParticipantDoc] = useState(null);
@@ -177,7 +179,7 @@ export default function Onboarding() {
         if (!editPid && searchParams.get("new") === "1") {
             try { localStorage.removeItem("wayly_second_participant_intent"); } catch { /* non-fatal */ }
         }
-        nav(user?.role === "participant" ? "/participant" : "/app");
+        nav("/app");
     };
 
     // ----- Auto-save draft -------------------------------------------------
@@ -341,7 +343,7 @@ export default function Onboarding() {
             <div className="mx-auto max-w-3xl px-4 md:px-6 py-6 md:py-10">
                 {editPid && !loadingExisting && participantDoc && (
                     <div data-testid="onboarding-complete-now-banner" className="mb-5 rounded-xl border border-sage/40 bg-sage/10 px-4 py-3 text-sm text-primary-k">
-                        <strong>Completing profile for {participantDoc.preferred_name || participantDoc.first_name || "your participant"}.</strong> We&apos;ve pre-filled what we know, just fill the missing bits and re-confirm authorisation.
+                        <strong>{persona.isParticipant ? "Completing your profile." : `Completing profile for ${participantDoc.preferred_name || participantDoc.first_name || "your participant"}.`}</strong> We&apos;ve pre-filled what we know, just fill the missing bits and re-confirm {persona.isParticipant ? "consent" : "authorisation"}.
                     </div>
                 )}
                 {loadingExisting && (
@@ -429,6 +431,7 @@ export default function Onboarding() {
 
 /* ---------- Dashboard banner ---------- */
 export function ProfileCompletionBanner() {
+    const persona = usePersonaCopy();
     const [items, setItems] = useState([]);
     const [dismissed, setDismissed] = useState(false);
 
@@ -461,7 +464,11 @@ export function ProfileCompletionBanner() {
                 <AlertCircle className="h-5 w-5 text-terracotta flex-none mt-0.5" />
                 <div className="flex-1 min-w-0">
                     <div className="text-sm text-primary-k">
-                        To keep using Wayly&apos;s accuracy guarantees, we need a few extra details about <strong>{displayName}</strong>. This takes about a minute.
+                        {persona.isParticipant ? (
+                            <>To keep using Wayly&apos;s accuracy guarantees, we need a few more of your details. This takes about a minute.</>
+                        ) : (
+                            <>To keep using Wayly&apos;s accuracy guarantees, we need a few extra details about <strong>{displayName}</strong>. This takes about a minute.</>
+                        )}
                     </div>
                     {items.length > 1 && (
                         <div className="text-xs text-muted-k mt-0.5">{items.length - 1} other participant(s) also need details.</div>

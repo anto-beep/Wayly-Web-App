@@ -53,7 +53,7 @@ export default function AuthCallback() {
 
                 // Resolve destination from user shape
                 let target = "/onboarding";
-                if (user?.role === "participant") target = "/participant";
+                if (user?.role === "participant") target = "/app";
                 else if (user?.plan === "free" && !planIntent) target = "/app";
                 // Use window.location.replace rather than React Router nav() , 
                 // the destination's auth guard reads `user` from context, and

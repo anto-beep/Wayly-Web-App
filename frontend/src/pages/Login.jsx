@@ -37,7 +37,7 @@ export default function Login() {
 
     const routeAfterLogin = (u) => {
         if (u.plan === "adviser") nav("/adviser");
-        else nav(u.role === "participant" ? "/participant" : "/app");
+        else nav("/app");
     };
 
     const submit = async (e) => {

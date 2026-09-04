@@ -45,7 +45,6 @@ const StatementAuditLog = lazy(() => import("@/pages/statements/StatementAuditLo
 const Chat = lazy(() => import("@/pages/Chat"));
 const FamilyThread = lazy(() => import("@/pages/FamilyThread"));
 const AuditLog = lazy(() => import("@/pages/AuditLog"));
-const ParticipantView = lazy(() => import("@/pages/ParticipantView"));
 const AIToolsIndex = lazy(() => import("@/pages/AIToolsIndex"));
 const StatementDecoderTool = lazy(() => import("@/pages/tools/StatementDecoderTool"));
 const InvoiceCheckerTool = lazy(() => import("@/pages/tools/InvoiceCheckerTool"));
@@ -210,7 +209,7 @@ function PublicAuthOnly({ children }) {
     if (user) {
         if (user.plan === "adviser") return <Navigate to="/adviser" replace />;
         if (!household && user.plan !== "free") return <Navigate to="/onboarding" replace />;
-        return <Navigate to={user.role === "participant" ? "/participant" : "/app"} replace />;
+        return <Navigate to="/app" replace />;
     }
     return children;
 }
@@ -555,7 +554,6 @@ function App() {
                     <Route path="/settings/:tab" element={<RequireAuth requireHousehold={false}><Layout><Settings /></Layout></RequireAuth>} />
                     <Route path="/support" element={<RequireAuth requireHousehold={false}><Layout><MySupport /></Layout></RequireAuth>} />
                     <Route path="/support/:ticketId" element={<RequireAuth requireHousehold={false}><Layout><MySupport /></Layout></RequireAuth>} />
-                    <Route path="/participant" element={<RequireAuth><ParticipantView /></RequireAuth>} />
 
                     {/* Adviser plan portal, multi-client list view */}
                     <Route path="/adviser" element={<RequireAuth requireHousehold={false}><AdviserPortal /></RequireAuth>} />

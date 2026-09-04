@@ -5,11 +5,11 @@ import { Send, MessageCircle } from "lucide-react-native";
 
 import { AppHeader, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import MarkdownText from "@/src/components/MarkdownText";
 import { apiFetch } from "@/src/lib/api";
 import { usePersona } from "@/src/hooks/usePersona";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
-import { sanitizeAI } from "@/src/utils/format";
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 const SUGGESTIONS = [
@@ -73,7 +73,11 @@ export default function AgedCareQA() {
           {msgs.map((m) => (
             <View key={m.id} testID={`fc-msg-${m.role}`} style={{ alignItems: m.role === "user" ? "flex-end" : "flex-start" }}>
               <View style={[styles.bubble, m.role === "user" ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 } : { backgroundColor: colors.surface2, borderBottomLeftRadius: 4 }]}>
-                <T style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 21, color: m.role === "user" ? "#fff" : colors.text }}>{sanitizeAI(m.content)}</T>
+                {m.role === "user" ? (
+                  <T style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 21, color: "#fff" }}>{m.content}</T>
+                ) : (
+                  <MarkdownText content={m.content} color={colors.text} size={14} lineHeight={21} />
+                )}
               </View>
             </View>
           ))}

@@ -89,7 +89,7 @@ export default function OnboardingRouter() {
         if (active.length === 0) return; // fall through to Onboarding create-first
         const incomplete = active.filter((p) => !isTier1Complete(p));
         if (incomplete.length === 0) {
-            nav(user?.role === "participant" ? "/participant" : "/app", { replace: true });
+            nav("/app", { replace: true });
             return;
         }
         if (incomplete.length === 1) {
@@ -137,7 +137,7 @@ export default function OnboardingRouter() {
                 incomplete={incomplete}
                 complete={active.filter((p) => isTier1Complete(p))}
                 onPick={(id) => setParams({ pid: id }, { replace: false })}
-                onFinishForNow={() => nav(user?.role === "participant" ? "/participant" : "/app")}
+                onFinishForNow={() => nav("/app")}
             />
         );
     }

@@ -17,6 +17,7 @@ import {
     Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2, Clock, Users, ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { usePersonaCopy } from "@/hooks/usePersonaCopy";
 import { useParticipants } from "@/context/ParticipantsContext";
 import ParticipantContactsPanel from "@/components/ParticipantContactsPanel";
 import BC2Projection from "@/components/BC2Projection";
@@ -167,6 +168,7 @@ function AtAGlance({ budget, statements, alertCount }) {
 
 export default function CaregiverDashboard() {
     const { household, user } = useAuth();
+    const persona = usePersonaCopy();
     const { active: activeParticipant } = useParticipants();
     const [showContacts, setShowContacts] = useState(false);
     const location = useLocation();
@@ -439,7 +441,7 @@ export default function CaregiverDashboard() {
                                 className="bg-surface border border-sage/40 rounded-xl p-5"
                             >
                                 <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                                    <span className="overline">Pathways the participant may qualify for</span>
+                                    <span className="overline">{persona.isParticipant ? "Pathways you may qualify for" : "Pathways the participant may qualify for"}</span>
                                     <span className="text-[10px] uppercase tracking-wider rounded-full bg-sage/10 text-sage px-2.5 py-1">
                                         {pathways.eligible.length} match{pathways.eligible.length === 1 ? "" : "es"}
                                     </span>
@@ -610,7 +612,7 @@ export default function CaregiverDashboard() {
                         </div>
                         {chatHistory.length === 0 ? (
                             <div className="mt-4 text-sm text-muted-k">
-                                No chat yet. Ask Wayly anything about {household?.participant_name || "the participant"}&#39;s budget, statement, or care plan. <Link to="/app/ask-wayly" className="text-primary-k underline">Start a chat</Link>.
+                                No chat yet. Ask Wayly anything about {persona.isParticipant ? "your" : `${household?.participant_name || "the participant"}\u2019s`} budget, statement, or care plan. <Link to="/app/ask-wayly" className="text-primary-k underline">Start a chat</Link>.
                             </div>
                         ) : (
                             <ul className="mt-4 space-y-3">

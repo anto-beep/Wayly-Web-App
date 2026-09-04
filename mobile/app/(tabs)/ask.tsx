@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { AppHeader, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
+import MarkdownText from "@/src/components/MarkdownText";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, streamAw2 } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -171,7 +172,8 @@ function Bubble({ msg, colors, onFeedback }: { msg: Msg; colors: Palette; onFeed
   return (
     <View style={[styles.bubbleRow, { justifyContent: isUser ? "flex-end" : "flex-start" }]}>
       <View style={[styles.bubble, isUser ? styles.userBubble : styles.aiBubble]} testID={`aw2-msg-${msg.role}-${msg.id}`}>
-        <T style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: isUser ? "#fff" : colors.text }} testID={`aw2-msg-content-${msg.id}`}>{msg.content}</T>
+        <T style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: isUser ? "#fff" : colors.text }} testID={`aw2-msg-content-${msg.id}`}>{isUser ? msg.content : null}</T>
+        {!isUser ? <MarkdownText content={msg.content} color={colors.text} size={15} lineHeight={22} /> : null}
         {!isUser && (msg.cited_sources || []).length > 0 ? (
           <View style={{ marginTop: 6, gap: 2 }} testID="aw2-citations">
             {(msg.cited_sources || []).map((c, i) => (

@@ -5,7 +5,7 @@ import { titleForPath } from "@/lib/appPageTitles";
 import { useAuth } from "@/context/AuthContext";
 import {
     LayoutDashboard, FileText, MessageCircle, Users, ScrollText, LogOut,
-    UserCircle2, Settings as SettingsIcon, Sparkles, Menu, X,
+    Settings as SettingsIcon, Sparkles, Menu, X,
     ShieldCheck, FolderArchive, Calendar, Bell, Repeat, Wrench, Mail, Share2, Star, FileBarChart,
     HeartPulse, Heart, FilePenLine, UserPlus, ChevronDown, ChevronRight, Wallet, ClipboardEdit, ClipboardList, Activity,
     LifeBuoy, Phone, Timer, User as UserIcon, ReceiptText, TrendingUp,
@@ -254,13 +254,6 @@ export default function Layout({ children }) {
                                 <span className="text-muted-k">plan</span>
                             </Link>
                         )}
-                        <Link
-                            to="/participant"
-                            data-testid="participant-view-link"
-                            className="hidden xl:inline-flex items-center gap-2 rounded-full border border-kindred px-3 py-1.5 text-sm hover:bg-surface-2 transition-colors"
-                        >
-                            <UserCircle2 className="h-4 w-4" /> Participant view
-                        </Link>
                         <button
                             onClick={handleLogout}
                             data-testid="logout-button"
@@ -396,15 +389,6 @@ export default function Layout({ children }) {
                                 <SettingsIcon className="h-5 w-5" />
                                 <span>Plan & billing</span>
                                 <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-k">{user?.plan || "free"}</span>
-                            </Link>
-                            <Link
-                                to="/participant"
-                                onClick={() => setDrawerOpen(false)}
-                                data-testid="drawer-participant"
-                                className="tap-target flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-primary-k hover:bg-surface-2"
-                            >
-                                <UserCircle2 className="h-5 w-5" />
-                                <span>Switch to Participant view</span>
                             </Link>
                             <button
                                 type="button"

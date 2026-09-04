@@ -143,7 +143,7 @@ export default function Journey() {
         setSaving(true);
         try {
             await api.post(`/journeys/${journey.id}/skip`);
-            nav(user?.role === "participant" ? "/participant" : "/app", { replace: true });
+            nav("/app", { replace: true });
         } catch (e) {
             setError(e?.response?.data?.detail || "Could not skip.");
             setSaving(false);
@@ -208,7 +208,7 @@ export default function Journey() {
                     <CompleteScreen
                         journey={journey}
                         onDownload={downloadPdf}
-                        onDashboard={() => nav(user?.role === "participant" ? "/participant" : "/app")}
+                        onDashboard={() => nav("/app")}
                     />
                 )}
             </main>

@@ -75,7 +75,6 @@ const RULES = [
     [/^\/adviser/, "Adviser Portal"],
     [/^\/onboarding/, "Get Started"],
     [/^\/journey/, "Your Journey"],
-    [/^\/participant$/, "Participant View"],
 ];
 
 /**

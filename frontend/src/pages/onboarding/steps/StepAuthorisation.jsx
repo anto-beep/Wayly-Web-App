@@ -1,12 +1,17 @@
 /**
- * Onboarding Step 2, Confirm authorisation.
+ * Onboarding Step 2, Confirm authorisation / consent.
  *
- * Extracted verbatim from Onboarding.jsx (Feb 2026 split).
+ * Persona-aware (Jun 2026): a caregiver confirms they are authorised to manage
+ * someone else's aged care info; a participant confirms the info is their own
+ * and consents to Wayly storing it.
  */
 import React from "react";
 import { ArrowRight, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { usePersonaCopy } from "@/hooks/usePersonaCopy";
 
 export default function StepAuthorisation({ firstName, confirmed, setConfirmed, onSubmit, onBack, saving }) {
+    const persona = usePersonaCopy();
+    const isP = persona.isParticipant;
     return (
         <div data-testid="step-authorisation">
             <div className="flex items-start gap-3">
@@ -14,9 +19,15 @@ export default function StepAuthorisation({ firstName, confirmed, setConfirmed, 
                     <ShieldCheck className="h-5 w-5 text-sage" />
                 </div>
                 <div>
-                    <h1 className="font-heading text-2xl md:text-3xl text-primary-k tracking-tight">Confirm authorisation</h1>
-                    <p className="text-muted-k mt-2 text-sm leading-relaxed">
-                        You&apos;re about to enter and store personal and financial information about {firstName ? <strong className="text-primary-k">{firstName}</strong> : "your parent"}. Wayly needs you to confirm that you&apos;re authorised to manage their aged care information.
+                    <h1 className="font-heading text-2xl md:text-3xl text-primary-k tracking-tight">
+                        {isP ? "Confirm consent" : "Confirm authorisation"}
+                    </h1>
+                    <p className="text-muted-k mt-2 text-sm leading-relaxed" data-testid="authorisation-intro">
+                        {isP ? (
+                            <>You&apos;re about to enter and store your own personal and financial information. Wayly needs you to confirm this is your information and that you consent to us storing it.</>
+                        ) : (
+                            <>You&apos;re about to enter and store personal and financial information about {firstName ? <strong className="text-primary-k">{firstName}</strong> : "your parent"}. Wayly needs you to confirm that you&apos;re authorised to manage {persona.careInfo(firstName)}.</>
+                        )}
                     </p>
                 </div>
             </div>
@@ -34,8 +45,12 @@ export default function StepAuthorisation({ firstName, confirmed, setConfirmed, 
                     className="mt-1 h-4 w-4 accent-[var(--kindred-primary)]"
                 />
                 <span className="text-sm text-primary-k">
-                    I confirm I am authorised to manage {firstName || "the participant"}&apos;s aged care information.
-                    This includes having power of attorney, being a nominated representative with My Aged Care, or having explicit consent from the participant.
+                    {isP ? (
+                        <>I confirm this is my own aged care information and I consent to Wayly securely storing and processing it.</>
+                    ) : (
+                        <>I confirm I am authorised to manage {firstName || "the participant"}&apos;s aged care information.
+                        This includes having power of attorney, being a nominated representative with My Aged Care, or having explicit consent from the participant.</>
+                    )}
                 </span>
             </label>
 
