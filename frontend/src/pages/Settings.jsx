@@ -18,7 +18,6 @@ const TABS = [
     // UI-1 §10, Title Case everywhere, SMS tab removed.
     { id: "profile", label: "Profile", icon: User },
     { id: "billing", label: "Plan and Billing", icon: CreditCard },
-    { id: "participants", label: "Participants", icon: User },
     { id: "members", label: "Family Members", icon: Users },
     { id: "digest", label: "Weekly Digest", icon: Mailbox },
     { id: "notifications", label: "Notifications", icon: Bell },
@@ -785,90 +784,6 @@ function roleChipLabel(m) {
     return "Family member";
 }
 
-function ParticipantsTab() {
-    const [data, setData] = useState({ participants: [], capacity: null });
-    const [loading, setLoading] = useState(true);
-    const [adding, setAdding] = useState(false);
-    const [form, setForm] = useState({ full_name: "", date_of_birth: "", classification: "", provider_name: "", relationship: "Self" });
-    const [editing, setEditing] = useState(null);
-    const [busy, setBusy] = useState(false);
-    const load = useCallback(async () => { setLoading(true); try { const { data } = await api.get("/participants"); setData(data); } finally { setLoading(false); } }, []);
-    useEffect(() => { load(); }, [load]);
-    const add = async (e) => {
-        e.preventDefault(); setBusy(true);
-        try {
-            const payload = { ...form, classification: form.classification ? Number(form.classification) : null, date_of_birth: form.date_of_birth || null, provider_name: form.provider_name || null };
-            await api.post("/participants", payload); toast.success("Participant added"); setAdding(false); setForm({ full_name: "", date_of_birth: "", classification: "", provider_name: "", relationship: "Self" }); await load();
-        } catch (err) {
-            const d = err?.response?.data?.detail;
-            toast.error((d && typeof d === "object" && d.message) || extractErrorMessage(err, "Could not add participant"));
-        } finally { setBusy(false); }
-    };
-    const saveEdit = async (pid, patch) => { try { await api.patch(`/participants/${pid}`, patch); toast.success("Saved"); setEditing(null); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not save")); } };
-    const archive = async (pid) => { if (!window.confirm("Remove this participant? This cannot be undone.")) return; try { await api.post(`/participants/${pid}/archive`); toast.success("Participant removed"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not remove")); } };
-    const deceased = async (pid) => { if (!window.confirm("Mark this participant as deceased? This is permanent and starts a 90-day grace period if they are the only participant.")) return; try { await api.post(`/participants/${pid}/deceased`); toast.success("Recorded. We're sorry for your loss."); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not update")); } };
-    const inviteLogin = async (pid) => { const email = window.prompt("Email to invite this participant to log in and see only their own care:"); if (!email) return; try { await api.post(`/participants/${pid}/invite-login`, { email }); toast.success("Login invite sent"); await load(); } catch (err) { const d = err?.response?.data?.detail; toast.error((d && typeof d === "object" && d.message) || extractErrorMessage(err, "Could not invite")); } };
-    const cap = data.capacity;
-    return (
-        <div className="space-y-6" data-testid="settings-participants">
-            <div>
-                <h2 className="font-heading text-2xl text-primary-k tracking-tight">Participants</h2>
-                <p className="text-sm text-muted-k mt-1">The people receiving Support at Home on this account. Each participant has their own budget, statements, and care plan.</p>
-                {cap && <p className="text-sm font-medium text-primary-k mt-2" data-testid="participants-counter">{cap.participants_used} of {cap.participants_included} participant{cap.participants_included === 1 ? "" : "s"} used.</p>}
-            </div>
-
-            {!adding ? (
-                <button onClick={() => setAdding(true)} data-testid="add-participant-btn" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33]"><Users className="h-4 w-4" /> Add a participant</button>
-            ) : (
-                <form onSubmit={add} className="bg-surface border border-kindred rounded-2xl p-6 grid sm:grid-cols-2 gap-3" data-testid="add-participant-form">
-                    <label className="block sm:col-span-2"><span className="text-sm text-muted-k">Full name</span><input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required data-testid="participant-name-input" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5" /></label>
-                    <label className="block"><span className="text-sm text-muted-k">Date of birth</span><input type="date" value={form.date_of_birth} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5" /></label>
-                    <label className="block"><span className="text-sm text-muted-k">Classification level (1–8)</span><input type="number" min="1" max="8" value={form.classification} onChange={(e) => setForm({ ...form, classification: e.target.value })} className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5" /></label>
-                    <label className="block"><span className="text-sm text-muted-k">Provider (optional)</span><input value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5" /></label>
-                    <label className="block"><span className="text-sm text-muted-k">Relationship to you</span><select value={form.relationship} onChange={(e) => setForm({ ...form, relationship: e.target.value })} className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5"><option>Self</option>{RELATIONSHIP_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}</select></label>
-                    <div className="sm:col-span-2 flex gap-2"><button type="submit" disabled={busy} data-testid="participant-save-btn" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm disabled:opacity-60">{busy && <Loader2 className="h-4 w-4 animate-spin" />} Save participant</button><button type="button" onClick={() => setAdding(false)} className="text-sm text-muted-k px-3">Cancel</button></div>
-                </form>
-            )}
-
-            <div className="bg-surface border border-kindred rounded-2xl p-6">
-                {loading ? <Skeleton variant="list" rows={3} /> : (
-                    <ul className="space-y-2">
-                        {data.participants.map((p) => (
-                            <li key={p.id} className="rounded-lg p-3 bg-surface-2" data-testid={`participant-row-${p.id}`}>
-                                <div className="flex items-center justify-between gap-3">
-                                    <div>
-                                        <div className="text-sm font-medium text-primary-k">{p.full_name}
-                                            <span className="text-xs bg-primary-k/10 text-primary-k rounded-full px-2 py-0.5 ml-2">{p.role_label}</span>
-                                            {p.deceased_at && <span className="text-xs bg-muted-k/10 text-muted-k rounded-full px-2 py-0.5 ml-2">Deceased</span>}
-                                        </div>
-                                        <div className="text-xs text-muted-k mt-0.5">{p.classification ? `Level ${p.classification}` : "No classification"}{p.provider_name ? ` · ${p.provider_name}` : ""}</div>
-                                    </div>
-                                    {!p.deceased_at && (
-                                        <div className="flex items-center gap-3 flex-none text-xs">
-                                            <button onClick={() => setEditing(editing === p.id ? null : p.id)} data-testid={`participant-edit-${p.id}`} className="text-primary-k hover:underline">Edit</button>
-                                            {!p.user_id && <button onClick={() => inviteLogin(p.id)} data-testid={`participant-invite-${p.id}`} className="text-primary-k hover:underline">Invite login</button>}
-                                            <button onClick={() => deceased(p.id)} data-testid={`participant-deceased-${p.id}`} className="text-muted-k hover:underline">Mark deceased</button>
-                                            <button onClick={() => archive(p.id)} data-testid={`participant-archive-${p.id}`} className="text-terracotta hover:underline">Remove</button>
-                                        </div>
-                                    )}
-                                </div>
-                                {editing === p.id && (
-                                    <div className="mt-3 grid sm:grid-cols-3 gap-2 border-t border-kindred pt-3" data-testid={`participant-edit-form-${p.id}`}>
-                                        <input defaultValue={p.full_name} id={`edit-name-${p.id}`} className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" placeholder="Full name" />
-                                        <input type="number" min="1" max="8" defaultValue={p.classification || ""} id={`edit-class-${p.id}`} className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" placeholder="Level 1–8" />
-                                        <input defaultValue={p.provider_name || ""} id={`edit-provider-${p.id}`} className="rounded-md border border-kindred bg-surface px-3 py-2 text-sm" placeholder="Provider" />
-                                        <div className="sm:col-span-3"><button onClick={() => { const name = document.getElementById(`edit-name-${p.id}`).value; const cls = document.getElementById(`edit-class-${p.id}`).value; const prov = document.getElementById(`edit-provider-${p.id}`).value; saveEdit(p.id, { full_name: name, classification: cls ? Number(cls) : null, provider_name: prov || null }); }} data-testid={`participant-edit-save-${p.id}`} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm">Save changes</button></div>
-                                    </div>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-        </div>
-    );
-}
-
 function MembersTab() {
     const { user } = useAuth();
     const [data, setData] = useState({ members: [], invites: [], expired: [], capacity: null });
@@ -1559,7 +1474,6 @@ export default function Settings() {
             <section className="min-w-0">
                 {active === "profile" && <ProfileTab />}
                 {active === "billing" && <BillingTab />}
-                {active === "participants" && <ParticipantsTab />}
                 {active === "members" && <MembersTab />}
                 {active === "digest" && <DigestTab />}
                 {active === "notifications" && <NotificationsTab />}

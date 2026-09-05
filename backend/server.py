@@ -1310,26 +1310,11 @@ async def list_members(user_id: str = Depends(get_current_user_id)):
             "capacity": capacity, "pending_approvals": pending_approvals}
 
 
-# ----------------- participants (DATA-MODEL-1 / PARTICIPANTS-1) -----------------
-class ParticipantCreate(BaseModel):
-    full_name: str = Field(min_length=1, max_length=120)
-    date_of_birth: Optional[str] = None
-    classification: Optional[int] = Field(default=None, ge=1, le=8)
-    provider_name: Optional[str] = None
-    relationship: str = "Other"
-
-
-class ParticipantUpdate(BaseModel):
-    full_name: Optional[str] = Field(default=None, min_length=1, max_length=120)
-    date_of_birth: Optional[str] = None
-    classification: Optional[int] = Field(default=None, ge=1, le=8)
-    provider_name: Optional[str] = None
-
-
-class ParticipantInviteBody(BaseModel):
-    email: EmailStr
-
-
+# ----------------- participants: helper retained for caregiver approve/deny -----------------
+# NOTE: the participant CRUD routes (/participants*) live in participant_profile.py
+# (onboarding, Tier-1 schema) and batch3_routes.py (/v2/participants). The
+# duplicate DATA-MODEL-1 routes that briefly lived here were removed because
+# they shadowed participant_profile.py and broke onboarding.
 async def _require_account_holder(user_id: str) -> dict:
     h = await _get_user_household(user_id)
     if not h:
@@ -1339,158 +1324,9 @@ async def _require_account_holder(user_id: str) -> dict:
     return h
 
 
-def _participant_role_label(pr: dict, owner_id: str) -> str:
-    if pr.get("user_id") == owner_id:
-        return "account holder + participant"
-    if pr.get("user_id"):
-        return "participant"
-    return "participant, no login yet"
-
-
-@api.get("/participants")
-async def list_participants(user_id: str = Depends(get_current_user_id)):
-    h = await _require_account_holder(user_id)
-    rows = await db.participant_records.find(
-        {"household_id": h["id"], "archived_at": None}, {"_id": 0}).to_list(50)
-    for r in rows:
-        r["role_label"] = _participant_role_label(r, h["owner_id"])
-    plan = (await _get_user(user_id)).get("plan") or "family"
-    cap = PLAN_CAPACITY.get(plan, PLAN_CAPACITY["family"])
-    live = [r for r in rows if not r.get("deceased_at")]
-    return {"participants": rows, "capacity": {
-        "plan": plan, "participants_included": cap["participants_included"],
-        "participants_used": len(live),
-        "can_add_free": len(live) < cap["participants_included"],
-        "extra_available": plan == "family",  # extras need billing (paused)
-    }}
-
-
-@api.post("/participants")
-async def add_participant(body: ParticipantCreate, user_id: str = Depends(get_current_user_id)):
-    import data_model as dm
-    h = await _require_account_holder(user_id)
-    plan = (await _get_user(user_id)).get("plan") or "family"
-    cap = PLAN_CAPACITY.get(plan, PLAN_CAPACITY["family"])
-    live = await db.participant_records.count_documents(
-        {"household_id": h["id"], "archived_at": None, "deceased_at": None})
-    if live >= cap["participants_included"]:
-        if plan != "family":
-            raise HTTPException(status_code=402, detail={"code": "upgrade_required", "message": "Solo plan supports 1 participant. Upgrade to Family to add more."})
-        # Family extra participant is a billable add-on; Stripe subscription-item
-        # wiring is a separate milestone (billing paused), so block for now.
-        raise HTTPException(status_code=402, detail={"code": "billing_required", "message": "Extra participants are billed at $24.50 per fortnight. Billing for extra participants is coming soon."})
-    pr = dm.build_participant_record({
-        "id": h["id"], "participant_name": body.full_name, "classification": body.classification,
-        "provider_name": body.provider_name, "created_at": now_iso(),
-        "date_of_birth": body.date_of_birth,
-    }, None)  # managed-only (no login) until invited
-    await db.participant_records.insert_one(pr)
-    u = await _get_user(user_id)
-    await _audit(h["id"], user_id, u["name"], "PARTICIPANT_ADDED", f"Added participant {body.full_name}")
-    pr.pop("_id", None)
-    pr["role_label"] = _participant_role_label(pr, h["owner_id"])
-    return pr
-
-
-@api.patch("/participants/{pid}")
-async def edit_participant(pid: str, body: ParticipantUpdate, user_id: str = Depends(get_current_user_id)):
-    h = await _require_account_holder(user_id)
-    pr = await db.participant_records.find_one({"id": pid, "household_id": h["id"]})
-    if not pr:
-        raise HTTPException(status_code=404, detail="Participant not found")
-    if pr.get("deceased_at") or pr.get("archived_at"):
-        raise HTTPException(status_code=400, detail="This participant record is no longer editable.")
-    updates = {k: v for k, v in body.model_dump(exclude_none=True).items()}
-    if "classification" in updates:
-        updates["classification_status"] = "assessed"
-    if "provider_name" in updates:
-        updates["provider_status"] = "selected" if updates["provider_name"] else "not_selected"
-    updates["updated_at"] = now_iso()
-    await db.participant_records.update_one({"id": pid}, {"$set": updates})
-    return {"ok": True}
-
-
-@api.post("/participants/{pid}/archive")
-async def archive_participant(pid: str, user_id: str = Depends(get_current_user_id)):
-    h = await _require_account_holder(user_id)
-    pr = await db.participant_records.find_one({"id": pid, "household_id": h["id"]})
-    if not pr:
-        raise HTTPException(status_code=404, detail="Participant not found")
-    live = await db.participant_records.count_documents(
-        {"household_id": h["id"], "archived_at": None, "deceased_at": None})
-    if live <= 1:
-        raise HTTPException(status_code=400, detail="You cannot remove the only participant. Add another first, or close the account from Billing.")
-    await db.participant_records.update_one({"id": pid}, {"$set": {"archived_at": now_iso(), "updated_at": now_iso()}})
-    # Auto-revoke caregivers left with no linked participant
-    await db.caregiver_participant_links.delete_many({"participant_record_id": pid})
-    u = await _get_user(user_id)
-    await _audit(h["id"], user_id, u["name"], "PARTICIPANT_ARCHIVED", f"Archived participant {pr.get('full_name','')}")
-    return {"ok": True}
-
-
-@api.post("/participants/{pid}/deceased")
-async def mark_participant_deceased(pid: str, user_id: str = Depends(get_current_user_id)):
-    h = await _require_account_holder(user_id)
-    pr = await db.participant_records.find_one({"id": pid, "household_id": h["id"]})
-    if not pr:
-        raise HTTPException(status_code=404, detail="Participant not found")
-    if pr.get("deceased_at"):
-        raise HTTPException(status_code=400, detail="Already recorded.")
-    ts = now_iso()
-    await db.participant_records.update_one({"id": pid}, {"$set": {"deceased_at": ts, "updated_at": ts}})
-    # Deactivate linked login if any
-    if pr.get("user_id") and pr["user_id"] != h["owner_id"]:
-        await db.users.update_one({"id": pr["user_id"]}, {"$set": {"deactivated_at": ts}})
-    # If sole participant, start 90-day bereavement grace
-    live = await db.participant_records.count_documents(
-        {"household_id": h["id"], "archived_at": None, "deceased_at": None})
-    if live == 0:
-        grace = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
-        await db.households.update_one({"id": h["id"]}, {"$set": {"bereavement_grace_expires_at": grace}})
-    u = await _get_user(user_id)
-    await _audit(h["id"], user_id, u["name"], "PARTICIPANT_DECEASED", f"Marked {pr.get('full_name','')} deceased")
-    return {"ok": True, "bereavement_grace": live == 0}
-
-
-@api.post("/participants/{pid}/invite-login")
-async def invite_participant_login(pid: str, body: ParticipantInviteBody, user_id: str = Depends(get_current_user_id)):
-    h = await _require_account_holder(user_id)
-    pr = await db.participant_records.find_one({"id": pid, "household_id": h["id"]})
-    if not pr:
-        raise HTTPException(status_code=404, detail="Participant not found")
-    if pr.get("user_id"):
-        raise HTTPException(status_code=400, detail="This participant already has a login.")
-    email_l = body.email.lower()
-    if await db.users.find_one({"email": email_l}, {"_id": 0, "id": 1}):
-        raise HTTPException(status_code=409, detail={"code": "email_registered", "message": "This email is already registered with Wayly. Multi-household support is coming in a future update. Please use a different email address, or contact support@wayly.com.au for help."})
-    token = new_id().replace("-", "") + new_id().replace("-", "")
-    u = await _get_user(user_id)
-    invite = {
-        "token": token, "household_id": h["id"], "household_name": h["participant_name"],
-        "inviter_user_id": user_id, "inviter_name": u["name"], "email": email_l,
-        "intended_role": "participant_login", "participant_record_id": pid,
-        "wayly_role": "participant_user", "relationship": "Self",
-        "role": "participant_login", "status": "pending", "approval_status": "awaiting_signup",
-        "expires_at": (datetime.now(timezone.utc) + timedelta(days=INVITE_EXPIRY_DAYS)).isoformat(),
-        "created_at": now_iso(),
-    }
-    await db.invites.insert_one(invite)
-    origin = _trusted_frontend_url()
-    accept_url = f"{origin}/invite?token={token}"
-    try:
-        await email_service.email_tool_result(
-            to=body.email, tool_name="Wayly login invitation",
-            headline=f"{u['name']} set up a Wayly login for you",
-            body_html=(f"<p>{u['name']} has set up a Wayly login so you can see your Support at Home care information.</p>"
-                       f"<p>For the best experience, install the Wayly app on your phone before tapping the link.</p>"
-                       f"<p><a href='{accept_url}' style='display:inline-block;background:#2BC4D6;color:#0E2A47;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invite</a></p>"
-                       f"<p style='color:#6B7280;font-size:13px'>This link expires in {INVITE_EXPIRY_DAYS} days and can only be used once.</p>"),
-        )
-    except Exception as e:
-        logger.warning("Participant login invite email failed: %s", e)
-    await _audit(h["id"], user_id, u["name"], "PARTICIPANT_LOGIN_INVITED", f"Invited {email_l} to log in as participant")
-    invite.pop("_id", None)
-    return invite
+# Participant CRUD lives in participant_profile.py (/participants) and
+# batch3_routes.py (/v2/participants). Removed the duplicate DATA-MODEL-1
+# routes that shadowed participant_profile.py and broke onboarding.
 
 
 # -- Share dashboard: email a snapshot to all family members or a custom list --
