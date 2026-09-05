@@ -775,53 +775,148 @@ function BillingTab() {
 }
 
 /* --------------------------------- Members -------------------------------- */
+const RELATIONSHIP_OPTIONS = ["Spouse or partner", "Adult child", "Parent", "Sibling", "Grandchild", "In-law", "Step-child", "Guardian (legal)", "Enduring Power of Attorney", "Trusted friend", "Neighbour", "Case worker", "Other"];
+
+function roleChipLabel(m) {
+    const r = m.wayly_role || m.role;
+    if (r === "account_holder") return "Account holder";
+    if (r === "participant") return "Participant";
+    return "Family member";
+}
+
 function MembersTab() {
     const { user } = useAuth();
-    const [data, setData] = useState({ members: [], invites: [] });
+    const [data, setData] = useState({ members: [], invites: [], expired: [], capacity: null });
     const [loading, setLoading] = useState(true);
-    const [form, setForm] = useState({ email: "", role: "family_member", note: "" });
+    const [form, setForm] = useState({ email: "", wayly_role: "caregiver", relationship: "Adult child", note: "" });
     const [sending, setSending] = useState(false);
+    const [emailError, setEmailError] = useState("");
     const load = useCallback(async () => { setLoading(true); try { const { data } = await api.get("/household/members"); setData(data); } finally { setLoading(false); } }, []);
     useEffect(() => { load(); }, [load]);
     const invite = async (e) => {
-        e.preventDefault(); setSending(true);
-        try { await api.post("/household/invite", form); toast.success(`Invitation sent to ${form.email}`); setForm({ email: "", role: "family_member", note: "" }); await load(); }
-        catch (err) { toast.error(extractErrorMessage(err, "Could not send invite")); }
+        e.preventDefault(); setSending(true); setEmailError("");
+        try { await api.post("/household/invite", form); toast.success(`Invitation sent to ${form.email}`); setForm({ email: "", wayly_role: "caregiver", relationship: "Adult child", note: "" }); await load(); }
+        catch (err) {
+            const detail = err?.response?.data?.detail;
+            if (detail && typeof detail === "object" && detail.code === "email_registered") { setEmailError(detail.message); }
+            else { toast.error(extractErrorMessage(err, "Could not send invite")); }
+        }
         finally { setSending(false); }
     };
     const remove = async (uid) => { if (!window.confirm("Remove this member?")) return; try { await api.delete(`/household/members/${uid}`); toast.success("Member removed"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not remove")); } };
+    const resend = async (token) => { try { await api.post(`/household/invite/${token}/resend`); toast.success("Invitation resent"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not resend")); } };
+    const revoke = async (token) => { if (!window.confirm("Revoke this invitation?")) return; try { await api.delete(`/household/invite/${token}`); toast.success("Invitation revoked"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not revoke")); } };
     const onFamily = user?.plan === "family";
+    const cap = data.capacity;
+    const subhead = onFamily
+        ? `Your Family plan supports ${cap?.participants_included ?? 2} participants and ${cap?.caregivers_included ?? 3} family members. Participants see everything on the account. Family members see the Family Wall and can post updates, but not statements, tools, or billing.`
+        : `Your Solo plan supports 1 participant and 1 family member. Participants see everything on the account. Family members see the Family Wall and can post updates, but not statements, tools, or billing.`;
     return (
         <div className="space-y-6" data-testid="settings-members">
             <div>
                 <h2 className="font-heading text-2xl text-primary-k tracking-tight">Family Members</h2>
-                <p className="text-sm text-muted-k mt-1">Up to 5 people per household (including you). Everyone sees the statements and audit log.</p>
+                <p className="text-sm text-muted-k mt-1" data-testid="members-subhead">{subhead}</p>
+                {onFamily && cap && (
+                    <p className="text-sm font-medium text-primary-k mt-2" data-testid="members-seat-counter">
+                        {cap.people_used} of {cap.max_people} people invited. {cap.spaces_remaining} {cap.spaces_remaining === 1 ? "space" : "spaces"} remaining.
+                    </p>
+                )}
             </div>
             {!onFamily ? (
                 <div className="bg-surface border border-gold rounded-2xl p-6" data-testid="members-upgrade-gate">
-                    <h3 className="font-heading text-xl text-primary-k">Inviting Siblings Is on Family Plan</h3>
-                    <p className="text-sm text-muted-k mt-2">Family plan adds 5 seats, role-based permissions, and the Sunday digest.</p>
+                    <h3 className="font-heading text-xl text-primary-k">Inviting Family Is on the Family Plan</h3>
+                    <p className="text-sm text-muted-k mt-2">Family plan adds up to 3 family members, role-based access, and the Sunday digest.</p>
                     <Link to="/settings/billing" className="mt-4 inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33]" data-testid="members-upgrade-cta">Upgrade to Family</Link>
                 </div>
             ) : (<>
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="invite-card">
                     <h3 className="font-heading text-lg text-primary-k">Invite Someone</h3>
                     <form onSubmit={invite} className="mt-4 grid sm:grid-cols-2 gap-3">
-                        <label className="block sm:col-span-2"><span className="text-sm text-muted-k">Email</span><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required data-testid="invite-email-input" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" /></label>
-                        <label className="block"><span className="text-sm text-muted-k">Role</span><select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} data-testid="invite-role-select" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"><option value="family_member">Family member (sibling / partner)</option><option value="advisor">Advisor / GP (read-only)</option></select></label>
-                        <label className="block"><span className="text-sm text-muted-k">Optional note</span><input type="text" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Hey sis, looping you in…" data-testid="invite-note-input" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" /></label>
+                        <label className="block sm:col-span-2"><span className="text-sm text-muted-k">Email</span>
+                            <input type="email" value={form.email} onChange={(e) => { setForm({ ...form, email: e.target.value }); setEmailError(""); }} required data-testid="invite-email-input" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" />
+                            {emailError && <p className="text-xs text-terracotta mt-1.5" data-testid="invite-email-error">{emailError}</p>}
+                        </label>
+                        <div className="block sm:col-span-2">
+                            <span className="text-sm text-muted-k">Wayly role</span>
+                            <div className="mt-1 flex gap-4" data-testid="invite-role-radios">
+                                <label className="inline-flex items-center gap-2 text-sm text-primary-k cursor-pointer">
+                                    <input type="radio" name="wayly_role" value="participant" checked={form.wayly_role === "participant"} onChange={(e) => setForm({ ...form, wayly_role: e.target.value })} data-testid="invite-role-participant" className="accent-[var(--kindred-primary)]" /> Participant
+                                </label>
+                                <label className="inline-flex items-center gap-2 text-sm text-primary-k cursor-pointer">
+                                    <input type="radio" name="wayly_role" value="caregiver" checked={form.wayly_role === "caregiver"} onChange={(e) => setForm({ ...form, wayly_role: e.target.value })} data-testid="invite-role-caregiver" className="accent-[var(--kindred-primary)]" /> Family member (caregiver)
+                                </label>
+                            </div>
+                            <p className="text-xs text-muted-k mt-1.5">Participants are the person receiving Support at Home. Family members (caregivers) help coordinate. Family members cannot use Wayly's tools or see statements.</p>
+                        </div>
+                        <label className="block"><span className="text-sm text-muted-k">Relationship</span>
+                            <select value={form.relationship} onChange={(e) => setForm({ ...form, relationship: e.target.value })} required data-testid="invite-relationship-select" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k">
+                                {RELATIONSHIP_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                            </select>
+                        </label>
+                        <label className="block"><span className="text-sm text-muted-k">Optional note</span><input type="text" maxLength={200} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Hey sis, looping you in…" data-testid="invite-note-input" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k" /></label>
                         <div className="sm:col-span-2"><button type="submit" disabled={sending} data-testid="invite-submit-btn" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33] disabled:opacity-60">{sending && <Loader2 className="h-4 w-4 animate-spin" />}<Mail className="h-4 w-4" /> Send invitation</button></div>
                     </form>
                 </div>
+
+                {data.invites?.length > 0 && (
+                    <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="pending-invites-card">
+                        <h3 className="font-heading text-lg text-primary-k">Pending Invites</h3>
+                        <ul className="mt-4 space-y-2">
+                            {data.invites.map((i) => (
+                                <li key={i.token} className="flex items-center justify-between gap-3 rounded-lg p-3 bg-gold/10 border border-gold/30 text-sm" data-testid={`pending-invite-${i.email}`}>
+                                    <div>
+                                        <div className="font-medium text-primary-k">{i.email}
+                                            <span className="text-xs bg-primary-k/10 text-primary-k rounded-full px-2 py-0.5 ml-2">{i.wayly_role === "participant" ? "Participant" : "Family member"}</span>
+                                            <span className="text-xs text-muted-k ml-2">{i.relationship}</span>
+                                        </div>
+                                        <div className="text-xs text-muted-k mt-0.5">Waiting for {i.email} to sign up. Expires {formatDate(i.expires_at)}.</div>
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-none">
+                                        <button onClick={() => resend(i.token)} data-testid={`invite-resend-${i.email}`} className="text-xs text-primary-k hover:underline">Resend</button>
+                                        <button onClick={() => revoke(i.token)} data-testid={`invite-revoke-${i.email}`} className="text-xs text-terracotta hover:underline">Revoke</button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="members-list-card">
                     <h3 className="font-heading text-lg text-primary-k">Active Members</h3>
                     {loading ? (<div className="mt-4"><Skeleton variant="list" rows={3} /></div>) : (
                         <ul className="mt-4 space-y-2">
-                            {data.members.map((m) => (<li key={m.user_id || m.email} className="flex items-center justify-between rounded-lg p-3 bg-surface-2" data-testid={`member-row-${m.email}`}><div><div className="text-sm font-medium text-primary-k">{m.name} <span className="text-xs text-muted-k capitalize ml-2">{m.role?.replace("_", " ")}</span></div><div className="text-xs text-muted-k">{m.email}</div></div>{m.role !== "primary" && (<button onClick={() => remove(m.user_id)} data-testid={`member-remove-${m.email}`} className="text-xs text-terracotta hover:underline inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Remove</button>)}</li>))}
+                            {data.members.map((m) => (
+                                <li key={m.user_id || m.email} className="flex items-center justify-between gap-3 rounded-lg p-3 bg-surface-2" data-testid={`member-row-${m.email}`}>
+                                    <div>
+                                        <div className="text-sm font-medium text-primary-k">{m.name}
+                                            <span className="text-xs bg-primary-k/10 text-primary-k rounded-full px-2 py-0.5 ml-2">{roleChipLabel(m)}</span>
+                                        </div>
+                                        <div className="text-xs text-muted-k">{m.email}{m.relationship && m.relationship !== "Account holder" ? ` · ${m.relationship}` : ""}</div>
+                                        {m.legal_role_declared && <div className="text-xs text-muted-k mt-0.5" title="This is a note for your awareness. It does not change what this person can access in Wayly.">Legal role declared: {m.relationship}</div>}
+                                    </div>
+                                    {(m.wayly_role || m.role) !== "account_holder" && m.role !== "primary" && m.user_id && (<button onClick={() => remove(m.user_id)} data-testid={`member-remove-${m.email}`} className="text-xs text-terracotta hover:underline inline-flex items-center gap-1 flex-none"><Trash2 className="h-3 w-3" /> Revoke access</button>)}
+                                </li>
+                            ))}
                         </ul>
                     )}
-                    {data.invites?.length > 0 && (<><h4 className="font-medium text-primary-k mt-6 mb-2 text-sm">Pending invites</h4><ul className="space-y-2">{data.invites.map((i) => (<li key={i.token} className="flex items-center justify-between rounded-lg p-3 bg-gold/10 border border-gold/30 text-sm"><div><div className="font-medium text-primary-k">{i.email} <span className="text-xs text-muted-k capitalize ml-2">{i.role?.replace("_", " ")}</span></div><div className="text-xs text-muted-k">Expires {formatDate(i.expires_at)}</div></div><span className="text-xs text-muted-k">Pending</span></li>))}</ul></>)}
                 </div>
+
+                {data.expired?.length > 0 && (
+                    <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="expired-invites-card">
+                        <h3 className="font-heading text-lg text-primary-k">Expired Invites</h3>
+                        <ul className="mt-4 space-y-2">
+                            {data.expired.map((i) => (
+                                <li key={i.token} className="flex items-center justify-between gap-3 rounded-lg p-3 bg-surface-2 text-sm" data-testid={`expired-invite-${i.email}`}>
+                                    <div><div className="font-medium text-primary-k">{i.email}</div><div className="text-xs text-muted-k">Expired {formatDate(i.expires_at)}.</div></div>
+                                    <div className="flex items-center gap-3 flex-none">
+                                        <button onClick={() => resend(i.token)} data-testid={`expired-resend-${i.email}`} className="text-xs text-primary-k hover:underline">Resend</button>
+                                        <button onClick={() => revoke(i.token)} data-testid={`expired-delete-${i.email}`} className="text-xs text-terracotta hover:underline">Delete</button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </>)}
         </div>
     );

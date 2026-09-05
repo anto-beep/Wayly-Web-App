@@ -995,10 +995,28 @@ async def verify_email(body: VerifyBody):
 
 
 # ----------------- household member invites -----------------
+# PC-D3 relationship options (PERMS-CAREGIVER-1). Fixed list.
+RELATIONSHIP_OPTIONS = [
+    "Spouse or partner", "Adult child", "Parent", "Sibling", "Grandchild",
+    "In-law", "Step-child", "Guardian (legal)", "Enduring Power of Attorney",
+    "Trusted friend", "Neighbour", "Case worker", "Other",
+]
+LEGAL_RELATIONSHIPS = {"Guardian (legal)", "Enduring Power of Attorney"}
+
+# BR-D3 plan capacity (participants + caregiver/"family member" seats).
+PLAN_CAPACITY = {
+    "solo": {"participants_included": 1, "caregivers_included": 1},
+    "family": {"participants_included": 2, "caregivers_included": 3},
+}
+
+
 class InviteBody(BaseModel):
     email: EmailStr
-    role: _LiteralType["family_member", "advisor"]
-    note: Optional[str] = None
+    wayly_role: _LiteralType["participant", "caregiver"] = "caregiver"
+    relationship: str = "Other"
+    linked_participant_ids: List[str] = Field(default_factory=list)
+    note: Optional[str] = Field(default=None, max_length=200)
+    role: Optional[str] = None  # legacy field, ignored
 
 
 class InviteAcceptBody(BaseModel):
@@ -1014,10 +1032,40 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
     household = await _get_user_household(user_id)
     if not household:
         raise HTTPException(status_code=400, detail="Create a household first")
-    # max 5 active members including owner
-    members = await db.household_members.count_documents({"household_id": household["id"], "status": {"$in": ["active", "pending"]}})
-    if members >= (HOUSEHOLD_MAX_MEMBERS - 1):  # owner + up to MAX-1 invitees
-        raise HTTPException(status_code=400, detail=f"Family plan limit: {HOUSEHOLD_MAX_MEMBERS} members (including you)")
+
+    if body.relationship not in RELATIONSHIP_OPTIONS:
+        raise HTTPException(status_code=422, detail="Please choose a relationship from the list.")
+
+    email_l = body.email.lower()
+
+    # PC-D23: multi-household not supported in v1. Block if the email already
+    # belongs to any Wayly user (account holder, participant, or caregiver).
+    existing_user = await db.users.find_one({"email": email_l}, {"_id": 0, "id": 1})
+    if existing_user:
+        raise HTTPException(status_code=409, detail={
+            "code": "email_registered",
+            "message": ("This email is already registered with Wayly. Multi-household support is "
+                        "coming in a future update. Please invite them using a different email "
+                        "address, or contact support@wayly.com.au for help."),
+        })
+
+    # Seat validation by Wayly role (PC-D8 / BR-D3). Owner is participant #1.
+    cap = PLAN_CAPACITY.get(u.get("plan") or "family", PLAN_CAPACITY["family"])
+    existing = await db.household_members.find(
+        {"household_id": household["id"], "status": {"$in": ["active", "pending"]}},
+        {"_id": 0, "wayly_role": 1},
+    ).to_list(50)
+    pending_inv = await db.invites.find(
+        {"household_id": household["id"], "status": "pending"}, {"_id": 0, "wayly_role": 1},
+    ).to_list(50)
+    all_rows = existing + pending_inv
+    caregivers_used = sum(1 for r in all_rows if (r.get("wayly_role") or "caregiver") == "caregiver")
+    participants_used = 1 + sum(1 for r in all_rows if r.get("wayly_role") == "participant")  # +1 owner
+    if body.wayly_role == "caregiver" and caregivers_used >= cap["caregivers_included"]:
+        raise HTTPException(status_code=400, detail=f"Your plan includes up to {cap['caregivers_included']} family members. Remove one before inviting another.")
+    if body.wayly_role == "participant" and participants_used >= cap["participants_included"]:
+        raise HTTPException(status_code=400, detail=f"Your plan includes up to {cap['participants_included']} participants. Remove one before inviting another.")
+
     token = new_id().replace("-", "") + new_id().replace("-", "")
     invite = {
         "token": token,
@@ -1025,10 +1073,15 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
         "household_name": household['participant_name'],
         "inviter_user_id": user_id,
         "inviter_name": u["name"],
-        "email": body.email.lower(),
-        "role": body.role,
+        "email": email_l,
+        "wayly_role": body.wayly_role,
+        "relationship": body.relationship,
+        "linked_participant_ids": body.linked_participant_ids,
+        "legal_role_declared": body.relationship in LEGAL_RELATIONSHIPS,
+        "role": "family_member",  # legacy compatibility
         "note": body.note,
         "status": "pending",
+        "approval_status": "awaiting_signup",
         "expires_at": (datetime.now(timezone.utc) + timedelta(days=INVITE_EXPIRY_DAYS)).isoformat(),
         "created_at": now_iso(),
     }
@@ -1036,41 +1089,101 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
     origin = _trusted_frontend_url()
     accept_url = f"{origin}/invite?token={token}"
     hh_name = household['participant_name']
+    role_label = "participant" if body.wayly_role == "participant" else "family member"
     try:
         await email_service.email_tool_result(
             to=body.email,
             tool_name="Wayly family invitation",
             headline=f"{u['name']} invited you to {hh_name}'s Wayly",
             body_html=(
-                f"<p>{u['name']} wants you involved as a <strong>{body.role.replace('_', ' ')}</strong> on {hh_name}'s Wayly household.</p>"
+                f"<p>{u['name']} has invited you to join {hh_name}'s Wayly household as a <strong>{role_label}</strong>.</p>"
                 f"{('<p><em>Note from ' + u['name'].split(' ')[0] + ':</em> ' + body.note + '</p>') if body.note else ''}"
+                f"<p>For the best experience, install the Wayly app on your phone before tapping the link.</p>"
                 f"<p><a href='{accept_url}' style='display:inline-block;background:#2BC4D6;color:#0E2A47;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invitation</a></p>"
-                f"<p style='color:#6B7280;font-size:13px'>Invitation expires in {INVITE_EXPIRY_DAYS} days.</p>"
+                f"<p style='color:#6B7280;font-size:13px'>This link expires in {INVITE_EXPIRY_DAYS} days and can only be used once.</p>"
             ),
         )
     except Exception as e:
         logger.warning("Invite email failed: %s", e)
-    await _audit(household["id"], user_id, u["name"], "INVITE_SENT", f"Invited {body.email} as {body.role}")
+    await _audit(household["id"], user_id, u["name"], "INVITE_SENT", f"Invited {email_l} as {body.wayly_role} ({body.relationship})")
     invite.pop("_id", None)
     return invite
+
+
+@api.post("/household/invite/{token}/resend")
+async def resend_invite(token: str, user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        raise HTTPException(status_code=400, detail="No household")
+    inv = await db.invites.find_one({"token": token, "household_id": household["id"]})
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    u = await _get_user(user_id)
+    new_expiry = (datetime.now(timezone.utc) + timedelta(days=INVITE_EXPIRY_DAYS)).isoformat()
+    await db.invites.update_one({"token": token}, {"$set": {"status": "pending", "expires_at": new_expiry}})
+    origin = _trusted_frontend_url()
+    accept_url = f"{origin}/invite?token={token}"
+    try:
+        await email_service.email_tool_result(
+            to=inv["email"], tool_name="Wayly family invitation",
+            headline=f"{u['name']} invited you to {household['participant_name']}'s Wayly",
+            body_html=(f"<p>Reminder: {u['name']} has invited you to join {household['participant_name']}'s Wayly household.</p>"
+                       f"<p><a href='{accept_url}' style='display:inline-block;background:#2BC4D6;color:#0E2A47;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600'>Accept invitation</a></p>"
+                       f"<p style='color:#6B7280;font-size:13px'>This link expires in {INVITE_EXPIRY_DAYS} days.</p>"),
+        )
+    except Exception as e:
+        logger.warning("Invite resend email failed: %s", e)
+    await _audit(household["id"], user_id, u["name"], "INVITE_RESENT", f"Resent invite to {inv['email']}")
+    return {"ok": True, "expires_at": new_expiry}
+
+
+@api.delete("/household/invite/{token}")
+async def revoke_invite(token: str, user_id: str = Depends(get_current_user_id)):
+    household = await _get_user_household(user_id)
+    if not household:
+        raise HTTPException(status_code=400, detail="No household")
+    inv = await db.invites.find_one({"token": token, "household_id": household["id"]}, {"_id": 0, "email": 1})
+    res = await db.invites.delete_one({"token": token, "household_id": household["id"]})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    u = await _get_user(user_id)
+    await _audit(household["id"], user_id, u["name"], "INVITE_REVOKED", f"Revoked invite to {(inv or {}).get('email','')}")
+    return {"ok": True}
 
 
 @api.get("/household/members")
 async def list_members(user_id: str = Depends(get_current_user_id)):
     household = await _get_user_household(user_id)
     if not household:
-        return {"members": [], "invites": []}
-    invites_cur = db.invites.find({"household_id": household["id"], "status": "pending"}, {"_id": 0})
-    invites = await invites_cur.to_list(50)
-    mem_cur = db.household_members.find({"household_id": household["id"]}, {"_id": 0})
-    members = await mem_cur.to_list(50)
-    # Include the owner (current user) synthesised
+        return {"members": [], "invites": [], "expired": [], "capacity": None}
+    now = datetime.now(timezone.utc).isoformat()
+    all_inv = await db.invites.find({"household_id": household["id"]}, {"_id": 0}).to_list(50)
+    invites, expired = [], []
+    for i in all_inv:
+        if i.get("status") == "pending" and (i.get("expires_at") or "") >= now:
+            invites.append(i)
+        elif i.get("status") == "pending":
+            expired.append(i)
+    members = await db.household_members.find({"household_id": household["id"]}, {"_id": 0}).to_list(50)
     owner = await _get_user(household["owner_id"])
     owner_row = {
         "user_id": owner["id"], "email": owner["email"], "name": owner["name"],
-        "role": "primary", "status": "active", "joined_at": household.get("created_at", ""),
+        "role": "account_holder", "wayly_role": "account_holder", "status": "active",
+        "relationship": "Account holder", "joined_at": household.get("created_at", ""),
     }
-    return {"members": [owner_row] + members, "invites": invites}
+    plan = (owner.get("plan") or "family")
+    cap = PLAN_CAPACITY.get(plan, PLAN_CAPACITY["family"])
+    total_people = 1 + len(members) + len(invites)  # owner + active members + pending
+    max_people = cap["participants_included"] + cap["caregivers_included"]
+    capacity = {
+        "plan": plan,
+        "participants_included": cap["participants_included"],
+        "caregivers_included": cap["caregivers_included"],
+        "max_people": max_people,
+        "people_used": total_people,
+        "spaces_remaining": max(0, max_people - total_people),
+    }
+    return {"members": [owner_row] + members, "invites": invites, "expired": expired, "capacity": capacity}
 
 
 # -- Share dashboard: email a snapshot to all family members or a custom list --

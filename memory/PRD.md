@@ -7047,3 +7047,23 @@ Backend unchanged. Fixes for user punchlist:
 - Web: new `frontend/src/components/MarkdownText.jsx` (react-markdown + remark-gfm) wraps assistant bubbles in `AskWaylyV2`. Verified bold/lists render, no literal `**`.
 - Mobile: new dependency-free `mobile/src/components/MarkdownText.tsx` (handles **bold**, bullets, numbered lists, strips `#`). Wired into `app/(tabs)/ask.tsx` and `src/components/tools/AgedCareQA.tsx`. Verified on Expo preview: semibold headings, no literal `**`.
 - Report: `/app/test_reports/iteration_267.json`.
+
+## Iter268 — PERMS-CAREGIVER-1 Milestone 1: Family Members invite model + screen (Jun 2026) ✅ DONE (web+backend, testing_agent 11/11 PASS)
+Context: implementing two large specs (BILLING-REACTIVATE-1 v1, PERMS-CAREGIVER-1 v2). User chose: build PERMS P1–P4 first; **BILLING paused** pending integration_expert wiring of Stripe Billing-Portal + subscription-update (Emergent checkout wrapper likely can't do "resume"/"portal"). Delivering in tested milestones.
+Phase 0 audit done (both specs): roles were only caregiver/participant (no account_holder); invites via db.invites+db.household_members (72h, no approval/relationship/role-split); Ask Wayly prompt has no caregiver scope; .well-known deep-link files already exist; INDEX-1/monetary_constants exists but no seat counts, prices hardcoded across UI.
+M1 shipped (server.py + Settings.jsx MembersTab):
+- Invite model: wayly_role (participant|caregiver), PC-D3 relationship list + LEGAL_RELATIONSHIPS flag, PLAN_CAPACITY (solo 1+1, family 2+3), linked_participant_ids, note(200).
+- PC-D23 block: inviting an already-registered Wayly email → 409 exact copy (multi-household coming + support@wayly.com.au).
+- Seat validation per role; relationship validation (422); new POST resend + DELETE revoke endpoints; list_members returns capacity + pending/expired split + owner as account_holder.
+- Web screen rebuilt: copy overhaul (removed "Everyone sees the statements and audit log"), seat counter, Participant/Family-member radios + help text, relationship dropdown, pending/active/expired sections with Resend/Revoke.
+- Report: /app/test_reports/iteration_268.json.
+
+### PERMS remaining milestones (backlog, in order)
+- M2: Tokenised single-use signup-via-invite (Path E web) + `/invite/accept` landing + two-step account-holder APPROVAL flow + pending-approval screen. (Carry testing notes: also block emails in invites/household_members; guard resend against non-pending; dedupe people_used on accept.)
+- M3: Server-side authz middleware (@requires_role + query scoping, source of truth PC-D18) + client route guards (PC-C) applied to tools/statements/billing/etc.
+- M4: Ask Wayly caregiver scope guardrail (PC-D7/E, 20 red-team prompts) + caregiver landing = Family Wall with participant context card + caregiver read-only Family Members view (PC-G).
+- M5: Subscription-lapse caregiver behaviour (PC-K), permission audit log (PC-N), caregiver notifications scoping (PC-L), primary transfer (PC-J, [SOLICITOR]).
+- Mobile parity (Workstream M) for all of the above; move seat counts/prices into INDEX-1.
+### Out of environment (deploy/ops/legal — not agent-buildable): real-device Universal/App Links + App/Play Store + Play Install Referrer, production .well-known serving + AASA verification, Stripe Dashboard/webhook config + live secrets, solicitor sign-off, Postman/video/CI-drift/banned-vocab artefacts, feature-flag infra.
+### User backlog notes (ops): deep-link deploy dependency (PH0-F); multi-household support macro for support@wayly.com.au; iOS install re-tap T+2h nudge email (Workstream O v2.1).
+### BILLING-REACTIVATE — PAUSED pending integration_expert (Portal + subscription resume). Already shipped earlier (iter264/265): direct-to-Stripe reactivation, plan-card capacity, inactive-screen copy.
