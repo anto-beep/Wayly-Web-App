@@ -7088,3 +7088,15 @@ Shipped (additive, no existing reads changed):
 - `scripts/verify_data_model_invariants.py` (exit non-zero on violation).
 - Tests: `/app/backend/tests/test_data_model_1_iter269.py` (9/9). Report iteration_269.
 NEXT: M-PART (PARTICIPANTS-1 — Participants screen + participant CRUD/archive/deceased + invite-to-login + billable-extra [needs integration_expert for Stripe subscription item]), then M-PERMS (v3 authz middleware, route guards, tokenised signup-via-invite + approval, caregiver landing per-participant Family Wall, Ask Wayly caregiver scope, audit log, transfer-primary, subscription-lapse, mobile parity). Rewire existing SAH reads from households → participant_records during M-PART.
+
+## Iter270 — PARTICIPANTS-1 Milestone: Participants screen + participant-login invite ✅ DONE (web+backend, testing_agent 15/15 PASS)
+Built on DATA-MODEL-1. Account holder can add / edit / archive / mark-deceased participants and invite a participant to log in.
+Backend (server.py): /api/participants (list w/ role_label + capacity), POST add (Family incl 2, Solo 1; over-cap → 402 billing_required [Family extra, Stripe paused] / upgrade_required [Solo]), PATCH edit, POST /archive (blocks last live participant; drops caregiver links), POST /deceased (terminal; sole→ 90-day bereavement_grace + deactivates linked login), POST /invite-login (participant_login invite via db.invites; PC-D23 block). _require_account_holder gate (403 non-owner). 
+Also: create_household now bootstraps a participant_record + account_holder membership at creation (fixes new-signup invariant #2 gap flagged by tester).
+Web: Settings → Participants tab (ParticipantsTab) — list/add/edit(inline)/archive/deceased/invite-login, capacity counter. Screenshot-verified.
+Tests: /app/backend/tests/test_participants1_iter270.py (15/15). Report iteration_270. Account restored (cathy → 1 live participant Dorothy).
+### Deferred within this area (next):
+- Participant-login invite ACCEPT flow (POST /invite/accept intended_role=participant_login) — only invite-row creation verified so far.
+- Mobile parity for Participants (Workstream M).
+- Family extra participant billing (needs Stripe subscription-item — part of Billing unblock milestone).
+### Remaining big milestones (order): M-BILLING unblock (Stripe raw SDK + claimable sandbox: Billing Portal + resume + subscription items — Flow A per integration playbook; migrates off emergent checkout wrapper) → M-PERMS v3 (authz middleware @requires_role + participant scoping, route guards, tokenised signup-via-invite + approval, caregiver landing = per-participant Family Wall, Ask Wayly caregiver scope + 20 red-team, audit log, transfer-primary, subscription-lapse) → mobile parity.
