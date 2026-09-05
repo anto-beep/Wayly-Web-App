@@ -193,7 +193,7 @@ async def proration_preview(body: ProrationPreviewBody, request: Request):
     items = []
     base_item_id = None
     addon_item_id = None
-    for it in getattr(sub, "items", None).data if getattr(sub, "items", None) else []:
+    for it in (sub["items"]["data"] if sub.get("items") else []):
         price = getattr(it, "price", None)
         looks_like_addon = "additional_participant" in (getattr(price, "lookup_key", "") or "").lower() or "additional" in (getattr(price, "nickname", "") or "").lower()
         if looks_like_addon:
@@ -280,7 +280,7 @@ async def change_plan(body: ChangePlanBody, request: Request):
     # Determine the current base plan + item from the live subscription.
     base_item = None
     base_lookup = ""
-    for it in getattr(sub, "items", None).data if getattr(sub, "items", None) else []:
+    for it in (sub["items"]["data"] if sub.get("items") else []):
         price = getattr(it, "price", None)
         lk = (getattr(price, "lookup_key", "") or "").lower()
         if "additional_participant" not in lk:
@@ -358,6 +358,35 @@ async def change_plan(body: ChangePlanBody, request: Request):
 # Plan-follows-participant-count sync (BILLING-UI-1 v5 §4.4 / §4.1)
 # --------------------------------------------------------------------------- #
 
+async def _stamp_account_addons_active(user_id: str, sub_id) -> int:
+    """Reconcile the legacy batch3 `participant_add_ons` rows with the real
+    Stripe subscription. Extra-participant billing actually flows through the
+    subscription-item proration applied by sync (charging the saved card), so
+    any add-on row created by add_v2_participant that still has no
+    stripe_subscription_id is NOT genuinely 'pending' , it's already covered.
+    Stamp those ACTIVE rows with the subscription id so the UI stops showing a
+    misleading 'pending add-on / confirm' banner. Returns count stamped."""
+    if _db is None or not sub_id:
+        return 0
+    acct = await _db.accounts.find_one({"owner_user_id": user_id}, {"_id": 0, "id": 1})
+    if not acct:
+        return 0
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    res = await _db.participant_add_ons.update_many(
+        {
+            "account_id": acct["id"],
+            "status": "ACTIVE",
+            "$or": [
+                {"stripe_subscription_id": None},
+                {"stripe_subscription_id": {"$exists": False}},
+            ],
+        },
+        {"$set": {"stripe_subscription_id": str(sub_id), "activated_at": now}},
+    )
+    return int(getattr(res, "modified_count", 0) or 0)
+
+
 async def _active_participant_count(user_id: str) -> int:
     if _db is None:
         return 0
@@ -418,7 +447,7 @@ async def sync_plan_to_participants(request: Request):
     current_addon_item = None
     current_base_lookup = ""
     current_addon_qty = 0
-    for it in getattr(sub, "items", None).data if getattr(sub, "items", None) else []:
+    for it in (sub["items"]["data"] if sub.get("items") else []):
         price = getattr(it, "price", None)
         lk = (getattr(price, "lookup_key", "") or "").lower()
         if "additional_participant" in lk:
@@ -437,7 +466,8 @@ async def sync_plan_to_participants(request: Request):
     addon_shrinking = target_addon_qty < current_addon_qty
 
     if not (is_upgrade or is_downgrade or addon_growing or addon_shrinking):
-        return {"ok": True, "changed": False, "plan": target_plan, "addon_qty": target_addon_qty}
+        stamped = await _stamp_account_addons_active(user.get("id"), sub.id)
+        return {"ok": True, "changed": False, "plan": target_plan, "addon_qty": target_addon_qty, "addons_stamped": stamped}
 
     changes = []
 
@@ -486,7 +516,7 @@ async def sync_plan_to_participants(request: Request):
                     {
                         "items": [
                             {"price": it.price.id, "quantity": it.quantity or 1}
-                            for it in sub.items.data
+                            for it in (sub["items"]["data"] if sub.get("items") else [])
                         ],
                         "start_date": sub.current_period_start,
                         "end_date": sub.current_period_end,
@@ -511,7 +541,12 @@ async def sync_plan_to_participants(request: Request):
             {"$set": {"plan": target_plan}},
         )
 
-    return {"ok": True, "changed": True, "plan": target_plan, "addon_qty": target_addon_qty, "changes": changes}
+    # Extra-participant add-ons are now billed via the subscription items
+    # above (saved card, prorated immediately) , stamp the legacy add-on rows
+    # so no stale 'pending add-on' banner survives.
+    stamped = await _stamp_account_addons_active(user.get("id"), sub.id)
+
+    return {"ok": True, "changed": True, "plan": target_plan, "addon_qty": target_addon_qty, "changes": changes, "addons_stamped": stamped}
 
 
 # --------------------------------------------------------------------------- #
@@ -542,7 +577,7 @@ async def run_reconciliation_once() -> dict:
             logger.warning("reconcile: sub retrieve failed for user=%s: %s", u.get("id"), e)
             continue
         base_lookup = ""
-        for it in sub.items.data:
+        for it in (sub["items"]["data"] if sub.get("items") else []):
             price = it.price
             lk = (getattr(price, "lookup_key", "") or "").lower()
             if "additional_participant" not in lk:

@@ -189,9 +189,26 @@ export default function ParticipantsScreen() {
       } });
       setLastAdded(data);
       setStep("done");
+      // Extra participant → charge the saved card immediately by reconciling
+      // the live Stripe subscription (prorated add-on subscription item,
+      // off-session). If no active subscription/card is on file, point the
+      // user to Plan & Billing to add one.
+      if (data.addon) {
+        try {
+          const sync = await apiFetch<any>("/payments/sync-plan-to-participants", { method: "POST", body: {} });
+          if (sync?.ok === false && sync?.reason === "no_active_subscription") {
+            Alert.alert(
+              "Add a payment method",
+              "This extra participant needs a card on file. Open Plan & Billing to finish setting up payment.",
+              [
+                { text: "Later", style: "cancel" },
+                { text: "Plan & Billing", onPress: () => router.push("/plan-billing") },
+              ],
+            );
+          }
+        } catch { /* the daily reconciliation cron backs this up */ }
+      }
       await loadAll(); await reload();
-      // Defence-in-depth: reconcile Stripe subscription shape with the new count.
-      apiFetch("/payments/sync-plan-to-participants", { method: "POST", body: {} }).catch(() => {});
     } catch (e) {
       const detail = e instanceof ApiError ? (e.data as any)?.detail : null;
       if (detail?.error === "solo_upgrade_required") {
@@ -272,7 +289,7 @@ export default function ParticipantsScreen() {
   const canDowngradeOnRemove = basePlan === "FAMILY" && active.length === 2 && !!removeTarget && !removeTarget.is_primary;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View testID="participants-page" style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Participants" subtitle={`${active.length} active`} onBack={() => router.back()} />
       {loading ? (
         <Loading label="Loading participants…" />

@@ -305,17 +305,34 @@ export default function ParticipantsPage() {
             const { data } = await api.post("/v2/participants", payload);
             setLastAdded(data);
             setStep("done");
+            // Extra participant → charge the saved card immediately by
+            // reconciling the live Stripe subscription (adds the add-on as a
+            // prorated subscription item, off-session). If the account has no
+            // active subscription/card on file, fall back to hosted checkout.
+            if (data.addon) {
+                try {
+                    const { data: sync } = await api.post("/payments/sync-plan-to-participants");
+                    if (sync?.ok === false && sync?.reason === "no_active_subscription") {
+                        const { data: co } = await api.post("/billing/v2/addon-checkout", {
+                            addon_id: data.addon.id,
+                            origin_url: window.location.origin,
+                        });
+                        if (co?.url) { window.location.href = co.url; return; }
+                        toast.info("Extra participant added — finish payment from Plan & Billing.");
+                    } else {
+                        toast.success("Extra participant added · $24.50 per fortnight charged to your saved card.");
+                    }
+                } catch {
+                    toast.error("Participant added, but the charge didn't complete. Please retry from Plan & Billing.");
+                }
+            } else if (data.plan_upgraded_to) {
+                toast.success(`Plan upgraded to ${data.plan_upgraded_to}`);
+                api.post("/payments/sync-plan-to-participants").catch(() => {});
+            } else {
+                toast.success("Participant added");
+            }
             await loadAll();
             await refresh();
-            // BILLING-UI-1 v5 §4.1: reconcile Stripe subscription shape with
-            // the new participant count. Fire-and-forget so a Stripe hiccup
-            // doesn't block the UI; the daily reconciliation cron backs it
-            // up. Legacy /v2/participants already handles the plan flip
-            // internally, this is defence in depth against drift.
-            api.post("/payments/sync-plan-to-participants").catch(() => {});
-            if (data.plan_upgraded_to) toast.success(`Plan upgraded to ${data.plan_upgraded_to}`);
-            else if (data.addon) toast.success(`Add-on subscription created · $24.50 per fortnight`);
-            else toast.success("Participant added");
         } catch (e) {
             const err = e?.response?.data?.detail;
             if (err?.error === "solo_upgrade_required") {

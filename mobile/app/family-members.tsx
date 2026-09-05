@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { Crown, Mail, Trash2, UserPlus, Users } from "lucide-react-native";
+import { Crown, Mail, Trash2, UserPlus, Users, X } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
@@ -10,17 +10,23 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDate } from "@/src/utils/format";
 
-type Member = { user_id?: string; email: string; name?: string; role: string; status: string };
-type Invite = { token: string; email: string; role: string; expires_at?: string };
-type MembersData = { members: Member[]; invites: Invite[] };
+type Member = { user_id?: string; email: string; name?: string; role: string; status: string; relationship?: string };
+type Invite = { token: string; email: string; relationship?: string; wayly_role?: string; expires_at?: string };
+type PendingApproval = { id: string; name?: string; email?: string; relationship?: string };
+type Capacity = { caregivers_used?: number; caregiver_spaces_remaining?: number; caregivers_included?: number };
+type MembersData = {
+  members: Member[];
+  invites: Invite[];
+  expired?: Invite[];
+  capacity?: Capacity | null;
+  pending_approvals?: PendingApproval[];
+};
 
-function fmtDate(s?: string): string {
-  return formatDate(s);
-}
-
-const ROLES = [
-  { key: "family_member", label: "Family member" },
-  { key: "advisor", label: "Advisor / GP (read-only)" },
+// PC-D3 relationship options (PERMS-CAREGIVER-1) — mirrors the web select.
+const RELATIONSHIP_OPTIONS = [
+  "Spouse or partner", "Adult child", "Parent", "Sibling", "Grandchild",
+  "In-law", "Step-child", "Guardian (legal)", "Enduring Power of Attorney",
+  "Trusted friend", "Neighbour", "Case worker", "Other",
 ];
 
 export default function FamilyMembersScreen() {
@@ -31,11 +37,12 @@ export default function FamilyMembersScreen() {
   const [data, setData] = useState<MembersData | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("family_member");
+  const [relationship, setRelationship] = useState("Adult child");
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");
   const [formOk, setFormOk] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try { setData(await apiFetch<MembersData>("/household/members")); }
@@ -49,13 +56,65 @@ export default function FamilyMembersScreen() {
     if (!email.trim()) { setFormError("Enter an email address to invite."); return; }
     setSending(true);
     try {
-      await apiFetch("/household/invite", { method: "POST", body: { email: email.trim().toLowerCase(), role, note: note.trim() || undefined } });
+      await apiFetch("/household/invite", {
+        method: "POST",
+        body: {
+          email: email.trim().toLowerCase(),
+          wayly_role: "caregiver",
+          relationship,
+          note: note.trim() || undefined,
+        },
+      });
       setFormOk(`Invitation sent to ${email.trim()}.`);
-      setEmail(""); setNote(""); setRole("family_member");
+      setEmail(""); setNote(""); setRelationship("Adult child");
       await load();
     } catch (e) {
-      setFormError(e instanceof ApiError ? e.message : "Could not send the invite. Please try again.");
+      const detail = e instanceof ApiError ? (e.data as any)?.detail : null;
+      const msg = (detail && typeof detail === "object" && detail.message) || (e instanceof ApiError ? e.message : "Could not send the invite. Please try again.");
+      setFormError(msg);
     } finally { setSending(false); }
+  };
+
+  const approve = async (mid: string) => {
+    setBusyId(mid);
+    try { await apiFetch(`/household/memberships/${mid}/approve`, { method: "POST", body: {} }); await load(); }
+    catch (e) { Alert.alert("Could not approve", e instanceof ApiError ? e.message : "Please try again."); }
+    finally { setBusyId(null); }
+  };
+
+  const deny = (mid: string, who: string) => {
+    Alert.alert("Deny access", `Deny ${who}'s access to this household?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Deny", style: "destructive", onPress: async () => {
+          setBusyId(mid);
+          try { await apiFetch(`/household/memberships/${mid}/deny`, { method: "POST", body: {} }); await load(); }
+          catch (e) { Alert.alert("Could not deny", e instanceof ApiError ? e.message : "Please try again."); }
+          finally { setBusyId(null); }
+        },
+      },
+    ]);
+  };
+
+  const resend = async (token: string) => {
+    setBusyId(token);
+    try { await apiFetch(`/household/invite/${token}/resend`, { method: "POST", body: {} }); Alert.alert("Invitation resent"); await load(); }
+    catch (e) { Alert.alert("Could not resend", e instanceof ApiError ? e.message : "Please try again."); }
+    finally { setBusyId(null); }
+  };
+
+  const revoke = (token: string, who: string) => {
+    Alert.alert("Revoke invitation", `Revoke the invitation to ${who}?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Revoke", style: "destructive", onPress: async () => {
+          setBusyId(token);
+          try { await apiFetch(`/household/invite/${token}`, { method: "DELETE" }); await load(); }
+          catch (e) { Alert.alert("Could not revoke", e instanceof ApiError ? e.message : "Please try again."); }
+          finally { setBusyId(null); }
+        },
+      },
+    ]);
   };
 
   const remove = (m: Member) => {
@@ -71,6 +130,9 @@ export default function FamilyMembersScreen() {
     ]);
   };
 
+  const cap = data?.capacity;
+  const pending = data?.pending_approvals || [];
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Family Members" subtitle="Share the load with your household" onBack={() => router.back()} />
@@ -82,8 +144,33 @@ export default function FamilyMembersScreen() {
             {!onFamily ? (
               <Card testID="members-upgrade-card">
                 <T style={{ fontFamily: fonts.headingSemi, fontSize: 18 }}>Family Members is on the Family plan</T>
-                <T variant="small" style={{ marginTop: 6 }}>Family plan adds up to 5 seats, role based permissions, and the Sunday digest for everyone.</T>
+                <T variant="small" style={{ marginTop: 6 }}>Family members see the Family Wall and can post updates, but not statements, tools, or billing.</T>
                 <Button label="See plans" testID="members-upgrade-cta" onPress={() => router.push("/plan-select")} style={{ marginTop: spacing.md }} />
+              </Card>
+            ) : null}
+
+            {onFamily && cap ? (
+              <T variant="small" testID="members-seat-counter" style={{ color: colors.text }}>
+                {cap.caregivers_used ?? 0} family member{(cap.caregivers_used ?? 0) === 1 ? "" : "s"} invited · {cap.caregiver_spaces_remaining ?? 0} {(cap.caregiver_spaces_remaining ?? 0) === 1 ? "space" : "spaces"} remaining.
+              </T>
+            ) : null}
+
+            {/* Waiting for approval */}
+            {pending.length > 0 ? (
+              <Card testID="pending-approvals-card" style={{ borderColor: colors.gold, borderWidth: 2 }}>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, marginBottom: spacing.sm }}>Waiting for your approval</T>
+                {pending.map((pa) => (
+                  <View key={pa.id} testID={`pending-approval-${pa.email}`} style={{ paddingVertical: spacing.sm, borderBottomWidth: 0, gap: spacing.sm }}>
+                    <View>
+                      <T style={{ fontFamily: fonts.bodyMedium, fontSize: 15 }} numberOfLines={1}>{pa.name || pa.email}</T>
+                      <T variant="small" numberOfLines={1}>{pa.email} · {pa.relationship || "Family member"} · signed up, awaiting approval</T>
+                    </View>
+                    <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                      <Button label="Approve" testID={`approve-${pa.email}`} onPress={() => approve(pa.id)} loading={busyId === pa.id} style={{ flex: 1 }} />
+                      <Button label="Deny" variant="outline" testID={`deny-${pa.email}`} onPress={() => deny(pa.id, pa.name || pa.email || "this person")} style={{ flex: 1 }} />
+                    </View>
+                  </View>
+                ))}
               </Card>
             ) : null}
 
@@ -101,12 +188,12 @@ export default function FamilyMembersScreen() {
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                         <T style={{ fontFamily: fonts.bodyMedium, fontSize: 15 }} numberOfLines={1}>{m.name || m.email}</T>
-                        {m.role === "primary" ? <Crown size={14} color={colors.gold} /> : null}
+                        {m.role === "account_holder" || m.role === "primary" ? <Crown size={14} color={colors.gold} /> : null}
                       </View>
-                      <T variant="small" numberOfLines={1}>{m.email}</T>
+                      <T variant="small" numberOfLines={1}>{m.email}{m.relationship ? ` · ${m.relationship}` : ""}</T>
                     </View>
-                    <Badge label={(m.role || "").replace(/_/g, " ").toUpperCase()} tone={m.role === "primary" ? "brand" : "neutral"} />
-                    {m.role !== "primary" && m.user_id ? (
+                    <Badge label={(m.role || "").replace(/_/g, " ").toUpperCase()} tone={m.role === "account_holder" || m.role === "primary" ? "brand" : "neutral"} />
+                    {m.role !== "primary" && m.role !== "account_holder" && m.user_id ? (
                       <Pressable testID={`member-remove-${i}`} hitSlop={10} onPress={() => remove(m)}>
                         <Trash2 size={18} color={colors.terracotta} />
                       </Pressable>
@@ -123,22 +210,24 @@ export default function FamilyMembersScreen() {
                   <UserPlus size={18} color={colors.primary} />
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Invite someone</T>
                 </View>
+                <T variant="small" style={{ marginBottom: spacing.sm }}>Family members help coordinate your household. They see the Family Wall and can post updates. They cannot see statements, use tools, or manage billing.</T>
                 <Field label="Email" testID="invite-email-input" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="sister@example.com" />
-                <T variant="label" style={{ marginTop: spacing.md, marginBottom: 6 }}>ROLE</T>
-                <View style={{ gap: spacing.sm }}>
-                  {ROLES.map((r) => {
-                    const active = role === r.key;
+                <T variant="label" style={{ marginTop: spacing.md, marginBottom: 6 }}>RELATIONSHIP</T>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.md }}>
+                  {RELATIONSHIP_OPTIONS.map((r) => {
+                    const active = relationship === r;
                     return (
-                      <Pressable key={r.key} testID={`invite-role-${r.key}`} onPress={() => setRole(r.key)}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: spacing.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.sageSoft : "transparent" }}>
-                        <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: active ? colors.primary : colors.muted, alignItems: "center", justifyContent: "center" }}>
-                          {active ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} /> : null}
-                        </View>
-                        <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>{r.label}</T>
+                      <Pressable
+                        key={r}
+                        testID={`invite-relationship-${r}`}
+                        onPress={() => setRelationship(r)}
+                        style={{ flexShrink: 0, height: 36, justifyContent: "center", paddingHorizontal: spacing.md, borderRadius: 18, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }}
+                      >
+                        <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? colors.primaryFg : colors.text }}>{r}</T>
                       </Pressable>
                     );
                   })}
-                </View>
+                </ScrollView>
                 <Field label="Optional note" testID="invite-note-input" value={note} onChangeText={setNote} placeholder="Hey sis, looping you in…" style={{ marginTop: spacing.md }} />
                 {formError ? <T variant="small" testID="invite-error" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{formError}</T> : null}
                 {formOk ? <T variant="small" testID="invite-success" style={{ color: colors.success, marginTop: spacing.sm }}>{formOk}</T> : null}
@@ -151,12 +240,18 @@ export default function FamilyMembersScreen() {
               <Card testID="invites-pending">
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, marginBottom: spacing.sm }}>Pending invites</T>
                 {(data?.invites || []).map((inv, i) => (
-                  <View key={inv.token} testID={`invite-pending-${i}`} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: spacing.sm, borderBottomWidth: i < (data!.invites.length - 1) ? 1 : 0, borderBottomColor: colors.border }}>
-                    <View style={{ flex: 1, paddingRight: spacing.sm }}>
-                      <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }} numberOfLines={1}>{inv.email}</T>
-                      <T variant="small">{(inv.role || "").replace(/_/g, " ")} · expires {fmtDate(inv.expires_at)}</T>
+                  <View key={inv.token} testID={`invite-pending-${i}`} style={{ paddingVertical: spacing.sm, borderBottomWidth: i < (data!.invites.length - 1) ? 1 : 0, borderBottomColor: colors.border, gap: spacing.sm }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                      <View style={{ flex: 1, paddingRight: spacing.sm }}>
+                        <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }} numberOfLines={1}>{inv.email}</T>
+                        <T variant="small">{inv.relationship || "Family member"} · expires {formatDate(inv.expires_at)}</T>
+                      </View>
+                      <Badge label="PENDING" tone="alert" />
                     </View>
-                    <Badge label="PENDING" tone="alert" />
+                    <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                      <Button label="Resend" variant="outline" testID={`invite-resend-${i}`} onPress={() => resend(inv.token)} loading={busyId === inv.token} icon={Mail} style={{ flex: 1 }} />
+                      <Button label="Revoke" variant="outline" testID={`invite-revoke-${i}`} onPress={() => revoke(inv.token, inv.email)} icon={X} style={{ flex: 1 }} />
+                    </View>
                   </View>
                 ))}
               </Card>
