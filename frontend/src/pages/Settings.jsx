@@ -890,6 +890,8 @@ function MembersTab() {
     };
     const remove = async (uid) => { if (!window.confirm("Remove this member?")) return; try { await api.delete(`/household/members/${uid}`); toast.success("Member removed"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not remove")); } };
     const resend = async (token) => { try { await api.post(`/household/invite/${token}/resend`); toast.success("Invitation resent"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not resend")); } };
+    const approveMember = async (mid) => { try { await api.post(`/household/memberships/${mid}/approve`); toast.success("Access approved"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not approve")); } };
+    const denyMember = async (mid) => { if (!window.confirm("Deny this person's access?")) return; try { await api.post(`/household/memberships/${mid}/deny`); toast.success("Access denied"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not deny")); } };
     const revoke = async (token) => { if (!window.confirm("Revoke this invitation?")) return; try { await api.delete(`/household/invite/${token}`); toast.success("Invitation revoked"); await load(); } catch (err) { toast.error(extractErrorMessage(err, "Could not revoke")); } };
     const onFamily = user?.plan === "family";
     const cap = data.capacity;
@@ -923,6 +925,25 @@ function MembersTab() {
                     <Link to="/settings/billing" className="mt-4 inline-flex items-center gap-2 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm hover:bg-[#091D33]" data-testid="members-upgrade-cta">Upgrade to Family</Link>
                 </div>
             ) : (<>
+                {data.pending_approvals?.length > 0 && (
+                    <div className="bg-surface border-2 border-gold rounded-2xl p-6" data-testid="pending-approvals-card">
+                        <h3 className="font-heading text-lg text-primary-k">Waiting for Your Approval</h3>
+                        <ul className="mt-4 space-y-2">
+                            {data.pending_approvals.map((pa) => (
+                                <li key={pa.id} className="flex items-center justify-between gap-3 rounded-lg p-3 bg-gold/10 text-sm" data-testid={`pending-approval-${pa.email}`}>
+                                    <div>
+                                        <div className="font-medium text-primary-k">{pa.name || pa.email}</div>
+                                        <div className="text-xs text-muted-k">{pa.email} · {pa.relationship || "Family member"} · signed up, awaiting approval</div>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-none">
+                                        <button onClick={() => approveMember(pa.id)} data-testid={`approve-${pa.email}`} className="text-xs bg-primary-k text-white rounded-md px-3 py-1.5">Approve</button>
+                                        <button onClick={() => denyMember(pa.id)} data-testid={`deny-${pa.email}`} className="text-xs text-terracotta hover:underline">Deny</button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="invite-card">
                     <h3 className="font-heading text-lg text-primary-k">Invite Someone</h3>
                     <form onSubmit={invite} className="mt-4 grid sm:grid-cols-2 gap-3">

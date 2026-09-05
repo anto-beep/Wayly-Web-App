@@ -1155,6 +1155,113 @@ async def revoke_invite(token: str, user_id: str = Depends(get_current_user_id))
     return {"ok": True}
 
 
+class InviteSignupBody(BaseModel):
+    token: str = Field(min_length=10, max_length=160)
+    name: str = Field(min_length=1, max_length=120)
+    password: str = Field(min_length=8, max_length=200)
+
+
+@api.get("/invite/{token}")
+async def get_invite(token: str):
+    inv = await db.invites.find_one({"token": token}, {"_id": 0})
+    if not inv:
+        raise HTTPException(status_code=404, detail="This invite link is not valid.")
+    now = datetime.now(timezone.utc).isoformat()
+    expired = inv.get("status") != "pending" or (inv.get("expires_at") or "") < now
+    existing = await db.users.find_one({"email": inv["email"]}, {"_id": 0, "id": 1})
+    is_participant = inv.get("wayly_role") == "participant_user" or inv.get("intended_role") == "participant_login"
+    return {
+        "inviter_name": inv.get("inviter_name"), "household_name": inv.get("household_name"),
+        "email": inv["email"], "kind": "participant" if is_participant else "caregiver",
+        "relationship": inv.get("relationship"), "note": inv.get("note"),
+        "expired": expired, "already_registered": bool(existing),
+    }
+
+
+@api.post("/invite/accept")
+async def accept_invite(body: InviteSignupBody, request: Request):
+    import data_model as _dm
+    inv = await db.invites.find_one({"token": body.token})
+    if not inv or inv.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="This invite link is no longer valid.")
+    now = datetime.now(timezone.utc).isoformat()
+    if (inv.get("expires_at") or "") < now:
+        raise HTTPException(status_code=400, detail="This invite link has expired. Ask the account holder to resend it.")
+    email_l = inv["email"]
+    if await db.users.find_one({"email": email_l}):
+        raise HTTPException(status_code=409, detail="This email is already registered. Please log in instead.")
+    await assert_password_not_pwned(body.password)
+    is_participant = inv.get("wayly_role") == "participant_user" or inv.get("intended_role") == "participant_login"
+    uid = new_id()
+    user_doc = {
+        "id": uid, "email": email_l, "password_hash": hash_password(body.password),
+        "name": body.name, "first_name": body.name.split(" ")[0],
+        "last_name": " ".join(body.name.split(" ")[1:]) or None, "mobile": None,
+        "role": "participant" if is_participant else "caregiver", "plan": None,
+        "household_id": inv["household_id"], "created_at": now_iso(),
+        "email_verified": True, "email_verified_at": now_iso(), "verification_deadline": None,
+    }
+    await db.users.insert_one(user_doc)
+    if is_participant:
+        pid = inv.get("participant_record_id")
+        if pid:
+            await db.participant_records.update_one({"id": pid}, {"$set": {"user_id": uid, "updated_at": now_iso()}})
+        await db.household_memberships.insert_one(
+            _dm.build_membership(inv["household_id"], uid, _dm.ROLE_PARTICIPANT_USER, relationship="Self"))
+        pending = False
+    else:
+        mem = _dm.build_membership(inv["household_id"], uid, _dm.ROLE_CAREGIVER,
+                                   relationship=inv.get("relationship") or "Other",
+                                   invited_by=inv.get("inviter_user_id"),
+                                   legal_role_declared=bool(inv.get("legal_role_declared")))
+        mem["status"] = "pending_approval"
+        await db.household_memberships.insert_one(mem)
+        pending = True
+        try:
+            owner = await _get_user(inv["inviter_user_id"])
+            await email_service.email_tool_result(
+                to=owner["email"], tool_name="Wayly approval needed",
+                headline=f"{body.name} accepted your invitation",
+                body_html=f"<p>{body.name} ({email_l}) has signed up and is waiting for your approval on the Family Members screen.</p>")
+        except Exception as e:
+            logger.warning("approval notify failed: %s", e)
+    await db.invites.update_one({"token": body.token},
+                                {"$set": {"status": "accepted", "accepted_at": now_iso(), "accepted_user_id": uid}})
+    access, _j, _e = create_access_token(uid)
+    refresh, _rj, _re = create_refresh_token(uid)
+    return {"token": access, "refresh_token": refresh, "pending_approval": pending,
+            "user": (await _user_public_with_sub(user_doc)).model_dump()}
+
+
+@api.post("/household/memberships/{mid}/approve")
+async def approve_membership(mid: str, user_id: str = Depends(get_current_user_id)):
+    import data_model as _dm
+    h = await _require_account_holder(user_id)
+    mem = await db.household_memberships.find_one({"id": mid, "household_id": h["id"]})
+    if not mem:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    await db.household_memberships.update_one({"id": mid}, {"$set": {"status": "active", "approved_at": now_iso(), "updated_at": now_iso()}})
+    prs = await db.participant_records.find({"household_id": h["id"], "archived_at": None, "deceased_at": None}, {"_id": 0, "id": 1}).to_list(20)
+    for pr in prs:
+        if not await db.caregiver_participant_links.find_one({"caregiver_membership_id": mid, "participant_record_id": pr["id"]}):
+            await db.caregiver_participant_links.insert_one(_dm.build_caregiver_link(mid, pr["id"]))
+    u = await _get_user(user_id)
+    await _audit(h["id"], user_id, u["name"], "CAREGIVER_APPROVED", f"Approved caregiver membership {mid}")
+    return {"ok": True}
+
+
+@api.post("/household/memberships/{mid}/deny")
+async def deny_membership(mid: str, user_id: str = Depends(get_current_user_id)):
+    h = await _require_account_holder(user_id)
+    mem = await db.household_memberships.find_one({"id": mid, "household_id": h["id"]})
+    if not mem:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    await db.household_memberships.update_one({"id": mid}, {"$set": {"status": "revoked", "revoked_at": now_iso(), "updated_at": now_iso()}})
+    u = await _get_user(user_id)
+    await _audit(h["id"], user_id, u["name"], "CAREGIVER_DENIED", f"Denied caregiver membership {mid}")
+    return {"ok": True}
+
+
 @api.get("/household/members")
 async def list_members(user_id: str = Depends(get_current_user_id)):
     household = await _get_user_household(user_id)
@@ -1192,7 +1299,15 @@ async def list_members(user_id: str = Depends(get_current_user_id)):
         "participants_included": cap["participants_included"],
         "participants_summary": participants_summary,
     }
-    return {"members": [owner_row] + members, "invites": invites, "expired": expired, "capacity": capacity}
+    # Caregivers who accepted their invite and await account-holder approval.
+    pending_approvals = await db.household_memberships.find(
+        {"household_id": household["id"], "status": "pending_approval"}, {"_id": 0}).to_list(20)
+    for pa in pending_approvals:
+        pu = await db.users.find_one({"id": pa.get("user_id")}, {"_id": 0, "name": 1, "email": 1})
+        pa["name"] = (pu or {}).get("name")
+        pa["email"] = (pu or {}).get("email")
+    return {"members": [owner_row] + members, "invites": invites, "expired": expired,
+            "capacity": capacity, "pending_approvals": pending_approvals}
 
 
 # ----------------- participants (DATA-MODEL-1 / PARTICIPANTS-1) -----------------
@@ -1526,54 +1641,6 @@ async def remove_member(member_user_id: str, user_id: str = Depends(get_current_
     )
     await db.users.update_one({"id": member_user_id}, {"$unset": {"household_id": ""}})
     return {"ok": True}
-
-
-@api.get("/invite/{token}")
-async def get_invite(token: str):
-    inv = await db.invites.find_one({"token": token, "status": "pending"}, {"_id": 0})
-    if not inv:
-        raise HTTPException(status_code=404, detail="Invitation not found or already used")
-    expires = datetime.fromisoformat(inv["expires_at"])
-    if datetime.now(timezone.utc) > expires:
-        raise HTTPException(status_code=400, detail="Invitation has expired")
-    return {
-        "email": inv["email"],
-        "role": inv["role"],
-        "household_name": inv["household_name"],
-        "inviter_name": inv["inviter_name"],
-        "note": inv.get("note"),
-    }
-
-
-@api.post("/invite/accept")
-async def accept_invite(body: InviteAcceptBody, user_id: str = Depends(get_current_user_id)):
-    inv = await db.invites.find_one({"token": body.token, "status": "pending"}, {"_id": 0})
-    if not inv:
-        raise HTTPException(status_code=404, detail="Invitation not found")
-    u = await _get_user(user_id)
-    if u["email"].lower() != inv["email"]:
-        raise HTTPException(status_code=403, detail=f"This invitation is for {inv['email']}.")
-    await db.household_members.insert_one({
-        "household_id": inv["household_id"], "user_id": user_id,
-        "email": u["email"], "name": u["name"], "role": inv["role"],
-        "status": "active", "joined_at": now_iso(),
-    })
-    await db.users.update_one({"id": user_id}, {"$set": {"household_id": inv["household_id"]}})
-    await db.invites.update_one({"token": body.token}, {"$set": {"status": "accepted", "accepted_at": now_iso()}})
-    await _audit(inv["household_id"], user_id, u["name"], "INVITE_ACCEPTED",
-                 f"{u['name']} joined as {inv['role']}")
-    # Notify the inviter
-    try:
-        await create_notification(
-            inv["inviter_user_id"],
-            "family_messages",
-            f"{u['name']} joined your household",
-            f"They're now on the Wayly household as {inv['role'].replace('_', ' ')}.",
-            "/settings/members",
-        )
-    except Exception:
-        pass
-    return {"ok": True, "household_id": inv["household_id"]}
 
 
 # ----------------- wellbeing check-in -----------------
