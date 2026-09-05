@@ -809,8 +809,10 @@ function MembersTab() {
     const onFamily = user?.plan === "family";
     const cap = data.capacity;
     const subhead = onFamily
-        ? `Your Family plan supports ${cap?.participants_included ?? 2} participants and ${cap?.caregivers_included ?? 3} family members. Participants see everything on the account. Family members see the Family Wall and can post updates, but not statements, tools, or billing.`
-        : `Your Solo plan supports 1 participant and 1 family member. Participants see everything on the account. Family members see the Family Wall and can post updates, but not statements, tools, or billing.`;
+        ? "Your Family plan supports 3 family members. Family members see the Family Wall and can post updates, but not statements, tools, or billing."
+        : "Your Solo plan supports 1 family member. Family members see the Family Wall and can post updates, but not statements, tools, or billing.";
+    const cgUsed = cap?.caregivers_used ?? 0;
+    const cgRemaining = cap?.caregiver_spaces_remaining ?? 0;
     return (
         <div className="space-y-6" data-testid="settings-members">
             <div>
@@ -818,7 +820,14 @@ function MembersTab() {
                 <p className="text-sm text-muted-k mt-1" data-testid="members-subhead">{subhead}</p>
                 {onFamily && cap && (
                     <p className="text-sm font-medium text-primary-k mt-2" data-testid="members-seat-counter">
-                        {cap.people_used} of {cap.max_people} people invited. {cap.spaces_remaining} {cap.spaces_remaining === 1 ? "space" : "spaces"} remaining.
+                        {cgUsed} family member{cgUsed === 1 ? "" : "s"} invited. {cgRemaining} {cgRemaining === 1 ? "space" : "spaces"} remaining.
+                    </p>
+                )}
+                {cap?.participants_summary?.length > 0 && (
+                    <p className="text-xs text-muted-k mt-2" data-testid="household-includes">
+                        Household includes: {cap.participants_summary.map((p, i) => (
+                            <span key={i}>{i > 0 ? ", " : ""}{p.name} ({p.label})</span>
+                        ))}. Manage participants on the Participants screen.
                     </p>
                 )}
             </div>
@@ -837,16 +846,7 @@ function MembersTab() {
                             {emailError && <p className="text-xs text-terracotta mt-1.5" data-testid="invite-email-error">{emailError}</p>}
                         </label>
                         <div className="block sm:col-span-2">
-                            <span className="text-sm text-muted-k">Wayly role</span>
-                            <div className="mt-1 flex gap-4" data-testid="invite-role-radios">
-                                <label className="inline-flex items-center gap-2 text-sm text-primary-k cursor-pointer">
-                                    <input type="radio" name="wayly_role" value="participant" checked={form.wayly_role === "participant"} onChange={(e) => setForm({ ...form, wayly_role: e.target.value })} data-testid="invite-role-participant" className="accent-[var(--kindred-primary)]" /> Participant
-                                </label>
-                                <label className="inline-flex items-center gap-2 text-sm text-primary-k cursor-pointer">
-                                    <input type="radio" name="wayly_role" value="caregiver" checked={form.wayly_role === "caregiver"} onChange={(e) => setForm({ ...form, wayly_role: e.target.value })} data-testid="invite-role-caregiver" className="accent-[var(--kindred-primary)]" /> Family member (caregiver)
-                                </label>
-                            </div>
-                            <p className="text-xs text-muted-k mt-1.5">Participants are the person receiving Support at Home. Family members (caregivers) help coordinate. Family members cannot use Wayly's tools or see statements.</p>
+                            <p className="text-xs text-muted-k">Family members help coordinate your household on Wayly. They can see the Family Wall and post updates. They cannot see statements, use tools, or manage billing. To add a Support at Home participant, use the Participants screen instead.</p>
                         </div>
                         <label className="block"><span className="text-sm text-muted-k">Relationship</span>
                             <select value={form.relationship} onChange={(e) => setForm({ ...form, relationship: e.target.value })} required data-testid="invite-relationship-select" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k">

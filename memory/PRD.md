@@ -7067,3 +7067,24 @@ M1 shipped (server.py + Settings.jsx MembersTab):
 ### Out of environment (deploy/ops/legal — not agent-buildable): real-device Universal/App Links + App/Play Store + Play Install Referrer, production .well-known serving + AASA verification, Stripe Dashboard/webhook config + live secrets, solicitor sign-off, Postman/video/CI-drift/banned-vocab artefacts, feature-flag infra.
 ### User backlog notes (ops): deep-link deploy dependency (PH0-F); multi-household support macro for support@wayly.com.au; iOS install re-tap T+2h nudge email (Workstream O v2.1).
 ### BILLING-REACTIVATE — PAUSED pending integration_expert (Portal + subscription resume). Already shipped earlier (iter264/265): direct-to-Stripe reactivation, plan-card capacity, inactive-screen copy.
+
+## Iter269 — DATA-MODEL-1 / PARTICIPANTS-1 / PERMS v3 intake + Family Members v3 alignment (Jun 2026)
+New specs received (supersede prior): DATA-MODEL-1 v1 (FOUNDATION — must adopt first), PARTICIPANTS-1 v1, PERMS-CAREGIVER-1 **v3** (ignore v1/v2), BILLING-REACTIVATE-1 v1 (parallel, still PAUSED pending integration_expert). Solicitor gates: user says treat as approved/signed off.
+Key architecture (DATA-MODEL-1): three concepts — User (login), Participant record (SAH subject, exists without a login), Household membership (role: account_holder | participant_user | caregiver) + caregiver_participant_links + invitations. New collections needed: participant_records, household_memberships (revamp), caregiver_participant_links, invitations (tokenised, 72h, approval). Per-participant Family Wall. Ask Wayly participant-context scoping. 11 CI invariants. Migration: existing accounts → account_holder + 1 self-managing participant_record; existing "family members" → caregiver (relationship 'Other', requires_relationship_update).
+v3 correction shipped this iter (bounded, safe): Family Members screen is now CAREGIVER-ONLY (PC-D24) — removed the Participant/Caregiver radio from Milestone 1; seat counter shows caregivers only (PC-D25); added "Household includes..." header (PC-D26, derived until participant_records land); copy per Workstream H; backend invite forces wayly_role=caregiver + caregiver-only seat cap. Verified: compiles, capacity API returns caregiver-only + participants_summary.
+
+### Sequenced milestones (remaining, big)
+- M-DM: Adopt DATA-MODEL-1 — new collections + Pydantic models + migration/backfill script + integrity invariants. FOUNDATION, blocks all below. LARGE + risky (must not break running app).
+- M-PART: PARTICIPANTS-1 — Participants screen (add/edit/archive/deceased, invite-to-login), billable-extra participant (+$24.50 Stripe item — needs integration_expert), Family-plan multi-participant.
+- M-PERMS: PERMS v3 remaining — authz middleware (@requires_role + participant scoping), route guards, tokenised signup-via-invite + approval, caregiver landing = per-participant Family Wall, Ask Wayly caregiver scope (20 red-team), audit log, transfer-primary, subscription-lapse, mobile parity.
+- INTERIM LAUNCH OPTION (user-flagged): launch Solo-only + basic Family (account holder + up to 2 self/AH-managed participants), defer full Participants management + caregiver invites to first post-launch release (disable "Invite Someone" card at launch).
+
+## Iter269b — DATA-MODEL-1 v1 foundation ADOPTED ✅ DONE (backend, testing_agent 9/9 PASS)
+User decisions: FULL build (DATA-MODEL → PARTICIPANTS → PERMS v3 in sequence); build DATA-MODEL foundation first. BILLING still paused.
+Shipped (additive, no existing reads changed):
+- `backend/data_model.py`: canonical roles (account_holder/participant_user/caregiver), builders + idempotent `backfill_data_model(db)` + `verify_invariants(db)` + `ensure_indexes`.
+- New collections: `participant_records`, `household_memberships`, `caregiver_participant_links`. households gained `account_holder_user_id` + `bereavement_grace_expires_at`.
+- Startup event `_data_model_1_backfill` (backgrounded, idempotent). Migrated 38 households → 38 participant_records (self-managing owner) + 38 account_holder memberships; legacy active household_members → caregiver memberships + links (0 in current data). Invariants 1/2/6/9/10/11 all pass.
+- `scripts/verify_data_model_invariants.py` (exit non-zero on violation).
+- Tests: `/app/backend/tests/test_data_model_1_iter269.py` (9/9). Report iteration_269.
+NEXT: M-PART (PARTICIPANTS-1 — Participants screen + participant CRUD/archive/deceased + invite-to-login + billable-extra [needs integration_expert for Stripe subscription item]), then M-PERMS (v3 authz middleware, route guards, tokenised signup-via-invite + approval, caregiver landing per-participant Family Wall, Ask Wayly caregiver scope, audit log, transfer-primary, subscription-lapse, mobile parity). Rewire existing SAH reads from households → participant_records during M-PART.

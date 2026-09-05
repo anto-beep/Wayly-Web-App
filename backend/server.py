@@ -1049,22 +1049,14 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
                         "address, or contact support@wayly.com.au for help."),
         })
 
-    # Seat validation by Wayly role (PC-D8 / BR-D3). Owner is participant #1.
+    # Seat validation (v3, PC-D24/D25): Family Members are always caregivers.
     cap = PLAN_CAPACITY.get(u.get("plan") or "family", PLAN_CAPACITY["family"])
-    existing = await db.household_members.find(
-        {"household_id": household["id"], "status": {"$in": ["active", "pending"]}},
-        {"_id": 0, "wayly_role": 1},
-    ).to_list(50)
-    pending_inv = await db.invites.find(
-        {"household_id": household["id"], "status": "pending"}, {"_id": 0, "wayly_role": 1},
-    ).to_list(50)
-    all_rows = existing + pending_inv
-    caregivers_used = sum(1 for r in all_rows if (r.get("wayly_role") or "caregiver") == "caregiver")
-    participants_used = 1 + sum(1 for r in all_rows if r.get("wayly_role") == "participant")  # +1 owner
-    if body.wayly_role == "caregiver" and caregivers_used >= cap["caregivers_included"]:
-        raise HTTPException(status_code=400, detail=f"Your plan includes up to {cap['caregivers_included']} family members. Remove one before inviting another.")
-    if body.wayly_role == "participant" and participants_used >= cap["participants_included"]:
-        raise HTTPException(status_code=400, detail=f"Your plan includes up to {cap['participants_included']} participants. Remove one before inviting another.")
+    caregivers_used = (
+        await db.household_members.count_documents({"household_id": household["id"], "status": {"$in": ["active", "pending"]}})
+        + await db.invites.count_documents({"household_id": household["id"], "status": "pending"})
+    )
+    if caregivers_used >= cap["caregivers_included"]:
+        raise HTTPException(status_code=400, detail=f"Your plan supports {cap['caregivers_included']} family member{'s' if cap['caregivers_included'] != 1 else ''}. Remove one before inviting another.")
 
     token = new_id().replace("-", "") + new_id().replace("-", "")
     invite = {
@@ -1074,7 +1066,7 @@ async def create_invite(body: InviteBody, request: Request, user_id: str = Depen
         "inviter_user_id": user_id,
         "inviter_name": u["name"],
         "email": email_l,
-        "wayly_role": body.wayly_role,
+        "wayly_role": "caregiver",
         "relationship": body.relationship,
         "linked_participant_ids": body.linked_participant_ids,
         "legal_role_declared": body.relationship in LEGAL_RELATIONSHIPS,
@@ -1173,15 +1165,20 @@ async def list_members(user_id: str = Depends(get_current_user_id)):
     }
     plan = (owner.get("plan") or "family")
     cap = PLAN_CAPACITY.get(plan, PLAN_CAPACITY["family"])
-    total_people = 1 + len(members) + len(invites)  # owner + active members + pending
-    max_people = cap["participants_included"] + cap["caregivers_included"]
+    caregivers_used = len(members) + len(invites)  # v3: members + pending are caregivers
+    # "Household includes..." summary (PC-D26). Derived from the current model
+    # until participant_records land (DATA-MODEL-1). Owner assumed self-managing.
+    participants_summary = [{"name": owner["name"], "label": "account holder + participant"}]
+    hh_pname = household.get("participant_name")
+    if hh_pname and hh_pname.strip().lower() != (owner.get("name") or "").strip().lower():
+        participants_summary.append({"name": hh_pname, "label": "participant, no login yet"})
     capacity = {
         "plan": plan,
-        "participants_included": cap["participants_included"],
         "caregivers_included": cap["caregivers_included"],
-        "max_people": max_people,
-        "people_used": total_people,
-        "spaces_remaining": max(0, max_people - total_people),
+        "caregivers_used": caregivers_used,
+        "caregiver_spaces_remaining": max(0, cap["caregivers_included"] - caregivers_used),
+        "participants_included": cap["participants_included"],
+        "participants_summary": participants_summary,
     }
     return {"members": [owner_row] + members, "invites": invites, "expired": expired, "capacity": capacity}
 
@@ -8117,6 +8114,27 @@ async def _scenario_engine_bootstrap():
         except Exception as e:
             logger.error("scenario_engine bootstrap failed: %s", e, exc_info=True)
     _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _data_model_1_backfill():
+    """DATA-MODEL-1 v1: idempotent backfill of participant_records,
+    household_memberships and caregiver_participant_links from existing
+    households. Additive, safe to re-run. Backgrounded so readiness is fast."""
+    import asyncio as _aio
+    async def _run():
+        try:
+            import data_model as _dm
+            stats = await _dm.backfill_data_model(db)
+            inv = await _dm.verify_invariants(db)
+            logger.info("DATA-MODEL-1 backfill=%s invariants_ok=%s violations=%d",
+                        stats, inv["ok"], len(inv["violations"]))
+            if not inv["ok"]:
+                logger.warning("DATA-MODEL-1 invariant violations: %s", inv["violations"][:20])
+        except Exception as e:
+            logger.error("DATA-MODEL-1 backfill failed: %s", e, exc_info=True)
+    _aio.create_task(_run())
+
 
 
 @app.on_event("startup")
