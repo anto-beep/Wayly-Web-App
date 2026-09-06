@@ -524,7 +524,7 @@ function BillingTab() {
                     </div>
                 )}
                 {/* Current plan card */}
-                <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="current-plan-card">
+                <div className="sect-teal border border-kindred rounded-2xl p-6" data-testid="current-plan-card">
                     <div className="flex items-start justify-between flex-wrap gap-4">
                         <div>
                             <div className="flex items-center gap-2"><Crown className="h-4 w-4 text-gold" /><span className="overline">Current plan</span></div>
@@ -596,7 +596,7 @@ function BillingTab() {
 
                 {/* What You Are Paying For — live view */}
                 {account?.summary && (
-                    <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-participants-card">
+                    <div className="sect-clay border border-kindred rounded-2xl p-6" data-testid="billing-participants-card">
                         <div className="flex items-start justify-between flex-wrap gap-4">
                             <div>
                                 <div className="flex items-center gap-2"><Users className="h-4 w-4 text-primary-k" /><span className="overline">What you are paying for</span></div>
@@ -703,7 +703,7 @@ function BillingTab() {
                 </div>
 
                 {/* Payment Method */}
-                <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-payment-method-card">
+                <div className="sect-teal border border-kindred rounded-2xl p-6" data-testid="billing-payment-method-card">
                     <div className="flex items-start justify-between flex-wrap gap-3">
                         <div>
                             <div className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-k" /><span className="overline">Payment method</span></div>
@@ -725,7 +725,7 @@ function BillingTab() {
                 </div>
 
                 {/* Billing History */}
-                <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-history-card">
+                <div className="sect-clay border border-kindred rounded-2xl p-6" data-testid="billing-history-card">
                     <div className="flex items-center gap-2"><Mailbox className="h-4 w-4 text-primary-k" /><span className="overline">Billing history</span></div>
                     <p className="mt-1 text-sm text-muted-k">Every charge, receipt, and refund. Download a Stripe-hosted PDF for each.</p>
                     {invoices === null ? (

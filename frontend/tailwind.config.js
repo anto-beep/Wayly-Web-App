@@ -45,16 +45,16 @@ module.exports = {
                 // Legacy `kindred.*` token surface — kept so existing components
                 // shift automatically. Values now map to the new spec.
                 kindred: {
-                    bg: "#FBF8F3",            // neutral 50 — warm off-white
-                    surface: "#FFFFFF",
-                    surface2: "#F4EFE7",      // neutral 100
+                    bg: "#EAEDF0",            // cool grey canvas (no cream)
+                    surface: "#FBFCFE",
+                    surface2: "#EEF1F5",      // cool inset (no cream)
                     primary: "#0E4D52",       // teal-ink 600
                     gold: "#A5512B",          // clay 500 — accent (AA on white)
                     sage: "#425F47",          // sage 600 — body-safe sage
                     terracotta: "#C0392B",    // error base
                     text: "#1C2B2D",          // warm ink
                     muted: "#524B42",         // neutral 700
-                    border: "#E7E0D5",        // neutral 200
+                    border: "#E2E7EC",        // cool neutral 200
                 },
 
                 // New spec primitives — use these in fresh components.
@@ -66,7 +66,7 @@ module.exports = {
                     cyan: "#A5512B",          // was cyan → clay 500 (accent)
                     mint: "#6B8F71",          // was mint → sage 400
                     sky: "#E9F2F2",           // was sky → teal 50
-                    skyLight: "#FBF8F3",      // was skyLight → neutral 50
+                    skyLight: "#FBFCFE",      // was skyLight → neutral 50
                     wave: "#3D8488",          // was wave → teal 400
                     indigo: "#6B8F71",        // was indigo → sage 400
                     lavender: "#94B397",      // was lavender → sage 300
@@ -108,9 +108,9 @@ module.exports = {
                     "clay-900": "#31170B",
 
                     "neutral-0":   "#FFFFFF",
-                    "neutral-50":  "#FBF8F3",
-                    "neutral-100": "#F4EFE7",
-                    "neutral-200": "#E7E0D5",
+                    "neutral-50":  "#FBFCFE",
+                    "neutral-100": "#EEF1F5",
+                    "neutral-200": "#E2E7EC",
                     "neutral-300": "#D3C9BB",
                     "neutral-400": "#B3A899",
                     "neutral-500": "#8C8275",

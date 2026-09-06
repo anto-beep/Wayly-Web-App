@@ -113,6 +113,15 @@ class FindingLetterBody(BaseModel):
     participant_id: Optional[str] = None
 
 
+class FindingsLetterBody(BaseModel):
+    """Consolidated draft-a-letter: ONE letter covering EVERY finding, auto-filled
+    from all detected issues (single-button flow)."""
+    findings: List[Dict[str, Any]] = Field(default_factory=list)
+    addressee: Optional[str] = None
+    provider_name: Optional[str] = None
+    participant_id: Optional[str] = None
+
+
 class SummaryPdfBody(BaseModel):
     """B9 · downloadable summary PDF for an (un)saved review."""
     extraction: Dict[str, Any] = Field(default_factory=dict)
@@ -1221,7 +1230,77 @@ def build_care_plans_router() -> APIRouter:
             "editor_path": f"/tools/letters-and-follow-ups/{entry_id}",
         }
 
-    # ---------------- B9 · Downloadable summary PDF (unsaved review) ------
+    # ---------------- C1b · Draft ONE letter from ALL findings ------------
+    @r.post("/care-plans/letter-from-findings")
+    async def letter_from_findings(
+        body: FindingsLetterBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Single-button consolidation: draft ONE letter that raises every
+        finding with a single recipient, auto-filled from all detected issues."""
+        from lib.lf1 import get_situation
+
+        findings = body.findings or []
+        if body.addressee:
+            addressee = body.addressee.strip().lower()
+        else:
+            counts = {}
+            for f in findings:
+                a = (f.get("addressee_primary") or "provider").strip().lower()
+                counts[a] = counts.get(a, 0) + 1
+            addressee = max(counts, key=counts.get) if counts else "provider"
+        situation_id, recipient_type = _ADDRESSEE_TO_LF1.get(addressee, (6, "provider_cm"))
+        archetype = (get_situation(situation_id) or {}).get("archetype") or "request"
+
+        issues = [
+            {
+                "title": f.get("title"),
+                "detail": f.get("detail"),
+                "citation_source": f.get("citation_source"),
+                "rule_id": f.get("rule_id"),
+                "severity": f.get("severity"),
+                "suggested_question": f.get("suggested_question"),
+            }
+            for f in findings
+        ]
+        source_import = {
+            "tool": "care-plan-reviewer",
+            "combined": True,
+            "issue_count": len(issues),
+            "issues": issues,
+            "finding_title": (issues[0]["title"] if issues else None),
+            "finding_body": (issues[0]["detail"] if issues else None),
+            "addressee": addressee,
+            "provider_name": body.provider_name,
+        }
+        entry_id = str(uuid4())
+        now = utcnow_iso()
+        entry = {
+            "id": entry_id,
+            "user_id": user_id,
+            "participant_id": body.participant_id,
+            "situation_id": situation_id,
+            "archetype": archetype,
+            "direction": "outbound",
+            "recipient_type": recipient_type,
+            "sender_identity": None,
+            "sender_authority_basis": None,
+            "complaint_mode": None,
+            "atsi_preference": False,
+            "source_import": source_import,
+            "intake": {},
+            "status": "draft",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.lf1_correspondence.insert_one(entry)
+        return {
+            "entry_id": entry_id,
+            "situation_id": situation_id,
+            "addressee": addressee,
+            "editor_path": f"/tools/letters-and-follow-ups/{entry_id}",
+        }
+
     @r.post("/care-plans/summary.pdf")
     async def summary_pdf(
         body: SummaryPdfBody,

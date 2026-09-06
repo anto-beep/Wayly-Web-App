@@ -15,6 +15,14 @@ export function toAUDate(input) {
 
 // Jargon -> plain English. Order matters (longer/more specific first).
 const REPLACERS = [
+    // Field-name jargon: "The extracted pension_status field is set to 'unknown'."
+    [/(?:the\s+)?extracted\s+([a-z][a-z_]*?)\s+field\s+is\s+set\s+to\s+['"]?unknown['"]?\.?/gi,
+        (_m, f) => `We don't have the ${f.replace(/_/g, " ")} on record yet.`],
+    [/(?:the\s+)?extracted\s+([a-z][a-z_]*?)\s+field\s+is\s+set\s+to\s+['"]?([^'".]+)['"]?/gi,
+        (_m, f, v) => `The ${f.replace(/_/g, " ")} shows ${String(v).trim()}`],
+    [/(?:the\s+)?extracted\s+([a-z][a-z_]*?)\s+field\b/gi, (_m, f) => `the ${f.replace(/_/g, " ")}`],
+    [/\bis\s+set\s+to\s+['"]?unknown['"]?/gi, "is not on record yet"],
+    [/\bset\s+to\s+['"]?unknown['"]?/gi, "not recorded"],
     [/,?\s*(?:while\s+)?the\s+extracted\s+json\s+flags?\s+this\s+with[^.]*\./gi, "."],
     [/\b_[a-z_]+\s*[:=]\s*-?\d+/gi, ""],
     [/\bextracted\s+json\b/gi, "the reading we took"],
@@ -26,6 +34,8 @@ const REPLACERS = [
     [/\bAT[-\s]?HM\b/g, "government-funded support"],
     [/\bATHM\b/g, "government-funded support"],
     [/\barray\b/gi, "list"],
+    // Any leftover snake_case field token -> spaced words (e.g. pension_status).
+    [/\b([a-z]+(?:_[a-z]+)+)\b/g, (m) => m.replace(/_/g, " ")],
 ];
 
 export function humanize(input) {

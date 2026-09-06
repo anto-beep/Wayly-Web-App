@@ -49,7 +49,7 @@ function FinancialCard({ financial, personaFramingParticipantName, participantId
     return (
         <section
             data-testid="core1-financial-card"
-            className="rounded-2xl border border-primary-k/10 bg-white p-6 shadow-sm"
+            className="rounded-2xl border border-primary-k/10 sect-clay p-6 shadow-sm"
         >
             <div className="flex items-center justify-between gap-2 mb-4">
                 <h2 className="text-base font-semibold text-primary-k">Financial Position</h2>
@@ -218,15 +218,15 @@ function PatternAlertsCard({ patterns, onDismiss }) {
     return (
         <section
             data-testid="loop1-patterns-card"
-            className="rounded-2xl border border-primary-k/10 bg-white p-5"
+            className="rounded-2xl border border-primary-k/10 sect-teal p-5"
         >
             <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-5 h-5 text-primary-k" aria-hidden />
                 <h2 className="text-base font-semibold text-primary-k">Patterns Wayly Noticed</h2>
             </div>
             <ul className="space-y-2">
-                {patterns.map((p) => (
-                    <li key={p.case_type} data-testid={`loop1-pattern-${p.case_type}`} className="flex items-start justify-between gap-3 p-3 rounded-lg border border-primary-k/10 bg-primary-k/[0.02]">
+                {patterns.map((p, pi) => (
+                    <li key={p.case_type} data-testid={`loop1-pattern-${p.case_type}`} className={`flex items-start justify-between gap-3 p-3 rounded-lg border ${["item-teal","item-clay","item-sage","item-plum"][pi % 4]}`}>
                         <div className="min-w-0 flex-1">
                             <div className="text-sm text-primary-k">{p.headline}</div>
                             <div className="text-xs text-primary-k/50 mt-1">
@@ -260,7 +260,7 @@ function OpenCasesCard({ cases, totalCount, participantId, personaFraming }) {
         return (
             <section
                 data-testid="core1-open-cases-empty"
-                className="rounded-2xl border border-primary-k/10 bg-white p-5"
+                className="rounded-2xl border border-primary-k/10 sect-clay p-5"
             >
                 <div className="flex items-center gap-2 mb-2">
                     <AlertCircle className="w-5 h-5 text-primary-k/60" aria-hidden />
@@ -280,7 +280,7 @@ function OpenCasesCard({ cases, totalCount, participantId, personaFraming }) {
     return (
         <section
             data-testid="core1-open-cases-card"
-            className="rounded-2xl border border-primary-k/10 bg-white p-5"
+            className="rounded-2xl border border-primary-k/10 sect-clay p-5"
         >
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -299,12 +299,12 @@ function OpenCasesCard({ cases, totalCount, participantId, personaFraming }) {
                 </Link>
             </div>
             <ul className="space-y-2">
-                {cases.slice(0, 5).map((c) => (
+                {cases.slice(0, 5).map((c, ci) => (
                     <li key={c.id}>
                         <Link
                             to={`/app/participants/${participantId}/cases/${c.id}`}
                             data-testid={`core1-open-case-${c.id}`}
-                            className="flex items-start justify-between gap-3 p-3 rounded-lg border border-primary-k/10 hover:border-primary-k/30 hover:bg-primary-k/[0.02] transition"
+                            className={`flex items-start justify-between gap-3 p-3 rounded-lg border hover:shadow-sm transition ${["item-clay","item-teal","item-plum","item-sage"][ci % 4]}`}
                         >
                             <div className="min-w-0 flex-1">
                                 <div className="text-sm font-medium text-primary-k line-clamp-1">{c.title}</div>
@@ -344,7 +344,7 @@ function HouseholdPanel({ members }) {
     return (
         <section
             data-testid="core1-household-panel"
-            className="rounded-2xl border border-primary-k/10 bg-white p-5"
+            className="rounded-2xl border border-primary-k/10 sect-teal p-5"
         >
             <div className="flex items-center gap-2 mb-3">
                 <Users className="w-5 h-5 text-primary-k" aria-hidden />
@@ -565,7 +565,7 @@ export default function ParticipantProfile() {
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] gap-6">
                 {/* Sidebar: at-a-glance identity */}
                 <aside className="space-y-4" data-testid="core1-profile-sidebar">
-                    <section className="rounded-2xl border border-primary-k/10 bg-white p-5 shadow-sm space-y-3">
+                    <section className="rounded-2xl border border-primary-k/10 sect-teal p-5 shadow-sm space-y-3">
                         <p className="text-xs uppercase tracking-wider text-primary-k/50">Personal Details</p>
                         <dl className="text-sm space-y-2">
                             {p.provider?.primary && (
@@ -591,7 +591,7 @@ export default function ParticipantProfile() {
                         </dl>
                     </section>
 
-                    <section className="rounded-2xl border border-primary-k/10 bg-white p-5 shadow-sm">
+                    <section className="rounded-2xl border border-primary-k/10 sect-clay p-5 shadow-sm">
                         <p className="text-xs uppercase tracking-wider text-primary-k/50 mb-3">Quick Actions</p>
                         <div className="flex flex-col gap-2">
                             <Link
@@ -644,7 +644,7 @@ export default function ParticipantProfile() {
                     {/* CPR-2 Voice Check entry point */}
                     <section
                         data-testid="core1-voice-check-card"
-                        className="rounded-2xl border border-primary-k/10 bg-white p-6 shadow-sm"
+                        className="rounded-2xl border border-primary-k/10 sect-teal p-6 shadow-sm"
                     >
                         <p className="text-xs uppercase tracking-wider text-primary-k/50">Support Plan Voice Check</p>
                         <h2 className="text-base font-semibold text-primary-k mt-1">Did Every Goal Come From {personaFraming.name}?</h2>
@@ -656,7 +656,7 @@ export default function ParticipantProfile() {
                     {/* CMP-1 Complaints entry point */}
                     <section
                         data-testid="core1-complaints-card"
-                        className="rounded-2xl border border-primary-k/10 bg-white p-6 shadow-sm"
+                        className="rounded-2xl border border-primary-k/10 sect-clay p-6 shadow-sm"
                     >
                         <p className="text-xs uppercase tracking-wider text-primary-k/50">Complaints</p>
                         <h2 className="text-base font-semibold text-primary-k mt-1">Track a Complaint From Provider To Regulator</h2>
@@ -666,7 +666,7 @@ export default function ParticipantProfile() {
                     </section>
 
                     {/* Latest artefacts grid */}
-                    <section data-testid="core1-artefacts-grid" className="rounded-2xl border border-primary-k/10 bg-white p-6 shadow-sm">
+                    <section data-testid="core1-artefacts-grid" className="rounded-2xl border border-primary-k/10 sect-teal p-6 shadow-sm">
                         <h2 className="text-base font-semibold text-primary-k mb-4">Latest Activity</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {["statement", "invoice_check", "care_plan_review", "classification_check", "contribution_estimate", "letter", "price_check", "budget_projection"].map((k) => (
@@ -678,7 +678,7 @@ export default function ParticipantProfile() {
                     {/* Timeline */}
                     <section
                         data-testid="core1-timeline-section"
-                        className="rounded-2xl border border-primary-k/10 bg-white p-6 shadow-sm"
+                        className="rounded-2xl border border-primary-k/10 sect-clay p-6 shadow-sm"
                     >
                         <div className="flex items-center justify-between mb-3">
                             <h2 className="text-base font-semibold text-primary-k">Timeline</h2>

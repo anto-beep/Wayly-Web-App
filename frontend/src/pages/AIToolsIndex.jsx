@@ -50,7 +50,7 @@ export default function AIToolsIndex() {
 
             <section className="mx-auto max-w-7xl px-6 pb-20">
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="ai-tools-grid">
-                    {TOOLS_ORDERED.map((t) => {
+                    {TOOLS_ORDERED.map((t, idx) => {
                         const Icon = t.IconComponent;
                         const isFreeTool = t.planTone === "free";
                         const hasFullAccess = plan.isPaid || plan.isTrialing;
@@ -65,45 +65,44 @@ export default function AIToolsIndex() {
                             if (plan.isTrialing) { chipLabel = "7-day free trial"; chipTone = "trial"; showSub = false; }
                         }
                         const badgeActive = hydrated && isBadgeActive(t);
+                        const TILE = [
+                            "bg-[#0E4D52]",
+                            "bg-[#A5512B]",
+                            "bg-[#425F47]",
+                        ][idx % 3];
                         return (
                             <div
                                 key={t.slug}
-                                className="rounded-xl border border-kindred bg-surface p-6 transition-all hover:-translate-y-1 hover:shadow-lg relative"
+                                className={`rounded-xl border border-white/15 ${TILE} p-6 transition-all hover:-translate-y-1 hover:shadow-lg relative`}
                                 data-testid={`ai-tool-card-${t.slug}`}
                             >
                                 {badgeActive && (
                                     <span
-                                        className="absolute -top-2 left-4 text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 bg-clay text-white"
+                                        className="absolute -top-2 left-4 text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 bg-white text-[#0E4D52]"
                                         data-testid={`ai-tool-badge-${t.slug}`}
                                     >
                                         New
                                     </span>
                                 )}
                                 <div className="flex items-start justify-between gap-3">
-                                    <div className="h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center">
-                                        <Icon className="h-5 w-5 text-primary-k" />
+                                    <div className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center">
+                                        <Icon className="h-5 w-5 text-white" />
                                     </div>
                                     {showChip && (
                                         <div className="text-right">
                                             <span
-                                                className={`text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 ${
-                                                    chipTone === "free"
-                                                        ? "bg-sage/20 text-[#0F5648]"
-                                                        : chipTone === "trial"
-                                                            ? "bg-clay/20 text-clay"
-                                                            : "bg-[#0E2A47] text-white"
-                                                }`}
+                                                className="text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 bg-white/20 text-white"
                                                 data-testid={`ai-tool-plan-${t.slug}`}
                                             >
                                                 {chipLabel}
                                             </span>
-                                            {showSub && <div className="text-[10px] text-muted-k mt-1">{t.planSub}</div>}
+                                            {showSub && <div className="text-[10px] text-white/70 mt-1">{t.planSub}</div>}
                                         </div>
                                     )}
                                 </div>
-                                <h2 className="font-heading text-xl text-primary-k mt-4">{t.name}</h2>
-                                <p className="mt-2 text-sm text-muted-k leading-relaxed">{t.body}</p>
-                                <Link to={t.route} className="mt-4 inline-flex items-center gap-1 text-sm text-primary-k font-medium" data-testid={`ai-tool-link-${t.slug}`}>
+                                <h2 className="font-heading text-xl text-white mt-4">{t.name}</h2>
+                                <p className="mt-2 text-sm text-white/85 leading-relaxed">{t.body}</p>
+                                <Link to={t.route} className="mt-4 inline-flex items-center gap-1 text-sm text-white font-semibold" data-testid={`ai-tool-link-${t.slug}`}>
                                     {hasFullAccess || !isFreeTool ? "Open tool" : "Try free"} <ArrowRight className="h-3.5 w-3.5" />
                                 </Link>
                             </div>

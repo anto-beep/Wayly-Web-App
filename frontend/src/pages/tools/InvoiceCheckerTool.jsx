@@ -768,7 +768,6 @@ export default function InvoiceCheckerTool() {
                         {/* 4. Issue Register - grouped-by-severity clear layout matching Statement Decoder */}
                         <InvoiceIssueRegister
                             findings={result.reconciliation?.findings || []}
-                            onDraftLetter={onDraftLetter}
                             onDraftAll={onDraftAll}
                         />
 
@@ -783,7 +782,6 @@ export default function InvoiceCheckerTool() {
                                 <div className="mt-3">
                                     <ConsequenceLadderList
                                         findings={result.reconciliation.findings}
-                                        onDraftLetter={onDraftLetter}
                                     />
                                 </div>
                             </details>

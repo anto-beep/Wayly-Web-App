@@ -90,12 +90,12 @@ function QuestionCard({ index, question, persona, value, onChange }) {
                             onMouseEnter={() => setShowAnchor(opt.value)}
                             onMouseLeave={() => setShowAnchor(null)}
                             data-testid={`csc-q-${question.id}-${opt.value}`}
-                            className={`text-left text-sm rounded-lg border px-3 py-2 transition-colors ${
+                            className={`text-left text-sm rounded-lg border-2 px-3 py-2.5 transition-colors ${
                                 selected
-                                    ? "border-primary-k bg-primary-k text-white font-medium"
+                                    ? "border-primary-k bg-primary-k text-white font-semibold shadow-sm"
                                     : isNotSure
-                                        ? "border-dashed border-kindred text-muted-k hover:bg-surface-2"
-                                        : "border-kindred text-primary-k hover:bg-surface-2"
+                                        ? "border-dashed border-[rgba(14,77,82,0.30)] bg-[rgba(14,77,82,0.03)] text-muted-k hover:bg-[rgba(14,77,82,0.08)]"
+                                        : "border-[rgba(14,77,82,0.30)] bg-[rgba(14,77,82,0.05)] text-primary-k hover:bg-[rgba(14,77,82,0.13)] hover:border-primary-k"
                             }`}
                         >
                             <div>{opt.label}</div>

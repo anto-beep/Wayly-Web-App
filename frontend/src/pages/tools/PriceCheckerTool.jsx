@@ -630,7 +630,7 @@ function ResultCard({ result, onAdmOpen, provider, selectedSnapshot, ceState, in
 
     return (
         <>
-            <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="pc-how-this-compares">
+            <div className="sect-teal border border-kindred rounded-2xl p-6" data-testid="pc-how-this-compares">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
                         <div className="overline text-muted-k">How this compares</div>
@@ -658,6 +658,38 @@ function ResultCard({ result, onAdmOpen, provider, selectedSnapshot, ceState, in
                         </Tooltip>
                     </TooltipProvider>
                 </div>
+
+                {(() => {
+                    const chg = Number(result.charged) || 0;
+                    const med = Number(result.median) || 0;
+                    if (!chg && !med) return null;
+                    const maxv = Math.max(chg, med, Number(result.upper) || 0) || 1;
+                    const chgOver = med > 0 && chg > med;
+                    return (
+                        <div className="mt-5 space-y-3" data-testid="pc-compare-bars">
+                            <div>
+                                <div className="flex items-center justify-between text-xs mb-1">
+                                    <span className="text-muted-k">Your provider charges</span>
+                                    <span className="font-semibold text-primary-k tabular-nums">{formatAUD2(chg)}{result.unit ? `/${result.unit}` : ""}</span>
+                                </div>
+                                <div className="h-3 w-full rounded-full bg-primary-k/10 overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${Math.max(3, (chg / maxv) * 100)}%`, backgroundColor: chgOver ? "#A5512B" : "#425F47" }} />
+                                </div>
+                            </div>
+                            {med > 0 && (
+                                <div>
+                                    <div className="flex items-center justify-between text-xs mb-1">
+                                        <span className="text-muted-k">Typical (median)</span>
+                                        <span className="font-semibold text-primary-k tabular-nums">{formatAUD2(med)}{result.unit ? `/${result.unit}` : ""}</span>
+                                    </div>
+                                    <div className="h-3 w-full rounded-full bg-primary-k/10 overflow-hidden">
+                                        <div className="h-full rounded-full bg-[#0E4D52]" style={{ width: `${Math.max(3, (med / maxv) * 100)}%` }} />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {result.doh_caveat && (
                     <p

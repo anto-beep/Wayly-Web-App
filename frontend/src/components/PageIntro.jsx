@@ -41,7 +41,7 @@ export default function PageIntro({
             {(whatItDoes || howToUse.length > 0 || whatYouGet.length > 0) && (
                 <div className="grid gap-4 lg:grid-cols-3 pt-2">
                     {whatItDoes && (
-                        <div className="rounded-2xl border border-primary-k/10 bg-white/60 p-4">
+                        <div className="rounded-2xl border border-primary-k/10 sect-teal p-4">
                             <div className="flex items-center gap-2 text-primary-k/70">
                                 <Sparkles className="w-4 h-4"/>
                                 <p className="text-xs uppercase tracking-wider">What This Does</p>
@@ -50,7 +50,7 @@ export default function PageIntro({
                         </div>
                     )}
                     {howToUse.length > 0 && (
-                        <div className="rounded-2xl border border-primary-k/10 bg-white/60 p-4">
+                        <div className="rounded-2xl border border-primary-k/10 sect-clay p-4">
                             <div className="flex items-center gap-2 text-primary-k/70">
                                 <ListChecks className="w-4 h-4"/>
                                 <p className="text-xs uppercase tracking-wider">How to Use It</p>
@@ -61,7 +61,7 @@ export default function PageIntro({
                         </div>
                     )}
                     {whatYouGet.length > 0 && (
-                        <div className="rounded-2xl border border-primary-k/10 bg-white/60 p-4">
+                        <div className="rounded-2xl border border-primary-k/10 sect-sage p-4">
                             <div className="flex items-center gap-2 text-primary-k/70">
                                 <Target className="w-4 h-4"/>
                                 <p className="text-xs uppercase tracking-wider">What You Get</p>

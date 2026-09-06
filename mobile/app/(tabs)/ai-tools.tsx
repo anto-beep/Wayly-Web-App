@@ -40,6 +40,11 @@ const TOOLS: Tool[] = [
   { slug: "family-coordinator", name: "Aged Care Q&A", body: "Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.", icon: MessageCircle, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
 ];
 
+// Rotating solid brand color blocks (teal / clay / sage) for the tool grid —
+// fixed hexes chosen so white text stays legible in both light + dark themes.
+const TILES = ["#0E4D52", "#A5512B", "#425F47"];
+
+
 const INFO_CHIPS = [
   { lead: "Try free.", rest: " Statement Decoder is free; every other tool comes with a 7-day trial." },
   { lead: "Grounded in law.", rest: " Every answer cites the Aged Care Act 2024 rule that applies." },
@@ -107,11 +112,12 @@ export default function AiToolsHub() {
         ) : null}
 
         <View style={{ gap: spacing.md, marginTop: spacing.lg }}>
-          {TOOLS.map((tool) => {
+          {TOOLS.map((tool, idx) => {
             const Icon = tool.icon;
             const isFreeTool = tool.planTone === "free";
             const showChip = !hasFullAccess;
             const cta = hasFullAccess || !isFreeTool ? "Open tool" : "Try free";
+            const tile = TILES[idx % TILES.length];
             return (
               <Pressable
                 key={tool.slug}
@@ -119,29 +125,29 @@ export default function AiToolsHub() {
                 onPress={() => router.push(`/tool/${tool.slug}` as any)}
                 style={({ pressed }) => [
                   styles.card,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  { backgroundColor: tile, borderColor: "rgba(255,255,255,0.15)" },
                   shadow.card,
                   pressed && { opacity: 0.9 },
                 ]}
               >
                 <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.sm }}>
-                  <View style={[styles.iconWrap, { backgroundColor: colors.surface2 }]}>
-                    <Icon size={22} color={colors.primary} />
+                  <View style={[styles.iconWrap, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+                    <Icon size={22} color="#FFFFFF" />
                   </View>
                   {showChip ? (
                     <View style={{ alignItems: "flex-end" }}>
-                      <View style={[styles.planChip, { backgroundColor: isFreeTool ? colors.sageSoft : colors.primary }]}>
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.4, color: isFreeTool ? colors.sage : "#fff" }}>{tool.plan.toUpperCase()}</T>
+                      <View style={[styles.planChip, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.4, color: "#fff" }}>{tool.plan.toUpperCase()}</T>
                       </View>
-                      <T style={{ fontFamily: fonts.body, fontSize: 10, color: colors.muted, marginTop: 3 }}>{tool.planSub}</T>
+                      <T style={{ fontFamily: fonts.body, fontSize: 10, color: "rgba(255,255,255,0.75)", marginTop: 3 }}>{tool.planSub}</T>
                     </View>
                   ) : null}
                 </View>
-                <T style={{ fontFamily: fonts.heading, fontSize: 19, marginTop: spacing.md }}>{tool.name}</T>
-                <T variant="small" style={{ marginTop: 6, lineHeight: 21 }}>{tool.body}</T>
+                <T style={{ fontFamily: fonts.heading, fontSize: 19, marginTop: spacing.md, color: "#FFFFFF" }}>{tool.name}</T>
+                <T variant="small" style={{ marginTop: 6, lineHeight: 21, color: "rgba(255,255,255,0.88)" }}>{tool.body}</T>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: spacing.md }}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }} testID={`ai-tool-link-${tool.slug}`}>{cta}</T>
-                  <ArrowRight size={14} color={colors.primary} />
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#FFFFFF" }} testID={`ai-tool-link-${tool.slug}`}>{cta}</T>
+                  <ArrowRight size={14} color="#FFFFFF" />
                 </View>
               </Pressable>
             );

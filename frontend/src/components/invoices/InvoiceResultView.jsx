@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { AlertTriangle, AlertOctagon, Info, CheckCircle2, Receipt, Building2, Calendar, Hash, ChevronDown, ChevronUp, FileDown, Download, Columns2, Loader2, ShieldAlert, Shield, Lightbulb } from "lucide-react";
+import { AlertTriangle, AlertOctagon, CheckCircle2, Receipt, Building2, Calendar, Hash, ChevronDown, ChevronUp, FileDown, Download, Columns2, Loader2, ShieldAlert, Shield, Mail } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
-import { humanize, shortSummary, flagTint } from "@/lib/plainText";
+import FlagCard from "@/components/FlagCard";
 import { toast } from "sonner";
 
 /**
@@ -161,73 +161,7 @@ function _bandOf(f) {
     return "low";
 }
 
-function IssueCard({ f, idx, band, onDraftLetter }) {
-    const meta = BAND_META[band];
-    const impact = _findingImpact(f);
-    const ref = f?.check_id || f?.rule_id || f?.code || `#${idx + 1}`;
-    const lineIds = f?.line_ids?.length ? f.line_ids : (f?.affected_line_ids || (f?.line_number ? [f.line_number] : []));
-    const lineHints = lineIds && lineIds.length
-        ? (typeof lineIds[0] === "number"
-            ? `Line ${lineIds.join(", ")}`
-            : `Line ${lineIds.map((x) => String(x).slice(0, 8)).join(", ")}`)
-        : null;
-    const title = f?.title || f?.headline || f?.label || _titleForCheck(ref);
-    const description = f?.description || f?.narrative || null;
-    const action = f?.recommended_action || f?.suggested_question || f?.escalation || null;
-    const summary = shortSummary(description);
-    const fullDesc = humanize(description);
-    const showWhy = fullDesc && fullDesc !== summary;
-    return (
-        <li className={`border rounded-xl p-5 ${flagTint(idx)}`} data-testid={`inv1-issue-${idx}`}>
-            <div className="flex items-start gap-3">
-                <span className={`inline-flex items-center justify-center rounded-full ${meta.bg} ${meta.fg} h-9 w-9 flex-none`}>
-                    <meta.Icon className="h-4 w-4" />
-                </span>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 ${meta.bg} ${meta.fg}`}>{meta.label}</span>
-                        {lineHints && <span className="text-[11px] text-muted-k inline-flex items-center gap-1"><Hash className="h-3 w-3" /> {lineHints}</span>}
-                    </div>
-                    <div className="mt-2 font-medium text-primary-k">{humanize(title)}</div>
-                    {summary && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{summary}</p>}
-                    {action && (
-                        <div className="mt-3 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2.5" data-testid={`inv1-issue-action-${idx}`}>
-                            <Lightbulb className="h-4 w-4 text-gold flex-none mt-0.5" />
-                            <div className="text-[13px] text-primary-k"><span className="font-semibold">What to do: </span>{humanize(action)}</div>
-                        </div>
-                    )}
-                    <div className="mt-3 flex items-center gap-3 flex-wrap">
-                        {impact > 0 && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sage/15 text-[#0F5648] px-3 py-1 text-sm font-semibold tabular-nums">
-                                Possible refund {aud(impact)}
-                            </span>
-                        )}
-                        {onDraftLetter && (
-                            <button
-                                type="button"
-                                onClick={() => onDraftLetter(idx)}
-                                data-testid={`inv1-issue-letter-${idx}`}
-                                className="text-xs inline-flex items-center gap-1 rounded-full border border-primary-k/25 bg-white px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white transition-colors"
-                            >
-                                Draft letter
-                            </button>
-                        )}
-                    </div>
-                    {showWhy && (
-                        <details className="mt-2 group/why" data-testid={`inv1-issue-why-${idx}`}>
-                            <summary className="cursor-pointer list-none text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
-                                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
-                            </summary>
-                            <p className="mt-2 text-sm text-muted-k leading-relaxed">{fullDesc}</p>
-                        </details>
-                    )}
-                </div>
-            </div>
-        </li>
-    );
-}
-
-function SeverityGroup({ band, entries, onDraftLetter }) {
+function SeverityGroup({ band, entries }) {
     const [open, setOpen] = useState(true);
     const meta = BAND_META[band];
     return (
@@ -251,7 +185,17 @@ function SeverityGroup({ band, entries, onDraftLetter }) {
             {open && (
                 <ul className="mt-3 space-y-3" data-testid={`inv1-severity-items-${band}`}>
                     {entries.map(({ f, i }) => (
-                        <IssueCard key={f.id || i} f={f} idx={i} band={band} onDraftLetter={onDraftLetter} />
+                        <FlagCard
+                            key={f.id || i}
+                            idx={i}
+                            severity={band}
+                            title={f?.title || f?.headline || f?.label || _titleForCheck(f?.check_id || f?.rule_id || f?.code || `#${i + 1}`)}
+                            detail={f?.description || f?.narrative || null}
+                            action={f?.recommended_action || f?.suggested_question || f?.escalation || null}
+                            evidence={f?.evidence}
+                            dollarImpact={_findingImpact(f)}
+                            testId={`inv1-issue-${i}`}
+                        />
                     ))}
                 </ul>
             )}
@@ -259,7 +203,7 @@ function SeverityGroup({ band, entries, onDraftLetter }) {
     );
 }
 
-export function InvoiceIssueRegister({ findings, onDraftLetter, onDraftAll }) {
+export function InvoiceIssueRegister({ findings, onDraftAll }) {
     if (!findings || findings.length === 0) {
         return (
             <section className="rounded-2xl border-2 border-dashed border-sage/40 bg-sage/5 p-8 text-center" data-testid="inv1-no-findings">
@@ -289,14 +233,14 @@ export function InvoiceIssueRegister({ findings, onDraftLetter, onDraftAll }) {
                 </h3>
                 <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-k">{findings.length} total</span>
-                    {onDraftAll && findings.length > 1 && (
+                    {onDraftAll && findings.length >= 1 && (
                         <button
                             type="button"
                             onClick={onDraftAll}
                             data-testid="inv1-draft-all-btn"
-                            className="text-xs inline-flex items-center gap-1.5 rounded-full bg-primary-k text-white px-3 py-1.5 hover:bg-[#091D33] transition-colors"
+                            className="text-sm inline-flex items-center gap-1.5 rounded-full bg-wayly-clay-500 text-white px-4 py-2 font-semibold hover:brightness-95 transition"
                         >
-                            <Receipt className="h-3.5 w-3.5" /> Draft one letter for all issues
+                            <Mail className="h-4 w-4" /> Draft a letter
                         </button>
                     )}
                 </div>
@@ -316,7 +260,6 @@ export function InvoiceIssueRegister({ findings, onDraftLetter, onDraftAll }) {
                     key={g.band}
                     band={g.band}
                     entries={g.entries}
-                    onDraftLetter={onDraftLetter}
                 />
             ))}
         </section>

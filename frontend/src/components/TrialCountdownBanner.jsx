@@ -58,15 +58,15 @@ export default function TrialCountdownBanner({ className = "" }) {
         >
             <div className="flex-1 text-sm leading-relaxed">
                 {isGrace
-                    ? <>Your trial ends tomorrow. Choose a plan to keep using Wayly.</>
-                    : <>Trial: <strong>{dayLabel} remaining</strong>. Choose a plan to keep access.</>}
+                    ? <>Your trial ends tomorrow. Add a payment method to keep using Wayly.</>
+                    : <>Trial: <strong>{dayLabel} remaining</strong>. Add a payment method to keep access.</>}
             </div>
             <Link
                 to="/settings/billing"
                 data-testid="trial-banner-upgrade"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 py-1.5 rounded-md whitespace-nowrap flex-shrink-0 bg-wayly-clay-500 text-white hover:brightness-95"
             >
-                Choose Plan
+                Manage Billing
             </Link>
             <button
                 type="button"

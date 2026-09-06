@@ -74,7 +74,7 @@ export default function SmartAISummary({
   return (
     <section
       data-testid={`smart-ai-summary-${pageKey}`}
-      className={`smart-ai-summary rounded-2xl border border-primary-k/20 bg-cream/60 dark:bg-white/[0.03] p-5 sm:p-6 shadow-sm mb-6 ${className}`}
+      className={`smart-ai-summary rounded-2xl border border-[rgba(14,77,82,0.25)] border-l-4 border-l-[#0E4D52] bg-[linear-gradient(135deg,rgba(14,77,82,0.12),rgba(165,81,43,0.07))] p-5 sm:p-6 shadow-md mb-6 ${className}`}
       aria-live="polite"
     >
       <div className="flex items-start gap-4">

@@ -16,9 +16,9 @@
 
 :root {
     /* --- Wayly brand tokens (Feb 2026 spec) ---------------------------- */
-    --kindred-bg:        #EFE8DB;   /* warm sand — app shell (less stark white) */
-    --kindred-surface:   #FBF7F1;   /* soft cream card (not pure white) */
-    --kindred-surface-2: #F4EFE7;   /* neutral 100 — sunken/inset */
+    --kindred-bg:        #EAEDF0;   /* soft cool grey — main app canvas (founder Jun 2026: no cream, no bright white) */
+    --kindred-surface:   #FBFCFE;   /* clean cool near-white card (NOT cream) */
+    --kindred-surface-2: #EEF1F5;   /* cool light grey — sunken/inset (NOT cream) */
     --kindred-primary:   #0E4D52;   /* teal-ink 600 — primary brand surface */
     --kindred-primary-fg:#FFFFFF;
     --kindred-gold:      #A5512B;   /* clay 500 — accent/CTA (AA on white) */
@@ -26,7 +26,7 @@
     --kindred-terracotta:#C0392B;   /* error base */
     --kindred-text:      #1C2B2D;   /* warm ink — body text (AAA on bg) */
     --kindred-muted:     #524B42;   /* neutral 700 — muted body text */
-    --kindred-border:    #E7E0D5;   /* neutral 200 — default border */
+    --kindred-border:    #E2E7EC;   /* cool neutral 200 — default border */
     --kindred-success:   #1B5733;   /* success dark — AAA on white */
     --kindred-alert:     #B7791F;   /* warning dark — AA on white */
 
@@ -48,9 +48,9 @@
      * difference" section). A warm peach that holds >= 4.5:1 AAA-large on
      * #0E4D52 dark teal (measured 4.7:1). */
     --clay-on-dark: #F4A674;
-    --wayly-neutral-50:  #FBF8F3;
-    --wayly-neutral-100: #F4EFE7;
-    --wayly-neutral-200: #E7E0D5;
+    --wayly-neutral-50:  #FBFCFE;
+    --wayly-neutral-100: #EEF1F5;
+    --wayly-neutral-200: #E2E7EC;
     --wayly-neutral-700: #524B42;
     --wayly-neutral-900: #1C2B2D;
 
@@ -248,7 +248,7 @@
     .bg-terracotta  { background-color: var(--kindred-terracotta); }
     .bg-gold        { background-color: var(--kindred-gold); }
     .border-kindred { border-color: var(--kindred-border); }
-    .app-topbar { background-image: linear-gradient(90deg, rgba(14,77,82,0.14), color-mix(in srgb, var(--kindred-surface) 88%, transparent) 45%, rgba(165,81,43,0.14)); }
+    .app-topbar { background-image: linear-gradient(90deg, rgba(14,77,82,0.20), color-mix(in srgb, var(--kindred-surface) 82%, transparent) 45%, rgba(165,81,43,0.20)); box-shadow: 0 2px 14px rgba(14,77,82,0.10); }
     .app-bottomnav { background-image: linear-gradient(90deg, rgba(14,77,82,0.12), color-mix(in srgb, var(--kindred-surface) 94%, transparent) 45%, rgba(165,81,43,0.12)); }
     .border-gold    { border-color: var(--kindred-gold); }
     .ring-primary-k { --tw-ring-color: var(--kindred-primary); }
@@ -1424,3 +1424,49 @@ html.theme-dark .app-shell [data-testid="optional-badge"] {
 }
 
 
+
+/* =====================================================================
+ * NO-WHITE MANDATE + BOLD COLOURED SECTIONS (Jun 2026, founder request)
+ * "No white backgrounds anywhere; use more teal & clay; sections and items
+ *  must stand out." Applies to the authenticated app shell only so public
+ *  marketing pages keep their designed palette.
+ * ===================================================================== */
+
+/* 1. Any stark white surface inside the app → warm cream in light mode
+ *    (dark mode already remaps .bg-white to a raised teal surface above). */
+html:not(.theme-dark) .app-shell .bg-white,
+html:not(.theme-dark) .app-shell .bg-white\/95,
+html:not(.theme-dark) .app-shell .bg-white\/90,
+html:not(.theme-dark) .app-shell .bg-white\/80,
+html:not(.theme-dark) .app-shell .bg-white\/75,
+html:not(.theme-dark) .app-shell .bg-white\/70,
+html:not(.theme-dark) .app-shell .bg-white\/60,
+html:not(.theme-dark) .app-shell .bg-white\/50,
+html:not(.theme-dark) .app-shell .bg-white\/40 {
+    background-color: var(--kindred-surface) !important;
+}
+
+/* 2. Reusable coloured section blocks. Each hue is a clearly-visible wash
+ *    (not a faint tint) plus a solid 5px accent bar drawn with an inset
+ *    box-shadow so it survives the global dark border override. Legible in
+ *    both themes with the app's default teal body text / white in dark. */
+.sect-teal { background-color: rgba(14,77,82,0.10) !important; box-shadow: inset 5px 0 0 #0E4D52; }
+.sect-clay { background-color: rgba(165,81,43,0.11) !important; box-shadow: inset 5px 0 0 #A5512B; }
+.sect-sage { background-color: rgba(66,95,71,0.13) !important; box-shadow: inset 5px 0 0 #425F47; }
+.sect-plum { background-color: rgba(95,78,118,0.11) !important; box-shadow: inset 5px 0 0 #5F4E76; }
+
+html.theme-dark .sect-teal { background-color: #0E3033 !important; background-image: linear-gradient(rgba(79,168,174,0.12),rgba(79,168,174,0.12)); box-shadow: inset 5px 0 0 #4FA8AE; }
+html.theme-dark .sect-clay { background-color: #0E3033 !important; background-image: linear-gradient(rgba(232,154,111,0.18),rgba(232,154,111,0.18)); box-shadow: inset 5px 0 0 #E89A6F; }
+html.theme-dark .sect-sage { background-color: #0E3033 !important; background-image: linear-gradient(rgba(168,199,171,0.16),rgba(168,199,171,0.16)); box-shadow: inset 5px 0 0 #A8C7AB; }
+html.theme-dark .sect-plum { background-color: #0E3033 !important; background-image: linear-gradient(rgba(180,160,210,0.18),rgba(180,160,210,0.18)); box-shadow: inset 5px 0 0 #B4A0D2; }
+
+/* 3. Item-level rotating tints so individual rows/cards inside a section
+ *    each stand apart (teal / clay / sage / plum). */
+.item-teal { background-color: rgba(14,77,82,0.08) !important; border-color: rgba(14,77,82,0.22) !important; }
+.item-clay { background-color: rgba(165,81,43,0.09) !important; border-color: rgba(165,81,43,0.24) !important; }
+.item-sage { background-color: rgba(66,95,71,0.11) !important; border-color: rgba(66,95,71,0.24) !important; }
+.item-plum { background-color: rgba(95,78,118,0.10) !important; border-color: rgba(95,78,118,0.24) !important; }
+html.theme-dark .item-teal { background-color: rgba(79,168,174,0.14) !important; }
+html.theme-dark .item-clay { background-color: rgba(232,154,111,0.16) !important; }
+html.theme-dark .item-sage { background-color: rgba(168,199,171,0.14) !important; }
+html.theme-dark .item-plum { background-color: rgba(180,160,210,0.16) !important; }

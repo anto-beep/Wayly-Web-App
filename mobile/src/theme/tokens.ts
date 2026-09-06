@@ -30,10 +30,10 @@ export type Palette = {
 };
 
 export const lightColors: Palette = {
-  bg: "#EFE8DB",
-  surface: "#FBF7F1",
-  surface2: "#F1E9DC",
-  sunken: "#F1EADD",
+  bg: "#EAEDF0",
+  surface: "#FBFCFE",
+  surface2: "#EEF1F5",
+  sunken: "#EEF1F5",
   primary: "#0E4D52",
   primaryFg: "#FFFFFF",
   cta: "#0E4D52",
@@ -47,7 +47,7 @@ export const lightColors: Palette = {
   text: "#1C2B2D",
   textSecondary: "#524B42",
   muted: "#524B42",
-  border: "#E7E0D5",
+  border: "#E2E7EC",
   success: "#1B5733",
   successSoft: "#E4F0E8",
   alert: "#B7791F",

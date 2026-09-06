@@ -7139,3 +7139,58 @@ PHASE 1 dashboard cleanup DONE web (CaregiverDashboard.jsx, DashboardActionBar.j
 FLAG/ISSUE PLAIN-LANGUAGE REDESIGN (user's core principle "simple, no jargon, less words, graphics, consistent across tools"): new shared helper /app/frontend/src/lib/plainText.js — humanize() strips developer jargon (JSON, arrays, field names like _dedupe_dropped, stream=, AT-HM/ATHM→"government-funded support") and converts YYYY-MM-DD→DD/MM/YYYY; shortSummary() gives a one-line lead. Redesigned the shared flag cards to ONE consistent pattern: severity chip + short plain title + one-line summary + a Lightbulb "What to do" action box + $ impact chip, with the long/technical detail COLLAPSED behind a "Why we flagged this" toggle (collapsed by default). Applied to: DecoderResultView.jsx AnomalyCard (statement decoder), invoices/InvoiceResultView.jsx IssueCard (invoice checker; removed raw ref code jargon), and StatementDetail.jsx anomalies-card (removed raw a.rule mono code). Capitalisation "Things To Know" fixed on web dashboard, StatementDetail, StatementDecoderEmbed, mobile dashboard.
 VERIFIED: frontend compiles clean; statement header dates render DD/MM/YYYY. NOT yet screenshot-verified: the redesigned anomaly card body (page is long/slow in automation) — recommend user/QA review.
 REMAINING Phase 2 (tool output): remove the DUPLICATE first summary box in decoder (DecoderResultView SECTION 0 plain-English vs summary banner — user wants only one); single "Draft one letter for all issues" button (dedupe if two appear); Draft-a-letter should PREFILL from detected issues on every tool; consistent number/graphics treatment across ALL tools; apply plainText.humanize() to remaining tools (ChspTools, PriceChecker, CarePlanReviewer, ContributionEstimator, BudgetCalculator). Phase 3 colour overhaul (run design_agent first). Phase 4 Account Health Score. Phase 5 support-plan→Goals + rename Voice Check→"Support Care Goals". Enforce Title Case app-wide.
+
+---
+
+## Session Update — Jun 2026 (UI Colour Pass + Draft Letter consolidation)
+
+### Founder directives this session
+- Main app canvas = soft greyish off-white (`#F1F2F4`), NOT bright white, NOT the old warm sand.
+- NO white backgrounds on any section/card anywhere in the authenticated app.
+- Use MORE teal & clay; every section AND item must clearly stand out; no grey in dark mode.
+
+### Implemented (web `/app/frontend` + mobile `/app/mobile`)
+- `index.css`: `--kindred-bg` → `#F1F2F4`. Added global NO-WHITE fallback (`html:not(.theme-dark) .app-shell .bg-white* → cream`). Added reusable section blocks `.sect-teal/.sect-clay/.sect-sage/.sect-plum` (bold wash + inset accent bar, light+dark) and rotating item tints `.item-teal/.item-clay/.item-sage/.item-plum`. Inset box-shadow accent used because the global dark `[class*="border-"]` override neutralises coloured borders.
+- Profile (`ParticipantProfile.jsx`): every section color-blocked (alternating teal/clay), Patterns + Open-Cases items use rotating item tints. Verified light + dark.
+- `PageIntro.jsx` triad (What This Does / How To Use / What You Get) → teal/clay/sage — propagates to ALL tool pages.
+- AI Tools hub grid → bold rotating teal/clay/sage solid blocks with white text (web `AIToolsIndex.jsx` + mobile `app/(tabs)/ai-tools.tsx`; mobile `TILES=["#0E4D52","#A5512B","#425F47"]`).
+- Billing (`Settings.jsx`): current-plan (teal), participants (clay), payment (teal), history (clay).
+- Family Wall (`extended/FamilyWall.jsx`): composer teal, posts rotating item tints.
+- Mobile tokens (`src/theme/tokens.ts`): light `bg` → `#F1F2F4`.
+
+### Draft Letter Prefill (Invoice page) — DONE
+- `InvoiceResultView.jsx`: removed the per-issue "Draft letter" button (IssueCard) AND stopped passing `onDraftLetter` to `ConsequenceLadderList` in `InvoiceCheckerTool.jsx`. Now ONE always-visible clay "Draft a letter" button in the Issue Register (shown when ≥1 finding, hidden at zero) → `onDraftAll` → `POST /invoices/{id}/letter`, which auto-fills the draft from ALL detected findings.
+
+### Not yet done / next
+- Roll the SINGLE "Draft a letter" button + plain-language coloured cards into Care Plan Reviewer, Contribution, Budget, Price Checker, CHSP (Phase 2/3 still pending).
+- Colour pass not yet applied to every bespoke page (Statements detail, tool result views, Care Team, Reports, etc.) — global no-white + grey canvas already covers them; sect-* still to be applied per section where they should "pop".
+- NOT end-to-end tested via testing agent (colour = visual, verified by screenshots; Invoice Draft Letter functional change should be regression-tested).
+
+---
+
+## Session Update 2 — Jun 2026 (No-cream, unified FlagCard, result graphics, draft-letter)
+
+### Founder directives (this batch)
+- Main canvas soft cool GREY (#EAEDF0), cards cool near-white — NO cream, NO bright white anywhere in-app.
+- Every section/item stands out (teal/clay/sage rotating); collapsed-by-default flags; plain English (no field jargon).
+- ONE auto-filled "Draft a letter" per tool. Visual graphics on results — VARY them (donut, bars, rings), not only pies.
+- Statement detail must include a "Wayly Summary" + graphics; removed "Second opinion on every line".
+
+### Implemented (web)
+- Killed cream globally: `--kindred-bg` #EAEDF0, `--kindred-surface` #FBFCFE, surface-2 #EEF1F5, border #E2E7EC; same in tailwind.config.js (kindred.* + wayly neutral-*) and mobile tokens.ts. Global no-white fallback + `.sect-*`/`.item-*` colored blocks in index.css.
+- Shared `components/FlagCard.jsx`: collapsed-by-default, plain-language, rotating tint. Now used by BOTH Statement anomalies (StatementDetail + DecoderResultView) and Invoice issues (InvoiceResultView) — identical design. Removed old AnomalyCard/IssueCard bodies.
+- `lib/plainText.js` humanize() strengthened: converts "extracted X field is set to 'unknown'" → "We don't have the X on record yet", de-snake_cases field tokens, strips "extracted json flags" noise.
+- StatementDetail: added `SmartAISummary` (Wayly Summary), `StatementInsightGraphics` (money donut + severity donut), colored sections; removed SD3V2StreamPanel ("Second opinion").
+- Result graphics + colored sections: Contribution (who-pays donut + rate bars + now/2026 bars), Price Checker (your-price vs median bars), Budget (usable-split stacked bar + per-stream allocation bars), Care Plan (FlagCard findings).
+- Draft-letter consolidation: Invoice single `inv1-draft-all-btn` (per-issue removed); Care Plan single `cp-draft-letter-all` → NEW backend `POST /api/care-plans/letter-from-findings` (routes/care_plans.py) drafts one letter from all findings.
+- ClassificationCheck option chips: teal-bordered/tinted + solid-teal selected (fixed cream-on-cream contrast).
+- AI Tools grid: solid rotating teal/clay/sage tiles (web AIToolsIndex + mobile ai-tools).
+
+### Testing — iteration_273.json (PASS, web)
+Backend 4/4 (new findings-letter endpoint + invoice draft-all + statement fetch). Statement Detail 100% (Wayly Summary, both donuts, FlagCard expand/collapse, plain language scrubbed, no Second opinion, no cream). AI Tools index no white/cream. Tool RESULT views (invoice/careplan/contribution/price/budget) not UI-driven (need form fixtures) but share the validated FlagCard/plainText pipeline; graphics verified by main-agent screenshots.
+
+### Remaining (next)
+- 3b nav-page colour pass: Care Team, Reports, Documents, Complaints (global no-white already applied; add sect-* accents).
+- CHSP tool colour/graphics.
+- Vary graphics further (progress rings for caps).
+- Optional cleanup: no-op `cpr_mitigate` wrapper in routes/care_plans.py.

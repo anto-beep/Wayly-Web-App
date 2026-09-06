@@ -361,28 +361,50 @@ export default function BudgetCalculatorTool() {
                             testId="bc-summary"
                         />
                         <div className="grid sm:grid-cols-3 gap-4">
-                            <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-quarterly-gross">
+                            <div className="item-clay border rounded-xl p-5" data-testid="bc-quarterly-gross">
                                 <div className="overline">Gross quarterly</div>
                                 <div className="mt-2 text-2xl text-primary-k"><NumberMono>{formatAUD2(result.quarterly_gross ?? (result.annual_total / 4))}</NumberMono></div>
                                 <div className="text-xs text-muted-k mt-1">This is the figure printed on your statement (annual ÷ 4).</div>
                             </div>
-                            <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-care-management">
+                            <div className="item-teal border rounded-xl p-5" data-testid="bc-care-management">
                                 <div className="overline">Care management (10%)</div>
                                 <div className="mt-2 font-heading text-2xl text-primary-k tabular-nums">−{formatAUD2(result.care_management_quarterly ?? ((result.quarterly_gross ?? result.annual_total/4) - result.quarterly_usable))}</div>
                                 <div className="text-xs text-muted-k mt-1">Provider's care management slice.</div>
                             </div>
-                            <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-quarterly-usable">
+                            <div className="item-sage border rounded-xl p-5" data-testid="bc-quarterly-usable">
                                 <div className="overline">Usable for services</div>
                                 <div className="mt-2 text-2xl text-primary-k"><NumberMono>{formatAUD2(result.quarterly_usable)}</NumberMono></div>
                                 <div className="text-xs text-muted-k mt-1">What you can spend on care this quarter.</div>
                             </div>
                         </div>
+                        {(() => {
+                            const gross = Number(result.quarterly_gross ?? (result.annual_total / 4)) || 0;
+                            const usable = Number(result.quarterly_usable) || 0;
+                            const cm = Number(result.care_management_quarterly ?? (gross - usable)) || 0;
+                            if (gross <= 0) return null;
+                            const usablePct = Math.max(2, Math.min(100, (usable / gross) * 100));
+                            return (
+                                <div className="sect-sage border border-kindred rounded-xl p-4" data-testid="bc-usable-bar">
+                                    <div className="flex items-center justify-between text-xs mb-2">
+                                        <span className="text-muted-k">How your quarterly budget splits</span>
+                                    </div>
+                                    <div className="h-5 w-full rounded-full overflow-hidden flex bg-primary-k/10" role="img" aria-label={`Usable ${formatAUD2(usable)}, care management ${formatAUD2(cm)}`}>
+                                        <div className="h-full bg-[#425F47]" style={{ width: `${usablePct}%` }} />
+                                        <div className="h-full bg-[#A5512B]" style={{ width: `${100 - usablePct}%` }} />
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-4 text-xs">
+                                        <span className="inline-flex items-center gap-1.5 text-primary-k"><span className="h-2.5 w-2.5 rounded-full bg-sage inline-block" /> Usable {formatAUD2(usable)}</span>
+                                        <span className="inline-flex items-center gap-1.5 text-primary-k"><span className="h-2.5 w-2.5 rounded-full bg-clay inline-block" /> Care management {formatAUD2(cm)}</span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                         <div className="bg-surface border border-kindred rounded-xl p-4 flex items-baseline justify-between" data-testid="bc-annual-summary">
                             <span className="text-sm text-muted-k">Annual budget</span>
                             <NumberMono className="text-lg text-primary-k">{formatAUD(result.annual_total)}</NumberMono>
                         </div>
 
-                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="bc-streams">
+                        <div className="sect-teal border border-kindred rounded-xl p-5" data-testid="bc-streams">
                             <div className="flex items-center justify-between gap-3 flex-wrap">
                                 <div className="overline">Per-stream quarterly allocation (indicative)</div>
                                 {result.allocation_source === "statement" ? (
@@ -395,13 +417,23 @@ export default function BudgetCalculatorTool() {
                             <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-primary-k leading-relaxed" data-testid="bc-streams-indicative-note">
                                 <span className="font-medium">Indicative split only.</span> Your participant's actual stream allocation is set in their individualised budget and care plan and may differ substantially. Streams cannot cross-subsidise. Check the quarterly budget summary on the provider statement for the real split.
                             </div>
-                            <div className="mt-3 space-y-2">
-                                {result.streams.map((s) => (
-                                    <div key={s.stream} className="flex items-baseline justify-between border-b border-kindred pb-2 last:border-0">
-                                        <span className="text-sm text-primary-k">{s.stream}</span>
-                                        <NumberMono className="text-lg text-primary-k">{formatAUD2(s.allocated)}</NumberMono>
-                                    </div>
-                                ))}
+                            <div className="mt-3 space-y-3">
+                                {result.streams.map((s, si) => {
+                                    const maxAlloc = Math.max(...result.streams.map((x) => Number(x.allocated) || 0), 1);
+                                    const pct = Math.max(2, ((Number(s.allocated) || 0) / maxAlloc) * 100);
+                                    const barColor = ["#0E4D52", "#A5512B", "#425F47", "#5F4E76"][si % 4];
+                                    return (
+                                        <div key={s.stream} className="rounded-lg item-teal border p-3">
+                                            <div className="flex items-baseline justify-between">
+                                                <span className="text-sm text-primary-k">{s.stream}</span>
+                                                <NumberMono className="text-lg text-primary-k">{formatAUD2(s.allocated)}</NumberMono>
+                                            </div>
+                                            <div className="mt-2 h-2.5 w-full rounded-full bg-primary-k/10 overflow-hidden">
+                                                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                         {(result.applied_supplements?.length > 0 || result.supplement_warnings?.length > 0) && (

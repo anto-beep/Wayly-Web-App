@@ -187,7 +187,7 @@ export default function FamilyWall() {
 
             {/* composer, hidden completely when trial expired */}
             <ReadOnlyLock testId="wall-composer-lock" label="Reactivate to share moments" sub="Reading the wall is still free, reactivating lets you post photos, voice notes and messages again.">
-            <div className="bg-surface border border-kindred rounded-2xl p-4 space-y-3" data-testid="wall-composer">
+            <div className="sect-teal border border-kindred rounded-2xl p-4 space-y-3" data-testid="wall-composer">
                 <textarea
                     rows={2}
                     value={body}
@@ -225,8 +225,8 @@ export default function FamilyWall() {
             {loading && <div className="text-sm text-muted-k">Loading…</div>}
 
             <div className="space-y-3" data-testid="wall-feed">
-                {posts.map((p) => (
-                    <article key={p.id} className="bg-surface border border-kindred rounded-2xl p-4 space-y-3" data-testid={`wall-post-${p.id}`}>
+                {posts.map((p, pi) => (
+                    <article key={p.id} className={`border rounded-2xl p-4 space-y-3 ${["item-teal","item-clay","item-sage","item-plum"][pi % 4]}`} data-testid={`wall-post-${p.id}`}>
                         <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-full bg-primary-k/10 text-primary-k flex items-center justify-center text-xs font-semibold">

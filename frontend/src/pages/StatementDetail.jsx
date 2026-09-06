@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { api, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Download, FileDown, MessageCircle, Archive, History, RotateCcw, Trash2, GitCompare, Sparkles, Lightbulb, ChevronDown } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Download, FileDown, MessageCircle, Archive, History, RotateCcw, Trash2, GitCompare, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 import DecoderResultView from "@/components/DecoderResultView";
@@ -11,10 +11,11 @@ import StatementNotes from "@/components/statements/StatementNotes";
 import StatementStatusBadge from "@/components/statements/StatementStatusBadge";
 import StatementAskWayly from "@/components/statements/StatementAskWayly";
 import StatementRightsPanel from "@/components/statements/StatementRightsPanel";
-import SD3V2StreamPanel from "@/components/statements/SD3V2StreamPanel";
-import { useParticipants } from "@/context/ParticipantsContext";
 import { periodCompact, periodExact, providerName, decodeStatus, flagsCount } from "@/lib/statementFields";
-import { humanize, shortSummary, flagTint } from "@/lib/plainText";
+import { useParticipants } from "@/context/ParticipantsContext";
+import FlagCard from "@/components/FlagCard";
+import SmartAISummary from "@/components/SmartAISummary";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 const STREAM_BADGE = {
     Clinical: "bg-[#0F5648] text-white",
@@ -64,6 +65,110 @@ async function downloadDecodedExport(stmt, kind /* "pdf" | "csv" */) {
         }
     }
 }
+
+function _sevCounts(stmt) {
+    const ac = stmt.audit_json?.anomaly_count;
+    if (ac && (ac.high || ac.medium || ac.low || ac.advisory)) {
+        return { high: ac.high || 0, medium: ac.medium || 0, low: (ac.low || 0) + (ac.advisory || 0) };
+    }
+    const out = { high: 0, medium: 0, low: 0 };
+    (stmt.anomalies || []).forEach((a) => {
+        const s = a.severity;
+        if (s === "alert" || s === "high") out.high += 1;
+        else if (s === "info" || s === "low" || s === "advisory") out.low += 1;
+        else out.medium += 1;
+    });
+    return out;
+}
+
+// Visual graphics for a statement: a "where the money went" donut plus a
+// "what we found" severity breakdown. Shown at the top of every statement so
+// people can grasp the numbers at a glance.
+function StatementInsightGraphics({ stmt }) {
+    const ss = stmt.audit_json?.statement_summary || {};
+    const gov = Number(ss.total_government_paid) || 0;
+    const you = Number(ss.total_participant_contribution) || 0;
+    const hasMoney = gov > 0 || you > 0;
+    const sev = _sevCounts(stmt);
+    const totalFlags = sev.high + sev.medium + sev.low;
+
+    const money = [
+        { name: "Government paid", value: gov, color: "#425F47" },
+        { name: "You paid", value: you, color: "#A5512B" },
+    ];
+    const sevData = [
+        { name: "Needs attention", value: sev.high, color: "#C0392B" },
+        { name: "Worth a look", value: sev.medium, color: "#A5512B" },
+        { name: "For your info", value: sev.low, color: "#425F47" },
+    ].filter((d) => d.value > 0);
+    const govPct = hasMoney ? Math.round((gov / (gov + you)) * 100) : 0;
+
+    if (!hasMoney && totalFlags === 0) return null;
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="statement-graphics">
+            {hasMoney && (
+                <div className="sect-teal border border-kindred rounded-2xl p-5" data-testid="statement-money-graphic">
+                    <div className="text-xs uppercase tracking-wider text-muted-k">Where the money went</div>
+                    <div className="mt-2 flex items-center gap-5">
+                        <div className="relative h-[130px] w-[130px] flex-none" role="img" aria-label={`Government paid ${govPct}%, you paid ${100 - govPct}%`}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={money} dataKey="value" innerRadius={44} outerRadius={62} startAngle={90} endAngle={-270} stroke="none" paddingAngle={2}>
+                                        {money.map((d) => <Cell key={d.name} fill={d.color} />)}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="font-heading text-xl text-primary-k tabular-nums leading-none">{govPct}%</span>
+                                <span className="text-[9px] uppercase tracking-wider text-muted-k mt-0.5">funded</span>
+                            </div>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                            <div className="flex items-center justify-between gap-2 rounded-lg item-sage border p-2.5">
+                                <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-sage inline-block" /> Government</span>
+                                <span className="font-semibold text-primary-k tabular-nums">{formatAUD2(gov)}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 rounded-lg item-clay border p-2.5">
+                                <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-clay inline-block" /> You paid</span>
+                                <span className="font-semibold text-primary-k tabular-nums">{formatAUD2(you)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {totalFlags > 0 && (
+                <div className="sect-clay border border-kindred rounded-2xl p-5" data-testid="statement-severity-graphic">
+                    <div className="text-xs uppercase tracking-wider text-muted-k">What we found</div>
+                    <div className="mt-2 flex items-center gap-5">
+                        <div className="relative h-[130px] w-[130px] flex-none" role="img" aria-label={`${totalFlags} things to know`}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={sevData} dataKey="value" innerRadius={44} outerRadius={62} startAngle={90} endAngle={-270} stroke="none" paddingAngle={2}>
+                                        {sevData.map((d) => <Cell key={d.name} fill={d.color} />)}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="font-heading text-xl text-primary-k tabular-nums leading-none">{totalFlags}</span>
+                                <span className="text-[9px] uppercase tracking-wider text-muted-k mt-0.5">to know</span>
+                            </div>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                            {sevData.map((d) => (
+                                <div key={d.name} className="flex items-center justify-between gap-2 rounded-lg border border-kindred px-2.5 py-2">
+                                    <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: d.color }} /> {d.name}</span>
+                                    <span className="font-semibold text-primary-k tabular-nums">{d.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 
 export default function StatementDetail() {
     const { id } = useParams();
@@ -328,7 +433,20 @@ export default function StatementDetail() {
 
             <NeedsReviewBanner confidence={stmt.parsing_confidence} />
 
-            <SD3V2StreamPanel statementId={stmt.id} statementCurrency="AUD" />
+            <SmartAISummary
+                pageKey="statement-detail"
+                context={{
+                    provider: providerName(stmt),
+                    period: periodExact(stmt),
+                    gross_aud: stmt.audit_json?.statement_summary?.total_gross ?? null,
+                    you_paid_aud: stmt.audit_json?.statement_summary?.total_participant_contribution ?? null,
+                    government_paid_aud: stmt.audit_json?.statement_summary?.total_government_paid ?? null,
+                    anomaly_count: flagsCount(stmt),
+                    anomaly_dollar_impact: stmt.anomaly_dollar_impact_total ?? null,
+                }}
+            />
+
+            <StatementInsightGraphics stmt={stmt} />
 
             {/* DEC-1 Phase 1: when the statement carries the rich decoder
                 payload (audit_json + extracted_json), render the exact same
@@ -352,14 +470,14 @@ export default function StatementDetail() {
             )}
 
             {stmt.summary && (
-                <div className="bg-surface-2 rounded-xl p-6 border border-kindred" data-testid="summary-card">
+                <div className="sect-teal rounded-xl p-6 border border-kindred" data-testid="summary-card">
                     <span className="overline">In plain English</span>
                     <p className="mt-3 text-primary-k leading-relaxed">{stmt.summary}</p>
                 </div>
             )}
 
             {(stmt.anomalies || []).length > 0 && (
-                <div className="bg-surface border border-kindred rounded-xl p-6" data-testid="anomalies-card">
+                <div className="sect-clay border border-kindred rounded-xl p-6" data-testid="anomalies-card">
                     <div className="flex items-baseline justify-between gap-3 flex-wrap">
                         <span className="overline">Things To Know</span>
                         {stmt.anomaly_dollar_impact_total > 0 && (
@@ -369,56 +487,27 @@ export default function StatementDetail() {
                         )}
                     </div>
                     <ul className="mt-4 space-y-3">
-                        {stmt.anomalies.map((a, aIdx) => {
-                            const summary = shortSummary(a.detail);
-                            const fullDetail = humanize(a.detail);
-                            const showWhy = (fullDetail && fullDetail !== summary) || (Array.isArray(a.evidence) && a.evidence.length > 0);
-                            return (
-                            <li key={a.id} className={`flex items-start gap-3 rounded-xl border p-4 ${flagTint(aIdx)}`} data-testid={`anomaly-${a.rule || a.id}`}>
-                                <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-none ${a.severity === "alert" ? "bg-terracotta text-white" : "bg-gold text-white"}`}>
-                                    <AlertTriangle className="h-4 w-4" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-primary-k text-sm">{humanize(a.title)}</div>
-                                    {summary && <div className="text-xs text-muted-k mt-1 leading-relaxed">{summary}</div>}
-                                    {a.dollar_impact != null && a.dollar_impact > 0 && (
-                                        <div data-testid={`anomaly-dollar-${a.id}`} className="mt-2 inline-flex items-center rounded-full bg-terracotta/10 text-terracotta px-3 py-1 text-xs font-semibold tabular-nums">
-                                            Could affect ${Number(a.dollar_impact).toFixed(2)}
-                                        </div>
-                                    )}
-                                    {a.suggested_action && (
-                                        <div className="mt-2.5 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2" data-testid={`anomaly-action-${a.id}`}>
-                                            <Lightbulb className="h-4 w-4 text-gold flex-none mt-0.5" />
-                                            <div className="text-xs text-primary-k"><span className="font-semibold">What to do: </span>{humanize(a.suggested_action)}</div>
-                                        </div>
-                                    )}
-                                    {showWhy && (
-                                        <details className="mt-2 text-xs text-muted-k group/why" data-testid={`anomaly-evidence-${a.id}`}>
-                                            <summary className="cursor-pointer list-none text-primary-k font-medium inline-flex items-center gap-1 hover:underline">
-                                                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
-                                            </summary>
-                                            {fullDetail && fullDetail !== summary && <p className="mt-2 leading-relaxed">{fullDetail}</p>}
-                                            {Array.isArray(a.evidence) && a.evidence.length > 0 && (
-                                                <ul className="mt-1.5 ml-3 list-disc space-y-0.5">
-                                                    {a.evidence.map((e, i) => (
-                                                        <li key={i} className="tabular-nums">{humanize(e)}</li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </details>
-                                    )}
-                                    <div className="mt-2">
-                                        <AIAccuracyBanner variant="anomaly" />
-                                    </div>
-                                </div>
-                            </li>
-                            );
-                        })}
+                        {stmt.anomalies.map((a, aIdx) => (
+                            <FlagCard
+                                key={a.id}
+                                idx={aIdx}
+                                severity={a.severity === "alert" ? "high" : a.severity === "info" ? "low" : "medium"}
+                                title={a.title}
+                                detail={a.detail}
+                                action={a.suggested_action}
+                                evidence={a.evidence}
+                                dollarImpact={a.dollar_impact}
+                                testId={`anomaly-${a.rule || a.id}`}
+                            />
+                        ))}
                     </ul>
+                    <div className="mt-3">
+                        <AIAccuracyBanner variant="anomaly" />
+                    </div>
                 </div>
             )}
 
-            <div className="bg-surface border border-kindred rounded-xl overflow-hidden" data-testid="line-items-table">
+            <div className="sect-sage border border-kindred rounded-xl overflow-hidden" data-testid="line-items-table">
                 <div className="px-6 py-4 border-b border-kindred">
                     <span className="overline">Line items</span>
                 </div>

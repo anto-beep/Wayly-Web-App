@@ -18,6 +18,7 @@ import { usePersonaTier1 } from "@/lib/persona";
 import { Loader2, Sparkles, ArrowRight, ChevronDown, ChevronUp, Info, Calendar, ShieldCheck, LifeBuoy, FileDown, TrendingUp } from "lucide-react";
 import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
     AutomatedDecisionDisclosure,
     DataFreshnessIndicator,
@@ -655,24 +656,41 @@ function RangeHeadline({ result, onEdit, personaCopy }) {
 /* ---------- section 2: government share hero bar ---------- */
 
 function GovernmentShareBar({ result, personaCopy }) {
-    void personaCopy; // reserved for future, gov-share phrasing already lives in PointHeadline
+    void personaCopy;
     const govtPct = Math.max(0, Math.min(100, result.government_share_percent || 0));
     const youPct = 100 - govtPct;
+    const data = [
+        { name: "Government", value: govtPct, color: "#425F47" },
+        { name: "You", value: youPct, color: "#A5512B" },
+    ];
     return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="ce-govt-share-bar">
+        <div className="sect-teal border border-kindred rounded-2xl p-6" data-testid="ce-govt-share-bar">
             <div className="text-xs uppercase tracking-wider text-muted-k">Who pays what</div>
-            <div className="mt-3 h-12 w-full rounded-lg overflow-hidden flex" role="img"
-                 aria-label={`Government pays ${govtPct.toFixed(1)}%, you pay ${youPct.toFixed(1)}%`}>
-                <div style={{ width: `${govtPct}%` }} className="bg-sage flex items-center justify-center text-white text-sm font-semibold" data-testid="ce-govt-share-govt">
-                    {govtPct >= 12 && <>Government · {govtPct.toFixed(1)}%</>}
+            <div className="mt-3 flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative h-[150px] w-[150px] flex-none" role="img"
+                     aria-label={`Government pays ${govtPct.toFixed(1)}%, you pay ${youPct.toFixed(1)}%`}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie data={data} dataKey="value" innerRadius={52} outerRadius={72} startAngle={90} endAngle={-270} stroke="none" paddingAngle={2}>
+                                {data.map((d) => <Cell key={d.name} fill={d.color} />)}
+                            </Pie>
+                        </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="font-heading text-2xl text-primary-k tabular-nums leading-none">{govtPct.toFixed(0)}%</span>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-k mt-0.5">funded</span>
+                    </div>
                 </div>
-                <div style={{ width: `${youPct}%` }} className="bg-primary-k flex items-center justify-center text-white text-sm font-semibold" data-testid="ce-govt-share-you">
-                    {youPct >= 8 && <>You · {youPct.toFixed(1)}%</>}
+                <div className="flex-1 w-full space-y-3">
+                    <div className="flex items-center justify-between gap-3 rounded-lg item-sage border p-3" data-testid="ce-govt-share-govt">
+                        <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-full bg-sage" /> Government pays</span>
+                        <span className="text-primary-k font-semibold tabular-nums">{_fmt(result.government_share_annual)}<span className="text-xs text-muted-k font-normal"> / yr</span></span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 rounded-lg item-clay border p-3" data-testid="ce-govt-share-you">
+                        <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-full bg-clay" /> You pay</span>
+                        <span className="text-primary-k font-semibold tabular-nums">{_fmt(result.contribution_annual)}<span className="text-xs text-muted-k font-normal"> / yr</span></span>
+                    </div>
                 </div>
-            </div>
-            <div className="mt-3 grid sm:grid-cols-2 gap-2 text-xs text-muted-k">
-                <div><span className="inline-block h-2 w-2 rounded-full bg-sage mr-1" /> Government pays <span className="text-primary-k font-medium tabular-nums">{_fmt(result.government_share_annual)}</span> / year</div>
-                <div><span className="inline-block h-2 w-2 rounded-full bg-primary-k mr-1" /> You pay <span className="text-primary-k font-medium tabular-nums">{_fmt(result.contribution_annual)}</span> / year</div>
             </div>
         </div>
     );
@@ -685,12 +703,12 @@ function RateBreakdown({ result, form }) {
     const bandInd = result.independence_rate?.toFixed(2);
     const bandEv = result.everyday_rate?.toFixed(2);
     return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-3" data-testid="ce-rate-breakdown">
+        <div className="sect-clay border border-kindred rounded-2xl p-6 space-y-3" data-testid="ce-rate-breakdown">
             <div className="text-xs uppercase tracking-wider text-muted-k">Your rates by service type</div>
-            <div className="grid grid-cols-3 gap-2">
-                <RateCard label="Clinical care" rate={0} note="Always free for participants" testId="ce-rate-clinical" />
-                <RateCard label="Independence" rate={bandInd} note="Personal care, meals" testId="ce-rate-independence" />
-                <RateCard label="Everyday Living" rate={bandEv} note="Cleaning, transport, gardening" testId="ce-rate-everyday" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <RateCard label="Clinical care" rate={0} note="Always free for participants" tone="sage" testId="ce-rate-clinical" />
+                <RateCard label="Independence" rate={bandInd} note="Personal care, meals" tone="teal" testId="ce-rate-independence" />
+                <RateCard label="Everyday Living" rate={bandEv} note="Cleaning, transport, gardening" tone="clay" testId="ce-rate-everyday" />
             </div>
             <p className="text-sm text-primary-k leading-relaxed mt-2" data-testid="ce-rate-prose">
                 {result.is_no_worse_off
@@ -701,12 +719,18 @@ function RateBreakdown({ result, form }) {
     );
 }
 
-function RateCard({ label, rate, note, testId }) {
+function RateCard({ label, rate, note, tone = "teal", testId }) {
+    const val = Number(rate) || 0;
+    const pct = Math.max(0, Math.min(100, (val / 25) * 100)); // 25% is the max contribution rate
+    const bar = { teal: "#0E4D52", clay: "#A5512B", sage: "#425F47" }[tone];
     return (
-        <div className="rounded-lg border border-kindred bg-surface-2 p-3" data-testid={testId}>
-            <div className="text-xs uppercase tracking-wider text-muted-k">{label}</div>
-            <div className="mt-1 font-heading text-2xl text-primary-k tabular-nums">{rate === 0 ? "0%" : `${rate}%`}</div>
-            <div className="text-xs text-muted-k mt-1 leading-tight">{note}</div>
+        <div className={`rounded-xl border p-4 item-${tone}`} data-testid={testId}>
+            <div className="text-[11px] uppercase tracking-wider text-muted-k">{label}</div>
+            <div className="mt-1 font-heading text-3xl text-primary-k tabular-nums leading-none">{val === 0 ? "0%" : `${rate}%`}</div>
+            <div className="mt-2 h-2 w-full rounded-full bg-primary-k/10 overflow-hidden" role="img" aria-label={`${label} contribution ${val}%`}>
+                <div className="h-full rounded-full" style={{ width: `${val === 0 ? 100 : pct}%`, backgroundColor: val === 0 ? "#425F47" : bar }} />
+            </div>
+            <div className="text-xs text-muted-k mt-2 leading-tight">{note}</div>
         </div>
     );
 }
@@ -717,7 +741,7 @@ function RateCard({ label, rate, note, testId }) {
 function SafetyNetPanel({ result }) {
     if (!result.applicable_lifetime_cap) return null;
     return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="ce-safety-net">
+        <div className="sect-sage border border-kindred rounded-2xl p-6" data-testid="ce-safety-net">
             <div className="flex items-start gap-3">
                 <ShieldCheck className="h-5 w-5 mt-0.5 text-sage" />
                 <div>
@@ -738,19 +762,25 @@ function OctoberComparison({ result }) {
     if (result.contribution_post_october_2026_weekly == null) return null;
     const saving = (result.contribution_weekly || 0) - (result.contribution_post_october_2026_weekly || 0);
     return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="ce-oct-2026">
+        <div className="sect-teal border border-kindred rounded-2xl p-6" data-testid="ce-oct-2026">
             <div className="flex items-start gap-3">
                 <Calendar className="h-5 w-5 mt-0.5 text-primary-k" />
                 <div className="flex-1">
                     <div className="text-primary-k font-medium">From 1 October 2026, personal care becomes fully government-funded</div>
                     <div className="mt-3 grid grid-cols-2 gap-3">
-                        <div className="rounded-lg border border-kindred p-3">
+                        <div className="rounded-lg item-clay border p-3">
                             <div className="text-xs uppercase tracking-wider text-muted-k">Now</div>
                             <div className="mt-1 font-heading text-2xl text-primary-k tabular-nums" data-testid="ce-oct-now">{_fmt(result.contribution_weekly)} / wk</div>
+                            <div className="mt-2 h-2 w-full rounded-full bg-primary-k/10 overflow-hidden">
+                                <div className="h-full rounded-full bg-clay" style={{ width: "100%" }} />
+                            </div>
                         </div>
-                        <div className="rounded-lg border border-sage/40 bg-sage/10 p-3">
+                        <div className="rounded-lg item-sage border p-3">
                             <div className="text-xs uppercase tracking-wider text-sage">From 1 Oct 2026</div>
                             <div className="mt-1 font-heading text-2xl text-primary-k tabular-nums" data-testid="ce-oct-after">{_fmt(result.contribution_post_october_2026_weekly)} / wk</div>
+                            <div className="mt-2 h-2 w-full rounded-full bg-primary-k/10 overflow-hidden">
+                                <div className="h-full rounded-full bg-sage" style={{ width: `${Math.max(4, Math.min(100, ((result.contribution_post_october_2026_weekly || 0) / (result.contribution_weekly || 1)) * 100))}%` }} />
+                            </div>
                         </div>
                     </div>
                     {saving > 0.005 && (
@@ -777,7 +807,7 @@ function WhatIfPanel({ result, form }) {
     const scenarios = useMemo(() => buildScenarios(result, form), [result, form]);
     if (!scenarios.length) return null;
     return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="ce-what-if">
+        <div className="sect-clay border border-kindred rounded-2xl p-6" data-testid="ce-what-if">
             <div className="text-xs uppercase tracking-wider text-muted-k">What if…</div>
             <ul className="mt-3 space-y-3">
                 {scenarios.map((s, i) => (
@@ -822,7 +852,7 @@ function buildScenarios(result, form) {
 
 function AlsoWorthKnowing({ result }) {
     return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="ce-also-worth-knowing">
+        <div className="sect-sage border border-kindred rounded-2xl p-6" data-testid="ce-also-worth-knowing">
             <div className="flex items-start gap-3">
                 <LifeBuoy className="h-5 w-5 mt-0.5 text-clay" />
                 <div>
@@ -857,7 +887,7 @@ function AlsoWorthKnowing({ result }) {
 function HowThisWasCalculated({ result, form, constants }) {
     const [open, setOpen] = useState(false);
     return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="ce-how-calculated">
+        <div className="sect-teal border border-kindred rounded-2xl p-6" data-testid="ce-how-calculated">
             <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
@@ -924,7 +954,7 @@ function HcpComparisonPanel({ result }) {
     const delta = hcp.delta_weekly || 0;
     const sahCheaper = hcp.is_sah_cheaper;
     return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="ce-hcp-comparison">
+        <div className="sect-clay border border-kindred rounded-2xl p-6" data-testid="ce-hcp-comparison">
             <button
                 type="button"
                 onClick={() => mode === "toggle" && setOpen((o) => !o)}

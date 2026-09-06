@@ -10,6 +10,7 @@ import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
+import FlagCard from "@/components/FlagCard";
 import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import UploadGuardNotice from "@/components/UploadGuardNotice";
@@ -178,12 +179,11 @@ export default function CarePlanReviewer() {
         }
     };
 
-    const draftLetter = async (finding, key, addressee) => {
-        setLetterBusyKey(key);
+    const draftAllFindings = async () => {
+        setLetterBusyKey("all");
         try {
-            const { data } = await api.post("/care-plans/letter-from-finding", {
-                finding,
-                addressee: addressee || finding.addressee_primary || "provider",
+            const { data } = await api.post("/care-plans/letter-from-findings", {
+                findings: fileResult?.findings || [],
                 provider_name: fileResult?.extraction?.provider_name || null,
             });
             if (data?.editor_path) navigate(data.editor_path);
@@ -484,8 +484,21 @@ export default function CarePlanReviewer() {
                         )}
 
                         {/* Findings */}
-                        <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="cp-file-findings">
-                            <div className="overline">Findings ({(fileResult.findings || []).length})</div>
+                        <div className="sect-clay border border-kindred rounded-xl p-5" data-testid="cp-file-findings">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <div className="overline">Findings ({(fileResult.findings || []).length})</div>
+                                {access === "allowed" && (fileResult.findings || []).length > 0 && (
+                                    <button
+                                        onClick={draftAllFindings}
+                                        disabled={letterBusyKey === "all"}
+                                        data-testid="cp-draft-letter-all"
+                                        className="inline-flex items-center gap-1.5 text-sm rounded-full bg-wayly-clay-500 text-white px-4 py-2 font-semibold hover:brightness-95 transition disabled:opacity-60"
+                                    >
+                                        {letterBusyKey === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                                        Draft a letter
+                                    </button>
+                                )}
+                            </div>
                             {(result?.safety_notice || fileResult?.safety_notice) && (
                                 <div className="mt-3 rounded-lg bg-amber-50 border border-amber-300 p-3" data-testid="cp-safety-banner">
                                     <div className="text-sm font-semibold text-amber-900">{(result?.safety_notice || fileResult?.safety_notice).title}</div>
@@ -496,54 +509,18 @@ export default function CarePlanReviewer() {
                                 <div className="mt-3 text-sm text-muted-k">No issues surfaced in this review.</div>
                             ) : (
                                 <ul className="mt-3 space-y-3">
-                                    {(fileResult.findings || []).map((f, i) => {
-                                        const meta = {
-                                            compliance: { label: "Compliance", cls: "bg-terracotta text-white", Icon: AlertOctagon },
-                                            choice: { label: "Choice", cls: "bg-clay text-white", Icon: ShieldAlert },
-                                            efficiency: { label: "Efficiency", cls: "bg-gold text-white", Icon: Shield },
-                                            info: { label: "Info", cls: "bg-sage text-white", Icon: ShieldCheck },
-                                        }[f.severity] || { label: "Info", cls: "bg-sage text-white", Icon: ShieldCheck };
-                                        return (
-                                            <li key={i} className="border-l-4 pl-3 py-1" style={{ borderColor: f.severity === "compliance" ? "#B14C36" : f.severity === "choice" ? "#B65D3D" : f.severity === "efficiency" ? "#C88A2E" : "#7FA083" }} data-testid={`cp-finding-${i}`}>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className={`text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
-                                                    <span className="text-[10px] text-muted-k uppercase tracking-wider">{f.confidence} confidence</span>
-                                                </div>
-                                                <div className="mt-1 text-sm font-medium text-primary-k">{f.title}</div>
-                                                <div className="mt-0.5 text-sm text-primary-k/85">{f.detail}</div>
-                                                {f.citation_source && (
-                                                    <div className="mt-1 text-xs text-muted-k">Source: {f.citation_source}</div>
-                                                )}
-                                                {f.suggested_question && (
-                                                    <div className="mt-2 text-xs italic text-primary-k">→ {f.suggested_question}</div>
-                                                )}
-                                                {access === "allowed" && (f.addressee_primary || f.rule_id) && (
-                                                    <div className="mt-2 flex items-center gap-2 flex-wrap" data-testid={`cp-finding-actions-${i}`}>
-                                                        <button
-                                                            onClick={() => draftLetter(f, `f${i}`, f.addressee_primary)}
-                                                            disabled={letterBusyKey === `f${i}`}
-                                                            data-testid={`cp-draft-letter-${i}`}
-                                                            className="inline-flex items-center gap-1.5 text-xs border border-primary-k text-primary-k rounded-full px-3 py-1 hover:bg-primary-k hover:text-white transition-colors disabled:opacity-60"
-                                                        >
-                                                            {letterBusyKey === `f${i}` ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                                                            Draft letter about this
-                                                        </button>
-                                                        {(f.addressee_secondary || []).map((sec) => (
-                                                            <button
-                                                                key={sec}
-                                                                onClick={() => draftLetter(f, `f${i}-${sec}`, sec)}
-                                                                disabled={letterBusyKey === `f${i}-${sec}`}
-                                                                data-testid={`cp-draft-letter-${i}-${sec}`}
-                                                                className="text-[10px] uppercase tracking-wider text-muted-k hover:text-primary-k underline"
-                                                            >
-                                                                to {sec.replace(/_/g, " ")}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </li>
-                                        );
-                                    })}
+                                    {(fileResult.findings || []).map((f, i) => (
+                                        <FlagCard
+                                            key={i}
+                                            idx={i}
+                                            severity={f.severity === "compliance" ? "high" : f.severity === "info" ? "low" : "medium"}
+                                            title={f.title}
+                                            detail={f.detail}
+                                            action={f.suggested_question}
+                                            evidence={f.citation_source ? [`Source: ${f.citation_source}`] : []}
+                                            testId={`cp-finding-${i}`}
+                                        />
+                                    ))}
                                 </ul>
                             )}
                         </div>

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Shield, ShieldAlert, ShieldCheck, AlertOctagon, FileDown, Share2, HelpCircle, Lightbulb } from "lucide-react";
-import AIAccuracyBanner from "@/components/AIAccuracyBanner";
+import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Shield, ShieldAlert, ShieldCheck, AlertOctagon, FileDown, Share2, HelpCircle } from "lucide-react";
 import { NumberMono } from "@/components/ToolShell";
 import { downloadDecodedAsCsv, downloadDecodedAsPdf, downloadShareablePdf } from "@/lib/decoderExport";
 import { formatDate } from "@/lib/formatDate";
 import { getAnomalyExplainer, shortRuleLabel } from "@/lib/anomalyExplainer";
-import { humanize, shortSummary, flagTint } from "@/lib/plainText";
+import FlagCard from "@/components/FlagCard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { readPersonaPreview } from "@/lib/persona";
@@ -71,8 +70,6 @@ function RuleBadge({ rule }) {
     const info = getAnomalyExplainer(rule);
     const short = shortRuleLabel(rule);
     if (!info) {
-        // Unknown rule, render the short code without a tooltip so the UI
-        // never claims to explain something we don't have copy for.
         return (
             <span
                 className="text-[10px] text-muted-k uppercase tracking-wider"
@@ -109,6 +106,8 @@ function RuleBadge({ rule }) {
         </Tooltip>
     );
 }
+// eslint-disable-next-line no-unused-vars
+const _RuleBadgeKeepAlive = RuleBadge;
 const STREAM_LABEL = {
     Clinical: "Clinical",
     Independence: "Independence",
@@ -579,72 +578,20 @@ function SeverityGroup({ band, items }) {
             {open && (
                 <ul className="mt-3 space-y-3" data-testid={`severity-group-items-${band}`}>
                     {items.map((a, i) => (
-                        <AnomalyCard key={i} a={a} idx={i} band={band} meta={meta} />
+                        <FlagCard
+                            key={i}
+                            idx={i}
+                            severity={band === "informational" ? "low" : band}
+                            title={a.headline}
+                            detail={a.detail}
+                            action={a.suggested_action}
+                            evidence={a.evidence}
+                            dollarImpact={a.dollar_impact}
+                            testId={`anomaly-card-${i}`}
+                        />
                     ))}
                 </ul>
             )}
         </div>
-    );
-}
-
-function AnomalyCard({ a, idx, band, meta }) {
-    const soft = band === "informational";
-    const summary = shortSummary(a.detail);
-    const fullDetail = humanize(a.detail);
-    const showWhy = fullDetail && fullDetail !== summary;
-    return (
-        <li
-            className={`border rounded-xl p-5 ${flagTint(idx)} ${soft ? "border-l-4 border-l-sage" : ""}`}
-            data-testid={`anomaly-card-${idx}`}
-        >
-            <div className="flex items-start gap-3">
-                <div className={`h-9 w-9 rounded-full ${meta.bg} ${meta.fg} flex items-center justify-center flex-shrink-0`}>
-                    <meta.Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 ${meta.bg} ${meta.fg}`}>
-                            {meta.label}
-                        </span>
-                        <RuleBadge rule={a.rule} />
-                    </div>
-                    <div className="mt-2 font-medium text-primary-k">{humanize(a.headline)}</div>
-                    {summary && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{summary}</p>}
-                    {a.dollar_impact > 0 && (
-                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-terracotta/10 text-terracotta px-3 py-1 text-sm font-semibold tabular-nums" data-testid={`anomaly-dollar-${idx}`}>
-                            Could affect {aud(a.dollar_impact)}
-                        </div>
-                    )}
-                    {a.suggested_action && (
-                        <div className="mt-3 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2.5" data-testid={`anomaly-action-${idx}`}>
-                            <Lightbulb className="h-4 w-4 text-gold flex-none mt-0.5" />
-                            <div className="text-sm text-primary-k"><span className="font-semibold">What to do: </span>{humanize(a.suggested_action)}</div>
-                        </div>
-                    )}
-                    {(showWhy || (Array.isArray(a.evidence) && a.evidence.length > 0)) && (
-                        <details className="mt-2 group/why" data-testid={`anomaly-why-${idx}`}>
-                            <summary className="cursor-pointer list-none text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
-                                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
-                            </summary>
-                            {showWhy && <p className="mt-2 text-sm text-muted-k leading-relaxed">{fullDetail}</p>}
-                            {Array.isArray(a.evidence) && a.evidence.length > 0 && (
-                                <ul className="mt-2 space-y-1">
-                                    {a.evidence.map((e, j) => (
-                                        <li key={j} className="text-xs text-muted-k flex items-start gap-1.5">
-                                            <span className="text-gold">▸</span><span>{humanize(e)}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </details>
-                    )}
-                    {!soft && (
-                        <div className="mt-3">
-                            <AIAccuracyBanner variant="anomaly" />
-                        </div>
-                    )}
-                </div>
-            </div>
-        </li>
     );
 }
