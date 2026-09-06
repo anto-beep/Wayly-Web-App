@@ -13,6 +13,7 @@ import { ParticipantSwitcher } from "@/src/components/ParticipantSwitcher";
 import { StreamProgress, Stream } from "@/src/components/StreamProgress";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { DashboardActionBar } from "@/src/components/DashboardActionBar";
+import { AccountHealthCard, HealthRing, useAccountHealth } from "@/src/components/AccountHealth";
 import { Card, Loading, MoneyBig, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -96,6 +97,7 @@ export default function Dashboard() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const firstName = user?.first_name || user?.name?.split(" ")[0] || "there";
+  const health = useAccountHealth();
   const displayName = active?.display_name || "";
   const displayProvider = active?.provider_name || "";
   const planCfg = PLAN_LABELS[plan] || PLAN_LABELS.free;
@@ -114,6 +116,13 @@ export default function Dashboard() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >
         <MissingDetailsBanner />
+        {/* Top row: username + quick-glance health ring (top-right) */}
+        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.sm, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md }}>
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.muted }} numberOfLines={1}>Hi, {firstName}</T>
+          {health ? (
+            <HealthRing pct={health.score_pct} size={44} stroke={5} light onPress={() => router.push("/participants")} testID="header-health-ring" />
+          ) : null}
+        </View>
         {/* Participant switcher — prominent at the top so families always know
             whose care they are viewing and can switch quickly. */}
         <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.xs }}>
@@ -123,6 +132,8 @@ export default function Dashboard() {
         <View style={{ paddingHorizontal: spacing.lg }}>
           <T style={{ fontFamily: fonts.headingSemi, fontSize: 27, lineHeight: 33, color: colors.text }} testID="dashboard-greeting">{greetingFor()}, {firstName} — what would you like to do?</T>
         </View>
+
+        {!loading && !error ? <View style={{ marginTop: spacing.md }}><AccountHealthCard data={health} /></View> : null}
 
         {loading ? (
           <Loading label="Loading your dashboard…" />

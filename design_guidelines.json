@@ -1,131 +1,276 @@
 {
-  "project_context": "Read-only design review of 5 key pages for incremental polish without full redesign. Audience skews 60+; accessibility and legibility are non-negotiable.",
-  "design_constraints": {
-    "colors": "Strictly preserve existing palette (kindred cream, sage, terracotta, gold, primary-k #0E4D52). No new hex colors.",
-    "typography": "Preserve Playfair Display (headings) and IBM Plex Mono/Sans (body). Maintain Wayly Title Case rules.",
-    "boundaries": "No massive redesigns, no backend changes, no new pages, no stock photo additions."
+  "app_name": "Wayly",
+  "surfaces": [
+    "web",
+    "mobile"
+  ],
+  "personality": "Archetype 2: Material You / Expressive + Editorial legibility (Fusion)",
+  "personality_one_liner": "A warm, high-quality financial care dashboard that uses rich Teal, Clay, and Sage color blocks to make complex data approachable and highly legible for older adults.",
+  "brand": {
+    "color": {
+      "surface": "#F4F7F6",
+      "onSurface": "#0A2022",
+      "surfaceSecondary": "#0E4D52",
+      "onSurfaceSecondary": "#FFFFFF",
+      "surfaceTertiary": "#A5512B",
+      "onSurfaceTertiary": "#FFFFFF",
+      "surfaceInverse": "#6B8F71",
+      "onSurfaceInverse": "#FFFFFF",
+      "brand": "#0E4D52",
+      "brandPrimary": "#0E4D52",
+      "onBrandPrimary": "#FFFFFF",
+      "brandSecondary": "#A5512B",
+      "onBrandSecondary": "#FFFFFF",
+      "brandTertiary": "#6B8F71",
+      "onBrandTertiary": "#FFFFFF",
+      "success": "#2D6A4F",
+      "onSuccess": "#FFFFFF",
+      "warning": "#D99E47",
+      "onWarning": "#0A2022",
+      "error": "#9B2226",
+      "onError": "#FFFFFF",
+      "info": "#457B9D",
+      "onInfo": "#FFFFFF",
+      "border": "#C4D4C8",
+      "borderStrong": "#0E4D52",
+      "divider": "#D9E2E2"
+    },
+    "typography": {
+      "displayFontFamily": "'Outfit', sans-serif",
+      "textFontFamily": "'Plus Jakarta Sans', sans-serif",
+      "scale": {
+        "sm": 12,
+        "base": 14,
+        "lg": 16,
+        "xl": 20,
+        "2xl": 24,
+        "3xl": 32
+      },
+      "expo_font_packages": [
+        "@expo-google-fonts/outfit",
+        "@expo-google-fonts/plus-jakarta-sans"
+      ]
+    },
+    "spacing": {
+      "xs": 4,
+      "sm": 8,
+      "md": 12,
+      "lg": 16,
+      "xl": 24,
+      "2xl": 32,
+      "3xl": 48
+    },
+    "radius_tokens": {
+      "sm": 6,
+      "md": 12,
+      "lg": 20,
+      "pill": 999
+    },
+    "shadow_tier": 0,
+    "icon": {
+      "style": "filled",
+      "web_library": "lucide-react",
+      "mobile_set": "Ionicons"
+    }
   },
-  "opportunities_by_page": {
-    "Landing Page (/app/frontend/src/pages/Landing.jsx)": [
-      {
-        "priority": "P1",
-        "where": "Persona On-Ramp (data-testid='persona-onramp')",
-        "problem_observed": "Hover states use simple vertical translations (-translate-y-0.5), feeling slightly rigid and lacking a premium tactile 'snap'.",
-        "proposed_change": "Increase the hover scale slightly (e.g., scale-[1.02]) with a spring-based transition. Apply a slight horizontal translation (group-hover:translate-x-1) to the ArrowRight icon.",
-        "why": "Micro-interactions & Motion: Adds a tactile, polished feel that reinforces interactivity without visual clutter."
+  "web": {
+    "tech": "React (.js, not .tsx) + Tailwind + shadcn/ui primitives",
+    "css_variables": {
+      "root": {
+        "--background": "160 20% 96%",
+        "--foreground": "183 53% 11%",
+        "--card": "184 71% 19%",
+        "--card-foreground": "0 0% 100%",
+        "--popover": "160 20% 96%",
+        "--popover-foreground": "183 53% 11%",
+        "--primary": "184 71% 19%",
+        "--primary-foreground": "0 0% 100%",
+        "--secondary": "19 59% 41%",
+        "--secondary-foreground": "0 0% 100%",
+        "--muted": "142 16% 49%",
+        "--muted-foreground": "0 0% 100%",
+        "--accent": "36 65% 56%",
+        "--accent-foreground": "183 53% 11%",
+        "--destructive": "358 64% 37%",
+        "--destructive-foreground": "0 0% 100%",
+        "--border": "135 15% 80%",
+        "--input": "135 15% 80%",
+        "--ring": "184 71% 19%"
       },
-      {
-        "priority": "P2",
-        "where": "Social Proof Strip",
-        "problem_observed": "The three large numbers (e.g., 2,847 households) load statically, missing an opportunity to emphasize scale and impact.",
-        "proposed_change": "Implement a staggered fade-up entrance animation using intersection observers. Animate the numbers counting up from 0 to their target value over 1-1.5 seconds.",
-        "why": "Motion & Rhythm: Draws attention to key trust metrics dynamically as the user scrolls down the page."
-      },
-      {
-        "priority": "P1",
-        "where": "Feature Grid ('Eight AI Tools. One Calm Dashboard.')",
-        "problem_observed": "The cards are uniform; interacting yields a standard lift but icons remain static, making the dense grid feel slightly monotonous.",
-        "proposed_change": "Add a subtle micro-interaction to the Lucide icons on hover (e.g., a slight scale pulse or 10-degree rotation) and increase card internal padding from p-5 to p-6 or p-8.",
-        "why": "Whitespace & Micro-interactions: Increases the 'breathing room' within each tile and adds interaction delight."
-      },
-      {
-        "priority": "P2",
-        "where": "How It Works (Screenshots & Copy)",
-        "problem_observed": "The alternating left/right layout is solid, but the static scrolling feels standard.",
-        "proposed_change": "Apply a subtle parallax effect or a slight vertical scroll delay to the images relative to their text blocks, so they slide into place gracefully on scroll.",
-        "why": "Section Transitions & Motion: Makes the narrative flow feel more dynamic and immersive."
+      "dark": {
+        "--background": "183 55% 8%",
+        "--foreground": "160 20% 96%",
+        "--card": "184 71% 19%",
+        "--card-foreground": "0 0% 100%",
+        "--popover": "183 55% 8%",
+        "--popover-foreground": "160 20% 96%",
+        "--primary": "184 45% 30%",
+        "--primary-foreground": "0 0% 100%",
+        "--secondary": "19 55% 45%",
+        "--secondary-foreground": "0 0% 100%",
+        "--muted": "142 20% 55%",
+        "--muted-foreground": "183 55% 8%",
+        "--accent": "36 65% 56%",
+        "--accent-foreground": "183 55% 8%",
+        "--destructive": "358 64% 45%",
+        "--destructive-foreground": "0 0% 100%",
+        "--border": "184 40% 20%",
+        "--input": "184 40% 20%",
+        "--ring": "184 45% 30%"
       }
+    },
+    "color_rules": [
+      "CRITICAL: Map 'bg-card' to Teal, 'bg-secondary' to Clay, and 'bg-muted' to Sage to enforce color blocking.",
+      "Never use pure white or pure black. Use the provided soft cream-sage background for light mode.",
+      "Ensure all text on Teal, Clay, and Sage backgrounds is strictly white."
     ],
-    "Pricing Page (/app/frontend/src/pages/Pricing.jsx)": [
-      {
-        "priority": "P0",
-        "where": "Feature Comparison Table (data-testid='pricing-table')",
-        "problem_observed": "The table is visually dense and can be difficult to scan, especially for older users.",
-        "proposed_change": "Increase vertical padding on table rows (py-2.5 to py-4). Add a subtle background hover state (e.g., hover:bg-primary-k/[0.02]) to rows to guide the user's reading line across columns.",
-        "why": "Content Density & Hierarchy: Drastically improves scanability and readability for the 60+ audience."
+    "typography": {
+      "headings": {
+        "font_family": "'Outfit', sans-serif",
+        "h1": "text-4xl sm:text-5xl lg:text-5xl tracking-tight font-medium",
+        "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-medium",
+        "h3": "text-xl sm:text-2xl font-medium",
+        "h4": "text-lg sm:text-xl font-medium",
+        "styles": "Use tight letter spacing on headings; keep font weights strictly at 400 or 500."
       },
-      {
-        "priority": "P1",
-        "where": "Pricing Cards (data-testid='tier-*')",
-        "problem_observed": "The 'Most popular' badge on the Family tier is static; hierarchy relies solely on the background color.",
-        "proposed_change": "Add a continuous, slow shimmer effect passing over the gold badge. Slightly increase the drop shadow (shadow-2xl instead of shadow-xl) on the featured tier.",
-        "why": "Hierarchy & Motion: Gently guides the user's eye to the preferred conversion path without feeling aggressive."
+      "body": {
+        "font_family": "'Plus Jakarta Sans', sans-serif",
+        "styles": "leading-relaxed text-base sm:text-lg font-normal"
       },
-      {
-        "priority": "P2",
-        "where": "Add-on Explainer (data-testid='addons-section')",
-        "problem_observed": "The three columns of features appear instantly, lacking narrative sequencing.",
-        "proposed_change": "Add a staggered slide-up fade animation for the 3 columns, triggering when the section enters the viewport.",
-        "why": "Section Transitions: Connects the flow from the pricing tiers down into the add-on details smoothly."
+      "labels": {
+        "styles": "uppercase text-xs tracking-[0.1em] font-medium"
       }
-    ],
-    "About Page (/app/frontend/src/pages/About.jsx)": [
-      {
-        "priority": "P1",
-        "where": "Scene Cards ('11pm' vs 'Wednesday, 9am')",
-        "problem_observed": "The cards feel tightly packed internally (p-6 sm:p-8) contrasting with the generous wide 12-column editorial grid around them.",
-        "proposed_change": "Increase internal padding to p-8 sm:p-10. Increase the spacing between paragraphs inside the cards (space-y-5 to space-y-6).",
-        "why": "Whitespace & Rhythm: Matches the pacing and 'breathing room' of a high-end editorial piece."
-      },
-      {
-        "priority": "P2",
-        "where": "Sticky Section Markers (Left column Roman numeral + H2)",
-        "problem_observed": "As users scroll through long prose sections, the sticky marker remains static and blends in, losing its wayfinding value.",
-        "proposed_change": "Add an intersection observer to the adjacent prose. When the section is actively crossing the middle of the viewport, subtly shift the Roman numeral's color to --uxf-gold.",
-        "why": "Hierarchy & Section Transitions: Provides clear, elegant wayfinding in a long-form article."
-      }
-    ],
-    "Statement Decoder Tool (/app/frontend/src/pages/tools/StatementDecoderTool.jsx)": [
-      {
-        "priority": "P0",
-        "where": "Mode Toggle (Paste, Upload, Email)",
-        "problem_observed": "The pill toggle uses instant CSS class switching for active states, feeling abrupt.",
-        "proposed_change": "Implement an animated shared-layout sliding background indicator (e.g., using Framer Motion layoutId) that glides smoothly behind the active tab.",
-        "why": "Micro-interactions: Creates a fluid, seamless state transition expected in modern, premium SaaS tools."
-      },
-      {
-        "priority": "P0",
-        "where": "Decoder Result View (data-testid='decoder-result')",
-        "problem_observed": "The results (summary, line items, anomalies) appear simultaneously once loading finishes, which can overwhelm the user with data.",
-        "proposed_change": "Implement a staggered cascade reveal: The top Summary card appears first, followed by the Line Items 150ms later, and Anomalies 150ms after that.",
-        "why": "Motion & Hierarchy: Reduces cognitive overload by guiding the user through the decoded information sequentially."
-      },
-      {
-        "priority": "P1",
-        "where": "Drag & Drop Zone (data-testid='decoder-dropzone')",
-        "problem_observed": "The active drag state only changes the static border color and scale, lacking lively feedback.",
-        "proposed_change": "Add an animated 'marching ants' (moving dashed stroke) effect to the border when dragging a file over it, and gently pulse the central Upload icon.",
-        "why": "Motion & Micro-interactions: Provides clear, immediate, and delightful visual feedback during a core user action."
-      }
-    ],
-    "Signed-in Dashboard (/app/frontend/src/pages/CaregiverDashboard.jsx)": [
-      {
-        "priority": "P0",
-        "where": "Alerts/Anomalies Card (data-testid='alerts-card')",
-        "problem_observed": "The list of anomalies is dense and the 'View' link lacks affordance as an interactive row.",
-        "proposed_change": "Apply the 'group' class to the list item. Add a subtle hover background tint (e.g., hover:bg-[--uxf-warning-bg] or similar soft token). Make the 'View' link translate slightly right on group hover.",
-        "why": "Micro-interactions & Hierarchy: Vastly improves clickability and interactivity for critical alerts."
-      },
-      {
-        "priority": "P1",
-        "where": "Lifetime Cap Card (data-testid='lifetime-cap-card')",
-        "problem_observed": "The percentage progress bar width is set instantly on load, missing a chance to visualize the data calculation.",
-        "proposed_change": "Animate the width of the inner progress bar from 0% to the target percentage over 800ms using an ease-out curve when the component mounts.",
-        "why": "Motion: Makes the data feel 'alive' and actively calculated, reinforcing trust in the system."
-      },
-      {
-        "priority": "P2",
-        "where": "Quick-glance Stat Cards (data-testid='dashboard-stats')",
-        "problem_observed": "The four metric cards are visually uniform and border-heavy, causing slight visual clutter.",
-        "proposed_change": "Increase the padding (p-5 to p-6) for more air. Move the icons from the left of the overline to be right-aligned in the card header, creating a stronger diagonal reading path.",
-        "why": "Whitespace & Rhythm: Reduces cognitive load and improves the scanning rhythm of top-level metrics."
-      }
-    ]
+    },
+    "layout": "Control Room Grid for dashboards: tight gap-6, 12-col base. Use large horizontal color-blocked sections stacked vertically for marketing/info pages.",
+    "surface_microtheme": "flat",
+    "navigation_header": "Solid Teal (bg-card) sticky header with hard bottom border; ensuring high contrast and trustworthiness.",
+    "components_strategy": {
+      "marketing_pages": "pure HTML + Tailwind for structural color-blocked layouts to avoid rigid shadcn Card limits",
+      "interactive_logic": "shadcn heavily customized via Tailwind to apply the Teal/Clay/Sage color blocks with rounded lg corners",
+      "icons": "lucide-react with stroke-width 2 to ensure legibility and friendliness",
+      "buttons": "pill-shaped (rounded-full) for primary actions, mapping to brand.radius_tokens.pill"
+    },
+    "glassmorphism": {
+      "enabled": "false",
+      "recipe": "backdrop-blur-xl + backdrop-saturate-150 + bg-white/70 (light) or bg-black/60 (dark) + 1px inner stroke"
+    },
+    "motion": {
+      "hover_states": "Soft -translate-y-1 lift and opacity shifts on buttons.",
+      "page_transitions": "Fade-through state morphing (Material You style).",
+      "buttons": "transition-transform transition-opacity duration-200 ease-out; respect prefers-reduced-motion"
+    },
+    "data_testid": "every interactive/key element gets a stable data-testid"
   },
-  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
-    "DO NOT use complete `transparent` background in headers, overlays, or any surface that has content under it.",
-    "All interactive and key informational elements MUST include a `data-testid` attribute to facilitate robust automated testing.",
-    "Never replace existing UXF tokens. Only apply structural, spacing, and motion adjustments.",
-    "Prioritize accessibility over pure aesthetics: ensure contrast and readability aren't sacrificed by new animations."
+  "mobile": {
+    "navigation": "bottom_tabs",
+    "glassmorphism": {
+      "enabled": "false",
+      "dos": [
+        "Use solid colored surfaces (Teal/Clay) instead of glass for data legibility."
+      ],
+      "donts": [
+        "Do not use blur over dense financial data or forms."
+      ]
+    },
+    "platform_libraries": {
+      "glass": {
+        "ios": "expo-glass-effect",
+        "android": "expo-blur",
+        "low_end_android_fallback": "solid surfaceSecondary"
+      },
+      "image": "expo-image",
+      "blur": "expo-blur",
+      "bottom_sheet": "@gorhom/bottom-sheet",
+      "animation": "react-native-reanimated",
+      "gesture": "react-native-gesture-handler"
+    },
+    "haptics": {
+      "events": {
+        "tab_press": "selection",
+        "primary_button": "light",
+        "anomaly_flag_tap": "medium",
+        "success_action": "success"
+      }
+    },
+    "safe_area": "every screen root respects safe area; sticky primary CTA in a solid Teal/Clay container at the bottom where applicable",
+    "touch_targets": ">=44x44pt (hitSlop if visual smaller); Pressable only; testID on all interactive elements"
+  },
+  "screens": [
+    {
+      "name": "Dashboard",
+      "surface": "both",
+      "purpose": "A high-level view combining financial pacing, account health, and recent statements using distinct color blocks.",
+      "states": {
+        "loading": "Centered Teal spinner on soft sage background.",
+        "empty": "Teal-tinted illustration with a prompt to upload the first statement.",
+        "error": "Clay-colored (error/brandSecondary) card with a readable retry message."
+      },
+      "layout": "Hero block (Teal background, white text) with Account Health score -> Things To Know (Clay block, white text) -> Recent Statements (Sage block)."
+    },
+    {
+      "name": "Statement Decoder",
+      "surface": "both",
+      "purpose": "Decodes aged-care invoices into plain English, flagging anomalies clearly.",
+      "states": {
+        "loading": "Skeleton loaders matching the colored card shapes.",
+        "empty": "Illustration encouraging the user to select an invoice.",
+        "error": "Readable error message with a 'Try Again' pill button."
+      },
+      "layout": "Summary banner pinned to top (Teal). Scrollable list of anomaly/flag cards (Clay colored with white text) that are collapsible."
+    },
+    {
+      "name": "AI Tools Hub",
+      "surface": "both",
+      "purpose": "A hub for Price Checker, Care Plan Reviewer, and Budget Calculator.",
+      "states": {
+        "loading": "Centered Teal spinner.",
+        "empty": "N/A - static tool list.",
+        "error": "Standard retry overlay."
+      },
+      "layout": "Tetris grid on web, single-column large cards on mobile. Cards alternate between Teal, Clay, and Sage to create a vibrant, engaging grid."
+    }
+  ],
+  "images": {
+    "logo": {
+      "url": "https://images.unsplash.com/photo-1560697529-d624622c3f62?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlYWwlMjBhbmQlMjB0ZXJyYWNvdHRhJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc4ODY4MTUyMXww&ixlib=rb-4.1.0&q=85",
+      "dark": "https://images.unsplash.com/photo-1560697529-d624622c3f62?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlYWwlMjBhbmQlMjB0ZXJyYWNvdHRhJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc4ODY4MTUyMXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Wayly Logo",
+      "category": "logo",
+      "description": "App logo/brand mark for the navigation header.",
+      "surface": "both",
+      "fallback": "WY, wayly logo aged care premium png"
+    },
+    "hero_background": {
+      "url": "https://images.pexels.com/photos/20818855/pexels-photo-20818855.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "dark": "https://images.pexels.com/photos/20818855/pexels-photo-20818855.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Abstract teal and terracotta waves",
+      "category": "hero",
+      "description": "Used as a rich, colorful gradient backdrop for the main Dashboard hero section.",
+      "surface": "both"
+    },
+    "lifestyle_marketing": {
+      "url": "https://images.pexels.com/photos/6975158/pexels-photo-6975158.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "dark": "https://images.pexels.com/photos/6975158/pexels-photo-6975158.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Senior couple smiling and enjoying smoothies",
+      "category": "product",
+      "description": "Warm, engaging lifestyle photo of an older couple, to be used in onboarding or Guided Journeys.",
+      "surface": "both"
+    },
+    "empty_state_illustration": {
+      "url": "https://images.unsplash.com/photo-1739955937993-a3867921747f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlYWwlMjBhbmQlMjB0ZXJyYWNvdHRhJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc4ODY4MTUyMXww&ixlib=rb-4.1.0&q=85",
+      "dark": "https://images.unsplash.com/photo-1739955937993-a3867921747f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlYWwlMjBhbmQlMjB0ZXJyYWNvdHRhJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc4ODY4MTUyMXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Soft colorful abstract shape",
+      "category": "empty_state",
+      "description": "A soft abstract graphic used behind empty state messages to maintain color and warmth.",
+      "surface": "both"
+    }
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: The founder explicitly requested 'different sections should use different background colours and stand out' and 'less white/brown plain space, more colour'. You MUST use full-width color blocks for different layout sections.",
+    "Web Color Mapping: Use 'bg-card' (mapped to Teal #0E4D52), 'bg-secondary' (mapped to Clay #A5512B), and 'bg-muted' (mapped to Sage #6B8F71) for distinct layout wrappers, cards, and banners. This guarantees the high-contrast colored-block aesthetic requested.",
+    "Mobile Color Mapping: Use 'surfaceSecondary' (Teal), 'surfaceTertiary' (Clay), and 'surfaceInverse' (Sage) for main view containers, bottom sheet backgrounds, and large cards. Avoid using 'surface' (the light base) for everything.",
+    "Contrast Rule: Whenever you use Teal, Clay, or Sage as a background, text MUST be white. No exceptions. Ensure high legibility for older adults.",
+    "Gradients: Use custom arbitrary gradients for hero sections to satisfy the 'not just one flat colour' rule, e.g., 'bg-gradient-to-br from-[#0E4D52] to-[#166A70]' for the Teal sections.",
+    "No Glass on Data: Use solid, warm, colored surfaces for cards instead of glass/blur, which can read as cold and clinical in health/aged-care contexts."
   ]
 }

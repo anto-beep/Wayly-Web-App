@@ -16,8 +16,8 @@
 
 :root {
     /* --- Wayly brand tokens (Feb 2026 spec) ---------------------------- */
-    --kindred-bg:        #FBF8F3;   /* neutral 50 — warm off-white app shell */
-    --kindred-surface:   #FFFFFF;
+    --kindred-bg:        #EFE8DB;   /* warm sand — app shell (less stark white) */
+    --kindred-surface:   #FBF7F1;   /* soft cream card (not pure white) */
     --kindred-surface-2: #F4EFE7;   /* neutral 100 — sunken/inset */
     --kindred-primary:   #0E4D52;   /* teal-ink 600 — primary brand surface */
     --kindred-primary-fg:#FFFFFF;
@@ -122,6 +122,11 @@
     body {
         margin: 0;
         background-color: var(--kindred-bg);
+        background-image:
+            radial-gradient(1100px 560px at 100% -8%, rgba(14,77,82,0.12), transparent 60%),
+            radial-gradient(950px 520px at -8% 108%, rgba(165,81,43,0.10), transparent 60%),
+            radial-gradient(820px 480px at 45% 40%, rgba(66,95,71,0.06), transparent 70%);
+        background-attachment: fixed;
         color: var(--kindred-text);
         font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         font-feature-settings: "tnum" 1, "lnum" 1, "ss01" 1, "cv11" 1;
@@ -243,8 +248,17 @@
     .bg-terracotta  { background-color: var(--kindred-terracotta); }
     .bg-gold        { background-color: var(--kindred-gold); }
     .border-kindred { border-color: var(--kindred-border); }
+    .app-topbar { background-image: linear-gradient(90deg, rgba(14,77,82,0.14), color-mix(in srgb, var(--kindred-surface) 88%, transparent) 45%, rgba(165,81,43,0.14)); }
+    .app-bottomnav { background-image: linear-gradient(90deg, rgba(14,77,82,0.12), color-mix(in srgb, var(--kindred-surface) 94%, transparent) 45%, rgba(165,81,43,0.12)); }
     .border-gold    { border-color: var(--kindred-gold); }
     .ring-primary-k { --tw-ring-color: var(--kindred-primary); }
+    /* Colour-block section backgrounds (WCAG: white text on filled; dark text on soft) */
+    .section-teal   { background-color: var(--kindred-primary); color: #fff; }
+    .section-clay   { background-color: var(--kindred-gold);    color: #fff; }
+    .section-sage   { background-color: var(--kindred-sage);    color: #fff; }
+    .section-teal-soft { background-color: color-mix(in srgb, var(--kindred-primary) 9%, var(--kindred-surface)); }
+    .section-clay-soft { background-color: color-mix(in srgb, var(--kindred-gold) 9%, var(--kindred-surface)); }
+    .section-sage-soft { background-color: color-mix(in srgb, var(--kindred-sage) 12%, var(--kindred-surface)); }
 
     .overline {
         text-transform: uppercase;
@@ -368,6 +382,11 @@ html.theme-dark {
 }
 html.theme-dark body {
     background-color: var(--kindred-bg);
+    background-image:
+        radial-gradient(1100px 560px at 100% -8%, rgba(79,168,174,0.16), transparent 60%),
+        radial-gradient(950px 520px at -8% 108%, rgba(232,154,111,0.12), transparent 60%),
+        radial-gradient(820px 480px at 45% 40%, rgba(168,199,171,0.07), transparent 70%);
+    background-attachment: fixed;
     color: var(--kindred-text);
 }
 /* Force WHITE text on every common text class so nothing slips through */

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { CheckCircle2, ChevronDown, ArrowRight, ShieldCheck } from "lucide-react";
 
@@ -36,7 +37,21 @@ export default function AccountHealthCard() {
     useEffect(() => {
         let cancelled = false;
         api.get("/account/health")
-            .then(({ data }) => { if (!cancelled) setData(data); })
+            .then(({ data }) => {
+                if (cancelled) return;
+                setData(data);
+                // Weekly in-app nudge if setup is still incomplete (at most once / 7 days).
+                if (!data.complete) {
+                    const KEY = "wayly_health_nudge_ts";
+                    const last = Number(localStorage.getItem(KEY) || 0);
+                    if (Date.now() - last > 7 * 24 * 60 * 60 * 1000) {
+                        localStorage.setItem(KEY, String(Date.now()));
+                        toast.info(`You still have ${data.outstanding_count} thing${data.outstanding_count === 1 ? "" : "s"} to finish setting up your account.`, {
+                            description: "Completing these gives you the most accurate results.",
+                        });
+                    }
+                }
+            })
             .catch(() => { if (!cancelled) setData(null); });
         return () => { cancelled = true; };
     }, []);
