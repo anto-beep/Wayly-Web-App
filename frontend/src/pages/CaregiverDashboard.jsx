@@ -12,6 +12,7 @@ import JourneyStartBanner from "@/pages/journey/JourneyStartBanner";
 import QP1DashboardTile from "@/pages/qp1/QP1DashboardTile";
 import { relativeTime } from "@/components/ProfileInlinePrompts";
 import { EmailVerificationBanner } from "./VerifyEmail";
+import { humanize, shortSummary } from "@/lib/plainText";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
     Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2, Clock, Users, ChevronDown, Lightbulb,
@@ -473,7 +474,7 @@ export default function CaregiverDashboard() {
 
             {!isFree && (
                 <details className="group rounded-2xl overflow-hidden border border-kindred shadow-sm" data-testid="things-to-know-details">
-                    <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none bg-gradient-to-r from-primary-k to-[#0b3b2e] text-white transition-colors">
+                    <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none bg-primary-k text-white transition-colors">
                         <span className="flex items-center gap-3 min-w-0">
                             <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gold text-white">
                                 <AlertTriangle className="h-5 w-5" />
@@ -503,24 +504,40 @@ export default function CaregiverDashboard() {
                             </div>
                         ) : (
                             <ul className="mt-4 space-y-3">
-                                {allAnomalies.slice(0, 6).map((a) => (
-                                    <li key={a.id} className="flex items-start gap-3 border-b border-kindred pb-3 last:border-0">
-                                        <AlertTriangle className={`h-4 w-4 mt-1 ${a.severity === "alert" ? "text-terracotta" : "text-sage"}`} />
-                                        <div className="flex-1">
-                                            <div className="font-medium text-primary-k text-sm">{a.title}</div>
-                                            <div className="text-xs text-muted-k mt-0.5">{a.detail}</div>
+                                {allAnomalies.slice(0, 6).map((a) => {
+                                    const summary = shortSummary(a.detail);
+                                    const fullDetail = humanize(a.detail);
+                                    const showWhy = fullDetail && fullDetail !== summary;
+                                    const isAlert = a.severity === "alert";
+                                    return (
+                                    <li key={a.id} className="flex items-start gap-3 rounded-xl bg-surface-2 border border-kindred p-4">
+                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-none ${isAlert ? "bg-terracotta text-white" : "bg-gold text-white"}`}>
+                                            <AlertTriangle className="h-4 w-4" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium text-primary-k text-sm">{humanize(a.title)}</div>
+                                            {summary && <div className="text-xs text-muted-k mt-1 leading-relaxed">{summary}</div>}
                                             {a.suggested_action && (
-                                                <div className="text-xs text-primary-k mt-1.5 flex items-start gap-1.5">
+                                                <div className="mt-2 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2">
                                                     <Lightbulb className="h-3.5 w-3.5 flex-none text-gold mt-0.5" />
-                                                    <span>{a.suggested_action}</span>
+                                                    <span className="text-xs text-primary-k"><span className="font-semibold">What to do: </span>{humanize(a.suggested_action)}</span>
                                                 </div>
                                             )}
+                                            {showWhy && (
+                                                <details className="mt-1.5 group/why">
+                                                    <summary className="cursor-pointer list-none text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
+                                                        <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
+                                                    </summary>
+                                                    <p className="mt-1.5 text-xs text-muted-k leading-relaxed">{fullDetail}</p>
+                                                </details>
+                                            )}
                                         </div>
-                                        <Link to={`/app/statements/${a.statement_id}`} className="text-xs text-primary-k underline">
+                                        <Link to={`/app/statements/${a.statement_id}`} className="text-xs text-primary-k underline flex-none">
                                             View
                                         </Link>
                                     </li>
-                                ))}
+                                    );
+                                })}
                             </ul>
                         )}
                     </div>
@@ -529,7 +546,7 @@ export default function CaregiverDashboard() {
 
             {/* Family thread, Family plan only — surfaced high on the page */}
             {isFamily && (
-                <div className="bg-gradient-to-br from-sage/15 to-surface border border-sage/30 rounded-xl p-6" data-testid="family-preview-card">
+                <div className="bg-[linear-gradient(135deg,rgba(107,143,113,0.16),rgba(244,239,231,0.4))] border border-sage/30 rounded-xl p-6" data-testid="family-preview-card">
                     <div className="flex items-center justify-between">
                         <span className="overline flex items-center gap-2"><Users2 className="h-4 w-4" /> Family thread</span>
                         <Link to="/app/family" className="text-xs text-primary-k underline">Open thread</Link>
@@ -553,7 +570,7 @@ export default function CaregiverDashboard() {
 
             {!isFree && (
                 <div className="grid lg:grid-cols-3 gap-6">
-                    <div className="bg-surface border border-kindred rounded-xl p-6 lg:col-span-3" data-testid="recent-statements-card">
+                    <div className="bg-[linear-gradient(135deg,rgba(165,81,43,0.06),transparent)] border border-gold/25 rounded-xl p-6 lg:col-span-3" data-testid="recent-statements-card">
                         <span className="overline">Recent statements</span>
                         {statements.length === 0 ? (
                             <div className="mt-4 text-sm text-muted-k">

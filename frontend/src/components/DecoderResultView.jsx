@@ -255,36 +255,9 @@ export default function DecoderResultView({ result }) {
 
             <InputMethodAccuracyNote method={result.input_method} parsingWarnings={result.parsing_warnings} />
 
-            {/* SECTION 0, Plain-English AI summary, always shown when the
-                backend produced one. Rendered as multi-paragraph body so
-                users get a full narrative before any table. Both pathways
-                (AI Tools + Statements tab) receive the same text. Defensive
-                dash-scrub on the display so older statements (parsed before
-                the parser's dash rules landed) also read as plain prose. */}
-            {result.summary && result.summary.trim() && (
-                <section className="bg-surface-2 border border-kindred rounded-2xl p-6" data-testid="decoder-plain-english-summary">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="h-6 w-6 rounded-full bg-primary-k text-white flex items-center justify-center flex-shrink-0" aria-hidden="true">
-                            <Info className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="overline">In plain English</span>
-                    </div>
-                    <div className="text-primary-k leading-relaxed space-y-3 text-[15px]">
-                        {String(result.summary)
-                            .replace(/\s*[\u2014\u2013]\s*/g, ", ")
-                            .replace(/(\S)\s-\s(\S)/g, "$1, $2")
-                            .replace(/,\s*,/g, ",")
-                            .replace(/,\s*\./g, ".")
-                            .split(/\n{2,}/)
-                            .map((para, i) => (
-                                <p key={i}>{para}</p>
-                            ))}
-                    </div>
-                    <div className="mt-4 text-[11px] text-muted-k">
-                        AI-generated summary. Always verify important figures with your provider or My Aged Care before acting.
-                    </div>
-                </section>
-            )}
+            {/* SECTION 0 removed — the structured summary banner below is the
+                single source of truth; the extra plain-English paragraph box
+                was redundant (two summaries confused users). */}
 
             {/* SECTION 1, Summary banner */}
             <section className="bg-primary-k text-white rounded-2xl p-6 relative" data-testid="decoder-summary-banner">

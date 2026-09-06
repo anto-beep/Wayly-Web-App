@@ -224,7 +224,7 @@ export default function Layout({ children }) {
         <div className="min-h-screen bg-kindred has-bottom-nav app-shell">
             <ReadOnlyBanner />
             {/* ---- HEADER (compact on mobile) ---- */}
-            <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-kindred safe-top">
+            <header className="sticky top-0 z-40 backdrop-blur-xl bg-[linear-gradient(90deg,rgba(14,77,82,0.13),rgba(244,239,231,0.92)_45%,rgba(165,81,43,0.13))] border-b border-kindred safe-top">
                 <div className="mx-auto max-w-[1720px] flex items-center justify-between px-4 md:px-6 lg:px-8 py-3 md:py-4 gap-2">
                     <Link to="/app" className="flex items-center gap-2 min-w-0" data-testid="brand-link" onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "smooth" })}>
                         <WaylyLogo size={36} className="h-8 w-8 md:h-9 md:w-9 flex-none rounded-lg" />
@@ -305,7 +305,7 @@ export default function Layout({ children }) {
             <nav
                 aria-label="Primary"
                 data-testid="mobile-bottom-nav"
-                className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-t border-kindred safe-bottom"
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[linear-gradient(90deg,rgba(14,77,82,0.12),rgba(244,239,231,0.96)_45%,rgba(165,81,43,0.12))] backdrop-blur-xl border-t border-kindred safe-bottom"
             >
                 <div className="grid grid-cols-4 max-w-md mx-auto">
                     {bottomNavItems.map((item) => (

@@ -2754,3 +2754,11 @@ Three mobile features brought to parity with web (web = source of truth). VERIFI
 User request, VERIFIED by testing agent (iteration_218, all 6 criteria pass; backend unchanged).
 - Removed the "Welcome Back" and "Sign in to your account" text from the mobile login screen (`mobile/app/login.tsx`).
 - Added a "Forgot Password?" link (`testID login-forgot-password`) below the password field → new `mobile/app/forgot-password.tsx` screen mirroring the web `/forgot` flow: email → `POST /api/auth/forgot` (enumeration-safe, rate-limited ~3/hr/email) → neutral "Check your email" state with a 60s-cooldown resend + Back to Sign In. The actual reset still happens via the emailed web `/reset` link, same as web. Auth reviewed via integration_expert first; back button uses `router.canGoBack()` fallback to `/login` for deep-link entry.
+
+## Iter275 — Dashboard Things To Know contrast+redesign, topbar colour, duplicate summary fix (web)
+- Root cause of "white text hard to read": the Things To Know header used a Tailwind gradient `from-primary-k` — but primary-k/gold/sage are custom CSS utilities, NOT Tailwind colors, so the gradient stops never resolved → transparent/light header with invisible white title. Fixed to solid `bg-primary-k` (teal, white text readable). Verified.
+- Dashboard Things To Know list now uses the shared plainText.humanize()/shortSummary(): each item = severity circle + short plain title + one-line summary + gold "What to do" lightbulb box + collapsed "Why we flagged this" (no JSON/ATHM/stream= jargon; verified JARGON_PRESENT=False on screenshot).
+- Top nav bar + mobile-web bottom nav: replaced flat bg-white with an arbitrary teal→cream→clay linear-gradient (rgba(14,77,82)/rgba(165,81,43)) so it's shaded/coloured, not plain white.
+- Section variety: Recent Statements got a subtle clay tint; Family Thread a sage tint (arbitrary-value gradients that actually render).
+- Statement Decoder (DecoderResultView): removed the duplicate SECTION 0 "In plain English" summary box; the structured summary banner is now the single summary.
+- NOTE: custom color names (primary-k/gold/sage) can't be used as Tailwind gradient stops — must use arbitrary hex/rgba values. Remembered for the Phase 3 colour overhaul.
