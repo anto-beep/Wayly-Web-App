@@ -530,6 +530,76 @@ async def participant_profile_prompts(pid: str, request: Request):
     }
 
 
+
+# ----------------------------------------------------------------------------
+# Account Health Score — one place that tells the user what's still outstanding
+# ----------------------------------------------------------------------------
+_HEALTH_FIELD_LABELS = {
+    "first_name": "first name",
+    "last_name": "last name",
+    "dob": "date of birth",
+    "classification_level": "support level (1\u20138)",
+    "pension_status": "pension status",
+    "provider_name": "provider",
+    "statement_delivery": "how statements arrive",
+    "authorisation_confirmed": "authorisation to manage their care",
+}
+
+
+@participant_profile_router.get("/account/health")
+async def account_health(request: Request):
+    """Aggregate everything the account still needs to complete into a single
+    score + a checklist, each item deep-linking to where it gets fixed."""
+    user, acct = await _account_for(request)
+    items = []
+
+    # 1) Email verification (account holder)
+    items.append({
+        "id": "email",
+        "label": "Verify your email address",
+        "done": bool(user.get("email_verified")),
+        "fix_route": "/verify-email",
+        "fix_label": "Verify email",
+    })
+
+    # 2) Each participant's profile gaps
+    rows = await _db.participants.find({"account_id": acct["id"]}, {"_id": 0}).to_list(20)
+    rows = [r for r in rows if not r.get("archived_at") and not r.get("deceased_at")]
+    for p in rows:
+        pid = p.get("id")
+        who = p.get("first_name") or p.get("participant_name") or p.get("name") or "this participant"
+        for field in missing_required_fields(p):
+            items.append({
+                "id": f"field:{pid}:{field}",
+                "label": f"Add {who}\u2019s {_HEALTH_FIELD_LABELS.get(field, field.replace('_', ' '))}",
+                "done": False,
+                "fix_route": "/app/participants",
+                "fix_label": "Complete profile",
+            })
+        # pension "unsure" is technically filled but still needs confirming
+        if (p.get("pension_status") or "").lower() == "unsure":
+            items.append({
+                "id": f"pension:{pid}",
+                "label": f"Confirm {who}\u2019s pension status",
+                "done": False,
+                "fix_route": "/app/participants",
+                "fix_label": "Set pension status",
+            })
+
+    total = len(items)
+    done = sum(1 for i in items if i["done"])
+    score = round((done / total) * 100) if total else 100
+    outstanding = [i for i in items if not i["done"]]
+    return {
+        "score_pct": score,
+        "complete": len(outstanding) == 0,
+        "done_count": done,
+        "total_count": total,
+        "outstanding_count": len(outstanding),
+        "items": items,
+    }
+
+
 # ----------------------------------------------------------------------------
 # Migration, used by the CLI script and the optional startup hook
 # ----------------------------------------------------------------------------

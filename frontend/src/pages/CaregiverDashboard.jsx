@@ -13,6 +13,7 @@ import QP1DashboardTile from "@/pages/qp1/QP1DashboardTile";
 import { relativeTime } from "@/components/ProfileInlinePrompts";
 import { EmailVerificationBanner } from "./VerifyEmail";
 import { humanize, shortSummary } from "@/lib/plainText";
+import AccountHealthCard from "@/components/AccountHealthCard";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
     Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2, Clock, Users, ChevronDown, Lightbulb,
@@ -269,6 +270,8 @@ export default function CaregiverDashboard() {
                     {greeting}, {caregiverFirst} — what would you like to do?
                 </h1>
             </div>
+
+            <AccountHealthCard />
 
             {/* What would you like to do? — the navigator */}
             {!loading && <DashboardActionBar />}
