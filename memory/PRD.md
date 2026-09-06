@@ -7194,3 +7194,28 @@ Backend 4/4 (new findings-letter endpoint + invoice draft-all + statement fetch)
 - CHSP tool colour/graphics.
 - Vary graphics further (progress rings for caps).
 - Optional cleanup: no-op `cpr_mitigate` wrapper in routes/care_plans.py.
+
+---
+
+## Bug Fix — Jun 2026 (Support Plan Reviewer 502 / origin overloaded)
+
+### Root cause
+The Support/Care Plan Reviewer runs ONE Claude review LLM call that takes ~40–60s. That exceeds the preview ingress read-timeout (~60s) → Cloudflare 502 "origin overloaded", AND (per llm_wrapper comment) piles up stuck coroutines that exhaust the per-model semaphore, poisoning the whole worker until a manual restart. This made ALL requests (incl. login for sam@test.com) fail during the spike — the login failure was a symptom of the outage, not a credentials problem (sam@test.com exists, family plan).
+
+### Fix (ASYNC-REVIEW-1)
+- Backend `routes/care_plans.py`: review now runs as a background job. New endpoints: `POST /api/public/care-plans/review-async` (text) and `/review-files-async` (files) return `{job_id}` instantly (asyncio.create_task); `GET /api/public/care-plans/review-jobs/{job_id}` returns `{status: processing|done|error, result}`. Job doc in Mongo `cpr_review_jobs`. Extracted `_text_review_core` / `_files_review_core` shared cores. Old sync endpoints kept.
+- `backend/.env`: `LLM_CALL_TIMEOUT_SEC=58`, `LLM_HTTP_TIMEOUT_SEC=54` (was 75/70) — keeps synchronous LLM endpoints under the gateway and gives the background review enough time.
+- Frontend `pages/tools/CarePlanReviewer.jsx`: both submit paths (file + text) call the -async endpoints then `pollReviewJob()` (poll every 3s, up to 60 tries); existing staged "~about a minute" progress UI covers the wait (bg-cream→sect-teal).
+
+### Verified
+Submit returns in 0.15s (HTTP 200); poll flips to `done` ~60s with real findings. No 502, no process poisoning. cathy login + external health back to 200 after the initial restart.
+
+### Note / follow-up
+- `cpr_review_jobs` has no TTL index yet (jobs are tiny; add a TTL later).
+- Other heavy synchronous LLM endpoints (statement/invoice decode) were not changed; if any 502s appear, apply the same async pattern.
+- sam@test.com password unknown (user's own account) — offered reset, awaiting choice.
+
+### Follow-up — reviewer client timeout (60000ms) resilience
+- Cause: user hit axios "timeout of 60000ms exceeded" during a transient backend overload (concurrent LLM jobs during testing). Submit itself is <0.2s.
+- Fix: (1) frontend `pollReviewJob` now fault-tolerant — 20s per-poll timeout, retries transient blips, aborts only on job status='error' or 8 consecutive network errors; submit timeouts raised to 90s. (2) backend caps concurrent background reviews via `asyncio.Semaphore(CPR_REVIEW_CONCURRENCY=4)` so a burst can't stall the worker.
+- Verified: iteration_275 PASS — findings render at ~64s with NO 60000ms timeout, NO 502; 5 concurrent submits stay <2s and /api/health stays responsive during the burst.

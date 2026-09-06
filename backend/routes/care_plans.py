@@ -22,6 +22,7 @@ is currently checked via participant_id → participants.household_id.
 """
 from __future__ import annotations
 
+import asyncio
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Literal, Optional
@@ -199,8 +200,125 @@ async def _get_llm_client():
 
 
 # ---------------------------------------------------------------------------
-# Router builder
+# Async review jobs (ASYNC-REVIEW-1) — the LLM review takes ~40-55s which
+# exceeds the ingress read-timeout and 502s (and piles up stuck coroutines
+# that poison the whole worker). So the review runs as a background job: the
+# HTTP request returns a job_id instantly and the client polls for the result.
 # ---------------------------------------------------------------------------
+
+# Caps concurrent background reviews (each holds an LLM thread ~40-60s).
+_REVIEW_SEMAPHORE = asyncio.Semaphore(int(os.environ.get("CPR_REVIEW_CONCURRENCY", "4")))
+
+
+async def _text_review_core(text: str, classification, quarterly_budget) -> Dict[str, Any]:
+    care_plan_id = f"anon-{uuid4()}"
+    extraction = structure_plan_text(text, care_plan_id)
+    client = await _get_llm_client()
+    result = await analyse_care_plan(
+        text,
+        extraction=extraction,
+        classification=classification,
+        quarterly_budget=quarterly_budget,
+        reference_snapshot_id=REFERENCE_SNAPSHOT_ID,
+        llm_client=client,
+    )
+    _findings, _notice = cpr_mitigate(result["findings"])
+    from lib import cpr_rules as _cpr
+    return {
+        "findings": _findings,
+        "safety_notice": _notice,
+        "verification_panel": result.get("verification_panel"),
+        "plan_summary": _cpr.plan_summary(extraction.model_dump(), result.get("verification_panel")),
+        "review_run": result["review_run"],
+        "extraction": extraction.model_dump(),
+    }
+
+
+async def _files_review_core(payloads, classification, quarterly_budget) -> Dict[str, Any]:
+    try:
+        validate_submission(payloads)
+    except UploadValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    combined_text_parts: List[str] = []
+    per_file_meta: List[Dict[str, Any]] = []
+    unread: List[str] = []
+    for name, raw, _ct in payloads:
+        try:
+            text, method, page_count, warnings = await extract_document(name, raw)
+        except UnsupportedFormatError as e:
+            raise HTTPException(status_code=400, detail=f"{name}: {e}")
+        except CorruptFileError as e:
+            raise HTTPException(status_code=400, detail=f"{name}: {e}")
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(status_code=400, detail=f"{name} could not be read: {e}")
+        combined_text_parts.append(f"--- {name} ---\n{text}")
+        per_file_meta.append({
+            "filename": name, "input_method": method, "page_count": page_count,
+            "warnings": warnings, "text_length": len(text or ""),
+        })
+        if warnings:
+            unread.extend([f"{name}: {w}" for w in warnings])
+
+    combined_text = "\n\n".join(combined_text_parts).strip()
+    if len(combined_text) < 50:
+        raise HTTPException(status_code=400, detail="Could not read enough text from the uploaded files.")
+
+    _guard = classify_content("care-plan-reviewer", combined_text)
+    if _guard["decision"] == "block" and _guard["reason"] == "wrong_tool":
+        return {"upload_guard": _guard}
+
+    care_plan_id = f"anon-{uuid4()}"
+    extraction = structure_plan_text(combined_text, care_plan_id)
+    extraction.unread_sections = list(dict.fromkeys(unread))[:20]
+    extraction.extraction_engine = "multi-file: " + ", ".join({m["input_method"] for m in per_file_meta})
+
+    client = await _get_llm_client()
+    result = await analyse_care_plan(
+        combined_text, extraction=extraction, classification=classification,
+        quarterly_budget=quarterly_budget, reference_snapshot_id=REFERENCE_SNAPSHOT_ID,
+        llm_client=client,
+    )
+    _findings, _notice = cpr_mitigate(result["findings"])
+    from lib import cpr_rules as _cpr
+    return {
+        "findings": _findings, "safety_notice": _notice,
+        "verification_panel": result.get("verification_panel"),
+        "plan_summary": _cpr.plan_summary(extraction.model_dump(), result.get("verification_panel")),
+        "review_run": result["review_run"], "extraction": extraction.model_dump(),
+        "per_file_meta": per_file_meta,
+    }
+
+
+async def _run_review_job(job_id: str, coro) -> None:
+    """Await a review coroutine and persist its result/error to the job doc.
+    A semaphore caps concurrent reviews so a burst can't saturate the LLM
+    executor / event loop and stall unrelated requests."""
+    try:
+        async with _REVIEW_SEMAPHORE:
+            result = await coro
+        await db.cpr_review_jobs.update_one(
+            {"id": job_id}, {"$set": {"status": "done", "result": result, "updated_at": utcnow_iso()}}
+        )
+    except HTTPException as e:
+        await db.cpr_review_jobs.update_one(
+            {"id": job_id}, {"$set": {"status": "error", "error": str(e.detail), "updated_at": utcnow_iso()}}
+        )
+    except Exception as e:  # noqa: BLE001
+        await db.cpr_review_jobs.update_one(
+            {"id": job_id}, {"$set": {"status": "error", "error": str(e), "updated_at": utcnow_iso()}}
+        )
+
+
+async def _create_review_job(coro) -> str:
+    job_id = str(uuid4())
+    now = utcnow_iso()
+    await db.cpr_review_jobs.insert_one(
+        {"id": job_id, "status": "processing", "result": None, "error": None, "created_at": now, "updated_at": now}
+    )
+    asyncio.create_task(_run_review_job(job_id, coro))
+    return job_id
+
 
 def build_care_plans_router() -> APIRouter:
     """Build and return the CPR-1 router. Called from `server.py` after
@@ -331,6 +449,48 @@ def build_care_plans_router() -> APIRouter:
             "extraction": extraction.model_dump(),
             "per_file_meta": per_file_meta,
         }
+
+    # ---------------- Async review jobs (submit + poll) ------------------
+    @r.post("/public/care-plans/review-async")
+    async def public_review_async(body: PublicReviewBody, request: Request, response: Response):
+        """Submit a text review as a background job; returns {job_id} instantly.
+        Poll GET /public/care-plans/review-jobs/{job_id} for the result."""
+        await _require_paid_plan(request, response, "Support Plan Reviewer")
+        job_id = await _create_review_job(
+            _text_review_core(body.text, body.classification, body.quarterly_budget)
+        )
+        return {"job_id": job_id, "status": "processing"}
+
+    @r.post("/public/care-plans/review-files-async")
+    async def public_review_files_async(
+        request: Request,
+        response: Response,
+        files: List[UploadFile] = File(...),
+        classification: Optional[int] = Form(None),
+        quarterly_budget: Optional[float] = Form(None),
+    ):
+        """Submit a multi-file review as a background job; returns {job_id}."""
+        await _require_paid_plan(request, response, "Support Plan Reviewer")
+        payloads: List[tuple[str, bytes, str]] = []
+        for f in files:
+            raw = await f.read()
+            payloads.append((f.filename or "unnamed", raw, f.content_type or ""))
+        # Validate up-front so obvious errors return immediately (not via poll).
+        try:
+            validate_submission(payloads)
+        except UploadValidationError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        job_id = await _create_review_job(
+            _files_review_core(payloads, classification, quarterly_budget)
+        )
+        return {"job_id": job_id, "status": "processing"}
+
+    @r.get("/public/care-plans/review-jobs/{job_id}")
+    async def public_review_job_status(job_id: str):
+        doc = await db.cpr_review_jobs.find_one({"id": job_id}, {"_id": 0})
+        if not doc:
+            raise HTTPException(status_code=404, detail="Review job not found or expired.")
+        return doc
 
     # ---------------- Authenticated: upload -----------------------------
     from fastapi import Depends

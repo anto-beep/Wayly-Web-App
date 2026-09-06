@@ -118,6 +118,31 @@ export default function CarePlanReviewer() {
     };
     const removeFile = (idx) => setFiles(files.filter((_, i) => i !== idx));
 
+    // Poll a background review job until it finishes. The review LLM call runs
+    // ~40-60s which exceeds the gateway timeout, so the backend runs it async
+    // and we poll here instead of holding one long request open. Tolerant of
+    // transient backend slowness: a single failed/slow poll is retried, not
+    // fatal, so a brief overload never surfaces as a hard timeout to the user.
+    const pollReviewJob = async (jobId, { tries = 80, intervalMs = 3000 } = {}) => {
+        let consecutiveErrors = 0;
+        for (let i = 0; i < tries; i++) {
+            await new Promise((r) => setTimeout(r, intervalMs));
+            try {
+                const { data } = await api.get(`/public/care-plans/review-jobs/${jobId}`, { timeout: 20000 });
+                consecutiveErrors = 0;
+                if (data?.status === "done") return data.result;
+                if (data?.status === "error") throw new Error(data.error || "Review failed.");
+            } catch (e) {
+                // A job that reported status "error" is a real failure — surface it.
+                if (e?.message && !e?.response && !/timeout|network/i.test(e.message) && !e?.code) throw e;
+                // Otherwise (timeout / network blip) keep polling; bail only if it persists.
+                consecutiveErrors += 1;
+                if (consecutiveErrors >= 8) throw new Error("We lost connection while reviewing. Please try again.");
+            }
+        }
+        throw new Error("The review is taking longer than expected. Please try again.");
+    };
+
     const submitFiles = async () => {
         setLoading(true);
         setFileError("");
@@ -129,10 +154,11 @@ export default function CarePlanReviewer() {
             files.forEach((f) => fd.append("files", f));
             if (classification) fd.append("classification", String(parseInt(classification, 10)));
             if (quarterlyBudget) fd.append("quarterly_budget", String(parseFloat(quarterlyBudget)));
-            const { data } = await api.post("/public/care-plans/review-files", fd, {
+            const { data: job } = await api.post("/public/care-plans/review-files-async", fd, {
                 headers: { "Content-Type": "multipart/form-data" },
-                timeout: 120000,
+                timeout: 90000,
             });
+            const data = await pollReviewJob(job.job_id);
             if (data?.upload_guard) { setGuard(data.upload_guard); return; }
             setFileResult(data);
         } catch (e) {
@@ -231,7 +257,8 @@ export default function CarePlanReviewer() {
             if (quarterlyBudget) payload.quarterly_budget = parseFloat(quarterlyBudget);
             // Migrated to the new findings-shape endpoint so text-paste and
             // file-upload flows share the same rendering path.
-            const { data } = await api.post("/public/care-plans/review", payload);
+            const { data: job } = await api.post("/public/care-plans/review-async", payload, { timeout: 90000 });
+            const data = await pollReviewJob(job.job_id);
             if (data?.upload_guard) { setGuard(data.upload_guard); return; }
             setFileResult(data);        // Reuse the unified findings renderer
         } catch (e) {
@@ -357,7 +384,7 @@ export default function CarePlanReviewer() {
                 </div>
 
                 {loading && (
-                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary-k/20 bg-cream/60 p-4 animate-fade-up" data-testid="cp-progress">
+                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary-k/20 sect-teal p-4 animate-fade-up" data-testid="cp-progress">
                         <Loader2 className="h-5 w-5 animate-spin text-primary-k shrink-0 mt-0.5" />
                         <div className="flex-1">
                             <div className="font-semibold text-primary-k" data-testid="cp-progress-stage">{PROGRESS_STAGES[progressStage]}…</div>
