@@ -19,7 +19,7 @@ charset-normalizer==3.4.7
 clamd==1.0.2
 click==8.3.2
 cryptography==46.0.7
-cssselect2==0.9.0
+cssselect2==0.10.1
 cyclonedx-python-lib==11.8.0
 defusedxml==0.7.1
 distro==1.9.0
