@@ -79,7 +79,7 @@ export function DashboardActionBar() {
         <View style={styles.grid} testID="dashboard-quick-actions">
           {DASHBOARD_QUICK_ACTIONS.map((a, i) => {
             const Icon = a.icon;
-            const tones = [colors.primary, colors.gold, "#0b3b2e", "#8f4a26", "#2f6d63", "#b5623a"];
+            const tones = ["#0E4D52", "#A5512B", "#3E6A4C", "#0B3B3E", "#B5623A", "#2E5540"];
             const tone = tones[i % tones.length];
             return (
               <Pressable

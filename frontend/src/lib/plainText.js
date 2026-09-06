@@ -43,6 +43,19 @@ export function humanize(input) {
     return out;
 }
 
+// Rotating soft tints so consecutive flag/issue cards each get their own
+// background and visibly stand apart (teal / clay / sage / plum).
+export const FLAG_TINTS = [
+    "bg-[rgba(14,77,82,0.10)] border-[rgba(14,77,82,0.28)] border-l-4 border-l-[#0E4D52]",
+    "bg-[rgba(165,81,43,0.10)] border-[rgba(165,81,43,0.28)] border-l-4 border-l-[#A5512B]",
+    "bg-[rgba(62,106,76,0.13)] border-[rgba(62,106,76,0.30)] border-l-4 border-l-[#3E6A4C]",
+    "bg-[rgba(95,78,118,0.12)] border-[rgba(95,78,118,0.28)] border-l-4 border-l-[#5F4E76]",
+];
+export function flagTint(i) {
+    const n = FLAG_TINTS.length;
+    return FLAG_TINTS[(((i || 0) % n) + n) % n];
+}
+
 // A short, scannable one-liner: humanised first sentence, capped.
 export function shortSummary(input, max = 150) {
     const h = humanize(input);

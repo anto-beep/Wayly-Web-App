@@ -56,9 +56,9 @@ export const lightColors: Palette = {
 };
 
 export const darkColors: Palette = {
-  bg: "#0B1416",
-  surface: "#152425",
-  surface2: "#1C2F31",
+  bg: "#06201F",
+  surface: "#0E3033",
+  surface2: "#14403F",
   sunken: "#060B0C",
   primary: "#4FA8AE",
   primaryFg: "#FFFFFF",

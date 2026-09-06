@@ -14,7 +14,7 @@ import StatementRightsPanel from "@/components/statements/StatementRightsPanel";
 import SD3V2StreamPanel from "@/components/statements/SD3V2StreamPanel";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { periodCompact, periodExact, providerName, decodeStatus, flagsCount } from "@/lib/statementFields";
-import { humanize, shortSummary } from "@/lib/plainText";
+import { humanize, shortSummary, flagTint } from "@/lib/plainText";
 
 const STREAM_BADGE = {
     Clinical: "bg-[#0F5648] text-white",
@@ -369,12 +369,12 @@ export default function StatementDetail() {
                         )}
                     </div>
                     <ul className="mt-4 space-y-3">
-                        {stmt.anomalies.map((a) => {
+                        {stmt.anomalies.map((a, aIdx) => {
                             const summary = shortSummary(a.detail);
                             const fullDetail = humanize(a.detail);
                             const showWhy = (fullDetail && fullDetail !== summary) || (Array.isArray(a.evidence) && a.evidence.length > 0);
                             return (
-                            <li key={a.id} className="flex items-start gap-3 border-b border-kindred pb-4 last:border-0" data-testid={`anomaly-${a.rule || a.id}`}>
+                            <li key={a.id} className={`flex items-start gap-3 rounded-xl border p-4 ${flagTint(aIdx)}`} data-testid={`anomaly-${a.rule || a.id}`}>
                                 <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-none ${a.severity === "alert" ? "bg-terracotta text-white" : "bg-gold text-white"}`}>
                                     <AlertTriangle className="h-4 w-4" />
                                 </div>

@@ -5,7 +5,7 @@ import { NumberMono } from "@/components/ToolShell";
 import { downloadDecodedAsCsv, downloadDecodedAsPdf, downloadShareablePdf } from "@/lib/decoderExport";
 import { formatDate } from "@/lib/formatDate";
 import { getAnomalyExplainer, shortRuleLabel } from "@/lib/anomalyExplainer";
-import { humanize, shortSummary } from "@/lib/plainText";
+import { humanize, shortSummary, flagTint } from "@/lib/plainText";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { readPersonaPreview } from "@/lib/persona";
@@ -594,7 +594,7 @@ function AnomalyCard({ a, idx, band, meta }) {
     const showWhy = fullDetail && fullDetail !== summary;
     return (
         <li
-            className={`bg-surface border rounded-xl p-5 ${soft ? "border-sage/40 border-l-4 border-l-sage" : "border-kindred"}`}
+            className={`border rounded-xl p-5 ${flagTint(idx)} ${soft ? "border-l-4 border-l-sage" : ""}`}
             data-testid={`anomaly-card-${idx}`}
         >
             <div className="flex items-start gap-3">

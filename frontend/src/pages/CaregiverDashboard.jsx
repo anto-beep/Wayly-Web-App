@@ -12,7 +12,7 @@ import JourneyStartBanner from "@/pages/journey/JourneyStartBanner";
 import QP1DashboardTile from "@/pages/qp1/QP1DashboardTile";
 import { relativeTime } from "@/components/ProfileInlinePrompts";
 import { EmailVerificationBanner } from "./VerifyEmail";
-import { humanize, shortSummary } from "@/lib/plainText";
+import { humanize, shortSummary, flagTint } from "@/lib/plainText";
 import AccountHealthCard from "@/components/AccountHealthCard";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
@@ -269,6 +269,13 @@ export default function CaregiverDashboard() {
                 <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-primary-k tracking-tight" data-testid="dashboard-greeting">
                     {greeting}, {caregiverFirst} — what would you like to do?
                 </h1>
+                {activeParticipant && (
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-full section-teal px-4 py-2 text-sm" data-testid="dashboard-viewing-for">
+                        <Users className="h-4 w-4 text-gold" />
+                        <span className="text-white/85">Viewing care for</span>
+                        <span className="font-semibold text-white">{displayName || "your household"}</span>
+                    </div>
+                )}
             </div>
 
             <AccountHealthCard />
@@ -507,13 +514,13 @@ export default function CaregiverDashboard() {
                             </div>
                         ) : (
                             <ul className="mt-4 space-y-3">
-                                {allAnomalies.slice(0, 6).map((a) => {
+                                {allAnomalies.slice(0, 6).map((a, ttkIdx) => {
                                     const summary = shortSummary(a.detail);
                                     const fullDetail = humanize(a.detail);
                                     const showWhy = fullDetail && fullDetail !== summary;
                                     const isAlert = a.severity === "alert";
                                     return (
-                                    <li key={a.id} className="flex items-start gap-3 rounded-xl bg-surface-2 border border-kindred p-4">
+                                    <li key={a.id} className={`flex items-start gap-3 rounded-xl border p-4 ${flagTint(ttkIdx)}`}>
                                         <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-none ${isAlert ? "bg-terracotta text-white" : "bg-gold text-white"}`}>
                                             <AlertTriangle className="h-4 w-4" />
                                         </div>

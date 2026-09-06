@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { AlertTriangle, AlertOctagon, Info, CheckCircle2, Receipt, Building2, Calendar, Hash, ChevronDown, ChevronUp, FileDown, Download, Columns2, Loader2, ShieldAlert, Shield, Lightbulb } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
-import { humanize, shortSummary } from "@/lib/plainText";
+import { humanize, shortSummary, flagTint } from "@/lib/plainText";
 import { toast } from "sonner";
 
 /**
@@ -178,7 +178,7 @@ function IssueCard({ f, idx, band, onDraftLetter }) {
     const fullDesc = humanize(description);
     const showWhy = fullDesc && fullDesc !== summary;
     return (
-        <li className="bg-surface border border-kindred rounded-xl p-5" data-testid={`inv1-issue-${idx}`}>
+        <li className={`border rounded-xl p-5 ${flagTint(idx)}`} data-testid={`inv1-issue-${idx}`}>
             <div className="flex items-start gap-3">
                 <span className={`inline-flex items-center justify-center rounded-full ${meta.bg} ${meta.fg} h-9 w-9 flex-none`}>
                     <meta.Icon className="h-4 w-4" />

@@ -104,7 +104,7 @@ export default function DashboardActionBar() {
             <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="dashboard-quick-actions">
                 {DASHBOARD_QUICK_ACTIONS.map((a, i) => {
                     const Icon = a.icon;
-                    const tones = ["bg-primary-k", "bg-gold", "bg-[#0b3b2e]", "bg-[#8f4a26]", "bg-[#2f6d63]", "bg-[#b5623a]"];
+                    const tones = ["bg-[#0E4D52]", "bg-[#A5512B]", "bg-[#3E6A4C]", "bg-[#0B3B3E]", "bg-[#B5623A]", "bg-[#2E5540]"];
                     const tone = tones[i % tones.length];
                     return (
                         <button

@@ -365,9 +365,9 @@
 /* Pure white body text + bright surfaces. Spec §17: hex values are placeholders
  * pending Antony's final lock, but the readability bar is now AAA. */
 html.theme-dark {
-    --kindred-bg:        #0B1416;     /* near-black, very slight teal */
-    --kindred-surface:   #152425;     /* surface raised */
-    --kindred-surface-2: #1C2F31;     /* surface raised+ */
+    --kindred-bg:        #06201F;     /* deep teal-ink (no grey) */
+    --kindred-surface:   #0E3033;     /* teal surface raised */
+    --kindred-surface-2: #14403F;     /* teal surface raised+ */
     --kindred-sunken:    #060B0C;     /* sunken */
     --kindred-primary:   #4FA8AE;     /* teal 400 — AAA on dark */
     --kindred-primary-fg:#FFFFFF;
@@ -377,7 +377,7 @@ html.theme-dark {
     --kindred-text:      #FFFFFF;     /* WHITE — full readability per user request */
     --kindred-text-2:    #E5E5E5;     /* secondary text — still high contrast */
     --kindred-muted:     #C7C2B8;     /* muted but still legible */
-    --kindred-border:    #2A3A3C;
+    --kindred-border:    #1F5052;
     color-scheme: dark;
 }
 html.theme-dark body {
