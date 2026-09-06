@@ -1,0 +1,66 @@
+{
+  "summary": "PHASE 1 dashboard cleanup verified on BOTH web and mobile (Family account cathy@example.com). All acceptance criteria pass: new hero greeting, header CTAs/plan-badge/latest-summary-card removed, coloured action tiles, gradient/teal 'Things to know' header, Family thread above Recent statements, and lightbulb icons for suggested actions on web.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "verification_details": {
+    "web": {
+      "greeting": "'Good morning, Cathy — what would you like to do?' rendered under [data-testid=dashboard-greeting]",
+      "removed_ok": ["dashboard-upload-cta (count=0)", "dashboard-key-contacts-cta (count=0)", "dashboard-plan-badge (count=0)", "latest-summary-card (count=0)", "Share-with-family button (0 found)"],
+      "present_ok": ["dashboard-action-bar", "dashboard-quick-actions (6 tiles)", "family-preview-card", "recent-statements-card", "things-to-know-details"],
+      "quick_action_tile_backgrounds": [
+        "rgb(14,77,82) primary-k",
+        "rgb(165,81,43) gold/clay",
+        "rgb(11,59,46) deep-teal",
+        "rgb(143,74,38) dark clay",
+        "rgb(47,109,99) teal",
+        "rgb(181,98,58) clay"
+      ],
+      "things_to_know_header": "bg-gradient-to-r from-primary-k to-[#0b3b2e], text-white — matches spec",
+      "family_before_recent_dom_order": true,
+      "lightbulb_in_expanded_things_to_know": "6 lucide-lightbulb icons in alerts-card, 0 arrow-right icons — matches spec",
+      "action_bar_search_navigates": "PASS (typed 'statements' returned matching results)"
+    },
+    "mobile": {
+      "greeting": "'Good morning, Cathy — what would you like to do?' rendered under [testID=dashboard-greeting]",
+      "removed_ok": ["dashboard-upload-cta (count=0)", "dashboard-key-contacts-cta (count=0)", "dashboard-plan-badge (count=0)", "latest-summary-card (count=0)"],
+      "present_ok": ["dashboard-action-bar", "dashboard-quick-actions (6 tiles)", "family-preview-card", "recent-statements-card", "dashboard-things-to-know-toggle"],
+      "quick_action_tiles": [
+        {"bg": "rgb(14,77,82)", "label": "Upload a statement"},
+        {"bg": "rgb(165,81,43)", "label": "Check an invoice"},
+        {"bg": "rgb(11,59,46)", "label": "Ask Wayly a question"},
+        {"bg": "rgb(143,74,38)", "label": "Draft a letter"},
+        {"bg": "rgb(47,109,99)", "label": "See my budget"},
+        {"bg": "rgb(181,98,58)", "label": "All AI Tools"}
+      ],
+      "things_to_know_toggle_bg": "rgb(14,77,82) primary teal with white label text — matches spec",
+      "family_before_recent_dom_order": true
+    }
+  },
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Cosmetic: on web, the shortcut tile backgrounds cover the full brand palette (primary-k, gold, deep-teal, plus 3 supplementary hex tones #0b3b2e / #8f4a26 / #2f6d63 / #b5623a). Spec called out 'teal/clay/deep-teal'; the extra tones read as clay/teal variants and match the intent, but the palette is more diverse than described — consider whether main agent wants only the 3 canonical tones repeated or to keep the current 6 distinct swatches."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "PHASE 1 dashboard cleanup is complete and validated on both surfaces. Web tested at desktop viewport (1440x2400) via REACT_APP_BACKEND_URL; mobile tested at 390x844 via the expo preview URL. All required data-testid/testID selectors are stable and used in this run.",
+  "rca of the issue": ""
+}

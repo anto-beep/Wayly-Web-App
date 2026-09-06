@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { AlertTriangle, AlertOctagon, Info, CheckCircle2, Receipt, Building2, Calendar, Hash, ChevronDown, ChevronUp, FileDown, Download, Columns2, Loader2, ShieldAlert, Shield } from "lucide-react";
+import { AlertTriangle, AlertOctagon, Info, CheckCircle2, Receipt, Building2, Calendar, Hash, ChevronDown, ChevronUp, FileDown, Download, Columns2, Loader2, ShieldAlert, Shield, Lightbulb } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
+import { humanize, shortSummary } from "@/lib/plainText";
 import { toast } from "sonner";
 
 /**
@@ -173,6 +174,9 @@ function IssueCard({ f, idx, band, onDraftLetter }) {
     const title = f?.title || f?.headline || f?.label || _titleForCheck(ref);
     const description = f?.description || f?.narrative || null;
     const action = f?.recommended_action || f?.suggested_question || f?.escalation || null;
+    const summary = shortSummary(description);
+    const fullDesc = humanize(description);
+    const showWhy = fullDesc && fullDesc !== summary;
     return (
         <li className="bg-surface border border-kindred rounded-xl p-5" data-testid={`inv1-issue-${idx}`}>
             <div className="flex items-start gap-3">
@@ -182,20 +186,20 @@ function IssueCard({ f, idx, band, onDraftLetter }) {
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-[9px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 ${meta.bg} ${meta.fg}`}>{meta.label}</span>
-                        <span className="text-[10px] uppercase tracking-wide text-muted-k font-mono">{ref}</span>
                         {lineHints && <span className="text-[11px] text-muted-k inline-flex items-center gap-1"><Hash className="h-3 w-3" /> {lineHints}</span>}
                     </div>
-                    <div className="mt-2 font-medium text-primary-k">{title}</div>
-                    {description && <p className="text-sm text-muted-k mt-1.5 leading-relaxed whitespace-pre-line">{description}</p>}
+                    <div className="mt-2 font-medium text-primary-k">{humanize(title)}</div>
+                    {summary && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{summary}</p>}
                     {action && (
-                        <div className="mt-3 rounded-lg bg-surface-2 border border-kindred px-3 py-2 text-[13px] text-primary-k" data-testid={`inv1-issue-action-${idx}`}>
-                            <span className="font-semibold">What to do: </span>{action}
+                        <div className="mt-3 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2.5" data-testid={`inv1-issue-action-${idx}`}>
+                            <Lightbulb className="h-4 w-4 text-gold flex-none mt-0.5" />
+                            <div className="text-[13px] text-primary-k"><span className="font-semibold">What to do: </span>{humanize(action)}</div>
                         </div>
                     )}
                     <div className="mt-3 flex items-center gap-3 flex-wrap">
                         {impact > 0 && (
-                            <span className="text-sm text-primary-k">
-                                Potential refund: <span className="font-semibold tabular-nums">{aud(impact)}</span>
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sage/15 text-[#0F5648] px-3 py-1 text-sm font-semibold tabular-nums">
+                                Possible refund {aud(impact)}
                             </span>
                         )}
                         {onDraftLetter && (
@@ -209,6 +213,14 @@ function IssueCard({ f, idx, band, onDraftLetter }) {
                             </button>
                         )}
                     </div>
+                    {showWhy && (
+                        <details className="mt-2 group/why" data-testid={`inv1-issue-why-${idx}`}>
+                            <summary className="cursor-pointer list-none text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
+                                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
+                            </summary>
+                            <p className="mt-2 text-sm text-muted-k leading-relaxed">{fullDesc}</p>
+                        </details>
+                    )}
                 </div>
             </div>
         </li>

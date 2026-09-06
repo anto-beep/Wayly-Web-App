@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { api, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Download, FileDown, MessageCircle, Archive, History, RotateCcw, Trash2, GitCompare, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Download, FileDown, MessageCircle, Archive, History, RotateCcw, Trash2, GitCompare, Sparkles, Lightbulb, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 import DecoderResultView from "@/components/DecoderResultView";
@@ -14,6 +14,7 @@ import StatementRightsPanel from "@/components/statements/StatementRightsPanel";
 import SD3V2StreamPanel from "@/components/statements/SD3V2StreamPanel";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { periodCompact, periodExact, providerName, decodeStatus, flagsCount } from "@/lib/statementFields";
+import { humanize, shortSummary } from "@/lib/plainText";
 
 const STREAM_BADGE = {
     Clinical: "bg-[#0F5648] text-white",
@@ -360,49 +361,59 @@ export default function StatementDetail() {
             {(stmt.anomalies || []).length > 0 && (
                 <div className="bg-surface border border-kindred rounded-xl p-6" data-testid="anomalies-card">
                     <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                        <span className="overline">Things to know</span>
+                        <span className="overline">Things To Know</span>
                         {stmt.anomaly_dollar_impact_total > 0 && (
                             <span data-testid="anomalies-total-impact" className="text-xs rounded-full bg-terracotta/10 text-terracotta px-2.5 py-1 tabular-nums">
-                                Potential impact: ${Number(stmt.anomaly_dollar_impact_total).toFixed(2)}
+                                Could affect ${Number(stmt.anomaly_dollar_impact_total).toFixed(2)}
                             </span>
                         )}
                     </div>
                     <ul className="mt-4 space-y-3">
-                        {stmt.anomalies.map((a) => (
-                            <li key={a.id} className="flex items-start gap-3 border-b border-kindred pb-3 last:border-0" data-testid={`anomaly-${a.rule || a.id}`}>
-                                <AlertTriangle className={`h-4 w-4 mt-1 ${a.severity === "alert" ? "text-terracotta" : "text-sage"}`} />
-                                <div className="flex-1">
-                                    <div className="font-medium text-primary-k text-sm">{a.title}</div>
-                                    <div className="text-xs text-muted-k mt-0.5">{a.detail}</div>
+                        {stmt.anomalies.map((a) => {
+                            const summary = shortSummary(a.detail);
+                            const fullDetail = humanize(a.detail);
+                            const showWhy = (fullDetail && fullDetail !== summary) || (Array.isArray(a.evidence) && a.evidence.length > 0);
+                            return (
+                            <li key={a.id} className="flex items-start gap-3 border-b border-kindred pb-4 last:border-0" data-testid={`anomaly-${a.rule || a.id}`}>
+                                <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-none ${a.severity === "alert" ? "bg-terracotta text-white" : "bg-gold text-white"}`}>
+                                    <AlertTriangle className="h-4 w-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-primary-k text-sm">{humanize(a.title)}</div>
+                                    {summary && <div className="text-xs text-muted-k mt-1 leading-relaxed">{summary}</div>}
                                     {a.dollar_impact != null && a.dollar_impact > 0 && (
-                                        <div data-testid={`anomaly-dollar-${a.id}`} className="text-xs text-terracotta mt-1 tabular-nums">
-                                            Potential impact: ${Number(a.dollar_impact).toFixed(2)}
+                                        <div data-testid={`anomaly-dollar-${a.id}`} className="mt-2 inline-flex items-center rounded-full bg-terracotta/10 text-terracotta px-3 py-1 text-xs font-semibold tabular-nums">
+                                            Could affect ${Number(a.dollar_impact).toFixed(2)}
                                         </div>
                                     )}
                                     {a.suggested_action && (
-                                        <div className="text-xs text-primary-k mt-1.5 italic">→ {a.suggested_action}</div>
-                                    )}
-                                    {Array.isArray(a.evidence) && a.evidence.length > 0 && (
-                                        <details className="mt-2 text-xs text-muted-k" data-testid={`anomaly-evidence-${a.id}`}>
-                                            <summary className="cursor-pointer text-primary-k hover:underline">Why was this flagged?</summary>
-                                            <ul className="mt-1.5 ml-3 list-disc space-y-0.5">
-                                                {a.evidence.map((e, i) => (
-                                                    <li key={i} className="tabular-nums">{e}</li>
-                                                ))}
-                                            </ul>
-                                        </details>
-                                    )}
-                                    {a.rule && (
-                                        <div data-testid={`anomaly-rule-${a.id}`} className="mt-2 text-[10px] uppercase tracking-wider text-muted-k font-mono">
-                                            {a.rule}
+                                        <div className="mt-2.5 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2" data-testid={`anomaly-action-${a.id}`}>
+                                            <Lightbulb className="h-4 w-4 text-gold flex-none mt-0.5" />
+                                            <div className="text-xs text-primary-k"><span className="font-semibold">What to do: </span>{humanize(a.suggested_action)}</div>
                                         </div>
+                                    )}
+                                    {showWhy && (
+                                        <details className="mt-2 text-xs text-muted-k group/why" data-testid={`anomaly-evidence-${a.id}`}>
+                                            <summary className="cursor-pointer list-none text-primary-k font-medium inline-flex items-center gap-1 hover:underline">
+                                                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
+                                            </summary>
+                                            {fullDetail && fullDetail !== summary && <p className="mt-2 leading-relaxed">{fullDetail}</p>}
+                                            {Array.isArray(a.evidence) && a.evidence.length > 0 && (
+                                                <ul className="mt-1.5 ml-3 list-disc space-y-0.5">
+                                                    {a.evidence.map((e, i) => (
+                                                        <li key={i} className="tabular-nums">{humanize(e)}</li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </details>
                                     )}
                                     <div className="mt-2">
                                         <AIAccuracyBanner variant="anomaly" />
                                     </div>
                                 </div>
                             </li>
-                        ))}
+                            );
+                        })}
                     </ul>
                 </div>
             )}

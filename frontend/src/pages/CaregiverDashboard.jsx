@@ -14,7 +14,7 @@ import { relativeTime } from "@/components/ProfileInlinePrompts";
 import { EmailVerificationBanner } from "./VerifyEmail";
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
-    Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2, Clock, Users, ChevronDown,
+    Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2, Clock, Users, ChevronDown, Lightbulb,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { usePersonaCopy } from "@/hooks/usePersonaCopy";
@@ -263,44 +263,10 @@ export default function CaregiverDashboard() {
             <JourneyStartBanner />
             <QP1DashboardTile />
             <OnboardingEnvelopeTile />
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
-                <div>
-                    <p className="text-sm font-semibold mb-1" style={{ color: "var(--kindred-sage)" }} data-testid="dashboard-greeting">{greeting}, {caregiverFirst}</p>
-                    <div className="flex items-center gap-3 flex-wrap mt-2">
-                        <PlanBadge plan={plan} />
-                    </div>
-                    {isFamily && activeParticipant?.field_modifications && (
-                        <LastTouchedByPill participant={activeParticipant} />
-                    )}
-                    {budget && (
-                        <p className="text-muted-k mt-2 text-sm">
-                            {budget.quarter_label} · {budget.classification_label}{displayProvider ? ` · ${displayProvider}` : ""}
-                        </p>
-                    )}
-                </div>
-                {!isFree && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <ShareDashboardButton />
-                        <Link
-                            to="/app/statements/upload"
-                            data-testid="dashboard-upload-cta"
-                            className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90 transition-colors"
-                        >
-                            <FileText className="h-4 w-4" /> Upload a statement
-                        </Link>
-                    </div>
-                )}
-                {activeParticipant?.id && (
-                    <button
-                        type="button"
-                        onClick={() => setShowContacts(true)}
-                        data-testid="dashboard-key-contacts-cta"
-                        className="inline-flex items-center gap-2 bg-white border-2 border-primary-k text-primary-k rounded-full px-4 py-2.5 text-sm hover:bg-primary-k hover:text-white transition-colors"
-                        aria-label="Open Key Contacts panel"
-                    >
-                        <Users className="h-4 w-4" /> Key Contacts
-                    </button>
-                )}
+            <div>
+                <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-primary-k tracking-tight" data-testid="dashboard-greeting">
+                    {greeting}, {caregiverFirst} — what would you like to do?
+                </h1>
             </div>
 
             {/* What would you like to do? — the navigator */}
@@ -506,15 +472,15 @@ export default function CaregiverDashboard() {
             )}
 
             {!isFree && (
-                <details className="group rounded-2xl border-2 border-primary-k/25 bg-primary-k/[0.04] overflow-hidden" data-testid="things-to-know-details">
-                    <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none hover:bg-primary-k/[0.07] transition-colors">
+                <details className="group rounded-2xl overflow-hidden border border-kindred shadow-sm" data-testid="things-to-know-details">
+                    <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none bg-gradient-to-r from-primary-k to-[#0b3b2e] text-white transition-colors">
                         <span className="flex items-center gap-3 min-w-0">
-                            <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gold/15 text-gold">
+                            <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gold text-white">
                                 <AlertTriangle className="h-5 w-5" />
                             </span>
                             <span className="min-w-0">
-                                <span className="block font-heading text-lg text-primary-k leading-tight">Things to know</span>
-                                <span className="block text-xs text-muted-k mt-0.5">
+                                <span className="block font-heading text-lg text-white leading-tight">Things To Know</span>
+                                <span className="block text-xs text-white/70 mt-0.5">
                                     {allAnomalies.length > 0
                                         ? `${allAnomalies.length} item${allAnomalies.length === 1 ? "" : "s"} that may need your attention`
                                         : "Alerts and anomalies picked up from your statements"}
@@ -523,14 +489,14 @@ export default function CaregiverDashboard() {
                         </span>
                         <span
                             data-testid="things-to-know-btn"
-                            className="inline-flex flex-none items-center gap-1.5 rounded-pill bg-primary-k text-white px-4 py-2.5 text-sm font-semibold whitespace-nowrap group-hover:bg-[#091D33] transition-colors"
+                            className="inline-flex flex-none items-center gap-1.5 rounded-pill bg-gold text-white px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors"
                         >
                             <span className="group-open:hidden">Show</span>
                             <span className="hidden group-open:inline">Hide</span>
                             <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
                         </span>
                     </summary>
-                    <div className="px-5 pb-6 pt-2 border-t border-primary-k/15" data-testid="alerts-card">
+                    <div className="px-5 pb-6 pt-4 bg-surface" data-testid="alerts-card">
                         {allAnomalies.length === 0 ? (
                             <div className="mt-4 text-muted-k text-sm flex items-center gap-2">
                                 <Sparkles className="h-4 w-4 text-sage" /> Nothing unusual at the moment.
@@ -544,7 +510,10 @@ export default function CaregiverDashboard() {
                                             <div className="font-medium text-primary-k text-sm">{a.title}</div>
                                             <div className="text-xs text-muted-k mt-0.5">{a.detail}</div>
                                             {a.suggested_action && (
-                                                <div className="text-xs text-primary-k mt-1.5 italic">→ {a.suggested_action}</div>
+                                                <div className="text-xs text-primary-k mt-1.5 flex items-start gap-1.5">
+                                                    <Lightbulb className="h-3.5 w-3.5 flex-none text-gold mt-0.5" />
+                                                    <span>{a.suggested_action}</span>
+                                                </div>
                                             )}
                                         </div>
                                         <Link to={`/app/statements/${a.statement_id}`} className="text-xs text-primary-k underline">
@@ -556,6 +525,30 @@ export default function CaregiverDashboard() {
                         )}
                     </div>
                 </details>
+            )}
+
+            {/* Family thread, Family plan only — surfaced high on the page */}
+            {isFamily && (
+                <div className="bg-gradient-to-br from-sage/15 to-surface border border-sage/30 rounded-xl p-6" data-testid="family-preview-card">
+                    <div className="flex items-center justify-between">
+                        <span className="overline flex items-center gap-2"><Users2 className="h-4 w-4" /> Family thread</span>
+                        <Link to="/app/family" className="text-xs text-primary-k underline">Open thread</Link>
+                    </div>
+                    {familyMsgs.length === 0 ? (
+                        <div className="mt-4 text-sm text-muted-k">
+                            No family messages yet. Share what&#39;s happening with siblings or your advisor without group SMS chains.
+                        </div>
+                    ) : (
+                        <ul className="mt-4 space-y-3">
+                            {familyMsgs.slice(-3).map((m) => (
+                                <li key={m.id} className="border-b border-kindred pb-2 last:border-0">
+                                    <div className="text-[10px] uppercase tracking-wider text-muted-k">{m.author_name} · {formatDateTime(m.created_at)}</div>
+                                    <div className="text-sm text-primary-k mt-0.5">{m.body}</div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             )}
 
             {!isFree && (
@@ -586,19 +579,6 @@ export default function CaregiverDashboard() {
                             </ul>
                         )}
                     </div>
-                </div>
-            )}
-
-            {!isFree && latest?.summary && (
-                <div className="bg-surface-2 rounded-xl p-6 border border-kindred" data-testid="latest-summary-card">
-                    <span className="overline">Latest statement, in plain English</span>
-                    <p className="mt-3 text-primary-k leading-relaxed text-[0.95rem]">{latest.summary}</p>
-                    <Link
-                        to={`/app/statements/${latest.id}`}
-                        className="mt-4 inline-flex items-center gap-1 text-sm text-primary-k underline"
-                    >
-                        Open full statement <ArrowRight className="h-3 w-3" />
-                    </Link>
                 </div>
             )}
 
@@ -644,30 +624,6 @@ export default function CaregiverDashboard() {
                             </ul>
                         )}
                     </div>
-                </div>
-            )}
-
-            {/* Family thread, Family plan only */}
-            {isFamily && (
-                <div className="bg-surface border border-kindred rounded-xl p-6" data-testid="family-preview-card">
-                    <div className="flex items-center justify-between">
-                        <span className="overline flex items-center gap-2"><Users2 className="h-4 w-4" /> Family thread</span>
-                        <Link to="/app/family" className="text-xs text-primary-k underline">Open thread</Link>
-                    </div>
-                    {familyMsgs.length === 0 ? (
-                        <div className="mt-4 text-sm text-muted-k">
-                            No family messages yet. Share what&#39;s happening with siblings or your advisor without group SMS chains.
-                        </div>
-                    ) : (
-                        <ul className="mt-4 space-y-3">
-                            {familyMsgs.slice(-3).map((m) => (
-                                <li key={m.id} className="border-b border-kindred pb-2 last:border-0">
-                                    <div className="text-[10px] uppercase tracking-wider text-muted-k">{m.author_name} · {formatDateTime(m.created_at)}</div>
-                                    <div className="text-sm text-primary-k mt-0.5">{m.body}</div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
                 </div>
             )}
 

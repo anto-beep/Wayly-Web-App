@@ -39,15 +39,8 @@ export default function DashboardActionBar() {
             data-testid="dashboard-action-bar"
             className="rounded-2xl border-2 border-gold/30 bg-gradient-to-br from-gold/[0.08] via-surface to-surface p-6 sm:p-7"
         >
-            <h2 className="font-heading text-2xl sm:text-[1.75rem] text-primary-k tracking-tight">
-                What would you like to do?
-            </h2>
-            <p className="mt-1 text-sm text-muted-k">
-                Search for anything, or tap a shortcut below.
-            </p>
-
             {/* Search */}
-            <form onSubmit={onSubmit} className="relative mt-4" role="search">
+            <form onSubmit={onSubmit} className="relative" role="search">
                 <div className="relative">
                     <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gold" aria-hidden="true" />
                     <input
@@ -109,22 +102,24 @@ export default function DashboardActionBar() {
 
             {/* Shortcut grid */}
             <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="dashboard-quick-actions">
-                {DASHBOARD_QUICK_ACTIONS.map((a) => {
+                {DASHBOARD_QUICK_ACTIONS.map((a, i) => {
                     const Icon = a.icon;
+                    const tones = ["bg-primary-k", "bg-gold", "bg-[#0b3b2e]", "bg-[#8f4a26]", "bg-[#2f6d63]", "bg-[#b5623a]"];
+                    const tone = tones[i % tones.length];
                     return (
                         <button
                             key={a.route}
                             type="button"
                             onClick={() => go(a.route)}
                             data-testid={`dashboard-quick-${a.route}`}
-                            className="group flex flex-col items-start gap-2.5 rounded-xl border border-kindred bg-white p-4 text-left hover:border-gold hover:shadow-card transition-all min-h-[112px]"
+                            className={`group flex flex-col items-start gap-2.5 rounded-xl ${tone} p-4 text-left shadow-sm hover:shadow-card hover:brightness-110 transition-all min-h-[112px]`}
                         >
-                            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/12 text-gold group-hover:bg-gold group-hover:text-white transition-colors">
+                            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition-colors">
                                 <Icon className="h-5 w-5" />
                             </span>
                             <span className="min-w-0">
-                                <span className="block text-sm font-semibold text-primary-k leading-tight">{a.label}</span>
-                                <span className="mt-0.5 block text-xs text-muted-k leading-snug">{a.hint}</span>
+                                <span className="block text-sm font-semibold text-white leading-tight">{a.label}</span>
+                                <span className="mt-0.5 block text-xs text-white/75 leading-snug">{a.hint}</span>
                             </span>
                         </button>
                     );

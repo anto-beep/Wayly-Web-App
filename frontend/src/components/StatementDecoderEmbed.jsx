@@ -238,7 +238,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
                     )}
                     {result.anomalies?.length > 0 && (
                         <div>
-                            <div className="overline">Things to know</div>
+                            <div className="overline">Things To Know</div>
                             <ul className="mt-2 space-y-2">
                                 {result.anomalies.map((a) => (
                                     <li key={a.id} className="flex items-start gap-2 text-sm">

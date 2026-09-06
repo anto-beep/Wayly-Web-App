@@ -31,9 +31,6 @@ export function DashboardActionBar() {
       testID="dashboard-action-bar"
       style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.gold }, shadow.card]}
     >
-      <T style={{ fontFamily: fonts.headingSemi, fontSize: 22, color: colors.text }}>What would you like to do?</T>
-      <T variant="small" style={{ marginTop: 2 }}>Search for anything, or tap a shortcut below.</T>
-
       {/* Search */}
       <View style={[styles.searchWrap, { borderColor: colors.border, backgroundColor: colors.bg }]}>
         <Search size={18} color={colors.gold} />
@@ -80,19 +77,21 @@ export function DashboardActionBar() {
         </View>
       ) : (
         <View style={styles.grid} testID="dashboard-quick-actions">
-          {DASHBOARD_QUICK_ACTIONS.map((a) => {
+          {DASHBOARD_QUICK_ACTIONS.map((a, i) => {
             const Icon = a.icon;
+            const tones = [colors.primary, colors.gold, "#0b3b2e", "#8f4a26", "#2f6d63", "#b5623a"];
+            const tone = tones[i % tones.length];
             return (
               <Pressable
                 key={a.route}
                 testID={`dashboard-quick-${a.label.toLowerCase().replace(/\s+/g, "-")}`}
                 onPress={() => go(a.route)}
-                style={({ pressed }) => [styles.tile, { backgroundColor: colors.bg, borderColor: colors.border }, pressed && { borderColor: colors.gold, opacity: 0.92 }]}
+                style={({ pressed }) => [styles.tile, { backgroundColor: tone }, pressed && { opacity: 0.9 }]}
               >
-                <View style={[styles.tileIcon, { backgroundColor: colors.goldSoft }]}>
-                  <Icon size={20} color={colors.gold} />
+                <View style={[styles.tileIcon, { backgroundColor: "rgba(255,255,255,0.18)" }]}>
+                  <Icon size={20} color="#fff" />
                 </View>
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }} numberOfLines={2}>{a.label}</T>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }} numberOfLines={2}>{a.label}</T>
               </Pressable>
             );
           })}
@@ -111,6 +110,6 @@ const styles = StyleSheet.create({
   resultRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1 },
   resultIcon: { width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.md },
-  tile: { width: "31%", minHeight: 96, borderRadius: radius.md, borderWidth: 1, padding: spacing.sm, gap: spacing.sm, justifyContent: "flex-start" },
+  tile: { width: "31%", minHeight: 96, borderRadius: radius.md, padding: spacing.sm, gap: spacing.sm, justifyContent: "flex-start" },
   tileIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
 });

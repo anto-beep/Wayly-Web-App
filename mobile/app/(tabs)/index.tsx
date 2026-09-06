@@ -4,7 +4,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "@react-navigation/native";
 import {
   TrendingUp, Bell, FileText, CheckCircle2, AlertTriangle, Sparkles, ChevronRight,
-  MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown,
+  MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb,
 } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
@@ -119,36 +119,9 @@ export default function Dashboard() {
         <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.xs }}>
           <ParticipantSwitcher householdName={user?.name} variant="bar" />
         </View>
-        {/* Greeting header */}
+        {/* Greeting header — hero */}
         <View style={{ paddingHorizontal: spacing.lg }}>
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.sage }} testID="dashboard-greeting">{greetingFor()}, {firstName}</T>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, marginTop: 8, flexWrap: "wrap" }}>
-            <View testID="dashboard-plan-badge" style={[styles.planBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Crown size={13} color={colors.gold} />
-              <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.4, color: colors.primary }}>{planCfg.label.toUpperCase()}</T>
-            </View>
-          </View>
-          {budget ? (
-            <T variant="bodyMuted" style={{ marginTop: 6 }}>
-              {budget.quarter_label} · {budget.classification_label}{displayProvider ? ` · ${displayProvider}` : ""}
-            </T>
-          ) : null}
-
-          {/* Header actions (parity with web) */}
-          {!isFree ? (
-            <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, flexWrap: "wrap" }}>
-              <Pressable testID="dashboard-upload-cta" onPress={() => router.push("/upload")} style={[styles.headerBtn, { backgroundColor: colors.cta }]}>
-                <FileText size={16} color="#fff" />
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>Upload a Statement</T>
-              </Pressable>
-              {activeId ? (
-                <Pressable testID="dashboard-key-contacts-cta" onPress={() => router.push("/key-contacts" as any)} style={[styles.headerBtnOutline, { borderColor: colors.primary }]}>
-                  <Users size={16} color={colors.primary} />
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>Key Contacts</T>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : null}
+          <T style={{ fontFamily: fonts.headingSemi, fontSize: 27, lineHeight: 33, color: colors.text }} testID="dashboard-greeting">{greetingFor()}, {firstName} — what would you like to do?</T>
         </View>
 
         {loading ? (
@@ -337,20 +310,20 @@ export default function Dashboard() {
                 <Pressable
                   testID="dashboard-things-to-know-toggle"
                   onPress={() => setShowKnow((v) => !v)}
-                  style={({ pressed }) => [styles.detailToggle, { backgroundColor: colors.surface, borderColor: colors.primary }, shadow.card, pressed && { opacity: 0.92 }]}
+                  style={({ pressed }) => [styles.detailToggle, { backgroundColor: colors.primary, borderColor: colors.primary }, shadow.card, pressed && { opacity: 0.92 }]}
                 >
-                  <View style={[styles.detailIcon, { backgroundColor: colors.goldSoft }]}>
+                  <View style={[styles.detailIcon, { backgroundColor: "rgba(255,255,255,0.16)" }]}>
                     <Bell size={20} color={colors.gold} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text }}>Things to know</T>
-                    <T variant="small" numberOfLines={2} style={{ marginTop: 2 }}>
+                    <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: "#fff" }}>Things To Know</T>
+                    <T variant="small" numberOfLines={2} style={{ marginTop: 2, color: "rgba(255,255,255,0.75)" }}>
                       {allAnomalies.length > 0
                         ? `${allAnomalies.length} item${allAnomalies.length === 1 ? "" : "s"} that may need your attention`
                         : "Alerts and anomalies picked up from your statements"}
                     </T>
                   </View>
-                  <View style={[styles.detailBtn, { backgroundColor: colors.cta }]}>
+                  <View style={[styles.detailBtn, { backgroundColor: colors.gold }]}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>{showKnow ? "Hide" : "Show"}</T>
                     <ChevronDown size={15} color="#fff" style={{ transform: [{ rotate: showKnow ? "180deg" : "0deg" }] }} />
                   </View>
@@ -371,7 +344,12 @@ export default function Dashboard() {
                             <View style={{ flex: 1 }}>
                               <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>{a.title}</T>
                               {a.detail ? <T variant="small" style={{ marginTop: 2 }}>{a.detail}</T> : null}
-                              {a.suggested_action ? <T variant="small" style={{ marginTop: 6, fontStyle: "italic", color: colors.primary }}>{`→ ${a.suggested_action}`}</T> : null}
+                              {a.suggested_action ? (
+                                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 6, marginTop: 6 }}>
+                                  <Lightbulb size={14} color={colors.gold} style={{ marginTop: 1 }} />
+                                  <T variant="small" style={{ flex: 1, color: colors.primary }}>{a.suggested_action}</T>
+                                </View>
+                              ) : null}
                             </View>
                             <ChevronRight size={16} color={colors.muted} />
                           </Pressable>
@@ -380,6 +358,33 @@ export default function Dashboard() {
                     )}
                   </Card>
                 ) : null}
+              </View>
+            ) : null}
+
+            {/* Family thread (Family plan only) — surfaced high on the page */}
+            {isFamily ? (
+              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                <Card testID="family-preview-card" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sage }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Users2 size={15} color={colors.muted} />
+                      <Overline>Family thread</Overline>
+                    </View>
+                    <Pressable onPress={() => router.push("/(tabs)/family")}><T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Open thread</T></Pressable>
+                  </View>
+                  {familyMsgs.length === 0 ? (
+                    <T variant="small" style={{ marginTop: spacing.md, lineHeight: 21 }}>{`No family messages yet. Share what's happening with siblings or your advisor without group SMS chains.`}</T>
+                  ) : (
+                    <View style={{ marginTop: spacing.md, gap: spacing.md }}>
+                      {familyMsgs.slice(-3).map((m) => (
+                        <View key={m.id} style={{ borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: spacing.sm }}>
+                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.6, color: colors.muted }}>{(m.author_name || "").toUpperCase()} · {formatDateTime(m.created_at)}</T>
+                          <T variant="small" style={{ marginTop: 2, color: colors.text }}>{m.body}</T>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </Card>
               </View>
             ) : null}
 
@@ -407,20 +412,6 @@ export default function Dashboard() {
                       ))}
                     </View>
                   )}
-                </Card>
-              </View>
-            ) : null}
-
-            {/* Latest statement, in plain English */}
-            {!isFree && latest?.summary ? (
-              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-                <Card testID="latest-summary-card" style={{ backgroundColor: colors.surface2, borderColor: colors.border }}>
-                  <Overline>Latest statement, in plain English</Overline>
-                  <T style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, marginTop: spacing.sm }}>{sanitizeAI(latest.summary)}</T>
-                  <Pressable onPress={() => router.push(`/statement/${latest.id}`)} style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: spacing.md }}>
-                    <T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 14 }}>Open full statement</T>
-                    <ArrowRight size={13} color={colors.primary} />
-                  </Pressable>
                 </Card>
               </View>
             ) : null}
@@ -474,33 +465,6 @@ export default function Dashboard() {
                             <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13 }}>{(a.action || "").replace(/_/g, " ")}</T>
                             <T variant="small">{a.actor_name ? `${a.actor_name} · ` : ""}{formatDateTime(a.created_at)}</T>
                           </View>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </Card>
-              </View>
-            ) : null}
-
-            {/* Family thread (Family plan only) */}
-            {isFamily ? (
-              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-                <Card testID="family-preview-card">
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Users2 size={15} color={colors.muted} />
-                      <Overline>Family thread</Overline>
-                    </View>
-                    <Pressable onPress={() => router.push("/(tabs)/family")}><T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Open thread</T></Pressable>
-                  </View>
-                  {familyMsgs.length === 0 ? (
-                    <T variant="small" style={{ marginTop: spacing.md, lineHeight: 21 }}>{`No family messages yet. Share what's happening with siblings or your advisor without group SMS chains.`}</T>
-                  ) : (
-                    <View style={{ marginTop: spacing.md, gap: spacing.md }}>
-                      {familyMsgs.slice(-3).map((m) => (
-                        <View key={m.id} style={{ borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: spacing.sm }}>
-                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.6, color: colors.muted }}>{(m.author_name || "").toUpperCase()} · {formatDateTime(m.created_at)}</T>
-                          <T variant="small" style={{ marginTop: 2, color: colors.text }}>{m.body}</T>
                         </View>
                       ))}
                     </View>

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Shield, ShieldAlert, ShieldCheck, AlertOctagon, FileDown, Share2, HelpCircle } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Shield, ShieldAlert, ShieldCheck, AlertOctagon, FileDown, Share2, HelpCircle, Lightbulb } from "lucide-react";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 import { NumberMono } from "@/components/ToolShell";
 import { downloadDecodedAsCsv, downloadDecodedAsPdf, downloadShareablePdf } from "@/lib/decoderExport";
 import { formatDate } from "@/lib/formatDate";
 import { getAnomalyExplainer, shortRuleLabel } from "@/lib/anomalyExplainer";
+import { humanize, shortSummary } from "@/lib/plainText";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { readPersonaPreview } from "@/lib/persona";
@@ -615,6 +616,9 @@ function SeverityGroup({ band, items }) {
 
 function AnomalyCard({ a, idx, band, meta }) {
     const soft = band === "informational";
+    const summary = shortSummary(a.detail);
+    const fullDetail = humanize(a.detail);
+    const showWhy = fullDetail && fullDetail !== summary;
     return (
         <li
             className={`bg-surface border rounded-xl p-5 ${soft ? "border-sage/40 border-l-4 border-l-sage" : "border-kindred"}`}
@@ -631,26 +635,35 @@ function AnomalyCard({ a, idx, band, meta }) {
                         </span>
                         <RuleBadge rule={a.rule} />
                     </div>
-                    <div className="mt-2 font-medium text-primary-k">{a.headline}</div>
-                    {a.detail && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{a.detail}</p>}
+                    <div className="mt-2 font-medium text-primary-k">{humanize(a.headline)}</div>
+                    {summary && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{summary}</p>}
                     {a.dollar_impact > 0 && (
-                        <div className="mt-2 text-sm text-primary-k">
-                            Potential impact: <span className="font-semibold tabular-nums">{aud(a.dollar_impact)}</span>
+                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-terracotta/10 text-terracotta px-3 py-1 text-sm font-semibold tabular-nums" data-testid={`anomaly-dollar-${idx}`}>
+                            Could affect {aud(a.dollar_impact)}
                         </div>
-                    )}
-                    {Array.isArray(a.evidence) && a.evidence.length > 0 && (
-                        <ul className="mt-2 space-y-1">
-                            {a.evidence.map((e, j) => (
-                                <li key={j} className="text-xs text-muted-k flex items-start gap-1.5">
-                                    <span className="text-gold">▸</span><span>{e}</span>
-                                </li>
-                            ))}
-                        </ul>
                     )}
                     {a.suggested_action && (
-                        <div className="mt-3 text-sm font-medium text-primary-k">
-                            → {a.suggested_action}
+                        <div className="mt-3 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2.5" data-testid={`anomaly-action-${idx}`}>
+                            <Lightbulb className="h-4 w-4 text-gold flex-none mt-0.5" />
+                            <div className="text-sm text-primary-k"><span className="font-semibold">What to do: </span>{humanize(a.suggested_action)}</div>
                         </div>
+                    )}
+                    {(showWhy || (Array.isArray(a.evidence) && a.evidence.length > 0)) && (
+                        <details className="mt-2 group/why" data-testid={`anomaly-why-${idx}`}>
+                            <summary className="cursor-pointer list-none text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
+                                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
+                            </summary>
+                            {showWhy && <p className="mt-2 text-sm text-muted-k leading-relaxed">{fullDetail}</p>}
+                            {Array.isArray(a.evidence) && a.evidence.length > 0 && (
+                                <ul className="mt-2 space-y-1">
+                                    {a.evidence.map((e, j) => (
+                                        <li key={j} className="text-xs text-muted-k flex items-start gap-1.5">
+                                            <span className="text-gold">▸</span><span>{humanize(e)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </details>
                     )}
                     {!soft && (
                         <div className="mt-3">
