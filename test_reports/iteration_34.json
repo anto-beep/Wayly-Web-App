@@ -1,0 +1,36 @@
+{
+  "summary": "Iter 34 — Validated 4 sidebar/UX fixes + complete Reports module (8 PDF report types). Backend: 33/33 pytest tests pass (all 8 report types reach READY in <30s, file_size>1000 bytes, %PDF header verified, download token + soft-delete + auth + Anomaly hero data all green). Frontend: Cathy login works; sidebar 5 collapsible groups all toggle correctly with sessionStorage persistence (key=wayly_nav_group_{key}); Reports page renders all 8 cards with Generate buttons; HOUSEHOLD_SUMMARY end-to-end completes in ~10s — modal opens, READY transition, View opens report-preview; config-modal works for QUARTERLY_BUDGET with cfg-submit; /ai-tools/statement-decoder wraps in Layout when logged in (primary-nav + brand-link present); Participants Edit modal opens with ProviderPicker dropdown (BlueBerry Care visible) and edit-save-btn present.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter34_reports.py",
+    "/app/test_reports/pytest/iter34_reports.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Provider Performance locking when <3 statements could not be exercised end-to-end because Cathy's seeded data has 8 statements; full READY report is returned instead. Locked-path code exists in builder but is not currently reachable with default seed. If you want this to be testable, consider seeding a second participant with <3 statements (or document the locking behavior as 'verified by code review only').",
+    "React duplicate-key warnings on /app dashboard originate from third-party emergent-main.js (https://assets.emergent.sh/scripts/emergent-main.js line 38) — not from Wayly code. No action needed.",
+    "Sidebar sessionStorage uses per-group keys (wayly_nav_group_today, wayly_nav_group_money, etc.), not a single composite key. This works correctly and persists across reload — just noting in case the spec implied a single key.",
+    "Reports backend correctly returns 401 for unauthenticated /api/reports/generate, returns 400 for unknown report types, soft-deletes (DELETED status filtered from list), and serves PDFs via short-lived token URL with proper Content-Type."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter34_reports.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (33/33 pytest)",
+    "frontend": "100% (all critical flows green)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None — used existing seeded Cathy/Dorothy household. Test-created reports are soft-deleted automatically (DELETED status filtered from list); no manual cleanup needed beyond stored PDF files on disk at /app/backend/storage/reports/.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend reports module is fully covered by /app/backend/tests/test_iter34_reports.py — re-run with: `pytest /app/backend/tests/test_iter34_reports.py -v`. It generates one of every report type and verifies READY + PDF. Auth: button text on /login is 'Sign in' (NOT 'Log in'). Cathy logs in via POST /api/auth/login returning Bearer token. Reports run async — POST returns GENERATING within ~50ms, full READY in 5-15s for most types (Care Timeline can be slowest). PDF served at /api/reports/file/{token} with 15-min TTL. The Provider Performance locked-state UI cannot be triggered with current seed (8 statements exist). All 5 sidebar groups have data-testid=`nav-group-toggle-{today|money|care|providers|account}` — labels in UI are TODAY, MONEY & STATEMENTS, THEIR CARE, PROVIDERS & PAPERWORK, YOUR ACCOUNT.",
+  "rca of the issue": "n/a — no bugs found"
+}

@@ -1,0 +1,36 @@
+{
+  "summary": "Focused re-verification of AppHeader title truncation bug fix (iter156 follow-up). Confirmed AppHeader now uses numberOfLines={2} on both title and subtitle (/app/mobile/src/components/ui.tsx lines 62 and 66). At 375px mobile viewport after logging in as cathy@example.com: /amendments renders the FULL title 'Care-Plan Changes' wrapped across 2 lines (Text node cw=181 sw=181, no horizontal overflow, no ellipsis dots visible in screenshot), and /athm renders the FULL 'AT & HM Projects' wrapped across 2 lines (Text node cw=181 sw=181). Regression sweep: /compare-providers title 'Compare Providers' fits on 1 line unchanged, /provider-switch 'Switch Provider' renders without truncation, tab headers still OK, no visual breakage from the 2-line change. Dark-mode retest via Settings > theme-dark: both /amendments and /athm continue to show full titles with the correct dark contrast. Note: /statement-audit/<id> could not be verified in this run (route returned 404 for tested statement id) — this is unrelated to the AppHeader change and should be checked separately if needed.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter157/amendments_light.jpeg",
+    "/app/test_reports/iter157/athm_light.jpeg",
+    "/app/test_reports/iter157/compare_light.jpeg",
+    "/app/test_reports/iter157/switch_light.jpeg",
+    "/app/test_reports/iter157/amendments_dark.jpeg",
+    "/app/test_reports/iter157/athm_dark.jpeg"
+  ],
+  "action_items": [
+    "(Optional, out of scope) /statement-audit/<id> route returned 404 for the first statement id in /statements. Verify whether the route is /statement-audit/[id].tsx or a different path (e.g. /statements/<id>/audit) and confirm audit-log header ('Audit log') still renders after the AppHeader 2-line change."
+  ],
+  "critical_code_review_comments": [
+    "AppHeader fix is minimal and correct: title & subtitle both set to numberOfLines={2}. Titles longer than ~15 chars now wrap instead of ellipsising. Title column width remains ~181px on 375-viewport screens (with back+right buttons), so the 2-line allowance is what's required for 'Care-Plan Changes' (17 chars) and 'AT & HM Projects' (16 chars) — verified."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100% for the re-verified bug fix"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan caregiver).",
+  "seed_data_creation": "None (used existing seeded amendments/athm data).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "AppHeader in /app/mobile/src/components/ui.tsx already uses numberOfLines={2} on both the title (line 62) and subtitle (line 66) Text components. Any future long titles will wrap to 2 lines rather than truncate. The title column is a flex:1 View next to an optional back button (~40px) and an optional right slot (e.g. 'New' pill ~68px); at 375-viewport this leaves ~180px for the title. Titles that exceed ~2 lines at that width could theoretically still clip — main agent should keep header titles ≤ ~30 chars or add a fallback (numberOfLines={3}) if longer strings appear. Statement-audit route wasn't fully validated in this run — recommend adding a smoke check next iter.",
+  "rca of the issue": "Root cause was AppHeader Title/Subtitle Text components using numberOfLines={1}, which forces horizontal ellipsis when text exceeds container width. Fix (already applied): change to numberOfLines={2} so long titles wrap to a second line. Verified visually + via DOM probe (scrollWidth == clientWidth on the title Text on both /amendments and /athm; height doubled from 34→68 px indicating 2 lines rendered; no ellipsis rendered in the DOM). Confirmed working in both light and dark themes."
+}

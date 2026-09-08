@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+{% set s = data.stats %}
+<p class="muted">FY{{ data.fy }} · 1 July {{ data.fy - 1 }} – 30 June {{ data.fy }}</p>
+
+{% if data.exec_summary %}<div class="cream-card section"><h3>Summary</h3><p>{{ data.exec_summary }}</p></div>{% endif %}
+
+<h2>Year in numbers</h2>
+<div class="stat-grid">
+  <div class="stat"><div class="stat-label">Annual entitlement</div><div class="stat-value">{{ s.annual_entitlement|money }}</div></div>
+  <div class="stat"><div class="stat-label">Total gross services</div><div class="stat-value">{{ s.gross|money }}</div></div>
+  <div class="stat"><div class="stat-label">Your contribution</div><div class="stat-value">{{ s.contribution|money }}</div></div>
+  <div class="stat"><div class="stat-label">Government paid</div><div class="stat-value">{{ s.government|money }}</div></div>
+  <div class="stat"><div class="stat-label">Lifetime cap used</div><div class="stat-value">{{ s.lifetime_cap_used|money }}</div></div>
+  <div class="stat"><div class="stat-label">Lifetime cap remaining</div><div class="stat-value">{{ s.lifetime_cap_remaining|money }}</div></div>
+</div>
+
+<h2>Contributions by month</h2>
+{% if data.monthly %}
+<table>
+  <thead><tr><th>Month</th><th>Contribution</th></tr></thead>
+  <tbody>
+  {% for m in data.monthly %}
+  <tr><td>{{ m.label }}</td><td>{{ m.contribution|money }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">No monthly contribution data recorded for this financial year.</p>{% endif %}
+
+<h2>Contributions by stream</h2>
+{% if data.by_stream %}
+<table>
+  <thead><tr><th>Stream</th><th>Annual total</th><th>Your contribution</th><th>Government</th></tr></thead>
+  <tbody>
+  {% for st in data.by_stream %}
+  <tr><td>{{ st.name }}</td><td>{{ st.total|money }}</td><td>{{ st.contribution|money }}</td><td>{{ st.government|money }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<h2>Lifetime cap</h2>
+<div class="bar"><div class="bar-fill green" style="width: {{ s.lifetime_cap_pct }}%;"></div></div>
+<p>{{ s.lifetime_cap_used|money }} of {{ s.lifetime_cap|money }} used ({{ s.lifetime_cap_pct }}%) · {{ s.lifetime_cap_remaining|money }} remaining</p>
+<p class="muted">When the lifetime cap is reached, all Support at Home costs are government-funded.</p>
+
+<h2>For your accountant or financial adviser</h2>
+<div class="gold-card">
+  <p><strong>Total participant contributions paid in FY{{ data.fy }}: {{ s.contribution|money }}</strong></p>
+  {% for st in data.by_stream %}
+  {% if st.name in ('Independence', 'Everyday Living') %}
+  <p>{{ st.name }} stream: {{ st.contribution|money }}</p>
+  {% endif %}
+  {% endfor %}
+  <p class="muted" style="font-size: 9px;">Participant contributions do not apply to Clinical, Care Management, or AT-HM streams. Participant ID: {{ data.participant.id }}{% if data.household.provider_abn %} · Provider ABN: {{ data.household.provider_abn }}{% endif %}.</p>
+  <p class="muted" style="font-size: 9px;">Participant contributions may be relevant to your tax position. Discuss with your financial adviser.</p>
+</div>
+{% endblock %}

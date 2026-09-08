@@ -1,0 +1,38 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "Landscape mobile: bottom nav overlaps page content because the content spacer stops at md but the mobile bottom nav is now hidden at lg. Retest at 852x393 that no content sits behind the fixed nav on /app, /app/statements, /app/pacing.",
+  "summary": "No relevant testing skill found. Logged in as cathy@example.com and verified /app, /app/statements, and /app/pacing at 852x393 landscape, 393x852 portrait, and 1440x900 desktop. The landscape overlap regression is fixed: mobile nav remains visible below lg, main padding-bottom is 80px on both mobile viewports, last content/padding clears the fixed 65px nav, desktop hides the mobile nav and resets main padding-bottom to 0. No APIs were mocked.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/bottom_nav_landscape_iter135_playwright.py",
+    "/app/test_reports/bottom_nav_landscape_iter135_results.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Reviewed /app/frontend/src/index.css lines 873-880: .has-bottom-nav main keeps padding-bottom: 5rem until @media (min-width: 1024px), matching Layout.jsx mobile bottom nav lg:hidden breakpoint.",
+    "Reviewed /app/frontend/src/components/Layout.jsx: [data-testid='mobile-bottom-nav'] remains lg:hidden and contains exactly Dashboard, AI Tools, Statements, Settings."
+  ],
+  "updated_files": [
+    "/app/test_reports/bottom_nav_landscape_iter135_playwright.py",
+    "/app/test_reports/bottom_nav_landscape_iter135_results.json",
+    "/app/test_reports/bug_verification_135.json",
+    "/app/test_reports/iteration_135.json"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend only",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "None. Used existing caregiver test account cathy@example.com / testpass123 from /app/memory/test_credentials.md.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Focused bottom-nav retest passed. At 852x393, /app, /app/statements, and /app/pacing all compute main padding-bottom: 80px while the fixed bottom nav is visible (65px, top 328px). At 1440x900 mobile nav is display:none and main padding-bottom is 0. Help and a11y launchers are display:none at 393x852 and 852x393, visible at desktop.",
+  "rca_of_the_issue": "Previous failure was a breakpoint mismatch: content spacer reset at md/768 while the mobile bottom nav stayed visible until lg/1024. The retested code now resets spacer at min-width 1024px, so landscape phones retain the bottom spacer. Non-blocking console noise from localhost websocket connection refusal was observed, but no user-visible errors or test failures occurred. No APIs were mocked."
+}

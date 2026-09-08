@@ -1,0 +1,2391 @@
+# INDEX-1 v1 · Deploy 1a — Monetary Constants Registry
+# Generated 2026-07-13 by tools/generate_monetary_constants_yaml.py
+# Source: backend/seed_program_reference.py (the current de facto seed).
+#
+# Every entry is human-reviewable. Antony's Deploy 1a authorisation confirms:
+#   - Reviewer:     antony
+#   - Alert channel: GitHub issue + email
+#   - Retention:    indefinite history
+#   - Cadence:      20 March + 20 September (twice yearly)
+#
+# For every entry: value → effective_from → source_url → source_citation.
+# Entries with source_url: PENDING have a verification_backlog record.
+version: 1
+constants:
+  - key: at_hm.high_tier_threshold_aud
+    value_aud: 15000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Legacy alias of athm.tier.high.amount_aud — kept for backwards-compatible callers."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: at_hm.validity_months
+    value: 12
+    unit: months
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "AT-HM funding valid 12 months; must be spent, not just committed."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.assistance_dog.amount_aud
+    value_aud: 2000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 212-5 (Tier amounts for AT classification type ongoing — Assistance dogs)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.assistance_dog.period_months
+    value: 12
+    unit: months
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.assistance_dog.rollover
+    value: false
+    unit: boolean
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Schedule explicitly: 'cannot accrue or roll over'."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.duration.extension_months
+    value: 12
+    unit: months
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Extension to 24 months total — requires evidence."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.duration.extension_requires_evidence
+    value: true
+    unit: boolean
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.duration.initial_months
+    value_aud: 12
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.remote_supplement.eligibility
+    value: MM6 or MM7 Modified Monash Model location
+    unit: text
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.remote_supplement.pct
+    value_percentage: 50
+    unit: percentage
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Schedule of Subsidies — MM6/MM7 50% loading applied over and above the standard AT-HM tier."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.tier.high.amount_aud
+    value_aud: 15000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 212-10 plus exceedance under section 211. Examples: stair lift, bathroom modification. High tier accessible once per lifetime per the Schedule."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.tier.high.amount_can_exceed
+    value: true
+    unit: boolean
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.tier.high.exceed_requires_evidence
+    value: true
+    unit: boolean
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Exceedance requires prescription or similar clinical evidence."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.tier.high.one_per_lifetime
+    value: true
+    unit: boolean
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.tier.low.amount_aud
+    value_aud: 500.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 212-10. Examples: shower chair, non-slip mats, basic grab rails."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: athm.tier.medium.amount_aud
+    value_aud: 2000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 212-10. Examples: walking frames, mobility aids."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: cap.time_limited_years
+    value: 4
+    unit: years
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Non-clinical contributions are capped at 4 cumulative years."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: care_management.cap_pct
+    value_percentage: 0.1
+    unit: percentage
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Provider may retain up to 10% of the quarterly budget for care management."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: ce2.personal_care_sub_share_of_independence
+    value: 0.4
+    unit: fraction
+    effective_from: 2025-11-01
+    source_type: operational_primary
+    source_url: "https://wayly.com.au"
+    source_citation: "Wayly illustrative default. Assumes personal care is 40% of a household Independence spend when projecting the post-October 2026 change (fully government-funded personal care). Documented default; NOT a published DoH figure. Stored as a fraction (0.40) because the engine uses it directly in 1 - share maths."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.1.daily_base_individual
+    value_aud: 26.46
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 (F2025L01173), section 194-5(2)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.1.daily_base_provider
+    value_aud: 2.94
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025, section 238-5."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.1.daily_total
+    value_aud: 29.4
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.2.daily_base_individual
+    value_aud: 39.54
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025, section 194-5(2)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.2.daily_base_provider
+    value_aud: 4.39
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.2.daily_total
+    value_aud: 43.93
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.3.daily_base_individual
+    value_aud: 54.16
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.3.daily_base_provider
+    value_aud: 6.02
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.3.daily_total
+    value_aud: 60.18
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.4.daily_base_individual
+    value_aud: 73.22
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.4.daily_base_provider
+    value_aud: 8.14
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.4.daily_total
+    value_aud: 81.36
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.5.daily_base_individual
+    value_aud: 97.88
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.5.daily_base_provider
+    value_aud: 10.88
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.5.daily_total
+    value_aud: 108.76
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.6.daily_base_individual
+    value_aud: 118.64
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.6.daily_base_provider
+    value_aud: 13.18
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.6.daily_total
+    value_aud: 131.82
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.7.daily_base_individual
+    value_aud: 143.38
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.7.daily_base_provider
+    value_aud: 15.93
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.7.daily_total
+    value_aud: 159.31
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.8.daily_base_individual
+    value_aud: 192.59
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.8.daily_base_provider
+    value_aud: 21.4
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification.8.daily_total
+    value_aud: 213.99
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification_annual.1
+    value_aud: 10731.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 sections 194-5(2) + 238-5. 29.40 × 365 = 10,731."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification_annual.2
+    value_aud: 16034.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "43.93 × 365 = 16,034.45 → rounded to 16,034."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification_annual.3
+    value_aud: 21966.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "60.18 × 365 = 21,965.70 → rounded to 21,966."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification_annual.4
+    value_aud: 29696.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "81.36 × 365 = 29,696.40 → rounded to 29,696."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification_annual.5
+    value_aud: 39697.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "108.76 × 365 = 39,697.40 → rounded to 39,697."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification_annual.6
+    value_aud: 48114.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "131.82 × 365 = 48,114.30 → rounded to 48,114."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification_annual.7
+    value_aud: 58148.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "159.31 × 365 = 58,148.15 → rounded to 58,148."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: classification_annual.8
+    value_aud: 78106.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "213.99 × 365 = 78,106.35 → rounded to 78,106."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: contribution.clinical_pct
+    value_percentage: 0.0
+    unit: percentage
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Clinical supports are fully government-funded — zero participant contribution."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: contribution.everyday_band
+    value_aud: [0.175, 0.8]
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Everyday Living supports: 17.5–80% means-tested participant contribution."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: contribution.independence_band
+    value_aud: [0.05, 0.5]
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Independence supports: 5–50% means-tested participant contribution."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.cancellation_charge_hours_threshold
+    value_aud: 48
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Under-48-hour cancellation can be charged to budget (provider may waive for hospital admissions)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.contribution_letter_validity_days
+    value_aud: 120
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.servicesaustralia.gov.au"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.death_final_claim_days
+    value_aud: 60
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.death_provider_notify_days
+    value_aud: 28
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.no_service_quarters_for_withdrawal
+    value_aud: 4
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Four consecutive quarters (one year) with no services risks funding withdrawal."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.provider_branch_transfer_notice_days
+    value_aud: 90
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.provider_exit_notice_days
+    value_aud: 14
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.provider_initial_agreement_min_days_before_cease
+    value_aud: 90
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.referral_code_validity_days
+    value_aud: 56
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.respite_days_per_year
+    value_aud: 63
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Up to 63 subsidised residential respite days per financial year."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: deadline.statement_due_days_after_month_end
+    value_aud: 30
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Statement due by the last day of the following month."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: eol.budget_aud
+    value_aud: 25000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Approximately $25,000 over 12 weeks, extendable to 16."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: eol.max_weeks
+    value_aud: 16
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: eol.weeks
+    value_aud: 12
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.basic_daily_fee.level_1
+    value_aud: 12.09
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "DoH Schedule (20 Sep 2025) - Home Care Package Level 1 basic daily fee."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.basic_daily_fee.level_2
+    value_aud: 12.78
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "DoH Schedule (20 Sep 2025) - Home Care Package Level 2 basic daily fee."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.basic_daily_fee.level_3
+    value_aud: 13.14
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "DoH Schedule (20 Sep 2025) - Home Care Package Level 3 basic daily fee."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.basic_daily_fee.level_4
+    value_aud: 13.49
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "DoH Schedule (20 Sep 2025) - Home Care Package Level 4 basic daily fee."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.annual_cap_tier1
+    value_aud: 7047.55
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF annual cap for tier-1 payers."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.annual_cap_tier2
+    value_aud: 14095.2
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF annual cap for tier-2 payers."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.income_free_area.couple
+    value_aud: 26871.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF income-free area (couple living together, per partner) at 20 Sep 2025."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.income_free_area.individual
+    value_aud: 34762.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP income-tested care fee income-free area, single, 20 Sep 2025."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.income_taper_pct
+    value_percentage: 50.0
+    unit: percentage
+    effective_from: 2025-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF income taper - 50% of assessable income above the income-free area."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.lifetime_cap
+    value_aud: 84571.66
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF lifetime cap. Matches the no-worse-off cohort cap pre-March-2026 numeric value."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.max_daily_rate_tier1
+    value_aud: 19.36
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF tier-1 daily cap (income between income-free area and tier-2 threshold)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.max_daily_rate_tier2
+    value_aud: 38.72
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF tier-2 daily cap (income above tier-2 threshold)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.tier2_income_threshold.couple
+    value_aud: 51142.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF tier-2 upper income threshold (couple, per partner) at 20 Sep 2025."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: hcp.itcf.tier2_income_threshold.individual
+    value_aud: 66960.4
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "HCP ITCF tier-2 upper income threshold (single) at 20 Sep 2025."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.allied_health.lower_aud_hour
+    value_aud: 160.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.allied_health.median_aud_hour
+    value_aud: 195.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Allied health and other therapeutic services. Range $160-$220."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.allied_health.upper_aud_hour
+    value_aud: 220.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.allied_health_assistant.lower_aud_hour
+    value_aud: 105.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.allied_health_assistant.median_aud_hour
+    value_aud: 122.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $105-$167."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.allied_health_assistant.upper_aud_hour
+    value_aud: 167.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.care_management.lower_aud_hour
+    value_aud: 80.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.care_management.median_aud_hour
+    value_aud: 120.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $80-$150."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.care_management.upper_aud_hour
+    value_aud: 150.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.counsellor.lower_aud_hour
+    value_aud: 160.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.counsellor.median_aud_hour
+    value_aud: 208.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Counsellor or psychotherapist. Range $160-$225."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.counsellor.upper_aud_hour
+    value_aud: 225.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.dietitian.lower_aud_hour
+    value_aud: 165.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.dietitian.median_aud_hour
+    value_aud: 200.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Dietitian or nutritionist. Range $165-$219."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.dietitian.upper_aud_hour
+    value_aud: 219.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.domestic_assistance.lower_aud_hour
+    value_aud: 83.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.domestic_assistance.median_aud_hour
+    value_aud: 95.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $83-$109."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.domestic_assistance.upper_aud_hour
+    value_aud: 109.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.enrolled_nurse.lower_aud_hour
+    value_aud: 120.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.enrolled_nurse.median_aud_hour
+    value_aud: 140.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $120-$163."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.enrolled_nurse.upper_aud_hour
+    value_aud: 163.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.exercise_physiologist.lower_aud_hour
+    value_aud: 165.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.exercise_physiologist.median_aud_hour
+    value_aud: 190.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $165-$219."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.exercise_physiologist.upper_aud_hour
+    value_aud: 219.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.home_maintenance.lower_aud_hour
+    value_aud: 85.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.home_maintenance.median_aud_hour
+    value_aud: 103.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Home maintenance and repairs. Range $85-$120."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.home_maintenance.upper_aud_hour
+    value_aud: 120.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.meal_delivery.lower_aud_meal
+    value_aud: 11.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.meal_delivery.median_aud_meal
+    value_aud: 15.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Per meal. Range $11-$22."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.meal_delivery.upper_aud_meal
+    value_aud: 22.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.meal_preparation.lower_aud_hour
+    value_aud: 82.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.meal_preparation.median_aud_hour
+    value_aud: 97.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $82-$110."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.meal_preparation.upper_aud_hour
+    value_aud: 110.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.nursing_assistant.lower_aud_hour
+    value_aud: 92.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.nursing_assistant.median_aud_hour
+    value_aud: 110.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $92-$143."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.nursing_assistant.upper_aud_hour
+    value_aud: 143.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.nursing_care.lower_aud_hour
+    value_aud: 125.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.nursing_care.median_aud_hour
+    value_aud: 150.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Indicative median per hour. Range: $125-$179."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.nursing_care.upper_aud_hour
+    value_aud: 179.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.occupational_therapist.lower_aud_hour
+    value_aud: 174.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.occupational_therapist.median_aud_hour
+    value_aud: 200.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $174-$220."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.occupational_therapist.upper_aud_hour
+    value_aud: 220.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.personal_care.lower_aud_hour
+    value_aud: 85.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.personal_care.median_aud_hour
+    value_aud: 100.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $85-$115."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.personal_care.upper_aud_hour
+    value_aud: 115.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.physiotherapist.lower_aud_hour
+    value_aud: 160.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.physiotherapist.median_aud_hour
+    value_aud: 185.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $160-$210."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.physiotherapist.upper_aud_hour
+    value_aud: 210.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.podiatrist.lower_aud_hour
+    value_aud: 153.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.podiatrist.median_aud_hour
+    value_aud: 180.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $153-$208."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.podiatrist.upper_aud_hour
+    value_aud: 208.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.psychologist.lower_aud_hour
+    value_aud: 210.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.psychologist.median_aud_hour
+    value_aud: 228.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $210-$250."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.psychologist.upper_aud_hour
+    value_aud: 250.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.registered_nurse.lower_aud_hour
+    value_aud: 144.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.registered_nurse.median_aud_hour
+    value_aud: 160.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $144-$186."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.registered_nurse.upper_aud_hour
+    value_aud: 186.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.remedial_masseuse.lower_aud_hour
+    value_aud: 134.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.remedial_masseuse.median_aud_hour
+    value_aud: 150.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $134-$206."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.remedial_masseuse.upper_aud_hour
+    value_aud: 206.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.respite.lower_aud_hour
+    value_aud: 85.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.respite.median_aud_hour
+    value_aud: 99.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $85-$112."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.respite.upper_aud_hour
+    value_aud: 112.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.restorative_care_management.lower_aud_hour
+    value_aud: 120.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.restorative_care_management.median_aud_hour
+    value_aud: 150.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $120-$173."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.restorative_care_management.upper_aud_hour
+    value_aud: 173.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.social_support.lower_aud_hour
+    value_aud: 82.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.social_support.median_aud_hour
+    value_aud: 99.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Social support and community engagement. Range $82-$110."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.social_support.upper_aud_hour
+    value_aud: 110.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.social_worker.lower_aud_hour
+    value_aud: 163.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.social_worker.median_aud_hour
+    value_aud: 200.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $163-$238."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.social_worker.upper_aud_hour
+    value_aud: 238.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.speech_pathologist.lower_aud_hour
+    value_aud: 187.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.speech_pathologist.median_aud_hour
+    value_aud: 208.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Range $187-$236."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.speech_pathologist.upper_aud_hour
+    value_aud: 236.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.therapeutic_independent_living.lower_aud_hour
+    value_aud: 140.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.therapeutic_independent_living.median_aud_hour
+    value_aud: 165.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Therapeutic services for independent living. Range $140-$220."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.therapeutic_independent_living.upper_aud_hour
+    value_aud: 220.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.transport.lower_aud_trip
+    value_aud: 40.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.transport.median_aud_trip
+    value_aud: 70.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Per trip. Range $40-$97."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: indicative_price.transport.upper_aud_trip
+    value_aud: 97.0
+    unit: AUD
+    effective_from: 2025-10-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: interim_funding.pct
+    value_percentage: 0.6
+    unit: percentage
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Interim funding pays 60% of classification budget while waiting; remainder is NOT backdated."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: lifetime_cap.hcp_transitioned
+    value_aud: 84571.66
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2025-09/schedule-of-fees-and-charges-for-residential-and-home-care.pdf"
+    source_citation: "Grandfathered HCP participants retain the HCP lifetime cap of $84,571.66 (Sep 2025) under the no-worse-off guarantee, rather than the SAH standard cap of $137,917.01."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: lifetime_cap.no_worse_off
+    value_aud: 86185.23
+    unit: AUD
+    effective_from: 2026-03-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.myagedcare.gov.au"
+    source_citation: "Indexed 20 March 2026."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+    history:
+      - value_aud: 84571.66
+        effective_from: 2025-11-01
+        effective_to: 2026-03-20
+        source_citation: "HCP no-worse-off cohort cap."
+
+  - key: lifetime_cap.standard
+    value_aud: 137917.01
+    unit: AUD
+    effective_from: 2026-03-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.myagedcare.gov.au"
+    source_citation: "Indexed 20 March 2026."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+    history:
+      - value_aud: 135318.69
+        effective_from: 2025-11-01
+        effective_to: 2026-03-20
+        source_citation: "Combined cap with non-clinical care contribution in residential aged care."
+
+  - key: means_test.asset_taper_pct
+    value_percentage: 7.8
+    unit: percentage
+    effective_from: 2025-11-01
+    source_type: primary_legislation
+    source_url: "https://www.health.gov.au/sites/default/files/2025-12/support-at-home-program-participant-contributions.pdf"
+    source_citation: "Aged Care Act 2024 - asset taper for SAH means-test. 7.8% of assets above the assets-free area contributes."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.assets_free_area.couple_homeowner
+    value_aud: 481500.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test assets-free area, couple homeowner (combined)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.assets_free_area.couple_non_homeowner
+    value_aud: 726500.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test assets-free area, couple non-homeowner (481500 + 245000)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.assets_free_area.individual_homeowner
+    value_aud: 321500.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test assets-free area, single homeowner. Principal home exempt."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.assets_free_area.individual_non_homeowner
+    value_aud: 566500.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test assets-free area, single non-homeowner (321500 + 245000 homeowner offset)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.income_free_area.couple_member
+    value_aud: 4940.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test income-free area, couple living together, per partner. Combined 9880 / 2."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.income_free_area.individual
+    value_aud: 5668.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test income-free area, single. Income at or below this produces zero income reduction."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.income_limit.couple
+    value_aud: 80884.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test income limit (couple, per partner). Combined 161768 / 2."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.income_limit.couple_separated_by_illness
+    value_aud: 101105.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test income limit, couple separated by illness. Each partner assessed as single."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.income_limit.individual
+    value_aud: 101105.0
+    unit: AUD
+    effective_from: 2025-09-20
+    indexation_schedule: 20_march_20_september
+    next_review_due: 2026-09-20
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+    source_citation: "SAH means-test income limit, single. Aligns with CSHC upper income limit."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: means_test.income_taper_pct
+    value_percentage: 50.0
+    unit: percentage
+    effective_from: 2025-11-01
+    source_type: primary_legislation
+    source_url: "https://www.health.gov.au/sites/default/files/2025-12/support-at-home-program-participant-contributions.pdf"
+    source_citation: "Aged Care Act 2024 - income taper for SAH means-test. 50% of income above the income-free area contributes."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: pathway.end_of_life.daily_aud
+    value_aud: 298.04
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 194-10(2). Participants with prognosis of 3 months or less."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: pathway.end_of_life.duration_days
+    value_aud: 84
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "12 weeks."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: pathway.end_of_life.episode_aud
+    value_aud: 25000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Nominal — actual = 298.04 × 84 = 25,035.36."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: pathway.restorative_care.daily_aud
+    value_aud: 53.67
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 194-10(2). Non-ongoing targeted care services."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: pathway.restorative_care.duration_days
+    value_aud: 112
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "16 weeks."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: pathway.restorative_care.episode_aud
+    value_aud: 6000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Nominal — actual = 53.67 × 112 = 6,011.04."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: pathway.restorative_care.max_episodes
+    value_aud: 2
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Standard plus extension."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: pathway.restorative_care.max_total_aud
+    value_aud: 12000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "If extension approved."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: policy.price_caps_status
+    value: deferred_indefinitely
+    unit: text
+    effective_from: 2026-05-20
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Australian Government announced on 20 May 2026 that national provider price caps under Support at Home are deferred indefinitely. Providers continue to set their own prices."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: policy_date.chsp_transition_earliest
+    value: 2027-07-01
+    unit: text
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "CHSP transition into Support at Home, no earlier than 1 July 2027."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: policy_date.eol_second_round_start
+    value: 2027-02-01
+    unit: text
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Approximate — 'early 2027' for End-of-Life second-round funding."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: policy_date.next_cap_indexation
+    value: 2026-09-20
+    unit: text
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.myagedcare.gov.au"
+    source_citation: "Lifetime caps indexed 20 March and 20 September."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: policy_date.next_classification_indexation
+    value: 2026-07-01
+    unit: text
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Classification budgets indexed every 1 July."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: policy_date.personal_care_free
+    value: 2026-10-01
+    unit: text
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Announced 22 April 2026 by Aged Care Minister Sam Rae. Personal care moves from Independence to Clinical Supports — zero contribution from 1 October 2026."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: policy_date.price_caps_start
+    value: 2026-07-01
+    unit: text
+    effective_from: 2025-11-01
+    effective_to: 2026-05-19
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Originally scheduled commencement of national provider price caps. Closed 19 May 2026 after the Australian Government announced an indefinite deferral the next day."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: restorative.budget_aud
+    value_aud: 6000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Approximate; per health.gov.au 'a unit of funding of around $6,000 for up to 16 weeks'."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: restorative.episodes_per_year
+    value_aud: 2
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: restorative.extension_aud
+    value_aud: 12000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Additional unit via Support Plan Review."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: restorative.months_between_episodes
+    value_aud: 3
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Minimum 3 months between non-consecutive restorative episodes."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: restorative.weeks
+    value_aud: 16
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: secondary
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: rollover.floor_aud
+    value_aud: 1000.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: rollover.pct
+    value_percentage: 0.1
+    unit: percentage
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Carry-over capped at the greater of $1,000 or 10% of the quarterly budget."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: stream_proportion.Clinical
+    value_aud: 0.4
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: operational_primary
+    source_url: PENDING
+    source_citation: "MVP indicative split — real allocation is set in the individualised budget."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: stream_proportion.Everyday Living
+    value_aud: 0.25
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: operational_primary
+    source_url: PENDING
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: stream_proportion.Independence
+    value_aud: 0.35
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: operational_primary
+    source_url: PENDING
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.care_management_provider.applies_to_provider
+    value: true
+    unit: boolean
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.care_management_provider.daily_aud
+    value_aud: 3.95
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 205-15."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.care_management_provider.eligibility
+    value: "Provider supplement for delivering services to specific cohorts: older Aboriginal and Torres Strait Islander people; homeless or at-risk-of-homeless; care leavers (including Forgotten Australians and former child migrants); veterans approved for the Veterans' Supplement; participants referred from the care finder program."
+    unit: text
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.care_management_provider.note
+    value: Provider-based — does not appear directly on participant statements as a participant amount.
+    unit: text
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.dementia_cognition.eligibility
+    value: Grandfathered HCP recipients only — must have been in receipt of the supplement on 31 October 2025. Ceases on reassessment to a Support at Home classification.
+    unit: text
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.dementia_cognition.grandfathered_only
+    value: true
+    unit: boolean
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.dementia_cognition.pct_of_base_individual
+    value_aud: 11.5
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 196-30."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.eachd_top_up.daily_aud
+    value_aud: 3.45
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 196-35."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.eachd_top_up.eligibility
+    value: Participants who were in receipt of an EACH-D package on 31 July 2013.
+    unit: text
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.eachd_top_up.grandfathered_only
+    value: true
+    unit: boolean
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.enteral.eligibility
+    value: Medical practitioner certifies need for non-supplementary enteral feeding. Care plan covers nutrition supports.
+    unit: text
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.enteral_bolus.daily_aud
+    value_aud: 23.25
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 196-20."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.enteral_non_bolus.daily_aud
+    value_aud: 26.11
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 196-20."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.oxygen.applies_to
+    value_aud: "['ongoing', 'short_term_except_strc']"
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.oxygen.daily_aud
+    value_aud: 14.66
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 196-15."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.oxygen.eligibility
+    value: Medical practitioner certifies continual need for oxygen. Care plan covers nursing care consumables and provider supplies oxygen equipment.
+    unit: text
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.veterans.eligibility
+    value: "Eligible veteran as determined by Department of Veterans' Affairs."
+    unit: text
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: supplement.veterans.pct_of_base_individual
+    value_aud: 11.5
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025 section 196-25."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.1.annual_aud
+    value_aud: 10986.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "30.10 × 365 = 10,986.50 → rounded to 10,986."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.1.daily_base_individual
+    value_aud: 27.09
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Aged Care Rules 2025, section 194-5(3)."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.1.daily_base_provider
+    value_aud: 3.01
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.1.daily_total
+    value_aud: 30.1
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.2.annual_aud
+    value_aud: 19319.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "52.93 × 365 = 19,319.45 → rounded to 19,319."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.2.daily_base_individual
+    value_aud: 47.64
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.2.daily_base_provider
+    value_aud: 5.29
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.2.daily_total
+    value_aud: 52.93
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.3.annual_aud
+    value_aud: 42055.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "115.22 × 365 = 42,055.30 → rounded to 42,055."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.3.daily_base_individual
+    value_aud: 103.7
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.3.daily_base_provider
+    value_aud: 11.52
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.3.daily_total
+    value_aud: 115.22
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.4.annual_aud
+    value_aud: 63758.0
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "174.68 × 365 = 63,758.20 → rounded to 63,758."
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.4.daily_base_individual
+    value_aud: 157.21
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.4.daily_base_provider
+    value_aud: 17.47
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+  - key: transitional_hcp.4.daily_total
+    value_aud: 174.68
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    last_verified_at: 2026-07-08
+    last_verified_by: antony
+
+
+  # INV-1 v1.2 Deploy 1b (Feb 2026) — Invoice Checker rule constants (spec §11)
+  - key: inv1.personal_care.fully_funded_from
+    value: "2026-10-01"
+    unit: iso_date
+    effective_from: 2026-10-01
+    source_type: primary_legislation
+    source_url: "PENDING - Aged Care Act 2024, Chapter 9"
+    source_citation: "From 1 October 2026 personal care under Support at Home becomes fully government funded."
+    last_verified_at: 2026-02-08
+    last_verified_by: emergent
+
+  - key: inv1.care_management.floor_pct
+    value: 0
+    unit: pct
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Care management has no minimum percentage; 10 percent is the cap, not a mandated floor."
+    last_verified_at: 2026-02-08
+    last_verified_by: emergent
+
+  - key: inv1.carryover.floor_aud
+    value_aud: 1000
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Unspent-funds carryover floor: max of $1,000 or 10 percent of the quarterly budget."
+    last_verified_at: 2026-02-08
+    last_verified_by: emergent
+
+  - key: inv1.carryover.floor_pct_of_quarterly_budget
+    value: 10
+    unit: pct
+    effective_from: 2025-11-01
+    source_type: delegated_instrument
+    source_url: "https://www.health.gov.au/our-work/support-at-home"
+    source_citation: "Unspent-funds carryover floor: max of $1,000 or 10 percent of the quarterly budget."
+    last_verified_at: 2026-02-08
+    last_verified_by: emergent
+
+  - key: inv1.lifetime_cap.standard_aud
+    value_aud: null
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: primary_legislation
+    source_url: "PENDING - Aged Care Act 2024, Chapter 9"
+    source_citation: "DEFERRED - awaiting confirmation against primary instrument."
+    last_verified_at: 2026-02-08
+    last_verified_by: emergent
+    deferred: true
+
+  - key: inv1.lifetime_cap.grandfathered_aud
+    value_aud: null
+    unit: AUD
+    effective_from: 2025-11-01
+    source_type: primary_legislation
+    source_url: "PENDING - Aged Care Act 2024, Chapter 9"
+    source_citation: "DEFERRED - awaiting confirmation against primary instrument."
+    last_verified_at: 2026-02-08
+    last_verified_by: emergent
+    deferred: true

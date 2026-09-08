@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align: center; padding: 14px 0;">
+  <h1 style="font-size: 24px;">Statement Digest</h1>
+  <p class="muted">{{ data.participant.first_name }} {{ data.participant.last_name }} · {{ data.date_range.start }} to {{ data.date_range.end }}</p>
+</div>
+
+<div class="stat-grid">
+  <div class="stat"><div class="stat-label">Statements</div><div class="stat-value">{{ data.totals.statements }}</div></div>
+  <div class="stat"><div class="stat-label">Total gross</div><div class="stat-value">{{ data.totals.gross|money }}</div></div>
+  <div class="stat"><div class="stat-label">Total contributions</div><div class="stat-value">{{ data.totals.contribution|money }}</div></div>
+  <div class="stat"><div class="stat-label">Anomalies</div><div class="stat-value">{{ data.totals.anomalies }}</div></div>
+</div>
+
+<h2>Summary table</h2>
+<table>
+  <thead><tr><th>Month</th><th>Provider</th><th>Gross</th><th>Contribution</th><th>Govt</th><th>Anomalies</th></tr></thead>
+  <tbody>
+    {% for r in data.rows %}
+    <tr>
+      <td>{{ r.period }}</td><td>{{ r.provider }}</td><td>{{ r.gross|money }}</td><td>{{ r.contribution|money }}</td><td>{{ r.government|money }}</td>
+      <td>
+        {% if r.anomaly_counts.HIGH > 0 %}<span class="badge red">{{ r.anomaly_counts.HIGH }} H</span> {% endif %}
+        {% if r.anomaly_counts.MEDIUM > 0 %}<span class="badge amber">{{ r.anomaly_counts.MEDIUM }} M</span> {% endif %}
+        {% if r.anomaly_counts.LOW > 0 %}<span class="badge grey">{{ r.anomaly_counts.LOW }} L</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    <tr class="tr-totals"><td>Total</td><td>{{ data.totals.statements }}</td><td>{{ data.totals.gross|money }}</td><td>{{ data.totals.contribution|money }}</td><td></td><td>{{ data.totals.anomalies }}</td></tr>
+  </tbody>
+</table>
+
+{% if data.detail_level == 'full' %}
+{% for r in data.rows %}
+<div class="page-break"></div>
+<h2>{{ r.period }}</h2>
+<p class="muted">{{ r.provider }} · {{ r.uploaded_at|niceDate }}</p>
+<p>Gross {{ r.gross|money }} · Contribution {{ r.contribution|money }} · Govt {{ r.government|money }}</p>
+
+<h3>Line items</h3>
+<table>
+  <thead><tr><th>Date</th><th>Service</th><th>Stream</th><th>Hours</th><th>Rate</th><th>Total</th></tr></thead>
+  <tbody>
+    {% for li in r.line_items %}
+    <tr><td>{{ li.date|niceDate }}</td><td>{{ li.description or li.service_code }}</td><td>{{ li.stream or '—' }}</td><td>{{ li.hours or '—' }}</td><td>{{ (li.unit_rate or 0)|money }}</td><td>{{ (li.total or 0)|money }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if r.anomalies %}
+<h3>Anomalies</h3>
+<table>
+  <tbody>
+    {% for a in r.anomalies %}
+    <tr><td><span class="badge {% if a.severity == 'HIGH' %}red{% elif a.severity == 'MEDIUM' %}amber{% else %}grey{% endif %}">{{ a.severity }}</span></td><td>{{ a.headline }}</td><td>{{ (a.dollar_impact or 0)|money }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endfor %}
+{% else %}
+{% for r in data.rows %}
+<div class="cream-card section">
+  <h3>{{ r.period }} · {{ r.provider }}</h3>
+  <p>Gross {{ r.gross|money }} · Contribution {{ r.contribution|money }} · Govt {{ r.government|money }}</p>
+  <p>{% if r.anomaly_counts.HIGH %}{{ r.anomaly_counts.HIGH }} HIGH · {% endif %}{% if r.anomaly_counts.MEDIUM %}{{ r.anomaly_counts.MEDIUM }} MEDIUM · {% endif %}{% if r.anomaly_counts.LOW %}{{ r.anomaly_counts.LOW }} LOW{% endif %}{% if not r.anomaly_counts.HIGH and not r.anomaly_counts.MEDIUM and not r.anomaly_counts.LOW %}<span class="muted">No anomalies</span>{% endif %}</p>
+  {% if r.anomaly_headlines %}
+  <ul>{% for h in r.anomaly_headlines %}<li>{{ h }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

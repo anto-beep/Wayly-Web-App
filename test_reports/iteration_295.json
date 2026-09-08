@@ -1,0 +1,38 @@
+{
+  "summary": "Iter 295 static code-verification pass across web + mobile for the 4 features shipped in this iteration. Every claim in the review_request is present in code and matches the described testIDs, routes, and copy. Live Playwright / LLM-generation e2e was skipped this pass due to hard token-budget constraints on the run — main agent should self-verify the auto-draft (LLM ~30s) and duplicate-detection flows via the preview UI. No blocking issues found in the code paths.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Main agent (or next testing pass) should live-verify on the Expo preview + web preview with cathy@example.com/testpass123: (a) run a Support Plan Reviewer with >=2 findings and confirm cp-draft-letter-all navigates to /correspondence/{id} and letter-body-input auto-populates with a full multi-paragraph letter within ~30s (mobile) + web CorrespondenceDetail form fields (participant_name, change_summary etc.) are pre-filled; (b) Statement Decoder mobile: decode a statement and confirm decoder-summary-banner shows 4 tiles + decoder-who-paid horizontal split bar + heading 'WHERE THE MONEY WENT' (no wall of text card); (c) Invoice Checker: run a check on an invoice, re-run on the SAME invoice, assert inv1-duplicate-warning (gold on web, alertSoft on mobile) + inv1-duplicate-view link appears on the 2nd result only; first result has no warning; check-title copy uses plain-English C6/C10 wording; (d) web CorrespondenceDetail header meta shows plain sentence like 'This is a request to your provider.' — no 'Archetype: · Recipient:' clutter."
+  ],
+  "critical_code_review_comments": [
+    "P0 — /app/backend/routes/care_plans.py:151 _compose_letter_intake builds a populated intake (participant_name + archetype-specific summary composed from issue titles/suggested_questions) and both letter-from-finding (line 1381) and letter-from-findings (line 1441) call it before inserting the lf1_correspondence doc, so the LF1 generate step has real content to work from. Contract matches review_request. Field map maps archetype→(field, subject, extras) for request/dispute/complaint/escalation/notification (line 178-183). Escalation extras include a prior_attempts stub — sensible.",
+    "P1 Decoder (mobile) — /app/mobile/src/components/DecoderResultView.tsx: decoder-summary-banner is the 4-tile banner (line 136), decoder-who-paid horizontal split bar with Govt%/You% + one-line sentence (line 156), and the breakdown heading now reads 'WHERE THE MONEY WENT' (line 242). Confirmed absent: decoder-plain-english-summary + 'STREAM BREAKDOWN' (grep returns nothing). Redesign is in place.",
+    "P1 Invoice plain-English titles — /app/frontend/src/components/invoices/InvoiceResultView.jsx:58,62 and /app/mobile/src/components/invoices/InvoiceResultView.tsx:64,68 both carry C6='The maths on a line doesn\\'t add up (quantity × rate)' and C10='You may be getting close to your lifetime cap'. Backend descriptions in invoices.py still use the technical labels (line 972,976) — that's fine because the UI overrides via CHECK_TITLE_OVERRIDES.",
+    "P1 Invoice duplicate warning — Backend: /app/backend/routes/invoices.py:422 sets response.duplicate_warning when found. Web: /app/frontend/src/pages/tools/InvoiceCheckerTool.jsx:713-732 renders data-testid='inv1-duplicate-warning' in a gold panel (border-gold/50 bg-gold/10) with 'View the earlier check' anchor data-testid='inv1-duplicate-view' → /invoices/{invoice_id}. Mobile: /app/mobile/src/components/invoices/InvoiceResultView.tsx:20+28 has the same testIDs (View + Pressable → router.push /invoices/{invoice_id}). Wiring is complete.",
+    "P1 Correspondence header cleanup (web) — /app/frontend/src/pages/tools/CorrespondenceDetail.jsx:321-341 renders a plain sentence built from an archetype dict {request→'a request', dispute→'a dispute', ...} × recipient_type dict (provider_cm→'your provider' etc.), e.g. 'This is a request to your provider.' No 'Archetype: · Recipient:' string exists anywhere in the file (grep confirmed).",
+    "Nice-to-have (non-blocking): The addressee→(situation_id, recipient_type) map in care_plans.py:138-148 has both 'provider' and 'provider_cm' aliases collapsing to (6, 'provider_cm'). If a finding sets addressee='provider_senior' the map falls back to (6,'provider_cm') via the default, silently losing severity nuance. Consider adding provider_senior explicitly."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (code-review only)", "frontend": "code-review only, no live Playwright due to token budget"},
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter 295 was a code-verification-only pass — every spec point is wired correctly in code. To close the loop the next agent should run live Playwright against: web preview https://wayly-engagement-hub.preview.emergentagent.com and Expo web preview https://llm-timeout-fix.expo.preview.emergentagent.com, login cathy@example.com/testpass123. Priorities: (1) CarePlanReviewer → cp-draft-letter-all → /correspondence/{id}: assert lf1-carried-issues visible, lf1-autodraft-busy flips, letter-body-input contains multi-paragraph body (allow ~30s), and intake form fields (participant_name, change_summary) are pre-filled. Same on web CorrespondenceDetail. (2) Statement Decoder mobile: /tool/statement-decoder decode → assert decoder-summary-banner + decoder-who-paid + heading 'WHERE THE MONEY WENT'; assert no element with testID decoder-plain-english-summary. (3) InvoiceCheckerTool: upload invoice → check → no inv1-duplicate-warning. Re-check same file → inv1-duplicate-warning visible with inv1-duplicate-view link. Both web and mobile. (4) CorrespondenceDetail web: open any existing entry → header meta reads 'This is a <archetype> to <recipient>.' — no 'Archetype:' string.",
+  "rca of the issue": ""
+}

@@ -1,0 +1,42 @@
+{
+  "summary": "STEP 3 in-app MOBILE Report detail view verified end-to-end for HOUSEHOLD_SUMMARY on the Solo test account. Login (form 2 inputs + 'Sign in') → /reports (View + PDF buttons visible on the READY row) → tap View navigates to /report/{id} → detail screen renders correctly: title 'Household Summary · Mum', 'Generated 01/09/2026 05:34 · Mum', Summary card (report-detail-summary) with exec_summary, 4-tile stat grid (Budget · Jul-Sep 2026 / Services this quarter / Anomalies flagged / Open concerns), Active services, Care team, Upcoming, Recent concerns sections all rendered. Download button (report-detail-download) is present in the header. Copy audit PASSES on both /reports and /report/{id}: no '$$', no em dashes (U+2014), no en dashes (U+2013), only single '$' and '%'. Zero console errors during the flow. Solo participant had insufficient data (no statements/care team/services) to spin up QUARTERLY_BUDGET, ANNUAL_FINANCIAL, ANOMALY_SAVINGS, CARE_TIMELINE, STATEMENT_DIGEST — Generate taps did not produce new READY rows within ~12s so those per-type layouts could not be smoke-tested against real data in this env. One minor UX gap found: navigating directly to /report/<bogus-id> keeps the screen stuck on the loading spinner instead of surfacing the report-detail-error StatePanel + Retry.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "ReportDetailScreen (/app/mobile/app/report/[id].tsx)", "issue": "Navigating directly to /report/<bogus-or-unknown-id> stays on the Loading spinner indefinitely (waited 10s) instead of transitioning to the report-detail-error StatePanel. Only the AppHeader 'Report' + spinner are visible; no error card, no Retry button. Expected: apiFetch throws on 404 → catch { setError(true) } → finally { setLoading(false) } → StatePanel with testID report-detail-error renders. Reproduce: log in, then GET /report/nonexistent-id-xyz.", "testID": "report-detail-error", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter254_login.jpeg",
+    "/app/test_reports/iter254_after_login.jpeg",
+    "/app/test_reports/iter254_reports.jpeg",
+    "/app/test_reports/iter254_detail.jpeg",
+    "/app/test_reports/iter254_detail_scroll1.jpeg",
+    "/app/test_reports/iter254_detail_scroll2.jpeg",
+    "/app/test_reports/iter254_bogus.jpeg"
+  ],
+  "action_items": [
+    "(LOW) Confirm the report-detail-error state actually renders for unknown/invalid report ids. Suspect: apiFetch may hang or the finally { setLoading(false) } branch isn't reached because id becomes stale after route mount, or a 404 response route is being intercepted. Consider adding an explicit response.status===404 -> setError(true) handling and a safety timeout in load().",
+    "(INFO for E1) Solo test participant (test+1777810269@example.com) has no seeded statements/care team/services, so QUARTERLY_BUDGET / ANNUAL_FINANCIAL / ANOMALY_SAVINGS / CARE_TIMELINE / STATEMENT_DIGEST could not be generated in this preview env to smoke-test their per-type detail layouts. If broader per-type coverage is required, seed the account (or reuse cathy@example.com Family account which has 3 participants + statements) and re-run."
+  ],
+  "critical_code_review_comments": [
+    "load() in /app/mobile/app/report/[id].tsx early-returns when !id without touching loading, so if id ever remains undefined the screen is stuck on <Loading />. Belt-and-braces: setLoading(false) in the !id early-return, or use a Suspense-friendly fetch pattern.",
+    "download() swallows errors silently (empty catch); consider surfacing a toast/error toast when the /reports/{id}/download call fails so the user knows to retry.",
+    "Table's colW is hardcoded to 130px — narrower columns like 'Rate' or 'Phone' waste space on 375px screens. Consider per-column widths."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only requested)", "frontend": "~95% (primary flow + copy audit pass; only the error-state edge case is off)"},
+  "test_credentials": "test+1777810269@example.com / SoloTest1! (Solo plan, 1 participant 'Mum')",
+  "seed_data_creation": "None. Consumed the existing READY HOUSEHOLD_SUMMARY report already on the account.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "STEP 3 mobile Report detail view is functionally correct on HOUSEHOLD_SUMMARY. If STEP 4 depends on other report types, seed the Solo test participant with a statement (via /api/statements/upload) OR run against cathy@example.com (Family plan, 3 participants with data) so QUARTERLY_BUDGET/STATEMENT_DIGEST/ANOMALY_SAVINGS can actually reach READY. The Expo web preview URL is https://wayly-care-review.expo.preview.emergentagent.com. Login flow: fill 2 inputs, click 'Sign in' text, wait ~4.5s, then router.push to /reports.",
+  "rca of the issue": "For the loading-stuck-on-bogus-id case: in /app/mobile/app/report/[id].tsx the load() callback returns early with `if (!id) return;` before setLoading(false). If useLocalSearchParams initially yields an undefined id and never re-triggers (edge case on direct navigation vs router.push), the effect fires load, hits the early return, and loading stays true forever. Even when id is present, if apiFetch's fetch hangs (no timeout is configured), the finally never runs. Suggested fix: (a) in the !id early-return also setLoading(false); (b) add an AbortController with a 15s timeout inside load(); (c) explicitly test res.status===404 and route to the error state."
+}

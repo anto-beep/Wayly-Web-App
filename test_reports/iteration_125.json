@@ -1,0 +1,69 @@
+{
+  "summary": "Iter 125: Verified BC-2 v2 (projection-preview + scenarios with overrides), CS-1 handover pack lifecycle + PDF, and cross-cutting document titles. 12/12 backend tests pass. Full UI flow verified end-to-end.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global (any /app page)", "issues": ["Console warning: 'In HTML, <span> cannot be a child of <option>' — hydration warning triggered on nav (likely in a header/participant switcher select). Not blocking but should be cleaned up."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter125_bc2_cs1.py",
+    "/app/test_reports/pytest/iter125.xml"
+  ],
+  "coverage_details": {
+    "BC-2 projection-preview": [
+      "Baseline (no overrides) → 200 with base_classification + assumptions.classification_overridden=false ✓",
+      "Classification override → 200; classification differs from base; classification_overridden=true ✓",
+      "indexation_percent=10 vs 0 → next_quarters[0].quarterly_budget_aud strictly greater ✓",
+      "spend_adjustment_pct=50 vs 0 → next_quarters[0].projected_spend_aud strictly greater ✓"
+    ],
+    "BC-2 scenarios": [
+      "POST with overrides {classification:6, spend:10, indexation:3} → snapshot.classification==6, classification_overridden=true ✓",
+      "GET lists the saved scenario ✓",
+      "DELETE removes it (GET no longer returns id) ✓"
+    ],
+    "CS-1 handover pack": [
+      "POST with opt_in_medical=false → my_medical_needs stored as null ✓",
+      "GET returns pack ✓",
+      "PATCH with opt_in_medical=true + medical text → persisted and re-fetch confirms ✓",
+      "GET .../export.pdf → 200, content-type application/pdf, %PDF- header, >500 bytes ✓",
+      "Cross-user (trial account) accessing cathy's pack + export.pdf → 404 ✓"
+    ],
+    "Frontend UI": [
+      "Login → /app title 'Dashboard | Wayly' ✓",
+      "/app/letters → 'Letters Mailbox | Wayly' ✓",
+      "/app/budget-scenarios → 'Budget Scenarios | Wayly' ✓",
+      "/app/carer/handover-pack → 'Carer Handover Pack | Wayly' ✓",
+      "/app/statements → 'Statements | Wayly' ✓",
+      "BC-2 sliders: bc2-slider-spend movement updates bc2-adjusted-col ✓",
+      "Save scenario bc2-save-scenario → appears in bc2-scenarios-list ✓",
+      "Ticking two scenarios → bc2-compare-results renders ✓",
+      "Scenario delete works ✓",
+      "Handover form: emergency, routines, medical opt-in reveals textarea, add-contact, add-helper, Save → toast 'Handover pack saved' ✓",
+      "Download PDF: axios blob path triggers browser download (2629 bytes, %PDF) ✓",
+      "Saved packs list visible ✓"
+    ],
+    "CPR-2 goal-continuity": ["Not exercised — not attempted in this run; only relevant if participant has ≥2 uploaded care plans linked with goals. Main agent noted it is optional."]
+  },
+  "action_items": [
+    "(Low) Investigate & fix hydration warning: '<span> cannot be a child of <option>' — appears on route change (likely inside a Select or option render, possibly a participant switcher). Only a warning; no functional impact."
+  ],
+  "critical_code_review_comments": [
+    "bc2._compute_projection: uses `int(ov.classification) if ov.classification else base_cls` — a valid override of 0 would fall through, but 0 is blocked by Pydantic ge=1, so OK.",
+    "bc2 save_scenario: calls _compute_projection which itself re-runs _user_dep + _core1_assert_access; double-work but harmless.",
+    "cs1.export_pack_pdf: no rate limit / abuse protection. Given PDFs are cheap and per-user gated by _load_pack_or_404 it's acceptable for v1.",
+    "cs1 update_pack: PATCH is not really a partial update — it overwrites every field with the request body (all fields default None/empty from Pydantic). Callers that omit fields will wipe them. Consider using exclude_unset or a partial model.",
+    "cs1 handover pack: opt_in_medical strips medical text server-side on both POST and PATCH — good. But on PATCH from a client that didn't send opt_in_medical, the model defaults it to False and will wipe out my_medical_needs unintentionally. Related to the previous point.",
+    "BudgetScenarios: dirty/save button gating and multi-checkbox compare all working; consider default-selecting the two most recent scenarios for a nicer UX."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter125_bc2_cs1.py"],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "100% (all data-testid flows + all 5 titles verified)"},
+  "test_credentials": "cathy@example.com / testpass123; trial30909@example.com / TrialPass1! (used for cross-user 404)",
+  "seed_data_creation": "Created 1 BC-2 scenario TEST_iter125_class6 (then deleted by test); 2 UI scenarios TEST_iter125_ui_scenario_A/B (attempted delete via UI, may leave orphans if confirm dialog raced). Created 1 CS-1 handover pack for cathy (Dorothy context) with emergency='TEST_iter125 UPDATED', medical='Insulin twice daily'. Also 1 UI handover pack from the frontend flow (emergency='TEST_iter125 emergency priorities').",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "cathy has several TEST_iter125 handover packs; clean via DELETE /api/cs1/handover-packs/{id} if empty state needed (note: no DELETE endpoint currently exists for handover packs — worth noting for future work). BC_2_PROJECTION_FLAG + CS1_ENABLED are on. PDF export must go through axios+blob (needs Bearer header) — verified. Document titles are set by /app/frontend/src/App.js AppDocTitle using /app/frontend/src/lib/appPageTitles.js.",
+  "rca of the issue": "No blocking issues found. Only a benign React hydration warning (span inside option). Backend + frontend behave as specified."
+}

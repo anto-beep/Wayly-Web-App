@@ -1,0 +1,43 @@
+{
+  "summary": "Mobile-only frontend testing of Group 3 AI tool parity rebuild + persona/prefill requirements as cathy@example.com (caregiver, active participant = 'Mum'). 7 of 8 checks PASS. Aged Care Q&A (LLM chat), Care Plan Reviewer (with 'prefilled from Mum' hint + 7 findings returned), Invoice Checker screen render (file picker not automated — manual-verify OK per request), CSC caregiver persona copy ('Is your parent on the right classification?' + 'your parent's daily life'), Provider Price Checker (pc-provider blank — acceptable because Mum has no provider_name), Letters&Follow-ups (situation labels show real name 'Dorothy' — no literal '{name}' token, and lf-intake-participant_name prefilled with 'Mum') all PASS. CTA/send-icon contrast on teal looks correct on the light theme screenshots. ONE BUG: Contribution Estimator ce-person-name is NOT prefilled with active participant's display_name — empty on load despite active.display_name being 'Mum' at that time (proven by CPR hint + LF prefill on the same session).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "ContributionEstimator",
+          "issue": "ce-person-name input is empty on load — active participant's display_name ('Mum') is NOT prefilled, despite the same session showing 'Mum' correctly in Care Plan Reviewer's 'prefilled from Mum' hint and in Letters lf-intake-participant_name. Root cause: useState initializer runs once at mount and captures active?.display_name at that moment; because useParticipants() likely resolves the active participant asynchronously, the initializer captures undefined and the state never re-syncs. Same pattern also affects the `classification` initial value (defaults to 'class_5' instead of the participant's real class). Fix: replace `useState({ person_name: active?.display_name || '' , classification: active?.classification_level ? `class_${active.classification_level}` : 'class_5' })` with a useEffect that syncs on `active` change, e.g. `useEffect(() => { if (active) setForm(f => ({ ...f, person_name: f.person_name || active.display_name, classification: f.classification || (active.classification_level ? `class_${active.classification_level}` : f.classification) })); }, [active?.id]);`. Reference: /app/mobile/src/components/tools/ContributionEstimator.tsx:43-49",
+          "testID": "ce-person-name",
+          "priority": "HIGH"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Contribution Estimator prefill", "platform": "mobile", "issue": "Web prefills person-name + classification from active participant; mobile does not — participant name field stays empty and classification pill falls back to class_5.", "expected": "ce-person-name = 'Mum' and classification pill = class_4 (or whatever active.classification_level is)", "actual": "ce-person-name is empty; classification defaults to class_5"}
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "Fix ContributionEstimator prefill: sync form.person_name and form.classification from useParticipants().active via useEffect so they populate once the participant context finishes loading (see RCA in ui_bugs above).",
+    "OPTIONAL (same pattern, low priority): ProviderPriceChecker also uses `useState(active?.provider_name || '')`. Currently benign because Mum has no provider_name, but if any participant does, prefill will be stale on first mount. Consider the same useEffect sync.",
+    "Manual verification: Invoice Checker file-picker upload path (native file picker not drivable in web preview). Screen renders correctly, no red-box error.",
+    "MINOR: Letters&Follow-ups situation labels for the caregiver test account use 'Dorothy' (from the household seed) rather than the currently-active participant 'Mum'. No literal '{name}' token leaks so the primary requirement is satisfied, but confirm on the web app that situation labels also anchor to the household's primary participant, not the active-participant switcher — otherwise it's a mobile↔web parity concern."
+  ],
+  "critical_code_review_comments": [
+    "ContributionEstimator.tsx line 43-49 and ProviderPriceChecker.tsx line 35: prefill via `useState(active?.field || '')` is a subtle bug when the source (useParticipants) resolves asynchronously — always use a useEffect that watches active to backfill empty fields.",
+    "AgedCareQA.tsx line 66: testID includes a truncated raw suggestion string (`fc-suggest-${s.slice(0,12)}`) — fine, but not stable if suggestions change. Consider indexing (fc-suggest-0..3).",
+    "CarePlanReviewer.tsx line 25 uses the same useState-at-mount prefill pattern for `classification`; it happened to work in this test because `active` was already populated, but the code is not robust. Same useEffect fix recommended for consistency."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "87% (7/8 checks pass)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family caregiver, active participant = 'Mum')",
+  "seed_data_creation": "",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All 3 new dedicated screens (Aged Care Q&A, Care Plan Reviewer, Invoice Checker) render and function correctly. Persona copy on CSC is correct for caregiver. Only Contribution Estimator ce-person-name (and by extension classification pill) prefill is broken due to useState-at-mount pattern capturing null before ParticipantContext resolves. After main agent fixes with a useEffect that syncs on active, re-verify ce-person-name is 'Mum' and ce-classification-class_4 pill is active on load.",
+  "rca of the issue": "ContributionEstimator uses `const [form, setForm] = useState({ person_name: active?.display_name || '', classification: active?.classification_level ? `class_${active.classification_level}` : 'class_5', ... })` at line 43-49. useState's initializer only runs once on mount. useParticipants() (ParticipantContext) resolves asynchronously after auth loads, so at the moment the CE screen mounts, `active` is often still undefined. The initializer captures the fallback values ('' and 'class_5') and the state never re-syncs when `active` later becomes 'Mum'. Care Plan Reviewer's 'prefilled from Mum' hint works because the hint is a render-time expression that reads `active` directly on every render, not from useState. Fix: add `useEffect(() => { if (active) setForm(f => ({ ...f, person_name: f.person_name || active.display_name || '', classification: (f.classification === 'class_5' && active.classification_level) ? `class_${active.classification_level}` : f.classification })); }, [active?.id]);`. Reproduction: log in as cathy@example.com → navigate to /tool/contribution-estimator → observe ce-person-name is empty and ce-classification-class_5 is selected instead of ce-classification-class_4."
+}

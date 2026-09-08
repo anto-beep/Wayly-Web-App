@@ -1,0 +1,55 @@
+{
+  "summary": "Iter291 consolidated re-verify (web, cathy@example.com, light + dark). 5 of 7 areas PASS. Participant Profile /app/participants/{id} now loads end-to-end (no 500): core1-profile-header renders 'Mum's Profile Level 4' banner; 8 core1-artefact-* cards render distinct SOLID tones (teal #0E4D52, clay #A5512B, sage #425F47, red #B23A2E, plum #5F4E76, dark-teal #1A696E, terracotta #7A3A1F) with white text; core1-timeline-section is solid clay with white text; core1-timeline-expand shows 'Show 6 key milestones' collapsed, click reveals core1-timeline-list (PASS). Settings Billing PASS in both themes: current-plan-card + billing-payment-method-card = SOLID teal rgb(14,77,82) with white text; billing-history-card + billing-participants-card = SOLID clay rgb(165,81,43) with white text; billing-open-portal 'Manage payment method' = WHITE button rgb(251,252,254) with TEAL text rgb(14,77,82) — READABLE (no teal-on-teal); billing-participant-* rows have teal-tinted rgba(14,77,82,0.1) bg. Resources Index PASS: resources-card-articles solid teal, resources-card-glossary solid clay, resources-card-templates solid sage, all with white text. Tool Cluster Grid PASS: cluster-ask-wayly is REMOVED; 6 cluster-tool-* cards render rotating teal/clay/sage soft tints. Landing ecosystem cards + DualFlagshipHero already verified in iter290. TWO ISSUES REMAIN — see ui_bugs.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "Landing final CTA — final-cta-signup (Start free trial)", "issue": "STILL WHITE-ON-WHITE in BOTH light and dark. Computed style: backgroundColor rgb(255,255,255) AND color rgb(255,255,255). Screenshot (iter291_landing_cta_light2.jpeg) confirms an empty white pill with no visible label on the teal section. The iter290 fix (narrowing .force-white to :not([class*='bg-']) at /app/frontend/src/index.css:279-286) is IRRELEVANT for this button because the actual override comes from a DIFFERENT rule: /app/frontend/src/index.css:1013-1017 sets `.bg-primary-k a { color: #FFFFFF !important; text-decoration: none !important; }` — the button is a <Link> (renders as <a>) nested inside <section className='bg-primary-k'> (Landing.jsx:526). This teal-surface link-color rule wins over .text-primary-k regardless of the .force-white narrowing. Fix options: (a) at /app/frontend/src/index.css:1013 narrow selector to `.bg-primary-k a:not([class*='bg-white']):not(.text-teal-solid)`; (b) at /app/frontend/src/pages/Landing.jsx:533 add inline style={{color:'#0E4D52'}} OR replace text-primary-k with an inline-styled span child that carries the teal color; (c) introduce a semantic utility class .text-on-white with `color:#0E4D52 !important` and add it to this button.", "selector": "[data-testid='final-cta-signup']", "priority": "CRITICAL"},
+        {"component": "Statement Detail buttons — /app/statements/{id}", "issue": "Could not re-exercise this iter: /app/statements list page does not expose a clickable row/link to an individual statement detail (only /app/statements/upload and /app/statements/archived surfaced). All 5 button testids (statement-download-original-btn, statement-audit-log-link, statement-archive-btn, statement-permanent-delete-btn, statement-restore-btn) were NOT FOUND on both /statements/upload and /statements/archived. NOTE: iter290 already verified these 5 testids render solid distinct teal/sage/red/dark-red/sage panels with white text on a real detail URL, so this is a re-verification gap, not necessarily a regression. Main agent to confirm statement detail URLs are reachable from the list page and re-check.", "selector": "[data-testid='statement-download-original-btn'] etc.", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Participant Profile /app/participants/{id} (light + dark)", "issues": ["PASS — profile header renders 'Mum's Profile Level 4' with dark ink on light; 8 core1-artefact-* cards render 7 distinct solid ARTEFACT_TONES hexes (teal, clay, sage, red, plum, dark-teal, terracotta) with white text; core1-timeline-section is solid clay rgb(165,81,43) with white text; core1-timeline-expand default collapsed showing 'Show 6 key milestones', click reveals core1-timeline-list."]},
+        {"screen": "Settings Billing /settings/billing (light + dark)", "issues": ["PASS — current-plan-card + billing-payment-method-card SOLID teal, billing-history-card + billing-participants-card SOLID clay, all white text; billing-open-portal is WHITE button with teal label 'Manage payment method' (READABLE, NOT teal-on-teal); billing-participant-* rows have teal-tinted rgba(14,77,82,0.1) bg."]},
+        {"screen": "Resources Index /resources (light + dark)", "issues": ["PASS — resources-card-articles solid teal rgb(14,77,82), resources-card-glossary solid clay rgb(165,81,43), resources-card-templates solid sage rgb(66,95,71), all with white text."]},
+        {"screen": "Tool Cluster Grid /ai-tools + landing", "issues": ["PASS — cluster-ask-wayly REMOVED (not present in DOM). 6 cluster-tool-* cards render soft rotating teal/clay/sage tinted backgrounds (srgb 0.85 variants). Ask Wayly block gone as required."]},
+        {"screen": "Family Wall /app/family (light + dark)", "issues": ["/app/family currently renders the 'Family Thread' chat view (message bubbles with CATHY sender labels), NOT the wall-post-* grid described in the spec. Zero wall-post-* testIDs found on the page. Either the wall-post spec applies to a different route (/family or a separate FamilyWall route) or the FamilyWall component is not being rendered under /app/family. Please confirm the intended route."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter291_web.py",
+    "/app/test_reports/iter291_landing_cta_light.jpeg",
+    "/app/test_reports/iter291_landing_cta_light2.jpeg",
+    "/app/test_reports/iter291_landing_cta_dark.jpeg",
+    "/app/test_reports/iter291_profile_light.jpeg",
+    "/app/test_reports/iter291_profile_light2.jpeg",
+    "/app/test_reports/iter291_profile_dark.jpeg",
+    "/app/test_reports/iter291_billing_light.jpeg",
+    "/app/test_reports/iter291_billing_dark.jpeg",
+    "/app/test_reports/iter291_resources_light.jpeg",
+    "/app/test_reports/iter291_resources_dark.jpeg",
+    "/app/test_reports/iter291_family_light.jpeg",
+    "/app/test_reports/iter291_family_light2.jpeg",
+    "/app/test_reports/iter291_family_dark.jpeg"
+  ],
+  "action_items": [
+    "CRITICAL: Fix final-cta-signup white-on-white. Root cause is /app/frontend/src/index.css:1013-1017 — `.bg-primary-k a { color:#FFFFFF !important; }` overrides the button's `text-primary-k` class because the button is a <Link> (renders <a>) inside <section className='bg-primary-k'>. The iter290 change to .force-white did NOT touch this rule. Recommended fix: narrow /app/frontend/src/index.css:1013 selector to `.bg-primary-k a:not([class*='bg-white']):not([class*='bg-surface'])` so white-backgrounded CTAs on teal keep their own dark label. Alternatively, at /app/frontend/src/pages/Landing.jsx:533 add `style={{color:'#0E4D52'}}` (inline wins over the !important cascade if declared on the element itself with the same specificity — safer is to introduce a `.text-teal-solid { color:#0E4D52 !important }` utility and include it in the button).",
+    "MEDIUM: Confirm /app/statements list surfaces a link/row to individual statement detail — could not re-exercise statement-download-original-btn / statement-audit-log-link / statement-archive-btn / statement-permanent-delete-btn / statement-restore-btn this iter because only /upload and /archived index pages were reachable from the list. iter290 verified these on a live detail URL, so this is not necessarily a regression.",
+    "MEDIUM: Family Wall — /app/family renders the Family Thread chat, not the wall-post-* card grid. Please confirm the correct route for the FamilyWall component OR update the review spec route. Zero wall-post-* testIDs found under /app/family."
+  ],
+  "critical_code_review_comments": [
+    "index.css has TWO layers of aggressive text-force-white — (a) .force-white at line 279 (now narrowed to :not([class*='bg-']) ) and (b) the teal-surface link rule at line 1013 (.bg-primary-k a → color:#FFFFFF !important). They shadow each other. The iter290 narrowing solved the .force-white case but the second layer still catches the final-cta-signup Link. Recommend consolidating into a single `.force-white`/`[data-teal-surface]` mechanism with a shared :not([class*='bg-white']) exception applied consistently across `p, span, li, h*, a` selectors."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "~80% — Participant Profile, Settings Billing, Resources, Tool Cluster all PASS in light+dark; final-cta-signup CRITICAL still white-on-white; Statement Detail buttons + Family Wall wall-post-* not re-exercisable this iter."},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter290's .force-white narrowing at index.css:279-286 works for its intended scope, but the final-cta-signup regression persists because a SECOND rule at index.css:1013-1017 (.bg-primary-k a → color:#FFFFFF !important) targets the button independently — the button is a <Link> (renders <a>) inside <section className='bg-primary-k'>. Main agent must narrow the teal-surface link rule to exempt bg-white children (e.g. `.bg-primary-k a:not([class*='bg-white'])`) OR set the button's color inline. After the fix, re-verify computed color on [data-testid='final-cta-signup'] is teal (~rgb(14,77,82) light / rgb(79,168,174) dark), NOT rgb(255,255,255). Also worth confirming (a) real /app/statements/{id} route surfaces the 5 button testIDs, and (b) which route hosts the FamilyWall wall-post-* grid (currently /app/family renders Family Thread chat, no wall-post-* testIDs).",
+  "rca of the issue": "final-cta-signup white-on-white: <Link to='/signup' className='bg-white text-primary-k ...'> at /app/frontend/src/pages/Landing.jsx:533 is a descendant of <section className='bg-primary-k'> at line 526. /app/frontend/src/index.css:1013-1017 declares `.bg-primary-k a, .bg-kindred-primary a, ... { color:#FFFFFF !important; }` — this !important rule beats the button's own `.text-primary-k` (color: var(--kindred-primary), non-important) so the label collapses to white on the white pill. The iter290 .force-white narrowing does NOT solve this because the guilty rule targets `a` inside `.bg-primary-k`, not `.text-primary-k` inside `.force-white`. Fix at index.css:1013 with a `:not([class*='bg-white'])` exemption, or override at the call site with an inline color."
+}
