@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { AlertCircle, ChevronRight, Clock, Users } from "lucide-react-native";
+import { AlertCircle, ChevronRight, Clock, DollarSign, Users } from "lucide-react-native";
+import Svg, { Circle } from "react-native-svg";
 
 import { AppHeader, Badge, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
@@ -57,6 +58,43 @@ function providerLabel(pr: any): string {
   return pr.primary || pr.name || "—";
 }
 
+// Budget-used gauge ring (SVG) — mirrors web ParticipantProfile FinancialCard.
+function BudgetGauge({ pct, danger }: { pct: number; danger: boolean }) {
+  const size = 128, stroke = 12;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const p = Math.max(0, Math.min(100, pct));
+  const off = c - (p / 100) * c;
+  const bar = danger ? "#F0857A" : "#F0B267";
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }} testID="pp-budget-gauge">
+      <Svg width={size} height={size} style={{ transform: [{ rotate: "-90deg" }] }}>
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.18)" strokeWidth={stroke} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={bar} strokeWidth={stroke} fill="none" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} />
+      </Svg>
+      <View style={{ position: "absolute", alignItems: "center" }}>
+        <T style={{ fontFamily: fonts.heading, fontSize: 26, color: "#fff", lineHeight: 30 }}>{pct}%</T>
+        <T style={{ fontSize: 9, letterSpacing: 1, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", marginTop: 2 }}>of budget used</T>
+      </View>
+    </View>
+  );
+}
+
+// Labelled comparison bar (white-on-teal).
+function SpendBar({ label, value, pct, tone }: { label: string; value: string; pct: number; tone: string }) {
+  return (
+    <View>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <T style={{ fontSize: 11, color: "rgba(255,255,255,0.82)" }}>{label}</T>
+        <T style={{ fontSize: 12, color: "#fff", fontFamily: fonts.bodySemi }}>{value}</T>
+      </View>
+      <View style={{ height: 8, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.15)", marginTop: 4, overflow: "hidden" }}>
+        <View style={{ height: "100%", width: `${Math.max(0, Math.min(100, pct))}%`, backgroundColor: tone, borderRadius: 999 }} />
+      </View>
+    </View>
+  );
+}
+
 export default function ParticipantProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
@@ -75,13 +113,6 @@ export default function ParticipantProfileScreen() {
   const p = data?.participant;
   const fp = data?.financial_position;
   const name = p?.display_name || "Participant";
-
-  const StatBox = ({ label, value }: { label: string; value: string }) => (
-    <View style={{ flex: 1 }}>
-      <T variant="label">{label}</T>
-      <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, marginTop: 2 }}>{value}</T>
-    </View>
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -114,26 +145,57 @@ export default function ParticipantProfileScreen() {
             </View>
           </Card>
 
-          {/* Financial position */}
-          <Card testID="pp-financial-position" style={{ backgroundColor: colors.sageSoft }}>
+          {/* Financial position — gauge + spend bars (mirrors web) */}
+          <View testID="pp-financial-position" style={{ borderRadius: radius.lg, padding: spacing.lg, backgroundColor: colors.primary }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Financial Position</T>
-              <Pressable testID="pp-see-contribution" onPress={() => router.push("/contribution-position")}>
-                <T variant="small" style={{ color: colors.primary }}>See Contribution Position →</T>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <DollarSign size={18} color="rgba(255,255,255,0.85)" />
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: "#fff" }}>Financial Position</T>
+              </View>
+              <Pressable testID="pp-see-contribution" onPress={() => router.push("/contribution-position")} hitSlop={8}>
+                <T variant="small" style={{ color: "rgba(255,255,255,0.85)" }}>See Contribution Position →</T>
               </Pressable>
             </View>
-            <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.md }}>
-              <StatBox label="QUARTERLY BUDGET" value={num(fp?.quarterly_budget) != null ? money(num(fp?.quarterly_budget)!) : "—"} />
-              <StatBox label="SPENT THIS QUARTER" value={num(fp?.spent_to_date_this_quarter) != null ? money(num(fp?.spent_to_date_this_quarter)!) : "—"} />
-            </View>
-            <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.md }}>
-              <StatBox label="LIFETIME CAP" value={num(fp?.lifetime_cap_total) != null ? money(num(fp?.lifetime_cap_total)!) : "—"} />
-              <StatBox label="LAST STATEMENT" value={fp?.last_statement_date ? shortDate(fp.last_statement_date) : "—"} />
-            </View>
-            {num(fp?.quarterly_budget) == null ? (
-              <T variant="small" style={{ marginTop: spacing.md }}>Run the Budget Calculator or upload a statement to see {name}'s live position.</T>
-            ) : null}
-          </Card>
+            {(() => {
+              const budget = num(fp?.quarterly_budget);
+              const spent = num(fp?.spent_to_date_this_quarter);
+              const cap = num(fp?.lifetime_cap_total);
+              const hasData = budget != null || spent != null;
+              const pct = budget && budget > 0 ? Math.min(100, Math.round(((spent || 0) / budget) * 100)) : 0;
+              const remaining = budget != null ? Math.max(0, budget - (spent || 0)) : null;
+              if (!hasData) {
+                return (
+                  <T variant="small" style={{ marginTop: spacing.md, color: "rgba(255,255,255,0.85)", lineHeight: 20 }}>
+                    Run the Budget Calculator or upload a statement to see {name}&apos;s live position.
+                  </T>
+                );
+              }
+              return (
+                <>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg, marginTop: spacing.md }}>
+                    <BudgetGauge pct={pct} danger={pct >= 90} />
+                    <View style={{ flex: 1, gap: 12 }}>
+                      <SpendBar label="Quarterly budget" value={budget != null ? money(budget) : "—"} pct={budget != null ? 100 : 0} tone="#8FBF95" />
+                      <SpendBar label="Spent this quarter" value={spent != null ? money(spent) : "—"} pct={pct} tone="#F0B267" />
+                      {remaining != null ? (
+                        <SpendBar label="Remaining" value={money(remaining)} pct={budget && budget > 0 ? Math.round((remaining / budget) * 100) : 0} tone="#A3CBCC" />
+                      ) : null}
+                    </View>
+                  </View>
+                  <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.15)" }}>
+                    <View style={{ flex: 1 }}>
+                      <T style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>Lifetime cap</T>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: "#fff", marginTop: 2 }}>{cap != null ? money(cap) : "—"}</T>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <T style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>Last statement</T>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: "#fff", marginTop: 2 }}>{fp?.last_statement_date ? shortDate(fp.last_statement_date) : "—"}</T>
+                    </View>
+                  </View>
+                </>
+              );
+            })()}
+          </View>
 
           {/* Open follow-ups */}
           <Card testID="pp-follow-ups" style={{ backgroundColor: colors.goldSoft }}>

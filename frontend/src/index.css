@@ -238,6 +238,12 @@
     .bg-kindred     { background-color: var(--kindred-bg); }
     .bg-surface     { background-color: var(--kindred-surface); }
     .bg-surface-2   { background-color: var(--kindred-surface-2); }
+
+    /* Uniform authenticated-app content width. Every /app + /settings screen
+       shares one comfortable wide column so pages feel consistent regardless
+       of any per-page max-width wrapper (founder request: same width, wide). */
+    .app-page { width: 100%; }
+    .app-page > * { max-width: 1400px !important; margin-left: auto !important; margin-right: auto !important; }
     .bg-primary-k   { background-color: var(--kindred-primary); }
     .text-primary-k { color: var(--kindred-primary); }
     .text-muted-k   { color: var(--kindred-muted); }
@@ -522,6 +528,11 @@ html.theme-dark .app-shell .text-primary-k\/85,
 html.theme-dark .app-shell .text-primary-k\/80,
 html.theme-dark .app-shell .text-primary-k\/70 { color: rgba(255,255,255,0.92) !important; }
 html.theme-dark .app-shell .text-muted-k { color: #F0E4D5 !important; }
+
+/* Contact form choice chips — selected state flips teal (light) → clay (dark),
+   so the active option reads clearly in either appearance. */
+.contact-choice-active { border-color:#0E4D52 !important; background-color:#0E4D52 !important; color:#fff !important; }
+html.theme-dark .contact-choice-active { border-color:#A5512B !important; background-color:#A5512B !important; color:#fff !important; }
 
 /* Global clay-button contrast rule: any button/link with a clay background
  * (any shade) MUST render its text in white — including on hover. This

@@ -55,7 +55,7 @@ export default function DualFlagshipHero() {
             className="relative overflow-hidden bg-gradient-to-br from-surface-2 via-surface to-surface-2 border-b border-kindred"
             data-testid="dual-flagship-hero"
         >
-            <div className="pointer-events-none absolute inset-0 opacity-40 [background:radial-gradient(circle_at_20%_10%,#0F5648_0%,transparent_45%),radial-gradient(circle_at_80%_20%,#C99B2E_0%,transparent_35%)]" aria-hidden="true" />
+            <div className="pointer-events-none absolute inset-0 opacity-20 [background:radial-gradient(circle_at_20%_10%,#0F5648_0%,transparent_35%),radial-gradient(circle_at_80%_20%,#C99B2E_0%,transparent_30%)]" aria-hidden="true" />
 
             <div className="relative mx-auto max-w-7xl px-6 pt-14 pb-20 lg:pt-20 lg:pb-24">
                 {/* Persona toggle above the fold */}
@@ -82,12 +82,12 @@ export default function DualFlagshipHero() {
 
                 <Reveal delay={140}>
                     <p
-                        className="mt-7 font-heading text-2xl sm:text-3xl lg:text-[1.9rem] xl:text-4xl text-primary-k/90 tracking-tight leading-[1.12] max-w-none lg:whitespace-nowrap"
+                        className="mt-7 font-heading text-2xl sm:text-3xl lg:text-[1.9rem] xl:text-4xl text-primary-k tracking-tight leading-[1.12] max-w-none lg:whitespace-nowrap"
                         data-testid="hero-headline"
                     >
                         {copy.headline}
                     </p>
-                    <p className="mt-5 text-lg text-primary-k/85 max-w-2xl leading-relaxed">
+                    <p className="mt-5 text-lg text-primary-k/85 max-w-4xl leading-relaxed">
                         {copy.subhead}
                     </p>
                 </Reveal>

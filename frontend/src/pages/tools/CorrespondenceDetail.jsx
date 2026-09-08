@@ -223,9 +223,20 @@ export default function CorrespondenceDetail() {
     const onImported = useCallback((data) => {
         // Merge fields from the import into intake so the user sees them
         // pre-filled without a page reload.
-        setIntake((prev) => ({ ...(prev || {}), ...(data?.intake || {}) }));
+        const mergedIntake = { ...(intake || {}), ...(data?.intake || {}) };
+        setIntake(mergedIntake);
         setSavingHint({ savedAt: new Date().toISOString(), imported: true });
-    }, []);
+        // If a draft already exists, pull the imported facts straight into the
+        // letter by regenerating from the merged intake (spec: "tap a linked
+        // statement or price check to pull those facts into the draft").
+        if (generated && !isGuidedPathway) {
+            setAutoGenerating(true);
+            api.post(`/lf1/correspondence/${entryId}/generate`, { intake: mergedIntake, persist: true })
+                .then(({ data: g }) => onGenerated(g))
+                .catch(() => { /* keep the existing draft on failure */ })
+                .finally(() => setAutoGenerating(false));
+        }
+    }, [intake, generated, isGuidedPathway, entryId]);
 
     const downloadPdf = async () => {
         setBusyPdf(true);

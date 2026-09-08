@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { CloudOff, FileText, RefreshCw, Save, Send, Sparkles } from "lucide-react-native";
+import { CloudOff, FileText, Link as LinkIcon, RefreshCw, Save, Send, Sparkles } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -9,6 +9,75 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate } from "@/src/utils/format";
 import { labelize } from "@/src/utils/labels";
+
+/**
+ * Cross-tool import chips — tap a linked statement, price check, care-plan
+ * review, classification check or contribution estimate to pull those facts
+ * into the letter. Mirrors web CrossToolImportPanel + the full mobile editor.
+ */
+function CrossToolChips({ entryId, onImport }: { entryId: string; onImport: () => void }) {
+  const { colors } = useTheme();
+  const [signals, setSignals] = useState<any>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<{ signals: any }>("/lf1/cross-tool-signals")
+      .then((r) => { if (!cancelled) setSignals(r?.signals || {}); })
+      .catch(() => { if (!cancelled) setSignals({}); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const attach = async (tool: string, record_id: string, fields: any, note: string) => {
+    setBusy(tool);
+    try {
+      await apiFetch(`/lf1/correspondence/${entryId}/attach-source`, { method: "POST", body: { tool, record_id, fields, note } });
+      onImport();
+    } catch { /* silent */ } finally { setBusy(null); }
+  };
+
+  if (signals === null) return null;
+
+  const chips: { key: string; label: string; detail: string; onPress: () => void }[] = [];
+  if (signals.statement_decoder) {
+    const s = signals.statement_decoder;
+    chips.push({ key: "statement_decoder", label: `Statement · ${s.period_label || "recent"}`, detail: `${s.line_item_count} line items, ${(s.top_anomalies || []).length} anomalies`, onPress: () => attach("statement_decoder", s.statement_id || "recent", { statement_period: s.period_label, statement_line_item_count: s.line_item_count, statement_anomaly_count: (s.top_anomalies || []).length }, "Imported from Statement Decoder") });
+  }
+  if (signals.care_plan_reviewer) {
+    const s = signals.care_plan_reviewer;
+    chips.push({ key: "care_plan_reviewer", label: `Care plan · ${s.provider_name || "recent"}`, detail: `${s.findings_count || 0} findings`, onPress: () => attach("care_plan_reviewer", s.care_plan_id || "recent", { care_plan_provider: s.provider_name, care_plan_findings_count: s.findings_count }, "Imported from Support Plan Reviewer") });
+  }
+  if (signals.provider_price_checker) {
+    const recent = signals.provider_price_checker.recent_checks?.[0];
+    if (recent) chips.push({ key: "provider_price_checker", label: `Price check · ${recent.service}`, detail: `${recent.provider} at $${recent.rate}`, onPress: () => attach("provider_price_checker", recent.id || "recent", { ppc_service: recent.service, ppc_provider: recent.provider, ppc_rate: recent.rate, ppc_position: recent.position }, "Imported from Provider Price Checker") });
+  }
+  if (signals.classification_self_check) {
+    const s = signals.classification_self_check;
+    chips.push({ key: "classification_self_check", label: "Classification check", detail: `Current ${s.current_class || "?"} · suggested ${s.suggested_class || "?"}`, onPress: () => attach("classification_self_check", "recent", { current_classification: s.current_class, suggested_classification: s.suggested_class }, "Imported from Classification Self-Check") });
+  }
+  if (signals.contribution_estimator) {
+    const s = signals.contribution_estimator;
+    chips.push({ key: "contribution_estimator", label: "Contribution estimate", detail: `${s.pension_status || "?"} · Class ${s.classification || "?"}`, onPress: () => attach("contribution_estimator", "recent", { pension_status: s.pension_status, is_grandfathered: s.is_grandfathered, ce_classification: s.classification }, "Imported from Contribution Estimator") });
+  }
+
+  if (!chips.length) return null;
+
+  return (
+    <Card testID="lf1-cross-tool-panel">
+      <T variant="label" style={{ color: colors.muted, marginBottom: spacing.sm }}>PULL FACTS FROM YOUR OTHER TOOLS</T>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+        {chips.map((c) => (
+          <Pressable key={c.key} testID={`lf1-import-${c.key}`} disabled={busy === c.key} onPress={c.onPress}
+            style={{ flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 7, borderColor: colors.primary, backgroundColor: colors.surface2, opacity: busy === c.key ? 0.5 : 1 }}>
+            <LinkIcon size={13} color={colors.primary} />
+            <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{c.label}</T>
+            <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>· {c.detail}</T>
+          </Pressable>
+        ))}
+      </View>
+    </Card>
+  );
+}
 
 /**
  * Per-entry LF-1 letter editor (mobile). CHSP + invoice draft-letter flows
@@ -79,6 +148,11 @@ export default function LetterEditorScreen() {
     } finally { setGenerating(false); }
   };
 
+  // A cross-tool chip was tapped; its fields are merged into the intake
+  // server-side. If a draft already exists, regenerate so those facts appear
+  // straight in the letter body.
+  const onImport = () => { if (body && body.trim()) generate(); };
+
   const save = async () => {
     setSaving(true);
     try {
@@ -111,6 +185,8 @@ export default function LetterEditorScreen() {
                 {entry.direction === "inbound" ? "From" : "To"} {labelize(entry.recipient_type) || "recipient"} · {shortDate(entry.created_at)}
               </T>
             </Card>
+
+            <CrossToolChips entryId={String(id)} onImport={onImport} />
 
             {carriedIssues.items.length > 0 ? (
               <Card testID="lf1-carried-issues" style={{ backgroundColor: colors.primary, borderColor: colors.primary }}>

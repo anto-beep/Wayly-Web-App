@@ -79,8 +79,8 @@ export default function ToolClusterGrid() {
     return (
         <section className="mx-auto max-w-7xl px-6 py-20" data-testid="tool-cluster-grid">
             <span className="overline">Everything Else Wayly Does</span>
-            <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 max-w-3xl tracking-tight">
-                Seven More Tools, <span style={{ color: "#A5512B" }}>Grouped the Way Families Think</span>.
+            <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
+                More Tools, <span style={{ color: "#A5512B" }}>Grouped the Way Families Think</span>.
             </h2>
             <p className="mt-3 text-base text-muted-k max-w-2xl leading-relaxed">
                 The Statement Decoder is your front door. Once you&apos;re inside, these are the tools waiting to help with the rest of your loved one&apos;s care.

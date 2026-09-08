@@ -1,12 +1,12 @@
 /**
- * CE-3 v1 · Contribution Position page.
+ * CE-3 v2 · Contribution Position page (redesigned).
  *
  * Route: /app/participants/:id/contribution-position
  *
- * Three cards on one screen:
- *   1. Lifetime cap accumulator (the flagship)
- *   2. Annual projection with confidence band
- *   3. Contribution reconciliation month-by-month
+ * A wide, plain-English, visual page that answers three questions in order:
+ *   1. How much of my lifetime cap have I used? (flagship gauge hero)
+ *   2. How much will I likely pay this year, and who pays the rest?
+ *   3. Does what I've been charged match the estimate? (reconciliation)
  */
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -14,8 +14,9 @@ import { api } from "@/lib/api";
 import { useParticipants } from "@/context/ParticipantsContext";
 import Skeleton from "@/components/Skeleton";
 import { formatDate } from "@/lib/formatDate";
-import { ChevronLeft, RefreshCw, Info, TrendingUp, AlertTriangle, ArrowRightLeft, X } from "lucide-react";
+import { ChevronLeft, RefreshCw, Info, TrendingUp, AlertTriangle, ArrowRightLeft, X, ShieldCheck, PiggyBank, CalendarClock } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
+import { DotField, GaugeRing, CompareRow } from "@/components/BrandVisuals";
 
 const AUD = (n) => new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n || 0);
 const AUD2 = (n) => new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
@@ -42,127 +43,182 @@ const FLAG_LABEL = {
     none_reconciled: "No data",
 };
 
-function LifetimeCapCard({ cap, onRefresh, refreshing }) {
+// A small labelled split bar — "who pays" style, white text on coloured panels.
+function SplitBar({ leftLabel, leftValue, leftPct, rightLabel, rightValue }) {
+    const l = Math.max(0, Math.min(100, leftPct));
+    return (
+        <div>
+            <div className="flex h-3.5 w-full overflow-hidden rounded-full bg-white/15">
+                <div className="h-full bg-[#F0B267]" style={{ width: `${l}%` }} />
+                <div className="h-full bg-[#8FBF95]" style={{ width: `${100 - l}%` }} />
+            </div>
+            <div className="mt-2 flex items-center justify-between text-xs">
+                <span className="inline-flex items-center gap-1.5 text-white/85">
+                    <span className="h-2 w-2 rounded-full bg-[#F0B267]" /> {leftLabel} <strong className="text-white tabular-nums">{leftValue}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-white/85">
+                    <strong className="text-white tabular-nums">{rightValue}</strong> {rightLabel} <span className="h-2 w-2 rounded-full bg-[#8FBF95]" />
+                </span>
+            </div>
+        </div>
+    );
+}
+
+// Flagship hero — the lifetime cap gauge + plain-English headline + paid/remaining bars.
+function LifetimeCapHero({ cap, onRefresh, refreshing }) {
     const usedPct = cap.total_cap ? Math.min(100, (cap.used_to_date / cap.total_cap) * 100) : 0;
-    const years = cap.years_at_current_pace;
+    const remainingPct = 100 - usedPct;
     const bucket = cap.years_at_current_pace_bucket;
-    const tone = bucket === "gt_50" || bucket === "20_to_50"
-        ? "border-emerald-200 bg-emerald-50/40"
-        : bucket === "10_to_20"
-            ? "border-primary-k/15 bg-white"
-            : bucket === "5_to_10"
-                ? "border-amber-200 bg-amber-50/40"
-                : bucket === "lt_5"
-                    ? "border-red-200 bg-red-50/40"
-                    : "border-primary-k/10 bg-white";
+    const nearCap = bucket === "lt_5" || bucket === "5_to_10";
 
     return (
-        <section className={`rounded-2xl border p-6 ${tone}`} data-testid="ce3-lifetime-cap-card">
-            <div className="flex items-start justify-between gap-3 flex-wrap">
+        <section
+            data-testid="ce3-lifetime-cap-card"
+            className="relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-md text-white"
+            style={{ background: "linear-gradient(135deg,#0E4D52,#0A3E42)" }}
+        >
+            <DotField />
+            <div className="relative flex items-start justify-between gap-3 flex-wrap">
                 <div>
-                    <p className="text-xs uppercase tracking-wide text-primary-k/50">Lifetime cap</p>
-                    <h2 className="text-lg font-heading text-primary-k mt-1">Your contribution position</h2>
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-white/60">Lifetime cap</p>
+                    <h2 className="text-2xl sm:text-3xl font-heading tracking-tight mt-1 text-white">Where you stand</h2>
                 </div>
                 <button
                     onClick={onRefresh}
                     disabled={refreshing}
                     data-testid="ce3-lifetime-cap-refresh"
-                    className="text-xs inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-primary-k/20 text-primary-k hover:bg-primary-k/[0.03] disabled:opacity-50"
+                    className="text-xs inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors disabled:opacity-50"
                 >
-                    <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} /> Refresh
+                    <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} /> Refresh
                 </button>
             </div>
 
-            <div className="mt-4">
-                <p className="text-sm text-primary-k/70" data-testid="ce3-lifetime-cap-headline">
-                    You&apos;ve paid <strong>{AUD2(cap.used_to_date)}</strong> toward your <strong>{AUD(cap.total_cap)}</strong> lifetime cap.
-                </p>
-                <div className="mt-3 h-2 rounded-full bg-primary-k/[0.08] overflow-hidden">
-                    <div
-                        className="h-full bg-primary-k transition-all"
-                        style={{ width: `${Math.max(0.5, usedPct)}%` }}
-                        data-testid="ce3-lifetime-cap-progress"
-                    />
+            <div className="relative mt-6 flex flex-col sm:flex-row items-center gap-7 sm:gap-9">
+                <div className="flex flex-col items-center flex-none">
+                    <GaugeRing pct={Math.round(usedPct)} size={148} label={`${usedPct.toFixed(0)}%`} sub="of cap used" bar={nearCap ? "#F0857A" : "#F0B267"} />
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-primary-k/60">
-                    <span>{usedPct.toFixed(2)}% used</span>
-                    <span data-testid="ce3-lifetime-cap-remaining">Remaining {AUD(cap.remaining)}</span>
+                <div className="flex-1 w-full space-y-4">
+                    <p className="text-base sm:text-lg leading-relaxed text-white/90" data-testid="ce3-lifetime-cap-headline">
+                        You&apos;ve paid <strong className="text-white">{AUD2(cap.used_to_date)}</strong> toward your{" "}
+                        <strong className="text-white">{AUD(cap.total_cap)}</strong> lifetime cap. This is the most anyone in Australia is asked to contribute to their aged care over a lifetime.
+                    </p>
+                    <div className="space-y-3">
+                        <div className="hidden" data-testid="ce3-lifetime-cap-progress" style={{ width: `${Math.max(0.5, usedPct)}%` }} />
+                        <CompareRow label="Paid so far" value={AUD(cap.used_to_date)} pct={usedPct} tone="#F0B267" />
+                        <CompareRow label="Still available" value={AUD(cap.remaining)} pct={remainingPct} tone="#8FBF95" />
+                    </div>
+                    <p className="text-sm text-white/75" data-testid="ce3-lifetime-cap-remaining">
+                        {AUD(cap.remaining)} of your cap is still available.
+                    </p>
                 </div>
             </div>
+        </section>
+    );
+}
 
-            {years !== null && years !== undefined ? (
-                <div className="mt-5 pt-5 border-t border-primary-k/10">
-                    <p className="text-xs uppercase tracking-wide text-primary-k/50">Years at current pace</p>
-                    <p className="text-4xl font-heading text-primary-k mt-1" data-testid="ce3-lifetime-cap-years">
-                        approximately {Math.round(years)} years
+// Years-at-pace friendly card (plain English + reassurance).
+function YearsAtPaceCard({ cap }) {
+    const years = cap.years_at_current_pace;
+    const bucket = cap.years_at_current_pace_bucket;
+    const has = years !== null && years !== undefined;
+    return (
+        <section className="rounded-2xl border border-primary-k/10 bg-white p-6 h-full" data-testid="ce3-years-card">
+            <div className="flex items-center gap-2 text-primary-k">
+                <CalendarClock className="h-5 w-5 text-clay" />
+                <h3 className="text-base font-semibold">At your current pace</h3>
+            </div>
+            {has ? (
+                <>
+                    <p className="text-4xl font-heading text-primary-k mt-3" data-testid="ce3-lifetime-cap-years">
+                        about {Math.round(years)} years
                     </p>
-                    <p className="text-xs text-primary-k/60 mt-2">
-                        Based on {cap.based_on_statement_ids?.length || 0} decoded statement{(cap.based_on_statement_ids?.length || 0) !== 1 ? "s" : ""} over {cap.days_since_program_entry} days.
+                    <p className="text-sm text-primary-k/60 mt-2 leading-relaxed">
+                        until you&apos;d reach the cap, based on {cap.based_on_statement_ids?.length || 0} decoded statement{(cap.based_on_statement_ids?.length || 0) !== 1 ? "s" : ""} over the last {cap.days_since_program_entry} days.
                     </p>
                     {(bucket === "gt_50" || bucket === "20_to_50") && (
-                        <p className="mt-3 text-sm text-emerald-800" data-testid="ce3-cap-reassuring-msg">
-                            The lifetime cap is the most Australia asks anyone to contribute toward aged care over a lifetime. For most people, this figure is a very long way off.
-                        </p>
+                        <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-100 p-3.5 text-sm text-emerald-800" data-testid="ce3-cap-reassuring-msg">
+                            <ShieldCheck className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+                            For most people the cap is a very long way off. There is nothing you need to do here.
+                        </div>
                     )}
                     {bucket === "lt_5" && (
-                        <p className="mt-3 text-sm text-red-800" data-testid="ce3-cap-approaching-msg">
-                            Approaching the lifetime cap. Reaching the cap is a good thing, it means you won&apos;t have to contribute further.
-                        </p>
+                        <div className="mt-4 rounded-xl bg-red-50 border border-red-100 p-3.5 text-sm text-red-800" data-testid="ce3-cap-approaching-msg">
+                            <Info className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+                            You&apos;re getting close to the cap. That&apos;s a good thing, it means you won&apos;t have to contribute any further once you reach it.
+                        </div>
                     )}
-                </div>
+                </>
             ) : (
-                <div className="mt-5 pt-5 border-t border-primary-k/10">
-                    <p className="text-sm text-primary-k/60" data-testid="ce3-lifetime-cap-warmup">
-                        <Info className="inline w-4 h-4 mr-1" /> We need at least 30 days of statement data before we can project years at current pace.
-                    </p>
+                <div className="mt-3 rounded-xl bg-primary-k/[0.03] border border-primary-k/10 p-4 text-sm text-primary-k/70" data-testid="ce3-lifetime-cap-warmup">
+                    <Info className="inline w-4 h-4 mr-1.5 -mt-0.5" /> Once we have about 30 days of statement data we&apos;ll show how long, at your current pace, until you reach the cap.
                 </div>
             )}
         </section>
     );
 }
 
+// Annual projection — big number + who-pays split + supporting chips, all on a teal panel.
 function AnnualProjectionCard({ ap }) {
     const conf = ap.annual_estimate_range?.confidence || "low";
     const showConfidence = (ap.annual_estimate || 0) > 0;
+    const yourShare = ap.annual_estimate || 0;
+    const govShare = ap.government_share_annual || 0;
+    const total = yourShare + govShare;
+    const yourPct = total > 0 ? Math.round((yourShare / total) * 100) : 0;
     return (
-        <section className="rounded-2xl border border-primary-k/10 bg-white p-6" data-testid="ce3-annual-card">
-            <div className="flex items-start justify-between gap-3 flex-wrap">
+        <section
+            data-testid="ce3-annual-card"
+            className="relative overflow-hidden rounded-2xl p-6 sm:p-7 shadow-md text-white h-full"
+            style={{ background: "linear-gradient(135deg,#425F47,#33492C)" }}
+        >
+            <DotField color="rgba(255,255,255,0.10)" />
+            <div className="relative flex items-start justify-between gap-3 flex-wrap">
                 <div>
-                    <p className="text-xs uppercase tracking-wide text-primary-k/50">Annual projection · {ap.financial_year_label}</p>
-                    <h2 className="text-lg font-heading text-primary-k mt-1">Estimated for the year</h2>
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-white/60">This year · {ap.financial_year_label}</p>
+                    <h3 className="text-lg font-heading tracking-tight mt-1 text-white">What you&apos;ll likely pay</h3>
                 </div>
                 {showConfidence && (
                     <span
-                        className={`text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded-full border ${CONFIDENCE_TINT[conf]}`}
+                        className={`text-[10px] uppercase tracking-wide font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white`}
                         data-testid="ce3-annual-confidence"
                     >
                         {conf} confidence
                     </span>
                 )}
             </div>
-            <div className="mt-4">
-                <p className="text-4xl font-heading text-primary-k" data-testid="ce3-annual-estimate">
-                    {AUD(ap.annual_estimate)}
+            <p className="relative text-4xl sm:text-5xl font-heading mt-4 tabular-nums" data-testid="ce3-annual-estimate">
+                {AUD(ap.annual_estimate)}
+            </p>
+            <p className="relative text-xs text-white/70 mt-1" data-testid="ce3-annual-range">
+                Likely between {AUD(ap.annual_estimate_range?.low || 0)} and {AUD(ap.annual_estimate_range?.high || 0)} (give or take {ap.annual_estimate_range?.band_percent || 0}%)
+            </p>
+            {ap.annual_estimate_range?.range_explanation_tokens?.caregiver && (
+                <p className="relative text-sm text-white/85 mt-3 leading-relaxed">
+                    {ap.annual_estimate_range.range_explanation_tokens.caregiver}
                 </p>
-                <p className="text-xs text-primary-k/60 mt-1" data-testid="ce3-annual-range">
-                    Range {AUD(ap.annual_estimate_range?.low || 0)}, {AUD(ap.annual_estimate_range?.high || 0)} (±{ap.annual_estimate_range?.band_percent || 0}%)
-                </p>
-                <p className="text-sm text-primary-k/70 mt-3">
-                    {ap.annual_estimate_range?.range_explanation_tokens?.caregiver}
-                </p>
-            </div>
-            <div className="mt-4 pt-4 border-t border-primary-k/10 grid grid-cols-3 gap-3 text-xs">
+            )}
+
+            {total > 0 && (
+                <div className="relative mt-5">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-white/55 mb-2">Who pays over the year</p>
+                    <SplitBar
+                        leftLabel="You"
+                        leftValue={AUD(yourShare)}
+                        leftPct={yourPct}
+                        rightLabel="Government"
+                        rightValue={AUD(govShare)}
+                    />
+                </div>
+            )}
+
+            <div className="relative mt-5 pt-4 border-t border-white/15 grid grid-cols-2 gap-4 text-sm">
                 <div>
-                    <p className="text-primary-k/50 uppercase">Weekly</p>
-                    <p className="text-primary-k mt-0.5 font-medium">{AUD2(ap.weekly_estimate)}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-white/55">Per week</p>
+                    <p className="text-white font-semibold mt-0.5 tabular-nums">{AUD2(ap.weekly_estimate)}</p>
                 </div>
                 <div>
-                    <p className="text-primary-k/50 uppercase">Quarterly</p>
-                    <p className="text-primary-k mt-0.5 font-medium">{AUD2(ap.quarterly_estimate)}</p>
-                </div>
-                <div>
-                    <p className="text-primary-k/50 uppercase">Gov. share/yr</p>
-                    <p className="text-primary-k mt-0.5 font-medium">{AUD(ap.government_share_annual)}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-white/55">Per quarter</p>
+                    <p className="text-white font-semibold mt-0.5 tabular-nums">{AUD2(ap.quarterly_estimate)}</p>
                 </div>
             </div>
         </section>
@@ -177,9 +233,12 @@ function ReconciliationCard({ pid, rows, onReconcile, reconciling }) {
     return (
         <section className="rounded-2xl border border-primary-k/10 bg-white p-6" data-testid="ce3-reconciliation-card">
             <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div>
-                    <p className="text-xs uppercase tracking-wide text-primary-k/50">Reconciliation</p>
-                    <h2 className="text-lg font-heading text-primary-k mt-1">Estimated vs actual, month by month</h2>
+                <div className="flex items-center gap-2 text-primary-k">
+                    <TrendingUp className="h-5 w-5 text-teal" />
+                    <div>
+                        <h3 className="text-base font-semibold">Estimate vs what you were charged</h3>
+                        <p className="text-xs text-primary-k/55 mt-0.5">Month by month, we check the estimate against your real statements.</p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <input
@@ -187,42 +246,41 @@ function ReconciliationCard({ pid, rows, onReconcile, reconciling }) {
                         value={month}
                         onChange={(e) => setMonth(e.target.value)}
                         data-testid="ce3-reconcile-month-picker"
-                        className="text-xs px-2 py-1 border border-primary-k/20 rounded-lg"
+                        className="text-xs px-2.5 py-1.5 border border-primary-k/20 rounded-lg"
                     />
                     <button
                         onClick={() => onReconcile(month)}
                         disabled={reconciling}
                         data-testid="ce3-reconcile-btn"
-                        className="text-xs inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-k text-white disabled:opacity-50"
+                        className="text-xs inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-primary-k text-white hover:bg-[#091D33] transition-colors disabled:opacity-50"
                     >
-                        {reconciling ? "…" : "Reconcile"}
+                        {reconciling ? "…" : "Check this month"}
                     </button>
                 </div>
             </div>
 
             {rows.length === 0 ? (
-                <div className="mt-4 rounded-lg border border-dashed border-primary-k/20 p-6 text-center" data-testid="ce3-reconcile-empty">
-                    <TrendingUp className="w-6 h-6 text-primary-k/40 mx-auto" />
-                    <p className="text-sm text-primary-k/60 mt-2">
-                        Reconciliation compares what you were estimated to pay against what you were actually charged.
-                        Pick a month above and click Reconcile to start.
+                <div className="mt-5 rounded-xl border border-dashed border-primary-k/20 bg-primary-k/[0.02] p-8 text-center" data-testid="ce3-reconcile-empty">
+                    <TrendingUp className="w-7 h-7 text-primary-k/40 mx-auto" />
+                    <p className="text-sm text-primary-k/65 mt-3 max-w-md mx-auto leading-relaxed">
+                        Pick a month above and choose <strong className="text-primary-k">Check this month</strong>. We&apos;ll compare what you were estimated to pay against what you were actually charged, and flag anything worth a closer look.
                     </p>
                 </div>
             ) : (
-                <ul className="mt-4 space-y-3" data-testid="ce3-reconcile-list">
+                <ul className="mt-5 space-y-3" data-testid="ce3-reconcile-list">
                     {rows.map((r) => (
                         <li
                             key={r.id}
                             data-testid={`ce3-reconcile-row-${r.reconciliation_period_month}`}
-                            className={`rounded-xl border p-4 ${r.variance_flag === "step_change_variance" ? "border-red-200 bg-red-50/30" : "border-primary-k/10 bg-white"}`}
+                            className={`rounded-xl border p-4 ${r.variance_flag === "step_change_variance" ? "border-red-200 bg-red-50/40" : "border-primary-k/10 bg-primary-k/[0.02]"}`}
                         >
                             <div className="flex items-start justify-between gap-3 flex-wrap">
                                 <div>
-                                    <p className="text-sm font-medium text-primary-k">
+                                    <p className="text-sm font-semibold text-primary-k">
                                         {new Date(r.month_start).toLocaleDateString("en-AU", { month: "long", year: "numeric" })}
                                     </p>
                                     <p className="text-xs text-primary-k/60 mt-1">
-                                        Estimated {AUD2(r.estimated_contribution)} · Actual {AUD2(r.actual_contribution)}
+                                        Estimated {AUD2(r.estimated_contribution)} · Charged {AUD2(r.actual_contribution)}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -230,14 +288,14 @@ function ReconciliationCard({ pid, rows, onReconcile, reconciling }) {
                                         {FLAG_LABEL[r.variance_flag]}
                                     </span>
                                     {r.variance_flag !== "none_reconciled" && (
-                                        <span className="text-xs text-primary-k/60">
+                                        <span className="text-xs text-primary-k/60 tabular-nums">
                                             {r.variance_percentage > 0 ? "+" : ""}{r.variance_percentage?.toFixed(1)}%
                                         </span>
                                     )}
                                 </div>
                             </div>
                             {r.automated_explanation_tokens?.caregiver && (
-                                <p className="mt-2 text-xs text-primary-k/70">{r.automated_explanation_tokens.caregiver}</p>
+                                <p className="mt-2 text-xs text-primary-k/70 leading-relaxed">{r.automated_explanation_tokens.caregiver}</p>
                             )}
                             {r.case_id && (
                                 <div className="mt-2 text-xs">
@@ -573,18 +631,21 @@ export default function ContributionPosition() {
     }
 
     if (error) return (
-        <div className="max-w-3xl mx-auto p-8 text-center text-sm text-red-600" data-testid="ce3-error">{String(error)}</div>
+        <div className="p-8 text-center text-sm text-red-600" data-testid="ce3-error">{String(error)}</div>
     );
     if (!cap || !ap) return (
-        <div className="max-w-3xl mx-auto p-6 space-y-4">
-            <Skeleton className="h-40" />
-            <Skeleton className="h-40" />
-            <Skeleton className="h-40" />
+        <div className="p-6 space-y-4">
+            <Skeleton className="h-56 rounded-3xl" />
+            <div className="grid lg:grid-cols-2 gap-4">
+                <Skeleton className="h-52 rounded-2xl" />
+                <Skeleton className="h-52 rounded-2xl" />
+            </div>
+            <Skeleton className="h-40 rounded-2xl" />
         </div>
     );
 
     return (
-        <div className="max-w-3xl mx-auto p-6 space-y-4" data-testid="ce3-contribution-position-page">
+        <div className="p-1 sm:p-2 space-y-5" data-testid="ce3-contribution-position-page">
             <Link
                 to={`/app/participants/${participantId}`}
                 className="inline-flex items-center gap-1 text-sm text-primary-k/60 hover:text-primary-k"
@@ -595,54 +656,64 @@ export default function ContributionPosition() {
             <PageIntro
                 eyebrow="Contribution Position"
                 title="Where You Stand on Contributions"
-                description="One page that answers three questions: how much of the lifetime cap have I used, how much will I likely pay this year, and does what I've been charged actually match the estimate?"
-                whatItDoes="Combines the lifetime cap accumulator, an annual projection with a confidence band, and month-by-month reconciliation of expected vs actual contributions."
+                description="One clear page: how much of your lifetime cap you've used, what you'll likely pay this year and who pays the rest, and whether what you've been charged matches the estimate."
+                whatItDoes="Brings together your lifetime cap, this year's projection with a confidence range, and a month-by-month check of expected versus actual contributions."
                 howToUse={[
-                    "Review your lifetime cap headroom at the top.",
-                    "Compare this year's projection with what's been charged so far.",
-                    "Open any month with a variance to investigate the underlying invoices.",
+                    "Check your lifetime cap headroom at the top.",
+                    "See what you'll likely pay this year, and the government's share.",
+                    "Check any month against your real statements to catch surprises early.",
                     "If contributions are causing hardship, open the hardship walkthrough.",
                 ]}
                 whatYouGet={[
-                    "Certainty about how much you've paid vs what remains.",
+                    "Certainty about how much you've paid and how much remains.",
                     "Early warning if this year's contributions are running high.",
-                    "A direct hand-off to the hardship pathway when needed.",
+                    "A direct hand-off to the hardship pathway when you need it.",
                 ]}
             />
 
-            <LifetimeCapCard cap={cap} onRefresh={refreshCap} refreshing={refreshing} />
+            <LifetimeCapHero cap={cap} onRefresh={refreshCap} refreshing={refreshing} />
 
             {hardshipTriggers.length > 0 && (
-                <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5" data-testid="ce3-hardship-banner">
-                    <p className="text-xs uppercase tracking-wide text-amber-800/70">Hardship pathway available</p>
-                    <p className="text-sm text-amber-900 mt-1">
-                        {hardshipTriggers[0].notification_tokens?.caregiver}
-                    </p>
-                    <Link
-                        to={`/app/tools/contribution-estimator/hardship-walkthrough?trigger=${hardshipTriggers[0].id}`}
-                        data-testid="ce3-hardship-open-walkthrough"
-                        className="inline-block mt-3 text-xs px-4 py-2 rounded-full bg-amber-900 text-white"
-                    >Open walkthrough →</Link>
+                <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-start gap-3" data-testid="ce3-hardship-banner">
+                    <PiggyBank className="h-5 w-5 text-amber-700 flex-none mt-0.5" />
+                    <div>
+                        <p className="text-xs uppercase tracking-wide text-amber-800/70">Hardship pathway available</p>
+                        <p className="text-sm text-amber-900 mt-1 leading-relaxed">
+                            {hardshipTriggers[0].notification_tokens?.caregiver}
+                        </p>
+                        <Link
+                            to={`/app/tools/contribution-estimator/hardship-walkthrough?trigger=${hardshipTriggers[0].id}`}
+                            data-testid="ce3-hardship-open-walkthrough"
+                            className="inline-block mt-3 text-xs px-4 py-2 rounded-full bg-amber-900 text-white hover:bg-amber-800 transition-colors"
+                        >Open walkthrough →</Link>
+                    </div>
                 </section>
             )}
 
-            <AnnualProjectionCard ap={ap} />
+            <div className="grid lg:grid-cols-2 gap-5 items-stretch">
+                <AnnualProjectionCard ap={ap} />
+                <YearsAtPaceCard cap={cap} />
+            </div>
+
             <ReconciliationCard pid={participantId} rows={rows} onReconcile={reconcile} reconciling={reconciling} />
 
             <section className="rounded-2xl border border-primary-k/10 bg-white p-6" data-testid="ce3-pension-change-cta-section">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div>
-                        <p className="text-xs uppercase tracking-wide text-primary-k/50">Pension status</p>
-                        <h2 className="text-lg font-heading text-primary-k mt-1">
-                            Current: {PENSION_LABELS[participant?.pension_status] || participant?.pension_status || "not set"}
-                        </h2>
-                        <p className="text-xs text-primary-k/60 mt-1">A change in pension status can move contribution amounts up or down.</p>
+                    <div className="flex items-start gap-3">
+                        <ArrowRightLeft className="h-5 w-5 text-clay flex-none mt-1" />
+                        <div>
+                            <p className="text-xs uppercase tracking-wide text-primary-k/50">Pension status</p>
+                            <h3 className="text-base font-semibold text-primary-k mt-1">
+                                Current: {PENSION_LABELS[participant?.pension_status] || participant?.pension_status || "not set"}
+                            </h3>
+                            <p className="text-sm text-primary-k/60 mt-1 max-w-xl leading-relaxed">A change in pension status can move your contributions up or down. Tell us when it changes and we&apos;ll update your estimate.</p>
+                        </div>
                     </div>
                     <button
                         onClick={() => setPensionModalOpen(true)}
                         data-testid="ce3-pension-change-open-btn"
-                        className="text-xs inline-flex items-center gap-1 px-4 py-2 rounded-full bg-primary-k text-white"
-                    ><ArrowRightLeft className="w-3 h-3" /> Change pension status</button>
+                        className="text-xs inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-k text-white hover:bg-[#091D33] transition-colors"
+                    ><ArrowRightLeft className="w-3.5 h-3.5" /> Change pension status</button>
                 </div>
             </section>
 

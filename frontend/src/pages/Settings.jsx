@@ -524,10 +524,10 @@ function BillingTab() {
                     </div>
                 )}
                 {/* Current plan card */}
-                <div className="panel-solid-teal force-white rounded-2xl p-6" data-testid="current-plan-card">
+                <div className="bg-[#0E4D52]/[0.04] border border-primary-k/15 border-l-4 border-l-primary-k rounded-2xl p-6" data-testid="current-plan-card">
                     <div className="flex items-start justify-between flex-wrap gap-4">
                         <div>
-                            <div className="flex items-center gap-2"><Crown className="h-4 w-4" /><span className="overline">Current plan</span></div>
+                            <div className="flex items-center gap-2"><Crown className="h-4 w-4 text-clay" /><span className="overline">Current plan</span></div>
                             <div className="mt-2 font-heading text-2xl text-primary-k" data-testid="current-plan-name">
                                 {PLANS[currentPlan]?.name}{" "}
                                 <span className="text-base font-sans text-muted-k" data-testid="current-plan-price">
@@ -572,26 +572,26 @@ function BillingTab() {
                                 </p>
                             )}
                             {sub?.cancel_at_period_end && (
-                                <div className="mt-3 rounded-md border border-white/30 bg-black/20 px-3 py-2 text-sm text-white" data-testid="billing-cancel-scheduled">
+                                <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" data-testid="billing-cancel-scheduled">
                                     Your plan is scheduled to end on {formatDate(sub.current_period_end)}. You keep full access until then.
-                                    <button type="button" onClick={reactivate} disabled={busy} className="ml-2 text-xs text-white font-semibold underline hover:no-underline" data-testid="billing-reactivate">
+                                    <button type="button" onClick={reactivate} disabled={busy} className="ml-2 text-xs text-amber-900 font-semibold underline hover:no-underline" data-testid="billing-reactivate">
                                         Reactivate
                                     </button>
                                 </div>
                             )}
                             {sub?.pending_plan && (
-                                <div className="mt-3 rounded-md border border-white/30 bg-black/20 px-3 py-2 text-sm text-white" data-testid="billing-pending-change">
+                                <div className="mt-3 rounded-md border border-primary-k/15 bg-primary-k/[0.05] px-3 py-2 text-sm text-primary-k" data-testid="billing-pending-change">
                                     Your plan changes to <strong className="font-semibold">{PLANS[sub.pending_plan]?.name || sub.pending_plan}</strong>
                                     {sub.pending_effective ? <> on {formatDate(sub.pending_effective)}</> : null}. You keep {PLANS[currentPlan]?.name} access until then.
-                                    <button type="button" onClick={keepCurrentPlan} disabled={busy} className="ml-2 text-xs text-white font-semibold underline hover:no-underline" data-testid="billing-keep-plan">
+                                    <button type="button" onClick={keepCurrentPlan} disabled={busy} className="ml-2 text-xs text-primary-k font-semibold underline hover:no-underline" data-testid="billing-keep-plan">
                                         Keep {PLANS[currentPlan]?.name}
                                     </button>
                                 </div>
                             )}
                             {sub?.status === "past_due" && (
-                                <div className="mt-3 rounded-md border border-white/40 bg-black/25 px-3 py-2 text-sm text-white" data-testid="billing-past-due">
+                                <div className="mt-3 rounded-md border border-terracotta/30 bg-terracotta/10 px-3 py-2 text-sm text-terracotta" data-testid="billing-past-due">
                                     Your last payment did not go through. Update your card to keep your access.
-                                    <button type="button" onClick={openPortal} disabled={busy} className="ml-2 text-xs text-white font-semibold underline hover:no-underline" data-testid="billing-past-due-update-card">
+                                    <button type="button" onClick={openPortal} disabled={busy} className="ml-2 text-xs text-terracotta font-semibold underline hover:no-underline" data-testid="billing-past-due-update-card">
                                         Update card
                                     </button>
                                 </div>
@@ -606,7 +606,7 @@ function BillingTab() {
                                     data-testid="cancel-plan-btn"
                                     className={isTrialing
                                         ? "inline-flex items-center gap-1.5 rounded-full bg-[#F0B267] text-[#0E2A2E] px-4 py-2 text-sm font-bold shadow-sm hover:brightness-95 disabled:opacity-60"
-                                        : "inline-flex items-center gap-2 text-sm text-white hover:underline"}
+                                        : "inline-flex items-center gap-2 text-sm text-muted-k hover:text-primary-k hover:underline"}
                                 >
                                     <X className="h-3.5 w-3.5" /> {isTrialing ? "Cancel trial" : "Cancel plan"}
                                 </button>
@@ -617,13 +617,13 @@ function BillingTab() {
 
                 {/* What You Are Paying For — live view */}
                 {account?.summary && (
-                    <div className="panel-solid-teal force-white rounded-2xl p-6" data-testid="billing-participants-card">
+                    <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-participants-card">
                         <div className="flex items-start justify-between flex-wrap gap-4">
                             <div>
-                                <div className="flex items-center gap-2"><Users className="h-4 w-4" /><span className="overline">What you are paying for</span></div>
-                                <p className="mt-1 text-sm opacity-80">Live view of participants and add-ons on this account.</p>
+                                <div className="flex items-center gap-2"><Users className="h-4 w-4 text-teal" /><span className="overline">What you are paying for</span></div>
+                                <p className="mt-1 text-sm text-muted-k">Live view of participants and add-ons on this account.</p>
                             </div>
-                            <Link to="/app/participants" className="text-sm hover:underline inline-flex items-center gap-1" data-testid="billing-manage-participants">Manage participants <ArrowUpRight className="h-3.5 w-3.5" /></Link>
+                            <Link to="/app/participants" className="text-sm text-primary-k hover:underline inline-flex items-center gap-1" data-testid="billing-manage-participants">Manage participants <ArrowUpRight className="h-3.5 w-3.5" /></Link>
                         </div>
                         <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
@@ -658,10 +658,10 @@ function BillingTab() {
                                 {(account.participants || []).filter((p) => p.status === "ACTIVE").map((p, idx) => {
                                     const isAddon = !p.is_primary && idx >= participantsIncluded;
                                     return (
-                                        <li key={p.id} className="my-1.5 py-3 px-3 rounded-lg flex items-center justify-between gap-3 text-sm" style={{ backgroundColor: "#A5512B" }} data-testid={`billing-participant-${p.id}`}>
+                                        <li key={p.id} className="my-1.5 py-3 px-3 rounded-lg flex items-center justify-between gap-3 text-sm bg-surface-2 border border-kindred" data-testid={`billing-participant-${p.id}`}>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-medium text-primary-k">{p.first_name} {p.last_name}</span>
-                                                {p.is_primary && (<span className="text-[10px] uppercase tracking-wider bg-white text-[#0E4D52] rounded-full px-2 py-0.5 font-semibold">Primary</span>)}
+                                                {p.is_primary && (<span className="text-[10px] uppercase tracking-wider bg-primary-k/10 text-primary-k rounded-full px-2 py-0.5 font-semibold">Primary</span>)}
                                             </div>
                                             <span className="text-xs text-muted-k">{isAddon ? `Additional participant, $${ADDON_PRICE_FORTNIGHT.toFixed(2)} per fortnight` : "Included in base plan"}</span>
                                         </li>
@@ -724,12 +724,12 @@ function BillingTab() {
                 </div>
 
                 {/* Payment Method */}
-                <div className="panel-solid-teal force-white rounded-2xl p-6" data-testid="billing-payment-method-card">
+                <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-payment-method-card">
                     <div className="flex items-start justify-between flex-wrap gap-3">
                         <div>
-                            <div className="flex items-center gap-2"><CreditCard className="h-4 w-4" /><span className="overline">Payment method</span></div>
-                            <p className="mt-1 text-sm opacity-85">Update your card, add a backup card, or set a default. We use Stripe&apos;s hosted card portal so Wayly never handles raw card details.</p>
-                            <p className="mt-1 text-xs opacity-75" data-testid="billing-backup-card-note">
+                            <div className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary-k" /><span className="overline">Payment method</span></div>
+                            <p className="mt-1 text-sm text-muted-k">Update your card, add a backup card, or set a default. We use Stripe&apos;s hosted card portal so Wayly never handles raw card details.</p>
+                            <p className="mt-1 text-xs text-muted-k" data-testid="billing-backup-card-note">
                                 If your main card ever fails, we&apos;ll try your backup automatically so your access is not interrupted.
                             </p>
                         </div>
@@ -738,7 +738,7 @@ function BillingTab() {
                             onClick={openPortal}
                             disabled={busy || !activeSub}
                             data-testid="billing-open-portal"
-                            className="text-sm bg-white text-primary-k font-semibold rounded-md px-4 py-2 hover:bg-white/90 disabled:opacity-60 inline-flex items-center gap-2"
+                            className="text-sm bg-primary-k text-white font-semibold rounded-md px-4 py-2 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center gap-2"
                         >
                             Manage payment method <ArrowUpRight className="h-3.5 w-3.5" />
                         </button>
@@ -746,9 +746,9 @@ function BillingTab() {
                 </div>
 
                 {/* Billing History */}
-                <div className="panel-solid-clay force-white rounded-2xl p-6" data-testid="billing-history-card">
-                    <div className="flex items-center gap-2"><Mailbox className="h-4 w-4" /><span className="overline">Billing history</span></div>
-                    <p className="mt-1 text-sm opacity-85">Every charge, receipt, and refund. Download a Stripe-hosted PDF for each.</p>
+                <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-history-card">
+                    <div className="flex items-center gap-2"><Mailbox className="h-4 w-4 text-clay" /><span className="overline">Billing history</span></div>
+                    <p className="mt-1 text-sm text-muted-k">Every charge, receipt, and refund. Download a Stripe-hosted PDF for each.</p>
                     {invoices === null ? (
                         <p className="mt-4 text-sm text-muted-k">Loading…</p>
                     ) : invoices.length === 0 ? (

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   Sparkles, AlertTriangle, FileText, Copy, Link as LinkIcon, ThumbsUp, ThumbsDown,
@@ -383,6 +383,8 @@ export default function CorrespondenceDetail() {
   // follow-up + reply modal
   const [replyOpen, setReplyOpen] = useState(false);
   const firstLoad = useRef(true);
+  const prefillRef = useRef(false);
+  const [prefilling, setPrefilling] = useState(false);
 
   const load = async () => {
     setLoadError(false); setLoading(true);
@@ -411,6 +413,36 @@ export default function CorrespondenceDetail() {
   const supportsComplaintMode = ["complaint", "escalation", "guided_pathway"].includes(archetype);
   const isReassessment = archetype === "request" && [1, 2].includes(entry?.situation_id);
 
+  // LF-1 v2 (mobile parity): when a letter opened fresh from a picked
+  // situation (not carried from a tool), seed the intake fields and draft a
+  // starting letter on arrival so the user never lands on a blank form.
+  // Idempotent server-side; never clobbers fields the user already filled.
+  useEffect(() => {
+    if (!entry || prefillRef.current) return;
+    if (entry.source_import || entry.content_draft || draft) return;
+    if (isGuided || isResponseDraft) return;
+    const it = entry.intake || {};
+    const summaryKeys = ["change_summary", "disputed_charge_summary", "complaint_summary", "escalation_summary", "notification_summary"];
+    const hasUserSummary = summaryKeys.some((k) => (it[k] || "").trim());
+    if (hasUserSummary) return;
+    prefillRef.current = true;
+    setPrefilling(true);
+    apiFetch<any>(`/lf1/correspondence/${id}/prefill`, { method: "POST", body: { participant_name: active?.display_name || null } })
+      .then((data) => {
+        if (data?.entry) {
+          setEntry(data.entry);
+          const merged = { ...(data.entry.intake || {}) };
+          if (!merged.participant_name && active?.display_name) merged.participant_name = active.display_name;
+          setIntake(merged);
+          setSenderAuthority(data.entry.sender_authority_basis || "");
+        }
+        if (data?.generated) { setDraft(data.generated); setOutMode("email"); }
+      })
+      .catch(() => { /* fall back to the manual intake + Generate button */ })
+      .finally(() => setPrefilling(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry, isGuided, isResponseDraft, id, draft]);
+
   const set = useCallback((patch: any) => { setIntake((s) => ({ ...s, ...patch })); setDirty(true); }, []);
 
   // Debounced autosave (mirrors web WS8 T31)
@@ -426,8 +458,19 @@ export default function CorrespondenceDetail() {
   }, [intake, senderAuthority, complaintMode, atsi, dirty, entry, id]);
 
   const onImported = (data: any) => {
-    setIntake((prev) => ({ ...(prev || {}), ...(data?.intake || {}) }));
+    const merged = { ...(intake || {}), ...(data?.intake || {}) };
+    setIntake(merged);
     setSavedHint("Imported"); setTimeout(() => setSavedHint(""), 1800);
+    // Pull the imported facts straight into the letter when a draft already
+    // exists, by regenerating from the merged intake (spec: tap a linked
+    // statement or price check to pull those facts into the draft).
+    if (draft && !isGuided) {
+      setBusy(true);
+      apiFetch<any>(`/lf1/correspondence/${id}/generate`, { method: "POST", body: { intake: merged, persist: true } })
+        .then((payload) => { if (payload?.body) { setDraft(payload); setOutMode("email"); } load(); })
+        .catch(() => { /* keep the existing draft on failure */ })
+        .finally(() => setBusy(false));
+    }
   };
 
   const acknowledgeTerms = async (checked: boolean) => {
@@ -560,6 +603,12 @@ export default function CorrespondenceDetail() {
               {savedHint ? <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><CheckCircle2 size={13} color={colors.sage} /><T variant="small" style={{ color: colors.muted, fontSize: 12 }} testID="lf1-detail-autosave-hint">{savedHint}</T></View> : null}
             </View>
             <T variant="small" style={{ color: colors.muted, marginTop: 2, marginBottom: spacing.xs }}>Wayly only uses the facts you enter here. Nothing is invented.</T>
+            {intake?.prefill_source === "situation" ? (
+              <View style={[styles.softNote, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]} testID="lf1-detail-starter-note">
+                <Sparkles size={16} color={colors.primary} style={{ marginTop: 2 }} />
+                <T variant="small" style={{ flex: 1, lineHeight: 20 }}>Wayly has started this letter for you based on the situation you picked. Edit anything, fill in the details in brackets, then regenerate.</T>
+              </View>
+            ) : null}
             <ArchetypeIntake archetype={archetype} intake={intake} set={set} missing={missing} />
           </Card>
 
@@ -582,6 +631,12 @@ export default function CorrespondenceDetail() {
             </View>
           ) : null}
 
+          {prefilling ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }} testID="lf1-prefill-busy">
+              <ActivityIndicator size="small" color={colors.primary} />
+              <T variant="small" style={{ color: colors.muted }}>Drafting a starting point from your situation…</T>
+            </View>
+          ) : null}
           <Button label={draft ? "Regenerate draft" : (isGuided ? "Build safeguarding record" : isResponseDraft ? "Draft my reply" : "Generate draft")} testID="lf1-generate-button" icon={isGuided ? ShieldCheck : Sparkles} onPress={generate} loading={busy} />
 
           {/* Generated output */}

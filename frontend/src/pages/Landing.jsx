@@ -147,7 +147,7 @@ export default function Landing() {
                 <Orb className="wayly-float-slow" style={{ width: 220, height: 220, bottom: -110, left: -70 }} from="#DCEAE9" to="#C4D4C8" />
                 <div className="relative mx-auto max-w-7xl px-6 py-16">
                     <span className="overline">The Problem We&apos;re Solving</span>
-                    <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">
+                    <h2 className="font-heading text-3xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
                         The new Support at Home program is more flexible, and <span style={{ color: "#A5512B" }}>far more complex</span>.
                     </h2>
                     <div className="mt-10 grid md:grid-cols-3 gap-6">
@@ -193,7 +193,7 @@ export default function Landing() {
                         { name: "Providers", body: "Calmer conversations with participants who arrive already understanding their statement and their budget." },
                         { name: "Clinicians", body: "Classification, care plan and services in one glance before the next review, so nothing gets missed." },
                     ].map((p, i) => {
-                        const tones = ["#0E4D52", "#A5512B", "#425F47", "#B23A2E", "#5F4E76", "#1A696E"];
+                        const tones = ["#134E52", "#8F4A29", "#3C5541", "#8A4038", "#4E4763", "#245A5E"];
                         const bg = tones[i % tones.length];
                         return (
                         <RevealOnScroll key={p.name}>
@@ -327,7 +327,7 @@ export default function Landing() {
                 <div className="relative mx-auto max-w-7xl px-6 py-16">
                     <div className="text-center max-w-2xl mx-auto">
                         <span className="overline">The Product</span>
-                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">One Calm Dashboard for <span style={{ color: "#A5512B" }}>Everything</span>.</h2>
+                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">One Calm Dashboard for <span style={{ color: "#A5512B" }}>Everything</span>.</h2>
                     </div>
                     <div className="mt-10 max-w-5xl mx-auto" data-testid="dashboard-strip-screenshot">
                         <RevealOnScroll>
@@ -347,9 +347,9 @@ export default function Landing() {
             {/* REPORTS HUB STRIP — colourful, plain-English report library */}
             <section className="border-t border-kindred bg-surface-2" data-testid="reports-strip">
                 <div className="mx-auto max-w-7xl px-6 py-16">
-                    <div className="max-w-3xl">
+                    <div className="max-w-4xl">
                         <span className="overline">Reports</span>
-                        <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">Clear reports you can actually use.</h2>
+                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">Clear reports you can <span style={{ color: "#A5512B" }}>actually use</span>.</h2>
                         <p className="mt-4 text-muted-k leading-relaxed">
                             At the end of every quarter, Wayly turns the numbers into eight tidy one-click PDFs. Each one answers a single question in plain English, ready to save, print, or hand to your accountant or Centrelink.
                         </p>
@@ -403,16 +403,16 @@ export default function Landing() {
             {/* COUNTDOWN */}
             <section className="border-y border-kindred bg-surface-2">
                 <div className="mx-auto max-w-7xl px-6 py-12 grid lg:grid-cols-12 gap-8 items-center">
-                    <div className="lg:col-span-7">
+                    <div className="lg:col-span-8">
                         <span className="overline">The 1 October 2026 moment</span>
-                        <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 tracking-tight">
+                        <h2 className="font-heading text-2xl sm:text-3xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
                             Personal care becomes fully funded in <span className="text-accent-aa tabular-nums font-semibold">{countdown.days}</span> days.
                         </h2>
                         <p className="mt-4 text-muted-k max-w-2xl leading-relaxed">
                             From 1 October 2026, showering, dressing and continence support move into Clinical Care under Support at Home, so families pay nothing for them. Until then, those visits still carry a contribution, and Wayly tracks every line so you know what should change on the day the rules do.
                         </p>
                     </div>
-                    <div className="lg:col-span-5">
+                    <div className="lg:col-span-4">
                         <div className="bg-surface border border-kindred rounded-2xl p-6 grid grid-cols-3 gap-4 text-center" data-testid="countdown-card">
                             {[
                                 { v: countdown.days, l: "days" },
@@ -434,7 +434,7 @@ export default function Landing() {
                 <div className="flex items-end justify-between flex-wrap gap-4">
                     <div>
                         <span className="overline">Free to Try</span>
-                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight max-w-2xl">
+                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
                             Decode a Statement Now, <span style={{ color: "#A5512B" }}>No Signup Needed</span>.
                         </h2>
                         <p className="mt-3 text-base text-muted-k leading-relaxed max-w-2xl">

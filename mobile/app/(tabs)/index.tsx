@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-n
 import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "@react-navigation/native";
 import {
-  TrendingUp, Bell, FileText, CheckCircle2, AlertTriangle, Sparkles, ChevronRight,
+  TrendingUp, Bell, FileText, AlertTriangle, Sparkles, ChevronRight,
   MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb,
 } from "lucide-react-native";
 
@@ -13,7 +13,7 @@ import { ParticipantSwitcher } from "@/src/components/ParticipantSwitcher";
 import { StreamProgress, Stream } from "@/src/components/StreamProgress";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { DashboardActionBar } from "@/src/components/DashboardActionBar";
-import { Card, Loading, MoneyBig, StatePanel, T } from "@/src/components/ui";
+import { Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
@@ -177,44 +177,6 @@ export default function Dashboard() {
             {/* At a glance — consolidated, calm summary */}
             {!isFree && budget ? (
               <>
-                <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-                  <View testID="dashboard-at-a-glance" style={[styles.glance, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
-                    <View style={{ borderLeftWidth: 4, borderLeftColor: colors.gold, paddingLeft: spacing.md }}>
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.8, color: colors.muted }}>LEFT TO SPEND THIS QUARTER</T>
-                      <View style={{ flexDirection: "row", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginTop: 2 }}>
-                        <MoneyBig testID="glance-left" value={left} whole size={34} color={colors.text} />
-                        <T variant="small">of {moneyWhole(usable)}</T>
-                      </View>
-                      <View style={[styles.bar, { backgroundColor: colors.surface2, marginTop: spacing.sm }]}>
-                        <View style={{ width: `${usable > 0 ? Math.max(0, Math.min(100, (left / usable) * 100)) : 0}%`, height: "100%", backgroundColor: colors.sage, borderRadius: 999 }} />
-                      </View>
-                    </View>
-                    <View style={[styles.glanceRow, { borderTopColor: colors.border }]}>
-                      <Pressable testID="glance-alerts" onPress={() => router.push("/budget-alerts")} style={styles.glanceCell}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                          <Bell size={13} color={colors.muted} />
-                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.6, color: colors.muted }}>TO REVIEW</T>
-                        </View>
-                        <T style={{ fontFamily: fonts.heading, fontSize: 22, marginTop: 2, color: allAnomalies.length > 0 ? colors.gold : colors.text }}>{allAnomalies.length}</T>
-                      </Pressable>
-                      <Pressable testID="glance-statements" onPress={() => router.push("/(tabs)/statements")} style={[styles.glanceCell, { borderLeftColor: colors.border, borderLeftWidth: 1 }]}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                          <FileText size={13} color={colors.muted} />
-                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.6, color: colors.muted }}>STATEMENTS</T>
-                        </View>
-                        <T style={{ fontFamily: fonts.heading, fontSize: 22, marginTop: 2 }}>{statements.length}</T>
-                      </Pressable>
-                      <Pressable testID="glance-cap" onPress={() => router.push("/reports")} style={[styles.glanceCell, { borderLeftColor: colors.border, borderLeftWidth: 1 }]}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                          <CheckCircle2 size={13} color={colors.muted} />
-                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.6, color: colors.muted }}>LIFETIME CAP</T>
-                        </View>
-                        <T style={{ fontFamily: fonts.heading, fontSize: 22, marginTop: 2 }}>{(budget.lifetime_pct ?? 0).toFixed(0)}%</T>
-                      </Pressable>
-                    </View>
-                  </View>
-                </View>
-
                 {/* Collapsible: budget detail, insights and history */}
                 <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
                   <Pressable
@@ -501,9 +463,6 @@ const styles = StyleSheet.create({
   headerBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.pill },
   headerBtnOutline: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.pill, borderWidth: 2 },
   lockIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
-  glance: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.lg },
-  glanceRow: { flexDirection: "row", borderTopWidth: 1, marginTop: spacing.md, paddingTop: spacing.md },
-  glanceCell: { flex: 1, paddingHorizontal: spacing.sm },
   detailToggle: { flexDirection: "row", alignItems: "center", gap: spacing.md, borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
   detailIcon: { width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   detailBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 9 },

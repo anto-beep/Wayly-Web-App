@@ -1,3 +1,25 @@
+## Mobile parity + Contribution/Billing redesign + marketing polish batch (Jun 2026)
+
+### Mobile parity (fork continuation) ✅ verified (iter 299–301)
+- **Mobile letters situation prefill** (`mobile/app/letters/[id].tsx`): a picked situation now auto-drafts a starting letter on arrival (`lf1-detail-starter-note` + pre-filled intake), matching web. Fixed a TDZ crash (hoisted `archetype/isGuided/isResponseDraft` above the prefill effect).
+- **Letter Detail Chips → pull into draft**: tapping a linked statement / price-check / contribution chip now regenerates the draft to weave the facts in — on web `CorrespondenceDetail`, mobile `letters/[id]`, and newly added `CrossToolChips` panel to mobile `correspondence/[id]`.
+- **Mobile participant money gauge** (`mobile/app/participant/[id].tsx`): teal Financial Position card with SVG budget-used `GaugeRing` + spend bars, matching web (empty-state parity when no `quarterly_budget`).
+
+### Web redesigns ✅ verified (iter 299)
+- **Contribution Position** (`ContributionPosition.jsx`): full redesign — wide layout, plain-English sections, teal gauge hero ("Where you stand"), annual "who pays" split bar, years-at-pace card, restyled reconciliation. All `ce3-*` testids + pension modal preserved.
+- **Settings → Plan & Billing** de-coloured: replaced 4 solid teal/clay panels with calm surface cards + subtle accents (kept the gold trial banner). Fixed low-contrast participant rows.
+- **Uniform content width**: `.app-page > * { max-width:1400px; margin:auto }` (index.css) + Layout wrapper — every /app + /settings screen shares one wide column.
+
+### Marketing polish ✅ verified (iter 301)
+- **DualFlagshipHero**: lightened the hero's dark radial overlay (opacity 40→20); headline to full-opacity `text-primary-k` (high contrast both modes); subhead `max-w-2xl→4xl` (2 lines).
+- **Landing.jsx**: 5 headings forced to one line (Problem / Dashboard-strip / Reports / Countdown / AI-tools); Reports heading resized to `sm:text-5xl` + clay accent; countdown grid rebalanced 8/4; ecosystem "Six People" palette muted for light+dark.
+- **ToolClusterGrid**: "Seven More Tools" → "More Tools", one line.
+- **Contact form**: selected option chip now flips teal (light) → clay (dark) via `.contact-choice-active`.
+
+### Mobile dashboard
+- Removed the quarterly-pacing "At a glance" section (`dashboard-at-a-glance`) from the top of the home tab per founder request; greeting, action bar, Wayly Summary and Budget-detail collapsible remain.
+
+
 ## Letters prefill + ClassificationCheck/PriceChecker polish + mobile parity batch (Jun 2026)
 
 ### Letters & Follow-ups — situation now pre-populates the letter (web) ✅ verified

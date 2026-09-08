@@ -291,8 +291,10 @@ export default function Layout({ children }) {
                     </nav>
                 </aside>
                 <main className="flex-1 min-w-0" key={activeParticipant?.id || "no-participant"}>
-                    <TrialCountdownBanner className="mb-4 md:mb-5" />
-                    {children}
+                    <div className="app-page">
+                        <TrialCountdownBanner className="mb-4 md:mb-5" />
+                        {children}
+                    </div>
                 </main>
             </div>
             <PlanComplianceGuard />

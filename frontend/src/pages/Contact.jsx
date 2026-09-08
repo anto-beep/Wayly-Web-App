@@ -151,7 +151,7 @@ export default function Contact() {
                                             onClick={() => setForm((f) => ({ ...f, role: r.v }))}
                                             data-testid={`contact-role-${r.v}`}
                                             className={`text-left rounded-lg border p-2.5 text-sm transition-colors ${
-                                                form.role === r.v ? "border-primary-k bg-surface-2 text-primary-k" : "border-kindred text-muted-k hover:bg-surface-2"
+                                                form.role === r.v ? "contact-choice-active" : "border-kindred text-muted-k hover:bg-surface-2"
                                             }`}
                                         >
                                             {r.label}
@@ -210,7 +210,7 @@ export default function Contact() {
                                                     onClick={() => setForm((f) => ({ ...f, preferred_time: t.v }))}
                                                     data-testid={`contact-time-${t.v}`}
                                                     className={`text-left rounded-lg border p-2.5 text-sm transition-colors ${
-                                                        form.preferred_time === t.v ? "border-primary-k bg-surface-2 text-primary-k" : "border-kindred text-muted-k hover:bg-surface-2"
+                                                        form.preferred_time === t.v ? "contact-choice-active" : "border-kindred text-muted-k hover:bg-surface-2"
                                                     }`}
                                                 >
                                                     {t.label}
