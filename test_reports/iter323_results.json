@@ -1,0 +1,73 @@
+{
+  "pass": [
+    {
+      "name": "invoice per-finding letter creates entry",
+      "detail": "entry_id=eb9ca008-556e-4da5-93b0-56621e9602fd"
+    },
+    {
+      "name": "per-finding intake non-empty",
+      "detail": "keys=['participant_name', 'provider_name', 'recipient_name', 'escalation_summary', 'subject', 'prior_attempts']"
+    },
+    {
+      "name": "per-finding intake has participant_name",
+      "detail": "val=Dorothy Smith"
+    },
+    {
+      "name": "per-finding intake has summary field",
+      "detail": "present_keys=['escalation_summary']"
+    },
+    {
+      "name": "invoice all-findings letter creates entry",
+      "detail": "entry_id=33788c24-e8e1-46e1-b5ea-c16ad861452c"
+    },
+    {
+      "name": "all-findings intake non-empty",
+      "detail": "keys=['participant_name', 'provider_name', 'recipient_name', 'escalation_summary', 'subject', 'prior_attempts']"
+    },
+    {
+      "name": "all-findings intake has participant_name",
+      "detail": "val=Dorothy Smith"
+    },
+    {
+      "name": "all-findings intake has summary field",
+      "detail": "present_keys=['escalation_summary']"
+    },
+    {
+      "name": "chsp1 service_continuity letter creates entry",
+      "detail": "entry_id=3a61c1d3-0ce8-4196-8f3a-ddd56ad3eaaf"
+    },
+    {
+      "name": "chsp1 service_continuity intake non-empty",
+      "detail": "keys=['participant_name', 'subject', 'change_summary', 'change_type']"
+    },
+    {
+      "name": "chsp1 service_continuity intake has participant_name",
+      "detail": "val=Dorothy Smith"
+    },
+    {
+      "name": "chsp1 service_continuity intake has change_summary",
+      "detail": "val=I am writing to ask that Dorothy Smith's current Commonwealth Home Support Programme services continue without interruption. Please confirm these services will keep running as they are now, and le"
+    },
+    {
+      "name": "chsp1 hardship letter creates entry",
+      "detail": "entry_id=4fbf8ca3-414a-4a45-a341-e9836e04888a"
+    },
+    {
+      "name": "chsp1 hardship intake non-empty",
+      "detail": "keys=['participant_name', 'subject', 'notification_summary']"
+    },
+    {
+      "name": "chsp1 hardship intake has participant_name",
+      "detail": "val=Dorothy Smith"
+    },
+    {
+      "name": "chsp1 hardship intake has notification_summary",
+      "detail": "val=I am writing about Dorothy Smith and their Commonwealth Home Support Programme services. We are experiencing financial hardship that is making the current contributions difficult to sustain. I wou"
+    },
+    {
+      "name": "regression: statement anomaly letter (skipped/absent endpoint)",
+      "detail": "endpoint 404 \u2014 likely different route"
+    }
+  ],
+  "fail": []
+}

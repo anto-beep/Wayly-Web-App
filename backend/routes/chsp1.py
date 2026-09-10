@@ -442,11 +442,54 @@ async def create_chsp_letter(body: ChspLetterIn, request: Request):
     uid = await _user_id(request)
     profile = await _db.chsp_profiles.find_one({"user_id": uid})
     participant_id = (profile or {}).get("represents_participant_id")
+    # Fall back to the household's primary participant when there is no CHSP
+    # profile row, so the letter's participant_name is populated (otherwise
+    # /lf1/.../generate 422s on participant_name -> blank letter).
+    if not participant_id:
+        udoc = await _db.users.find_one({"id": uid}, {"_id": 0, "household_id": 1})
+        hid = (udoc or {}).get("household_id")
+        if hid:
+            pp = (await _db.participants.find_one({"household_id": hid, "is_primary": True, "status": {"$ne": "REMOVED"}}, {"_id": 0})
+                  or await _db.participants.find_one({"household_id": hid, "status": {"$ne": "REMOVED"}}, {"_id": 0}))
+            if pp:
+                participant_id = pp.get("id")
 
     if body.kind == "hardship":
         situation_id, archetype, recipient = 9, "notification", "services_australia_aged_care"
     else:
         situation_id, archetype, recipient = 6, "request", "provider_cm"
+
+    # Populate the intake so the draft generates real content (an empty intake
+    # previously made /lf1/.../generate 422 -> blank letter).
+    pname = ""
+    if participant_id:
+        p = await _db.participants.find_one(
+            {"id": participant_id},
+            {"_id": 0, "first_name": 1, "last_name": 1, "display_name": 1, "name": 1},
+        )
+        if p:
+            full = f"{(p.get('first_name') or '').strip()} {(p.get('last_name') or '').strip()}".strip()
+            pname = full or (p.get("display_name") or p.get("name") or "").strip()
+    subject_who = f" for {pname}" if pname else ""
+    person = pname or "the person I care for"
+    intake: Dict[str, Any] = {"participant_name": pname}
+    if body.provider_name:
+        intake["provider_name"] = body.provider_name
+        intake["recipient_name"] = body.provider_name
+    if body.kind == "hardship":
+        intake["subject"] = f"Financial hardship and contribution support{subject_who}"
+        intake["notification_summary"] = (
+            f"I am writing about {person} and their Commonwealth Home Support Programme services. "
+            f"We are experiencing financial hardship that is making the current contributions difficult to sustain. "
+            f"I would like to understand what fee-waiver, reduced-contribution or hardship options are available, and how to apply for them."
+        )
+    else:
+        intake["subject"] = f"Continuity of Commonwealth Home Support Programme services{subject_who}"
+        intake["change_summary"] = (
+            f"I am writing to ask that {person}'s current Commonwealth Home Support Programme services continue without interruption. "
+            f"Please confirm these services will keep running as they are now, and let me know in advance of any change to them."
+        )
+        intake.setdefault("change_type", "care_plan_amendment")
 
     entry_id = str(uuid.uuid4())
     now = _iso(_now())
@@ -468,7 +511,7 @@ async def create_chsp_letter(body: ChspLetterIn, request: Request):
             "provider_name": body.provider_name,
             **body.context,
         },
-        "intake": {},
+        "intake": intake,
         "status": "draft",
         "created_at": now,
         "updated_at": now,

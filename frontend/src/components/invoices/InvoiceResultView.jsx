@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { AlertTriangle, AlertOctagon, CheckCircle2, Receipt, Building2, Calendar, Hash, ChevronDown, ChevronUp, FileDown, Download, Columns2, Loader2, ShieldAlert, Shield, Mail } from "lucide-react";
+import { AlertTriangle, AlertOctagon, CheckCircle2, Receipt, Building2, Calendar, Hash, ChevronDown, ChevronUp, FileDown, Download, Columns2, Loader2, ShieldAlert, Shield, Mail, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
 import FlagCard from "@/components/FlagCard";
+import InvoiceInsightGraphics from "@/components/InvoiceInsightGraphics";
 import { toast } from "sonner";
 
 /**
@@ -59,7 +60,7 @@ const _CHECK_TITLES = {
     C7: "This invoice doesn't match your statement",
     C8: "GST charged on a service that should be GST-free",
     C9: "Adjustment or refund line",
-    C10: "You may be getting close to your lifetime cap",
+    C10: "About your lifetime contribution cap",
     C11: "Duplicate line",
     C12: "Rate exceeds published price",
 };
@@ -126,15 +127,14 @@ export function InvoiceResultBanner({ result }) {
 const SEVERITY_ORDER = ["blocker", "critical", "high", "medium", "low", "info"];
 
 function _severityKey(f) {
-    // Tier is the primary field on the Wayly INV-1 backend: 1 = critical
-    // (definite issue), 2 = high (probable), 3 = medium (verify), 4/5 = watch.
-    // Fall back to severity/priority for compatibility.
+    // Backend Tier is the primary field: HIGHER number = MORE severe.
+    // T4 check-before-paying (top) > T3 worth-a-question > T2 worth-noting >
+    // T1 informational (lowest). Fall back to severity/priority strings.
     const t = Number(f?.tier);
     if (isFinite(t) && t > 0) {
-        if (t === 1) return "critical";
-        if (t === 2) return "high";
+        if (t >= 4) return "high";
         if (t === 3) return "medium";
-        if (t === 4) return "low";
+        if (t === 2) return "low";
         return "info";
     }
     const s = String(f?.severity || f?.priority || "medium").toLowerCase();
@@ -260,6 +260,63 @@ export function InvoiceIssueRegister({ findings, onDraftFinding }) {
                 />
             ))}
         </section>
+    );
+}
+
+/**
+ * WaylySummaryCard — the plain-English "Wayly Summary" card shown on both the
+ * fresh-run result and the saved invoice page so they read identically.
+ */
+export function WaylySummaryCard({ summary }) {
+    if (!summary) return null;
+    return (
+        <section className="rounded-3xl border border-primary-k/10 bg-white p-6 sm:p-8 shadow-sm" data-testid="inv1-summary">
+            <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-primary-k/10 flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-primary-k" />
+                </div>
+                <div className="text-sm font-semibold text-primary-k tracking-wide">Wayly Summary</div>
+            </div>
+            <p className="text-[15px] text-primary-k leading-[1.7] whitespace-pre-line">{summary}</p>
+        </section>
+    );
+}
+
+/**
+ * InvoiceResultBody — the ONE shared result layout used by BOTH the fresh-run
+ * Invoice Checker output and the saved Invoice Detail page, so they look
+ * identical from layout to graphics. Order: summary banner, insight graphics
+ * (donuts), metadata strip, download/compare bar, Wayly Summary, draft-all
+ * button, issue register, charges table.
+ */
+export function InvoiceResultBody({ result, invoiceId, comparing, onCompare, onDraftFinding, onDraftAll }) {
+    const rec = result?.reconciliation || {};
+    const findings = rec.findings || [];
+    return (
+        <>
+            <InvoiceResultBanner result={result} />
+            <InvoiceInsightGraphics reconciliation={rec} />
+            <InvoiceMetadataStrip result={result} />
+            {invoiceId && (
+                <InvoiceDownloadBar invoiceId={invoiceId} onCompare={onCompare} comparing={comparing} />
+            )}
+            {comparing && invoiceId && <InvoiceCompareView invoiceId={invoiceId} result={result} />}
+            <WaylySummaryCard summary={rec.summary_md} />
+            {findings.length > 1 && onDraftAll && (
+                <div className="flex justify-end">
+                    <button
+                        type="button"
+                        onClick={onDraftAll}
+                        data-testid="inv1-draft-all-letter"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k text-white text-sm font-medium px-4 py-2 hover:bg-[#091D33] transition-colors"
+                    >
+                        <Sparkles className="h-4 w-4" /> Draft one letter covering all {findings.length} issues
+                    </button>
+                </div>
+            )}
+            <InvoiceIssueRegister findings={findings} onDraftFinding={onDraftFinding} />
+            <InvoiceChargesTable result={result} />
+        </>
     );
 }
 
@@ -443,7 +500,7 @@ export function InvoiceDownloadBar({ invoiceId, onCompare, comparing }) {
                 {onCompare && (
                     <button
                         onClick={onCompare}
-                        className={`inline-flex items-center gap-1.5 text-sm font-semibold text-white rounded-lg px-4 py-2 transition-colors ${comparing ? "bg-[#091D33]" : "bg-gold hover:bg-[#c98a2e]"}`}
+                        className={`inline-flex items-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2 transition-colors ${comparing ? "bg-[#091D33] text-white" : "bg-[#F0B267] text-primary-k hover:bg-[#e0a250]"}`}
                         data-testid="inv1-compare-btn"
                     >
                         <Columns2 className="h-3.5 w-3.5" /> {comparing ? "Hide Compare" : "Compare"}

@@ -574,10 +574,16 @@ def check_c10_lifetime_cap(
             expected_source=ExpectedSource.program_rule,
             confidence=Confidence.low,
             suggested_question=(
-                "The lifetime cap for Support at Home is being confirmed. "
-                "Once it is published, we will surface how close you are getting."
+                "Nothing to do right now, and this is not based on your own figures. "
+                "The lifetime cap is the most you would ever pay towards Support at Home care overall. "
+                "The government (Department of Health and Aged Care) has not published the final cap amount yet, "
+                "so once they do, Wayly will automatically start showing how close you are."
             ),
-            narrative="Lifetime cap indicative check, cap value pending.",
+            narrative=(
+                "There is a lifetime limit on the total you will ever pay towards your Support at Home care. "
+                "The government has not published the final cap figure yet, so we cannot show how close you are to it. "
+                "This note is here for your information only, not because anything on this invoice is wrong."
+            ),
         ))
         return findings
 

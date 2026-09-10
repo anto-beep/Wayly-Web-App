@@ -12,6 +12,7 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { sanitizeAI } from "@/src/utils/format";
 import { downloadAndShare } from "@/src/lib/download";
 import { useRouter } from "expo-router";
+import { InvoiceInsightGraphics } from "@/src/components/InsightGraphics";
 
 function DuplicateNotice({ dup }: { dup: any }) {
   const { colors } = useTheme();
@@ -65,7 +66,7 @@ const CHECK_TITLES: Record<string, string> = {
   C7: "This invoice doesn't match your statement",
   C8: "GST charged on a service that should be GST-free",
   C9: "Adjustment or refund line",
-  C10: "You may be getting close to your lifetime cap",
+  C10: "About your lifetime contribution cap",
   C11: "Duplicate line",
   C12: "Rate exceeds published price",
 };
@@ -100,12 +101,13 @@ function sumRefund(findings: any[]): number {
 
 const SEVERITY_ORDER = ["blocker", "critical", "high", "medium", "low", "info"];
 function severityKey(f: any): string {
+  // Backend Tier is the primary field: HIGHER number = MORE severe.
+  // T4 check-before-paying (top) > T3 > T2 > T1 informational (lowest).
   const t = Number(f?.tier);
   if (isFinite(t) && t > 0) {
-    if (t === 1) return "critical";
-    if (t === 2) return "high";
+    if (t >= 4) return "high";
     if (t === 3) return "medium";
-    if (t === 4) return "low";
+    if (t === 2) return "low";
     return "info";
   }
   const s = String(f?.severity || f?.priority || "medium").toLowerCase();
@@ -479,16 +481,18 @@ export function InvoiceMetaCard({ result }: { result: any }) {
 export default function InvoiceResultView({ result, onDraftLetter, onDraftAll }: { result: any; onDraftLetter?: (i: number) => void; onDraftAll?: () => void }) {
   const rec = result?.reconciliation || {};
   const invoiceId = result?.invoice_id || result?.id;
+  const findings = rec.findings || [];
+  const billed = Number(rec.invoice_total ?? result?.invoice_total ?? 0);
+  // Same sequence as the saved invoice page so a fresh run looks identical.
   return (
     <View testID="inv1-result" style={{ gap: spacing.md }}>
       {result?.duplicate_warning ? <DuplicateNotice dup={result.duplicate_warning} /> : null}
       <InvoiceResultBanner result={result} />
+      <InvoiceInsightGraphics billed={billed} findings={findings} />
       <InvoiceMetadataStrip result={result} />
       <InvoiceDownloadBar invoiceId={invoiceId} />
-      <VerdictBanner verdict={rec.overall_verdict || "all_clear"} findings={rec.findings || []} lineCount={(rec.lines || []).length} />
       <WaylySummaryCard summary={rec.summary_md} />
-      <InvoiceMetaCard result={result} />
-      <InvoiceIssueRegister findings={rec.findings || []} onDraftLetter={onDraftLetter} onDraftAll={onDraftAll} />
+      <InvoiceIssueRegister findings={findings} onDraftLetter={onDraftLetter} onDraftAll={onDraftAll} />
       <InvoiceChargesTable result={result} />
     </View>
   );

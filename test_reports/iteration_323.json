@@ -1,0 +1,44 @@
+{
+  "summary": "Verified the draft-a-letter INTAKE population fix via backend API (definitive). INVOICE bridges are FIXED: POST /api/invoices/{id}/findings/0/letter and POST /api/invoices/{id}/letter both return entry_id AND populate intake with participant_name='Dorothy Smith', escalation_summary, subject, provider_name, recipient_name, prior_attempts — GET /api/lf1/correspondence/{entry_id} confirms 6-key intake (no longer {}). This directly resolves the user-reported 'blank letter' bug for the invoice draft-a-letter flow. CHSP1 bridges are PARTIALLY fixed: intake now contains subject + change_summary (service_continuity) / notification_summary (hardship), BUT participant_name is empty string on cathy's account because backend only reads chsp_profiles.represents_participant_id and cathy has NO chsp_profile row — so POST /api/lf1/correspondence/{id}/generate STILL returns 422 source_data_missing missing_fields=['participant_name'] for CHSP1 letters. Web UI E2E attempt was blocked: automated Playwright login form fill failed silently (fields visible but stayed empty after fill/type; the /login form seems to intercept programmatic input); backend evidence is however conclusive for the invoice flow. 15/17 backend assertions PASS.",
+  "platforms_tested": ["web-api"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/chsp1/letter (both kinds) -> /api/lf1/correspondence/{id}/generate", "issue": "CHSP1 letter intake still leaves participant_name='' when the user has no chsp_profiles doc, causing /generate to 422 with missing_fields=['participant_name']. Reproduced with cathy@example.com (has household participant Dorothy Smith but no chsp_profile). Fix: fall back to the user's active household participant (participants collection where user_id=... or via household.participants) when chsp_profiles.represents_participant_id is null. Reference: /app/backend/routes/chsp1.py:443-464.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Login form (Playwright automation)", "issue": "page.fill/type on /login inputs is silently ignored — form stays empty and submit stays on /login. Manual browser login is fine; only automation is affected. Not a regression from this bug, but blocked the requested end-to-end web UI verification of the draft-a-letter click.", "affected_selectors": ["input[type=email]","input[type=password]"]}
+      ],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter323_letters_intake.py",
+    "/app/test_reports/iter323_results.json",
+    "/app/test_reports/iter323_inv.jpeg"
+  ],
+  "action_items": [
+    "FIX (HIGH): /app/backend/routes/chsp1.py `create_chsp_letter` (L436-508). When `chsp_profiles.represents_participant_id` is null, look up an active participant from the user's household (mirror the fallback used in _compose_letter_intake in routes/invoices.py) so participant_name is populated. Currently blocks CHSP1 service_continuity + hardship draft-letter generate (422 source_data_missing).",
+    "VERIFY (main-agent self-test): After fix, hit POST /api/chsp1/letter {kind:'hardship'} on cathy, then POST /api/lf1/correspondence/{entry_id}/generate — expect 200 not 422.",
+    "OPTIONAL: main-agent may retest the web UI click on 'Draft a letter about this' inside a manually-logged-in browser to confirm the editor auto-drafts (backend intake is now populated so the editor code path is unblocked)."
+  ],
+  "critical_code_review_comments": [
+    "routes/invoices.py per-finding + all-findings letter now correctly compose intake via _compose_letter_intake (participant_name, escalation_summary, provider_name, recipient_name, subject, prior_attempts). Well done.",
+    "routes/chsp1.py::create_chsp_letter should reuse the same household-participant fallback as invoices.py — right now it depends on chsp_profiles.represents_participant_id, which is optional/rare and yields empty participant_name for most users.",
+    "Suggestion: consolidate the participant-name lookup into a shared helper (services/lf1_intake_helpers.py) so all letter bridges (care_plans, invoices, chsp1, future) resolve participant_name consistently. Currently there are at least 3 copies of similar logic which risks divergence like this one."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "88% (15/17 assertions; the 2 failures are the two CHSP1 participant_name assertions — same root cause)", "frontend": "not-executed (automation login blocked)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family). token endpoint POST /api/auth/login returns {token} (put into localStorage.kindred_token for web).",
+  "seed_data_creation": "None. Used existing invoice db513099-8f5d-4175-987d-9f8b3c090c03.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend E2E harness at /app/test_reports/iter323_letters_intake.py — rerun after CHSP1 participant_name fallback fix to confirm all 17 assertions pass. For UI verification, the automated login is unreliable in this preview; recommend logging in manually or programmatically injecting localStorage.kindred_token from the /api/auth/login response BEFORE the first page.goto (I tried this — page.request.post to /api/auth/login also timed out at 30s in the automation env for reasons unrelated to the bug). Rich invoice for testing: db513099-8f5d-4175-987d-9f8b3c090c03; C10-only tier1 invoice: 37fb5b99-4c5b-4720-9051-b3a54685cc9f. Mobile invoice severity C10 UI parity was already re-verified in iter_322 (web); parity for mobile was not re-verified in this run but the mobile severity+layout fix wasn't touched by the letter changes.",
+  "rca of the issue": "Root cause of the user-facing 'blank letter' bug: letter bridges (routes/invoices.py per-finding + all-findings, routes/chsp1.py service_continuity + hardship, routes/care_plans.py statement + care-plan) created LF-1 correspondence rows with `intake={}`. When the editor auto-drafted via POST /api/lf1/correspondence/{id}/generate, the LF-1 generator asserts required fields on `intake` and returned 422 {error:'source_data_missing', missing_fields:[...]}. The editor swallowed the 422 -> user saw a blank letter. FIX (this iteration): populate `intake` at bridge-creation time. Invoices bridge is FULLY fixed (participant_name + escalation_summary + subject + provider + recipient + prior_attempts). CHSP1 bridge is PARTIALLY fixed — subject + change_summary/notification_summary are now populated, but participant_name is only set when chsp_profiles.represents_participant_id is present. For the test user cathy (no chsp_profile row) participant_name='' so /generate still 422s with missing_fields=['participant_name']. Care-plan bridge was fixed in a previous session and was not re-tested here."
+}

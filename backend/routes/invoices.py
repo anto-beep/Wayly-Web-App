@@ -58,6 +58,24 @@ logger = logging.getLogger("wayly.inv1.routes")
 # Safety: reject anything above this raw size (25MB, same as statements)
 _MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
+# Human-readable titles for the C1..C12 checks, used when composing a
+# draft letter from a finding so the letter reads in plain English (mirrors
+# the frontend _CHECK_TITLES in InvoiceResultView.jsx).
+_LETTER_CHECK_TITLES = {
+    "C1": "Clinical care contribution should be nil",
+    "C2": "Personal care contribution after 1 October 2026 should be nil",
+    "C3": "Weekday and weekend rates do not line up",
+    "C4": "A care management or package fee that may not be chargeable",
+    "C5": "A service charged after it was delivered / outside the billing period",
+    "C6": "The maths on a line does not add up",
+    "C7": "The invoice does not match the statement",
+    "C8": "GST charged on a service that should be GST-free",
+    "C9": "An adjustment or refund line to confirm",
+    "C10": "A note about the lifetime contribution cap",
+    "C11": "A possible duplicate line",
+    "C12": "A rate that exceeds the published price",
+}
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -583,9 +601,27 @@ def build_invoices_router(
             "invoice_filename": doc.get("filename"),
         }
 
-        # Delegate the actual creation to the LF-1 route by inserting the
-        # correspondence document directly. Keep the shape compatible with
-        # ``lf1.create_correspondence``.
+        archetype = "escalation" if situation_id == 10 else "dispute"
+
+        # Populate the intake so the letter drafts with real content (empty
+        # intake previously made /lf1/.../generate 422 -> blank letter).
+        provider_name = doc.get("provider_name") or recon.get("provider_name")
+        check_id = str(finding.get("check_id") or "").upper()
+        issue = {
+            "title": _LETTER_CHECK_TITLES.get(check_id) or (finding.get("narrative") or "").strip(),
+            "suggested_question": (finding.get("suggested_question") or finding.get("narrative") or "").strip(),
+            "reference_number": doc.get("invoice_number") or recon.get("invoice_number") or "",
+        }
+        try:
+            from routes.care_plans import _compose_letter_intake
+            intake = await _compose_letter_intake(
+                db, doc.get("participant_id"), archetype, [issue],
+                provider_name, source_tool="invoice-checker",
+            )
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning("invoice finding-letter intake compose failed: %s", e)
+            intake = {}
+
         import uuid as _uuid
         entry_id = str(_uuid.uuid4())
         now = _now_iso()
@@ -594,7 +630,7 @@ def build_invoices_router(
             "user_id": user_id,
             "participant_id": doc.get("participant_id"),
             "situation_id": situation_id,
-            "archetype": "escalation" if situation_id == 10 else "dispute",
+            "archetype": archetype,
             "direction": "outbound",
             "recipient_type": "acqsc" if situation_id == 10 else "provider_cm",
             "sender_identity": None,
@@ -602,7 +638,7 @@ def build_invoices_router(
             "complaint_mode": None,
             "atsi_preference": False,
             "source_import": source_import,
-            "intake": {},
+            "intake": intake,
             "status": "draft",
             "created_at": now,
             "updated_at": now,
@@ -658,6 +694,31 @@ def build_invoices_router(
             "invoice_filename": doc.get("filename"),
         }
 
+        archetype = "escalation" if situation_id == 10 else "dispute"
+
+        # Populate the intake so the letter drafts with every issue listed
+        # (empty intake previously made /lf1/.../generate 422 -> blank letter).
+        provider_name = doc.get("provider_name") or recon.get("provider_name")
+        ref = doc.get("invoice_number") or recon.get("invoice_number") or ""
+        compose_issues = [
+            {
+                "title": _LETTER_CHECK_TITLES.get(str(f.get("check_id") or "").upper())
+                or (f.get("narrative") or "").strip(),
+                "suggested_question": (f.get("suggested_question") or f.get("narrative") or "").strip(),
+                "reference_number": ref,
+            }
+            for f in findings
+        ]
+        try:
+            from routes.care_plans import _compose_letter_intake
+            intake = await _compose_letter_intake(
+                db, doc.get("participant_id"), archetype, compose_issues,
+                provider_name, source_tool="invoice-checker",
+            )
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning("invoice all-findings-letter intake compose failed: %s", e)
+            intake = {}
+
         import uuid as _uuid
         entry_id = str(_uuid.uuid4())
         now = _now_iso()
@@ -666,7 +727,7 @@ def build_invoices_router(
             "user_id": user_id,
             "participant_id": doc.get("participant_id"),
             "situation_id": situation_id,
-            "archetype": "escalation" if situation_id == 10 else "dispute",
+            "archetype": archetype,
             "direction": "outbound",
             "recipient_type": "acqsc" if situation_id == 10 else "provider_cm",
             "sender_identity": None,
@@ -674,7 +735,7 @@ def build_invoices_router(
             "complaint_mode": None,
             "atsi_preference": False,
             "source_import": source_import,
-            "intake": {},
+            "intake": intake,
             "status": "draft",
             "created_at": now,
             "updated_at": now,

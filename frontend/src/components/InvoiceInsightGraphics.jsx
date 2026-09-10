@@ -29,7 +29,8 @@ function sumRefund(findings) {
 }
 function bandOf(f) {
     const tr = Number(f?.tier);
-    if (isFinite(tr) && tr > 0) { if (tr <= 2) return "high"; if (tr === 3) return "medium"; return "low"; }
+    // Backend Tier: HIGHER number = MORE severe (T4 check-before-paying is the top).
+    if (isFinite(tr) && tr > 0) { if (tr >= 4) return "high"; if (tr === 3) return "medium"; return "low"; }
     const s = String(f?.severity || f?.priority || "medium").toLowerCase();
     if (s.includes("block") || s.includes("critical") || s.includes("high")) return "high";
     if (s.includes("low") || s.includes("info") || s.includes("watch")) return "low";

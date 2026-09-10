@@ -34,7 +34,7 @@ import { api, extractErrorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
 import {
     Upload, Loader2, ArrowRight, CheckCircle2, AlertTriangle,
-    FileText, ReceiptText, Info, HelpCircle, Sparkles,
+    FileText, ReceiptText,
     Save, FolderInput,
 } from "lucide-react";
 import SeoHead, {
@@ -46,7 +46,7 @@ import SeoHead, {
 import { SEO } from "@/seo/pageConfig";
 import { AutomatedDecisionDisclosure, isEnabled } from "@/uxf";
 import { ConsequenceLadderList } from "@/uxf/components/ConsequenceLadder";
-import { InvoiceResultBanner, InvoiceIssueRegister, InvoiceMetadataStrip, InvoiceChargesTable, InvoiceDownloadBar, InvoiceCompareView } from "@/components/invoices/InvoiceResultView";
+import { InvoiceResultBody } from "@/components/invoices/InvoiceResultView";
 
 const _toolJsonLd = (cfg) => {
     const blocks = [softwareApplicationLd({
@@ -72,105 +72,6 @@ const SHAPE_LABEL = {
     remittance: "Remittance advice",
     receipt: "Receipt",
 };
-
-const VERDICT_META = {
-    all_clear: {
-        heading: "Looks all clear",
-        body: "We checked this invoice against the current Support at Home rules and could not find anything worth raising.",
-        tone: "from-sage/30 to-sage/10 border-sage/40",
-        chip: "bg-sage/20 text-[#0F5648]",
-        Icon: CheckCircle2,
-    },
-    items_to_note: {
-        heading: "A few items to note",
-        body: "Nothing needs urgent action, but there are one or two informational items worth reading.",
-        tone: "from-gold/25 to-gold/5 border-gold/40",
-        chip: "bg-gold/25 text-primary-k",
-        Icon: Info,
-    },
-    questions_to_raise: {
-        heading: "Some questions to raise",
-        body: "We found lines worth asking your provider about before you pay.",
-        tone: "from-clay/25 to-clay/5 border-clay/40",
-        chip: "bg-clay/20 text-clay",
-        Icon: HelpCircle,
-    },
-    check_before_paying: {
-        heading: "Check before you pay",
-        body: "We found something that may breach the Support at Home rules. Please raise these with your provider before paying.",
-        tone: "from-red-100 to-red-50 border-red-200",
-        chip: "bg-red-100 text-red-700",
-        Icon: AlertTriangle,
-    },
-};
-
-function VerdictBanner({ verdict, findings = [], lineCount = 0 }) {
-    const meta = VERDICT_META[verdict] || VERDICT_META.all_clear;
-    const Icon = meta.Icon;
-    const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-    findings.forEach((f) => {
-        if (tierCounts[f.tier] !== undefined) tierCounts[f.tier] += 1;
-    });
-    return (
-        <div
-            className={`rounded-3xl border-2 bg-gradient-to-br ${meta.tone} p-8 sm:p-10 shadow-sm`}
-            data-testid={`inv1-verdict-${verdict}`}
-        >
-            <div className="flex items-start gap-5">
-                <div className={`h-14 w-14 rounded-2xl ${meta.chip} flex items-center justify-center shrink-0`}>
-                    <Icon className="h-7 w-7" />
-                </div>
-                <div className="min-w-0 flex-1">
-                    <div className="font-heading text-3xl sm:text-4xl leading-tight text-primary-k">
-                        {meta.heading}
-                    </div>
-                    <p className="mt-2.5 text-base text-primary-k/80 leading-relaxed max-w-2xl">
-                        {meta.body}
-                    </p>
-                    <div className="mt-5 flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-medium text-primary-k/70 bg-surface/60 backdrop-blur rounded-full px-3 py-1.5">
-                            {lineCount} line{lineCount === 1 ? "" : "s"} read
-                        </span>
-                        {[4, 3, 2, 1].map((t) => tierCounts[t] > 0 && (
-                            <span
-                                key={t}
-                                className="text-xs font-medium text-primary-k/70 bg-surface/60 backdrop-blur rounded-full px-3 py-1.5"
-                                data-testid={`inv1-tier-count-${t}`}
-                            >
-                                {tierCounts[t]} Tier {t}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function InvoiceMetaCard({ invoice }) {
-    if (!invoice) return null;
-    const rows = [
-        ["Provider", invoice.provider_name],
-        ["ABN", invoice.provider_abn ? invoice.provider_abn.replace(/(\d{2})(\d{3})(\d{3})(\d{3})/, "$1 $2 $3 $4") : null],
-        ["Invoice date", formatDate(invoice.invoice_date) || invoice.invoice_date],
-        ["Due date", formatDate(invoice.due_date) || invoice.due_date],
-        ["Document shape", invoice.document_shape ? (SHAPE_LABEL[invoice.document_shape] || invoice.document_shape) : null],
-    ].filter(([, v]) => Boolean(v));
-    if (rows.length === 0) return null;
-    return (
-        <div className="rounded-2xl border border-kindred bg-surface p-5" data-testid="inv1-meta-card">
-            <div className="overline mb-3">Invoice details</div>
-            <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
-                {rows.map(([label, value]) => (
-                    <div key={label} className="flex items-baseline justify-between gap-4 sm:block">
-                        <dt className="text-[11px] uppercase tracking-wider text-muted-k">{label}</dt>
-                        <dd className="text-sm text-primary-k font-medium sm:mt-0.5">{value}</dd>
-                    </div>
-                ))}
-            </dl>
-        </div>
-    );
-}
 
 function CleanReconciliation({ items }) {
     if (!items || items.length === 0) return null;
@@ -739,30 +640,14 @@ export default function InvoiceCheckerTool() {
                                 </div>
                             </div>
                         )}
-                        {/* 1. Summary banner - mirrors Statement Decoder look */}
-                        <InvoiceResultBanner result={result} />
-
-                        {/* 2. Metadata strip (provider, invoice date, due date, invoice #) */}
-                        <InvoiceMetadataStrip result={result} />
-
-                        {/* Download + compare bar (parity with Statement Decoder) */}
-                        {result.invoice_id && (
-                            <InvoiceDownloadBar
-                                invoiceId={result.invoice_id}
-                                onCompare={() => setComparing((c) => !c)}
-                                comparing={comparing}
-                            />
-                        )}
-                        {comparing && result.invoice_id && (
-                            <InvoiceCompareView invoiceId={result.invoice_id} result={result} />
-                        )}
-
-
-                        {/* 3. Verdict tier chip row */}
-                        <VerdictBanner
-                            verdict={result.reconciliation?.overall_verdict || "all_clear"}
-                            findings={result.reconciliation?.findings || []}
-                            lineCount={(result.reconciliation?.lines || []).length}
+                        {/* Shared result body — identical layout + graphics to the saved Invoice page */}
+                        <InvoiceResultBody
+                            result={result}
+                            invoiceId={result.invoice_id}
+                            comparing={comparing}
+                            onCompare={() => setComparing((c) => !c)}
+                            onDraftFinding={onDraftLetter}
+                            onDraftAll={onDraftAll}
                         />
 
                         {/* Combined-doc reconciliation prompt (C7/C9). Shows when the
@@ -812,44 +697,9 @@ export default function InvoiceCheckerTool() {
                             </div>
                         )}
 
-                        {/* 2. AI plain-English summary in an eye-catching card */}
-                        {result.reconciliation?.summary_md && (
-                            <div
-                                className="rounded-3xl border border-primary-k/10 bg-white p-6 sm:p-8 shadow-sm"
-                                data-testid="inv1-summary"
-                            >
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="h-8 w-8 rounded-lg bg-primary-k/10 flex items-center justify-center">
-                                        <Sparkles className="h-4 w-4 text-primary-k" />
-                                    </div>
-                                    <div className="text-sm font-semibold text-primary-k tracking-wide">Wayly Summary</div>
-                                </div>
-                                <p className="text-[15px] text-primary-k leading-[1.7] whitespace-pre-line">
-                                    {result.reconciliation.summary_md}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* 3. Invoice metadata card */}
-                        <InvoiceMetaCard
-                            invoice={{
-                                provider_name: result.provider_name,
-                                provider_abn: result.provider_abn,
-                                invoice_date: result.invoice_date,
-                                due_date: result.due_date,
-                                document_shape: result.document_shape,
-                            }}
-                        />
-
-                        {/* 4. Issue Register - grouped-by-severity clear layout matching Statement Decoder */}
-                        <InvoiceIssueRegister
-                            findings={result.reconciliation?.findings || []}
-                            onDraftFinding={onDraftLetter}
-                        />
-
-                        {/* 4a. What's been charged - line-item table (parity with Decoder) */}
-                        <InvoiceChargesTable result={result} />
-
+                        {/* 2. AI plain-English summary + 3. metadata + 4. issue register +
+                            4a. charges now all render inside <InvoiceResultBody> above,
+                            so the fresh run looks identical to the saved invoice page. */}
 
                         {/* 4b. Legacy consequence-ladder view (kept for the "next steps" chips) */}
                         {result.reconciliation?.findings?.length > 0 && (

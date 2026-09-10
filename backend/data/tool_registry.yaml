@@ -116,7 +116,8 @@ tools:
     active: true
 
   - slug: letters-and-follow-ups
-    name: "Letters & Follow-ups"    short_description: "Draft polished letters to your provider, ACQSC, or the Ombudsman."
+    name: "Letters & Follow-ups"
+    short_description: "Draft polished letters to your provider, ACQSC, or the Ombudsman."
     long_description: >
       Draft a polished letter to My Aged Care, your provider, ACQSC, or the
       Ombudsman. Track responses and know when to escalate.

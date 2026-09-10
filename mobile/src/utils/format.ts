@@ -19,8 +19,7 @@ export function ruleLabel(rule?: string | null): string {
   return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : "Flagged";
 }
 
-export function money(n: number | null | undefined): string {
-  const v = typeof n === "number" && !isNaN(n) ? n : 0;
+export function money(n: number | null | undefined): string {  const v = typeof n === "number" && !isNaN(n) ? n : 0;
   return v.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2 });
 }
 
@@ -49,6 +48,8 @@ function humanizeText(input?: string | null): string {
     .replace(/\bstream\s*=?\s*'?([A-Za-z][A-Za-z\s-]*?)'?(?=[\s.,)])/gi, "category \u201c$1\u201d")
     .replace(/\bAT[-\s]?HM\b/g, "government-funded support")
     .replace(/\bATHM\b/g, "government-funded support")
+    .replace(/\bINDEX[-_\s]?1\b/gi, "the official price guide")
+    .replace(/\bRULE[_\s]?[A-Z0-9]+(?:_[A-Z0-9]+)*\b/g, "")
     .replace(/\bmeans[-\s]tested\b/gi, "income-assessed")
     .replace(/\b([a-z]+(?:_[a-z]+)+)\b/g, (m: string) => m.replace(/_/g, " "))
     .replace(/\s{2,}/g, " ")
@@ -100,6 +101,14 @@ export function plainBody(input?: string | null, max = 340): string {
   if (dot > max * 0.5) return slice.slice(0, dot + 1);
   const sp = slice.lastIndexOf(" ");
   return (sp > 0 ? slice.slice(0, sp) : slice).trim() + "\u2026";
+}
+
+// A single "From your statement" evidence line, in plain English: strips
+// internal codes (INDEX-1, rule codes, snake_case), formats AU dates and
+// capitalises the first letter. Mirrors the web FlagCard evidence fix.
+export function plainEvidence(input?: string | null): string {
+  const h = humanizeText(input).trim();
+  return h ? h.charAt(0).toUpperCase() + h.slice(1) : "";
 }
 
 // Wayly rule (UI-1 §0.6): render ALL full dates as DD/MM/YYYY (Australian),

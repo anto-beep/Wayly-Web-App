@@ -10,7 +10,7 @@ import { AlertOctagon, AlertTriangle, ChevronDown, ChevronUp, FileDown, FileText
 import { Card, T } from "@/src/components/ui";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
-import { sanitizeAI, cleanTitle, plainBody, ruleLabel } from "@/src/utils/format";
+import { sanitizeAI, cleanTitle, plainBody, plainEvidence, ruleLabel } from "@/src/utils/format";
 import { normaliseDecode, exportDecodedCsv, exportDecodedPdf } from "@/src/lib/decoderExport";
 import { StatementInsightGraphics } from "@/src/components/InsightGraphics";
 
@@ -295,7 +295,7 @@ export default function DecoderResultView({ result, onDraftLetter }: { result: a
                           <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.muted }}>FROM YOUR STATEMENT</T>
                         </View>
                         {a.evidence.filter((e: any) => typeof e === "string" && e.trim()).map((e: string, j: number) => (
-                          <T key={j} style={{ fontFamily: fonts.mono, fontSize: 12, color: colors.text, lineHeight: 18 }}>{e}</T>
+                          <T key={j} style={{ fontFamily: fonts.body, fontSize: 12, color: colors.text, lineHeight: 18 }}>{plainEvidence(e)}</T>
                         ))}
                       </View>
                     ) : null}
@@ -426,7 +426,7 @@ function PublishBlockPanel({ block, message, blockers = [], onDraftLetter }: { b
                           <FileText size={12} color={colors.muted} />
                           <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.muted }}>FROM YOUR STATEMENT</T>
                         </View>
-                        {evidence.map((e: string, j: number) => <T key={j} style={{ fontFamily: fonts.mono, fontSize: 12, color: colors.text, lineHeight: 18 }}>{e}</T>)}
+                        {evidence.map((e: string, j: number) => <T key={j} style={{ fontFamily: fonts.body, fontSize: 12, color: colors.text, lineHeight: 18 }}>{plainEvidence(e)}</T>)}
                       </View>
                     ) : null}
                     {canDraft ? (
