@@ -114,7 +114,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
             </div>
 
             {/* Mode toggle */}
-            <div className="mt-3 inline-flex rounded-full border border-kindred bg-surface-2 p-1 text-xs" role="tablist" aria-label="Input method">
+            <div className="decoder-mode-toggle mt-3 inline-flex rounded-full border border-kindred bg-surface-2 p-1 text-xs" role="tablist" aria-label="Input method">
                 <button
                     type="button"
                     role="tab"

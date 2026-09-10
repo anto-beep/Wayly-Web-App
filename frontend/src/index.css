@@ -624,14 +624,16 @@ html.theme-dark .landing-marketing p.text-gold,
 html.theme-dark .landing-marketing .text-gold { color: var(--kindred-gold) !important; }
 /* Inline tone-coloured card titles → white */
 html.theme-dark .landing-marketing .landing-tone-title { color: var(--kindred-text) !important; }
-/* Big decorative step numbers were near-invisible at 15% tone → white, a touch brighter */
-html.theme-dark .landing-marketing .landing-step-number { color: #FFFFFF !important; opacity: 0.22 !important; }
+/* Big decorative step numbers were near-invisible at 15% tone → clearly white */
+html.theme-dark .landing-marketing .landing-step-number { color: #FFFFFF !important; opacity: 0.42 !important; }
+/* Step eyebrow (Check / Understand) inline tone → light, never dark teal */
+html.theme-dark .landing-marketing .landing-step-eyebrow { color: #C7C2B8 !important; }
 
 /* Featured pricing card: replace the bright teal with a sleek deep-teal
    panel so it reads as premium, not neon, in dark mode. */
 html.theme-dark .landing-marketing .landing-tier-card--featured {
     background: linear-gradient(160deg, #14403F 0%, #0B2B2D 100%) !important;
-    border-color: var(--kindred-gold) !important;
+    border-color: #A5512B !important;
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55) !important;
     color: #FFFFFF !important;
 }
@@ -640,27 +642,41 @@ html.theme-dark .landing-marketing .landing-tier-card--featured .text-gold { col
 /* Non-featured tier card body copy stays legible */
 html.theme-dark .landing-marketing .landing-tier-card:not(.landing-tier-card--featured) .text-muted-k { color: var(--kindred-text-2) !important; }
 
-/* Final-CTA buttons on the teal band: the global link rule was tinting the
-   outline button's text teal-on-teal (invisible). Force sleek, high-contrast
-   buttons with clearly visible hover states in dark mode. */
-html.theme-dark .landing-marketing a.landing-cta-primary {
-    background: #FFFFFF !important;
-    color: #0B2B2D !important;
+/* Clay solid buttons: keep normal clay + white text in dark (the global link
+   rule was tinting their text teal, and --kindred-gold lightened the clay). */
+html.theme-dark .landing-marketing a.landing-btn-clay {
+    background: #A5512B !important;
+    color: #FFFFFF !important;
+}
+
+/* Final-CTA band: not the bright teal in dark — a clean, deep teal-ink panel.
+   Primary button uses the brand primary colour; buttons are static (no hover
+   animation) per the sleek/premium button language. */
+html.theme-dark .landing-marketing.landing-final-cta,
+html.theme-dark .landing-marketing .landing-final-cta,
+html.theme-dark section.landing-final-cta {
+    background: #0B2B2D !important;
+}
+html.theme-dark .landing-marketing a.landing-cta-primary,
+html.theme-dark section.landing-final-cta a.landing-cta-primary {
+    background: var(--kindred-primary) !important;
+    color: #06201F !important;
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45) !important;
 }
-html.theme-dark .landing-marketing a.landing-cta-primary:hover {
-    background: #EAF3F2 !important;
-    color: #0B2B2D !important;
-}
-html.theme-dark .landing-marketing a.landing-cta-secondary {
+html.theme-dark .landing-marketing a.landing-cta-secondary,
+html.theme-dark section.landing-final-cta a.landing-cta-secondary {
     background: rgba(255, 255, 255, 0.08) !important;
     border-color: rgba(255, 255, 255, 0.55) !important;
     color: #FFFFFF !important;
 }
-html.theme-dark .landing-marketing a.landing-cta-secondary:hover {
-    background: rgba(255, 255, 255, 0.20) !important;
+
+/* Statement Decoder embed: the active input toggle should read as clay, not
+   the bright teal primary, in dark mode. */
+html.theme-dark .decoder-mode-toggle .bg-primary-k {
+    background: #A5512B !important;
     color: #FFFFFF !important;
 }
+
 
 /* Status pills/badges keep their color but get white text */
 html.theme-dark .admin-badge { background: rgba(255,255,255,0.10); color: var(--kindred-text); border-color: var(--kindred-border); }

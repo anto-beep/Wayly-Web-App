@@ -7,7 +7,6 @@ import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
 import HeroSpotlight from "@/components/HeroSpotlight";
 import DualFlagshipHero from "@/components/DualFlagshipHero";
 import ToolClusterGrid from "@/components/ToolClusterGrid";
-import { BrowserFrame, ScreenshotStatement, ScreenshotDashboard, ScreenshotFamilyThread, ScreenshotAnomaly, ScreenshotReportsHub } from "@/components/Screenshots";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import { DotField, Orb, GaugeRing, CompareRow } from "@/components/BrandVisuals";
 
@@ -193,13 +192,13 @@ export default function Landing() {
                         { name: "Providers", body: "Calmer conversations with participants who arrive already understanding their statement and their budget." },
                         { name: "Clinicians", body: "Classification, care plan and services in one glance before the next review, so nothing gets missed." },
                     ].map((p, i) => {
-                        const tones = ["#134E52", "#8F4A29", "#3C5541", "#8A4038", "#4E4763", "#245A5E"];
+                        const tones = ["#0E3A3D", "#5E3520", "#2B402F", "#5A2F2A", "#38334A", "#173F42"];
                         const bg = tones[i % tones.length];
                         return (
                         <RevealOnScroll key={p.name}>
                         <div
                             data-testid={`ecosystem-card-${p.name.toLowerCase()}`}
-                            className="h-full rounded-2xl p-6 force-white hover:brightness-110 transition-all shadow-sm"
+                            className="h-full rounded-2xl p-6 force-white shadow-sm"
                             style={{ backgroundColor: bg }}
                         >
                             <div className="text-xs uppercase tracking-[0.18em] font-semibold opacity-80">
@@ -269,7 +268,7 @@ export default function Landing() {
                                     </span>
                                     <span className="font-heading text-4xl landing-step-number" style={{ color: s.tone, opacity: 0.15 }}>{s.n}</span>
                                 </div>
-                                <div className="mt-4 text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: s.tone }}>{s.t}</div>
+                                <div className="mt-4 text-xs uppercase tracking-[0.18em] font-semibold landing-step-eyebrow" style={{ color: s.tone }}>{s.t}</div>
                                 <h3 className="mt-1 font-heading text-2xl text-primary-k tracking-tight">{s.h}</h3>
                                 <p className="mt-3 text-sm text-muted-k leading-relaxed">{s.b}</p>
                             </li>
@@ -277,7 +276,7 @@ export default function Landing() {
                     ))}
                 </ol>
                 <div className="mt-8">
-                    <Link to="/ai-tools/statement-decoder" className="inline-flex items-center gap-2 rounded-full bg-primary-k text-white px-6 py-3 text-sm font-semibold hover:bg-[#091D33] transition-colors" data-testid="how-it-works-cta">
+                    <Link to="/ai-tools/statement-decoder" className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white px-6 py-3 text-sm font-semibold" data-testid="how-it-works-cta">
                         Start your free 7-day trial <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
@@ -301,15 +300,15 @@ export default function Landing() {
                             <h2 className="font-heading text-4xl sm:text-5xl text-white mt-4 leading-tight tracking-tight">
                                 The average Wayly household spots <span className="font-semibold" style={{ color: "#F0B267" }} data-testid="big-number-accent">$1,847/year</span> in incorrect charges and unused funding.
                             </h2>
-                            <div className="mt-8 flex items-center justify-center lg:justify-start gap-4 flex-wrap">
+                            <div className="mt-8 flex items-center justify-center lg:justify-start gap-3 flex-wrap">
                                 <Link
                                     to="/signup"
                                     data-testid="big-number-cta"
-                                    className="bg-[#A5512B] text-white font-semibold rounded-full px-6 py-3 hover:bg-[#8E4523] shadow-md hover:-translate-y-0.5 transition-all"
+                                    className="landing-btn-clay inline-flex items-center justify-center bg-[#A5512B] text-white font-semibold rounded-lg px-6 py-3 shadow-md"
                                 >
                                     Start free for 7 days
                                 </Link>
-                                <Link to="/ai-tools/budget-calculator" className="text-white underline font-semibold hover:no-underline">
+                                <Link to="/ai-tools/budget-calculator" className="landing-cta-secondary inline-flex items-center justify-center border border-white/40 bg-white/10 text-white font-semibold rounded-lg px-6 py-3">
                                     Or estimate your own budget →
                                 </Link>
                             </div>
@@ -319,30 +318,6 @@ export default function Landing() {
             </section>
 
             {/* FEATURE GRID moved above (see what-wayly-does section) */}
-
-            {/* SEE THE DASHBOARD, live on-brand mockup (no photo) */}
-            <section className="relative overflow-hidden" data-testid="dashboard-strip">
-                <Orb className="wayly-float-slow" style={{ width: 300, height: 300, top: -120, right: -90 }} from="#DCEAE9" to="#C4D4C8" />
-                <Orb className="wayly-float" style={{ width: 220, height: 220, bottom: -100, left: -70 }} from="#F3E7DE" to="#E9D4C6" />
-                <div className="relative mx-auto max-w-7xl px-6 py-16">
-                    <div className="text-center max-w-2xl mx-auto">
-                        <span className="overline">The Product</span>
-                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">One Calm Dashboard for <span style={{ color: "#A5512B" }}>Everything</span>.</h2>
-                    </div>
-                    <div className="mt-10 max-w-5xl mx-auto" data-testid="dashboard-strip-screenshot">
-                        <RevealOnScroll>
-                            <BrowserFrame url="app.wayly.com.au/app" designWidth={1100} label="Wayly caregiver dashboard with stat cards, anomalies and latest reports">
-                                <ScreenshotDashboard />
-                            </BrowserFrame>
-                        </RevealOnScroll>
-                    </div>
-                    <div className="text-center mt-8">
-                        <Link to="/signup?plan=solo" data-testid="dashboard-strip-cta" className="inline-flex items-center gap-2 bg-[#A5512B] text-white font-semibold rounded-full px-6 py-3 hover:bg-[#8E4523] shadow-md hover:-translate-y-0.5 transition-all">
-                            Start your free 7-day trial <ArrowRight className="h-4 w-4" />
-                        </Link>
-                    </div>
-                </div>
-            </section>
 
             {/* REPORTS HUB STRIP — colourful, plain-English report library */}
             <section className="border-t border-kindred bg-surface-2" data-testid="reports-strip">
@@ -441,7 +416,7 @@ export default function Landing() {
                             Paste any Support at Home statement and get plain English in about 60 seconds, no account required. Every other Wayly tool is yours to explore during your 7-day free trial, then continues on a Solo or Family plan.
                         </p>
                     </div>
-                    <Link to="/ai-tools" className="text-[#A5512B] font-semibold underline text-sm">See all {TOOL_COUNT} tools →</Link>
+                    <Link to="/ai-tools" data-testid="see-all-tools-cta" className="landing-btn-clay inline-flex items-center gap-1.5 rounded-lg bg-[#A5512B] text-white px-5 py-2.5 text-sm font-semibold shadow-sm shrink-0">See all {TOOL_COUNT} tools <ArrowRight className="h-3.5 w-3.5" /></Link>
                 </div>
                 <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {[
@@ -510,7 +485,7 @@ export default function Landing() {
                                 className={`landing-tier-card relative h-full rounded-2xl border p-6 ${t.featured ? "landing-tier-card--featured bg-primary-k text-white border-gold shadow-xl" : "bg-surface border-kindred"}`}
                             >
                                 {t.badge && (
-                                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-white text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-semibold whitespace-nowrap">
+                                    <span className="landing-featured-badge absolute -top-3 left-1/2 -translate-x-1/2 bg-[#A5512B] text-white text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-semibold whitespace-nowrap">
                                         {t.badge}
                                     </span>
                                 )}
@@ -533,7 +508,7 @@ export default function Landing() {
                                 <Link
                                     to={user ? "/pricing" : t.href}
                                     data-testid={`landing-tier-cta-${t.key}`}
-                                    className={`mt-5 block text-center rounded-full px-4 py-2.5 text-sm font-semibold ${t.featured ? "bg-gold text-white hover:brightness-95" : "bg-primary-k text-white hover:bg-[#091D33]"}`}
+                                    className={`mt-5 block text-center rounded-lg px-4 py-2.5 text-sm font-semibold ${t.featured ? "landing-btn-clay bg-[#A5512B] text-white" : "bg-primary-k text-white"}`}
                                 >
                                     {user ? `Buy ${t.name}` : t.cta}
                                 </Link>
@@ -568,17 +543,17 @@ export default function Landing() {
             </section>
 
             {/* FINAL CTA */}
-            <section className="bg-primary-k">
+            <section className="landing-final-cta bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-16 text-center">
                     <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight wf-dot-lg">Ready when you are</h2>
                     <p className="mt-4 text-white/80 max-w-xl mx-auto">
                         Try Wayly free for 7 days. Cancel anytime.
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-                        <Link to="/signup" data-testid="final-cta-signup" className="landing-cta-primary inline-flex items-center justify-center bg-white text-primary-k font-bold rounded-xl px-7 py-3.5 shadow-lg hover:-translate-y-0.5 hover:shadow-2xl transition-all">
+                        <Link to="/signup" data-testid="final-cta-signup" className="landing-cta-primary inline-flex items-center justify-center bg-white text-primary-k font-bold rounded-lg px-7 py-3.5 shadow-lg">
                             Start free trial
                         </Link>
-                        <Link to="/ai-tools" className="landing-cta-secondary inline-flex items-center justify-center border border-white/40 bg-white/10 text-white font-semibold rounded-xl px-7 py-3.5 hover:bg-white/20 hover:-translate-y-0.5 transition-all">Or try a free AI tool</Link>
+                        <Link to="/ai-tools" className="landing-cta-secondary inline-flex items-center justify-center border border-white/40 bg-white/10 text-white font-semibold rounded-lg px-7 py-3.5">Or try a free AI tool</Link>
                     </div>
                 </div>
             </section>

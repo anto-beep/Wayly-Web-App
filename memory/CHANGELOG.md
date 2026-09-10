@@ -1,3 +1,14 @@
+## Iter 320c — Landing dark-mode round 2 + sleeker buttons (Jun 2026, fork) ✅ verified via light + dark screenshots
+Second visual-edit pass on the marketing landing + a shared-button restyle.
+- **Landing dark fixes**: ecosystem "Wayly for…" cards use darker/muted tone backgrounds (both modes, less bright); step eyebrows (Check/Understand) and the big 01/02/03 numbers now light/white (were dark-teal/invisible); persona intro paragraph white.
+- **Removed** the "See the dashboard" mockup section (`dashboard-strip`) and its now-unused Screenshots import.
+- **Pricing**: Family card badge + "Get started" button forced to normal clay `#A5512B` (not the light-clay `--kindred-gold`) in dark; featured card = sleek deep-teal gradient.
+- **Final-CTA band** in dark is now a clean deep teal-ink `#0B2B2D` (not neon teal); its primary button uses the brand primary colour.
+- **"See all N tools"** promoted from a small underlined link to a prominent clay button.
+- **StatementDecoderEmbed**: active input toggle reads clay (not bright teal) in dark.
+- **App-wide button language**: shared shadcn `Button` (`components/ui/button.jsx`) made less round (`rounded-lg`) and stripped of hover motion (translate/brightness/shadow-lift → static, `transition-colors` only); solid variants flattened (no gradient). Every landing raw button matched (rounded-lg, no hover). NOTE: bespoke raw buttons on other pages that don't use the shared component still need a follow-up sweep for full consistency.
+
+
 ## Iter 320b — Landing dark-mode readability polish (Jun 2026, fork) ✅ verified via dark-mode screenshots
 Visual-edit pass on the public marketing pages (web only, CSS/JSX). Scoped a `.landing-marketing` wrapper on `Landing.jsx` + `ToolClusterGrid.jsx` and added a dark-mode block in `index.css`:
 - Muted body paragraphs + one hardcoded-hex paragraph now render full white in dark mode (persona intro, problem cards, how-it-works, reports, countdown, AI-tools teaser, pricing intro, FAQ, tool-cluster blurbs). Gold accent line kept gold.
