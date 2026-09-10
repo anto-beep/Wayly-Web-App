@@ -1,0 +1,37 @@
+{
+  "pass": [
+    "Auth ready; url=https://mobile-parity-6.preview.emergentagent.com/app",
+    "Header no overflow at 1440 light",
+    "Header testid probe done",
+    "Tile light bg subtle (alpha=0.07)",
+    "account-menu-toggle present on /app/statements",
+    "account-menu-toggle present on /settings/billing",
+    "Header no overflow at 1440 dark",
+    "dashboard-more-detail-btn dark bg = rgb(14,42,46)",
+    "things-to-know-btn dark bg = rgb(14,42,46)"
+  ],
+  "fail": [
+    "dashboard-more-detail-btn label didn't change",
+    "things-to-know-btn label didn't change",
+    "Sign Out did NOT log user out \u2014 token still present, url=https://mobile-parity-6.preview.emergentagent.com/"
+  ],
+  "info": [
+    "Header light 1440 sw/cw: [1440, 1440]",
+    "Present brand-link: True",
+    "Present account-menu-toggle: True",
+    "Present layout-menu-button: True",
+    "Optional participant-switcher: False",
+    "Optional notifications-bell: False",
+    "Optional lca1-alerts-bell: False",
+    "Optional account-health-menu: False",
+    "Tile light bg=rgba(14, 77, 82, 0.07), label color=rgb(255, 255, 255)",
+    "html class dark: theme-dark",
+    "Header dark 1440 sw/cw: [1440, 1440]",
+    "dashboard-more-detail-btn dark bg = rgb(14, 42, 46)",
+    "dashboard-more-detail-btn: 'Show DetailHide Detail' -> 'Show DetailHide Detail'",
+    "things-to-know-btn dark bg = rgb(14, 42, 46)",
+    "things-to-know-btn: 'ShowHide' -> 'ShowHide'",
+    "token before: present",
+    "url after logout=https://mobile-parity-6.preview.emergentagent.com/; token_after=present"
+  ]
+}

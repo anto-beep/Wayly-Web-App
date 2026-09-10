@@ -1,0 +1,19 @@
+{
+  "pass": [
+    "Logged in fresh",
+    "Sign Out logged user out \u2014 token cleared, /app redirected to https://mobile-parity-6.preview.emergentagent.com/login",
+    "dashboard-more-detail-btn toggles ('Show Detail' -> 'Hide Detail')",
+    "things-to-know-btn toggles ('Show' -> 'Hide')"
+  ],
+  "fail": [],
+  "info": [
+    "post-login url=https://mobile-parity-6.preview.emergentagent.com/app; token=present",
+    "logout label: 'Sign Out'",
+    "before: kindred_token=present; refresh=present",
+    "after: url=https://mobile-parity-6.preview.emergentagent.com/; kindred_token=null; refresh=null",
+    "visit /app after logout -> https://mobile-parity-6.preview.emergentagent.com/login",
+    "detail-btn innerText BEFORE: 'Show Detail'",
+    "detail-btn innerText AFTER: 'Hide Detail'",
+    "things-to-know innerText: 'Show' -> 'Hide'"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "summary": "Iter 53 mobile-responsiveness regression PASS across all 4 viewports (375/414/768/1280). Body.scrollWidth equals innerWidth at every scroll position from top to bottom on every page tested. All landing headings fit, all 5 BrowserFrame screenshots correctly hidden on mobile (375/414) and visible on tablet/desktop (768/1280). Dashboard ProfileCompletionBanner stacks vertically at 375 (flex-direction:column) and LastTouchedByPill renders with 'Last updated by Cathy · 1 h ago · Supplements'. Onboarding + all 4 AI tools pages fit cleanly within 375.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Global CSS overflow-x:hidden + max-width:100vw on html/body is doing the right thing — measured body.scrollWidth==innerWidth at 375/414/768/1280 across full vertical scroll of Landing (12394px tall).",
+    "`hidden sm:block` wrapping on Landing.jsx BrowserFrames (Step 2/3 + dashboard strip + Reports hub) is working — 5 elements with that class combo exist; 0 of them are visible at 375/414, all 5 visible at 768.",
+    "ProfileCompletionBanner.flex-direction computed = 'column' at 375px (was 'row' before the fix). Banner total width 343px (fits inside 375 with margin).",
+    "LastTouchedByPill correctly reads field_modifications and renders 'Last updated by Cathy · 1 h ago · Supplements' — testid='participant-last-touched' resolves, visible width 279px, no overflow.",
+    "All h1/h2/h3 elements on Landing/Dashboard/Onboarding/4 AI tools have .right <= innerWidth at 375 — no heading clipping anywhere. The few headings reported with width=0 are inside the `hidden sm:block` screenshot frames (display:none) — expected, not a bug."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (frontend-only as requested)", "frontend": "100% (8/8 scenarios)" },
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, primary PID 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "None — used existing field_modifications data on primary participant which already had Supplements update by Cathy ~1h ago.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter 53 mobile fixes verified green. The 5 BrowserFrame containers on Landing use `hidden sm:block` pattern (visible at >=640px). If any future iteration adds a new fixed-width screenshot to Landing, wrap it with the same className or it WILL break mobile overflow. `useResponsiveScale` ResizeObserver in Screenshots.jsx still scales the hero spotlight + tablet/desktop frames down to parent width. Mobile typography downscale kicks in at <=480px (so 414 still uses standard sizing — verified no overflow there).",
+  "evidence": {
+    "landing_375": {"bodyScrollWidth": 375, "innerWidth": 375, "maxScrollWidthThroughoutPage": 375, "scrollXAfterScrollTo1000": 0, "hiddenSmBlockVisibleCount": 0, "headingsOverflowing": 0, "totalPageHeight": 12394},
+    "landing_414": {"maxScrollWidthThroughoutPage": 414, "innerWidth": 414},
+    "landing_768": {"maxScrollWidthThroughoutPage": 768, "innerWidth": 768, "hiddenSmBlockVisibleCount": 5, "headingsOverflowing": 0},
+    "landing_1280": {"maxScrollWidthThroughoutPage": 1280, "innerWidth": 1280, "headingsOverflowing": 0},
+    "dashboard_375": {"maxScrollWidth": 375, "innerWidth": 375, "bannerFlexDirection": "column", "bannerDisplay": "flex", "bannerWidth": 343, "lastTouchedPillVisible": true, "lastTouchedPillText": "Last updated by Cathy · 1 h ago · Supplements", "headingsOverflowing": 0},
+    "onboarding_375": {"maxScrollWidth": 375, "innerWidth": 375, "headingsOverflowing": 0, "fieldOverflowCount": 0},
+    "ai_tools_budget_calculator_375": {"maxScrollWidth": 375, "innerWidth": 375, "headingsOverflowing": 0, "fieldOverflowCount": 0},
+    "ai_tools_contribution_estimator_375": {"maxScrollWidth": 375, "innerWidth": 375, "headingsOverflowing": 0, "fieldOverflowCount": 0},
+    "ai_tools_reassessment_letter_375": {"maxScrollWidth": 375, "innerWidth": 375, "headingsOverflowing": 0, "fieldOverflowCount": 0},
+    "ai_tools_statement_decoder_375": {"maxScrollWidth": 375, "innerWidth": 375, "headingsOverflowing": 0, "fieldOverflowCount": 0}
+  }
+}

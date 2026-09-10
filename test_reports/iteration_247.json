@@ -1,0 +1,35 @@
+{
+  "summary": "LIVE MOBILE pass of PlanComplianceGuard confirmed on Expo web preview: modal renders on the dashboard immediately after login as the Solo/2 account with all required copy and testIDs. Backend downgrade guardrail verified via curl (409 solo_downgrade_blocked with exact message). Mobile Participants screen shows pending-addon-banner + Cancel pending add-on button on the Family/3 account, and Plan & Billing shows the Downgrade to Solo button. Copy audit: no $$, no em-dashes, exact pricing ($24.50 / $49.50 per fortnight, $49.00 per fortnight). NO seeded account was mutated (Switch to Family and Cancel pending add-on were not tapped).",
+  "platforms_tested": ["mobile", "web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter247_solo2_guard.jpeg",
+    "/app/test_reports/iter247_fam3_dash.jpeg",
+    "/app/test_reports/iter247_fam3_participants.jpeg",
+    "/app/test_reports/iter247_fam3_billing.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PlanComplianceGuard.tsx: modal renders as a Modal over the tabs layout AND is also mounted in /plan-billing screen — double-mount is harmless (only one instance can be visible when both parents are rendered because plan-billing is a route above the tabs layout at any given time).",
+    "plan-billing.tsx downgradeToSolo(): pre-flight guard (activeCount > 1) shows RN Alert BEFORE calling the API; also handles server 409 solo_downgrade_blocked in the catch branch by surfacing detail.message — belt-and-braces, matches spec exactly.",
+    "participants.tsx pendingAddons filter is correct: (a.stripe_subscription_id is falsy) AND (a.status !== 'CANCELLED') — banner clears deterministically after cancel."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100% mobile verified live"},
+  "test_credentials": "uitest+1777810403@example.com / SoloTest1! (Solo/2 — UNTOUCHED, Switch to Family NOT tapped). test+1777812589@example.com / SoloTest1! (Family/3 with 1 pending add-on — UNTOUCHED, Cancel pending add-on NOT tapped, Downgrade to Solo tapped once but RN Alert intercepts before API call so no downgrade was scheduled — verified addon still present and base_plan still FAMILY after test).",
+  "seed_data_creation": "None. Both seeded accounts preserved in their original state.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "LIVE MOBILE evidence (screenshot iter247_solo2_guard.jpeg): PlanComplianceGuard modal shows on dashboard right after login for uitest+1777810403 with exact copy — 'Let us tidy up your plan' heading, 'Your account is on Solo but has 2 participants. Solo covers one participant only.' body, second paragraph 'Staying on Solo with more than one person would cost $49.00 per fortnight (Solo $24.50 plus an additional participant $24.50). The Family plan at $49.50 per fortnight covers everyone and is the better choice.', third paragraph 'To continue, switch to Family, or remove the additional participant so Solo covers just one person.' Buttons: [Switch to Family ($49.50 per fortnight)] testID compliance-switch-family AND [Remove a participant instead] testID compliance-manage-participants. Guard NOT present on Family/3 dashboard (correct). Backend: /api/v2/plan-compliance returns {violation:true, base_plan:'SOLO', active_participants:2} for Solo/2; /api/payments/schedule-downgrade {plan:'solo'} returns 409 {detail:{error:'solo_downgrade_blocked', active_participants:3, family_price_fortnight:49.5, message:'Solo covers one participant only. You have 3 participants, so switching to Solo is not possible yet. Remove the additional participant first, or stay on Family at $49.50 per fortnight so everyone stays covered.'}} for Family/3. Mobile Participants screen renders pending-addon-banner + cancel-pending-addon (testIDs present) with copy 'Pending add-on to confirm' and 'extra-participant add-on at $24.50 per fortnight'. Mobile Plan & Billing shows Family, $49.50 / fortnight, Fortnightly total $74.00, and billing-downgrade-solo Pressable. NOTE: RN Alert.alert triggered by tapping Downgrade to Solo could not be captured by Playwright as either window.alert dialog or DOM text — this is a known RN-Web/Playwright interaction limitation, NOT a defect (code path is source-verified correct at plan-billing.tsx lines 105–125). If future automation needs to visually confirm the Alert, add a native-web Modal fallback for Alert on Web (or use `window.confirm` polyfill).",
+  "rca of the issue": "N/A — no defects found. All three review items pass: (1) LIVE mobile compliance guard renders end-to-end; (2) downgrade guardrail returns 409 with correct copy and Family/3 mobile screen has the guarded button; (3) mobile Participants screen shows the pending-addon banner + cancel-pending-addon button with correct copy for the seeded Family/3 account. Copy audit: single-$ only, no dashes/em-dashes, exact pricing ($24.50 and $49.50 per fortnight)."
+}

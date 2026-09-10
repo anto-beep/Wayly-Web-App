@@ -1,0 +1,188 @@
+{
+  "phone_390_statement_decoder": {
+    "info": {
+      "card": {
+        "w": 366,
+        "h": 184,
+        "count": 2
+      },
+      "table": {
+        "w": 0,
+        "h": 0
+      },
+      "wrapper_display": "none",
+      "sample": "Personal care\n$130.00\n05/09/2026\nIndependence\n2.00 hr \u00b7 $65.00\nYour share ,\nGov ,"
+    },
+    "overflow": {
+      "sw": 390,
+      "cw": 390,
+      "body_sw": 390,
+      "viewport": 390
+    },
+    "url": "https://mobile-parity-6.preview.emergentagent.com/app/statements/d5267556-57c4-4925-90c7-13eca0ba24f3"
+  },
+  "phone_390_statement_summary": {
+    "w": 366,
+    "cw": 390,
+    "x": 12
+  },
+  "phone_390_invoices_list_overflow": {
+    "sw": 390,
+    "cw": 390,
+    "body_sw": 390,
+    "viewport": 390
+  },
+  "phone_390_invoice_charges": {
+    "info": {
+      "card": {
+        "w": 366,
+        "h": 1140,
+        "count": 13
+      },
+      "table": {
+        "w": 0,
+        "h": 0
+      },
+      "sample": "3 Oct Domestic assistance (weekday) 1.5 hrs $77.20 $115.80 17.5% $20.27\n$115.80\n03/10/2026\nindependence\n1.5 \u00d7 $77.20\nYou paid $20.27",
+      "disputed_tinted": 9
+    },
+    "overflow": {
+      "sw": 390,
+      "cw": 390,
+      "body_sw": 390,
+      "viewport": 390
+    },
+    "url": "https://mobile-parity-6.preview.emergentagent.com/app/invoices/a0b36408-c48d-43df-9eac-b9bc4b0e6866"
+  },
+  "phone_390_dashboard_overflow": {
+    "sw": 390,
+    "cw": 390,
+    "body_sw": 390,
+    "viewport": 390
+  },
+  "phone_390_statements_list_overflow": {
+    "sw": 390,
+    "cw": 390,
+    "body_sw": 390,
+    "viewport": 390
+  },
+  "phone_390_statement_detail_overflow": {
+    "sw": 390,
+    "cw": 390,
+    "body_sw": 390,
+    "viewport": 390
+  },
+  "phone_390_invoice_detail_overflow": {
+    "sw": 390,
+    "cw": 390,
+    "body_sw": 390,
+    "viewport": 390
+  },
+  "phone_390_gutter": {
+    "main": {
+      "padL": "0px",
+      "padR": "0px",
+      "w": 366,
+      "x": 12
+    },
+    "firstChild": {
+      "padL": "0px",
+      "padR": "0px",
+      "tag": "DIV",
+      "cls": "app-page"
+    },
+    "vw": 390
+  },
+  "tablet_768_dashboard_overflow": {
+    "sw": 768,
+    "cw": 768,
+    "body_sw": 768,
+    "viewport": 768
+  },
+  "tablet_768_statements_list_overflow": {
+    "sw": 768,
+    "cw": 768,
+    "body_sw": 768,
+    "viewport": 768
+  },
+  "tablet_768_statement_detail_overflow": {
+    "sw": 768,
+    "cw": 768,
+    "body_sw": 768,
+    "viewport": 768
+  },
+  "tablet_768_invoices_list_overflow": {
+    "sw": 768,
+    "cw": 768,
+    "body_sw": 768,
+    "viewport": 768
+  },
+  "tablet_768_invoice_detail_overflow": {
+    "sw": 768,
+    "cw": 768,
+    "body_sw": 768,
+    "viewport": 768
+  },
+  "desktop_1440_statement_decoder": {
+    "info": {
+      "cards": {
+        "w": 0,
+        "h": 0,
+        "display": "none"
+      },
+      "table": {
+        "w": 1126,
+        "h": 109
+      }
+    },
+    "overflow": {
+      "sw": 1440,
+      "cw": 1440,
+      "body_sw": 1440,
+      "viewport": 1440
+    }
+  },
+  "desktop_1440_invoice_charges": {
+    "info": {
+      "cards": {
+        "w": 0,
+        "h": 0,
+        "display": "none"
+      },
+      "table": {
+        "w": 1126,
+        "h": 710
+      }
+    },
+    "overflow": {
+      "sw": 1440,
+      "cw": 1440,
+      "body_sw": 1440,
+      "viewport": 1440
+    }
+  },
+  "desktop_1440_statements_list_regression": {
+    "rows": 25,
+    "min_w_720": 0,
+    "doc_sw": 1440,
+    "doc_cw": 1440
+  },
+  "desktop_1440_invoices_list_regression": {
+    "rows": 37,
+    "min_w_720": 0,
+    "doc_sw": 1440,
+    "doc_cw": 1440
+  },
+  "phone_390_statements_list_regression": {
+    "rows": 25,
+    "min_w_720": 0,
+    "doc_sw": 390,
+    "doc_cw": 390
+  },
+  "phone_390_invoices_list_regression": {
+    "rows": 37,
+    "min_w_720": 0,
+    "doc_sw": 390,
+    "doc_cw": 390
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "url": "https://wayly-engagement-hub.expo.preview.emergentagent.com/login",
+  "ps.present": false,
+  "quarterly-pacing.absent": true,
+  "dashboard-at-a-glance.absent": true,
+  "all_testids_head": [
+    "brand-tagline",
+    "login-email-input",
+    "login-password-input",
+    "login-toggle-password",
+    "login-forgot-password",
+    "login-error",
+    "login-submit-button",
+    "login-google-button",
+    "login-goto-signup"
+  ],
+  "show_click_err": "Locator.element_handle: Timeout 30000ms exceeded.\nCall log:\n  - waiting for get_by_text(\"Show\", exact=True).first\n",
+  "budget.toggle_used": null,
+  "lcc.present": false
+}

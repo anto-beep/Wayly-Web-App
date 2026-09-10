@@ -1,0 +1,132 @@
+{
+  "phone_390": {
+    "/app/statements": {
+      "rowCount": 25,
+      "forced720Elements": 0,
+      "scrollers": [
+        {
+          "scrollWidth": 356,
+          "clientWidth": 356,
+          "hasInnerScroll": false
+        }
+      ],
+      "docScrollWidth": 390,
+      "clientWidth": 390,
+      "pageOverflow": 0,
+      "stackedMobileCards": 25,
+      "desktopGrids": 25,
+      "firstRowText": "01/09/2026 to 30/09/2026\nSunrise Care Pty Ltd\nFlagged \u00b7 2\nGross $250.00\nYesterday",
+      "firstRowTestId": "statement-row-d5267556-57c4-4925-90c7-13eca0ba24f3"
+    },
+    "nav_test_statement": {
+      "clicked": "statement-row-d5267556-57c4-4925-90c7-13eca0ba24f3",
+      "landed": "https://mobile-parity-6.preview.emergentagent.com/app/statements/d5267556-57c4-4925-90c7-13eca0ba24f3"
+    },
+    "/app/invoices": {
+      "rowCount": 37,
+      "forced720Elements": 0,
+      "scrollers": [
+        {
+          "scrollWidth": 356,
+          "clientWidth": 356,
+          "hasInnerScroll": false
+        }
+      ],
+      "docScrollWidth": 390,
+      "clientWidth": 390,
+      "pageOverflow": 0,
+      "stackedMobileCards": 37,
+      "desktopGrids": 37,
+      "firstRowText": "Meridian Home Care Pty Ltd\nIssues\n$1,791.36\n02 Nov 2026\n7 findings",
+      "firstRowTestId": "invoice-row-a0b36408-c48d-43df-9eac-b9bc4b0e6866"
+    },
+    "nav_test_invoice": {
+      "clicked": "invoice-row-a0b36408-c48d-43df-9eac-b9bc4b0e6866",
+      "landed": "https://mobile-parity-6.preview.emergentagent.com/app/invoices/a0b36408-c48d-43df-9eac-b9bc4b0e6866"
+    }
+  },
+  "tablet_768": {
+    "/app/statements": {
+      "rowCount": 25,
+      "forced720Elements": 0,
+      "scrollers": [
+        {
+          "scrollWidth": 734,
+          "clientWidth": 734,
+          "hasInnerScroll": false
+        }
+      ],
+      "docScrollWidth": 768,
+      "clientWidth": 768,
+      "pageOverflow": 0,
+      "stackedMobileCards": 25,
+      "desktopGrids": 25,
+      "firstRowText": "01/09/2026 to 30/09/2026\nSunrise Care Pty Ltd\nYesterday\n$250.00\n\u2014\nFlagged \u00b7 2",
+      "firstRowTestId": "statement-row-d5267556-57c4-4925-90c7-13eca0ba24f3",
+      "closing_column": {
+        "emdash_count": 25,
+        "commaBug": 0
+      }
+    },
+    "/app/invoices": {
+      "rowCount": 37,
+      "forced720Elements": 0,
+      "scrollers": [
+        {
+          "scrollWidth": 734,
+          "clientWidth": 734,
+          "hasInnerScroll": false
+        }
+      ],
+      "docScrollWidth": 768,
+      "clientWidth": 768,
+      "pageOverflow": 0,
+      "stackedMobileCards": 37,
+      "desktopGrids": 37,
+      "firstRowText": "02 Nov 2026\nMeridian Home Care Pty Ltd\n03 Aug\n$1,791.36\n7\nIssues",
+      "firstRowTestId": "invoice-row-a0b36408-c48d-43df-9eac-b9bc4b0e6866"
+    }
+  },
+  "desktop_1440": {
+    "/app/statements": {
+      "rowCount": 25,
+      "forced720Elements": 0,
+      "scrollers": [
+        {
+          "scrollWidth": 1126,
+          "clientWidth": 1126,
+          "hasInnerScroll": false
+        }
+      ],
+      "docScrollWidth": 1440,
+      "clientWidth": 1440,
+      "pageOverflow": 0,
+      "stackedMobileCards": 25,
+      "desktopGrids": 25,
+      "firstRowText": "01/09/2026 to 30/09/2026\nSunrise Care Pty Ltd\nYesterday\n$250.00\n\u2014\nFlagged \u00b7 2",
+      "firstRowTestId": "statement-row-d5267556-57c4-4925-90c7-13eca0ba24f3",
+      "closing_column": {
+        "emdash_count": 25,
+        "commaBug": 0
+      }
+    },
+    "/app/invoices": {
+      "rowCount": 37,
+      "forced720Elements": 0,
+      "scrollers": [
+        {
+          "scrollWidth": 1126,
+          "clientWidth": 1126,
+          "hasInnerScroll": false
+        }
+      ],
+      "docScrollWidth": 1440,
+      "clientWidth": 1440,
+      "pageOverflow": 0,
+      "stackedMobileCards": 37,
+      "desktopGrids": 37,
+      "firstRowText": "02 Nov 2026\nMeridian Home Care Pty Ltd\n03 Aug\n$1,791.36\n7\nIssues",
+      "firstRowTestId": "invoice-row-a0b36408-c48d-43df-9eac-b9bc4b0e6866"
+    }
+  }
+}

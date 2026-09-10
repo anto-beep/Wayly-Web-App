@@ -1,0 +1,66 @@
+{
+  "summary": "End-to-end verification of iter305 fixes. BACKEND: CORS is FIXED — OPTIONS + POST /api/auth/login from Origin https://wayly-engagement-hub.expo.preview.emergentagent.com now correctly returns access-control-allow-origin echoing the real browser origin (verified via curl and confirmed by a successful UI login on the Expo web preview). GET /api/bc2/participants/{id}/projection, GET /api/core/participants/{id}/profile (quarterly_budget.amount=6681.6, spent_to_date_this_quarter.amount=4142.59), GET /api/lf1/cross-tool-signals, POST /api/lf1/correspondence/{id}/attach-source ({tool,record_id,fields,note}) all 200. WEB (1440 viewport, cathy/testpass123 /app dashboard): dashboard-at-a-glance + glance-left/-alerts/-statements/-cap + smart-ai-summary-dashboard + dashboard-more-detail-btn + things-to-know-details + things-to-know-count all present; expanding detail reveals bc2-projection-card + burn/cap/next-0..2 and dashboard-timeline-panel with 6 dashboard-timeline-row-N rows; account menu shows 'Plan & Billing' (Title Case, correct); /ai-tools tool cards show 'Open Tool' (Title Case, correct); LetterGeneration draft (/tools/letters-and-follow-ups/{id}) — lf1-cross-tool-panel visible with 2 lf1-import-* chips; clicking lf1-import-provider_price_checker inserts a visible lf1-cross-tool-added / lf1-added-provider_price_checker tag reading 'Added: price check $90'. MOBILE (390x844, Expo web preview): CORS blocker is CLEARED — cathy login succeeds and lands on /. Tapping dashboard-more-detail-toggle reveals dashboard-more-detail with BudgetRunway (bc2-projection-card, bc2-projection-burn, bc2-projection-cap, bc2-projection-next-0..2 all present). letters/[id] (2CJbGVKx0g2TqZ4c) — lf1-cross-tool-panel + 2 lf1-import-* chips; clicking chip shows lf1-cross-tool-added 'Added: price check $90'. PARITY BUG: correspondence/[id] mobile page renders the panel + 2 chips and the attach-source POST succeeds, but the 'Added: <label>' tag block is NEVER RENDERED (CrossToolChips inside /app/mobile/app/correspondence/[id].tsx tracks `added` state but forgets to render a `lf1-cross-tool-added` View like letters/[id].tsx does at line 365-370). Everything else passes.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "correspondence/[id] CrossToolChips",
+          "issue": "After tapping a lf1-import-* chip on the mobile correspondence detail page the attach-source POST succeeds and internal `added` state is updated, but the component never renders the confirmation block. Missing the `<View testID='lf1-cross-tool-added'>{added.map(a => <View testID={`lf1-added-${a.key}`}>Added: {a.label}</View>)}</View>` block that letters/[id].tsx has at lines 365-370. Reference: /app/mobile/app/correspondence/[id].tsx:78-91 (Card body only contains label + chip row).",
+          "testID": "lf1-cross-tool-added / lf1-added-*",
+          "priority": "HIGH"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {
+      "flow": "Draft-preview chip confirmation tag",
+      "platform": "mobile",
+      "issue": "letters/[id] shows the 'Added: ...' tag but correspondence/[id] does not, even though both use similar CrossToolChips code and both call the same attach-source endpoint successfully",
+      "expected": "Both mobile screens must show lf1-cross-tool-added with lf1-added-<tool> reading 'Added: <label>' after chip tap (matches web LetterGeneration behaviour)",
+      "actual": "letters/[id] renders the tag; correspondence/[id] renders nothing after chip tap"
+    }
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter305/web_dashboard.jpeg",
+    "/app/test_reports/iter305/web_account_menu.jpeg",
+    "/app/test_reports/iter305/web_chip_added.jpeg",
+    "/app/test_reports/iter305/mobile_after_login.jpeg",
+    "/app/test_reports/iter305/mobile_bc2_card.jpeg",
+    "/app/test_reports/iter305/mobile_letters_chip.jpeg",
+    "/app/test_reports/iter305/mobile_corr_detail.jpeg"
+  ],
+  "action_items": [
+    "Add the missing 'Added: <label>' render block to /app/mobile/app/correspondence/[id].tsx CrossToolChips (mirror /app/mobile/app/letters/[id].tsx lines 365-370: wrap `added.map` in a `<View testID=\"lf1-cross-tool-added\">` with per-item `<View testID={`lf1-added-${a.key}`}>Added: {a.label}</View>`). Then restart the mobile Expo bundler (`sudo supervisorctl restart mobile`) before re-verifying."
+  ],
+  "critical_code_review_comments": [
+    "The web `Back to <Screen>` capitalisation spec calls out Profile/Statement/Dashboard/Invoices/Articles/Switches. On the letter/correspondence detail page the back link currently reads 'Correspondence log' (sentence case) instead of a Title-Case 'Back to Correspondence Log' style. Not one of the explicitly-listed screens, but worth aligning for consistency.",
+    "CrossToolChips is duplicated across letters/[id].tsx and correspondence/[id].tsx — the two implementations already drifted (letters renders the added-tag block, correspondence forgot it). Consider extracting into `/app/mobile/src/components/lf1/CrossToolChips.tsx` and importing it from both screens to prevent future parity drift.",
+    "correspondence/[id].tsx CrossToolChips holds `added` state that is only ever written to but never read — dead state that misled a reviewer into thinking the tag was implemented."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend_web": "100%",
+    "frontend_mobile": "90% (correspondence/[id] chip tag missing; everything else passes)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md — plan=family, active). Sample correspondence entry id: 2CJbGVKx0g2TqZ4c (dispute, has both lf1-import-provider_price_checker and lf1-import-contribution_estimator chips).",
+  "seed_data_creation": "none — used existing seeded budget + LF1 signals",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "CORS fix is verified working — no need to re-test the CORS itself unless server.py CORS middleware changes. Everything in the review request passes EXCEPT the mobile correspondence/[id] chip-confirmation tag (see action_items). To re-verify: mobile login as cathy on the Expo preview → navigate to /correspondence/2CJbGVKx0g2TqZ4c → tap lf1-import-provider_price_checker → look for lf1-cross-tool-added / lf1-added-provider_price_checker with text starting 'Added:'.",
+  "rca of the issue": "correspondence/[id].tsx CrossToolChips was copied from letters/[id].tsx but the render block for the `added` state array was omitted. The state hook, the attach-source POST, and the addedLabel helper are all present and functional; only the JSX render is missing inside the Card at line 78-91."
+}

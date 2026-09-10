@@ -1,0 +1,50 @@
+{
+  "summary": "CPR-FINDINGS-UX-1 v2 Workstream A UI-render verified end-to-end on WEB with the Robert Henderson golden fixture (cathy@example.com, Family plan). The new Verification checks panel (data-testid cp-verification-panel) renders ABOVE the Findings card and lists ALL 5 flagship checks with the exact per-check testids: cp-check-care_management_fee, cp-check-at_hm_ring_fence, cp-check-personal_care_placement, cp-check-rollover_cap, cp-check-quarterly_budget_vs_classification — every one Confirmed for the fixture (matches backend golden). Interim M2 safety banner (cp-safety-banner) renders inside the Findings card with 'Legal references are being reviewed' body. Findings render as cp-finding-0..8 (9 findings, each with severity, confidence, and title/detail). No fabricated 'minimum RN hours' / 'registered nurse minimum' finding survives. Preview header shows Provider/Effective/Classification/Quarterly budget cleanly with no stray comma (all fields present in this fixture); source review of CarePlanReviewer.jsx lines 327-329 confirms missing fields fall back to 'Not stated in document' via `value || \"Not stated in document\"` and effective_to is `&&`-guarded, so the reported stray-comma regression cannot recur. Console shows no runtime errors introduced by the new panel — only carry-over dev-only React hydration warning on <option> from dev instrumentation (same class as iter236/237, cosmetic dev-only) and unrelated Google Identity origin warning. MOBILE: Expo web-preview auth injection remains blocked (SecureStore, carry-over from iter235-237), so UI automation is not possible; per handoff, mobile treated as source-review parity — /app/mobile/src/components/tools/CarePlanReviewer.tsx renders cp-verification-panel Card with the same 5 cp-check-<name> testIDs ABOVE cp-file-findings, and cp-safety-banner inside cp-file-findings when result.safety_notice is present. 1:1 parity with web confirmed for all requested surfaces.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "CarePlanReviewer /ai-tools/care-plan-reviewer preview header", "issues": ["Preview shows Effective dates in ISO ('2027-01-01 → 2027-03-31') rather than the DD/MM/YYYY convention Wayly uses elsewhere (e.g. CHSP). Not in scope for CPR-FINDINGS-UX-1 v2 WS-A but worth noting for a future pass. Reference: /app/frontend/src/pages/tools/CarePlanReviewer.jsx:328."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Authenticated /ai-tools/care-plan-reviewer on Expo web preview", "issue": "Carry-over from iter235-237: cannot inject kindred_token into SecureStore on the Expo web preview, so UI automation cannot reach the authenticated tool. Not a shipped-code bug; source parity confirmed 1:1 with web for cp-verification-panel, cp-check-<name>, cp-safety-banner, cp-finding-<i>.", "affected_testIDs": ["cp-verification-panel", "cp-check-care_management_fee", "cp-check-at_hm_ring_fence", "cp-check-personal_care_placement", "cp-check-rollover_cap", "cp-check-quarterly_budget_vs_classification", "cp-safety-banner"]}
+      ],
+      "design_issues": [
+        {"screen": "CarePlanReviewer mobile preview header", "issues": ["Mobile silently OMITS missing preview rows (ex.provider_name ? …) while WEB shows 'Not stated in document' fallback. Not a bug — both are valid — but a minor parity nuance. Reference: /app/mobile/src/components/tools/CarePlanReviewer.tsx:253-255."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Preview header missing-field rendering", "platform": "mobile", "issue": "Web renders 'Not stated in document' fallback for missing Provider/Effective/Classification; mobile omits the row entirely.", "expected": "Consistent UX (either both fallback text or both omit)", "actual": "Web shows fallback text; mobile omits row"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter238_cpr_web_result.jpeg",
+    "/app/test_reports/iter238_cpr_web.py"
+  ],
+  "action_items": [
+    "(Optional, cosmetic) Suppress the dev-only React hydration warning on <select><option> in CarePlanReviewer.jsx (carry-over class of issue from iter236/237; likely caused by dev instrumentation injecting <span> into <option>).",
+    "(Optional, out-of-scope for WS-A) Format Preview 'Effective' dates as DD/MM/YYYY on both surfaces to match the Wayly date convention.",
+    "(Optional, parity) Decide whether mobile preview should also show the 'Not stated in document' fallback for a missing header field, mirroring web."
+  ],
+  "critical_code_review_comments": [
+    "cp-verification-panel is correctly rendered ABOVE the Findings card in both web (jsx:372-399) and mobile (tsx:292-318); the same 5 cp-check-<name> testids are emitted, driven by the backend verification_panel.checks payload — clean, deterministic, and matches the backend golden.",
+    "Safety banner is correctly co-located inside the Findings card and reads from `result?.safety_notice || fileResult?.safety_notice` on web (jsx:404-408), and `result?.safety_notice` on mobile (tsx:322-327). No fabricated citations leak into the finding titles because the banner is rendered separately and the interim citation stripping is applied server-side.",
+    "Preview 'Not stated in document' fallback is correctly wired on web via `value || 'Not stated in document'` plus conditional `&&` on effective_to — no stray comma can be produced even if all header fields are null.",
+    "Mobile parity is source-verified 1:1: same testIDs, same ordering, same status→label mapping (pass→Confirmed, flag→Flagged, else→Missing info). Env limitation on SecureStore prevents automation, not a shipped-code gap."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request; backend golden previously 8/8 per handoff)", "frontend": "web 100% for tested flow (5/5 checks Confirmed, banner present, 9 findings, no runtime errors, no stray comma, no fabricated RN-minimum); mobile: source parity 100%, UI automation blocked by env"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan — passed the tool paywall).",
+  "seed_data_creation": "None (paste-text path, no saved plan created — 'Save this plan' CTA not clicked to keep register clean).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "CPR-FINDINGS-UX-1 v2 WS-A is UI-verified on web with the Robert Henderson fixture. The mobile Expo-web-preview SecureStore auth-injection issue is still open (same as iter235-237); if a future iteration MUST automate the authenticated mobile Care Plan Reviewer flow, the main agent will need to add a dev-only URL-param hook that seeds SecureStore, otherwise mobile testing must stay at source-review parity. The interim M2 citation-stripping + safety banner is still active; when the legal-citation register is signed off and citation-stripping is removed, re-verify cp-safety-banner is GONE and citations are back in findings.",
+  "rca of the issue": "N/A — no regressions found; all requested UI surfaces render correctly and match the backend golden output."
+}

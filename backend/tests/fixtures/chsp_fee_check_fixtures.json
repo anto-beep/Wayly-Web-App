@@ -1,0 +1,35 @@
+{
+  "_comment": "CHSP-FIX-golden-v1 canonical fixture set (WS-6). All amounts are fixture inputs, not product constants. Consumed by test_chsp_fee_check_golden.py::test_canonical_fixture_set.",
+  "fixtures": [
+    {
+      "id": "CHSP-FIX-1",
+      "name": "Clean invoice",
+      "input": {"agreed_rate": "6.00", "units_received": 4, "units_billed": 4, "billed_amount": "24.00"},
+      "expect": {"billed_per_unit": "6.00", "expected_amount": "24.00", "amount_delta": "0.00", "rate_tier": "within", "units_tier": "within", "overall_verdict": "within", "dispute_offered": false, "provisional": false}
+    },
+    {
+      "id": "CHSP-FIX-2",
+      "name": "Material rate overcharge",
+      "input": {"agreed_rate": "6.00", "units_received": 1, "units_billed": 1, "billed_amount": "10.00"},
+      "expect": {"billed_per_unit": "10.00", "rate_difference": "4.00", "expected_amount": "6.00", "amount_delta": "4.00", "rate_tier": "material", "units_tier": "within", "overall_verdict": "material", "dispute_offered": true}
+    },
+    {
+      "id": "CHSP-FIX-3",
+      "name": "Extra unit billed",
+      "input": {"agreed_rate": "6.00", "units_received": 4, "units_billed": 5, "billed_amount": "30.00"},
+      "expect": {"billed_per_unit": "6.00", "rate_difference": "0.00", "expected_amount": "24.00", "amount_delta": "6.00", "rate_tier": "within", "units_tier": "material", "overall_verdict": "material", "dispute_offered": true}
+    },
+    {
+      "id": "CHSP-FIX-4",
+      "name": "No agreed rate (degraded)",
+      "input": {"agreed_rate": null, "units_received": 4, "units_billed": 4, "billed_amount": "24.00"},
+      "expect": {"degraded": true, "overall_verdict": "no_verdict", "rate_tier": null, "units_tier": null, "dispute_offered": false, "prompt_add_agreed_rate": true}
+    },
+    {
+      "id": "CHSP-FIX-5",
+      "name": "Stale agreed rate (provisional)",
+      "input": {"agreed_rate": "6.00", "units_received": 4, "units_billed": 4, "billed_amount": "24.00", "rate_effective_date": "01/01/2026", "billed_period_start": "01/07/2026"},
+      "expect": {"rate_age_days": 181, "rate_tier": "within", "units_tier": "within", "overall_verdict": "within", "provisional": true}
+    }
+  ]
+}

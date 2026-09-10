@@ -1,0 +1,60 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "see attached screenshot where Andrew is the participant selected but its showing Dorothy in the profile page. Also the 'Profile' selection isnt highlighted when on that page. the switcher needs to be working as intended showing that participant data when switched over",
+  "summary": "No relevant testing skill found. Focused Playwright retest logged in as cathy@example.com, persisted Dorothy as active, then direct-navigated to Robert. Direct URL now stayed on Robert, the header chip showed Robert, Robert's profile rendered, and the Profile nav item was highlighted. However, the required switcher regression still fails: clicking Dorothy in the header switcher while on Robert's profile fires the menu click but leaves URL, localStorage active participant, chip, and H1 on Robert, so the switcher does not work as intended after the direct-URL fix.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ParticipantSwitcher / ParticipantProfile",
+        "issue": "After opening Dorothy then direct-navigating to Robert, selecting Dorothy in the header switcher does not change active participant, URL, chip, or profile content. Evidence: active remained seed-robert_kowalski-f0844844 and URL remained /app/participants/seed-robert_kowalski-f0844844?p=robert after clicking data-testid participant-option-0c538637-b0dd-4982-8f78-b32814c6a5eb.",
+        "selector": "[data-testid='participant-option-0c538637-b0dd-4982-8f78-b32814c6a5eb']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Profile direct URL -> header participant switcher",
+        "issue": "The URL-wins fix is partial: direct URL/profile/highlight work, but post-mount switcher selection does not propagate to ParticipantsContext/localStorage/router on the profile page. This also prevented completing the downstream ATHM/CSC/Ask Wayly/LF-2/BC-2 cascade checks in the full regression script.",
+        "affected_selectors": [
+          "[data-testid='participant-switcher-trigger']",
+          "[data-testid='participant-switcher-menu']",
+          "[data-testid='core1-profile-header'] h1",
+          "a[data-testid='nav-profile']"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/profile_switcher_bug_iter121_playwright.py",
+    "/app/test_reports/profile_switcher_bug_iter121_focused_debug.py",
+    "/app/test_reports/bug_verification_121.json",
+    "/app/test_reports/iteration_121.json"
+  ],
+  "action_items": [
+    "Fix ParticipantProfile/ParticipantsContext sync so that once direct URL has won and active.id has caught up, a later header switcher click updates activeId/localStorage/query string and navigates to the newly selected participant.",
+    "Re-run the focused profile script plus the cascade checks for ATHM, CSC, Ask Wayly, LF-2, and BC-2 after the switcher regression is fixed."
+  ],
+  "critical_code_review_comments": [
+    "ParticipantProfile.jsx lines 402-434 add urlWonRef and preserve direct URL behavior, but runtime evidence shows switcher clicks after the URL-wins path are not honored; ensure the follow-switcher branch cannot leave context/query pinned to the URL participant after user selection."
+  ],
+  "updated_files": [
+    "/app/test_reports/profile_switcher_bug_iter121_playwright.py",
+    "/app/test_reports/profile_switcher_bug_iter121_focused_debug.py",
+    "/app/test_reports/bug_verification_121.json",
+    "/app/test_reports/iteration_121.json"
+  ],
+  "success_rate": {
+    "backend": "not_applicable",
+    "frontend": "70%"
+  },
+  "seed_data_creation": "No seed data created. Used existing cathy@example.com account and existing Dorothy/Robert participant records.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Mandatory skill lookup was performed with query 'participant profile switcher sidebar highlight'; no relevant testing skill was found. Re-run /app/test_reports/profile_switcher_bug_iter121_playwright.py or the focused debug flow. Current evidence: direct Robert URL over persisted Dorothy passes, Profile nav highlight passes, but clicking Dorothy in the switcher while on Robert's profile leaves active participant and profile on Robert.",
+  "rca_of_the_issue": "Repro: login as Cathy, clear storage, open /app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb to persist Dorothy, then page.goto /app/participants/seed-robert_kowalski-f0844844. Robert URL/chip/H1/highlight pass. Open [data-testid='participant-switcher-trigger'] and click [data-testid='participant-option-0c538637-b0dd-4982-8f78-b32814c6a5eb']; native mousedown/mouseup/click events fire and the menu closes, but localStorage wayly_active_participant_id remains seed-robert_kowalski-f0844844 and URL remains ?p=robert. Likely remaining sync/race issue in ParticipantProfile URL-wins logic or ParticipantsContext URL mirroring. No MOCKED APIs were used."
+}

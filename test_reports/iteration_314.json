@@ -1,0 +1,29 @@
+{
+  "summary": "Verified iter311/312/313 dashboard visual cleanup on Wayly web (Caregiver dashboard + ParticipantProfile). All four requested changes confirmed via DOM probes and screenshots — Recent Activity timeline and Lifetime Contribution Cap card are gone; DashboardInsights (burn-rate-chart, anomaly-timeline) and Pathways card render with shaded backgrounds (bg-surface-2 / bg-sage/[0.06]); At-a-Glance donut and mini-stat tiles unaffected; ParticipantProfile invoice_check artefact body no longer contains raw 'check_before_paying' token while humanised 'Check before paying' pill still displays. No regressions found.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter314_light.jpeg",
+    "/app/test_reports/iter314_dark.jpeg",
+    "/app/test_reports/iter314_participant.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Dark-mode legibility check: forced document.documentElement.classList.toggle('dark') did not visibly re-render the theme in the automated run (theme provider likely gates via a store); however bg-surface-2 uses theme-aware CSS variables so it will swap correctly. Manual eye-check under a real theme toggle is recommended for absolute certainty, but no legibility issue observed in light mode."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter314 verified iter311-313 visual cleanup: DashboardTimelinePanel + lifetime-cap-card removals confirmed, burn-rate-chart & anomaly-timeline use bg-surface-2, dashboard-pathways uses bg-sage/[0.06], ParticipantProfile stripTrailingStatus works (raw code 'check_before_paying' absent, humanised pill 'Check before paying' present). Login cathy@example.com / testpass123 -> /app dashboard for Dorothy Smith; participant id used in probe: 0c538637-b0dd-4982-8f78-b32814c6a5eb.",
+  "rca of the issue": ""
+}

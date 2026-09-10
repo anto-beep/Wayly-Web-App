@@ -1,0 +1,34 @@
+{
+  "summary": "UI/UX polish this turn verified end-to-end on web + mobile smoke + backend regression. Statement Decoder & Invoice Detail donuts are fully visible on solid teal/clay panels with contrasting mint/gold/coral/sage segments; donut + legend rows are clickable and smooth-scroll to the anomaly/issue register (money donut scrollY 0->1433, severity donut scrollY 0->1433). SmartAISummary (Wayly Summary on statement detail) is the solid teal gradient panel with near-white body text. DecoderResultView 3 download buttons have visibly different backgrounds (share=teal rgb(14,77,82), CSV=sage rgb(66,95,71), PDF=clay rgb(165,81,43)); decoder-who-paid-legend shows Government 95% + You paid 5%; decoder-balance-panel renders as solid sage panel. PageIntro eyebrow removed on tool pages (page-intro renders without pageintro-eyebrow). ParticipantProfile core1-timeline-section is a native <details> element and collapse/expand works. PersonaToggle active bg = teal for caregiver (rgb(14,77,82)), clay for participant (rgb(165,81,43)). Premium button hover on pricing tier-cta deepens (bg 14,77,82 -> 9,29,51), translateY(-1px), deep shadow; landing final-cta-signup also lifts translateY(-2px) with deeper shadow. Pricing Family tier: RECOMMENDED badge fully visible, $49.50 in white. Mobile Expo preview loads Wayly login screen cleanly. Backend /auth/me access_state fixtures: cathy=active, trialactive=trial, cancelled.vo=view_only — 3/3 PASS.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "InvoiceDetail", "issues": ["'Wayly Summary' card on the invoice detail page renders as a plain white/outline card (inline JSX at InvoiceDetail.jsx:209), not the new solid-teal-gradient SmartAISummary panel used on statement detail/dashboard. Not called out in the review spec, but this is now visually inconsistent with the same 'Wayly Summary' label elsewhere. Consider swapping to <SmartAISummary/> for parity."]},
+        {"screen": "BudgetScenarios (and other pages using <select><option>)", "issues": ["React hydration warning: '<span> cannot be a child of <option>' — appears to be from an editor runtime probe injecting <span data-ve-dynamic> inside <option>. Not caused by this turn's changes, but pollutes console."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": ["/tmp/test_auth_regression.py", "/app/test_reports/iter298_stmt_detail.jpeg", "/app/test_reports/iter298_invoice.jpeg", "/app/test_reports/iter298_pricing.jpeg", "/app/test_reports/iter298_participant.jpeg", "/app/test_reports/iter298_mobile_home.jpeg"],
+  "action_items": [
+    "(Optional) Replace the inline 'Wayly Summary' card in /app/frontend/src/pages/InvoiceDetail.jsx around line 209 with <SmartAISummary/> so the solid teal gradient + near-white text style matches statement detail/dashboard.",
+    "(Optional) Root-cause the <span>-in-<option> hydration warning from the runtime wrapper on pages with <select> (BudgetScenarios.jsx line 279+) if it is coming from app code and not the editor runtime probe."
+  ],
+  "critical_code_review_comments": [
+    "PageIntro (components/PageIntro.jsx) uses a single data-testid='page-intro' for the whole header; the 3 inner cards (What/How/What you get) are just class-based (sect-teal/clay/sage) with no per-card testid. If future turns need to assert individual card visibility/colour, add data-testid='pageintro-card-what|how|get'.",
+    "StatementInsightGraphics & InvoiceInsightGraphics duplicate a scrollToFirst helper — extract to a shared util (~10 lines duplicated)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com/testpass123 (active), trialactive@example.com/AccessTest1! (trial), cancelled.vo@example.com/AccessTest1! (view_only) — all valid.",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "This turn's UI polish (premium buttons, SmartAISummary solid teal, Statement/Invoice donut visibility + click-to-scroll, DecoderResultView 3-colour download buttons, PageIntro no-eyebrow + solid brand cards, ParticipantProfile Timeline as <details>, PersonaToggle teal/clay, Pricing Family RECOMMENDED + white price, DualFlagshipHero final-cta-signup premium) all verified on preview host https://mobile-parity-6.preview.emergentagent.com. Sample IDs used: statement d5267556-57c4-4925-90c7-13eca0ba24f3, invoice a0b36408-c48d-43df-9eac-b9bc4b0e6866, participant 0c538637-b0dd-4982-8f78-b32814c6a5eb. Note: Invoice detail's 'Wayly Summary' is NOT the SmartAISummary component (inline card at InvoiceDetail.jsx:209) — flagged as design inconsistency, not a blocker.",
+  "rca of the issue": ""
+}

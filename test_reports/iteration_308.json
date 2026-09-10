@@ -1,0 +1,84 @@
+{
+  "summary": "Verified iter308 responsive fixes for the statement decoder 'Show full line-item table' and invoice 'What's been charged' sections, plus global page gutter. Both wide tables now render stacked cards <md and aligned tables md+. No horizontal page overflow anywhere on the specified pages at 390/768/1440. However, one item from the change note is INCOMPLETE: the stray ',' placeholder is still visible in the DecoderResultView mobile cards for 'Your share' / 'Gov' when values are null — root cause is DecoderResultView.jsx:13 aud() helper still returns ', ' for null.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "DecoderResultView mobile card (decoder-full-cards)",
+          "issue": "Stray comma still shown for 'Your share' / 'Gov' when the underlying value is null. Visible on statement d5267556-... first item ('Personal care'): renders 'Your share ,' and 'Gov ,' instead of '—'. Root cause: aud() helper at /app/frontend/src/components/DecoderResultView.jsx:13 returns ', ' for null; call sites at lines 424-425 don't null-guard. Also /app/frontend/src/components/DecoderResultView.jsx:580 returns ','. The task change note claims stray ', '/',' → '—' but this path was missed for the mobile cards.",
+          "selector": "[data-testid=\"decoder-full-cards\"]",
+          "priority": "MEDIUM"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "verification_evidence": {
+    "phone_390_statement_decoder": {
+      "cards": {"testid": "decoder-full-cards", "width": 366, "count": 2, "no_horizontal_scroll": true},
+      "desktop_table_wrapper_display": "none",
+      "page_overflow": "390 == 390 (no overflow)",
+      "sample_card_text": "Personal care $130.00 / 05/09/2026 Independence 2.00 hr · $65.00 / Your share , / Gov ,  <-- stray comma bug"
+    },
+    "phone_390_invoice_charges": {
+      "cards": {"testid": "inv1-charges-cards", "width": 366, "count": 13, "no_horizontal_scroll": true, "disputed_tinted_rows": 9},
+      "desktop_table_rect": {"w": 0, "h": 0, "rendered": false},
+      "page_overflow": "390 == 390 (no overflow)",
+      "sample_card_text": "03/10/2026 independence 1.5 × $77.20 You paid $20.27 / $115.80"
+    },
+    "phone_390_full_width_gutter": {
+      "main_padding": "0/0",
+      "main_content_width": 366,
+      "content_x": 12,
+      "computed_side_gutter_px": 12,
+      "summary_card_span": {"testid": "smart-ai-summary-statement-detail", "w": 366, "x": 12, "note": "spans full content width"}
+    },
+    "phone_390_page_overflow_probes": {
+      "dashboard": "390==390", "statements_list": "390==390", "statement_detail": "390==390",
+      "invoices_list": "390==390", "invoice_detail": "390==390"
+    },
+    "tablet_768_page_overflow_probes": {
+      "dashboard": "768==768", "statements_list": "768==768", "statement_detail": "768==768",
+      "invoices_list": "768==768", "invoice_detail": "768==768"
+    },
+    "desktop_1440_statement_decoder": {
+      "cards_display": "none", "cards_rect": {"w": 0, "h": 0}, "table_rect": {"w": 1126, "h": 109}, "page_overflow": "1440==1440"
+    },
+    "desktop_1440_invoice_charges": {
+      "cards_display": "none", "cards_rect": {"w": 0, "h": 0}, "table_rect": {"w": 1126, "h": 710}, "page_overflow": "1440==1440"
+    },
+    "regression_list_pages": {
+      "phone_390_statements": {"rows": 25, "min_w_720": 0, "doc_sw": 390, "doc_cw": 390},
+      "phone_390_invoices": {"rows": 37, "min_w_720": 0, "doc_sw": 390, "doc_cw": 390},
+      "desktop_1440_statements": {"rows": 25, "min_w_720": 0, "doc_sw": 1440, "doc_cw": 1440},
+      "desktop_1440_invoices": {"rows": 37, "min_w_720": 0, "doc_sw": 1440, "doc_cw": 1440}
+    },
+    "console_errors_on_changed_pages": "Only pre-existing GSI 403 (Google Identity) warnings and Recharts width(-1) warnings — no NEW errors introduced on StatementDetail/DecoderResultView/InvoiceResultView. No blank sections."
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter308_findings.json",
+    "/app/test_reports/iter308_phone_stmt_decoder.png",
+    "/app/test_reports/iter308_phone_inv_charges.png"
+  ],
+  "action_items": [
+    "Fix DecoderResultView.jsx: change aud() at line 13 to return '—' for null (or null-guard the two call sites on lines 424-425 like InvoiceResultView does on line 361). Also fix the ',' fallback at DecoderResultView.jsx:580. This will complete the stated ', '/',' → '—' cleanup on the statement mobile card."
+  ],
+  "critical_code_review_comments": [
+    "aud() default of ', ' for null is a codebase-wide anti-pattern (also present in StatementLifecycleModals.jsx, statementFields.js, and several AdminPhase*.jsx / AdminUserProfile / AdminPages / AdminSupport / SwitchSettlement pages). Consider centralising a formatMoney helper that returns '—' for null.",
+    "InvoiceResultView correctly null-guards at the call site (ln.contribution_amount != null ? aud(...) : '—'); apply the same pattern in DecoderResultView mobile cards.",
+    "Responsive-table pattern (md:hidden stacked cards + hidden md:block table) is now consistent across all three wide tables — good pattern to reuse."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "5/6 acceptance criteria pass — full-width gutter, both wide-table responsive layouts, no page overflow, desktop regression, list-page regression all PASS; the '—' cleanup for statement decoder mobile card is INCOMPLETE (stray comma still visible)"},
+  "test_credentials": "cathy@example.com / testpass123 (used as specified)",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The stacked-card fixes for decoder-full-cards and inv1-charges-cards, plus the reduced 12px page gutter, all verified working at 390/768/1440. Only remaining issue is the stray comma placeholder in DecoderResultView mobile cards ('Your share ,'/'Gov ,') caused by aud() returning ', ' for null — see /app/frontend/src/components/DecoderResultView.jsx:13 and lines 424-425. After main agent fixes, re-verify statement d5267556-57c4-4925-90c7-13eca0ba24f3 first item ('Personal care') on 390 viewport: cards should show 'Your share —' / 'Gov —' instead of commas.",
+  "rca of the issue": "Statement decoder mobile card stray-comma bug — RCA: /app/frontend/src/components/DecoderResultView.jsx line 13 `function aud(n) { if (n == null) return ', '; ... }` returns a comma-space for null. Lines 424-425 call aud(li.participant_contribution) and aud(li.government_paid) unconditionally, so when those fields are null the rendered text is 'Your share , Gov ,'. Reproduction: login as cathy@example.com, open /app/statements/d5267556-57c4-4925-90c7-13eca0ba24f3 at 390x844, click 'Show full line-item table', observe the first 'Personal care' card. Mitigation: either change the aud() default to '—' (breaking change for other call sites that intentionally show '—') OR null-guard at the call sites in DecoderResultView.jsx:424-425 the same way InvoiceResultView.jsx:361 does."
+}

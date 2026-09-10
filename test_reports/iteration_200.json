@@ -1,0 +1,37 @@
+{
+  "summary": "Iter 200: verified web Settings Family->Solo scheduled downgrade UI parity with mobile. Backend endpoints POST /payments/schedule-downgrade, POST /payments/cancel-scheduled-change validated (7/7 pytest pass). Web UI verified with seeded pending_plan: banner (billing-pending-change), Keep Family button (billing-keep-plan) that calls /payments/cancel-scheduled-change, and Scheduled state (billing-plan-scheduled-solo) on Solo plan card all render correctly. Confirmed Settings.jsx:385 wires Family->Solo to /payments/schedule-downgrade (NOT the legacy /billing/upgrade — that path remains only for upgrade). cathy's soloBlocked hint + disabled Switch button also verified (2 participants).",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_schedule_downgrade_iter200.py",
+    "/app/test_reports/pytest/iter200.xml",
+    "/app/test_reports/iter200_pending_ui.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Settings.jsx BillingTab is ~475 lines within a >900-line file. Consider splitting per-tab into separate files to keep bundles focused (Profile/Billing/Members/Digest etc.) — but not blocking.",
+    "keepCurrentPlan() has no confirmation dialog (unlike changePlan which uses window.confirm). Considered acceptable — 'Keep Family' reverses a scheduled change, no destructive action.",
+    "In BillingTab.changePlan(), when isDowngrade is true the plan-swap fallthrough on line 390 (/billing/upgrade) is unreachable (both branches guarded), which is correct — legacy path only fires for actual upgrades and same-plan clicks."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_schedule_downgrade_iter200.py (new)"
+  ],
+  "success_rate": {"backend": "100% (7/7)", "frontend": "100% (all critical UI selectors + wiring verified)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, 2 participants — soloBlocked verified). Seeded pending_plan=solo on cathy's db.subscriptions doc for banner verification, then cleaned up.",
+  "seed_data_creation": "Temporarily seeded db.subscriptions {pending_plan:'solo', pending_effective:'2027-02-14T00:00:00+00:00', schedule_id:'sub_sched_TEST_iter200_ui'} on cathy's user to verify banner/scheduled state renders — CLEANED UP after test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The web downgrade UI is fully wired per the spec and matches mobile parity. To exercise a REAL end-to-end schedule-downgrade against Stripe you need an account with a real stripe_subscription_id on a Family price — preview env doesn't have one. Use the DB-seed approach (see /tmp/seed_pending.py) to test the pending banner/keep-plan UI. cathy has schedule_id absent so cancel-scheduled-change returns 400 'No scheduled change to cancel.' unless seeded. The seeded schedule_id is fake so Stripe returns 502 on the release call — that's expected, the FE wiring is what matters.",
+  "rca of the issue": "N/A — no bugs found. Feature works as specified."
+}

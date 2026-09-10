@@ -1,0 +1,28 @@
+{
+  "summary": "Verified CaregiverDashboard AtAGlance visual changes on web. UNDER-budget (real Dorothy) shows exactly ONE status label ('Left to spend this quarter', uppercase, primary teal rgb(14,77,82), 15px/700), no separate 'On track/Getting close/...' pill anywhere, big amount $2,322 in primary teal at 60px/600 (≥48px), prominent 'Spent $5,296 · 70% of budget used' row in primary teal 16px/600, and care-management sub-line legible. OVER-budget branch was exercised by intercepting GET /api/budget/current with Playwright and inflating stream spent to 150% of quarterly_gross; after reload label read 'Over budget this quarter' in terracotta rgb(192,57,43), and glance-left amount ($7,187) also rendered in terracotta rgb(192,57,43). Progress bar also switched to terracotta fill. All three acceptance criteria (single label, prominence, conditional red) satisfied.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter312_under.jpeg",
+    "/app/test_reports/iter312_over.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AtAGlance.pctUsed is clamped to 100 via Math.min, so the 'N% of budget used' row shows '100% of budget used' when over budget. That's fine visually but hides how far over the participant is. Consider showing the true % (e.g. 194%) when over==true so the red state is quantitatively meaningful. Not a blocker for this bug fix."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "seed_data_creation": "None. Over-budget branch verified via Playwright route interception of /api/budget/current (no DB mutation).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "AtAGlance in /app/frontend/src/pages/CaregiverDashboard.jsx (lines 126-183) drives both the under- and over-budget headline. Under-budget: label + amount are text-primary-k (rgb(14,77,82)); over-budget (left<0): both switch to text-terracotta (rgb(192,57,43)) and label reads 'Over budget this quarter'. The old separate coloured status pill has been removed — do NOT reintroduce a duplicate status element. To reproduce over-budget without a DB user, use Playwright route interception on **/api/budget/current and inflate any stream.spent so sum > quarterly_gross (see iter312 script). Screenshots at /app/test_reports/iter312_under.jpeg and /app/test_reports/iter312_over.jpeg.",
+  "rca of the issue": ""
+}

@@ -1,0 +1,29 @@
+{
+  "summary": "Admin console cleanup verification pass (web only). Overview loads with 8 metric cards (Total Users, MRR, Active Trials, Paid Subscribers, Statements Today, Churn (30d), Open Tickets, Signups Today) + AI System Health (24h) + Plans/Subscriptions summary + Recent Activity feed — no error boundary, no blank state. Sidebar decluttered: expected sections Analytics/Platform/Cost & Usage/Data & Platform all present; all 8 requested labels are REMOVED from nav (Funnels, Cohorts, Scenario Clocks, V2 Add-ons, V2 Free-tier, Tickets (Legacy), IndexNow (Ext), Global Search). Support labelled as 'Support' (no SUP suffix). /admin/statements now shows real data across the correct columns (Period, File, Household, Anomalies, Uploaded) — 25 rows visible, e.g. 'April 2026' / filename / 8-char household id / anomaly count / timestamp. Regression: navigated all 43 remaining visible sidebar items — 0 admin-screen-error cards and 0 pageerror console entries. All requested fixes verified.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/admin_verify_iter100_playwright.py",
+    "/app/test_reports/iter100_overview.png",
+    "/app/test_reports/iter100_statements.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Non-blocking: ~10 background 401 console warnings observed across the regression sweep ('Failed to load resource: 401'). Zero pageerror events and zero admin-screen-error cards, so this looks like a small set of endpoints that either return 401 for the super-admin role or fire before the auth header attaches on first paint. Worth a follow-up cleanup so the browser console stays clean, but not blocking."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Admin login is 2-step: POST /api/admin/auth/login + POST /api/admin/auth/2fa/verify (TOTP secret M5A7R2XCCEXWYYKNJY55MVZYUHPYFA6W via pyotp). Cloudflare blocks raw urllib (1010), so do both POSTs from the browser's fetch context via page.evaluate(), then set localStorage 'wayly_admin_token' before navigating to /admin. Reusable regression script that iterates every visible sidebar item and checks for AdminErrorBoundary/short body is at /app/test_reports/admin_verify_iter100_playwright.py.",
+  "rca of the issue": "N/A — verification pass only. Fixes from iter261 confirmed working end-to-end: Overview activity_feed 500 resolved, AdminStatements column mapping (period_label/filename/household_id/anomaly_count/uploaded_at) shows real values, 8 legacy/broken nav entries hidden, System group split into Platform / Cost & Usage / Data & Platform, global AdminErrorBoundary wired but never had to trigger during regression."
+}

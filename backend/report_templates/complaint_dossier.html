@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align: center; padding: 24px 0;">
+  <h1 style="font-size: 28px;">Support at Home Complaint Record</h1>
+  <p class="muted">Prepared for submission to: <strong>{{ data.addressed_to }}</strong></p>
+</div>
+
+<div class="cream-card">
+  <p><strong>Participant:</strong> {{ data.participant.first_name }} {{ data.participant.last_name }}{% if data.participant.date_of_birth %} · DOB {{ data.participant.date_of_birth|niceDate }}{% endif %}</p>
+  <p><strong>Participant ID:</strong> {{ data.participant.id }}</p>
+  <p><strong>Provider:</strong> {{ data.household.provider_name or '—' }}{% if data.household.provider_abn %} · ABN {{ data.household.provider_abn }}{% endif %}</p>
+  <p><strong>Report period:</strong> {{ data.date_range.start }} to {{ data.date_range.end }}</p>
+  <p><strong>Report prepared:</strong> {{ data.generated_at|niceDate }}</p>
+</div>
+
+<h2>Summary of concerns</h2>
+{% if data.concerns %}
+<ol>
+  {% for c in data.concerns %}
+  <li>{{ c.created_at|niceDate }} — {{ c.type or 'Concern' }} — {{ c.title or c.headline or '—' }} — <strong>{{ c.status|upper }}</strong></li>
+  {% endfor %}
+</ol>
+<p class="muted">Details of each concern follow below.</p>
+{% else %}<p class="muted">No concerns recorded in this period.</p>{% endif %}
+
+<h2>Concerns (detailed)</h2>
+{% for c in data.concerns %}
+<div class="cream-card section">
+  <h3>{{ loop.index }}. {{ c.title or 'Concern' }}</h3>
+  <p><strong>Date:</strong> {{ c.created_at|niceDate }} · <strong>Severity:</strong> {{ c.severity or 'MEDIUM' }} · <strong>Status:</strong> {{ c.status or 'open' }}</p>
+  <p><strong>What happened:</strong></p>
+  <p>{{ c.description or c.body or '—' }}</p>
+  {% if c.resolution %}<p><strong>Resolution:</strong> {{ c.resolution }}</p>{% endif %}
+</div>
+{% endfor %}
+
+<h2>Correspondence history</h2>
+{% if data.correspondence %}
+<table>
+  <thead><tr><th>Date sent</th><th>Type</th><th>Recipient</th><th>Sent via</th><th>Response</th></tr></thead>
+  <tbody>
+    {% for c in data.correspondence %}
+    <tr>
+      <td>{{ c.sent_at|niceDate }}</td>
+      <td>{{ c.type or '—' }}</td>
+      <td>{{ c.recipient or '—' }}</td>
+      <td>{{ c.channel or '—' }}</td>
+      <td>{% if c.response_received_at %}{{ c.response_received_at|niceDate }}{% else %}<span class="badge red">No response</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">No correspondence recorded.</p>{% endif %}
+
+<h2>Billing anomaly evidence</h2>
+{% if data.anomalies %}
+<table>
+  <thead><tr><th>Statement</th><th>Type</th><th>Severity</th><th>$ impact</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for a in data.anomalies %}
+    <tr>
+      <td>{{ a.statement or '—' }}</td>
+      <td>{{ a.headline }}</td>
+      <td><span class="badge {% if a.severity == 'HIGH' %}red{% else %}amber{% endif %}">{{ a.severity }}</span></td>
+      <td>{{ (a.dollar_impact or 0)|money }}</td>
+      <td>{{ a.status or 'pending' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">No relevant anomalies in this period.</p>{% endif %}
+
+<h2>Service non-deliveries</h2>
+{% if data.non_deliveries %}
+<table>
+  <thead><tr><th>Date</th><th>Service</th><th>Worker</th><th>Notice given?</th></tr></thead>
+  <tbody>
+    {% for n in data.non_deliveries %}
+    <tr><td>{{ n.starts_at|niceDate }}</td><td>{{ n.service or '—' }}</td><td>{{ n.worker or '—' }}</td><td>{{ 'Yes' if n.notice_given else 'No' }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">No non-deliveries recorded.</p>{% endif %}
+
+<div class="cream-card section" style="margin-top: 18px;">
+  <p>This document has been prepared using Wayly. The information is based on records logged by the caregiver and data decoded by Wayly's AI system from provider statements. Original statement documents are available on request.</p>
+</div>
+{% endblock %}

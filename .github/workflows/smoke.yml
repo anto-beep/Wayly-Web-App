@@ -1,0 +1,81 @@
+name: Wayly Production Smoke
+
+# Runs every 15 min against wayly.com.au using the sentinel smoke@wayly.com.au
+# account. POSTs the result back to /api/internal/smoke-report (HMAC-signed),
+# which persists it to Mongo and emails the on-call inbox on failure.
+#
+# Secrets needed (set in Repo Settings → Secrets → Actions):
+#   SMOKE_TARGET_URL    https://wayly.com.au
+#   SMOKE_API_BASE      https://wayly.com.au
+#   SMOKE_EMAIL         smoke@wayly.com.au
+#   SMOKE_PASSWORD      <output of seed_smoke_account.py>
+#   SMOKE_HMAC_SECRET   <same value as backend .env SMOKE_HMAC_SECRET>
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"        # every 15 min, UTC
+  workflow_dispatch:               # manual trigger from the Actions tab
+  push:
+    branches: [main]
+    paths:
+      - "scripts/smoke.py"
+      - ".github/workflows/smoke.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  # If a previous run is still going (e.g. wedged on a 20 s timeout), skip
+  # this one rather than pile up — keeps the queue clean.
+  group: smoke-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Smoke wayly.com.au
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-chromium-v1
+
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip
+          pip install "playwright==1.49.1"
+
+      - name: Install Chromium (if not cached)
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run smoke
+        env:
+          SMOKE_TARGET_URL: ${{ secrets.SMOKE_TARGET_URL }}
+          SMOKE_API_BASE:   ${{ secrets.SMOKE_API_BASE }}
+          SMOKE_EMAIL:      ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD:   ${{ secrets.SMOKE_PASSWORD }}
+          SMOKE_HMAC_SECRET: ${{ secrets.SMOKE_HMAC_SECRET }}
+          SMOKE_ENV:        production
+          SMOKE_RUN_ID:     ${{ github.run_id }}-${{ github.run_attempt }}
+        run: python scripts/smoke.py
+
+      - name: Upload trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-trace-${{ github.run_id }}
+          path: |
+            /tmp/playwright-trace.zip
+          if-no-files-found: ignore
+          retention-days: 7

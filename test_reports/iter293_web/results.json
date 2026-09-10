@@ -1,0 +1,25 @@
+{
+  "csc": {
+    "header": null,
+    "summary": null,
+    "comparison": null,
+    "drivers": null
+  },
+  "sd": null,
+  "inv": {
+    "result": null,
+    "redirect": null,
+    "error": null,
+    "summary": null,
+    "reconciliation": null,
+    "meta": null,
+    "duplicate": null
+  },
+  "cp": {
+    "result": null,
+    "fileResult": null,
+    "findings": null,
+    "checks": null
+  },
+  "fc": []
+}

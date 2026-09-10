@@ -1,0 +1,28 @@
+{
+  "summary": "Verified iter315 header cluttering fix + Statement Decoder tweaks on web. All 5 requested checks pass: (1) header has exactly ONE nav-bell and 0 old lca1-alerts-bell-btn/lca1-alerts-bell-root; (2) dropdown shows BOTH the personal Notifications section AND a clearly labelled 'Aged care updates' section (notif-updates-header + notif-updates-section render), Manage preferences link routes to /settings/notifications; (3) combined badge (nav-bell-count) = 9 = personal(9) + aged-care(0) and decrements to 8 after marking one personal item read (no regression); (4) StatementDecoderTool intro <p> is now 2 lines at 1920px (height 58.5px / line-height 29.25px = 2 lines, class 'max-w-3xl' applied); (5) AcceptedFormatsPanel is collapsed by default in BOTH 'Paste text' mode AND 'Upload file or photo' mode with no file attached (accepted-pdf hidden), and only reveals after clicking accepted-formats-toggle. Header cluster spacing is clean: search | bell + account-health ring (gap-1.5, no divider between them per design) | vertical divider | participant switcher | vertical divider | account menu.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/tmp/sd_intro.jpeg", "/tmp/bell_dropdown.jpeg"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Nit: /app/frontend/src/components/LCA1AlertsBell.jsx is now dead code (no imports anywhere). Safe to delete to prevent accidental re-mount and reduce bundle size.",
+    "Nit: NotificationsBell.jsx polls /lca1/alerts/unread-count every 60s even when the user has no permission/aged-care feed items — a swallowed 404/403 is fine but consider gating by feature flag if the endpoint is not universally enabled.",
+    "Info: When the dropdown first opens, 'Aged care updates' briefly renders a 'Loading…' state (see screenshot). That is expected because loadUpdates() only fires on open; not a bug, just a UX note."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, used for authenticated header/bell checks). Statement Decoder verified anonymously.",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter315 verified. Key selectors used: [data-testid='nav-bell'], [data-testid='nav-bell-count'], [data-testid='notifications-dropdown'], [data-testid='notif-updates-header'], [data-testid='notif-updates-section'], [data-testid='notifications-mark-all-read'], [data-testid='notification-item-<id>'] (+ '-mark' variant when no link), [data-testid='lca1-alerts-empty'], [data-testid='lca1-alert-read-<id>'], [data-testid='lca1-alert-dismiss-<id>']. For Statement Decoder: [data-testid='statement-decoder-tool'], [data-testid='accepted-formats-panel'], [data-testid='accepted-formats-toggle'], [data-testid='accepted-pdf']. LCA1AlertsBell.jsx file still exists but is unimported.",
+  "rca of the issue": "Not applicable — this was a feature/UX verification, not a bug hunt. Original user complaint (two bells, cluttered header, intro paragraph too tall, formats panel auto-expanded) is fully resolved by the diff described in the review request."
+}

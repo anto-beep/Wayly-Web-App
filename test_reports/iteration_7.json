@@ -1,0 +1,85 @@
+{
+  "summary": "Iteration 7 backend+frontend verification of P0 items: 14-day→7-day trial rename, removal of Solo+ gating from 6 public AI tools, global axios 429/503 toast interceptor, billing/status 500 fix. Backend: 14/15 pytest pass (1 critical fail = family-coordinator-chat is STILL gated server-side). Frontend: 5 critical text/UX deviations from spec. Cathy regression flow is fully healthy. The billing/status 500 bug from iter6 is FIXED — now returns 200 with payment_status='unknown' as expected.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/public/family-coordinator-chat",
+        "issue": "STILL has `await _require_solo_plus(request, 'Family Care Coordinator')` at server.py line 1023. Anonymous calls return HTTP 402 {detail:{code:'plan_required', tool:'Family Care Coordinator', message:'...Start a 14-day free trial...', upgrade_url:'/signup?plan=family'}}. The iteration spec explicitly listed FamilyCoordinator as one of the 6 tools to ungate, and the frontend page (/ai-tools/family-coordinator) already shows the FREE TOOL · 5 USES PER HOUR overline — but any actual chat submission will fail with 402. Also the message text still references '14-day free trial' (should be 7-day). FIX: delete line 1023 in /app/backend/server.py.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "RATE_LIMIT_BUCKET (server.py:621)",
+        "issue": "Carry-over from prior iterations: in-memory dict, lost on restart, shared across users behind a NAT egress IP. Acceptable for MVP, flag for production hardening."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Family Care Coordinator chat (anonymous)",
+        "issue": "Page loads with 'FREE TOOL · 5 USES PER HOUR' overline (frontend ungated correctly), but any chat submit will hit the still-gated /api/public/family-coordinator-chat endpoint (402). The new global axios interceptor will surface this as a generic toast — the UX will be broken until the backend is fixed.",
+        "affected_selectors": ["/ai-tools/family-coordinator chat input/submit"]
+      },
+      {
+        "flow": "Global 429 toast via axios interceptor",
+        "issue": "Could not directly verify a sonner toast appears on 429 because my browser-side test used fetch() (bypasses axios). The interceptor exists in /app/frontend/src/lib/api.js and the backend correctly returns 429 with rate_limit body. Trusting integration but main agent should manually confirm by exhausting limit through a tool's UI submit (e.g., classification quiz) and observing the toast."
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "/ai-tools (AIToolsIndex)",
+        "issues": ["Hero subtext STILL says 'free 14-day trial, no card needed' — should be 7-day per the rename spec. File: /app/frontend/src/pages/AIToolsIndex.jsx. Search for '14' or '14-day' / '14‑day' (note: contains a non-breaking hyphen \\u2011)."]
+      },
+      {
+        "screen": "/ai-tools/statement-decoder",
+        "issues": ["Upgrade CTA button reads 'Start free' — spec required 'Start 7-day free trial'. File: /app/frontend/src/pages/tools/StatementDecoderTool.jsx. Neither '7-day' nor '14-day' present in the CTA copy."]
+      },
+      {
+        "screen": "/pricing",
+        "issues": [
+          "FAQ trial answer NOT found — expected exact text 'Yes — 7 days on Solo or Family, no card needed.' Page contains zero occurrences of '7 days' or '14 days'. The FAQ section may be missing or the trial Q/A was deleted. File: /app/frontend/src/pages/Pricing.jsx.",
+          "A 4th plan tier 'ADVISOR — $299 per month — Up to 50 clients. Lifetime-cap tracker, forecasting, review-pack export, email + priority support.' is rendered. PRD/spec describes only 3 plans (Free/Solo/Family). The word 'Lifetime' is legitimate (lifetime-cap tracker) but the new tier itself may be unintended scope leak. Confirm with product."
+        ]
+      },
+      {
+        "screen": "Backend 402 message copy",
+        "issues": ["The /public/family-coordinator-chat 402 detail.message still says 'Start a 14-day free trial' — once the gate is removed this is moot, but if any other code path emits this string it should also be updated to 7-day."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter7.py",
+    "/app/test_reports/pytest/iter7_results.xml"
+  ],
+  "action_items": [
+    "[CRITICAL] Delete line 1023 of /app/backend/server.py — the `await _require_solo_plus(request, 'Family Care Coordinator')` call inside public_family_coordinator(). This makes the chat endpoint anonymous-accessible (rate-limited only), matching the other 7 public tools and the frontend ungated overline.",
+    "[HIGH] /app/frontend/src/pages/AIToolsIndex.jsx — change 'free 14-day trial, no card needed' to 'free 7-day trial, no card needed' in the hero subtext. Note non-breaking hyphen U+2011 in current copy.",
+    "[HIGH] /app/frontend/src/pages/tools/StatementDecoderTool.jsx — change upgrade CTA from 'Start free' to 'Start 7-day free trial'.",
+    "[HIGH] /app/frontend/src/pages/Pricing.jsx — restore/fix the 'Free trial?' FAQ Q/A with answer 'Yes — 7 days on Solo or Family, no card needed.' (currently absent — neither '7 days' nor '14 days' found anywhere on /pricing).",
+    "[MED] Confirm with product whether the 'Advisor $299/mo (up to 50 clients)' tier on /pricing is intended scope. PRD describes 3 tiers only (Free/Solo/Family).",
+    "[LOW] After fixing above, manually verify a sonner toast appears when an axios call returns 429 by exhausting rate limit through the classification quiz UI."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now ~1307 lines — repeated split recommendation: routers/billing.py, routers/auth.py, routers/public_tools.py.",
+    "The 14-day → 7-day rename was not driven by a constant — string searches show inconsistent updates across the codebase. Recommend extracting a TRIAL_DAYS = 7 constant exported from a shared module to prevent future drift.",
+    "billing/checkout still trusts client-supplied origin_url without validation (server.py:billing_checkout) — open redirect risk for success/cancel URLs. Carry-over from iter6.",
+    "RATE_LIMIT_BUCKET is in-memory; will be reset on every backend restart and is shared across all users sharing an egress IP (NAT). Move to Redis or a Mongo-backed sliding window before production.",
+    "_check_rate_limit raises HTTPException with detail being a dict — FastAPI serialises this so the frontend interceptor reads response.data.detail.error rather than response.data.error. Confirm /app/frontend/src/lib/api.js interceptor handles both shapes."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter7.py (NEW — 15 tests covering iter7 P0 scope)"
+  ],
+  "success_rate": {
+    "backend": "93.3% (14/15 pytest). 1 fail = family-coordinator-chat still server-gated (402).",
+    "frontend": "Mixed — text/UX: 5 pages affected (3 stale '14-day' / 'Start free' copy + 1 missing FAQ + 1 unexpected Advisor tier). Ungating overlines and FREE badges on /ai-tools index and tool pages all correctly applied. Cathy login + Family-plan dashboard fully healthy."
+  },
+  "test_credentials": "cathy@example.com / testpass123 (family plan) — confirmed working. Resend verified inbox: a.chiware2@gmail.com.",
+  "seed_data_creation": "2 payment_transactions docs from billing tests (cathy still on family). 1 tool_email_log doc. RATE_LIMIT_BUCKET grew but is in-memory.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter7 P0 scope verified. Backend test file: /app/backend/tests/test_iter7.py (15 tests, 14 pass). The single backend failure is a real bug: server.py line 1023 still has _require_solo_plus on the family-coordinator-chat endpoint — this was missed in the iter7 ungating sweep. The billing/status 500 from iter6 is FIXED (now returns 200 with payment_status='unknown' via try/except wrap, server.py:1224-1235). Frontend issues are all stale-copy: AIToolsIndex hero (14-day), StatementDecoder CTA ('Start free' instead of 'Start 7-day free trial'), Pricing FAQ trial answer missing entirely, and an unexpected Advisor $299 tier on /pricing. Cathy/Family dashboard regression is intact. Direct fetch() bypasses the axios interceptor, so 429-toast UX needs a UI-driven test next round.",
+  "rca of the issue": "Backend RCA — family-coordinator-chat 402: The iteration prompt listed 6 tools to ungate (ClassificationCheck, PriceChecker, ReassessmentLetter, ContributionEstimator, CarePlanReviewer, FamilyCoordinator). Frontend pages were updated for all 6 (overline now reads FREE TOOL · 5 USES PER HOUR), but the backend `await _require_solo_plus(...)` line was only removed from 5 of the 6 endpoints — public_family_coordinator() at server.py:1021-1023 still has it. Reproduction: `curl -X POST $URL/api/public/family-coordinator-chat -H 'Content-Type: application/json' -d '{\"message\":\"hi\"}'` → 402 {detail:{code:'plan_required',...}}. Mitigation: delete server.py line 1023 (`await _require_solo_plus(request, 'Family Care Coordinator')`). Frontend RCA — stale '14-day' / missing FAQ: the global rename swept most files but missed AIToolsIndex.jsx hero, StatementDecoderTool.jsx CTA copy ('Start free' vs 'Start 7-day free trial'), and the Pricing.jsx FAQ section (where the trial answer appears to have been deleted rather than reworded). Recommend a single TRIAL_DAYS constant + a grep for '14' / 'fourteen' before declaring rename complete."
+}

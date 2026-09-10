@@ -1,0 +1,414 @@
+[
+  {
+    "vp": "phone",
+    "screen": "landing",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "pricing",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "dashboard",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "statements",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": [
+      {
+        "tag": "TABLE",
+        "tid": "statements-table",
+        "cls": "w-full text-sm",
+        "w": 720,
+        "txt": "PERIOD PROVIDER UPLOADED GROSS TOTAL CLOSING BALAN"
+      },
+      {
+        "tag": "THEAD",
+        "tid": "",
+        "cls": "bg-surface-2 text-muted-k text-xs uppercase tracking-wider",
+        "w": 720,
+        "txt": "PERIOD PROVIDER UPLOADED GROSS TOTAL CLOSING BALAN"
+      },
+      {
+        "tag": "TR",
+        "tid": "",
+        "cls": "",
+        "w": 720,
+        "txt": "PERIOD PROVIDER UPLOADED GROSS TOTAL CLOSING BALAN"
+      },
+      {
+        "tag": "TH",
+        "tid": "",
+        "cls": "p-0",
+        "w": 720,
+        "txt": "PERIOD PROVIDER UPLOADED GROSS TOTAL CLOSING BALAN"
+      },
+      {
+        "tag": "DIV",
+        "tid": "",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px]",
+        "w": 720,
+        "txt": "PERIOD PROVIDER UPLOADED GROSS TOTAL CLOSING BALAN"
+      },
+      {
+        "tag": "TR",
+        "tid": "",
+        "cls": "border-t border-kindred hover:bg-primary-k/[0.03] focus-within:bg-primary-k/[0.0",
+        "w": 720,
+        "txt": "01/09/2026 to 30/09/2026 Sunrise Care Pty Ltd Yest"
+      },
+      {
+        "tag": "A",
+        "tid": "statement-row-d5267556-57c4-4925-90c7-13eca0ba24f3",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px] focus:outline-none focus-visible",
+        "w": 720,
+        "txt": "01/09/2026 to 30/09/2026 Sunrise Care Pty Ltd Yest"
+      },
+      {
+        "tag": "A",
+        "tid": "statement-row-673fa982-367c-43ca-8ce8-4df5b8ba4f68",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px] focus:outline-none focus-visible",
+        "w": 720,
+        "txt": "01/07/2026 to 30/09/2026 Glorious Services Pty Ltd"
+      },
+      {
+        "tag": "A",
+        "tid": "statement-row-1e6f55e6-939e-49b9-a65d-bf8c39b5c2a9",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px] focus:outline-none focus-visible",
+        "w": 720,
+        "txt": "01/09/2026 to 30/09/2026 TestCare 8 Jul 2026 $300."
+      },
+      {
+        "tag": "A",
+        "tid": "statement-row-33c09d27-f9fe-4682-88db-5dfd57ad0ce2",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px] focus:outline-none focus-visible",
+        "w": 720,
+        "txt": "01/09/2026 to 30/09/2026 Unknown provider 7 Jul 20"
+      }
+    ]
+  },
+  {
+    "vp": "phone",
+    "screen": "stmt_detail",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "ai_tools",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "reports",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "pacing",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "invoices",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": [
+      {
+        "tag": "TABLE",
+        "tid": "",
+        "cls": "w-full text-sm",
+        "w": 720,
+        "txt": "Invoice date Provider Uploaded Amount Findings VE"
+      },
+      {
+        "tag": "THEAD",
+        "tid": "",
+        "cls": "",
+        "w": 720,
+        "txt": "Invoice date Provider Uploaded Amount Findings VE"
+      },
+      {
+        "tag": "TR",
+        "tid": "",
+        "cls": "bg-surface-2 text-muted-k text-xs uppercase tracking-wider",
+        "w": 720,
+        "txt": "Invoice date Provider Uploaded Amount Findings VE"
+      },
+      {
+        "tag": "TH",
+        "tid": "",
+        "cls": "p-0",
+        "w": 720,
+        "txt": "Invoice date Provider Uploaded Amount Findings VE"
+      },
+      {
+        "tag": "DIV",
+        "tid": "",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px]",
+        "w": 720,
+        "txt": "Invoice date Provider Uploaded Amount Findings VE"
+      },
+      {
+        "tag": "TR",
+        "tid": "",
+        "cls": "hover:bg-cream/40 border-t border-primary-k/5",
+        "w": 720,
+        "txt": "02 Nov 2026 Meridian Home Care Pty Ltd 03 Aug $1,7"
+      },
+      {
+        "tag": "A",
+        "tid": "invoice-row-a0b36408-c48d-43df-9eac-b9bc4b0e6866",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px] focus:outline-none focus-visible",
+        "w": 720,
+        "txt": "02 Nov 2026 Meridian Home Care Pty Ltd 03 Aug $1,7"
+      },
+      {
+        "tag": "A",
+        "tid": "invoice-row-4fc9f779-e04e-45f8-93d9-63529a124ec5",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px] focus:outline-none focus-visible",
+        "w": 720,
+        "txt": "02 Nov 2026 Meridian Home Care Pty Ltd 03 Aug $1,7"
+      },
+      {
+        "tag": "A",
+        "tid": "invoice-row-d8b7255a-03de-4e8e-b681-409a7ad2b5d1",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px] focus:outline-none focus-visible",
+        "w": 720,
+        "txt": "02 Nov 2026 Meridian Home Care Pty Ltd 03 Aug $1,7"
+      },
+      {
+        "tag": "A",
+        "tid": "invoice-row-a8805528-bff9-43a6-80be-352142fc77c5",
+        "cls": "grid items-center gap-4 px-6 py-3 min-w-[720px] focus:outline-none focus-visible",
+        "w": 720,
+        "txt": "02 Nov 2026 Meridian Home Care Pty Ltd 03 Aug $1,7"
+      }
+    ]
+  },
+  {
+    "vp": "phone",
+    "screen": "profile",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "billing",
+    "clientW": 390,
+    "scrollW": 390,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "landing",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "pricing",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "dashboard",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "statements",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "stmt_detail",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "ai_tools",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "reports",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "pacing",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "invoices",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "profile",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "tablet",
+    "screen": "billing",
+    "clientW": 768,
+    "scrollW": 768,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "landing",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "pricing",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "dashboard",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "statements",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "stmt_detail",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "ai_tools",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "reports",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "pacing",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "invoices",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "profile",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "desktop",
+    "screen": "billing",
+    "clientW": 1440,
+    "scrollW": 1440,
+    "overflow_px": 0,
+    "culprits": []
+  },
+  {
+    "vp": "phone",
+    "screen": "nav_widgets",
+    "hamburger": 0,
+    "bottomNav": 1
+  }
+]

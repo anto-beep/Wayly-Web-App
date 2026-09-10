@@ -1,0 +1,2702 @@
+[
+  {
+    "tool": "CE",
+    "url": "https://mobile-parity-6.preview.emergentagent.com/ai-tools/contribution-estimator",
+    "issues": [
+      "ce-rate-breakdown: LOW ratio=1.21 fg=(82, 75, 66) bg=(66, 95, 71) text='Clinical care'",
+      "ce-rate-breakdown: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='0%'",
+      "ce-rate-breakdown: LOW ratio=1.21 fg=(82, 75, 66) bg=(66, 95, 71) text='Always free for participants'",
+      "ce-rate-breakdown: LOW ratio=1.11 fg=(82, 75, 66) bg=(14, 77, 82) text='Independence'",
+      "ce-rate-breakdown: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='5.00%'",
+      "ce-rate-breakdown: LOW ratio=1.11 fg=(82, 75, 66) bg=(14, 77, 82) text='Personal care, meals'",
+      "ce-rate-breakdown: LOW ratio=1.56 fg=(82, 75, 66) bg=(165, 81, 43) text='Everyday Living'",
+      "ce-rate-breakdown: LOW ratio=1.73 fg=(14, 77, 82) bg=(165, 81, 43) text='17.50%'",
+      "ce-rate-breakdown: LOW ratio=1.56 fg=(82, 75, 66) bg=(165, 81, 43) text='Cleaning, transport, gardening'",
+      "ce-oct-2026: LOW ratio=1.56 fg=(82, 75, 66) bg=(165, 81, 43) text='Now'",
+      "ce-oct-2026: LOW ratio=1.73 fg=(14, 77, 82) bg=(165, 81, 43) text='$50.44'",
+      "ce-oct-2026: LOW ratio=1.73 fg=(14, 77, 82) bg=(165, 81, 43) text='/ wk'",
+      "ce-oct-2026: LOW ratio=1.00 fg=(66, 95, 71) bg=(66, 95, 71) text='From 1 Oct 2026'",
+      "ce-oct-2026: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='$43.59'",
+      "ce-oct-2026: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='/ wk'"
+    ],
+    "measured": [
+      {
+        "tid": "ce-result-headline",
+        "t": "the care recipient's estimated",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "$50.44",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "/ week",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "$2,629.93",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "a year \u00b7",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "$657.48",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "a quarter",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "The government covers the rest",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": ": the Australian Government pa",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "$37,067.07",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "a year, that is",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "93.4",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "of the total.",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-result-headline",
+        "t": "Edit my inputs",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "Who pays what",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "93",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "funded",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "Government pays",
+        "r": 4.53,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          94,
+          126,
+          99
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "$37,067.07",
+        "r": 4.53,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          94,
+          126,
+          99
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "/ yr",
+        "r": 4.53,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          94,
+          126,
+          99
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "You pay",
+        "r": 5.51,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "$2,629.93",
+        "r": 5.51,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-govt-share-bar",
+        "t": "/ yr",
+        "r": 5.51,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "Your rates by service type",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "Clinical care",
+        "r": 1.21,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "0%",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "Always free for participants",
+        "r": 1.21,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "Independence",
+        "r": 1.11,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "5.00%",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "Personal care, meals",
+        "r": 1.11,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "Everyday Living",
+        "r": 1.56,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "17.50%",
+        "r": 1.73,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "Cleaning, transport, gardening",
+        "r": 1.56,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-rate-breakdown",
+        "t": "Independence services cost you",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-safety-net",
+        "t": "Your lifetime cap:",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-safety-net",
+        "t": "$137,917.01",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-safety-net",
+        "t": "This is the total amount you'l",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "From 1 October 2026, personal ",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "Now",
+        "r": 1.56,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "$50.44",
+        "r": 1.73,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "/ wk",
+        "r": 1.73,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "From 1 Oct 2026",
+        "r": 1.0,
+        "fg": [
+          66,
+          95,
+          71
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "$43.59",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "/ wk",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "That's about",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "$6.85",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "a week less, or",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "$356.20",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "a year.",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-oct-2026",
+        "t": "Personal care sits inside the ",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-hcp-comparison",
+        "t": "Compared to your Home Care Pac",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-hcp-comparison",
+        "t": "Level",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-hcp-comparison",
+        "t": "\u00b7 September 2025 fees",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-what-if",
+        "t": "What if\u2026",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-what-if",
+        "t": "\u2026you reduced your Everyday Liv",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-what-if",
+        "t": "Everyday Living carries the hi",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-what-if",
+        "t": "\u2026you kept paying at this rate ",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-what-if",
+        "t": "You'd hit your lifetime cap of",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-also-worth-knowing",
+        "t": "Also worth knowing",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-also-worth-knowing",
+        "t": "Financial hardship.",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-also-worth-knowing",
+        "t": "If paying your contribution wo",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-also-worth-knowing",
+        "t": "Read the criteria on Services ",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-also-worth-knowing",
+        "t": "Reassessment.",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-also-worth-knowing",
+        "t": "If your care needs change, you",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-also-worth-knowing",
+        "t": "Open Letters & Follow-ups",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-also-worth-knowing",
+        "t": "This is a plain-English estima",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-how-calculated",
+        "t": "Show working",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "ce-how-calculated",
+        "t": "How this was calculated",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      }
+    ]
+  },
+  {
+    "tool": "PC",
+    "url": "https://mobile-parity-6.preview.emergentagent.com/ai-tools/provider-price-checker",
+    "issues": [
+      "pc-how-this-compares: LOW ratio=1.11 fg=(82, 75, 66) bg=(14, 77, 82) text='How this compares'",
+      "pc-how-this-compares: LOW ratio=1.34 fg=(66, 95, 71) bg=(14, 77, 82) text='Your rate of $95.00 per hour is inside t'",
+      "pc-how-this-compares: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='Inside the published range.'",
+      "pc-how-this-compares: LOW ratio=1.34 fg=(66, 95, 71) bg=(14, 77, 82) text='Independence'",
+      "pc-how-this-compares: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='How this flag works'",
+      "pc-range: LOW ratio=1.21 fg=(82, 75, 66) bg=(66, 95, 71) text='Indicative range'",
+      "pc-range: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='$85.00'",
+      "pc-range: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='to'",
+      "pc-range: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='$115.00'",
+      "pc-range: LOW ratio=1.21 fg=(82, 75, 66) bg=(66, 95, 71) text='DoH'",
+      "pc-range: LOW ratio=1.21 fg=(82, 75, 66) bg=(66, 95, 71) text='October 2025'",
+      "pc-result: LOW ratio=1.11 fg=(82, 75, 66) bg=(14, 77, 82) text='How this compares'",
+      "pc-result: LOW ratio=1.34 fg=(66, 95, 71) bg=(14, 77, 82) text='Your rate of $95.00 per hour is inside t'",
+      "pc-result: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='Inside the published range.'",
+      "pc-result: LOW ratio=1.34 fg=(66, 95, 71) bg=(14, 77, 82) text='Independence'",
+      "pc-result: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='How this flag works'",
+      "pc-result: LOW ratio=1.11 fg=(82, 75, 66) bg=(14, 77, 82) text='You are charged'",
+      "pc-result: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='$95.00'",
+      "pc-result: LOW ratio=1.11 fg=(82, 75, 66) bg=(14, 77, 82) text='per hour'",
+      "pc-result: LOW ratio=1.56 fg=(82, 75, 66) bg=(165, 81, 43) text='Your share'",
+      "pc-result: LOW ratio=1.56 fg=(82, 75, 66) bg=(165, 81, 43) text='Choose your situation above to see your '",
+      "pc-result: LOW ratio=1.21 fg=(82, 75, 66) bg=(66, 95, 71) text='Indicative range'",
+      "pc-result: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='$85.00'",
+      "pc-result: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='to'",
+      "pc-result: LOW ratio=1.34 fg=(14, 77, 82) bg=(66, 95, 71) text='$115.00'",
+      "pc-result: LOW ratio=1.21 fg=(82, 75, 66) bg=(66, 95, 71) text='DoH'",
+      "pc-verdict: NOT_FOUND",
+      "pc-stat-cards: NOT_FOUND",
+      "pc-stat-card: NOT_FOUND"
+    ],
+    "measured": [
+      {
+        "tid": "pc-how-this-compares",
+        "t": "How this compares",
+        "r": 1.11,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "Your rate of $95.00 per hour i",
+        "r": 1.34,
+        "fg": [
+          66,
+          95,
+          71
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "Inside the published range.",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "Independence",
+        "r": 1.34,
+        "fg": [
+          66,
+          95,
+          71
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "What your provider charges vs ",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "Within the range",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "You",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "$95.00",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "/hour",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "Indicative range",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "($85.00 to $115.00)",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "Typical median",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "$100.00",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "/hour",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-how-this-compares",
+        "t": "How this flag works",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-range",
+        "t": "Indicative range",
+        "r": 1.21,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-range",
+        "t": "$85.00",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-range",
+        "t": "to",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-range",
+        "t": "$115.00",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-range",
+        "t": "DoH",
+        "r": 1.21,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-range",
+        "t": "October 2025",
+        "r": 1.21,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "How this compares",
+        "r": 1.11,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Your rate of $95.00 per hour i",
+        "r": 1.34,
+        "fg": [
+          66,
+          95,
+          71
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Inside the published range.",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Independence",
+        "r": 1.34,
+        "fg": [
+          66,
+          95,
+          71
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "What your provider charges vs ",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Within the range",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "You",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "$95.00",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "/hour",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Indicative range",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "($85.00 to $115.00)",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Typical median",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "$100.00",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "/hour",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "How this flag works",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "You are charged",
+        "r": 1.11,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "$95.00",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "per hour",
+        "r": 1.11,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Your share",
+        "r": 1.56,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Choose your situation above to",
+        "r": 1.56,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "Indicative range",
+        "r": 1.21,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "$85.00",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "to",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "$115.00",
+        "r": 1.34,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "pc-result",
+        "t": "DoH",
+        "r": 1.21,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      }
+    ]
+  },
+  {
+    "tool": "BC",
+    "url": "https://mobile-parity-6.preview.emergentagent.com/ai-tools/budget-calculator",
+    "issues": [
+      "bc-annual-summary: LOW ratio=1.11 fg=(82, 75, 66) bg=(14, 77, 82) text='Annual budget'",
+      "bc-annual-summary: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='$39,697'",
+      "bc-streams: LOW ratio=1.11 fg=(82, 75, 66) bg=(14, 77, 82) text='Per-stream quarterly allocation (indicat'",
+      "bc-streams: LOW ratio=1.19 fg=(107, 74, 15) bg=(14, 77, 82) text='Indicative split'",
+      "bc-streams: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='Clinical'",
+      "bc-streams: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='$3,572.73'",
+      "bc-streams: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='Independence'",
+      "bc-streams: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='$3,126.14'",
+      "bc-streams: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='Everyday Living'",
+      "bc-streams: LOW ratio=1.00 fg=(14, 77, 82) bg=(14, 77, 82) text='$2,232.96'",
+      "bc-supplements: LOW ratio=1.00 fg=(165, 81, 43) bg=(165, 81, 43) text='Applicable supplements (optional)'",
+      "bc-supplements: LOW ratio=1.56 fg=(82, 75, 66) bg=(165, 81, 43) text='Tick any supplement the participant's ca'",
+      "bc-supplements-result: NOT_FOUND",
+      "bc-result: LOW ratio=2.96 fg=(66, 95, 71) bg=(0, 0, 0) text='How your quarterly budget splits'",
+      "bc-result: LOW ratio=2.20 fg=(14, 77, 82) bg=(0, 0, 0) text='Of your'",
+      "bc-result: LOW ratio=2.20 fg=(14, 77, 82) bg=(0, 0, 0) text='$9,924.25'",
+      "bc-result: LOW ratio=2.20 fg=(14, 77, 82) bg=(0, 0, 0) text='gross budget each quarter,'",
+      "bc-result: LOW ratio=2.96 fg=(66, 95, 71) bg=(0, 0, 0) text='90'",
+      "bc-result: LOW ratio=2.20 fg=(14, 77, 82) bg=(0, 0, 0) text='is yours to spend on care and'",
+      "bc-result: LOW ratio=2.20 fg=(14, 77, 82) bg=(0, 0, 0) text='goes to the provider for care management'"
+    ],
+    "measured": [
+      {
+        "tid": "bc-annual-summary",
+        "t": "Annual budget",
+        "r": 1.11,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-annual-summary",
+        "t": "$39,697",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "Per-stream quarterly allocatio",
+        "r": 1.11,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "Indicative split",
+        "r": 1.19,
+        "fg": [
+          107,
+          74,
+          15
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "Indicative split only.",
+        "r": 9.2,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          255,
+          251,
+          235
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "Your participant's actual stre",
+        "r": 9.2,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          255,
+          251,
+          235
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "Clinical",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "$3,572.73",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "Independence",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "$3,126.14",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "Everyday Living",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-streams",
+        "t": "$2,232.96",
+        "r": 1.0,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "Applicable supplements (option",
+        "r": 1.0,
+        "fg": [
+          165,
+          81,
+          43
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "Tick any supplement the partic",
+        "r": 1.56,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "Oxygen supplement",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "$14.66/day \u00b7 medical practitio",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "Enteral feeding",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "$23.25/day bolus \u00b7 $26.11/day ",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "Veterans' supplement",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "11.5% of base individual daily",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "Dementia & cognition",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "11.5% of base individual daily",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "Grandfathered HCP only",
+        "r": 5.3,
+        "fg": [
+          192,
+          57,
+          43
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "EACHD top-up",
+        "r": 9.29,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "$3.45/day \u00b7 grandfathered HCP ",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-supplements",
+        "t": "Grandfathered HCP only",
+        "r": 5.3,
+        "fg": [
+          192,
+          57,
+          43
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Budget Calculator",
+        "r": 7.31,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          234,
+          237,
+          240
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Summary",
+        "r": 7.31,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          234,
+          237,
+          240
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Your quarterly usable budget i",
+        "r": 8.12,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          234,
+          237,
+          240
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Wayly worked out your Support ",
+        "r": 8.12,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          234,
+          237,
+          240
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Gross quarterly",
+        "r": 5.51,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "$9,924.25",
+        "r": 5.51,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "The figure printed on your sta",
+        "r": 5.51,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          165,
+          81,
+          43
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Care management (10%)",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "$992.42",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Provider's care management sli",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Usable for services",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "$8,931.83",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "What you can spend on care thi",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "How your quarterly budget spli",
+        "r": 2.96,
+        "fg": [
+          66,
+          95,
+          71
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Of your",
+        "r": 2.2,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "$9,924.25",
+        "r": 2.2,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "gross budget each quarter,",
+        "r": 2.2,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "90",
+        "r": 2.96,
+        "fg": [
+          66,
+          95,
+          71
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "is yours to spend on care and",
+        "r": 2.2,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "10",
+        "r": 3.81,
+        "fg": [
+          165,
+          81,
+          43
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "goes to the provider for care ",
+        "r": 2.2,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "90",
+        "r": 7.1,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          66,
+          95,
+          71
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Usable for care",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "$8,931.83",
+        "r": 6.91,
+        "fg": [
+          66,
+          95,
+          71
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "bc-result",
+        "t": "Care management",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      }
+    ]
+  },
+  {
+    "tool": "CSC",
+    "url": "https://mobile-parity-6.preview.emergentagent.com/ai-tools/classification-self-check",
+    "issues": [
+      "csc-result-header: NOT_FOUND",
+      "csc-band: NOT_FOUND",
+      "csc-gap-badge: NOT_FOUND",
+      "csc-summary: NOT_FOUND",
+      "csc-recommendation: NOT_FOUND",
+      "csc-result: NOT_FOUND"
+    ],
+    "measured": []
+  },
+  {
+    "tool": "SD",
+    "url": "https://mobile-parity-6.preview.emergentagent.com/ai-tools/statement-decoder",
+    "issues": [
+      "decoder-result: NOT_FOUND",
+      "decoder-summary: NOT_FOUND",
+      "decoder-lines: NOT_FOUND",
+      "sd-result: NOT_FOUND",
+      "sd-charges: NOT_FOUND",
+      "sd-verdict: NOT_FOUND"
+    ],
+    "measured": []
+  },
+  {
+    "tool": "INV",
+    "url": "https://mobile-parity-6.preview.emergentagent.com/ai-tools/invoice-checker",
+    "issues": [
+      "inv1-verdict-ok: NOT_FOUND",
+      "inv1-verdict-overcharge: NOT_FOUND",
+      "inv1-verdict-warn: NOT_FOUND",
+      "inv1-clean-reconciliation: NOT_FOUND",
+      "inv1-meta-card: NOT_FOUND",
+      "inv1-summary: NOT_FOUND",
+      "inv1-result: NOT_FOUND"
+    ],
+    "measured": []
+  },
+  {
+    "tool": "CP",
+    "url": "https://mobile-parity-6.preview.emergentagent.com/ai-tools/care-plan-reviewer",
+    "issues": [
+      "cp-result: NOT_FOUND",
+      "cp-summary: NOT_FOUND",
+      "cp-goals: NOT_FOUND",
+      "cp-recommendations: NOT_FOUND",
+      "cp-verdict: NOT_FOUND",
+      "cpr-result: NOT_FOUND"
+    ],
+    "measured": []
+  },
+  {
+    "tool": "FC",
+    "url": "https://mobile-parity-6.preview.emergentagent.com/ai-tools/family-coordinator",
+    "issues": [
+      "fc-msg-assistant: NOT_FOUND"
+    ],
+    "measured": [
+      {
+        "tid": "fc-msg-user",
+        "t": "How does the government contri",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "aged-care-qa",
+        "t": "How does the government contri",
+        "r": 9.54,
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "bg": [
+          14,
+          77,
+          82
+        ]
+      },
+      {
+        "tid": "aged-care-qa",
+        "t": "Thinking\u2026",
+        "r": 8.37,
+        "fg": [
+          82,
+          75,
+          66
+        ],
+        "bg": [
+          251,
+          252,
+          254
+        ]
+      },
+      {
+        "tid": "aged-care-qa",
+        "t": "These answers are generated au",
+        "r": 12.59,
+        "fg": [
+          28,
+          43,
+          45
+        ],
+        "bg": [
+          228,
+          240,
+          241
+        ]
+      },
+      {
+        "tid": "aged-care-qa",
+        "t": "Contact our team",
+        "r": 8.19,
+        "fg": [
+          14,
+          77,
+          82
+        ],
+        "bg": [
+          228,
+          240,
+          241
+        ]
+      }
+    ]
+  }
+]

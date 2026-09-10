@@ -1,0 +1,44 @@
+{
+  "summary": "Iteration 72 comprehensive review of the two features shipped in this drop: (1) ticket attachments on user + admin support replies, and (2) required-field badges. Backend: 13/13 pytest cases pass on the live preview URL — PNG + PDF uploads succeed, roundtrip download bytes match the upload exactly, 11 MB rejection returns 413, .exe/x-msdownload rejection returns 415, empty file returns 400, closed ticket rejects with 409, ownership guard returns 404 for another user, admin_upload endpoint returns type='admin_upload' + uploaded_by_type='staff', and admin can download user_upload attachments. Unauthenticated admin upload returns 401. Frontend: signup badges render (First/Last/Email/Password → Required, Mobile → Optional), MySupport reply form attach flow works (paperclip button, native picker with correct accept types, pending chip with Remove, .txt rejected with 'Only PNG, JPEG, WebP or PDF' banner, attach-only send enables Send, attachment appears in Attached block and message appears in timeline), and Admin reply form works too (Attach file button, 'Send Reply + N files' dynamic label, admin_upload row shows filename + admin_upload label + 'by staff'). One minor accessibility gap flagged.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Signup Password field", "issues": ["Password <input> has the HTML5 required attribute but no explicit aria-required=\"true\". The other three required text inputs (First Name, Last Name, Email) all set aria-required='true' explicitly. For visual consistency + strict accessibility auditing, add aria-required='true' to the Password input (Signup.jsx line ~346)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter72_ticket_attachments.py",
+    "/app/test_reports/pytest/iter72.xml"
+  ],
+  "action_items": [
+    "OPTIONAL POLISH: Add aria-required=\"true\" to Signup password <input> for consistency with the other 3 required text inputs."
+  ],
+  "critical_code_review_comments": [
+    "support.py _persist_ticket_upload (line ~273): Solid design — validates ext OR mime against the allowlist, size cap enforced after read (10 MB), safe filename normalisation stripping non-alnum, inline base64 storage same as other Wayly file features. Attachment projection returned to clients correctly excludes file_b64 and storage_path. attachment_added event written for audit trail. LGTM.",
+    "support.py _stream_ticket_attachment (line ~346): Purged rows return 410 (with 'no longer available' copy) and missing rows return 404. Callers must have already guarded ownership — user endpoint does {ticket_id, user_id} lookup, admin endpoint skips per-user guard as documented in the docstring. Good separation.",
+    "support.py upload_attachment_to_my_ticket (line ~1130): status gate limits uploads to received/under_review/awaiting_user — matches product spec. Returns 409 for closed/resolved (verified in test).",
+    "MySupport.jsx addFiles (line ~444): Client-side MIME + extension double-check mirrors server-side ALLOWED_TICKET_UPLOAD_MIMES + ALLOWED_TICKET_UPLOAD_EXTS. Good defence-in-depth. Error banner copy exactly matches spec ('Only PNG, JPEG, WebP or PDF up to 10 MB.').",
+    "MySupport.jsx sendReply (line ~485): Correctly allows send when either text OR attachment is present. Sequential (message → attachments) rather than parallel — a slower flow but avoids partial-failure ambiguity.",
+    "AdminSupport.jsx send button label (line ~880): Dynamic label 'Send Reply + N files' is a nice UX touch. Confirmed live.",
+    "RequiredHint.jsx: Well-designed component set (RequiredBadge, OptionalBadge, FieldLabel, FieldLabelText). Uses aria-hidden='true' on the visual badge while a sr-only span carries the '(required)' cue — good a11y pattern. Only nit: FieldLabel's outer wrapper is <label> when htmlFor is passed, but the required indicator lives outside the semantic input association — screen-reader users depend on the aria-required on the <input> for the announcement, which is currently missing on Signup's password input.",
+    "Reminder from prior iterations: server.py + support.py (2022 lines) + AdminSupport.jsx (1228 lines) all still exceed the 700-line file-size guideline. Non-blocking, pre-existing."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter72_ticket_attachments.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 pytest)",
+    "frontend": "100% — Signup required badges verified, MySupport user upload+download+error banner+remove+send-with-and-without-text verified, Admin login+attach+dynamic label+attachment listing verified"
+  },
+  "test_credentials": "trial30909@example.com / TrialPass1!  |  Admin hello@techglove.com.au / AdminPass!2026 + TOTP secret decrypted via security_utils.decrypt_totp_secret and used with pyotp.TOTP(secret).now(). Rando signup passwords need to avoid HIBP blocklist — 'RandoPass1!' works.",
+  "seed_data_creation": "Backend suite: created ticket WAY-0039 for trial30909 (fallback when no open ticket existed). Uploaded ~7 attachments (2 user_upload PNGs including our tiny 74-byte fixture, 1 user_upload PDF, 1 admin_upload PNG, and 4 more via the UI flow: iter72-only-attach.png, iter72-with-text.png, plus adminui-playwright.png on WAY-0001). Created 1 dedicated ticket that was force-closed via db.sup_tickets.update to test 409. Created transient rando user iter72-rando-*@example.com. All test data is TEST-prefixed and prunable.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter72 backend suite lives at /app/backend/tests/test_iter72_ticket_attachments.py — 13 tests, ~6 s. If the trial30909 account state drifts (plan=free / expired) the login fixture will skip; verify state via memory/test_credentials.md before running. Admin login uses security_utils.decrypt_totp_secret + pyotp.TOTP().now() — the /admin/auth/login endpoint takes 1+ second on cold start; the fixture uses 45 s timeout. NOTE: the first ticket in the trial user's list may be resolved (no reply form) — the frontend test iterates rows until it finds one with data-testid='my-support-reply-form'. Onboarding + Participants required-badge rendering was verified by code inspection only (FieldLabelText required on the 7 tier-1 onboarding fields and on first_name/last_name in both create and edit participant modals, aria-required='true' on inputs, toast.error('Last name is required.') on submit-blank in Participants.jsx line 197). Purge/retention flow (410 response on purged attachments) not exercised.",
+  "rca_of_the_issue": "n/a — feature-drop verification, not a bug fix. All flows work. One optional-polish item: Signup password input lacks explicit aria-required='true' (has HTML5 required which implicitly maps but is less strict for screen readers)."
+}

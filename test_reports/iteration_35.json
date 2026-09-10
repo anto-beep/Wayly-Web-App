@@ -1,0 +1,37 @@
+{
+  "summary": "Iter 35 — Validated dashboard participant-switch fix, SSE notifications stream, reports scheduler logic, S3 fallback, and regression of all 8 report types. Backend: 18/18 pytest pass — _completed_quarter_window(2026-07-07) returns ('Q4',2026,2026-04-01,2026-06-30) ✓, _completed_fy(2026-07-14) returns (2026,2025-07-01,2026-06-30) ✓, scheduler.start() spawns _task ✓; SSE /api/notifications/stream returns text/event-stream with 'event: snapshot' + unread count immediately ✓, 401 without token ✓, new Mongo insert delivered via 'event: notification' within ~3s ✓; S3 unset → POST /api/reports/generate + GET /api/reports/{id}/download returns local /api/reports/file/{token} URL serving valid %PDF >1000 bytes ✓; all 8 report types (HOUSEHOLD_SUMMARY, QUARTERLY_BUDGET, ANNUAL_FINANCIAL, ANOMALY_SAVINGS, PROVIDER_PERFORMANCE, COMPLAINT_DOSSIER, CARE_TIMELINE, STATEMENT_DIGEST) reach READY with file_size>1000 ✓. Frontend: Cathy login → /app loads; ParticipantSwitcher shows 2 participants (Dorothy primary + newly-created Lebron) — clicking Lebron triggered fresh API calls to /api/budget/current (2), /api/statements (2), /api/family-thread (2) confirming key-based remount works; header changed from 'Dorothy / Classification 4 · BlueBerry Care' to 'Lebron James / Classification 3 · BlueBerry Care' and main content updated; /app/reports rescoped to 'Reports · Lebron'; Provider Performance now shows 'Needs 3 more decoded statements to unlock' locked-state correctly for Lebron (previously unreachable with single-participant seed).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter35_dashboard_sse_scheduler.py",
+    "/app/test_reports/pytest/iter35_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "reports_scheduler imports motor + opens an AsyncIOMotorClient at module-import time (line 20-21). That couples test/dev usability to a valid MONGO_URL being present at import. Tests had to strip quoted env values manually. Consider lazy DB-client construction (build inside _tick) so the module imports cleanly without DB env set.",
+    "SSE endpoint /api/notifications/stream accepts JWT via ?token= query param. Token will appear in proxy/nginx access logs and browser history — acceptable trade-off for EventSource limitation, but worth noting for production logging policy (consider scrubbing the token query param from access logs).",
+    "SSE polling interval is 1s with a DB query each tick. For N concurrent SSE clients this is N qps per second on db.notifications. Currently fine, but a change-stream or pub/sub bus would scale better if many users connect.",
+    "Reports preview rich-rendering could not be re-verified end-to-end this iter because the newly created participant (Lebron) has 0 existing reports and the test session timed out before regenerating one for Dorothy. iter34 already visually verified the preview opens; the new ReportBody/8 typed view components are still present in /app/frontend/src/pages/Reports.jsx. Recommend a quick manual click of 'View' on any Dorothy report to confirm sectioned cards (not raw <pre>{JSON}</pre>).",
+    "ParticipantsContext stores active id in localStorage key 'wayly_active_participant_id' and api.js attaches it as X-Participant-Id — backend reads 'x-participant-id' header in _resolve_active_participant (server.py:111). Wiring confirmed and verified via /api/statements scope test."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter35_dashboard_sse_scheduler.py (new — 18 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18 pytest)",
+    "frontend": "100% (multi-participant switch + header + Reports rescope all green)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created a second participant 'Lebron James' (Classification 3) for Cathy's account via POST /api/v2/participants — required to exercise the multi-participant switch. This row remains in db.participants after testing. Test-generated reports are soft-deleted automatically (status DELETED).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend coverage: re-run with `pytest /app/backend/tests/test_iter35_dashboard_sse_scheduler.py -v`. Critical wiring facts: (1) ParticipantSwitcher writes localStorage 'wayly_active_participant_id'; api.js attaches header X-Participant-Id; backend _resolve_active_participant reads it case-insensitive. (2) SSE: EventSource cannot set Authorization, so /api/notifications/stream accepts ?token=<jwt>. (3) reports_scheduler is started from server.py @app.on_event('startup'); _task is None until startup hook fires. (4) Cathy now has 2 participants on this env — Dorothy (primary, has data) and Lebron (created in iter35, empty). Use Dorothy's id for any test that requires existing statements/reports.",
+  "rca of the issue": "n/a — all features verified working. Previous bug (dashboard not refetching on participant switch) is fixed by key={activeParticipant?.id} on <main> in Layout.jsx — confirmed by observing 3 distinct API refetches (budget/current, statements, family-thread) and header content change after clicking the Lebron option in ParticipantSwitcher."
+}

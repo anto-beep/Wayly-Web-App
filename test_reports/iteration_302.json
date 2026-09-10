@@ -1,0 +1,31 @@
+{
+  "summary": "Verified founder's authenticated-app visual batch on WEB. All 6 flows PASS on cathy@example.com (Family, 168 anomalies). (1) Things-To-Know: list capped at exactly 10 items; button reads 'View all 168 things to know' → click expands ul to 168 li, label flips to 'Show fewer'; second click collapses back to 10. (2) Each Things-To-Know item renders the redesign: severity badge ('Heads up' verified), title, summary, 'What to do' callout, 'Why we flagged this' expander, and 'View statement' link pointing to /app/statements/{id}. (3) Budget Detail toggle: dashboard-more-detail-btn shows only 'Show Detail' when closed and only 'Hide Detail' when open (other span is display:none via group-open). (4) Global header (app-topbar) in BOTH light and dark: brand-link, GlobalSearch (lg), LCA1AlertsBell, NotificationsBell, AccountHealthMenu, ParticipantSwitcher, layout-plan-badge (Family), logout-button ('Sign out' visible on xl+, color rgb(240,228,213) in dark = cream on dark bg — legible), and mobile layout-menu-button all present; no header overflow at 1440px (scrollWidth == offsetWidth) in light OR dark. Mobile viewport 390: menu-button visible, logout hidden as intended, brand visible. (5) SmartAISummary present as data-testid=smart-ai-summary-dashboard with bg-gradient-to-br from-[#135A61] to-[#123F44] (linear-gradient rgb(19,90,97) → rgb(18,63,68)) — matches the 'slightly lighter teal' spec, white text readable. (6) REGRESSION: header renders correctly with no overflow on /app/statements, /app/invoices, /settings/billing (in dark mode) — brand, logout, plan-badge all present. 0 blocking console errors (only benign GSI initialize warnings + a 403 for the Google client-id origin, unrelated to this batch).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter302_dash_light.jpeg",
+    "/app/test_reports/iter302_dash_dark.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Non-blocking: CaregiverDashboard.jsx uses <details> with a Tailwind group-open trick for the Budget Detail toggle — visually correct in this render, but relying on native <details> open state means the label state cannot be toggled programmatically without a click (Playwright had to setAttribute('open','') to inspect). Consider a controlled useState if any future test/automation needs to drive it deterministically. Current UX is fine.",
+    "Non-blocking: the terracotta 'Alert' badge branch wasn't visually observed because the first ~10 anomalies in Cathy's seed are all 'Heads up' severity; code path is present at line 526-528 with the bg-terracotta class. If founder wants to spot-check the red variant, seed a severity='alert' anomaly."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "web 100% (6/6 flows: TTK cap+toggle, TTK item structure, Budget Detail label, header light+dark+mobile, SmartAISummary, 3-page regression)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, 168 anomalies).",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Founder's Wayly web visual batch (Things-To-Know cap-at-10 + view-all/show-fewer, TTK item redesign with severity/what-to-do/why/view-statement, Budget Detail Show/Hide label, header tidy across light+dark, SmartAISummary lighter teal, and regression on statements/invoices/billing) is fully verified. Only 'Heads up' severity was rendered in Cathy's seed; the 'Alert' (terracotta) branch is coded but wasn't hit — if a future prompt asks to verify red badge, seed an anomaly with severity='alert'. Dark mode is driven by localStorage 'wayly:app:appearance'='dark' (plain string) and correctly flips html.className to 'theme-dark' on /app routes.",
+  "rca of the issue": "n/a — verification pass, no bugs found."
+}
