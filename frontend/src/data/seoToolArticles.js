@@ -835,7 +835,7 @@ If a finding surprises you, the fastest path is: raise it with the provider in w
         faqs: [
             {
                 q: "Do I need to pay for the Wayly Invoice Checker?",
-                a: "No, it's included in the 7-day free trial and in every paid Wayly plan (Solo at $19/month, Family at $39/month). There's no per-invoice charge and no upsell mid-check. Verdicts, findings and PDF reports are all included.",
+                a: "No, it's included in the 7-day free trial and in every paid Wayly plan (Solo at $24.50 per fortnight, Family at $49.50 per fortnight). There's no per-invoice charge and no upsell mid-check. Verdicts, findings and PDF reports are all included.",
             },
             {
                 q: "How is the Invoice Checker different from the Statement Decoder?",

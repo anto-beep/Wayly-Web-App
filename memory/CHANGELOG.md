@@ -1,3 +1,10 @@
+## Iter 320d — Statement Decoder CTA + related-link polish (Jun 2026, fork) ✅ verified light + dark screenshots
+- **Usage CTA banner** (`StatementDecoderTool.jsx`): redesigned to stand out — tinted gradient panel + status icon, and fixed the WRONG plan amount ("Upgrade · $19/mo" → "Start free trial · Solo $24.50/fortnight"). Also corrected the same wrong pricing in the Invoice Checker SEO FAQ (`seoToolArticles.js`: Solo $24.50 / Family $49.50 per fortnight). Canonical pricing confirmed against `Pricing.jsx`.
+- **Related-tool cards**: given subtle distinct tints (sage / clay) to draw attention without being overwhelming.
+- **ToolRelatedLinks "Go deeper" card titles**: now Title Cased app-wide via a `toTitleCase` helper (preserves acronyms/brand casing), per Rule 2.4.
+- **Global dark-mode guard**: `a.text-white`/`button.text-white` stay white in dark, so the dark link-tint never turns text teal on clay/solid buttons (never teal-on-clay).
+
+
 ## Iter 320c — Landing dark-mode round 2 + sleeker buttons (Jun 2026, fork) ✅ verified via light + dark screenshots
 Second visual-edit pass on the marketing landing + a shared-button restyle.
 - **Landing dark fixes**: ecosystem "Wayly for…" cards use darker/muted tone backgrounds (both modes, less bright); step eyebrows (Check/Understand) and the big 01/02/03 numbers now light/white (were dark-teal/invisible); persona intro paragraph white.

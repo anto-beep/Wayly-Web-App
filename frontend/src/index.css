@@ -677,6 +677,12 @@ html.theme-dark .decoder-mode-toggle .bg-primary-k {
     color: #FFFFFF !important;
 }
 
+/* Global rule (app-wide): a link/button that opts into white text sits on a
+   solid colour, so it must stay white in dark mode. Stops the dark link-tint
+   from turning text teal on clay/solid buttons (never teal-on-clay). */
+html.theme-dark a.text-white,
+html.theme-dark button.text-white { color: #FFFFFF !important; }
+
 
 /* Status pills/badges keep their color but get white text */
 html.theme-dark .admin-badge { background: rgba(255,255,255,0.10); color: var(--kindred-text); border-color: var(--kindred-border); }

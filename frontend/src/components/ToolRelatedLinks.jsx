@@ -118,6 +118,24 @@ const TOOL_LINKS = {
     },
 };
 
+// Rule 2.4 — link/label copy is Title Case. Capitalises major words, keeps
+// minor words lowercase (except first), and preserves acronyms / brand casing.
+const TITLE_MINOR = new Set(["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "nor", "of", "on", "or", "per", "the", "to", "vs", "via", "with"]);
+function toTitleCase(str) {
+    let wordIndex = 0;
+    return String(str).split(/(\s+)/).map((tok) => {
+        if (/^\s+$/.test(tok) || tok === "") return tok;
+        const isFirst = wordIndex === 0;
+        wordIndex += 1;
+        // Preserve acronyms / brand casing (internal capitals or all-caps).
+        if (/[A-Z]/.test(tok.slice(1)) || tok === tok.toUpperCase()) return tok;
+        const lower = tok.toLowerCase();
+        const bare = lower.replace(/[^a-z]/g, "");
+        if (!isFirst && TITLE_MINOR.has(bare)) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+    }).join("");
+}
+
 export default function ToolRelatedLinks({ slug }) {
     const links = TOOL_LINKS[slug];
     if (!links) return null;
@@ -172,7 +190,7 @@ function Card({ icon: Icon, overline, href, label, sub, testid }) {
                 </div>
                 <div className="overline">{overline}</div>
             </div>
-            <div className="font-heading text-lg text-[#0E2A47] mt-3 leading-snug">{label}</div>
+            <div className="font-heading text-lg text-[#0E2A47] mt-3 leading-snug">{toTitleCase(label)}</div>
             <div className="mt-1 text-xs text-[#4A5A75]">{sub}</div>
             <div className="mt-4 text-sm font-medium text-[#1565B8] inline-flex items-center gap-1">
                 Read <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />

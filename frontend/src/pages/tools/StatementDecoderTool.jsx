@@ -217,15 +217,30 @@ export default function StatementDecoderTool() {
             <section className="mx-auto max-w-[1720px] px-6 pb-20" data-testid="statement-decoder-tool">
                 <ProfileInlinePrompts where="statement_decoder" />
                 {usage && !user && (
-                    <div className={`mb-4 rounded-xl border px-4 py-3 text-sm flex items-center justify-between gap-3 flex-wrap ${usage.remaining > 0 ? "bg-sage/10 border-sage/30 text-primary-k" : "bg-gold/10 border-gold/40 text-primary-k"}`} data-testid="usage-counter-banner">
-                        <div>
-                            <strong>{usage.remaining} of 1</strong> free decode{usage.remaining === 1 ? "" : "s"} remaining in your 120-day window
-                            {usage.reset_at && usage.days_until_next_use > 0 && ` · next opens in ${usage.days_until_next_use} day${usage.days_until_next_use === 1 ? "" : "s"}`}
+                    <div className={`mb-6 rounded-2xl border p-5 flex items-center justify-between gap-4 flex-wrap ${usage.remaining > 0 ? "bg-gradient-to-r from-sage/15 to-sage/5 border-sage/40" : "bg-gradient-to-r from-gold/15 to-gold/5 border-gold/45"}`} data-testid="usage-counter-banner">
+                        <div className="flex items-start gap-3">
+                            <span className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white ${usage.remaining > 0 ? "bg-sage" : "bg-[#A5512B]"}`}>
+                                {usage.remaining > 0 ? <Sparkles className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                            </span>
+                            <div>
+                                <div className="text-sm text-primary-k">
+                                    <strong>{usage.remaining} of 1</strong> free decode{usage.remaining === 1 ? "" : "s"} remaining in your 120-day window
+                                </div>
+                                <div className="text-xs text-muted-k mt-0.5">
+                                    {usage.remaining > 0
+                                        ? "Create a free account to unlock unlimited decodes and every Wayly tool."
+                                        : (usage.reset_at && usage.days_until_next_use > 0
+                                            ? `Your next free decode opens in ${usage.days_until_next_use} day${usage.days_until_next_use === 1 ? "" : "s"} — or start a plan to keep going now.`
+                                            : "Start a plan to keep decoding right away.")}
+                                </div>
+                            </div>
                         </div>
                         {usage.remaining === 0 && (
-                            <div className="flex gap-2">
-                                <Link to="/login" className="text-xs underline">Sign in</Link>
-                                <Link to="/signup?plan=solo" className="text-xs font-semibold bg-primary-k text-white rounded-full px-3 py-1 hover:bg-[#091D33]" data-testid="usage-upgrade-btn">Upgrade · $19/mo</Link>
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <Link to="/login" className="text-xs font-semibold text-primary-k underline underline-offset-2">Sign in</Link>
+                                <Link to="/signup?plan=solo" className="inline-flex items-center gap-1.5 text-sm font-semibold bg-[#A5512B] text-white rounded-lg px-4 py-2 shadow-sm" data-testid="usage-upgrade-btn">
+                                    Start free trial · Solo $24.50/fortnight <ArrowRight className="h-3.5 w-3.5" />
+                                </Link>
                             </div>
                         )}
                     </div>
@@ -495,11 +510,11 @@ export default function StatementDecoderTool() {
                 </section>
 
                 <div className="mt-6 grid sm:grid-cols-2 gap-4">
-                    <Link to="/ai-tools/budget-calculator" className="bg-surface border border-kindred rounded-xl p-4 hover:bg-surface-2 transition-colors">
+                    <Link to="/ai-tools/budget-calculator" className="bg-sage/10 border border-sage/30 rounded-xl p-4 hover:bg-sage/20 transition-colors" data-testid="related-tool-budget-calculator">
                         <div className="overline">Related tool</div>
                         <div className="font-heading text-lg text-primary-k mt-1">Budget Calculator →</div>
                     </Link>
-                    <Link to="/ai-tools/provider-price-checker" className="bg-surface border border-kindred rounded-xl p-4 hover:bg-surface-2 transition-colors">
+                    <Link to="/ai-tools/provider-price-checker" className="bg-gold/10 border border-gold/30 rounded-xl p-4 hover:bg-gold/20 transition-colors" data-testid="related-tool-provider-price-checker">
                         <div className="overline">Related tool</div>
                         <div className="font-heading text-lg text-primary-k mt-1">Provider Price Checker →</div>
                     </Link>
