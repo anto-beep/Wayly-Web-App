@@ -120,7 +120,7 @@ export default function CarePlanChangesScreen() {
             <Card testID="amend-form">
               <T variant="h3" style={{ marginBottom: spacing.sm }}>New change request</T>
               <View style={{ gap: spacing.sm }}>
-                <Field label="Service" testID="amend-service" value={form.service_name} onChangeText={(v) => setForm({ ...form, service_name: v })} placeholder="e.g. Physiotherapy" />
+                <Field label="Service" required testID="amend-service" value={form.service_name} onChangeText={(v) => setForm({ ...form, service_name: v })} placeholder="e.g. Physiotherapy" />
                 <View>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, marginBottom: 6 }}>Change type</T>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -135,8 +135,8 @@ export default function CarePlanChangesScreen() {
                     })}
                   </View>
                 </View>
-                <Field label="Reason" testID="amend-reason" value={form.reason} onChangeText={(v) => setForm({ ...form, reason: v })} placeholder="Why is this change needed?" multiline />
-                <Field label="Provider (optional)" value={form.provider_name} onChangeText={(v) => setForm({ ...form, provider_name: v })} placeholder="e.g. Blue Care" />
+                <Field label="Reason" required testID="amend-reason" value={form.reason} onChangeText={(v) => setForm({ ...form, reason: v })} placeholder="Why is this change needed?" multiline />
+                <Field label="Provider" optional value={form.provider_name} onChangeText={(v) => setForm({ ...form, provider_name: v })} placeholder="e.g. Blue Care" />
                 {saveError ? <T variant="small" style={{ color: colors.terracotta }}>{saveError}</T> : null}
                 <Button label="Generate request" testID="amend-save" icon={Sparkles} onPress={save} loading={saving} disabled={!form.service_name.trim() || !form.reason.trim()} />
               </View>

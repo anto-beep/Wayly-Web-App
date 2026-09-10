@@ -176,7 +176,7 @@ function CreateSettlementForm({ sid, colors, onCreated }: any) {
       <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 19 }}>The old provider&apos;s final invoice should reflect only services delivered up to the effective date. Any prepaid balance is owed back to you.</T>
       <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
         <LInput label="Refund expected (AUD)" value={amount} onChangeText={setAmount} testID="psw1-settle-create-amount" colors={colors} />
-        <Select label="Calculation basis" value={method} onChange={setMethod} options={METHODS} testID="psw1-settle-create-method" />
+        <Select label="Calculation basis" required value={method} onChange={setMethod} options={METHODS} testID="psw1-settle-create-method" />
       </View>
       {err ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{err}</T> : null}
       <Button label="Create settlement" testID="psw1-settle-create-submit" loading={busy} onPress={submit} style={{ marginTop: spacing.md }} />

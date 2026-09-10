@@ -75,7 +75,7 @@ function MfaCard() {
           <T variant="small">1. Scan this QR code with your authenticator app.</T>
           {qr ? <Image source={{ uri: qr }} style={{ width: 176, height: 176, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border }} /> : null}
           {secret ? <T variant="small" style={{ fontFamily: fonts.mono }} testID="security-mfa-secret">Or enter manually: {secret}</T> : null}
-          <Field label="2. Enter the 6-digit code" testID="security-mfa-verify-input" value={code} onChangeText={setCode} keyboardType="number-pad" placeholder="123456" maxLength={6} />
+          <Field label="2. Enter the 6-digit code" required testID="security-mfa-verify-input" value={code} onChangeText={setCode} keyboardType="number-pad" placeholder="123456" maxLength={6} />
           <Button label="Verify and enable" testID="security-mfa-verify-btn" onPress={confirmSetup} loading={busy} disabled={code.length < 6} />
         </View>
       ) : null}

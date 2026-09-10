@@ -107,15 +107,15 @@ export default function HandoverPackScreen() {
             <Card testID="handover-form">
               <T variant="h3" style={{ marginBottom: spacing.sm }}>New handover pack</T>
               <View style={{ gap: spacing.sm }}>
-                <Field label="Daily routines" testID="handover-routines" value={form.my_routines} onChangeText={(v) => setForm({ ...form, my_routines: v })} placeholder="Morning, meals, medications, evening…" multiline />
-                <Field label="Key information" testID="handover-key-info" value={form.my_key_information} onChangeText={(v) => setForm({ ...form, my_key_information: v })} placeholder="Where things are, passwords in the safe, GP details…" multiline />
-                <Field label="Emergency priorities" testID="handover-emergency" value={form.emergency_priorities} onChangeText={(v) => setForm({ ...form, emergency_priorities: v })} placeholder="Who to call first, what matters most in a crisis…" multiline />
+                <Field label="Daily routines" optional testID="handover-routines" value={form.my_routines} onChangeText={(v) => setForm({ ...form, my_routines: v })} placeholder="Morning, meals, medications, evening…" multiline />
+                <Field label="Key information" optional testID="handover-key-info" value={form.my_key_information} onChangeText={(v) => setForm({ ...form, my_key_information: v })} placeholder="Where things are, passwords in the safe, GP details…" multiline />
+                <Field label="Emergency priorities" optional testID="handover-emergency" value={form.emergency_priorities} onChangeText={(v) => setForm({ ...form, emergency_priorities: v })} placeholder="Who to call first, what matters most in a crisis…" multiline />
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, flex: 1 }}>Include medical needs</T>
                   <Switch value={form.opt_in_medical} onValueChange={(v) => setForm({ ...form, opt_in_medical: v })} trackColor={{ true: colors.primary }} testID="handover-opt-medical" />
                 </View>
                 {form.opt_in_medical ? (
-                  <Field label="Medical needs" value={form.my_medical_needs} onChangeText={(v) => setForm({ ...form, my_medical_needs: v })} placeholder="Conditions, medications, allergies…" multiline />
+                  <Field label="Medical needs" optional value={form.my_medical_needs} onChangeText={(v) => setForm({ ...form, my_medical_needs: v })} placeholder="Conditions, medications, allergies…" multiline />
                 ) : null}
                 <Button label="Save handover pack" testID="handover-save" icon={Plus} onPress={save} loading={saving} />
               </View>

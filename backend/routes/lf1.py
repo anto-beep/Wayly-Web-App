@@ -151,6 +151,12 @@ class AttachSourceBody(BaseModel):
     note: str | None = None
 
 
+class BulkFollowUpBody(BaseModel):
+    """Iteration 5, chase several overdue/awaiting letters in one action."""
+    entry_ids: list[str]
+    note: str | None = None
+
+
 # ---------------------------------------------------------------------------
 # Router builder
 # ---------------------------------------------------------------------------
@@ -1027,6 +1033,94 @@ def build_lf1_router(db, get_current_user_id, get_current_user_id_optional, requ
         upcoming.sort(key=lambda x: x["days_until_due"])
         return {"overdue": overdue, "upcoming": upcoming}
 
+    @r.post("/lf1/follow-ups/bulk-send")
+    async def bulk_send_follow_ups(
+        body: BulkFollowUpBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Chase several outstanding letters at once.
+
+        For every selected entry that is genuinely outstanding (outbound and
+        sent / awaiting_response), record a chase-up: log it to the entry's
+        `follow_up_history`, reset the response clock to a fresh window, move
+        the status to `awaiting_response`, and hand back a plain-English
+        chase-up note the user can copy or forward. Deterministic (no LLM), so
+        a slow gateway can never stall the batch. Entries that are not
+        outstanding are skipped and reported back, never silently dropped."""
+        ids = [str(x) for x in (body.entry_ids or []) if str(x).strip()]
+        if not ids:
+            raise HTTPException(status_code=400, detail="Select at least one letter to chase.")
+
+        today = _dt.date.today()
+        chased: list[dict] = []
+        skipped: list[dict] = []
+
+        for entry_id in ids:
+            entry = await db.lf1_correspondence.find_one(
+                {"user_id": user_id, "id": entry_id}, {"_id": 0}
+            )
+            if not entry:
+                skipped.append({"id": entry_id, "reason": "not_found"})
+                continue
+            if entry.get("direction") != "outbound":
+                skipped.append({"id": entry_id, "reason": "not_outbound"})
+                continue
+            if entry.get("status") not in ("sent", "awaiting_response"):
+                skipped.append({"id": entry_id, "reason": f"status_{entry.get('status')}"})
+                continue
+
+            # Days overdue against the current follow-up date.
+            prev_due = str(entry.get("follow_up_date") or "")[:10]
+            days_overdue = None
+            try:
+                due = _dt.date.fromisoformat(prev_due)
+                days_overdue = (today - due).days
+            except Exception:
+                days_overdue = None
+
+            note = _chase_up_note(entry, days_overdue, body.note)
+            window = lf1.default_response_window_days(
+                entry.get("situation_id"), entry.get("archetype") or ""
+            ) or 14
+            new_due = _add_days(window)
+
+            history = list(entry.get("follow_up_history") or [])
+            history.append({
+                "id": secrets.token_urlsafe(8),
+                "chased_at": _iso(),
+                "previous_follow_up_date": entry.get("follow_up_date"),
+                "new_follow_up_date": new_due,
+                "days_overdue": days_overdue,
+                "note": note,
+            })
+
+            await db.lf1_correspondence.update_one(
+                {"user_id": user_id, "id": entry_id},
+                {"$set": {
+                    "status": "awaiting_response",
+                    "follow_up_date": new_due,
+                    "expected_response_by": new_due,
+                    "last_chase_sent_at": _iso(),
+                    "follow_up_history": history,
+                    "next_action_suggested": _suggest_next_action(entry, (days_overdue or 0)),
+                    "updated_at": _iso(),
+                }},
+            )
+            chased.append({
+                "id": entry_id,
+                "situation_label": entry.get("situation_label"),
+                "recipient_type": entry.get("recipient_type"),
+                "new_follow_up_date": new_due,
+                "note": note,
+            })
+
+        return {
+            "ok": True,
+            "count": len(chased),
+            "chased": chased,
+            "skipped": skipped,
+        }
+
     @r.post("/lf1/correspondence/{entry_id}/escalate")
     async def escalate(
         entry_id: str,
@@ -1314,8 +1408,34 @@ def build_lf1_router(db, get_current_user_id, get_current_user_id_optional, requ
 # ---------------------------------------------------------------------------
 
 
+def _chase_up_note(entry: dict, days_overdue: int | None, extra: str | None = None) -> str:
+    """Deterministic, friendly chase-up line for a bulk follow-up. No LLM, so a
+    slow gateway can never stall the batch (AI tone rule: no dashes)."""
+    recipient_labels = {
+        "provider_cm": "your provider's care manager",
+        "provider_senior": "your provider's senior contact",
+        "provider": "your provider",
+        "mac": "My Aged Care",
+        "acqsc": "the Aged Care Quality and Safety Commission",
+        "ombudsman": "the Commonwealth Ombudsman",
+        "services_australia": "Services Australia",
+    }
+    who = recipient_labels.get(entry.get("recipient_type") or "", "the recipient")
+    subject = (entry.get("intake") or {}).get("subject") or entry.get("situation_label") or "my earlier letter"
+    if isinstance(days_overdue, int) and days_overdue > 0:
+        timing = f"It has now been {days_overdue} day{'s' if days_overdue != 1 else ''} past the reply date I noted."
+    else:
+        timing = "I have not yet had a reply."
+    base = (
+        f"Following up with {who} on {subject}. {timing} "
+        f"Please confirm you have received it and let me know when I can expect a response."
+    )
+    if extra and extra.strip():
+        base = f"{base} {extra.strip()}"
+    return base
+
+
 def _suggest_next_action(entry: dict, days_delta: int) -> str:
-    archetype = entry.get("archetype") or ""
     recipient = entry.get("recipient_type") or ""
     if days_delta < 0:
         # Overdue.

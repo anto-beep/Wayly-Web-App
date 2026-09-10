@@ -66,10 +66,10 @@ export default function AthmProjectsScreen() {
           <Card testID="athm-new-project-form">
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text, marginBottom: spacing.sm }}>Start a new AT / HM project</T>
             <View style={{ gap: spacing.sm }}>
-              <Select label="Type" value={form.project_type} onChange={(v: string) => setForm({ ...form, project_type: v })} options={PROJECT_TYPE_OPTIONS} testID="athm-project-type" />
-              <Field label="Title" testID="athm-project-title" value={form.title} onChangeText={(v: string) => setForm({ ...form, title: v })} placeholder="e.g. Bathroom safety upgrade" />
-              <Field label="Primary need" testID="athm-project-need" value={form.primary_need_summary} onChangeText={(v: string) => setForm({ ...form, primary_need_summary: v })} placeholder="What problem are we solving?" />
-              <Field label="Description (optional)" testID="athm-project-description" value={form.description} onChangeText={(v: string) => setForm({ ...form, description: v })} multiline />
+              <Select label="Type" required value={form.project_type} onChange={(v: string) => setForm({ ...form, project_type: v })} options={PROJECT_TYPE_OPTIONS} testID="athm-project-type" />
+              <Field label="Title" required testID="athm-project-title" value={form.title} onChangeText={(v: string) => setForm({ ...form, title: v })} placeholder="e.g. Bathroom safety upgrade" />
+              <Field label="Primary need" required testID="athm-project-need" value={form.primary_need_summary} onChangeText={(v: string) => setForm({ ...form, primary_need_summary: v })} placeholder="What problem are we solving?" />
+              <Field label="Description" optional testID="athm-project-description" value={form.description} onChangeText={(v: string) => setForm({ ...form, description: v })} multiline />
               {error ? <T variant="small" style={{ color: colors.terracotta }} testID="athm-project-error">{error}</T> : null}
               <View style={{ flexDirection: "row", gap: spacing.sm }}>
                 <Button label="Cancel" variant="outline" onPress={() => { setShowForm(false); setError(""); }} style={{ flexGrow: 1 }} />

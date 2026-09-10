@@ -351,9 +351,9 @@ function LedgerRow({ entry, onChanged }: { entry: Ledger; onChanged: () => void 
 
       {!done && showChanged ? (
         <View testID={`qp1-changed-form-${entry.id}`} style={{ gap: spacing.sm, marginTop: 4 }}>
-          <Field label="Actual hours" testID={`qp1-changed-hours-${entry.id}`} value={dur} onChangeText={setDur} keyboardType="decimal-pad" />
-          <Field label="Actual $/hr" testID={`qp1-changed-rate-${entry.id}`} value={rate} onChangeText={setRate} keyboardType="decimal-pad" />
-          <Field label="Note (optional)" testID={`qp1-changed-note-${entry.id}`} value={note} onChangeText={setNote} />
+          <Field label="Actual hours" required testID={`qp1-changed-hours-${entry.id}`} value={dur} onChangeText={setDur} keyboardType="decimal-pad" />
+          <Field label="Actual $/hr" required testID={`qp1-changed-rate-${entry.id}`} value={rate} onChangeText={setRate} keyboardType="decimal-pad" />
+          <Field label="Note" optional testID={`qp1-changed-note-${entry.id}`} value={note} onChangeText={setNote} />
           <Button label="Save change" testID={`qp1-changed-save-${entry.id}`} loading={busy}
             onPress={() => act("changed", { actual_duration_hours: Number(dur) || null, actual_rate: Number(rate) || null, notes: note || null })} />
         </View>
@@ -415,12 +415,12 @@ function AdHocForm({ participantId, onSaved }: { participantId: string; onSaved:
       </View>
       {open ? (
         <View testID="qp1-adhoc-form" style={{ marginTop: spacing.md, gap: spacing.sm }}>
-          <Field label="Service type" testID="qp1-adhoc-service" value={serviceType} onChangeText={setServiceType} />
-          <Field label="Provider (optional)" testID="qp1-adhoc-provider" value={provider} onChangeText={setProvider} />
-          <DateField label="Date" testID="qp1-adhoc-date" value={when} onChange={setWhen} />
-          <Field label="Hours" testID="qp1-adhoc-hours" value={dur} onChangeText={setDur} keyboardType="decimal-pad" />
-          <Field label="Rate $/hr" testID="qp1-adhoc-rate" value={rate} onChangeText={setRate} keyboardType="decimal-pad" />
-          <Field label="Note (optional)" testID="qp1-adhoc-note" value={note} onChangeText={setNote} />
+          <Field label="Service type" required testID="qp1-adhoc-service" value={serviceType} onChangeText={setServiceType} />
+          <Field label="Provider" optional testID="qp1-adhoc-provider" value={provider} onChangeText={setProvider} />
+          <DateField label="Date" required testID="qp1-adhoc-date" value={when} onChange={setWhen} />
+          <Field label="Hours" required testID="qp1-adhoc-hours" value={dur} onChangeText={setDur} keyboardType="decimal-pad" />
+          <Field label="Rate $/hr" required testID="qp1-adhoc-rate" value={rate} onChangeText={setRate} keyboardType="decimal-pad" />
+          <Field label="Note" optional testID="qp1-adhoc-note" value={note} onChangeText={setNote} />
           {err ? <T variant="small" style={{ color: colors.terracotta }}>{err}</T> : null}
           <Button label="Save one-off" testID="qp1-adhoc-save" loading={busy} onPress={save} />
         </View>
@@ -491,7 +491,7 @@ function ReconcileFromStatementForm({ participantId, onDone }: { participantId: 
             <T variant="small">No decoded statements with line items yet. Upload one on the Statements page and it will appear here.</T>
           ) : (
             <>
-              <Select label="Statement" testID="qp1-reconcile-statement-select" value={selectedId} onChange={setSelectedId} options={opts} />
+              <Select label="Statement" required testID="qp1-reconcile-statement-select" value={selectedId} onChange={setSelectedId} options={opts} />
               {err ? <T testID="qp1-reconcile-statement-error" variant="small" style={{ color: colors.terracotta }}>{err}</T> : null}
               <Button label={busy ? "Reconciling…" : "Reconcile now"} testID="qp1-reconcile-statement-submit" variant="secondary" loading={busy} disabled={!selectedId} onPress={submit} />
               {result ? (
@@ -556,8 +556,8 @@ function ReconcileForm({ participantId, onDone }: { participantId: string; onDon
       </View>
       {open ? (
         <View testID="qp1-reconcile-form" style={{ marginTop: spacing.md, gap: spacing.sm }}>
-          <Field label="Statement reference (optional)" testID="qp1-reconcile-ref" value={ref} onChangeText={setRef} />
-          <Field label="Statement lines (one per row: YYYY-MM-DD, amount, description)" testID="qp1-reconcile-csv"
+          <Field label="Statement reference" optional testID="qp1-reconcile-ref" value={ref} onChangeText={setRef} />
+          <Field label="Statement lines (one per row: YYYY-MM-DD, amount, description)" required testID="qp1-reconcile-csv"
             value={csv} onChangeText={setCsv} placeholder="2026-08-04, 108.75, BlueBerry Care visit" multiline
             style={{ }} />
           {err ? <T testID="qp1-reconcile-error" variant="small" style={{ color: colors.terracotta }}>{err}</T> : null}
@@ -665,18 +665,18 @@ function ScheduleForm({ participantId, onSaved }: { participantId: string; onSav
       </View>
       {open ? (
         <View testID="qp1-schedule-form" style={{ marginTop: spacing.md, gap: spacing.sm }}>
-          <Field label="Service type" testID="qp1-schedule-service" value={serviceType} onChangeText={setServiceType} />
-          <Field label="Provider (optional)" testID="qp1-schedule-provider" value={provider} onChangeText={setProvider} />
-          <Select label="Cadence" testID="qp1-schedule-cadence" value={cadence} onChange={setCadence} options={CADENCE_OPTIONS} />
+          <Field label="Service type" required testID="qp1-schedule-service" value={serviceType} onChangeText={setServiceType} />
+          <Field label="Provider" optional testID="qp1-schedule-provider" value={provider} onChangeText={setProvider} />
+          <Select label="Cadence" required testID="qp1-schedule-cadence" value={cadence} onChange={setCadence} options={CADENCE_OPTIONS} />
           {(cadence === "weekly" || cadence === "fortnightly") ? (
-            <Select label="Day of week" testID="qp1-schedule-day" value={day} onChange={setDay} options={DAYS} />
+            <Select label="Day of week" required testID="qp1-schedule-day" value={day} onChange={setDay} options={DAYS} />
           ) : null}
           {cadence === "monthly" ? (
-            <Field label="Day of month" testID="qp1-schedule-dom" value={dom} onChangeText={setDom} keyboardType="number-pad" />
+            <Field label="Day of month" required testID="qp1-schedule-dom" value={dom} onChangeText={setDom} keyboardType="number-pad" />
           ) : null}
-          <Field label="Hours per visit" testID="qp1-schedule-hours" value={dur} onChangeText={setDur} keyboardType="decimal-pad" />
-          <Field label="Rate $/hr" testID="qp1-schedule-rate" value={rate} onChangeText={setRate} keyboardType="decimal-pad" />
-          <DateField label="Start date" testID="qp1-schedule-from" value={from} onChange={setFrom} maximumDate={new Date(2100, 0, 1)} />
+          <Field label="Hours per visit" required testID="qp1-schedule-hours" value={dur} onChangeText={setDur} keyboardType="decimal-pad" />
+          <Field label="Rate $/hr" required testID="qp1-schedule-rate" value={rate} onChangeText={setRate} keyboardType="decimal-pad" />
+          <DateField label="Start date" required testID="qp1-schedule-from" value={from} onChange={setFrom} maximumDate={new Date(2100, 0, 1)} />
           {err ? <T variant="small" style={{ color: colors.terracotta }}>{err}</T> : null}
           <Button label="Save schedule" testID="qp1-schedule-save" loading={busy} onPress={save} />
         </View>

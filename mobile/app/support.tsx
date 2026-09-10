@@ -125,7 +125,7 @@ export default function SupportScreen() {
                     );
                   })}
                 </View>
-                <Field label="Tell us more" testID="support-note-input" value={note} onChangeText={setNote} multiline placeholder="Describe the issue in your own words…" style={{ marginTop: spacing.md }} />
+                <Field label="Tell us more" optional testID="support-note-input" value={note} onChangeText={setNote} multiline placeholder="Describe the issue in your own words…" style={{ marginTop: spacing.md }} />
                 {err ? <T variant="small" testID="support-error" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{err}</T> : null}
                 <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
                   <Button label="Cancel" testID="support-cancel" variant="ghost" onPress={() => { setShowForm(false); setErr(""); }} style={{ flex: 1 }} />

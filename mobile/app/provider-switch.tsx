@@ -184,9 +184,9 @@ function NewSwitchModal({ visible, pid, colors, onClose, onCreated }: any) {
           </View>
           <T variant="small" style={{ color: colors.muted, marginTop: 4 }}>Wayly supports the switching process once decided. We do not recommend providers.</T>
           <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
-            <Field label="Current provider name" testID="psw1-modal-provider" value={form.current_provider_name} onChangeText={(v: string) => setForm({ ...form, current_provider_name: v })} />
-            <Select label="Main reason" value={form.initial_reason_for_switch} onChange={(v: string) => setForm({ ...form, initial_reason_for_switch: v })} options={REASONS.map((r) => ({ value: r.key, label: r.label }))} testID="psw1-modal-reason" />
-            <Field label="Notes (optional)" testID="psw1-modal-notes" value={form.reason_notes} onChangeText={(v: string) => setForm({ ...form, reason_notes: v })} multiline />
+            <Field label="Current provider name" required testID="psw1-modal-provider" value={form.current_provider_name} onChangeText={(v: string) => setForm({ ...form, current_provider_name: v })} />
+            <Select label="Main reason" required value={form.initial_reason_for_switch} onChange={(v: string) => setForm({ ...form, initial_reason_for_switch: v })} options={REASONS.map((r) => ({ value: r.key, label: r.label }))} testID="psw1-modal-reason" />
+            <Field label="Notes" optional testID="psw1-modal-notes" value={form.reason_notes} onChangeText={(v: string) => setForm({ ...form, reason_notes: v })} multiline />
           </View>
           {err ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }} testID="psw1-modal-error">{err}</T> : null}
           <Button label="Start switch" testID="psw1-modal-submit" loading={busy} disabled={!form.current_provider_name.trim()} onPress={submit} style={{ marginTop: spacing.md }} />

@@ -117,10 +117,10 @@ export default function HospitalScreen() {
             <Card testID="hospital-form">
               <T variant="h3" style={{ marginBottom: spacing.sm }}>Log a hospital admission</T>
               <View style={{ gap: spacing.sm }}>
-                <Field label="Hospital name" testID="hospital-name" value={form.hospital_name} onChangeText={(v) => setForm({ ...form, hospital_name: v })} placeholder="e.g. Royal Melbourne" />
-                <DateField label="Admission date" testID="hospital-date" value={form.admission_date} onChange={(iso) => setForm({ ...form, admission_date: iso })} />
-                <Field label="Ward (optional)" value={form.ward} onChangeText={(v) => setForm({ ...form, ward: v })} placeholder="e.g. Ward 4B" />
-                <Field label="Reason (optional)" value={form.reason} onChangeText={(v) => setForm({ ...form, reason: v })} placeholder="e.g. Fall, fractured hip" />
+                <Field label="Hospital name" required testID="hospital-name" value={form.hospital_name} onChangeText={(v) => setForm({ ...form, hospital_name: v })} placeholder="e.g. Royal Melbourne" />
+                <DateField label="Admission date" required testID="hospital-date" value={form.admission_date} onChange={(iso) => setForm({ ...form, admission_date: iso })} />
+                <Field label="Ward" optional value={form.ward} onChangeText={(v) => setForm({ ...form, ward: v })} placeholder="e.g. Ward 4B" />
+                <Field label="Reason" optional value={form.reason} onChangeText={(v) => setForm({ ...form, reason: v })} placeholder="e.g. Fall, fractured hip" />
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, flex: 1 }}>Pause home care services</T>
                   <Switch value={form.pause_services} onValueChange={(v) => setForm({ ...form, pause_services: v })} trackColor={{ true: colors.primary }} testID="hospital-pause" />

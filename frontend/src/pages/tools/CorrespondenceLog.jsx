@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
     Loader2, ArrowLeft, Mail, MessageSquare, FileText, AlertTriangle,
     ShieldAlert, ChevronRight, Clock, CheckCircle2, ArrowUpRight, TrendingUp,
-    Search, Trash2, Inbox, PenLine, X,
+    Search, Trash2, Inbox, PenLine, X, Send, Circle,
 } from "lucide-react";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
@@ -307,12 +307,72 @@ export default function CorrespondenceLog() {
 // ---------------------------------------------------------------------
 
 function FollowUpPanel({ followUps, onEscalated }) {
+    const allIds = useMemo(
+        () => [...(followUps.overdue || []), ...(followUps.upcoming || [])].map((e) => e.id).filter(Boolean),
+        [followUps],
+    );
+    const [selectMode, setSelectMode] = useState(false);
+    const [selected, setSelected] = useState(() => new Set());
+    const [busyBulk, setBusyBulk] = useState(false);
+    const [bulkResult, setBulkResult] = useState("");
+
+    const toggle = (id) => setSelected((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+    });
+    const exitSelect = () => { setSelectMode(false); setSelected(new Set()); };
+    const selectAllOverdue = () => setSelected(new Set((followUps.overdue || []).map((e) => e.id).filter(Boolean)));
+
+    const sendChaseUps = async () => {
+        const ids = [...selected];
+        if (!ids.length) return;
+        setBusyBulk(true);
+        setBulkResult("");
+        try {
+            const r = await api.post("/lf1/follow-ups/bulk-send", { entry_ids: ids });
+            const count = r.data?.count ?? ids.length;
+            setBulkResult(`Chased ${count} letter${count === 1 ? "" : "s"}. The reply clock has been reset.`);
+            toast.success(`Sent ${count} chase-up${count === 1 ? "" : "s"}.`);
+            exitSelect();
+            onEscalated?.();
+        } catch (err) {
+            const msg = extractErrorMessage(err, "We couldn't send those chase-ups.");
+            setBulkResult(msg);
+            toast.error(msg);
+        } finally {
+            setBusyBulk(false);
+        }
+    };
+
     return (
         <div className="bg-surface border border-clay/30 rounded-2xl p-5" data-testid="lf1-follow-up-panel">
-            <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-clay" aria-hidden="true" />
-                <div className="font-heading text-xl text-primary-k">Follow-ups</div>
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-clay" aria-hidden="true" />
+                    <div className="font-heading text-xl text-primary-k">Follow-ups</div>
+                </div>
+                {allIds.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
+                        data-testid="lf1-followups-select-toggle"
+                        className="text-sm font-medium text-primary-k hover:underline"
+                    >
+                        {selectMode ? "Cancel" : "Chase up"}
+                    </button>
+                )}
             </div>
+            {selectMode && (
+                <div className="mt-3 flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-k" data-testid="lf1-followups-selected-count">{selected.size} selected</span>
+                    {(followUps.overdue || []).length > 0 && (
+                        <button type="button" onClick={selectAllOverdue} data-testid="lf1-followups-select-all-overdue" className="text-xs font-medium text-primary-k hover:underline">
+                            Select all overdue
+                        </button>
+                    )}
+                </div>
+            )}
             {followUps.overdue.length > 0 && (
                 <div className="mt-3">
                     <div className="text-xs uppercase tracking-wider text-terracotta mb-2">
@@ -320,7 +380,8 @@ function FollowUpPanel({ followUps, onEscalated }) {
                     </div>
                     <ul className="space-y-2" data-testid="lf1-followups-overdue">
                         {followUps.overdue.map((e) => (
-                            <FollowUpRow key={e.id} entry={e} isOverdue onEscalated={onEscalated} />
+                            <FollowUpRow key={e.id} entry={e} isOverdue onEscalated={onEscalated}
+                                selectMode={selectMode} selected={selected.has(e.id)} onToggle={toggle} />
                         ))}
                     </ul>
                 </div>
@@ -332,16 +393,30 @@ function FollowUpPanel({ followUps, onEscalated }) {
                     </div>
                     <ul className="space-y-2" data-testid="lf1-followups-upcoming">
                         {followUps.upcoming.map((e) => (
-                            <FollowUpRow key={e.id} entry={e} onEscalated={onEscalated} />
+                            <FollowUpRow key={e.id} entry={e} onEscalated={onEscalated}
+                                selectMode={selectMode} selected={selected.has(e.id)} onToggle={toggle} />
                         ))}
                     </ul>
                 </div>
             )}
+            {selectMode && (
+                <button
+                    type="button"
+                    onClick={sendChaseUps}
+                    disabled={busyBulk || selected.size === 0}
+                    data-testid="lf1-followups-bulk-send"
+                    className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary-k text-white px-4 py-2.5 text-sm font-medium hover:bg-primary-k/90 disabled:opacity-60"
+                >
+                    {busyBulk ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {busyBulk ? "Sending chase-ups…" : `Send ${selected.size || ""} chase-up${selected.size === 1 ? "" : "s"}`.replace("  ", " ")}
+                </button>
+            )}
+            {bulkResult && <div className="mt-2 text-sm text-sage" data-testid="lf1-followups-bulk-result">{bulkResult}</div>}
         </div>
     );
 }
 
-function FollowUpRow({ entry, isOverdue = false, onEscalated }) {
+function FollowUpRow({ entry, isOverdue = false, onEscalated, selectMode = false, selected = false, onToggle }) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const canEscalate = entry.recipient_type && ["provider_cm", "provider_senior", "mac", "acqsc"].includes(entry.recipient_type);
@@ -368,22 +443,42 @@ function FollowUpRow({ entry, isOverdue = false, onEscalated }) {
     };
 
     return (
-        <li className="rounded-xl border border-kindred bg-surface-2 p-3.5">
+        <li className={`rounded-xl border bg-surface-2 p-3.5 ${selectMode && selected ? "border-primary-k" : "border-kindred"}`}>
             <div className="flex items-start gap-3">
-                <Clock className={isOverdue ? "h-4 w-4 mt-0.5 text-terracotta" : "h-4 w-4 mt-0.5 text-muted-k"} aria-hidden="true" />
-                <div className="flex-1 min-w-0">
-                    <Link
-                        to={`/tools/letters-and-follow-ups/${entry.id}`}
-                        className="text-sm text-primary-k hover:underline"
-                        data-testid={`lf1-followup-open-${entry.id}`}
+                {selectMode ? (
+                    <button
+                        type="button"
+                        onClick={() => onToggle?.(entry.id)}
+                        data-testid={`lf1-followup-select-${entry.id}`}
+                        className="mt-0.5 shrink-0"
+                        aria-label={selected ? "Deselect" : "Select"}
                     >
-                        {entry.situation_label || ARCHETYPE_LABEL[entry.archetype] || entry.archetype}
-                    </Link>
+                        {selected
+                            ? <CheckCircle2 className="h-5 w-5 text-primary-k" aria-hidden="true" />
+                            : <Circle className="h-5 w-5 text-muted-k" aria-hidden="true" />}
+                    </button>
+                ) : (
+                    <Clock className={isOverdue ? "h-4 w-4 mt-0.5 text-terracotta" : "h-4 w-4 mt-0.5 text-muted-k"} aria-hidden="true" />
+                )}
+                <div className="flex-1 min-w-0">
+                    {selectMode ? (
+                        <button type="button" onClick={() => onToggle?.(entry.id)} className="text-left text-sm text-primary-k hover:underline" data-testid={`lf1-followup-open-${entry.id}`}>
+                            {entry.situation_label || ARCHETYPE_LABEL[entry.archetype] || entry.archetype}
+                        </button>
+                    ) : (
+                        <Link
+                            to={`/tools/letters-and-follow-ups/${entry.id}`}
+                            className="text-sm text-primary-k hover:underline"
+                            data-testid={`lf1-followup-open-${entry.id}`}
+                        >
+                            {entry.situation_label || ARCHETYPE_LABEL[entry.archetype] || entry.archetype}
+                        </Link>
+                    )}
                     <div className="text-xs text-muted-k mt-0.5">
                         {daysCopy()} · Suggested: {entry.suggested_next_action}
                     </div>
                 </div>
-                {canEscalate && (
+                {!selectMode && canEscalate && (
                     <button
                         type="button"
                         onClick={escalate}

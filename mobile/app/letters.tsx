@@ -3,7 +3,7 @@ import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, Vi
 import { router, useFocusEffect } from "expo-router";
 import {
   Mail, Clock, AlertTriangle, PenLine, ArrowUpRight, ArrowDownLeft,
-  Search, X, Trash2, Inbox, CheckCircle2, ChevronRight, TrendingUp,
+  Search, X, Trash2, Inbox, CheckCircle2, ChevronRight, TrendingUp, Send, Circle,
 } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, Select, StatePanel, T } from "@/src/components/ui";
@@ -80,6 +80,12 @@ export default function LettersMailboxScreen() {
   const [deleteTarget, setDeleteTarget] = useState<Entry | null>(null);
   const [busyDelete, setBusyDelete] = useState(false);
 
+  // Bulk follow-up (chase several outstanding letters in one tap)
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [busyBulk, setBusyBulk] = useState(false);
+  const [bulkResult, setBulkResult] = useState<string>("");
+
   const load = useCallback(async () => {
     setError(false);
     const q = activeId ? `?participant_id=${activeId}` : "";
@@ -128,6 +134,33 @@ export default function LettersMailboxScreen() {
     } catch { /* keep modal on error */ } finally { setBusyDelete(false); }
   };
 
+  const followUpIds = useMemo(
+    () => [...overdue, ...upcoming].map((f) => f.id || f.entry_id).filter(Boolean) as string[],
+    [overdue, upcoming],
+  );
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const exitSelect = () => { setSelectMode(false); setSelectedIds(new Set()); };
+  const selectAllOverdue = () =>
+    setSelectedIds(new Set(overdue.map((f) => f.id || f.entry_id).filter(Boolean) as string[]));
+
+  const sendBulkChaseUps = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    setBusyBulk(true); setBulkResult("");
+    try {
+      const r = await apiFetch<{ count: number }>("/lf1/follow-ups/bulk-send", { method: "POST", body: { entry_ids: ids } });
+      setBulkResult(`Chased ${r?.count ?? ids.length} letter${(r?.count ?? ids.length) === 1 ? "" : "s"}. The reply clock has been reset.`);
+      exitSelect();
+      load();
+    } catch { setBulkResult("We couldn't send those chase-ups. Please try again."); }
+    finally { setBusyBulk(false); }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader onBack={() => router.back()} />
@@ -164,20 +197,47 @@ export default function LettersMailboxScreen() {
             <Card testID="lf1-follow-up-panel" style={{ borderColor: colors.gold }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <TrendingUp size={18} color={colors.gold} />
-                <T style={{ fontFamily: fonts.headingSemi, fontSize: 18 }}>Follow-ups</T>
+                <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, flex: 1 }}>Follow-ups</T>
+                {followUpIds.length > 0 ? (
+                  <Pressable testID="lf1-followups-select-toggle" onPress={() => (selectMode ? exitSelect() : setSelectMode(true))} hitSlop={8}>
+                    <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{selectMode ? "Cancel" : "Chase up"}</T>
+                  </Pressable>
+                ) : null}
               </View>
+              {selectMode ? (
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: spacing.sm }}>
+                  <T variant="small" style={{ color: colors.muted }} testID="lf1-followups-selected-count">{selectedIds.size} selected</T>
+                  {overdue.length > 0 ? (
+                    <Pressable testID="lf1-followups-select-all-overdue" onPress={selectAllOverdue} hitSlop={8}>
+                      <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>Select all overdue</T>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : null}
               {overdue.length > 0 ? (
                 <View style={{ marginTop: spacing.sm }} testID="lf1-followups-overdue">
                   <T variant="small" style={{ color: colors.terracotta, letterSpacing: 0.5, marginBottom: 6 }}>OVERDUE ({overdue.length})</T>
-                  {overdue.map((f) => <FollowUpRow key={f.id || f.entry_id} entry={f} isOverdue onEscalated={load} />)}
+                  {overdue.map((f) => <FollowUpRow key={f.id || f.entry_id} entry={f} isOverdue onEscalated={load} selectMode={selectMode} selected={selectedIds.has((f.id || f.entry_id) as string)} onToggle={toggleSelected} />)}
                 </View>
               ) : null}
               {upcoming.length > 0 ? (
                 <View style={{ marginTop: spacing.md }} testID="lf1-followups-upcoming">
                   <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, marginBottom: 6 }}>DUE SOON ({upcoming.length})</T>
-                  {upcoming.map((f) => <FollowUpRow key={f.id || f.entry_id} entry={f} onEscalated={load} />)}
+                  {upcoming.map((f) => <FollowUpRow key={f.id || f.entry_id} entry={f} onEscalated={load} selectMode={selectMode} selected={selectedIds.has((f.id || f.entry_id) as string)} onToggle={toggleSelected} />)}
                 </View>
               ) : null}
+              {selectMode ? (
+                <Button
+                  label={busyBulk ? "Sending chase-ups…" : `Send ${selectedIds.size || ""} chase-up${selectedIds.size === 1 ? "" : "s"}`.replace("  ", " ")}
+                  testID="lf1-followups-bulk-send"
+                  icon={Send}
+                  loading={busyBulk}
+                  disabled={selectedIds.size === 0}
+                  onPress={sendBulkChaseUps}
+                  style={{ marginTop: spacing.md }}
+                />
+              ) : null}
+              {bulkResult ? <T variant="small" testID="lf1-followups-bulk-result" style={{ color: colors.sage, marginTop: spacing.sm, lineHeight: 19 }}>{bulkResult}</T> : null}
             </Card>
           ) : null}
 
@@ -246,7 +306,7 @@ export default function LettersMailboxScreen() {
   );
 }
 
-function FollowUpRow({ entry, isOverdue = false, onEscalated }: { entry: FollowUp; isOverdue?: boolean; onEscalated: () => void }) {
+function FollowUpRow({ entry, isOverdue = false, onEscalated, selectMode = false, selected = false, onToggle }: { entry: FollowUp; isOverdue?: boolean; onEscalated: () => void; selectMode?: boolean; selected?: boolean; onToggle?: (id: string) => void }) {
   const { colors } = useTheme();
   const [busy, setBusy] = useState(false);
   const id = entry.id || entry.entry_id || "";
@@ -264,13 +324,19 @@ function FollowUpRow({ entry, isOverdue = false, onEscalated }: { entry: FollowU
     catch { /* silent */ } finally { setBusy(false); }
   };
   return (
-    <View style={[styles.fuRow, { borderColor: colors.border, backgroundColor: colors.surface2 }]}>
-      <Clock size={16} color={isOverdue ? colors.terracotta : colors.muted} style={{ marginTop: 2 }} />
-      <Pressable style={{ flex: 1 }} testID={`lf1-followup-open-${id}`} onPress={() => router.push(`/letters/${id}` as any)}>
+    <View style={[styles.fuRow, { borderColor: selectMode && selected ? colors.primary : colors.border, backgroundColor: colors.surface2 }]}>
+      {selectMode ? (
+        <Pressable testID={`lf1-followup-select-${id}`} onPress={() => onToggle?.(id)} hitSlop={10} style={{ marginTop: 1 }}>
+          {selected ? <CheckCircle2 size={20} color={colors.primary} /> : <Circle size={20} color={colors.muted} />}
+        </Pressable>
+      ) : (
+        <Clock size={16} color={isOverdue ? colors.terracotta : colors.muted} style={{ marginTop: 2 }} />
+      )}
+      <Pressable style={{ flex: 1 }} testID={`lf1-followup-open-${id}`} onPress={() => (selectMode ? onToggle?.(id) : router.push(`/letters/${id}` as any))}>
         <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{entry.situation_label || ARCHETYPE_LABEL[entry.archetype || ""] || entry.archetype || "Follow-up"}</T>
         <T variant="small" style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{daysCopy()}{entry.suggested_next_action ? ` · ${entry.suggested_next_action}` : ""}</T>
       </Pressable>
-      {canEscalate ? (
+      {!selectMode && canEscalate ? (
         <Pressable testID={`lf1-followup-escalate-${id}`} disabled={busy} onPress={escalate}
           style={[styles.escalate, { borderColor: colors.primary, opacity: busy ? 0.5 : 1 }]}>
           <ArrowUpRight size={13} color={colors.primary} />

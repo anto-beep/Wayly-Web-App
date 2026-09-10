@@ -84,7 +84,7 @@ export default function ReferralsScreen() {
             ) : (
               <Card testID="referrals-form">
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, marginBottom: spacing.sm }}>New referral</T>
-                <Field label="Referred to" testID="referrals-to-input" value={to} onChangeText={setTo} placeholder="e.g. Dr Lee" />
+                <Field label="Referred to" required testID="referrals-to-input" value={to} onChangeText={setTo} placeholder="e.g. Dr Lee" />
                 <T variant="label" style={{ marginTop: spacing.md, marginBottom: 6 }}>KIND</T>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                   {KINDS.map((k) => {
@@ -97,8 +97,8 @@ export default function ReferralsScreen() {
                     );
                   })}
                 </View>
-                <Field label="Phone / email (optional)" testID="referrals-contact-input" value={contact} onChangeText={setContact} style={{ marginTop: spacing.md }} />
-                <Field label="Reason (optional)" testID="referrals-reason-input" value={reason} onChangeText={setReason} multiline style={{ marginTop: spacing.md }} />
+                <Field label="Phone / email" optional testID="referrals-contact-input" value={contact} onChangeText={setContact} style={{ marginTop: spacing.md }} />
+                <Field label="Reason" optional testID="referrals-reason-input" value={reason} onChangeText={setReason} multiline style={{ marginTop: spacing.md }} />
                 {err ? <T variant="small" testID="referrals-error" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{err}</T> : null}
                 <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
                   <Button label="Cancel" testID="referrals-cancel" variant="ghost" onPress={() => { setShowForm(false); setErr(""); }} style={{ flex: 1 }} />

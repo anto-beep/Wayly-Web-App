@@ -175,10 +175,10 @@ export default function CalendarScreen() {
               </View>
               <View style={{ gap: spacing.sm }}>
                 <Field label="Title" required testID="visits-form-title" value={draft.title} onChangeText={(v) => setDraft({ ...draft, title: v })} placeholder="e.g. GP appointment" />
-                <Select label="Kind" testID="visits-form-kind" value={draft.kind} onChange={(v) => setDraft({ ...draft, kind: v })} options={KIND_OPTIONS} />
-                <DateField label="Date" testID="visits-form-when" value={draft.date} onChange={(iso) => setDraft({ ...draft, date: iso })} maximumDate={new Date(2100, 0, 1)} />
-                <Field label="Time (HH:MM, 24h)" testID="visits-form-time" value={draft.time} onChangeText={(v) => setDraft({ ...draft, time: v })} placeholder="09:00" keyboardType="numbers-and-punctuation" />
-                <Field label="Duration (minutes)" testID="visits-form-duration" value={draft.duration_minutes} onChangeText={(v) => setDraft({ ...draft, duration_minutes: v.replace(/[^0-9]/g, "") })} keyboardType="number-pad" />
+                <Select label="Kind" required testID="visits-form-kind" value={draft.kind} onChange={(v) => setDraft({ ...draft, kind: v })} options={KIND_OPTIONS} />
+                <DateField label="Date" required testID="visits-form-when" value={draft.date} onChange={(iso) => setDraft({ ...draft, date: iso })} maximumDate={new Date(2100, 0, 1)} />
+                <Field label="Time (HH:MM, 24h)" required testID="visits-form-time" value={draft.time} onChangeText={(v) => setDraft({ ...draft, time: v })} placeholder="09:00" keyboardType="numbers-and-punctuation" />
+                <Field label="Duration (minutes)" required testID="visits-form-duration" value={draft.duration_minutes} onChangeText={(v) => setDraft({ ...draft, duration_minutes: v.replace(/[^0-9]/g, "") })} keyboardType="number-pad" />
                 <Field label="Provider" optional testID="visits-form-provider" value={draft.provider} onChangeText={(v) => setDraft({ ...draft, provider: v })} placeholder="e.g. Acacia Aged Care" />
                 <Field label="Location" optional testID="visits-form-location" value={draft.location} onChangeText={(v) => setDraft({ ...draft, location: v })} placeholder="e.g. Clinic address" />
                 <Field label="Notes" optional testID="visits-form-notes" value={draft.notes} onChangeText={(v) => setDraft({ ...draft, notes: v })} placeholder="Anything to remember" multiline style={{ minHeight: 72 } as any} />

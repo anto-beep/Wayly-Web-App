@@ -5,8 +5,9 @@ import Footer from "@/components/Footer";
 import { api, extractErrorMessage } from "@/lib/api";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { participantDisplayName } from "@/hooks/useParticipantPrefill";
-import { Loader2, ArrowLeft, Trash2, Save, Info, ShieldAlert, MessageSquare, Sparkles } from "lucide-react";
+import { Loader2, ArrowLeft, Trash2, Save, Info, ShieldAlert, MessageSquare, Sparkles, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { useAuth } from "@/context/AuthContext";
 import { CrossToolSourceIndicator, AutomatedDecisionDisclosure, StandingBanner, isEnabled } from "@/uxf";
 import COPY from "@/uxf/copy";
 import {
@@ -118,6 +119,7 @@ export default function CorrespondenceDetail() {
     const { entryId } = useParams();
     const nav = useNavigate();
     const { active: activeParticipant } = useParticipants();
+    const { user } = useAuth();
     const activeName = participantDisplayName(activeParticipant);
 
     const [entry, setEntry] = useState(null);
@@ -131,6 +133,7 @@ export default function CorrespondenceDetail() {
     const [termsAck, setTermsAck] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [busyDelete, setBusyDelete] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
 
     const [generated, setGenerated] = useState(null);
     const [busyPdf, setBusyPdf] = useState(false);
@@ -637,6 +640,14 @@ export default function CorrespondenceDetail() {
                                     onDownloadPdf={downloadPdf}
                                     busyPdf={busyPdf}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewOpen(true)}
+                                    data-testid="lf1-preview-open"
+                                    className="inline-flex items-center gap-2 rounded-full border border-primary-k text-primary-k px-4 py-2 text-sm font-medium hover:bg-primary-k hover:text-white transition-colors"
+                                >
+                                    <Eye className="h-4 w-4" /> Preview letter
+                                </button>
                                 {pdfSaved && isEnabled("uxf_v3.artifacts") && (
                                     <StandingBanner
                                         variant="success"
@@ -716,7 +727,98 @@ export default function CorrespondenceDetail() {
                 </DialogContent>
             </Dialog>
 
+            <LetterPreviewDialog
+                open={previewOpen}
+                onOpenChange={setPreviewOpen}
+                generated={generated}
+                entry={entry}
+                senderName={user?.name || ""}
+                senderEmail={user?.email || ""}
+                senderAuthority={senderAuthority}
+            />
+
             <Footer />
         </div>
+    );
+}
+
+function LetterPreviewDialog({ open, onOpenChange, generated, entry, senderName, senderEmail, senderAuthority }) {
+    if (!generated) return null;
+    const cover = generated.cover_note || {};
+    const RECIPIENT_LABEL = {
+        provider_cm: "Provider (Care Manager)", provider: "Provider", provider_senior: "Provider (Senior)",
+        mac: "My Aged Care", acqsc: "ACQSC", ombudsman: "Ombudsman", services_australia: "Services Australia",
+    };
+    const situationLine = entry?.situation_label
+        || String(entry?.archetype || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const today = new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+    let subject = generated.subject || (entry?.intake || {}).subject || "";
+    let body = generated.body || "";
+    if (!subject && body.toLowerCase().trimStart().startsWith("subject:")) {
+        const [first, ...rest] = body.split("\n");
+        subject = first.split(":").slice(1).join(":").trim();
+        body = rest.join("\n").trim();
+    }
+    const recipientLines = [
+        cover.entity_name || RECIPIENT_LABEL[entry?.recipient_type] || "Recipient",
+        cover.postal_address, cover.email, cover.portal_url, cover.phone,
+    ].filter(Boolean);
+    const paras = body.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+    const ccs = cover.cc_recipients || [];
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl" data-testid="lf1-preview-modal">
+                <DialogHeader>
+                    <DialogTitle>Letter preview</DialogTitle>
+                    <DialogDescription>
+                        This is exactly how your letter will look to the recipient. Review it before you send.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="max-h-[70vh] overflow-y-auto">
+                    <div className="bg-white text-[#1C2B2D] rounded-xl border border-kindred p-6 space-y-4" data-testid="lf1-preview-paper">
+                        <div className="border-b-2 border-primary-k pb-2">
+                            <div className="font-heading text-xl text-primary-k">Wayly</div>
+                            <div className="text-[10px] tracking-widest text-[#7a736a]">
+                                LETTERS AND FOLLOW-UPS · {String(situationLine).toUpperCase()}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <div className="text-xs font-semibold">From</div>
+                                <div className="text-sm mt-0.5">{senderName || "You"}</div>
+                                {senderAuthority ? <div className="text-xs text-[#524B42] mt-0.5">{senderAuthority}</div> : null}
+                                {senderEmail ? <div className="text-xs text-[#524B42] mt-0.5">{senderEmail}</div> : null}
+                            </div>
+                            <div>
+                                <div className="text-xs font-semibold">To</div>
+                                {recipientLines.map((l, i) => (
+                                    <div key={i} className={i === 0 ? "text-sm mt-0.5" : "text-xs text-[#524B42] mt-0.5"}>{l}</div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="text-xs text-[#524B42]">{today}</div>
+                        {subject ? <div className="font-heading text-lg text-primary-k" data-testid="lf1-preview-subject">{subject}</div> : null}
+                        <div className="space-y-2.5" data-testid="lf1-preview-body">
+                            {paras.map((p, i) => (
+                                <p key={i} className="text-sm leading-relaxed whitespace-pre-line">{p}</p>
+                            ))}
+                        </div>
+                        {cover.include_opan_footer ? (
+                            <p className="text-xs italic text-[#524B42] leading-relaxed">
+                                Reference: Older Persons Advocacy Network (OPAN), 1800 700 600. Independent advocacy is available to older Australians under the Statement of Rights, section 3 of the Aged Care Act 2024.
+                            </p>
+                        ) : null}
+                        {ccs.length ? (
+                            <p className="text-xs text-[#524B42]">cc: {ccs.map((c) => `${c.label}${c.phone ? ` (${c.phone})` : ""}`).join(", ")}</p>
+                        ) : null}
+                        <div className="border-t border-kindred pt-2">
+                            <p className="text-[10px] text-[#8a837a] leading-normal">
+                                Drafted with Wayly Letters and Follow-ups, a drafting assistant, not legal advice. Review in full before sending.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }

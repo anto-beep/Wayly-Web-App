@@ -147,7 +147,7 @@ export default function SupportDetailScreen() {
 
             {!isClosed ? (
               <Card>
-                <Field label="Add a reply" testID="support-reply-input" value={reply} onChangeText={setReply} multiline placeholder="Type your message…" />
+                <Field label="Add a reply" optional testID="support-reply-input" value={reply} onChangeText={setReply} multiline placeholder="Type your message…" />
                 <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
                   <Button label="Attach file" testID="support-attach" icon={Paperclip} variant="outline" onPress={attach} loading={attaching} style={{ flex: 1 }} />
                   <Button label="Send" testID="support-send" icon={Send} onPress={send} loading={busy} disabled={!reply.trim()} style={{ flex: 1 }} />

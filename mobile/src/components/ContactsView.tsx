@@ -121,7 +121,7 @@ export default function ContactsView({
             <Card testID={`${testPrefix}-form`}>
               <T variant="h3" style={{ marginBottom: spacing.sm }}>Add a contact</T>
               <View style={{ gap: spacing.sm }}>
-                <Field label="Name" testID={`${testPrefix}-name`} value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} placeholder="Full name" />
+                <Field label="Name" required testID={`${testPrefix}-name`} value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} placeholder="Full name" />
                 <View>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, marginBottom: 6 }}>Role</T>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -136,9 +136,9 @@ export default function ContactsView({
                     })}
                   </View>
                 </View>
-                <Field label="Organisation (optional)" value={form.organisation} onChangeText={(v) => setForm({ ...form, organisation: v })} placeholder="e.g. Blue Care" />
-                <Field label="Phone (optional)" value={form.phone} onChangeText={(v) => setForm({ ...form, phone: v })} keyboardType="phone-pad" placeholder="Phone" />
-                <Field label="Email (optional)" value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} keyboardType="email-address" autoCapitalize="none" placeholder="Email" />
+                <Field label="Organisation" optional value={form.organisation} onChangeText={(v) => setForm({ ...form, organisation: v })} placeholder="e.g. Blue Care" />
+                <Field label="Phone" optional value={form.phone} onChangeText={(v) => setForm({ ...form, phone: v })} keyboardType="phone-pad" placeholder="Phone" />
+                <Field label="Email" optional value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} keyboardType="email-address" autoCapitalize="none" placeholder="Email" />
                 <Button label="Save contact" testID={`${testPrefix}-save`} icon={Plus} onPress={save} loading={saving} disabled={!form.name.trim()} />
               </View>
             </Card>

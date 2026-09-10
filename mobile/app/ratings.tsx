@@ -104,12 +104,12 @@ export default function RatingsScreen() {
             <Card testID="ratings-form">
               <T variant="h3" style={{ marginBottom: spacing.sm }}>Rate a provider</T>
               <View style={{ gap: spacing.sm }}>
-                <Field label="Provider name" testID="ratings-provider" value={form.provider_name} onChangeText={(v) => setForm({ ...form, provider_name: v })} placeholder="e.g. Blue Care" />
+                <Field label="Provider name" required testID="ratings-provider" value={form.provider_name} onChangeText={(v) => setForm({ ...form, provider_name: v })} placeholder="e.g. Blue Care" />
                 <View>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, marginBottom: 6 }}>Stars</T>
                   <Stars value={form.stars} size={30} color={colors.gold} muted={colors.border} onPress={(n) => setForm({ ...form, stars: n })} />
                 </View>
-                <Field label="Comment (optional)" value={form.comment} onChangeText={(v) => setForm({ ...form, comment: v })} placeholder="What was your experience?" multiline />
+                <Field label="Comment" optional value={form.comment} onChangeText={(v) => setForm({ ...form, comment: v })} placeholder="What was your experience?" multiline />
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Would recommend</T>
                   <Switch value={form.would_recommend} onValueChange={(v) => setForm({ ...form, would_recommend: v })} trackColor={{ true: colors.primary }} testID="ratings-recommend" />

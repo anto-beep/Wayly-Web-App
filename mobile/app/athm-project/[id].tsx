@@ -178,7 +178,7 @@ export default function AthmProjectDetailScreen() {
           </View>
           {showItemForm ? (
             <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-              <Select label="Category" value={newItem.item_category} onChange={(v: string) => setNewItem({ ...newItem, item_category: v })} options={AT_CATEGORIES} testID="athm-item-category" />
+              <Select label="Category" required value={newItem.item_category} onChange={(v: string) => setNewItem({ ...newItem, item_category: v })} options={AT_CATEGORIES} testID="athm-item-category" />
               <FieldLite label="Item name" value={newItem.item_name} onChangeText={(v: string) => setNewItem({ ...newItem, item_name: v })} testID="athm-item-name" colors={colors} />
               <FieldLite label="Description (optional)" value={newItem.item_description} onChangeText={(v: string) => setNewItem({ ...newItem, item_description: v })} testID="athm-item-description" colors={colors} />
               <Button label="Save item" testID="athm-item-save" onPress={addItem} />
@@ -203,7 +203,7 @@ export default function AthmProjectDetailScreen() {
           </View>
           {showModForm ? (
             <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-              <Select label="Category" value={newMod.modification_category} onChange={(v: string) => setNewMod({ ...newMod, modification_category: v })} options={HM_CATEGORIES} testID="athm-mod-category" />
+              <Select label="Category" required value={newMod.modification_category} onChange={(v: string) => setNewMod({ ...newMod, modification_category: v })} options={HM_CATEGORIES} testID="athm-mod-category" />
               <FieldLite label="Name (e.g. Walk-in shower)" value={newMod.modification_name} onChangeText={(v: string) => setNewMod({ ...newMod, modification_name: v })} testID="athm-mod-name" colors={colors} />
               <FieldLite label="Location (e.g. Bathroom)" value={newMod.location_in_home} onChangeText={(v: string) => setNewMod({ ...newMod, location_in_home: v })} testID="athm-mod-location" colors={colors} />
               <Button label="Save modification" testID="athm-mod-save" onPress={addMod} />

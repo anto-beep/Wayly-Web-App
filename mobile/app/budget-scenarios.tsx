@@ -313,7 +313,7 @@ export default function BudgetScenariosScreen() {
                 </View>
 
                 <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
-                  <Field label="Save this scenario as" testID="bc2-scenario-label" value={label} onChangeText={setLabel} placeholder="e.g. If reassessed to Level 5" />
+                  <Field label="Save this scenario as" required testID="bc2-scenario-label" value={label} onChangeText={setLabel} placeholder="e.g. If reassessed to Level 5" />
                   {saveErr ? <T variant="small" style={{ color: colors.terracotta }}>{saveErr}</T> : null}
                   <Button label={saving ? "Saving..." : "Save scenario"} testID="bc2-save-scenario" icon={Save} loading={saving} disabled={!dirty} onPress={saveScenario} />
                   {!dirty ? <T variant="small" style={{ fontSize: 11 }}>Move a control to create a what-if scenario worth saving.</T> : null}

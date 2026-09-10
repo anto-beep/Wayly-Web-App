@@ -381,7 +381,7 @@ export default function DocumentsScreen() {
                 </View>
               </View>
 
-              <Field label="Title (optional)" testID="upload-title" value={docTitle} onChangeText={setDocTitle} placeholder="e.g. March statement" />
+              <Field label="Title" optional testID="upload-title" value={docTitle} onChangeText={setDocTitle} placeholder="e.g. March statement" />
 
               {uploadError ? (
                 <View style={[styles.errorBox, { backgroundColor: colors.errorSoft }]}>
@@ -414,8 +414,8 @@ export default function DocumentsScreen() {
               <Pressable testID="docvault-edit-close" onPress={() => setEditing(null)} hitSlop={12}><X size={22} color={colors.muted} /></Pressable>
             </View>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: spacing.sm }}>
-              <Field label="Title" testID="docvault-edit-title" value={editForm.title} onChangeText={(v) => setEditForm({ ...editForm, title: v })} placeholder="Document title" />
-              <Select label="Category" testID="docvault-edit-category" value={editForm.category} onChange={(v) => setEditForm({ ...editForm, category: v })} options={UPLOAD_CATEGORIES} />
+              <Field label="Title" required testID="docvault-edit-title" value={editForm.title} onChangeText={(v) => setEditForm({ ...editForm, title: v })} placeholder="Document title" />
+              <Select label="Category" required testID="docvault-edit-category" value={editForm.category} onChange={(v) => setEditForm({ ...editForm, category: v })} options={UPLOAD_CATEGORIES} />
               <Field label="Notes" optional testID="docvault-edit-notes" value={editForm.notes} onChangeText={(v) => setEditForm({ ...editForm, notes: v })} placeholder="Notes about this document" multiline style={{ minHeight: 80 } as any} />
               <Button label="Save changes" testID="docvault-edit-save" onPress={saveEdit} loading={savingEdit} />
             </ScrollView>

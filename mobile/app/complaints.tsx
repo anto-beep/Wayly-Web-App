@@ -285,7 +285,7 @@ function NewComplaintModal({ visible, pid, colors, prefill, onClose, onCreated }
 
             {step === 0 ? (
               <View testID="cmp1-wizard-content-0" style={{ gap: spacing.sm }}>
-                <Select label="Complaint type" value={form.complaint_type} onChange={(v: string) => set({ complaint_type: v })} options={COMPLAINT_TYPES} testID="cmp1-new-type" />
+                <Select label="Complaint type" required value={form.complaint_type} onChange={(v: string) => set({ complaint_type: v })} options={COMPLAINT_TYPES} testID="cmp1-new-type" />
                 {form.complaint_type === "elder_abuse" ? (
                   <View testID="cmp1-new-elder-safeguard" style={{ backgroundColor: colors.errorSoft, borderRadius: radius.md, padding: spacing.sm }}>
                     <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}><ShieldAlert size={13} color={colors.terracotta} /><T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.terracotta }}>Elder Abuse Safeguard</T></View>
@@ -297,7 +297,7 @@ function NewComplaintModal({ visible, pid, colors, prefill, onClose, onCreated }
                   <TextInput testID="cmp1-new-subject" value={form.subject_matter_summary} onChangeText={(v) => set({ subject_matter_summary: v })} multiline placeholder="A few sentences on what went wrong and roughly when." placeholderTextColor={colors.muted}
                     style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, minHeight: 100, textAlignVertical: "top", color: colors.text, fontFamily: fonts.body, backgroundColor: colors.bg }} />
                 </View>
-                <Select label="Severity" value={form.severity} onChange={(v: string) => set({ severity: v })} options={SEVERITIES} testID="cmp1-new-severity" />
+                <Select label="Severity" required value={form.severity} onChange={(v: string) => set({ severity: v })} options={SEVERITIES} testID="cmp1-new-severity" />
                 <CheckRow label="This includes an immediate safety concern" checked={form.contains_immediate_safety_concerns} onToggle={() => set({ contains_immediate_safety_concerns: !form.contains_immediate_safety_concerns })} testID="cmp1-new-safety" colors={colors} />
               </View>
             ) : null}
@@ -316,7 +316,7 @@ function NewComplaintModal({ visible, pid, colors, prefill, onClose, onCreated }
 
             {step === 2 ? (
               <View testID="cmp1-wizard-content-2" style={{ gap: spacing.sm }}>
-                <Select label="Desired outcome" value={form.desired_outcome} onChange={(v: string) => set({ desired_outcome: v })} options={DESIRED_OUTCOMES} testID="cmp1-new-outcome" />
+                <Select label="Desired outcome" required value={form.desired_outcome} onChange={(v: string) => set({ desired_outcome: v })} options={DESIRED_OUTCOMES} testID="cmp1-new-outcome" />
                 <View>
                   <T variant="small" style={{ color: colors.muted, fontSize: 11, marginBottom: 4 }}>Additional outcome notes (optional)</T>
                   <TextInput testID="cmp1-new-outcome-notes" value={form.desired_outcome_notes} onChangeText={(v) => set({ desired_outcome_notes: v })} multiline placeholder="Anything specific you want as a result?" placeholderTextColor={colors.muted}

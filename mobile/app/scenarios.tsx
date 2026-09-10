@@ -154,8 +154,8 @@ export default function ScenariosScreen() {
                     </View>
                   ))
                 )}
-                <DateField label="When" testID="scenario-date" value={form.effective_date} onChange={(iso) => setForm({ ...form, effective_date: iso })} />
-                <Field label="Note (optional)" value={form.note} onChangeText={(v) => setForm({ ...form, note: v })} placeholder="Anything to remember" multiline />
+                <DateField label="When" required testID="scenario-date" value={form.effective_date} onChange={(iso) => setForm({ ...form, effective_date: iso })} />
+                <Field label="Note" optional value={form.note} onChangeText={(v) => setForm({ ...form, note: v })} placeholder="Anything to remember" multiline />
                 {saveError ? <T variant="small" style={{ color: colors.terracotta }}>{saveError}</T> : null}
                 <Button label="Log event" testID="scenario-save" icon={Plus} onPress={save} loading={saving} disabled={!form.event_type} />
               </View>

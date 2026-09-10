@@ -105,7 +105,7 @@ export default function CaseDetailScreen() {
             </Card>
 
             <Card>
-              <Field label="Add a note" testID="case-note-input" value={note} onChangeText={setNote} multiline placeholder="Log a call, action taken, or update…" />
+              <Field label="Add a note" optional testID="case-note-input" value={note} onChangeText={setNote} multiline placeholder="Log a call, action taken, or update…" />
               <Button label="Add note" testID="case-add-note" icon={Plus} onPress={addNote} loading={busy} disabled={!note.trim()} style={{ marginTop: spacing.sm }} />
             </Card>
           </ScrollView>

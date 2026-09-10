@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
   Sparkles, AlertTriangle, FileText, Copy, Link as LinkIcon, ThumbsUp, ThumbsDown,
   ShieldCheck, Users, Paperclip, X, ClipboardCheck, Send, Info, Trash2, MailCheck,
-  CheckCircle2, PenLine, Download, MessageSquare,
+  CheckCircle2, PenLine, Download, MessageSquare, Eye,
 } from "lucide-react-native";
 import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
@@ -13,6 +13,7 @@ import { AppHeader, Badge, Button, Card, Loading, Select, StatePanel, T } from "
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { sharePostPdf } from "@/src/lib/download";
 import { useParticipants } from "@/src/context/ParticipantContext";
+import { useAuth } from "@/src/context/AuthContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { sanitizeAI } from "@/src/utils/format";
@@ -381,6 +382,7 @@ function CrossToolPanel({ entryId, onImport }: { entryId: string; onImport: (dat
 export default function CorrespondenceDetail() {
   const { colors } = useTheme();
   const { active } = useParticipants();
+  const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [entry, setEntry] = useState<any>(null);
@@ -403,6 +405,7 @@ export default function CorrespondenceDetail() {
   const [busyEmail, setBusyEmail] = useState(false);
   const [emailedSelf, setEmailedSelf] = useState(false);
   const [outMode, setOutMode] = useState<"email" | "mac_portal">("email");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // follow-up + reply modal
   const [replyOpen, setReplyOpen] = useState(false);
@@ -736,7 +739,8 @@ export default function CorrespondenceDetail() {
               <Card testID="lf1-draft">
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: spacing.sm }}>
                   <T variant="label" style={{ color: colors.muted }}>YOUR DRAFT</T>
-                  <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                  <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}>
+                    <Button label="Preview" variant="outline" icon={Eye} testID="lf1-preview-open" onPress={() => setPreviewOpen(true)} style={{ minHeight: 38, paddingHorizontal: spacing.md }} />
                     <Button label={copied ? "Copied" : "Copy"} variant="outline" icon={Copy} testID="lf1-copy" onPress={copy} style={{ minHeight: 38, paddingHorizontal: spacing.md }} />
                     <Button label="PDF" variant="outline" icon={Download} testID="lf1-format-pdf" onPress={downloadPdf} loading={busyPdf} style={{ minHeight: 38, paddingHorizontal: spacing.md }} />
                     <Button label={emailedSelf ? "Emailed" : "Email me"} variant="outline" icon={MailCheck} testID="lf1-email-self" onPress={emailSelf} loading={busyEmail} disabled={emailedSelf} style={{ minHeight: 38, paddingHorizontal: spacing.md }} />
@@ -795,6 +799,18 @@ export default function CorrespondenceDetail() {
 
       {/* Log inbound reply modal */}
       <LogReplyModal open={replyOpen} onClose={() => setReplyOpen(false)} entryId={String(id)} onLogged={() => { setReplyOpen(false); load(); }} />
+
+      {/* Letter preview — exactly as the provider will receive it */}
+      <LetterPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        draft={draft}
+        entry={entry}
+        archetype={archetype}
+        senderName={user?.name || ""}
+        senderEmail={user?.email || ""}
+        senderAuthority={senderAuthority}
+      />
     </View>
   );
 }
@@ -925,6 +941,80 @@ function ShareAndSignOffPanel({ entry, entryId, onUpdated }: { entry: any; entry
       )}
       {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }} testID="lf1-share-error">{error}</T> : null}
     </Card>
+  );
+}
+
+function LetterPreviewModal({ open, onClose, draft, entry, archetype, senderName, senderEmail, senderAuthority }: {
+  open: boolean; onClose: () => void; draft: any; entry: any; archetype: string;
+  senderName: string; senderEmail: string; senderAuthority: string;
+}) {
+  const { colors } = useTheme();
+  if (!draft) return null;
+  const cover = draft.cover_note || {};
+  const situationLine = entry?.situation_label || String(archetype || "").replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const today = new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+  // Body may carry a "Subject: ..." first line; split it out so the paper reads cleanly.
+  let subject = draft.subject || (entry?.intake || {}).subject || "";
+  let body = draft.body || "";
+  if (!subject && body.toLowerCase().trimStart().startsWith("subject:")) {
+    const [first, ...rest] = body.split("\n");
+    subject = first.split(":").slice(1).join(":").trim();
+    body = rest.join("\n").trim();
+  }
+  const recipientLines = [cover.entity_name || RECIPIENT_LABEL[entry?.recipient_type] || "Recipient", cover.postal_address, cover.email, cover.portal_url, cover.phone].filter(Boolean);
+  const paras = sanitizeAI(body).split(/\n\n+/).map((p: string) => p.trim()).filter(Boolean);
+  const ccs: any[] = cover.cc_recipients || [];
+  return (
+    <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: colors.overlay }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingTop: Platform.OS === "ios" ? 56 : spacing.lg, paddingBottom: spacing.sm }}>
+          <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, color: "#fff" }}>Letter preview</T>
+          <Pressable onPress={onClose} hitSlop={10} testID="lf1-preview-close"><X size={24} color="#fff" /></Pressable>
+        </View>
+        <T variant="small" style={{ color: "rgba(255,255,255,0.85)", paddingHorizontal: spacing.lg, marginBottom: spacing.sm }}>This is exactly how your letter will look to the recipient. Review it before you send.</T>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}>
+          <View testID="lf1-preview-paper" style={{ backgroundColor: "#ffffff", borderRadius: radius.md, padding: spacing.lg, gap: spacing.md }}>
+            {/* Letterhead */}
+            <View style={{ borderBottomWidth: 2, borderBottomColor: colors.primary, paddingBottom: spacing.sm }}>
+              <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.primary }}>Wayly</T>
+              <T style={{ fontFamily: fonts.body, fontSize: 10, letterSpacing: 1, color: "#7a736a" }}>LETTERS AND FOLLOW-UPS · {String(situationLine).toUpperCase()}</T>
+            </View>
+            {/* From / To */}
+            <View style={{ flexDirection: "row", gap: spacing.md }}>
+              <View style={{ flex: 1 }}>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: "#1C2B2D" }}>From</T>
+                <T style={{ fontFamily: fonts.body, fontSize: 13, color: "#1C2B2D", marginTop: 2 }}>{senderName || "You"}</T>
+                {senderAuthority ? <T style={{ fontFamily: fonts.body, fontSize: 12, color: "#524B42", marginTop: 2 }}>{senderAuthority}</T> : null}
+                {senderEmail ? <T style={{ fontFamily: fonts.body, fontSize: 12, color: "#524B42", marginTop: 2 }}>{senderEmail}</T> : null}
+              </View>
+              <View style={{ flex: 1 }}>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: "#1C2B2D" }}>To</T>
+                {recipientLines.map((l: string, i: number) => (
+                  <T key={i} style={{ fontFamily: fonts.body, fontSize: i === 0 ? 13 : 12, color: i === 0 ? "#1C2B2D" : "#524B42", marginTop: 2 }}>{l}</T>
+                ))}
+              </View>
+            </View>
+            <T style={{ fontFamily: fonts.body, fontSize: 12, color: "#524B42" }}>{today}</T>
+            {subject ? <T testID="lf1-preview-subject" style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.primary }}>{subject}</T> : null}
+            {/* Body */}
+            <View testID="lf1-preview-body" style={{ gap: spacing.sm }}>
+              {paras.map((p: string, i: number) => (
+                <T key={i} style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 22, color: "#1C2B2D" }}>{p}</T>
+              ))}
+            </View>
+            {cover.include_opan_footer ? (
+              <T style={{ fontFamily: fonts.body, fontSize: 11, fontStyle: "italic", color: "#524B42", lineHeight: 17 }}>Reference: Older Persons Advocacy Network (OPAN), 1800 700 600. Independent advocacy is available to older Australians under the Statement of Rights, section 3 of the Aged Care Act 2024.</T>
+            ) : null}
+            {ccs.length ? (
+              <T style={{ fontFamily: fonts.body, fontSize: 11, color: "#524B42" }}>cc: {ccs.map((c) => `${c.label}${c.phone ? ` (${c.phone})` : ""}`).join(", ")}</T>
+            ) : null}
+            <View style={{ borderTopWidth: 1, borderTopColor: "#E7E0D5", paddingTop: spacing.sm }}>
+              <T style={{ fontFamily: fonts.body, fontSize: 10, color: "#8a837a", lineHeight: 15 }}>Drafted with Wayly Letters and Follow-ups, a drafting assistant, not legal advice. Review in full before sending.</T>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
   );
 }
 

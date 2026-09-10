@@ -138,7 +138,7 @@ function WS1FeeCheck({ services, colors }: any) {
 
       {services.length > 0 ? (
         <View style={{ marginTop: spacing.md }}>
-          <Select label="Service entry" value={""} onChange={onServiceChange} options={serviceOpts} testID="chsp-ws1-service-entry" />
+          <Select label="Service entry" optional value={""} onChange={onServiceChange} options={serviceOpts} testID="chsp-ws1-service-entry" />
         </View>
       ) : null}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.md }}>
@@ -290,7 +290,7 @@ function ChspProfileCard({ profile, onCreate, colors }: any) {
       <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>START A CHSP PROFILE</T>
       <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>Set your current CHSP status so we can check fees and walk through transition to Support at Home.</T>
       <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
-        <Select label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} testID="chsp-status" />
+        <Select label="Status" required value={status} onChange={setStatus} options={STATUS_OPTIONS} testID="chsp-status" />
         <LInput label="CHSP start date (optional, YYYY-MM-DD)" value={start} onChangeText={setStart} placeholder="2024-03-01" testID="chsp-start-date" colors={colors} />
       </View>
       {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
@@ -390,7 +390,7 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
 
       {open ? (
         <View style={{ marginTop: spacing.md, gap: spacing.sm }} testID="chsp-service-form">
-          <Select label="Service type" value={form.service_type} onChange={(v: string) => set({ service_type: v })} options={SERVICE_TYPES} testID="chsp-svc-type" />
+          <Select label="Service type" required value={form.service_type} onChange={(v: string) => set({ service_type: v })} options={SERVICE_TYPES} testID="chsp-svc-type" />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
             <LInput label="Provider" value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-svc-provider" colors={colors} />
             <LInput label="Hourly rate / fee (AUD)" value={form.hourly_rate_or_fee} onChangeText={(v: string) => set({ hourly_rate_or_fee: v })} keyboardType="decimal-pad" testID="chsp-svc-rate" colors={colors} />
@@ -473,12 +473,12 @@ function FeeCheckForm({ services, colors }: any) {
       <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Enter what you were billed and what you expected. We&apos;ll flag anything outside a 2% or $5 tolerance.</T>
 
       <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
-        {services.length > 0 ? <Select label="Service entry (pre-fills provider / type)" value={form.chsp_service_entry_id} onChange={onServiceChange} options={serviceOpts} testID="chsp-fc-service-entry" /> : null}
+        {services.length > 0 ? <Select label="Service entry (pre-fills provider / type)" optional value={form.chsp_service_entry_id} onChange={onServiceChange} options={serviceOpts} testID="chsp-fc-service-entry" /> : null}
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
           <LInput label="Invoice / statement reference" value={form.invoice_or_statement_reference} onChangeText={(v: string) => set({ invoice_or_statement_reference: v })} testID="chsp-fc-reference" colors={colors} />
           <LInput label="Provider" value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-fc-provider" colors={colors} />
         </View>
-        <Select label="Service type" value={form.service_type} onChange={(v: string) => set({ service_type: v })} options={SERVICE_TYPES} testID="chsp-fc-service-type" />
+        <Select label="Service type" required value={form.service_type} onChange={(v: string) => set({ service_type: v })} options={SERVICE_TYPES} testID="chsp-fc-service-type" />
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
           <LInput label="Units billed" value={form.units_billed} onChangeText={(v: string) => set({ units_billed: v })} placeholder="e.g. 4 hours" testID="chsp-fc-units" colors={colors} />
           <LInput label="Billed amount (AUD)" value={form.billed_amount} onChangeText={(v: string) => set({ billed_amount: v })} keyboardType="decimal-pad" testID="chsp-fc-billed" colors={colors} />
@@ -583,7 +583,7 @@ function TransitionWalkthrough({ colors }: any) {
         ) : null}
         {step === 2 ? (
           <>
-            <Select label="Decision" value={decision} onChange={setDecision} options={DECISION_OPTIONS} testID="tw-decision" />
+            <Select label="Decision" required value={decision} onChange={setDecision} options={DECISION_OPTIONS} testID="tw-decision" />
             <TextInput testID="tw-decision-notes" value={decisionNotes} onChangeText={setDecisionNotes} multiline placeholder="Notes about this decision" placeholderTextColor={colors.muted}
               style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, minHeight: 70, textAlignVertical: "top", color: colors.text, fontFamily: fonts.body }} />
           </>

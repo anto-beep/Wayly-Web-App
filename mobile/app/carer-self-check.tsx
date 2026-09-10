@@ -143,7 +143,7 @@ export default function CarerSelfCheckScreen() {
         <ChipGroup title="What support are you using now?" options={SUPPORTS} selected={supports} onToggle={(k: string) => toggle(supports, setSupports, k)} colors={colors} prefix="csc-support" />
         <ChipGroup title="What would help most?" options={DESIRED} selected={desired} onToggle={(k: string) => toggle(desired, setDesired, k)} colors={colors} prefix="csc-desired" />
 
-        <Field label="Anything you want to add? (optional)" value={notes} onChangeText={setNotes} placeholder="A sentence or two, if you like." multiline testID="csc-notes" />
+        <Field label="Anything you want to add?" optional value={notes} onChangeText={setNotes} placeholder="A sentence or two, if you like." multiline testID="csc-notes" />
 
         <Card>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>

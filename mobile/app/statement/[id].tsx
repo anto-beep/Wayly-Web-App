@@ -210,6 +210,9 @@ export default function StatementDetail() {
                 input_method: stmt.input_method,
                 parsing_warnings: stmt.parsing_warnings,
                 summary: stmt.summary,
+                publishable: stmt.audit_json?.publishable,
+                publish_block: stmt.audit_json?.publish_block,
+                low_confidence: stmt.audit_json?.low_confidence,
               }} onDraftLetter={draftLetterFromAnomaly} />
             </View>
           ) : (

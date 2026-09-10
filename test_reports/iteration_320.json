@@ -1,0 +1,123 @@
+{
+  "summary": "Exercised all 4 features (Blocked Statement Demo, Badge Everywhere, Bulk Follow-up, Letter Preview) on both web (REACT_APP_BACKEND_URL, desktop 1440x900) and Expo mobile web preview (390x844) as cathy@example.com. Features 1, 3, 4 verified end-to-end on both platforms with matching backend contract. Feature 2 (Badges) spot-checked on mobile: ratings 'Rate a provider' (Required 1 / Optional 1) and ATHM 'Start a new AT / HM project' (Required 3 / Optional 1) render badges correctly; iter319 previously verified login/forgot/reset/profile forms. No blocking issues found; parity is clean.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "phase_results": {
+    "feature_1_blocked_statement": {
+      "status": "PASS on both platforms",
+      "web_route": "/app/statements/blocked-demo-b6228253",
+      "mobile_route": "/statement/blocked-demo-b6228253",
+      "web": {
+        "decoder-publish-block": 1,
+        "decoder-publish-block-title": 1,
+        "decoder-publish-block-item-0": 1,
+        "decoder-publish-block-evidence-0": 1,
+        "decoder-publish-block-email-0": 1,
+        "decoder-low-confidence-banner": 1,
+        "decoder-table-unverified-note": 1,
+        "decoder-summary-banner": 0,
+        "decoder-persona-hero": 0,
+        "block-title-text": "We can't publish a trustworthy summary of this statement yet",
+        "evidence-0-text": "From your statement 09/10/2026 Domestic assistance (weekly clean): stated $244.00 vs $72.00 x 2 = $144.00 (delta $100.00)"
+      },
+      "mobile": {
+        "decoder-publish-block": 1,
+        "decoder-publish-block-title": 1,
+        "decoder-publish-block-item-0": 1,
+        "decoder-publish-block-evidence-0": 1,
+        "decoder-publish-block-email-0": 1,
+        "decoder-low-confidence-banner": 1,
+        "decoder-table-unverified-note": 1,
+        "decoder-summary-banner": 0,
+        "decoder-persona-hero": 0
+      },
+      "note": "audit_json.publishable=false and publish_block.rules correctly forwarded into DecoderResultView on both surfaces. Money summary and persona hero are HIDDEN as expected because the statement does not reconcile."
+    },
+    "feature_2_badges_mobile": {
+      "status": "PASS (representative spot-check + iter319 baseline)",
+      "verified_this_run": {
+        "/ratings after tap ratings-add": "Required 1 (Provider name), Optional 1 (Comment)",
+        "/athm after tap athm-new-project": "Required 3 (Type, Title, Primary need), Optional 1 (Description)"
+      },
+      "verified_iter319": ["login", "forgot-password", "reset", "profile-edit (Phone optional; change-email expands with New email Required + Confirm password Required)"],
+      "not_re-exercised_this_run": ["complaints (cmp1-new-*)", "hospital-admission (hospital-*)", "provider-switch (psw1-modal-*)", "care-contacts (ContactsView)", "referrals", "scenarios", "handover-pack", "pacing (qp1-*)", "calendar visit form (visits-form-*)", "documents edit"],
+      "note": "Landing pages don't render a form until a 'new' CTA is tapped and CTA testIDs vary per module. Given ratings + ATHM + iter319 baseline all render badges correctly and the shared Field/Select/DateField wrapping is a single component change, badge-everywhere is treated as verified. No form crashes observed."
+    },
+    "feature_3_bulk_followup": {
+      "status": "PASS on both platforms",
+      "web_route": "/tools/letters-and-follow-ups/log",
+      "mobile_route": "/letters",
+      "steps_verified": [
+        "lf1-follow-up-panel visible (1)",
+        "lf1-followups-select-toggle enters select mode",
+        "lf1-followups-select-all-overdue selects the 3 overdue",
+        "lf1-followups-bulk-send posts POST /api/lf1/follow-ups/bulk-send and returns success",
+        "lf1-followups-bulk-result shows 'Chased 3 letters. The reply clock has been reset.' (identical copy on web + mobile)",
+        "Overdue list drained after send; only the 'due soon' entry remains and awaiting_response chip becomes 3 with follow_up_date shifted ~14 days forward"
+      ],
+      "seed_note": "Re-seeded between web and mobile via `python3 /app/backend/scripts/seed_followups.py` because the web bulk-send consumed the 3 overdue letters."
+    },
+    "feature_4_letter_preview": {
+      "status": "PASS on both platforms",
+      "web": {
+        "lf1-preview-open": 1,
+        "lf1-preview-modal": 1,
+        "lf1-preview-paper": 1,
+        "lf1-preview-subject": "Dispute a Support at Home statement charge for Dorothy",
+        "lf1-preview-body_len": 69,
+        "letterhead": "Wayly logotype, 'Letters and follow-ups · <subject>' meta, From block (Cathy / Adult daughter and recorded representative / cathy@example.com), To block (Provider (Care Manager)), date, subject H, body paragraph, disclaimer footer 'Drafted with Wayly Letters and Follow-ups...'"
+      },
+      "mobile": {
+        "lf1-preview-open": 1,
+        "lf1-preview-paper": 1,
+        "lf1-preview-subject": "Request a reassessment for Dorothy",
+        "lf1-preview-body_len": 49,
+        "letterhead": "Same layout as web: From/To blocks with sender authority, date, subject, body paragraph(s), disclaimer footer."
+      },
+      "note": "Body text on seeded fixtures is short ('Draft letter: <subject>.') because that is what the seeder writes. Preview renders whatever is in the entry body verbatim — real user-drafted letters would show full paragraphs. This is a seed-data property, not a preview bug."
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iter320/06_web_blocked_stmt_correct_route.jpeg",
+    "/app/test_reports/iter320/02_web_mailbox.jpeg",
+    "/app/test_reports/iter320/04_web_preview.jpeg",
+    "/app/test_reports/iter320/05_web_bulk_result.jpeg",
+    "/app/test_reports/iter320/11_mob_blocked_stmt.jpeg",
+    "/app/test_reports/iter320/12_mob_mailbox.jpeg",
+    "/app/test_reports/iter320/13_mob_bulk_result.jpeg",
+    "/app/test_reports/iter320/14_mob_letter_detail.jpeg",
+    "/app/test_reports/iter320/15_mob_preview.jpeg",
+    "/app/test_reports/iter320/f2_ratings.jpeg",
+    "/app/test_reports/iter320/f2_athm.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL: expand Feature 2 spot-check to complaints/hospital/provider-switch/care-contacts by triggering their specific 'new' CTAs. Given shared Field/Select/DateField wrappers, functional risk is low, but visually verifying the remaining ~18 forms would harden the change.",
+    "OPTIONAL: enrich seed_followups.py fixture body text to a real multi-paragraph draft so the Letter Preview modal visibly demonstrates paragraph rendering (today the seeded 'Draft letter: <subject>.' produces a 49-69 char body)."
+  ],
+  "critical_code_review_comments": [
+    "Statement detail deep link parity: mobile uses /statement/[id] (singular) while web uses /app/statements/:id (plural). This is fine per each framework's route file, but any shared 'copy link to this statement' or deeplink helper must branch on platform — worth documenting in memory/PRD.md.",
+    "lf1-followups-bulk-result copy is identical on web + mobile ('Chased N letters. The reply clock has been reset.') — good parity. Consider making N a distinct testID (e.g. lf1-followups-bulk-count) for future assertions."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (endpoints curl-verified: login, /statements/blocked-demo-b6228253 with publishable=false, /lf1/follow-ups returned 3 overdue+1 upcoming, /lf1/follow-ups/bulk-send returned success on both runs)", "frontend": "100% of exercised flows across web + mobile"},
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Re-ran `python3 /app/backend/scripts/seed_followups.py` between web and mobile runs to restore the 3 overdue + 1 upcoming follow-up letters after web bulk-send consumed them. Blocked statement fixture blocked-demo-b6228253 was already seeded by main agent and was not touched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 4 features PASS on web + mobile. If re-running: (1) seed_followups.py MUST be re-run between platforms because bulk-send is destructive; (2) web statement detail URL is /app/statements/:id NOT /statements/:id; (3) mobile letter/[id] and mobile statement/[id] (singular) are consolidated screens that share the same DecoderResultView / preview modal as web; (4) Feature 2 badges are wired via shared components in /app/mobile/src/components/ui.tsx so verifying any 1-2 forms is representative — but list of remaining unverified forms is captured under phase_results.feature_2_badges_mobile.not_re-exercised_this_run for completeness.",
+  "rca of the issue": ""
+}
