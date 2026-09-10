@@ -7,6 +7,7 @@ import { Sparkles, AlertOctagon, ShieldAlert, Shield, ShieldCheck, Upload, Camer
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import ToolEntriesButton from "@/src/components/ToolEntriesButton";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
@@ -298,6 +299,7 @@ export default function CarePlanReviewer() {
           <T variant="bodyMuted" style={{ lineHeight: 22 }}>
             Upload the care plan or paste the text. We will check it against the Statement of Rights (Aged Care Act 2024) and the National Quality Standards, and flag the gaps.
           </T>
+          <ToolEntriesButton toolKey="care-plan-reviewer" />
 
           <Card testID="care-plan-form">
             {/* Upload files */}

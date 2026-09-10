@@ -12,6 +12,7 @@ import EmailResultButton from "@/components/EmailResultButton";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
 import DecoderResultView from "@/components/DecoderResultView";
+import ToolEntriesButton from "@/components/ToolEntriesButton";
 import DecoderProgress from "@/components/DecoderProgress";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import ProfileInlinePrompts from "@/components/ProfileInlinePrompts";
@@ -212,6 +213,7 @@ export default function StatementDecoderTool() {
                     We accept PDF, Word, photos, and more. Get a plain-English breakdown
                     in under 2 minutes.
                 </p>
+                <ToolEntriesButton toolKey="statement-decoder" className="mt-5" />
             </section>
 
             <section className="mx-auto max-w-[1720px] px-6 pb-20" data-testid="statement-decoder-tool">

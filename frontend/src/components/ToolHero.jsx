@@ -12,6 +12,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { TOOL_CONTENT } from "@/data/toolContent";
+import ToolEntriesButton from "@/components/ToolEntriesButton";
 
 export default function ToolHero({ toolKey, wide = false }) {
     const c = TOOL_CONTENT[toolKey];
@@ -31,6 +32,7 @@ export default function ToolHero({ toolKey, wide = false }) {
             <p className="mt-3 text-lg text-muted-k leading-relaxed max-w-4xl">
                 {c.heroOneLiner}
             </p>
+            <ToolEntriesButton toolKey={toolKey} className="mt-5" />
         </section>
     );
 }

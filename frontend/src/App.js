@@ -303,10 +303,15 @@ function AppearanceScope() {
             || localStorage.getItem("wayly:marketing:appearance") // legacy split key
             || localStorage.getItem("kindred_theme") // legacy fallback
             || "light";
-        document.documentElement.classList.toggle("theme-dark", pref === "dark");
+        // Auth pages (login / signup / password reset / email verify) always
+        // render in light mode — dark mode is disabled on those pages per
+        // product decision, so they look identical to light mode.
+        const authRoute = /^\/(login|signup|forgot|reset|verify-email)/i.test(pathname);
+        const dark = pref === "dark" && !authRoute;
+        document.documentElement.classList.toggle("theme-dark", dark);
         // Mirror to the UXF-1 v3 attribute so tokens.css light/dark
         // overrides fire alongside the legacy `.theme-dark` class.
-        document.documentElement.setAttribute("data-theme", pref === "dark" ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
     }, [pathname]);
     return null;
 }

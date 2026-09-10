@@ -45,7 +45,10 @@ function applyPrefs(p) {
     const root = document.documentElement;
     root.setAttribute("data-font-scale", String(p.fontScale ?? 1));
     root.classList.toggle("theme-high-contrast", !!p.highContrast);
-    root.classList.toggle("theme-dark", !!p.dark);
+    // Auth pages (login / signup / password reset / email verify) always
+    // render in light mode; never force dark there even if the pref is dark.
+    const authRoute = /^\/(login|signup|forgot|reset|verify-email)/i.test((typeof window !== "undefined" && window.location.pathname) || "");
+    root.classList.toggle("theme-dark", !!p.dark && !authRoute);
     root.classList.toggle("a11y-underline-links", !!p.underlineLinks);
     root.classList.toggle("a11y-reduce-motion", !!p.reduceMotion);
     // Keep the Settings appearance store in sync so /settings reflects

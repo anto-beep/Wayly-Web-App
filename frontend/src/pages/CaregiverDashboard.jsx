@@ -12,7 +12,7 @@ import { humanize, shortSummary, flagTint } from "@/lib/plainText";
 
 import {
     AlertTriangle, FileText, ArrowRight, Sparkles, Users2, Shield, MessageCircle,
-    Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2, Clock, Users, ChevronDown, Lightbulb,
+    Crown, Lock, Calendar, TrendingUp, Bell, CheckCircle2, Clock, Users, ChevronDown, Lightbulb, Info,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { usePersonaCopy } from "@/hooks/usePersonaCopy";
@@ -175,13 +175,13 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                         </span>
                         <div className="mt-1.5 flex items-baseline gap-3 flex-wrap justify-center sm:justify-start">
                             <span className={`font-heading text-5xl sm:text-6xl tabular-nums leading-none ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-left">
-                                {formatAUD(Math.abs(left))}
+                                {formatAUD2(Math.abs(left))}
                             </span>
                             <span className="text-base sm:text-lg text-primary-k/80 font-medium">of {formatAUD2(quarterlyBudget)} this quarter</span>
                         </div>
                         <p className="mt-3.5 inline-flex items-center gap-2 text-sm sm:text-base font-semibold text-primary-k" data-testid="glance-spent">
                             <span className="h-3 w-3 rounded-full flex-none" style={{ backgroundColor: toneHex }} />
-                            <span className="tabular-nums">{formatAUD(spent)}</span> spent so far
+                            <span className="tabular-nums">{formatAUD2(spent)}</span> spent so far
                         </p>
                         {careMgmt > 0 && (
                             <p className="mt-2 text-sm text-primary-k/70" data-testid="glance-care-management">{formatAUD2(careMgmt)} of this is care management (10% of the quarterly budget).</p>
@@ -443,19 +443,37 @@ export default function CaregiverDashboard() {
                         {budget.streams_note && (
                             <div
                                 data-testid="dashboard-streams-note"
-                                className="flex items-start justify-between gap-3 rounded-lg border border-kindred bg-surface-2/70 px-4 py-3 text-xs text-muted-k leading-relaxed"
+                                className={`rounded-xl px-4 py-3.5 leading-relaxed ${
+                                    budget.allocation_source === "statement"
+                                        ? "border border-kindred bg-surface-2/70 text-xs text-muted-k"
+                                        : "border-2 border-gold/70 bg-gold/[0.14] text-sm"
+                                }`}
                             >
-                                <span>{budget.streams_note}</span>
-                                <span
-                                    data-testid="dashboard-streams-source"
-                                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider font-semibold border ${
-                                        budget.allocation_source === "statement"
-                                            ? "bg-sage/15 text-sage border-sage/40"
-                                            : "bg-gold/25 text-[#6B4A0F] border-gold/60"
-                                    }`}
-                                >
-                                    {budget.allocation_source === "statement" ? "From your latest statement" : "Indicative split"}
-                                </span>
+                                <div className="flex items-start gap-2.5">
+                                    {budget.allocation_source === "statement" ? (
+                                        <CheckCircle2 className="h-4 w-4 text-sage flex-none mt-0.5" />
+                                    ) : (
+                                        <Info className="h-4 w-4 text-[#6B4A0F] flex-none mt-0.5" />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <span
+                                            data-testid="dashboard-streams-source"
+                                            className={`inline-block rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold border ${
+                                                budget.allocation_source === "statement"
+                                                    ? "bg-sage/15 text-sage border-sage/40"
+                                                    : "bg-gold/40 text-[#6B4A0F] border-gold"
+                                            }`}
+                                        >
+                                            {budget.allocation_source === "statement" ? "From your latest statement" : "Indicative split only"}
+                                        </span>
+                                        {budget.allocation_source !== "statement" && (
+                                            <p className="mt-2 font-semibold text-[#6B4A0F]">
+                                                These per-category figures are an estimated split, not your provider's actual numbers. Upload a statement to see the real split.
+                                            </p>
+                                        )}
+                                        <p className={budget.allocation_source === "statement" ? "" : "mt-1 text-[#6B4A0F]/85"}>{budget.streams_note}</p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                         {pathways && pathways.eligible && pathways.eligible.length > 0 && (

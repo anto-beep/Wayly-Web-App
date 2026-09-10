@@ -416,24 +416,24 @@ export function InvoiceDownloadBar({ invoiceId }: { invoiceId?: string }) {
     } catch { /* surfaced by share sheet failure; keep quiet */ }
     finally { setBusy(null); }
   };
-  const btn = (label: string, kind: "original" | "report" | "csv", Icon: any, primary?: boolean) => (
+  const btn = (label: string, kind: "original" | "report" | "csv", Icon: any, bg: string) => (
     <Pressable
       testID={`inv1-download-${kind === "report" ? "pdf" : kind}-btn`}
       onPress={() => go(kind)}
       disabled={busy === kind}
-      style={{ flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: primary ? colors.primary : colors.surface, borderWidth: primary ? 0 : 1, borderColor: colors.border, opacity: busy === kind ? 0.5 : 1 }}
+      style={{ flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: bg, opacity: busy === kind ? 0.5 : 1 }}
     >
-      <Icon size={14} color={primary ? "#fff" : colors.text} />
-      <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: primary ? "#fff" : colors.text }}>{label}</T>
+      <Icon size={14} color="#fff" />
+      <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: "#fff" }}>{label}</T>
     </Pressable>
   );
   return (
     <View testID="inv1-download-bar" style={{ backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }}>
       <T variant="small" style={{ color: colors.muted }}>Save or view this checked invoice.</T>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-        {btn("Original", "original", FileText)}
-        {btn("CSV", "csv", Download)}
-        {btn("PDF report", "report", Download, true)}
+        {btn("Original", "original", FileText, colors.sage)}
+        {btn("CSV", "csv", Download, colors.gold)}
+        {btn("PDF report", "report", Download, colors.primary)}
       </View>
     </View>
   );

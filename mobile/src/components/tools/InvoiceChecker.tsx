@@ -6,6 +6,7 @@ import { Upload, ArrowRight, AlertTriangle, FileText, ReceiptText } from "lucide
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import ToolEntriesButton from "@/src/components/ToolEntriesButton";
 import InvoiceResultView from "@/src/components/invoices/InvoiceResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
@@ -66,6 +67,7 @@ export default function InvoiceChecker() {
         <T variant="bodyMuted" style={{ lineHeight: 22 }}>
           {"Upload the invoice your provider sent. We verify every line against Support at Home rules, flag anything worth raising, and show what you actually pay."}
         </T>
+        <ToolEntriesButton toolKey="invoice-checker" />
 
         <Card testID="inv1-upload-card">
           <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
@@ -76,7 +78,13 @@ export default function InvoiceChecker() {
 
           <View style={[styles.drop, { borderColor: colors.border, backgroundColor: colors.surface2 }]}>
             {!file ? (
-              <Button label="Choose invoice" testID="inv1-pick-file" icon={Upload} onPress={pick} />
+              <Pressable testID="inv1-pick-file" onPress={pick} style={{ alignItems: "center", paddingVertical: spacing.md }}>
+                <View style={{ width: 56, height: 56, borderRadius: radius.pill, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
+                  <Upload size={26} color={colors.primary} />
+                </View>
+                <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text, marginTop: 10 }}>Tap to choose your invoice</T>
+                <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>PDF, Word, image or CSV</T>
+              </Pressable>
             ) : (
               <View style={{ gap: spacing.sm, alignItems: "center" }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -93,18 +101,27 @@ export default function InvoiceChecker() {
         {error ? <View style={[styles.err, { backgroundColor: colors.errorSoft }]}><AlertTriangle size={18} color={colors.terracotta} /><T variant="small" style={{ color: colors.terracotta, flex: 1 }} testID="inv1-error">{error}</T></View> : null}
 
         {dupe ? (
-          <Card testID="inv1-duplicate">
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-              <AlertTriangle size={20} color={colors.gold} />
-              <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, flex: 1 }}>You have already checked this invoice</T>
+          <Card testID="inv1-duplicate" style={{ borderColor: colors.gold, borderWidth: 2, backgroundColor: colors.goldSoft }}>
+            <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing.sm }}>
+              <View style={{ width: 44, height: 44, borderRadius: radius.pill, backgroundColor: colors.gold, alignItems: "center", justifyContent: "center" }}>
+                <AlertTriangle size={22} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ alignSelf: "flex-start", backgroundColor: colors.gold + "55", borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3 }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.text }}>ALREADY CHECKED</T>
+                </View>
+                <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.text, marginTop: 6 }}>You have already checked this invoice</T>
+                <T variant="small" style={{ color: colors.text, marginTop: 4, lineHeight: 20 }}>
+                  {`This exact file was uploaded before${dupe.existing_created_at ? ` on ${shortDate(dupe.existing_created_at)}` : ""}${dupe.existing_provider_name ? ` for ${dupe.existing_provider_name}` : ""}. Open the existing check instead of creating a duplicate.`}
+                </T>
+              </View>
             </View>
-            <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>
-              {`This exact file was uploaded before${dupe.existing_created_at ? ` on ${shortDate(dupe.existing_created_at)}` : ""}${dupe.existing_provider_name ? ` for ${dupe.existing_provider_name}` : ""}. Open the existing check instead of creating a duplicate.`}
-            </T>
-            {dupe.existing_invoice_id ? (
-              <Button label="Open the existing check" testID="inv1-duplicate-open" icon={ArrowRight} onPress={() => router.push(`/invoice/${dupe.existing_invoice_id}`)} style={{ marginTop: spacing.md }} />
-            ) : null}
-            <Button label="Check a different invoice" variant="outline" testID="inv1-duplicate-reset" onPress={reset} style={{ marginTop: spacing.sm }} />
+            <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
+              {dupe.existing_invoice_id ? (
+                <Button label="Open the existing check" testID="inv1-duplicate-open" icon={ArrowRight} onPress={() => router.push(`/invoice/${dupe.existing_invoice_id}`)} />
+              ) : null}
+              <Button label="Check a different invoice" variant="outline" testID="inv1-duplicate-reset" onPress={reset} />
+            </View>
           </Card>
         ) : null}
 

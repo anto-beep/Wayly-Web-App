@@ -12,10 +12,11 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 type P = { id: string; first_name?: string; preferred_name?: string; requires_completion?: boolean };
 
 const DISMISS_KEY = "wayly_missing_details_banner_dismissed_at";
-const DISMISS_MS = 24 * 60 * 60 * 1000; // 24h
+const DISMISS_MS = 75 * 24 * 60 * 60 * 1000; // ~2.5 months (matches web ProfileInlinePrompts)
 
 // Mirrors web ProfileCompletionBanner. Shows when a participant still needs
-// details. Dismissible; once closed it stays hidden for 24 hours.
+// details. Dismissible; once closed it stays hidden for ~2.5 months so it
+// never nags on every visit.
 export function MissingDetailsBanner() {
   const { colors } = useTheme();
   const [items, setItems] = useState<P[]>([]);
