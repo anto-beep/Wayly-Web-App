@@ -97,7 +97,7 @@ export function InvoiceResultBanner({ result }) {
                 </div>
                 <div>
                     <div className="text-[10px] uppercase tracking-wider text-white/70">Potential refund</div>
-                    <div className="text-2xl mt-1 tabular-nums text-gold">{aud(refundOwed)}</div>
+                    <div className="text-3xl font-bold mt-1 tabular-nums text-gold">{aud(refundOwed)}</div>
                 </div>
                 <div>
                     <div className="text-[10px] uppercase tracking-wider text-white/70">Net payable</div>
@@ -438,21 +438,21 @@ export function InvoiceDownloadBar({ invoiceId, onCompare, comparing }) {
 
     return (
         <div className="flex items-center justify-between flex-wrap gap-3 section-teal-soft border border-kindred rounded-lg px-4 py-3" data-testid="inv1-download-bar">
-            <div className="text-sm text-primary-k font-medium">Save or compare this checked invoice.</div>
+            <div className="text-sm text-primary-k font-semibold">Save or compare this checked invoice.</div>
             <div className="flex items-center gap-2 flex-wrap">
                 {onCompare && (
                     <button
                         onClick={onCompare}
-                        className={`inline-flex items-center gap-1.5 text-sm border rounded-md px-3 py-1.5 transition-colors ${comparing ? "bg-primary-k text-white border-primary-k" : "border-primary-k text-primary-k hover:bg-primary-k hover:text-white"}`}
+                        className={`inline-flex items-center gap-1.5 text-sm font-semibold text-white rounded-lg px-4 py-2 transition-colors ${comparing ? "bg-[#091D33]" : "bg-gold hover:bg-[#c98a2e]"}`}
                         data-testid="inv1-compare-btn"
                     >
-                        <Columns2 className="h-3.5 w-3.5" /> {comparing ? "Hide compare" : "Compare"}
+                        <Columns2 className="h-3.5 w-3.5" /> {comparing ? "Hide Compare" : "Compare"}
                     </button>
                 )}
                 <button
                     onClick={() => download("original")}
                     disabled={busy === "original"}
-                    className="inline-flex items-center gap-1.5 text-sm border item-sage rounded-md px-3 py-1.5 hover:opacity-80 text-sage disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold bg-sage text-white rounded-lg px-4 py-2 hover:bg-[#345a3f] disabled:opacity-50 transition-colors"
                     data-testid="inv1-download-original-btn"
                 >
                     {busy === "original" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />} Original
@@ -460,7 +460,7 @@ export function InvoiceDownloadBar({ invoiceId, onCompare, comparing }) {
                 <button
                     onClick={() => download("csv")}
                     disabled={busy === "csv"}
-                    className="inline-flex items-center gap-1.5 text-sm border item-clay rounded-md px-3 py-1.5 hover:opacity-80 text-clay-k disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold bg-[#A5512B] text-white rounded-lg px-4 py-2 hover:bg-[#8f4523] disabled:opacity-50 transition-colors"
                     data-testid="inv1-download-csv-btn"
                 >
                     {busy === "csv" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />} CSV
@@ -468,7 +468,7 @@ export function InvoiceDownloadBar({ invoiceId, onCompare, comparing }) {
                 <button
                     onClick={() => download("report")}
                     disabled={busy === "report"}
-                    className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-md px-3 py-1.5 hover:bg-[#091D33] disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold bg-primary-k text-white rounded-lg px-4 py-2 hover:bg-[#091D33] disabled:opacity-50 transition-colors"
                     data-testid="inv1-download-pdf-btn"
                 >
                     {busy === "report" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />} PDF

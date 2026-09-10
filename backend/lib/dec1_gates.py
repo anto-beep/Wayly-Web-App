@@ -211,28 +211,30 @@ def run_reconciliation_gates(
             add({
                 "severity": "high",
                 "rule": "RULE_G3_BUDGET_NOT_IN_INDEX",
-                "headline": f"The quarterly budget on this statement ({_aud(stated_q)}) is not a recognised Support at Home amount.",
+                "headline": f"The quarterly budget on this statement ({_aud(stated_q)}) doesn't match any official Support at Home budget.",
                 "detail": (
-                    f"Support at Home quarterly budgets are fixed per classification, and {_aud(stated_q)} does not match any of them. "
-                    f"The closest is Class {nearest[0]} at {_aud(nearest[1])}. Because the budget figure looks wrong, we have not used it to "
-                    f"work out how much is left."
+                    f"Every Support at Home level has one set quarterly budget, and {_aud(stated_q)} isn't any of them "
+                    f"(the closest is Level {nearest[0]} at {_aud(nearest[1])}). This usually means the level or the budget was "
+                    f"typed incorrectly on the statement. Because this figure can't be trusted, we haven't used it to work out how "
+                    f"much of the budget is left, so those totals stay hidden until it's fixed."
                 ),
                 "dollar_impact": 0.0,
-                "evidence": [f"stated quarterly budget {_aud(stated_q)}; valid range {_aud(min(valid.values()))} to {_aud(max(valid.values()))}"],
-                "suggested_action": "Ask the provider which classification applies and confirm the correct quarterly budget.",
+                "evidence": [f"Budget shown: {_aud(stated_q)}. Official budgets run from {_aud(min(valid.values()))} to {_aud(max(valid.values()))}."],
+                "suggested_action": "Ask your provider to confirm which Support at Home level applies and the correct quarterly budget for it, then re-run this statement.",
             }, is_blocker=True)
         elif cls and cls in valid and abs(valid[cls] - stated_q) > 5.0:
             add({
                 "severity": "high",
                 "rule": "RULE_G3_BUDGET_CLASS_MISMATCH",
-                "headline": f"The quarterly budget shown ({_aud(stated_q)}) does not match Class {cls}.",
+                "headline": f"The quarterly budget shown ({_aud(stated_q)}) doesn't match the Level {cls} budget.",
                 "detail": (
-                    f"The statement lists Class {cls}, whose quarterly budget is {_aud(valid[cls])}, but it shows {_aud(stated_q)}. "
-                    f"We have not used the stated figure to work out how much is left."
+                    f"This statement says Level {cls}, and the set quarterly budget for that level is {_aud(valid[cls])}, but the "
+                    f"statement shows {_aud(stated_q)}. The two should be the same. Because they don't line up, we haven't used the "
+                    f"stated figure to work out how much of the budget is left."
                 ),
                 "dollar_impact": 0.0,
-                "evidence": [f"Class {cls} budget {_aud(valid[cls])} vs stated {_aud(stated_q)}"],
-                "suggested_action": "Ask the provider to confirm the classification and the quarterly budget.",
+                "evidence": [f"Level {cls} budget is {_aud(valid[cls])}. Statement shows {_aud(stated_q)}."],
+                "suggested_action": "Ask your provider to confirm the level and the correct quarterly budget, then re-run this statement.",
             }, is_blocker=True)
 
     true_budget = valid.get(cls) if cls else None
