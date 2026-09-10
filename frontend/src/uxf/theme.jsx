@@ -29,13 +29,23 @@ function readStoredPreference() {
     } catch { return null; }
 }
 
+function isAuthRoute() {
+    if (typeof window === "undefined") return false;
+    return /^\/(login|signup|forgot|reset|verify-email)/i.test(window.location.pathname || "");
+}
+
 function applyTheme(theme) {
     if (typeof document === "undefined") return;
-    document.documentElement.setAttribute(ATTR, theme);
+    // Auth pages (login / signup / password reset / email verify) always
+    // render in light mode regardless of the saved preference, so they look
+    // identical to light mode. This is the lowest-level writer of the theme
+    // class/attribute, so guarding here keeps refreshes on those routes light.
+    const effectiveTheme = isAuthRoute() ? "light" : theme;
+    document.documentElement.setAttribute(ATTR, effectiveTheme);
     // Mirror the legacy class-name convention (`AppearanceScope` writes
     // this same class) so any CSS that keyed on `.theme-dark` still
     // works during the UXF-1 v3 rollout.
-    document.documentElement.classList.toggle(DARK_CLASS, theme === "dark");
+    document.documentElement.classList.toggle(DARK_CLASS, effectiveTheme === "dark");
 }
 
 export function ThemeProvider({ children }) {
