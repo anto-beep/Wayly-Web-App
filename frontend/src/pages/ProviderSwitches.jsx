@@ -103,7 +103,7 @@ function NewSwitchModal({ pid, onClose, onCreated }) {
                 </div>
                 {err && <p className="text-xs text-red-700" data-testid="psw1-modal-error">{err}</p>}
                 <div className="flex items-center justify-end gap-2">
-                    <button onClick={onClose} className="text-xs px-4 py-2 rounded-full border border-primary-k/20">
+                    <button onClick={onClose} className="text-xs px-4 py-2 rounded-lg border border-primary-k/20">
                         Cancel
                     </button>
                     <button onClick={submit} disabled={busy || !form.current_provider_name.trim()}
@@ -376,7 +376,7 @@ export function SwitchDecisionWalkthrough() {
                 {step < 6 && (
                     <>
                         <div className="mt-4 h-1.5 rounded-full bg-primary-k/10 overflow-hidden" data-testid="psw1-progress">
-                            <div className="h-full bg-primary-k transition-all" style={{width: `${(step/5)*100}%`}} />
+                            <div className="h-full bg-primary-k transition-colors" style={{width: `${(step/5)*100}%`}} />
                         </div>
                         <p className="text-[11px] text-primary-k/50 mt-1">Step {step} of 5</p>
                     </>

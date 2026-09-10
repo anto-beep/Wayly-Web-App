@@ -177,7 +177,7 @@ function ArtefactCard({ kind, artefact }) {
         <Link
             to={artefact.url}
             data-testid={`core1-artefact-${kind}`}
-            className="block rounded-xl border border-kindred p-4 hover:shadow-md hover:border-primary-k/30 transition"
+            className="block rounded-xl border border-kindred p-4 hover:border-primary-k/30 transition"
             style={{ borderLeftWidth: 4, borderLeftColor: accent, backgroundColor: `${accent}0F` }}
         >
             <div className="flex items-center gap-2.5 mb-2">
@@ -754,7 +754,7 @@ export default function ParticipantProfile() {
                     <Link
                         to={`/app/participants/${id}/voice-check`}
                         data-testid="core1-voice-check-card"
-                        className="block rounded-2xl border border-kindred border-l-4 border-l-[#0E4D52] bg-[#0E4D52]/[0.05] p-6 shadow-sm hover:shadow-md hover:border-primary-k/30 transition"
+                        className="block rounded-2xl border border-kindred border-l-4 border-l-[#0E4D52] bg-[#0E4D52]/[0.05] p-6 shadow-sm hover:border-primary-k/30 transition"
                     >
                         <div className="flex items-start gap-3">
                             <span className="h-10 w-10 flex-none rounded-xl bg-[#0E4D52]/10 text-[#0E4D52] flex items-center justify-center">
@@ -775,7 +775,7 @@ export default function ParticipantProfile() {
                     <Link
                         to={`/app/participants/${id}/complaints`}
                         data-testid="core1-complaints-card"
-                        className="block rounded-2xl border border-kindred border-l-4 border-l-[#A5512B] bg-[#A5512B]/[0.05] p-6 shadow-sm hover:shadow-md hover:border-primary-k/30 transition"
+                        className="block rounded-2xl border border-kindred border-l-4 border-l-[#A5512B] bg-[#A5512B]/[0.05] p-6 shadow-sm hover:border-primary-k/30 transition"
                     >
                         <div className="flex items-start gap-3">
                             <span className="h-10 w-10 flex-none rounded-xl bg-[#A5512B]/10 text-[#A5512B] flex items-center justify-center">
@@ -821,7 +821,7 @@ export default function ParticipantProfile() {
                                 >
                                     Full Timeline →
                                 </Link>
-                                <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-primary-k/10 text-primary-k transition-all group-hover:bg-primary-k/20 group-open:rotate-180" aria-hidden>
+                                <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-primary-k/10 text-primary-k transition-colors group-hover:bg-primary-k/20 group-open:rotate-180" aria-hidden>
                                     <ChevronDown className="h-4 w-4" />
                                 </span>
                             </div>

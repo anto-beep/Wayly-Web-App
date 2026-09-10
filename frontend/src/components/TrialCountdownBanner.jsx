@@ -64,7 +64,7 @@ export default function TrialCountdownBanner({ className = "" }) {
             <Link
                 to="/settings/billing"
                 data-testid="trial-banner-upgrade"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 py-1.5 rounded-md whitespace-nowrap flex-shrink-0 bg-wayly-clay-500 text-white hover:brightness-95"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 py-1.5 rounded-md whitespace-nowrap flex-shrink-0 bg-wayly-clay-500 text-white"
             >
                 Manage Billing
             </Link>

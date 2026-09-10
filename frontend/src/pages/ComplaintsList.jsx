@@ -276,7 +276,7 @@ function NewComplaintModal({ pid, onClose, onCreated, prefill = {} }) {
                 </div>
 
                 <div className="p-5 border-t border-primary-k/10 flex gap-2">
-                    <button onClick={onClose} className="py-2 px-4 rounded-full border border-primary-k/20 text-primary-k text-sm" data-testid="cmp1-new-cancel">Cancel</button>
+                    <button onClick={onClose} className="py-2 px-4 rounded-lg border border-primary-k/20 text-primary-k text-sm" data-testid="cmp1-new-cancel">Cancel</button>
                     <div className="flex-1"/>
                     {step > 0 && (
                         <button onClick={goBack}

@@ -51,7 +51,7 @@ function ProgressBar({ answered, total }) {
                 <span>{pct}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
-                <div className="h-full bg-primary-k transition-all" style={{ width: `${pct}%` }} />
+                <div className="h-full bg-primary-k transition-colors" style={{ width: `${pct}%` }} />
             </div>
         </div>
     );
@@ -177,7 +177,7 @@ function ProfileHeader({ result, current, bands }) {
                         return (
                             <div key={n} className="flex-1 flex flex-col items-center gap-1.5" data-testid={`csc-scale-${n}`}>
                                 <div
-                                    className={`w-full rounded-full transition-all ${
+                                    className={`w-full rounded-full transition-colors ${
                                         isPrimary ? "bg-gold h-9 shadow-[0_0_0_2px_rgba(255,255,255,0.35)]"
                                             : inRange ? "bg-[#8FBF95] h-6"
                                                 : "bg-white/15 h-3.5"

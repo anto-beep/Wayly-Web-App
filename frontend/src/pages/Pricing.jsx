@@ -284,7 +284,7 @@ export default function Pricing() {
             <section className="mx-auto max-w-6xl px-6 pb-12" data-testid="pricing-cards">
                 <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
                     {TIERS.map((t) => (
-                        <div key={t.key} className={`group relative rounded-2xl border p-6 pt-7 transition-all duration-300 hover:-translate-y-1.5 ${t.featured ? "bg-gradient-to-br from-[#0E4D52] to-[#0A3B3F] text-white border-gold/60 shadow-[0_24px_60px_-20px_rgba(10,32,34,0.55)] hover:shadow-[0_32px_80px_-24px_rgba(10,32,34,0.7)]" : "bg-surface border-kindred shadow-sm hover:shadow-xl hover:border-primary-k/40"}`} data-testid={`tier-${t.key}`}>
+                        <div key={t.key} className={`group relative rounded-2xl border p-6 pt-7 transition-colors duration-300.5 ${t.featured ? "bg-gradient-to-br from-[#0E4D52] to-[#0A3B3F] text-white border-gold/60 shadow-[0_24px_60px_-20px_rgba(10,32,34,0.55)] hover:shadow-[0_32px_80px_-24px_rgba(10,32,34,0.7)]" : "bg-surface border-kindred shadow-sm hover:border-primary-k/40"}`} data-testid={`tier-${t.key}`}>
                             <span aria-hidden className={`absolute inset-x-0 top-0 h-1.5 rounded-t-2xl ${t.featured ? "bg-gold" : "bg-primary-k"}`} />
                             {t.badge && (
                                 <span className="absolute -top-3 right-5 inline-flex items-center gap-1 bg-gold text-white text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-bold shadow-md">
@@ -315,7 +315,7 @@ export default function Pricing() {
                                 }}
                                 disabled={loadingPlan === t.key}
                                 data-testid={`tier-cta-${t.key}`}
-                                className={`mt-5 w-full inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition ${t.featured ? "bg-gold text-white hover:brightness-95" : "bg-primary-k text-white hover:bg-[#091D33]"} disabled:opacity-60 disabled:cursor-wait`}
+                                className={`mt-5 w-full inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition ${t.featured ? "bg-gold text-white" : "bg-primary-k text-white hover:bg-[#091D33]"} disabled:opacity-60 disabled:cursor-wait`}
                             >
                                 {loadingPlan === t.key ? (
                                     <><Loader2 className="h-4 w-4 animate-spin" /> Starting checkout</>

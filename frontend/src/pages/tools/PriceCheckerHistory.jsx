@@ -598,7 +598,7 @@ function BulkDeleteModal({ open, onClose, service, provider, onDeleted }) {
                     {error && <p className="text-sm text-terracotta">{error}</p>}
                 </div>
                 <DialogFooter className="gap-2">
-                    <button type="button" onClick={onClose} className="px-3.5 py-2 rounded-full border border-kindred text-primary-k text-sm">Cancel</button>
+                    <button type="button" onClick={onClose} className="px-3.5 py-2 rounded-lg border border-kindred text-primary-k text-sm">Cancel</button>
                     <button
                         type="button"
                         onClick={doDelete}

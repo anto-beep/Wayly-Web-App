@@ -26,6 +26,7 @@ import ToolGate from "@/components/ToolGate";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
+import FilePreviewPanel from "@/components/FilePreviewPanel";
 import UploadGuardNotice from "@/components/UploadGuardNotice";
 import useToolAccess from "@/hooks/useToolAccess";
 import { useAuth } from "@/context/AuthContext";
@@ -350,7 +351,7 @@ function SituationForm({ invoiceId, onUpdated }) {
             <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white text-sm font-medium px-5 py-2.5 hover:brightness-95 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white text-sm font-medium px-5 py-2.5 disabled:opacity-60"
                 data-testid="inv1-situation-submit"
             >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -364,6 +365,7 @@ export default function InvoiceCheckerTool() {
     const access = useToolAccess();
     const { user } = useAuth();
     const [file, setFile] = useState(null);
+    const [dragActive, setDragActive] = useState(false);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
@@ -550,56 +552,51 @@ export default function InvoiceCheckerTool() {
                         <ReceiptText className="h-8 w-8 text-primary-k hidden sm:block" />
                     </div>
 
-                    <div className="mt-6 border-2 border-dashed border-kindred rounded-xl p-6 text-center bg-surface-2">
-                        <input
-                            ref={fileRef}
-                            type="file"
-                            accept=".pdf,.doc,.docx,.txt,.csv,.jpg,.jpeg,.png,.heic,.heif,.webp"
-                            onChange={onPick}
-                            className="hidden"
-                            data-testid="inv1-file-input"
-                        />
-                        {!file && (
-                            <button
-                                type="button"
-                                onClick={() => fileRef.current?.click()}
-                                className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white font-medium px-5 py-3 hover:brightness-95"
-                                data-testid="inv1-pick-file"
-                            >
-                                <Upload className="h-4 w-4" /> Choose invoice
-                            </button>
-                        )}
-                        {file && (
-                            <div className="flex items-center justify-center gap-3 flex-wrap">
-                                <div className="inline-flex items-center gap-2 text-sm text-primary-k">
-                                    <FileText className="h-4 w-4" />
-                                    <span data-testid="inv1-file-name">{file.name}</span>
-                                    <span className="text-muted-k">
-                                        · {(file.size / 1024).toFixed(0)} KB
-                                    </span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => onUpload()}
-                                    disabled={loading}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white font-medium px-5 py-2.5 hover:brightness-95 disabled:opacity-60"
-                                    data-testid="inv1-upload-submit"
-                                >
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                                    {loading ? "Reading your invoice…" : "Check my invoice"}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={onReset}
-                                    disabled={loading}
-                                    className="text-sm text-muted-k underline"
-                                    data-testid="inv1-reset"
-                                >
-                                    Choose a different file
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                    <input
+                        ref={fileRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,.txt,.csv,.jpg,.jpeg,.png,.heic,.heif,.webp"
+                        onChange={onPick}
+                        className="hidden"
+                        data-testid="inv1-file-input"
+                    />
+                    {!file ? (
+                        <div
+                            className={`mt-6 rounded-xl border-2 border-dashed bg-surface-2 p-10 text-center cursor-pointer transition-colors ${dragActive ? "border-gold bg-surface scale-[1.01]" : "border-kindred hover:bg-surface"}`}
+                            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                            onDragLeave={() => setDragActive(false)}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                setDragActive(false);
+                                const f = e.dataTransfer.files?.[0];
+                                if (f) { setFile(f); setResult(null); setError(null); setGuard(null); }
+                            }}
+                            onClick={() => fileRef.current?.click()}
+                            data-testid="inv1-dropzone"
+                        >
+                            <Upload className={`h-12 w-12 mx-auto text-primary-k transition-transform ${dragActive ? "scale-110" : ""}`} />
+                            <div className="font-heading text-xl text-primary-k mt-3">Drag your invoice here</div>
+                            <div className="text-sm text-muted-k mt-1">or click to browse files</div>
+                            <div className="text-xs text-muted-k mt-3">PDF · Word · TXT · CSV · JPG · PNG · HEIC · WEBP</div>
+                        </div>
+                    ) : (
+                        <div className="mt-6">
+                            <FilePreviewPanel file={file} onClear={onReset} />
+                        </div>
+                    )}
+
+                    {file && (
+                        <button
+                            type="button"
+                            onClick={() => onUpload()}
+                            disabled={loading}
+                            data-testid="inv1-upload-submit"
+                            className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        >
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                            {loading ? "Reading your invoice…" : "Check my invoice"}
+                        </button>
+                    )}
 
                     <p className="mt-4 text-xs text-muted-k">
                         We accept PDF, DOC/DOCX, TXT, CSV, JPG, PNG, HEIC, and WEBP files. Your invoice is stored securely in Australia and you can delete it any time.
@@ -626,37 +623,43 @@ export default function InvoiceCheckerTool() {
 
                 {/* Exact-duplicate notice */}
                 {dupe && (
-                    <div className="mt-6 rounded-2xl border border-gold/50 bg-gold/10 p-5" data-testid="inv1-duplicate">
-                        <div className="flex items-start gap-3">
-                            <div className="h-9 w-9 rounded-full bg-gold/25 flex items-center justify-center flex-shrink-0">
-                                <AlertTriangle className="h-5 w-5 text-primary-k" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-heading text-lg text-primary-k">You have already checked this invoice</h3>
-                                <p className="mt-1 text-sm text-muted-k leading-relaxed">
-                                    This exact file was uploaded before
-                                    {dupe.existing_created_at ? <> on <strong>{formatDate(dupe.existing_created_at)}</strong></> : null}
-                                    {dupe.existing_provider_name ? <> for <strong>{dupe.existing_provider_name}</strong></> : null}.
-                                    Open the existing check instead of creating a duplicate.
-                                </p>
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                    {dupe.existing_invoice_id && (
-                                        <Link
-                                            to={`/app/invoices/${dupe.existing_invoice_id}`}
-                                            data-testid="inv1-duplicate-open"
-                                            className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]"
+                    <div className="mt-6 overflow-hidden rounded-2xl border-2 border-gold bg-gold/10 shadow-sm" data-testid="inv1-duplicate">
+                        <div className="h-1.5 w-full bg-gold" />
+                        <div className="p-6">
+                            <div className="flex items-start gap-4">
+                                <div className="h-12 w-12 rounded-full bg-gold flex items-center justify-center flex-shrink-0">
+                                    <AlertTriangle className="h-6 w-6 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="inline-block text-[11px] font-semibold uppercase tracking-wider text-primary-k bg-gold/30 rounded-full px-2.5 py-1">
+                                        Already Checked
+                                    </span>
+                                    <h3 className="mt-2 font-heading text-xl text-primary-k">You Have Already Checked This Invoice</h3>
+                                    <p className="mt-1.5 text-sm text-primary-k/80 leading-relaxed">
+                                        This exact file was uploaded before
+                                        {dupe.existing_created_at ? <> on <strong>{formatDate(dupe.existing_created_at)}</strong></> : null}
+                                        {dupe.existing_provider_name ? <> for <strong>{dupe.existing_provider_name}</strong></> : null}.
+                                        Open the existing check instead of creating a duplicate.
+                                    </p>
+                                    <div className="mt-5 flex flex-wrap gap-3">
+                                        {dupe.existing_invoice_id && (
+                                            <Link
+                                                to={`/app/invoices/${dupe.existing_invoice_id}`}
+                                                data-testid="inv1-duplicate-open"
+                                                className="inline-flex items-center gap-2 text-sm font-semibold bg-primary-k text-white rounded-lg px-5 py-3 hover:bg-[#091D33] transition-colors"
+                                            >
+                                                <ArrowRight className="h-4 w-4" /> Open the Existing Check
+                                            </Link>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={onReset}
+                                            data-testid="inv1-duplicate-reset"
+                                            className="inline-flex items-center gap-2 text-sm font-semibold bg-[#A5512B] text-white rounded-lg px-5 py-3 hover:bg-[#8f4523] transition-colors"
                                         >
-                                            Open the existing check
-                                        </Link>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={onReset}
-                                        data-testid="inv1-duplicate-reset"
-                                        className="text-sm border border-kindred rounded-full px-5 py-2.5 text-primary-k hover:bg-surface-2"
-                                    >
-                                        Check a different invoice
-                                    </button>
+                                            <ReceiptText className="h-4 w-4" /> Check a Different Invoice
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -688,7 +691,7 @@ export default function InvoiceCheckerTool() {
                                 <div className="mt-4 flex flex-wrap items-center gap-3">
                                     <Link
                                         to="/ai-tools/statement-decoder"
-                                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k text-white text-sm font-medium px-4 py-2 hover:brightness-95"
+                                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k text-white text-sm font-medium px-4 py-2"
                                         data-testid="inv1-open-statement-decoder"
                                     >
                                         Open Statement Decoder <ArrowRight className="h-3.5 w-3.5" />
@@ -787,7 +790,7 @@ export default function InvoiceCheckerTool() {
                                                 type="button"
                                                 onClick={onReconcileCombined}
                                                 disabled={reconcilingCombined}
-                                                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k text-white text-sm font-medium px-4 py-2 hover:brightness-95 disabled:opacity-60"
+                                                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
                                                 data-testid="inv1-reconcile-combined-btn"
                                             >
                                                 {reconcilingCombined ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
@@ -841,7 +844,6 @@ export default function InvoiceCheckerTool() {
                         {/* 4. Issue Register - grouped-by-severity clear layout matching Statement Decoder */}
                         <InvoiceIssueRegister
                             findings={result.reconciliation?.findings || []}
-                            onDraftAll={onDraftAll}
                             onDraftFinding={onDraftLetter}
                         />
 
@@ -879,7 +881,7 @@ export default function InvoiceCheckerTool() {
                                     type="button"
                                     onClick={onSaveToVault}
                                     disabled={savingToVault}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k text-white text-sm font-medium px-4 py-2 hover:brightness-95 disabled:opacity-60"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
                                     data-testid="inv1-save-to-vault-btn"
                                 >
                                     {savingToVault ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -928,12 +930,12 @@ export default function InvoiceCheckerTool() {
                 </div>
 
                 <div className="mt-8 grid sm:grid-cols-2 gap-4">
-                    <Link to="/ai-tools/statement-decoder" className="bg-surface border border-kindred rounded-xl p-4 hover:bg-surface-2 transition-colors" data-testid="inv1-related-statement-decoder">
+                    <Link to="/ai-tools/statement-decoder" className="bg-[rgba(14,77,82,0.08)] border border-[rgba(14,77,82,0.25)] rounded-xl p-4 hover:bg-[rgba(14,77,82,0.14)] transition-colors" data-testid="inv1-related-statement-decoder">
                         <div className="overline">Related tool</div>
                         <div className="font-heading text-lg text-primary-k mt-1">Statement Decoder →</div>
                         <p className="mt-1 text-sm text-muted-k">The information-only statement, decoded line by line.</p>
                     </Link>
-                    <Link to="/ai-tools/contribution-estimator" className="bg-surface border border-kindred rounded-xl p-4 hover:bg-surface-2 transition-colors" data-testid="inv1-related-contribution-estimator">
+                    <Link to="/ai-tools/contribution-estimator" className="bg-gold/10 border border-gold/30 rounded-xl p-4 hover:bg-gold/20 transition-colors" data-testid="inv1-related-contribution-estimator">
                         <div className="overline">Related tool</div>
                         <div className="font-heading text-lg text-primary-k mt-1">Contribution Estimator →</div>
                         <p className="mt-1 text-sm text-muted-k">Work out what you should be paying each quarter.</p>

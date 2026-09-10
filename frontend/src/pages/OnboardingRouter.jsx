@@ -193,7 +193,7 @@ function ParticipantSelector({ account, incomplete, complete, onPick, onFinishFo
                                 key={p.id}
                                 type="button"
                                 onClick={() => onPick(p.id)}
-                                className="w-full text-left rounded-2xl border border-kindred bg-white p-5 hover:border-primary-k hover:shadow-md transition group focus:outline-none focus:ring-2 ring-primary-k"
+                                className="w-full text-left rounded-2xl border border-kindred bg-white p-5 hover:border-primary-k transition group focus:outline-none focus:ring-2 ring-primary-k"
                                 data-testid={`onboarding-select-${p.id}`}
                             >
                                 <div className="flex items-start gap-4">
@@ -214,7 +214,7 @@ function ParticipantSelector({ account, incomplete, complete, onPick, onFinishFo
                                         <div className="mt-3">
                                             <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
                                                 <div
-                                                    className="h-full bg-sage transition-all"
+                                                    className="h-full bg-sage transition-colors"
                                                     style={{ width: `${pct}%` }}
                                                     role="progressbar"
                                                     aria-valuenow={pct}

@@ -52,7 +52,7 @@ function FreePlanLimitCard() {
                         You can still view every statement, anomaly, contact and AT-HM record we have on file for you. To add new entries, decode new statements, lodge support tickets, or use the AI tools, choose a plan.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
-                        <Link to="/settings/billing" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]" data-testid="dashboard-upgrade-cta">Choose a Plan</Link>
+                        <Link to="/settings/billing" className="text-sm bg-primary-k text-white rounded-lg px-5 py-2.5 hover:bg-[#091D33]" data-testid="dashboard-upgrade-cta">Choose a Plan</Link>
                     </div>
                 </div>
             </div>
@@ -191,16 +191,16 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
             </div>
             {/* Mini-stats: three distinct, soft colours */}
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3 p-3 sm:p-4 border-t border-kindred">
-                <Link to={toReviewHref} data-testid="glance-alerts" className="rounded-xl border-l-4 border-l-gold border border-gold/30 bg-gold/[0.10] p-3.5 sm:p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:bg-gold/[0.18] transition-all">
+                <Link to={toReviewHref} data-testid="glance-alerts" className="rounded-xl border-l-4 border-l-gold border border-gold/30 bg-gold/[0.10] p-3.5 sm:p-4 shadow-sm hover:bg-gold/[0.18] transition-colors">
                     <div className="flex items-center gap-1.5 text-[#6B4A0F]"><Bell className="h-4 w-4" /><span className="text-[10px] uppercase tracking-[0.12em] font-semibold">To review</span></div>
                     <div className="mt-1 font-heading text-[1.75rem] leading-none text-primary-k tabular-nums">{alertCount}</div>
                     <div className="mt-0.5 text-[10px] text-muted-k leading-tight">On your latest statement</div>
                 </Link>
-                <Link to="/app/statements" data-testid="glance-statements" className="rounded-xl border-l-4 border-l-primary-k border border-primary-k/15 bg-primary-k/[0.06] p-3.5 sm:p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:bg-primary-k/[0.11] transition-all">
+                <Link to="/app/statements" data-testid="glance-statements" className="rounded-xl border-l-4 border-l-primary-k border border-primary-k/15 bg-primary-k/[0.06] p-3.5 sm:p-4 shadow-sm hover:bg-primary-k/[0.11] transition-colors">
                     <div className="flex items-center gap-1.5 text-primary-k"><FileText className="h-4 w-4" /><span className="text-[10px] uppercase tracking-[0.12em] font-semibold">Statements</span></div>
                     <div className="mt-1 font-heading text-[1.75rem] leading-none text-primary-k tabular-nums">{statements.length}</div>
                 </Link>
-                <Link to={lifetimeCapHref} data-testid="glance-cap" className="rounded-xl border-l-4 border-l-clay border border-clay/30 bg-clay/[0.09] p-3.5 sm:p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:bg-clay/[0.16] transition-all">
+                <Link to={lifetimeCapHref} data-testid="glance-cap" className="rounded-xl border-l-4 border-l-clay border border-clay/30 bg-clay/[0.09] p-3.5 sm:p-4 shadow-sm hover:bg-clay/[0.16] transition-colors">
                     <div className="flex items-center gap-1.5 text-clay"><CheckCircle2 className="h-4 w-4" /><span className="text-[10px] uppercase tracking-[0.12em] font-semibold">Lifetime cap</span></div>
                     <div className="mt-1 font-heading text-[1.4rem] sm:text-[1.6rem] leading-none text-primary-k tabular-nums">{formatAUD(budget.lifetime_contributions)}</div>
                     <div className="mt-0.5 text-[10px] text-muted-k leading-tight tabular-nums">{budget.lifetime_pct.toFixed(0)}% of {formatAUD(budget.lifetime_cap)}</div>
@@ -362,7 +362,7 @@ export default function CaregiverDashboard() {
                             {n.cta_href && n.cta_label && (
                                 <Link
                                     to={n.cta_href}
-                                    className="inline-flex items-center gap-1 bg-primary-k text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:brightness-95 whitespace-nowrap"
+                                    className="inline-flex items-center gap-1 bg-primary-k text-white rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap"
                                     data-testid={`dashboard-nudge-${n.key}-cta`}
                                 >
                                     {n.cta_label} <ArrowRight className="h-3 w-3" />
@@ -411,7 +411,7 @@ export default function CaregiverDashboard() {
 
             {!isFree && budget && (
                 <details className="group rounded-2xl border border-primary-k/20 bg-surface overflow-hidden shadow-sm" data-testid="dashboard-more-detail">
-                    <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none border-l-4 border-l-primary-k bg-[linear-gradient(135deg,rgba(14,77,82,0.10),rgba(107,143,113,0.06))] hover:brightness-[0.98] transition-all">
+                    <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none border-l-4 border-l-primary-k bg-[linear-gradient(135deg,rgba(14,77,82,0.10),rgba(107,143,113,0.06))] hover:brightness-[0.98] transition-colors">
                         <span className="flex items-center gap-3 min-w-0">
                             <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-primary-k text-white shadow-sm">
                                 <TrendingUp className="h-5 w-5" />
@@ -511,7 +511,7 @@ export default function CaregiverDashboard() {
 
             {!isFree && (
                 <details className="group rounded-2xl overflow-hidden border border-gold/40 shadow-sm" data-testid="things-to-know-details">
-                    <summary className={`flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none border-l-4 hover:brightness-[0.98] transition-all ${allAnomalies.length > 0 ? "border-l-terracotta bg-[linear-gradient(135deg,rgba(192,57,43,0.10),rgba(240,178,103,0.10))]" : "border-l-gold bg-[linear-gradient(135deg,rgba(165,81,43,0.10),rgba(240,178,103,0.08))]"}`}>
+                    <summary className={`flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none border-l-4 hover:brightness-[0.98] transition-colors ${allAnomalies.length > 0 ? "border-l-terracotta bg-[linear-gradient(135deg,rgba(192,57,43,0.10),rgba(240,178,103,0.10))]" : "border-l-gold bg-[linear-gradient(135deg,rgba(165,81,43,0.10),rgba(240,178,103,0.08))]"}`}>
                         <span className="flex items-center gap-3 min-w-0">
                             <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-full text-white shadow-sm ${allAnomalies.length > 0 ? "bg-terracotta" : "bg-gold"}`}>
                                 <AlertTriangle className="h-5 w-5" />
@@ -668,7 +668,7 @@ export default function CaregiverDashboard() {
             {/* AI chat preview, Solo & Family */}
             {!isFree && (
                 <details className="group bg-surface border border-kindred rounded-xl overflow-hidden" data-testid="chat-preview-card">
-                    <summary className="flex cursor-pointer items-center justify-between gap-3 px-6 py-5 list-none select-none hover:brightness-[0.99] transition-all">
+                    <summary className="flex cursor-pointer items-center justify-between gap-3 px-6 py-5 list-none select-none hover:brightness-[0.99] transition-colors">
                         <span className="overline flex items-center gap-2"><MessageCircle className="h-4 w-4" /> Wayly Chat, last conversation</span>
                         <span className="flex items-center gap-3">
                             <Link to="/app/ask-wayly" onClick={(e) => e.stopPropagation()} className="text-xs text-primary-k underline">Open chat</Link>

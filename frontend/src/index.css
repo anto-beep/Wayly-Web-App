@@ -683,6 +683,67 @@ html.theme-dark .decoder-mode-toggle .bg-primary-k {
 html.theme-dark a.text-white,
 html.theme-dark button.text-white { color: #FFFFFF !important; }
 
+/* ============================================================
+   Auth pages (login / signup) — dark mode (Jun 2026)
+   Default surface was near-black teal on near-black, so the card
+   vanished and the white Google button floated. Use a lighter,
+   warmer teal card with a clay top accent so it reads like the
+   pricing cards and the Google button is clearly visible.
+   ============================================================ */
+html.theme-dark .auth-shell {
+    background: radial-gradient(130% 100% at 50% -10%, #164A49 0%, #0F3234 48%, #0C2829 100%) !important;
+}
+html.theme-dark .auth-card {
+    background: #164648 !important;
+    border-color: #2E6360 !important;
+    border-top: 3px solid #B5623A !important;
+    box-shadow: 0 22px 55px rgba(0, 0, 0, 0.5) !important;
+}
+html.theme-dark .auth-card input,
+html.theme-dark .auth-card select,
+html.theme-dark .auth-card textarea {
+    background: #0F3739 !important;
+    border-color: #2E6360 !important;
+    color: #F4EFE7 !important;
+}
+/* Frame the Google button subtly so it reads as an intentional control */
+html.theme-dark .auth-google {
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+html.theme-dark .auth-google-caption { color: #F4EFE7 !important; }
+/* Force the Google widget to render in LIGHT color-scheme so its label is dark
+   text on the white button (dark color-scheme made it white-on-white). */
+html.theme-dark .auth-google-wrap,
+html.theme-dark .auth-google-wrap iframe,
+html.theme-dark .auth-google iframe {
+    color-scheme: light !important;
+}
+/* Nested cards inside the signup form card get a touch more depth */
+html.theme-dark .auth-card .bg-surface-2 { background: #0F3739 !important; }
+
+/* More clay, less teal on the auth pages (Jun 2026 feedback):
+   primary action buttons become clay, accent links become clay, and the
+   Google caption stays cream so it's always readable above the widget. */
+html.theme-dark .auth-shell .bg-primary-k,
+html.theme-dark .auth-card .bg-primary-k {
+    background: #A5512B !important;
+    color: #FFFFFF !important;
+}
+html.theme-dark .auth-shell a.text-primary-k,
+html.theme-dark .auth-shell a.underline,
+html.theme-dark .auth-card a.text-primary-k {
+    color: #E8A07A !important;
+}
+html.theme-dark .auth-google-caption { color: #F4EFE7 !important; }
+/* A selected plan / role card is highlighted in clay so it contrasts the teal */
+html.theme-dark .auth-shell .auth-selected,
+html.theme-dark .auth-card .auth-selected {
+    border-color: #A5512B !important;
+    background: rgba(165, 81, 43, 0.20) !important;
+    box-shadow: 0 0 0 2px rgba(165, 81, 43, 0.40) !important;
+}
+
 
 /* Status pills/badges keep their color but get white text */
 html.theme-dark .admin-badge { background: rgba(255,255,255,0.10); color: var(--kindred-text); border-color: var(--kindred-border); }

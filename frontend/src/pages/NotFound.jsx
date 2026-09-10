@@ -41,13 +41,13 @@ export default function NotFound() {
                     The URL you followed isn't on Wayly. It may have moved, or there could be a typo. Try one of the routes below, or email <a href="mailto:support@wayly.com.au" className="text-[#075866] font-medium underline underline-offset-2">support@wayly.com.au</a> if you think this is broken.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                    <Link to="/" data-testid="notfound-home" className="inline-flex items-center gap-2 rounded-full bg-[#0E2A47] hover:bg-[#091D33] text-white px-5 py-3 text-sm font-semibold">
+                    <Link to="/" data-testid="notfound-home" className="inline-flex items-center gap-2 rounded-lg bg-[#0E2A47] hover:bg-[#091D33] text-white px-5 py-3 text-sm font-semibold">
                         <Home className="h-4 w-4" /> Home
                     </Link>
-                    <Link to="/ai-tools" data-testid="notfound-tools" className="inline-flex items-center gap-2 rounded-full bg-white text-[#0E2A47] border border-[#CFE0F0] px-5 py-3 text-sm font-semibold hover:border-[#2BC4D6]">
+                    <Link to="/ai-tools" data-testid="notfound-tools" className="inline-flex items-center gap-2 rounded-lg bg-white text-[#0E2A47] border border-[#CFE0F0] px-5 py-3 text-sm font-semibold hover:border-[#2BC4D6]">
                         Free AI tools <ArrowRight className="h-4 w-4" />
                     </Link>
-                    <Link to="/faq" data-testid="notfound-faq" className="inline-flex items-center gap-2 rounded-full bg-white text-[#0E2A47] border border-[#CFE0F0] px-5 py-3 text-sm font-semibold hover:border-[#2BC4D6]">
+                    <Link to="/faq" data-testid="notfound-faq" className="inline-flex items-center gap-2 rounded-lg bg-white text-[#0E2A47] border border-[#CFE0F0] px-5 py-3 text-sm font-semibold hover:border-[#2BC4D6]">
                         <Search className="h-4 w-4" /> Search FAQ
                     </Link>
                 </div>
@@ -58,7 +58,7 @@ export default function NotFound() {
                         { href: "/policy", label: "Policy explainers", sub: "Personal care change, no-worse-off, caps status" },
                         { href: "/guides", label: "Caregiver guides", sub: "Practical and emotional reads" },
                     ].map((s) => (
-                        <Link key={s.href} to={s.href} className="rounded-2xl border border-[#CFE0F0] bg-white p-4 hover:border-[#2BC4D6] hover:-translate-y-0.5 transition-all">
+                        <Link key={s.href} to={s.href} className="rounded-2xl border border-[#CFE0F0] bg-white p-4 hover:border-[#2BC4D6] transition-colors">
                             <div className="font-heading text-base text-[#0E2A47]">{s.label}</div>
                             <div className="text-xs text-[#3F506B] mt-1">{s.sub}</div>
                         </Link>

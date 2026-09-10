@@ -12,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
  * REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS,
  * THIS BREAKS THE AUTH.
  */
-export default function GoogleSignInButton({ testid = "google-signin", planIntent = null, onBeforeClick = null, text = "continue_with" }) {
+export default function GoogleSignInButton({ testid = "google-signin", planIntent = null, onBeforeClick = null, text = "continue_with", label = null }) {
     const { completeGoogleAuth } = useAuth();
 
     const onSuccess = async (cred) => {
@@ -43,15 +43,19 @@ export default function GoogleSignInButton({ testid = "google-signin", planInten
     };
 
     return (
-        <div data-testid={testid} className="w-full flex justify-center [&>div]:w-full">
-            <GoogleLogin
-                onSuccess={onSuccess}
-                onError={() => toast.error("Google sign-in was cancelled or failed.")}
-                text={text}
-                width="360"
-                shape="rectangular"
-                logo_alignment="center"
-            />
+        <div data-testid={testid} className="w-full auth-google-wrap">
+            <p className="text-center text-sm font-medium mb-2 auth-google-caption">Sign in with Google</p>
+            <div className="flex justify-center">
+                <GoogleLogin
+                    onSuccess={onSuccess}
+                    onError={() => toast.error("Google sign-in was cancelled or failed.")}
+                    text={text}
+                    theme="outline"
+                    width="340"
+                    shape="rectangular"
+                    logo_alignment="left"
+                />
+            </div>
         </div>
     );
 }

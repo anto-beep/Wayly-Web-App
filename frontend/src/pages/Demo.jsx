@@ -206,7 +206,7 @@ export default function Demo() {
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-14 text-center">
                     <h2 className="font-heading text-4xl text-white tracking-tight">Want This for Your Family?</h2>
-                    <Link to="/signup" data-testid="demo-cta-trial" className="mt-6 inline-flex items-center gap-2 bg-gold text-white font-medium rounded-full px-6 py-3 hover:brightness-95 transition">Start Free Trial <ArrowRight className="h-4 w-4" /></Link>
+                    <Link to="/signup" data-testid="demo-cta-trial" className="mt-6 inline-flex items-center gap-2 bg-gold text-white font-medium rounded-lg px-6 py-3 transition">Start Free Trial <ArrowRight className="h-4 w-4" /></Link>
                 </div>
             </section>
             <Footer />

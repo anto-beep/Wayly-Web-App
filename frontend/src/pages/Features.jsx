@@ -213,9 +213,9 @@ const Card = ({ icon: Icon, title, body, plan, dark = false, i = 0 }) => {
     if (dark) {
         return (
             <Reveal className="h-full" delay={(i % 4) * 70}>
-                <div className="group h-full rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 transition-all hover:-translate-y-1 hover:bg-white/15" data-testid={`feat-card-${title.replace(/\W+/g, "-").toLowerCase()}`}>
+                <div className="group h-full rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 transition-colors hover:bg-white/15" data-testid={`feat-card-${title.replace(/\W+/g, "-").toLowerCase()}`}>
                     <div className="flex items-start justify-between gap-3">
-                        <div className="h-11 w-11 rounded-xl bg-white/15 flex items-center justify-center transition-transform group-hover:scale-105">
+                        <div className="h-11 w-11 rounded-xl bg-white/15 flex items-center justify-center transition-transform group-">
                             <Icon className="h-5 w-5 text-white" strokeWidth={2} />
                         </div>
                         {plan && (
@@ -230,10 +230,10 @@ const Card = ({ icon: Icon, title, body, plan, dark = false, i = 0 }) => {
     }
     return (
         <Reveal className="h-full" delay={(i % 4) * 70}>
-            <div className={`group relative h-full overflow-hidden rounded-2xl border border-kindred bg-surface p-6 transition-all hover:-translate-y-1 hover:shadow-lg ring-1 ring-transparent hover:${accent.ring}`} data-testid={`feat-card-${title.replace(/\W+/g, "-").toLowerCase()}`}>
+            <div className={`group relative h-full overflow-hidden rounded-2xl border border-kindred bg-surface p-6 transition-colors ring-1 ring-transparent hover:${accent.ring}`} data-testid={`feat-card-${title.replace(/\W+/g, "-").toLowerCase()}`}>
                 <span className={`absolute left-0 top-0 h-1.5 w-full ${accent.tile} opacity-80`} />
                 <div className="flex items-start justify-between gap-3">
-                    <div className={`h-11 w-11 rounded-xl ${accent.tile} flex items-center justify-center shadow-sm transition-transform group-hover:scale-105`}>
+                    <div className={`h-11 w-11 rounded-xl ${accent.tile} flex items-center justify-center shadow-sm transition-transform group-`}>
                         <Icon className="h-5 w-5 text-white" strokeWidth={2} />
                     </div>
                     {plan && (
@@ -291,10 +291,10 @@ export default function Features() {
                                 Wayly sits on top of Australia&apos;s Support at Home program. It reads the statements, watches the budget, drafts the letters, and makes sure no one in the family is the only one paying attention.
                             </p>
                             <div className="mt-8 flex flex-wrap gap-3">
-                                <Link to="/signup" className="inline-flex items-center gap-2 bg-[#A5512B] text-white font-semibold rounded-full px-6 py-3 hover:bg-[#8E4523] shadow-md hover:-translate-y-0.5 transition-all" data-testid="features-cta-trial">
+                                <Link to="/signup" className="inline-flex items-center gap-2 bg-[#A5512B] text-white font-semibold rounded-lg px-6 py-3 hover:bg-[#8E4523] shadow-md transition-colors" data-testid="features-cta-trial">
                                     Start free trial <ArrowRight className="h-4 w-4" />
                                 </Link>
-                                <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-[#0E4D52] text-white font-semibold rounded-full px-6 py-3 hover:bg-[#0A3B3F] shadow-md hover:-translate-y-0.5 transition-all" data-testid="features-cta-demo">
+                                <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-[#0E4D52] text-white font-semibold rounded-lg px-6 py-3 hover:bg-[#0A3B3F] shadow-md transition-colors" data-testid="features-cta-demo">
                                     Book a demo
                                 </Link>
                             </div>
@@ -313,7 +313,7 @@ export default function Features() {
                 <div className="mx-auto max-w-7xl px-6 py-3 overflow-x-auto">
                     <div className="flex gap-1">
                         {TABS.map((t) => (
-                            <a key={t.id} href={`#${t.id}`} className="text-sm whitespace-nowrap px-4 py-2 rounded-full text-muted-k hover:text-white hover:bg-[#0E4D52] transition-colors" data-testid={`features-tab-${t.id}`}>
+                            <a key={t.id} href={`#${t.id}`} className="text-sm whitespace-nowrap px-4 py-2 rounded-lg text-muted-k hover:text-white hover:bg-[#0E4D52] transition-colors" data-testid={`features-tab-${t.id}`}>
                                 {t.label}
                             </a>
                         ))}
@@ -340,7 +340,7 @@ export default function Features() {
                                     <li className="flex items-start gap-2"><Check className="w-4 h-4 text-[#8FBF95] mt-0.5 flex-none" /> 15 anomaly rules catch rate spikes, duplicates and missing entitlements</li>
                                     <li className="flex items-start gap-2"><Check className="w-4 h-4 text-[#8FBF95] mt-0.5 flex-none" /> Smart Summaries turn the numbers into one calm &quot;here is what matters&quot; note</li>
                                 </ul>
-                                <Link to="/ai-tools/statement-decoder" data-testid="features-featured-cta" className="inline-flex items-center gap-1 mt-6 px-5 py-2.5 rounded-full bg-white text-[#0E4D52] text-sm font-semibold hover:bg-white/90 hover:-translate-y-0.5 transition-all">
+                                <Link to="/ai-tools/statement-decoder" data-testid="features-featured-cta" className="inline-flex items-center gap-1 mt-6 px-5 py-2.5 rounded-lg bg-white text-[#0E4D52] text-sm font-semibold hover:bg-white/90 transition-colors">
                                     Try Statement Decoder Free <ArrowRight className="w-4 h-4" />
                                 </Link>
                             </div>
@@ -449,10 +449,10 @@ export default function Features() {
                         <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Ready when you are.</h2>
                         <p className="mt-4 text-white/80 max-w-xl mx-auto">Start the free 7-day trial, no card needed, or book a 20-minute call with a real person on our team.</p>
                         <div className="mt-8 flex flex-wrap gap-3 justify-center">
-                            <Link to="/signup" className="inline-flex items-center gap-2 bg-[#A5512B] text-white font-semibold rounded-full px-6 py-3 hover:bg-[#8E4523] shadow-md hover:-translate-y-0.5 transition-all" data-testid="features-bottom-cta-trial">
+                            <Link to="/signup" className="inline-flex items-center gap-2 bg-[#A5512B] text-white font-semibold rounded-lg px-6 py-3 hover:bg-[#8E4523] shadow-md transition-colors" data-testid="features-bottom-cta-trial">
                                 Start free trial <ArrowRight className="h-4 w-4" />
                             </Link>
-                            <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-white text-[#0E4D52] font-semibold rounded-full px-6 py-3 hover:bg-white/90 shadow-md hover:-translate-y-0.5 transition-all" data-testid="features-bottom-cta-demo">
+                            <Link to="/contact?intent=demo" className="inline-flex items-center gap-2 bg-white text-[#0E4D52] font-semibold rounded-lg px-6 py-3 hover:bg-white/90 shadow-md transition-colors" data-testid="features-bottom-cta-demo">
                                 Book a demo
                             </Link>
                         </div>

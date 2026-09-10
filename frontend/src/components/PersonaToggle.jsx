@@ -54,7 +54,7 @@ export default function PersonaToggle({ onChange, defaultPersona = "caregiver", 
                         aria-selected={active}
                         onClick={() => select(p.id)}
                         data-testid={`persona-toggle-${p.id}`}
-                        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                             active
                                 ? "text-white shadow-md"
                                 : "text-primary-k hover:bg-white/70"

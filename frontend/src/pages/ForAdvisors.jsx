@@ -36,7 +36,7 @@ export default function ForAdvisors() {
                             Your existing clients are facing the biggest aged-care reform in decades. Either you are the trusted source they call, or someone else is.
                         </p>
                         <div className="mt-7 flex items-center gap-3 flex-wrap">
-                            <Link to="/contact" data-testid="advisor-book-demo" className="bg-primary-k text-white rounded-full px-6 py-3 hover:bg-[#091D33] transition-colors">
+                            <Link to="/contact" data-testid="advisor-book-demo" className="bg-primary-k text-white rounded-lg px-6 py-3 hover:bg-[#091D33] transition-colors">
                                 Book a demo
                             </Link>
                             <Link to="/pricing" className="text-primary-k underline">See pricing</Link>
@@ -58,7 +58,7 @@ export default function ForAdvisors() {
                     <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">Everything you need for the aged-care chapter of a financial plan.</h2>
                     <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         {FEATURES.map((f) => (
-                            <div key={f.title} className="bg-surface rounded-xl border border-kindred p-5 hover:-translate-y-1 hover:shadow-lg transition-all">
+                            <div key={f.title} className="bg-surface rounded-xl border border-kindred p-5 transition-colors">
                                 <div className="h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center">
                                     <f.icon className="h-5 w-5 text-primary-k" />
                                 </div>
@@ -106,7 +106,7 @@ export default function ForAdvisors() {
             <section className="bg-primary-k">
                 <div className="mx-auto max-w-4xl px-6 py-16 text-center">
                     <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">A 30-minute demo will show you everything.</h2>
-                    <Link to="/contact" className="mt-8 inline-block bg-gold text-white font-medium rounded-full px-6 py-3 hover:bg-[#1FA8B8]">Book a demo</Link>
+                    <Link to="/contact" className="mt-8 inline-block bg-gold text-white font-medium rounded-lg px-6 py-3 hover:bg-[#1FA8B8]">Book a demo</Link>
                 </div>
             </section>
             <Footer />

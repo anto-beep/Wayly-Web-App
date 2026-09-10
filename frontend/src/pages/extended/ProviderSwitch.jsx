@@ -332,7 +332,7 @@ function Stepper({ current, onJump, disabled }) {
                                 disabled={disabled && n !== 1}
                                 onClick={() => onJump(n)}
                                 data-testid={`switch-step-${n}`}
-                                className={`w-full text-left rounded-lg border px-3 py-2 transition-all ${active
+                                className={`w-full text-left rounded-lg border px-3 py-2 transition-colors ${active
                                     ? "border-primary-k bg-primary-k text-white"
                                     : done
                                         ? "border-sage bg-sage/10 text-primary-k"
@@ -366,7 +366,7 @@ function NavButtons({ onBack, onNext, nextLabel = "Continue", nextDisabled }) {
             <button type="button" onClick={onBack} disabled={!onBack} data-testid="switch-back" className="inline-flex items-center gap-1 text-sm text-primary-k hover:underline disabled:opacity-30 disabled:no-underline">
                 <ChevronLeft className="h-4 w-4" /> Back
             </button>
-            <button type="button" onClick={onNext} disabled={nextDisabled} data-testid="switch-next" className="inline-flex items-center gap-2 rounded-full bg-primary-k px-5 py-2 text-sm font-semibold text-white hover:bg-[#091D33] disabled:opacity-50">
+            <button type="button" onClick={onNext} disabled={nextDisabled} data-testid="switch-next" className="inline-flex items-center gap-2 rounded-lg bg-primary-k px-5 py-2 text-sm font-semibold text-white hover:bg-[#091D33] disabled:opacity-50">
                 {nextLabel} <ChevronRight className="h-4 w-4" />
             </button>
         </>
@@ -393,7 +393,7 @@ function StepOne({ intro, setIntro, row, onStart, onNext }) {
                 ? <NavButtons onBack={null} onNext={onNext} nextLabel="I Have Read This, Continue" />
                 : (
                     <div className="ml-auto">
-                        <button type="button" onClick={onStart} data-testid="switch-start" className="inline-flex items-center gap-2 rounded-full bg-primary-k px-5 py-2 text-sm font-semibold text-white hover:bg-[#091D33]">
+                        <button type="button" onClick={onStart} data-testid="switch-start" className="inline-flex items-center gap-2 rounded-lg bg-primary-k px-5 py-2 text-sm font-semibold text-white hover:bg-[#091D33]">
                             Start the Workflow <ChevronRight className="h-4 w-4" />
                         </button>
                     </div>
@@ -536,7 +536,7 @@ function StepFour({ intro, notice, setNotice, letterText, onCopy, onDownload, on
                         <button type="button" onClick={onDownload} data-testid="switch-letter-download" className="inline-flex items-center gap-1.5 text-xs text-primary-k hover:underline">
                             <Download className="h-3.5 w-3.5" /> .txt
                         </button>
-                        <button type="button" onClick={onDownloadPdf} data-testid="switch-letter-pdf" className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-k bg-surface-2 rounded-full px-2.5 py-1 hover:bg-primary-k hover:text-white transition-colors">
+                        <button type="button" onClick={onDownloadPdf} data-testid="switch-letter-pdf" className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-k bg-surface-2 rounded-lg px-2.5 py-1 hover:bg-primary-k hover:text-white transition-colors">
                             <Download className="h-3.5 w-3.5" /> PDF
                         </button>
                     </div>
@@ -567,7 +567,7 @@ function StepFive({ row, onToggle, onBack, onComplete }) {
                     <button type="button" onClick={onBack} data-testid="switch-back" className="inline-flex items-center gap-1 text-sm text-primary-k hover:underline">
                         <ChevronLeft className="h-4 w-4" /> Back
                     </button>
-                    <button type="button" onClick={onComplete} disabled={!allDone || row?.stage === "complete"} data-testid="switch-complete" className="inline-flex items-center gap-2 rounded-full bg-sage px-5 py-2 text-sm font-semibold text-white hover:bg-[#5a7a5f] disabled:opacity-50">
+                    <button type="button" onClick={onComplete} disabled={!allDone || row?.stage === "complete"} data-testid="switch-complete" className="inline-flex items-center gap-2 rounded-lg bg-sage px-5 py-2 text-sm font-semibold text-white hover:bg-[#5a7a5f] disabled:opacity-50">
                         <Check className="h-4 w-4" /> {row?.stage === "complete" ? "Switch Complete" : "Mark Switch Complete"}
                     </button>
                 </>

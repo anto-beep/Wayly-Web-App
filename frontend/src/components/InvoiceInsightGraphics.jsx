@@ -102,7 +102,7 @@ export default function InvoiceInsightGraphics({ reconciliation }) {
                         <span className="text-[10px] uppercase tracking-wider text-muted-k inline-flex items-center gap-0.5">Tap to open <ChevronRight className="h-3 w-3" /></span>
                     </div>
                     <div className="mt-2 flex items-center gap-5">
-                        <button type="button" onClick={() => scrollTo("[data-testid=inv1-issue-register]")} data-testid="invoice-severity-donut" aria-label={`${totalFlags} things to check. Open the list.`} className="relative h-[148px] w-[148px] flex-none rounded-full transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k">
+                        <button type="button" onClick={() => scrollTo("[data-testid=inv1-issue-register]")} data-testid="invoice-severity-donut" aria-label={`${totalFlags} things to check. Open the list.`} className="relative h-[148px] w-[148px] flex-none rounded-full transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie data={sevData} dataKey="value" innerRadius={50} outerRadius={70} startAngle={90} endAngle={-270} stroke="none" paddingAngle={2}>
@@ -117,7 +117,7 @@ export default function InvoiceInsightGraphics({ reconciliation }) {
                         </button>
                         <div className="flex-1 space-y-2">
                             {sevData.map((d) => (
-                                <button key={d.name} type="button" onClick={() => scrollTo("[data-testid=inv1-issue-register]")} data-testid={`invoice-severity-${d.name.replace(/\W+/g, "-").toLowerCase()}`} className="w-full flex items-center justify-between gap-2 rounded-lg border border-kindred px-2.5 py-2 text-left transition-transform hover:scale-[1.02] hover:shadow-sm">
+                                <button key={d.name} type="button" onClick={() => scrollTo("[data-testid=inv1-issue-register]")} data-testid={`invoice-severity-${d.name.replace(/\W+/g, "-").toLowerCase()}`} className="w-full flex items-center justify-between gap-2 rounded-lg border border-kindred px-2.5 py-2 text-left transition-transform hover:shadow-sm">
                                     <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: d.color }} /> {d.name}</span>
                                     <span className="font-semibold text-primary-k tabular-nums inline-flex items-center gap-1">{d.value} <ChevronRight className="h-3.5 w-3.5 text-muted-k" /></span>
                                 </button>

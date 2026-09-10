@@ -51,13 +51,13 @@ export default function ServicesHub() {
                             key={s.slug}
                             to={`/services/${s.slug}`}
                             data-testid={`service-card-${s.slug}`}
-                            className="group rounded-2xl border border-[#CFE0F0] bg-white p-5 hover:border-[#2BC4D6] hover:-translate-y-0.5 transition-all"
+                            className="group rounded-2xl border border-[#CFE0F0] bg-white p-5 hover:border-[#2BC4D6] transition-colors"
                         >
                             <div className="overline">{s.overline}</div>
                             <h2 className="font-heading text-xl text-[#0E2A47] mt-2 leading-tight">{s.h1}</h2>
                             <p className="mt-2 text-sm text-[#4A5A75] leading-relaxed line-clamp-3">{s.description}</p>
                             <div className="mt-4 text-sm font-medium text-[#1565B8] inline-flex items-center gap-1">
-                                Read explainer <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                Read explainer <ArrowRight className="h-3.5 w-3.5 group-transition-transform" />
                             </div>
                         </Link>
                     ))}

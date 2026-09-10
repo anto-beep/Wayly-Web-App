@@ -184,7 +184,7 @@ export default function VisitCalendar() {
             overline="Calendar"
             title="Appointments and Home Visits"
             description="Every appointment, home visit, telehealth call and assessment in one place. Click a day to add something new, or click an event to view, edit, cancel, or archive it."
-            actions={isExpired ? null : <button type="button" data-testid="visits-add-btn" onClick={() => openNew()} className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#091D33]"><Plus className="h-4 w-4" /> Add Appointment</button>}
+            actions={isExpired ? null : <button type="button" data-testid="visits-add-btn" onClick={() => openNew()} className="inline-flex items-center gap-2 bg-primary-k text-white rounded-lg px-5 py-2.5 text-sm font-medium hover:bg-[#091D33]"><Plus className="h-4 w-4" /> Add Appointment</button>}
         >
             {visits.length === 0 ? (
                 <EmptyCard
@@ -241,26 +241,26 @@ export default function VisitCalendar() {
                         {isExpired ? (
                             <p className="text-xs text-muted-k italic">Reactivate to edit, cancel, archive or delete appointments.</p>
                         ) : (<>
-                        <button type="button" onClick={startEdit} data-testid="visits-detail-edit" className="inline-flex items-center gap-1.5 text-xs rounded-full border border-kindred px-3 py-1.5 hover:border-primary-k hover:bg-surface-2"><Pencil className="h-3.5 w-3.5" /> Edit</button>
+                        <button type="button" onClick={startEdit} data-testid="visits-detail-edit" className="inline-flex items-center gap-1.5 text-xs rounded-lg border border-kindred px-3 py-1.5 hover:border-primary-k hover:bg-surface-2"><Pencil className="h-3.5 w-3.5" /> Edit</button>
 
                         {!isPast(selected.starts_at) && selected.status === "active" && (
-                            <button type="button" onClick={() => setStatus("cancelled", "Appointment cancelled")} data-testid="visits-detail-cancel" className="inline-flex items-center gap-1.5 text-xs rounded-full border border-clay/40 text-clay px-3 py-1.5 hover:bg-clay hover:text-white"><Ban className="h-3.5 w-3.5" /> Cancel</button>
+                            <button type="button" onClick={() => setStatus("cancelled", "Appointment cancelled")} data-testid="visits-detail-cancel" className="inline-flex items-center gap-1.5 text-xs rounded-lg border border-clay/40 text-clay px-3 py-1.5 hover:bg-clay hover:text-white"><Ban className="h-3.5 w-3.5" /> Cancel</button>
                         )}
 
                         {selected.status === "cancelled" && (
-                            <button type="button" onClick={() => setStatus("active", "Appointment restored")} data-testid="visits-detail-restore" className="inline-flex items-center gap-1.5 text-xs rounded-full border border-sage/40 text-primary-k px-3 py-1.5 hover:bg-sage hover:text-white"><RefreshCw className="h-3.5 w-3.5" /> Restore</button>
+                            <button type="button" onClick={() => setStatus("active", "Appointment restored")} data-testid="visits-detail-restore" className="inline-flex items-center gap-1.5 text-xs rounded-lg border border-sage/40 text-primary-k px-3 py-1.5 hover:bg-sage hover:text-white"><RefreshCw className="h-3.5 w-3.5" /> Restore</button>
                         )}
 
                         {isPast(selected.starts_at) && selected.status !== "archived" && (
-                            <button type="button" onClick={() => setStatus("archived", "Moved to archive")} data-testid="visits-detail-archive" className="inline-flex items-center gap-1.5 text-xs rounded-full border border-kindred px-3 py-1.5 hover:border-primary-k hover:bg-surface-2"><Archive className="h-3.5 w-3.5" /> Archive</button>
+                            <button type="button" onClick={() => setStatus("archived", "Moved to archive")} data-testid="visits-detail-archive" className="inline-flex items-center gap-1.5 text-xs rounded-lg border border-kindred px-3 py-1.5 hover:border-primary-k hover:bg-surface-2"><Archive className="h-3.5 w-3.5" /> Archive</button>
                         )}
 
                         {selected.status === "archived" && (
-                            <button type="button" onClick={() => setStatus("active", "Restored")} data-testid="visits-detail-unarchive" className="inline-flex items-center gap-1.5 text-xs rounded-full border border-kindred px-3 py-1.5 hover:border-primary-k hover:bg-surface-2"><RefreshCw className="h-3.5 w-3.5" /> Restore</button>
+                            <button type="button" onClick={() => setStatus("active", "Restored")} data-testid="visits-detail-unarchive" className="inline-flex items-center gap-1.5 text-xs rounded-lg border border-kindred px-3 py-1.5 hover:border-primary-k hover:bg-surface-2"><RefreshCw className="h-3.5 w-3.5" /> Restore</button>
                         )}
 
                         {!isPast(selected.starts_at) && (
-                            <button type="button" onClick={hardDelete} data-testid="visits-detail-delete" className="inline-flex items-center gap-1.5 text-xs rounded-full border border-terracotta/40 text-terracotta px-3 py-1.5 hover:bg-terracotta hover:text-white ml-auto"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
+                            <button type="button" onClick={hardDelete} data-testid="visits-detail-delete" className="inline-flex items-center gap-1.5 text-xs rounded-lg border border-terracotta/40 text-terracotta px-3 py-1.5 hover:bg-terracotta hover:text-white ml-auto"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
                         )}
                         </>)}
                     </div>
@@ -321,8 +321,8 @@ function DraftForm({ draft, setDraft, isEdit, onSave, onCancel }) {
                 </label>
             </div>
             <div className="pt-3 border-t border-kindred flex justify-end gap-2">
-                <button type="button" onClick={onCancel} className="rounded-full border border-kindred px-4 py-2 text-sm text-primary-k hover:bg-surface-2">Cancel</button>
-                <button type="submit" data-testid="visits-form-submit" className="rounded-full bg-primary-k px-5 py-2 text-sm font-semibold text-white hover:bg-[#091D33]">{isEdit ? "Save Changes" : "Add to Calendar"}</button>
+                <button type="button" onClick={onCancel} className="rounded-lg border border-kindred px-4 py-2 text-sm text-primary-k hover:bg-surface-2">Cancel</button>
+                <button type="submit" data-testid="visits-form-submit" className="rounded-lg bg-primary-k px-5 py-2 text-sm font-semibold text-white hover:bg-[#091D33]">{isEdit ? "Save Changes" : "Add to Calendar"}</button>
             </div>
         </form>
     );

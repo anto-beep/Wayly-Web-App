@@ -49,10 +49,10 @@ export default function ServerError({ error, resetError }) {
                     Don't worry. We've logged the error and our team will look into it. Try refreshing the page, or email <a href="mailto:support@wayly.com.au" className="text-[#075866] font-medium underline underline-offset-2">support@wayly.com.au</a> if it keeps happening.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                    <button onClick={handleReload} data-testid="500-retry" className="inline-flex items-center gap-2 rounded-full bg-[#0E2A47] hover:bg-[#091D33] text-white px-5 py-3 text-sm font-semibold">
+                    <button onClick={handleReload} data-testid="500-retry" className="inline-flex items-center gap-2 rounded-lg bg-[#0E2A47] hover:bg-[#091D33] text-white px-5 py-3 text-sm font-semibold">
                         <RefreshCw className="h-4 w-4" /> Try again
                     </button>
-                    <Link to="/" data-testid="500-home" className="inline-flex items-center gap-2 rounded-full bg-white text-[#0E2A47] border border-[#CFE0F0] px-5 py-3 text-sm font-semibold hover:border-[#2BC4D6]">
+                    <Link to="/" data-testid="500-home" className="inline-flex items-center gap-2 rounded-lg bg-white text-[#0E2A47] border border-[#CFE0F0] px-5 py-3 text-sm font-semibold hover:border-[#2BC4D6]">
                         <Home className="h-4 w-4" /> Back to home
                     </Link>
                 </div>

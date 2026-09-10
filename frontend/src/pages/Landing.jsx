@@ -114,10 +114,10 @@ export default function Landing() {
                                     onMouseEnter={() => setSelectedPersona(p.id)}
                                     onClick={() => (window.location.href = p.href)}
                                     data-testid={`persona-${p.id}`}
-                                    className={`text-left rounded-xl p-4 border transition-all ${
+                                    className={`text-left rounded-xl p-4 border transition-colors ${
                                         selectedPersona === p.id
                                             ? "border-[#0E2A47] bg-[#0E2A47] text-white -translate-y-0.5 shadow-md"
-                                            : "border-kindred bg-surface hover:border-[#0E2A47] hover:-translate-y-0.5"
+                                            : "border-kindred bg-surface hover:border-[#0E2A47]"
                                     }`}
                                 >
                                     <div className={`text-xs uppercase tracking-wider ${selectedPersona === p.id ? "text-white/85" : "text-muted-k"}`}>
@@ -156,9 +156,9 @@ export default function Landing() {
                             { t: "For the Family", icon: MessageCircle, tone: "#4E6E54", b: "You live in another suburb, or another state. You want to help without taking over, and to know that nothing important is being missed, without living in a group chat of half-answers and worry." },
                         ].map((c, i) => (
                             <RevealOnScroll key={c.t} delay={i * 80}>
-                                <div className="group relative h-full overflow-hidden bg-surface border border-kindred rounded-2xl p-6 transition-all hover:-translate-y-1 hover:shadow-lg">
+                                <div className="group relative h-full overflow-hidden bg-surface border border-kindred rounded-2xl p-6 transition-colors">
                                     <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: c.tone }} />
-                                    <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: c.tone }}>
+                                    <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-" style={{ backgroundColor: c.tone }}>
                                         <c.icon className="h-5 w-5 text-white" strokeWidth={2} />
                                     </div>
                                     <h3 className="mt-4 font-heading text-xl landing-tone-title" style={{ color: c.tone }}>{c.t}</h3>
@@ -227,7 +227,7 @@ export default function Landing() {
                                 key={f.title}
                                 to={`/ai-tools/${f.slug}`}
                                 data-testid={`feature-tile-${f.slug}`}
-                                className="block bg-surface rounded-xl border border-kindred p-5 hover:-translate-y-1 hover:shadow-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-wayly-clay-500 focus-visible:ring-offset-2"
+                                className="block bg-surface rounded-xl border border-kindred p-5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-wayly-clay-500 focus-visible:ring-offset-2"
                             >
                                 <div className="h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center">
                                     <f.icon className="h-5 w-5 text-primary-k" />
@@ -260,10 +260,10 @@ export default function Landing() {
                         { n: "03", t: "Understand", tone: "#4E6E54", Icon: MessageCircle, h: "Ask anything, share with family", b: "Ask Wayly a plain question (\"is a handrail covered?\") grounded in the Aged Care Act 2024, then loop in siblings or an adviser so everyone sees the same clear picture." },
                     ].map((s, i) => (
                         <RevealOnScroll key={s.n} delay={i * 90}>
-                            <li className="group relative h-full overflow-hidden rounded-2xl border border-kindred bg-surface p-6 hover:-translate-y-1 hover:shadow-lg transition-all">
+                            <li className="group relative h-full overflow-hidden rounded-2xl border border-kindred bg-surface p-6 transition-colors">
                                 <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: s.tone }} />
                                 <div className="flex items-center justify-between">
-                                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: s.tone }}>
+                                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm transition-transform group-" style={{ backgroundColor: s.tone }}>
                                         <s.Icon className="h-5 w-5" aria-hidden="true" />
                                     </span>
                                     <span className="font-heading text-4xl landing-step-number" style={{ color: s.tone, opacity: 0.15 }}>{s.n}</span>
@@ -342,9 +342,9 @@ export default function Landing() {
                             { icon: AlertTriangle, title: "Concerns Log", body: "Every concern you've raised and where it landed, in date order.", tone: "#A5512B" },
                         ].map((r, i) => (
                             <RevealOnScroll key={r.title} delay={(i % 4) * 70}>
-                                <div className="group relative h-full overflow-hidden rounded-2xl border border-kindred bg-surface p-5 transition-all hover:-translate-y-1 hover:shadow-lg" data-testid={`report-card-${r.title.replace(/\W+/g, "-").toLowerCase()}`}>
+                                <div className="group relative h-full overflow-hidden rounded-2xl border border-kindred bg-surface p-5 transition-colors" data-testid={`report-card-${r.title.replace(/\W+/g, "-").toLowerCase()}`}>
                                     <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: r.tone }} />
-                                    <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: r.tone }}>
+                                    <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-" style={{ backgroundColor: r.tone }}>
                                         <r.icon className="h-5 w-5 text-white" strokeWidth={2} />
                                     </div>
                                     <h3 className="font-heading text-lg text-primary-k mt-4">{r.title}</h3>
@@ -425,10 +425,10 @@ export default function Landing() {
                         { to: "/ai-tools/provider-price-checker", title: "Provider Price Checker", body: "Tell us what you're charged. We'll tell you whether it's fair.", free: false, icon: BarChart3, tone: "#4E6E54" },
                     ].map((t, i) => (
                         <RevealOnScroll key={t.to} delay={i * 80}>
-                        <Link to={t.to} className="group relative block h-full overflow-hidden bg-surface border border-kindred rounded-2xl p-6 hover:-translate-y-1 hover:shadow-lg transition-all" data-testid={`tool-teaser-${t.to.split('/').pop()}`}>
+                        <Link to={t.to} className="group relative block h-full overflow-hidden bg-surface border border-kindred rounded-2xl p-6 transition-colors" data-testid={`tool-teaser-${t.to.split('/').pop()}`}>
                             <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: t.tone }} />
                             <div className="flex items-start justify-between gap-3">
-                                <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: t.tone }}>
+                                <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-" style={{ backgroundColor: t.tone }}>
                                     <t.icon className="h-5 w-5 text-white" strokeWidth={2} />
                                 </div>
                                 {t.free && <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 bg-sage/20 text-[#0F5648]">Free</span>}

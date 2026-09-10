@@ -28,6 +28,9 @@ export const HEADER_BY_WHERE = {
     profile: "Add a few more details",
 };
 
+// Once a caregiver closes a prompt, keep it hidden for ~2.5 months.
+const DISMISS_TTL_MS = 75 * 24 * 60 * 60 * 1000;
+
 export default function ProfileInlinePrompts({ where, onParticipantUpdated }) {
     const { user } = useAuth();
     const { active } = useParticipants();
@@ -60,7 +63,38 @@ export default function ProfileInlinePrompts({ where, onParticipantUpdated }) {
         load();
     }, [user, load]);
 
-    const throttleKey = user ? `wayly_prompts_seen_${user.id || user.email || "u"}_${where}` : null;
+    const userKey = user ? (user.id || user.email || "u") : null;
+    const throttleKey = userKey ? `wayly_prompts_seen_${userKey}_${where}` : null;
+    // Once a caregiver actively closes a prompt, don't nag them again for a
+    // couple of months (they've made a clear choice) — it shouldn't reappear
+    // every time the tool is opened.
+    const dismissKey = userKey ? `wayly_prompts_dismissed_${userKey}_${where}` : null;
+
+    // Rehydrate persisted dismissals (kept for ~2.5 months) so a closed prompt
+    // stays closed across page loads instead of coming back every visit.
+    useEffect(() => {
+        if (!dismissKey) return;
+        try {
+            const raw = JSON.parse(window.localStorage.getItem(dismissKey) || "{}");
+            const now = Date.now();
+            const active = {};
+            for (const [f, ts] of Object.entries(raw)) {
+                if (typeof ts === "number" && (now - ts) < DISMISS_TTL_MS) active[f] = true;
+            }
+            if (Object.keys(active).length) setDismissed((d) => ({ ...active, ...d }));
+        } catch { /* ignore */ }
+    }, [dismissKey]);
+
+    const handleDismiss = useCallback((field) => {
+        setDismissed((d) => ({ ...d, [field]: true }));
+        if (!dismissKey) return;
+        try {
+            const raw = JSON.parse(window.localStorage.getItem(dismissKey) || "{}");
+            raw[field] = Date.now();
+            window.localStorage.setItem(dismissKey, JSON.stringify(raw));
+        } catch { /* ignore */ }
+    }, [dismissKey]);
+
     // Show these gentle "add what we're missing" nudges at most once a week so
     // they never feel like nagging or duplicate an always-present inline field.
     const throttled = useMemo(() => {
@@ -108,7 +142,7 @@ export default function ProfileInlinePrompts({ where, onParticipantUpdated }) {
                     prompt={q}
                     participant={participant}
                     onSaved={(updatedDoc) => onSaved(q.field, updatedDoc)}
-                    onDismiss={() => setDismissed((d) => ({ ...d, [q.field]: true }))}
+                    onDismiss={() => handleDismiss(q.field)}
                 />
             ))}
         </div>
@@ -153,7 +187,7 @@ function PromptRow({ participantId, prompt, participant, onSaved, onDismiss }) {
     return (
         <div
             data-testid={`profile-prompt-${prompt.field}`}
-            className={`rounded-lg border bg-surface p-3 transition-all ${justSaved ? "border-sage" : "border-kindred"}`}
+            className={`rounded-lg border bg-surface p-3 transition-colors ${justSaved ? "border-sage" : "border-kindred"}`}
         >
             <div className="flex items-start gap-2">
                 <p className="flex-1 text-xs text-primary-k leading-relaxed">{prompt.prompt}</p>

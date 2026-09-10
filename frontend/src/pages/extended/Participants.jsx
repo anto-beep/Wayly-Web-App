@@ -438,7 +438,7 @@ export default function ParticipantsPage() {
                     type="button"
                     onClick={openAdd}
                     data-testid="participants-add-btn"
-                    className="inline-flex items-center gap-2 bg-gold text-white font-semibold rounded-full px-4 py-2.5 text-sm hover:brightness-95"
+                    className="inline-flex items-center gap-2 bg-gold text-white font-semibold rounded-full px-4 py-2.5 text-sm"
                 >
                     <Plus className="h-4 w-4" /> Add Participant
                 </button>
@@ -660,7 +660,7 @@ export default function ParticipantsPage() {
                                         <p className="text-sm text-muted-k">Upgrade to Solo ($24.50 per fortnight) for 1 Participant, or Family ($49.50 per fortnight) for 2 Participants and 3 Caregiver seats.</p>
                                         <div className="flex gap-2">
                                             <Link to="/pricing?plan=solo" className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]" data-testid="upgrade-solo">Upgrade to Solo</Link>
-                                            <Link to="/pricing?plan=family" className="inline-flex items-center gap-1.5 bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95" data-testid="upgrade-family">Upgrade to Family</Link>
+                                            <Link to="/pricing?plan=family" className="inline-flex items-center gap-1.5 bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm" data-testid="upgrade-family">Upgrade to Family</Link>
                                         </div>
                                     </div>
                                 )}
@@ -675,7 +675,7 @@ export default function ParticipantsPage() {
                                         </ul>
                                         <p className="text-xs text-muted-k">Switch to Family and you will be billed $49.50 per fortnight from your next charge, with the prorated difference for the rest of your current fortnight applied now. Includes GST.</p>
                                         <div className="flex gap-2 flex-wrap">
-                                            <button onClick={() => { setConfirmUpgrade(true); setStep("form"); }} className="bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm hover:brightness-95" data-testid="confirm-solo-to-family">
+                                            <button onClick={() => { setConfirmUpgrade(true); setStep("form"); }} className="bg-gold text-white font-semibold rounded-md px-4 py-2 text-sm" data-testid="confirm-solo-to-family">
                                                 Switch to Family and continue
                                             </button>
                                             <button onClick={closeAdd} className="rounded-md border border-kindred px-4 py-2 text-sm text-muted-k hover:text-primary-k" data-testid="cancel-stay-solo">
@@ -1005,7 +1005,7 @@ export default function ParticipantsPage() {
                         </div>
                         <div className="px-5 py-3 border-t border-kindred flex justify-end gap-2">
                             <button onClick={() => setRemoveTarget(null)} className="px-4 py-2 text-sm text-muted-k hover:text-primary-k">Cancel</button>
-                            <button onClick={confirmRemove} className="bg-terracotta text-white rounded-md px-4 py-2 text-sm hover:brightness-95" data-testid="confirm-remove">Confirm removal</button>
+                            <button onClick={confirmRemove} className="bg-terracotta text-white rounded-md px-4 py-2 text-sm" data-testid="confirm-remove">Confirm removal</button>
                         </div>
                     </div>
                 </div>
@@ -1098,10 +1098,10 @@ function ShareLinkModal({ participant, onClose }) {
                             <div className="flex flex-wrap gap-2 pt-2 border-t border-kindred">
                                 {!showRotateConfirm && !showRevokeConfirm && (
                                     <>
-                                        <button onClick={() => setShowRotateConfirm(true)} className="text-xs text-primary-k border border-kindred rounded-full px-3 py-1.5 hover:bg-surface-2" data-testid="share-rotate-open">
+                                        <button onClick={() => setShowRotateConfirm(true)} className="text-xs text-primary-k border border-kindred rounded-lg px-3 py-1.5 hover:bg-surface-2" data-testid="share-rotate-open">
                                             <RotateCcw className="inline h-3 w-3 mr-1" /> Rotate link
                                         </button>
-                                        <button onClick={() => setShowRevokeConfirm(true)} className="text-xs text-terracotta border border-terracotta/40 rounded-full px-3 py-1.5 hover:bg-terracotta/5" data-testid="share-revoke-open">
+                                        <button onClick={() => setShowRevokeConfirm(true)} className="text-xs text-terracotta border border-terracotta/40 rounded-lg px-3 py-1.5 hover:bg-terracotta/5" data-testid="share-revoke-open">
                                             <Trash2 className="inline h-3 w-3 mr-1" /> Revoke sharing
                                         </button>
                                     </>
@@ -1110,7 +1110,7 @@ function ShareLinkModal({ participant, onClose }) {
                                     <div className="w-full rounded-md border border-gold/40 bg-gold/5 p-3 text-primary-k">
                                         <p className="mb-2">Create a new link and stop the current one? {participant.first_name} will need the new link to keep opening the page.</p>
                                         <div className="flex gap-2">
-                                            <button onClick={rotate} disabled={busy} className="text-xs bg-gold text-white rounded-full px-3 py-1.5 hover:brightness-95 disabled:opacity-50" data-testid="share-rotate-confirm">Yes, rotate</button>
+                                            <button onClick={rotate} disabled={busy} className="text-xs bg-gold text-white rounded-lg px-3 py-1.5 disabled:opacity-50" data-testid="share-rotate-confirm">Yes, rotate</button>
                                             <button onClick={() => setShowRotateConfirm(false)} className="text-xs text-muted-k px-3 py-1.5">Cancel</button>
                                         </div>
                                     </div>
@@ -1119,7 +1119,7 @@ function ShareLinkModal({ participant, onClose }) {
                                     <div className="w-full rounded-md border border-terracotta/40 bg-terracotta/5 p-3 text-primary-k">
                                         <p className="mb-2">Revoke sharing? The link will stop working immediately. You can create a new one later.</p>
                                         <div className="flex gap-2">
-                                            <button onClick={revoke} disabled={busy} className="text-xs bg-terracotta text-white rounded-full px-3 py-1.5 hover:brightness-95 disabled:opacity-50" data-testid="share-revoke-confirm">Yes, revoke</button>
+                                            <button onClick={revoke} disabled={busy} className="text-xs bg-terracotta text-white rounded-lg px-3 py-1.5 disabled:opacity-50" data-testid="share-revoke-confirm">Yes, revoke</button>
                                             <button onClick={() => setShowRevokeConfirm(false)} className="text-xs text-muted-k px-3 py-1.5">Cancel</button>
                                         </div>
                                     </div>

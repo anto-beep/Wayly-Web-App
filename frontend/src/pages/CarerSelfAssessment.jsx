@@ -223,7 +223,7 @@ export default function CarerSelfAssessment() {
                 </div>
                 {step <= totalSteps && (
                     <div className="mt-4 h-1.5 rounded-full bg-primary-k/10 overflow-hidden" data-testid="cs1-progress">
-                        <div className="h-full bg-primary-k transition-all" style={{width: `${(step/totalSteps)*100}%`}} />
+                        <div className="h-full bg-primary-k transition-colors" style={{width: `${(step/totalSteps)*100}%`}} />
                     </div>
                 )}
                 {step <= totalSteps && (

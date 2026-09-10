@@ -74,7 +74,7 @@ export default function BudgetAlerts() {
                                         {isExpired ? (
                                             <span className={`text-xs rounded-full px-2.5 py-0.5 ${a.active ? "bg-sage/20 text-primary-k" : "bg-surface-2 text-muted-k"}`}>{a.active ? "Active" : "Paused"}</span>
                                         ) : (
-                                        <button type="button" onClick={() => toggle(a)} data-testid={`alerts-toggle-${a.id}`} className={`text-xs rounded-full px-2.5 py-0.5 ${a.active ? "bg-sage/20 text-primary-k" : "bg-surface-2 text-muted-k"}`}>
+                                        <button type="button" onClick={() => toggle(a)} data-testid={`alerts-toggle-${a.id}`} className={`text-xs rounded-lg px-2.5 py-0.5 ${a.active ? "bg-sage/20 text-primary-k" : "bg-surface-2 text-muted-k"}`}>
                                             {a.active ? "Active" : "Paused"}
                                         </button>
                                         )}

@@ -90,7 +90,7 @@ export default function BC2Projection({ participantId }) {
                         </span>
                     </div>
                     <div className="mt-3 h-3.5 rounded-full bg-primary-k/10 overflow-hidden">
-                        <div className={`h-full ${barTone} rounded-full transition-all duration-500`} style={{ width: `${Math.max(2, pct)}%` }} data-testid="bc2-projection-burn-bar" />
+                        <div className={`h-full ${barTone} rounded-full transition-colors duration-500`} style={{ width: `${Math.max(2, pct)}%` }} data-testid="bc2-projection-burn-bar" />
                     </div>
                     <p className={`text-[0.95rem] mt-2.5 font-semibold ${statusTone}`}>
                         {overBudget
@@ -110,7 +110,7 @@ export default function BC2Projection({ participantId }) {
                         </span>
                     </div>
                     <div className="mt-3 h-3 rounded-full bg-clay/15 overflow-hidden">
-                        <div className={`h-full ${capTone} rounded-full transition-all duration-500`} style={{ width: `${Math.max(2, capPct)}%` }} data-testid="bc2-projection-cap-bar" />
+                        <div className={`h-full ${capTone} rounded-full transition-colors duration-500`} style={{ width: `${Math.max(2, capPct)}%` }} data-testid="bc2-projection-cap-bar" />
                     </div>
                     <p className="text-sm mt-2 text-muted-k">
                         {money(cap.remaining_headroom_aud)} of your lifetime contributions still to go.

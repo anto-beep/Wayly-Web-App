@@ -33,6 +33,9 @@ const REPLACERS = [
     [/\bstream\s*=\s*'?([a-z][a-z\s-]*?)'?(?=[\s.,)])/gi, "category \u201c$1\u201d"],
     [/\bAT[-\s]?HM\b/g, "government-funded support"],
     [/\bATHM\b/g, "government-funded support"],
+    // Internal reference + rule codes must never reach the user.
+    [/\bINDEX[-_\s]?1\b/gi, "the official price guide"],
+    [/\bRULE[_\s]?[A-Z0-9]+(?:_[A-Z0-9]+)*\b/g, ""],
     [/\barray\b/gi, "list"],
     // Any leftover snake_case field token -> spaced words (e.g. pension_status).
     [/\b([a-z]+(?:_[a-z]+)+)\b/g, (m) => m.replace(/_/g, " ")],

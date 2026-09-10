@@ -571,7 +571,7 @@ export default function CarePlanReviewer() {
                             <div className="text-sm text-primary-k/70 mt-0.5">This usually takes about a minute. You can leave this screen and come back; we&apos;ll save the result to your list.</div>
                             <div className="mt-2 flex items-center gap-1.5">
                                 {PROGRESS_STAGES.map((_, i) => (
-                                    <span key={i} className={`h-1.5 rounded-full transition-all ${i <= progressStage ? "w-8 bg-primary-k" : "w-4 bg-primary-k/20"}`} />
+                                    <span key={i} className={`h-1.5 rounded-full transition-colors ${i <= progressStage ? "w-8 bg-primary-k" : "w-4 bg-primary-k/20"}`} />
                                 ))}
                             </div>
                         </div>
@@ -686,7 +686,7 @@ export default function CarePlanReviewer() {
                                         onClick={draftAllFindings}
                                         disabled={letterBusyKey === "all"}
                                         data-testid="cp-draft-letter-all"
-                                        className="inline-flex items-center gap-1.5 text-sm rounded-full bg-wayly-clay-500 text-white px-4 py-2 font-semibold hover:brightness-95 transition disabled:opacity-60"
+                                        className="inline-flex items-center gap-1.5 text-sm rounded-full bg-wayly-clay-500 text-white px-4 py-2 font-semibold transition disabled:opacity-60"
                                     >
                                         {letterBusyKey === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                                         Draft a letter about these
@@ -898,7 +898,7 @@ export default function CarePlanReviewer() {
                         {access !== "allowed" && (
                             <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
                                 <div className="font-medium text-primary-k">Save this review and re-run against future legislative updates.</div>
-                                <Link to="/signup" className="mt-3 inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]">Start free trial</Link>
+                                <Link to="/signup" className="mt-3 inline-block text-sm bg-primary-k text-white rounded-lg px-5 py-2.5 hover:bg-[#091D33]">Start free trial</Link>
                             </div>
                         )}
                     </div>
@@ -1028,7 +1028,7 @@ export default function CarePlanReviewer() {
                         {access !== "allowed" && (
                             <div className="bg-surface-2 rounded-xl p-5 border border-kindred">
                                 <div className="font-medium text-primary-k">Want Wayly to watch divergence between this plan and what&apos;s actually delivered?</div>
-                                <Link to="/signup" className="mt-3 inline-block text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]">Start free trial</Link>
+                                <Link to="/signup" className="mt-3 inline-block text-sm bg-primary-k text-white rounded-lg px-5 py-2.5 hover:bg-[#091D33]">Start free trial</Link>
                             </div>
                         )}
                     </div>

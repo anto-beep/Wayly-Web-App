@@ -223,7 +223,7 @@ export default function ParticipantContactsPanel({ participantId, participantNam
                                     People to call or coordinate with for <strong className="text-primary-k">{participantName || "this participant"}</strong>.
                                 </p>
                                 {!isExpired && (
-                                <button type="button" onClick={startNew} data-testid="contacts-add" className="inline-flex items-center gap-1.5 rounded-full bg-primary-k px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">
+                                <button type="button" onClick={startNew} data-testid="contacts-add" className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">
                                     <Plus className="h-3.5 w-3.5" /> Add Contact
                                 </button>
                                 )}
@@ -365,12 +365,12 @@ function ContactCard({ contact: c, expanded, onToggle, onEdit, onRemove, onCopy,
                     </dl>
                     <div className="pl-12 pt-2 flex items-center gap-2">
                         {!readOnly && (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="inline-flex items-center gap-1 text-xs text-primary-k border border-kindred rounded-full px-2.5 py-1 hover:bg-surface-2" data-testid={`contact-edit-${c.id}`}>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="inline-flex items-center gap-1 text-xs text-primary-k border border-kindred rounded-lg px-2.5 py-1 hover:bg-surface-2" data-testid={`contact-edit-${c.id}`}>
                             <Pencil className="h-3 w-3" /> Edit
                         </button>
                         )}
                         {!readOnly && (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(); }} className="inline-flex items-center gap-1 text-xs text-terracotta border border-terracotta/40 rounded-full px-2.5 py-1 hover:bg-terracotta/10" data-testid={`contact-remove-${c.id}`}>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(); }} className="inline-flex items-center gap-1 text-xs text-terracotta border border-terracotta/40 rounded-lg px-2.5 py-1 hover:bg-terracotta/10" data-testid={`contact-remove-${c.id}`}>
                             <Trash2 className="h-3 w-3" /> Remove
                         </button>
                         )}
@@ -429,8 +429,8 @@ function ContactForm({ editing, setEditing, saving, onCancel, onSave }) {
                 </label>
             </div>
             <div className="flex shrink-0 items-center justify-end gap-3 border-t border-kindred bg-surface-2 px-6 py-3">
-                <button type="button" onClick={onCancel} className="rounded-full px-4 py-2 text-sm font-medium text-primary-k hover:bg-surface">Cancel</button>
-                <button type="submit" disabled={saving} data-testid="contacts-form-save" className="inline-flex items-center gap-2 rounded-full bg-primary-k px-5 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2 text-sm font-medium text-primary-k hover:bg-surface">Cancel</button>
+                <button type="submit" disabled={saving} data-testid="contacts-form-save" className="inline-flex items-center gap-2 rounded-lg bg-primary-k px-5 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50">
                     {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save Contact
                 </button>
             </div>

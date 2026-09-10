@@ -129,7 +129,7 @@ function SpendingChart({ series, hasData }) {
                                                 {formatShort(p.gross)}
                                             </div>
                                             <div
-                                                className="w-full max-w-[60px] relative rounded-t-xl overflow-hidden flex flex-col-reverse shadow-sm group-hover:shadow-md transition-shadow"
+                                                className="w-full max-w-[60px] relative rounded-t-xl overflow-hidden flex flex-col-reverse shadow-sm group-transition-shadow"
                                                 style={{ height: `${heightPct}%`, minHeight: "10px" }}
                                                 title={`${p.label}: ${formatAUD2(p.gross)} billed — ${formatAUD2(p.copay)} your co-payment, ${formatAUD2(funded)} government funded`}
                                             >
@@ -251,7 +251,7 @@ function ChecksChart({ data, hasData }) {
                                                 {total || ""}
                                             </div>
                                             <div
-                                                className="w-full max-w-[52px] relative rounded-t-xl overflow-hidden flex flex-col-reverse shadow-sm group-hover:shadow-md transition-shadow"
+                                                className="w-full max-w-[52px] relative rounded-t-xl overflow-hidden flex flex-col-reverse shadow-sm group-transition-shadow"
                                                 style={{ height: `${heightPct}%`, minHeight: total ? "12px" : "4px" }}
                                                 title={`${d.label}: ${d.alerts} need attention, ${d.warns} worth a look, ${d.infos} FYI`}
                                             >

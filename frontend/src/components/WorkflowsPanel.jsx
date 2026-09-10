@@ -183,7 +183,7 @@ export default function WorkflowsPanel({ participant }) {
                                     type="button"
                                     onClick={() => start(w.key)}
                                     data-testid={`workflow-start-${w.key}`}
-                                    className="group h-full w-full text-left rounded-2xl border border-kindred bg-surface p-6 hover:border-primary-k hover:shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-k"
+                                    className="group h-full w-full text-left rounded-2xl border border-kindred bg-surface p-6 hover:border-primary-k transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-k"
                                 >
                                     <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary-k/10 text-primary-k mb-3">
                                         <LifeBuoy className="h-4 w-4" aria-hidden="true" />
@@ -199,7 +199,7 @@ export default function WorkflowsPanel({ participant }) {
                                         </div>
                                     )}
                                     <div className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-medium text-primary-k">
-                                        {draft ? "Resume" : "Start"} <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                                        {draft ? "Resume" : "Start"} <ChevronRight className="h-4 w-4 group-transition-transform" />
                                     </div>
                                 </button>
                             </li>
@@ -452,7 +452,7 @@ export default function WorkflowsPanel({ participant }) {
                                         type="button"
                                         onClick={() => { saveCurrentDraft(); setSwitcherOpen(false); start(w.key); }}
                                         data-testid={`workflow-switch-to-${w.key}`}
-                                        className="w-full text-left rounded-xl border border-kindred bg-surface-2 p-4 hover:border-primary-k transition-all"
+                                        className="w-full text-left rounded-xl border border-kindred bg-surface-2 p-4 hover:border-primary-k transition-colors"
                                     >
                                         <div className="font-heading text-[16px] text-primary-k">{w.label}</div>
                                         <p className="mt-1 text-sm text-muted-k line-clamp-2">{w.intro}</p>

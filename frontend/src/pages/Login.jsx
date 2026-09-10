@@ -106,20 +106,20 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-kindred flex items-center justify-center px-6">
+        <div className="min-h-screen bg-kindred auth-shell flex items-center justify-center px-6">
             <SeoHead {...SEO.login} noindex />
             <div className="w-full max-w-md">
                 <Link to="/" className="flex items-center gap-2 mb-8">
                     <WaylyLogo size={32} className="rounded-md" />
                     <span className="font-heading text-lg text-primary-k">Wayly</span>
                 </Link>
-                <div className="bg-surface border border-kindred rounded-2xl p-8">
+                <div className="bg-surface border border-kindred rounded-2xl p-8 auth-card">
                     {!mfaToken ? (
                         <>
                             <span className="overline">Sign in</span>
                             <h1 className="font-heading text-3xl text-primary-k mt-2 tracking-tight">Welcome back</h1>
 
-                            <div className="mt-6">
+                            <div className="mt-6 auth-google">
                                 <GoogleSignInButton testid="login-google" />
                             </div>
 

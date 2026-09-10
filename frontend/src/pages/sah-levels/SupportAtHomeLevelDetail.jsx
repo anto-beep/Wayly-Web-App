@@ -137,9 +137,9 @@ export default function SupportAtHomeLevelDetail() {
                     <h2 className="font-heading text-xl text-primary-k tracking-tight">Check Whether Level {level.number} Still Fits</h2>
                     <p className="mt-2 text-sm text-muted-k">Needs change. If your parent&apos;s care plan keeps running short or family is filling more gaps than a year ago, it may be time to review the level.</p>
                     <div className="mt-4 grid sm:grid-cols-3 gap-3">
-                        <Link to="/ai-tools/classification-self-check" className="text-sm inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-4 py-2"><ClipboardCheck className="h-4 w-4" /> Run the self-check</Link>
-                        <Link to="/ai-tools/budget-calculator" className="text-sm inline-flex items-center gap-2 border border-primary-k text-primary-k rounded-full px-4 py-2"><Calculator className="h-4 w-4" /> Budget Calculator</Link>
-                        <Link to="/ai-tools/reassessment-letter" className="text-sm inline-flex items-center gap-2 border border-primary-k text-primary-k rounded-full px-4 py-2"><FilePen className="h-4 w-4" /> Reassessment letter</Link>
+                        <Link to="/ai-tools/classification-self-check" className="text-sm inline-flex items-center gap-2 bg-primary-k text-white rounded-lg px-4 py-2"><ClipboardCheck className="h-4 w-4" /> Run the self-check</Link>
+                        <Link to="/ai-tools/budget-calculator" className="text-sm inline-flex items-center gap-2 border border-primary-k text-primary-k rounded-lg px-4 py-2"><Calculator className="h-4 w-4" /> Budget Calculator</Link>
+                        <Link to="/ai-tools/reassessment-letter" className="text-sm inline-flex items-center gap-2 border border-primary-k text-primary-k rounded-lg px-4 py-2"><FilePen className="h-4 w-4" /> Reassessment letter</Link>
                     </div>
                 </section>
 

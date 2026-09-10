@@ -211,15 +211,15 @@ export default function FamilyWall() {
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
                         <input type="file" accept="image/*" ref={fileRef} onChange={onFile} className="hidden" />
-                        <button type="button" onClick={() => fileRef.current?.click()} disabled={posting} className="inline-flex items-center gap-1.5 text-xs bg-surface-2 border border-kindred text-primary-k rounded-full px-3 py-1.5 hover:bg-surface" data-testid="wall-photo-btn">
+                        <button type="button" onClick={() => fileRef.current?.click()} disabled={posting} className="inline-flex items-center gap-1.5 text-xs bg-surface-2 border border-kindred text-primary-k rounded-lg px-3 py-1.5 hover:bg-surface" data-testid="wall-photo-btn">
                             <Camera className="h-3.5 w-3.5" /> Photo
                         </button>
                         {!recording ? (
-                            <button type="button" onClick={startRecording} disabled={posting} className="inline-flex items-center gap-1.5 text-xs bg-surface-2 border border-kindred text-primary-k rounded-full px-3 py-1.5 hover:bg-surface" data-testid="wall-record-btn">
+                            <button type="button" onClick={startRecording} disabled={posting} className="inline-flex items-center gap-1.5 text-xs bg-surface-2 border border-kindred text-primary-k rounded-lg px-3 py-1.5 hover:bg-surface" data-testid="wall-record-btn">
                                 <Mic className="h-3.5 w-3.5" /> Voice note
                             </button>
                         ) : (
-                            <button type="button" onClick={stopRecording} className="inline-flex items-center gap-1.5 text-xs bg-terracotta text-white border border-terracotta rounded-full px-3 py-1.5 animate-pulse" data-testid="wall-stop-record-btn">
+                            <button type="button" onClick={stopRecording} className="inline-flex items-center gap-1.5 text-xs bg-terracotta text-white border border-terracotta rounded-lg px-3 py-1.5 animate-pulse" data-testid="wall-stop-record-btn">
                                 <Mic className="h-3.5 w-3.5" /> Stop recording
                             </button>
                         )}
@@ -227,7 +227,7 @@ export default function FamilyWall() {
                             <VoiceInput onResult={(t) => setBody(t)} testId="wall-dictate-btn" label="Dictate" />
                         )}
                     </div>
-                    <button onClick={postMessage} disabled={!body.trim() || posting} data-testid="wall-post-btn" className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-full px-4 py-2 text-xs hover:bg-[#091D33] disabled:opacity-60">
+                    <button onClick={postMessage} disabled={!body.trim() || posting} data-testid="wall-post-btn" className="inline-flex items-center gap-1.5 bg-primary-k text-white rounded-lg px-4 py-2 text-xs hover:bg-[#091D33] disabled:opacity-60">
                         <Send className="h-3.5 w-3.5" /> Share
                     </button>
                 </div>

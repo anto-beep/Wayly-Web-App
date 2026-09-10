@@ -209,7 +209,7 @@ function SeverityGroup({ band, entries, onDraftFinding }) {
     );
 }
 
-export function InvoiceIssueRegister({ findings, onDraftAll, onDraftFinding }) {
+export function InvoiceIssueRegister({ findings, onDraftFinding }) {
     if (!findings || findings.length === 0) {
         return (
             <section className="rounded-2xl border-2 border-dashed border-sage/40 bg-sage/5 p-8 text-center" data-testid="inv1-no-findings">
@@ -239,16 +239,6 @@ export function InvoiceIssueRegister({ findings, onDraftAll, onDraftFinding }) {
                 </h3>
                 <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-k">{findings.length} total</span>
-                    {onDraftAll && findings.length >= 1 && (
-                        <button
-                            type="button"
-                            onClick={onDraftAll}
-                            data-testid="inv1-draft-all-btn"
-                            className="text-sm inline-flex items-center gap-1.5 rounded-full bg-wayly-clay-500 text-white px-4 py-2 font-semibold hover:brightness-95 transition"
-                        >
-                            <Mail className="h-4 w-4" /> Draft a letter
-                        </button>
-                    )}
                 </div>
             </header>
             <div className={`border-l-4 rounded-r-lg p-4 flex items-start gap-3 ${highCount > 0 ? "bg-terracotta text-white border-terracotta" : topBand === "medium" ? "bg-gold/20 text-primary-k border-gold" : "bg-sage/15 text-[#0F5648] border-sage"}`} data-testid="inv1-issue-top-banner">

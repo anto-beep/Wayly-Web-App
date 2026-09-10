@@ -313,7 +313,7 @@ export default function ParticipantTimeline() {
                 data-testid="timeline-add-event"
                 aria-disabled={isExpired ? "true" : undefined}
                 onClick={(e) => { if (isExpired) e.preventDefault(); }}
-                className={`fixed right-4 bottom-20 sm:right-8 sm:bottom-8 z-30 inline-flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-sm shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-wayly-clay-500 ${isExpired ? "bg-wayly-clay-500/60 text-white/80 cursor-not-allowed" : "bg-wayly-clay-500 text-white hover:brightness-95"}`}
+                className={`fixed right-4 bottom-20 sm:right-8 sm:bottom-8 z-30 inline-flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-sm shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-wayly-clay-500 ${isExpired ? "bg-wayly-clay-500/60 text-white/80 cursor-not-allowed" : "bg-wayly-clay-500 text-white"}`}
             >
                 <Plus className="h-4 w-4" aria-hidden="true" /> Add Event
             </Link>

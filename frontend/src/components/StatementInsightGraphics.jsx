@@ -68,7 +68,7 @@ export default function StatementInsightGraphics({ stmt }) {
                         <span className="text-[10px] uppercase tracking-wider text-muted-k inline-flex items-center gap-0.5">Tap to open <ChevronRight className="h-3 w-3" /></span>
                     </div>
                     <div className="mt-2 flex items-center gap-5">
-                        <button type="button" onClick={openBreakdown} data-testid="money-graphic-donut" aria-label={`Government paid ${govPct}%, you paid ${100 - govPct}%. Open the breakdown.`} className="relative h-[148px] w-[148px] flex-none rounded-full transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k">
+                        <button type="button" onClick={openBreakdown} data-testid="money-graphic-donut" aria-label={`Government paid ${govPct}%, you paid ${100 - govPct}%. Open the breakdown.`} className="relative h-[148px] w-[148px] flex-none rounded-full transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie data={money} dataKey="value" innerRadius={50} outerRadius={70} startAngle={90} endAngle={-270} stroke="none" paddingAngle={2}>
@@ -82,11 +82,11 @@ export default function StatementInsightGraphics({ stmt }) {
                             </div>
                         </button>
                         <div className="flex-1 space-y-2">
-                            <button type="button" onClick={openBreakdown} data-testid="money-graphic-gov" className="w-full flex items-center justify-between gap-2 rounded-lg item-sage border p-2.5 text-left transition-transform hover:scale-[1.02] hover:shadow-sm">
+                            <button type="button" onClick={openBreakdown} data-testid="money-graphic-gov" className="w-full flex items-center justify-between gap-2 rounded-lg item-sage border p-2.5 text-left transition-transform hover:shadow-sm">
                                 <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: "#8FBF95" }} /> Government</span>
                                 <span className="font-semibold text-primary-k tabular-nums">{formatAUD2(gov)}</span>
                             </button>
-                            <button type="button" onClick={openBreakdown} data-testid="money-graphic-you" className="w-full flex items-center justify-between gap-2 rounded-lg item-clay border p-2.5 text-left transition-transform hover:scale-[1.02] hover:shadow-sm">
+                            <button type="button" onClick={openBreakdown} data-testid="money-graphic-you" className="w-full flex items-center justify-between gap-2 rounded-lg item-clay border p-2.5 text-left transition-transform hover:shadow-sm">
                                 <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: "#F0B267" }} /> You paid</span>
                                 <span className="font-semibold text-primary-k tabular-nums">{formatAUD2(you)}</span>
                             </button>
@@ -101,7 +101,7 @@ export default function StatementInsightGraphics({ stmt }) {
                         <span className="text-[10px] uppercase tracking-wider text-muted-k inline-flex items-center gap-0.5">Tap to open <ChevronRight className="h-3 w-3" /></span>
                     </div>
                     <div className="mt-2 flex items-center gap-5">
-                        <button type="button" onClick={openAnomalies} data-testid="severity-graphic-donut" aria-label={`${totalFlags} things to know. Open the list.`} className="relative h-[148px] w-[148px] flex-none rounded-full transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k">
+                        <button type="button" onClick={openAnomalies} data-testid="severity-graphic-donut" aria-label={`${totalFlags} things to know. Open the list.`} className="relative h-[148px] w-[148px] flex-none rounded-full transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie data={sevData} dataKey="value" innerRadius={50} outerRadius={70} startAngle={90} endAngle={-270} stroke="none" paddingAngle={2}>
@@ -116,7 +116,7 @@ export default function StatementInsightGraphics({ stmt }) {
                         </button>
                         <div className="flex-1 space-y-2">
                             {sevData.map((d) => (
-                                <button key={d.name} type="button" onClick={openAnomalies} data-testid={`severity-graphic-${d.name.replace(/\W+/g, "-").toLowerCase()}`} className="w-full flex items-center justify-between gap-2 rounded-lg border border-kindred px-2.5 py-2 text-left transition-transform hover:scale-[1.02] hover:shadow-sm">
+                                <button key={d.name} type="button" onClick={openAnomalies} data-testid={`severity-graphic-${d.name.replace(/\W+/g, "-").toLowerCase()}`} className="w-full flex items-center justify-between gap-2 rounded-lg border border-kindred px-2.5 py-2 text-left transition-transform hover:shadow-sm">
                                     <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: d.color }} /> {d.name}</span>
                                     <span className="font-semibold text-primary-k tabular-nums inline-flex items-center gap-1">{d.value} <ChevronRight className="h-3.5 w-3.5 text-muted-k" /></span>
                                 </button>

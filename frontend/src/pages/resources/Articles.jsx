@@ -86,7 +86,7 @@ export default function ArticlesIndex() {
             </section>
             <section className="mx-auto max-w-5xl px-6 pb-20 grid sm:grid-cols-2 gap-5">
                 {list.map((a) => (
-                    <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 hover:-translate-y-1 hover:shadow-md transition-all" data-testid={`articles-card-${a.slug}`}>
+                    <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 transition-colors" data-testid={`articles-card-${a.slug}`}>
                         <h2 className="font-heading text-xl text-primary-k">{a.title}</h2>
                         <p className="mt-2 text-sm text-muted-k leading-relaxed">{a.excerpt}</p>
                         {a.is_draft_needs_review && (
@@ -401,7 +401,7 @@ function StructuredArticle({ article, slug }) {
                         <h2 className="font-heading text-xl text-primary-k">Related reading</h2>
                         <div className="mt-4 grid sm:grid-cols-2 gap-4">
                             {relatedArticles.map((r) => (
-                                <Link key={r.slug} to={`/resources/articles/${r.slug}`} className="block bg-surface border border-kindred rounded-2xl p-5 hover:-translate-y-1 hover:shadow-md transition-all" data-testid={`related-${r.slug}`}>
+                                <Link key={r.slug} to={`/resources/articles/${r.slug}`} className="block bg-surface border border-kindred rounded-2xl p-5 transition-colors" data-testid={`related-${r.slug}`}>
                                     <h3 className="font-heading text-base text-primary-k">{r.title}</h3>
                                     <p className="mt-2 text-sm text-muted-k leading-relaxed">{r.excerpt}</p>
                                     <span className="mt-2 inline-flex items-center gap-1 text-sm text-primary-k">Read <ArrowRight className="h-3.5 w-3.5" /></span>
@@ -417,7 +417,7 @@ function StructuredArticle({ article, slug }) {
                         <h2 className="font-heading text-xl text-primary-k">Pillars on Wayly</h2>
                         <div className="mt-4 grid sm:grid-cols-3 gap-4">
                             {ARTICLE_PILLAR_MAP[article.slug].map((p) => (
-                                <Link key={p.href} to={p.href} className="block bg-surface border border-kindred rounded-2xl p-4 hover:-translate-y-0.5 hover:border-[#2BC4D6] transition-all" data-testid={`article-pillar-${p.href.replace(/[^a-z0-9]+/gi, "-")}`}>
+                                <Link key={p.href} to={p.href} className="block bg-surface border border-kindred rounded-2xl p-4 hover:border-[#2BC4D6] transition-colors" data-testid={`article-pillar-${p.href.replace(/[^a-z0-9]+/gi, "-")}`}>
                                     <div className="font-heading text-base text-primary-k leading-snug">{p.label}</div>
                                     <p className="mt-1 text-xs text-muted-k">{p.sub}</p>
                                     <span className="mt-3 inline-flex items-center gap-1 text-sm text-[#1565B8]">Visit <ArrowRight className="h-3.5 w-3.5" /></span>

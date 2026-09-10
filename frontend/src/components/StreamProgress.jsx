@@ -26,7 +26,7 @@ export default function StreamProgress({ stream }) {
                 {formatAUD(stream.remaining)} <span className="text-sm text-muted-k font-sans">left</span>
             </div>
             <div className="mt-3 h-2.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: "rgba(0,0,0,0.06)" }}>
-                <div className="h-full transition-all rounded-full" style={{ width: `${pct}%`, backgroundColor: tone.solid }} />
+                <div className="h-full transition-colors rounded-full" style={{ width: `${pct}%`, backgroundColor: tone.solid }} />
             </div>
             <div className="mt-2 text-xs text-muted-k">
                 {formatAUD(stream.spent)} of {formatAUD(stream.allocated)} this quarter

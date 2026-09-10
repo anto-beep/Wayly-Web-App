@@ -36,12 +36,12 @@ export default function SeoHubLinks({ exclude }) {
                             key={h.href}
                             to={h.href}
                             data-testid={`hub-link-${h.href.replace(/[^a-z0-9]+/gi, "-")}`}
-                            className="group rounded-2xl border border-[#CFE0F0] bg-white p-5 shadow-sm hover:shadow-md hover:border-[#2BC4D6] hover:-translate-y-1 transition-all"
+                            className="group rounded-2xl border border-[#CFE0F0] bg-white p-5 shadow-sm hover:border-[#2BC4D6] transition-colors"
                         >
                             <div className="font-heading text-lg text-[#0E2A47] leading-snug group-hover:text-[#1565B8] transition-colors">{h.label}</div>
                             <div className="mt-1.5 text-sm text-[#4A5A75] leading-relaxed">{h.sub}</div>
                             <div className="mt-4 text-sm font-semibold text-[#A5512B] inline-flex items-center gap-1.5">
-                                Explore <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                Explore <ArrowRight className="h-4 w-4 group-transition-transform" />
                             </div>
                         </Link>
                     ))}

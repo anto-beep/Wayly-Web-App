@@ -3,8 +3,8 @@
 _Started Jun 2026. Historical implementation log lives in PRD.md (dated sections)._
 
 ## Recently shipped
-- **Iter 320 (Jun 2026)** — Blocked Statement Demo (seed + forward publishable/publish_block/low_confidence into DecoderResultView on web + mobile statement detail); Required/Optional badge sweep across 22 mobile forms; Bulk Follow-up (multi-select mailbox chase-ups, web + mobile, `POST /lf1/follow-ups/bulk-send`); Letter Preview (polished WYSIWYG letter-paper modal, web + mobile). Verified iteration_320 (both platforms).
-- **Mobile parity (Jun 2026)** — Statement Decoder publish gate; Letters & Follow-ups redesigned front door + mailbox; consolidated letter detail screen; Required/Optional badges on account forms. Verified iteration_319.
+- **Iter 321 (Jun 2026)** — Auth dark-mode fix (lighter warm cards + clay accents, readable Google label); invoice per-issue draft-letter parity; Fee Transparency + Confidence Legend on the statement decoder (web+mobile); app-wide sleek/less-round/no-hover button restyle; prod test-account cleanup script; confirmed Gateway Guardrail + /api/health already mitigated (off-loop LLM executor, 75s timeout, dependency-free liveness). Verified iteration_321.
+- **Iter 320 (Jun 2026)** — Blocked Statement Demo; Required/Optional badge sweep (mobile); Bulk Follow-up (web+mobile); Letter Preview (in-app WYSIWYG); landing dark-mode + button polish; Statement Decoder CTA pricing fix.
 
 ## P1 — next up
 - **Reviewer PDF Match** — the downloaded review PDF should include the same safety checks the family sees on screen.

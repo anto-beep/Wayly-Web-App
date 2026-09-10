@@ -121,7 +121,7 @@ export default function GlossaryTerm() {
                                 <Link
                                     key={r.slug}
                                     to={`/resources/glossary/${r.slug}`}
-                                    className="block bg-surface border border-kindred rounded-xl p-4 hover:border-primary-k transition-all"
+                                    className="block bg-surface border border-kindred rounded-xl p-4 hover:border-primary-k transition-colors"
                                     data-testid={`glossary-related-${r.slug}`}
                                 >
                                     <div className="font-medium text-primary-k">{r.term}</div>

@@ -60,7 +60,7 @@ export default function PlanComplianceGuard() {
                     <button
                         onClick={switchToFamily}
                         disabled={working}
-                        className="bg-gold text-white font-semibold rounded-md px-4 py-2.5 text-sm hover:brightness-95 disabled:opacity-60"
+                        className="bg-gold text-white font-semibold rounded-md px-4 py-2.5 text-sm disabled:opacity-60"
                         data-testid="compliance-switch-family"
                     >
                         {working ? "Switching…" : "Switch to Family ($49.50 per fortnight)"}

@@ -204,7 +204,7 @@ export default function StatementAskWayly({ statementId, providerName, periodLab
                         type="button"
                         onClick={() => send()}
                         disabled={sending || !input.trim()}
-                        className="inline-flex items-center gap-1.5 bg-gold text-white rounded-lg px-4 py-2.5 text-sm font-semibold hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 bg-gold text-white rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                         data-testid="statement-ask-wayly-send"
                         aria-label="Send"
                     >

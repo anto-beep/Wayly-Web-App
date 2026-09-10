@@ -27,7 +27,7 @@ const PLAN_CARDS = [
             "Statement vault & budget tools",
         ],
         ring: "border-primary-k",
-        cta_classes: "bg-primary-k text-white hover:brightness-95",
+        cta_classes: "bg-primary-k text-white",
     },
     {
         key: "family",
@@ -42,7 +42,7 @@ const PLAN_CARDS = [
             "Sunday digest emails to the family",
         ],
         ring: "border-wayly-clay-500",
-        cta_classes: "bg-wayly-clay-500 text-white hover:brightness-95",
+        cta_classes: "bg-wayly-clay-500 text-white",
         featured: true,
     },
 ];

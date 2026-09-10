@@ -573,7 +573,7 @@ function ResultScreen({ result, form, constants, onEdit, access }) {
                 <div className="bg-surface-2 rounded-xl p-5 border border-kindred" data-testid="ce-signup-cta">
                     <div className="font-medium text-primary-k">Want this updated automatically as your statements arrive?</div>
                     <p className="text-sm text-muted-k mt-1">On a paid plan Wayly re-runs this estimate every time your care mix or income changes and shows you the delta.</p>
-                    <Link to="/signup" className="mt-3 inline-flex items-center gap-1 text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]">
+                    <Link to="/signup" className="mt-3 inline-flex items-center gap-1 text-sm bg-primary-k text-white rounded-lg px-5 py-2.5 hover:bg-[#091D33]">
                         Start free trial <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                 </div>

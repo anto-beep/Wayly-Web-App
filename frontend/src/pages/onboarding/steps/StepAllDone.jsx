@@ -101,7 +101,7 @@ export default function StepAllDone({ doc, participantId, onFinish, user }) {
                             <div className="mt-3 flex flex-wrap gap-2">
                                 <a
                                     href="/onboarding?new=1"
-                                    className="inline-flex items-center gap-2 bg-primary-k text-white rounded-lg px-4 py-2 text-sm font-medium hover:brightness-95"
+                                    className="inline-flex items-center gap-2 bg-primary-k text-white rounded-lg px-4 py-2 text-sm font-medium"
                                     data-testid="onboarding-add-second-cta"
                                 >
                                     {secondIntent?.first_name
@@ -151,7 +151,7 @@ export default function StepAllDone({ doc, participantId, onFinish, user }) {
                                 <Icon className="h-5 w-5 text-primary-k" />
                                 <div className="mt-2 font-heading text-base text-primary-k">{c.title}</div>
                                 <p className="text-xs text-muted-k mt-1 leading-relaxed">{c.reason}</p>
-                                <div className="mt-2 inline-flex items-center gap-1 text-xs text-primary-k group-hover:gap-2 transition-all">
+                                <div className="mt-2 inline-flex items-center gap-1 text-xs text-primary-k group-hover:gap-2 transition-colors">
                                     Open Tool <ArrowRight className="h-3 w-3" />
                                 </div>
                             </a>

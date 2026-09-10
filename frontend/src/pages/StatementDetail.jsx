@@ -231,7 +231,7 @@ export default function StatementDetail() {
                         type="button"
                         onClick={downloadOriginal}
                         disabled={!stmt.has_original_file}
-                        className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                         style={{ backgroundColor: "#0E4D52" }}
                         data-testid="statement-download-original-btn"
                         title={stmt.has_original_file ? "Download the original file as received, the evidentiary copy for disputes" : "Original file no longer available."}
@@ -281,7 +281,7 @@ export default function StatementDetail() {
                     <Link
                         to={`/app/statements/${stmt.id}/audit-log`}
                         data-testid="statement-audit-log-link"
-                        className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium hover:brightness-110"
+                        className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium"
                         style={{ backgroundColor: "#425F47" }}
                         title="See every change recorded for this statement"
                     >
@@ -293,7 +293,7 @@ export default function StatementDetail() {
                             onClick={openArchiveModal}
                             disabled={actionBusy}
                             data-testid="statement-archive-btn"
-                            className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium hover:brightness-110 disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium disabled:opacity-50"
                             style={{ backgroundColor: "#B23A2E" }}
                             title="Archive this statement (30-day restore window)"
                         >
@@ -306,7 +306,7 @@ export default function StatementDetail() {
                                 onClick={restore}
                                 disabled={actionBusy}
                                 data-testid="statement-restore-btn"
-                                className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium hover:brightness-110 disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium disabled:opacity-50"
                                 style={{ backgroundColor: "#425F47" }}
                                 title="Restore this statement to active"
                             >
@@ -316,7 +316,7 @@ export default function StatementDetail() {
                                 type="button"
                                 onClick={() => setDeleteOpen(true)}
                                 data-testid="statement-permanent-delete-btn"
-                                className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium hover:brightness-110"
+                                className="inline-flex items-center gap-1.5 text-sm rounded-md px-3 py-1.5 text-white font-medium"
                                 style={{ backgroundColor: "#7A241B" }}
                                 title="Permanently delete this statement"
                             >

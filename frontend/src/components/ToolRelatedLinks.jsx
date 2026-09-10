@@ -182,7 +182,7 @@ function Card({ icon: Icon, overline, href, label, sub, testid }) {
         <Link
             to={href}
             data-testid={testid}
-            className="group block rounded-2xl border border-[#CFE0F0] bg-white p-5 hover:border-[#2BC4D6] hover:-translate-y-0.5 transition-all"
+            className="group block rounded-2xl border border-[#CFE0F0] bg-white p-5 hover:border-[#2BC4D6] transition-colors"
         >
             <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-[#DCEBF7] inline-flex items-center justify-center text-[#1565B8]">
@@ -193,7 +193,7 @@ function Card({ icon: Icon, overline, href, label, sub, testid }) {
             <div className="font-heading text-lg text-[#0E2A47] mt-3 leading-snug">{toTitleCase(label)}</div>
             <div className="mt-1 text-xs text-[#4A5A75]">{sub}</div>
             <div className="mt-4 text-sm font-medium text-[#1565B8] inline-flex items-center gap-1">
-                Read <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                Read <ArrowRight className="h-3.5 w-3.5 group-transition-transform" />
             </div>
         </Link>
     );

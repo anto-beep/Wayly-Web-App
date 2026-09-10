@@ -121,6 +121,87 @@ const STREAM_LABEL = {
  * Renders the Pass-2 audit JSON (statement_summary + stream_breakdown +
  * anomalies) plus the full line-item table from the Pass-1 extraction.
  */
+/**
+ * FeeBreakdown — Fee Transparency (Jun 2026). Breaks out services, care
+ * management, package management and GST as their own rows so the total the
+ * family sees always adds up on screen. Values come from the Pass-1 extraction
+ * (falls back to the summary) and only non-zero components are shown.
+ */
+function FeeBreakdown({ extracted, summary }) {
+    const num = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
+    const round2 = (n) => Math.round(n * 100) / 100;
+    const items = extracted?.line_items || [];
+    const services = round2(items.filter((li) => !li.is_cancellation).reduce((s, li) => s + num(li.gross ?? li.total), 0));
+    const careMgmt = num(extracted?.care_management_deducted ?? summary?.care_management_fee);
+    const pkgMgmt = num(extracted?.package_management_deducted);
+    const gst = num(extracted?.gst_total);
+    const cancellations = round2(items.filter((li) => li.is_cancellation).reduce((s, li) => s + num(li.charged_amount), 0));
+    const credits = round2((extracted?.previous_period_adjustments || []).reduce((s, a) => s + num(a?.credit_amount), 0));
+    const reported = num(extracted?.reported_total_gross ?? summary?.total_gross);
+    const computed = round2(services + careMgmt + pkgMgmt + gst + cancellations - credits);
+    const rows = [
+        { label: "Services", value: services, always: true },
+        { label: "Care management", value: careMgmt },
+        { label: "Package management", value: pkgMgmt },
+        { label: "GST", value: gst },
+        { label: "Charged cancellations", value: cancellations },
+        { label: "Credits applied", value: credits, neg: true },
+    ].filter((r) => r.always || Math.abs(r.value) > 0.005);
+    if (rows.length <= 1 && reported <= 0) return null;
+    const total = reported > 0 ? reported : computed;
+    const reconciles = Math.abs(computed - total) <= Math.max(5, 0.02 * total);
+    return (
+        <section data-testid="decoder-fee-breakdown" className="rounded-2xl border border-kindred bg-surface p-5">
+            <div className="flex items-baseline justify-between gap-2">
+                <h3 className="font-heading text-lg text-primary-k">Where the money goes</h3>
+                <span className="text-[11px] text-muted-k">Every fee, broken out</span>
+            </div>
+            <dl className="mt-3 divide-y divide-kindred">
+                {rows.map((r) => (
+                    <div key={r.label} className="flex items-center justify-between py-2 text-sm" data-testid={`decoder-fee-row-${r.label.toLowerCase().replace(/\s+/g, "-")}`}>
+                        <dt className="text-muted-k">{r.label}</dt>
+                        <dd className={`tabular-nums ${r.neg ? "text-sage" : "text-primary-k"}`}>{r.neg ? `− ${aud(Math.abs(r.value))}` : aud(r.value)}</dd>
+                    </div>
+                ))}
+                <div className="flex items-center justify-between py-2.5 text-sm font-semibold" data-testid="decoder-fee-total">
+                    <dt className="text-primary-k">Total billed</dt>
+                    <dd className="tabular-nums text-primary-k">{aud(total)}</dd>
+                </div>
+            </dl>
+            {reported > 0 && (
+                <p className={`mt-1 text-[11px] ${reconciles ? "text-sage" : "text-terracotta"}`} data-testid="decoder-fee-reconcile-note">
+                    {reconciles
+                        ? "These rows add up to the statement's own total."
+                        : `Heads up: these rows add to ${aud(computed)}, but the statement's own total is ${aud(reported)}.`}
+                </p>
+            )}
+        </section>
+    );
+}
+
+/**
+ * ConfidenceLegend — a small "how we read this" note so families understand
+ * what low-confidence and unverified figures mean BEFORE they act on them.
+ */
+function ConfidenceLegend({ lowConfidence, blocked, confidence }) {
+    const pct = (typeof confidence === "number" && confidence > 0 && confidence <= 1)
+        ? Math.round(confidence * 100)
+        : null;
+    return (
+        <details className="rounded-xl border border-kindred bg-surface-2 px-4 py-3 text-sm" data-testid="decoder-confidence-legend">
+            <summary className="cursor-pointer text-primary-k font-medium select-none list-none flex items-center gap-2">
+                <Info className="h-4 w-4 text-primary-k" /> How we read this
+                {pct !== null ? <span className="text-xs text-muted-k font-normal">· {pct}% read confidence</span> : null}
+            </summary>
+            <div className="mt-3 space-y-2 text-muted-k leading-relaxed">
+                <p><span className="font-semibold text-gold">Low confidence</span> means some figures were hard to read (often a photo or a faint scan). We show our best reading, but double-check those against your original before acting on them.</p>
+                <p><span className="font-semibold text-terracotta">Unverified</span> means the statement&apos;s own numbers do not add up, so we will not present a total as fact until the provider corrects or confirms it.</p>
+                <p>Everything else has passed our reconciliation checks. Wayly is a reading assistant, not financial or legal advice.</p>
+            </div>
+        </details>
+    );
+}
+
 export default function DecoderResultView({ result, onDraftLetter }) {
     const audit = result.audit || {};
     const extracted = result.extracted || {};
@@ -352,6 +433,10 @@ export default function DecoderResultView({ result, onDraftLetter }) {
                 budget context so participants can trace ledger continuity
                 across monthly + quarterly statements. */}
             {!blocked && <BalancePanel extracted={extracted} summary={summary} audit={audit} />}
+
+            {/* Confidence Legend + Fee Transparency (Jun 2026) */}
+            <ConfidenceLegend lowConfidence={lowConfidence} blocked={blocked} confidence={extractionConfidence} />
+            {!blocked && <FeeBreakdown extracted={extracted} summary={summary} />}
 
             {/* SECTION 2, Anomaly alert panel (always shown) */}
             <section data-testid="decoder-anomaly-panel">

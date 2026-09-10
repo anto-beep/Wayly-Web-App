@@ -136,7 +136,7 @@ export default function AccessibilityWidget() {
                 aria-label={open ? "Close accessibility menu" : "Open accessibility menu"}
                 aria-expanded={open}
                 data-testid="a11y-launcher"
-                className="fixed bottom-16 md:bottom-5 left-3 md:left-5 z-[60] inline-flex items-center justify-center h-12 w-12 rounded-full bg-wayly-clay-500 text-white shadow-xl hover:brightness-95 transition-all focus:outline-none focus:ring-2 focus:ring-wayly-clay-500 focus:ring-offset-2"
+                className="fixed bottom-16 md:bottom-5 left-3 md:left-5 z-[60] inline-flex items-center justify-center h-12 w-12 rounded-full bg-wayly-clay-500 text-white shadow-xl transition-colors focus:outline-none focus:ring-2 focus:ring-wayly-clay-500 focus:ring-offset-2"
             >
                 {open ? <X className="h-5 w-5" /> : <Accessibility className="h-5 w-5" />}
             </button>

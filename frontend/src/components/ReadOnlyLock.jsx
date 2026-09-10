@@ -58,7 +58,7 @@ export default function ReadOnlyLock({
                 onClick={reactivate}
                 disabled={busy}
                 data-testid={`${testId}-cta`}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-wayly-clay-500 text-white text-xs font-semibold px-4 py-2 hover:brightness-95 disabled:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-wayly-clay-500 focus-visible:ring-offset-2"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-wayly-clay-500 text-white text-xs font-semibold px-4 py-2 disabled:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-wayly-clay-500 focus-visible:ring-offset-2"
             >
                 {busy ? "Opening secure checkout…" : "Reactivate"}
             </button>

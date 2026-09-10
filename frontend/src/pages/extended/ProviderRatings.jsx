@@ -13,7 +13,7 @@ function StarRow({ stars, onClick, size = 4 }) {
                     type="button"
                     onClick={onClick ? () => onClick(n) : undefined}
                     disabled={!onClick}
-                    className={`${onClick ? "hover:scale-110" : "cursor-default"} transition-transform`}
+                    className={`${onClick ? "" : "cursor-default"} transition-transform`}
                 >
                     <Star className={`h-${size} w-${size} ${n <= stars ? "fill-gold text-gold" : "text-muted-k"}`} />
                 </button>

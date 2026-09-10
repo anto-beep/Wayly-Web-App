@@ -399,7 +399,7 @@ function BlankLetterPanel({ situations, busySituationId, onPick }) {
                             disabled={!sit || Boolean(busySituationId)}
                             onClick={() => onPick(sit)}
                             data-testid={`lf1-blank-type-${t.situationId}`}
-                            className="inline-flex items-center gap-2.5 rounded-xl border border-kindred bg-surface px-3.5 py-3 text-left text-sm text-primary-k hover:border-primary-k hover:shadow-sm transition-all disabled:opacity-60"
+                            className="inline-flex items-center gap-2.5 rounded-xl border border-kindred bg-surface px-3.5 py-3 text-left text-sm text-primary-k hover:border-primary-k hover:shadow-sm transition-colors disabled:opacity-60"
                         >
                             {busy ? <Loader2 className="h-4 w-4 animate-spin text-primary-k flex-shrink-0" /> : <Icon className="h-4 w-4 text-primary-k flex-shrink-0" aria-hidden="true" />}
                             <span className="flex-1">{t.label}</span>
@@ -426,7 +426,7 @@ function SituationCard({ situation, accent, busy, onClick }) {
                 disabled={busy}
                 data-testid={testId}
                 className={[
-                    "w-full text-left rounded-2xl border border-kindred bg-surface p-5 transition-all",
+                    "w-full text-left rounded-2xl border border-kindred bg-surface p-5 transition-colors",
                     a.hover, "hover:shadow-sm",
                     busy ? "opacity-60 cursor-wait" : "",
                 ].join(" ")}

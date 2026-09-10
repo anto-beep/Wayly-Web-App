@@ -47,6 +47,7 @@ export default function DecoderResultView({ result, onDraftLetter }: { result: a
   const [showTable, setShowTable] = useState(false);
   const [openBands, setOpenBands] = useState<Record<string, boolean>>({});
   const [draftKey, setDraftKey] = useState<string | null>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
   const runDraft = onDraftLetter
     ? async (a: any, key: string) => { setDraftKey(key); try { await onDraftLetter(a); } finally { setDraftKey(null); } }
     : null;
@@ -220,8 +221,26 @@ export default function DecoderResultView({ result, onDraftLetter }: { result: a
           </View>
         </Card>
       ) : null}
+      {/* Fee Transparency — services + care/package management + GST broken out (Jun 2026) */}
+      <FeeBreakdown extracted={_ext} summary={result?.audit?.statement_summary || {}} colors={colors} />
       </>
       ) : null}
+
+      {/* Confidence Legend — "how we read this" (Jun 2026) */}
+      <Card testID="decoder-confidence-legend">
+        <Pressable onPress={() => setLegendOpen((o) => !o)} style={{ flexDirection: "row", alignItems: "center", gap: 8 }} testID="decoder-confidence-legend-toggle">
+          <Info size={16} color={colors.primary} />
+          <T style={{ fontFamily: fonts.bodySemi, color: colors.text, flex: 1 }}>How we read this{typeof extractionConfidence === "number" && extractionConfidence > 0 && extractionConfidence <= 1 ? ` · ${Math.round(extractionConfidence * 100)}% read confidence` : ""}</T>
+          {legendOpen ? <ChevronUp size={16} color={colors.muted} /> : <ChevronDown size={16} color={colors.muted} />}
+        </Pressable>
+        {legendOpen ? (
+          <View style={{ marginTop: spacing.sm, gap: spacing.xs }}>
+            <T variant="small" style={{ color: colors.muted, lineHeight: 19 }}><T variant="small" style={{ color: colors.gold, fontFamily: fonts.bodySemi }}>Low confidence</T> means some figures were hard to read (often a photo or faint scan). Double-check those against your original before acting on them.</T>
+            <T variant="small" style={{ color: colors.muted, lineHeight: 19 }}><T variant="small" style={{ color: colors.terracotta, fontFamily: fonts.bodySemi }}>Unverified</T> means the statement's own numbers do not add up, so we will not present a total as fact until the provider corrects it.</T>
+            <T variant="small" style={{ color: colors.muted, lineHeight: 19 }}>Everything else has passed our reconciliation checks. Wayly is a reading assistant, not financial or legal advice.</T>
+          </View>
+        ) : null}
+      </Card>
 
       {/* Anomaly panel */}
       <View testID="decoder-anomaly-panel">
@@ -463,6 +482,59 @@ function BalCell({ label, value, testID }: { label: string; value: any; testID: 
     </View>
   );
 }
+
+// Fee Transparency — services + care/package management + GST as their own rows
+// so the total always adds up on screen. Mirrors the web FeeBreakdown.
+function FeeBreakdown({ extracted, summary, colors }: { extracted: any; summary: any; colors: any }) {
+  const num = (v: any) => { const x = Number(v); return isFinite(x) ? x : 0; };
+  const r2 = (x: number) => Math.round(x * 100) / 100;
+  const items: any[] = extracted?.line_items || [];
+  const services = r2(items.filter((li) => !li.is_cancellation).reduce((s, li) => s + num(li.gross ?? li.total), 0));
+  const careMgmt = num(extracted?.care_management_deducted ?? summary?.care_management_fee);
+  const pkgMgmt = num(extracted?.package_management_deducted);
+  const gst = num(extracted?.gst_total);
+  const cancellations = r2(items.filter((li) => li.is_cancellation).reduce((s, li) => s + num(li.charged_amount), 0));
+  const credits = r2((extracted?.previous_period_adjustments || []).reduce((s: number, a: any) => s + num(a?.credit_amount), 0));
+  const reported = num(extracted?.reported_total_gross ?? summary?.total_gross);
+  const computed = r2(services + careMgmt + pkgMgmt + gst + cancellations - credits);
+  const rows = [
+    { label: "Services", value: services, always: true, neg: false },
+    { label: "Care management", value: careMgmt, always: false, neg: false },
+    { label: "Package management", value: pkgMgmt, always: false, neg: false },
+    { label: "GST", value: gst, always: false, neg: false },
+    { label: "Charged cancellations", value: cancellations, always: false, neg: false },
+    { label: "Credits applied", value: credits, always: false, neg: true },
+  ].filter((row) => row.always || Math.abs(row.value) > 0.005);
+  if (rows.length <= 1 && reported <= 0) return null;
+  const total = reported > 0 ? reported : computed;
+  const reconciles = Math.abs(computed - total) <= Math.max(5, 0.02 * total);
+  return (
+    <Card testID="decoder-fee-breakdown">
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
+        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text }}>Where the money goes</T>
+        <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>Every fee, broken out</T>
+      </View>
+      <View style={{ marginTop: spacing.sm }}>
+        {rows.map((row) => (
+          <View key={row.label} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 7, borderTopWidth: 1, borderTopColor: colors.border }}>
+            <T variant="small" style={{ color: colors.muted }}>{row.label}</T>
+            <T variant="small" style={{ fontFamily: fonts.mono, color: row.neg ? colors.sage : colors.text }}>{row.neg ? `− ${aud(Math.abs(row.value))}` : aud(row.value)}</T>
+          </View>
+        ))}
+        <View testID="decoder-fee-total" style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 9, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Total billed</T>
+          <T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{aud(total)}</T>
+        </View>
+      </View>
+      {reported > 0 ? (
+        <T variant="small" style={{ fontSize: 11, color: reconciles ? colors.sage : colors.terracotta, marginTop: 4 }}>
+          {reconciles ? "These rows add up to the statement's own total." : `Heads up: these rows add to ${aud(computed)}, but the statement's own total is ${aud(reported)}.`}
+        </T>
+      ) : null}
+    </Card>
+  );
+}
+
 
 const styles = StyleSheet.create({
   notice: { borderRadius: radius.md, padding: spacing.md },

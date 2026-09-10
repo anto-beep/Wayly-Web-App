@@ -66,7 +66,7 @@ export default function PdfExportButton({ result, provider, ceState }) {
                 onClick={download}
                 disabled={busy}
                 data-testid="pc-pdf-export"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#A5512B] text-white text-sm hover:brightness-95 transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#A5512B] text-white text-sm transition-colors disabled:opacity-60"
             >
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                 {busy ? "Rendering…" : "Download PDF"}

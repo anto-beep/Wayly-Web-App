@@ -259,7 +259,7 @@ export default function Signup() {
     const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
     return (
-        <div className="min-h-screen bg-kindred px-6 py-10">
+        <div className="min-h-screen bg-kindred auth-shell px-6 py-10">
             <SeoHead {...SEO.signup} noindex={isRetiredFreePlan || SEO.signup.noindex} />
             <div className="mx-auto max-w-6xl">
                 <Link to="/" className="flex items-center gap-2 mb-8">
@@ -290,7 +290,7 @@ export default function Signup() {
                 <div className="grid lg:grid-cols-12 gap-6 lg:gap-8">
                     {/* PERSONA + ACCOUNT (7 of 12 cols) */}
                     <div className="lg:col-span-7 order-2 lg:order-1">
-                        <div className="bg-surface border border-kindred rounded-2xl p-5 lg:p-6">
+                        <div className="bg-surface border border-kindred rounded-2xl p-5 lg:p-6 auth-card">
                             <span className="overline">Your details</span>
                             <h1 className="font-heading text-2xl text-primary-k mt-1 tracking-tight">
                                 Start your 7-day free trial
@@ -299,7 +299,7 @@ export default function Signup() {
                                 {"Cancel any time. Two minutes so Wayly speaks in the right voice from day one."}
                             </p>
 
-                            <div className="mt-4">
+                            <div className="mt-4 auth-google">
                                 <GoogleSignInButton
                                     testid="signup-google"
                                     planIntent={form.plan}
@@ -330,7 +330,7 @@ export default function Signup() {
                                                 onClick={() => setForm((f) => ({ ...f, role: o.v }))}
                                                 className={`text-left rounded-lg border p-3 transition-colors ${
                                                     form.role === o.v
-                                                        ? "border-primary-k bg-surface-2 ring-2 ring-primary-k/20"
+                                                        ? "border-primary-k bg-surface-2 ring-2 ring-primary-k/20 auth-selected"
                                                         : "border-kindred hover:bg-surface-2"
                                                 }`}
                                             >
@@ -598,9 +598,9 @@ export default function Signup() {
                                             onClick={() => setForm((f) => ({ ...f, plan: p.v }))}
                                             data-testid={`signup-plan-${p.v}`}
                                             aria-pressed={selected}
-                                            className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 relative ${
+                                            className={`w-full text-left rounded-xl border-2 p-4 transition-colors duration-200 relative ${
                                                 selected
-                                                    ? "border-primary-k bg-primary-k/[0.06] ring-4 ring-primary-k/25 shadow-lg scale-[1.015]"
+                                                    ? "border-primary-k bg-primary-k/[0.06] ring-4 ring-primary-k/25 shadow-lg scale-[1.015] auth-selected"
                                                     : "border-kindred bg-surface hover:bg-surface-2 hover:border-primary-k/40 hover:shadow-sm"
                                             }`}
                                         >

@@ -673,10 +673,10 @@ function TicketDetail({ ticketId }) {
                     <div className="mt-3 rounded-lg border border-[#C2683D]/40 bg-[#C2683D]/5 p-3 text-sm text-[#0E4D52]" data-testid="my-support-close-confirm">
                         <p className="mb-2">Close this ticket now? You can reopen it within 30 days if you need to add more.</p>
                         <div className="flex gap-2">
-                            <button type="button" onClick={doClose} disabled={busy} className="inline-flex items-center gap-1 rounded-full bg-[#C2683D] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#a5512b] disabled:opacity-50" data-testid="my-support-close-confirm-yes">
+                            <button type="button" onClick={doClose} disabled={busy} className="inline-flex items-center gap-1 rounded-lg bg-[#C2683D] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#a5512b] disabled:opacity-50" data-testid="my-support-close-confirm-yes">
                                 <Check className="h-3.5 w-3.5" /> Yes, close it
                             </button>
-                            <button type="button" onClick={() => setConfirmClose(false)} className="rounded-full border border-[#E5DCC9] px-3 py-1.5 text-xs text-[#0E4D52] hover:bg-[#F4F1EA]" data-testid="my-support-close-confirm-no">
+                            <button type="button" onClick={() => setConfirmClose(false)} className="rounded-lg border border-[#E5DCC9] px-3 py-1.5 text-xs text-[#0E4D52] hover:bg-[#F4F1EA]" data-testid="my-support-close-confirm-no">
                                 Cancel
                             </button>
                         </div>
@@ -736,8 +736,8 @@ function TicketDetail({ ticketId }) {
                             </select>
                         </label>
                         <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => setEditing(false)} className="rounded-full px-4 py-2 text-sm text-[#0E4D52] hover:bg-[#F4F1EA]">Cancel</button>
-                            <button type="button" onClick={saveEdit} disabled={savingEdit} className="inline-flex items-center gap-2 rounded-full bg-[#0E4D52] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0a3d41] disabled:opacity-50" data-testid="my-support-edit-save">
+                            <button type="button" onClick={() => setEditing(false)} className="rounded-lg px-4 py-2 text-sm text-[#0E4D52] hover:bg-[#F4F1EA]">Cancel</button>
+                            <button type="button" onClick={saveEdit} disabled={savingEdit} className="inline-flex items-center gap-2 rounded-lg bg-[#0E4D52] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0a3d41] disabled:opacity-50" data-testid="my-support-edit-save">
                                 {savingEdit && <Loader2 className="h-4 w-4 animate-spin" />} Save changes
                             </button>
                         </div>

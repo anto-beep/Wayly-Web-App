@@ -191,7 +191,7 @@ export default function InvoiceDetail() {
                 </div>
             )}
 
-            <InvoiceIssueRegister findings={inv?.reconciliation?.findings || []} onDraftLetter={onDraftLetter} onDraftAll={onDraftAll} />
+            <InvoiceIssueRegister findings={inv?.reconciliation?.findings || []} onDraftFinding={onDraftLetter} />
 
             <InvoiceChargesTable result={result} />
         </div>

@@ -253,7 +253,7 @@ export default function FloatingHelpChat() {
                 aria-label={open ? "Close help chat" : "Open help chat"}
                 aria-expanded={open}
                 data-testid="help-chat-launcher"
-                className="fixed bottom-16 md:bottom-20 right-3 md:right-5 z-[60] inline-flex items-center justify-center gap-2 rounded-full bg-wayly-clay-500 text-white shadow-xl hover:brightness-95 transition-all focus:outline-none focus:ring-2 focus:ring-wayly-clay-500 focus:ring-offset-2"
+                className="fixed bottom-16 md:bottom-20 right-3 md:right-5 z-[60] inline-flex items-center justify-center gap-2 rounded-full bg-wayly-clay-500 text-white shadow-xl transition-colors focus:outline-none focus:ring-2 focus:ring-wayly-clay-500 focus:ring-offset-2"
                 style={{
                     width: open ? "3rem" : "auto",
                     height: "3rem",

@@ -10,7 +10,7 @@ import { ArrowRight, BookOpen, FileText, ListOrdered } from "lucide-react";
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 const Card = ({ icon: Icon, title, body, href, count, testId, tone }) => (
-    <Link to={href} className="block rounded-2xl p-6 force-white hover:-translate-y-1 hover:brightness-110 hover:shadow-md transition-all" style={{ backgroundColor: tone || "#0E4D52" }} data-testid={testId}>
+    <Link to={href} className="block rounded-2xl p-6 force-white transition-colors" style={{ backgroundColor: tone || "#0E4D52" }} data-testid={testId}>
         <div className="flex items-start gap-4">
             <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                 <Icon className="h-5 w-5" />
@@ -72,7 +72,7 @@ export default function ResourcesIndex() {
                             .sort((a, b) => String(b.published_at || "").localeCompare(String(a.published_at || "")))
                             .slice(0, 6 - pinned.length);
                         return [...pinned, ...fill].map((a) => (
-                            <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 hover:-translate-y-1 hover:shadow-md transition-all" data-testid={`resources-article-${a.slug}`}>
+                            <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 transition-colors" data-testid={`resources-article-${a.slug}`}>
                                 <h3 className="font-heading text-lg text-primary-k">{a.title}</h3>
                                 <p className="mt-2 text-sm text-muted-k leading-relaxed line-clamp-3">{a.excerpt}</p>
                                 <span className="mt-3 inline-flex items-center gap-1 text-sm text-primary-k">Read <ArrowRight className="h-3.5 w-3.5" /></span>

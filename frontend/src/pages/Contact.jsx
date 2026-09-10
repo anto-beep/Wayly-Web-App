@@ -252,13 +252,13 @@ export default function Contact() {
                 </div>
 
                 <aside className="space-y-3" data-testid="contact-info-cards">
-                    <div className="relative overflow-hidden bg-surface border border-kindred rounded-2xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="relative overflow-hidden bg-surface border border-kindred rounded-2xl p-5 transition-colors">
                         <span className="absolute left-0 top-0 h-1.5 w-full opacity-80 bg-[#0E4D52]" />
                         <div className="h-10 w-10 rounded-xl bg-[#0E4D52] flex items-center justify-center shadow-sm"><Mail className="h-5 w-5 text-white" /></div>
                         <div className="overline mt-3">Email</div>
                         <a href="mailto:hello@wayly.com.au" className="block mt-1 text-sm text-primary-k">hello@wayly.com.au</a>
                     </div>
-                    <div className="relative overflow-hidden bg-surface border border-kindred rounded-2xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="relative overflow-hidden bg-surface border border-kindred rounded-2xl p-5 transition-colors">
                         <span className="absolute left-0 top-0 h-1.5 w-full opacity-80 bg-[#425F47]" />
                         <div className="h-10 w-10 rounded-xl bg-[#425F47] flex items-center justify-center shadow-sm"><MapPin className="h-5 w-5 text-white" /></div>
                         <div className="overline mt-3">Where we are</div>

@@ -50,7 +50,7 @@ export default function ToolGate({ toolName }) {
                                 to="/settings/billing"
                                 state={{ plan: "solo" }}
                                 data-testid="tool-gate-upgrade-solo"
-                                className="bg-primary-k text-white font-semibold rounded-md py-3 px-5 text-sm hover:brightness-95 inline-flex items-center justify-center gap-2"
+                                className="bg-primary-k text-white font-semibold rounded-md py-3 px-5 text-sm inline-flex items-center justify-center gap-2"
                             >
                                 Upgrade to Solo, $24.50 per fortnight <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
@@ -58,7 +58,7 @@ export default function ToolGate({ toolName }) {
                                 to="/settings/billing"
                                 state={{ plan: "family" }}
                                 data-testid="tool-gate-upgrade-family"
-                                className="bg-wayly-clay-500 text-white rounded-md py-3 px-5 text-sm hover:brightness-95 inline-flex items-center justify-center gap-2"
+                                className="bg-wayly-clay-500 text-white rounded-md py-3 px-5 text-sm inline-flex items-center justify-center gap-2"
                             >
                                 Upgrade to Family, $49.50 per fortnight <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
@@ -78,7 +78,7 @@ export default function ToolGate({ toolName }) {
                         <Link
                             to="/signup?plan=solo"
                             data-testid="tool-gate-trial-cta"
-                            className="mt-6 w-full bg-gold text-white font-semibold rounded-md py-3 px-5 text-sm hover:brightness-95 inline-flex items-center justify-center gap-2"
+                            className="mt-6 w-full bg-gold text-white font-semibold rounded-md py-3 px-5 text-sm inline-flex items-center justify-center gap-2"
                         >
                             Start free 7-day trial <ArrowRight className="h-3.5 w-3.5" />
                         </Link>

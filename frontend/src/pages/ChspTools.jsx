@@ -78,7 +78,7 @@ function AccessHardshipCard({ providerName, emphasiseHardship }) {
                     onClick={() => draft("hardship")}
                     disabled={busy === "hardship"}
                     data-testid="chsp-hardship-letter"
-                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm transition-colors disabled:opacity-50 ${emphasiseHardship ? "bg-gold text-white hover:brightness-95" : "border border-primary-k/25 bg-white text-primary-k hover:bg-primary-k hover:text-white"}`}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm transition-colors disabled:opacity-50 ${emphasiseHardship ? "bg-gold text-white" : "border border-primary-k/25 bg-white text-primary-k hover:bg-primary-k hover:text-white"}`}
                 >
                     <LifeBuoy className="w-4 h-4" /> Apply for hardship / fee waiver
                 </button>
@@ -192,7 +192,7 @@ function WS1FeeCheck({ services }) {
                 </label>
             </div>
 
-            <button onClick={submit} disabled={busy} data-testid="chsp-ws1-submit" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2 text-sm disabled:opacity-50">
+            <button onClick={submit} disabled={busy} data-testid="chsp-ws1-submit" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-lg px-5 py-2 text-sm disabled:opacity-50">
                 <Receipt className="w-4 h-4" /> Check fee
             </button>
 
@@ -293,8 +293,8 @@ function AgreedRateSchedule({ services, onChanged }) {
                                     <label className="text-xs text-muted-k">Effective (DD/MM/YYYY)
                                         <input type="text" value={eff} placeholder="DD/MM/YYYY" onChange={(e) => setEff(e.target.value)} data-testid={`chsp-rate-edit-date-${s.id}`} className="mt-1 block w-36 px-2 py-1.5 text-sm border rounded" />
                                     </label>
-                                    <button onClick={() => saveEdit(s.id)} disabled={busy} data-testid={`chsp-rate-save-${s.id}`} className="text-xs rounded-full bg-primary-k text-white px-3 py-1.5">Save</button>
-                                    <button onClick={() => setEditing(null)} className="text-xs rounded-full border border-primary-k/20 px-3 py-1.5">Cancel</button>
+                                    <button onClick={() => saveEdit(s.id)} disabled={busy} data-testid={`chsp-rate-save-${s.id}`} className="text-xs rounded-lg bg-primary-k text-white px-3 py-1.5">Save</button>
+                                    <button onClick={() => setEditing(null)} className="text-xs rounded-lg border border-primary-k/20 px-3 py-1.5">Cancel</button>
                                 </div>
                             ) : (
                                 <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -303,8 +303,8 @@ function AgreedRateSchedule({ services, onChanged }) {
                                         <div className="text-xs text-muted-k">{AUD(s.hourly_rate_or_fee?.amount ?? 0)} per unit{s.start_date ? ` · effective ${formatDate(s.start_date)}` : ""}</div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => startEdit(s)} data-testid={`chsp-rate-edit-${s.id}`} className="text-xs rounded-full border border-primary-k/25 px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white">Edit</button>
-                                        <button onClick={() => expire(s.id)} disabled={busy} data-testid={`chsp-rate-expire-${s.id}`} className="text-xs rounded-full border border-terracotta-200 text-terracotta-800 px-3 py-1.5 hover:bg-terracotta-50">Expire</button>
+                                        <button onClick={() => startEdit(s)} data-testid={`chsp-rate-edit-${s.id}`} className="text-xs rounded-lg border border-primary-k/25 px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white">Edit</button>
+                                        <button onClick={() => expire(s.id)} disabled={busy} data-testid={`chsp-rate-expire-${s.id}`} className="text-xs rounded-lg border border-terracotta-200 text-terracotta-800 px-3 py-1.5 hover:bg-terracotta-50">Expire</button>
                                     </div>
                                 </div>
                             )}

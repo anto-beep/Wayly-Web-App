@@ -54,7 +54,7 @@ function ToolCard({ tool, tone }) {
         <Link
             to={tool.marketingRoute || tool.route}
             data-testid={`cluster-tool-${tool.slug}`}
-            className={`group block rounded-xl ${panel} p-5 hover:-translate-y-0.5 hover:brightness-[1.03] hover:shadow-md transition-all`}
+            className={`group block rounded-xl ${panel} p-5 hover:brightness-[1.03] transition-colors`}
         >
             <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-lg bg-white/60 inline-flex items-center justify-center shrink-0">
@@ -65,7 +65,7 @@ function ToolCard({ tool, tone }) {
                     <p className="mt-1.5 text-sm text-muted-k leading-relaxed line-clamp-3">{tool.short}</p>
                 </div>
             </div>
-            <span className="mt-4 inline-flex items-center gap-1 text-sm text-primary-k font-semibold group-hover:gap-2 transition-all">
+            <span className="mt-4 inline-flex items-center gap-1 text-sm text-primary-k font-semibold group-hover:gap-2 transition-colors">
                 Open Tool <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
         </Link>

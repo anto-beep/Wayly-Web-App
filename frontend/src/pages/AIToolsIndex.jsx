@@ -73,7 +73,7 @@ export default function AIToolsIndex() {
                         return (
                             <div
                                 key={t.slug}
-                                className={`rounded-xl border border-white/15 ${TILE} force-white p-6 transition-all hover:-translate-y-1 hover:shadow-lg relative`}
+                                className={`rounded-xl border border-white/15 ${TILE} force-white p-6 transition-colors relative`}
                                 data-testid={`ai-tool-card-${t.slug}`}
                             >
                                 {badgeActive && (

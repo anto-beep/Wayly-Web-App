@@ -605,7 +605,7 @@ function BillingTab() {
                                     disabled={busy}
                                     data-testid="cancel-plan-btn"
                                     className={isTrialing
-                                        ? "inline-flex items-center gap-1.5 rounded-full bg-[#F0B267] text-[#0E2A2E] px-4 py-2 text-sm font-bold shadow-sm hover:brightness-95 disabled:opacity-60"
+                                        ? "inline-flex items-center gap-1.5 rounded-full bg-[#F0B267] text-[#0E2A2E] px-4 py-2 text-sm font-bold shadow-sm disabled:opacity-60"
                                         : "inline-flex items-center gap-2 text-sm text-muted-k hover:text-primary-k hover:underline"}
                                 >
                                     <X className="h-3.5 w-3.5" /> {isTrialing ? "Cancel trial" : "Cancel plan"}
@@ -1065,7 +1065,7 @@ function DigestTab() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <button onClick={sendNow} disabled={!onFamily || sending} data-testid="digest-send-btn" className="inline-flex items-center gap-2 bg-gold text-white rounded-md px-5 py-2.5 text-sm font-semibold hover:brightness-95 disabled:opacity-60">
+                    <button onClick={sendNow} disabled={!onFamily || sending} data-testid="digest-send-btn" className="inline-flex items-center gap-2 bg-gold text-white rounded-md px-5 py-2.5 text-sm font-semibold disabled:opacity-60">
                         {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                         Send this digest now
                     </button>
@@ -1188,7 +1188,7 @@ function AppearanceTab() {
                         key={o.v}
                         onClick={() => pick(o.v)}
                         data-testid={`theme-${o.v}`}
-                        className={`text-left rounded-2xl border p-5 transition-all ${
+                        className={`text-left rounded-2xl border p-5 transition-colors ${
                             currentSelection === o.v
                                 ? "border-primary-k ring-2 ring-primary-k/20 bg-surface"
                                 : "border-kindred bg-surface hover:bg-surface-2"
@@ -1476,7 +1476,7 @@ function DangerTab() {
                 <p className="text-xs text-muted-k mt-2">Type <span className="font-mono bg-surface-2 px-1.5 py-0.5 rounded">delete my account</span> to confirm.</p>
                 <input type="text" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} data-testid="danger-confirm-input" placeholder="delete my account" className="mt-3 w-full max-w-sm rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-terracotta" />
                 <div className="mt-4">
-                    <button onClick={submit} disabled={confirmText !== "delete my account" || busy} data-testid="danger-delete-btn" className="bg-terracotta text-white rounded-md px-5 py-2.5 text-sm hover:brightness-95 disabled:opacity-60">{busy ? "Deleting…" : "Delete account permanently"}</button>
+                    <button onClick={submit} disabled={confirmText !== "delete my account" || busy} data-testid="danger-delete-btn" className="bg-terracotta text-white rounded-md px-5 py-2.5 text-sm disabled:opacity-60">{busy ? "Deleting…" : "Delete account permanently"}</button>
                 </div>
             </div>
         </div>

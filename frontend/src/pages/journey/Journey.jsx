@@ -332,10 +332,10 @@ function PersonaCard({ icon: Icon, title, body, testId, tone = "#0E4D52", disabl
             onClick={onClick}
             disabled={disabled}
             data-testid={testId}
-            className="group relative overflow-hidden text-left rounded-2xl border border-kindred bg-white p-6 hover:shadow-lg hover:-translate-y-1 transition-all focus:outline-none focus:ring-2 focus:ring-primary-k disabled:opacity-60"
+            className="group relative overflow-hidden text-left rounded-2xl border border-kindred bg-white p-6 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-k disabled:opacity-60"
         >
             <span className="absolute left-0 top-0 h-1.5 w-full" style={{ backgroundColor: tone }} />
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: tone }}>
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-sm transition-transform group-" style={{ backgroundColor: tone }}>
                 <Icon className="h-5 w-5" aria-hidden />
             </span>
             <h3 className="mt-5 font-heading text-xl text-primary-k tracking-tight leading-snug">{title}</h3>
@@ -442,7 +442,7 @@ function StepRow({ n, step, state, title, description, available, onOpen, onSkip
 
     return (
         <li
-            className={`group relative overflow-hidden rounded-2xl border p-5 sm:p-6 transition-all ${done ? "border-sage/50 bg-sage/5" : available ? "border-kindred bg-white hover:shadow-md" : "border-kindred bg-surface-2/60"}`}
+            className={`group relative overflow-hidden rounded-2xl border p-5 sm:p-6 transition-colors ${done ? "border-sage/50 bg-sage/5" : available ? "border-kindred bg-white" : "border-kindred bg-surface-2/60"}`}
             data-testid={`journey-step-${step}`}
             data-status={status}
         >

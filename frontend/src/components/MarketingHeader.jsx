@@ -32,7 +32,7 @@ function Avatar({ user, onClick, dataTestId }) {
         <button
             onClick={onClick}
             data-testid={dataTestId}
-            className="h-9 w-9 rounded-full bg-[#2BC4D6] text-white font-semibold text-sm inline-flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-all"
+            className="h-9 w-9 rounded-full bg-[#2BC4D6] text-white font-semibold text-sm inline-flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-colors"
             title={user.name || user.email}
         >
             {user.picture ? (
@@ -116,14 +116,14 @@ function SignedOutControls() {
             <Link
                 to="/login"
                 data-testid="nav-login"
-                className="text-sm text-white border border-white/40 rounded-lg px-4 py-2 hover:bg-white hover:text-[#0E2A47] transition-all duration-200"
+                className="text-sm text-white border border-white/40 rounded-lg px-4 py-2 hover:bg-white hover:text-[#0E2A47] transition-colors duration-200"
             >
                 Sign in
             </Link>
             <Link
                 to="/signup?plan=family"
                 data-testid="nav-start-trial"
-                className="inline-flex items-center text-sm font-semibold bg-[#2BC4D6] text-[#0E2A47] rounded-lg px-5 py-2 shadow-[0_2px_8px_rgba(212,162,78,0.40)] hover:bg-[#DDB567] hover:shadow-[0_4px_14px_rgba(212,162,78,0.55)] hover:-translate-y-px active:scale-[0.97] transition-all duration-200"
+                className="inline-flex items-center text-sm font-semibold bg-[#2BC4D6] text-[#0E2A47] rounded-lg px-5 py-2 shadow-[0_2px_8px_rgba(212,162,78,0.40)] hover:bg-[#DDB567] hover:shadow-[0_4px_14px_rgba(212,162,78,0.55)] active:scale-[0.97] transition-colors duration-200"
             >
                 Start free trial
             </Link>

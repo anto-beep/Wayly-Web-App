@@ -283,7 +283,7 @@ export default function StatementDecoderTool() {
                         <>
                             {!file ? (
                                 <div
-                                    className={`mt-4 rounded-xl border-2 border-dashed bg-surface-2 p-10 text-center cursor-pointer transition-all ${active ? "border-gold bg-surface scale-[1.01]" : "border-kindred hover:bg-surface"}`}
+                                    className={`mt-4 rounded-xl border-2 border-dashed bg-surface-2 p-10 text-center cursor-pointer transition-colors ${active ? "border-gold bg-surface scale-[1.01]" : "border-kindred hover:bg-surface"}`}
                                     onDragOver={(e) => { e.preventDefault(); setActive(true); }}
                                     onDragLeave={() => setActive(false)}
                                     onDrop={(e) => { e.preventDefault(); setActive(false); setFile(e.dataTransfer.files?.[0] || null); }}
@@ -343,7 +343,7 @@ export default function StatementDecoderTool() {
                                         <p className="text-xs text-muted-k mt-2 tabular-nums">Resets in: <span className="font-semibold text-primary-k">{countdown}</span></p>
                                     )}
                                     <div className="mt-4 flex flex-wrap gap-2">
-                                        <Link to="/signup?plan=solo" data-testid="sd-limit-trial" className="text-sm bg-gold text-white font-semibold rounded-md px-4 py-2 hover:brightness-95">Start free trial →</Link>
+                                        <Link to="/signup?plan=solo" data-testid="sd-limit-trial" className="text-sm bg-gold text-white font-semibold rounded-md px-4 py-2">Start free trial →</Link>
                                         <Link to="/login" data-testid="sd-limit-signin" className="text-sm border border-kindred rounded-md px-4 py-2 text-primary-k hover:bg-surface-2">Sign in →</Link>
                                     </div>
                                 </div>
@@ -437,7 +437,7 @@ export default function StatementDecoderTool() {
                                     <div className="font-medium text-primary-k">Want this every month, automatically?</div>
                                     <p className="text-sm text-muted-k mt-1">Wayly watches every statement, alerts you when something's off, and tracks your quarterly budget across all three streams.</p>
                                     <div className="mt-3 flex items-center gap-3 flex-wrap">
-                                        <Link to="/signup" className="text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#091D33]" data-testid="decoder-upgrade">
+                                        <Link to="/signup" className="text-sm bg-primary-k text-white rounded-lg px-5 py-2.5 hover:bg-[#091D33]" data-testid="decoder-upgrade">
                                             Start 7-day free trial
                                         </Link>
                                         <Link to="/ai-tools/budget-calculator" className="text-sm text-primary-k underline inline-flex items-center gap-1">
@@ -479,7 +479,7 @@ export default function StatementDecoderTool() {
                                         <li className="flex items-start gap-2"><span className="text-gold">✦</span> Budget tracking plus lifetime cap monitor</li>
                                         <li className="flex items-start gap-2"><span className="text-gold">✦</span> Family sharing (Family plan)</li>
                                     </ul>
-                                    <Link to="/signup?plan=solo" data-testid="sd-conversion-cta" className="mt-6 w-full bg-gold text-white font-semibold rounded-md py-3 hover:brightness-95 inline-flex items-center justify-center gap-2">
+                                    <Link to="/signup?plan=solo" data-testid="sd-conversion-cta" className="mt-6 w-full bg-gold text-white font-semibold rounded-md py-3 inline-flex items-center justify-center gap-2">
                                         Start free 7-day trial <ArrowRight className="h-4 w-4" />
                                     </Link>
                                     <p className="text-center text-xs text-white/70 mt-3">No card required. Cancel anytime.</p>

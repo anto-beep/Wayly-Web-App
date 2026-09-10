@@ -95,7 +95,7 @@ export default function ShortTermPathways() {
                                     onClick={() => { setSituation(s.v); setResult(null); }}
                                     data-testid={`stp-situation-${s.v}`}
                                     aria-pressed={active}
-                                    className={`text-left rounded-2xl border p-4 transition-all ${active ? "border-primary-k bg-[#E9F2F2] shadow-sm" : "border-kindred hover:border-primary-k/40 hover:bg-surface-2"}`}
+                                    className={`text-left rounded-2xl border p-4 transition-colors ${active ? "border-primary-k bg-[#E9F2F2] shadow-sm" : "border-kindred hover:border-primary-k/40 hover:bg-surface-2"}`}
                                 >
                                     <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl mb-2 ${active ? "bg-primary-k text-white" : "bg-[#E9F2F2] text-primary-k"}`}>
                                         <Icon className="h-5 w-5" />
@@ -145,7 +145,7 @@ export default function ShortTermPathways() {
                             <button onClick={() => setResult(null)} className="inline-flex items-center gap-1.5 text-sm text-primary-k hover:text-[#0A3E42]" data-testid="stp-reset">
                                 <RotateCcw className="h-3.5 w-3.5" /> Start again
                             </button>
-                            <Link to="/ai-tools/letters-and-follow-ups" className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-full px-5 py-2.5 hover:bg-[#0A3E42] transition-colors" data-testid="stp-draft-letter">
+                            <Link to="/ai-tools/letters-and-follow-ups" className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-lg px-5 py-2.5 hover:bg-[#0A3E42] transition-colors" data-testid="stp-draft-letter">
                                 Draft a request letter <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
                         </div>

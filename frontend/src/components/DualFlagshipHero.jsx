@@ -185,7 +185,7 @@ function FlagshipCard({ testid, Icon, eyebrow, title, sub, cta, to, onClick, acc
             to={to}
             onClick={onClick}
             data-testid={testid}
-            className={`group relative block rounded-2xl border-2 ${accent === "clay" ? "panel-clay" : "panel-teal"} p-6 lg:p-7 transition-all hover:-translate-y-1 ${accentClasses}`}
+            className={`group relative block rounded-2xl border-2 ${accent === "clay" ? "panel-clay" : "panel-teal"} p-6 lg:p-7 transition-colors ${accentClasses}`}
         >
             {badge && (
                 <span className="absolute -top-2.5 right-6 inline-flex items-center gap-1 rounded-full bg-clay text-white text-[10px] font-medium uppercase tracking-wider px-2.5 py-1 shadow-md">
@@ -202,7 +202,7 @@ function FlagshipCard({ testid, Icon, eyebrow, title, sub, cta, to, onClick, acc
                     </span>
                     <h2 className="mt-2.5 font-heading text-2xl text-primary-k tracking-tight">{title}</h2>
                     <p className="mt-2.5 text-sm text-primary-k/80 leading-relaxed">{sub}</p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-k group-hover:gap-2 transition-all">
+                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-k group-hover:gap-2 transition-colors">
                         {cta} <ArrowRight className="h-4 w-4" aria-hidden="true" />
                     </span>
                 </div>

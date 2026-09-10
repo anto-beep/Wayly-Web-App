@@ -265,8 +265,8 @@ function ChangeEditor({ data, setData, onCancel, onSave, busy }) {
                 </Field>
             )}
             <div className="flex justify-end gap-2 pt-2">
-                <button onClick={onCancel} className="px-3 py-1.5 rounded-full border border-primary-k/20 text-sm text-primary-k" disabled={busy}>Cancel</button>
-                <button onClick={onSave} disabled={busy} data-testid="lca1-admin-editor-save" className="px-4 py-1.5 rounded-full bg-primary-k text-white text-sm disabled:opacity-50">Save draft</button>
+                <button onClick={onCancel} className="px-3 py-1.5 rounded-lg border border-primary-k/20 text-sm text-primary-k" disabled={busy}>Cancel</button>
+                <button onClick={onSave} disabled={busy} data-testid="lca1-admin-editor-save" className="px-4 py-1.5 rounded-lg bg-primary-k text-white text-sm disabled:opacity-50">Save draft</button>
             </div>
             <style>{`.input { border: 1px solid rgba(26, 58, 46, 0.15); border-radius: 8px; padding: 6px 10px; font-size: 14px; }`}</style>
         </div>
@@ -294,15 +294,15 @@ function ChangeDetail({ data, impact, busy, onEdit, onPreview, onPublish, onCanc
                 <div className="flex flex-wrap gap-1 shrink-0">
                     {data.status === "draft" && (
                         <>
-                            <button onClick={onEdit} className="text-xs px-2 py-1 rounded-full border border-primary-k/20 text-primary-k">Edit</button>
-                            <button onClick={onPreview} disabled={busy} data-testid="lca1-admin-preview-impact" className="text-xs px-2 py-1 rounded-full border border-primary-k/20 text-primary-k inline-flex items-center gap-1"><Eye className="w-3 h-3" /> Preview impact</button>
-                            <button onClick={onPublish} disabled={busy} data-testid="lca1-admin-publish" className="text-xs px-2 py-1 rounded-full bg-primary-k text-white inline-flex items-center gap-1"><Send className="w-3 h-3" /> Publish</button>
+                            <button onClick={onEdit} className="text-xs px-2 py-1 rounded-lg border border-primary-k/20 text-primary-k">Edit</button>
+                            <button onClick={onPreview} disabled={busy} data-testid="lca1-admin-preview-impact" className="text-xs px-2 py-1 rounded-lg border border-primary-k/20 text-primary-k inline-flex items-center gap-1"><Eye className="w-3 h-3" /> Preview impact</button>
+                            <button onClick={onPublish} disabled={busy} data-testid="lca1-admin-publish" className="text-xs px-2 py-1 rounded-lg bg-primary-k text-white inline-flex items-center gap-1"><Send className="w-3 h-3" /> Publish</button>
                         </>
                     )}
                     {data.status === "published" && (
                         <>
-                            <button onClick={onEdit} className="text-xs px-2 py-1 rounded-full border border-primary-k/20 text-primary-k">Edit (new version)</button>
-                            <button onClick={onCancel} data-testid="lca1-admin-cancel" className="text-xs px-2 py-1 rounded-full border border-clay/40 text-clay inline-flex items-center gap-1"><XIcon className="w-3 h-3" /> Cancel</button>
+                            <button onClick={onEdit} className="text-xs px-2 py-1 rounded-lg border border-primary-k/20 text-primary-k">Edit (new version)</button>
+                            <button onClick={onCancel} data-testid="lca1-admin-cancel" className="text-xs px-2 py-1 rounded-lg border border-clay/40 text-clay inline-flex items-center gap-1"><XIcon className="w-3 h-3" /> Cancel</button>
                         </>
                     )}
                 </div>

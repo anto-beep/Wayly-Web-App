@@ -49,13 +49,13 @@ export default function PolicyHub() {
                             key={p.slug}
                             to={`/policy/${p.slug}`}
                             data-testid={`policy-card-${p.slug}`}
-                            className="group block rounded-2xl border border-[#CFE0F0] bg-white p-5 hover:border-[#2BC4D6] hover:-translate-y-0.5 transition-all"
+                            className="group block rounded-2xl border border-[#CFE0F0] bg-white p-5 hover:border-[#2BC4D6] transition-colors"
                         >
                             <div className="overline">{p.overline}</div>
                             <h2 className="font-heading text-xl text-[#0E2A47] mt-2 leading-tight">{p.h1}</h2>
                             <p className="mt-2 text-sm text-[#4A5A75] leading-relaxed">{p.description}</p>
                             <div className="mt-3 text-sm font-medium text-[#1565B8] inline-flex items-center gap-1">
-                                Read explainer <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                Read explainer <ArrowRight className="h-3.5 w-3.5 group-transition-transform" />
                             </div>
                         </Link>
                     ))}

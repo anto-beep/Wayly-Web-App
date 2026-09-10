@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, AlertOctagon, AlertTriangle, Info, Lightbulb, PenLine, FileText } from "lucide-react";
-import { cleanTitle, plainBody } from "@/lib/plainText";
+import { cleanTitle, plainBody, humanize } from "@/lib/plainText";
 
 /**
  * FlagCard — the single, shared flag/issue card used by the Statement Decoder
@@ -43,7 +43,16 @@ export default function FlagCard({
     const explanation = plainBody(detail, 340);
     const step = plainBody(action, 300);
     const evidenceList = Array.isArray(evidence)
-        ? evidence.filter((e) => typeof e === "string" && e.trim())
+        ? evidence
+              .filter((e) => typeof e === "string" && e.trim())
+              .map((e) => {
+                  // Keep the evidence plain-English: strip internal codes
+                  // (INDEX-1, rule codes, snake_case), format dates DD/MM/YYYY
+                  // and capitalise the first letter.
+                  const h = humanize(e).trim();
+                  return h ? h.charAt(0).toUpperCase() + h.slice(1) : "";
+              })
+              .filter(Boolean)
         : [];
     const hasBody = Boolean(explanation) || Boolean(step) || Boolean(onDraftLetter) || evidenceList.length > 0;
 

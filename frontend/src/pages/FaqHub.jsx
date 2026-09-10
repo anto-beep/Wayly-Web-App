@@ -137,8 +137,8 @@ export default function FaqHub() {
                     <h2 className="font-heading text-xl text-primary-k">Still Stuck?</h2>
                     <p className="mt-2 text-sm text-muted-k">Ask Wayly directly. It is free and answers based only on the public Support at Home rules, never your private statement.</p>
                     <div className="mt-4 flex flex-wrap gap-2">
-                        <Link to="/ask-wayly" data-testid="faq-cta-ask" className="inline-flex items-center gap-2 rounded-full bg-primary-k hover:bg-[#091D33] text-white px-5 py-2.5 text-sm font-semibold">Ask Wayly</Link>
-                        <Link to="/contact" data-testid="faq-cta-contact" className="inline-flex items-center gap-2 rounded-full bg-white text-primary-k border border-kindred px-5 py-2.5 text-sm font-semibold hover:border-[#A5512B]">Send a Question</Link>
+                        <Link to="/ask-wayly" data-testid="faq-cta-ask" className="inline-flex items-center gap-2 rounded-lg bg-primary-k hover:bg-[#091D33] text-white px-5 py-2.5 text-sm font-semibold">Ask Wayly</Link>
+                        <Link to="/contact" data-testid="faq-cta-contact" className="inline-flex items-center gap-2 rounded-lg bg-white text-primary-k border border-kindred px-5 py-2.5 text-sm font-semibold hover:border-[#A5512B]">Send a Question</Link>
                     </div>
                 </Reveal>
             </div>

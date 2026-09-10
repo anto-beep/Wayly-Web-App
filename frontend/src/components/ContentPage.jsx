@@ -210,14 +210,14 @@ export default function ContentPage({
                                 <Link
                                     key={i}
                                     to={r.href}
-                                    className="group flex items-start gap-2 rounded-xl border border-[#CFE0F0] bg-white p-4 hover:border-[#2BC4D6] hover:-translate-y-0.5 transition-all"
+                                    className="group flex items-start gap-2 rounded-xl border border-[#CFE0F0] bg-white p-4 hover:border-[#2BC4D6] transition-colors"
                                     data-testid={`content-related-${i}`}
                                 >
                                     <div className="flex-1">
                                         <div className="text-[#0E2A47] font-semibold text-sm">{r.label}</div>
                                         {r.sub && <div className="text-xs text-[#4A5A75] mt-1">{r.sub}</div>}
                                     </div>
-                                    <ArrowRight className="h-4 w-4 text-[#1565B8] mt-1 group-hover:translate-x-0.5 transition-transform" />
+                                    <ArrowRight className="h-4 w-4 text-[#1565B8] mt-1 group-transition-transform" />
                                 </Link>
                             ))}
                         </div>

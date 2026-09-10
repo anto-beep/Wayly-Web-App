@@ -99,7 +99,7 @@ export default function About() {
                                         .getElementById("about-section-moments")
                                         ?.scrollIntoView({ behavior: "smooth", block: "start" });
                                 }}
-                                className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#0E4D52] px-6 py-3 text-sm font-semibold text-white shadow-md transition-transform hover:-translate-y-0.5"
+                                className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#0E4D52] px-6 py-3 text-sm font-semibold text-white shadow-md transition-transform"
                             >
                                 Read Our Story
                                 <ArrowRight className="h-4 w-4" aria-hidden />
@@ -378,7 +378,7 @@ export default function About() {
                             <Link
                                 to="/ai-tools/statement-decoder"
                                 data-testid="about-cta-decode"
-                                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold shadow-md transition-transform hover:-translate-y-0.5"
+                                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold shadow-md transition-transform"
                                 style={{ color: CLAY }}
                             >
                                 Decode a Statement
@@ -429,7 +429,7 @@ function SectionHeading({ num, title, testid, lead }) {
 function Scene({ bg, icon: Icon, label, children }) {
     return (
         <Reveal className="h-full">
-            <div className="group relative h-full overflow-hidden rounded-2xl bg-surface border border-kindred p-6 sm:p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+            <div className="group relative h-full overflow-hidden rounded-2xl bg-surface border border-kindred p-6 sm:p-8 shadow-sm transition-colors">
                 <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: bg }} />
                 <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em]" style={{ color: bg }}>
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm" style={{ backgroundColor: bg }}>
@@ -459,7 +459,7 @@ function PullQuote({ bg, children }) {
 function StatTile({ bg, value, label }) {
     return (
         <Reveal className="h-full">
-            <div className="group relative h-full overflow-hidden rounded-2xl bg-surface border border-kindred p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+            <div className="group relative h-full overflow-hidden rounded-2xl bg-surface border border-kindred p-6 text-center shadow-sm transition-colors">
                 <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: bg }} />
                 <div className="font-heading text-4xl sm:text-5xl tabular-nums" style={{ color: bg }}>{value}</div>
                 <div className="mt-2 text-xs uppercase tracking-wider text-muted-k leading-tight">
@@ -473,7 +473,7 @@ function StatTile({ bg, value, label }) {
 function Lesson({ n, bg, children }) {
     return (
         <Reveal className="h-full">
-            <div className="flex gap-5 rounded-2xl bg-surface border border-kindred border-l-4 p-6 h-full shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg" style={{ borderLeftColor: bg }}>
+            <div className="flex gap-5 rounded-2xl bg-surface border border-kindred border-l-4 p-6 h-full shadow-sm transition-colors" style={{ borderLeftColor: bg }}>
                 <span className="font-heading text-3xl tabular-nums select-none" style={{ color: bg }} aria-hidden>
                     {n}
                 </span>
@@ -486,7 +486,7 @@ function Lesson({ n, bg, children }) {
 function Belief({ bg, icon: Icon, title, children }) {
     return (
         <Reveal className="h-full">
-            <div className="group relative h-full overflow-hidden rounded-2xl bg-surface border border-kindred p-6 sm:p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+            <div className="group relative h-full overflow-hidden rounded-2xl bg-surface border border-kindred p-6 sm:p-8 shadow-sm transition-colors">
                 <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: bg }} />
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm" style={{ backgroundColor: bg }}>
                     <Icon className="h-5 w-5" aria-hidden />
@@ -507,7 +507,7 @@ function ClusterCard({ bg, icon: Icon, title, to, children }) {
             <Link
                 to={withFrom}
                 data-testid="about-cluster-card"
-                className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface border border-kindred p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface border border-kindred p-6 shadow-sm transition-colors"
             >
                 <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: bg }} />
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm" style={{ backgroundColor: bg }}>
@@ -520,7 +520,7 @@ function ClusterCard({ bg, icon: Icon, title, to, children }) {
                 <p className="mt-3 text-sm sm:text-base leading-relaxed text-muted-k flex-1">{children}</p>
                 <span className="mt-5 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: bg }}>
                     Open the Tool
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-" aria-hidden />
                 </span>
             </Link>
         </Reveal>
