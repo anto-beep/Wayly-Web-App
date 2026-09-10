@@ -1,3 +1,11 @@
+## Iter 320b — Landing dark-mode readability polish (Jun 2026, fork) ✅ verified via dark-mode screenshots
+Visual-edit pass on the public marketing pages (web only, CSS/JSX). Scoped a `.landing-marketing` wrapper on `Landing.jsx` + `ToolClusterGrid.jsx` and added a dark-mode block in `index.css`:
+- Muted body paragraphs + one hardcoded-hex paragraph now render full white in dark mode (persona intro, problem cards, how-it-works, reports, countdown, AI-tools teaser, pricing intro, FAQ, tool-cluster blurbs). Gold accent line kept gold.
+- Inline tone-coloured card titles (`landing-tone-title`) and the big 01/02/03 step numbers (`landing-step-number`) forced to white (were near-invisible at 15% tone on dark).
+- Featured pricing card no longer the neon `bg-primary-k` teal — sleek deep-teal gradient (`#14403F→#0B2B2D`) with gold border + deeper shadow in dark.
+- Final-CTA buttons redesigned sleeker/less-round (rounded-xl) with self-contained dark styles so the global link-tint no longer turned the outline button teal-on-teal (invisible); hover now clearly visible in both modes.
+
+
 ## Iter 320 — Blocked demo, badge sweep, bulk follow-up, letter preview (Jun 2026, fork) ✅ verified iteration_320 (web + mobile)
 Four features across the shared backend + both frontends. All confirmed by the cross-platform testing agent (parity clean).
 - **Blocked Statement Demo (web + mobile)**: root cause — both `StatementDetail.jsx` and mobile `app/statement/[id].tsx` built the `DecoderResultView` result WITHOUT the top-level `publishable`/`publish_block`/`low_confidence` fields (they live inside `audit_json`), so the DEC-1 publish-block UI could never render from the statement detail screen even with blocked data. Fixed by forwarding `stmt.audit_json.{publishable,publish_block,low_confidence}` into the result on both surfaces. Added idempotent seed `backend/scripts/seed_blocked_statement.py` — clones a rich statement for the demo account, injects a genuine per-line arithmetic mismatch (`$244 vs $72×2=$144`) + gross-reconcile gap, sets `publishable=false` + `publish_block{reason,rules,items}` + `low_confidence=true`. Verified the blocked view (publish-block panel with evidence + draft-letter CTA, low-confidence banner, unverified-lines note) shows and the money summary/hero are hidden.

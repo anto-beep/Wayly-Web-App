@@ -84,7 +84,7 @@ export default function Landing() {
     const [selectedPersona, setSelectedPersona] = useState("caregiver");
 
     return (
-        <div className="min-h-screen bg-kindred">
+        <div className="min-h-screen bg-kindred landing-marketing">
             <SeoHead {...SEO.home} />
             <MarketingHeader />
 
@@ -103,7 +103,7 @@ export default function Landing() {
                     <div className="lg:col-span-7">
                         <span className="overline">Three quick ways in</span>
                         <h2 className="font-heading text-3xl sm:text-4xl text-[#0E2A47] mt-3">Which describes you best?</h2>
-                        <p className="mt-3 text-base text-[#4A5A75] max-w-xl leading-relaxed">
+                        <p className="mt-3 text-base text-muted-k max-w-xl leading-relaxed">
                             Australia&apos;s aged-care system was rebuilt on 1 November 2025. Pick the path that fits your household and we will tailor the next step for you.
                         </p>
 
@@ -162,7 +162,7 @@ export default function Landing() {
                                     <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: c.tone }}>
                                         <c.icon className="h-5 w-5 text-white" strokeWidth={2} />
                                     </div>
-                                    <h3 className="mt-4 font-heading text-xl" style={{ color: c.tone }}>{c.t}</h3>
+                                    <h3 className="mt-4 font-heading text-xl landing-tone-title" style={{ color: c.tone }}>{c.t}</h3>
                                     <p className="mt-2 text-sm text-muted-k leading-relaxed">{c.b}</p>
                                 </div>
                             </RevealOnScroll>
@@ -267,7 +267,7 @@ export default function Landing() {
                                     <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: s.tone }}>
                                         <s.Icon className="h-5 w-5" aria-hidden="true" />
                                     </span>
-                                    <span className="font-heading text-4xl" style={{ color: s.tone, opacity: 0.15 }}>{s.n}</span>
+                                    <span className="font-heading text-4xl landing-step-number" style={{ color: s.tone, opacity: 0.15 }}>{s.n}</span>
                                 </div>
                                 <div className="mt-4 text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: s.tone }}>{s.t}</div>
                                 <h3 className="mt-1 font-heading text-2xl text-primary-k tracking-tight">{s.h}</h3>
@@ -507,7 +507,7 @@ export default function Landing() {
                             <RevealOnScroll key={t.key}>
                             <div
                                 data-testid={`landing-tier-${t.key}`}
-                                className={`relative h-full rounded-2xl border p-6 ${t.featured ? "bg-primary-k text-white border-gold shadow-xl" : "bg-surface border-kindred"}`}
+                                className={`landing-tier-card relative h-full rounded-2xl border p-6 ${t.featured ? "landing-tier-card--featured bg-primary-k text-white border-gold shadow-xl" : "bg-surface border-kindred"}`}
                             >
                                 {t.badge && (
                                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-white text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-semibold whitespace-nowrap">
@@ -575,10 +575,10 @@ export default function Landing() {
                         Try Wayly free for 7 days. Cancel anytime.
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-                        <Link to="/signup" data-testid="final-cta-signup" className="bg-white text-primary-k font-bold rounded-full px-7 py-3.5 shadow-lg hover:bg-[#F4F7F6] hover:-translate-y-0.5 hover:shadow-xl transition-all">
+                        <Link to="/signup" data-testid="final-cta-signup" className="landing-cta-primary inline-flex items-center justify-center bg-white text-primary-k font-bold rounded-xl px-7 py-3.5 shadow-lg hover:-translate-y-0.5 hover:shadow-2xl transition-all">
                             Start free trial
                         </Link>
-                        <Link to="/ai-tools" className="border-2 border-white text-white font-semibold rounded-full px-7 py-3.5 hover:bg-white/10 hover:-translate-y-0.5 transition-all">Or try a free AI tool</Link>
+                        <Link to="/ai-tools" className="landing-cta-secondary inline-flex items-center justify-center border border-white/40 bg-white/10 text-white font-semibold rounded-xl px-7 py-3.5 hover:bg-white/20 hover:-translate-y-0.5 transition-all">Or try a free AI tool</Link>
                     </div>
                 </div>
             </section>
