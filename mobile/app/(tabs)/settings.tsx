@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
-import { useScrollToTop } from "@react-navigation/native";
+import { useScrollToTop } from "expo-router";
 import { Sun, Moon, Smartphone, LogOut, User, CreditCard, Bell, Shield, Phone, Mail, ChevronRight, Users, Mailbox, Gauge, AlertTriangle, Pencil, Info } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";

@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { useScrollToTop } from "@react-navigation/native";
+import { useScrollToTop } from "expo-router";
 import { FileText, Plus, CloudOff, FileSearch, Search, StickyNote, Download, Archive } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";

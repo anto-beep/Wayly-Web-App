@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import { usePreventRemove } from "@react-navigation/native";
 import {
   Sparkles, AlertTriangle, FileText, Copy, Link as LinkIcon, ThumbsUp, ThumbsDown,
   ShieldCheck, Users, Paperclip, X, ClipboardCheck, Send, Info, Trash2, MailCheck,
@@ -626,10 +625,17 @@ export default function CorrespondenceDetail() {
   }, [entry, id, intake, senderAuthority, complaintMode, atsi, draft]);
 
   // Guard hardware back / swipe-back gesture when there are unsaved changes.
-  usePreventRemove(dirty, ({ data }) => {
-    pendingNavRef.current = () => navigation.dispatch(data.action);
-    setLeaveOpen(true);
-  });
+  // expo-router 57 no longer re-exports usePreventRemove, so subscribe to the
+  // navigation "beforeRemove" event directly (the same underlying mechanism).
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const unsub = navigation.addListener("beforeRemove", (e: any) => {
+      e.preventDefault();
+      pendingNavRef.current = () => navigation.dispatch(e.data.action);
+      setLeaveOpen(true);
+    });
+    return unsub;
+  }, [navigation, dirty]);
 
   // Route a navigation affordance through the unsaved-changes prompt.
   const requestLeave = useCallback((go: () => void) => {
