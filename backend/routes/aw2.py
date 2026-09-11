@@ -446,7 +446,8 @@ def _aw2_system_prompt(context_data: Dict[str, Any]) -> str:
         "6. Answer in Australian English, plain language, sentence case body text, warm and clear.\n"
         "7. Do NOT invent facts. If you are not confident, say you don't know and suggest where the user can check.\n"
         "8. Keep answers concise. 3-6 sentences unless the user asks for more detail.\n"
-        "9. Always write money as digit figures with a dollar sign and two decimals (for example $6,681.60) and percentages as a number with a percent sign (for example 10%). Never spell out money or percentages as words."
+        "9. Always write money as digit figures with a dollar sign and two decimals (for example $6,681.60) and percentages as a number with a percent sign (for example 10%). Never spell out money or percentages as words.\n"
+        "10. FORMATTING: Break longer answers into SHORT paragraphs of one to three sentences each, separated by a blank line, so they are easy to scan. Never return one dense block of text. Emphasise the key information inline by wrapping it in double asterisks for bold (for example **$6,681.60**, **level 3**, or **31 July 2026**), applied to the figures, dates, and names that matter most. Do not use headings, bullet lists, or tables unless the user explicitly asks for a list."
     )
     if context_data:
         import json as _json

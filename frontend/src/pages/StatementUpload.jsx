@@ -6,12 +6,14 @@ import { toast } from "sonner";
 import { DupExactModal, DupLogicalSameModal, DupLogicalDiffModal } from "@/components/statements/StatementLifecycleModals";
 import ReadOnlyLock from "@/components/ReadOnlyLock";
 import PageIntro from "@/components/PageIntro";
+import UploadGuardNotice from "@/components/UploadGuardNotice";
 
 export default function StatementUpload() {
     const nav = useNavigate();
     const fileRef = useRef(null);
     const [active, setActive] = useState(false);
     const [busy, setBusy] = useState(false);
+    const [guard, setGuard] = useState(null);
     const [dupExact, setDupExact] = useState(null);          // payload from 409
     const [dupLogicalSame, setDupLogicalSame] = useState(null); // from job status=duplicate
     const [dupLogicalDiff, setDupLogicalDiff] = useState(null); // from job status=done w/ supersedes_version_id
@@ -23,6 +25,7 @@ export default function StatementUpload() {
             return;
         }
         setBusy(true);
+        setGuard(null);
         // Generate an idempotency key per upload attempt so accidental
         // double-clicks / network retries don't create phantom duplicates.
         const idemKey = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -63,6 +66,9 @@ export default function StatementUpload() {
                     throw postErr;
                 }
             }
+            // UPLOAD-GUARD-1 (STRICT): block unless clearly a Support at Home
+            // statement, so we never decode numbers from a wrong file type.
+            if (data?.upload_guard) { setGuard(data.upload_guard); return; }
             const jobId = data?.job_id;
             if (!jobId) {
                 throw new Error("No job_id returned");
@@ -180,6 +186,12 @@ export default function StatementUpload() {
                 </div>
             </div>
             </ReadOnlyLock>
+
+            {guard && (
+                <div data-testid="statement-upload-guard">
+                    <UploadGuardNotice strict verdict={guard} onChooseAnother={() => setGuard(null)} />
+                </div>
+            )}
 
             <div className="bg-surface-2 rounded-xl p-6 border border-kindred">
                 <span className="overline">Privacy</span>

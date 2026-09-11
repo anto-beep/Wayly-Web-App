@@ -118,23 +118,44 @@ SYSTEM_PROMPT = (
 
 # Pages that get a richer, multi-paragraph "overall standing" summary.
 _STATEMENT_PAGE_KEYS = {"statement-detail"}
+# The caregiver dashboard needs budget-accurate wording (over vs under budget).
+_DASHBOARD_PAGE_KEYS = {"dashboard", "caregiver-dashboard"}
+
+_DASHBOARD_SUMMARY_OVERRIDE = (
+    " PAGE OVERRIDE (dashboard): Base EVERY budget statement strictly on these context fields: "
+    "over_budget, quarterly_spent_aud, quarterly_budget_aud, budget_percent_used, "
+    "amount_over_budget_aud, amount_remaining_aud. "
+    "If over_budget is true, you MUST lead with the fact that the participant is OVER this quarter's budget: "
+    "state how much has been spent (quarterly_spent_aud) against the budget (quarterly_budget_aud), the "
+    "percent used (budget_percent_used), and how much they are over by (amount_over_budget_aud). "
+    "When over_budget is true you must NEVER say any money is 'available to spend', 'left to spend', or "
+    "'remaining'. Only talk about money available or left to spend when over_budget is false, using "
+    "amount_remaining_aud. "
+    "For anomalies, refer ONLY to latest_statement_open_anomalies (the LATEST statement); never imply a total "
+    "across all statements. You may also note latest_invoice_issue_count when has_invoice_on_file is true. "
+    "Keep to two or three short sentences as per the base rules."
+)
 
 _STATEMENT_SUMMARY_OVERRIDE = (
-    " PAGE OVERRIDE (statement detail): Ignore writing rule 1 above. Instead write TWO or THREE short "
-    "paragraphs, up to about 110 words in total, separated by a blank line (two newline characters). "
+    " PAGE OVERRIDE (statement detail): Ignore writing rule 1 above. Instead write TWO short "
+    "paragraphs, up to about 120 words in total, separated by a blank line (two newline characters). "
     "Paragraph one speaks only to THIS statement: what it shows for the period, and any anomalies with "
     "their dollar impact if present, and whether it looks fine or worth a closer look. "
     "Paragraph two gives the participant's OVERALL standing across Wayly, using the participant_standing "
-    "object in the context: letters in progress or awaiting a reply, any open complaints, and anything "
-    "that needs attention. If a signal is zero or missing, do not mention it and do not invent it. "
-    "Keep it warm and calm. Still return the exact JSON shape, with the paragraphs (including the blank "
-    "line between them) inside the summary string."
+    "object in the context: open complaints, letters awaiting a reply, letters in draft, and the latest "
+    "invoice check (latest_invoice: its provider, verdict and number of issues, or say no invoice has been "
+    "checked yet if none). Weave these real figures into the sentence, for example 'Three open complaints "
+    "are still active, and four letters are awaiting a reply'. If a signal is zero or missing, do not mention "
+    "it and do not invent it. Keep it warm and calm. Still return the exact JSON shape, with the paragraphs "
+    "(including the blank line between them) inside the summary string."
 )
 
 
 def _system_prompt_for(page_key: str) -> str:
     if page_key in _STATEMENT_PAGE_KEYS:
         return SYSTEM_PROMPT + _STATEMENT_SUMMARY_OVERRIDE
+    if page_key in _DASHBOARD_PAGE_KEYS:
+        return SYSTEM_PROMPT + _DASHBOARD_SUMMARY_OVERRIDE
     return SYSTEM_PROMPT
 
 
@@ -254,7 +275,26 @@ async def _enrich_context(uid: Optional[str], page_key: str, context: Dict[str, 
             "letters_awaiting_reply": int(letters_awaiting or 0),
             "letters_in_draft": int(letters_draft or 0),
         }
-        return {**context, "participant_standing": standing}
+        # Latest invoice check for this participant, so the second paragraph can
+        # speak to invoices too (or say none has been checked yet).
+        latest_invoice = None
+        try:
+            inv = await _db.invoices.find_one(
+                {"participant_id": pid, "state": "active"},
+                {"_id": 0, "provider_name": 1, "created_at": 1, "reconciliation.overall_verdict": 1,
+                 "reconciliation.findings": 1},
+                sort=[("created_at", -1)],
+            )
+            if inv:
+                recon = inv.get("reconciliation") or {}
+                latest_invoice = {
+                    "provider": inv.get("provider_name"),
+                    "verdict": recon.get("overall_verdict"),
+                    "issue_count": len(recon.get("findings") or []),
+                }
+        except Exception:
+            latest_invoice = None
+        return {**context, "participant_standing": standing, "latest_invoice": latest_invoice}
     except Exception as e:  # pragma: no cover - defensive
         logger.warning("insights enrich failed: %s", e)
         return context

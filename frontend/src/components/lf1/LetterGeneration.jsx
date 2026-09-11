@@ -100,7 +100,7 @@ const RESPONSE_STANCE_OPTIONS = [
 // ArchetypeIntakeForm, dispatches to the right form per archetype
 // =====================================================================
 
-export function ArchetypeIntakeForm({ archetype, intake, onChange }) {
+export function ArchetypeIntakeForm({ archetype, intake, onChange, disabled = false }) {
     const set = useCallback((patch) => {
         onChange({ ...(intake || {}), ...patch });
     }, [intake, onChange]);
@@ -132,10 +132,10 @@ export function ArchetypeIntakeForm({ archetype, intake, onChange }) {
     })();
 
     return (
-        <div className="space-y-4">
+        <fieldset disabled={disabled} className={`space-y-4 border-0 p-0 m-0 min-w-0 ${disabled ? "opacity-60" : ""}`} data-testid="lf1-intake-fieldset">
             {showRecipient && <RecipientField intake={intake} set={set} />}
             {form}
-        </div>
+        </fieldset>
     );
 }
 
@@ -823,13 +823,14 @@ export function CrossToolImportPanel({ entryId, onImport }) {
 // GenerateButton, with source_data_missing guard
 // =====================================================================
 
-export function GenerateButton({ entryId, intakeOverrides, endpoint = "generate", onGenerated, disabled }) {
+export function GenerateButton({ entryId, intakeOverrides, endpoint = "generate", onGenerated, disabled, onBusyChange }) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const [missing, setMissing] = useState(null);
 
     const go = async () => {
         setBusy(true);
+        if (onBusyChange) onBusyChange(true);
         setError(null);
         setMissing(null);
         try {
@@ -853,6 +854,7 @@ export function GenerateButton({ entryId, intakeOverrides, endpoint = "generate"
             }
         } finally {
             setBusy(false);
+            if (onBusyChange) onBusyChange(false);
         }
     };
 

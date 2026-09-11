@@ -317,6 +317,10 @@ _REVIEW_SEMAPHORE = asyncio.Semaphore(int(os.environ.get("CPR_REVIEW_CONCURRENCY
 
 
 async def _text_review_core(text: str, classification, quarterly_budget) -> Dict[str, Any]:
+    # UPLOAD-GUARD-1 (STRICT): block unless clearly a care plan.
+    _guard = classify_content("care-plan-reviewer", text)
+    if _guard["decision"] != "accept":
+        return {"upload_guard": _guard}
     care_plan_id = f"anon-{uuid4()}"
     extraction = structure_plan_text(text, care_plan_id)
     client = await _get_llm_client()
@@ -371,7 +375,7 @@ async def _files_review_core(payloads, classification, quarterly_budget) -> Dict
         raise HTTPException(status_code=400, detail="Could not read enough text from the uploaded files.")
 
     _guard = classify_content("care-plan-reviewer", combined_text)
-    if _guard["decision"] == "block" and _guard["reason"] == "wrong_tool":
+    if _guard["decision"] != "accept":
         return {"upload_guard": _guard}
 
     care_plan_id = f"anon-{uuid4()}"
@@ -443,6 +447,11 @@ def build_care_plans_router() -> APIRouter:
         Rate-limited via _require_paid_plan (falls through for anon).
         """
         await _require_paid_plan(request, response, "Support Plan Reviewer")
+
+        # UPLOAD-GUARD-1 (STRICT): block unless clearly a care plan.
+        _guard = classify_content("care-plan-reviewer", body.text)
+        if _guard["decision"] != "accept":
+            return {"upload_guard": _guard}
 
         # Structure the plan (no persistence) then analyse
         care_plan_id = f"anon-{uuid4()}"
@@ -523,9 +532,11 @@ def build_care_plans_router() -> APIRouter:
                 detail="Could not read enough text from the uploaded files.",
             )
 
-        # UPLOAD-GUARD-1: redirect if this is clearly an invoice/statement.
+        # UPLOAD-GUARD-1 (STRICT): block unless the document is clearly a care
+        # plan. Anything ambiguous, unrelated, or belonging to another tool is
+        # blocked so no extracted numbers are ever shown for the wrong file.
         _guard = classify_content("care-plan-reviewer", combined_text)
-        if _guard["decision"] == "block" and _guard["reason"] == "wrong_tool":
+        if _guard["decision"] != "accept":
             return {"upload_guard": _guard}
 
         care_plan_id = f"anon-{uuid4()}"
@@ -606,6 +617,10 @@ def build_care_plans_router() -> APIRouter:
         body: TextUploadBody,
         user_id: str = Depends(get_current_user_id),
     ):
+        # UPLOAD-GUARD-1 (STRICT): block unless clearly a care plan.
+        _guard = classify_content("care-plan-reviewer", body.text)
+        if _guard["decision"] != "accept":
+            return {"upload_guard": _guard}
         try:
             ingested = ingest_care_plan_text(
                 body.text,
@@ -716,9 +731,11 @@ def build_care_plans_router() -> APIRouter:
                 detail="Could not read enough text from the uploaded files. Try paste-text or re-scan the pages.",
             )
 
-        # UPLOAD-GUARD-1: redirect if this is clearly an invoice/statement.
+        # UPLOAD-GUARD-1 (STRICT): block unless the document is clearly a care
+        # plan. Anything ambiguous, unrelated, or belonging to another tool is
+        # blocked so no extracted numbers are ever shown for the wrong file.
         _guard = classify_content("care-plan-reviewer", combined_text)
-        if _guard["decision"] == "block" and _guard["reason"] == "wrong_tool":
+        if _guard["decision"] != "accept":
             return {"upload_guard": _guard}
 
         # Ingest as if text-paste

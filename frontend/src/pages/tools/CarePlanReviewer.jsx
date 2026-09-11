@@ -579,10 +579,10 @@ export default function CarePlanReviewer() {
                     </div>
                 )}
 
-                {/* UPLOAD-GUARD-1 verdict (wrong-tool redirect) */}
+                {/* UPLOAD-GUARD-1 verdict — STRICT full-screen block */}
                 {guard && (
                     <div className="mt-6">
-                        <UploadGuardNotice verdict={guard} onChooseAnother={() => { setFiles([]); setGuard(null); }} />
+                        <UploadGuardNotice strict verdict={guard} onChooseAnother={() => { setFiles([]); setGuard(null); setText(""); }} />
                     </div>
                 )}
 
@@ -639,7 +639,9 @@ export default function CarePlanReviewer() {
                         {(fileResult.plan_summary || (fileResult.findings || []).length >= 0) && (
                             <div className="panel-solid-teal rounded-2xl p-6" data-testid="cp-plan-summary">
                                 <div className="flex items-start justify-between gap-3 flex-wrap">
-                                    <div className="text-xs uppercase tracking-wider text-white/80">Plan overview</div>
+                                    <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-white/80">
+                                        <Sparkles className="h-4 w-4" /> Wayly Summary
+                                    </div>
                                     <button
                                         onClick={downloadSummary}
                                         disabled={downloadBusy}
@@ -672,6 +674,27 @@ export default function CarePlanReviewer() {
                                 {fileResult.plan_summary && (
                                     <p className="mt-3 text-sm text-white/95 leading-relaxed">{fileResult.plan_summary}</p>
                                 )}
+                                {(() => {
+                                    const ext = fileResult.extraction || {};
+                                    const vp = fileResult.verification_panel || {};
+                                    const gaps = [];
+                                    (ext.unread_sections || []).forEach((u) => gaps.push(u));
+                                    if (!ext.classification) gaps.push("The support level (classification) was not stated, so budget checks are limited.");
+                                    if (!ext.quarterly_budget && !vp.classification_quarterly_budget) gaps.push("No quarterly budget figure was found in the plan.");
+                                    if (!ext.effective_from) gaps.push("The plan's start date was not clearly stated.");
+                                    if ((ext.services || []).length === 0) gaps.push("No individual services were identified in the plan.");
+                                    if (gaps.length === 0) return null;
+                                    return (
+                                        <div className="mt-4 rounded-xl bg-white/12 border border-white/20 p-4" data-testid="cp-couldnt-check">
+                                            <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-white/85">
+                                                <ShieldAlert className="h-4 w-4" /> What we could not check
+                                            </div>
+                                            <ul className="mt-2 space-y-1 text-sm text-white/95 leading-relaxed">
+                                                {gaps.map((g, i) => <li key={i}>· {g}</li>)}
+                                            </ul>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         )}
 

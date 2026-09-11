@@ -21,6 +21,7 @@ import PhotoTipsAccordion from "@/components/PhotoTipsAccordion";
 import EmailForwardingPanel from "@/components/EmailForwardingPanel";
 import FilePreviewPanel from "@/components/FilePreviewPanel";
 import ReportIssueButton from "@/components/ReportIssueButton";
+import UploadGuardNotice from "@/components/UploadGuardNotice";
 import { usePlanState } from "@/hooks/usePlanState";
 import { ToolSummary } from "@/components/ToolShell";
 import SmartAISummary from "@/components/SmartAISummary";
@@ -61,6 +62,7 @@ export default function StatementDecoderTool() {
     const [active, setActive] = useState(false);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [guard, setGuard] = useState(null);
     const [error, setError] = useState(null);
     const [limitInfo, setLimitInfo] = useState(null); // { reset_at, period_month }
     const [usage, setUsage] = useState(null); // { allowed, used_count, remaining, reset_at }
@@ -118,6 +120,7 @@ export default function StatementDecoderTool() {
     const submit = async () => {
         setError(null);
         setResult(null);
+        setGuard(null);
         setLimitInfo(null);
         setLoading(true);
         try {
@@ -146,6 +149,9 @@ export default function StatementDecoderTool() {
                     throw postErr;
                 }
             }
+            // UPLOAD-GUARD-1 (STRICT): block unless clearly a Support at Home
+            // statement, so no decoded numbers are ever shown for a wrong file.
+            if (initial.upload_guard) { setGuard(initial.upload_guard); return; }
             // Abuse-flag short-circuit (no job)
             if (initial.abuse_flag) {
                 setResult(initial);
@@ -356,6 +362,12 @@ export default function StatementDecoderTool() {
                     {error && !limitInfo && (
                         <div className="mt-4 flex items-start gap-2 text-sm text-terracotta bg-[#fbf2eb] border border-[#e8c6b0] rounded-md p-3">
                             <AlertTriangle className="h-4 w-4 mt-0.5" /><span>{error}</span>
+                        </div>
+                    )}
+
+                    {guard && (
+                        <div className="mt-6" data-testid="decoder-upload-guard">
+                            <UploadGuardNotice strict verdict={guard} onChooseAnother={() => { setGuard(null); setFile(null); setText(""); }} />
                         </div>
                     )}
 

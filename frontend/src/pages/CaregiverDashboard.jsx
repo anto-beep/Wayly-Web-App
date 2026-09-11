@@ -244,6 +244,7 @@ export default function CaregiverDashboard() {
     const greeting = hourNow < 12 ? "Good morning" : hourNow < 18 ? "Good afternoon" : "Good evening";
     const [budget, setBudget] = useState(null);
     const [statements, setStatements] = useState([]);
+    const [invoices, setInvoices] = useState([]);
     const [familyMsgs, setFamilyMsgs] = useState([]);
     const [audit, setAudit] = useState([]);
     const [chatHistory, setChatHistory] = useState([]);
@@ -278,13 +279,14 @@ export default function CaregiverDashboard() {
         setLoading(true);
         (async () => {
             try {
-                const [b, s, f, a, c, p] = await Promise.all([
+                const [b, s, f, a, c, p, inv] = await Promise.all([
                     api.get("/budget/current").catch(() => ({ data: null })),
                     api.get("/statements").catch(() => ({ data: [] })),
                     api.get("/family-thread").catch(() => ({ data: [] })),
                     api.get("/audit-log").catch(() => ({ data: [] })),
                     api.get("/chat/history").catch(() => ({ data: [] })),
                     api.get("/budget/eligible-pathways").catch(() => ({ data: null })),
+                    api.get("/invoices").catch(() => ({ data: { items: [] } })),
                 ]);
                 if (cancelled) return;
                 setBudget(b.data);
@@ -293,6 +295,7 @@ export default function CaregiverDashboard() {
                 setAudit(a.data || []);
                 setChatHistory(c.data || []);
                 setPathways(p.data);
+                setInvoices((inv.data && inv.data.items) || []);
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -301,9 +304,27 @@ export default function CaregiverDashboard() {
     }, [activeParticipant?.id]);
 
     const latest = statements[0];
-    const allAnomalies = statements.flatMap((s) =>
-        (s.anomalies || []).map((a) => ({ ...a, statement_id: s.id, period_label: s.period_label }))
-    );
+    // Things To Know and the dashboard summary reflect ONLY the most recent
+    // statement and the most recent invoice, never an aggregate across every
+    // statement (which would balloon into hundreds of stale items).
+    const latestStatementAnomalies = (latest?.anomalies || []).map((a) => ({
+        ...a, statement_id: latest.id, period_label: latest.period_label,
+    }));
+    const latestInvoice = invoices[0] || null;
+    const latestInvoiceFindings = (latestInvoice?.reconciliation?.findings) || [];
+    const ttkCount = latestStatementAnomalies.length + latestInvoiceFindings.length;
+
+    // Budget view — mirror AtAGlance exactly so the Wayly Summary tells the
+    // SAME story as the donut (spent, % used, over / left).
+    const budgetSpent = budget ? budget.streams.reduce((acc, s) => acc + s.spent, 0) : 0;
+    const budgetQuarterly = budget
+        ? (budget.quarterly_gross ?? budget.quarterly_total ?? budget.quarterly_usable ?? 0)
+        : 0;
+    const budgetLeft = budgetQuarterly - budgetSpent;
+    const budgetOver = budgetLeft < 0;
+    const budgetPctUsed = budgetQuarterly > 0
+        ? Math.max(0, Math.round((budgetSpent / budgetQuarterly) * 100))
+        : 0;
 
     return (
         <div className="space-y-8" data-testid="caregiver-dashboard">
@@ -333,15 +354,20 @@ export default function CaregiverDashboard() {
                         provider: displayProvider || null,
                         plan,
                         quarter_label: budget?.quarter_label,
-                        quarterly_budget_aud: budget?.quarterly_gross ?? budget?.quarterly_total ?? budget?.quarterly_usable,
-                        quarterly_care_management_aud: budget?.care_management_quarterly,
-                        quarterly_usable_aud: budget?.quarterly_usable ?? budget?.quarterly_total,
-                        quarterly_spent_aud: budget?.spent_aud ?? budget?.spent,
-                        quarterly_headroom_aud: budget?.headroom_aud ?? budget?.headroom,
+                        quarterly_budget_aud: budgetQuarterly || null,
+                        quarterly_spent_aud: budgetSpent || null,
+                        budget_percent_used: budget ? budgetPctUsed : null,
+                        over_budget: budget ? budgetOver : null,
+                        amount_over_budget_aud: budget && budgetOver ? Math.abs(budgetLeft) : null,
+                        amount_remaining_aud: budget && !budgetOver ? budgetLeft : null,
+                        quarterly_care_management_aud: budget?.care_management_quarterly ?? null,
                         statements_count: statements.length,
                         latest_statement_period: latest?.period_label || null,
                         latest_statement_provider: latest?.provider_name || latest?.extracted_json?.provider_name || null,
-                        open_anomaly_count: allAnomalies.length,
+                        latest_statement_open_anomalies: latestStatementAnomalies.length,
+                        latest_invoice_provider: latestInvoice?.provider_name || null,
+                        latest_invoice_issue_count: latestInvoice ? latestInvoiceFindings.length : null,
+                        has_invoice_on_file: invoices.length > 0,
                         unread_family_messages: familyMsgs.filter((m) => !m.read).length,
                     }}
                 />
@@ -533,24 +559,20 @@ export default function CaregiverDashboard() {
 
             {!isFree && (
                 <details className="group rounded-2xl overflow-hidden border border-gold/40 shadow-sm" data-testid="things-to-know-details">
-                    <summary className={`flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none border-l-4 hover:brightness-[0.98] transition-colors ${allAnomalies.length > 0 ? "border-l-terracotta bg-[linear-gradient(135deg,rgba(192,57,43,0.10),rgba(240,178,103,0.10))]" : "border-l-gold bg-[linear-gradient(135deg,rgba(165,81,43,0.10),rgba(240,178,103,0.08))]"}`}>
+                    <summary className={`flex cursor-pointer items-center justify-between gap-4 px-5 py-5 list-none select-none border-l-4 hover:brightness-[0.98] transition-colors ${ttkCount > 0 ? "border-l-terracotta bg-[linear-gradient(135deg,rgba(192,57,43,0.10),rgba(240,178,103,0.10))]" : "border-l-gold bg-[linear-gradient(135deg,rgba(165,81,43,0.10),rgba(240,178,103,0.08))]"}`}>
                         <span className="flex items-center gap-3 min-w-0">
-                            <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-full text-white shadow-sm ${allAnomalies.length > 0 ? "bg-terracotta" : "bg-gold"}`}>
+                            <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-full text-white shadow-sm ${ttkCount > 0 ? "bg-terracotta" : "bg-gold"}`}>
                                 <AlertTriangle className="h-5 w-5" />
                             </span>
                             <span className="min-w-0">
                                 <span className="block font-heading text-lg text-primary-k leading-tight">Things To Know</span>
-                                <span className="block text-xs text-muted-k mt-0.5">
-                                    {allAnomalies.length > 0
-                                        ? `${allAnomalies.length} item${allAnomalies.length === 1 ? "" : "s"} that may need your attention`
-                                        : "Alerts and anomalies picked up from your statements"}
-                                </span>
+                                <span className="block text-xs text-muted-k mt-0.5">Based on your latest statement and invoice</span>
                             </span>
                         </span>
                         <span className="flex flex-none items-center gap-2.5">
-                            {allAnomalies.length > 0 && (
+                            {ttkCount > 0 && (
                                 <span data-testid="things-to-know-count" className="inline-flex items-center justify-center rounded-full bg-terracotta text-white text-sm font-bold h-7 min-w-[1.75rem] px-2 shadow-sm">
-                                    {allAnomalies.length > 99 ? "99+" : allAnomalies.length}
+                                    {ttkCount > 99 ? "99+" : ttkCount}
                                 </span>
                             )}
                             <span
@@ -564,70 +586,134 @@ export default function CaregiverDashboard() {
                         </span>
                     </summary>
                     <div className="px-5 pb-6 pt-4 bg-surface" data-testid="alerts-card">
-                        {allAnomalies.length === 0 ? (
-                            <div className="mt-4 text-muted-k text-sm flex items-center gap-2">
-                                <Sparkles className="h-4 w-4 text-sage" /> Nothing unusual at the moment.
+                        {/* STATEMENTS — latest statement only */}
+                        <div data-testid="ttk-statements-section">
+                            <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-primary-k" />
+                                <span className="font-heading text-base text-primary-k">Statements</span>
                             </div>
-                        ) : (
-                            <>
-                            <ul className="mt-4 space-y-3">
-                                {(showAllTtk ? allAnomalies : allAnomalies.slice(0, 10)).map((a, ttkIdx) => {
-                                    const summary = shortSummary(a.detail);
-                                    const fullDetail = humanize(a.detail);
-                                    const showWhy = fullDetail && fullDetail !== summary;
-                                    const isAlert = a.severity === "alert";
-                                    return (
-                                    <li key={a.id} className={`rounded-xl border p-4 ${flagTint(ttkIdx)}`}>
-                                        <div className="flex items-start gap-3">
-                                            <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-none ${isAlert ? "bg-terracotta text-white" : "bg-gold text-white"}`}>
-                                                <AlertTriangle className="h-4 w-4" />
+                            <p className="text-xs text-muted-k mt-0.5">
+                                Based on the latest statement{latest?.period_label ? ` (${latest.period_label})` : ""}.
+                            </p>
+                            {latestStatementAnomalies.length === 0 ? (
+                                <div className="mt-3 text-muted-k text-sm flex items-center gap-2">
+                                    <Sparkles className="h-4 w-4 text-sage" /> Nothing unusual on your latest statement.
+                                </div>
+                            ) : (
+                                <>
+                                <ul className="mt-3 space-y-3">
+                                    {(showAllTtk ? latestStatementAnomalies : latestStatementAnomalies.slice(0, 10)).map((a, ttkIdx) => {
+                                        const summary = shortSummary(a.detail);
+                                        const fullDetail = humanize(a.detail);
+                                        const showWhy = fullDetail && fullDetail !== summary;
+                                        const isAlert = a.severity === "alert";
+                                        return (
+                                        <li key={a.id} className={`rounded-xl border p-4 ${flagTint(ttkIdx)}`}>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-none ${isAlert ? "bg-terracotta text-white" : "bg-gold text-white"}`}>
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className={`text-[10px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 text-white ${isAlert ? "bg-terracotta" : "bg-gold"}`}>
+                                                            {isAlert ? "Alert" : "Heads up"}
+                                                        </span>
+                                                        <span className="font-semibold text-primary-k text-sm">{humanize(a.title)}</span>
+                                                    </div>
+                                                    {summary && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{summary}</p>}
+                                                    {a.suggested_action && (
+                                                        <div className="mt-2.5 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2">
+                                                            <Lightbulb className="h-3.5 w-3.5 flex-none text-gold mt-0.5" />
+                                                            <span className="text-xs text-primary-k leading-relaxed"><span className="font-semibold">What to do: </span>{humanize(a.suggested_action)}</span>
+                                                        </div>
+                                                    )}
+                                                    {showWhy && (
+                                                        <details className="mt-2 group/why">
+                                                            <summary className="cursor-pointer list-none text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
+                                                                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
+                                                            </summary>
+                                                            <p className="mt-1.5 text-xs text-muted-k leading-relaxed">{fullDetail}</p>
+                                                        </details>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
+                                            <div className="mt-3 flex justify-end border-t border-primary-k/10 pt-2.5">
+                                                <Link to={`/app/statements/${a.statement_id}`} className="text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
+                                                    View statement <ArrowRight className="h-3.5 w-3.5" />
+                                                </Link>
+                                            </div>
+                                        </li>
+                                        );
+                                    })}
+                                </ul>
+                                {latestStatementAnomalies.length > 10 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAllTtk((v) => !v)}
+                                        data-testid="things-to-know-view-all"
+                                        className="mt-4 w-full inline-flex items-center justify-center gap-1.5 rounded-pill border border-primary-k/25 bg-surface px-4 py-2.5 text-sm font-semibold text-primary-k hover:bg-primary-k/[0.05] transition-colors"
+                                    >
+                                        {showAllTtk ? "Show fewer" : `View all ${latestStatementAnomalies.length} on this statement`}
+                                        <ChevronDown className={`h-4 w-4 transition-transform ${showAllTtk ? "rotate-180" : ""}`} />
+                                    </button>
+                                )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* INVOICES — latest invoice only */}
+                        <div data-testid="ttk-invoices-section" className="mt-6 pt-5 border-t border-kindred">
+                            <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-clay" />
+                                <span className="font-heading text-base text-primary-k">Invoices</span>
+                            </div>
+                            <p className="text-xs text-muted-k mt-0.5">
+                                Based on the latest invoice{latestInvoice?.provider_name ? ` (${latestInvoice.provider_name})` : ""}.
+                            </p>
+                            {!latestInvoice ? (
+                                <div className="mt-3 text-muted-k text-sm flex items-center gap-2">
+                                    <Info className="h-4 w-4 text-muted-k" /> No invoice checked yet.{" "}
+                                    <Link to="/app/tools/invoice-checker" className="text-primary-k underline">Check one</Link>.
+                                </div>
+                            ) : latestInvoiceFindings.length === 0 ? (
+                                <div className="mt-3 text-muted-k text-sm flex items-center gap-2">
+                                    <Sparkles className="h-4 w-4 text-sage" /> Nothing unusual on your latest invoice.
+                                </div>
+                            ) : (
+                                <ul className="mt-3 space-y-3">
+                                    {latestInvoiceFindings.map((f, i) => {
+                                        const isAlert = Number(f.tier) <= 2;
+                                        const body = f.narrative || f.suggested_question || "";
+                                        return (
+                                        <li key={`${f.check_id}-${i}`} className={`rounded-xl border p-4 ${flagTint(i)}`}>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-none ${isAlert ? "bg-terracotta text-white" : "bg-gold text-white"}`}>
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
                                                     <span className={`text-[10px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 text-white ${isAlert ? "bg-terracotta" : "bg-gold"}`}>
                                                         {isAlert ? "Alert" : "Heads up"}
                                                     </span>
-                                                    <span className="font-semibold text-primary-k text-sm">{humanize(a.title)}</span>
+                                                    {body && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{body}</p>}
+                                                    {f.suggested_question && f.suggested_question !== body && (
+                                                        <div className="mt-2.5 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2">
+                                                            <Lightbulb className="h-3.5 w-3.5 flex-none text-gold mt-0.5" />
+                                                            <span className="text-xs text-primary-k leading-relaxed"><span className="font-semibold">What to ask: </span>{f.suggested_question}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {summary && <p className="text-sm text-muted-k mt-1.5 leading-relaxed">{summary}</p>}
-                                                {a.suggested_action && (
-                                                    <div className="mt-2.5 flex items-start gap-2 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2">
-                                                        <Lightbulb className="h-3.5 w-3.5 flex-none text-gold mt-0.5" />
-                                                        <span className="text-xs text-primary-k leading-relaxed"><span className="font-semibold">What to do: </span>{humanize(a.suggested_action)}</span>
-                                                    </div>
-                                                )}
-                                                {showWhy && (
-                                                    <details className="mt-2 group/why">
-                                                        <summary className="cursor-pointer list-none text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
-                                                            <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/why:rotate-180" /> Why we flagged this
-                                                        </summary>
-                                                        <p className="mt-1.5 text-xs text-muted-k leading-relaxed">{fullDetail}</p>
-                                                    </details>
-                                                )}
                                             </div>
-                                        </div>
-                                        <div className="mt-3 flex justify-end border-t border-primary-k/10 pt-2.5">
-                                            <Link to={`/app/statements/${a.statement_id}`} className="text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
-                                                View statement <ArrowRight className="h-3.5 w-3.5" />
-                                            </Link>
-                                        </div>
-                                    </li>
-                                    );
-                                })}
-                            </ul>
-                            {allAnomalies.length > 10 && (
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAllTtk((v) => !v)}
-                                    data-testid="things-to-know-view-all"
-                                    className="mt-4 w-full inline-flex items-center justify-center gap-1.5 rounded-pill border border-primary-k/25 bg-surface px-4 py-2.5 text-sm font-semibold text-primary-k hover:bg-primary-k/[0.05] transition-colors"
-                                >
-                                    {showAllTtk ? "Show fewer" : `View all ${allAnomalies.length} things to know`}
-                                    <ChevronDown className={`h-4 w-4 transition-transform ${showAllTtk ? "rotate-180" : ""}`} />
-                                </button>
+                                            <div className="mt-3 flex justify-end border-t border-primary-k/10 pt-2.5">
+                                                <Link to={`/app/invoices/${latestInvoice.id}`} className="text-xs font-medium text-primary-k inline-flex items-center gap-1 hover:underline">
+                                                    View invoice <ArrowRight className="h-3.5 w-3.5" />
+                                                </Link>
+                                            </div>
+                                        </li>
+                                        );
+                                    })}
+                                </ul>
                             )}
-                            </>
-                        )}
+                        </div>
                     </div>
                 </details>
             )}

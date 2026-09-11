@@ -9,6 +9,7 @@ import MarkdownText from "@/components/MarkdownText";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { ChevronLeft, Send, ShieldCheck, ThumbsUp, ThumbsDown, AlertCircle, Settings2 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
+import ReportIssueButton from "@/components/ReportIssueButton";
 
 /**
  * Stream an Ask Wayly (AW-2) reply over SSE so it renders word-by-word.
@@ -359,6 +360,16 @@ export default function AskWaylyV2() {
                     </button>
                 )}
             </section>
+
+            {/* Report an issue — sits BELOW the chat bar */}
+            <div className="flex justify-end" data-testid="aw2-report-issue">
+                <ReportIssueButton
+                    toolName="Ask Wayly"
+                    variant="inline"
+                    toolInput={{ last_question: input || null }}
+                    toolOutput={{ conversation_id: conv?.id || null }}
+                />
+            </div>
 
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-2"
                  data-testid="aw2-scope-note">

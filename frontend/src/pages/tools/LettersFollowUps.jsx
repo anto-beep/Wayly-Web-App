@@ -14,7 +14,7 @@ import { participantDisplayName } from "@/hooks/useParticipantPrefill";
 import { api, extractErrorMessage } from "@/lib/api";
 import {
     Loader2, Phone, AlertTriangle, Mail, MessageSquare,
-    FileText, ShieldAlert, Clock, ChevronRight, Info, PenLine,
+    FileText, ShieldAlert, Clock, ChevronRight, Info, PenLine, Sparkles,
 } from "lucide-react";
 import SeoHead, { softwareApplicationLd, breadcrumbLd } from "@/seo/SeoHead";
 
@@ -82,10 +82,17 @@ const ACCENT = {
  * through unchanged.
  */
 function personaliseSituationLabel(label, participantName) {
-    if (!label || !label.includes("{name}")) return label;
-    const trimmed = (participantName || "").trim();
-    const firstName = trimmed ? trimmed.split(/\s+/)[0] : DEFAULT_PARTICIPANT_LABEL;
-    return label.replaceAll("{name}", firstName);
+    if (!label) return label;
+    let out = label;
+    if (label.includes("{name}")) {
+        const trimmed = (participantName || "").trim();
+        const firstName = trimmed ? trimmed.split(/\s+/)[0] : DEFAULT_PARTICIPANT_LABEL;
+        out = label.replaceAll("{name}", firstName);
+    }
+    // Tidy the card labels: strip trailing dots and capitalise the first letter.
+    out = out.trim().replace(/\.+$/, "");
+    if (out) out = out.charAt(0).toUpperCase() + out.slice(1);
+    return out;
 }
 
 export default function LettersFollowUps() {
@@ -222,7 +229,7 @@ export default function LettersFollowUps() {
         <div className="min-h-screen bg-kindred">
             <MarketingHeader />
             <ToolHero toolKey="letters-and-follow-ups" />
-            <ToolGate toolName="Letters & Follow-ups"><ScreenshotStatement /></ToolGate>
+            <ToolGate toolName="Letters & Follow-Ups"><ScreenshotStatement /></ToolGate>
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="letters-and-follow-ups" />
             </section>
@@ -234,7 +241,7 @@ export default function LettersFollowUps() {
     return (
         <div className="min-h-screen bg-kindred">
             <SeoHead
-                title="Letters & Follow-ups | Wayly"
+                title="Letters & Follow-Ups | Wayly"
                 description="Draft polished, evidence-led letters to My Aged Care, providers, ACQSC, and the Ombudsman. Track responses, escalate on time, and keep a case file."
                 canonical="/ai-tools/letters-and-follow-ups"
                 jsonLd={[
@@ -272,7 +279,7 @@ export default function LettersFollowUps() {
                     className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight"
                     data-testid="lf1-title"
                 >
-                    Letters &amp; Follow-ups
+                    Letters &amp; Follow-Ups
                 </h1>
                 <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
                     {"Draft a letter, track the reply, and know when to escalate. Pick the situation that fits, or start a blank letter — Wayly builds the draft from there."}
@@ -297,8 +304,13 @@ export default function LettersFollowUps() {
                             onPick={(sit) => sit && beginSituation(sit)}
                         />
 
-                        <div className="text-xs uppercase tracking-wider text-muted-k mt-10 mb-3">
-                            Or pick the situation that best matches yours
+                        <div className="mt-10 mb-4 flex items-center gap-3" data-testid="lf1-pick-situation-heading">
+                            <span className="h-px flex-1 bg-kindred" aria-hidden="true" />
+                            <span className="inline-flex items-center gap-2 rounded-full bg-gold/20 border border-gold/40 px-4 py-1.5 text-sm font-semibold text-primary-k">
+                                <Sparkles className="h-4 w-4 text-gold" aria-hidden="true" />
+                                Or pick the situation that best matches yours
+                            </span>
+                            <span className="h-px flex-1 bg-kindred" aria-hidden="true" />
                         </div>
 
                         <div className="space-y-8" data-testid="lf1-situation-grid">

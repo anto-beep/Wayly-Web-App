@@ -353,16 +353,15 @@ export default function CorrespondenceDetail() {
     // blank intake screen. Runs once; falls back to the manual button on error.
     const autoGenRef = useRef(false);
     const [autoGenerating, setAutoGenerating] = useState(false);
+    const [manualGenerating, setManualGenerating] = useState(false);
     useEffect(() => {
         if (!entry || autoGenRef.current) return;
         const cameFromTool = carriedIssues.items.length > 0;
         if (!cameFromTool || entry.content_draft || generated || isGuidedPathway) return;
+        // LF polish: do NOT auto-draft. The intake is pre-filled from the tool
+        // issues at creation; the draft appears only after the user clicks
+        // "Generate letter". Nothing shows at the bottom until then.
         autoGenRef.current = true;
-        setAutoGenerating(true);
-        generateLetterAsync(entryId, { intake: entry.intake || null, persist: true })
-            .then((data) => onGenerated(data))
-            .catch(() => { /* fall back to the manual Generate button below */ })
-            .finally(() => setAutoGenerating(false));
     }, [entry, entryId, carriedIssues, generated, isGuidedPathway]);
 
     // LF-1 v2: when a letter is created directly from a situation (not carried
@@ -392,15 +391,10 @@ export default function CorrespondenceDetail() {
                 }
                 if (data?.generated) {
                     setGenerated(data.generated);
-                } else if (data?.needs_generation) {
-                    // Intake seeded server-side; draft the letter via the async
-                    // job so the request never hangs on a slow LLM call.
-                    setAutoGenerating(true);
-                    generateLetterAsync(entryId, { intake: (data.entry && data.entry.intake) || null, persist: true })
-                        .then((g) => onGenerated(g))
-                        .catch(() => { /* fall back to the manual Generate button */ })
-                        .finally(() => setAutoGenerating(false));
                 }
+                // LF polish: seed the intake fields only. The draft is NOT
+                // auto-generated; the user reviews the pre-filled fields and
+                // clicks "Generate letter" to produce (and reveal) the draft.
             })
             .catch(() => { /* fall back to the manual intake + Generate button */ })
             .finally(() => setPrefilling(false));
@@ -659,6 +653,7 @@ export default function CorrespondenceDetail() {
                                     archetype={entry.archetype}
                                     intake={intake}
                                     onChange={onIntakeChange}
+                                    disabled={autoGenerating || manualGenerating || prefilling}
                                 />
                             </div>
                         </div>
@@ -717,6 +712,7 @@ export default function CorrespondenceDetail() {
                                                 entryId={entryId}
                                                 intakeOverrides={intake}
                                                 onGenerated={onGenerated}
+                                                onBusyChange={setManualGenerating}
                                             />
                                         )}
                                     </div>

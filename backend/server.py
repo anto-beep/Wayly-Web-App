@@ -1786,6 +1786,13 @@ async def upload_statement(
     text = sanitize_for_prompt(text)
     if not text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from file. Try a clearer photo or paste the text directly.")
+    # UPLOAD-GUARD-1 (STRICT): only decode a document that is clearly a Support
+    # at Home statement. Anything ambiguous / unrelated / belonging to another
+    # tool is blocked so we never surface decoded numbers for the wrong file.
+    from lib.upload_guard import classify_content as _classify_content
+    _sd_guard = _classify_content("statement-decoder", text)
+    if _sd_guard["decision"] != "accept":
+        return {"upload_guard": _sd_guard}
     # Stash the original bytes so the user can re-download the source PDF / CSV / TXT later.
     import base64 as _b64
     file_b64 = _b64.b64encode(raw).decode("ascii")
@@ -5052,6 +5059,10 @@ async def public_decode_text(
     caller_user_id: Optional[str] = Depends(get_current_user_id_optional),
 ):
     await _enforce_statement_decoder_limit(request, response)
+    from lib.upload_guard import classify_content as _classify_content
+    _sd_guard = _classify_content("statement-decoder", body.text or "")
+    if _sd_guard["decision"] != "accept":
+        return {"upload_guard": _sd_guard}
     job_id = _submit_decode_job(
         body.text, input_method="text_paste", document_pages=1, parsing_warnings=[],
         persist_for_user_id=caller_user_id,
@@ -5091,6 +5102,10 @@ async def public_decode_file(
         raise HTTPException(status_code=400, detail="Could not extract text from file. Try a clearer photo or paste the text directly.")
     # Phase 4: prompt-injection sanitisation.
     text = sanitize_for_prompt(text)
+    from lib.upload_guard import classify_content as _classify_content
+    _sd_guard = _classify_content("statement-decoder", text)
+    if _sd_guard["decision"] != "accept":
+        return {"upload_guard": _sd_guard}
     job_id = _submit_decode_job(
         text, input_method=input_method, document_pages=page_count,
         parsing_warnings=parse_warnings, original_filename=safe_name,
