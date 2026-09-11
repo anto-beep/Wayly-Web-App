@@ -1,3 +1,12 @@
+# Wayly — current fork status (Jun 2026)
+
+**Just shipped (Iter 328, verified backend 16/16):** the 3 P0 production bugs — (1) AI letter-draft Cloudflare 524 timeout → LF-1 letter generation is now an async job+poll (`/api/lf1/correspondence/{id}/generate-async` + `/api/lf1/generate-jobs/{id}`); (2) dashboard freeze → rerouted on-loop `LlmChat` calls (insights summary, statement-decode chunk extractors + auditor + parse + anomaly, Ask-Wayly non-stream, invoice summariser) through `lib/llm_wrapper.chat_send` (off-loop executor + timeout + breaker); (3) ghost drafts → leave-modal Discard now DELETEs a brand-new unsaved draft (backend `user_saved` flag gates it). See CHANGELOG Iter 328.
+
+**Next up — big P0 UI/UX batch (Web + Mobile), user-approved order:** strict document validation (Statement Decoder + Care Plan Reviewer, "always block unless clearly the right type", full-screen prompt, no numbers) + Invoice Checker prominent wrong-doc prompt; Statement Decoder remove "Forward by email"; Care Plan Reviewer Wayly Summary + "what we couldn't check" + draft-email + capitalise "Your Saved Plans" + auto-save; Provider Price Checker capitalisation + prefill provider + required fields + "Your Price History" button; Classification Self-Check required fields + persona-aware headings + save/name/delete/edit/re-run + button colours + fix web hover glitch; Letters & Follow-Ups rename + highlight "Or pick the situation…" + de-dot/capitalise categories + block edits while generating + hide draft until Generate; Aged Care Q&A move "Report an Issue" below chat bar + short paragraphs/inline bold (also convert aw2/streaming off-loop). P1: mobile dashboard/profile polish parity; Short-Term Pathways tool; cross-platform parity test.
+
+---
+
+
 # Statement Decoder Trust Overhaul — roadmap (added Jun 2026 fork)
 
 **P0 — DONE & verified** (see CHANGELOG): reconciliation gates (per-line arithmetic, budget-vs-INDEX-1, QTD-over-budget, gross reconciliation, charged-cancellation) + a **publish gate** that hard-blocks any self-contradicting summary. `backend/lib/dec1_gates.py`, wired in `agents._add_parse_warnings`, enforced in `server._render_plain_english_summary`. Tests: `backend/tests/test_dec1_gates.py`.

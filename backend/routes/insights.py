@@ -179,28 +179,29 @@ async def _generate_summary(page_key: str, context: Dict[str, Any]) -> Dict[str,
             "model": "fallback",
         }
 
+    # Route through llm_wrapper so the provider call runs OFF the request event
+    # loop (dedicated thread executor) with a hard timeout + circuit breaker.
+    # A raw LlmChat call here ran on the loop, so a hung gateway froze the whole
+    # backend, stalling every dashboard request (the "stuck on skeletons" bug).
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        from lib import llm_wrapper
         from agents import _strip_json  # reuse existing helper
     except Exception as e:  # pragma: no cover
         logger.warning("insights LLM import failed: %s", e)
-        return {
-            "summary": "Your latest data is ready to review.",
-            "alerts": [],
-            "model": "fallback",
-        }
+        return {"summary": "Your latest data is ready to review.", "alerts": [], "model": "fallback"}
 
     try:
-        payload = {
-            "page": page_key,
-            "context": _truncate_context(context),
-        }
-        chat = LlmChat(
-            api_key=key,
-            session_id=f"insight-{page_key}-{_now().strftime('%Y%m%d%H%M%S')}",
-            system_message=_system_prompt_for(page_key),
-        ).with_model(INSIGHT_MODEL_PROVIDER, INSIGHT_MODEL_NAME)
-        raw = await chat.send_message(UserMessage(text=json.dumps(payload, default=str)))
+        payload = {"page": page_key, "context": _truncate_context(context)}
+        raw = await llm_wrapper.chat_send(
+            model=INSIGHT_MODEL_NAME,
+            provider=INSIGHT_MODEL_PROVIDER,
+            system=_system_prompt_for(page_key),
+            user_text=json.dumps(payload, default=str),
+            session_id=f"insight-{page_key}",
+            deterministic=True,
+            apply_tone_rules=False,
+            model_params={"max_tokens": 700},
+        )
         parsed = json.loads(_strip_json(raw))
         summary = _sanitise_prose(str(parsed.get("summary") or "").strip())
         alerts_raw = parsed.get("alerts") or []

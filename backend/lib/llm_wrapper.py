@@ -249,6 +249,7 @@ async def chat_send(
     model_params: Optional[dict] = None,
     apply_tone_rules: bool = True,
     sanitise_output: bool = True,
+    timeout_sec: Optional[float] = None,
 ) -> str:
     """One-shot ``LlmChat.send_message`` wrapped through ``call()``.
 
@@ -301,6 +302,7 @@ async def chat_send(
         params={"temperature": 0} if deterministic else {},
         cache_ttl=cache_ttl,
         concurrency=concurrency,
+        timeout_sec=timeout_sec,
     )
     if sanitise_output and isinstance(reply, str):
         reply = strip_wayly_dashes(reply)

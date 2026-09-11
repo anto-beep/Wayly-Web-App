@@ -201,20 +201,21 @@ async def generate_summary(
         return _fallback_summary(reconciliation)
 
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        from lib import llm_wrapper
     except Exception as e:      # pragma: no cover - defensive
-        logger.warning("emergentintegrations unavailable: %s", e)
+        logger.warning("llm_wrapper unavailable: %s", e)
         return _fallback_summary(reconciliation)
 
     try:
-        chat = LlmChat(
-            api_key=key,
-            session_id=session_id,
-            system_message=_SYSTEM_PROMPT,
-        ).with_model(_MODEL_PROVIDER, _MODEL_NAME)
         payload = _build_prompt(reconciliation, header=header, situation=situation)
-        msg = UserMessage(text=f"Here is what we found on the invoice:\n\n{payload}\n\nWrite the summary now.")
-        raw = await chat.send_message(msg)
+        raw = await llm_wrapper.chat_send(
+            model=_MODEL_NAME,
+            provider=_MODEL_PROVIDER,
+            system=_SYSTEM_PROMPT,
+            user_text=f"Here is what we found on the invoice:\n\n{payload}\n\nWrite the summary now.",
+            session_id=session_id,
+            apply_tone_rules=False,
+        )
         text = _iso_to_au_in_text(_scrub_dashes(str(raw or "")).strip())
         if not text:
             return _fallback_summary(reconciliation)

@@ -162,14 +162,17 @@ async def parse_statement(text: str, household_id: str) -> Dict[str, Any]:
     key = _key()
     if not key:
         raise RuntimeError("EMERGENT_LLM_KEY not configured")
-    chat = LlmChat(
-        api_key=key,
-        session_id=f"parse-{household_id}",
-        system_message=PARSER_SYSTEM,
-    ).with_model(MODEL_PROVIDER, MODEL_NAME)
+    from lib import llm_wrapper
     truncated = text[:18000]  # safety cap
-    msg = UserMessage(text=f"Parse this Support at Home statement:\n\n{truncated}")
-    raw = await chat.send_message(msg)
+    raw = await llm_wrapper.chat_send(
+        model=MODEL_NAME,
+        provider=MODEL_PROVIDER,
+        system=PARSER_SYSTEM,
+        user_text=f"Parse this Support at Home statement:\n\n{truncated}",
+        session_id=f"parse-{household_id}",
+        apply_tone_rules=False,
+        sanitise_output=False,
+    )
     payload = _strip_json(raw)
     try:
         parsed = json.loads(payload)
@@ -213,14 +216,17 @@ async def explain_anomalies(anomalies: List[Dict[str, Any]], household_id: str) 
     key = _key()
     if not anomalies or not key:
         return anomalies
-    chat = LlmChat(
-        api_key=key,
-        session_id=f"anomaly-{household_id}",
-        system_message=ANOMALY_SYSTEM,
-    ).with_model(MODEL_PROVIDER, MODEL_NAME)
-    msg = UserMessage(text=f"Anomalies:\n{json.dumps(anomalies, indent=2)}")
+    from lib import llm_wrapper
     try:
-        raw = await chat.send_message(msg)
+        raw = await llm_wrapper.chat_send(
+            model=MODEL_NAME,
+            provider=MODEL_PROVIDER,
+            system=ANOMALY_SYSTEM,
+            user_text=f"Anomalies:\n{json.dumps(anomalies, indent=2)}",
+            session_id=f"anomaly-{household_id}",
+            apply_tone_rules=False,
+            sanitise_output=False,
+        )
         data = json.loads(_strip_json(raw))
         explained = {item["id"]: item for item in data.get("explained", [])}
         merged = []
@@ -245,28 +251,29 @@ async def chat_with_kindred(
     if not key:
         return "Chat is not configured. Please add an LLM key."
     system = _build_chat_system_message(context)
+    from lib import llm_wrapper
     try:
-        from lib.text_sanitiser import strip_wayly_dashes
-    except Exception:
-        strip_wayly_dashes = None  # type: ignore
-    chat = LlmChat(
-        api_key=key,
-        session_id=session_id,
-        system_message=system,
-    ).with_model(MODEL_PROVIDER, CHAT_MODEL)
-    try:
-        reply = await asyncio.wait_for(
-            chat.send_message(UserMessage(text=user_text)),
-            timeout=CHAT_TIMEOUT_SECONDS,
+        reply = await llm_wrapper.chat_send(
+            model=CHAT_MODEL,
+            provider=MODEL_PROVIDER,
+            system=system,
+            user_text=user_text,
+            session_id=session_id,
+            apply_tone_rules=False,
+            timeout_sec=CHAT_TIMEOUT_SECONDS,
         )
-    except asyncio.TimeoutError:
+    except llm_wrapper.LlmCallTimeout:
         logger.warning("chat_with_kindred timed out after %ss", CHAT_TIMEOUT_SECONDS)
         return (
             "Sorry, that took longer than expected to look into. Please try asking "
             "again, and if it keeps happening, try a shorter or more specific question."
         )
-    if strip_wayly_dashes and isinstance(reply, str):
-        reply = strip_wayly_dashes(reply)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("chat_with_kindred failed: %s", e)
+        return (
+            "Sorry, that took longer than expected to look into. Please try asking "
+            "again, and if it keeps happening, try a shorter or more specific question."
+        )
     return reply
 
 
@@ -1093,14 +1100,19 @@ async def _llm_chunk_call(
     async def _attempt(attempt: int) -> Optional[Any]:
         import time
         from llm_costs import record_llm_call
-        chat = LlmChat(
-            api_key=key,
-            session_id=f"{session_id}-a{attempt}",
-            system_message=system_message,
-        ).with_model(MODEL_PROVIDER, EXTRACTOR_MODEL).with_params(max_tokens=max_tokens)
+        from lib import llm_wrapper
         t0 = time.time()
         try:
-            raw = await chat.send_message(UserMessage(text=user_text))
+            raw = await llm_wrapper.chat_send(
+                model=EXTRACTOR_MODEL,
+                provider=MODEL_PROVIDER,
+                system=system_message,
+                user_text=user_text,
+                session_id=f"{session_id}-a{attempt}",
+                apply_tone_rules=False,
+                sanitise_output=False,
+                model_params={"max_tokens": max_tokens},
+            )
         except Exception as e:
             logger.warning("Chunk call %s attempt %d failed: %s", session_id, attempt, e)
             await record_llm_call(
@@ -2077,19 +2089,23 @@ async def audit_statement(
         _apply_reported_totals(fallback, extracted)
         _recompute_stream_breakdown(fallback, extracted)
         return fallback
-    chat = LlmChat(
-        api_key=key,
-        session_id=f"audit-{household_id}",
-        system_message=AUDITOR_SYSTEM,
-    ).with_model(MODEL_PROVIDER, AUDITOR_MODEL).with_params(max_tokens=4000)
     payload = json.dumps(extracted, separators=(",", ":"))[:40000]
-    msg = UserMessage(text=f"Audit this extracted statement:\n\n{payload}")
     raw = None
     import time as _time
     from llm_costs import record_llm_call as _rec
+    from lib import llm_wrapper as _wrap
     _t0 = _time.time()
     try:
-        raw = await chat.send_message(msg)
+        raw = await _wrap.chat_send(
+            model=AUDITOR_MODEL,
+            provider=MODEL_PROVIDER,
+            system=AUDITOR_SYSTEM,
+            user_text=f"Audit this extracted statement:\n\n{payload}",
+            session_id=f"audit-{household_id}",
+            apply_tone_rules=False,
+            sanitise_output=False,
+            model_params={"max_tokens": 4000},
+        )
         # Record the audit-pass cost row
         await _rec(
             tool="audit", model=AUDITOR_MODEL,

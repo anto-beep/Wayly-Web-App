@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { api, extractErrorMessage } from "@/lib/api";
+import { generateLetterAsync } from "@/lib/lf1Generate";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { participantDisplayName } from "@/hooks/useParticipantPrefill";
 import { Loader2, ArrowLeft, Trash2, Save, Info, ShieldAlert, MessageSquare, Sparkles, Eye } from "lucide-react";
@@ -189,6 +190,7 @@ export default function CorrespondenceDetail() {
             const r = await api.patch(`/lf1/correspondence/${entryId}/autosave`, body);
             setSavingHint({ savedAt: r.data?.saved_at });
             setDirty(false);
+            setEntry((prev) => (prev ? { ...prev, user_saved: true } : prev));
             return true;
         } catch (err) {
             setSavingHint({ error: true });
@@ -226,11 +228,17 @@ export default function CorrespondenceDetail() {
         }
     }, [saveDraft, nav]);
 
-    const leaveDiscardAndGo = useCallback(() => {
+    const leaveDiscardAndGo = useCallback(async () => {
         setDirty(false);
         setLeaveOpen(false);
+        // If this is a brand-new draft the user never saved or sent, delete it
+        // so abandoned drafts don't clutter the mailbox (a genuine discard).
+        const throwaway = entry && entry.status === "draft" && !entry.sent_at && !entry.user_saved;
+        if (throwaway) {
+            try { await api.delete(`/lf1/correspondence/${entryId}`); } catch (_) { /* noop */ }
+        }
         nav(leaveTargetRef.current || "/tools/letters-and-follow-ups/log");
-    }, [nav]);
+    }, [nav, entry, entryId]);
 
     const canDelete = entry && entry.status !== "sent";
 
@@ -280,8 +288,8 @@ export default function CorrespondenceDetail() {
         // statement or price check to pull those facts into the draft").
         if (generated && !isGuidedPathway) {
             setAutoGenerating(true);
-            api.post(`/lf1/correspondence/${entryId}/generate`, { intake: mergedIntake, persist: true })
-                .then(({ data: g }) => onGenerated(g))
+            generateLetterAsync(entryId, { intake: mergedIntake, persist: true })
+                .then((g) => onGenerated(g))
                 .catch(() => { /* keep the existing draft on failure */ })
                 .finally(() => setAutoGenerating(false));
         }
@@ -351,8 +359,8 @@ export default function CorrespondenceDetail() {
         if (!cameFromTool || entry.content_draft || generated || isGuidedPathway) return;
         autoGenRef.current = true;
         setAutoGenerating(true);
-        api.post(`/lf1/correspondence/${entryId}/generate`, { intake: entry.intake || null, persist: true })
-            .then(({ data }) => onGenerated(data))
+        generateLetterAsync(entryId, { intake: entry.intake || null, persist: true })
+            .then((data) => onGenerated(data))
             .catch(() => { /* fall back to the manual Generate button below */ })
             .finally(() => setAutoGenerating(false));
     }, [entry, entryId, carriedIssues, generated, isGuidedPathway]);
@@ -382,7 +390,17 @@ export default function CorrespondenceDetail() {
                     setIntake(data.entry.intake || {});
                     setSenderAuthority(data.entry.sender_authority_basis || "");
                 }
-                if (data?.generated) setGenerated(data.generated);
+                if (data?.generated) {
+                    setGenerated(data.generated);
+                } else if (data?.needs_generation) {
+                    // Intake seeded server-side; draft the letter via the async
+                    // job so the request never hangs on a slow LLM call.
+                    setAutoGenerating(true);
+                    generateLetterAsync(entryId, { intake: (data.entry && data.entry.intake) || null, persist: true })
+                        .then((g) => onGenerated(g))
+                        .catch(() => { /* fall back to the manual Generate button */ })
+                        .finally(() => setAutoGenerating(false));
+                }
             })
             .catch(() => { /* fall back to the manual intake + Generate button */ })
             .finally(() => setPrefilling(false));

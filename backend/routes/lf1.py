@@ -24,8 +24,10 @@ Iteration 1 endpoints
 """
 from __future__ import annotations
 
+import asyncio
 import datetime as _dt
 import logging
+import os
 import secrets
 from typing import Any
 
@@ -366,6 +368,9 @@ def build_lf1_router(db, get_current_user_id, get_current_user_id_optional, requ
         # Autosave never transitions status out of draft.
         if row.get("status") == "draft":
             update["status"] = "draft"
+        # Explicit user save. Marks this entry as one the user intends to keep,
+        # so backing out later does NOT delete it as an abandoned ghost draft.
+        update["user_saved"] = True
         await db.lf1_correspondence.update_one(
             {"user_id": user_id, "id": entry_id},
             {"$set": update},
@@ -574,6 +579,102 @@ def build_lf1_router(db, get_current_user_id, get_current_user_id_optional, requ
             )
         return payload
 
+    # ---------- Async letter generation (JOB + POLL) ----------
+    # Drafting hits the LLM which can take 30-70s. Holding an HTTP request open
+    # that long trips the Cloudflare 524 edge timeout, so the draft runs as a
+    # background job: submit returns a job_id instantly and the client polls.
+    _GEN_SEMAPHORE = asyncio.Semaphore(int(os.environ.get("LF1_GENERATE_CONCURRENCY", "4")))
+
+    async def _do_generate(user_id: str, entry_id: str, intake_override, persist: bool) -> dict:
+        from services import lf1_generate as _gen
+        entry = await db.lf1_correspondence.find_one(
+            {"user_id": user_id, "id": entry_id}, {"_id": 0}
+        )
+        if not entry:
+            raise HTTPException(status_code=404, detail="Correspondence entry not found")
+        if intake_override:
+            merged_intake = {**(entry.get("intake") or {}), **intake_override}
+            entry = {**entry, "intake": merged_intake}
+        try:
+            from lib.persona import load_persona_context
+            entry["_persona_context"] = await load_persona_context(db, user_id)
+        except Exception:
+            entry["_persona_context"] = None
+        payload = await _gen.generate_letter(entry)  # may raise SourceDataMissing
+        if persist:
+            await db.lf1_correspondence.update_one(
+                {"user_id": user_id, "id": entry_id},
+                {"$set": {
+                    "content_draft": payload["body"],
+                    "intake": entry.get("intake") or {},
+                    "updated_at": _iso(),
+                }},
+            )
+        return payload
+
+    async def _run_generate_job(job_id, user_id, entry_id, intake_override, persist):
+        from services import lf1_generate as _gen
+        try:
+            async with _GEN_SEMAPHORE:
+                result = await _do_generate(user_id, entry_id, intake_override, persist)
+            await db.lf1_generate_jobs.update_one(
+                {"id": job_id},
+                {"$set": {"status": "done", "result": result, "updated_at": _iso()}},
+            )
+        except _gen.SourceDataMissing as missing:
+            await db.lf1_generate_jobs.update_one(
+                {"id": job_id},
+                {"$set": {
+                    "status": "error",
+                    "error": "source_data_missing",
+                    "error_detail": {"error": "source_data_missing",
+                                     "missing_fields": list(missing.args[0])},
+                    "updated_at": _iso(),
+                }},
+            )
+        except HTTPException as e:
+            await db.lf1_generate_jobs.update_one(
+                {"id": job_id},
+                {"$set": {"status": "error", "error": str(e.detail), "updated_at": _iso()}},
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("LF-1 async generate failed for entry %s", entry_id)
+            await db.lf1_generate_jobs.update_one(
+                {"id": job_id},
+                {"$set": {"status": "error", "error": "generation_unavailable", "updated_at": _iso()}},
+            )
+
+    @r.post("/lf1/correspondence/{entry_id}/generate-async")
+    async def generate_letter_async(
+        entry_id: str,
+        body: GenerateBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        entry = await db.lf1_correspondence.find_one(
+            {"user_id": user_id, "id": entry_id}, {"_id": 0}
+        )
+        if not entry:
+            raise HTTPException(status_code=404, detail="Correspondence entry not found")
+        job_id = secrets.token_urlsafe(12)
+        now = _iso()
+        await db.lf1_generate_jobs.insert_one({
+            "id": job_id, "user_id": user_id, "entry_id": entry_id,
+            "status": "processing", "result": None, "error": None,
+            "created_at": now, "updated_at": now,
+        })
+        asyncio.create_task(_run_generate_job(job_id, user_id, entry_id, body.intake, body.persist))
+        return {"job_id": job_id, "status": "processing"}
+
+    @r.get("/lf1/generate-jobs/{job_id}")
+    async def generate_job_status(
+        job_id: str,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        doc = await db.lf1_generate_jobs.find_one({"id": job_id, "user_id": user_id}, {"_id": 0})
+        if not doc:
+            raise HTTPException(status_code=404, detail="Generation job not found or expired.")
+        return doc
+
     @r.post("/lf1/correspondence/{entry_id}/prefill")
     async def prefill_letter(
         entry_id: str,
@@ -647,39 +748,14 @@ def build_lf1_router(db, get_current_user_id, get_current_user_id_optional, requ
             )
             return {"entry": row, "generated": None, "auto_draftable": False}
 
-        try:
-            from lib.persona import load_persona_context
-            entry["_persona_context"] = await load_persona_context(db, user_id)
-        except Exception:
-            entry["_persona_context"] = None
-
-        try:
-            payload = await _gen.generate_letter(entry)
-        except _gen.SourceDataMissing:
-            # Seed already persisted; let the user complete the remaining fields.
-            row = await db.lf1_correspondence.find_one(
-                {"user_id": user_id, "id": entry_id}, {"_id": 0}
-            )
-            return {"entry": row, "generated": None, "auto_draftable": True, "needs_more": True}
-        except Exception:
-            logger.exception("LF-1 prefill generate failed for entry %s", entry_id)
-            row = await db.lf1_correspondence.find_one(
-                {"user_id": user_id, "id": entry_id}, {"_id": 0}
-            )
-            return {"entry": row, "generated": None, "error": "generation_unavailable"}
-
-        await db.lf1_correspondence.update_one(
-            {"user_id": user_id, "id": entry_id},
-            {"$set": {
-                "content_draft": payload["body"],
-                "intake": merged,
-                "updated_at": _iso(),
-            }},
-        )
+        # Intake is seeded + persisted above. The actual draft is generated by
+        # the client via the async job endpoint (generate-async), so this
+        # request never holds the connection open for a slow LLM call (which
+        # is what tripped the Cloudflare edge timeout).
         row = await db.lf1_correspondence.find_one(
             {"user_id": user_id, "id": entry_id}, {"_id": 0}
         )
-        return {"entry": row, "generated": payload}
+        return {"entry": row, "generated": None, "auto_draftable": True, "needs_generation": True}
 
     @r.post("/lf1/correspondence/{entry_id}/pdf")
     async def pdf_export(

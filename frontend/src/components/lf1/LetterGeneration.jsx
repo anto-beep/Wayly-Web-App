@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { api, extractErrorMessage } from "@/lib/api";
+import { generateLetterAsync } from "@/lib/lf1Generate";
 import ADMDisclosure, { ADMDisclosureTrigger } from "@/components/adm/ADMDisclosure";
 import { RequiredBadge } from "@/components/RequiredHint";
 import { useParticipantPrefill } from "@/hooks/useParticipantPrefill";
@@ -832,13 +833,19 @@ export function GenerateButton({ entryId, intakeOverrides, endpoint = "generate"
         setError(null);
         setMissing(null);
         try {
-            const { data } = await api.post(
-                `/lf1/correspondence/${entryId}/${endpoint}`,
-                { intake: intakeOverrides || null, persist: true },
-            );
+            let data;
+            if (endpoint === "generate") {
+                data = await generateLetterAsync(entryId, { intake: intakeOverrides || null, persist: true });
+            } else {
+                const res = await api.post(
+                    `/lf1/correspondence/${entryId}/${endpoint}`,
+                    { intake: intakeOverrides || null, persist: true },
+                );
+                data = res.data;
+            }
             onGenerated(data);
         } catch (err) {
-            const detail = err?.response?.data?.detail;
+            const detail = err?.detail || err?.response?.data?.detail;
             if (detail?.error === "source_data_missing") {
                 setMissing(detail.missing_fields || []);
             } else {

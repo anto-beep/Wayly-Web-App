@@ -12,6 +12,7 @@ import * as DocumentPicker from "expo-document-picker";
 
 import { AppHeader, Badge, Button, Card, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { generateLetterAsync } from "@/src/lib/lf1Generate";
 import { sharePostPdf } from "@/src/lib/download";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { useAuth } from "@/src/context/AuthContext";
@@ -489,6 +490,13 @@ export default function CorrespondenceDetail() {
           setSenderAuthority(data.entry.sender_authority_basis || "");
         }
         if (data?.generated) { setDraft(data.generated); setOutMode("email"); }
+        else if (data?.needs_generation) {
+          setPrefilling(true);
+          generateLetterAsync(id, { intake: (data.entry && data.entry.intake) || null, persist: true })
+            .then((payload) => { if (payload?.body) { setDraft(payload); setOutMode("email"); } load(); })
+            .catch(() => { /* fall back to the manual Generate button */ })
+            .finally(() => setPrefilling(false));
+        }
       })
       .catch(() => { /* fall back to the manual intake + Generate button */ })
       .finally(() => setPrefilling(false));
@@ -502,7 +510,7 @@ export default function CorrespondenceDetail() {
     if (carriedIssues.items.length === 0 || entry.content_draft || draft || isGuided) return;
     autoGenRef.current = true;
     setBusy(true);
-    apiFetch<any>(`/lf1/correspondence/${id}/generate`, { method: "POST", body: { intake: entry.intake || null, persist: true } })
+    generateLetterAsync(id, { intake: entry.intake || null, persist: true })
       .then((payload) => { if (payload?.body) { setDraft(payload); setOutMode("email"); } load(); })
       .catch(() => { /* fall back to the manual Generate button */ })
       .finally(() => setBusy(false));
@@ -522,6 +530,7 @@ export default function CorrespondenceDetail() {
       setSavedHint("Saved");
       setTimeout(() => setSavedHint(""), 2200);
       setDirty(false);
+      setEntry((prev: any) => (prev ? { ...prev, user_saved: true } : prev));
       return true;
     } catch {
       setSavedHint("");
@@ -560,8 +569,14 @@ export default function CorrespondenceDetail() {
 
   const leaveDiscardAndGo = useCallback(() => {
     setLeaveOpen(false);
+    // If this is a brand-new draft the user never saved or sent, delete it so
+    // abandoned drafts don't clutter the mailbox (a genuine discard).
+    const throwaway = entry && entry.status === "draft" && !entry.sent_at && !entry.user_saved;
+    if (throwaway) {
+      apiFetch(`/lf1/correspondence/${id}`, { method: "DELETE" }).catch(() => { /* noop */ });
+    }
     runPendingNav();
-  }, [runPendingNav]);
+  }, [runPendingNav, entry, id]);
 
   const onImported = (data: any) => {
     const merged = { ...(intake || {}), ...(data?.intake || {}) };
@@ -573,7 +588,7 @@ export default function CorrespondenceDetail() {
     // statement or price check to pull those facts into the draft).
     if (draft && !isGuided) {
       setBusy(true);
-      apiFetch<any>(`/lf1/correspondence/${id}/generate`, { method: "POST", body: { intake: merged, persist: true } })
+      generateLetterAsync(id, { intake: merged, persist: true })
         .then((payload) => { if (payload?.body) { setDraft(payload); setOutMode("email"); } load(); })
         .catch(() => { /* keep the existing draft on failure */ })
         .finally(() => setBusy(false));
@@ -591,13 +606,16 @@ export default function CorrespondenceDetail() {
       let payload: any;
       if (isGuided) payload = await apiFetch(`/lf1/correspondence/${id}/safeguarding-record`, { method: "POST", body: { intake, persist: true } });
       else if (isResponseDraft) payload = await apiFetch(`/lf1/correspondence/${id}/response-draft`, { method: "POST", body: { inbound_content: intake?.inbound_summary || "", inbound_from_label: intake?.inbound_from || null, stance: intake?.stance || null } });
-      else payload = await apiFetch(`/lf1/correspondence/${id}/generate`, { method: "POST", body: { intake, persist: true } });
+      else payload = await generateLetterAsync(id, { intake, persist: true });
       setDraft(payload);
       setOutMode("email");
       load();
     } catch (e) {
       if (e instanceof ApiError && e.status === 422 && (e.data?.detail?.missing_fields || e.data?.missing_fields)) {
         setMissing(e.data?.detail?.missing_fields || e.data?.missing_fields);
+        setError("Please fill in the highlighted fields before generating.");
+      } else if ((e as any)?.missingFields) {
+        setMissing((e as any).missingFields);
         setError("Please fill in the highlighted fields before generating.");
       } else {
         setError(e instanceof ApiError ? e.message : "Draft generation is temporarily unavailable.");
