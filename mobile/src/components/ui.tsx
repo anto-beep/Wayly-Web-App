@@ -180,7 +180,10 @@ export function Button({
       style={({ pressed }) => [
         styles.btn,
         variant === "primary" || variant === "secondary"
-          ? { shadowColor: p.bg, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }
+          ? (Platform.select({
+              web: { boxShadow: `0px 8px 14px ${p.bg}59` },
+              default: { shadowColor: p.bg, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 },
+            }) as ViewStyle)
           : null,
         { backgroundColor: p.bg, opacity: isDisabled ? 0.55 : 1, transform: [{ scale: pressed && !isDisabled ? 0.97 : 1 }] },
         p.border ? { borderWidth: 1.5, borderColor: p.border } : null,
