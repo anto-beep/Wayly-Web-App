@@ -52,6 +52,19 @@ const _toolJsonLd = (cfg) => {
 };
 
 const UNIT_LABEL = { hour: "$ per hour", trip: "$ per trip", meal: "$ per meal", month: "$ per month", kilometre: "$ per kilometre" };
+
+// Title-case a service/provider label for display (keeps small joining words
+// lower-case). The underlying stored value is never changed.
+function titleCase(str) {
+    if (!str) return str;
+    const small = new Set(["a", "an", "and", "as", "at", "by", "for", "in", "of", "on", "or", "the", "to", "per"]);
+    return String(str).split(/(\s+)/).map((tok, i) => {
+        if (/^\s+$/.test(tok)) return tok;
+        const lower = tok.toLowerCase();
+        if (i !== 0 && small.has(lower)) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+    }).join("");
+}
 const UNIT_WORD = { hour: "per hour", trip: "per trip", meal: "per meal", month: "per month", kilometre: "per kilometre" };
 
 const STREAM_TONE = {
@@ -121,6 +134,15 @@ export default function PriceCheckerTool() {
         api.get("/tools/ce/state").then((r) => {
             setCeState(r.data?.state || null);
         }).catch(() => setCeState(null));
+    }, [access]);
+
+    // Prefill the user's provider so a price check is pre-addressed. Editable.
+    useEffect(() => {
+        if (access !== "allowed") return;
+        api.get("/account/health").then((r) => {
+            const prov = r.data?.provider;
+            if (prov) setProvider((cur) => cur || prov);
+        }).catch(() => { /* soft-fail: field stays empty and editable */ });
     }, [access]);
 
     // ---- Selected service row + unit ----
@@ -251,8 +273,8 @@ export default function PriceCheckerTool() {
                         <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k" data-testid="pc-back-link">← All AI Tools</Link>
                         <AboutBackLink />
                     </div>
-                    <Link to="/tools/price-checker/history" className="text-sm text-primary-k hover:underline inline-flex items-center gap-1" data-testid="pc-history-link">
-                        Your price history <ArrowRight className="h-3.5 w-3.5" />
+                    <Link to="/tools/price-checker/history" className="inline-flex items-center gap-1.5 rounded-full border border-primary-k/30 bg-surface px-4 py-2 text-sm font-semibold text-primary-k transition-colors hover:bg-primary-k/[0.06]" data-testid="pc-history-link">
+                        Your Price History <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                 </div>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight" data-testid="pc-title">Provider Price Checker</h1>
@@ -328,18 +350,19 @@ export default function PriceCheckerTool() {
                 {/* --- Input form --- */}
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="price-checker">
                     <label className="block">
-                        <span className="text-sm text-muted-k">Service</span>
+                        <span className="text-sm text-muted-k">Service <span className="text-terracotta" aria-hidden="true">*</span></span>
                         <select
                             value={service}
                             onChange={(e) => { setService(e.target.value); setResult(null); setContinueAnyway(false); }}
                             data-testid="pc-service"
+                            required
                             className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
                         >
                             {["Clinical", "Independence", "Everyday Living"].map((streamName) => (
                                 <optgroup label={streamName} key={streamName}>
                                     {(grouped[streamName] || []).map((r) => (
                                         <option key={r.service} value={r.service}>
-                                            {r.service}{!r.checkable ? ", no range published" : ""}
+                                            {titleCase(r.service)}{!r.checkable ? ", no range published" : ""}
                                         </option>
                                     ))}
                                 </optgroup>
@@ -363,27 +386,29 @@ export default function PriceCheckerTool() {
 
                     <div className="grid sm:grid-cols-2 gap-4">
                         <label className="block">
-                            <span className="text-sm text-muted-k">Rate charged ({UNIT_LABEL[activeUnit] || "$ per unit"})</span>
+                            <span className="text-sm text-muted-k">Rate charged ({UNIT_LABEL[activeUnit] || "$ per unit"}) <span className="text-terracotta" aria-hidden="true">*</span></span>
                             <input
                                 type="number"
                                 value={rate}
                                 onChange={(e) => { setRate(e.target.value); setResult(null); setContinueAnyway(false); }}
                                 placeholder="e.g. 100"
                                 data-testid="pc-rate"
+                                required
                                 className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k tabular-nums"
                                 min="0"
                             />
                         </label>
                         <label className="block">
-                            <span className="text-sm text-muted-k">Provider (optional)</span>
+                            <span className="text-sm text-muted-k">Provider</span>
                             <input
                                 value={provider}
                                 onChange={(e) => setProvider(e.target.value)}
+                                onBlur={(e) => setProvider(titleCase(e.target.value.trim()))}
                                 placeholder="Provider name"
                                 data-testid="pc-provider"
                                 className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
                             />
-                            <span className="mt-1 block text-xs text-muted-k">Optional. Helps Wayly build a provider price picture.</span>
+                            <span className="mt-1 block text-xs text-muted-k">Pre-filled from your account. Edit if this rate is from a different provider.</span>
                         </label>
                     </div>
 

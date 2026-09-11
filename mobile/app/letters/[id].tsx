@@ -379,6 +379,100 @@ function CrossToolPanel({ entryId, onImport }: { entryId: string; onImport: (dat
 }
 
 // ---------------------------------------------------------------------------
+// Recipient Directory (saved provider contacts) — pre-address future letters
+// ---------------------------------------------------------------------------
+function RecipientDirectoryCard({ entryId, currentSpecific, onApplied }: { entryId: string; currentSpecific: any; onApplied: (specific: any) => void }) {
+  const { colors } = useTheme();
+  const [recipients, setRecipients] = useState<any[]>([]);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const loadRecipients = useCallback(async () => {
+    try { const r = await apiFetch<{ recipients: any[] }>("/lf1/recipients"); setRecipients(r?.recipients || []); }
+    catch { setRecipients([]); }
+  }, []);
+  useEffect(() => { loadRecipients(); }, [loadRecipients]);
+
+  const currentName = currentSpecific?.entity_name || "";
+  const currentEmail = currentSpecific?.email || "";
+
+  const apply = async (rec: any) => {
+    setBusyId(rec.id);
+    const specific = { ...(currentSpecific || {}), entity_name: rec.name, email: rec.email || null };
+    try {
+      await apiFetch(`/lf1/correspondence/${entryId}/autosave`, { method: "PATCH", body: { recipient_specific: specific } });
+      onApplied(specific);
+    } catch { /* noop */ } finally { setBusyId(null); }
+  };
+
+  const saveNew = async () => {
+    const nm = name.trim();
+    if (!nm) return;
+    setSaving(true);
+    try {
+      const r = await apiFetch<{ recipient: any }>("/lf1/recipients", { method: "POST", body: { name: nm, email: email.trim() || null } });
+      await loadRecipients();
+      setName(""); setEmail(""); setAdding(false);
+      if (r?.recipient) await apply(r.recipient);
+    } catch { /* noop */ } finally { setSaving(false); }
+  };
+
+  return (
+    <Card testID="lf1-recipient-directory">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Users size={15} color={colors.muted} />
+        <T variant="label" style={{ color: colors.muted }}>DELIVER TO</T>
+      </View>
+      <T variant="small" style={{ color: colors.muted, marginTop: 2, marginBottom: spacing.sm, lineHeight: 19 }}>Save a provider once and every future letter to them is pre-addressed.</T>
+      {currentName ? (
+        <View testID="lf1-recipient-current" style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.sm }}>
+          <CheckCircle2 size={16} color={colors.sage} />
+          <View style={{ flex: 1 }}>
+            <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{currentName}</T>
+            {currentEmail ? <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>{currentEmail}</T> : null}
+          </View>
+        </View>
+      ) : null}
+      {recipients.length > 0 ? (
+        <View style={{ gap: spacing.xs, marginTop: currentName ? spacing.sm : 0 }}>
+          {recipients.map((rec) => {
+            const selected = currentName === rec.name && currentEmail === (rec.email || "");
+            return (
+              <Pressable key={rec.id} testID={`lf1-recipient-${rec.id}`} onPress={() => apply(rec)} disabled={busyId === rec.id}
+                style={{ flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: selected ? colors.primary : colors.border, borderRadius: radius.md, paddingHorizontal: spacing.sm, paddingVertical: 10, opacity: busyId === rec.id ? 0.6 : 1 }}>
+                <View style={{ flex: 1 }}>
+                  <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{rec.name}</T>
+                  {rec.email ? <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>{rec.email}</T> : null}
+                </View>
+                {selected ? <CheckCircle2 size={16} color={colors.primary} /> : <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Use</T>}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+      {adding ? (
+        <View style={{ marginTop: spacing.sm, gap: 6 }} testID="lf1-recipient-add-form">
+          <LInput value={name} onChangeText={setName} placeholder="Recipient name (e.g. BlueBerry Care)" testID="lf1-recipient-name" />
+          <LInput value={email} onChangeText={setEmail} placeholder="Email (optional)" testID="lf1-recipient-email" />
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            <Button label={saving ? "Saving…" : "Save recipient"} testID="lf1-recipient-save" onPress={saveNew} loading={saving} style={{ flex: 1, minHeight: 42 }} />
+            <Button label="Cancel" variant="outline" testID="lf1-recipient-cancel" onPress={() => { setAdding(false); setName(""); setEmail(""); }} style={{ minHeight: 42, paddingHorizontal: spacing.md }} />
+          </View>
+        </View>
+      ) : (
+        <Pressable testID="lf1-recipient-add" onPress={() => setAdding(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.sm }}>
+          <PenLine size={14} color={colors.primary} />
+          <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>Save a new recipient</T>
+        </Pressable>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
 export default function CorrespondenceDetail() {
@@ -489,31 +583,21 @@ export default function CorrespondenceDetail() {
           setIntake(merged);
           setSenderAuthority(data.entry.sender_authority_basis || "");
         }
+        // LF polish: seed the intake fields only. The draft is NOT auto-generated;
+        // the user reviews the pre-filled fields and taps "Generate letter".
         if (data?.generated) { setDraft(data.generated); setOutMode("email"); }
-        else if (data?.needs_generation) {
-          setPrefilling(true);
-          generateLetterAsync(id, { intake: (data.entry && data.entry.intake) || null, persist: true })
-            .then((payload) => { if (payload?.body) { setDraft(payload); setOutMode("email"); } load(); })
-            .catch(() => { /* fall back to the manual Generate button */ })
-            .finally(() => setPrefilling(false));
-        }
       })
       .catch(() => { /* fall back to the manual intake + Generate button */ })
       .finally(() => setPrefilling(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry, isGuided, isResponseDraft, id, draft]);
 
-  // Auto-draft on arrival when the letter was created from a tool with carried
-  // issues, so the user lands on a populated draft instead of a blank editor.
+  // LF polish: do NOT auto-draft. The intake is pre-filled from the tool issues
+  // at creation; the draft appears only after the user taps "Generate letter".
   useEffect(() => {
     if (!entry || autoGenRef.current) return;
     if (carriedIssues.items.length === 0 || entry.content_draft || draft || isGuided) return;
     autoGenRef.current = true;
-    setBusy(true);
-    generateLetterAsync(id, { intake: entry.intake || null, persist: true })
-      .then((payload) => { if (payload?.body) { setDraft(payload); setOutMode("email"); } load(); })
-      .catch(() => { /* fall back to the manual Generate button */ })
-      .finally(() => setBusy(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry, carriedIssues, draft, isGuided, id]);
 
@@ -700,7 +784,7 @@ export default function CorrespondenceDetail() {
               <T variant="small" style={{ color: "rgba(255,255,255,0.8)", letterSpacing: 0.4, fontFamily: fonts.bodySemi }}>
                 {carriedIssues.items.length} ISSUE{carriedIssues.items.length === 1 ? "" : "S"} CARRIED OVER FROM {String(carriedIssues.tool).toUpperCase()}
               </T>
-              <T variant="small" style={{ color: "rgba(255,255,255,0.92)", marginTop: 4, lineHeight: 19 }}>Wayly has pulled these into your letter and drafted it for you below. Edit anything before you send.</T>
+              <T variant="small" style={{ color: "rgba(255,255,255,0.92)", marginTop: 4, lineHeight: 19 }}>Wayly has pulled these into your letter. Tap Generate letter below to draft it, then edit anything before you send.</T>
               <View style={{ gap: 6, marginTop: spacing.sm }}>
                 {carriedIssues.items.slice(0, 8).map((txt, i) => (
                   <View key={i} style={{ flexDirection: "row", gap: 8 }}>
@@ -709,18 +793,21 @@ export default function CorrespondenceDetail() {
                   </View>
                 ))}
               </View>
-              {busy && !draft ? (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.sm }} testID="lf1-autodraft-busy">
-                  <ActivityIndicator size="small" color="#fff" />
-                  <T variant="small" style={{ color: "rgba(255,255,255,0.92)" }}>Drafting your letter from these issues…</T>
-                </View>
-              ) : null}
             </Card>
           ) : null}
 
           {/* Cross-tool import (skip for guided pathway, mirrors web) */}
           {!isGuided ? (
             <Card testID="lf1-cross-tool-card"><CrossToolPanel entryId={String(id)} onImport={onImported} /></Card>
+          ) : null}
+
+          {/* Recipient Directory — pre-address future letters to this provider */}
+          {!isGuided ? (
+            <RecipientDirectoryCard
+              entryId={String(id)}
+              currentSpecific={entry?.recipient_specific}
+              onApplied={(specific) => { setEntry((prev: any) => (prev ? { ...prev, recipient_specific: specific } : prev)); }}
+            />
           ) : null}
 
           {/* Sender authority */}
@@ -770,10 +857,12 @@ export default function CorrespondenceDetail() {
             {intake?.prefill_source === "situation" ? (
               <View style={[styles.softNote, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]} testID="lf1-detail-starter-note">
                 <Sparkles size={16} color={colors.primary} style={{ marginTop: 2 }} />
-                <T variant="small" style={{ flex: 1, lineHeight: 20 }}>Wayly has started this letter for you based on the situation you picked. Edit anything, fill in the details in brackets, then regenerate.</T>
+                <T variant="small" style={{ flex: 1, lineHeight: 20 }}>Wayly has started this letter for you based on the situation you picked. Edit anything, fill in the details in brackets, then tap Generate letter.</T>
               </View>
             ) : null}
-            <ArchetypeIntake archetype={archetype} intake={intake} set={set} missing={missing} />
+            <View pointerEvents={busy || prefilling ? "none" : "auto"} style={busy || prefilling ? { opacity: 0.55 } : undefined}>
+              <ArchetypeIntake archetype={archetype} intake={intake} set={set} missing={missing} />
+            </View>
           </Card>
 
           {/* Terms ack */}
@@ -801,7 +890,7 @@ export default function CorrespondenceDetail() {
               <T variant="small" style={{ color: colors.muted }}>Drafting a starting point from your situation…</T>
             </View>
           ) : null}
-          <Button label={draft ? "Regenerate draft" : (isGuided ? "Build safeguarding record" : isResponseDraft ? "Draft my reply" : "Generate draft")} testID="lf1-generate-button" icon={isGuided ? ShieldCheck : Sparkles} onPress={generate} loading={busy} />
+          <Button label={draft ? "Regenerate letter" : (isGuided ? "Build safeguarding record" : isResponseDraft ? "Draft my reply" : "Generate letter")} testID="lf1-generate-button" icon={isGuided ? ShieldCheck : Sparkles} onPress={generate} loading={busy} />
 
           {/* Generated output */}
           {draft ? (

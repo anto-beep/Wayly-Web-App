@@ -159,6 +159,15 @@ class BulkFollowUpBody(BaseModel):
     note: str | None = None
 
 
+class SavedRecipientBody(BaseModel):
+    """Recipient Directory: a saved provider contact so future letters to the
+    same recipient are pre-addressed (name + email)."""
+    name: str | None = None
+    email: str | None = None
+    provider_name: str | None = None
+    notes: str | None = None
+
+
 # ---------------------------------------------------------------------------
 # Router builder
 # ---------------------------------------------------------------------------
@@ -196,6 +205,60 @@ def build_lf1_router(db, get_current_user_id, get_current_user_id_optional, requ
         if not row:
             raise HTTPException(status_code=404, detail="Recipient not found")
         return row
+
+    # ---------- Recipient Directory (saved provider contacts, user-scoped) ----------
+    # Save a provider's name + email once so every future letter to them is
+    # pre-addressed. Selecting one writes recipient_specific on the entry, which
+    # build_cover_note() consumes, so the drafted letter is addressed correctly.
+
+    @r.get("/lf1/recipients")
+    async def list_saved_recipients(user_id: str = Depends(get_current_user_id)):
+        rows = await db.lf1_recipients.find({"user_id": user_id}, {"_id": 0}).sort("updated_at", -1).to_list(length=200)
+        return {"recipients": rows}
+
+    @r.post("/lf1/recipients")
+    async def create_saved_recipient(body: SavedRecipientBody, user_id: str = Depends(get_current_user_id)):
+        name = (body.name or "").strip()
+        if not name:
+            raise HTTPException(status_code=422, detail="A recipient name is required.")
+        email = (body.email or "").strip() or None
+        provider_name = (body.provider_name or "").strip() or None
+        notes = (body.notes or "").strip() or None
+        now = _iso()
+        # De-dupe by (user, name, email): refresh the existing row rather than
+        # creating a near-duplicate, so the directory stays tidy.
+        existing = await db.lf1_recipients.find_one({"user_id": user_id, "name": name, "email": email})
+        if existing:
+            await db.lf1_recipients.update_one(
+                {"id": existing["id"]},
+                {"$set": {"provider_name": provider_name, "notes": notes, "updated_at": now}},
+            )
+            doc = await db.lf1_recipients.find_one({"id": existing["id"]}, {"_id": 0})
+            return {"recipient": doc, "created": False}
+        rid = secrets.token_hex(12)
+        doc = {"id": rid, "user_id": user_id, "name": name, "email": email,
+               "provider_name": provider_name, "notes": notes, "created_at": now, "updated_at": now}
+        await db.lf1_recipients.insert_one(dict(doc))
+        return {"recipient": doc, "created": True}
+
+    @r.patch("/lf1/recipients/{rid}")
+    async def update_saved_recipient(rid: str, body: SavedRecipientBody, user_id: str = Depends(get_current_user_id)):
+        patch: dict[str, Any] = {"updated_at": _iso()}
+        if (body.name or "").strip():
+            patch["name"] = body.name.strip()
+        patch["email"] = (body.email or "").strip() or None
+        patch["provider_name"] = (body.provider_name or "").strip() or None
+        patch["notes"] = (body.notes or "").strip() or None
+        res = await db.lf1_recipients.update_one({"id": rid, "user_id": user_id}, {"$set": patch})
+        if res.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Recipient not found")
+        doc = await db.lf1_recipients.find_one({"id": rid}, {"_id": 0})
+        return {"recipient": doc}
+
+    @r.delete("/lf1/recipients/{rid}")
+    async def delete_saved_recipient(rid: str, user_id: str = Depends(get_current_user_id)):
+        await db.lf1_recipients.delete_one({"id": rid, "user_id": user_id})
+        return {"ok": True}
 
     # ---------- Situation triage (WS1) ----------
 

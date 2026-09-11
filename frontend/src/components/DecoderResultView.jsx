@@ -202,7 +202,7 @@ function ConfidenceLegend({ lowConfidence, blocked, confidence }) {
     );
 }
 
-export default function DecoderResultView({ result, onDraftLetter }) {
+export default function DecoderResultView({ result, onDraftLetter, onDraftAll }) {
     const audit = result.audit || {};
     const extracted = result.extracted || {};
     const summary = audit.statement_summary || {};
@@ -295,7 +295,7 @@ export default function DecoderResultView({ result, onDraftLetter }) {
 
     return (
         <div className="space-y-6" data-testid="decoder-result-v2">
-            {blocked && <PublishBlockPanel block={publishBlock} message={blockMessage} blockers={blockerAnoms} onDraftLetter={onDraftLetter} />}
+            {blocked && <PublishBlockPanel block={publishBlock} message={blockMessage} blockers={blockerAnoms} onDraftLetter={onDraftLetter} onDraftAll={onDraftAll} />}
             {lowConfidence && <LowConfidenceBanner confidence={extractionConfidence} />}
             {/* PERSONA-1 §F, persona-aware hero shown above everything else. */}
             {!blocked && (
@@ -724,8 +724,9 @@ function BalancePanel({ extracted, summary, audit }) {
 // statement unpublishable (its own numbers contradict each other). Presents
 // the blocker findings prominently and replaces the trusted-summary banner.
 // Fix-It Checklist: each blocker offers a one-tap "email my provider" letter.
-function PublishBlockPanel({ block, message, blockers = [], onDraftLetter }) {
+function PublishBlockPanel({ block, message, blockers = [], onDraftLetter, onDraftAll }) {
     const [draftKey, setDraftKey] = useState(null);
+    const [bundleBusy, setBundleBusy] = useState(false);
     const fallbackItems = Array.isArray(block?.items)
         ? block.items.filter((it) => it && (it.headline || it.detail))
         : [];
@@ -740,6 +741,10 @@ function PublishBlockPanel({ block, message, blockers = [], onDraftLetter }) {
             setDraftKey(key);
             try { await onDraftLetter(anom); } finally { setDraftKey(null); }
         }
+        : null;
+    // Blocker Letters Bundle: one email raising every blocker at once.
+    const runBundle = (onDraftAll && blockers.length > 1)
+        ? async () => { setBundleBusy(true); try { await onDraftAll(blockers); } finally { setBundleBusy(false); } }
         : null;
 
     return (
@@ -759,6 +764,19 @@ function PublishBlockPanel({ block, message, blockers = [], onDraftLetter }) {
                     <p className="mt-1.5 text-sm text-primary-k/80 leading-relaxed">{reason}</p>
                 </div>
             </div>
+
+            {runBundle && (
+                <button
+                    type="button"
+                    onClick={runBundle}
+                    disabled={bundleBusy}
+                    data-testid="decoder-publish-block-email-all"
+                    className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary-k text-white text-sm font-semibold px-4 py-3 hover:bg-[#091D33] disabled:opacity-60 transition-colors"
+                >
+                    <PenLine className="h-4 w-4" />
+                    {bundleBusy ? "Starting email\u2026" : `Draft one email to your provider covering all ${blockers.length} blockers`}
+                </button>
+            )}
 
             {rows.length > 0 ? (
                 <ul className="mt-4 space-y-2" data-testid="decoder-publish-block-items">

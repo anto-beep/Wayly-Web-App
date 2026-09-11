@@ -20,15 +20,17 @@ export default function UploadGuardNotice({ verdict, onContinue, onChooseAnother
     const wrong = verdict.reason === "wrong_tool" && verdict.wrong_tool;
 
     if (strict) {
-        // Full-screen, hard-block presentation. No "continue anyway".
+        // Full-screen, hard-block presentation. No "continue anyway" unless the
+        // caller explicitly allows it for the ambiguous (confirm) tier.
+        const allowContinue = isConfirm && !!onContinue;
         const heading = wrong
             ? "This looks like a different document"
-            : "We can't review this document";
-        const message = wrong
+            : allowContinue
+                ? "Just checking this is the right document"
+                : "We can't review this document";
+        const message = (wrong || verdict.reason === "unreadable" || allowContinue)
             ? verdict.message
-            : (verdict.reason === "unreadable"
-                ? verdict.message
-                : "To keep you from acting on the wrong numbers, we only continue when the file is clearly the right type. Please upload the correct document, or paste the text instead. Nothing has been read from this file.");
+            : "To keep you from acting on the wrong numbers, we only continue when the file is clearly the right type. Please upload the correct document, or paste the text instead. Nothing has been read from this file.";
         return (
             <div
                 data-testid="upload-guard-notice"
@@ -51,6 +53,17 @@ export default function UploadGuardNotice({ verdict, onContinue, onChooseAnother
                         >
                             Open the {verdict.wrong_tool.name}
                             <ArrowRight className="h-4 w-4" />
+                        </button>
+                    ) : null}
+                    {isConfirm && onContinue ? (
+                        <button
+                            type="button"
+                            data-testid="upload-guard-continue"
+                            onClick={onContinue}
+                            disabled={busy}
+                            className="inline-flex items-center rounded-full bg-primary-k px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-k/90 disabled:opacity-60"
+                        >
+                            {busy ? "Working…" : "Continue anyway"}
                         </button>
                     ) : null}
                     <button

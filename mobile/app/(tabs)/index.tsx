@@ -3,8 +3,8 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-n
 import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "@react-navigation/native";
 import {
-  TrendingUp, Bell, FileText, AlertTriangle, Sparkles, ChevronRight,
-  MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb,
+  TrendingUp, FileText, AlertTriangle, Sparkles, ChevronRight,
+  MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info,
 } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
@@ -37,6 +37,7 @@ type Budget = {
   lifetime_cap?: number; lifetime_contributions?: number; lifetime_pct?: number; is_grandfathered?: boolean;
 };
 type Statement = { id: string; filename: string; period_label?: string | null; uploaded_at?: string; created_at?: string; anomalies?: any[]; provider_name?: string; summary?: string | null; line_items?: any[] };
+type Invoice = { id: string; provider_name?: string | null; created_at?: string; reconciliation?: { overall_verdict?: string; findings?: any[] } };
 type Pathway = { pathway: string; title: string; episode_aud?: number; duration_days?: number; reason?: string; section_ref?: string };
 type AuditEntry = { id: string; actor_name?: string; action?: string; detail?: string; created_at?: string };
 type ChatMsg = { id: string; role?: string; content?: string; created_at?: string };
@@ -53,6 +54,7 @@ export default function Dashboard() {
   const { colors, shadow } = useTheme();
   const [budget, setBudget] = useState<Budget | null>(null);
   const [statements, setStatements] = useState<Statement[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [pathways, setPathways] = useState<Pathway[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMsg[]>([]);
@@ -62,6 +64,8 @@ export default function Dashboard() {
   const [error, setError] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [showKnow, setShowKnow] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [showAllTtk, setShowAllTtk] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   useScrollToTop(scrollRef);
 
@@ -72,9 +76,10 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     setError(false);
     try {
-      const [b, stmts, pw, au, chat, fam] = await Promise.all([
+      const [b, stmts, inv, pw, au, chat, fam] = await Promise.all([
         apiFetch<Budget>("/budget/current").catch(() => null),
         apiFetch<Statement[]>("/statements").catch(() => []),
+        apiFetch<{ items: Invoice[] }>("/invoices").catch(() => ({ items: [] })),
         apiFetch<{ eligible: Pathway[] }>("/budget/eligible-pathways").catch(() => ({ eligible: [] })),
         apiFetch<AuditEntry[]>("/audit-log").catch(() => []),
         apiFetch<ChatMsg[]>("/chat/history").catch(() => []),
@@ -82,6 +87,7 @@ export default function Dashboard() {
       ]);
       setBudget(b);
       setStatements(Array.isArray(stmts) ? stmts : []);
+      setInvoices(Array.isArray(inv?.items) ? inv.items : []);
       setPathways(pw?.eligible || []);
       setAudit(Array.isArray(au) ? au : []);
       setChatHistory(Array.isArray(chat) ? chat : []);
@@ -100,14 +106,21 @@ export default function Dashboard() {
   const displayName = active?.display_name || "";
   const displayProvider = active?.provider_name || "";
   const planCfg = PLAN_LABELS[plan] || PLAN_LABELS.free;
-  const allAnomalies = statements.flatMap((s) => (s.anomalies || []).map((a: any) => ({ ...a, statement_id: s.id })));
   const spent = (budget?.streams || []).reduce((a, s) => a + (s.spent || 0), 0);
   const usable = budget?.quarterly_usable ?? budget?.quarterly_total ?? 0;
   // Official quarterly budget = annual ÷ 4 (includes the 10% care-management share).
   const quarterlyBudget = budget?.quarterly_gross ?? budget?.quarterly_total ?? usable;
   const careMgmt = budget?.care_management_quarterly ?? 0;
   const left = quarterlyBudget - spent;
+  const budgetOver = left < 0;
+  const budgetPctUsed = quarterlyBudget > 0 ? Math.max(0, Math.round((spent / quarterlyBudget) * 100)) : 0;
   const latest = statements[0];
+  // Things To Know and the dashboard summary reflect ONLY the most recent
+  // statement and the most recent invoice, never an aggregate across every one.
+  const latestStatementAnomalies = (latest?.anomalies || []).map((a: any) => ({ ...a, statement_id: latest!.id, period_label: latest!.period_label }));
+  const latestInvoice = invoices[0] || null;
+  const latestInvoiceFindings = latestInvoice?.reconciliation?.findings || [];
+  const ttkCount = latestStatementAnomalies.length + latestInvoiceFindings.length;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -148,19 +161,47 @@ export default function Dashboard() {
                   provider: displayProvider || null,
                   plan,
                   quarter_label: budget?.quarter_label,
-                  quarterly_budget_aud: quarterlyBudget,
+                  quarterly_budget_aud: quarterlyBudget || null,
+                  quarterly_spent_aud: spent || null,
+                  budget_percent_used: budget ? budgetPctUsed : null,
+                  over_budget: budget ? budgetOver : null,
+                  amount_over_budget_aud: budget && budgetOver ? Math.abs(left) : null,
+                  amount_remaining_aud: budget && !budgetOver ? left : null,
                   quarterly_care_management_aud: careMgmt,
-                  quarterly_usable_aud: usable,
-                  quarterly_spent_aud: spent,
-                  quarterly_headroom_aud: left,
                   statements_count: statements.length,
                   latest_statement_period: latest?.period_label || null,
                   latest_statement_provider: latest?.provider_name || null,
-                  open_anomaly_count: allAnomalies.length,
+                  latest_statement_open_anomalies: latestStatementAnomalies.length,
+                  latest_invoice_provider: latestInvoice?.provider_name || null,
+                  latest_invoice_issue_count: latestInvoice ? latestInvoiceFindings.length : null,
+                  has_invoice_on_file: invoices.length > 0,
                   unread_family_messages: familyMsgs.filter((m) => !m.read).length,
                 }}
               />
             </View>
+
+            {/* Prominent budget status pill (parity with web AtAGlance headline) */}
+            {!isFree && budget ? (
+              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                <Card testID="dashboard-budget-status" style={{ borderColor: budgetOver ? colors.terracotta : colors.border, borderWidth: budgetOver ? 1.5 : StyleSheet.hairlineWidth }}>
+                  <View style={[styles.statusPill, { backgroundColor: budgetOver ? colors.errorSoft : colors.sageSoft }]}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: budgetOver ? colors.terracotta : colors.sage }} />
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.7, color: budgetOver ? colors.terracotta : colors.sage }} testID="glance-budget-status">
+                      {budgetOver ? "OVER BUDGET THIS QUARTER" : "LEFT TO SPEND THIS QUARTER"}
+                    </T>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                    <T style={{ fontFamily: fonts.heading, fontSize: 27, lineHeight: 32, color: budgetOver ? colors.terracotta : colors.text }} testID="glance-left">{money(Math.abs(left))}</T>
+                    <T variant="small" style={{ color: colors.muted }}>of {moneyWhole(quarterlyBudget)} this quarter</T>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+                    <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage }} />
+                    <T variant="small" style={{ color: colors.text }} testID="glance-spent"><T style={{ fontFamily: fonts.bodySemi }}>{money(spent)}</T> spent so far · {budgetPctUsed}% of budget used</T>
+                  </View>
+                  {careMgmt > 0 ? <T variant="small" style={{ color: colors.muted, marginTop: 6 }} testID="glance-care-management">{money(careMgmt)} of this is care management (10% of the quarterly budget).</T> : null}
+                </Card>
+              </View>
+            ) : null}
 
             {/* Free plan paywall */}
             {isFree ? (
@@ -284,26 +325,27 @@ export default function Dashboard() {
               </>
             ) : null}
 
-            {/* Things to know (collapsible — mirrors the Budget detail toggle) */}
+            {/* Things to know (collapsible — Statements + Invoices, latest only) */}
             {!isFree ? (
               <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
                 <Pressable
                   testID="dashboard-things-to-know-toggle"
                   onPress={() => setShowKnow((v) => !v)}
-                  style={({ pressed }) => [styles.detailToggle, { backgroundColor: colors.primary, borderColor: colors.primary }, shadow.card, pressed && { opacity: 0.92 }]}
+                  style={({ pressed }) => [styles.detailToggle, { backgroundColor: ttkCount > 0 ? colors.terracotta : colors.gold, borderColor: ttkCount > 0 ? colors.terracotta : colors.gold }, shadow.card, pressed && { opacity: 0.92 }]}
                 >
                   <View style={[styles.detailIcon, { backgroundColor: "rgba(255,255,255,0.16)" }]}>
-                    <Bell size={20} color={colors.gold} />
+                    <AlertTriangle size={20} color="#fff" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: "#fff" }}>Things To Know</T>
-                    <T variant="small" numberOfLines={2} style={{ marginTop: 2, color: "rgba(255,255,255,0.75)" }}>
-                      {allAnomalies.length > 0
-                        ? `${allAnomalies.length} item${allAnomalies.length === 1 ? "" : "s"} that may need your attention`
-                        : "Alerts and anomalies picked up from your statements"}
-                    </T>
+                    <T variant="small" numberOfLines={2} style={{ marginTop: 2, color: "rgba(255,255,255,0.8)" }}>Based on your latest statement and invoice</T>
                   </View>
-                  <View style={[styles.detailBtn, { backgroundColor: colors.gold }]}>
+                  {ttkCount > 0 ? (
+                    <View testID="things-to-know-count" style={{ backgroundColor: "#fff", borderRadius: radius.pill, minWidth: 28, height: 28, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" }}>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.terracotta }}>{ttkCount > 99 ? "99+" : ttkCount}</T>
+                    </View>
+                  ) : null}
+                  <View style={[styles.detailBtn, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>{showKnow ? "Hide" : "Show"}</T>
                     <ChevronDown size={15} color="#fff" style={{ transform: [{ rotate: showKnow ? "180deg" : "0deg" }] }} />
                   </View>
@@ -311,31 +353,103 @@ export default function Dashboard() {
 
                 {showKnow ? (
                   <Card testID="alerts-card" style={{ marginTop: spacing.md }}>
-                    {allAnomalies.length === 0 ? (
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <Sparkles size={16} color={colors.sage} />
-                        <T variant="small">Nothing unusual at the moment.</T>
+                    {/* STATEMENTS — latest statement only */}
+                    <View testID="ttk-statements-section">
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <FileText size={15} color={colors.primary} />
+                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 15, color: colors.text }}>Statements</T>
                       </View>
-                    ) : (
-                      <View style={{ gap: spacing.md }}>
-                        {allAnomalies.slice(0, 6).map((a: any, i: number) => (
-                          <Pressable key={a.id || i} onPress={() => router.push(`/statement/${a.statement_id}`)} style={{ flexDirection: "row", gap: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: spacing.md }}>
-                            <AlertTriangle size={16} color={a.severity === "alert" ? colors.terracotta : colors.sage} style={{ marginTop: 2 }} />
-                            <View style={{ flex: 1 }}>
-                              <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>{a.title}</T>
-                              {a.detail ? <T variant="small" style={{ marginTop: 2 }}>{a.detail}</T> : null}
-                              {a.suggested_action ? (
-                                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 6, marginTop: 6 }}>
-                                  <Lightbulb size={14} color={colors.gold} style={{ marginTop: 1 }} />
-                                  <T variant="small" style={{ flex: 1, color: colors.primary }}>{a.suggested_action}</T>
+                      <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
+                        Based on the latest statement{latest?.period_label ? ` (${latest.period_label})` : ""}.
+                      </T>
+                      {latestStatementAnomalies.length === 0 ? (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.sm }}>
+                          <Sparkles size={16} color={colors.sage} />
+                          <T variant="small">Nothing unusual on your latest statement.</T>
+                        </View>
+                      ) : (
+                        <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+                          {(showAllTtk ? latestStatementAnomalies : latestStatementAnomalies.slice(0, 6)).map((a: any, i: number) => {
+                            const isAlert = a.severity === "alert";
+                            return (
+                              <Pressable key={a.id || i} testID={`ttk-statement-item-${i}`} onPress={() => router.push(`/statement/${a.statement_id}`)} style={{ flexDirection: "row", gap: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingBottom: spacing.sm }}>
+                                <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: isAlert ? colors.terracotta : colors.gold, alignItems: "center", justifyContent: "center" }}>
+                                  <AlertTriangle size={15} color="#fff" />
                                 </View>
-                              ) : null}
-                            </View>
-                            <ChevronRight size={16} color={colors.muted} />
-                          </Pressable>
-                        ))}
+                                <View style={{ flex: 1 }}>
+                                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.5, color: isAlert ? colors.terracotta : colors.gold }}>{isAlert ? "ALERT" : "HEADS UP"}</T>
+                                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, flex: 1 }}>{sanitizeAI(a.title)}</T>
+                                  </View>
+                                  {a.detail ? <T variant="small" style={{ marginTop: 2 }}>{sanitizeAI(a.detail)}</T> : null}
+                                  {a.suggested_action ? (
+                                    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 6, marginTop: 6 }}>
+                                      <Lightbulb size={13} color={colors.gold} style={{ marginTop: 1 }} />
+                                      <T variant="small" style={{ flex: 1, color: colors.primary }}><T style={{ fontFamily: fonts.bodySemi }}>What to do: </T>{sanitizeAI(a.suggested_action)}</T>
+                                    </View>
+                                  ) : null}
+                                </View>
+                                <ChevronRight size={16} color={colors.muted} />
+                              </Pressable>
+                            );
+                          })}
+                          {latestStatementAnomalies.length > 6 ? (
+                            <Pressable testID="things-to-know-view-all" onPress={() => setShowAllTtk((v) => !v)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 4, borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingVertical: 10 }}>
+                              <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>{showAllTtk ? "Show fewer" : `View all ${latestStatementAnomalies.length} on this statement`}</T>
+                              <ChevronDown size={15} color={colors.text} style={{ transform: [{ rotate: showAllTtk ? "180deg" : "0deg" }] }} />
+                            </Pressable>
+                          ) : null}
+                        </View>
+                      )}
+                    </View>
+
+                    {/* INVOICES — latest invoice only */}
+                    <View testID="ttk-invoices-section" style={{ marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <FileText size={15} color={colors.gold} />
+                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 15, color: colors.text }}>Invoices</T>
                       </View>
-                    )}
+                      <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
+                        Based on the latest invoice{latestInvoice?.provider_name ? ` (${latestInvoice.provider_name})` : ""}.
+                      </T>
+                      {!latestInvoice ? (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.sm }}>
+                          <Info size={16} color={colors.muted} />
+                          <T variant="small">No invoice checked yet. </T>
+                          <Pressable onPress={() => router.push("/tool/invoice-checker")}><T variant="small" style={{ color: colors.primary, textDecorationLine: "underline" }}>Check one</T></Pressable>
+                        </View>
+                      ) : latestInvoiceFindings.length === 0 ? (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.sm }}>
+                          <Sparkles size={16} color={colors.sage} />
+                          <T variant="small">Nothing unusual on your latest invoice.</T>
+                        </View>
+                      ) : (
+                        <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+                          {latestInvoiceFindings.map((f: any, i: number) => {
+                            const isAlert = Number(f.tier) <= 2;
+                            const body = f.narrative || f.suggested_question || "";
+                            return (
+                              <Pressable key={`${f.check_id}-${i}`} testID={`ttk-invoice-item-${i}`} onPress={() => router.push(`/invoice/${latestInvoice.id}`)} style={{ flexDirection: "row", gap: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingBottom: spacing.sm }}>
+                                <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: isAlert ? colors.terracotta : colors.gold, alignItems: "center", justifyContent: "center" }}>
+                                  <AlertTriangle size={15} color="#fff" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.5, color: isAlert ? colors.terracotta : colors.gold }}>{isAlert ? "ALERT" : "HEADS UP"}</T>
+                                  {body ? <T variant="small" style={{ marginTop: 2 }}>{sanitizeAI(body)}</T> : null}
+                                  {f.suggested_question && f.suggested_question !== body ? (
+                                    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 6, marginTop: 6 }}>
+                                      <Lightbulb size={13} color={colors.gold} style={{ marginTop: 1 }} />
+                                      <T variant="small" style={{ flex: 1, color: colors.primary }}><T style={{ fontFamily: fonts.bodySemi }}>What to ask: </T>{sanitizeAI(f.suggested_question)}</T>
+                                    </View>
+                                  ) : null}
+                                </View>
+                                <ChevronRight size={16} color={colors.muted} />
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      )}
+                    </View>
                   </Card>
                 ) : null}
               </View>
@@ -396,29 +510,40 @@ export default function Dashboard() {
               </View>
             ) : null}
 
-            {/* AI chat, last conversation */}
+            {/* AI chat, last conversation (collapsible — Wayly Chat) */}
             {!isFree ? (
               <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
                 <Card testID="chat-preview-card">
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Pressable testID="chat-preview-toggle" onPress={() => setShowChat((v) => !v)} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
                       <MessageCircle size={15} color={colors.muted} />
-                      <Overline>AI chat, last conversation</Overline>
+                      <Overline>Wayly Chat, last conversation</Overline>
                     </View>
-                    <Pressable onPress={() => router.push("/(tabs)/ask")}><T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Open chat</T></Pressable>
-                  </View>
-                  {chatHistory.length === 0 ? (
-                    <T variant="small" style={{ marginTop: spacing.md, lineHeight: 21 }}>{`No chat yet. Ask Wayly anything about ${displayName || "the participant"}'s budget, statement, or care plan.`}</T>
-                  ) : (
-                    <View style={{ marginTop: spacing.md, gap: spacing.md }}>
-                      {chatHistory.slice(-3).map((m) => (
-                        <View key={m.id}>
-                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.6, color: colors.muted }}>{(m.role === "user" ? "You" : "Wayly").toUpperCase()} · {formatDateTime(m.created_at)}</T>
-                          <T variant="small" numberOfLines={2} style={{ marginTop: 2, color: colors.text }}>{m.content}</T>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      <T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>{showChat ? "Hide" : "Show"}</T>
+                      <ChevronDown size={15} color={colors.primary} style={{ transform: [{ rotate: showChat ? "180deg" : "0deg" }] }} />
+                    </View>
+                  </Pressable>
+                  {showChat ? (
+                    <>
+                      {chatHistory.length === 0 ? (
+                        <T variant="small" style={{ marginTop: spacing.md, lineHeight: 21 }}>{`No chat yet. Ask Wayly anything about ${displayName || "the participant"}'s budget, statement, or care plan.`}</T>
+                      ) : (
+                        <View style={{ marginTop: spacing.md, gap: spacing.md }}>
+                          {chatHistory.slice(-3).map((m) => (
+                            <View key={m.id}>
+                              <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.6, color: colors.muted }}>{(m.role === "user" ? "You" : "Wayly").toUpperCase()} · {formatDateTime(m.created_at)}</T>
+                              <T variant="small" numberOfLines={2} style={{ marginTop: 2, color: colors.text }}>{m.content}</T>
+                            </View>
+                          ))}
                         </View>
-                      ))}
-                    </View>
-                  )}
+                      )}
+                      <Pressable testID="chat-preview-open" onPress={() => router.push("/(tabs)/ask")} style={{ marginTop: spacing.md, flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Open chat</T>
+                        <ChevronRight size={14} color={colors.primary} />
+                      </Pressable>
+                    </>
+                  ) : null}
                 </Card>
               </View>
             ) : null}
@@ -484,6 +609,7 @@ const styles = StyleSheet.create({
   detailToggle: { flexDirection: "row", alignItems: "center", gap: spacing.md, borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
   detailIcon: { width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   detailBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 9 },
+  statusPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
   note: { flexDirection: "row", gap: spacing.sm, alignItems: "center", borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
   sourceBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
   matchBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },

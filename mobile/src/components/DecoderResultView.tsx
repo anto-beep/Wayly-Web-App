@@ -28,7 +28,7 @@ function fmtDate(v: any): string {
 const STREAM_DISPLAY_MAP: Record<string, string> = { EverydayLiving: "Everyday Living", ATHM: "AT-HM", CareMgmt: "Care Management" };
 const STREAM_DISPLAY_LONG: Record<string, string> = { EverydayLiving: "Everyday Living", ATHM: "AT-HM (assistive tech & home mods)", CareMgmt: "Care Management" };
 
-export default function DecoderResultView({ result, onDraftLetter }: { result: any; onDraftLetter?: (a: any) => Promise<void> | void }) {
+export default function DecoderResultView({ result, onDraftLetter, onDraftAll }: { result: any; onDraftLetter?: (a: any) => Promise<void> | void; onDraftAll?: (blockers: any[]) => Promise<void> | void }) {
   const { colors } = useTheme();
   const n = normaliseDecode(result);
   // DEC-1 publish gate — mirrors web DecoderResultView. When the statement's
@@ -111,7 +111,7 @@ export default function DecoderResultView({ result, onDraftLetter }: { result: a
 
   return (
     <View style={{ gap: spacing.md }} testID="decoder-result-v2">
-      {blocked ? <PublishBlockPanel block={publishBlock} message={blockMessage} blockers={blockerAnoms} onDraftLetter={onDraftLetter} /> : null}
+      {blocked ? <PublishBlockPanel block={publishBlock} message={blockMessage} blockers={blockerAnoms} onDraftLetter={onDraftLetter} onDraftAll={onDraftAll} /> : null}
       {lowConfidence ? <LowConfidenceBanner confidence={extractionConfidence} /> : null}
       {/* Persona-aware hero (matches web default copy) */}
       {!blocked ? (
@@ -389,13 +389,15 @@ export default function DecoderResultView({ result, onDraftLetter }: { result: a
   );
 }
 
-function PublishBlockPanel({ block, message, blockers = [], onDraftLetter }: { block: any; message?: string; blockers?: any[]; onDraftLetter?: (a: any) => Promise<void> | void }) {
+function PublishBlockPanel({ block, message, blockers = [], onDraftLetter, onDraftAll }: { block: any; message?: string; blockers?: any[]; onDraftLetter?: (a: any) => Promise<void> | void; onDraftAll?: (blockers: any[]) => Promise<void> | void }) {
   const { colors } = useTheme();
   const [draftKey, setDraftKey] = useState<number | null>(null);
+  const [bundleBusy, setBundleBusy] = useState(false);
   const fallbackItems = Array.isArray(block?.items) ? block.items.filter((it: any) => it && (it.headline || it.detail)) : [];
   const rows = blockers.length > 0 ? blockers : fallbackItems;
   const reason = block?.reason || "This statement's own numbers do not reconcile, so a plain-English summary could be misleading.";
   const runDraft = onDraftLetter ? async (anom: any, key: number) => { setDraftKey(key); try { await onDraftLetter(anom); } finally { setDraftKey(null); } } : null;
+  const runBundle = onDraftAll && blockers.length > 1 ? async () => { setBundleBusy(true); try { await onDraftAll(blockers); } finally { setBundleBusy(false); } } : null;
   return (
     <View testID="decoder-publish-block" style={{ borderWidth: 2, borderColor: colors.terracotta, backgroundColor: colors.errorSoft, borderRadius: radius.lg, padding: spacing.lg }}>
       <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
@@ -407,6 +409,13 @@ function PublishBlockPanel({ block, message, blockers = [], onDraftLetter }: { b
           <T variant="small" style={{ marginTop: 6, color: colors.text, lineHeight: 20 }}>{reason}</T>
         </View>
       </View>
+      {runBundle ? (
+        <Pressable testID="decoder-publish-block-email-all" onPress={runBundle} disabled={bundleBusy}
+          style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: spacing.md, backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: 13, opacity: bundleBusy ? 0.6 : 1 }}>
+          <PenLine size={16} color="#fff" />
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#fff" }}>{bundleBusy ? "Starting email…" : `Draft one email to your provider covering all ${blockers.length} blockers`}</T>
+        </Pressable>
+      ) : null}
       {rows.length > 0 ? (
         <View testID="decoder-publish-block-items" style={{ gap: spacing.sm, marginTop: spacing.md }}>
           {rows.map((it: any, i: number) => {

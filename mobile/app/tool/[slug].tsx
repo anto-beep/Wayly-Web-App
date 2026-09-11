@@ -7,6 +7,7 @@ import { AppHeader, Button, Card, Field, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import DecoderResultView from "@/src/components/DecoderResultView";
+import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ToolEntriesButton from "@/src/components/ToolEntriesButton";
 import BudgetCalculatorTool from "@/src/components/tools/BudgetCalculatorTool";
 import ClassificationSelfCheck from "@/src/components/tools/ClassificationSelfCheck";
@@ -148,6 +149,25 @@ function StatementDecoderTool() {
     if (data?.entry_id) router.push(`/letters/${data.entry_id}` as any);
   };
 
+  // Blocker Letters Bundle: one email to the provider covering every blocker
+  // on the statement, instead of a separate letter per issue.
+  const draftAllBlockers = async (blockers: any[]) => {
+    const findings = (blockers || []).map((a) => ({
+      title: a.headline || a.title, detail: a.detail, citation_source: a.evidence || a.citation_source,
+      rule_id: a.rule, severity: a.severity, suggested_question: a.suggested_action,
+    }));
+    const data: any = await apiFetch("/care-plans/letter-from-findings", {
+      method: "POST",
+      body: {
+        findings, addressee: "provider",
+        provider_name: result?.summary?.provider || result?.provider_name || null,
+        participant_id: active?.id || null,
+        source_tool: "statement-decoder",
+      },
+    });
+    if (data?.entry_id) router.push(`/letters/${data.entry_id}` as any);
+  };
+
   const decode = async () => {
     if (!text.trim()) { setError("Paste your statement text first."); return; }
     setBusy(true); setError(""); setResult(null); setLimitInfo(null); setPhase("Reading your statement…");
@@ -241,7 +261,9 @@ function StatementDecoderTool() {
             </View>
           ) : null}
 
-          {result?.abuse_flag ? (
+          {result?.upload_guard ? (
+            <UploadGuardNotice verdict={result.upload_guard} onChooseAnother={() => { setResult(null); setText(""); }} />
+          ) : result?.abuse_flag ? (
             <Card testID="decoder-guardrail" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
               <T style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 22, color: colors.text }}>{sanitizeAI(result.abuse_response || "We can only help decode Support at Home statements here.")}</T>
             </Card>
@@ -260,7 +282,7 @@ function StatementDecoderTool() {
                   </View>
                 </View>
               ) : null}
-              <DecoderResultView result={result} onDraftLetter={draftLetterFromAnomaly} />
+              <DecoderResultView result={result} onDraftLetter={draftLetterFromAnomaly} onDraftAll={draftAllBlockers} />
               {result?.persisted_statement_id ? (
                 <Pressable
                   testID="decoder-ask-wayly"

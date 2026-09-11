@@ -154,6 +154,23 @@ export default function StatementDetail() {
     if (data?.entry_id) router.push(`/letters/${data.entry_id}` as any);
   };
 
+  const draftAllBlockers = async (blockers: any[]) => {
+    const findings = (blockers || []).map((a) => ({
+      title: a.headline || a.title, detail: a.detail, citation_source: a.evidence || a.citation_source,
+      rule_id: a.rule, severity: a.severity, suggested_question: a.suggested_action,
+    }));
+    const data: any = await apiFetch("/care-plans/letter-from-findings", {
+      method: "POST",
+      body: {
+        findings, addressee: "provider",
+        provider_name: stmt?.provider_name || stmt?.extracted_json?.provider_name || null,
+        participant_id: (stmt as any)?.participant_id || active?.id || null,
+        source_tool: "statement-decoder",
+      },
+    });
+    if (data?.entry_id) router.push(`/letters/${data.entry_id}` as any);
+  };
+
   const lineItems = stmt?.line_items || [];
   const isArchived = (stmt?.state || "").toLowerCase() === "archived";
   const _sx = stmt?.extracted_json || {};
@@ -213,7 +230,7 @@ export default function StatementDetail() {
                 publishable: stmt.audit_json?.publishable,
                 publish_block: stmt.audit_json?.publish_block,
                 low_confidence: stmt.audit_json?.low_confidence,
-              }} onDraftLetter={draftLetterFromAnomaly} />
+              }} onDraftLetter={draftLetterFromAnomaly} onDraftAll={draftAllBlockers} />
             </View>
           ) : (
             <LegacyStatementView stmt={stmt} colors={colors} />

@@ -114,6 +114,22 @@ export default function StatementDetail() {
         else if (data?.entry_id) nav(`/tools/letters-and-follow-ups/${data.entry_id}`);
     };
 
+    // Blocker Letters Bundle: one email to the provider covering all blockers.
+    const draftAllBlockers = async (blockers) => {
+        const findings = (blockers || []).map((a) => ({
+            title: a.headline || a.title, detail: a.detail, citation_source: a.evidence || a.citation_source,
+            rule_id: a.rule, severity: a.severity, suggested_question: a.suggested_action,
+        }));
+        const { data } = await api.post("/care-plans/letter-from-findings", {
+            findings, addressee: "provider",
+            provider_name: providerName(stmt) || null,
+            participant_id: stmt.participant_id || null,
+            source_tool: "statement-decoder",
+        });
+        if (data?.editor_path) nav(data.editor_path);
+        else if (data?.entry_id) nav(`/tools/letters-and-follow-ups/${data.entry_id}`);
+    };
+
     const total = (stmt.line_items || []).reduce((acc, li) => acc + (li.total || 0), 0);
     const totalContribution = (stmt.line_items || []).reduce((acc, li) => acc + (li.contribution_paid || 0), 0);
     const isArchived = stmt.state === "archived";
@@ -388,7 +404,7 @@ export default function StatementDetail() {
                         publishable: stmt.audit_json?.publishable,
                         publish_block: stmt.audit_json?.publish_block,
                         low_confidence: stmt.audit_json?.low_confidence,
-                    }} onDraftLetter={draftLetterFromAnomaly} />
+                    }} onDraftLetter={draftLetterFromAnomaly} onDraftAll={draftAllBlockers} />
                 </div>
             ) : (
             <>

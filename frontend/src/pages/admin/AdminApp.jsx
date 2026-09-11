@@ -381,7 +381,68 @@ function AdminRoutes() {
 
 // ---------- Root component (handles login route inline) ----------
 
+/**
+ * While the admin console is mounted, the ADMIN theme (not the consumer app's)
+ * drives <html>. Without this, a user who set the CONSUMER app to dark mode
+ * left `html.theme-dark` / `html[data-theme="dark"]` in place, whose global
+ * rules bled into the light-designed admin surfaces (white headings on white
+ * cards, black inputs) and made the console unreadable. On unmount we restore
+ * whatever theme the consumer app had.
+ */
+function useSyncHtmlToAdminTheme(theme) {
+    useEffect(() => {
+        const html = document.documentElement;
+
+        const effOf = (t) => {
+            const prefersDark = typeof window !== "undefined" && window.matchMedia
+                && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            if (t === "system") return prefersDark ? "dark" : "light";
+            return t === "dark" ? "dark" : "light";
+        };
+
+        let applying = false;
+        const apply = () => {
+            const eff = effOf(theme);
+            const wantDark = eff === "dark";
+            if (html.getAttribute("data-theme") === eff
+                && html.classList.contains("theme-dark") === wantDark) return;
+            applying = true;
+            html.setAttribute("data-theme", eff);
+            html.classList.toggle("theme-dark", wantDark);
+            applying = false;
+        };
+        apply();
+
+        // The consumer ThemeProvider (a parent) re-applies its own theme to
+        // <html> via a useEffect on mount / refresh / state change, which would
+        // re-introduce the dark bleed into the light-designed admin surfaces.
+        // A MutationObserver re-asserts the ADMIN theme the instant anything
+        // else touches <html>, so the console always wins while it is mounted.
+        let obs = null;
+        if (typeof MutationObserver !== "undefined") {
+            obs = new MutationObserver(() => {
+                if (applying) return;
+                apply();
+            });
+            obs.observe(html, { attributes: true, attributeFilter: ["class", "data-theme"] });
+        }
+
+        return () => {
+            if (obs) obs.disconnect();
+            // Restore the CONSUMER theme (mirrors ThemeProvider: stored pref,
+            // else light — the consumer app ignores OS dark unless chosen).
+            let pref = null;
+            try { pref = window.localStorage.getItem("wayly:app:appearance"); } catch { /* ignore */ }
+            const consumerEff = pref === "dark" ? "dark" : "light";
+            html.setAttribute("data-theme", consumerEff);
+            html.classList.toggle("theme-dark", consumerEff === "dark");
+        };
+    }, [theme]);
+}
+
 export default function AdminApp() {
+    const [theme] = useAdminTheme();
+    useSyncHtmlToAdminTheme(theme);
     return (
         <AdminAuthProvider>
             <Routes>

@@ -6,7 +6,7 @@ import { api, extractErrorMessage } from "@/lib/api";
 import { generateLetterAsync } from "@/lib/lf1Generate";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { participantDisplayName } from "@/hooks/useParticipantPrefill";
-import { Loader2, ArrowLeft, Trash2, Save, Info, ShieldAlert, MessageSquare, Sparkles, Eye } from "lucide-react";
+import { Loader2, ArrowLeft, Trash2, Save, Info, ShieldAlert, MessageSquare, Sparkles, Eye, Users, CheckCircle2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { CrossToolSourceIndicator, AutomatedDecisionDisclosure, StandingBanner, isEnabled } from "@/uxf";
@@ -113,6 +113,98 @@ function CrossToolProvenance({ generated }) {
  *   - Response Draft flow for situation 12 (Iter 4).
  *   - ADM disclosure (shared component).
  */
+
+// Recipient Directory (saved provider contacts) — save a provider's name +
+// email once so every future letter to them is pre-addressed. Selecting one
+// writes recipient_specific on the entry, which build_cover_note() consumes.
+function RecipientDirectory({ entryId, currentSpecific, onApplied }) {
+    const [recipients, setRecipients] = useState([]);
+    const [busyId, setBusyId] = useState(null);
+    const [adding, setAdding] = useState(false);
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    const loadRecipients = useCallback(async () => {
+        try { const { data } = await api.get("/lf1/recipients"); setRecipients(data?.recipients || []); }
+        catch { setRecipients([]); }
+    }, []);
+    useEffect(() => { loadRecipients(); }, [loadRecipients]);
+
+    const currentName = currentSpecific?.entity_name || "";
+    const currentEmail = currentSpecific?.email || "";
+
+    const apply = async (rec) => {
+        setBusyId(rec.id);
+        const specific = { ...(currentSpecific || {}), entity_name: rec.name, email: rec.email || null };
+        try { await api.patch(`/lf1/correspondence/${entryId}/autosave`, { recipient_specific: specific }); onApplied(specific); }
+        catch { /* noop */ } finally { setBusyId(null); }
+    };
+
+    const saveNew = async () => {
+        const nm = name.trim();
+        if (!nm) return;
+        setSaving(true);
+        try {
+            const { data } = await api.post("/lf1/recipients", { name: nm, email: email.trim() || null });
+            await loadRecipients();
+            setName(""); setEmail(""); setAdding(false);
+            if (data?.recipient) await apply(data.recipient);
+        } catch { /* noop */ } finally { setSaving(false); }
+    };
+
+    return (
+        <div className="bg-surface border border-kindred rounded-2xl p-5" data-testid="lf1-recipient-directory">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-k">
+                <Users className="h-4 w-4" /> Deliver to
+            </div>
+            <p className="text-sm text-muted-k mt-1 leading-relaxed">Save a provider once and every future letter to them is pre-addressed.</p>
+            {currentName && (
+                <div className="mt-3 flex items-center gap-2 rounded-lg bg-sage/10 border border-sage/30 px-3 py-2.5" data-testid="lf1-recipient-current">
+                    <CheckCircle2 className="h-4 w-4 text-sage flex-shrink-0" />
+                    <div className="min-w-0">
+                        <div className="text-sm font-medium text-primary-k">{currentName}</div>
+                        {currentEmail && <div className="text-xs text-muted-k">{currentEmail}</div>}
+                    </div>
+                </div>
+            )}
+            {recipients.length > 0 && (
+                <div className="mt-3 space-y-1.5">
+                    {recipients.map((rec) => {
+                        const selected = currentName === rec.name && currentEmail === (rec.email || "");
+                        return (
+                            <button key={rec.id} type="button" onClick={() => apply(rec)} disabled={busyId === rec.id}
+                                data-testid={`lf1-recipient-${rec.id}`}
+                                className={`w-full flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors disabled:opacity-60 ${selected ? "border-primary-k bg-primary-k/[0.05]" : "border-kindred hover:border-primary-k"}`}>
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-medium text-primary-k">{rec.name}</div>
+                                    {rec.email && <div className="text-xs text-muted-k">{rec.email}</div>}
+                                </div>
+                                {selected ? <CheckCircle2 className="h-4 w-4 text-primary-k" /> : <span className="text-xs font-semibold text-primary-k">Use</span>}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+            {adding ? (
+                <div className="mt-3 space-y-2" data-testid="lf1-recipient-add-form">
+                    <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Recipient name (e.g. BlueBerry Care)" data-testid="lf1-recipient-name" className="w-full rounded-md border border-kindred px-3 py-2 text-sm" />
+                    <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" data-testid="lf1-recipient-email" className="w-full rounded-md border border-kindred px-3 py-2 text-sm" />
+                    <div className="flex gap-2">
+                        <button type="button" onClick={saveNew} disabled={saving || !name.trim()} data-testid="lf1-recipient-save" className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white px-4 py-2 text-sm font-semibold disabled:opacity-60">
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save recipient
+                        </button>
+                        <button type="button" onClick={() => { setAdding(false); setName(""); setEmail(""); }} data-testid="lf1-recipient-cancel" className="rounded-lg border border-kindred px-4 py-2 text-sm">Cancel</button>
+                    </div>
+                </div>
+            ) : (
+                <button type="button" onClick={() => setAdding(true)} data-testid="lf1-recipient-add" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-k hover:underline">
+                    <Plus className="h-4 w-4" /> Save a new recipient
+                </button>
+            )}
+        </div>
+    );
+}
 
 export default function CorrespondenceDetail() {
     const { entryId } = useParams();
@@ -517,6 +609,15 @@ export default function CorrespondenceDetail() {
                                     </div>
                                 )}
                             </div>
+                        )}
+
+                        {/* Recipient Directory — pre-address future letters to this provider */}
+                        {!isGuidedPathway && (
+                            <RecipientDirectory
+                                entryId={entryId}
+                                currentSpecific={entry.recipient_specific}
+                                onApplied={(specific) => setEntry((prev) => prev ? { ...prev, recipient_specific: specific } : prev)}
+                            />
                         )}
 
                         {/* Sender identity + authority (WS4) */}

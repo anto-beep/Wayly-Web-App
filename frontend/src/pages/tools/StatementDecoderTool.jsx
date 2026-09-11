@@ -90,6 +90,22 @@ export default function StatementDecoderTool() {
         else if (data?.entry_id) navigate(`/tools/letters-and-follow-ups/${data.entry_id}`);
     };
 
+    // Blocker Letters Bundle: one email to the provider covering all blockers.
+    const draftAllBlockers = async (blockers) => {
+        const findings = (blockers || []).map((a) => ({
+            title: a.headline || a.title, detail: a.detail, citation_source: a.evidence || a.citation_source,
+            rule_id: a.rule, severity: a.severity, suggested_question: a.suggested_action,
+        }));
+        const { data } = await api.post("/care-plans/letter-from-findings", {
+            findings, addressee: "provider",
+            provider_name: result?.summary?.provider || result?.provider_name || null,
+            participant_id: activeParticipant?.id || null,
+            source_tool: "statement-decoder",
+        });
+        if (data?.editor_path) navigate(data.editor_path);
+        else if (data?.entry_id) navigate(`/tools/letters-and-follow-ups/${data.entry_id}`);
+    };
+
     // Fetch monthly usage counter on mount (server-side fingerprint or user_id)
     useEffect(() => {
         let alive = true;
@@ -416,7 +432,7 @@ export default function StatementDecoderTool() {
                                 </>
                             )}
                             <div className="mt-5" />
-                            <DecoderResultView result={result} onDraftLetter={draftLetterFromAnomaly} />
+                            <DecoderResultView result={result} onDraftLetter={draftLetterFromAnomaly} onDraftAll={draftAllBlockers} />
                             {result.persisted_statement_id && (() => {
                                 const ss = result.audit?.statement_summary || {};
                                 return (

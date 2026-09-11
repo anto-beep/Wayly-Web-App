@@ -571,6 +571,7 @@ export default function InvoiceCheckerTool() {
                 {guard && (
                     <div className="mt-6">
                         <UploadGuardNotice
+                            strict
                             verdict={guard}
                             busy={loading}
                             onContinue={guard.decision === "confirm" ? () => onUpload(true) : undefined}

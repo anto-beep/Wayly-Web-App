@@ -258,6 +258,7 @@ export default function CarePlanReviewer() {
         setFileResult(null);
         setResult(null);
         setGuard(null);
+        autoSaveRef.current = false;
         try {
             const fd = new FormData();
             files.forEach((f) => fd.append("files", f));
@@ -313,6 +314,18 @@ export default function CarePlanReviewer() {
             setSaving(false);
         }
     };
+
+    // Auto-save a reviewed plan into "Your Saved Plans" for signed-in users, so
+    // they don't have to remember to click Save. Runs once per review.
+    const autoSaveRef = useRef(false);
+    useEffect(() => {
+        if (access !== "allowed") return;
+        if (!fileResult || savedPlanId || saving || autoSaveRef.current) return;
+        autoSaveRef.current = true;
+        if (files.length > 0) saveUploadedPlan();
+        else if (text && text.trim()) savePlan();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fileResult, access, savedPlanId, saving]);
 
     const draftAllFindings = async () => {
         setLetterBusyKey("all");
@@ -411,6 +424,7 @@ export default function CarePlanReviewer() {
         setResult(null);
         setFileResult(null);
         setGuard(null);
+        autoSaveRef.current = false;
         try {
             const payload = { text };
             if (classification) payload.classification = parseInt(classification, 10);
@@ -448,7 +462,7 @@ export default function CarePlanReviewer() {
                             data-testid="link-saved-plans"
                         >
                             <FolderOpen className="h-4 w-4" />
-                            Your saved plans
+                            Your Saved Plans
                         </Link>
                     )}
                 </div>
@@ -713,7 +727,7 @@ export default function CarePlanReviewer() {
                                         className="inline-flex items-center gap-1.5 text-sm rounded-full bg-wayly-clay-500 text-white px-4 py-2 font-semibold transition disabled:opacity-60"
                                     >
                                         {letterBusyKey === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                                        Draft a letter about these
+                                        Draft an email to your provider
                                     </button>
                                 )}
                             </div>

@@ -432,10 +432,13 @@ export default function CarePlanReviewer() {
                 ) : null}
               </Card>
 
-              {/* Plan overview */}
+              {/* Wayly Summary */}
               {result?.plan_summary || Object.keys(ex).length ? (
                 <Card testID="cp-plan-summary" style={{ backgroundColor: colors.primary }}>
-                  <T variant="small" style={{ color: "rgba(255,255,255,0.8)", letterSpacing: 0.5, fontFamily: fonts.bodySemi }}>PLAN OVERVIEW</T>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Sparkles size={14} color="#fff" />
+                    <T variant="small" style={{ color: "rgba(255,255,255,0.85)", letterSpacing: 0.5, fontFamily: fonts.bodySemi }}>WAYLY SUMMARY</T>
+                  </View>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                     {ex.provider_name ? <View style={styles.ovChip}><T style={styles.ovChipTxt}>{ex.provider_name}</T></View> : null}
                     {ex.classification ? <View style={styles.ovChip}><T style={styles.ovChipTxt}>Level {ex.classification}</T></View> : null}
@@ -443,6 +446,27 @@ export default function CarePlanReviewer() {
                     {(ex.services || []).length ? <View style={styles.ovChip}><T style={styles.ovChipTxt}>{ex.services.length} service{ex.services.length === 1 ? "" : "s"}</T></View> : null}
                   </View>
                   {result?.plan_summary ? <T variant="small" style={{ marginTop: 10, lineHeight: 20, color: "#fff" }}>{sanitizeAI(result.plan_summary)}</T> : null}
+                  {(() => {
+                    const vp = result?.verification_panel || {};
+                    const gaps: string[] = [];
+                    (ex.unread_sections || []).forEach((u: string) => gaps.push(u));
+                    if (!ex.classification) gaps.push("The support level (classification) was not stated, so budget checks are limited.");
+                    if (!ex.quarterly_budget && !vp.classification_quarterly_budget) gaps.push("No quarterly budget figure was found in the plan.");
+                    if (!ex.effective_from) gaps.push("The plan's start date was not clearly stated.");
+                    if ((ex.services || []).length === 0) gaps.push("No individual services were identified in the plan.");
+                    if (gaps.length === 0) return null;
+                    return (
+                      <View testID="cp-couldnt-check" style={{ marginTop: spacing.md, backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.2)", borderRadius: radius.md, padding: spacing.sm }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                          <ShieldAlert size={14} color="#fff" />
+                          <T variant="small" style={{ color: "rgba(255,255,255,0.9)", letterSpacing: 0.5, fontFamily: fonts.bodySemi }}>WHAT WE COULD NOT CHECK</T>
+                        </View>
+                        <View style={{ gap: 3, marginTop: 6 }}>
+                          {gaps.map((g, i) => <T key={i} variant="small" style={{ color: "#fff", lineHeight: 19 }}>· {g}</T>)}
+                        </View>
+                      </View>
+                    );
+                  })()}
                 </Card>
               ) : null}
 
@@ -524,7 +548,7 @@ export default function CarePlanReviewer() {
                   <Pressable testID="cp-draft-letter-all" onPress={draftAllFindings} disabled={letterBusyKey === "all"}
                     style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: spacing.md, backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: 12, opacity: letterBusyKey === "all" ? 0.6 : 1 }}>
                     <Mail size={16} color="#fff" />
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#fff" }}>{letterBusyKey === "all" ? "Starting letter…" : `Draft one letter covering all ${findings.length} findings`}</T>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#fff" }}>{letterBusyKey === "all" ? "Starting letter…" : "Draft an email to your provider"}</T>
                   </Pressable>
                 ) : null}
               </Card>
@@ -658,4 +682,6 @@ const styles = StyleSheet.create({
   pill: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 7 },
   fileRow: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 8 },
   err: { flexDirection: "row", gap: 8, alignItems: "center", borderRadius: radius.md, padding: spacing.md },
+  ovChip: { backgroundColor: "rgba(255,255,255,0.16)", borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  ovChipTxt: { color: "#fff", fontSize: 12, fontFamily: fonts.bodyMedium },
 });
