@@ -360,6 +360,7 @@ export default function StatementDetail() {
             <SmartAISummary
                 pageKey="statement-detail"
                 context={{
+                    participant_id: stmt.participant_id ?? null,
                     provider: providerName(stmt),
                     period: periodExact(stmt),
                     gross_aud: stmt.audit_json?.statement_summary?.total_gross ?? null,

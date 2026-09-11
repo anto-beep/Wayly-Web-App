@@ -173,15 +173,19 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                         <span className={`block text-sm sm:text-[15px] uppercase tracking-[0.14em] font-bold ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-budget-status">
                             {over ? "Over budget this quarter" : "Left to spend this quarter"}
                         </span>
-                        <div className="mt-1.5 flex items-baseline gap-3 flex-wrap justify-center sm:justify-start">
-                            <span className={`font-heading text-5xl sm:text-6xl tabular-nums leading-none ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-left">
+                        <div className="mt-1.5 flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
+                            <span className={`font-heading text-3xl tabular-nums leading-tight ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-left">
                                 {formatAUD2(Math.abs(left))}
                             </span>
-                            <span className="text-base sm:text-lg text-primary-k/80 font-medium">of {formatAUD2(quarterlyBudget)} this quarter</span>
+                            <span className="text-sm text-primary-k/70 font-medium">of</span>
+                            <span className="font-heading text-3xl tabular-nums leading-tight text-primary-k/80" data-testid="glance-budget">
+                                {formatAUD2(quarterlyBudget)}
+                            </span>
+                            <span className="text-sm text-primary-k/70 font-medium">this quarter</span>
                         </div>
-                        <p className="mt-3.5 inline-flex items-center gap-2 text-sm sm:text-base font-semibold text-primary-k" data-testid="glance-spent">
+                        <p className="mt-3.5 inline-flex items-center gap-2 text-base font-semibold text-primary-k" data-testid="glance-spent">
                             <span className="h-3 w-3 rounded-full flex-none" style={{ backgroundColor: toneHex }} />
-                            <span className="tabular-nums">{formatAUD2(spent)}</span> spent so far
+                            <span className="tabular-nums font-bold">{formatAUD2(spent)}</span> spent so far
                         </p>
                         {careMgmt > 0 && (
                             <p className="mt-2 text-sm text-primary-k/70" data-testid="glance-care-management">{formatAUD2(careMgmt)} of this is care management (10% of the quarterly budget).</p>

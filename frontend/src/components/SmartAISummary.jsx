@@ -108,14 +108,20 @@ export default function SmartAISummary({
               </button>
             )}
           </div>
-          <p
+          <div
             data-testid={`smart-ai-summary-body-${pageKey}`}
-            className={`mt-2 text-[0.95rem] leading-relaxed text-primary-k/90 ${
+            className={`mt-2 space-y-2 text-[0.95rem] leading-relaxed text-primary-k/90 ${
               isLoading ? "opacity-70" : ""
             }`}
           >
-            {summary}
-          </p>
+            {String(summary || "")
+              .split(/\n{2,}/)
+              .map((para) => para.trim())
+              .filter(Boolean)
+              .map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+          </div>
           {alerts.length > 0 && (
             <ul className="mt-4 space-y-2">
               {alerts.map((a, i) => {

@@ -81,9 +81,13 @@ def _sanitise_prose(text: str) -> str:
     out = _HYPHEN_SEP_RE.sub(", ", out)
     out = _DOLLARS_RE.sub(r"$\1", out)
     out = _PERCENT_WORD_RE.sub(r"\1%", out)
-    # Collapse repeated commas or spaces the substitution may have created
+    # Collapse repeated commas the substitution may have created
     out = re.sub(r"(?:,\s*){2,}", ", ", out)
-    out = re.sub(r"\s{2,}", " ", out)
+    # Collapse runs of spaces/tabs but PRESERVE paragraph breaks (blank lines),
+    # so multi-paragraph summaries (e.g. the statement overview) keep their shape.
+    out = re.sub(r"[ \t]{2,}", " ", out)
+    out = re.sub(r"[ \t]*\n[ \t]*", "\n", out)
+    out = re.sub(r"\n{3,}", "\n\n", out)
     return out.strip()
 
 
@@ -111,6 +115,27 @@ SYSTEM_PROMPT = (
     '{"summary": "<the paragraph>", "alerts": [{"level": "info|warning|success", "text": "<one short sentence>"}]}'
     " Return zero to three alerts, only when they truly help the caregiver. "
 )
+
+# Pages that get a richer, multi-paragraph "overall standing" summary.
+_STATEMENT_PAGE_KEYS = {"statement-detail"}
+
+_STATEMENT_SUMMARY_OVERRIDE = (
+    " PAGE OVERRIDE (statement detail): Ignore writing rule 1 above. Instead write TWO or THREE short "
+    "paragraphs, up to about 110 words in total, separated by a blank line (two newline characters). "
+    "Paragraph one speaks only to THIS statement: what it shows for the period, and any anomalies with "
+    "their dollar impact if present, and whether it looks fine or worth a closer look. "
+    "Paragraph two gives the participant's OVERALL standing across Wayly, using the participant_standing "
+    "object in the context: letters in progress or awaiting a reply, any open complaints, and anything "
+    "that needs attention. If a signal is zero or missing, do not mention it and do not invent it. "
+    "Keep it warm and calm. Still return the exact JSON shape, with the paragraphs (including the blank "
+    "line between them) inside the summary string."
+)
+
+
+def _system_prompt_for(page_key: str) -> str:
+    if page_key in _STATEMENT_PAGE_KEYS:
+        return SYSTEM_PROMPT + _STATEMENT_SUMMARY_OVERRIDE
+    return SYSTEM_PROMPT
 
 
 class SummariseIn(BaseModel):
@@ -173,7 +198,7 @@ async def _generate_summary(page_key: str, context: Dict[str, Any]) -> Dict[str,
         chat = LlmChat(
             api_key=key,
             session_id=f"insight-{page_key}-{_now().strftime('%Y%m%d%H%M%S')}",
-            system_message=SYSTEM_PROMPT,
+            system_message=_system_prompt_for(page_key),
         ).with_model(INSIGHT_MODEL_PROVIDER, INSIGHT_MODEL_NAME)
         raw = await chat.send_message(UserMessage(text=json.dumps(payload, default=str)))
         parsed = json.loads(_strip_json(raw))
@@ -201,12 +226,48 @@ async def _generate_summary(page_key: str, context: Dict[str, Any]) -> Dict[str,
         }
 
 
+async def _enrich_context(uid: Optional[str], page_key: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    """For the statement page, add the participant's cross-tool standing
+    (open complaints, letters in progress / awaiting a reply) so the summary
+    can speak to the bigger picture, not just this statement."""
+    if page_key not in _STATEMENT_PAGE_KEYS or _db is None:
+        return context
+    pid = context.get("participant_id")
+    if not pid:
+        return context
+    try:
+        open_complaints = await _db.complaints.count_documents({
+            "participant_id": pid,
+            "current_stage": {"$nin": ["closed_resolved", "closed_abandoned"]},
+        })
+        letters_total = await _db.lf1_correspondence.count_documents({"participant_id": pid})
+        letters_awaiting = await _db.lf1_correspondence.count_documents({
+            "participant_id": pid, "status": {"$in": ["sent", "awaiting_response"]},
+        })
+        letters_draft = await _db.lf1_correspondence.count_documents({
+            "participant_id": pid, "status": "draft",
+        })
+        standing = {
+            "open_complaints": int(open_complaints or 0),
+            "letters_total": int(letters_total or 0),
+            "letters_awaiting_reply": int(letters_awaiting or 0),
+            "letters_in_draft": int(letters_draft or 0),
+        }
+        return {**context, "participant_standing": standing}
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning("insights enrich failed: %s", e)
+        return context
+
+
 @insights_router.post("/summarise")
 async def summarise(payload: SummariseIn, request: Request):
     user = await _user_dep(request)
     uid = (user or {}).get("id") if isinstance(user, dict) else None
 
-    ctx_hash = _hash_ctx(payload.page_key, payload.context or {})
+    # Enrich BEFORE hashing so cross-tool standing changes bust the cache.
+    context = await _enrich_context(uid, payload.page_key, payload.context or {})
+
+    ctx_hash = _hash_ctx(payload.page_key, context)
     cache_key = {"user_id": uid or "anon", "page_key": payload.page_key, "context_hash": ctx_hash}
 
     if not payload.refresh:
@@ -236,7 +297,7 @@ async def summarise(payload: SummariseIn, request: Request):
                     "model": cached.get("model", INSIGHT_MODEL_NAME),
                 }
 
-    result = await _generate_summary(payload.page_key, payload.context or {})
+    result = await _generate_summary(payload.page_key, context)
     generated_at = _now()
 
     doc = {
