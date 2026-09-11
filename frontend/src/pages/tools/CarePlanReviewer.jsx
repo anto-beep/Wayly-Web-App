@@ -339,6 +339,7 @@ export default function CarePlanReviewer() {
                 verification_panel: fileResult?.verification_panel || null,
                 plan_summary: fileResult?.plan_summary || null,
                 provider_name: fileResult?.extraction?.provider_name || null,
+                safety_notice: fileResult?.safety_notice || null,
             }, { responseType: "blob" });
             const url = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
             const a = document.createElement("a");

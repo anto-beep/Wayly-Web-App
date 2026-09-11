@@ -73,6 +73,7 @@ def render_artefact_pdf(
     findings: List[Dict[str, Any]],
     verification_panel: Dict[str, Any] | None = None,
     plan_summary_text: str | None = None,
+    safety_notice: Dict[str, Any] | None = None,
 ) -> None:
     styles = getSampleStyleSheet()
     H1 = ParagraphStyle(
@@ -152,17 +153,43 @@ def render_artefact_pdf(
         story.append(Paragraph("PLAN SUMMARY", H_LABEL))
         story.append(Paragraph(plan_summary_text, BODY))
 
+    # ---------------- Safety notice (matches the on-screen amber banner) ----
+    if safety_notice and (safety_notice.get("title") or safety_notice.get("body")):
+        NOTICE = ParagraphStyle(
+            "NOTICE", parent=BODY, textColor=colors.HexColor("#7A4A05"), fontSize=9, leading=13,
+        )
+        NOTICE_TITLE = ParagraphStyle(
+            "NOTICE_TITLE", parent=BODY, fontName="Helvetica-Bold",
+            textColor=colors.HexColor("#7A4A05"), fontSize=10, leading=13, spaceAfter=2,
+        )
+        notice_cell = []
+        if safety_notice.get("title"):
+            notice_cell.append(Paragraph(safety_notice["title"], NOTICE_TITLE))
+        if safety_notice.get("body"):
+            notice_cell.append(Paragraph(safety_notice["body"], NOTICE))
+        nt = Table([[notice_cell]], colWidths=[17 * cm])
+        nt.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FEF6E7")),
+            ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#E3B341")),
+            ("LEFTPADDING", (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ]))
+        story.append(Spacer(1, 6))
+        story.append(nt)
+
     # ---------------- Verification panel (A3) ----------------
     vp_checks = (verification_panel or {}).get("checks") or []
     if vp_checks:
-        story.append(Paragraph("VERIFICATION CHECKS", H2))
+        story.append(Paragraph("SAFETY CHECKS WE RAN", H2))
         story.append(Paragraph(
-            "Five Support at Home checks we run on every plan. A pass is confirmed correct, not just silence.",
+            "Five Support at Home checks we run on every plan. A tick means we confirmed it, not just that nothing was said.",
             BODY,
         ))
         story.append(Spacer(1, 4))
-        _status_label = {"pass": "CONFIRMED", "flag": "FLAGGED", "cannot_run": "MISSING INFO"}
-        _status_colour = {"pass": SAGE, "flag": TERRACOTTA, "cannot_run": GOLD}
+        _status_label = {"pass": "All good", "flag": "Worth a look", "cannot_run": "Need more info"}
+        _status_colour = {"pass": SAGE, "flag": CLAY, "cannot_run": GOLD}
         vp_rows = []
         for c in vp_checks:
             col = _status_colour.get(c.get("status"), GOLD)

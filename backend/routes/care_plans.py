@@ -133,6 +133,7 @@ class SummaryPdfBody(BaseModel):
     plan_summary: Optional[str] = None
     provider_name: Optional[str] = None
     participant_name: Optional[str] = None
+    safety_notice: Optional[Dict[str, Any]] = None
 
 
 # C1 addressee → LF-1 (situation_id, recipient_type). The user can switch the
@@ -1132,10 +1133,12 @@ def build_care_plans_router() -> APIRouter:
             quarterly_budget=plan.get("quarterly_budget_at_review"),
         )
         _vp = _cpr.run_verification_panel(_facts)
+        from lib import cpr_safety as _cpr_safety
         render_artefact_pdf(
             buf, plan=plan, extraction=ext or {}, findings=findings,
             verification_panel=_vp,
             plan_summary_text=_cpr.plan_summary(ext or {}, _vp),
+            safety_notice=_cpr_safety.safety_notice(),
         )
         buf.seek(0)
         from lib.artifact_naming import build_filename
@@ -1634,6 +1637,7 @@ def build_care_plans_router() -> APIRouter:
             buf, plan=plan, extraction=body.extraction, findings=body.findings,
             verification_panel=body.verification_panel,
             plan_summary_text=body.plan_summary,
+            safety_notice=body.safety_notice,
         )
         buf.seek(0)
         filename = build_filename(

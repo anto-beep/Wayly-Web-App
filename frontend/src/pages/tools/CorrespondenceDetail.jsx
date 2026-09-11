@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { api, extractErrorMessage } from "@/lib/api";
@@ -113,8 +113,6 @@ function CrossToolProvenance({ generated }) {
  *   - ADM disclosure (shared component).
  */
 
-const AUTOSAVE_DEBOUNCE_MS = 1000;
-
 export default function CorrespondenceDetail() {
     const { entryId } = useParams();
     const nav = useNavigate();
@@ -170,22 +168,69 @@ export default function CorrespondenceDetail() {
         return () => { cancelled = true; };
     }, [entryId]);
 
-    // ---- Debounced autosave (WS8 T31) ----
-    useEffect(() => {
-        if (!entry || !dirty) return;
-        const t = setTimeout(() => {
+    // ---- Save as Draft (explicit; replaces the old silent autosave) ----
+    const [saving, setSaving] = useState(false);
+    const [leaveOpen, setLeaveOpen] = useState(false);
+    const [busyLeave, setBusyLeave] = useState(false);
+    const leaveTargetRef = useRef(null);
+
+    const saveDraft = useCallback(async () => {
+        if (!entry) return false;
+        setSaving(true);
+        try {
             const body = {
                 intake,
                 sender_authority_basis: senderAuthority,
                 complaint_mode: complaintMode,
                 atsi_preference: atsi,
             };
-            api.patch(`/lf1/correspondence/${entryId}/autosave`, body)
-                .then((r) => setSavingHint({ savedAt: r.data?.saved_at }))
-                .catch(() => setSavingHint({ error: true }));
-        }, AUTOSAVE_DEBOUNCE_MS);
-        return () => clearTimeout(t);
-    }, [intake, senderAuthority, complaintMode, atsi, dirty, entry, entryId]);
+            // Persist the generated letter body too (user chose: save everything).
+            if (generated?.body) body.content_draft = generated.body;
+            const r = await api.patch(`/lf1/correspondence/${entryId}/autosave`, body);
+            setSavingHint({ savedAt: r.data?.saved_at });
+            setDirty(false);
+            return true;
+        } catch (err) {
+            setSavingHint({ error: true });
+            return false;
+        } finally {
+            setSaving(false);
+        }
+    }, [entry, entryId, intake, senderAuthority, complaintMode, atsi, generated]);
+
+    // Warn on browser refresh / tab close / external navigation while unsaved.
+    useEffect(() => {
+        if (!dirty) return;
+        const handler = (e) => { e.preventDefault(); e.returnValue = ""; };
+        window.addEventListener("beforeunload", handler);
+        return () => window.removeEventListener("beforeunload", handler);
+    }, [dirty]);
+
+    // In-app navigation guard: confirm before leaving with unsaved changes.
+    const guardedNav = useCallback((to) => {
+        if (dirty) {
+            leaveTargetRef.current = to;
+            setLeaveOpen(true);
+        } else {
+            nav(to);
+        }
+    }, [dirty, nav]);
+
+    const leaveSaveAndGo = useCallback(async () => {
+        setBusyLeave(true);
+        const ok = await saveDraft();
+        setBusyLeave(false);
+        if (ok) {
+            setLeaveOpen(false);
+            nav(leaveTargetRef.current || "/tools/letters-and-follow-ups/log");
+        }
+    }, [saveDraft, nav]);
+
+    const leaveDiscardAndGo = useCallback(() => {
+        setDirty(false);
+        setLeaveOpen(false);
+        nav(leaveTargetRef.current || "/tools/letters-and-follow-ups/log");
+    }, [nav]);
 
     const canDelete = entry && entry.status !== "sent";
 
@@ -228,6 +273,7 @@ export default function CorrespondenceDetail() {
         // pre-filled without a page reload.
         const mergedIntake = { ...(intake || {}), ...(data?.intake || {}) };
         setIntake(mergedIntake);
+        setDirty(true);
         setSavingHint({ savedAt: new Date().toISOString(), imported: true });
         // If a draft already exists, pull the imported facts straight into the
         // letter by regenerating from the merged intake (spec: "tap a linked
@@ -354,13 +400,14 @@ export default function CorrespondenceDetail() {
         <div className="min-h-screen bg-kindred">
             <MarketingHeader />
             <section className="mx-auto max-w-5xl px-6 pt-10 pb-4">
-                <Link
-                    to="/tools/letters-and-follow-ups/log"
+                <button
+                    type="button"
+                    onClick={() => guardedNav("/tools/letters-and-follow-ups/log")}
                     className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"
                     data-testid="lf1-detail-back"
                 >
                     <ArrowLeft className="h-4 w-4" /> Correspondence log
-                </Link>
+                </button>
                 <h1
                     className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight"
                     data-testid="lf1-detail-title"
@@ -387,6 +434,35 @@ export default function CorrespondenceDetail() {
                             <LF1ADMDisclosure archetype={entry.archetype} situationLabel={entry.situation_label} />
                         </span>
                     </p>
+                )}
+                {entry && (
+                    <div className="mt-4 flex items-center gap-3 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={saveDraft}
+                            disabled={saving}
+                            data-testid="lf1-detail-save-draft"
+                            className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white px-4 py-2 text-sm font-semibold disabled:opacity-60"
+                        >
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            {saving ? "Saving…" : "Save as draft"}
+                        </button>
+                        {!saving && savingHint?.savedAt && !dirty && (
+                            <span className="text-sm text-sage inline-flex items-center gap-1" data-testid="lf1-detail-saved-hint">
+                                Saved
+                            </span>
+                        )}
+                        {!saving && dirty && (
+                            <span className="text-xs text-muted-k" data-testid="lf1-detail-unsaved-hint">
+                                Unsaved changes
+                            </span>
+                        )}
+                        {savingHint?.error && (
+                            <span className="text-xs text-terracotta" data-testid="lf1-detail-save-error">
+                                Couldn't save, please try again
+                            </span>
+                        )}
+                    </div>
                 )}
             </section>
 
@@ -722,6 +798,44 @@ export default function CorrespondenceDetail() {
                             data-testid="lf1-detail-delete-confirm"
                         >
                             {busyDelete ? "Deleting…" : "Delete"}
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+                <DialogContent data-testid="lf1-detail-leave-modal">
+                    <DialogHeader>
+                        <DialogTitle>Save before leaving?</DialogTitle>
+                        <DialogDescription>
+                            You have unsaved changes to this letter. Would you like to save them as a draft before you go?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setLeaveOpen(false)}
+                            className="px-3.5 py-2 rounded-lg border border-kindred text-primary-k text-sm"
+                            data-testid="lf1-detail-leave-cancel"
+                        >
+                            Keep editing
+                        </button>
+                        <button
+                            type="button"
+                            onClick={leaveDiscardAndGo}
+                            className="px-3.5 py-2 rounded-lg border border-terracotta text-terracotta text-sm"
+                            data-testid="lf1-detail-leave-discard"
+                        >
+                            Leave without saving
+                        </button>
+                        <button
+                            type="button"
+                            onClick={leaveSaveAndGo}
+                            disabled={busyLeave}
+                            className="px-3.5 py-2 rounded-lg bg-primary-k text-white text-sm font-semibold disabled:opacity-60"
+                            data-testid="lf1-detail-leave-save"
+                        >
+                            {busyLeave ? "Saving…" : "Save and leave"}
                         </button>
                     </DialogFooter>
                 </DialogContent>

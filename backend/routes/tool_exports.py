@@ -68,11 +68,22 @@ def _render_invoice(payload: dict, person_name: Optional[str]) -> bytes:
 def _render_care_plan(payload: dict, person_name: Optional[str]) -> bytes:
     from services.care_plan_pdf import render_artefact_pdf
     buf = BytesIO()
+    ext = payload.get("extraction") or {}
+    plan = {
+        "provider_name": payload.get("provider_name") or ext.get("provider_name"),
+        "effective_from": ext.get("effective_from"),
+        "effective_to": ext.get("effective_to"),
+        "classification_at_review": ext.get("classification"),
+        "quarterly_budget_at_review": ext.get("quarterly_budget"),
+    }
     render_artefact_pdf(
         buf,
-        plan={},
-        extraction=payload.get("extraction") or {},
+        plan=plan,
+        extraction=ext,
         findings=payload.get("findings") or [],
+        verification_panel=payload.get("verification_panel"),
+        plan_summary_text=payload.get("plan_summary"),
+        safety_notice=payload.get("safety_notice"),
     )
     return buf.getvalue()
 

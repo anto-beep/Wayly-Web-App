@@ -9,7 +9,7 @@ import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
 import { api, formatAUD, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { ToolSummary, NumberMono } from "@/components/ToolShell";
-import { Loader2, ArrowRight, Sparkles, AlertTriangle } from "lucide-react";
+import { Loader2, ArrowRight, Sparkles, AlertTriangle, Printer } from "lucide-react";
 import { toast } from "sonner";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotBudget } from "@/components/Screenshots";
@@ -82,8 +82,34 @@ export default function BudgetCalculatorTool() {
     }, [activeParticipant?.id, activeParticipant?.first_name]);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [downloadBusy, setDownloadBusy] = useState(false);
     const resultRef = useScrollToResult(Boolean(result));
     const [, _setSnapshotVersion] = useState(0);
+
+    // Printable one-page estimate (server-rendered PDF, matches mobile export).
+    const downloadEstimate = async () => {
+        if (!result) return;
+        setDownloadBusy(true);
+        try {
+            const { data } = await api.post("/public/exports/pdf", {
+                tool: "budget",
+                payload: result,
+                person_name: participantFirstName || null,
+            }, { responseType: "blob" });
+            const url = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `wayly-budget-estimate-${new Date().toISOString().slice(0, 10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            toast.error(extractErrorMessage(e, "Could not prepare your estimate. Please try again."));
+        } finally {
+            setDownloadBusy(false);
+        }
+    };
 
     // Pull the live figures from /api/program-reference/public on mount.
     useEffect(() => { loadProgramReference().then(() => _setSnapshotVersion((v) => v + 1)); }, []);
@@ -361,6 +387,21 @@ export default function BudgetCalculatorTool() {
                             tone="success"
                             testId="bc-summary"
                         />
+                        {access === "allowed" && (
+                            <div className="flex flex-wrap items-center gap-3" data-testid="bc-estimate-actions">
+                                <button
+                                    type="button"
+                                    onClick={downloadEstimate}
+                                    disabled={downloadBusy}
+                                    data-testid="bc-download-estimate"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-60"
+                                >
+                                    {downloadBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+                                    {downloadBusy ? "Preparing…" : "Download printable estimate"}
+                                </button>
+                                <span className="text-xs text-muted-k">A one-page sheet you can print and take to your provider.</span>
+                            </div>
+                        )}
                         <div className="grid sm:grid-cols-3 gap-4">
                             <div className="rounded-xl p-5 text-white shadow-sm" style={{ backgroundColor: "#A5512B" }} data-testid="bc-quarterly-gross">
                                 <div className="text-xs uppercase tracking-[0.14em] font-semibold text-white/70">Gross quarterly</div>

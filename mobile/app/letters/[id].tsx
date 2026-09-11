@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, ActivityIndicator } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
+import { usePreventRemove } from "@react-navigation/native";
 import {
   Sparkles, AlertTriangle, FileText, Copy, Link as LinkIcon, ThumbsUp, ThumbsDown,
   ShieldCheck, Users, Paperclip, X, ClipboardCheck, Send, Info, Trash2, MailCheck,
@@ -406,6 +407,11 @@ export default function CorrespondenceDetail() {
   const [emailedSelf, setEmailedSelf] = useState(false);
   const [outMode, setOutMode] = useState<"email" | "mac_portal">("email");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [busyLeave, setBusyLeave] = useState(false);
+  const pendingNavRef = useRef<null | (() => void)>(null);
+  const navigation = useNavigation();
 
   // follow-up + reply modal
   const [replyOpen, setReplyOpen] = useState(false);
@@ -505,21 +511,62 @@ export default function CorrespondenceDetail() {
 
   const set = useCallback((patch: any) => { setIntake((s) => ({ ...s, ...patch })); setDirty(true); }, []);
 
-  // Debounced autosave (mirrors web WS8 T31)
-  useEffect(() => {
-    if (!entry || !dirty) return;
-    const t = setTimeout(() => {
-      apiFetch(`/lf1/correspondence/${id}/autosave`, { method: "PATCH", body: { intake, sender_authority_basis: senderAuthority, complaint_mode: complaintMode, atsi_preference: atsi } })
-        .then(() => { setSavedHint("Saved"); setTimeout(() => setSavedHint(""), 1800); })
-        .catch(() => {});
+  // Save as Draft (explicit; replaces the old silent autosave).
+  const saveDraft = useCallback(async () => {
+    if (!entry) return false;
+    setSaving(true);
+    try {
+      const body: any = { intake, sender_authority_basis: senderAuthority, complaint_mode: complaintMode, atsi_preference: atsi };
+      if (draft?.body) body.content_draft = draft.body;
+      await apiFetch(`/lf1/correspondence/${id}/autosave`, { method: "PATCH", body });
+      setSavedHint("Saved");
+      setTimeout(() => setSavedHint(""), 2200);
       setDirty(false);
-    }, 1000);
-    return () => clearTimeout(t);
-  }, [intake, senderAuthority, complaintMode, atsi, dirty, entry, id]);
+      return true;
+    } catch {
+      setSavedHint("");
+      setError("Couldn't save your draft. Please try again.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [entry, id, intake, senderAuthority, complaintMode, atsi, draft]);
+
+  // Guard hardware back / swipe-back gesture when there are unsaved changes.
+  usePreventRemove(dirty, ({ data }) => {
+    pendingNavRef.current = () => navigation.dispatch(data.action);
+    setLeaveOpen(true);
+  });
+
+  // Route a navigation affordance through the unsaved-changes prompt.
+  const requestLeave = useCallback((go: () => void) => {
+    if (dirty) { pendingNavRef.current = go; setLeaveOpen(true); }
+    else go();
+  }, [dirty]);
+
+  const runPendingNav = useCallback(() => {
+    const go = pendingNavRef.current;
+    pendingNavRef.current = null;
+    setDirty(false);
+    setTimeout(() => { if (go) go(); }, 40);
+  }, []);
+
+  const leaveSaveAndGo = useCallback(async () => {
+    setBusyLeave(true);
+    const ok = await saveDraft();
+    setBusyLeave(false);
+    if (ok) { setLeaveOpen(false); runPendingNav(); }
+  }, [saveDraft, runPendingNav]);
+
+  const leaveDiscardAndGo = useCallback(() => {
+    setLeaveOpen(false);
+    runPendingNav();
+  }, [runPendingNav]);
 
   const onImported = (data: any) => {
     const merged = { ...(intake || {}), ...(data?.intake || {}) };
     setIntake(merged);
+    setDirty(true);
     setSavedHint("Imported"); setTimeout(() => setSavedHint(""), 1800);
     // Pull the imported facts straight into the letter when a draft already
     // exists, by regenerating from the merged intake (spec: tap a linked
@@ -598,8 +645,8 @@ export default function CorrespondenceDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title={isGuided ? "Safeguarding record" : "Draft your letter"} onBack={() => router.back()} right={
-        <Pressable testID="lf-log-link" onPress={() => router.push("/letters")} hitSlop={8}><FileText size={20} color={colors.primary} /></Pressable>
+      <AppHeader title={isGuided ? "Safeguarding record" : "Draft your letter"} onBack={() => requestLeave(() => router.back())} right={
+        <Pressable testID="lf-log-link" onPress={() => requestLeave(() => router.push("/letters"))} hitSlop={8}><FileText size={20} color={colors.primary} /></Pressable>
       } />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
@@ -613,6 +660,21 @@ export default function CorrespondenceDetail() {
             </T>
             {entry.status ? <View style={{ marginTop: spacing.sm, flexDirection: "row" }}><Badge label={String(entry.status).replace(/_/g, " ").toUpperCase()} tone={entry.status === "sent" ? "success" : entry.status === "responded" ? "brand" : "neutral"} /></View> : null}
           </Card>
+
+          {/* Save as draft (explicit; replaces silent autosave) */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexWrap: "wrap" }}>
+            <Pressable
+              testID="lf1-detail-save-draft"
+              onPress={saveDraft}
+              disabled={saving}
+              style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.md, opacity: saving ? 0.6 : 1 }}
+            >
+              {saving ? <ActivityIndicator size="small" color="#fff" /> : <CheckCircle2 size={16} color="#fff" />}
+              <T style={{ color: "#fff", fontFamily: fonts.bodySemi, fontSize: 14 }}>{saving ? "Saving…" : "Save as draft"}</T>
+            </Pressable>
+            {!saving && dirty ? <T variant="small" style={{ color: colors.muted, fontSize: 12 }} testID="lf1-detail-unsaved-hint">Unsaved changes</T> : null}
+            {!saving && !dirty && savedHint === "Saved" ? <T variant="small" style={{ color: colors.sage, fontSize: 12 }} testID="lf1-detail-saved-hint">Saved</T> : null}
+          </View>
 
           {/* Issues carried over from another tool (auto-drafted below) */}
           {carriedIssues.items.length > 0 ? (
@@ -811,6 +873,43 @@ export default function CorrespondenceDetail() {
         senderEmail={user?.email || ""}
         senderAuthority={senderAuthority}
       />
+
+      {/* Save before leaving? prompt */}
+      <Modal visible={leaveOpen} transparent animationType="fade" onRequestClose={() => setLeaveOpen(false)}>
+        <View style={styles.leaveBackdrop}>
+          <View style={[styles.leaveSheet, { backgroundColor: colors.surface }]} testID="lf1-detail-leave-modal">
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 17, color: colors.text }}>Save before leaving?</T>
+            <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>
+              You have unsaved changes to this letter. Would you like to save them as a draft before you go?
+            </T>
+            <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+              <Pressable
+                testID="lf1-detail-leave-save"
+                onPress={leaveSaveAndGo}
+                disabled={busyLeave}
+                style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, backgroundColor: colors.primary, paddingVertical: 12, borderRadius: radius.md, opacity: busyLeave ? 0.6 : 1 }}
+              >
+                {busyLeave ? <ActivityIndicator size="small" color="#fff" /> : null}
+                <T style={{ color: "#fff", fontFamily: fonts.bodySemi, fontSize: 15 }}>{busyLeave ? "Saving…" : "Save and leave"}</T>
+              </Pressable>
+              <Pressable
+                testID="lf1-detail-leave-discard"
+                onPress={leaveDiscardAndGo}
+                style={{ paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: colors.terracotta, alignItems: "center" }}
+              >
+                <T style={{ color: colors.terracotta, fontFamily: fonts.bodySemi, fontSize: 15 }}>Leave without saving</T>
+              </Pressable>
+              <Pressable
+                testID="lf1-detail-leave-cancel"
+                onPress={() => setLeaveOpen(false)}
+                style={{ paddingVertical: 12, alignItems: "center" }}
+              >
+                <T style={{ color: colors.muted, fontSize: 15 }}>Keep editing</T>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1068,4 +1167,6 @@ const styles = StyleSheet.create({
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, alignItems: "center", justifyContent: "center", marginTop: 1 },
   fbBtn: { width: 34, height: 34, borderRadius: radius.pill, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   formatBtn: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 6 },
+  leaveBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+  leaveSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: spacing.lg, paddingBottom: spacing.xxl },
 });
