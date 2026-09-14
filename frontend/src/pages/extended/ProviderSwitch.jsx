@@ -24,6 +24,12 @@ import { toast } from "sonner";
 import { PageShell, safeGet, safePost, safePatch } from "./_shared";
 import { useExpiredTrial } from "@/hooks/useExpiredTrial";
 import ReadOnlyLock from "@/components/ReadOnlyLock";
+import { RequiredBadge, OptionalBadge } from "@/components/RequiredHint";
+import { useParticipants } from "@/context/ParticipantsContext";
+
+// Shared app-wide field markers so every field is clearly labelled.
+const Req = () => <RequiredBadge className="ml-1 align-middle" />;
+const Opt = () => <OptionalBadge className="ml-1 align-middle" />;
 
 const STAGE_BY_STEP = ["considering", "comparing", "notice_given", "transition", "complete"];
 
@@ -138,6 +144,7 @@ export default function ProviderSwitch() {
     const [loading, setLoading] = useState(true);
     const [step, setStep] = useState(1);
     const isExpired = useExpiredTrial();
+    const { active } = useParticipants();
 
     // Form scratchpads (persist into row.checklist + row.target_provider etc)
     const [intro, setIntro] = useState({ current_provider: "", target_provider: "", reason: "" });
@@ -172,6 +179,14 @@ export default function ProviderSwitch() {
 
     useEffect(() => { refresh(); }, []);
     useEffect(() => { if (stepRef.current) stepRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); }, [step]);
+
+    // Prefill the current provider from the active participant's profile when
+    // no switch has been started yet and the user hasn't typed their own.
+    useEffect(() => {
+        if (!row && active?.provider_name) {
+            setIntro((s) => (s.current_provider ? s : { ...s, current_provider: active.provider_name }));
+        }
+    }, [active?.provider_name, row]);
 
     const startSwitch = async () => {
         if (!intro.current_provider.trim()) {
@@ -411,15 +426,15 @@ function StepOne({ intro, setIntro, row, onStart, onNext }) {
         >
             <div className="grid sm:grid-cols-2 gap-3">
                 <label className="block">
-                    <span className="text-xs text-muted-k">Current Provider</span>
-                    <input value={intro.current_provider} onChange={(e) => setIntro({ ...intro, current_provider: e.target.value })} required data-testid="switch-current-provider" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
+                    <span className="text-xs text-muted-k flex items-center gap-1">Current Provider <Req /></span>
+                    <input value={intro.current_provider} onChange={(e) => setIntro({ ...intro, current_provider: e.target.value })} required aria-required="true" data-testid="switch-current-provider" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 </label>
                 <label className="block">
-                    <span className="text-xs text-muted-k">Target Provider (Optional)</span>
+                    <span className="text-xs text-muted-k flex items-center gap-1">Target Provider <Opt /></span>
                     <input value={intro.target_provider} onChange={(e) => setIntro({ ...intro, target_provider: e.target.value })} data-testid="switch-target-provider" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 </label>
                 <label className="block sm:col-span-2">
-                    <span className="text-xs text-muted-k">In a Sentence, Why Are You Considering Switching?</span>
+                    <span className="text-xs text-muted-k flex items-center gap-1">In a Sentence, Why Are You Considering Switching? <Opt /></span>
                     <textarea value={intro.reason} onChange={(e) => setIntro({ ...intro, reason: e.target.value })} rows={2} data-testid="switch-reason" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 </label>
             </div>
@@ -482,7 +497,7 @@ function StepThree({ intro, setIntro, compare, setCompare, onBack, onNext }) {
             footer={<NavButtons onBack={onBack} onNext={onNext} nextLabel="Draft the Notice" />}
         >
             <label className="block max-w-md">
-                <span className="text-xs text-muted-k">Target Provider</span>
+                <span className="text-xs text-muted-k flex items-center gap-1">Target Provider <Opt /></span>
                 <input value={intro.target_provider} onChange={(e) => setIntro({ ...intro, target_provider: e.target.value })} data-testid="switch-target-provider-3" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
             </label>
             <ul className="mt-4 space-y-3">
@@ -524,11 +539,11 @@ function StepFour({ intro, notice, setNotice, letterText, onCopy, onDownload, on
         >
             <div className="grid sm:grid-cols-2 gap-3">
                 <label className="block">
-                    <span className="text-xs text-muted-k">Last Day of Service With Current Provider</span>
+                    <span className="text-xs text-muted-k flex items-center gap-1">Last Day of Service With Current Provider <Opt /></span>
                     <input type="date" value={notice.last_service_date} onChange={(e) => setNotice({ ...notice, last_service_date: e.target.value })} data-testid="switch-last-day" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 </label>
                 <label className="block">
-                    <span className="text-xs text-muted-k">Reason (One Short Sentence)</span>
+                    <span className="text-xs text-muted-k flex items-center gap-1">Reason (One Short Sentence) <Opt /></span>
                     <input value={notice.reason_short} onChange={(e) => setNotice({ ...notice, reason_short: e.target.value })} placeholder={intro.reason || "for example, we are moving to a provider closer to home"} data-testid="switch-reason-short" className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm" />
                 </label>
             </div>

@@ -7438,3 +7438,7 @@ Root cause: read serializers returned raw stored names. Fixed at the boundaries:
 
 ### Status
 All verified — backend pytest 5/5 (test_iter338_titlecase.py), web + mobile dashboards Title-Cased, mobile provider-switch list/decision(steps 1→2 tone change confirmed)/settlement render with colored sections. No regressions. No mocked APIs.
+
+### iteration_338 follow-up — web ProviderSwitch agentic edits (Jun 2026)
+- `frontend/src/pages/extended/ProviderSwitch.jsx`: Step 1 "Current Provider" input now PREFILLS from the active participant's `provider_name` (via `useParticipants()`) when no switch row exists and the field is empty (verified live: shows "MuffinCare" for peter@test.com).
+- Required/Optional field markers (shared `RequiredBadge`/`OptionalBadge`) applied across the step forms: Current Provider = Required; Target Provider (steps 1 & 3), the switching-reason textarea, Last Day of Service and Reason (step 4) = Optional. Steps 2 & 5 use choice buttons/checklists (no required inputs).
