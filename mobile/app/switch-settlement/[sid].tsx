@@ -94,11 +94,11 @@ export default function SwitchSettlementScreen() {
           <CreateSettlementForm sid={sid!} colors={colors} onCreated={load} />
         ) : (
           <>
-            <Card testID="psw1-settle-summary">
+            <Card testID="psw1-settle-summary" style={{ backgroundColor: colors.primarySoft, borderColor: colors.border }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <View>
-                  <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>STATUS</T>
-                  <View style={{ backgroundColor: colors.surface2, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start" }}>
+                  <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>STATUS</T>
+                  <View style={{ backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start" }}>
                     <T testID="psw1-settle-status" style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.primary }}>{(STATUS_LABEL[settlement.refund_status] || settlement.refund_status || "").toUpperCase()}</T>
                   </View>
                 </View>
@@ -122,8 +122,8 @@ export default function SwitchSettlementScreen() {
             ) : null}
 
             {sw?.related_case_ids?.length > 0 || settlement.refund_status === "refund_received_variance_flagged" ? (
-              <Card style={{ backgroundColor: colors.surface2 }}>
-                <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>LINKED CASES</T>
+              <Card style={{ backgroundColor: colors.alertSoft, borderColor: colors.border }}>
+                <T variant="small" style={{ color: colors.alert, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>LINKED CASES</T>
                 <T variant="small" style={{ color: colors.text, marginTop: 6 }}>Dispute case created via LOOP-1. Track progress in your cases list.</T>
                 <Button label="Open Cases" variant="outline" icon={ExternalLink} testID="psw1-settle-cases-link" onPress={() => router.push("/cases")} style={{ marginTop: spacing.sm }} />
               </Card>
@@ -171,8 +171,8 @@ function CreateSettlementForm({ sid, colors, onCreated }: any) {
     finally { setBusy(false); }
   };
   return (
-    <Card testID="psw1-settle-create-form">
-      <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>CREATE SETTLEMENT RECORD</T>
+    <Card testID="psw1-settle-create-form" style={{ backgroundColor: colors.goldSoft, borderColor: colors.border }}>
+      <T variant="small" style={{ color: colors.gold, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>CREATE SETTLEMENT RECORD</T>
       <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 19 }}>The old provider&apos;s final invoice should reflect only services delivered up to the effective date. Any prepaid balance is owed back to you.</T>
       <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
         <LInput label="Refund expected (AUD)" value={amount} onChangeText={setAmount} testID="psw1-settle-create-amount" colors={colors} />
@@ -198,8 +198,8 @@ function ReceiveRefundForm({ settlementId, colors, onRecorded }: any) {
     finally { setBusy(false); }
   };
   return (
-    <Card testID="psw1-settle-receive-form">
-      <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>RECORD REFUND RECEIPT</T>
+    <Card testID="psw1-settle-receive-form" style={{ backgroundColor: colors.primarySoft, borderColor: colors.border }}>
+      <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>RECORD REFUND RECEIPT</T>
       <View style={{ marginTop: spacing.sm }}>
         <LInput label="Amount received (AUD)" value={amount} onChangeText={setAmount} testID="psw1-settle-amount-input" colors={colors} />
       </View>

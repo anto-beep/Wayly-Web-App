@@ -14,6 +14,21 @@ import {
  * page) or tap one of the large clay shortcut tiles for the most common tasks.
  * Designed for older users: big targets, plain labels, one clear question.
  */
+const MINOR_WORDS = new Set(["a", "an", "the", "and", "or", "but", "of", "to", "in", "on", "for", "with", "at", "by", "from", "as", "per"]);
+// Headline-style capitalisation: "upload a statement" -> "Upload a Statement".
+// Keeps all-caps acronyms (AI) and minor words (a, an, the …) intact.
+const toTitleLabel = (s) =>
+    String(s || "")
+        .split(" ")
+        .map((w, i) => {
+            if (!w) return w;
+            const lw = w.toLowerCase();
+            if (i > 0 && MINOR_WORDS.has(lw)) return lw;
+            if (w.length > 1 && w === w.toUpperCase()) return w;
+            return w.charAt(0).toUpperCase() + w.slice(1);
+        })
+        .join(" ");
+
 export default function DashboardActionBar() {
     const navigate = useNavigate();
     const [query, setQuery] = useState("");
@@ -82,7 +97,7 @@ export default function DashboardActionBar() {
                                                     <Icon className="h-5 w-5" />
                                                 </span>
                                                 <span className="min-w-0 flex-1">
-                                                    <span className="block text-sm font-semibold text-primary-k">{d.label}</span>
+                                                    <span className="block text-sm font-semibold text-primary-k">{toTitleLabel(d.label)}</span>
                                                     <span className="block text-xs text-muted-k truncate">{d.hint}</span>
                                                 </span>
                                                 {i === 0 ? (
@@ -119,7 +134,7 @@ export default function DashboardActionBar() {
                                 <Icon className="h-5 w-5" />
                             </span>
                             <span className="min-w-0">
-                                <span className="block text-sm font-semibold text-primary-k leading-tight">{a.label}</span>
+                                <span className="block text-sm font-semibold text-primary-k leading-tight">{toTitleLabel(a.label)}</span>
                                 <span className="mt-0.5 block text-xs text-muted-k leading-snug">{a.hint}</span>
                             </span>
                         </button>

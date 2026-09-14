@@ -1,0 +1,58 @@
+{
+  "summary": "iter338 review of Title-Case name bug + web/mobile dashboard label capitalisation + mobile Provider Switch colored redesign. BACKEND (5/5 pytest passing in /app/backend/tests/test_iter338_titlecase.py): peter@test.com login + /auth/me return name='Peter Smith', first_name='Peter', last_name='Smith' Title-Cased (DB stored lowercase, serialiser _user_public applies _titlecase_name). /api/participants (core1) + /api/v2/participants (batch3) return participant first_name/last_name Title-Cased. lib.text_utils.title_case_name preserves McDonald and capitalises o'brien -> O'brien correctly. WEB (peter@test.com, /app/dashboard): 'Welcome back, Peter Smith' toast ✅, greeting 'Good afternoon, Peter' ✅, DashboardActionBar tiles show 'Upload a Statement', 'Check an Invoice', 'Draft a Letter', 'Ask Wayly a Question', 'See My Budget', 'All AI Tools' — all Title-Cased with minor words ('a'/'an') lowercase and 'AI' acronym preserved ✅. MOBILE (Expo, peter@test.com): 'HOUSEHOLD Peter Smith' pill ✅, greeting 'Good afternoon, Peter' ✅, DashboardActionBar same 6 tiles Title-Cased ✅. Mobile /provider-switch: psw1-list-root + psw1-empty + psw1-new-btn present, empty state renders with clay-toned card ✅. Mobile /switch-settlement/{sid}: psw1-settlement-root + psw1-settle-create-form present with 'Refund expected (AUD)' input + Calculation basis Required select + 'Create settlement' teal button ✅. \n\n**REGRESSION BUG FOUND**: /api/account (batch3_routes.py:207-221) returns raw participant docs WITHOUT title-casing, so `first_name`/`last_name` come back lowercase for peter's account. Web ParticipantsContext.jsx:35 calls /account and drives the dashboard 'Viewing care for peter smith' pill (data-testid=dashboard-viewing-for) — the pill renders LOWERCASE 'peter smith', breaking the review-request rule that names must be Title Case everywhere. This is HIGH priority — Peter (or any other lowercase-stored user) will see lowercase participant names on the dashboard.\n\nMobile decision-walkthrough (/switch-decision/{sid}) could not be fully verified through the browser session: after login on the Expo preview, follow-on navigations to /provider-switch and /switch-decision/{sid} raised 401s on the API calls (session cookie/token not persisted across page.goto in the automation), so psw1-walkthrough-root did not render and the list appeared empty even though the switch was created via curl. Same session did successfully load the settlement page shell (psw1-settlement-root + psw1-settle-create-form) because that route renders its create-form before the auth-required load completes. This is an automation-session issue, not necessarily a UI bug — main agent should re-verify walkthrough 1→5 with a real sign-in.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/account", "issue": "Returns participants with raw lowercase first_name/last_name (e.g. 'peter'/'smith'). Missing the title_case_name pass that /api/participants and /api/v2/participants apply. Fix: in batch3_routes.py get_account() apply title_case_name to first_name/last_name/preferred_name/name for each participant in `parts` before returning (mirror the loop in list_v2_participants).", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "CaregiverDashboard 'Viewing care for' pill", "issue": "Shows 'Viewing care for peter smith' in lowercase because ParticipantsContext uses /api/account which returns lowercase names. Downstream fix (recommended, defensive): also Title-Case displayName in ParticipantsContext.jsx before setItems, so the UI is safe regardless of endpoint output.", "selector": "[data-testid=dashboard-viewing-for]", "priority": "HIGH"}
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Participant name display on dashboard", "platform": "web", "issue": "Mobile dashboard shows 'HOUSEHOLD Peter Smith' Title-Cased; web shows 'Viewing care for peter smith' lowercase. Divergence caused by web using /api/account (not title-cased) while mobile pulls from a source that IS title-cased.", "expected": "Both surfaces show 'Peter Smith' Title-Cased", "actual": "web lowercase, mobile title-case"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iter338_titlecase.py",
+    "/app/test_reports/pytest/iter338_titlecase.xml",
+    "/app/test_reports/iter338_web_dash.jpeg",
+    "/app/test_reports/iter338_mob_dash.jpeg",
+    "/app/test_reports/iter338_mob_psw_list.jpeg",
+    "/app/test_reports/iter338_mob_settle.jpeg"
+  ],
+  "action_items": [
+    "HIGH: In /app/backend/batch3_routes.py get_account() (line 207-221), apply lib.text_utils.title_case_name to each participant's first_name/last_name/preferred_name/name before returning — mirror the loop already in list_v2_participants (batch3_routes.py:237-241). This fixes the 'Viewing care for peter smith' lowercase pill on the web dashboard and any other consumer of /account.",
+    "Optional defensive: title-case first_name/last_name in /app/frontend/src/context/ParticipantsContext.jsx refresh() before storing, so the UI is safe even if a backend endpoint returns raw casing.",
+    "Follow-up manual verification: mobile /switch-decision/{sid} 5-step walkthrough (step-1..5, next/back/submit, done) could not be exercised in this run due to a session-persistence issue in the Expo web preview; recommend a quick manual pass after the /account fix."
+  ],
+  "critical_code_review_comments": [
+    "backend/batch3_routes.py get_account (line 207) inconsistent with list_v2_participants (line 227): only the latter title-cases participant name fields. The whole point of iter337/338 was Title Case everywhere — /account is a regression gap that leaks lowercase names to the web dashboard.",
+    "frontend/src/context/ParticipantsContext.jsx builds `name` from raw first_name+last_name; when the source endpoint returns lowercase, downstream UI breaks. A single title-case call at ingestion would make the client robust to backend regressions.",
+    "backend/routes/psw1.py POST /participants/{pid}/switches requires initial_reason_for_switch from a strict VALID_REASONS set of 9 values (billing_disputes_unresolved, care_quality_declined, worker_experience_issues, provider_communication_breakdown, financial_reasons, location_change, care_manager_concerns, care_plan_alignment_issues, other). Any client picker must map to those exact strings — good defensive validation.",
+    "mobile/app/provider-switch.tsx psw1-empty is a clay-toned card with 'No provider switches in progress.' — matches the review-request colored redesign spec."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter338_titlecase.py",
+    "/app/test_reports/iteration_338.json"
+  ],
+  "success_rate": {"backend": "100% (5/5 pytest — login, /me, /participants, /v2/participants, edge cases); but /api/account not title-cased is a regression not covered by iter338 test", "frontend": "web 85% (dashboard labels + login toast + greeting all pass; participant pill FAILS due to /account lowercase); mobile 95% (dashboard labels ✅ + provider-switch list shell ✅ + settlement shell ✅; walkthrough not verified live due to automation session issue)"},
+  "test_credentials": "peter@test.com / Peter!2026 (lowercase name in DB — the fixture the review targets)",
+  "seed_data_creation": "Created 1 provider switch (id=2e50e701-8e04-47e8-9bc5-28a80a8bc1be) on peter@test.com's participant (34f9a7f9...) via /api/psw1/participants/{pid}/switches with initial_reason_for_switch=other, reason_notes='UI test'. Left in place so main agent can re-verify walkthrough UI without re-seeding.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "1. The Title-Case fix is applied at 3 backend read-sites (_user_public, list_v2_participants, participant_profile._decorate + core1._participant_public) but NOT at batch3 get_account() — patch there is the outstanding fix. 2. Web ParticipantsContext uses /account (not /participants), so the pill breakage is downstream of that gap. 3. Peter's participant id: 34f9a7f9-08d5-4358-b773-e443f1f11985 in account ebf181b9-db3e-4aab-8d6b-81d31e2324d9. 4. Existing provider switch seed for walkthrough retest: sid=2e50e701-8e04-47e8-9bc5-28a80a8bc1be, stage=deciding. 5. Valid switch reasons: billing_disputes_unresolved | care_quality_declined | worker_experience_issues | provider_communication_breakdown | financial_reasons | location_change | care_manager_concerns | care_plan_alignment_issues | other. 6. Mobile session doesn't persist across page.goto in Expo web preview — use a single-session flow (goto login → in-app nav via clicks) for multi-page tests. 7. DashboardActionBar toTitleLabel util at /app/frontend/src/components/DashboardActionBar.jsx:20 + /app/mobile/src/components/DashboardActionBar.tsx:13 — shared logic, works for both.",
+  "rca of the issue": "Bug: 'Viewing care for peter smith' web pill renders lowercase. Reproduction: (1) Login as peter@test.com on web preview → /app/dashboard. (2) Header pill 'Viewing care for peter smith' visible below the greeting (Title-Cased 'Peter'). (3) `curl -H \"Authorization: Bearer $TOKEN\" /api/account` returns participants[0].first_name='peter', last_name='smith' — LOWERCASE. Root cause: batch3_routes.py:207 get_account() returns _active_participants(...) verbatim; only the /v2/participants sibling (line 227) applies title_case_name. The other read-serialisers (_user_public in server.py:288, core1._participant_public, participant_profile._decorate) DO title-case, but /account slipped through. Mitigation: add the same title_case loop from list_v2_participants (batch3_routes.py:237-241) inside get_account() before returning the response, OR title-case in ParticipantsContext client-side for a defence-in-depth fix. Preferred: fix backend so all consumers of /account get consistent output."
+}

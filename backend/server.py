@@ -289,9 +289,9 @@ def _user_public(u: dict, sub: Optional[dict] = None) -> UserPublic:
     return UserPublic(
         id=u["id"],
         email=u["email"],
-        name=u["name"],
-        first_name=u.get("first_name"),
-        last_name=u.get("last_name"),
+        name=_titlecase_name(u["name"]),
+        first_name=_titlecase_name(u.get("first_name")),
+        last_name=_titlecase_name(u.get("last_name")),
         mobile=u.get("mobile"),
         role=u["role"],
         plan=u.get("plan", "free"),

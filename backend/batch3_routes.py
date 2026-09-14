@@ -212,6 +212,11 @@ async def get_account(request: Request):
     members = await _active_members(acct["id"])
     addons = [a async for a in _db.participant_add_ons.find({"account_id": acct["id"]}, {"_id": 0}).limit(100)]
     is_owner = acct.get("owner_user_id") == user["id"]
+    from lib.text_utils import title_case_name as _tc
+    for p in parts:
+        for _k in ("first_name", "last_name", "preferred_name", "name"):
+            if p.get(_k):
+                p[_k] = _tc(p[_k])
     return {
         "summary": _account_summary(acct, parts, members, addons),
         "participants": parts,
@@ -231,8 +236,14 @@ async def list_v2_participants(request: Request, include_removed: bool = Query(d
     q: Dict[str, Any] = {"account_id": acct["id"]}
     if not include_removed:
         q["status"] = "ACTIVE"
+    from lib.text_utils import title_case_name as _tc
     cur = _db.participants.find(q, {"_id": 0}).sort("is_primary", -1).limit(50)
-    items = [p async for p in cur]
+    items = []
+    async for p in cur:
+        for _k in ("first_name", "last_name", "preferred_name", "name"):
+            if p.get(_k):
+                p[_k] = _tc(p[_k])
+        items.append(p)
     return {"items": items, "max": MAX_PARTICIPANTS_PER_ACCOUNT}
 
 

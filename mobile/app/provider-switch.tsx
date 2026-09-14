@@ -99,15 +99,15 @@ export default function ProviderSwitchScreen() {
         <Button label="New Switch" icon={Plus} testID="psw1-new-btn" onPress={() => setModalOpen(true)} disabled={!pid} />
 
         {rows.length === 0 ? (
-          <Card testID="psw1-empty" style={{ alignItems: "center", paddingVertical: spacing.xl }}>
-            <AlertCircle size={28} color={colors.muted} />
+          <Card testID="psw1-empty" style={{ alignItems: "center", paddingVertical: spacing.xl, backgroundColor: colors.goldSoft, borderColor: colors.border }}>
+            <AlertCircle size={28} color={colors.gold} />
             <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm }}>No provider switches in progress.</T>
           </Card>
         ) : (
           <>
             {activeRows.length > 0 ? (
               <View testID="psw1-active-list" style={{ gap: spacing.sm }}>
-                <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>ACTIVE SWITCHES</T>
+                <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>ACTIVE SWITCHES</T>
                 {activeRows.map((r) => <SwitchRow key={r.id} row={r} colors={colors} />)}
               </View>
             ) : null}
@@ -134,7 +134,7 @@ function SwitchRow({ row, colors }: any) {
   const target = isDeciding ? `/switch-decision/${row.id}` : isSettlement ? `/switch-settlement/${row.id}` : null;
   return (
     <Pressable testID={`psw1-row-${row.id}`} disabled={!target} onPress={() => target && router.push(target as any)}>
-      <Card>
+      <Card style={{ backgroundColor: tone.bg, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: tone.fg }}>
         <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }} numberOfLines={1}>
           {row.current_provider_name}{row.new_provider_name ? ` → ${row.new_provider_name}` : ""}
         </T>

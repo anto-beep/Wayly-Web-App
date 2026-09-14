@@ -7411,3 +7411,30 @@ Brought the Expo mobile app to full parity with the recent web overhaul. User ch
 
 ### Known recurring blocker (environmental, NOT a mobile bug)
 - Shared backend has a runtime deadlock after LiteLLM-heavy ops (generate/prefill) — all requests hang (HTTP 000 / screens stuck loading). Recovery: `sudo supervisorctl restart backend` (~8s). `rate_limit.py` fails open correctly (Redis is FATAL in preview), so rate limiting is not the cause. Occurred once this session; resolved by restart.
+
+---
+
+## Feature + Bug fix — Jun 2026 (iteration_338: Mobile Provider Switch redesign parity, name Title-Case, dashboard label caps)
+
+Forked continuation. Verified in iteration_338 (both surfaces) + live screenshots.
+
+### 1. MOBILE Provider Switch redesign — parity with web colored-section redesign
+Applied the web `ProviderSwitch.jsx` STEP_TONES design language (teal/clay/terracotta/sage soft blocks, tighter spacing) to the three mobile `/psw1` screens:
+- `mobile/app/provider-switch.tsx` — clay-toned empty state, teal "ACTIVE SWITCHES" label, switch rows with a stage-coloured left accent (`tone.bg` + `tone.fg` borderLeft).
+- `mobile/app/switch-decision/[sid].tsx` — teal intro header block, amber (`alertSoft`) cross-tool context card, and per-step tone on the step card: step1 teal, step2 clay, step3 teal, step4 terracotta, step5 sage (const STEP_TONES). Thicker teal progress bar.
+- `mobile/app/switch-settlement/[sid].tsx` — summary card teal-toned, create-settlement form clay-toned, receive-refund form teal-toned, linked-cases card amber-toned.
+- All tones use theme tokens (primarySoft/goldSoft/errorSoft/sageSoft/alertSoft) so dark mode adapts automatically.
+
+### 2. BUG — participant/user names shown lowercase throughout (report: peter@test.com)
+Root cause: read serializers returned raw stored names. Fixed at the boundaries:
+- `backend/server.py` `_user_public()` now applies `_titlecase_name` to name/first_name/last_name → fixes greeting/header/toast everywhere (login, /auth/me, signup, google-session).
+- `backend/batch3_routes.py` `list_v2_participants` (`GET /v2/participants`) AND `get_account` (`GET /api/account`) now title-case first_name/last_name/preferred_name/name. `/account` fix resolves the web "Viewing care for …" pill (ParticipantsContext uses /account).
+- core1 `_participant_public` and participant_profile `_decorate` already title-cased.
+- Edge cases preserved by `lib.text_utils.title_case_name` / `_titlecase_name`: "McDonald" stays, "o'brien" → "O'Brien".
+- Test fixture account: peter@test.com / Peter!2026 (stored name lowercase on purpose).
+
+### 3. Dashboard quick-action label capitalisation (web + mobile)
+`DashboardActionBar.jsx` + `DashboardActionBar.tsx`: added `toTitleLabel` headline-style caser applied to tile + search-result labels. "Upload a statement" → "Upload a Statement"; minor words (a/an/the/of/to…) stay lowercase; all-caps acronyms (AI) preserved; "See my budget" → "See My Budget".
+
+### Status
+All verified — backend pytest 5/5 (test_iter338_titlecase.py), web + mobile dashboards Title-Cased, mobile provider-switch list/decision(steps 1→2 tone change confirmed)/settlement render with colored sections. No regressions. No mocked APIs.

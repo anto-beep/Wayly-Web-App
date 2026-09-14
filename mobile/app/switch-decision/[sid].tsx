@@ -78,27 +78,32 @@ export default function SwitchDecisionScreen() {
 
   if (!sw) return <View style={{ flex: 1, backgroundColor: colors.bg }}><AppHeader onBack={() => router.back()} /><Loading label="Loading…" /></View>;
 
+  // Per-step colour tones mirror the web ProviderSwitch redesign
+  // (teal · clay · teal · terracotta · sage).
+  const STEP_TONES = [colors.primarySoft, colors.goldSoft, colors.primarySoft, colors.errorSoft, colors.sageSoft];
+  const stepBg = step <= 5 ? STEP_TONES[step - 1] : colors.sageSoft;
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Decision Walkthrough" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled" testID="psw1-walkthrough-root">
-        <View>
-          <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>DECISION WALKTHROUGH</T>
-          <T testID="psw1-walkthrough-title" style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text, marginTop: 2 }}>Confirm the Decision to Switch from {sw.current_provider_name}</T>
-          <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>Wayly does not push either direction. This walkthrough helps you think through the decision.</T>
+      <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm }} keyboardShouldPersistTaps="handled" testID="psw1-walkthrough-root">
+        <View style={{ backgroundColor: colors.primarySoft, borderRadius: radius.lg, padding: spacing.lg }}>
+          <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>DECISION WALKTHROUGH</T>
+          <T testID="psw1-walkthrough-title" style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text, marginTop: 4 }}>Confirm the Decision to Switch from {sw.current_provider_name}</T>
+          <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Wayly does not push either direction. This walkthrough helps you think through the decision.</T>
           {step < 6 ? (
             <View style={{ marginTop: spacing.md }}>
-              <View testID="psw1-progress" style={{ height: 6, borderRadius: 3, backgroundColor: colors.surface2, overflow: "hidden" }}>
-                <View style={{ height: 6, width: `${(step / 5) * 100}%`, backgroundColor: colors.primary }} />
+              <View testID="psw1-progress" style={{ height: 8, borderRadius: 4, backgroundColor: "rgba(14,77,82,0.15)", overflow: "hidden" }}>
+                <View style={{ height: 8, width: `${(step / 5) * 100}%`, backgroundColor: colors.primary }} />
               </View>
-              <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>Step {step} of 5</T>
+              <T variant="small" style={{ color: colors.primary, fontSize: 11, marginTop: 6, fontFamily: fonts.bodySemi }}>Step {step} of 5</T>
             </View>
           ) : null}
         </View>
 
         {context ? (
-          <Card testID="psw1-cross-tool-context" style={{ backgroundColor: colors.surface2 }}>
-            <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>CROSS-TOOL CONTEXT</T>
+          <Card testID="psw1-cross-tool-context" style={{ backgroundColor: colors.alertSoft, borderColor: colors.border }}>
+            <T variant="small" style={{ color: colors.alert, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>CROSS-TOOL CONTEXT</T>
             <View style={{ flexDirection: "row", gap: spacing.lg, marginTop: spacing.sm }}>
               <View style={{ flex: 1 }}>
                 <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>Unresolved complaints at current provider</T>
@@ -112,7 +117,7 @@ export default function SwitchDecisionScreen() {
           </Card>
         ) : null}
 
-        <Card testID={`psw1-walkthrough-step-${step}`}>
+        <Card testID={`psw1-walkthrough-step-${step}`} style={{ backgroundColor: stepBg, borderColor: colors.border }}>
           {step === 1 ? (
             <>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }}>Your reasons for switching</T>
@@ -190,7 +195,7 @@ export default function SwitchDecisionScreen() {
                 </View>
               </View>
               {context.final_decision === "proceed_with_switch" ? (
-                <Card testID="psw1-lf2-chain" style={{ backgroundColor: colors.surface2 }}>
+                <Card testID="psw1-lf2-chain" style={{ backgroundColor: colors.primarySoft, borderColor: colors.border }}>
                   <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
                     <FileText size={16} color={colors.primary} />
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text, flex: 1 }}>Draft the provider letters</T>

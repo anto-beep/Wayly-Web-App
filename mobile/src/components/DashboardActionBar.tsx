@@ -8,6 +8,20 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { DASHBOARD_QUICK_ACTIONS, searchDestinations } from "@/src/config/dashboardDestinations";
 
+const MINOR_WORDS = new Set(["a", "an", "the", "and", "or", "but", "of", "to", "in", "on", "for", "with", "at", "by", "from", "as", "per"]);
+// Headline-style capitalisation: "upload a statement" -> "Upload a Statement".
+const toTitleLabel = (s: string) =>
+  String(s || "")
+    .split(" ")
+    .map((w, i) => {
+      if (!w) return w;
+      const lw = w.toLowerCase();
+      if (i > 0 && MINOR_WORDS.has(lw)) return lw;
+      if (w.length > 1 && w === w.toUpperCase()) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(" ");
+
 /**
  * DashboardActionBar — "What would you like to do?" (mobile).
  *
@@ -66,7 +80,7 @@ export function DashboardActionBar() {
                     <Icon size={17} color={colors.gold} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{d.label}</T>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{toTitleLabel(d.label)}</T>
                     <T variant="small" numberOfLines={1}>{d.hint}</T>
                   </View>
                   <ArrowRight size={16} color={colors.muted} />
@@ -91,7 +105,7 @@ export function DashboardActionBar() {
                 <View style={[styles.tileIcon, { backgroundColor: "rgba(255,255,255,0.18)" }]}>
                   <Icon size={20} color="#fff" />
                 </View>
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }} numberOfLines={2}>{a.label}</T>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }} numberOfLines={2}>{toTitleLabel(a.label)}</T>
               </Pressable>
             );
           })}
