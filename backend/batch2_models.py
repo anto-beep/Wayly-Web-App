@@ -153,8 +153,16 @@ class ExternalContact(BaseModel):
 # ---------- Care Plan Amendment ----------
 class AmendmentRequestItem(BaseModel):
     service_name: str = Field(min_length=1, max_length=200)
-    change_type: Literal["add", "increase", "decrease", "remove", "swap"]
+    # Free-form so users can add their own change type beyond the presets.
+    change_type: str = Field(min_length=1, max_length=60)
     reason: str = Field(min_length=1, max_length=600)
+
+
+class AmendmentDraftItem(BaseModel):
+    """Loose variant used when saving an in-progress draft (fields may be blank)."""
+    service_name: Optional[str] = Field(default="", max_length=200)
+    change_type: Optional[str] = Field(default="", max_length=60)
+    reason: Optional[str] = Field(default="", max_length=600)
 
 
 class AmendmentCreate(BaseModel):
@@ -162,6 +170,24 @@ class AmendmentCreate(BaseModel):
     items: List[AmendmentRequestItem] = Field(min_length=1, max_length=10)
     sender_name: str = Field(min_length=1, max_length=120)
     sender_role: Optional[str] = Field(default="primary caregiver", max_length=80)
+    provider_name: Optional[str] = Field(default=None, max_length=200)
+
+
+class AmendmentSaveDraft(BaseModel):
+    """Save an in-progress amendment without generating the letter yet."""
+    participant_id: str
+    items: List[AmendmentDraftItem] = Field(default_factory=list, max_length=10)
+    sender_name: Optional[str] = Field(default="", max_length=120)
+    sender_role: Optional[str] = Field(default="primary caregiver", max_length=80)
+    provider_name: Optional[str] = Field(default=None, max_length=200)
+    id: Optional[str] = None  # when present, overwrite the existing draft
+
+
+class AmendmentUpdate(BaseModel):
+    """Edit an existing amendment (regenerates the letter when items change)."""
+    items: Optional[List[AmendmentRequestItem]] = Field(default=None, max_length=10)
+    sender_name: Optional[str] = Field(default=None, max_length=120)
+    sender_role: Optional[str] = Field(default=None, max_length=80)
     provider_name: Optional[str] = Field(default=None, max_length=200)
 
 

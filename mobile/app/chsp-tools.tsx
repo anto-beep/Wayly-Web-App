@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { router } from "expo-router";
-import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, ClipboardCheck, Plus, Wrench, Clock, HelpCircle, LifeBuoy, Mail, AlertTriangle } from "lucide-react-native";
+import * as DocumentPicker from "expo-document-picker";
+import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, ClipboardCheck, Plus, Wrench, Clock, HelpCircle, LifeBuoy, Mail, AlertTriangle, Upload, FileText, Trash2, Sparkles, Save, ListChecks } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, Select, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
@@ -43,10 +44,12 @@ const DECISION_OPTIONS = [
   { value: "need_more_information", label: "Need more information" },
 ];
 
-function LInput({ label, value, onChangeText, placeholder, keyboardType, testID, colors }: any) {
+function LInput({ label, value, onChangeText, placeholder, keyboardType, testID, colors, required, optional }: any) {
   return (
     <View style={{ flex: 1, minWidth: "45%" }}>
-      <T variant="small" style={{ color: colors.muted, fontSize: 11, marginBottom: 4 }}>{label}</T>
+      <T variant="small" style={{ color: colors.muted, fontSize: 11, marginBottom: 4 }}>
+        {label}{required ? <T style={{ color: colors.terracotta, fontFamily: fonts.bodySemi }}> *</T> : optional ? <T style={{ color: colors.muted, fontSize: 10 }}> (optional)</T> : null}
+      </T>
       <TextInput testID={testID} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.muted} keyboardType={keyboardType}
         style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, minHeight: 44, color: colors.text, fontFamily: fonts.body, backgroundColor: colors.bg }} />
     </View>
@@ -97,10 +100,44 @@ function WS1FeeCheck({ services, colors }: any) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
+  const [parsing, setParsing] = useState(false);
+  const [parseInfo, setParseInfo] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<any[]>([]);
+  const [showPast, setShowPast] = useState(false);
+
+  const loadSaved = async () => {
+    try { const d = await apiFetch<any>("/chsp1/fee-check/saved"); setSaved(d?.saved_checks || []); } catch { /* ignore */ }
+  };
+  useEffect(() => { loadSaved(); }, []);
 
   const onServiceChange = (id: string) => {
     const svc = services.find((s: any) => s.id === id);
     if (svc) set({ service_type: svc.service_type, provider_name: svc.provider_name, agreed_rate: svc.hourly_rate_or_fee?.amount != null ? String(svc.hourly_rate_or_fee.amount) : form.agreed_rate, rate_effective_date: svc.start_date ? (shortDate(svc.start_date) || form.rate_effective_date) : form.rate_effective_date });
+  };
+
+  const uploadInvoice = async () => {
+    try {
+      const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
+      if (res.canceled || !res.assets?.[0]) return;
+      const a = res.assets[0];
+      setParsing(true); setParseInfo(null); setError("");
+      const fd = new FormData();
+      fd.append("file", { uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream" } as any);
+      const data = await apiFetch<any>("/chsp1/fee-check/parse-invoice", { method: "POST", body: fd, isForm: true });
+      const fx = data?.fields || {};
+      set({
+        invoice_reference: fx.invoice_reference ?? form.invoice_reference,
+        provider_name: fx.provider_name ?? form.provider_name,
+        service_type: SERVICE_TYPES.some((o: any) => o.value === fx.service_type) ? fx.service_type : form.service_type,
+        agreed_rate: fx.agreed_rate != null ? String(fx.agreed_rate) : form.agreed_rate,
+        units_billed: fx.units_billed != null ? String(fx.units_billed) : form.units_billed,
+        units_received: fx.units_received != null ? String(fx.units_received) : form.units_received,
+        billed_amount: fx.billed_amount != null ? String(fx.billed_amount) : form.billed_amount,
+      });
+      setParseInfo({ plain_summary: data?.plain_summary, next_steps: data?.next_steps || [] });
+    } catch (e) { setError(e instanceof ApiError ? e.message : "Could not read that invoice."); }
+    finally { setParsing(false); }
   };
 
   const submit = async () => {
@@ -126,6 +163,27 @@ function WS1FeeCheck({ services, colors }: any) {
     finally { setBusy(false); }
   };
 
+  const saveCheck = async () => {
+    if (!result) return;
+    setSaving(true);
+    try {
+      await apiFetch("/chsp1/fee-check/save", { method: "POST", body: {
+        invoice_reference: form.invoice_reference || null, provider_name: form.provider_name || null,
+        service_type: form.service_type, agreed_rate: form.agreed_rate === "" ? null : Number(form.agreed_rate),
+        units_billed: form.units_billed === "" ? null : Number(form.units_billed),
+        units_received: form.units_received === "" ? null : Number(form.units_received),
+        billed_amount: form.billed_amount === "" ? null : Number(form.billed_amount),
+        rate_effective_date: form.rate_effective_date || null, billed_period_start: form.billed_period_start || null,
+        result,
+      } });
+      loadSaved();
+    } catch { /* ignore */ } finally { setSaving(false); }
+  };
+
+  const deleteSaved = async (id: string) => {
+    try { await apiFetch(`/chsp1/fee-check/saved/${id}`, { method: "DELETE" }); setSaved((l) => l.filter((s) => s.id !== id)); } catch { /* ignore */ }
+  };
+
   const serviceOpts = [{ value: "", label: "Manual entry" }, ...services.map((s: any) => ({ value: s.id, label: `${serviceTypeLabel(s.service_type)} · ${s.provider_name}` }))];
   const verdictTone = result ? (result.overall_verdict === "within" ? "success" : result.overall_verdict === "no_verdict" ? "neutral" : "alert") : "neutral";
   const VIcon = result ? (result.overall_verdict === "within" ? CheckCircle2 : result.overall_verdict === "material" ? ShieldAlert : result.overall_verdict === "no_verdict" ? HelpCircle : AlertTriangle) : HelpCircle;
@@ -134,7 +192,30 @@ function WS1FeeCheck({ services, colors }: any) {
     <Card testID="chsp-ws1-fee-check">
       <T variant="label">FEE CHECK</T>
       <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Was this CHSP invoice correct?</T>
-      <T variant="small" style={{ marginTop: 4 }}>We compare what you were billed against your provider&apos;s agreed per-unit rate.</T>
+      <T variant="small" style={{ marginTop: 4 }}>We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields marked <T style={{ color: colors.terracotta }}>*</T> are required.</T>
+
+      {/* Upload + auto-read */}
+      <View style={{ marginTop: spacing.md, backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="chsp-ws1-upload-card">
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
+          <View style={{ flex: 1, flexDirection: "row", gap: 8, alignItems: "center" }}>
+            <FileText size={18} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Have the invoice handy?</T>
+              <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>Upload a PDF or photo and we&apos;ll fill in the fields.</T>
+            </View>
+          </View>
+          <Button label={parsing ? "Reading…" : "Upload"} icon={Upload} testID="chsp-ws1-upload" loading={parsing} onPress={uploadInvoice} style={{ minHeight: 38, paddingHorizontal: 12 }} />
+        </View>
+        {parseInfo ? (
+          <View style={{ backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.sm, gap: 6 }} testID="chsp-ws1-parse-summary">
+            <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}><Sparkles size={14} color={colors.sage} /><T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>What we read</T></View>
+            <T variant="small" style={{ color: colors.muted }}>{parseInfo.plain_summary}</T>
+            {(parseInfo.next_steps || []).map((s: string, i: number) => (
+              <View key={i} style={{ flexDirection: "row", gap: 6, alignItems: "flex-start" }} testID={`chsp-ws1-next-step-${i}`}><ArrowRight size={12} color={colors.primary} style={{ marginTop: 2 }} /><T variant="small" style={{ flex: 1, color: colors.text }}>{s}</T></View>
+            ))}
+          </View>
+        ) : null}
+      </View>
 
       {services.length > 0 ? (
         <View style={{ marginTop: spacing.md }}>
@@ -142,14 +223,14 @@ function WS1FeeCheck({ services, colors }: any) {
         </View>
       ) : null}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.md }}>
-        <LInput label="Invoice reference" value={form.invoice_reference} onChangeText={(v: string) => set({ invoice_reference: v })} testID="chsp-ws1-reference" colors={colors} />
-        <LInput label="Provider" value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-ws1-provider" colors={colors} />
-        <LInput label="Agreed per-unit rate" value={form.agreed_rate} onChangeText={(v: string) => set({ agreed_rate: v })} placeholder="6.00" keyboardType="decimal-pad" testID="chsp-ws1-agreed-rate" colors={colors} />
-        <LInput label="Rate effective (DD/MM/YYYY)" value={form.rate_effective_date} onChangeText={(v: string) => set({ rate_effective_date: v })} placeholder="01/01/2026" testID="chsp-ws1-rate-date" colors={colors} />
-        <LInput label="Units billed" value={form.units_billed} onChangeText={(v: string) => set({ units_billed: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-billed" colors={colors} />
-        <LInput label="Units received" value={form.units_received} onChangeText={(v: string) => set({ units_received: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-received" colors={colors} />
-        <LInput label="Billed period start (DD/MM/YYYY)" value={form.billed_period_start} onChangeText={(v: string) => set({ billed_period_start: v })} placeholder="01/07/2026" testID="chsp-ws1-period-start" colors={colors} />
-        <LInput label="Billed amount" value={form.billed_amount} onChangeText={(v: string) => set({ billed_amount: v })} keyboardType="decimal-pad" testID="chsp-ws1-billed" colors={colors} />
+        <LInput label="Invoice reference" optional value={form.invoice_reference} onChangeText={(v: string) => set({ invoice_reference: v })} testID="chsp-ws1-reference" colors={colors} />
+        <LInput label="Provider" optional value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-ws1-provider" colors={colors} />
+        <LInput label="Agreed per-unit rate" optional value={form.agreed_rate} onChangeText={(v: string) => set({ agreed_rate: v })} placeholder="6.00" keyboardType="decimal-pad" testID="chsp-ws1-agreed-rate" colors={colors} />
+        <LInput label="Rate effective (DD/MM/YYYY)" optional value={form.rate_effective_date} onChangeText={(v: string) => set({ rate_effective_date: v })} placeholder="01/01/2026" testID="chsp-ws1-rate-date" colors={colors} />
+        <LInput label="Units billed" required value={form.units_billed} onChangeText={(v: string) => set({ units_billed: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-billed" colors={colors} />
+        <LInput label="Units received" required value={form.units_received} onChangeText={(v: string) => set({ units_received: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-received" colors={colors} />
+        <LInput label="Billed period start (DD/MM/YYYY)" optional value={form.billed_period_start} onChangeText={(v: string) => set({ billed_period_start: v })} placeholder="01/07/2026" testID="chsp-ws1-period-start" colors={colors} />
+        <LInput label="Billed amount" required value={form.billed_amount} onChangeText={(v: string) => set({ billed_amount: v })} keyboardType="decimal-pad" testID="chsp-ws1-billed" colors={colors} />
       </View>
       {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
       <Button label="Check fee" icon={ReceiptText} testID="chsp-ws1-submit" loading={busy} onPress={submit} style={{ marginTop: spacing.md }} />
@@ -184,10 +265,30 @@ function WS1FeeCheck({ services, colors }: any) {
                   <T variant="small" style={{ marginTop: 4 }}>{result.rate_age_days != null ? `This agreed rate is ${result.rate_age_days} days old.` : "This billed period may span a contribution change."} This verdict is provisional until you confirm the rate still applies.</T>
                 </View>
               ) : null}
+              <Button label={saving ? "Saving…" : "Save this check"} variant="outline" icon={Save} testID="chsp-ws1-save" loading={saving} onPress={saveCheck} style={{ alignSelf: "flex-start" }} />
             </>
           )}
         </View>
       ) : null}
+
+      {saved.length > 0 ? (
+        <View style={{ marginTop: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, overflow: "hidden" }} testID="chsp-ws1-past">
+          <Pressable testID="chsp-ws1-past-toggle" onPress={() => setShowPast((s) => !s)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: spacing.md }}>
+            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}><ListChecks size={16} color={colors.primary} /><T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Past checks ({saved.length})</T></View>
+            <T variant="small" style={{ color: colors.muted }}>{showPast ? "Hide" : "Show"}</T>
+          </Pressable>
+          {showPast ? saved.map((s) => (
+            <View key={s.id} testID={`chsp-ws1-past-${s.id}`} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border }}>
+              <View style={{ flex: 1 }}>
+                <T variant="small" style={{ color: colors.text }} numberOfLines={1}>{s.provider_name || "Provider"} · {serviceTypeLabel(s.service_type)}</T>
+                <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>{s.result?.verdict_label || "Checked"} · {s.created_at ? shortDate(s.created_at) : ""}</T>
+              </View>
+              <Pressable testID={`chsp-ws1-past-delete-${s.id}`} onPress={() => deleteSaved(s.id)}><Trash2 size={15} color={colors.terracotta} /></Pressable>
+            </View>
+          )) : null}
+        </View>
+      ) : null}
+
       <AccessHardship colors={colors} providerName={form.provider_name} emphasise={Boolean(result && !result.degraded && result.overall_verdict === "material")} />
     </Card>
   );

@@ -10,10 +10,14 @@ import { toast } from "sonner";
 import {
     ChevronLeft, Receipt, ArrowRight, CheckCircle2, AlertTriangle,
     ShieldAlert, ClipboardCheck, Home, Clock, LifeBuoy, Mail, HelpCircle,
+    Upload, FileText, Save, Trash2, Sparkles, ListChecks,
 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
 import { serviceTypeLabel, chspStatusLabel, labelize } from "@/lib/labels";
 import { formatDate } from "@/lib/formatDate";
+
+// Explicit "(Required)" marker so every field is clearly labelled.
+const Req = () => <span className="text-red-600 font-semibold ml-0.5" aria-label="required" title="Required">*</span>;
 
 const SERVICE_TYPES = [
     "domestic_assistance", "personal_care", "meals", "transport",
@@ -102,7 +106,27 @@ function WS1FeeCheck({ services }) {
     });
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState(null);
+    const [parsing, setParsing] = useState(false);
+    const [parseInfo, setParseInfo] = useState(null); // { plain_summary, next_steps }
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState([]);
+    const [showPast, setShowPast] = useState(false);
+    const fileRef = React.useRef(null);
     const resultRef = useScrollToResult(Boolean(result));
+
+    // Normalise DD/MM/YYYY or ISO to YYYY-MM-DD for native date inputs.
+    const toISODate = (v) => {
+        if (!v) return "";
+        const s = String(v);
+        if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+        const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        return m ? `${m[3]}-${m[2]}-${m[1]}` : "";
+    };
+
+    const loadSaved = async () => {
+        try { const { data } = await api.get("/chsp1/fee-check/saved"); setSaved(data.saved_checks || []); } catch { /* ignore */ }
+    };
+    useEffect(() => { loadSaved(); }, []);
 
     const onServiceChange = (id) => {
         const svc = services.find((s) => s.id === id);
@@ -112,14 +136,44 @@ function WS1FeeCheck({ services }) {
                 service_type: svc.service_type || f.service_type,
                 provider_name: svc.provider_name || f.provider_name,
                 agreed_rate: svc.hourly_rate_or_fee?.amount != null ? String(svc.hourly_rate_or_fee.amount) : f.agreed_rate,
-                rate_effective_date: svc.start_date ? (formatDate(svc.start_date) || f.rate_effective_date) : f.rate_effective_date,
+                rate_effective_date: svc.start_date ? (toISODate(svc.start_date) || f.rate_effective_date) : f.rate_effective_date,
             }));
         }
     };
 
+    const onPickInvoice = async (e) => {
+        const file = e.target.files?.[0];
+        if (fileRef.current) fileRef.current.value = "";
+        if (!file) return;
+        setParsing(true);
+        setParseInfo(null);
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            const { data } = await api.post("/chsp1/fee-check/parse-invoice", fd, { headers: { "Content-Type": "multipart/form-data" } });
+            const fx = data.fields || {};
+            setForm((f) => ({
+                ...f,
+                invoice_reference: fx.invoice_reference ?? f.invoice_reference,
+                provider_name: fx.provider_name ?? f.provider_name,
+                service_type: SERVICE_TYPES.includes(fx.service_type) ? fx.service_type : f.service_type,
+                agreed_rate: fx.agreed_rate != null ? String(fx.agreed_rate) : f.agreed_rate,
+                units_billed: fx.units_billed != null ? String(fx.units_billed) : f.units_billed,
+                units_received: fx.units_received != null ? String(fx.units_received) : f.units_received,
+                billed_amount: fx.billed_amount != null ? String(fx.billed_amount) : f.billed_amount,
+                billed_period_start: toISODate(fx.billed_period_start) || f.billed_period_start,
+                billed_period_end: toISODate(fx.billed_period_end) || f.billed_period_end,
+            }));
+            setParseInfo({ plain_summary: data.plain_summary, next_steps: data.next_steps || [] });
+            toast.success("We read your invoice and filled in what we could.");
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || "Could not read that invoice.");
+        } finally { setParsing(false); }
+    };
+
     const submit = async () => {
         for (const k of ["units_billed", "units_received", "billed_amount"]) {
-            if (form[k] === "" || form[k] == null) { toast.error(`Missing: ${k.replace(/_/g, " ")}`); return; }
+            if (form[k] === "" || form[k] == null) { toast.error(`Please enter ${k.replace(/_/g, " ")}`); return; }
         }
         setBusy(true);
         try {
@@ -141,18 +195,79 @@ function WS1FeeCheck({ services }) {
         } finally { setBusy(false); }
     };
 
+    const saveCheck = async () => {
+        if (!result) return;
+        setSaving(true);
+        try {
+            await api.post("/chsp1/fee-check/save", {
+                invoice_reference: form.invoice_reference || null,
+                provider_name: form.provider_name || null,
+                service_type: form.service_type,
+                agreed_rate: form.agreed_rate === "" ? null : Number(form.agreed_rate),
+                units_billed: form.units_billed === "" ? null : Number(form.units_billed),
+                units_received: form.units_received === "" ? null : Number(form.units_received),
+                billed_amount: form.billed_amount === "" ? null : Number(form.billed_amount),
+                rate_effective_date: form.rate_effective_date || null,
+                billed_period_start: form.billed_period_start || null,
+                billed_period_end: form.billed_period_end || null,
+                result,
+            });
+            toast.success("Saved to your past checks.");
+            loadSaved();
+        } catch { toast.error("Could not save this check."); }
+        finally { setSaving(false); }
+    };
+
+    const deleteSaved = async (id) => {
+        try { await api.delete(`/chsp1/fee-check/saved/${id}`); setSaved((l) => l.filter((s) => s.id !== id)); }
+        catch { toast.error("Could not delete."); }
+    };
+
     const verdict = result ? (WS1_VERDICT[result.overall_verdict] || WS1_VERDICT.no_verdict) : null;
 
     return (
-        <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-4" data-testid="chsp-ws1-fee-check">
-            <p className="text-xs uppercase tracking-wide text-primary-k/50">Fee check</p>
-            <h2 className="font-heading text-xl text-primary-k">Was this CHSP invoice correct?</h2>
-            <p className="text-sm text-muted-k">We compare what you were billed against your provider&apos;s agreed per-unit rate. Enter the agreed rate so we can give you an authoritative verdict.</p>
+        <div className="rounded-2xl bg-[#EAF3F3] p-5 space-y-4" data-testid="chsp-ws1-fee-check">
+            <div>
+                <p className="text-xs uppercase tracking-wide text-primary-k/60">Fee check</p>
+                <h2 className="font-heading text-xl text-primary-k">Was this CHSP invoice correct?</h2>
+                <p className="text-sm text-muted-k">We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields marked <Req/> are required.</p>
+            </div>
 
-            <div className="grid sm:grid-cols-2 gap-3">
+            {/* Upload + auto-read an invoice */}
+            <div className="rounded-xl bg-white/70 border border-primary-k/10 p-4 space-y-2" data-testid="chsp-ws1-upload-card">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-start gap-2">
+                        <div className="p-2 rounded-lg bg-primary-k/10"><FileText className="w-4 h-4 text-primary-k"/></div>
+                        <div>
+                            <p className="text-sm font-medium text-primary-k">Have the invoice handy?</p>
+                            <p className="text-[11px] text-muted-k">Upload a PDF or photo and we&apos;ll read it and fill in the fields below for you.</p>
+                        </div>
+                    </div>
+                    <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" onChange={onPickInvoice} className="hidden" data-testid="chsp-ws1-upload-input"/>
+                    <button onClick={() => fileRef.current?.click()} disabled={parsing} data-testid="chsp-ws1-upload"
+                            className="text-xs inline-flex items-center gap-1 px-3 py-2 rounded-full bg-primary-k text-white disabled:opacity-50">
+                        <Upload className="w-3 h-3"/> {parsing ? "Reading…" : "Upload invoice"}
+                    </button>
+                </div>
+                {parseInfo && (
+                    <div className="rounded-lg bg-[#EEF3EE] p-3 space-y-2" data-testid="chsp-ws1-parse-summary">
+                        <div className="flex items-center gap-1.5 text-sm text-primary-k font-medium"><Sparkles className="w-4 h-4"/> What we read</div>
+                        <p className="text-sm text-muted-k">{parseInfo.plain_summary}</p>
+                        {parseInfo.next_steps?.length > 0 && (
+                            <ul className="space-y-1" data-testid="chsp-ws1-next-steps">
+                                {parseInfo.next_steps.map((s, i) => (
+                                    <li key={i} className="text-xs text-primary-k flex items-start gap-1.5"><ArrowRight className="w-3 h-3 mt-0.5 shrink-0"/> {s}</li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3 rounded-xl bg-white/70 border border-primary-k/10 p-4">
                 {services.length > 0 && (
                     <label className="text-xs text-muted-k sm:col-span-2">Service entry (pre-fills provider, type, rate)
-                        <select onChange={(e) => onServiceChange(e.target.value)} data-testid="chsp-ws1-service-entry" className="mt-1 w-full px-3 py-2 text-sm border rounded">
+                        <select onChange={(e) => onServiceChange(e.target.value)} data-testid="chsp-ws1-service-entry" className="mt-1 w-full px-3 py-2 text-sm border rounded bg-white">
                             <option value="">Manual entry</option>
                             {services.map((s) => <option key={s.id} value={s.id}>{serviceTypeLabel(s.service_type)} · {s.provider_name}</option>)}
                         </select>
@@ -164,30 +279,30 @@ function WS1FeeCheck({ services }) {
                 <label className="text-xs text-muted-k">Provider
                     <input value={form.provider_name} data-testid="chsp-ws1-provider" onChange={(e) => setForm({ ...form, provider_name: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Service type
-                    <select value={form.service_type} data-testid="chsp-ws1-service-type" onChange={(e) => setForm({ ...form, service_type: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded">
+                <label className="text-xs text-muted-k">Service type <Req/>
+                    <select value={form.service_type} data-testid="chsp-ws1-service-type" onChange={(e) => setForm({ ...form, service_type: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded bg-white">
                         {SERVICE_TYPES.map((t) => <option key={t} value={t}>{serviceTypeLabel(t)}</option>)}
                     </select>
                 </label>
                 <label className="text-xs text-muted-k">Agreed per-unit rate (AUD)
                     <input type="number" value={form.agreed_rate} data-testid="chsp-ws1-agreed-rate" placeholder="e.g. 6.00" onChange={(e) => setForm({ ...form, agreed_rate: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Rate effective date (DD/MM/YYYY)
-                    <input type="text" inputMode="numeric" value={form.rate_effective_date} data-testid="chsp-ws1-rate-date" placeholder="DD/MM/YYYY" onChange={(e) => setForm({ ...form, rate_effective_date: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                <label className="text-xs text-muted-k">Rate effective date
+                    <input type="date" value={form.rate_effective_date} data-testid="chsp-ws1-rate-date" onChange={(e) => setForm({ ...form, rate_effective_date: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Units billed
+                <label className="text-xs text-muted-k">Units billed <Req/>
                     <input type="number" value={form.units_billed} data-testid="chsp-ws1-units-billed" placeholder="e.g. 4" onChange={(e) => setForm({ ...form, units_billed: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Units received
+                <label className="text-xs text-muted-k">Units received <Req/>
                     <input type="number" value={form.units_received} data-testid="chsp-ws1-units-received" placeholder="e.g. 4" onChange={(e) => setForm({ ...form, units_received: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Billed period start (DD/MM/YYYY)
-                    <input type="text" inputMode="numeric" value={form.billed_period_start} data-testid="chsp-ws1-period-start" placeholder="DD/MM/YYYY" onChange={(e) => setForm({ ...form, billed_period_start: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                <label className="text-xs text-muted-k">Billed period start
+                    <input type="date" value={form.billed_period_start} data-testid="chsp-ws1-period-start" onChange={(e) => setForm({ ...form, billed_period_start: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Billed period end (DD/MM/YYYY)
-                    <input type="text" inputMode="numeric" value={form.billed_period_end} data-testid="chsp-ws1-period-end" placeholder="DD/MM/YYYY" onChange={(e) => setForm({ ...form, billed_period_end: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                <label className="text-xs text-muted-k">Billed period end
+                    <input type="date" value={form.billed_period_end} data-testid="chsp-ws1-period-end" onChange={(e) => setForm({ ...form, billed_period_end: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Billed amount (AUD)
+                <label className="text-xs text-muted-k">Billed amount (AUD) <Req/>
                     <input type="number" value={form.billed_amount} data-testid="chsp-ws1-billed" onChange={(e) => setForm({ ...form, billed_amount: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
             </div>
@@ -199,7 +314,7 @@ function WS1FeeCheck({ services }) {
             {result && (
                 <div ref={resultRef} className="mt-2 space-y-3 scroll-mt-20" data-testid="chsp-ws1-result">
                     {result.degraded ? (
-                        <div className="rounded-xl border border-primary-k/20 bg-primary-k/[0.03] p-4" data-testid="chsp-ws1-degraded">
+                        <div className="rounded-xl border border-primary-k/20 bg-white p-4" data-testid="chsp-ws1-degraded">
                             <div className="flex items-center gap-2 text-primary-k font-medium"><HelpCircle className="w-4 h-4" /> No verdict yet</div>
                             <p className="text-sm text-muted-k mt-1">We can&apos;t give an authoritative verdict without your provider&apos;s agreed per-unit rate. Add the agreed fee schedule for this provider and service, then run the check again.</p>
                         </div>
@@ -214,10 +329,10 @@ function WS1FeeCheck({ services }) {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                                <div className="rounded-lg border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Billed per unit</div><div className="text-primary-k tabular-nums mt-0.5">{AUD(result.billed_per_unit)}</div></div>
-                                <div className="rounded-lg border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Expected amount</div><div className="text-primary-k tabular-nums mt-0.5">{AUD(result.expected_amount)}</div></div>
-                                <div className="rounded-lg border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Rate check</div><div className="text-primary-k mt-0.5 capitalize">{result.rate_tier}</div></div>
-                                <div className="rounded-lg border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Units check</div><div className="text-primary-k mt-0.5 capitalize">{result.units_tier}</div></div>
+                                <div className="rounded-lg bg-white border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Billed per unit</div><div className="text-primary-k tabular-nums mt-0.5">{AUD(result.billed_per_unit)}</div></div>
+                                <div className="rounded-lg bg-white border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Expected amount</div><div className="text-primary-k tabular-nums mt-0.5">{AUD(result.expected_amount)}</div></div>
+                                <div className="rounded-lg bg-white border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Rate check</div><div className="text-primary-k mt-0.5 capitalize">{result.rate_tier}</div></div>
+                                <div className="rounded-lg bg-white border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Units check</div><div className="text-primary-k mt-0.5 capitalize">{result.units_tier}</div></div>
                             </div>
                             {result.provisional && (
                                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" data-testid="chsp-ws1-staleness">
@@ -225,7 +340,35 @@ function WS1FeeCheck({ services }) {
                                     <p className="mt-1">{result.rate_age_days != null ? `This agreed rate is ${result.rate_age_days} days old.` : "This billed period may span a contribution change."} This verdict is provisional until you confirm the rate still applies.</p>
                                 </div>
                             )}
+                            <button onClick={saveCheck} disabled={saving} data-testid="chsp-ws1-save"
+                                    className="inline-flex items-center gap-1.5 text-xs px-4 py-2 rounded-full border border-primary-k/30 text-primary-k bg-white hover:bg-primary-k hover:text-white disabled:opacity-50">
+                                <Save className="w-3.5 h-3.5"/> {saving ? "Saving…" : "Save this check"}
+                            </button>
                         </>
+                    )}
+                </div>
+            )}
+
+            {/* Past checks */}
+            {saved.length > 0 && (
+                <div className="rounded-xl bg-white/70 border border-primary-k/10 overflow-hidden" data-testid="chsp-ws1-past">
+                    <button onClick={() => setShowPast((s) => !s)} data-testid="chsp-ws1-past-toggle"
+                            className="w-full flex items-center justify-between px-4 py-3 text-sm text-primary-k">
+                        <span className="inline-flex items-center gap-2 font-medium"><ListChecks className="w-4 h-4"/> Past checks ({saved.length})</span>
+                        <span className="text-xs text-muted-k">{showPast ? "Hide" : "Show"}</span>
+                    </button>
+                    {showPast && (
+                        <ul className="divide-y divide-kindred">
+                            {saved.map((s) => (
+                                <li key={s.id} className="px-4 py-2.5 flex items-center justify-between gap-2" data-testid={`chsp-ws1-past-${s.id}`}>
+                                    <div className="min-w-0">
+                                        <p className="text-sm text-primary-k truncate">{s.provider_name || "Provider"} · {serviceTypeLabel(s.service_type)}</p>
+                                        <p className="text-[11px] text-muted-k">{s.result?.verdict_label || "Checked"} · {formatDate(s.created_at) || ""}</p>
+                                    </div>
+                                    <button onClick={() => deleteSaved(s.id)} data-testid={`chsp-ws1-past-delete-${s.id}`} className="text-red-600 shrink-0"><Trash2 className="w-4 h-4"/></button>
+                                </li>
+                            ))}
+                        </ul>
                     )}
                 </div>
             )}
@@ -356,7 +499,7 @@ function ChspProfileCard({ profile, onCreate }) {
             <p className="text-xs uppercase tracking-wide text-primary-k/50">Start a CHSP profile</p>
             <p className="text-sm text-muted-k">Set your current CHSP status so we can check fees and walk through transition to Support at Home.</p>
             <div className="grid sm:grid-cols-2 gap-3">
-                <label className="text-xs text-muted-k">Status
+                <label className="text-xs text-muted-k">Status <Req/>
                     <select value={status} onChange={e => setStatus(e.target.value)}
                             data-testid="chsp-status"
                             className="mt-1 w-full px-3 py-2 text-sm border rounded">

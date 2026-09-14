@@ -22,6 +22,7 @@ import os
 import io
 import base64
 import logging
+from uuid import uuid4
 from datetime import datetime, timezone, date
 from typing import Optional, List, Dict, Any
 
@@ -36,6 +37,7 @@ from batch2_models import (
     WallPostCreate, WallReact, WallPost,
     ExternalContactUpdate, ExternalContact,
     AmendmentCreate, AmendmentRequestItem, CarePlanAmendment,
+    AmendmentSaveDraft, AmendmentUpdate,
     AdviserBrandUpdate,
     ScenarioCreate, ScenarioInputs, ScenarioOutputs, AdviserScenario,
     _new_id, _now_iso,
@@ -551,7 +553,12 @@ def _generate_amendment_letter(*, participant: dict, items: List[AmendmentReques
             "decrease": "Decrease",
             "remove": "Remove",
             "swap": "Swap",
-        }.get(it.change_type, it.change_type.capitalize())
+            "change_provider": "Change provider for",
+            "change_schedule": "Change the schedule for",
+            "pause": "Pause",
+            "resume": "Resume",
+            "update_goal": "Update the goal for",
+        }.get(it.change_type, (it.change_type or "").replace("_", " ").strip().capitalize() or "Change")
         bullet_lines.append(f"- {verb} {it.service_name}, {it.reason}")
     body = (
         f"{today}\n\n"
@@ -638,9 +645,93 @@ async def update_amendment_status(aid: str, payload: _AmendmentStatusBody, reque
     return await _db.care_plan_amendments.find_one({"id": aid}, {"_id": 0})
 
 
-# ============================================================================
-# FEATURE 5, Adviser Branded PDF (brand profile CRUD)
-# ============================================================================
+@batch2_router.post("/amendments/save-draft")
+async def save_amendment_draft(payload: AmendmentSaveDraft, request: Request):
+    """Save an in-progress amendment (blank fields allowed) so the user can
+    come back and finish it later. Overwrites when an id is supplied."""
+    user = await _user_dep(request)
+    hid = await _require_household_id(user)
+    p = await _get_participant_or_404(hid, payload.participant_id)
+    items = [it.model_dump() for it in (payload.items or [])] or [{"service_name": "", "change_type": "", "reason": ""}]
+    now = datetime.now(timezone.utc).isoformat()
+    if payload.id:
+        res = await _db.care_plan_amendments.update_one(
+            {"id": payload.id, "household_id": hid},
+            {"$set": {
+                "participant_id": payload.participant_id,
+                "items": items,
+                "sender_name": payload.sender_name or "",
+                "sender_role": payload.sender_role or "primary caregiver",
+                "provider_name": payload.provider_name or p.get("provider_name"),
+                "status": "draft",
+                "updated_at": now,
+            }},
+        )
+        if res.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Draft not found")
+        return await _db.care_plan_amendments.find_one({"id": payload.id}, {"_id": 0})
+    doc = {
+        "id": str(uuid4()),
+        "household_id": hid,
+        "participant_id": payload.participant_id,
+        "items": items,
+        "sender_name": payload.sender_name or "",
+        "sender_role": payload.sender_role or "primary caregiver",
+        "provider_name": payload.provider_name or p.get("provider_name"),
+        "generated_letter": "",
+        "status": "draft",
+        "created_at": now,
+        "created_by": user["id"],
+    }
+    await _db.care_plan_amendments.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@batch2_router.patch("/amendments/{aid}")
+async def edit_amendment(aid: str, payload: AmendmentUpdate, request: Request):
+    """Edit an existing amendment. When items are supplied the letter is
+    regenerated so the draft stays in sync with the changes."""
+    user = await _user_dep(request)
+    hid = await _require_household_id(user)
+    existing = await _db.care_plan_amendments.find_one({"id": aid, "household_id": hid}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Amendment not found")
+    p = await _get_participant_or_404(hid, existing["participant_id"])
+    updates: Dict[str, Any] = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if payload.sender_name is not None:
+        updates["sender_name"] = payload.sender_name
+    if payload.sender_role is not None:
+        updates["sender_role"] = payload.sender_role or "primary caregiver"
+    if payload.provider_name is not None:
+        updates["provider_name"] = payload.provider_name
+    if payload.items is not None:
+        updates["items"] = [it.model_dump() for it in payload.items]
+        letter = _generate_amendment_letter(
+            participant=p,
+            items=payload.items,
+            sender_name=(payload.sender_name if payload.sender_name is not None else existing.get("sender_name")) or "",
+            sender_role=(payload.sender_role if payload.sender_role is not None else existing.get("sender_role")) or "primary caregiver",
+            provider_name=(payload.provider_name if payload.provider_name is not None else existing.get("provider_name")),
+        )
+        updates["generated_letter"] = letter
+    await _db.care_plan_amendments.update_one({"id": aid, "household_id": hid}, {"$set": updates})
+    return await _db.care_plan_amendments.find_one({"id": aid}, {"_id": 0})
+
+
+@batch2_router.delete("/amendments/{aid}")
+async def delete_amendment(aid: str, request: Request):
+    user = await _user_dep(request)
+    hid = await _require_household_id(user)
+    res = await _db.care_plan_amendments.delete_one({"id": aid, "household_id": hid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Amendment not found")
+    try:
+        await _audit_log(hid, user["id"], user.get("name") or user["email"], "AMENDMENT_DELETED",
+                         f"Deleted care-plan amendment {aid[:8]}")
+    except Exception:
+        pass
+    return {"ok": True, "deleted": aid}
 @batch2_router.get("/adviser/brand")
 async def get_brand(request: Request):
     user = await _adviser_dep(request)

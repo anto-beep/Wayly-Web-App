@@ -180,6 +180,107 @@ def _burnout_response(signal: str) -> Dict[str, Any]:
     return templates.get(signal, templates["low"])
 
 
+# Desired-support / constraint → relevant directory services (Section F). Lets the
+# results screen point to more than one generic list, tailored to what the carer said.
+_DESIRED_TO_SLUGS = {
+    "more_respite": ["my_aged_care", "carer_gateway"],
+    "financial_support": ["carer_gateway", "my_aged_care"],
+    "counselling": ["carer_gateway", "lifeline", "1800respect"],
+    "peer_support": ["opan", "carer_gateway"],
+    "education": ["carer_gateway"],
+    "practical_help": ["carer_gateway", "my_aged_care"],
+    "understanding": ["opan", "carer_gateway"],
+}
+_CONSTRAINT_TO_SLUGS = {
+    "own_health": ["carer_gateway"],
+    "social_isolation": ["opan", "carer_gateway"],
+    "family_conflict": ["1800respect", "elder_abuse_helpline"],
+    "emotional": ["lifeline", "carer_gateway"],
+}
+
+_STRENGTH_LABEL = {
+    "patience": "patience", "organisation": "organisation", "medical_knowledge": "medical knowledge",
+    "physical_capacity": "physical capacity", "emotional_resilience": "emotional resilience",
+    "communication": "communication", "other": "other strengths",
+}
+_DESIRED_LABEL = {
+    "more_respite": "more respite", "financial_support": "financial support", "counselling": "counselling",
+    "peer_support": "peer support", "education": "education or training", "practical_help": "practical help",
+    "understanding": "understanding from others",
+}
+
+
+def _recommend_resources(desired: List[str], constraints: List[str], base: List[str]) -> List[str]:
+    slugs: List[str] = list(base or [])
+    for d in desired or []:
+        slugs.extend(_DESIRED_TO_SLUGS.get(d, []))
+    for c in constraints or []:
+        slugs.extend(_CONSTRAINT_TO_SLUGS.get(c, []))
+    if not slugs:
+        slugs = ["carer_gateway"]
+    # De-dupe, preserve order, cap.
+    seen, out = set(), []
+    for s in slugs:
+        if s not in seen:
+            seen.add(s)
+            out.append(s)
+    return out[:6]
+
+
+def _humanise_list(items: List[str], mapping: Dict[str, str]) -> str:
+    labels = [mapping.get(i, i.replace("_", " ")) for i in (items or [])]
+    labels = [l for l in labels if l]
+    if not labels:
+        return ""
+    if len(labels) == 1:
+        return labels[0]
+    if len(labels) == 2:
+        return f"{labels[0]} and {labels[1]}"
+    return ", ".join(labels[:-1]) + f", and {labels[-1]}"
+
+
+def _build_carer_summary(body: "CarerAssessmentIn", burnout_signal: Optional[str]) -> Dict[str, Any]:
+    """A warm, plain-English read-back of what the carer told us, plus an
+    encouraging line and tailored next steps. Deterministic (no LLM)."""
+    strengths = _humanise_list(body.self_reported_strengths, _STRENGTH_LABEL)
+    desired = _humanise_list(body.desired_support, _DESIRED_LABEL)
+    hours = None
+    try:
+        hours = int((body.capacity_indicators or {}).get("hours_per_week_caring") or 0) or None
+    except Exception:
+        hours = None
+
+    lines: List[str] = []
+    if strengths:
+        lines.append(f"You bring real {strengths} to your caring role, and that matters.")
+    else:
+        lines.append("Showing up for someone every day takes real strength, even on the days it does not feel like it.")
+    if hours:
+        lines.append(f"You told us you spend around {hours} hours a week caring. That is a big part of your life to give.")
+    if body.constraints_reported:
+        lines.append("You also named some things that are making it harder right now. Naming them is the first step to getting the right support.")
+    summary = " ".join(lines)
+
+    encouragement_map = {
+        "low": "You seem to be holding things steady. Keep protecting the small routines that keep you well.",
+        "moderate": "A few things are starting to wear on you. A little support now can stop it building up.",
+        "elevated": "You are carrying a lot at the moment. Please be as kind to yourself as you are to the person you care for.",
+        "high": "This sounds really heavy right now. You deserve support too, and reaching out is a sign of strength, not failure.",
+    }
+    encouragement = encouragement_map.get(burnout_signal or "low", encouragement_map["low"])
+
+    next_steps: List[str] = []
+    if desired:
+        next_steps.append(f"You said {desired} would help most. The contacts below can start you on that.")
+    if burnout_signal in ("elevated", "high"):
+        next_steps.append("Consider calling Carer Gateway on 1800 422 737 for practical and emotional support.")
+    next_steps.append("Book a gentle check-in with yourself in a few weeks so you keep noticing how you are travelling.")
+    if "respite_formal" not in (body.support_used_currently or []) and "respite_informal" not in (body.support_used_currently or []):
+        next_steps.append("If you have never tried respite, even a short break can make a real difference.")
+
+    return {"personal_summary": summary, "encouragement": encouragement, "next_steps": next_steps}
+
+
 # ---------------------------------------------------------------------------
 # Carer assessment (Sections B.1, D.1, E)
 # ---------------------------------------------------------------------------
@@ -206,6 +307,7 @@ class CarerAssessmentIn(BaseModel):
     desired_support: List[str] = Field(default_factory=list)
     opt_in_burnout: bool = False
     opt_in_health_conditions: bool = False
+    next_checkin_date: Optional[str] = None
 
 
 def _view_assessment(a: dict) -> Dict[str, Any]:
@@ -225,6 +327,10 @@ def _view_assessment(a: dict) -> Dict[str, Any]:
         "burnout_response": a.get("burnout_response"),
         "desired_support": a.get("desired_support") or [],
         "resources_offered": a.get("resources_offered") or [],
+        "personal_summary": a.get("personal_summary"),
+        "encouragement": a.get("encouragement"),
+        "next_steps": a.get("next_steps") or [],
+        "next_checkin_date": a.get("next_checkin_date"),
         "created_at": _iso(a.get("created_at")),
         "retention_expires_at": _iso(a.get("retention_expires_at")),
         "caregiver_extended_retention": bool(a.get("caregiver_extended_retention")),
@@ -254,6 +360,9 @@ async def create_assessment(body: CarerAssessmentIn, request: Request):
     resources_offered = []
     if burnout_response:
         resources_offered = burnout_response.get("recommended_resources", [])
+    # Tailor the resource list to what the carer actually asked for + their constraints.
+    resources_offered = _recommend_resources(body.desired_support, body.constraints_reported, resources_offered)
+    warm = _build_carer_summary(body, burnout_signal)
 
     doc = {
         "id": str(uuid.uuid4()),
@@ -271,6 +380,10 @@ async def create_assessment(body: CarerAssessmentIn, request: Request):
         "burnout_response": burnout_response,
         "desired_support": body.desired_support,
         "resources_offered": resources_offered,
+        "personal_summary": warm["personal_summary"],
+        "encouragement": warm["encouragement"],
+        "next_steps": warm["next_steps"],
+        "next_checkin_date": body.next_checkin_date,
         "resources_taken_up": [],
         "contains_sensitive_content_flag": bool(
             body.constraints_notes and any(k in (body.constraints_notes or "").lower()
@@ -318,6 +431,63 @@ async def delete_assessment(aid: str, request: Request):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Not found")
     return {"deleted": True}
+
+
+# ---------------------------------------------------------------------------
+# In-progress draft (save & resume) — one draft per carer
+# ---------------------------------------------------------------------------
+
+
+class AssessmentDraftIn(BaseModel):
+    form: Dict[str, Any] = Field(default_factory=dict)
+    step: int = 1
+
+
+@cs1_router.get("/assessment-draft")
+async def get_assessment_draft(request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    doc = await _db.carer_assessment_drafts.find_one({"caregiver_user_id": uid}, {"_id": 0})
+    if not doc:
+        return {"draft": None}
+    return {"draft": {"form": doc.get("form") or {}, "step": doc.get("step") or 1, "updated_at": _iso(doc.get("updated_at"))}}
+
+
+@cs1_router.put("/assessment-draft")
+async def save_assessment_draft(body: AssessmentDraftIn, request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    now = _now()
+    await _db.carer_assessment_drafts.update_one(
+        {"caregiver_user_id": uid},
+        {"$set": {"caregiver_user_id": uid, "form": body.form, "step": body.step, "updated_at": now}},
+        upsert=True,
+    )
+    return {"saved": True, "updated_at": _iso(now)}
+
+
+@cs1_router.delete("/assessment-draft")
+async def clear_assessment_draft(request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    await _db.carer_assessment_drafts.delete_one({"caregiver_user_id": uid})
+    return {"cleared": True}
+
+
+class CheckinIn(BaseModel):
+    next_checkin_date: Optional[str] = None
+
+
+@cs1_router.post("/assessments/{aid}/checkin")
+async def set_checkin(aid: str, body: CheckinIn, request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    doc = await _db.carer_assessments.find_one({"id": aid, "caregiver_user_id": uid})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Not found")
+    await _db.carer_assessments.update_one(
+        {"id": aid}, {"$set": {"next_checkin_date": body.next_checkin_date, "updated_at": _now()}})
+    return {"ok": True, "next_checkin_date": body.next_checkin_date}
 
 
 # ---------------------------------------------------------------------------

@@ -8,6 +8,7 @@ import {
 
 import { AppHeader, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
+import { useParticipants } from "@/src/context/ParticipantContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { moneyWhole } from "@/src/utils/format";
@@ -50,12 +51,14 @@ const CONF_LABEL: Record<string, string> = {
 
 export default function ShortTermPathways() {
   const { colors } = useTheme();
+  const { active } = useParticipants();
   const [situation, setSituation] = useState("recovering");
   const [recentEvent, setRecentEvent] = useState<boolean | null>(null);
   const [prognosisShort, setPrognosisShort] = useState<boolean | null>(null);
   const [stayHome, setStayHome] = useState<boolean | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState("");
 
   const run = async () => {
@@ -75,6 +78,49 @@ export default function ShortTermPathways() {
       setError("Could not check the pathways just now. Please try again in a moment.");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const draftRequestLetter = async () => {
+    if (!result) return;
+    setDrafting(true); setError("");
+    try {
+      const situationLabel = (SITUATIONS.find((s) => s.v === situation) || {}).label || "";
+      const findings = (result.results || []).map((p) => {
+        const facts = (p.key_facts || [])
+          .map((k) => `${k.label}: ${k.value_aud != null ? moneyWhole(k.value_aud) : k.value_text}`)
+          .join("; ");
+        const detail = [p.eligibility_note || p.tagline, facts ? `Key details — ${facts}.` : ""].filter(Boolean).join(" ");
+        return {
+          title: `Request the ${p.title}`,
+          detail,
+          suggested_question: (p.provider_questions || [])[0] || `Please confirm eligibility for the ${p.title} and how to set it up.`,
+          addressee_primary: "provider",
+        };
+      });
+      if (findings.length === 0) {
+        findings.push({
+          title: "Request a short-term pathway",
+          detail: `${result.headline}${situationLabel ? ` Situation: ${situationLabel}.` : ""}`,
+          suggested_question: "Please advise which short-term pathway applies and how to start it.",
+          addressee_primary: "provider",
+        });
+      }
+      const data: any = await apiFetch("/care-plans/letter-from-findings", {
+        method: "POST",
+        body: {
+          findings,
+          addressee: "provider",
+          provider_name: (active as any)?.provider || null,
+          participant_id: active?.id || null,
+          source_tool: "short-term-pathways",
+        },
+      });
+      if (data?.entry_id) router.push(`/letters/${data.entry_id}` as any);
+    } catch (e) {
+      setError("Could not start the letter just now. Please try again in a moment.");
+    } finally {
+      setDrafting(false);
     }
   };
 
@@ -151,7 +197,8 @@ export default function ShortTermPathways() {
                   <RotateCcw size={14} color={colors.primary} />
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }}>Start again</T>
                 </Pressable>
-                <Pressable testID="stp-draft-letter" onPress={() => router.push("/letters" as any)} style={[styles.ctaBtn, { backgroundColor: colors.primary }]}>
+                <Pressable testID="stp-draft-letter" onPress={draftRequestLetter} disabled={drafting} style={[styles.ctaBtn, { backgroundColor: colors.primary, opacity: drafting ? 0.7 : 1 }]}>
+                  {drafting ? <ActivityIndicator color="#FFFFFF" size="small" /> : null}
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#FFFFFF" }}>Draft a request letter</T>
                   <ArrowRight size={15} color="#FFFFFF" />
                 </Pressable>

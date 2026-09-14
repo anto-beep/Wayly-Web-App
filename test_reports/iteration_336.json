@@ -1,0 +1,56 @@
+{
+  "summary": "iter336 — full-both-surface verification of AT/HM Projects redesign, CHSP WS1 fee-check overhaul (parse-invoice + save/list/delete), and mobile ask-tab shared ReportSheet swap. BACKEND (4/4 pytest passing): /api/chsp1/fee-check/preview 200, POST /api/chsp1/fee-check/parse-invoice returns {fields, plain_summary, next_steps, extracted} correctly parsed (provider=BlueBerry Care Pty Ltd, service=Domestic Assistance, amount=132, units=2), POST /api/chsp1/fee-check/save + GET /saved + DELETE /saved/{id} all user-scoped and idempotent, POST /api/athm1/participants/{pid}/projects (with schema-valid project_type=assistive_technology_only) + POST /api/documents (category=ot_referral) + POST /api/athm1/projects/{id}/ot-referrals/attach chain succeeds and lists via GET /ot-referrals. WEB (/app/athm/projects): 'New Project' opens a centered/wide modal titled 'New Project' with subtext 'Fields marked * are required', 3 required-* markers, athm-project-type dropdown (3 options), athm-project-need-select (10 options) prefills athm-project-need textarea with the correct summary (e.g. 'The main goal is to reduce the risk of falls at home…'), athm-project-file-pick present, athm-project-save enabled, and both type-filter (4 chips) + status-filter (3 chips) render + are clickable. WEB (/app/chsp/tools): chsp-ws1-fee-check card renders (CHSP profile pre-existed), invoice upload calls /parse-invoice (~10s LLM), pre-fills provider/amount/units, shows chsp-ws1-parse-summary ('BlueBerry Care has charged $132.00 for 2 hours…') + chsp-ws1-next-steps (4 bullets), rate/period fields all render with type='date' (native picker), 5 required-* markers, submit → chsp-ws1-result (Minor · Difference $12), save persists ('Saved to your past checks' toast), Past checks (1) renders with delete button. MOBILE: /athm renders athm-new-project, opens form (athm-new-project-form, athm-project-need-select, athm-project-file-pick, athm-project-save all present) with 'Required' badges, athm-type-filter horizontal chips scroll. /chsp-tools renders chsp-ws1-fee-check with chsp-ws1-upload, units-billed, billed, submit, past — all present. /ask (aw2-report-issue-btn) opens shared ReportSheet from /app/mobile/src/components/ReportSheet.tsx (aw2-report-sheet), category select (aw2-report-cat-*), note field, submit → confirmation aw2-report-confirm with real ticket ref (WAY-0044 created live). All happy paths pass on both surfaces.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "AT/HM new project modal required marker", "platform": "mobile", "issue": "Mobile uses a small 'Required' badge next to labels; web uses a red '*' asterisk. Both meet the user rule ('every form on web AND mobile must clearly label required fields'), but the visual language differs by surface.", "expected": "Consistent required-field marker style on both surfaces", "actual": "web = '*' asterisk, mobile = 'Required' badge"},
+    {"flow": "CHSP WS1 service type selector", "platform": "mobile", "issue": "Web exposes BOTH a chsp-ws1-service-entry (Manual entry / saved service pre-fill) AND a separate chsp-ws1-service-type <select> that user can override manually; mobile has only chsp-ws1-service-entry — service_type is stored on form.service_type but there is no user-facing testID='chsp-ws1-service-type' to override it directly. Not a functional blocker (parse-invoice, manual entry via service-entry, save, past checks all still work), but a parity gap to note.", "expected": "Mobile also exposes a chsp-ws1-service-type override control matching web", "actual": "Mobile only exposes chsp-ws1-service-entry; direct service_type override control is absent"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iter336_chsp_athm.py",
+    "/app/test_reports/pytest/iter336_chsp_athm.xml",
+    "/app/test_reports/iter336_web_athm_list.jpeg",
+    "/app/test_reports/iter336_web_athm_modal.jpeg",
+    "/app/test_reports/iter336_web_chsp_top.jpeg",
+    "/app/test_reports/iter336_web_chsp_ws1_parsed.jpeg",
+    "/app/test_reports/iter336_web_chsp_ws1_full.jpeg",
+    "/app/test_reports/iter336_mob_athm.jpeg",
+    "/app/test_reports/iter336_mob_athm_modal.jpeg",
+    "/app/test_reports/iter336_mob_chsp_tools.jpeg",
+    "/app/test_reports/iter336_mob_ask_report.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL parity: unify required-field markers across web + mobile (either use '*' on both or 'Required' badge on both).",
+    "OPTIONAL parity: expose a mobile testID='chsp-ws1-service-type' override control (matching web) so users can pick service type independently of the saved-service pre-fill."
+  ],
+  "critical_code_review_comments": [
+    "Backend /api/chsp1/fee-check/parse-invoice cleanly reuses document_extract + emergentintegrations LLM (claude-haiku-4-5-20251001) with strict JSON prompt; falls back safely (parsed={}) if LLM output is malformed and still returns a sensible summary + 3 default next-steps. Nice defensive design.",
+    "Web /app/chsp/tools rate/period fields correctly use HTML5 <input type=\"date\"> (native mobile pickers) rather than a custom shadcn calendar — aligns with the user request.",
+    "Mobile ask.tsx imports ReportSheet from '@/src/components/ReportSheet' (shared component) — the swap from inline sheet is done and end-to-end verified (WAY-0044 ticket created via /api/support/tickets).",
+    "AT/HM POST /participants/{pid}/projects strict-regex enforces project_type in {assistive_technology_only, home_modification_only, combined_at_and_hm} — the web modal exposes the same 3 options; consistent.",
+    "chsp-ws1-save + chsp-ws1-past testIDs are only mounted AFTER a successful chsp-ws1-submit — this is expected UX (nothing to save until a verdict exists). Not a bug; noting so the next testing agent doesn't flag it as missing on a fresh page load."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter336_chsp_athm.py"
+  ],
+  "success_rate": {"backend": "100% (4/4 pytest — preview, parse-invoice, save/list/delete, athm-create+attach)", "frontend": "web 100% (all review items verified), mobile 100% (all review items verified; 2 minor parity notes)"},
+  "test_credentials": "cathy@example.com / testpass123 (used on both web + mobile; CHSP profile + Dorothy participant pre-existed and were sufficient).",
+  "seed_data_creation": "Created 1 TEST_ AT/HM project + attached 1 test ot_referral document (via backend test). Created 1 saved WS1 check on web via UI + 1 saved check via backend test (later deleted by test). 1 real support ticket WAY-0044 created on mobile via ReportSheet flow.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "1. cathy@example.com has an ACTIVE CHSP profile so chsp-ws1-fee-check renders immediately at /app/chsp/tools and /chsp-tools (mobile). If testing on a fresh account, save the CHSP profile via chsp-profile-save FIRST — the WS1 card only renders after that. 2. On both surfaces, chsp-ws1-save + chsp-ws1-past only mount AFTER a successful submit — count=0 pre-submit is expected. 3. AT/HM project_type must be one of: assistive_technology_only | home_modification_only | combined_at_and_hm (strict backend regex). Using short strings like 'AT' fails with 422. 4. For requests.Session multipart uploads, do NOT set Content-Type manually (breaks boundary) — call requests.post() directly with files=. 5. Participant status values are UPPERCASE ('ACTIVE'), not lowercase. 6. Mobile Expo preview URL is https://final-verify-web.expo.preview.emergentagent.com (mobile screenshots); web preview is https://final-verify-web.preview.emergentagent.com.",
+  "rca of the issue": "N/A — no bugs found. All 10 review-request items PASS. Two parity nits flagged as OPTIONAL follow-ups (marker style + mobile service-type override control)."
+}

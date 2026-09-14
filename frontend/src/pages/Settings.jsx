@@ -9,10 +9,11 @@ import { toast } from "sonner";
 import { useTheme, isEnabled } from "@/uxf";
 import {
     User, CreditCard, Users, Shield, Loader2, Check, X, Crown, Mail, ArrowUpRight, Trash2,
-    Bell, Moon, Sun, Gauge, AlertTriangle, Mailbox, Send, Eye, MessageSquare, Sparkles,
+    Bell, Moon, Sun, Gauge, AlertTriangle, Mailbox, Send, Eye, MessageSquare, Sparkles, ScrollText,
 } from "lucide-react";
 import Skeleton from "@/components/Skeleton";
 import PersonaPreviewCard from "@/components/PersonaPreviewCard";
+import AuditLog from "@/pages/AuditLog";
 
 const TABS = [
     // UI-1 §10, Title Case everywhere, SMS tab removed.
@@ -24,6 +25,7 @@ const TABS = [
     { id: "appearance", label: "Appearance", icon: Moon },
     { id: "usage", label: "Usage", icon: Gauge },
     { id: "security", label: "Security", icon: Shield },
+    { id: "audit", label: "Audit Log", icon: ScrollText },
     { id: "danger", label: "Danger Zone", icon: AlertTriangle },
 ];
 
@@ -1501,6 +1503,7 @@ export default function Settings() {
                 {active === "appearance" && <AppearanceTab />}
                 {active === "usage" && <UsageTab />}
                 {active === "security" && <SecurityTab />}
+                {active === "audit" && <AuditLog />}
                 {active === "danger" && <DangerTab />}
             </section>
         </div>

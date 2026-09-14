@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import PageIntro from "@/components/PageIntro";
 import { api, formatAUD } from "@/lib/api";
+import { useParticipants } from "@/context/ParticipantsContext";
 import {
     Loader2, Activity, HeartHandshake, ShieldCheck, CheckCircle2, CalendarDays,
     HelpCircle, ArrowRight, RotateCcw, Sparkles, UserRound,
@@ -41,6 +42,53 @@ export default function ShortTermPathways() {
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [drafting, setDrafting] = useState(false);
+    const navigate = useNavigate();
+    const { active: activeParticipant } = useParticipants();
+
+    // Draft a real, pre-filled request letter carrying the situation + the
+    // recommended pathway(s) + the provider questions the user just saw.
+    const draftRequestLetter = async () => {
+        if (!result) return;
+        setDrafting(true); setError(null);
+        try {
+            const situationLabel = (SITUATIONS.find((s) => s.v === situation) || {}).label || "";
+            const findings = (result.results || []).map((p) => {
+                const facts = (p.key_facts || [])
+                    .map((k) => `${k.label}: ${k.value_aud != null ? formatAUD(k.value_aud) : k.value_text}`)
+                    .join("; ");
+                const detail = [p.eligibility_note || p.tagline, facts ? `Key details — ${facts}.` : ""]
+                    .filter(Boolean).join(" ");
+                return {
+                    title: `Request the ${p.title}`,
+                    detail,
+                    suggested_question: (p.provider_questions || [])[0] || `Please confirm eligibility for the ${p.title} and how to set it up.`,
+                    addressee_primary: "provider",
+                };
+            });
+            if (findings.length === 0) {
+                findings.push({
+                    title: "Request a short-term pathway",
+                    detail: `${result.headline}${situationLabel ? ` Situation: ${situationLabel}.` : ""}`,
+                    suggested_question: "Please advise which short-term pathway applies and how to start it.",
+                    addressee_primary: "provider",
+                });
+            }
+            const { data } = await api.post("/care-plans/letter-from-findings", {
+                findings,
+                addressee: "provider",
+                provider_name: activeParticipant?.provider || null,
+                participant_id: activeParticipant?.id || null,
+                source_tool: "short-term-pathways",
+            });
+            if (data?.editor_path) navigate(data.editor_path);
+            else if (data?.entry_id) navigate(`/tools/letters-and-follow-ups/${data.entry_id}`);
+        } catch (e) {
+            setError("Could not start the letter just now. Please try again in a moment.");
+        } finally {
+            setDrafting(false);
+        }
+    };
 
     const run = async () => {
         setLoading(true); setError(null); setResult(null);
@@ -145,9 +193,10 @@ export default function ShortTermPathways() {
                             <button onClick={() => setResult(null)} className="inline-flex items-center gap-1.5 text-sm text-primary-k hover:text-[#0A3E42]" data-testid="stp-reset">
                                 <RotateCcw className="h-3.5 w-3.5" /> Start again
                             </button>
-                            <Link to="/ai-tools/letters-and-follow-ups" className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-lg px-5 py-2.5 hover:bg-[#0A3E42] transition-colors" data-testid="stp-draft-letter">
+                            <button onClick={draftRequestLetter} disabled={drafting} className="inline-flex items-center gap-1.5 text-sm bg-primary-k text-white rounded-lg px-5 py-2.5 hover:bg-[#0A3E42] transition-colors disabled:opacity-60" data-testid="stp-draft-letter">
+                                {drafting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                                 Draft a request letter <ArrowRight className="h-3.5 w-3.5" />
-                            </Link>
+                            </button>
                         </div>
                     </div>
 

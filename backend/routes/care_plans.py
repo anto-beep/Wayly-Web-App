@@ -163,6 +163,10 @@ _SOURCE_TOOL_TO_LF1 = {
     "provider-price-checker": (3, "provider_cm"),   # rate dispute
     "care-plan-reviewer": (6, "provider_cm"),       # plan-change request
     "support-plan-reviewer": (6, "provider_cm"),    # plan-change request
+    "short-term-pathways": (6, "provider_cm"),      # request a short-term pathway
+    "athm": (6, "provider_cm"),                     # request AT/HM equipment or mods
+    "chsp": (6, "provider_cm"),                     # CHSP fee / continuity request
+    "amendments": (6, "provider_cm"),               # care-plan amendment request
 }
 
 # Source-aware lead-in so the letter never claims a finding "came out of a
@@ -174,6 +178,10 @@ _SOURCE_LEADIN = {
     "provider-price-checker": "comparing {who}service rates against the market",
     "care-plan-reviewer": "reviewing {who}support plan",
     "support-plan-reviewer": "reviewing {who}support plan",
+    "short-term-pathways": "looking at the short-term Support at Home pathways",
+    "athm": "planning assistive technology or home modifications",
+    "chsp": "checking {who}CHSP services and fees",
+    "amendments": "reviewing {who}support plan for a change",
 }
 
 

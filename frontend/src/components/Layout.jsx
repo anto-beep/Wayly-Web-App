@@ -126,7 +126,6 @@ const navGroups = [
             { to: "/app/csc/stream-mix-and-iat", label: "Classification Prep", icon: ClipboardList },
             { to: "/app/athm/projects", label: "AT & HM Projects", icon: Wrench },
             { to: "/app/chsp/tools", label: "CHSP Tools", icon: HeartPulse },
-            { to: "/tools/letters-and-follow-ups/log", label: "Letters & Follow-ups", icon: Mail },
             { to: "/app/provider-switch", label: "Switch Provider", icon: Repeat },
         ],
     },
@@ -150,8 +149,6 @@ const navGroups = [
         items: [
             { to: "/app/documents", label: "Documents", icon: FolderArchive },
             { to: "/app/correspondence", label: "Correspondence", icon: Mail },
-            { to: "/app/tools/provider-price-checker/compare", label: "Compare Providers", icon: Star },
-            { to: "/app/ratings", label: "Ratings", icon: Star },
         ],
     },
     {
@@ -159,8 +156,6 @@ const navGroups = [
         label: "Your Account",
         items: [
             { to: "/app/participants", label: "Participants", icon: UserPlus },
-            { to: "/app/referrals", label: "Referrals", icon: Share2 },
-            { to: "/app/audit", label: "Audit Log", icon: ScrollText },
             { to: "/support", label: "Support", icon: LifeBuoy },
             { to: "/settings/profile", label: "Settings", icon: SettingsIcon, mobile: true },
         ],

@@ -93,7 +93,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Classification Prep", route: "/classification-prep", icon: ClipboardList, implemented: true },
       { label: "AT & HM Projects", route: "/athm", icon: Wrench, implemented: true },
       { label: "CHSP Tools", route: "/chsp-tools", icon: HeartPulse, implemented: true },
-      { label: "Letters Mailbox", route: "/letters", icon: Mail, implemented: true },
       { label: "Switch Provider", route: "/provider-switch", icon: Repeat, implemented: true },
       { label: "Complaints", route: "/complaints", icon: AlertOctagon, implemented: true },
     ],
@@ -119,8 +118,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Documents", route: "/documents", icon: FolderArchive, implemented: true },
       { label: "Correspondence", route: "/correspondence", icon: Mail, implemented: true },
-      { label: "Compare Providers", route: "/compare-providers", icon: Star, implemented: true },
-      { label: "Ratings", route: "/ratings", icon: Star, implemented: true },
     ],
   },
   {
@@ -128,8 +125,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Your Account",
     items: [
       { label: "Participants", route: "/participants", icon: UserPlus, implemented: true },
-      { label: "Referrals", route: "/referrals", icon: Share2, implemented: true },
-      { label: "Audit Log", route: "/audit", icon: ScrollText, implemented: true },
       { label: "Support", route: "/support", icon: LifeBuoy, implemented: true },
       { label: "Settings", route: "/(tabs)/settings", icon: SettingsIcon, implemented: true },
     ],

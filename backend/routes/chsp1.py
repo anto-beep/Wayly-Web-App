@@ -21,7 +21,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel, Field
 
 from lib.chsp1.fee_check import run_fee_check
@@ -424,6 +424,159 @@ async def fee_check_preview(body: FeeCheckPreviewIn, request: Request):
     result["provider_name"] = body.provider_name
     result["service_type"] = body.service_type
     return {"result": result}
+
+
+CHSP_PARSE_SYSTEM = (
+    "You are a careful billing assistant for the Australian Commonwealth Home Support Programme (CHSP). "
+    "You read the text of ONE CHSP invoice or statement and extract billing facts as STRICT JSON. "
+    "Return ONLY a JSON object, no prose, no code fences. "
+    "Use null when a value is not present. Money values are plain numbers (no $ or commas). "
+    "Dates are DD/MM/YYYY. service_type must be one of: domestic_assistance, personal_care, meals, "
+    "transport, social_support_individual, social_support_group, allied_health, nursing, home_maintenance, "
+    "home_modifications_minor, goods_equipment_assistive_technology, respite, specialised_support_services, other. "
+    "Keys: provider_name (string|null), invoice_reference (string|null), service_type (string|null), "
+    "agreed_rate (number|null, the per-unit/hourly rate), units_billed (number|null), units_received (number|null), "
+    "billed_amount (number|null, total billed for this service), billed_period_start (string|null), "
+    "billed_period_end (string|null), plain_summary (string, 2 short plain-English sentences a family carer can "
+    "understand about what this invoice charges), next_steps (array of up to 4 short plain-English action strings). "
+    "If units_received is not stated, set it equal to units_billed."
+)
+
+
+def _strip_json_fences(s: str) -> str:
+    s = (s or "").strip()
+    if s.startswith("```"):
+        s = s.split("```", 2)[1] if s.count("```") >= 2 else s.strip("`")
+        if s.lstrip().lower().startswith("json"):
+            s = s.lstrip()[4:]
+    return s.strip()
+
+
+@chsp1_router.post("/fee-check/parse-invoice")
+async def parse_chsp_invoice(request: Request, file: UploadFile = File(...)):
+    """Reuse the shared document-extract + LLM pipeline to read an uploaded CHSP
+    invoice and return pre-fill fields, a plain-English summary and next steps.
+    Persists nothing: the caller reviews and then runs the Fee Check."""
+    import json as _json
+    await _assert_flag()
+    if not _ws1_enabled():
+        raise HTTPException(status_code=404, detail="Not found")
+    await _user_id(request)
+
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty file")
+    try:
+        import document_extract  # type: ignore
+    except Exception:  # pragma: no cover
+        from backend import document_extract  # type: ignore
+    try:
+        text, _input_method, _pages, _warnings = await document_extract.extract_document(file.filename or "invoice", raw)
+    except Exception as e:
+        logger.warning("chsp invoice extract failed: %s", e)
+        raise HTTPException(status_code=422, detail="Could not read that file. Try a clearer PDF or photo.")
+    if not (text or "").strip():
+        raise HTTPException(status_code=422, detail="No readable text found in that file.")
+
+    parsed: Dict[str, Any] = {}
+    try:
+        from lib import llm_wrapper
+        reply = await llm_wrapper.chat_send(
+            model="claude-haiku-4-5-20251001",
+            provider="anthropic",
+            system=CHSP_PARSE_SYSTEM,
+            user_text=f"CHSP invoice/statement text:\n\n{text[:8000]}\n\nReturn the JSON now.",
+            apply_tone_rules=False,
+        )
+        parsed = _json.loads(_strip_json_fences(str(reply or "")))
+        if not isinstance(parsed, dict):
+            parsed = {}
+    except Exception as e:
+        logger.warning("chsp invoice parse llm failed: %s", e)
+        parsed = {}
+
+    fields = {
+        "provider_name": parsed.get("provider_name"),
+        "invoice_reference": parsed.get("invoice_reference"),
+        "service_type": parsed.get("service_type"),
+        "agreed_rate": parsed.get("agreed_rate"),
+        "units_billed": parsed.get("units_billed"),
+        "units_received": parsed.get("units_received") if parsed.get("units_received") is not None else parsed.get("units_billed"),
+        "billed_amount": parsed.get("billed_amount"),
+        "billed_period_start": parsed.get("billed_period_start"),
+        "billed_period_end": parsed.get("billed_period_end"),
+    }
+    summary = parsed.get("plain_summary") or "We read your invoice. Check the pre-filled figures against the paper copy, then run the fee check."
+    next_steps = parsed.get("next_steps") if isinstance(parsed.get("next_steps"), list) else []
+    if not next_steps:
+        next_steps = [
+            "Check the pre-filled provider, rate and amounts against your invoice.",
+            "Add your provider's agreed per-unit rate if it is missing.",
+            "Run the fee check to see whether the amount looks right.",
+        ]
+    return {
+        "fields": fields,
+        "plain_summary": str(summary),
+        "next_steps": [str(s) for s in next_steps][:4],
+        "extracted": bool(parsed),
+    }
+
+
+class SavedCheckIn(BaseModel):
+    invoice_reference: Optional[str] = None
+    provider_name: Optional[str] = None
+    service_type: Optional[str] = None
+    agreed_rate: Optional[float] = None
+    units_billed: Optional[float] = None
+    units_received: Optional[float] = None
+    billed_amount: Optional[float] = None
+    rate_effective_date: Optional[str] = None
+    billed_period_start: Optional[str] = None
+    billed_period_end: Optional[str] = None
+    result: Dict[str, Any] = Field(default_factory=dict)
+
+
+@chsp1_router.post("/fee-check/save")
+async def save_fee_check(body: SavedCheckIn, request: Request):
+    """Persist a WS-1 fee check so the user can revisit it under Past checks."""
+    await _assert_flag()
+    uid = await _user_id(request)
+    now = _now()
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": uid,
+        **body.dict(),
+        "created_at": now,
+        "data_residency": "ap-southeast-2",
+    }
+    await _db.chsp_saved_checks.insert_one(doc)
+    doc.pop("_id", None)
+    doc["created_at"] = _iso(doc["created_at"])
+    return {"saved_check": doc}
+
+
+@chsp1_router.get("/fee-check/saved")
+async def list_saved_checks(request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    cur = _db.chsp_saved_checks.find({"user_id": uid}).sort("created_at", -1)
+    rows = await cur.to_list(length=100)
+    for r in rows:
+        r.pop("_id", None)
+        if r.get("created_at"):
+            r["created_at"] = _iso(r["created_at"])
+    return {"saved_checks": rows}
+
+
+@chsp1_router.delete("/fee-check/saved/{check_id}")
+async def delete_saved_check(check_id: str, request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    res = await _db.chsp_saved_checks.delete_one({"id": check_id, "user_id": uid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"deleted": True}
+
 
 
 class ChspLetterIn(BaseModel):
