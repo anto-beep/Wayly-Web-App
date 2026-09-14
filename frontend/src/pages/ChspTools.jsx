@@ -13,11 +13,12 @@ import {
     Upload, FileText, Save, Trash2, Sparkles, ListChecks,
 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
+import { RequiredBadge } from "@/components/RequiredHint";
 import { serviceTypeLabel, chspStatusLabel, labelize } from "@/lib/labels";
 import { formatDate } from "@/lib/formatDate";
 
-// Explicit "(Required)" marker so every field is clearly labelled.
-const Req = () => <span className="text-red-600 font-semibold ml-0.5" aria-label="required" title="Required">*</span>;
+// Explicit "Required" badge (shared app-wide style) so every field is clearly labelled.
+const Req = () => <RequiredBadge className="ml-1 align-middle" />;
 
 const SERVICE_TYPES = [
     "domestic_assistance", "personal_care", "meals", "transport",
@@ -230,7 +231,7 @@ function WS1FeeCheck({ services }) {
             <div>
                 <p className="text-xs uppercase tracking-wide text-primary-k/60">Fee check</p>
                 <h2 className="font-heading text-xl text-primary-k">Was this CHSP invoice correct?</h2>
-                <p className="text-sm text-muted-k">We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields marked <Req/> are required.</p>
+                <p className="text-sm text-muted-k">We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields showing a Required label must be completed.</p>
             </div>
 
             {/* Upload + auto-read an invoice */}
@@ -677,6 +678,21 @@ function FeeCheckForm({ services, onSubmitted }) {
     );
 }
 
+function TWTile({ checked, onClick, label, testid, tone = "teal" }) {
+    const ring = checked
+        ? { teal: "border-[#0E4D52] bg-[#0E4D52]/[0.06]", clay: "border-clay bg-clay/[0.08]" }[tone]
+        : "border-kindred bg-white hover:border-primary-k/40";
+    return (
+        <button type="button" onClick={onClick} data-testid={testid}
+                className={`w-full flex items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors ${ring}`}>
+            <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${checked ? (tone === "clay" ? "bg-clay border-clay" : "bg-[#0E4D52] border-[#0E4D52]") : "border-primary-k/30"}`}>
+                {checked && <CheckCircle2 className="h-4 w-4 text-white" />}
+            </span>
+            <span className="text-sm text-primary-k">{label}</span>
+        </button>
+    );
+}
+
 function TransitionWalkthrough() {
     const [step, setStep] = useState(0);
     const [reasons, setReasons] = useState([]);
@@ -687,12 +703,8 @@ function TransitionWalkthrough() {
     const [busy, setBusy] = useState(false);
     const [submitted, setSubmitted] = useState(null);
 
-    const toggleReason = (r) => {
-        setReasons(l => l.includes(r) ? l.filter(x => x !== r) : [...l, r]);
-    };
-    const toggleConsideration = (k) => {
-        setConsiderations(c => ({ ...c, [k]: !c[k] }));
-    };
+    const toggleReason = (r) => setReasons(l => l.includes(r) ? l.filter(x => x !== r) : [...l, r]);
+    const toggleConsideration = (k) => setConsiderations(c => ({ ...c, [k]: !c[k] }));
 
     const submit = async () => {
         setBusy(true);
@@ -711,107 +723,122 @@ function TransitionWalkthrough() {
         } finally { setBusy(false); }
     };
 
-    const steps = [
-        {
-            title: "Why are you thinking about a change?",
-            content: (
-                <div className="space-y-2">
-                    {REASONS.map(r => (
-                        <label key={r} className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={reasons.includes(r)}
-                                   data-testid={`tw-reason-${r}`}
-                                   onChange={() => toggleReason(r)}/>
-                            <span>{labelize(r)}</span>
-                        </label>
-                    ))}
-                    <textarea rows={2} value={reasonsNotes} onChange={e => setReasonsNotes(e.target.value)}
-                              data-testid="tw-reasons-notes"
-                              placeholder="Anything else?"
-                              className="w-full px-3 py-2 text-sm border rounded"/>
-                </div>
-            ),
-        },
-        {
-            title: "Understand the differences",
-            content: (
-                <div className="space-y-2">
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" data-testid="tw-two-sided">
-                        <p className="font-medium">Support at Home is not automatically better.</p>
-                        <p className="mt-1">Compared with CHSP, Support at Home <strong>can cost more</strong>, is <strong>means tested</strong>, and can involve <strong>waitlists</strong>. For many people, CHSP remains the right program.</p>
-                    </div>
-                    <p className="text-xs text-muted-k">Tick each concept you feel comfortable with. Nothing gets submitted yet, this is just for your own confidence.</p>
-                    {CONSIDERATIONS.map(c => (
-                        <label key={c.key} className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={!!considerations[c.key]}
-                                   data-testid={`tw-consideration-${c.key}`}
-                                   onChange={() => toggleConsideration(c.key)}/>
-                            <span>{c.label}</span>
-                        </label>
-                    ))}
-                </div>
-            ),
-        },
-        {
-            title: "Make a decision",
-            content: (
-                <div className="space-y-2">
-                    <label className="text-xs text-muted-k">Decision (choose one)
-                        <select value={decision} onChange={e => setDecision(e.target.value)}
-                                data-testid="tw-decision"
-                                className="mt-1 w-full px-3 py-2 text-sm border rounded">
-                            <option value="">Not decided yet</option>
-                            <option value="stay_on_chsp_no_change">Stay on CHSP, no change</option>
-                            <option value="stay_on_chsp_review_services">Stay on CHSP, review services</option>
-                            <option value="proceed_with_transition_seek_ras_reassessment">Proceed, request RAS reassessment</option>
-                            <option value="proceed_with_transition_seek_iat_directly">Proceed, request IAT directly</option>
-                            <option value="need_more_information">Need more information</option>
-                        </select>
-                    </label>
-                    <textarea rows={2} value={decisionNotes} onChange={e => setDecisionNotes(e.target.value)}
-                              data-testid="tw-decision-notes"
-                              placeholder="Notes about this decision"
-                              className="w-full px-3 py-2 text-sm border rounded"/>
-                </div>
-            ),
-        },
+    const STEP_META = [
+        { title: "Why You're Considering A Change", icon: HelpCircle, tone: "clay", bg: "#FBEFE7", border: "border-clay/30" },
+        { title: "Understand The Differences", icon: AlertTriangle, tone: "teal", bg: "#E7F1F1", border: "border-[#0E4D52]/20" },
+        { title: "Make A Decision", icon: ClipboardCheck, tone: "teal", bg: "#EEF3EE", border: "border-sage/40" },
     ];
 
-    return (
-        <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-4" data-testid="chsp-transition-walkthrough">
-            <div>
-                <p className="text-xs uppercase tracking-wide text-primary-k/50">Considering a move to Support at Home?</p>
-                <h2 className="font-heading text-xl text-primary-k mt-1">Transition walkthrough</h2>
+    const content = [
+        (
+            <div className="space-y-2" key="s0">
+                <p className="text-sm text-primary-k font-medium">What&apos;s prompting the thought? Pick any that apply.</p>
+                {REASONS.map(r => (
+                    <TWTile key={r} tone="clay" checked={reasons.includes(r)} onClick={() => toggleReason(r)} testid={`tw-reason-${r}`} label={labelize(r)} />
+                ))}
+                <textarea rows={2} value={reasonsNotes} onChange={e => setReasonsNotes(e.target.value)}
+                          data-testid="tw-reasons-notes" placeholder="Anything else? (optional)"
+                          className="w-full mt-1 px-3 py-2 text-sm border border-kindred rounded-lg bg-white"/>
             </div>
-            <div className="flex gap-2 flex-wrap">
-                {steps.map((s, i) => (
-                    <button key={i} onClick={() => setStep(i)}
-                            data-testid={`tw-step-${i}`}
-                            className={`text-[11px] px-3 py-1 rounded-full border ${step === i ? "bg-primary-k text-white border-primary-k" : "border-kindred text-muted-k hover:text-primary-k"}`}>
-                        {i + 1}. {s.title}
-                    </button>
+        ),
+        (
+            <div className="space-y-3" key="s1">
+                <div className="rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm text-primary-k flex items-start gap-3" data-testid="tw-two-sided">
+                    <AlertTriangle className="w-5 h-5 text-gold shrink-0 mt-0.5" />
+                    <div>
+                        <p className="font-semibold">Support at Home is not automatically better.</p>
+                        <p className="mt-1">Compared with CHSP, Support at Home <strong>can cost more</strong>, is <strong>means tested</strong>, and can involve <strong>waitlists</strong>. For many people, CHSP remains the right program.</p>
+                    </div>
+                </div>
+                <p className="text-xs text-muted-k">Tick each idea you feel comfortable with. Nothing is submitted yet — this is just for your own confidence.</p>
+                {CONSIDERATIONS.map(c => (
+                    <TWTile key={c.key} tone="teal" checked={!!considerations[c.key]} onClick={() => toggleConsideration(c.key)} testid={`tw-consideration-${c.key}`} label={c.label} />
                 ))}
             </div>
-            <div>{steps[step].content}</div>
-            <div className="flex items-center gap-2">
-                {step > 0 && <button onClick={() => setStep(step - 1)} className="text-xs text-muted-k">Back</button>}
-                {step < steps.length - 1 && (
-                    <button onClick={() => setStep(step + 1)} data-testid="tw-next"
-                            className="inline-flex items-center gap-1 bg-primary-k text-white rounded-full px-4 py-1.5 text-sm">
-                        Next <ArrowRight className="w-4 h-4"/>
-                    </button>
-                )}
-                {step === steps.length - 1 && (
-                    <button onClick={submit} disabled={busy} data-testid="tw-submit"
-                            className="inline-flex items-center gap-1 bg-primary-k text-white rounded-full px-4 py-1.5 text-sm">
-                        <ClipboardCheck className="w-4 h-4"/> Save decision
-                    </button>
+        ),
+        (
+            <div className="space-y-2" key="s2">
+                <label className="text-xs font-medium text-primary-k block">Your decision
+                    <select value={decision} onChange={e => setDecision(e.target.value)} data-testid="tw-decision"
+                            className="mt-1 w-full px-3 py-2.5 text-sm border border-kindred rounded-lg bg-white">
+                        <option value="">Not decided yet</option>
+                        <option value="stay_on_chsp_no_change">Stay on CHSP, no change</option>
+                        <option value="stay_on_chsp_review_services">Stay on CHSP, review services</option>
+                        <option value="proceed_with_transition_seek_ras_reassessment">Proceed, request RAS reassessment</option>
+                        <option value="proceed_with_transition_seek_iat_directly">Proceed, request IAT directly</option>
+                        <option value="need_more_information">Need more information</option>
+                    </select>
+                </label>
+                <textarea rows={2} value={decisionNotes} onChange={e => setDecisionNotes(e.target.value)}
+                          data-testid="tw-decision-notes" placeholder="Notes about this decision (optional)"
+                          className="w-full px-3 py-2 text-sm border border-kindred rounded-lg bg-white"/>
+            </div>
+        ),
+    ];
+
+    const meta = STEP_META[step];
+    return (
+        <div className="rounded-2xl overflow-hidden shadow-sm" data-testid="chsp-transition-walkthrough">
+            {/* Coloured header */}
+            <div className="bg-[#0E4D52] px-6 py-5 text-white">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-white/15"><Home className="w-5 h-5" /></div>
+                    <div>
+                        <p className="text-xs uppercase tracking-wide text-white/70">Considering A Move To Support At Home?</p>
+                        <h2 className="font-heading text-2xl">Transition Walkthrough</h2>
+                    </div>
+                </div>
+                <p className="text-sm text-white/80 mt-2">A calm, three-step self-check. There&apos;s no pressure — many people stay on CHSP.</p>
+            </div>
+
+            {/* Visual stepper */}
+            <div className="bg-white px-6 pt-5">
+                <div className="flex items-center">
+                    {STEP_META.map((s, i) => {
+                        const done = i < step;
+                        const active = i === step;
+                        const Icon = s.icon;
+                        return (
+                            <React.Fragment key={i}>
+                                <button onClick={() => setStep(i)} data-testid={`tw-step-${i}`} className="flex flex-col items-center gap-1 shrink-0">
+                                    <span className={`flex h-9 w-9 items-center justify-center rounded-full border-2 transition-colors ${active ? "bg-[#0E4D52] border-[#0E4D52] text-white" : done ? "bg-sage border-sage text-white" : "bg-white border-kindred text-muted-k"}`}>
+                                        {done ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-4 w-4" />}
+                                    </span>
+                                    <span className={`text-[10px] max-w-[90px] text-center leading-tight ${active ? "text-primary-k font-medium" : "text-muted-k"}`}>{s.title}</span>
+                                </button>
+                                {i < STEP_META.length - 1 && <div className={`h-0.5 flex-1 mx-1 mb-4 rounded ${i < step ? "bg-sage" : "bg-kindred"}`} />}
+                            </React.Fragment>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Coloured content panel */}
+            <div className="bg-white px-6 pb-6 pt-4">
+                <div className={`rounded-xl border ${meta.border} p-4`} style={{ backgroundColor: meta.bg }}>
+                    {content[step]}
+                </div>
+                <div className="flex items-center justify-between mt-4">
+                    <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}
+                            className="text-sm text-muted-k disabled:opacity-40" data-testid="tw-back">← Back</button>
+                    {step < STEP_META.length - 1 ? (
+                        <button onClick={() => setStep(step + 1)} data-testid="tw-next"
+                                className="inline-flex items-center gap-1 bg-primary-k text-white rounded-full px-5 py-2 text-sm">
+                            Next <ArrowRight className="w-4 h-4"/>
+                        </button>
+                    ) : (
+                        <button onClick={submit} disabled={busy} data-testid="tw-submit"
+                                className="inline-flex items-center gap-1 bg-primary-k text-white rounded-full px-5 py-2 text-sm">
+                            <ClipboardCheck className="w-4 h-4"/> Save Decision
+                        </button>
+                    )}
+                </div>
+                {submitted && (
+                    <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800" data-testid="tw-saved">
+                        Decision recorded. Reasons: {reasons.length || 0}. Concepts reviewed: {Object.values(considerations).filter(Boolean).length} / {CONSIDERATIONS.length}.
+                    </div>
                 )}
             </div>
-            {submitted && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800" data-testid="tw-saved">
-                    Decision recorded. Reasons: {reasons.length || 0}. Considerations reviewed: {Object.values(considerations).filter(Boolean).length} / {CONSIDERATIONS.length}.
-                </div>
-            )}
         </div>
     );
 }
@@ -864,19 +891,25 @@ export default function ChspTools() {
             <ChspProfileCard profile={profile} onCreate={load}/>
             {profile && (
                 <>
-                    {ws1 && <AgreedRateSchedule services={services} onChanged={load} />}
-                    {ws1 ? <WS1FeeCheck services={services} /> : <FeeCheckForm services={services} onSubmitted={() => load()}/>}
-
-                    <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-3" data-testid="chsp-fit-self-check">
-                        <p className="text-xs uppercase tracking-wide text-primary-k/50">Is CHSP still the right fit?</p>
-                        <p className="text-sm text-muted-k">Most people on CHSP are on the right program. You only need the transition walkthrough if your care needs have genuinely changed.</p>
-                        <label className="flex items-center gap-2 text-sm text-primary-k">
+                    {/* Is CHSP still the right fit? — surfaced up top, not buried at the bottom. */}
+                    <div className="rounded-2xl border border-[#0E4D52]/20 bg-[#E7F1F1] p-5 space-y-3" data-testid="chsp-fit-self-check">
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-full bg-[#0E4D52]/10"><Home className="w-5 h-5 text-[#0E4D52]" /></div>
+                            <div>
+                                <p className="text-xs uppercase tracking-wide text-[#0E4D52]/70">Is CHSP still the right fit?</p>
+                                <p className="text-sm text-primary-k mt-1">Most people on CHSP are on the right program. You only need the transition walkthrough if your care needs have genuinely changed.</p>
+                            </div>
+                        </div>
+                        <label className="flex items-center gap-2 text-sm text-primary-k bg-white/70 rounded-xl px-3 py-2.5 cursor-pointer">
                             <input type="checkbox" checked={needsChange} onChange={(e) => setNeedsChange(e.target.checked)} data-testid="chsp-needs-change" />
                             <span>My care needs have changed recently (for example after a hospital stay or a health change).</span>
                         </label>
                     </div>
 
                     {needsChange && <TransitionWalkthrough/>}
+
+                    {ws1 && <AgreedRateSchedule services={services} onChanged={load} />}
+                    {ws1 ? <WS1FeeCheck services={services} /> : <FeeCheckForm services={services} onSubmitted={() => load()}/>}
 
                     <div className="rounded-xl border border-primary-k/15 bg-primary-k/[0.03] p-4 text-xs text-muted-k" data-testid="chsp-disclaimer">
                         <p className="font-medium text-primary-k">Not financial or legal advice.</p>

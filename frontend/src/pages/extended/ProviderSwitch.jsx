@@ -349,13 +349,22 @@ function Stepper({ current, onJump, disabled }) {
     );
 }
 
-function StepShell({ title, intro, children, footer, testid }) {
+const STEP_TONES = {
+    teal: { bg: "#E7F1F1", border: "border-[#0E4D52]/20" },
+    clay: { bg: "#FBEFE7", border: "border-clay/30" },
+    terracotta: { bg: "#FBEAE3", border: "border-terracotta/30" },
+    sage: { bg: "#EEF3EE", border: "border-sage/40" },
+    gold: { bg: "#FBF3E4", border: "border-gold/30" },
+};
+
+function StepShell({ title, intro, children, footer, testid, tone = "teal" }) {
+    const t = STEP_TONES[tone] || STEP_TONES.teal;
     return (
-        <section data-testid={testid} className="bg-surface border border-kindred rounded-2xl p-6 space-y-4">
+        <section data-testid={testid} className={`border ${t.border} rounded-2xl p-6 space-y-4`} style={{ backgroundColor: t.bg }}>
             <h2 className="font-heading text-2xl text-primary-k">{title}</h2>
             {intro && <div className="text-sm leading-relaxed text-primary-k max-w-3xl">{intro}</div>}
             <div className="pt-2">{children}</div>
-            {footer && <div className="pt-4 border-t border-kindred flex items-center justify-between gap-3">{footer}</div>}
+            {footer && <div className="pt-4 border-t border-primary-k/10 flex items-center justify-between gap-3">{footer}</div>}
         </section>
     );
 }
@@ -388,7 +397,7 @@ function StepOne({ intro, setIntro, row, onStart, onNext }) {
         </>
     );
     return (
-        <StepShell testid="switch-step1" title="Why You Might Switch Providers" intro={introCopy}
+        <StepShell testid="switch-step1" tone="teal" title="Why You Might Switch Providers" intro={introCopy}
             footer={row
                 ? <NavButtons onBack={null} onNext={onNext} nextLabel="I Have Read This, Continue" />
                 : (
@@ -425,7 +434,7 @@ function StepTwo({ beforeYouDecide, setBeforeYouDecide, onBack, onNext }) {
         </>
     );
     return (
-        <StepShell testid="switch-step2" title="Before You Decide" intro={introCopy}
+        <StepShell testid="switch-step2" tone="clay" title="Before You Decide" intro={introCopy}
             footer={<NavButtons onBack={onBack} onNext={onNext} nextLabel="Compare Providers" />}
         >
             <ul className="space-y-3">
@@ -469,7 +478,7 @@ function StepThree({ intro, setIntro, compare, setCompare, onBack, onNext }) {
         </>
     );
     return (
-        <StepShell testid="switch-step3" title="Comparing Providers" intro={introCopy}
+        <StepShell testid="switch-step3" tone="teal" title="Comparing Providers" intro={introCopy}
             footer={<NavButtons onBack={onBack} onNext={onNext} nextLabel="Draft the Notice" />}
         >
             <label className="block max-w-md">
@@ -510,7 +519,7 @@ function StepFour({ intro, notice, setNotice, letterText, onCopy, onDownload, on
         </>
     );
     return (
-        <StepShell testid="switch-step4" title="Giving Notice" intro={introCopy}
+        <StepShell testid="switch-step4" tone="terracotta" title="Giving Notice" intro={introCopy}
             footer={<NavButtons onBack={onBack} onNext={onNext} nextLabel="Plan the Handover" />}
         >
             <div className="grid sm:grid-cols-2 gap-3">
@@ -561,7 +570,7 @@ function StepFive({ row, onToggle, onBack, onComplete }) {
         </>
     );
     return (
-        <StepShell testid="switch-step5" title="Handover and First Two Weeks" intro={introCopy}
+        <StepShell testid="switch-step5" tone="sage" title="Handover and First Two Weeks" intro={introCopy}
             footer={
                 <>
                     <button type="button" onClick={onBack} data-testid="switch-back" className="inline-flex items-center gap-1 text-sm text-primary-k hover:underline">

@@ -24,12 +24,12 @@ const CARD_ICON: Record<string, any> = {
 // brand accent — mirrors web LettersFollowUps so the front door reads as an
 // organised menu, not a flat wall of cards.
 const GROUPS = [
-  { key: "change", title: "Ask for a change", desc: "Request an assessment, more help, or a change to the plan.", accent: "teal", archetypes: ["request"] },
-  { key: "dispute", title: "Dispute or disagree", desc: "Push back on a charge, an assessment, or a classification decision.", accent: "gold", archetypes: ["dispute"] },
-  { key: "escalate", title: "Report a problem or escalate", desc: "Raise a service problem, an unresponsive care manager, or go to a regulator.", accent: "terracotta", archetypes: ["complaint", "escalation"] },
-  { key: "notify", title: "Notify of a change", desc: "Tell them about a provider change, hardship, or updated details.", accent: "sage", archetypes: ["notification"] },
-  { key: "reply", title: "Reply to a message", desc: "Draft a considered response to something you received.", accent: "teal", archetypes: ["response_draft"] },
-  { key: "safety", title: "A safety concern", desc: "Worried about someone's safety? Start here — we guide you to call first.", accent: "gold", archetypes: ["guided_pathway"] },
+  { key: "change", title: "Ask For A Change", desc: "Request an assessment, more help, or a change to the plan.", accent: "teal", archetypes: ["request"] },
+  { key: "dispute", title: "Dispute Or Disagree", desc: "Push back on a charge, an assessment, or a classification decision.", accent: "gold", archetypes: ["dispute"] },
+  { key: "escalate", title: "Report A Problem Or Escalate", desc: "Raise a service problem, an unresponsive care manager, or go to a regulator.", accent: "terracotta", archetypes: ["complaint", "escalation"] },
+  { key: "notify", title: "Notify Of A Change", desc: "Tell them about a provider change, hardship, or updated details.", accent: "sage", archetypes: ["notification"] },
+  { key: "reply", title: "Reply To A Message", desc: "Draft a considered response to something you received.", accent: "teal", archetypes: ["response_draft"] },
+  { key: "safety", title: "A Safety Concern", desc: "Worried about someone's safety? Start here — we guide you to call first.", accent: "gold", archetypes: ["guided_pathway"] },
 ];
 
 // "Start a blank letter" — letters are not limited to the life-scenarios above.
@@ -51,7 +51,10 @@ export default function LettersFollowUps() {
   const { colors } = useTheme();
   const { active } = useParticipants();
   const firstName = (active?.first_name || active?.display_name || "").trim().split(/\s+/)[0] || "your loved one";
-  const personalise = (label: string) => (label && label.includes("{name}") ? label.replaceAll("{name}", firstName) : label);
+  const personalise = (label: string) => {
+    const swapped = label && label.includes("{name}") ? label.replaceAll("{name}", firstName) : label;
+    return swapped ? swapped.replace(/\.+$/, "").replace(/\b[a-z]/g, (c) => c.toUpperCase()) : swapped;
+  };
   const [situations, setSituations] = useState<Situation[]>([]);
   const [safety, setSafety] = useState<Safety | null>(null);
   const [terms, setTerms] = useState("");

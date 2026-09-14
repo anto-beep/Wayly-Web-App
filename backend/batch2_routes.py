@@ -200,7 +200,12 @@ async def add_participant(payload: ParticipantCreate, request: Request):
         "is_primary": True,
     })
     is_primary = has_primary == 0
-    p = Participant(household_id=hid, is_primary=is_primary, **payload.model_dump())
+    from lib.text_utils import title_case_name as _tc
+    data = payload.model_dump()
+    for _k in ("name", "first_name", "last_name", "preferred_name"):
+        if data.get(_k):
+            data[_k] = _tc(data[_k])
+    p = Participant(household_id=hid, is_primary=is_primary, **data)
     await _db.participants.insert_one(p.model_dump())
     try:
         await _audit_log(hid, user["id"], user.get("name") or user["email"], "PARTICIPANT_ADDED",
@@ -218,6 +223,10 @@ async def update_participant(pid: str, payload: ParticipantUpdate, request: Requ
     patch = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
     if not patch:
         return p
+    from lib.text_utils import title_case_name as _tc
+    for _k in ("name", "first_name", "last_name", "preferred_name"):
+        if patch.get(_k):
+            patch[_k] = _tc(patch[_k])
     await _db.participants.update_one({"id": pid, "household_id": hid}, {"$set": patch})
     updated = await _db.participants.find_one({"id": pid}, {"_id": 0})
     try:

@@ -506,6 +506,23 @@ async def parse_chsp_invoice(request: Request, file: UploadFile = File(...)):
         "billed_period_start": parsed.get("billed_period_start"),
         "billed_period_end": parsed.get("billed_period_end"),
     }
+    # Contribution prefill: if the invoice didn't show a per-unit rate, fall back
+    # to the user's saved provider rate (Agreed Rate Schedule) so the Fee Check
+    # is one tap. Match on service_type first, narrow by provider_name if we have it.
+    prefilled_rate_from_saved = False
+    if fields.get("agreed_rate") in (None, "", 0) and fields.get("service_type"):
+        profile = await _db.chsp_profiles.find_one({"user_id": (await _user_id(request))})
+        if profile:
+            q: Dict[str, Any] = {"chsp_profile_id": profile["id"], "is_active": True, "service_type": fields["service_type"]}
+            saved = await _db.chsp_service_entries.find_one(q, sort=[("start_date", -1)])
+            if not saved and fields.get("provider_name"):
+                saved = await _db.chsp_service_entries.find_one({"chsp_profile_id": profile["id"], "is_active": True}, sort=[("start_date", -1)])
+            amount = ((saved or {}).get("hourly_rate_or_fee") or {}).get("amount")
+            if amount:
+                fields["agreed_rate"] = amount
+                if not fields.get("provider_name"):
+                    fields["provider_name"] = (saved or {}).get("provider_name")
+                prefilled_rate_from_saved = True
     summary = parsed.get("plain_summary") or "We read your invoice. Check the pre-filled figures against the paper copy, then run the fee check."
     next_steps = parsed.get("next_steps") if isinstance(parsed.get("next_steps"), list) else []
     if not next_steps:
@@ -514,11 +531,14 @@ async def parse_chsp_invoice(request: Request, file: UploadFile = File(...)):
             "Add your provider's agreed per-unit rate if it is missing.",
             "Run the fee check to see whether the amount looks right.",
         ]
+    if prefilled_rate_from_saved:
+        next_steps = ["We used your saved provider rate of $" + f"{fields['agreed_rate']}" + " per unit — tap Check fee."] + [s for s in next_steps if "agreed per-unit rate if it is missing" not in s]
     return {
         "fields": fields,
         "plain_summary": str(summary),
         "next_steps": [str(s) for s in next_steps][:4],
         "extracted": bool(parsed),
+        "rate_from_saved": prefilled_rate_from_saved,
     }
 
 

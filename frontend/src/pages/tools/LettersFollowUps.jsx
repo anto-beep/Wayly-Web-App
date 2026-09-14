@@ -47,12 +47,12 @@ const DEFAULT_PARTICIPANT_LABEL = "your loved one";
 // subtle brand accent so the front door reads as an organised menu, not a wall
 // of cards. Ordering within a group follows the situation id order.
 const GROUPS = [
-    { key: "change",   title: "Ask for a change",          desc: "Request an assessment, more help, or a change to the plan.",              accent: "teal",       icon: FileText,      archetypes: ["request"] },
-    { key: "dispute",  title: "Dispute or disagree",        desc: "Push back on a charge, an assessment, or a classification decision.",     accent: "gold",       icon: AlertTriangle, archetypes: ["dispute"] },
-    { key: "escalate", title: "Report a problem or escalate", desc: "Raise a service problem, an unresponsive care manager, or go to a regulator.", accent: "terracotta", icon: MessageSquare, archetypes: ["complaint", "escalation"] },
-    { key: "notify",   title: "Notify of a change",         desc: "Tell them about a provider change, hardship, or updated details.",        accent: "sage",       icon: Mail,          archetypes: ["notification"] },
-    { key: "reply",    title: "Reply to a message",         desc: "Draft a considered response to something you received.",                  accent: "teal",       icon: MessageSquare, archetypes: ["response_draft"] },
-    { key: "safety",   title: "A safety concern",           desc: "Worried about someone's safety? Start here — we guide you to call first.", accent: "clay",       icon: ShieldAlert,   archetypes: ["guided_pathway"] },
+    { key: "change",   title: "Ask For A Change",          desc: "Request an assessment, more help, or a change to the plan.",              accent: "teal",       icon: FileText,      archetypes: ["request"] },
+    { key: "dispute",  title: "Dispute Or Disagree",        desc: "Push back on a charge, an assessment, or a classification decision.",     accent: "gold",       icon: AlertTriangle, archetypes: ["dispute"] },
+    { key: "escalate", title: "Report A Problem Or Escalate", desc: "Raise a service problem, an unresponsive care manager, or go to a regulator.", accent: "terracotta", icon: MessageSquare, archetypes: ["complaint", "escalation"] },
+    { key: "notify",   title: "Notify Of A Change",         desc: "Tell them about a provider change, hardship, or updated details.",        accent: "sage",       icon: Mail,          archetypes: ["notification"] },
+    { key: "reply",    title: "Reply To A Message",         desc: "Draft a considered response to something you received.",                  accent: "teal",       icon: MessageSquare, archetypes: ["response_draft"] },
+    { key: "safety",   title: "A Safety Concern",           desc: "Worried about someone's safety? Start here — we guide you to call first.", accent: "clay",       icon: ShieldAlert,   archetypes: ["guided_pathway"] },
 ];
 
 // "Start a blank letter" — letters are not limited to the life-scenarios above.
@@ -89,9 +89,10 @@ function personaliseSituationLabel(label, participantName) {
         const firstName = trimmed ? trimmed.split(/\s+/)[0] : DEFAULT_PARTICIPANT_LABEL;
         out = label.replaceAll("{name}", firstName);
     }
-    // Tidy the card labels: strip trailing dots and capitalise the first letter.
+    // Tidy the card labels: strip trailing dots, then apply full Title Case
+    // (every word capitalised) so situations read as proper titles.
     out = out.trim().replace(/\.+$/, "");
-    if (out) out = out.charAt(0).toUpperCase() + out.slice(1);
+    if (out) out = out.replace(/\b[a-z]/g, (c) => c.toUpperCase());
     return out;
 }
 

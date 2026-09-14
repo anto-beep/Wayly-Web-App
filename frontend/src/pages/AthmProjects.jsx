@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useParticipants } from "@/context/ParticipantsContext";
+import { RequiredBadge } from "@/components/RequiredHint";
 import { toast } from "sonner";
 import {
     ChevronLeft, Plus, Wrench, Home, TimerReset, ArrowRight,
@@ -67,8 +68,8 @@ const STATUS_STEPS = [
     "declined", "cancelled",
 ];
 
-// Small, reusable "(Required)" marker so every form field is explicitly labelled.
-const Req = () => <span className="text-red-600 font-semibold ml-0.5" aria-label="required" title="Required">*</span>;
+// Explicit "Required" badge (shared app-wide style) so every field is clearly labelled.
+const Req = () => <RequiredBadge className="ml-1 align-middle" />;
 
 function useParticipantId() {
     // Reactive: cascades to the active participant selected in the header.
@@ -179,6 +180,13 @@ function QuoteComparison({ mod, onRefresh }) {
                             Variance ${(dearest - cheapest).toLocaleString()} ({variance}% between the cheapest and dearest quote).
                         </p>
                     )}
+                </div>
+            )}
+
+            {quotes.length === 1 && (
+                <div className="rounded-xl border border-gold/40 bg-gold/10 p-3 flex items-start gap-2.5" data-testid={`mod-one-quote-nudge-${mod.id}`}>
+                    <AlertTriangle className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+                    <p className="text-xs text-primary-k">You&apos;ve added <strong>one quote</strong> so far. Add at least one more so you can compare prices side by side before you decide.</p>
                 </div>
             )}
 
@@ -455,7 +463,7 @@ function ProjectDetail({ project, participantId, onClose, onRefresh }) {
                 </div>
                 {showItemForm && (
                     <div className="rounded-xl border border-kindred bg-surface-2/40 p-3 space-y-2" data-testid="athm-item-form">
-                        <p className="text-[11px] text-muted-k">Fields marked <Req/> are required.</p>
+                        <p className="text-[11px] text-muted-k">Fields showing a Required label must be completed.</p>
                         <div className="grid sm:grid-cols-2 gap-2 items-end">
                             <label className="text-[11px] text-muted-k font-medium">Category <Req/>
                                 <select value={AT_CATEGORIES.some(c => c.v === newItem.item_category) ? newItem.item_category : "__custom__"}
@@ -524,7 +532,7 @@ function ProjectDetail({ project, participantId, onClose, onRefresh }) {
                 </div>
                 {showModForm && (
                     <div className="rounded-xl border border-kindred bg-surface-2/40 p-3 space-y-2" data-testid="athm-mod-form">
-                        <p className="text-[11px] text-muted-k">Fields marked <Req/> are required.</p>
+                        <p className="text-[11px] text-muted-k">Fields showing a Required label must be completed.</p>
                         <div className="grid sm:grid-cols-2 gap-2 items-end">
                             <label className="text-[11px] text-muted-k font-medium">Category <Req/>
                                 <select value={HM_CATEGORIES.some(c => c.v === newMod.modification_category) ? newMod.modification_category : "__custom__"}
@@ -644,7 +652,7 @@ function CreateProjectCard({ participantId, onCreated }) {
                 <div className="bg-primary-k px-6 py-5 text-white">
                     <p className="text-xs uppercase tracking-wide text-white/70">Assistive Technology & Home Modifications</p>
                     <h2 className="font-heading text-2xl mt-1">New Project</h2>
-                    <p className="text-sm text-white/80 mt-1">Set up the project, then add items, quotes, and documents. Fields marked <span className="text-white font-semibold">*</span> are required.</p>
+                    <p className="text-sm text-white/80 mt-1">Set up the project, then add items, quotes, and documents. Fields showing a Required label must be completed.</p>
                 </div>
                 <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                     <div className="rounded-xl bg-[#EAF3F3] p-4">

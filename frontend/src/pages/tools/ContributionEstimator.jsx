@@ -263,17 +263,36 @@ function buildPayload(form) {
 
 /* ---------- form body ---------- */
 
+function SectionHeader({ tone, title, desc }) {
+    const dot = { teal: "bg-[#0E4D52]", clay: "bg-clay", terracotta: "bg-terracotta" }[tone] || "bg-primary-k";
+    return (
+        <div className="flex items-start gap-2.5">
+            <span className={`mt-1.5 inline-block h-2.5 w-2.5 rounded-full ${dot}`} />
+            <div>
+                <h3 className="font-heading text-lg text-primary-k leading-tight">{title}</h3>
+                {desc && <p className="text-xs text-muted-k mt-0.5">{desc}</p>}
+            </div>
+        </div>
+    );
+}
+
 function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, showHcpLevel, showClassificationPicker, cscBadge }) {
     return (
-        <div className="bg-gradient-to-b from-surface to-surface-2/40 border border-kindred rounded-2xl p-6 space-y-4">
-            {/* Person name */}
-            <FieldRow label="Person's name (optional)">
-                <input
-                    type="text" value={form.person_name} onChange={(e) => set({ person_name: e.target.value })}
-                    placeholder="e.g. Louisa Davids" data-testid="ce-person-name"
-                    className="w-full rounded-md border border-kindred px-3 py-2 focus:outline-none focus:ring-2 ring-primary-k"
-                />
-            </FieldRow>
+        <div className="space-y-5">
+            {/* Person name (neutral) */}
+            <div className="bg-surface border border-kindred rounded-2xl p-5">
+                <FieldRow label="Person's name (optional)">
+                    <input
+                        type="text" value={form.person_name} onChange={(e) => set({ person_name: e.target.value })}
+                        placeholder="e.g. Louisa Davids" data-testid="ce-person-name"
+                        className="w-full rounded-md border border-kindred px-3 py-2 focus:outline-none focus:ring-2 ring-primary-k"
+                    />
+                </FieldRow>
+            </div>
+
+            {/* SECTION · Your care situation (teal) */}
+            <div className="rounded-2xl border border-[#0E4D52]/20 bg-[#E7F1F1] p-5 space-y-4" data-testid="ce-section-situation">
+                <SectionHeader tone="teal" title="Your care situation" desc="Where you are in the Support at Home process." />
 
             {/* Entry path (5 options, replaces the old grandfathered checkbox) */}
             <FieldRow label="Which best describes your situation?" tone="teal">
@@ -363,6 +382,12 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
                 </FieldRow>
             )}
 
+            </div>
+
+            {/* SECTION · Your money (clay) */}
+            <div className="rounded-2xl border border-clay/30 bg-[#FBEFE7] p-5 space-y-4" data-testid="ce-section-money">
+                <SectionHeader tone="clay" title="Your money" desc="Your pension, household and finances set what you contribute." />
+
             {/* Pension status */}
             <FieldRow label="Age Pension status" tone="sage">
                 <div className="grid sm:grid-cols-2 gap-2" data-testid="ce-pension-status">
@@ -448,6 +473,12 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
                 </div>
             )}
 
+            </div>
+
+            {/* SECTION · Service mix (terracotta / red) */}
+            <div className="rounded-2xl border border-terracotta/30 bg-[#FBEAE3] p-5 space-y-3" data-testid="ce-section-mix">
+                <SectionHeader tone="terracotta" title="Service mix" desc="Fine-tune the split across clinical, independence and everyday services." />
+
             {/* Service mix advanced toggle */}
             <div>
                 <button
@@ -475,6 +506,7 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
                 {form.mix_advanced && (
                     <div className="text-xs text-muted-k mt-1">Total: {form.service_mix.clinical + form.service_mix.independence + form.service_mix.everyday}%</div>
                 )}
+            </div>
             </div>
         </div>
     );

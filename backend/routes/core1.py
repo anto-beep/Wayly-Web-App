@@ -133,17 +133,19 @@ class ParticipantPatch(BaseModel):
 
 
 def _participant_public(p: dict) -> dict:
-    """Sanitised participant object returned by API."""
+    """Sanitised participant object returned by API. Person names are always
+    returned Title-Cased so "peter smith" never surfaces anywhere."""
+    from lib.text_utils import title_case_name as _tc
     display = p.get("name") or p.get("preferred_name") or p.get("first_name")
     if not display and p.get("last_name"):
         display = f"{p.get('first_name','')} {p.get('last_name','')}".strip()
     return {
         "id": p.get("id"),
         "household_id": p.get("household_id"),
-        "display_name": display or "Unnamed",
-        "first_name": p.get("first_name"),
-        "last_name": p.get("last_name"),
-        "preferred_name": p.get("preferred_name"),
+        "display_name": _tc(display) or "Unnamed",
+        "first_name": _tc(p.get("first_name")),
+        "last_name": _tc(p.get("last_name")),
+        "preferred_name": _tc(p.get("preferred_name")),
         "classification": {
             "band": p.get("classification") or p.get("classification_level"),
             "confidence": None,
@@ -217,7 +219,8 @@ async def patch_participant(pid: str, payload: ParticipantPatch, request: Reques
     updates: Dict[str, Any] = {"updated_at": _now()}
     events: List[Dict[str, Any]] = []
     if payload.name is not None and payload.name != p.get("name"):
-        updates["name"] = payload.name
+        from lib.text_utils import title_case_name as _tc
+        updates["name"] = _tc(payload.name)
     if payload.provider_name is not None and payload.provider_name != p.get("provider_name"):
         updates["provider_name"] = payload.provider_name
         events.append({"event_type": "provider_changed", "old": p.get("provider_name"), "new": payload.provider_name})

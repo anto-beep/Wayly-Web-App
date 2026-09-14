@@ -47,9 +47,10 @@ const DECISION_OPTIONS = [
 function LInput({ label, value, onChangeText, placeholder, keyboardType, testID, colors, required, optional }: any) {
   return (
     <View style={{ flex: 1, minWidth: "45%" }}>
-      <T variant="small" style={{ color: colors.muted, fontSize: 11, marginBottom: 4 }}>
-        {label}{required ? <T style={{ color: colors.terracotta, fontFamily: fonts.bodySemi }}> *</T> : optional ? <T style={{ color: colors.muted, fontSize: 10 }}> (optional)</T> : null}
-      </T>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+        <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>{label}</T>
+        {required ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.gold }}>Required</T> : optional ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>Optional</T> : null}
+      </View>
       <TextInput testID={testID} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.muted} keyboardType={keyboardType}
         style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, minHeight: 44, color: colors.text, fontFamily: fonts.body, backgroundColor: colors.bg }} />
     </View>
@@ -192,7 +193,7 @@ function WS1FeeCheck({ services, colors }: any) {
     <Card testID="chsp-ws1-fee-check">
       <T variant="label">FEE CHECK</T>
       <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Was this CHSP invoice correct?</T>
-      <T variant="small" style={{ marginTop: 4 }}>We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields marked <T style={{ color: colors.terracotta }}>*</T> are required.</T>
+      <T variant="small" style={{ marginTop: 4 }}>We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields showing a Required label must be completed.</T>
 
       {/* Upload + auto-read */}
       <View style={{ marginTop: spacing.md, backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="chsp-ws1-upload-card">
@@ -328,19 +329,27 @@ export default function ChspToolsScreen() {
               <ChspProfileCard profile={profile} onCreate={load} colors={colors} />
               {profile ? (
                 <>
-                  <ChspServicesCard services={services} onAdded={load} colors={colors} />
-                  {ws1 ? <WS1FeeCheck services={services} colors={colors} /> : <FeeCheckForm services={services} colors={colors} />}
-
-                  <Card testID="chsp-fit-self-check">
-                    <T variant="label">IS CHSP STILL THE RIGHT FIT?</T>
-                    <T variant="small" style={{ marginTop: 4, lineHeight: 20 }}>Most people on CHSP are on the right program. You only need the transition walkthrough if your care needs have genuinely changed.</T>
-                    <Pressable testID="chsp-needs-change" onPress={() => setNeedsChange((v) => !v)} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.md }}>
+                  {/* Is CHSP still the right fit? — surfaced up top, not buried at the bottom. */}
+                  <View testID="chsp-fit-self-check" style={{ backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.primary + "33", borderRadius: radius.lg, padding: spacing.md }}>
+                    <View style={{ flexDirection: "row", gap: spacing.sm, alignItems: "flex-start" }}>
+                      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary + "1A", alignItems: "center", justifyContent: "center" }}>
+                        <Home size={18} color={colors.primary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <T variant="label" style={{ color: colors.primary }}>IS CHSP STILL THE RIGHT FIT?</T>
+                        <T variant="small" style={{ marginTop: 4, lineHeight: 20, color: colors.text }}>Most people on CHSP are on the right program. You only need the transition walkthrough if your care needs have genuinely changed.</T>
+                      </View>
+                    </View>
+                    <Pressable testID="chsp-needs-change" onPress={() => setNeedsChange((v) => !v)} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.md, backgroundColor: colors.bg, borderRadius: radius.md, padding: spacing.sm }}>
                       <Checkbox checked={needsChange} colors={colors} />
                       <T variant="small" style={{ flex: 1, color: colors.text }}>My care needs have changed recently (for example after a hospital stay or a health change).</T>
                     </Pressable>
-                  </Card>
+                  </View>
 
                   {needsChange ? <TransitionWalkthrough colors={colors} /> : null}
+
+                  <ChspServicesCard services={services} onAdded={load} colors={colors} />
+                  {ws1 ? <WS1FeeCheck services={services} colors={colors} /> : <FeeCheckForm services={services} colors={colors} />}
 
                   <View testID="chsp-disclaimer" style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.md }}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>Not financial or legal advice.</T>

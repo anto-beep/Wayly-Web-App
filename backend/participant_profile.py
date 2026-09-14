@@ -314,10 +314,15 @@ def _strip_mongo(doc: Optional[dict]) -> Optional[dict]:
 
 def _decorate(doc: dict) -> dict:
     """Adds computed `profile_completeness_pct`, `missing_required_fields`,
-    `recommended_next_fields`, `requires_completion` to a participant doc."""
+    `recommended_next_fields`, `requires_completion` to a participant doc.
+    Person names are always returned Title-Cased."""
     if not doc:
         return doc
     doc = dict(doc)
+    from lib.text_utils import title_case_name as _tc
+    for _k in ("first_name", "last_name", "preferred_name", "name"):
+        if doc.get(_k):
+            doc[_k] = _tc(doc[_k])
     doc["profile_completeness_pct"] = compute_profile_completeness(doc)
     missing = missing_required_fields(doc)
     doc["missing_required_fields"] = missing
@@ -362,6 +367,9 @@ async def create_participant(body: ParticipantCreateBody, request: Request):
     # subset of fields, we extend it here with the full Tier 1 / 2 / 3 schema).
     import uuid
     pid = str(uuid.uuid4())
+    from lib.text_utils import title_case_name as _tc
+    body.first_name = _tc(body.first_name.strip())
+    body.last_name = _tc(body.last_name.strip())
     # Create a backing household row for legacy code paths
     hid = user.get("household_id")
     full_name = f"{body.first_name} {body.last_name}".strip()
@@ -469,6 +477,10 @@ async def patch_participant(pid: str, body: ParticipantPatchBody, request: Reque
     patch = body.model_dump(exclude_unset=True)
     if not patch:
         return _decorate(doc)
+    from lib.text_utils import title_case_name as _tc
+    for _k in ("first_name", "last_name", "preferred_name", "name"):
+        if patch.get(_k):
+            patch[_k] = _tc(patch[_k])
     # Sync legacy aliases for back-compat
     if "dob" in patch:
         patch["date_of_birth"] = patch["dob"]

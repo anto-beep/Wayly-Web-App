@@ -161,8 +161,10 @@ export default function ContributionEstimator() {
               <Label colors={colors}>{"Person's name (optional)"}</Label>
               <TextInput testID="ce-person-name" value={form.person_name} onChangeText={(v) => set({ person_name: v })} placeholder="e.g. Louisa Davids" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
 
-              <Label colors={colors} top>Which best describes your situation?</Label>
-              <View testID="ce-entry-path" style={{ gap: spacing.sm, backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.md }}>
+              <View style={{ marginTop: spacing.md, backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="ce-section-situation">
+                <SectionHead colors={colors} dot={colors.primary} title="Your care situation" desc="Where you are in the Support at Home process." />
+              <Label colors={colors}>Which best describes your situation?</Label>
+              <View testID="ce-entry-path" style={{ gap: spacing.sm }}>
                 {ENTRY_PATHS.map((p) => (
                   <RadioTile key={p.v} checked={form.entry_path === p.v} label={p.label} sub={p.desc} colors={colors} testID={`ce-entry-${p.v}`}
                     onPress={() => set({ entry_path: p.v, assessment_status: p.v === "not_assessed" ? "not_assessed" : form.assessment_status, hcp_paid_fees: p.v === "hcp_pre_sep_2024" ? form.hcp_paid_fees : null, hcp_level_when_grandfathered: (p.v === "hcp_pre_sep_2024" || p.v === "hcp_post_sep_pre_nov_2025") ? form.hcp_level_when_grandfathered : null })} />
@@ -218,14 +220,18 @@ export default function ContributionEstimator() {
                 </View>
               ) : null}
 
-              <Label colors={colors} top>Age Pension status</Label>
-              <View testID="ce-pension-status" style={{ gap: spacing.sm, backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.md }}>
+              </View>
+
+              <View style={{ marginTop: spacing.md, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="ce-section-money">
+                <SectionHead colors={colors} dot={colors.gold} title="Your money" desc="Your pension, household and finances set what you contribute." />
+              <Label colors={colors}>Age Pension status</Label>
+              <View testID="ce-pension-status" style={{ gap: spacing.sm }}>
                 {PENSION_STATUS.map((p) => (
                   <RadioTile key={p.v} checked={form.pension_status === p.v} label={p.label} colors={colors} testID={`ce-pension-${p.v}`} onPress={() => set({ pension_status: p.v })} />
                 ))}
               </View>
 
-              <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.md, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md }} testID="ce-household-block">
+              <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.md, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md }} testID="ce-household-block">
                 <View style={{ flex: 1 }}>
                   <Label colors={colors}>Household</Label>
                   <View style={{ flexDirection: "row", gap: spacing.sm }}>
@@ -261,7 +267,11 @@ export default function ContributionEstimator() {
                 </View>
               ) : null}
 
-              <Pressable testID="ce-mix-toggle" onPress={() => set({ mix_advanced: !form.mix_advanced })} style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: spacing.md }}>
+              </View>
+
+              <View style={{ marginTop: spacing.md, backgroundColor: colors.errorSoft, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="ce-section-mix">
+                <SectionHead colors={colors} dot={colors.terracotta} title="Service mix" desc="Fine-tune the split across clinical, independence and everyday services." />
+              <Pressable testID="ce-mix-toggle" onPress={() => set({ mix_advanced: !form.mix_advanced })} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <T variant="small" style={{ color: colors.muted }}>Service mix, defaults to 30 / 45 / 25 %</T>
                 {form.mix_advanced ? <ChevronUp size={15} color={colors.muted} /> : <ChevronDown size={15} color={colors.muted} />}
               </Pressable>
@@ -275,6 +285,7 @@ export default function ContributionEstimator() {
                   ))}
                 </View>
               ) : null}
+              </View>
 
               {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }} testID="ce-error">{error}</T> : null}
               <Button label="See my estimate" testID="ce-submit" icon={Sparkles} onPress={submit} loading={busy} style={{ marginTop: spacing.md }} />
@@ -548,6 +559,17 @@ function RateCard({ label, rate, note, colors, testID }: any) {
       <T style={{ fontSize: 10, letterSpacing: 0.3, color: colors.muted }}>{label.toUpperCase()}</T>
       <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>{rate}</T>
       <T style={{ fontSize: 10, color: colors.muted, marginTop: 2 }}>{note}</T>
+    </View>
+  );
+}
+function SectionHead({ colors, dot, title, desc }: any) {
+  return (
+    <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: dot, marginTop: 5 }} />
+      <View style={{ flex: 1 }}>
+        <T style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.text }}>{title}</T>
+        {desc ? <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>{desc}</T> : null}
+      </View>
     </View>
   );
 }

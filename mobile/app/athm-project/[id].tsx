@@ -293,6 +293,13 @@ function QuoteComparison({ mod, onRefresh, colors }: any) {
         </View>
       ) : null}
 
+      {quotes.length === 1 ? (
+        <View testID={`mod-one-quote-nudge-${mod.id}`} style={{ marginTop: spacing.sm, flexDirection: "row", gap: 8, alignItems: "flex-start", backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.sm }}>
+          <AlertTriangle size={14} color={colors.gold} style={{ marginTop: 1 }} />
+          <T variant="small" style={{ color: colors.text, flex: 1, fontSize: 12 }}>You&apos;ve added one quote so far. Add at least one more so you can compare prices before you decide.</T>
+        </View>
+      ) : null}
+
       <View style={{ gap: spacing.xs, marginTop: spacing.sm }}>
         <TextInput testID={`mod-add-supplier-${mod.id}`} value={supplier} onChangeText={setSupplier} placeholder="Supplier" placeholderTextColor={colors.muted} style={qInput(colors)} />
         <TextInput testID={`mod-add-amount-${mod.id}`} value={amount} onChangeText={setAmount} placeholder="Amount (AUD)" keyboardType="decimal-pad" placeholderTextColor={colors.muted} style={qInput(colors)} />
