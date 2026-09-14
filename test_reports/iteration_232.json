@@ -1,0 +1,51 @@
+{
+  "summary": "INV-1 Phase 2 (Invoice Checker parity with Statement Decoder) tested end-to-end on web + mobile. Backend: 6/6 pytest PASS — GET /api/invoices/{id}/download?kind=original returns application/pdf (raw bytes); ?kind=report returns Wayly check-report PDF (magic %PDF); GET /api/invoices/{id}/export.csv returns text/csv with 'Wayly - Invoice Check' header, Line rows and Issues section; POST /api/invoices/{id}/findings/0/letter returns entry_id + editor_path='/tools/letters-and-follow-ups/{id}' + situation_id 3/10; unauth 401. Web /app/invoices/{id}: all 13 required data-testids present (inv1-summary-banner, inv1-download-bar + original/csv/pdf/compare buttons, inv1-charges-toggle → 29-row inv1-charges-table, inv1-issue-register with 3 collapsible severity groups high/medium/low, per-issue inv1-issue-letter-0 navigates to /tools/letters-and-follow-ups/629c04ef... after backend create). Compare view renders inv1-compare-view + inv1-compare-original <object> beside decoded charges. Mobile /invoice/{id}: 12/13 testIDs present (all summary/download/severity/charges/issue-letter). Severity collapse/expand + charges toggle work; screenshot confirms High/Medium/Low grouping identical to web (Low shows C1 clinical care contribution should be nil, refund $130.35). Parity: severity grouping, line items, download options all match across surfaces. One mobile follow-up: after tapping inv1-issue-letter-0 the page did NOT navigate to /correspondence in the Playwright web preview — likely because RN web Alert.alert renders custom UI (not window.alert) so the auto-dismiss dialog handler didn't tap 'OK'. The backend letter draft IS created (confirmed by pytest). Main agent should verify the mobile Alert 'OK' handler wires router.push('/correspondence') and confirm on a device/simulator.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "InvoiceResultView top-level wrapper", "issue": "testID='inv1-result' wrapper View is defined in /app/mobile/src/components/invoices/InvoiceResultView.tsx (default export) but count=0 on /invoice/[id]. Suggests /app/mobile/app/invoice/[id].tsx renders the named exports directly instead of the default composed InvoiceResultView. Minor — everything inside still renders.", "testID": "inv1-result", "priority": "LOW"}
+      ],
+      "integration_issues": [
+        {"flow": "Draft letter from invoice finding", "issue": "After tapping inv1-issue-letter-0, URL stayed on /invoice/{id} in Expo web preview (expected navigation to /correspondence after Alert confirm). Backend entry IS created (pytest green). Likely RN Alert.alert on web renders a custom modal — needs manual OK tap, not window.dialog auto-accept. Please verify on native and/or add a testID to the Alert's OK button.", "affected_testIDs": ["inv1-issue-letter-0"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Draft-letter navigation", "platform": "mobile", "issue": "Web navigates to /tools/letters-and-follow-ups/{entry_id} immediately after backend responds; mobile shows an Alert first and then routes to /correspondence — different destination copy is expected per spec (mobile deep-links to /correspondence list, web opens the editor directly), but the mobile navigation could not be observed in the automated preview run. Backend confirmed to produce entry.", "expected": "Both surfaces navigate away from the invoice detail after a successful letter draft creation.", "actual": "Web navigates OK; mobile Playwright run stayed on /invoice/{id} — Alert 'OK' handler needs verification."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_inv1_phase2_parity_iter232.py",
+    "/app/test_reports/pytest/iter232_inv1_phase2.xml",
+    "/app/test_reports/iter232_web.jpeg",
+    "/app/test_reports/iter232_mobile.jpeg"
+  ],
+  "action_items": [
+    "Add testID='inv1-result' at the top-level View of /app/mobile/app/invoice/[id].tsx (or use the default InvoiceResultView export) so screen-level tests can key off a single anchor.",
+    "Verify the mobile per-issue Draft-letter Alert.alert OK handler actually calls router.push('/correspondence') — automated preview run stayed on /invoice/{id}. Optional: add testID to the OK button so automation can confirm on web preview too.",
+    "(Already green) Web: all download/compare/severity/letter flows working; no fixes needed."
+  ],
+  "critical_code_review_comments": [
+    "backend/routes/invoices.py download_invoice_file correctly derives mimetype from filename suffix and streams via Response (no in-memory bloat beyond base64 decode) — good. Response.headers Content-Disposition='inline' for original preserves side-by-side compare UX; report is 'attachment'.",
+    "export.csv writes 'Amount billed' from recon.invoice_total (backfilled by get_invoice on demand) — good self-healing for pre-backfill rows. CSV also includes de-duplicated Issues block with C1..C12 human titles that mirror the web _CHECK_TITLES map.",
+    "letter route maps escalation=='acqsc' → situation 10 else situation 3 and passes source_import={tool,record_id,check_id,tier,suggested_question,narrative,invoice_filename} into lf1_correspondence — clean source-aware pattern; web + mobile both receive editor_path for navigation.",
+    "Web InvoiceResultView.jsx: severity bands collapse to High/Medium/Low, preserves original finding index via withIdx.map so draft-letter callback still points at the right backend finding after grouping — nice correctness detail.",
+    "Web InvoiceCompareView renders <object data=objUrl type=application/pdf> which is not preview-able in headless chromium (fallback text shows). Not a bug — download button still works. Consider using an <iframe> or pdf.js viewer for a smoother in-page preview on stricter browsers."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (6/6 pytest — download original+report, csv export, letter draft, auth)", "frontend": "web 100% / mobile ~92% (13/13 testIDs — minus inv1-result wrapper; letter route needs verification)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None — reused seeded invoice 2acaf9f3-0190-47e7-b9c7-c939c579b49b (Glorious Services Pty Ltd, 18 findings, 29 line items, refund $180.86).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "INV-1 Phase 2 is GREEN on backend + web. Mobile: only unknown is whether the Draft-letter Alert routes to /correspondence — verify by tapping 'OK' manually or in a native/device run. Seeded invoice id: 2acaf9f3-0190-47e7-b9c7-c939c579b49b. Reusable test file: /app/backend/tests/test_inv1_phase2_parity_iter232.py (needs REACT_APP_BACKEND_URL exported before pytest).",
+  "rca of the issue": ""
+}

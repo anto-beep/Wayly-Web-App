@@ -1,0 +1,34 @@
+{
+  "summary": "Mobile-only frontend test of two features on the Expo web preview logged in as cathy@example.com: (1) CHSP service-entry manager on /chsp-tools and (2) Care Plan Camera Scan on the Support Plan Reviewer. Both features work end-to-end. Profile already existed for cathy so 'Your CHSP services' card rendered immediately; added a service (BlueBerry Care, $60, 2025-07-01) — chsp-services-count incremented 0→1 and the entry appeared in chsp-services-list. chsp-svc-save with missing provider/rate/start correctly shows chsp-svc-error 'Provider, rate and start date are required.' The fee-check chsp-fc-service-entry dropdown listed the new service and was selectable; a fee check with billed 260 / expected 240 rendered variance $20 (8.33%) with variance-badge-material_variance and the Open dispute case button. On the Support Plan Reviewer (route /tool/care-plan-reviewer, reached via AI Tools tab), care-plan-form renders BOTH cp-pick-files and the new cp-take-photo button; tapping cp-take-photo on the web preview does not crash the screen (form remains mounted) — the native camera cannot open on web as expected. No red screen or console errors were introduced by the new code paths.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter225_chsp_initial.jpeg",
+    "/app/test_reports/iter225_chsp_after_add.jpeg",
+    "/app/test_reports/iter225_chsp_fc_dropdown.jpeg",
+    "/app/test_reports/iter225_chsp_fc_result.jpeg",
+    "/app/test_reports/iter225_care_plan_form.jpeg",
+    "/app/test_reports/iter225_care_plan_after_take.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "chsp-tools.tsx onServiceChange pre-fills service_type + provider_name when a service entry is picked — verified via variance calc; note that in RN Web the underlying DOM input .value attribute lags the controlled state briefly (eval_on_selector('.value') returned '' momentarily after selection), but the on-screen field and submit payload reflect the correct value.",
+    "cp-take-photo currently returns silently on the web preview when ImagePicker.launchCameraAsync is unavailable — no error banner or 'not supported on web' hint is shown. Not a defect for native, but adding a small info message on web could improve UX; native/device testing still required to fully validate the camera flow."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family caregiver) — profile already existed on this env",
+  "seed_data_creation": "Created one CHSP service entry for cathy: provider='BlueBerry Care', service_type='domestic_assistance', hourly_rate_or_fee=60, start_date=2025-07-01. One fee-check submitted (INV-TEST-001, billed 260, expected 240) which produced a material_variance result.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Support Plan Reviewer is at /tool/care-plan-reviewer (singular 'tool'), NOT /tools/care-plan-reviewer or /care-plan-reviewer. Login page inputs on mobile do not carry data-testid, so use plain input selectors (2 inputs, email/password order). cathy already has a CHSP profile and now at least one service entry from this run — assertions on empty state (chsp-services-empty) will not fire without cleanup."
+}

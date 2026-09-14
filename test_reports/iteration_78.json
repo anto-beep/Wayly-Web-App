@@ -1,0 +1,55 @@
+{
+  "summary": "ITER-78 four-item batch fully verified end-to-end. (1) Signup v3 two-column layout — at 1440x900 the persona-first form card renders on LEFT (signup-role-caregiver X=173) and compact plan picker on RIGHT (signup-plan-family X=835). Submit button lands at Y=944 (just 44px below the 900px fold — essentially ~1x viewport as spec'd). signup-caregiver-fields is default-visible (caregiver is the default role) and correctly hides when toggling to participant. Mobile field is behind a collapsed <details> summary 'Add a mobile number (optional)' and reveals on click. At 375x667, plans stack ABOVE the form (plan Y=353 < form Y=898) — the order-1/order-2 swap works. Zero console errors on /signup. (2) Report Persona Refresh — verified via NEW /app/backend/tests/test_iter78_report_persona_refresh.py. Cathy generates HOUSEHOLD_SUMMARY as caregiver → exec_summary opens with 'Dorothy has used just under half of her quarterly budget so far…' (third person). Then PUT /api/persona switches her to participant, and a fresh generation yields 'You've used 49% of your quarterly budget with BlueBerry Care this quarter…' — no Dorothy leakage, dominant second-person 'you/your'. This proves the report.pop('_persona_context', None) + fresh load_persona_context() at reports_routes.py:1158 landed correctly (stale persona is dropped before each generation). (3) LF-1 adaptive system-prompt trim — _build_user_message no longer emits the PERSONA CONTEXT block; caregiver dispute letter still produced third-person 'Dorothy' body (persona injection still flowing via system prompt in generate_letter → confirms it's not double-emitted). (4) Copy governance lint — the two structural pytests in tests/test_persona_governance.py both pass. Verified their teeth by injecting: (a) a probe JSX file with Python-style adjacent strings → test FAILED with 'frontend/src/pages/_governance_probe.jsx:3'; (b) a temp 'test.orphan.key' in TIER1_VARIANTS → test FAILED with 'test.orphan.key' called out by name. Both probes removed and re-run confirms clean state. Backend regression suite: 34/34 persona base + 1 new persona-refresh = 35/35 pass. Iter77 LF-1 participant letter has ONE flaky assertion — see minor issues below.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "N/A (pre-existing test bug from iter77)",
+        "issue": "tests/test_iter77_persona_injection.py::TestLF1PersonaVoice::test_participant_letter_uses_first_person asserts \"'dorothy' not in body\" AFTER passing intake={'participant_name': 'Dorothy'}. The LLM correctly rendered 'I am writing to dispute a charge on Dorothy's May statement' — the letter voice IS first-person (persona flow works), but the LLM echoed the intake field. Test should either: (a) set participant_name='Cathy' (or omit it) when running the participant case, OR (b) assert only that first-person voice is present rather than requiring absence of the intake name. Not a persona-injection regression."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Signup v3 (1440x900)",
+        "issues": [
+          "Submit button top-edge sits at Y=944 (44px below the 900px fold). Meets the spec's 'within scroll distance (~1x viewport)' requirement, but the review copy says 'both above the fold' — strictly true only for the plan picker (Y=104–1057) and the form header (Y=402 for the role radio). The submit button itself does require a tiny scroll. Consider slimming the header block ~50px if 'submit-above-fold' is the hard requirement."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter78_report_persona_refresh.py",
+    "/app/test_reports/pytest/iter78_persona_regression.xml",
+    "/app/test_reports/pytest/iter78_report_refresh.xml",
+    "/app/test_reports/pytest/iter78_full.xml",
+    "/app/test_reports/pytest/iter78_iter77_persona_injection.xml"
+  ],
+  "action_items": [
+    "(minor) Iter77 test bug: tests/test_iter77_persona_injection.py::TestLF1PersonaVoice::test_participant_letter_uses_first_person is flaky when intake.participant_name='Dorothy' — LLM correctly echoes the intake name and trips the 'dorothy not in body' assertion. Either drop that assertion for the participant case or override the intake participant name to 'Cathy'/self for the participant run.",
+    "(review) Copy Governance Lint suite is currently pytest-only. As the misc note suggests, wire tests/test_persona_governance.py::test_no_adjacent_string_literals_in_jsx into a pre-commit hook (or CI-required check) so the CE-2-style build break is impossible to reintroduce at PR time — pytest running only after PR merge is the wrong quality gate for a build-blocker.",
+    "(design) At 1440x900, Signup v3 submit button falls ~44px below the fold. If 'both submit + plans above the fold' is a hard requirement rather than a soft one, trim the top hero/header block by ~50–60px."
+  ],
+  "critical_code_review_comments": [
+    "reports_routes.py:1158 pop-before-reload of _persona_context is CORRECT for retries, but note the fresh-generation path (POST /api/reports/generate) never populates _persona_context in the initial insert anyway — the pop is defensive-programming for the retry path where a stale ctx might have been serialized alongside a FAILED report. Consider adding a comment explicitly calling out that this pop is only strictly needed on retry.",
+    "services/lf1_generate.py:_build_user_message keeps `persona_context` on the signature for API stability but assigns it to `_` — clean, but a callsite grepping for persona_context will now find dead usage. Add a comment noting that the block is intentionally emitted via generate_letter's system-prompt path only.",
+    "lib/persona/registry.py comment on line 213-218 references retired seed keys but doesn't list them explicitly. Consider naming the retired keys (lf1.letter.rate_query.opening, lf1.signature.representative, reports.summary.intro) in the comment so future git-archaeology doesn't have to scan history.",
+    "tests/test_persona_governance.py::_ADJACENT_JSX_PATTERN uses a simple `\"...\"\\n...\"...\"` regex; it will not catch adjacent strings on the SAME line (e.g. `foo: \"a\" \"b\"`) or triple-quoted TS templates. Confirmed the CE-2 root cause was multi-line so today's suite catches it, but the pattern could be tightened to a token-level scan in a follow-up."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter78_report_persona_refresh.py (NEW — 1 test proving pop-before-reload picks up post-PUT persona)"
+  ],
+  "success_rate": {
+    "backend": "100% (35/35: 34 persona base + governance + registry + routes + context, plus 1 new iter78 report-persona-refresh test)",
+    "frontend": "100% (Signup v3 desktop two-column layout, default-caregiver-fields, participant toggle, mobile details-collapse, mobile-viewport plan-above-form ordering ALL PASS; /signup, /ai-tools/statement-decoder, /ai-tools/contribution-estimator, /tools/price-checker/history all render with 0 console errors)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 — used for LF-1 dispute letter generation and HOUSEHOLD_SUMMARY report persona-switch. Restored to caregiver + Dorothy on teardown (verified via GET /api/persona post-fixture).",
+  "seed_data_creation": "Ephemeral only. Two HOUSEHOLD_SUMMARY reports created + deleted during test_iter78_report_persona_refresh. No permanent seed data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "PERSONA_V1_ENABLED=true. Iter-78 shipped 4 items — all verified. Full backend persona test suite is now 35 tests (test_persona_governance 2 + test_persona_context 4 + test_persona_registry 17 + test_persona_routes 11 + test_iter78_report_persona_refresh 1). Cathy is restored to caregiver + Dorothy + pronouns=unknown. Governance lint has teeth — verified by injecting probes for both tests. Signup v3 desktop layout: form LEFT (col-span-7), plans RIGHT (col-span-5), submit at Y=944 (just below fold). Mobile viewport correctly reorders plans above form via order-1/order-2. Test file at /app/backend/tests/test_iter78_report_persona_refresh.py should be kept for future regression on the pop-before-reload contract.",
+  "rca of the issue": "N/A — no bugs found. All four items verified working."
+}

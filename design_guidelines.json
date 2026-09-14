@@ -1,0 +1,276 @@
+{
+  "app_name": "Wayly",
+  "surfaces": [
+    "web",
+    "mobile"
+  ],
+  "personality": "Archetype 2: Material You / Expressive + Editorial legibility (Fusion)",
+  "personality_one_liner": "A warm, high-quality financial care dashboard that uses rich Teal, Clay, and Sage color blocks to make complex data approachable and highly legible for older adults.",
+  "brand": {
+    "color": {
+      "surface": "#F4F7F6",
+      "onSurface": "#0A2022",
+      "surfaceSecondary": "#0E4D52",
+      "onSurfaceSecondary": "#FFFFFF",
+      "surfaceTertiary": "#A5512B",
+      "onSurfaceTertiary": "#FFFFFF",
+      "surfaceInverse": "#6B8F71",
+      "onSurfaceInverse": "#FFFFFF",
+      "brand": "#0E4D52",
+      "brandPrimary": "#0E4D52",
+      "onBrandPrimary": "#FFFFFF",
+      "brandSecondary": "#A5512B",
+      "onBrandSecondary": "#FFFFFF",
+      "brandTertiary": "#6B8F71",
+      "onBrandTertiary": "#FFFFFF",
+      "success": "#2D6A4F",
+      "onSuccess": "#FFFFFF",
+      "warning": "#D99E47",
+      "onWarning": "#0A2022",
+      "error": "#9B2226",
+      "onError": "#FFFFFF",
+      "info": "#457B9D",
+      "onInfo": "#FFFFFF",
+      "border": "#C4D4C8",
+      "borderStrong": "#0E4D52",
+      "divider": "#D9E2E2"
+    },
+    "typography": {
+      "displayFontFamily": "'Outfit', sans-serif",
+      "textFontFamily": "'Plus Jakarta Sans', sans-serif",
+      "scale": {
+        "sm": 12,
+        "base": 14,
+        "lg": 16,
+        "xl": 20,
+        "2xl": 24,
+        "3xl": 32
+      },
+      "expo_font_packages": [
+        "@expo-google-fonts/outfit",
+        "@expo-google-fonts/plus-jakarta-sans"
+      ]
+    },
+    "spacing": {
+      "xs": 4,
+      "sm": 8,
+      "md": 12,
+      "lg": 16,
+      "xl": 24,
+      "2xl": 32,
+      "3xl": 48
+    },
+    "radius_tokens": {
+      "sm": 6,
+      "md": 12,
+      "lg": 20,
+      "pill": 999
+    },
+    "shadow_tier": 0,
+    "icon": {
+      "style": "filled",
+      "web_library": "lucide-react",
+      "mobile_set": "Ionicons"
+    }
+  },
+  "web": {
+    "tech": "React (.js, not .tsx) + Tailwind + shadcn/ui primitives",
+    "css_variables": {
+      "root": {
+        "--background": "160 20% 96%",
+        "--foreground": "183 53% 11%",
+        "--card": "184 71% 19%",
+        "--card-foreground": "0 0% 100%",
+        "--popover": "160 20% 96%",
+        "--popover-foreground": "183 53% 11%",
+        "--primary": "184 71% 19%",
+        "--primary-foreground": "0 0% 100%",
+        "--secondary": "19 59% 41%",
+        "--secondary-foreground": "0 0% 100%",
+        "--muted": "142 16% 49%",
+        "--muted-foreground": "0 0% 100%",
+        "--accent": "36 65% 56%",
+        "--accent-foreground": "183 53% 11%",
+        "--destructive": "358 64% 37%",
+        "--destructive-foreground": "0 0% 100%",
+        "--border": "135 15% 80%",
+        "--input": "135 15% 80%",
+        "--ring": "184 71% 19%"
+      },
+      "dark": {
+        "--background": "183 55% 8%",
+        "--foreground": "160 20% 96%",
+        "--card": "184 71% 19%",
+        "--card-foreground": "0 0% 100%",
+        "--popover": "183 55% 8%",
+        "--popover-foreground": "160 20% 96%",
+        "--primary": "184 45% 30%",
+        "--primary-foreground": "0 0% 100%",
+        "--secondary": "19 55% 45%",
+        "--secondary-foreground": "0 0% 100%",
+        "--muted": "142 20% 55%",
+        "--muted-foreground": "183 55% 8%",
+        "--accent": "36 65% 56%",
+        "--accent-foreground": "183 55% 8%",
+        "--destructive": "358 64% 45%",
+        "--destructive-foreground": "0 0% 100%",
+        "--border": "184 40% 20%",
+        "--input": "184 40% 20%",
+        "--ring": "184 45% 30%"
+      }
+    },
+    "color_rules": [
+      "CRITICAL: Map 'bg-card' to Teal, 'bg-secondary' to Clay, and 'bg-muted' to Sage to enforce color blocking.",
+      "Never use pure white or pure black. Use the provided soft cream-sage background for light mode.",
+      "Ensure all text on Teal, Clay, and Sage backgrounds is strictly white."
+    ],
+    "typography": {
+      "headings": {
+        "font_family": "'Outfit', sans-serif",
+        "h1": "text-4xl sm:text-5xl lg:text-5xl tracking-tight font-medium",
+        "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-medium",
+        "h3": "text-xl sm:text-2xl font-medium",
+        "h4": "text-lg sm:text-xl font-medium",
+        "styles": "Use tight letter spacing on headings; keep font weights strictly at 400 or 500."
+      },
+      "body": {
+        "font_family": "'Plus Jakarta Sans', sans-serif",
+        "styles": "leading-relaxed text-base sm:text-lg font-normal"
+      },
+      "labels": {
+        "styles": "uppercase text-xs tracking-[0.1em] font-medium"
+      }
+    },
+    "layout": "Control Room Grid for dashboards: tight gap-6, 12-col base. Use large horizontal color-blocked sections stacked vertically for marketing/info pages.",
+    "surface_microtheme": "flat",
+    "navigation_header": "Solid Teal (bg-card) sticky header with hard bottom border; ensuring high contrast and trustworthiness.",
+    "components_strategy": {
+      "marketing_pages": "pure HTML + Tailwind for structural color-blocked layouts to avoid rigid shadcn Card limits",
+      "interactive_logic": "shadcn heavily customized via Tailwind to apply the Teal/Clay/Sage color blocks with rounded lg corners",
+      "icons": "lucide-react with stroke-width 2 to ensure legibility and friendliness",
+      "buttons": "pill-shaped (rounded-full) for primary actions, mapping to brand.radius_tokens.pill"
+    },
+    "glassmorphism": {
+      "enabled": "false",
+      "recipe": "backdrop-blur-xl + backdrop-saturate-150 + bg-white/70 (light) or bg-black/60 (dark) + 1px inner stroke"
+    },
+    "motion": {
+      "hover_states": "Soft -translate-y-1 lift and opacity shifts on buttons.",
+      "page_transitions": "Fade-through state morphing (Material You style).",
+      "buttons": "transition-transform transition-opacity duration-200 ease-out; respect prefers-reduced-motion"
+    },
+    "data_testid": "every interactive/key element gets a stable data-testid"
+  },
+  "mobile": {
+    "navigation": "bottom_tabs",
+    "glassmorphism": {
+      "enabled": "false",
+      "dos": [
+        "Use solid colored surfaces (Teal/Clay) instead of glass for data legibility."
+      ],
+      "donts": [
+        "Do not use blur over dense financial data or forms."
+      ]
+    },
+    "platform_libraries": {
+      "glass": {
+        "ios": "expo-glass-effect",
+        "android": "expo-blur",
+        "low_end_android_fallback": "solid surfaceSecondary"
+      },
+      "image": "expo-image",
+      "blur": "expo-blur",
+      "bottom_sheet": "@gorhom/bottom-sheet",
+      "animation": "react-native-reanimated",
+      "gesture": "react-native-gesture-handler"
+    },
+    "haptics": {
+      "events": {
+        "tab_press": "selection",
+        "primary_button": "light",
+        "anomaly_flag_tap": "medium",
+        "success_action": "success"
+      }
+    },
+    "safe_area": "every screen root respects safe area; sticky primary CTA in a solid Teal/Clay container at the bottom where applicable",
+    "touch_targets": ">=44x44pt (hitSlop if visual smaller); Pressable only; testID on all interactive elements"
+  },
+  "screens": [
+    {
+      "name": "Dashboard",
+      "surface": "both",
+      "purpose": "A high-level view combining financial pacing, account health, and recent statements using distinct color blocks.",
+      "states": {
+        "loading": "Centered Teal spinner on soft sage background.",
+        "empty": "Teal-tinted illustration with a prompt to upload the first statement.",
+        "error": "Clay-colored (error/brandSecondary) card with a readable retry message."
+      },
+      "layout": "Hero block (Teal background, white text) with Account Health score -> Things To Know (Clay block, white text) -> Recent Statements (Sage block)."
+    },
+    {
+      "name": "Statement Decoder",
+      "surface": "both",
+      "purpose": "Decodes aged-care invoices into plain English, flagging anomalies clearly.",
+      "states": {
+        "loading": "Skeleton loaders matching the colored card shapes.",
+        "empty": "Illustration encouraging the user to select an invoice.",
+        "error": "Readable error message with a 'Try Again' pill button."
+      },
+      "layout": "Summary banner pinned to top (Teal). Scrollable list of anomaly/flag cards (Clay colored with white text) that are collapsible."
+    },
+    {
+      "name": "AI Tools Hub",
+      "surface": "both",
+      "purpose": "A hub for Price Checker, Care Plan Reviewer, and Budget Calculator.",
+      "states": {
+        "loading": "Centered Teal spinner.",
+        "empty": "N/A - static tool list.",
+        "error": "Standard retry overlay."
+      },
+      "layout": "Tetris grid on web, single-column large cards on mobile. Cards alternate between Teal, Clay, and Sage to create a vibrant, engaging grid."
+    }
+  ],
+  "images": {
+    "logo": {
+      "url": "https://images.unsplash.com/photo-1560697529-d624622c3f62?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlYWwlMjBhbmQlMjB0ZXJyYWNvdHRhJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc4ODY4MTUyMXww&ixlib=rb-4.1.0&q=85",
+      "dark": "https://images.unsplash.com/photo-1560697529-d624622c3f62?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlYWwlMjBhbmQlMjB0ZXJyYWNvdHRhJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc4ODY4MTUyMXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Wayly Logo",
+      "category": "logo",
+      "description": "App logo/brand mark for the navigation header.",
+      "surface": "both",
+      "fallback": "WY, wayly logo aged care premium png"
+    },
+    "hero_background": {
+      "url": "https://images.pexels.com/photos/20818855/pexels-photo-20818855.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "dark": "https://images.pexels.com/photos/20818855/pexels-photo-20818855.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Abstract teal and terracotta waves",
+      "category": "hero",
+      "description": "Used as a rich, colorful gradient backdrop for the main Dashboard hero section.",
+      "surface": "both"
+    },
+    "lifestyle_marketing": {
+      "url": "https://images.pexels.com/photos/6975158/pexels-photo-6975158.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "dark": "https://images.pexels.com/photos/6975158/pexels-photo-6975158.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Senior couple smiling and enjoying smoothies",
+      "category": "product",
+      "description": "Warm, engaging lifestyle photo of an older couple, to be used in onboarding or Guided Journeys.",
+      "surface": "both"
+    },
+    "empty_state_illustration": {
+      "url": "https://images.unsplash.com/photo-1739955937993-a3867921747f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlYWwlMjBhbmQlMjB0ZXJyYWNvdHRhJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc4ODY4MTUyMXww&ixlib=rb-4.1.0&q=85",
+      "dark": "https://images.unsplash.com/photo-1739955937993-a3867921747f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlYWwlMjBhbmQlMjB0ZXJyYWNvdHRhJTIwZ3JhZGllbnQlMjB0ZXh0dXJlfGVufDB8fHx8MTc4ODY4MTUyMXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Soft colorful abstract shape",
+      "category": "empty_state",
+      "description": "A soft abstract graphic used behind empty state messages to maintain color and warmth.",
+      "surface": "both"
+    }
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: The founder explicitly requested 'different sections should use different background colours and stand out' and 'less white/brown plain space, more colour'. You MUST use full-width color blocks for different layout sections.",
+    "Web Color Mapping: Use 'bg-card' (mapped to Teal #0E4D52), 'bg-secondary' (mapped to Clay #A5512B), and 'bg-muted' (mapped to Sage #6B8F71) for distinct layout wrappers, cards, and banners. This guarantees the high-contrast colored-block aesthetic requested.",
+    "Mobile Color Mapping: Use 'surfaceSecondary' (Teal), 'surfaceTertiary' (Clay), and 'surfaceInverse' (Sage) for main view containers, bottom sheet backgrounds, and large cards. Avoid using 'surface' (the light base) for everything.",
+    "Contrast Rule: Whenever you use Teal, Clay, or Sage as a background, text MUST be white. No exceptions. Ensure high legibility for older adults.",
+    "Gradients: Use custom arbitrary gradients for hero sections to satisfy the 'not just one flat colour' rule, e.g., 'bg-gradient-to-br from-[#0E4D52] to-[#166A70]' for the Teal sections.",
+    "No Glass on Data: Use solid, warm, colored surfaces for cards instead of glass/blur, which can read as cold and clinical in health/aged-care contexts."
+  ]
+}

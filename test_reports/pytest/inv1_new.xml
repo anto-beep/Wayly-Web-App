@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="1" tests="10" time="46.484" timestamp="2026-08-03T12:10:31.861591+00:00" hostname="agent-env-6151a19a-9060-4d5e-99f6-5365c248ae5e"><testcase classname="tests.test_inv1_new_endpoints.TestAuth" name="test_cathy_login" time="30.133"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='checker-preview.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/http/client.py:1415: in getresponse
+    response.begin()
+/usr/local/lib/python3.11/http/client.py:330: in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/http/client.py:291: in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/socket.py:718: in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/ssl.py:1314: in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/ssl.py:1166: in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:645: in send
+    resp = conn.urlopen(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:842: in urlopen
+    retries = retries.increment(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/retry.py:498: in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/util/util.py:39: in reraise
+    raise value
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:788: in urlopen
+    response = self._make_request(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:536: in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
+    raise ReadTimeoutError(
+E   urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='checker-preview.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)
+
+During handling of the above exception, another exception occurred:
+tests/test_inv1_new_endpoints.py:124: in test_cathy_login
+    r = _login(CATHY_EMAIL, CATHY_PASSWORD)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_inv1_new_endpoints.py:22: in _login
+    r = requests.post(
+/root/.venv/lib/python3.11/site-packages/requests/api.py:115: in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:592: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:706: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:691: in send
+    raise ReadTimeout(e, request=request)
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='checker-preview.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)</failure></testcase><testcase classname="tests.test_inv1_new_endpoints.TestPlainInvoiceUpload" name="test_plain_invoice_upload_no_combined" time="11.152" /><testcase classname="tests.test_inv1_new_endpoints.TestPlainInvoiceUpload" name="test_get_invoice_after_upload" time="0.101" /><testcase classname="tests.test_inv1_new_endpoints.TestPlainInvoiceUpload" name="test_situation_endpoint" time="2.074"><failure message="AssertionError: assert 'unknown' == 'full_pension'&#10;  &#10;  - full_pension&#10;  + unknown">tests/test_inv1_new_endpoints.py:177: in test_situation_endpoint
+    assert d["situation"]["pension_status"] == "full_pension"
+E   AssertionError: assert 'unknown' == 'full_pension'
+E     
+E     - full_pension
+E     + unknown</failure></testcase><testcase classname="tests.test_inv1_new_endpoints.TestPlainInvoiceUpload" name="test_reconcile_combined_fails_on_plain" time="0.102" /><testcase classname="tests.test_inv1_new_endpoints.TestCombinedReconciliation" name="test_combined_upload_detects_statement_lines" time="2.162" /><testcase classname="tests.test_inv1_new_endpoints.TestCombinedReconciliation" name="test_reconcile_combined_endpoint" time="0.000"><skipped type="pytest.skip" message="classifier did not detect combined statement lines">/app/backend/tests/test_inv1_new_endpoints.py:216: classifier did not detect combined statement lines</skipped></testcase><testcase classname="tests.test_inv1_new_endpoints.TestSaveToVault" name="test_save_to_vault_success" time="0.158" /><testcase classname="tests.test_inv1_new_endpoints.TestSaveToVault" name="test_saved_docs_visible_in_vault" time="0.096" /><testcase classname="tests.test_inv1_new_endpoints.TestLetterRegression" name="test_letter_endpoint_smoke" time="0.290" /></testsuite></testsuites>

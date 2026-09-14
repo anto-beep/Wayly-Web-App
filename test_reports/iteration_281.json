@@ -1,0 +1,58 @@
+{
+  "summary": "Frontend colour-pass verification of Statement Detail on web + mobile. Login as cathy@example.com worked; opened statement 673fa982-... on both surfaces. Web: layout (Rights redesigned as cards, AI accuracy banner at bottom, no decoder-format-disclaimer at top, stream headers solid teal + white text in LIGHT) is correct, BUT the requested clay/teal/sage tinted backgrounds on statement-notes-card, statement-ask-wayly-card, statement-rights-panel and decoder-balance-panel are NOT applied — the class names in the JSX (`sect-clay-soft`, `sect-teal-soft`, `sect-sage-soft`) do not exist in the CSS (only `.section-*-soft` and `.sect-*` without the `-soft` suffix exist). computed backgroundColor is rgba(0,0,0,0) on all four cards. Dark mode: stream card headers turn clay (rgb 165,81,43) instead of teal — appears to be a `bg-primary-k` dark-swap. Mobile: goldSoft/sageSoft tokens exist and apply, but `colors.primarySoft` is UNDEFINED in the theme (neither `theme/tokens.ts` nor `theme/palette.ts` defines primarySoft/tealSoft), so summary-card renders untinted (falls back to Card default). This mobile branch is broken.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "StatementNotes", "issue": "className `sect-clay-soft` does not exist in CSS; card renders with transparent bg — no clay tint. Fix: rename CSS or use existing `.section-clay-soft` (index.css:260) or `.sect-clay` (index.css:1454).", "selector": "[data-testid='statement-notes-card']", "priority": "HIGH"},
+        {"component": "StatementAskWayly", "issue": "className `sect-teal-soft` not defined — no teal tint applied.", "selector": "[data-testid='statement-ask-wayly-card']", "priority": "HIGH"},
+        {"component": "StatementRightsPanel", "issue": "className `sect-clay-soft` not defined — panel container has no clay tint (the inner right-* cards do get their border-l-clay accent correctly).", "selector": "[data-testid='statement-rights-panel']", "priority": "HIGH"},
+        {"component": "DecoderResultView balance panel", "issue": "className `sect-sage-soft` not defined — panel renders transparent instead of sage tint.", "selector": "[data-testid='decoder-balance-panel']", "priority": "HIGH"},
+        {"component": "DecoderResultView stream card header (dark mode)", "issue": "In DARK mode, stream-card header bg becomes clay rgb(165,81,43) instead of the required SOLID TEAL. `bg-primary-k` is being remapped to clay in the dark theme. Spec asks for teal header in both modes.", "selector": "[data-testid^='stream-card-'] > button", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Statement Detail", "issues": ["All four requested tinted surfaces (notes, ask, rights, balance) render as page-background off-white — the intended colour pass is not visually present."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "LegacyStatementView summary-card", "issue": "`colors.primarySoft` is undefined in theme (theme/tokens.ts and theme/palette.ts have `primary`, `goldSoft`, `sageSoft` but NO `primarySoft`/`tealSoft`). backgroundColor resolves to undefined → summary-card renders without the requested teal-soft tint.", "testID": "summary-card", "priority": "HIGH"},
+        {"component": "LegacyStatementView anomalies-card", "issue": "OK — colors.goldSoft (#F3E7DE) resolves and applies a gold/clay-soft tint as expected.", "testID": "anomalies-card", "priority": "LOW"},
+        {"component": "LegacyStatementView line-items-table", "issue": "OK — colors.sageSoft (#EEF3EE) resolves.", "testID": "line-items-table", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Statement Detail (legacy branch)", "issues": ["Test statement 673fa982... uses decoded (audit_json) branch on mobile so legacy cards were not shown for that id; token audit against colors object shows primarySoft is missing regardless of statement content."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Statement detail tinted surfaces", "platform": "both", "issue": "Colour pass broken on both surfaces for the same reason class (web) / token (mobile) is name-mismatched.", "expected": "notes=clay-soft, ask=teal-soft, rights=clay-soft, balance=sage-soft on web; summary=teal-soft on mobile.", "actual": "All show untinted default backgrounds."}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter281_light.jpeg",
+    "/app/test_reports/iter281_dark.jpeg",
+    "/app/test_reports/iter281_mobile_light.jpeg"
+  ],
+  "action_items": [
+    "Add missing CSS: `.sect-clay-soft`, `.sect-teal-soft`, `.sect-sage-soft` classes to /app/frontend/src/index.css (or update JSX to use existing `.section-*-soft` classes at index.css:259-261). Preferred: add `-soft` variants of `.sect-*` matching the design tokens.",
+    "Add missing mobile theme token `primarySoft` (e.g. '#E4EEEF' or color-mix teal 9% on surface) in /app/mobile/theme/tokens.ts AND lightColors/darkColors in /app/mobile/theme/palette.ts. Update summary-card to use the correct token.",
+    "In dark mode, stream card header uses `bg-primary-k` which is being remapped to clay — force teal (e.g. bg #0E3033 with inset teal or use a dedicated `.stream-header` class) so the SOLID TEAL header requirement holds in both themes."
+  ],
+  "critical_code_review_comments": [
+    "CSS class naming is inconsistent: `.sect-*` (dark, inset accent), `.section-*-soft` (subtle tint) — the JSX uses a third variant `.sect-*-soft` that exists nowhere. Consolidate to a single naming convention across CSS + JSX.",
+    "Mobile theme token surface should mirror web tokens 1:1 (comment in palette.ts explicitly says so). Missing `primarySoft` breaks that mirror.",
+    "Consider a lint rule / unit test that fails if a JSX className string references an undefined Tailwind/utility class, to prevent future silent misses like this."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "40%"},
+  "test_credentials": "cathy@example.com / testpass123 (used successfully on both surfaces)",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After main agent fixes the CSS class definitions and adds primarySoft mobile token, re-verify computed backgroundColor is non-transparent on notes/ask/rights/balance (web) and that summary-card gets a teal-soft fill (mobile). Also re-check dark mode: stream card headers must remain solid teal (not clay). Statement id used: 673fa982-367c-43ca-8ce8-4df5b8ba4f68. Dark-mode toggle for the web app is `document.documentElement.classList.add('theme-dark','dark')` + `data-theme=dark`.",
+  "rca of the issue": "Web: class names `sect-clay-soft`/`sect-teal-soft`/`sect-sage-soft` used in StatementNotes.jsx:59, StatementAskWayly.jsx:87, StatementRightsPanel.jsx:25, DecoderResultView.jsx:528 do not exist in /app/frontend/src/index.css. CSS defines `.section-*-soft` (lines 259-261, subtle tint) and `.sect-*` (lines 1453-1461, stronger accent with inset shadow) but NOT `.sect-*-soft`. Because Tailwind purges unused CSS but does not error on unknown classes, the mismatch silently rendered transparent. Mobile: /app/mobile/theme/tokens.ts exports `colors` and /app/mobile/theme/palette.ts exports `lightColors`/`darkColors`; neither defines `primarySoft`, so `colors.primarySoft` on statement/[id].tsx:263 evaluates to undefined. Reproduction: log in as cathy, open /app/statements/{any-id}, inspect getComputedStyle for the four data-testids listed — backgroundColor === 'rgba(0, 0, 0, 0)'."
+}

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="muted">{{ report_title }} · Generated {{ generated_at }}</p>
+{% if data.exec_summary %}<div class="cream-card section"><h3>Summary</h3><p>{{ data.exec_summary }}</p></div>{% endif %}
+<pre style="font-size: 9px; white-space: pre-wrap;">{{ data | tojson(indent=2) }}</pre>
+{% endblock %}

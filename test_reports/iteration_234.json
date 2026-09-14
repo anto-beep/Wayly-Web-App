@@ -1,0 +1,32 @@
+{
+  "summary": "Verified 3 cross-platform parity items on web + mobile (Expo web preview) with cathy@example.com / testpass123 (Family). (4) Decode-in-progress copy matches on both surfaces — 'Reading the statement…' and 'Reading your invoice…' are wired identically in /app/mobile/app/upload.tsx and /app/frontend/src/pages/StatementUpload.jsx + /app/frontend/src/pages/tools/InvoiceCheckerTool.jsx (grep-confirmed; the strings only render during an active decode so DOM-visibility couldn't be exercised without a live upload, but source and testIDs — upload-submit-button and upload-decoding-note — are present and correct). (5) Web nav: 'Money & Statements' group now exposes a 'Contribution Position' item that routes to /app/contribution-position; the alias route mounts <ContributionPosition/>, resolves the active participant, and renders data-testid='ce3-contribution-position-page' with NO ce3-error (screenshot captured). (6) Mobile /reports renders the full 8-card catalog upfront BEFORE any Generate tap — reports-catalog present, 8 report-card-{TYPE} nodes (HOUSEHOLD_SUMMARY, QUARTERLY_BUDGET, ANNUAL_FINANCIAL, ANOMALY_SAVINGS, PROVIDER_PERFORMANCE, COMPLAINT_DOSSIER, CARE_TIMELINE, STATEMENT_DIGEST), each with name + description + 'Best for' + a generate-{TYPE} button, and 'Your reports' history heading rendered below. Web /app/reports parity is unchanged and shows the same 8 cards + generate ids.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Mobile /reports currently hides the whole catalog when the initial GET /reports fails (error state renders StatePanel INSTEAD of catalog+history). Not a regression vs the requirement, but on web the catalog is static and always visible regardless of history-load errors. Consider rendering the catalog even when the history fetch fails on mobile, so users can still generate reports offline of history load — minor parity nit."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 3 parity items are verified. Automated evidence: web nav shows 'Contribution Position' under Money & Statements group; /app/contribution-position renders ce3-contribution-position-page without ce3-error via active-participant fallback; web /app/reports and mobile /reports both expose reports-catalog with 8 report-card-{TYPE} + generate-{TYPE} nodes; 'Your reports' + 'Best for' text present on mobile catalog. Mobile decode strings verified via grep only — the submit button (upload-submit-button) and decoding note (upload-decoding-note) are conditional on `picked` and `busy`, so exercising them via automation requires a real file selection which browser automation cannot supply reliably in Expo web preview; source-of-truth strings in /app/mobile/app/upload.tsx are 'Reading the statement…' (statement branch + prettyPhase map) and 'Reading your invoice…' (invoice branch, line 115), matching web verbatim.",
+  "rca of the issue": ""
+}

@@ -1,0 +1,36 @@
+{
+  "summary": "Mobile-only frontend test of Statements Depth (StatementDetail dark-aware + Downloads & records, Audit Log, Compare) on Expo web preview. All new testIDs are present, gating rules (has_original_file / isPdf) work, navigation to Compare and Audit Log is correct, and both light+dark themes render with high-contrast, legible text. BUG: the three download buttons (Decoded CSV, Decoded PDF, Download original) all fail on the Expo web preview and surface the error text 'Couldn't download the decoded ... Please try again.' — this violates the explicit requirement that on the web preview the download must not crash / no error text on success.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "StatementDetail Downloads & records", "issue": "Tapping Decoded CSV / Decoded PDF / Download original on the Expo web preview throws (expo-file-system/legacy downloadAsync + cacheDirectory are not usable in the browser) and renders the error text 'Couldn't download the decoded CSV/PDF/original file. Please try again.' The requirement says the flow must not crash and no error text should appear on success on the web preview. Reference: /app/mobile/src/lib/download.ts:16 (uses cacheDirectory + downloadAsync unconditionally) and /app/mobile/app/statement/[id].tsx:73-91 (runDownload catches and sets dlError). Same code path is reused by /app/mobile/app/statement-compare/[id].tsx:47-59 (Open original file).", "testID": "statement-download-csv | statement-download-pdf | statement-download-original | compare-open-original", "priority": "HIGH"}
+      ],
+      "integration_issues": [
+        {"flow": "Statement download & share (web preview)", "issue": "downloadAndShare() in /app/mobile/src/lib/download.ts calls expo-file-system/legacy downloadAsync against `${cacheDirectory}<file>`. On web `cacheDirectory` is not a real writable location and downloadAsync is not supported — the promise rejects, runDownload's catch fires, and the UI shows the 'Couldn't download…' message. Suggested fix: branch on Platform.OS === 'web' and use a fetch()+blob()+anchor.click() download (or window.open with a signed URL) so the web preview succeeds silently while native keeps the share sheet.", "affected_testIDs": ["statement-download-csv", "statement-download-pdf", "statement-download-original", "compare-open-original"]}
+      ],
+      "design_issues": [
+        {"screen": "StatementDetail / StatementAuditLog / StatementCompare (dark mode)", "issues": ["Verified visually in dark theme: high-contrast text on dark bg, sage AI insight card still legible, orange/terracotta accents on primary CTAs remain readable, audit timeline event titles and dates are clear. No contrast issues found."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Fix mobile web download flow in /app/mobile/src/lib/download.ts so that on Platform.OS === 'web' the code does NOT call expo-file-system/legacy (which throws on web). Recommended: on web, do a fetch() with the Authorization + X-Participant-Id headers, convert to a Blob, and trigger a temporary <a download> click; on native keep the current cacheDirectory + Sharing.shareAsync path. Also swallow/hide dlError on web when the browser fallback succeeds.",
+    "Consider migrating off expo-file-system/legacy to the current expo-file-system API in a follow-up; the /legacy subpath is on a deprecation path."
+  ],
+  "critical_code_review_comments": [
+    "/app/mobile/src/lib/download.ts is platform-agnostic but the APIs it uses (cacheDirectory, downloadAsync from expo-file-system/legacy) are effectively native-only — the code silently breaks on Expo web preview which is the ONLY runtime our reviewers can screenshot.",
+    "runDownload() in /app/mobile/app/statement/[id].tsx surfaces the same generic error string regardless of the underlying failure — consider logging the caught error to console for easier RCA."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "85% (all UI + navigation + dark mode pass; download action fails on web preview)"},
+  "seed_data_creation": "None. Used the pre-seeded cathy@example.com caregiver account (36 statements). PDF statement id dd6fd5bb-89b7-40f7-855c-3510837b0410 (MARGARET.pdf) and CSV statement 408fcbf3-c126-4897-a9b1-c76628c49ca7 (iter58_stmt_728357.csv) as provided.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login on Expo web preview: cathy@example.com / testpass123. Use `page.query_selector('input[type=\"email\"]').fill(...)` + click the div with text 'Sign In' (buttons/[role=button]/div[tabindex] selector list). Tokens land in localStorage under kindred_token / kindred_refresh_token / wayly_active_participant_id. Direct page.goto to /statement/{id}, /statement-audit/{id}, /statement-compare/{id} all work once the auth token is in localStorage. All required testIDs on the new screens exist: statement-overview, statement-ai-summary, statement-streams, statement-downloads, statement-download-original, statement-download-csv, statement-download-pdf, statement-compare-btn (only on PDF statements), statement-audit-log-link, audit-log-timeline / audit-log-empty / audit-log-error, compare-tab-decoded, compare-tab-original, compare-decoded-totals, compare-figure-list, compare-original-pane, compare-open-original. Dark theme toggle lives at /settings via testID `theme-dark`. The one open defect is the web-preview download failure documented above.",
+  "rca of the issue": "Downloads: /app/mobile/src/lib/download.ts imports { cacheDirectory, downloadAsync } from 'expo-file-system/legacy'. On the Expo web preview these are native-shim placeholders — cacheDirectory is null/undefined and downloadAsync rejects because there is no native file-system bridge. The promise rejection propagates to runDownload's catch in statement/[id].tsx (and openOriginal in statement-compare/[id].tsx), which sets dlError and renders the 'Couldn't download…' text under the buttons. Reproduction: log in as cathy@example.com, open /statement/dd6fd5bb-89b7-40f7-855c-3510837b0410, scroll to 'Downloads & records', tap 'Decoded CSV' — the error text appears within ~2s. Mitigation: in download.ts, wrap the native path with `if (Platform.OS !== 'web') { …native cacheDirectory+downloadAsync+Sharing… } else { const res = await fetch(url,{headers}); const blob = await res.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href); }` so the browser downloads directly and no error text is shown."
+}

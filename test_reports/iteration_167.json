@@ -1,0 +1,28 @@
+{
+  "summary": "Mobile parity retest for (1) dismissible Verify-email banner with 24h AsyncStorage suppression and (2) Profile Account card. All three requested flows pass on Expo web preview @ 390x844 as bibi@test.com.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "EmailVerifyBanner.tsx uses in-memory `_cache` (module-scoped) with 45s TTL and reads AsyncStorage on mount — behaviour is correct. Consider surfacing dismiss to Sentry/analytics later.",
+    "profile-edit uses `user.created_at` via `(user as any)` — consider typing on the User model for maintainability."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not requested)", "frontend": "100%"},
+  "test_credentials": "bibi@test.com / CarTest123$",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Confirmed on Expo web preview 390x844: (1) Login as bibi@test.com/CarTest123$ lands on '/' dashboard (household exists — Bibi Chiware household, FAMILY plan, Classification 4). (2) Verify-email banner IS visible for Bibi — text `Verify your email within 6 days · tap to resend`, testID `verify-email-banner`. Tapping the X (`verify-email-dismiss`) hides it immediately; AsyncStorage/localStorage key `wayly_verify_banner_dismissed_at` is set (verified value: 1786878073846). After full page reload the banner stays hidden — 24h suppression confirmed. (3) /profile-edit shows the new `profile-account-card` with Plan=FAMILY (`profile-plan-badge`), Household=Active, Member since=16/08/2026, alongside existing `profile-name-value`=Bibi Chiware, `profile-role-badge`=Caregiver, Change email button (`email-change-open`), phone input and `profile-save-btn`. Screen is no longer near-empty. No console errors beyond the expected expo-notifications web warning and a `props.pointerEvents is deprecated` warning (RN framework noise, not new).",
+  "rca of the issue": "n/a — verification retest, all requested behaviours pass."
+}

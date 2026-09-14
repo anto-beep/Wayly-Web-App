@@ -1,0 +1,58 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "the profile page is saying \"Something went wrong loading this profile. Please try again.\"",
+  "summary": "No relevant testing skill found. Focused UI verification on preview confirmed Cathy can log in and /app/me plus /app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb render the CORE-1 profile instead of core1-error, with Mum's profile, Level 4, provider text, lifetime cap $137,917, artefacts, household, and timeline. Invalid IDs render core1-not-found and a MOCKED transient 503 confirms core1-retry-btn re-fetches successfully. However the required single profile fetch per navigation is still failing: /app/me and direct participant navigation each made 2 identical /api/core/participants/{id}/profile calls in preview. ParticipantSwitcher also exposes an active participant (Lebron James / f094f938-fb27-4a7a-958c-1cedf8b94ccd) whose profile endpoint returns 404, though choosing an accessible alternate (Robert) works.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/account vs /api/core/participants/{id}/profile",
+        "issue": "ParticipantSwitcher data from /api/account includes f094f938-fb27-4a7a-958c-1cedf8b94ccd as ACTIVE, but /api/core/participants/f094f938-fb27-4a7a-958c-1cedf8b94ccd/profile returned 404 for Cathy. This makes one visible switcher option unable to render a full CORE-1 profile. Backend was not otherwise regression-tested because request was frontend-only."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "CORE-1 profile navigation",
+        "issue": "Required one-call-per-navigation criterion failed in preview: /app/me made 2 identical profile GETs and direct /app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb made 2 identical profile GETs. Profile content renders, but the duplicate fetch/race risk is not fully removed.",
+        "affected_selectors": ["core1-participant-profile", "core1-profile-header"]
+      },
+      {
+        "flow": "ParticipantSwitcher > View full profile",
+        "issue": "The first alternate ACTIVE participant shown in the switcher (Lebron James / f094f938-fb27-4a7a-958c-1cedf8b94ccd) returned 404 from the profile endpoint. Selecting another accessible participant (Robert) did render successfully, so the flow is partially working but not safe for every visible option.",
+        "affected_selectors": ["participant-switcher-trigger", "participant-switcher-view-profile", "core1-not-found"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/bug_profile_page_core1_iter94_playwright_snippet.py",
+    "/app/test_reports/bug_verification_94.json",
+    "/app/test_reports/iteration_94.json"
+  ],
+  "action_items": [
+    "Dedupe or abort in-flight ParticipantProfile profile requests so React StrictMode/dev preview still sends only one effective /profile request per navigation.",
+    "Align ParticipantSwitcher data with CORE-1 accessible participants or filter out account participants whose /core/participants/{id}/profile returns 404.",
+    "Retest /app/me, direct profile, switcher, invalid-id, and retry after the duplicate-fetch and switcher-data fixes."
+  ],
+  "critical_code_review_comments": [
+    "ParticipantProfile.jsx no longer uses useUserPersona and now reads persona from the profile response, but its useEffect still issues un-aborted api.get calls on mount; with React.StrictMode enabled in frontend/src/index.js, preview sends two identical profile GETs on initial profile navigation.",
+    "ParticipantSwitcher.jsx builds visible options from useParticipants()/api /account, which can include participants not accessible through CORE-1 profile; this produced a visible ACTIVE option that navigates to a 404 profile."
+  ],
+  "updated_files": [
+    "/app/tests/bug_profile_page_core1_iter94_playwright_snippet.py",
+    "/app/test_reports/bug_verification_94.json",
+    "/app/test_reports/iteration_94.json"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend-only verification; only browser-observed API responses used",
+    "frontend": "75%"
+  },
+  "seed_data_creation": "None. Used existing Cathy caregiver fixture (cathy@example.com / testpass123).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Skill lookup returned no relevant testing skill. Normal profile pages render and the generic core1-error was not visible for Cathy, but profile fetch count remains 2 on /app/me and direct participant navigation in preview. Retry was verified with a MOCKED Playwright route injecting transient 503s, then allowing the real API response. Re-check ParticipantSwitcher: /api/account exposed f094f938-fb27-4a7a-958c-1cedf8b94ccd (Lebron James) but its CORE-1 profile returned 404; Robert's profile rendered successfully.",
+  "rca_of_the_issue": "The original useUserPersona race appears removed from source, but the profile fetch is still not idempotent/deduped. React.StrictMode is enabled in frontend/src/index.js and preview exhibited double initial effect execution: two identical /api/core/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb/profile requests for both /app/me and direct navigation. Because the first request is only ignored on cleanup, not aborted/deduped, the required one-call invariant is not met and residual race/transient-failure risk remains. Separate data-source mismatch: ParticipantSwitcher consumes /api/account options that are not guaranteed to be CORE-1 profile-accessible."
+}

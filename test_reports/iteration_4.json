@@ -1,0 +1,51 @@
+{
+  "summary": "Iteration 4 testing covers plan-field auth (signup/PUT-plan), Resend mocked email, wrapper PII redaction, family-coordinator manipulation, contact intake regression, and plan-conditional dashboard UI. Backend pytest: 17/18 PASS (1 critical bug). Frontend: marketing nav Contact link present; /pricing and /features render 3 plan tiers (Lifetime references that remain are legitimate 'Lifetime contribution cap' product feature, not the removed tier); /signup picker shows 3 plans with URL ?plan= preselect honored; signup btn label flips between 'Create account' and 'Start trial'; Cathy login (plan=family) renders all 7 dashboard cards (PlanBadge, lifetime-cap, alerts, recent-statements, chat-preview, audit-preview, family-preview) + layout-plan-badge; switching cathy.plan to solo via PUT /api/auth/plan correctly hides family-preview-card and shows upgrade-to-family-card; new free signup lands directly on /app with only PlanBadge + free-plan-limit-card (no household onboarding required).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/public/decode-statement-text (and /api/public/decode-statement file upload)",
+        "issue": "Wrapper NOT invoked. Endpoint at server.py:630-633 calls _run_public_decode(body.text) directly without await run_wrapper(...). Result: response is missing top-level redaction_notice + redaction_count fields, AND raw PII is forwarded to the parse_statement Sonnet call — confirmed: a request containing 'John Smith, phone 0412 345 678, email john@gmail.com' produced a summary text reading 'services provided to John Smith during April 2026' (PII leaked verbatim into LLM output). Same issue for /public/decode-statement (file upload) — neither path runs the wrapper. Reassessment, Care Plan, Family Coordinator endpoints DO invoke the wrapper correctly.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "/api/contact",
+        "issue": "Email notification is mocked via Resend (RESEND_API_KEY=re_demo_replace_me). Returns ok+mocked correctly — no functional issue, just flagging mock state."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter4.py",
+    "/app/test_reports/pytest/iter4_results.xml"
+  ],
+  "action_items": [
+    "Wire run_wrapper into /api/public/decode-statement-text and /api/public/decode-statement (file upload). Pattern to follow already exists in /public/reassessment-letter, /public/care-plan-review, /public/family-coordinator-chat (server.py lines 794, 888, 931). Suggested fix: in _run_public_decode, accept an optional wrapped dict OR call run_wrapper at the top of both endpoints, redact text before parse_statement, and append redaction_notice + redaction_count to the response dict. This is a privacy-critical bug — without it, user PII is sent to the Sonnet parsing call and reflected in summary output."
+  ],
+  "critical_code_review_comments": [
+    "PRIVACY: /public/decode-statement-text bypasses wrapper redaction; PII reaches LLM and surfaces in returned summary. Fix immediately before any production traffic.",
+    "server.py is now ~1049 lines — reaffirming iter2/iter3 recommendation to split into routers. New endpoints PUT /auth/plan, /public/email-result added without restructuring.",
+    "/public/email-result accepts body_html up to 80KB and only strips '<script' / '<iframe' / 'javascript:' substrings — case-sensitive replace can be bypassed (e.g. <SCRIPT or <ScRiPt). Recommend a real HTML sanitizer (bleach) before sending — currently low risk because Resend is mocked.",
+    "Cathy plan was upgraded directly via PUT during testing — plan was successfully restored to 'family' afterwards.",
+    "Wrapper local regex fallback re-runs after LLM redaction (defence-in-depth) — good. But wrapper is async-only; consider memoising frequent identical calls if traffic grows.",
+    "EmailStr is used on PlanUpdate/SignupRequest/EmailResultBody but ContactBody still uses str for email (already noted iter3)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter4.py (NEW — 18 tests covering iter4 scope)"
+  ],
+  "success_rate": {
+    "backend": "94% (17/18 — 1 critical wrapper-not-wired bug on decode-statement-text)",
+    "frontend": "100% — all plan-conditional dashboard rendering, plan picker, nav Contact link, layout plan badge, signup flow URL-param preselect verified"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (plan=family — restored after solo PUT test). Created several TEST_iter4_*@example.com signup users — non-blocking residue.",
+  "seed_data_creation": "Test users TEST_iter4_free_*, TEST_iter4_solo_*, TEST_iter4_family_*, TEST_iter4_planupd_*, TEST_iter4_planinv_*, TEST_iter4_uifree_*, TEST_iter4_uisolo_* created. TEST_ contact record posted to db.contact_requests. Cleanup not performed — non-blocking.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter4 backend tests at /app/backend/tests/test_iter4.py (18 cases). Combined coverage across iter2+iter3+iter4 ≈ 61 tests. Critical open issue: wrapper not wired on decode-statement-text/decode-statement (file upload). Plan PUT works server-side; UI plan-conditional rendering testids all present: dashboard-plan-badge, layout-plan-badge, lifetime-cap-card, alerts-card, recent-statements-card, chat-preview-card, audit-preview-card, family-preview-card (Family-only), upgrade-to-family-card (Solo-only), free-plan-limit-card (Free-only). Signup testids: signup-plan-picker, signup-plan-{free|solo|family}, signup-name-input, signup-email-input, signup-password-input, signup-role-{caregiver|participant}, signup-plan-summary, signup-submit-button. /pricing and /features keep word 'Lifetime' as part of 'Lifetime cap'/'Lifetime Contribution Cap' product-feature naming — that is correct, not a regression. Resend RESEND_API_KEY is still 're_demo_replace_me' so all email endpoints return {ok:true, mocked:true}.",
+  "rca of the issue": "RCA: server.py line 630-633 (`public_decode_text`) and line 636-647 (`public_decode_file`) both delegate straight to `_run_public_decode(text)` without invoking `run_wrapper`. Other public free-text endpoints (reassessment, care-plan, family-coordinator) DO invoke the wrapper at the top and pass `wrapped['redacted_input']` to the LLM. Reproduction: `curl -X POST $URL/api/public/decode-statement-text -d '{\"text\":\"Statement for John Smith, phone 0412 345 678 ...\"}'` returns a Sonnet-generated summary that reads 'services provided to John Smith ...' verbatim, and response JSON has no `redaction_notice` / `redaction_count` keys. Mitigation: at the top of `_run_public_decode` (or in each endpoint before calling it), `wrapped = await run_wrapper(text)`; pass `wrapped['redacted_input']` to `parse_statement`; if `wrapped['abuse_flag']` short-circuit return abuse response; merge `redaction_notice` + `redaction_count` into final response dict. Also consider whether the structured statement table itself (where PII like names rarely appear) needs redaction or only the surrounding free-text — but the current Sonnet summary clearly proves PII passthrough is happening today."
+}

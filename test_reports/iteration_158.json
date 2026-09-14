@@ -1,0 +1,42 @@
+{
+  "summary": "Mobile-only (Expo) test of the refreshed Login and Signup screens (branding + password/AU-mobile validation) in both light and dark theme. All 8 requested items PASSED. The Wayly mark, the word 'Wayly', and the tagline 'AGED CARE, MADE EASY' (testID brand-tagline) render prominently on both screens; tagline text is 'AGED CARE, MADE EASY' verified exactly. Password rules checklist (signup-password-rules) shows all 5 unmet rules when password is 'abc', weak-pw submit is blocked with a friendly error and does NOT create an account. Identity-in-password error reads 'Password should not include your name or email.' (no dashes, matches request). Invalid AU mobile '12345' is rejected with 'Enter an Australian mobile (04XXXXXXXX or +614XXXXXXXX), or leave blank.'; blank mobile + strong password 'Wayly!2026x' + unique email created the account and landed on /(tabs) dashboard. Existing login cathy@example.com/testpass123 succeeded. Dark-mode toggled via Settings 'theme-dark', logged out, and re-checked both auth screens: WaylyMark switches to the mono-white variant, 'Wayly' heading is white, tagline is warm gold (#E89A6F) on near-black background, and primary buttons render in high-contrast terracotta — no button or text blends into the background. No red-screen or blocking console errors.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Login/Signup (dark mode)", "issues": ["Cosmetic: primary CTA in dark theme uses the terracotta/gold accent rather than the sage/teal primary used in light. Contrast is excellent so this is not a blocker, but worth confirming it is the intended button colour in dark."]}
+      ],
+      "react_native_issues": [
+        {"component": "shadow* style props", "issue": "React Native Web deprecation warning: '\"shadow*\" style props are deprecated. Use \"boxShadow\"'. Not from the two changed screens specifically but surfaces in console on these screens (likely from shared ui/Field/Button). Reference: console output."},
+        {"component": "props.pointerEvents", "issue": "Deprecation warning: 'props.pointerEvents is deprecated. Use style.pointerEvents'. Minor, non-blocking."}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter158_login_light.jpeg",
+    "/app/test_reports/iter158_signup_light.jpeg",
+    "/app/test_reports/iter158_after_signup.jpeg",
+    "/app/test_reports/iter158_login_dark.jpeg",
+    "/app/test_reports/iter158_signup_dark.jpeg"
+  ],
+  "action_items": [
+    "Optional: audit shared UI (Field/Button) to replace deprecated shadow* props with boxShadow and pointerEvents prop with style.pointerEvents to remove RN-Web console warnings.",
+    "Optional: confirm the terracotta/gold primary button in dark mode is intentional (light mode uses sage/teal). If yes, no action."
+  ],
+  "critical_code_review_comments": [
+    "Password rules array PW_RULES + evaluatePassword duplicated between web PasswordStrength.jsx and mobile signup.tsx. Consider extracting a shared package (or at least a mobile helper) so future rule tweaks stay in sync — currently a manual port.",
+    "AU mobile regex only accepts +614XXXXXXXX or 04XXXXXXXX; spaces are stripped but common formats like '+61 4xx xxx xxx' will be normalised only if user removes them. Behaviour matches spec (whitespace stripped), so no bug — just note for UX polish."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "100%"},
+  "test_credentials": "Login verified with cathy@example.com / testpass123. Signup created a fresh mobtest+<ts>@example.com account with password Wayly!2026x during this run.",
+  "seed_data_creation": "One new signup account created via happy-path test: mobtest+1786865721@example.com (Family plan trialing, no household).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Auth screens (login.tsx, signup.tsx) refresh verified in both light and dark themes on Expo web preview at mobile viewport 390x844. Preview URL: https://proration-preview.expo.preview.emergentagent.com. Settings 'theme-dark' testID works. Signup testIDs used: signup-first-name-input, signup-email-input, signup-mobile-input, signup-password-input, signup-password-rules, signup-error, signup-submit-button. Login testIDs: login-email-input, login-password-input, login-submit-button, login-goto-signup. Brand tagline testID 'brand-tagline' exists on both screens.",
+  "rca of the issue": ""
+}

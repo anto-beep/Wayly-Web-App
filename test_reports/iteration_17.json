@@ -1,0 +1,41 @@
+{
+  "summary": "Iter 17 fully verified end-to-end. (1) Cached pytest suites: 41/41 passing (15 iter15 + 10 iter16 + 16 iter17_okafor) in ~10s with DECODER_USE_CACHE=1 against /app/backend/tests/fixtures/_okafor_decoded.json + _robert_q1_decoded.json. (2) New pytest test_iter17_async_job.py: 7/7 passing — async submit returns 200 with {job_id, status:'pending'} in <30s, job_id is 20-char hex, GET /api/public/decode-job/<random> → 404 'Job not found or expired', and 5 unit tests on _add_parse_warnings cover RULE_9_PENSION_STATUS_UNKNOWN single-LOW emit on unknown status, RULE_9_CONTRIBUTION_MISMATCH dollar_impact ≈ 33.37 on part-age Independence $95→$50 mismatch, no-fire on correct part-age Meal Prep at 50%, skip cancellations, and no double-emit when LLM already flagged Rule 9. (3) LIVE remote async-job flow on Robert Okafor March 2026 fixture (RUN_LIVE_DECODE=1) PASSED in 70.12s end-to-end through K8s ingress → state transitions running→done observed, all 16 assertions matched (participant_name=Robert James Okafor, pension_status=part_age_pension, period 2026-03-01..03-31, reported_total_gross=2077.33, RULE_11/12/13 + RULE_10 fired, RULE_9 absent, no 'meal' false positives). (4) Frontend smoke at /ai-tools/statement-decoder: clicking 'Decode this statement' shows progress panel with all 7 steps (Reading header, Extracting Clinical, Extracting Independence, Extracting Everyday, Extracting Adjustments, Reading provider notes, Cross-checking audit), polling completes in ~20s on the sample, final result card renders with totals + anomaly card, ZERO React pageerrors and ZERO console errors. (5) Daily-limit 429 cookie + abuse-flag-non-consume regressions remain green (covered by iter15 suite test_daily_limit_returns_429_with_cookie).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/public/decode-statement-text", "issue": "While a previous decode job is processing on the single-worker uvicorn, follow-up POST submit requests can occasionally take 10-25s to return through the K8s ingress (server returns 200 quickly, but TLS/proxy waiting for the worker to yield). Not a regression; frontend timeout is 30s+ on submit so user-facing impact is nil. Could be smoothed by raising backend supervisor workers from 1 → 2 if SLA tightens."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter17_async_job.py",
+    "/app/backend/tests/test_iter17_okafor.py",
+    "/app/backend/tests/test_iter16_rules_11_12_13.py",
+    "/app/backend/tests/test_iter15_rules.py",
+    "/app/test_reports/pytest/iter17_results.xml",
+    "/app/test_reports/pytest/iter17_async_job.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Async-job pattern in server.py is clean: DECODE_JOBS dict + asyncio.create_task background runner + 600s TTL prune on each submit + GET /api/public/decode-job/{id} returning {status, phase, result|error}. Idempotent and safe with the K8s 60s ingress timeout. Note that DECODE_JOBS is in-process state; if the backend is ever scaled beyond a single replica this needs to move to Redis/Mongo.",
+    "_add_parse_warnings is well-engineered: skips cancellations, respects existing LLM-emitted RULE_9, emits a single LOW informational flag on unknown pension_status with no per-line math, and uses _PENSION_RATES table for full/part/self-funded. Variance threshold of $0.10 is sensible. Test coverage now includes the failure mode that produced the prior false positives (Meal Prep at 50% for part-age) and confirms no regression.",
+    "agents.py is 1266 lines (was 976 in iter15). The 6 parallel extractor SYSTEM prompts + auditor + helpers are getting heavy. Recommend a follow-up split into agents/extractors.py + agents/auditor.py + agents/post_audit.py (rules 9/13/14/15) + agents/types.py. Non-blocking for this iter."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter17_async_job.py (new — 7 tests, +5 unit + 1 integration + 1 live live-LLM gated)"
+  ],
+  "success_rate": {
+    "backend": "100% (48/48 passing — 41 cached + 7 new async/Rule9; live remote Okafor flow also passing 16/16 assertions)",
+    "frontend": "100% (decode flow loads, 7-step progress UI shown, result rendered, 0 console/page errors)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (not used — Statement Decoder is a public unauthenticated tool)",
+  "seed_data_creation": "none — used existing /app/backend/tests/fixtures/_okafor_decoded.json + _robert_q1_decoded.json caches; live remote flow regenerated server-side state without persisting",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "To re-run the async-job tests: `cd /app/backend && DECODER_USE_CACHE=1 python -m pytest tests/test_iter15_rules.py tests/test_iter16_rules_11_12_13.py tests/test_iter17_okafor.py tests/test_iter17_async_job.py -v` (~12s). To force the live Okafor decode through ingress: `RUN_LIVE_DECODE=1 python -m pytest tests/test_iter17_async_job.py::test_okafor_async_job_flow -v` (~70s, consumes 1 daily-limit slot). Daily-limit cookie name is `kindred_sd_used`; if 429s appear on the live test add a cookie reset by clearing the kindred_sd_used cookie in your requests.Session before submitting, OR wait for the day to roll over. Job TTL is 600s so always poll within 10 min of submit. Frontend testid for the decode button is the visible text 'Decode this statement' (not a data-testid yet); could add data-testid='decode-sample-btn' for cleaner E2E. The 7 progress steps appear with these labels: 'Reading header', 'Extracting Clinical', 'Extracting Independence', 'Extracting Everyday', 'Extracting Adjustments', 'Reading provider notes', 'Cross-checking audit'.",
+  "rca of the issue": "No bugs found. All 6 stated deliverables in iter17 verified working: (a) pension_status capture wired through _PENSION_RATES table — pretest had part_age_pension correctly detected from contribution-rate percentages and Rule 9 deterministic helper produces zero false positives on the Okafor fixture; (b) PROVIDER_NOTES_EXTRACTOR_SYSTEM 6th parallel chunk populates provider_notes_raw[] (>=3 entries on Okafor) feeding Rule 11; (c) _is_subtotal_row + _dedupe_line_items strip summary rows with no duplicate signatures observed in extraction output; (d) _apply_reported_totals override puts statement_summary.total_gross at exactly 2077.33 matching the printed bottom line; (e) async job pattern POST→{job_id}→poll→done verified end-to-end 70s through K8s ingress with no timeouts; (f) Rule 13 threshold lowered correctly fires LOW on $640.70 underspend (13.3% of $4,825). Non-blocking observation: when a heavy decode is in flight the single-worker uvicorn briefly delays unrelated POST submits by up to 25s through ingress; this is environmental, not a code bug, and the frontend's 30s+ submit timeout absorbs it cleanly."
+}

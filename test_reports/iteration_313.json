@@ -1,0 +1,34 @@
+{
+  "summary": "Web-only re-verification of iter313 visual edits. Dashboard AtAGlance donut and ParticipantProfile changes verified end-to-end as cathy@example.com against the shared preview backend. Under-budget donut is sage (#4E6E54), status 'Left to spend this quarter'. Route-intercepted /api/budget/current to inflate spent → 150% of quarterly_gross produced full terracotta state: glance-donut-pct color rgb(192,57,43), donut arc stroke #C0392B, glance-budget-status 'Over budget this quarter' rgb(192,57,43), glance-left rgb(192,57,43); uncapped 150% surfaced (not clamped). No duplicate 'N% of budget used' row and no residual linear progressbar inside dashboard-at-a-glance. All three mini-stat tiles (glance-alerts, glance-statements, glance-cap) present with correct hrefs. ParticipantProfile: h1 renders full name 'Dorothy Smith'; core1-profile-subtitle is a single line (20px height == 20px line-height). Personal Details + Quick Actions sidebar titles are prominent (font-weight 700, uppercase, teal rgb(14,77,82), 14px). All six filled Latest Activity artefact cards have no created date text and no clock icon; status pills render in sentence case (e.g. 'Check before paying'). ONE minor content issue: the invoice_check artefact `summary_line` body still contains the raw snake_case 'check_before_paying' inline (backend-produced summary text), even though the pill correctly humanises it.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "ArtefactCard (invoice_check)", "issue": "The card's summary_line still contains the raw snake_case status 'check_before_paying' embedded in the sentence (backend-generated content). Visible text: 'Invoice from Meridian Home Care Pty Ltd, check_before_paying'. The pill below correctly reads 'Check before paying'. Fix at the source (invoice checker summary composer) OR post-process summary_line with the same humanizeStatus helper in ParticipantProfile.jsx.", "selector": "[data-testid='core1-artefact-invoice_check']", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter313_dash_over.jpeg",
+    "/app/test_reports/iter313_profile.jpeg"
+  ],
+  "action_items": [
+    "LOW: Clean the invoice_check artefact `summary_line` so it does not embed the raw snake_case status code ('check_before_paying'). Preferable fix at backend summary composer; alternative: run humanizeStatus on any *_status token inside summary_line client-side."
+  ],
+  "critical_code_review_comments": [
+    "CaregiverDashboard.jsx BudgetDonut/AtAGlance implementation is clean; tone tri-band (#4E6E54 / #C2683D / #C0392B) works correctly and pctUsedDisplay carries the uncapped signal while pctFill clamps the arc. Good.",
+    "ParticipantProfile.jsx fullName fallback chain (first+last → display_name → preferred_name → framing name) is robust."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "~95% (all requested checks pass except one minor summary_line text bug)"},
+  "seed_data_creation": "None. Over-budget state simulated purely via Playwright route interception on GET /api/budget/current (spent inflated to 1.5x quarterly_gross).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Under-budget (cathy/Dorothy) shows 70% used with sage donut; to reproduce the red over-budget state you MUST intercept /api/budget/current and inflate `spent`/stream spends past `quarterly_gross`, because Dorothy's real quarter is well under budget. Terracotta canonical colour: rgb(192,57,43) / #C0392B. Profile URL: strip trailing /contribution-position from glance-cap href.",
+  "rca of the issue": "N/A — feature verification passed. Residual invoice_check summary_line text is a backend content-composition detail, not a regression of the iter313 UI redesign."
+}

@@ -1,0 +1,103 @@
+{
+  "summary": "Comprehensive mobile functional sweep of Wayly Expo web preview (login cathy@example.com, Family plan, 3 participants). Ran real submissions against every AI tool, walked the guided workflows, exercised Stripe checkout, opened every Settings/Your Account subscreen and swept ~25 screens for blank/crash/$$/%%. Result: no P0 crashes or blank screens; all 9 AI tools produce sensible output; Stripe test-mode checkout opens successfully. Found 3 P1 parity/consistency gaps (Classification Self-Check generic labels, Family plan participant-count copy inconsistency across plan-select vs plan-billing vs participants list, dark-mode CTA text contrast) and 2 P2 polish issues (AI dollar formatting with space after comma, Rules-of-Hooks in tool/[slug].tsx). Full details below.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "Dashboard 'Upload a Statement' CTA in DARK MODE",
+          "issue": "In dark mode the Pressable renders bg=rgb(165,81,43) (terracotta) but the child text color computes to rgb(0,0,0) black — low contrast, and inconsistent with light mode which is white-on-teal (verified iter174). Expected: white/high-contrast text on the coloured CTA regardless of theme. Reference: /app/mobile/app/(tabs)/index.tsx dashboard-upload-cta + /app/mobile/src/components/ui.tsx T colour fallback in dark palette.",
+          "testID": "dashboard-upload-cta",
+          "priority": "P1"
+        },
+        {
+          "component": "Classification Self-Check (/tool/classification-self-check)",
+          "issue": "12 scale rows are labelled generically 'Area 1' … 'Area 12' with no domain description. Web version uses meaningful domain labels (Self-care, IADLs, Cognition and behaviour, Safety, Informal support, Home environment, Mood — see /app/frontend/src/pages/tools/ClassificationCheck.jsx L144-152). Users on mobile cannot answer accurately because they don't know what each Area represents. PARITY GAP vs web.",
+          "testID": "n/a (scale12 field labels)",
+          "priority": "P1"
+        }
+      ],
+      "integration_issues": [
+        {
+          "flow": "Ask Wayly chat AI response formatting",
+          "issue": "Response text contains dollar amounts with a space after the comma, e.g. '$86, 185.23' and '$137, 917.01' — likely a punctuation artifact from the LLM that sanitizeAI() is not stripping. Should render as '$86,185.23'.",
+          "affected_testIDs": ["ask-send-button"]
+        }
+      ],
+      "design_issues": [
+        {
+          "screen": "Plan copy inconsistency between /plan-select, /plan-billing, /participants",
+          "issues": [
+            "/plan-select — Family card: '2 PARTICIPANTS · UP TO 3 CAREGIVER SEATS'",
+            "/plan-billing — Family card: 'Up to 4 participants' (bullet)",
+            "/participants — banner: 'Family plan covers 2, additional participants are $24.50 per fortnight each'",
+            "Three different participant limits shown to the same user in the same plan. Pick one canonical number (business-defined) and align copy across all 3 screens."
+          ]
+        },
+        {
+          "screen": "/plan-select Family card feature bullets",
+          "issues": [
+            "Bullet says 'Track two parents on one plan' which reinforces the /plan-select '2 participants' rule, but /plan-billing bullet says 'Up to 4 participants'. Same inconsistency; also fix copy tone (two parents vs 4 participants)."
+          ]
+        }
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {
+      "flow": "Classification Self-Check",
+      "platform": "mobile",
+      "issue": "Mobile uses 12 generic 'Area N' scales; web asks domain-specific questions grouped by self_care/iadl/cognition_behaviour/safety_hospitalisation/informal_support/home_environment/mood.",
+      "expected": "Same domain-based questionnaire on mobile as on web (identify each scale row with a meaningful label + help text).",
+      "actual": "'Area 1' through 'Area 12' with no help text, all 0-4 scales visually identical."
+    },
+    {
+      "flow": "Family plan capacity copy",
+      "platform": "mobile",
+      "issue": "Different participant limit shown on plan-select (2) vs plan-billing (Up to 4) vs participants list banner (2).",
+      "expected": "Canonical, identical copy across all plan/billing screens on mobile and web.",
+      "actual": "Three conflicting numbers on three consecutive mobile screens."
+    }
+  ],
+  "test_report_links": [
+    "/tmp/dashboard_iter175.png",
+    "/tmp/budget_result.png",
+    "/tmp/decoder_result.png",
+    "/tmp/selfcheck.png",
+    "/tmp/pswitch.png",
+    "/tmp/ask.png",
+    "/tmp/planselect.png",
+    "/tmp/planbilling.png",
+    "/tmp/stripe_checkout.png",
+    "/tmp/drawer_iter175.png",
+    "/tmp/participants.png",
+    "/tmp/dark_settings.png",
+    "/tmp/dark_dashboard.png",
+    "/tmp/dark_statements.png"
+  ],
+  "action_items": [
+    "P1 — Rebuild Classification Self-Check on mobile with the same 12 domain-labelled questions the web tool uses (map to self_care / iadl / cognition_behaviour / safety_hospitalisation / informal_support / home_environment / mood). Replace 'Area N' with the descriptive label and add the same help copy.",
+    "P1 — Align Family plan participant-limit copy across /plan-select, /plan-billing, and /participants (business decision required: is Family plan 2, 3, or 4 included seats?). Whichever is canonical, all three screens must match.",
+    "P1 — Investigate dark-mode CTA text colour: 'Upload a Statement' renders black text on terracotta bg in dark mode (rgb(0,0,0) on rgb(165,81,43)). Ensure the same white-text-on-coloured-CTA rule that was fixed in iter173 for light-mode teal also applies for the terracotta variant in dark mode. Likely another <T> colour fallback edge case in ui.tsx or dark-palette colours.primaryFg.",
+    "P2 — sanitizeAI (/app/mobile/src/utils/format.ts or equivalent) should collapse a space that appears immediately after a comma inside numeric strings so LLM output '$86, 185.23' → '$86,185.23'. Also apply on web for parity.",
+    "P2 — Fix Rules-of-Hooks violation in /app/mobile/app/tool/[slug].tsx: an early return of <StatementDecoderTool /> is placed at L193 BEFORE useState calls at L194-197. Extract the remaining form-tool body into its own component or move all useState calls above the branching return."
+  ],
+  "critical_code_review_comments": [
+    "/app/mobile/app/tool/[slug].tsx L188-217 mixes early return + useState in the same functional component: `if (slug === 'statement-decoder') return <StatementDecoderTool />;` sits on L193, but L194-197 declare useState hooks unconditionally. This works today because the slug is stable per route, but it is a Rules-of-Hooks footgun and will crash if the slug ever changes at runtime. Extract the form-tool body into a separate component (`FormTool`) and render <StatementDecoderTool /> or <FormTool /> from the top of ToolScreen without any hooks in the outer switch.",
+    "/app/mobile/app/tool/[slug].tsx classification-self-check config only carries a single scale12 field labelled 'Rate each area (0 = no help, 4 = full help)' and no per-scale labels — mobile parity requires either a bespoke ClassificationSelfCheckTool component (like StatementDecoderTool) or a scale12 schema that carries 12 domain-labelled rows.",
+    "Family-plan copy is currently duplicated in ≥3 places on mobile (plan-select cards, plan-billing card, participants banner). Extract to a single source-of-truth constant so a single change propagates."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-focused sweep; all mobile API-backed flows returned real data)",
+    "frontend": "9/9 AI tools return output, 9/9 Settings subscreens open, ~25/25 drawer screens load, Stripe test checkout opens. 3 P1 + 2 P2 issues found."
+  },
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, 3 participants: Dorothy/Mum primary, Robert, Patricia)",
+  "seed_data_creation": "None (used existing seeded cathy household).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile Expo web preview: https://mobile-parity-sweep.expo.preview.emergentagent.com. Login testIDs: login-email-input / login-password-input / login-submit-button. Verified AI tool submissions: Budget (20000/500/class 4) -> annual $29,696, quarterly $6,681.60, lifetime cap $137,917. Provider Price Checker (Personal care/75) -> 'Below the indicative range $85-$115, median $100'. Classification Self-Check all zeros -> Classification 1,2 indicative $10,731-$16,034. Contribution Estimator defaults -> annual $1,967.36, quarterly $491.84, years to cap 70.1. Statement Decoder pasted sample -> 3 anomalies + line items rendered. Ask chat 'What is the no-worse-off guarantee?' -> full context-aware reply about Dorothy + HCP transition (but with punctuation artefact '$86, 185.23'). Provider Switch 5-step navigation works; Stripe popup opened to checkout.stripe.com test mode. All Settings subscreens load. Per-participant isolation confirmed: making Robert primary re-scopes dashboard header. No blank/crashed screens; no '$$' or '%%' anywhere.",
+  "rca of the issue": "P1 Classification Self-Check parity gap: /app/mobile/app/tool/[slug].tsx L38-41 declares the tool as a single scale12 field with `label: 'Rate each area (0 = no help, 4 = full help)'` and no per-scale labels. The rendered FormRow for scale12 auto-names each row 'Area 1' … 'Area 12'. The web version (/app/frontend/src/pages/tools/ClassificationCheck.jsx L144-152) uses named domains (self_care, iadl, cognition_behaviour, safety_hospitalisation, informal_support, home_environment, mood). Fix by either extending scale12 config to accept 12 explicit row labels + help text, or by adding a bespoke ClassificationSelfCheckTool similar to StatementDecoderTool. Same applies to any future domain-based tool that needs per-scale copy."
+}

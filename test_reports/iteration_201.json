@@ -1,0 +1,44 @@
+{
+  "summary": "Iter 201: verified the upgrade-consolidation refactor. Backend POST /api/payments/change-plan wired correctly (9/9 pytest pass): 401 unauth, 422 invalid/missing target_plan, 400 'No active subscription on record.' for solo-plan user without live Stripe sub (preview env limit), and family user's downgrade attempt returns 400/409 depending on live-sub presence (endpoint path proven wired). /payments/sync-plan-to-participants regression: still reachable, returns ok:false reason:no_active_subscription for accounts without live subs, ok:true (idempotent no-op) for family cathy. Code review + grep confirms: Settings.jsx changePlan (line 393) posts to /payments/change-plan (NOT /billing/upgrade); Participants.jsx confirm-solo-to-family (line 610) calls setStep('form') directly with NO Stripe redirect; addon-prorated-note (line 718) + add-done-btn (line 722) render when lastAdded.addon.id is present; the removed testIDs pay-addon-btn/skip-payment-btn/skip-checkout-solo-to-family are absent from BOTH /app/frontend/src and /app/mobile/app (grep -r returned zero matches). Mobile web preview verified: cathy participant screen renders, none of the removed testIDs present in DOM, add-participant button reachable, no legacy /billing/v2/upgrade-checkout or /billing/v2/addon-checkout network requests observed.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_change_plan_iter201.py",
+    "/app/test_reports/pytest/iter201.xml",
+    "/app/test_reports/iter201_solo_billing.jpeg",
+    "/app/test_reports/iter201_mobile_participants.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "payments_advanced.py:266 uses stripe.error.StripeError but modern stripe-python 12.x also raises stripe._error.StripeError — the current import path still resolves in 12.x, but consider centralising exception handling.",
+    "Settings.jsx BillingTab currently only shows billing-switch-family when activeSub is truthy (line 664). For preview-env solo accounts without a stripe_subscription_id (like mobpay.solo@example.com), the button rendered is billing-start-family (calls startCheckout → /payments/checkout, the checkout flow, not the modify-in-place path). This is correct behaviour but means the /payments/change-plan wiring can only be exercised with a live-sub account — worth documenting for future testing agents.",
+    "Participants.jsx add-done-step addon-prorated-note (line 717) is only rendered when lastAdded.addon?.id is truthy. For the solo_to_family upgrade path (2nd participant, no addon — just a base plan swap), the note won't appear. Confirm this matches spec: request says 'Done step shows addon-prorated-note for 3rd+ participant', so this is intentional. Mobile mirrors the same guard (line 375). OK."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_change_plan_iter201.py (new)"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% (code review + legacy-testID absence + no legacy network calls)"},
+  "test_credentials": "cathy@example.com / testpass123 (family, no live Stripe sub in preview), mobpay.solo@example.com / MobPay1! (solo, no live Stripe sub in preview)",
+  "seed_data_creation": "None. Env limit acknowledged: preview lacks real stripe_subscription_id for these accounts, so /payments/change-plan cannot be exercised end-to-end past the 400/409 gates — this matches the review request's known-env-limitation note.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The upgrade consolidation is complete and consistent across web + mobile. To exercise /payments/change-plan end-to-end (200 with proration_display) you MUST use an account that has a real stripe_subscription_id on the solo lookup_key — preview env doesn't have one. Use the DB-seed pattern from iter200 or complete a full Stripe test-mode checkout via /api/payments/checkout to plant a real sub, then flip plan to solo in db.users and retry the button. The /payments/prices endpoint (GET, no auth) is a good smoke check that lookup keys resolve.",
+  "rca of the issue": "N/A — refactor works as specified."
+}

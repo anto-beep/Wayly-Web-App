@@ -1,0 +1,39 @@
+{
+  "summary": "PARITY-1 v7 mobile sweep — all three tools brought to web-parity verified end-to-end on the Expo web preview (mobile viewport 390x844, cathy@example.com). (1) Classification Self-Check: answered all 16 questions (csc-q-Q1..Q16 testIDs work), csc-submit → csc-result rendered; csc-cta-help visible pre-completion; csc-download-pdf ('Save as PDF') + csc-email-self ('Email to self') visible in csc-actions card on result; csc-assessor-toggle expands csc-assessor-block and populates IAT domains with Covered / Partly / Not covered chips (all three chip states rendered — see iter213b_csc_result.jpg); footer shows 'Payload version …' and 'Budgets sourced from …'. Draft/resume: partial-answer → navigate away to /dashboard → return → csc-resumed banner + csc-restart 'Start over' both visible. (2) Care Plan / Support Plan Reviewer: cp-pick-files ('Choose care plan files'), OR-PASTE-TEXT divider, cp-quarterly-budget, cp-classification-4 pill all present. Text-path submit (~30s AI wait) → cp-result with cp-preview + cp-file-findings + cp-save-cta rendered (screenshot iter213b_cpr_result.jpg); cp-save-btn saved to register → 'Plan saved to your Care Plans register' + cp-open-saved-plan ('View saved plans') visible. (3) Provider Price Checker: pc-snapshot-selector shows 'DoH DATASET: DoH October 2025 · latest' (pc-snapshot-single), pc-history-link 'Your price history' present. Ran a Personal-care check @ $90/hr BlueBerry Care → result rendered with 'Saved.' confirmation after tapping pc-save-check → pc-saved-confirmation. (4) /price-history standalone: ppc-history-snapshot renders (5 Tracked · 1 dropped · 1 rising · 3 Steady · Estimated savings tracked $150.00), 5 grouped provider cards (ppc-history-group-*), 2 sparklines (ppc-history-sparkline) for groups with >1 check; empty state correctly NOT shown. All success paths pass on mobile.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter213b_csc_result.jpg",
+    "/app/test_reports/iter213b_cpr_result.jpg",
+    "/app/test_reports/iter213b_ppc.jpg",
+    "/app/test_reports/iter213b_history.jpg"
+  ],
+  "action_items": [
+    "Nice-to-have: add a data-testid='login-submit' (currently /login has no testID on the Sign In button — testing had to fall back to text-match). Not blocking, but would harden future mobile automation.",
+    "Nice-to-have: care plan text-path AI response can take >25s on the preview; consider tightening the cp-progress copy expected wait ('about a minute' is honest, keep as-is).",
+    "Deferred (per main-agent note, NOT flagged as bugs this run): CSC question anchors, global mobile ReportIssue affordance, PPC row/bulk-delete + quality-profile chip + email-draft/pdf-export."
+  ],
+  "critical_code_review_comments": [
+    "ClassificationSelfCheck.tsx cleanly ports the web actions row + IAT-domains block; draft persistence uses cacheGet/cacheSet('csc.run.draft.v1') and is cleared on submit — parity with web localStorage.",
+    "CarePlanReviewer.tsx correctly forks between /public/care-plans/review-files (multipart) and /public/care-plans/review (JSON text) based on files.length, and save mirrors the same fork to /care-plans/upload-files vs /care-plans/upload.",
+    "PPC snapshot chip + history link + Save this result are wired to the same public /ppc endpoints as web; /price-history correctly groups by service+provider and renders sparkline only for groups with >1 check."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "none — used cathy's pre-existing ~12 saved price checks",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All three PARITY-1 v7 mobile flows are green: CSC (16-q run + Save-PDF + Email-self + IAT-domains + budget-source footer + draft/resume), CPR (text path incl. save-to-register; file path exercised via cp-pick-files visibility only — real file upload in web preview not attempted this run), PPC (snapshot chip + save + history link) and /price-history (snapshot + grouped cards + sparklines). Note the login screen lacks a data-testid on the Sign In button; testing agents should click via text 'Sign In' as a fallback. Screenshots at iter213b_*.jpg.",
+  "rca of the issue": ""
+}

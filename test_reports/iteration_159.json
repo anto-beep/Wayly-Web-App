@@ -1,0 +1,37 @@
+{
+  "summary": "Mobile-only frontend testing of Wayly mobile parity screens on Expo web preview (390x844). 7/8 features PASS as cathy@example.com (Settings hub nav, Profile edit incl. email-change form, Family Members incl. empty-email validation + real invite success/pending, Weekly Digest preview+history, Security incl. password reset + 2FA setup renders QR+verify input, Usage cards render, Danger Zone confirm gate correctly toggles disabled/enabled, Plan Select shows solo+family with CURRENT badge on family and subscribe-solo button — family shows 'current plan' row instead of subscribe as expected). CRITICAL BUG: Onboarding wizard (/onboarding) crashes with 'useDrawer must be used within DrawerProvider' error boundary because `WaylyHeader` uses `useDrawer()` but `DrawerProvider` is only mounted inside `app/(tabs)/_layout.tsx`. Signup + onboarding entry path is 100% broken for new users — feature (H) is DEAD.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "OnboardingScreen (WaylyHeader)", "issue": "Screen throws 'useDrawer must be used within DrawerProvider'. WaylyHeader calls useDrawer() but DrawerProvider is only wrapped inside app/(tabs)/_layout.tsx (lines 28/81). Onboarding is the only out-of-tabs screen using WaylyHeader — all sibling out-of-tabs screens (profile-edit, family-members, weekly-digest, security, usage, danger-zone, plan-select, plan-billing, signup) use AppHeader instead. Reference: /app/mobile/app/onboarding.tsx:7,150 and /app/mobile/src/components/WaylyHeader.tsx:17.", "testID": "onboarding-step-essentials", "priority": "CRITICAL"}
+      ],
+      "integration_issues": [
+        {"flow": "New signup → onboarding wizard", "issue": "After signup, the app tries to route to /onboarding but the screen instantly crashes with a red LogBox error boundary. New users cannot complete Step 1 → Step 4, cannot create household/participant, and are blocked from reaching /(tabs) dashboard. Feature (H) mobile onboarding wizard is fully blocked.", "affected_testIDs": ["onboarding-step-essentials", "onboarding-step1-continue", "onboarding-step2-continue", "onboarding-step3-skip", "onboarding-finish"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": [
+        {"component": "useDrawer / DrawerProvider scope", "issue": "DrawerProvider wraps only the tabs group but WaylyHeader (which needs it) is imported by an out-of-tabs route. Reference: /app/mobile/app/(tabs)/_layout.tsx:28 and /app/mobile/app/onboarding.tsx:150."}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "CRITICAL: Fix onboarding crash. Recommended: swap `<WaylyHeader />` in /app/mobile/app/onboarding.tsx for `<AppHeader title=\"Welcome to Wayly\" subtitle=\"Let’s set up the participant profile\" />` (matching pattern used by profile-edit, security, plan-select, etc.). Alternative: move `<DrawerProvider>` up into `/app/mobile/app/_layout.tsx` so it wraps every route, or make `useDrawer()` no-op when no provider is present (return `openDrawer: () => {}`). Re-test the full signup → onboarding steps 1–4 → /(tabs) flow after the fix.",
+    "Re-run onboarding wizard end-to-end after fix to verify POST /participants with authorisation_confirmed=true persists, PATCH /participants/{id} on step 3 (or skip works), and router.replace('/(tabs)') lands on the dashboard with household_id set."
+  ],
+  "critical_code_review_comments": [
+    "Header context leakage: WaylyHeader silently requires DrawerProvider — consider making it defensive (optional chaining or default context value) to avoid crashing when reused outside tabs.",
+    "app/onboarding.tsx uses WaylyHeader which is a tab-only header; onboarding shouldn't show the drawer/nav — an AppHeader is the correct fit and matches every other pre-tabs screen (signup/login etc.)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "88% (7/8 features PASS, onboarding is a hard fail)"},
+  "test_credentials": "cathy@example.com / testpass123 used for all settings-side flows. Fresh signup email mobtest+<ts>@example.com / Wayly!2026x created but onboarding crashed.",
+  "seed_data_creation": "One family invite was sent from cathy's household (invitee<ts>@example.com) — visible under invites-pending; safe to leave. One fresh signup user was created (mobtest+1786868997@example.com) but has no household because onboarding crashed.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All non-onboarding new mobile screens pass. After main agent swaps WaylyHeader → AppHeader (or lifts DrawerProvider) in onboarding.tsx, only the onboarding end-to-end flow needs re-testing (signup → 4 steps → dashboard with household_id). Do NOT delete cathy's account; do NOT complete Stripe checkout when tapping plan-subscribe-solo (it will redirect via Linking.openURL to Stripe).",
+  "rca of the issue": "Root cause: `/app/mobile/app/onboarding.tsx` renders `<WaylyHeader />` (line 150). `WaylyHeader` calls `useDrawer()` which throws when there is no ancestor `<DrawerProvider>` (see /app/mobile/src/context/DrawerContext.tsx:15). `DrawerProvider` is only wrapped inside `app/(tabs)/_layout.tsx` (line 28), NOT in the root `app/_layout.tsx`. Since `/onboarding` is a route OUTSIDE the (tabs) group (household-gated users are routed to it BEFORE they can enter tabs), the provider is missing and the entire onboarding screen mounts inside an error boundary. Repro: sign up with any fresh email at mobile Expo preview → immediately see a red 'Uncaught Error: useDrawer must be used within DrawerProvider' overlay; no way to complete onboarding. Mitigation: replace WaylyHeader with AppHeader on onboarding.tsx (1-line change matching sibling out-of-tabs screens), OR lift DrawerProvider into root _layout.tsx above ThemedStack."
+}

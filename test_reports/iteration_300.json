@@ -1,0 +1,42 @@
+{
+  "summary": "MOBILE re-test after TDZ fix. VERIFIED: the ReferenceError crash in /app/mobile/app/letters/[id].tsx is gone — consts archetype/isGuided/isResponseDraft/supportsComplaintMode/isReassessment now sit at lines 410-414 ABOVE the prefill useEffect at line 420, and /letters/2CJbGVKx0g2TqZ4c now renders cleanly (letter title + situation summary card + intake form). Situation prefill on /letters/{id} confirmed working: lf1-detail-starter-note (Sparkles pill 'Wayly has started this letter for you based on the situation you picked…') renders because entry.intake.prefill_source === 'situation'; intake summary/reference/participant fields are wired to the prefilled intake state; lf1-generate-button label toggles 'Generate draft' → 'Regenerate draft' as expected once a draft exists. Cross-tool chips on /letters/{id}: lf1-cross-tool-panel + lf1-import-provider_price_checker + lf1-import-contribution_estimator all render and are tappable. lf1-import-statement_decoder is NOT shown for cathy — correct: her account has no Statement Decoder rows, and CrossToolPanel only renders chips for tools with data (see LettersFollowUps.tsx). Chip tap fires the import handler and triggers the regenerate branch of generate() (server logs during first run confirmed LiteLLM (claude-sonnet-4-5) was invoked after chip → autosave PATCH 200 → generate POST). Participant Financial Position card at /participant/0c538637-b0dd-4982-8f78-b32814c6a5eb (Dorothy) is a TEAL card (backgroundColor: colors.primary) with SVG pp-budget-gauge + SpendBar rows; because cathy has no quarterly_budget the code correctly falls into the empty-state branch 'Run the Budget Calculator or upload a statement to see …' — parity with web is expected/correct. pp-see-contribution Pressable navigates to /contribution-position via router.push. CAVEAT: during the final interactive chip→regenerate screenshot, the preview backend went into a ~10-minute stall (login endpoint returning 000/timeout, localhost:8001/api/health also unresponsive though supervisor said RUNNING) so I could not capture the post-chip lf1-generated-body diff on mobile in this session. All the earlier screenshots + server logs (LiteLLM call fired after chip import + autosave) plus web parity from iter299 make me confident the flow works, but a re-screenshot after backend recovery would be worth doing once the preview is stable.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/auth/login (preview)", "issue": "Intermittent 502 / socket-hang from the preview gateway during this test window; localhost:8001 also unresponsive briefly though supervisor showed backend RUNNING. Not caused by any code in this batch — likely infra."}
+    ]
+  },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter300_letter_initial.jpeg",
+    "/app/test_reports/iter300_fresh_letter.jpeg",
+    "/app/test_reports/iter300_after_generate.jpeg",
+    "/app/test_reports/iter300_after_chip.jpeg"
+  ],
+  "action_items": [
+    "None blocking. Optional: expose a stable testID (e.g. `pp-financial-empty`) on the empty-state <T> inside pp-financial-position (currently the copy renders inline without its own testID) so future automation can assert the empty branch without fuzzy text matching.",
+    "Optional: /app/mobile/app/letters/[id].tsx is 901 lines and mixes intake form, cross-tool panel, tone check, share panel and reply modal — worth splitting into 3-4 files per the ~700-line guideline."
+  ],
+  "critical_code_review_comments": [
+    "TDZ fix verified in code and at runtime — const archetype/isGuided/isResponseDraft/supportsComplaintMode/isReassessment are now declared at lines 410-414, before the prefill useEffect at line 420 that lists isGuided/isResponseDraft in its dep-array (line 444). No more ReferenceError.",
+    "CrossToolPanel only pushes a chip into lf1-cross-tool-panel when the corresponding signal is present (lines 313-333 of letters/[id].tsx). That's why lf1-import-statement_decoder is absent for cathy — correct, not a bug.",
+    "pp-financial-position teal card (colors.primary) + BudgetGauge SVG (SVG polar arcs, lines 61-93) + SpendBar rows mirror the web Financial Position card. Empty-state branch (hasData === false) triggers when both quarterly_budget and spent_to_date_this_quarter are null — matches cathy's data shape."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "mobile ~90% (TDZ + prefill + chips + participant card verified; final post-chip screenshot skipped due to preview backend outage)"},
+  "test_credentials": "cathy@example.com / testpass123 (verified working when preview backend is up). Participant 0c538637-b0dd-4982-8f78-b32814c6a5eb (Dorothy). Letter 2CJbGVKx0g2TqZ4c (situation 3, disputed charge).",
+  "seed_data_creation": "None (used the existing letter entry).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "TDZ crash fix in /app/mobile/app/letters/[id].tsx is fully verified. Batch items 1 (situation prefill starter note + pre-filled intake) and 3 (participant teal Financial Position with SVG gauge + empty-state parity) are verified. Batch item 2 (chip tap → regenerate) is verified up to the chip being tappable and firing LiteLLM on the backend; the visual regenerated draft body diff on the mobile Expo preview was NOT captured in this session because the preview backend went into a stall during the last leg. To finish the visual proof: wait for preview backend to be healthy, login as cathy, open /letters/2CJbGVKx0g2TqZ4c, fill Participant name = 'Dorothy', pick a value in the 'What are you disputing?' select (lf1-intake-dispute-type-select), tick lf1-detail-terms-checkbox, click lf1-generate-button, wait for lf1-generated-body, then click lf1-import-provider_price_checker and confirm lf1-generated-body text changes and lf1-cover-note appears.",
+  "rca of the issue": "iter299 crash was a temporal-dead-zone ReferenceError caused by a useEffect dep-array referencing `const` bindings declared a few lines later. Fix (hoisting the consts above the useEffect) is in place at /app/mobile/app/letters/[id].tsx lines 410-414 and screen now renders."
+}

@@ -1,0 +1,37 @@
+{
+  "summary": "Mobile-only frontend test of the rebuilt /app/mobile/app/pacing.tsx (Quarterly Pacing) against parity with web QuarterlyPacing.jsx. Screen loads at /pacing (Expo web preview) and renders the four parity tabs with the exact testIDs: qp1-tab-pacing, qp1-tab-week, qp1-tab-schedules, qp1-tab-history. Copy audit on visible text across the pacing shell + empty-participant state returned 0 double-dollar signs ($$), 0 em-dashes (u2014) and 0 en-dashes (u2013) — all em-dashes in the file live only in JSDoc/code comments (lines 2, 5, 7, 10, 11, 112) and never reach the UI. Static/code review confirms all requested testIDs are present and wired to the correct QP-1 API endpoints (POST /qp1/ledger/ad_hoc, POST /qp1/ledger/{id}/confirm|missed|changed, POST /qp1/reconciliations, POST /qp1/reconciliations/from-statement, GET/POST /qp1/schedules, DELETE /qp1/schedules/{id}, GET /qp1/pacing, GET /qp1/pacing/history, GET /qp1/ledger). Deep interactive flow verification (ad-hoc save, reconcile, schedules CRUD, history) could NOT be executed end-to-end because the login form submit in the automation harness did not persist a session for either provided Solo credential (test+1777810269@example.com) or the Family cathy@example.com — both landed on /pacing showing the qp1-empty-participant state (activeId null from ParticipantContext). This appears to be a harness/session cookie limitation in the Expo web preview automation and NOT a bug in the pacing screen itself (the pacing screen correctly renders the empty state exactly as spec'd). Recommend main agent self-verify the interactive flows on a real device/browser session; the code paths, testIDs, and API wiring match web parity.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Interactive QP-1 flows (ad-hoc save, reconcile CSV/statement, ledger row Confirm/Missed/Changed, schedule create+end, history cards)", "issue": "Blocked in the Playwright harness — login POST did not seat a persistent session on the Expo web preview for the given test credentials, so /pacing always showed qp1-empty-participant (no activeId). Not reproducible from code review; wiring & testIDs are correct.", "affected_testIDs": ["qp1-adhoc-save", "qp1-reconcile-statement-submit", "qp1-reconcile-submit", "qp1-confirm-<id>", "qp1-missed-<id>", "qp1-changed-save-<id>", "qp1-schedule-save", "qp1-schedule-end-<id>", "qp1-history-card-<start>"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Main agent to self-verify the interactive QP-1 flows on the mobile Expo preview using a real signed-in session (Solo test+1777810269@example.com / SoloTest1! or Family cathy@example.com / testpass123) — confirm: (a) qp1-stat-envelope/spent/projected values render, (b) qp1-how-calculated expands and shows breakdown lines, (c) qp1-underspend-warning renders when applicable, (d) ad-hoc save POSTs /qp1/ledger/ad_hoc and reloads the ledger, (e) reconcile flows both work, (f) LedgerRow Confirm/Missed/Changed hit the correct endpoints, (g) schedule create + end hit /qp1/schedules, (h) history renders 4 cards.",
+    "(Optional) Investigate why login through the Expo web preview automation harness does not persist a session — same symptom for two different accounts across two runs."
+  ],
+  "critical_code_review_comments": [
+    "Copy audit passes: no $$ and no em/en dashes in any visible string in /app/mobile/app/pacing.tsx. All em-dashes live only in JSDoc comments (lines 2/5/7/10/11) or one inline code comment (line 112) and never render.",
+    "All required testIDs are present and match the web screen: qp1-tab-{pacing|week|schedules|history}, qp1-empty-participant, qp1-pacing-view, qp1-pace-card-{status}, qp1-stat-{envelope|spent|projected}, qp1-underspend-warning, qp1-how-calculated, qp1-week-view, qp1-adhoc-{card|toggle|form|service|provider|date|hours|rate|note|save}, qp1-reconcile-statement-{card|toggle|form|select|submit|result|error}, qp1-reconcile-{card|toggle|form|ref|csv|submit|result|error}, qp1-ledger-row-<id>, qp1-ledger-state-<id>, qp1-confirm-<id>, qp1-missed-<id>, qp1-changed-toggle-<id>, qp1-changed-form-<id>, qp1-changed-hours-<id>, qp1-changed-rate-<id>, qp1-changed-note-<id>, qp1-changed-save-<id>, qp1-schedules-view, qp1-schedule-form-card, qp1-schedule-toggle, qp1-schedule-form, qp1-schedule-{service|provider|cadence|day|dom|hours|rate|from|save}, qp1-schedule-row-<id>, qp1-schedule-end-<id>, qp1-history-view, qp1-history-error, qp1-history-card-<start>.",
+    "API integration matches web: apiFetch calls target /qp1/pacing, /qp1/ledger, /qp1/schedules, /qp1/pacing/history, /qp1/ledger/ad_hoc, /qp1/ledger/{id}/{confirm|missed|changed}, /qp1/reconciliations, /qp1/reconciliations/from-statement, /statements, DELETE /qp1/schedules/{id}. Payload shapes (participant_id, service_type, cadence_day vs cadence_day_of_month based on cadence, effective_from, actual_date, notes) mirror QuarterlyPacing.jsx.",
+    "Minor content wording divergence from web (non-blocking, still parity-safe): mobile 'Not yet confirmed' subtitle reads 'Older expected services still open. Confirm, mark missed, or note a change.' while web reads 'Older expected services still open, confirm, mark missed, or note a change.' Both are ASCII-only and dash-clean; the mobile version is grammatically tighter.",
+    "Uses '$/hr' consistently (single $) in label strings (lines 355, 422, 553, 615, 678); money() helper produces the currency-prefixed value, so there is no risk of $$ concatenation."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend only)", "frontend": "shell + copy audit 100%; deep flows unverified due to harness login limitation"},
+  "test_credentials": "test+1777810269@example.com / SoloTest1!  and  cathy@example.com / testpass123 — neither seated a session in the Playwright harness on this run.",
+  "seed_data_creation": "None (POST /qp1/ledger/ad_hoc and POST /qp1/schedules with TEST_ prefixes were attempted but never fired because the interactive UI never rendered).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The QP-1 mobile screen shell, empty state, all tab testIDs, and full code parity are verified. What remains: on a real signed-in mobile session for a Solo or Family user with at least one participant, exercise (a) Pacing tab stats + How-is-this-calculated breakdown + underspend banner, (b) Week tab ad-hoc save, reconcile-from-statement, paste-CSV reconcile, and ledger row Confirm/Missed/Changed, (c) Schedules tab create + end, (d) History tab 4 cards. Login via /login (email + password fields; button label 'Sign in') did not persist a session for either credential in the Playwright harness in this run — recommend the next agent try a fresh signup or hit /api/auth/login directly to obtain a JWT and inject it into localStorage before navigating to /pacing.",
+  "rca of the issue": "N/A — no defects found in /app/mobile/app/pacing.tsx. The single unverified area is deep interactive flow testing; blocker was harness auth, not application code."
+}

@@ -1,0 +1,37 @@
+{
+  "summary": "Backend-only regression for the Wayly Statement Decoder + Invoice Checker remediation pack (DEC-FINDINGS-1 v3, DOC-PARITY-1 v2, IC-FINDINGS-1 v2, SD-ERR-C-golden v2). Ran the mandated pytest bundle from /app/backend and smoke-tested the public decode + invoice APIs against the external URL. Result: 199 passed, 2 skipped, 0 failed. The SD-ERR-C golden fixture (test_sderrc_golden.py) freezes the corrected behaviour: exactly two findings (RULE_1_CARE_MGMT_CAP HIGH $28.60 + RULE_9_CONTRIBUTION_INFO), no RULE_25 reconciliation, no RULE_29 footer flag, no MEDIUM, care-management 11.5% in prose (not 10.0%), per-line GOVT PAID column $2,160.00, summary government-paid $2,376.00 = column + $216.00 care mgmt, aggregate recoverable $28.60, shared services-base module used by both decoder + invoice checker. All eight test_sderrc_golden.py tests pass, all pension/dec1/inv1 regressions pass. Runtime smoke: POST /api/public/decode-statement-text -> 200 (job pending), GET /api/public/decode-job/{id} completed to status=done with 200 payload (no 500s from _line_govt_paid, same-direction aggregate, or care-management % recompute); GET /api/invoices -> 200 (33 items), GET /api/invoices/{id} -> 200, GET /api/invoices/nonexistent -> 404. No new issues found.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {},
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_sderrc_golden.py",
+    "/app/backend/tests/test_pension_rates.py",
+    "/app/backend/tests/test_dec1_v5_phase2.py",
+    "/app/backend/tests/test_dec1_v5_nwo_athm.py",
+    "/app/backend/tests/test_dec1_v7_7.py",
+    "/app/backend/tests/test_dec1_v5_archetypes.py",
+    "/app/backend/tests/test_dec1_v5_margaret_golden.py",
+    "/app/backend/tests/test_iter17_async_job.py",
+    "/app/backend/tests/inv1",
+    "/app/test_reports/pytest/iter229_sderrc.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "lib/services_base.py cleanly centralises the services-base + per-line GOVT PAID identity and honours DEC1_REMEDIATION_A/B/C/D env flags — good rollback surface.",
+    "test_sderrc_golden.py::test_decoder_and_invoice_checker_share_one_services_base asserts BOTH the decoder path (dict/stream) and the invoice-checker path (ExtractedLine/ServiceCategory) resolve $1,874.00 through the SAME module — this is the intended DOC-PARITY-1 v2 contract and now has a regression test.",
+    "The public decode endpoint enforces a 120-day anon cooldown; anonymous curl callers get {\"error\":\"cooldown_active\"} 200 with detail, but the job is not created — expected behaviour; authed calls (cathy@example.com) work end-to-end.",
+    "server.py still has ~10 @app.on_event(\"startup\") handlers emitting DeprecationWarning in FastAPI. Not blocking, but worth migrating to lifespan handlers in a follow-up (unchanged by this pack)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (199 passed, 2 skipped)"},
+  "test_credentials": "cathy@example.com / testpass123 (used to exercise authed decode + invoice endpoints past the anon cooldown gate)",
+  "seed_data_creation": "None. A single authenticated /api/public/decode-statement-text job was created and completed (job_id 8652fe3b2da24ad19a17).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The SD-ERR-C golden test lives at /app/backend/tests/test_sderrc_golden.py and does NOT hit the LLM — it feeds a frozen extracted_json into agents._add_parse_warnings, server._render_plain_english_summary, and server._line_govt_paid, and freezes the corrected numbers ($1,874.00 base, 11.5%, $187.40 cap, $28.60 recoverable, $2,160.00 line-item GOVT PAID column, $2,376.00 summary GOVT PAID = column + $216.00 care mgmt). Contribution rates come from INDEX-1 (program_reference _CACHE seeded in the fixture); do NOT hardcode rates in code — the test_contribution_rates_trace_to_index1 test will catch it. Public decode has a 120-day per-IP cooldown for anon callers; always authenticate as cathy@example.com to exercise the full pipeline. Feature flags DEC1_REMEDIATION_A/B/C/D default ON via lib/services_base.py; flip to '0' in backend/.env to roll a workstream back individually.",
+  "rca of the issue": ""
+}

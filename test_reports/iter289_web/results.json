@@ -1,0 +1,82 @@
+{
+  "light_account_health": {
+    "color": "rgb(255, 255, 255)",
+    "text": "11%",
+    "parentBg": "rgba(0, 0, 0, 0)",
+    "parentImg": "linear-gradient(120deg, rgb(14, 77, 82), rgb(10, 62, 66))"
+  },
+  "light_stream-clinical": {
+    "bg": "rgba(15, 86, 72, 0.12)",
+    "borderLeft": "rgb(15, 86, 72) 4px",
+    "numColor": "rgb(82, 75, 66)",
+    "numText": "63%"
+  },
+  "light_stream-independence": {
+    "bg": "rgba(94, 126, 99, 0.15)",
+    "borderLeft": "rgb(94, 126, 99) 4px",
+    "numColor": "rgb(82, 75, 66)",
+    "numText": "72%"
+  },
+  "light_stream-everyday-living": {
+    "bg": "rgba(160, 85, 69, 0.14)",
+    "borderLeft": "rgb(160, 85, 69) 4px",
+    "numColor": "rgb(82, 75, 66)",
+    "numText": "75%"
+  },
+  "light_billing_card": {
+    "bg": "rgb(165, 81, 43)",
+    "texts": [
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)"
+    ]
+  },
+  "dark_account_health": {
+    "color": "rgb(255, 255, 255)",
+    "text": "11%",
+    "parentBg": "rgba(0, 0, 0, 0)",
+    "parentImg": "linear-gradient(120deg, rgb(14, 77, 82), rgb(10, 62, 66))"
+  },
+  "dark_stream-clinical": {
+    "bg": "rgba(15, 86, 72, 0.12)",
+    "borderLeft": "rgb(15, 86, 72) 4px",
+    "numColor": "rgb(82, 75, 66)",
+    "numText": "63%"
+  },
+  "dark_stream-independence": {
+    "bg": "rgba(94, 126, 99, 0.15)",
+    "borderLeft": "rgb(94, 126, 99) 4px",
+    "numColor": "rgb(82, 75, 66)",
+    "numText": "72%"
+  },
+  "dark_stream-everyday-living": {
+    "bg": "rgba(160, 85, 69, 0.14)",
+    "borderLeft": "rgb(160, 85, 69) 4px",
+    "numColor": "rgb(82, 75, 66)",
+    "numText": "75%"
+  },
+  "dark_billing_card": {
+    "bg": "rgb(165, 81, 43)",
+    "texts": [
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)",
+      "rgb(255, 255, 255)"
+    ]
+  },
+  "light_artefacts": [],
+  "dark_artefacts": []
+}

@@ -1,0 +1,135 @@
+<analysis>**original_problem_statement**: 
+The user requested a large batch of features, bug fixes, and UX improvements to be implemented with **strict parity across BOTH web and mobile apps**. 
+PRODUCT REQUIREMENTS include:
+1. Redesign Price Checker Sanity Check UI to stand out.
+2. Statement/Invoice Participant Guard: Surface identity warnings in the UI if an uploaded document doesn't match the active participant.
+3. Notifications (Mobile & Web): Viewing removes it from the list, Mark all read clears the list, fix overflows.
+4. Letters & Follow-Ups: Validate required fields client-side before generating a draft. Add recipient auto-fill using the participant's saved . Capitalize letter situation titles and Start a blank letter items.
+5. AskWayly / Aged Care Q&A: Move report issue buttons below chat bar. Chunk long answers using Markdown, and use highlight chips for key figures/deadlines.
+6. Participant Settings: Add a Provider email field.
+7. Signup & Onboarding: Fix mobile DOB formatting bug blocking signup ( masking). Bring the same text masking to Web onboarding. Auto-capitalize first and last names on backend signup.
+8. Contribution Estimator: Add subtle colored background shading to different sections.
+9. Mobile specific: Audit clear back buttons on all screens and ensure no layout overflow.
+
+**User's preferred language**: English (EN)
+*(INSTRUCT NEXT AGENT: Respond in English only)*
+
+**what currently exists?** 
+A mature cross-platform aged-care application (Wayly) with a React web frontend, an Expo/React Native mobile app, and a shared FastAPI/MongoDB backend. Extensive parity updates and UI polishes for Letters, Q&A, Contribution Estimator, and Onboarding flows have been fully implemented across both platforms.
+
+**Last working item**: 
+    - Last item agent was working: The agent reviewed the current project state (noting all requested features from the last batch are implemented) and called the  tool to confirm the plan for the final clean-up and manual verification tasks. 
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y (Automated tests passed in previous steps, manual visual verification pending)
+    - Which testing method agent to use?: Frontend testing agent (completed) / Screenshot tool for pending manual visual checks.
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:  
+  Issue 1: Final verification of Web Q&A chips and Web Onboarding DOB field masking
+     - Attempted fixes: The code was fully implemented, but the automated  couldn't reach these web screens previously due to leftover test data blocking the auth/onboarding flow.
+     - Next debug checklist: Once user confirms the plan, log in to the web frontend using a clean test account and visually verify via  that the  requires/formats DD/MM/YYYY on onboarding, and that the Q&A markdown chips render correctly.
+     - Why fix this issue and what will be achieved with the fix?: Confirming the very last visual features requested by the user are functioning as expected.
+     - Status: TESTING PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Frontend (Web)
+     - Blocked on other issue: Pending user response to 
+
+**In progress Task List**: 
+  *(No tasks are currently in progress code-wise; waiting for user confirmation on the proposed plan.)*
+
+**Upcoming and Future Tasks**
+  - **P1**: Refactor Mobile  to use the newly created shared . (The previous agent created a shared component for AgedCareQA but left a duplicate local implementation in  to avoid risky deletions late in the session).
+  - **P2**: Conduct a final manual visual sweep of the mobile app (using screenshot tool) to double-check for any missed text overflows on smaller devices.
+
+**Completed work in this session**
+- Mobile parity for Notifications (remove on view, clear all) (DONE)
+- Price Checker Sanity check high-contrast UI (Web & Mobile) (DONE)
+- Identity Guard UI warnings surfaced on Invoice & Statement results (Web & Mobile) (DONE)
+- Added  field to Participant endpoints and forms (Backend, Web, Mobile) (DONE)
+- Removed Sign in with Google text from  (DONE)
+- Mobile Onboarding DOB field bug fixed ( digit masking added) (DONE)
+- Web Onboarding  updated to support  text masking alongside calendar (DONE)
+- AskWayly / Aged Care Q&A UI: Report buttons moved below chat, Markdown chunking and highlight chips added (DONE)
+- Letters & Follow-Ups: Client-side required field validation gating added (Web & Mobile) (DONE)
+- Letters auto-address logic added: Draft automatically pre-selects and applies  on load (DONE)
+- Letters situation headers and Start a blank letter items capitalized (DONE)
+- Contribution Estimator form styled with subtle section shading (Web & Mobile) (DONE)
+- Backend  updated to auto-capitalize user first/last names (DONE)
+- Mobile back-button audit performed (All screens have adequate navigation) (DONE)
+
+**Earlier issues found/mentioned but not fixed**
+None.
+
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: Leftover test data causing blocked UI navigation during testing (Testing agent leaving  account in  or locked onboarding state).
+  - Recurrence count: 1
+  - Status: RESOLVED (Previous agent manually cleared it, but be mindful if testing agent is run again).
+
+**Code Architecture**
+- : FastAPI server. Serves both Web and Mobile via  prefixed routes.
+- : React web application.
+- : Expo React Native application using file-based routing ().
+
+**Key Technical Concepts**
+FastAPI, MongoDB, React, Tailwind CSS, Expo, React Native, cross-platform UI parity, E2E Testing, Markdown chunking ().
+
+**key DB schema**
+  - : {email, first_name, last_name (capitalized on save)}
+  - : {household_id, first_name, last_name, provider_name, provider_email}
+
+**changes in tech stack**
+  - Web/Mobile: Enhanced usage of  with custom components for chip rendering.
+
+**All files of reference**
+-  &  (Name capitalization logic, Identity Guard wire-up)
+-  ( schema added)
+-  (Added text mask for DOB)
+-  (Added chip rendering)
+-  (Added chip rendering)
+-  (Shared component for Q&A reports)
+-  (Currently holds a duplicate local  needing refactor)
+-  &  (Client-side required field validation, auto-addressing)
+-  &  (UI section shading)
+
+**Areas that need refactoring**
+- : Contains a local definition of  that should be removed and replaced with the newly created global .
+
+**key api endpoints**
+- 
+- 
+- 
+- 
+
+**Critical Info for New Agent**
+- **Strict Parity Context:** All features in this application MUST be implemented identically across both the Web () and Mobile () platforms.
+- The  field is deeply integrated into the Letter generation process for auto-addressing. Do not alter its return shape from the  or  endpoints.
+- If you run the automated testing agent or test manually, be aware test accounts might get stuck in blocked onboarding states. You may need to manually script DB cleanups using  or bash python commands if UI navigation tests fail.
+
+**documents and test reports created in this job**
+- 
+- 
+- 
+
+**Last 10 User Messages and any pending HUMAN messages** 
+1. **User**: Please use ask_human tool and confirm your plan now. (Completed - agent called )
+2. **Pending HUMAN message**: The agent has sent its plan via  and is currently **waiting for the user's response** to proceed with the final verification and refactor cleanup.
+
+**Project Health Check:**
+- Backend: RUNNING
+- Web Frontend: RUNNING
+- Mobile Frontend: RUNNING
+
+**3rd Party Integrations** 
+- OpenAI GPT — uses Emergent LLM Key
+
+**Testing status**
+  - Testing agent used after significant changes: YES (Iter 334 & Iter 335 passed).
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: , 
+  - Known regressions: None.
+
+**Credentials to test flow:**
+- General flow: Accounts are generated dynamically by tests or can be created via standard signup.
+
+**What agent forgot to execute**
+- The agent executed as expected by holding for user confirmation via  before jumping into the final verification tasks.</analysis>

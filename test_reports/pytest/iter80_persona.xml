@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="30" time="58.149" timestamp="2026-07-22T04:51:34.598156+00:00" hostname="agent-env-9d7dc41f-aa05-432b-8632-1634219cad4f"><testcase classname="tests.test_persona_registry.TestTier2Tokens" name="test_participant_is_first_person" time="0.002" /><testcase classname="tests.test_persona_registry.TestTier2Tokens" name="test_caregiver_she_her_with_name" time="0.000" /><testcase classname="tests.test_persona_registry.TestTier2Tokens" name="test_caregiver_he_him_with_s_ending_name" time="0.000" /><testcase classname="tests.test_persona_registry.TestTier2Tokens" name="test_caregiver_they_them_plural_verbs" time="0.000" /><testcase classname="tests.test_persona_registry.TestTier2Tokens" name="test_caregiver_unknown_pronouns_falls_back" time="0.000" /><testcase classname="tests.test_persona_registry.TestTemplateResolver" name="test_substitutes_known_tokens" time="0.000" /><testcase classname="tests.test_persona_registry.TestTemplateResolver" name="test_participant_pronoun_agnostic" time="0.000" /><testcase classname="tests.test_persona_registry.TestTemplateResolver" name="test_leaves_unknown_tokens_intact" time="0.000" /><testcase classname="tests.test_persona_registry.TestTier1Resolver" name="test_participant_dec1_hero_is_first_person" time="0.000" /><testcase classname="tests.test_persona_registry.TestTier1Resolver" name="test_caregiver_dec1_hero_uses_name_and_pronouns" time="0.000" /><testcase classname="tests.test_persona_registry.TestTier1Resolver" name="test_verb_agreement_participant_vs_caregiver" time="0.000" /><testcase classname="tests.test_persona_registry.TestTier1Resolver" name="test_unknown_pronoun_uses_care_recipient_fallback" time="0.000" /><testcase classname="tests.test_persona_registry.TestTier1Resolver" name="test_missing_key_raises" time="0.000" /><testcase classname="tests.test_persona_registry.TestFeatureFlag" name="test_flag_off_returns_caregiver_variant" time="0.000" /><testcase classname="tests.test_persona_registry.TestFeatureFlag" name="test_flag_on" time="0.000" /><testcase classname="tests.test_persona_registry.TestBundle" name="test_bundle_shape" time="0.000" /><testcase classname="tests.test_persona_registry.TestRegistrySeed" name="test_every_key_has_both_variants" time="0.000" /><testcase classname="tests.test_persona_routes.TestGetPersona" name="test_requires_auth" time="36.035"><error message="failed on setup with &quot;requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='aged-care-os.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/persona (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='aged-care-os.preview.emergentagent.com', port=443) at 0xf87f2de89010&gt;, 'Connection to aged-care-os.preview.emergentagent.com timed out. (connect timeout=10)'))&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:204: in _new_conn
+    sock = connection.create_connection(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/connection.py:85: in create_connection
+    raise err
+/root/.venv/lib/python3.11/site-packages/urllib3/util/connection.py:73: in create_connection
+    sock.connect(sa)
+E   TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:788: in urlopen
+    response = self._make_request(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:488: in _make_request
+    raise new_e
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:464: in _make_request
+    self._validate_conn(conn)
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:1106: in _validate_conn
+    conn.connect()
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:759: in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:213: in _new_conn
+    raise ConnectTimeoutError(
+E   urllib3.exceptions.ConnectTimeoutError: (&lt;HTTPSConnection(host='aged-care-os.preview.emergentagent.com', port=443) at 0xf87f2de89010&gt;, 'Connection to aged-care-os.preview.emergentagent.com timed out. (connect timeout=10)')
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:645: in send
+    resp = conn.urlopen(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:842: in urlopen
+    retries = retries.increment(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/retry.py:543: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='aged-care-os.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/persona (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='aged-care-os.preview.emergentagent.com', port=443) at 0xf87f2de89010&gt;, 'Connection to aged-care-os.preview.emergentagent.com timed out. (connect timeout=10)'))
+
+During handling of the above exception, another exception occurred:
+tests/test_persona_routes.py:43: in reset_persona
+    client.put(
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:652: in put
+    return self.request("PUT", url, data=data, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:592: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:706: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:666: in send
+    raise ConnectTimeout(e, request=request)
+E   requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='aged-care-os.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/persona (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='aged-care-os.preview.emergentagent.com', port=443) at 0xf87f2de89010&gt;, 'Connection to aged-care-os.preview.emergentagent.com timed out. (connect timeout=10)'))</error></testcase><testcase classname="tests.test_persona_routes.TestGetPersona" name="test_get_returns_profile_and_resolver" time="0.183" /><testcase classname="tests.test_persona_routes.TestPutPersona" name="test_switch_to_participant_mirrors_account" time="10.171" /><testcase classname="tests.test_persona_routes.TestPutPersona" name="test_participant_ignores_representative_flag" time="0.163" /><testcase classname="tests.test_persona_routes.TestPutPersona" name="test_caregiver_representative_persists" time="0.147" /><testcase classname="tests.test_persona_routes.TestResolve" name="test_tier1_participant_first_person" time="0.253" /><testcase classname="tests.test_persona_routes.TestResolve" name="test_tier1_caregiver_third_person_uses_name" time="0.199" /><testcase classname="tests.test_persona_routes.TestResolve" name="test_tier2_template_substitution" time="0.198" /><testcase classname="tests.test_persona_routes.TestResolve" name="test_unknown_tier1_key_reported" time="10.163" /><testcase classname="tests.test_persona_routes.TestTier1KeysEndpoint" name="test_lists_keys" time="0.215" /><testcase classname="tests.test_persona_routes.TestAdminPreviewOverride" name="test_non_admin_override_ignored" time="0.141" /><testcase classname="tests.test_persona_governance" name="test_no_adjacent_string_literals_in_jsx" time="0.013" /><testcase classname="tests.test_persona_governance" name="test_every_tier1_key_is_referenced" time="0.022" /></testsuite></testsuites>

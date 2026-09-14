@@ -1,0 +1,70 @@
+{
+  "summary": "Mobile Tool-Behaviour end-to-end re-test after iter185 ContributionEstimator 'voice is not defined' fix. Logged in as cathy@example.com (caregiver, active participant Mum) and drove every tool + guided journey requested. CE regression PASSES: no red-screen after submit; caregiver-voice strings ('They pay', 'Their lifetime cap', 'COMPARED TO THEIR HOME CARE PACKAGE', 'their assessed income') all render. CSC, PPC, Budget Calculator, Statement Decoder /upload source pickers, Letters & Follow-ups (situation → letter draft), and 6 guided journey entry screens all load and render without JS/red-screen errors. Ask Wayly empty state shows the 3 intro cards. Two behavioural gaps found (not red-screens, likely upstream LLM/API): (1) Care Plan Reviewer — cp-submit stays in loading spinner for 45+ seconds, cp-result never mounts; (2) Ask Wayly — after send the 'Wayly is thinking…' state clears but the visible body text collapses to ~138 chars with no visible answer bubble. Zero pageerror / console error events captured across the whole session.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "CarePlanReviewer",
+          "issue": "After pressing 'Review my care plan' (cp-submit) with 250+ chars of valid plan text and Class 4 selected, the Button loading spinner stays on for 45+ seconds and cp-result never mounts. No error toast (cp-error) appears either — request seems to hang or the backend never returns. Web parity target was 'findings render' — that path did not complete on mobile. File: /app/mobile/src/components/tools/CarePlanReviewer.tsx (POST /public/care-plans/review at line 39).",
+          "testID": "cp-submit / cp-result",
+          "priority": "HIGH"
+        },
+        {
+          "component": "Ask Wayly (Ask tab)",
+          "issue": "After sending 'What is Support at Home?' the 'Wayly is thinking…' indicator does disappear, but the resulting DOM body text is only ~138 chars — no visible answer bubble / grounded answer rendered. The 3-card intro (empty state) is present and correct before send. Route: /(tabs)/ask. Testable via ask-input / ask-send-button.",
+          "testID": "ask-input / ask-send-button",
+          "priority": "HIGH"
+        }
+      ],
+      "integration_issues": [
+        {
+          "flow": "Care Plan Reviewer submit → findings",
+          "issue": "POST /public/care-plans/review appears to hang or never resolves on mobile (no result, no error, spinner persists >45s). Recommend checking backend log for that endpoint during this session.",
+          "affected_testIDs": ["cp-submit", "cp-result", "cp-file-findings"]
+        },
+        {
+          "flow": "Ask Wayly send → grounded answer",
+          "issue": "Send completes (thinking indicator clears) but no answer message is rendered in the chat area. Body collapses to ~138 chars.",
+          "affected_testIDs": ["ask-input", "ask-send-button"]
+        }
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Care Plan Reviewer", "platform": "mobile", "issue": "Task states web renders findings; mobile spinner never resolves.", "expected": "cp-result / cp-file-findings mounts within ~10-20s", "actual": "cp-submit spinner still active at 45s, cp-result never mounts, no error shown."},
+    {"flow": "Ask Wayly", "platform": "mobile", "issue": "Send completes but no visible grounded answer message appears in the chat.", "expected": "Answer bubble rendered under the user question", "actual": "Thinking indicator disappears but no message text visible; page body only ~138 chars."}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter186_ce_result.jpeg",
+    "/app/test_reports/iter186_csc_result.jpeg",
+    "/app/test_reports/iter186_cpr_result2.jpeg",
+    "/app/test_reports/iter186_ppc_result.jpeg",
+    "/app/test_reports/iter186_inv_form.jpeg",
+    "/app/test_reports/iter186_lf_result.jpeg",
+    "/app/test_reports/iter186_bc_result.jpeg",
+    "/app/test_reports/iter186_upload.jpeg",
+    "/app/test_reports/iter186_ask_result.jpeg",
+    "/app/test_reports/iter186_ask_final.jpeg"
+  ],
+  "action_items": [
+    "Investigate Care Plan Reviewer POST /public/care-plans/review — mobile spinner stays on >45s with no error and no result. Verify (a) backend endpoint returns within timeout, (b) client apiFetch has a sensible timeout + surfacing to cp-error, (c) any parity difference with the web version that made web work in the parent task description.",
+    "Investigate Ask Wayly send path — after ask-send-button, the thinking state clears but no answer bubble renders. Check the streaming/response wiring and how the assistant message is appended to the chat list.",
+    "(Optional resilience) Wrap each tool result renderer in a lightweight error boundary so a future scope bug does not blank the whole subtree (as iter185 did)."
+  ],
+  "critical_code_review_comments": [
+    "ContributionEstimator.tsx (line 240): `const voice = usePersonaVoice()` is now correctly declared inside ResultScreen — regression closed. Consider tightening the `any` on ResultScreen's props (line 239) so this class of closure bug fails at type-check time.",
+    "CarePlanReviewer.tsx: submit() has no explicit timeout and error only surfaces if apiFetch throws — if the backend simply hangs, the UI will stay in spinner forever. Add a client-side timeout or a maximum-wait fallback message."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "~82% (9 of 11 tool/journey flows PASS end-to-end; CPR and Ask Wayly response render fail)"},
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, active participant Mum)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "CE regression is closed. Remaining failures are (1) Care Plan Reviewer: cp-submit hangs — verify POST /public/care-plans/review from the mobile pod is completing within a reasonable time and that the response shape matches what the component destructures (result.findings, result.extraction). (2) Ask Wayly send: thinking clears but no answer bubble — inspect how the assistant message is appended after ask-send-button. Everything else on mobile (CE, CSC, PPC, Invoice entry, Letters & Follow-ups draft flow, Budget Calculator, Statement Decoder /upload pickers, and journey entry screens for /classification-prep, /carer-self-check, /handover-pack, /chsp-tools, /athm, /provider-switch) loads and executes without JS/red-screen errors.",
+  "rca of the issue": "CPR: Submit -> apiFetch('/public/care-plans/review') either does not resolve within 45s or the response is missing/unshaped so setResult(data) never fires a result truthy enough for the {result ? …} guard. No error was thrown (cp-error not shown) which points to either (a) request truly hung, or (b) response was falsy. Recommend adding a timeout + logging around the setResult call. Ask Wayly: send handler clears the 'thinking' state but never appends the assistant message row to the chat list — investigate the response handler in /(tabs)/ask.tsx."
+}

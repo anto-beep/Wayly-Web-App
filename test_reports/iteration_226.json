@@ -1,0 +1,35 @@
+{
+  "summary": "PSW-1 mobile parity smoke: verified full end-to-end flow on Expo web preview as cathy@example.com. New Switch modal + validation (submit gated on provider name), list rendering with row/stage/decision-link testIDs, 5-step decision walkthrough with cross-tool context (complaints/cases counts), proceed_with_switch showing LF2 chain and stage transitioning to DECISION CONFIRMED on return, direct-navigation Settlement create + matching-receipt (variance-zero) + shortfall (variance flagged, LOOP-1 dispute copy). All primary flows PASSED. One minor parity/UX issue: settlement status chip label falls back to raw enum on mobile (and web) because STATUS_LABEL map does not include the switch.refund_status values actually written by the backend.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [
+        {"component": "SwitchSettlementScreen status chip", "issue": "After recording a refund receipt, the STATUS chip shows the raw uppercase enum (e.g. 'RECEIVED_LESS_THAN_EXPECTED_DISPUTED', 'RECEIVED_MATCHES_EXPECTED', 'PENDING_RECEIPT') because /app/mobile/app/switch-settlement/[sid].tsx STATUS_LABEL only maps settlement.settlement_status keys ('review_complete_refund_pending', 'refund_received_reconciled', 'refund_received_variance_flagged') while the screen actually reads switch.refund_status (backend writes 'pending_receipt' | 'received_matches_expected' | 'received_less_than_expected_disputed').", "testID": "psw1-settle-status", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Post-Switch Settlement status chip", "platform": "mobile", "issue": "Both mobile (/app/mobile/app/switch-settlement/[sid].tsx line 12-16) and web (/app/frontend/src/pages/SwitchSettlement.jsx line 12-16) have the same mismatched STATUS map; parity of the bug is preserved but the label is ugly on both. Same fix needed on both surfaces.", "expected": "Human-friendly label like 'Refund shortfall · dispute opened'", "actual": "Raw uppercase enum shown (e.g. 'RECEIVED_LESS_THAN_EXPECTED_DISPUTED')"}
+  ],
+  "test_report_links": ["/app/test_reports/psw1_final.jpeg", "/app/test_reports/psw1_list_initial.jpeg"],
+  "action_items": [
+    "In /app/mobile/app/switch-settlement/[sid].tsx STATUS_LABEL, add mappings for the actual switch.refund_status values written by /app/backend/routes/psw1.py (pending_receipt → 'Refund pending', received_matches_expected → 'Reconciled', received_less_than_expected_disputed → 'Variance flagged · dispute opened'). Mirror the same fix in /app/frontend/src/pages/SwitchSettlement.jsx STATUS_STYLE."
+  ],
+  "critical_code_review_comments": [
+    "STATUS_LABEL / STATUS_STYLE maps in both mobile and web SwitchSettlement pages are keyed on settlement.settlement_status but the code actually reads switch.refund_status → chip always falls back to raw enum after receipt.",
+    "Settlement create endpoint is not stage-gated on the backend — mobile lets you create a settlement for any switch (verified during test on a decision_confirmed row). This may or may not be intentional; PSW-1 spec typically expects settlement only after final_settlement_pending. Web parity: same permissive behaviour.",
+    "psw1-settle-variance-zero uses a strict variance === 0 check; for backend variance rounded via .toFixed(2) any float noise could show as non-zero. Consider Math.abs(variance) < 0.01."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% of the requested mobile flows passed (list+modal validation+create, walkthrough 5 steps+submit+LF2 chain+stage transition, settlement create+match variance-zero, shortfall variance flagged)"},
+  "seed_data_creation": "Created one PSW switch row on Cathy's active participant during test: current_provider_name='TEST_PSW1_1787191113' (id 45aa0970-7caa-4e56-9a64-74568beb90b1). It has been advanced to decision_confirmed and has a $500 refund settlement in refund_received_reconciled state. A pre-existing switch (BlueBerry Care, id bcb5b8f5-...) was used for the shortfall test and now has an $800 expected / $300 received settlement in refund_received_variance_flagged state with a LOOP-1 dispute case opened automatically.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Cathy has 5 provider switches now (1 seeded by this run in decision_confirmed with completed reconciled settlement; 1 BlueBerry Care in variance_flagged state; 3 others in deciding). If retesting the modal validation, the check I used was: psw1-modal-submit has aria-disabled='true', opacity 0.55, pointerEvents none when provider name is empty; after typing it becomes aria=null, opacity=1, pointer=auto — worked as expected. Note: fill selector needs 'input[data-testid=\"psw1-modal-provider\"]' not '[data-testid=\"psw1-modal-provider\"] input' for Field component. Same for settle-create-amount and settle-amount-input.",
+  "rca of the issue": "SwitchSettlement status chip: the mobile screen builds `settlement` from `data.switch` where refund_status is derived from the switch document (values: pending_receipt / received_matches_expected / received_less_than_expected_disputed). The STATUS_LABEL constant however uses the settlement_status keys from the settlement collection. As a result STATUS_LABEL[settlement.refund_status] is always undefined and falls through to the raw refund_status.toUpperCase()."
+}

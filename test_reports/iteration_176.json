@@ -1,0 +1,105 @@
+{
+  "summary": "Iter 176 — mobile parity re-test of the 3 rebuilt AI tools (Statement Decoder, Budget & Lifetime Cap Calculator, Classification Self-Check) on Expo web preview + backend API sweep. Budget Calculator is FULL PARITY with web: all 8 class cards show correct $/yr (Class 1 $10,731 … Class 8 $78,106), GF explainer shows both caps ($86,185.23 vs $137,917.01), supplements + enteral bolus/non-bolus + oxygen certification warning all work, result panel renders every required stat (annual, quarterly, care mgmt, per-stream, supplements, lifetime progress, years-to-cap) with no double-dollar. Statement Decoder text-paste flow works end-to-end (job poll → SMART SUMMARY + line items + anomalies), file-upload card shows. Classification Self-Check UI is now correct (16 real domain questions, progress, current-class pills, Submit gated until all 16 answered) BUT the result panel is BROKEN due to a shape mismatch with /api/public/csc/run: header stays generic 'Your likely classification', no summary is shown, and the driver bullets render blank. Backend all 3 endpoints return 200. Also found a fresh REGRESSION: the primary submit buttons on all three tools render BLACK text on the teal / dark-mode terracotta pill — the exact regression class the request asked us to check.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/public/csc/run", "issue": "Response shape uses classification.primary + top_drivers[{question_id,answer,domain}] + profile_summary, but the mobile ClassificationSelfCheck component reads classification.label / result.summary / d.label|d.text. Backend response is correct-looking (schema_version csc.payload.v1); the mobile UI needs to adapt (or backend should also expose a human label). Result panel renders empty bullets and generic header."}
+    ]
+  },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "Primary submit buttons on all 3 tool pages (Budget Calculator, CSC, Statement Decoder)",
+          "issue": "Button text renders BLACK (rgb(0,0,0)) on teal (rgb(14,77,82)) in light mode and BLACK on terracotta (rgb(165,81,43)) in dark mode. Should be white/high-contrast. Same regression class as iter175's dashboard-upload-cta. Reference: shared Button component in /app/mobile/src/components/ui.tsx used by bc-submit / csc-submit / decoder-submit.",
+          "testID": "bc-submit, csc-submit, decoder-submit",
+          "priority": "P1"
+        },
+        {
+          "component": "ClassificationSelfCheck result header",
+          "issue": "Header always shows generic 'Your likely classification' — never 'Likely Classification N'. Mobile reads result?.classification?.label but /api/public/csc/run returns classification.primary (integer) + range_low + range_high. Reference: /app/mobile/src/components/tools/ClassificationSelfCheck.tsx L43-44, L108-110.",
+          "testID": "csc-result-header",
+          "priority": "P1"
+        },
+        {
+          "component": "ClassificationSelfCheck result summary",
+          "issue": "No summary text is rendered even though API returns a rich profile_summary field. Mobile reads result.summary but API returns result.profile_summary. Reference: /app/mobile/src/components/tools/ClassificationSelfCheck.tsx L111.",
+          "testID": "csc-result",
+          "priority": "P1"
+        },
+        {
+          "component": "ClassificationSelfCheck driver bullets",
+          "issue": "'What is driving this' renders 3 EMPTY bullets. API returns top_drivers[] with shape {question_id, answer, domain} but mobile reads d.label || d.text || '' — both are undefined. Reference: /app/mobile/src/components/tools/ClassificationSelfCheck.tsx L115-117.",
+          "testID": "csc-result",
+          "priority": "P1"
+        }
+      ],
+      "integration_issues": [
+        {
+          "flow": "Classification Self-Check submit → result",
+          "issue": "POST /api/public/csc/run returns 200 with a complete payload (classification.primary=5, top_drivers with 3 items, profile_summary, domain_scores, composite_score) but the mobile UI reads three keys that DO NOT EXIST on that payload (classification.label, result.summary, driver.label/text). Net effect: user sees a blank-ish result card with just the label 'Your likely classification' and 3 dot bullets. Web version (frontend/src/pages/tools/ClassificationCheck.jsx) is presumed to use the correct shape.",
+          "affected_testIDs": ["csc-submit", "csc-result", "csc-result-header"]
+        }
+      ],
+      "design_issues": [
+        {
+          "screen": "All 3 tool pages",
+          "issues": [
+            "Primary CTA text contrast fails WCAG in BOTH light (black on teal) and dark (black on terracotta) modes — same root cause as iter175 dashboard-upload-cta."
+          ]
+        }
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {
+      "flow": "Classification Self-Check result panel",
+      "platform": "mobile",
+      "issue": "Web result panel shows classification band + summary + drivers; mobile shows only a generic 'Your likely classification' header with three empty bullets and no summary because the mobile component reads the wrong response keys.",
+      "expected": "Likely Classification 5 header + profile summary text + 3 named driver bullets, matching /api/public/csc/run schema (csc.payload.v1).",
+      "actual": "Generic 'Your likely classification' + no summary + 3 empty bullets."
+    },
+    {
+      "flow": "Primary CTA colour",
+      "platform": "mobile",
+      "issue": "Web tool CTAs use white-on-teal; mobile equivalents render black-on-teal (light) and black-on-terracotta (dark).",
+      "expected": "White (or same high-contrast) text on the primary/secondary CTA regardless of theme, matching web.",
+      "actual": "Black text — fails contrast on every primary tool button."
+    }
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iter176_mobile_tools.py",
+    "/app/test_reports/pytest/iter176.xml",
+    "/tmp/bc_top.png",
+    "/tmp/bc_result.png",
+    "/tmp/csc_top.png",
+    "/tmp/csc_result.png",
+    "/tmp/csc_dark.png",
+    "/tmp/decoder_result.png"
+  ],
+  "action_items": [
+    "P1 — Fix mobile CSC result panel to match /api/public/csc/run (csc.payload.v1) shape. Concretely in /app/mobile/src/components/tools/ClassificationSelfCheck.tsx: (a) derive band = result.classification?.primary ? `Classification ${result.classification.primary}` : ... and optionally show the range_low–range_high band with annual_budget_low..high; (b) replace result.summary with result.profile_summary; (c) map drivers with d.question_id / d.answer / d.domain (e.g. `${d.domain} — ${d.answer}` or look up the human stem from CSC_QUESTIONS via d.question_id).",
+    "P1 — Fix the primary Button component so its label text uses white (or theme.primaryFg) instead of the default text colour when the button background is the primary teal or terracotta. Same class of bug as iter175 dashboard-upload-cta; likely a <T> colour fallback in /app/mobile/src/components/ui.tsx (or wherever the Button label renders). Verify all 3 tool CTAs (bc-submit, csc-submit, decoder-submit) render white text on both light and dark themes.",
+    "P2 — Consider having /api/public/csc/run include a convenience classification.label (e.g. 'Classification 5') and/or a human 'summary' alias so mobile/web can share a simpler renderer."
+  ],
+  "critical_code_review_comments": [
+    "/app/mobile/src/components/tools/ClassificationSelfCheck.tsx L43-44 and L111 read result.classification.label and result.summary — neither exists on the actual /api/public/csc/run payload (csc.payload.v1). This is a straight shape mismatch that silently degrades UX to an empty result card.",
+    "Driver bullet mapping at L115-117 uses `typeof d === 'string' ? d : sanitizeAI(d.label || d.text || '')` — API returns {question_id, answer, domain}, so this yields '• ' with no content 3 times. Add a question_id → stem lookup using CSC_QUESTIONS, or map d.answer/d.domain.",
+    "Primary Button (used for bc-submit / csc-submit / decoder-submit) is rendering its label with black text on the coloured pill in BOTH themes. This is the third iteration in a row that a CTA has been shipped with the wrong label colour — worth adding a snapshot/contrast test for the Button component so it doesn't keep regressing."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter176_mobile_tools.py"
+  ],
+  "success_rate": {
+    "backend": "4/5 pytest tests pass (budget-calc class4, budget-calc supplements, budget-calc grandfathered, decode-statement-text). The failing test is a shape-mismatch assertion pointing at the CSC UI bug — the endpoint itself returns 200 with a complete payload.",
+    "frontend": "Budget Calculator 100% (all fields + result panel work); Statement Decoder 100% functionality but P1 button-contrast regression; Classification Self-Check ~60% (form 100%, result panel broken)."
+  },
+  "test_credentials": "cathy@example.com / testpass123 (Family, 3 participants)",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Expo web preview https://mobile-parity-sweep.expo.preview.emergentagent.com. Login testIDs login-email-input / login-password-input / login-submit-button. Deep links used: /tool/budget-calculator, /tool/statement-decoder, /tool/classification-self-check. TestIDs verified live: bc-class-1..8, bc-lifetime-balance, bc-annual-burn, bc-grandfathered, bc-supplement-<oxygen|enteral|veterans|dementia_cognition|eachd_top_up>, bc-enteral-<bolus|non_bolus>, bc-submit, bc-result, csc-current-<none|1..8>, csc-progress, csc-q-<qid>-<value>, csc-submit, csc-result, decoder-mode-<text|file>, decoder-text-input, decoder-submit, decoder-result. Budget Calculator + Statement Decoder function correctly. CSC form is correct but result panel is broken — see backend_test_iter176_mobile_tools.py::test_csc_run_all_answered failure for the actual API payload shape (schema_version csc.payload.v1). Primary CTA text is BLACK on teal/terracotta on all 3 tools — regression across the Button component. Other tools (provider-price-checker, contribution-estimator, care-plan-reviewer, letters-and-follow-ups, invoice-checker, family-coordinator) are still on the older FormTool render path per problem statement and were not exercised this iteration.",
+  "rca of the issue": "CSC result-panel bugs stem from a straight backend↔UI contract mismatch in /app/mobile/src/components/tools/ClassificationSelfCheck.tsx: the component reads result.classification.label, result.summary, and driver.label/driver.text, none of which are present in the /api/public/csc/run (csc.payload.v1) response. The real payload uses classification.primary + classification.range_low/high + classification.annual_budget_low/high, profile_summary, and top_drivers[{question_id, answer, domain}]. Fix by remapping the reader — no backend change strictly required. CTA colour regression: the shared Button component (used by bc-submit / csc-submit / decoder-submit) is not overriding the label colour when its background is the coloured pill, so the label falls back to the theme text colour — black in both light and dark palettes. Same root cause as the dashboard-upload-cta bug caught in iter175. Recommend fixing the Button component and adding a colour-contrast snapshot to prevent this recurring."
+}

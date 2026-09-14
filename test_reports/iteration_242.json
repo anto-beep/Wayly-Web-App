@@ -1,0 +1,28 @@
+{
+  "summary": "Iter242 CPR web E2E focused retest for citation-content fix (post iter241). Logged in as cathy@example.com, navigated to /ai-tools/support-plan-reviewer, pasted /app/tests/fixtures/CPR-ERR-A-golden-v1/robert_henderson_q1_2027.txt, set Classification=5, Quarterly budget=9924.25, clicked Review my care plan. Result rendered in ~5s. All 4 requested checks PASS: (1) CITATION CONTENT — of 9 findings, 8 show real registry citations ('Source: Aged Care Rules 2025 (F2025L01173) s.194-3' x3, 's.194-4' x1, 's.194-5(1)(c)' x2; 'Source: Statement of Rights, Right 1 (Aged Care Act 2024)' x1; 'Source: Statement of Rights, Right 4 (Aged Care Act 2024)' x1) and only 1 correctly reads 'Source: Verification required' (soft finding without deterministic keyword match, which is the intended fallback). Backend match_rule_id() → registry binding is working end-to-end and reaching the UI. (2) No amber cp-safety-banner rendered. (3) No regression — cp-plan-summary, cp-download-summary, cp-verification-panel, cp-draft-letter-0 all render; page loaded cleanly with no 500 error boundary. (4) TDZ fix from iter241 is intact (CarePlanReviewer.jsx lines 46-65: useState declarations remain before the progress-stage useEffect). Verification Checks card still shows all 5 confirmed (Care management fee, AT-HM ring-fence, Personal care placement, Rollover cap, Quarterly budget vs classification).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter242_result.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor (not requested to fix): browser console flags a React hydration warning '<span> cannot be a child of <option>' originating from AIToolsRoute (App.js line 403). Non-blocking but should be cleaned up when convenient.",
+    "Google Sign-in throws 'The given origin is not allowed for the given client ID' (403 on gsi/status) on the preview host. Cosmetic — password login works — but the '/api/auth/google' path may fail in production if the OAuth client's authorized-origins list omits the preview URL."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100% (4/4 requested checks passed)"},
+  "seed_data_creation": "None — used existing fixture and existing cathy@example.com account.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Citation fix in /app/backend/lib/cpr_rules.py::match_rule_id() is confirmed working live on the golden Robert Henderson fixture: 8/9 findings bind to registry rules with real 'Source:' citations, 1 legitimately falls back to 'Verification required'. If iter243+ regresses this, first check that enrich_findings still runs match_rule_id() before the freeform fallback and that title_body_coherent() is still conservative (was previously dropping the 'does not match the goal' finding wrongly). Fixture path: /app/tests/fixtures/CPR-ERR-A-golden-v1/robert_henderson_q1_2027.txt. Login: cathy@example.com / testpass123. Route: /ai-tools/support-plan-reviewer. Result appears within ~5s (fast path — no need for long LLM waits on this fixture).",
+  "rca of the issue": "N/A — retest confirmed the iter241 fix. The prior 'everything shows Source: Verification required' symptom was root-caused (by main agent) to the deterministic keyword→rule matcher never binding findings to the solicitor-signed-off Rule Registry inside enrich_findings; adding match_rule_id() (2-keyword minimum, no fabrication) before the freeform fallback resolved it, and making title_body_coherent() only drop genuine quantitative polarity flips stopped it from wrongly discarding the 'does not match the goal' finding. This retest confirms the fix in the live UI."
+}

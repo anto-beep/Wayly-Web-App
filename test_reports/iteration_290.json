@@ -1,0 +1,46 @@
+{
+  "summary": "Iter290 web visual QA (cathy@example.com, light + dark). CRITICAL ChevronDown import fix VERIFIED — /app/participants/{id} (Mum's Profile, id 0c538637...) now renders end-to-end (no more 500). All Participant Profile deliverables PASS: teal-gradient header banner (linear-gradient 135deg rgb(14,77,82)->rgb(10,62,66)) with white 'Mum's Profile' heading; six core1-artefact-* Latest Activity cards each render a DISTINCT solid ARTEFACT_TONES colour (teal #0E4D52, clay #A5512B, red #B23A2E, plum #5F4E76, dark-teal #1A696E, terracotta #7A3A1F) with white text; core1-timeline-section is solid clay rgb(165,81,43) with white text; core1-timeline-expand shows 'Show 6 key milestones' by default (collapsed), click reveals core1-timeline-list with 6 events. Statement Detail buttons PASS: statement-download-original-btn = SOLID teal rgb(14,77,82) / statement-audit-log-link = SOLID sage rgb(66,95,71) / statement-archive-btn = SOLID red rgb(178,58,46) — all white text in both themes. (statement-permanent-delete-btn / statement-restore-btn correctly not present for an ACTIVE statement — those only render on the /archived detail view.) Landing page mostly PASS: CTA copy updated to 'Try Wayly free for 7 days. Cancel anytime.' (old 'No card required for the trial' gone); all 6 ecosystem-card-* are distinct solid system colours with white text; ToolClusterGrid cluster-tool-* cards have rotating teal / clay / sage soft tints with teal headings (readable); DualFlagshipHero hero-flagship-statement-decoder bg=light teal-tint, Invoice Checker card=light clay-tint (visible in screenshot). ONE CRITICAL BUG remaining — see below.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "Landing final CTA — final-cta-signup (Start free trial)", "issue": "White-on-white text: the button computed style is backgroundColor rgb(255,255,255) AND color rgb(255,255,255). Screenshot confirms an empty white pill on the teal section with no visible label in BOTH light and dark. Root cause: /app/frontend/src/pages/Landing.jsx:533 uses className='bg-white text-primary-k ...' inside a parent that carries the .force-white utility (see /app/frontend/src/index.css:283-287) which overrides .text-primary-k to rgba(255,255,255,0.8) !important — so the intended teal text is force-whitened away. Fix: either replace text-primary-k with an inline style={{color:'#0E4D52'}} / a non-overridable class (e.g. text-[#0E4D52]) OR add an exception in the .force-white rule for .bg-white .text-primary-k. Adjacent 'Or try a free AI tool' outline button is correct (transparent bg, white text, 2px solid white border).", "selector": "[data-testid=\"final-cta-signup\"]", "priority": "CRITICAL"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Participant Profile /app/participants/{id} (light + dark)", "issues": ["PASS — core1-profile-header teal gradient + white heading; ARTEFACT_TONES rotation confirmed with 6 unique solid hex bgs and rgb(255,255,255) child text; core1-timeline-section solid clay + white text; core1-timeline-expand collapsed by default with 'Show 6 key milestones', expands to core1-timeline-list of 6 filtered MAJOR_TIMELINE_EVENTS."]},
+        {"screen": "Statement Detail /app/statements/{uuid} (light + dark)", "issues": ["PASS — Download original SOLID teal / Audit Log SOLID sage / Archive SOLID red, all white text, distinct hues (not shades of a single tone)."]},
+        {"screen": "Landing page (light + dark)", "issues": ["PASS on ecosystem-card-* (6 distinct solid tones + white text), cluster-tool-* soft tints with teal headings, DualFlagshipHero teal-tint / clay-tint pair, CTA copy update.", "FAIL on final-cta-signup — see ui_bugs above."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter290_profile_light.jpeg",
+    "/app/test_reports/iter290_profile_dark.jpeg",
+    "/app/test_reports/iter290_stmt_light.jpeg",
+    "/app/test_reports/iter290_stmt_dark.jpeg",
+    "/app/test_reports/iter290_landing_top.jpeg",
+    "/app/test_reports/iter290_landing_bottom.jpeg",
+    "/app/test_reports/iter290_landing_top_dark.jpeg",
+    "/app/test_reports/iter290_landing_bottom_dark.jpeg"
+  ],
+  "action_items": [
+    "CRITICAL: Fix final-cta-signup white-on-white. In /app/frontend/src/pages/Landing.jsx:533 replace 'text-primary-k' with a class/inline-style not caught by the '.force-white .text-primary-k' override (e.g. style={{color:'#0E4D52'}} or a new .text-teal-solid class), OR patch /app/frontend/src/index.css:283-287 to exempt .bg-white descendants so the intended teal label survives inside the teal CTA section.",
+    "OPTIONAL: Manually spot-check /app/statements/{archived_id} to visually confirm statement-permanent-delete-btn (SOLID dark-red) and statement-restore-btn (SOLID sage) render correctly — this iteration only had ACTIVE statements available so those two testIDs could not be exercised."
+  ],
+  "critical_code_review_comments": [
+    "The '.force-white .text-primary-k -> rgba(255,255,255,0.8) !important' rule (index.css:283-287) is intentionally aggressive so nested overlines/eyebrows go white on the teal panel — but it's now silently breaking any WHITE-backgrounded CTA that lives inside a .force-white ancestor. Recommend narrowing the selector to '.force-white :not(.bg-white) .text-primary-k' or introducing a semantic .text-on-white utility for buttons/pills placed on force-white sections.",
+    "ParticipantProfile.jsx ARTEFACT_TONES uses a fixed 8-hex rotation. Verified working; consider centralising into a shared token so StreamProgress, ArtefactCard and the ecosystem cards stay in sync."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "~90% — Participant Profile + Statement buttons + ecosystem/cluster/hero + CTA copy all pass; final-cta-signup button is the single critical remaining issue."},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The iter289-blocking 500 on /app/participants/{id} is fixed (ChevronDown import). ARTEFACT_TONES rotation and core1-timeline-expand collapse-then-expand flow both verified. The one remaining issue on the landing page is the final-cta-signup button (root cause pinpointed in ui_bugs). After the main agent fixes it, re-verify: (1) computed color on [data-testid='final-cta-signup'] is a teal (~rgb(14,77,82)) not rgb(255,255,255), (2) visually the button label 'Start free trial' is legible in both light and dark. No mobile testing done this iter (platforms_to_test=web).",
+  "rca of the issue": "Landing final-cta-signup: className='bg-white text-primary-k ...' is nested inside a section that carries .force-white; .force-white .text-primary-k has a '!important' override to rgba(255,255,255,0.8), so the intended teal text collapses to white and disappears on the white pill. Fix at the call site (inline color / different class) or narrow the force-white selector to skip .bg-white descendants."
+}

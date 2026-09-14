@@ -1,0 +1,224 @@
+{
+  "light_artefacts": [],
+  "dark_artefacts": [],
+  "light_streams_detail": {
+    "stream-clinical": {
+      "bg": "rgba(15, 86, 72, 0.12)",
+      "borderLeft": "rgb(15, 86, 72)",
+      "allNumbers": [
+        {
+          "text": "Clinical63%",
+          "color": "rgb(28, 43, 45)",
+          "tag": "DIV",
+          "cls": "flex items-baseline justify-between"
+        },
+        {
+          "text": "63%",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": "text-xs text-muted-k tabular-nums"
+        },
+        {
+          "text": "$1,678 of $2,673 this quarter",
+          "color": "rgb(82, 75, 66)",
+          "tag": "DIV",
+          "cls": "mt-2 text-xs text-muted-k"
+        },
+        {
+          "text": "$1,678",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "text": "$2,673",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        }
+      ]
+    },
+    "stream-independence": {
+      "bg": "rgba(94, 126, 99, 0.15)",
+      "borderLeft": "rgb(94, 126, 99)",
+      "allNumbers": [
+        {
+          "text": "Independence72%",
+          "color": "rgb(28, 43, 45)",
+          "tag": "DIV",
+          "cls": "flex items-baseline justify-between"
+        },
+        {
+          "text": "72%",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": "text-xs text-muted-k tabular-nums"
+        },
+        {
+          "text": "$1,673 of $2,339 this quarter",
+          "color": "rgb(82, 75, 66)",
+          "tag": "DIV",
+          "cls": "mt-2 text-xs text-muted-k"
+        },
+        {
+          "text": "$1,673",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "text": "$2,339",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        }
+      ]
+    },
+    "stream-everyday-living": {
+      "bg": "rgba(160, 85, 69, 0.14)",
+      "borderLeft": "rgb(160, 85, 69)",
+      "allNumbers": [
+        {
+          "text": "Everyday Living75%",
+          "color": "rgb(28, 43, 45)",
+          "tag": "DIV",
+          "cls": "flex items-baseline justify-between"
+        },
+        {
+          "text": "75%",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": "text-xs text-muted-k tabular-nums"
+        },
+        {
+          "text": "$1,256 of $1,670 this quarter",
+          "color": "rgb(82, 75, 66)",
+          "tag": "DIV",
+          "cls": "mt-2 text-xs text-muted-k"
+        },
+        {
+          "text": "$1,256",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "text": "$1,670",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        }
+      ]
+    }
+  },
+  "dark_streams_detail": {
+    "stream-clinical": {
+      "bg": "rgba(15, 86, 72, 0.12)",
+      "borderLeft": "rgb(15, 86, 72)",
+      "allNumbers": [
+        {
+          "text": "Clinical63%",
+          "color": "rgb(28, 43, 45)",
+          "tag": "DIV",
+          "cls": "flex items-baseline justify-between"
+        },
+        {
+          "text": "63%",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": "text-xs text-muted-k tabular-nums"
+        },
+        {
+          "text": "$1,678 of $2,673 this quarter",
+          "color": "rgb(82, 75, 66)",
+          "tag": "DIV",
+          "cls": "mt-2 text-xs text-muted-k"
+        },
+        {
+          "text": "$1,678",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "text": "$2,673",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        }
+      ]
+    },
+    "stream-independence": {
+      "bg": "rgba(94, 126, 99, 0.15)",
+      "borderLeft": "rgb(94, 126, 99)",
+      "allNumbers": [
+        {
+          "text": "Independence72%",
+          "color": "rgb(28, 43, 45)",
+          "tag": "DIV",
+          "cls": "flex items-baseline justify-between"
+        },
+        {
+          "text": "72%",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": "text-xs text-muted-k tabular-nums"
+        },
+        {
+          "text": "$1,673 of $2,339 this quarter",
+          "color": "rgb(82, 75, 66)",
+          "tag": "DIV",
+          "cls": "mt-2 text-xs text-muted-k"
+        },
+        {
+          "text": "$1,673",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "text": "$2,339",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        }
+      ]
+    },
+    "stream-everyday-living": {
+      "bg": "rgba(160, 85, 69, 0.14)",
+      "borderLeft": "rgb(160, 85, 69)",
+      "allNumbers": [
+        {
+          "text": "Everyday Living75%",
+          "color": "rgb(28, 43, 45)",
+          "tag": "DIV",
+          "cls": "flex items-baseline justify-between"
+        },
+        {
+          "text": "75%",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": "text-xs text-muted-k tabular-nums"
+        },
+        {
+          "text": "$1,256 of $1,670 this quarter",
+          "color": "rgb(82, 75, 66)",
+          "tag": "DIV",
+          "cls": "mt-2 text-xs text-muted-k"
+        },
+        {
+          "text": "$1,256",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        },
+        {
+          "text": "$1,670",
+          "color": "rgb(82, 75, 66)",
+          "tag": "SPAN",
+          "cls": ""
+        }
+      ]
+    }
+  }
+}

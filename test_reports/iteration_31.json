@@ -1,0 +1,40 @@
+{
+  "summary": "Batch 2 (9 features) backend tested end-to-end via pytest. 13/13 tests PASSED covering Participants CRUD/promote, Hospital admission/RCP/discharge, Family Wall post/react-toggle/delete + 413 guard, SMS contacts/normalize/mocked send, Care Plan Amendment generate/list/status, Adviser Brand get/put/403, Adviser Scenarios calc/persist/list/delete + means-test settings, and Adviser Global Alerts type filter. Frontend smoke could not be performed reliably because /login on the preview URL redirects to auth.emergentagent.com (Emergent google-auth shell) before the email+password form is submitted in headless Playwright — so authenticated routes were not exercisable from a fresh browser session. Manual smoke test results referenced in the review already confirmed the UI flows.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Headless email+password login", "issue": "/login navigates to https://auth.emergentagent.com/?redirect=... before submitting credentials, blocking automated UI smoke tests. Manual login in a real browser works (per review note). Not a regression — same Emergent auth shell used by every other iteration.", "affected_selectors": ["input[type=email]", "input[type=password]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_batch2_features.py",
+    "/app/test_reports/pytest/batch2_results.xml"
+  ],
+  "action_items": [
+    "If automated UI regression is required, expose a /api/test/login or token-based bypass for preview env so Playwright can set the session cookie/JWT without going through the Emergent auth shell.",
+    "Consider returning the participant name+provider directly inside the amendment letter even when provider_name is overridden (currently fallback works, just calling out the substring assertion was loose in test_generate_list_status)."
+  ],
+  "critical_code_review_comments": [
+    "batch2_routes.py is ~940 lines housing 8 feature areas — consider splitting per feature (participants.py, hospital.py, wall.py, sms.py, amendments.py, adviser_brand.py, adviser_scenarios.py, adviser_alerts.py) for maintainability.",
+    "`_generate_amendment_letter` uses `datetime.strftime('%-d %B %Y')` inside a hasattr guard that is always true on Linux — the fallback path is unreachable. Minor; works on Linux containers.",
+    "Asset taper clamps excess to `cap - free` only when cap>free; for non-homeowners the 100k exemption is subtracted before clamping, which is the intended order but worth a unit test for edge values.",
+    "Family Wall `_household_owner_ids` returns `[h.get('owner_id')]` — if owner_id is None, the list contains None which still works for `user.id in [...]` check but is fragile.",
+    "Hospital admission `email_service.email_tool_result` call is best-effort but blocks the request — consider asyncio.create_task() to avoid added latency on the create endpoint.",
+    "All endpoints correctly exclude MongoDB _id via projection. Good.",
+    "Pydantic models, status codes (400/403/404/409/413), and audit-log wiring are all in good shape."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_batch2_features.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "not_executed (auth shell blocks headless login)"},
+  "test_credentials": "cathy@example.com / testpass123 (caregiver) + mark.adviser@example.com / AdviserPass1! (adviser) — both authenticated successfully via /api/auth/login during backend tests.",
+  "seed_data_creation": "Tests create TEST_ prefixed Participants, hospital admissions, wall posts, amendments, brand profile, scenarios. Most are cleaned up by the test flow (wall post deleted, scenarios deleted, participants archived). A few residuals (1 hospital admission marked discharged, 1 amendment marked sent, brand profile firm_name=TEST Firm) persist but do not interfere with future runs.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend Batch 2 is solid — re-run /app/backend/tests/test_batch2_features.py to regress. For UI smoke, you'll need to either (a) inject a session cookie programmatically before navigating to /app/* or (b) use a real browser. The Emergent auth shell on auth.emergentagent.com intercepts /login redirects in headless Playwright. Don't waste cycles trying to fight it without a token bypass."
+}

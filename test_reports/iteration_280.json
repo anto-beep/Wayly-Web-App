@@ -1,0 +1,38 @@
+{
+  "summary": "Iter280 — Mobile UX colour-pass FIX VERIFY for two tools. BOTH PASS in light AND dark mode. (1) Provider Price Checker /tool/provider-price-checker: ran Domestic assistance @ $90 as cathy. Result cards now render three distinctly tinted stat cards, each with a 4px coloured left-accent bar. LIGHT — pc-stat-charged bg=rgb(220,233,234) primarySoft-teal, borderLeft=rgb(14,77,82) primary teal ✓; pc-your-share bg=rgb(243,231,222) goldSoft-clay, borderLeft=rgb(165,81,43) clay ✓; pc-range bg=rgb(238,243,238) sageSoft, borderLeft=rgb(66,95,71) sage ✓. DARK — pc-stat-charged bg=rgba(79,168,174,0.15) teal tint, borderLeft=rgb(79,168,174) teal ✓; pc-your-share bg=rgba(232,154,111,0.16) clay tint, borderLeft=rgb(232,154,111) clay ✓; pc-range bg=rgba(168,199,171,0.12) sage tint, borderLeft=rgb(168,199,171) sage ✓. All three visibly differ from plain surface in both themes. iter279 parity regression is fully resolved. (2) Classification Self-Check /tool/classification-self-check: answered all 16 questions (Q1-Q11+Q15=moderate, Q12=sometimes, Q13/Q14=one, Q16=some), csc-submit enabled, submitted successfully. Result surfaced: csc-result-header teal bg rgb(14,77,82) with white Playfair 'Classification 4 to 6' + PER YEAR/PER QUARTER budget tiles + 'Medium confidence' + 'Higher than your current Classification 4' pill ✓; csc-wayly-summary gold card bg rgb(243,231,222) with plain-English copy including weekly $ figure ('$571 to $925 a week of care') + reassessment nudge ✓; csc-comparison sage card with all 8 rows csc-comparison-row-1..8 present, each row showing plain description + $/yr + ≈$/wk (e.g., '$29,696/yr ≈$571/wk'), primary band (Level 5) highlighted with 'YOU'RE LIKELY HERE' gold badge ✓; csc-drivers gold card with top drivers ('Cognition and behaviour / Moderate', 'Mood / Moderate', 'Cognition and behaviour / Sometimes') ✓. Same structure verified in dark mode with dark palette tokens. iter279 unfinished CSC end-state verification is now complete.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter280_browser/pc_light.jpeg",
+    "/app/test_reports/iter280_browser/pc_dark.jpeg",
+    "/app/test_reports/iter280_browser/csc_light_header.jpeg",
+    "/app/test_reports/iter280_browser/csc_light_summary.jpeg",
+    "/app/test_reports/iter280_browser/csc_light_compare.jpeg",
+    "/app/test_reports/iter280_browser/csc_light_drivers.jpeg",
+    "/app/test_reports/iter280_browser/csc_dark_header.jpeg",
+    "/app/test_reports/iter280_browser/csc_dark_compare.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ProviderPriceChecker.tsx StatCard toneMap now correctly consumes colors.primarySoft (teal), colors.sageSoft (sage), colors.goldSoft (clay); tone props threaded into both pc-stat-charged (teal) and pc-range / pc-range-unavailable (sage). Regression from iter279 addressed cleanly.",
+    "tokens.ts adds primarySoft on both light (#DCE9EA) and dark (rgba(79,168,174,0.15)) palettes — mirrors sageSoft/goldSoft pattern. Good token symmetry.",
+    "ClassificationSelfCheck.tsx result rendering is clean and mobile-legible: teal header, gold WAYLY SUMMARY card, 8-row sage comparison with primary/in-range/other tri-state styling, and gold drivers card. Plain-English copy + weekly $ figures throughout — matches web parity."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend only)", "frontend": "mobile 100% (both fix-verify items pass in light AND dark)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter279's mobile Provider Price Checker parity regression is fully fixed — all three PC stat cards now render distinct teal/clay/sage tints + left-accent bars in light and dark. CSC mobile full submission verified end-to-end this iteration: 16-question flow, teal header, gold summary, 8-row sage comparison with 'YOU'RE LIKELY HERE' badge, drivers card. No follow-ups.",
+  "rca of the issue": "iter279 mobile PC card parity gap RCA (now fixed): StatCard component in /app/mobile/src/components/tools/ProviderPriceChecker.tsx exposed a tone={teal|sage|clay} prop, but the two direct StatCard callers (pc-stat-charged, pc-range/pc-range-unavailable) omitted the tone prop and fell through to the default {accent: border, bg: surface} — producing plain grey cards. Fix landed in iter280: (a) added primarySoft token to /app/mobile/src/theme/tokens.ts on both light and dark palettes so the teal tone has a genuine tint (not just surface), (b) passed tone='teal' at line 251 and tone='sage' at lines 254/256 of ProviderPriceChecker.tsx. Verified via computed getComputedStyle backgroundColor + borderLeftColor for each card in both themes."
+}

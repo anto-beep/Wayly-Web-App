@@ -1,0 +1,86 @@
+[
+  {
+    "test": "A2",
+    "result": "PASS",
+    "actual": "status=active nonzero_paid=1 amt=$24.50 all_paid=2",
+    "note": "",
+    "at": "2026-08-13T05:27:58.502514+00:00"
+  },
+  {
+    "test": "A4",
+    "result": "PASS",
+    "actual": "trial_will_end events for sub=1",
+    "note": "",
+    "at": "2026-08-13T05:28:11.474769+00:00"
+  },
+  {
+    "test": "A6",
+    "result": "PASS",
+    "actual": "cancel_at_period_end=True status_after=canceled refunds=0 paid_before_nonzero=1",
+    "note": "",
+    "at": "2026-08-13T05:28:39.911902+00:00"
+  },
+  {
+    "test": "B1",
+    "result": "PASS",
+    "actual": "prorated_preview=$12.50 invoice=$0.00",
+    "note": "",
+    "at": "2026-08-13T05:29:07.659630+00:00"
+  },
+  {
+    "test": "B2",
+    "result": "PASS",
+    "actual": "10d expected=$17.86 got=$17.86 OK; 7d expected=$12.50 got=$12.50 OK; 1d expected=$1.79 got=$1.79 OK",
+    "note": "",
+    "at": "2026-08-13T05:30:25.770211+00:00"
+  },
+  {
+    "test": "C1",
+    "result": "PASS",
+    "actual": "prorated_preview=$12.25 invoice=$0.00",
+    "note": "",
+    "at": "2026-08-13T05:30:56.590724+00:00"
+  },
+  {
+    "test": "E2",
+    "result": "PASS",
+    "actual": "base_now=solo_fortnightly paid_before_advance=1",
+    "note": "",
+    "at": "2026-08-13T05:31:31.363363+00:00"
+  },
+  {
+    "test": "F1",
+    "result": "PASS",
+    "actual": "base_after_release=family_fortnightly status=active",
+    "note": "",
+    "at": "2026-08-13T05:32:08.199199+00:00"
+  },
+  {
+    "test": "I3",
+    "result": "PASS",
+    "actual": "duplicate=True users_update_called=False",
+    "note": "",
+    "at": "2026-08-13T05:32:09.353792+00:00"
+  },
+  {
+    "test": "A4",
+    "result": "PASS",
+    "actual": "trial_will_end events for sub=1",
+    "note": "",
+    "at": "2026-08-13T05:34:02.671734+00:00"
+  },
+  {
+    "test": "F1",
+    "result": "PASS",
+    "actual": "base_after_release=family_fortnightly status=active",
+    "note": "",
+    "at": "2026-08-13T05:34:44.128472+00:00"
+  },
+  {
+    "test": "I3",
+    "result": "PASS",
+    "actual": "duplicate=True users_update_called=False",
+    "note": "",
+    "at": "2026-08-13T05:34:45.289403+00:00"
+  }
+]

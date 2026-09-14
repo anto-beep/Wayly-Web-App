@@ -1,0 +1,54 @@
+{
+  "summary": "Iter 296 end-to-end verification of the system-wide UI/UX overhaul (Features rebuild, Guided Journeys glow-up on web + mobile, P2 backend expired-plan access_state guard, dark-mode legibility fix on Plan & Billing, Landing tweaks, premium Button primitive). All required testIDs render on web /features (10/10), web / landing (5/5 positive + 2/2 negative + 8 report-card-*), web /journey (4 steps + list), Settings Plan & Billing dark-mode legibility (billing-cancel-scheduled callout renders inside teal current-plan-card with white text), and mobile /journeys (progress ring + 4 step cards + 3 more tiles). Backend access_state fixture check: 3/4 pass — cathy=active, cancelled.vo=view_only, trial30909=view_only (correct). The 4th fixture trialactive@example.com is DATA-DRIFTED in the preview DB (subscription_status=expired, plan=free, but trial_ends_at is future 2026-09-06) so backend correctly returns view_only instead of trial; this is a fixture problem, not a code regression.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/auth/me", "issue": "Fixture drift: trialactive@example.com now has subscription_status='expired' + plan='free' in preview DB, so access_state resolves to view_only instead of trial. _compute_access_state is behaving correctly for the actual DB state; the fixture needs re-seeding (set subscription_status='trialing' and trial_ends_at now+5d)."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": [
+        {"component": "Pressable/View responder handlers", "issue": "Non-blocking console warnings 'Unknown event handler property onStartShouldSetResponder/onResponderGrant/...' on /journeys — React Native web ignoring native responder props. Cosmetic log noise only; taps still work. Reference: /app/mobile/app/journeys.tsx (native responder props leaking to DOM via one of the wrappers)."}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_access_state_iter296.py",
+    "/app/test_reports/pytest/iter296_access_state.xml",
+    "/app/test_reports/iter296_landing.jpg",
+    "/app/test_reports/iter296_journey.jpg",
+    "/app/test_reports/iter296_billing_dark.jpg",
+    "/app/test_reports/iter296_mobile_journeys.jpg"
+  ],
+  "action_items": [
+    "(Data, not code) Re-seed trialactive@example.com so subscription_status='trialing', plan in ('solo','family'), trial_ends_at=now+5d so access_state=trial is deterministic. Prefer a Mongo update script rather than a code change.",
+    "(Nice-to-have) On /app/mobile/app/journeys.tsx, ensure responder handlers (onStartShouldSetResponder etc.) are only attached to the correct RN primitives (Pressable/View) — currently leaking to a DOM element on web preview and producing console warnings."
+  ],
+  "critical_code_review_comments": [
+    "Features page: /app/frontend/src/pages/Features.jsx renders all 10 required testIDs (features-hero, features-featured, features-featured-cta, features-section-tools/wedge/caregiver/participant/family/trust, features-tabs) + 32 feat-card-* tool cards.",
+    "Landing: /app/frontend/src/pages/Landing.jsx renders reports-strip with 8 report-card-* cards and NO reports-strip-screenshot or reports-strip-cta (both count=0 as required). hero-kicker, hero-flagship-statement-decoder, hero-flagship-invoice-checker present; how-it-works-cta text = 'Start your free 7-day trial'.",
+    "Journey (web): /journey renders journey-step-list with all 4 step cards (csc/ce2/budget/cpr). journey-persona not shown for Cathy because she is already onboarded — expected behaviour.",
+    "Settings Plan & Billing dark mode: current-plan-card renders on teal rgb(14,77,82) with white text; billing-history-card on clay rgb(165,81,43) with white text; billing-cancel-scheduled callout ('Your plan is scheduled to end on 01/01/2027... Reactivate') is legible inside the teal card. Legibility fix confirmed.",
+    "Backend _compute_access_state (server.py ~L3271): correctly returns view_only for lapsed paid subs (cancelled.vo, trial30909) and active for cathy. Behaviour matches the P2 guard.",
+    "Mobile /journeys (Expo web preview): journeys-progress present (25% ring, '1 of 4 done'), all 4 coloured step cards render with left-strip accent, 3 journey-more-* tiles render, no crash. Premium Button primitive on login renders with brand teal + pill radius (999px) and successful press flow.",
+    "Nice-to-have — Mobile RN responder-prop warnings leaking to DOM on /journeys; cosmetic only, not blocking."
+  ],
+  "updated_files": ["/app/backend/tests/test_access_state_iter296.py", "/app/test_reports/iteration_296.json"],
+  "success_rate": {"backend": "75% (3/4 access_state fixtures — the failing one is data drift, not code)", "frontend": "100% (all required testIDs present on web + mobile flows tested)"},
+  "seed_data_creation": "None. Suggest re-seeding trialactive@example.com (see action items).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All four visual + functional items in the iter296 spec are verified: (1) /features renders all sections/cards, (2) Landing reports-strip is redesigned to plain-English cards with no screenshot/CTA, hero-kicker/hero-flagship-* and how-it-works-cta text match, (3) /journey renders coloured step cards (persona step is skipped for already-onboarded Cathy), (4) Settings Plan & Billing status callouts are legible in dark mode inside branded coloured cards, (5) mobile /journeys renders progress ring + 4 step cards + more tiles, (6) mobile premium Button (login) renders teal pill and press works. Only outstanding item is DATA drift for trialactive@example.com in preview DB.",
+  "rca of the issue": "trialactive@example.com currently returns access_state=view_only instead of trial because the preview DB shows subscription_status='expired' + plan='free' (trial has already been consumed). Backend logic is correct — this is a stale fixture. To reproduce trial state deterministically, run: db.users.updateOne({email:'trialactive@example.com'}, {$set:{subscription_status:'trialing', plan:'family', trial_ends_at: <now+5d ISO>}})."
+}

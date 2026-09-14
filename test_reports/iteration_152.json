@@ -1,0 +1,57 @@
+{
+  "summary": "Mobile Expo AI Tools hub + all 6 AI tool screens tested end-to-end after login as cathy@example.com. Hub cards route correctly to /tool/{slug}; every tool submits, hits the shared /api/public/* endpoint, and renders the expected result blocks. sanitizeAI() output is clean, no em/en dashes or space-hyphen-space found in any AI-generated text (letter, summary, gaps, questions, assessment, caveat, streams_note). Dark theme renders with legible high-contrast text. One minor UX gap found: the letters tool does not handle the backend abuse-guardrail payload ({abuse_flag, abuse_response}) so the Result card renders empty when the LLM refuses (reproduced with a 'clinical' prompt). Also noted: the ` - ` used as a numeric-range separator in the mobile UI (Provider Price Checker and Classification Self-Check result rows) is a UI string, not AI text, but strictly speaking still contains a dash character — flagged as a code review nit.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "ToolResult (letters-and-follow-ups)",
+          "issue": "When the backend returns an abuse-guardrail payload like {abuse_flag: 'clinical', abuse_response: '...'} (no `letter` field), the mobile Result card renders only the 'Result' heading with an empty body — the guardrail message is dropped. Reproduced with participant_name='Dorothy' + changes_summary='Mobility has declined; needs more personal care and physio.' → HTTP 200 body: {\"abuse_flag\":\"clinical\",\"abuse_response\":\"That's a question for the GP / care team. Want help drafting a question to ask them instead?\"}. Reference: /app/mobile/app/tool/[slug].tsx:257-261. Suggest: render data.abuse_response (via sanitizeAI) as a soft-warn block when data.letter is absent — same treatment should be applied to the other tools that can trip guardrails.",
+          "testID": "tool-result",
+          "priority": "MEDIUM"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {
+          "screen": "tool/provider-price-checker & tool/classification-self-check result rows",
+          "issues": [
+            "Numeric ranges are rendered as `${money(lower)} - ${money(upper)}` (with space-hyphen-space) in /app/mobile/app/tool/[slug].tsx:238 and :246. This is UI code, not AI text, so sanitizeAI() does not touch it, but the Wayly 'no dashes' style rule is violated in the surfaced string. Consider `${money(lower)} to ${money(upper)}` or an en-dash-with-no-spaces to align with the web copy convention."
+          ]
+        }
+      ],
+      "react_native_issues": [
+        {
+          "component": "shadow* style props",
+          "issue": "Console warning: '\"shadow*\" style props are deprecated. Use \"boxShadow\".' Emitted repeatedly on tool screens. Non-blocking but worth migrating for RN Web parity."
+        },
+        {
+          "component": "props.pointerEvents",
+          "issue": "Console warning: 'props.pointerEvents is deprecated. Use style.pointerEvents'. Non-blocking; likely from a shared UI primitive."
+        }
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "In /app/mobile/app/tool/[slug].tsx letters-and-follow-ups result branch, handle data.abuse_response / abuse_flag when data.letter is missing (render the guardrail message via sanitizeAI). Consider generalising this to a shared fallback for all 6 tools.",
+    "Replace ` - ` numeric range separators in the mobile ToolResult (Provider Price Checker and Classification Self-Check) with a non-dash separator (e.g. ' to ') to comply with the 'no dashes' Wayly copy rule end-to-end.",
+    "Fix the dead branch on /app/mobile/app/tool/[slug].tsx:95 — `if (f.key === 'current_lifetime_balance' && v == null) v = 0;` never fires because the field default is empty string, so `v == null` is false. Either compare with `(v === '' || v == null)` or move the guard after the number coercion on line 94."
+  ],
+  "critical_code_review_comments": [
+    "/app/mobile/app/tool/[slug].tsx:95 default-to-0 guard for current_lifetime_balance is dead code (empty string is falsy but not == null). Backend happens to default to 0 so nothing breaks today, but the intent is not being honoured.",
+    "/app/mobile/app/tool/[slug].tsx:257-261 letters branch has no fallback for the backend's abuse_flag/abuse_response payload — users see an empty Result card silently.",
+    "/app/mobile/app/tool/[slug].tsx:238,246 hard-coded ` - ` between money(lower) and money(upper) violates the 'no dashes' copy rule surfaced to the user.",
+    "Mobile logs show deprecated `shadow*` and `props.pointerEvents` warnings; migrate to boxShadow / style.pointerEvents at the shared UI primitive level."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (backend testing skipped per request)", "frontend": "6/6 tool flows OK; 1 minor UX gap on guardrail fallback" },
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, family plan). Login testids: login-email-input, login-password-input, login-submit-button.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Expo web preview URL for this env: https://proration-preview.expo.preview.emergentagent.com. AI-Tools tab is at /ai-tools; individual tools are at /tool/{slug}. Tool testids: tool-{slug} on hub cards; tool-submit, tool-result, tool-field-{key}, tool-field-{key}-{value} (chip), tool-scale-{i}-{n} (12x5 grid), tool-letter-text on the letter body. AI text passes through sanitizeAI(); range separators are hard-coded UI strings and bypass it. Note: the letters endpoint returns 200 with an `abuse_flag/abuse_response` payload when the input looks like a medical/clinical question — the mobile UI currently drops that message.",
+  "rca of the issue": "letters-and-follow-ups renders `sanitizeAI(data.letter)` unconditionally at [slug].tsx:259. When the backend guardrail returns `{abuse_flag, abuse_response}` (no `letter` field), `data.letter` is undefined and sanitizeAI('') returns '', so a blank Text node is drawn inside the Result card. Fix: `data.letter ? <letter block> : data.abuse_response ? <guardrail block via sanitizeAI> : null`."
+}

@@ -1,0 +1,42 @@
+{
+  "summary": "PERMS-CAREGIVER-1 Milestone 1 (Family Members invite model + screen) tested end-to-end on web + backend. 11/11 pytest cases pass. All acceptance criteria in the review request verified: capacity block on GET /api/household/members with correct Family plan seats + owner account_holder role + invites/expired split; PC-D23 409 email_registered block with exact spec copy (including support@wayly.com.au); fresh-email caregiver invite succeeds with legal_role_declared False; Guardian (legal) sets legal_role_declared True; invalid relationship → 422; 4th caregiver at seat cap → 400; resend extends expires_at (200); revoke removes invite (200); unknown token → 404; cross-household user cannot resend/revoke another household's token. Web /settings/members verified: subhead no longer contains 'Everyone sees the statements and audit log', seat counter renders 'N of 5 people invited. K spaces remaining.', all required testIDs present (invite-role-participant, invite-role-caregiver, invite-relationship-select, invite-note-input, invite-email-error), PC-D23 inline error shows the exact spec copy and NO invite is created. Test invites cleaned up.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_perms_caregiver1_iter268.py",
+    "/app/test_reports/pytest/iter268_perms1.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Copy-paste risk (backend/server.py:1043): PC-D23 email-registered lookup uses only db.users. Once tokenized signup-via-invite lands, ensure it ALSO blocks emails that are already in db.invites (pending) or db.household_members to keep 'one household per email' invariant across all sources of truth.",
+    "resend_invite (backend/server.py:1113) does not check that the invite is currently 'pending' before resetting expires_at — it re-activates any status back to pending. If a revoked/expired-then-declined invite still exists in the collection, resend would silently resurrect it. Milestone 1 revoke uses DELETE so this is moot today, but worth guarding when approval/decline states land.",
+    "list_members (server.py:1176) computes people_used = 1 (owner) + members + pending_invites, but does not subtract when a member is both an active member AND has a lingering pending invite for the same email. Not observable now (active membership is created via accept-invite which deletes the invite in a later milestone), but flag for later milestones."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_perms_caregiver1_iter268.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan account holder); trialactive@example.com / AccessTest1! (used as cross-household isolation probe — happens to have no household so backend returns 400 'No household' instead of 404 for another household's token; both are valid isolation responses).",
+  "seed_data_creation": "Test suite creates and self-cleans TEST_perm_<uuid>@example.com invites in cathy's Family household. Post-run GET /api/household/members shows invites=[] — no residue.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "PERMS-CAREGIVER-1 M1 is fully green. Later milestones (tokenized signup-via-invite, approval flow, authz middleware, route guards, Ask Wayly caregiver scope) were explicitly out of scope and NOT tested. Cross-household isolation test uses trialactive@example.com — if that account gets a household later, the 400/404 assertion will still pass because it accepts both. Pytest file: /app/backend/tests/test_perms_caregiver1_iter268.py — safe to run as regression.",
+  "rca of the issue": ""
+}

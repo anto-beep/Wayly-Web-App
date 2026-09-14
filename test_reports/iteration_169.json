@@ -1,0 +1,27 @@
+{
+  "summary": "Retest of Participant Profile hub after iteration_168 crash fix (bibi@test.com / CarTest123$ → /participant/eabfb742-da66-415f-8e62-b5ff94aaf752). PASS. The screen mounts cleanly with zero pageerrors and no 'Objects are not valid as a React child' red-screen. All 7 required section testIDs render (pp-personal-details, pp-financial-position, pp-see-contribution, pp-follow-ups, pp-household, pp-latest-activity, pp-timeline) and all 8 pp-tool-* rows are present (statement, invoice_check, care_plan_review, classification_check, contribution_estimate, letter, price_check, budget_projection). Data values match spec: Provider='Something', Classification='Level 4', Pension Status='Full Pension', LIFETIME CAP='$137,917.01' (single $), QUARTERLY BUDGET / SPENT THIS QUARTER / LAST STATEMENT show '—' (no live budget yet, matches the empty-state copy). Header shows 'PARTICIPANT PROFILE' + \"Bibi's Profile\" and the Level 4 badge. Navigation verified: pp-see-contribution → /contribution-position, pp-tool-statement → /statements, Full Timeline → /timeline. No hallucinated tests — only the hub retest requested was executed.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "The Profile type in /app/mobile/app/participant/[id].tsx still types provider as `string` and lifetime_cap_total as `number|null`, while the runtime shape is nested objects. The runtime helpers (providerLabel/num/classLabel) now handle both, so it works, but the TypeScript contract should be tightened to match the real API (mirror the web ParticipantProfile.jsx shape) to avoid future drift."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100% (all 15 required testIDs render, 3/3 navigations verified, 0 pageerrors)"},
+  "test_credentials": "bibi@test.com / CarTest123$ (participant id eabfb742-da66-415f-8e62-b5ff94aaf752)",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration_168 crash is fully resolved. providerLabel(), classLabel() (accepts {band}), and num() (unwraps {amount} objects) work with the real /api/core/participants/{id}/profile payload. Only quarterly_budget / spent_to_date_this_quarter / last_statement_date are still empty for Bibi because no statement has been uploaded — this is the expected data-driven empty state (message 'Run the Budget Calculator or upload a statement to see Bibi's live position.'), NOT a bug. If future scope requires seeding a statement to exercise those StatBoxes, upload via /api/statements/upload for participant_id eabfb742-da66-415f-8e62-b5ff94aaf752.",
+  "rca of the issue": "N/A — retest confirms iteration_168 fixes landed: p.provider → providerLabel(p.provider) returns .primary; classification → classLabel() returns `Level ${band}`; lifetime_cap_total → num() unwraps .amount before money(). Timeline and artefact rows already guard against non-string values via `[..].find((x) => typeof x === 'string')`."
+}

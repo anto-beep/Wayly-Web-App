@@ -1,0 +1,40 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "I want the admin system to use the light theme not the dark theme - this should be the initial theme set. Also (from prior report): dark-mode contrast, admin login must use the light theme, and I want a dedicated Preferences section for theme.",
+  "summary": "No relevant testing skill found. Focused browser verification passed: fresh authenticated admin visits now default to light, /admin/login is light, /admin/preferences exists, top-bar and Preferences L/S/D controls sync bidirectionally while mounted, selected theme persists after full reload, and dark-mode H1/stat label contrast meets the requested thresholds.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/admin_theme_bug_verification_iter84.py",
+    "/app/test_reports/admin_theme_bug_iter84_results.json"
+  ],
+  "action_items": [
+    "Ensure /app/frontend/src/pages/admin/useAdminTheme.js is tracked/committed before release; it is currently untracked in git status even though the preview behavior passes."
+  ],
+  "critical_code_review_comments": [
+    "Inspected AdminApp.jsx, AdminPhaseB.jsx, useAdminTheme.js, and admin.css. The shared useAdminTheme hook defaults to light and broadcasts wayly:admin-theme updates; AdminShell and AdminPreferences both consume it, which matches the runtime sync evidence.",
+    "git status shows /app/frontend/src/pages/admin/useAdminTheme.js as untracked and AdminApp.jsx/AdminPhaseB.jsx/admin.css modified, alongside many unrelated repo changes."
+  ],
+  "updated_files": [
+    "/app/tests/admin_theme_bug_verification_iter84.py",
+    "/app/test_reports/admin_theme_bug_iter84_results.json",
+    "/app/test_reports/bug_verification_84.json",
+    "/app/test_reports/iteration_84.json"
+  ],
+  "success_rate": {
+    "backend": "N/A",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "Created short-lived admin_sessions rows and JWTs for hello@techglove.com.au to test the authenticated admin UI without consuming MFA backup codes; no product/business seed data created.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run /app/tests/admin_theme_bug_verification_iter84.py. It uses /root/bin/chromium, creates a temporary admin JWT/session, and checks login light theme, first-visit light default with no wayly.admin.theme, Preferences/top-bar bidirectional sync for light/system/dark, full-reload persistence, and computed contrast ratios.",
+  "rca_of_the_issue": "Previous failure was split theme state: AdminShell kept local useState while AdminPreferences independently mutated .admin-root/localStorage. The new shared hook is the single source of truth and emits/subscribes to a same-window custom event, so mounted controls update together. Test evidence: prefs-theme-dark immediately made admin-theme-dark aria-pressed=true; admin-theme-dark immediately made prefs-theme-dark aria-checked=true; system segment also synced both directions. Console captured expected unauthenticated 401s on the public login session only; authenticated admin theme flows passed. No MOCKED APIs used."
+}

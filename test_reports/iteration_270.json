@@ -1,0 +1,32 @@
+{
+  "summary": "PARTICIPANTS-1 backend milestone tested end-to-end via pytest. 15/15 tests passed (list/capacity/role_label, add + 402 billing_required + 402 upgrade_required, patch + archived/deceased-guard, archive + only-live-guard + caregiver-link cleanup, deceased sole triggers 90-day bereavement grace, deceased second-call terminal, invite-login creates invite row with intended_role/participant_record_id/wayly_role=participant_user, PC-D23 email_registered 409, AUTHZ 403 for non-owner and 400 with no household, verify_invariants ok=True). Cathy restored to exactly 1 live participant (Dorothy); her households.bereavement_grace_expires_at left None.",
+  "platforms_tested": ["backend"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/household", "issue": "create_household does NOT build a participant_record — the sole participant only lands via startup backfill or when the caller explicitly hits POST /api/participants. In a fresh signup + create_household flow the household is in violation of invariant #2 (no live participant_record) until backfill runs. Consider inserting build_participant_record(h, owner_id) inside create_household to satisfy the DATA-MODEL-1 invariants at write-time rather than at boot."}
+    ]
+  },
+  "frontend_issues": {"web": {"ui_bugs": [], "integration_issues": [], "design_issues": []}, "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}},
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_participants1_iter270.py",
+    "/app/test_reports/pytest/participants1_iter270.xml"
+  ],
+  "action_items": [
+    "Consider auto-creating the primary participant_record inside POST /api/household so that invariant #2 (>=1 live participant_record) holds immediately after onboarding without relying on startup backfill."
+  ],
+  "critical_code_review_comments": [
+    "server.py list_participants (line ~1223) returns rows without projecting `_id` OFF for the underlying find(); it currently uses `{'_id': 0}` correctly — good. Verify no other participant endpoints leak _id.",
+    "invite_participant_login stores role='participant_login' (legacy) and intended_role='participant_login' + wayly_role='participant_user'. Confirm downstream signup-accept code (POST /invite/accept) branches on intended_role='participant_login' and sets the created user's household_id + wires participant_records.user_id to the new user id — not tested here."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_participants1_iter270.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "n/a"},
+  "test_credentials": "cathy@example.com/testpass123 (Family); test+1777810269@example.com/SoloTest1! (Solo with 1 participant); throwaway TEST_bereave_* users created and deleted inside test.",
+  "seed_data_creation": "Test-created participants all archived; throwaway bereavement/authz test users deleted; cathy restored to Dorothy-only; household.bereavement_grace_expires_at=None (unchanged).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Cathy currently has exactly 1 live participant (Dorothy) — all Grandpa Joe and TEST_* extras are archived (rows remain but archived_at set). Invariants all pass. Solo user test+1777810269@example.com still has its single participant. To rerun this suite, first clear redis signup rate limits if 429s appear: redis SCAN 'rl:signup*' DEL. The `invite_participant_login` accept-flow was NOT tested (only the invite-row creation was) — next agent should cover POST /invite/accept for participant_login intended_role."
+}

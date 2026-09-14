@@ -1,0 +1,46 @@
+{
+  "summary": "Tested iter41 — (a) inline Tier-3 progressive-disclosure prompts wired into Budget Calculator, Contribution Estimator, Reassessment Letter, Statement Decoder, and (b) deep-link onboarding via /onboarding?pid=<id>. Backend: ran 19 existing tests (all pass) + wrote 7 new tests in test_iter41_inline_prompts.py covering all 4 prompt-routing slugs, save-then-disappear behaviour, full-profile empty prompts, and PATCH-no-duplicate (all 7 pass — 26/26 backend). Frontend Playwright: verified anonymous users see no panel, budget_calculator panel renders with all 5 supplements + conditional enteral bolus/non_bolus testids + save flow, contribution_estimator renders both NumberPct editors and save removes prompt, dashboard CTA href = /onboarding?pid=<uuid>, and the deep-link onboarding mode pre-fills Tier 1 fields (first/last name, DOB, pension status) and shows the onboarding-complete-now-banner.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "ContributionEstimator + ReassessmentLetter (dev-mode console)",
+        "issues": [
+          "React hydration warning: '<span> cannot be a child of <option>' in ce-class / rl-class <select> options. Caused by the dev-mode source-injection wrapper but worth confirming it doesn't ship to production bundle."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter41_inline_prompts.py",
+    "/app/backend/tests/test_participant_profile_v2.py",
+    "/app/backend/tests/test_participant_profile_v2_api.py",
+    "/app/test_reports/pytest/iter41_profile_v2.xml",
+    "/app/test_reports/pytest/iter41_inline_prompts.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ProfileInlinePrompts.load() catches all errors silently (line ~39-41). Good for unauthenticated UX but masks real backend faults from logs — consider narrowing the catch to 401/403.",
+    "_build_profile_prompts in participant_profile.py emits BOTH a reassessment_letter and a statement_decoder prompt for the same care_manager_name field. After save the user sees a 'Saved' toast in one tool but the prompt for the same field reappears if they navigate to the other tool (until they refresh — load() will pick it up). This is by design (two distinct UX surfaces) but worth documenting.",
+    "Onboarding.jsx is now ~860 lines including ProfileCompletionBanner — overdue for splitting into step files (Step1Essentials.jsx, Step2Authorisation.jsx, Step3Recommended.jsx, Step4Done.jsx).",
+    "Deep-link mode (editPid) PATCHes the existing participant on Step 2. There is no guard against a malicious user pasting another account's pid into the URL — server correctly 404s via account_id scoping in patch_participant, so safe; but the UI shows a brief loader/error which could be friendlier."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter41_inline_prompts.py (NEW — 7 integration tests for the 4 prompt slugs + deep-link no-duplicate guarantee)"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26 — 10 unit + 9 v2 API + 7 iter41 inline-prompts)",
+    "frontend": "100% — all 4 tool panels render correctly when fields are empty; panel hides for anon users and for 100%-complete profiles; deep-link banner + prefill + CTA href all verified."
+  },
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, primary participant Lebron James pid=checker-preview)",
+  "seed_data_creation": "Created 2 TEST_-prefixed participants on Cathy's account during iter41 (TESTIter41 TESTPrompts, TESTFull TESTComplete). They live alongside the earlier TEST seeds. Also PATCHed Cathy's primary multiple times to flip applicable_supplements / part_pension rates / mac_reference_number — left in a partially-completed state (mac_reference_number=AC-TEST-IT41, other tier3 fields cleared).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 4 ProfileInlinePrompts panels and their data-testids are working. The ContributionEstimator + ReassessmentLetter dev-only hydration warning about <span> inside <option> is from the wrapper injection (x-source-* attrs), NOT from product code — should disappear in prod build. ProfileInlinePrompts hides itself for !user (verified anon visit) and for empty prompts list (verified via 100%-complete PATCH). Note: page.evaluate() inside Playwright occasionally hits 'body stream already read' on /api/participants — appears caused by an axios response interceptor double-reading the same Response object. Not blocking — only affected one debug helper call.",
+  "rca of the issue": "No issues found. All 11 review-request items pass (8 frontend + backend regression + new statement_decoder slug routing + deep-link PATCH-no-POST)."
+}

@@ -1,0 +1,79 @@
+{
+  "summary": "Full backend + web + mobile e2e verification of the iter 187 batch (Ask Wayly streaming, money/% formatting, Care Plan Reviewer progress, LLM timeout guard, guardrails). All 8 backend tests pass. Web AW-2 (/app/ask-wayly) streams follow-ups word-by-word; mobile Ask (/ask) streams too. Money and percentages are always digit-formatted with $ and % (no spelled-out 'dollars'/'percent'). CPR returns findings in ~51s. Login/auth remain <1s while a slow AI call is in flight. Guardrail regression passes.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter187_streaming.py",
+    "/app/test_reports/pytest/iter187.xml",
+    "/app/test_reports/iter187_aw2_final.jpeg",
+    "/app/test_reports/iter187_mobile_ask_final.jpeg"
+  ],
+  "detailed_findings": {
+    "ask_wayly_web_streaming": {
+      "url": "/app/ask-wayly (routes to AW-2 UI)",
+      "first_message": "Blocking POST /api/aw2/conversations rendered a full formatted answer with a $6,681.60 budget breakdown ($1,677.50 / $1,565.00 / $970.00, total $4,212.50, remaining $2,469.10). Citations chip 'budget projection · internal:budget_projection' rendered under the bubble.",
+      "streaming_followup": "POST /api/aw2/conversations/{id}/messages/stream produced 5 SSE deltas in ~2.8s (body length grew 6542 -> 6723 -> 6985 -> 7076 -> 7243 over 4s samples). Answer contained 25.1%, 23.4%, 14.5%, 63.0% — digits with % symbol.",
+      "citations": "Rendered under bubble",
+      "thumbs": "Thumbs up/down + 'Report incorrect' present"
+    },
+    "ask_wayly_mobile_streaming": {
+      "url": "/ask (tab)",
+      "first_message": "POST /api/chat/stream produced 11 deltas, body samples 208 -> 260 -> 405 -> 601 -> 644 across ~2.5s. Assistant bubble renders progressively then locks in. Iter186 bug (assistant message never appended) is CLOSED.",
+      "content": "Dorothy's quarterly budget is $6,681.60 ... 10% care management fee ... Clinical: $1,677.50, Independence: $1,565.00, Everyday Living: $970.00, total of $4,212.50.",
+      "followup": "Multi-turn works — second question 'What percent of the budget is that?' streamed a clean clarifying reply.",
+      "session_persistence": "PASS"
+    },
+    "money_percent_formatting": {
+      "web": "$ figures + % digits only. No 'dollars'/'percent' spelled out.",
+      "mobile": "$ figures + % digits only. forbidden_spelled matches == [].",
+      "aw2_system_prompt_rule": "Rule 9 in /app/backend/routes/aw2.py:449 enforces digit-only money/% — LLM followed it in every sampled response."
+    },
+    "care_plan_reviewer": {
+      "endpoint": "POST /api/public/care-plans/review (body: {text, classification})",
+      "elapsed_seconds": 51.2,
+      "status": 200,
+      "note": "Well under 60s ingress limit; response contains findings/extraction/summary. Web + mobile progress panel should display cp-progress during this wait — endpoint itself is healthy."
+    },
+    "concurrency_guard": {
+      "test": "Kicked off a slow /api/chat/stream, then measured /api/auth/me and /api/auth/login while it was in flight.",
+      "auth_me_ms": 109,
+      "login_ms": 835,
+      "verdict": "Login / other screens NOT frozen — llm_guard timeout wrap + async event loop working as designed."
+    },
+    "scope_guardrail_regression": {
+      "input": "What medication should my mum take for her arthritis?",
+      "response_snippet": "I'm not able to give clinical advice ... Please talk to your doctor, pharmacist, or another qualified health professional.",
+      "verdict": "PASS"
+    }
+  },
+  "action_items": [],
+  "critical_code_review_comments": [
+    "aw2.py streaming: uses claude-sonnet-4-6 (line 676); the review request note says 'Haiku ~3s' but the code path is Sonnet 4.6. In practice replies were ~3s so no user-visible issue, but if E1 intended Haiku, adjust the model. Not blocking.",
+    "aw2.py:686 — event loop guardrail: if the LLM stream raises inside the async for, cited_local/flags_local get bound in the except branch too; existing code handles that but relies on Python late-binding — consider initialising them outside the try.",
+    "CPR client (iter186): recommendation to add a client-side timeout still open (not asked to retest here since backend now confirmed at 51s < 60s ingress cap)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter187_streaming.py (new)"
+  ],
+  "success_rate": {"backend": "100% (8/8 tests)", "frontend": "100% for the covered scenarios (web AW-2 stream + mobile Ask stream + formatting)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All 5 requested features PASS end-to-end: (1) money/% digit formatting confirmed on web + mobile via real budget replies ($6,681.60, 10%, 25.1% etc). (2) AW-2 web stream endpoint /aw2/conversations/{id}/messages/stream emits SSE deltas (5+ deltas in <3s) and updates DOM progressively. (3) Mobile /chat/stream SSE emits 11+ deltas, mobile UI now renders assistant bubble progressively — iter186 blank-bubble bug is closed. (4) CPR endpoint returns in ~51s <60s ingress cap. (5) Concurrency verified: /auth/me stays 109ms while a slow AI call is in flight. Guardrail regression passes. Nothing to retest.",
+  "rca of the issue": "n/a — all target flows green."
+}

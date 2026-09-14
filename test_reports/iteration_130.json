@@ -1,0 +1,50 @@
+{
+  "summary": "Frontend audit for (1) dark-mode contrast and (2) routing/dead-link fixes on Wayly. Logged in as cathy@example.com, verified html.theme-dark class after localStorage flip, audited 7 authenticated pages with a runtime WCAG-style contrast walker (parses computed color/bg, walks parent chain for effective bg, min ratio 4.5 body / 3.0 large). Also verified light-mode regression on 3 key pages, tested each named tool route, mapped /features CTAs, and swept all 39 sidebar links after expanding the 7 collapsible groups. Screenshots captured for both modes.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Dashboard 'Details still needed' warning banner CTA", "issue": "Dark mode: 'Complete now' button renders teal-ish text rgb(79,168,174) on terracotta background rgb(232,154,111) — measured contrast 1.23:1, effectively unreadable. Same button in light mode is white-on-terracotta and looks correct. Fix: force white (or high-contrast) text color for this button in html.theme-dark, or scope the dark button-text remap so it does not override buttons already on a warm/accent background. Confirmed via screenshot (dark_dashboard.jpg): text is almost invisible.", "selector": "warning banner button 'Complete now' on /app", "priority": "HIGH"},
+      {"component": "Voice Check radio option rows", "issue": "Dark mode: every un-selected radio option row (Yes they wanted this / Yes but not exactly like this / No / I don't remember / Skip this goal) renders with a solid terracotta background rgb(165,81,43) making them all look pre-selected. inputChecked=false on all of them. This is the 'bg-primary-k/[0.0x] -> solid clay' pre-existing broad rule the request warned about — text (white) is readable (~3.15:1) so per the note it may be 'acceptable', BUT because 5 mutually-exclusive radio options all show the same clay fill, users cannot tell which one is selected (the tiny radio dot is the only differentiator). Light mode renders these as plain circles on white — correct. Recommend narrowing the dark-mode bg-primary-k/[0.0x] remap so it does not hit radio/checkbox option rows, OR give the selected state a distinct border/inner-fill.", "selector": "label > input[type=radio] rows on /app/participants/:id/voice-check", "priority": "HIGH"},
+      {"component": "Statement detail — anomaly card AI-disclaimer line", "issue": "Dark mode: 'This flag is AI-generated and may be incorrect. Verify …' renders amber-800 rgb(146,64,14) on very dark card bg rgb(21,36,37) — contrast 2.26:1, below WCAG AA. Amber warning text was designed for the light-tint amber-50 background but the tint got dark-remapped without recolouring the text. Fix: in html.theme-dark, remap text-amber-800/900 -> amber-200/300 (or brighten to amber-400).", "selector": "anomaly card disclaimer on /app/statements/:id", "priority": "MEDIUM"},
+      {"component": "Statement detail — priority badges", "issue": "Dark mode: 'High' / 'Medium' pill badges are white text on terracotta bg — contrast 2.26:1. 'Low' badge is white on sage rgb(168,199,171) — 1.84:1. These are tiny (9px) so ideally need >4.5:1. Consider darkening the text or lightening the pill bg in dark mode.", "selector": "anomaly-card badges on /app/statements/:id", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "AI tool routing: /ai-tools/reassessment-letter", "issue": "Navigating to /ai-tools/reassessment-letter (as referenced in ToolExplainer AUTHENTICATED_ROUTES) 302s/replaces to /ai-tools/letters-and-follow-ups. Not broken (page loads, 200), but confirm this alias is intentional — the fix comment implies the route should live at /ai-tools/reassessment-letter. If intentional the ToolExplainer AUTHENTICATED_ROUTES map could point directly to the canonical URL.", "affected_selectors": ["ToolExplainer 'open in app' for Reassessment Letter"]},
+      {"flow": "Dead URL /app/tools/invoice-checker/list", "issue": "Direct visit still renders a 'not found'-style page (body contains '404/not found'). Nothing in /features or the sidebar or scraped anchors links to it any more (confirmed via link scrape of /features and sidebar). So the user-facing fix holds. Suggest returning a proper HTTP redirect to /ai-tools/invoice-checker for backwards-compat with any external bookmarks.", "affected_selectors": []}
+    ],
+    "design_issues": [
+      {"screen": "Dark mode across form/info pages (Budget Scenarios, Coordinator, Handover Pack)", "issues": ["Contrast walker flagged the 'What This Does / How To Use It / What You Get' info tiles as white-on-white — this is a FALSE POSITIVE caused by the walker seeing a transparent element and inheriting body bg; the tiles actually render as light-clay bg with white text and are readable (visible in screenshot dark_budget-scenarios.jpg). NOT a bug, documenting so next agent doesn't chase it.", "Light-mode screenshots (light_dashboard.jpg, light_voice-check.jpg, light_budget-scenarios.jpg) confirm the light theme is untouched: emerald/amber tint cards still light, Continue banner gradient still visible, radios render as plain circles."]},
+      {"screen": "Console noise", "issues": ["Recurring React DOM hydration warning: '<span> cannot be a child of <option>' fired from BudgetScenarios.jsx line 227 and other pages that map array options — the emergent x-array wrapper is injecting a <span> inside <option>. Not user-visible but pollutes logs and could break some browsers' native <select> rendering."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/dark_audit_iter130_results.json",
+    "/app/test_reports/dark_audit_iter130_part2.json"
+  ],
+  "action_items": [
+    "HIGH: Fix 'Complete now' warning-banner button in dark mode — force readable text (contrast currently 1.23:1).",
+    "HIGH: Voice Check radio rows all look pre-selected in dark mode (uniform clay fill). Narrow the dark bg-primary-k/[0.0x] remap so radio/checkbox option rows keep a transparent/neutral bg and rely on the checked state for the accent.",
+    "MEDIUM: In html.theme-dark, remap text-amber-800/900 (and text-red-800, text-emerald-800 if any) to a lighter shade — currently amber-800 disclaimer text on dark card is 2.26:1.",
+    "LOW: Improve High/Medium/Low pill badges contrast in dark mode (currently 1.84–2.26:1 on tiny 9px text).",
+    "LOW: Add server-side redirect from /app/tools/invoice-checker/list -> /ai-tools/invoice-checker for legacy bookmarks (still renders a 404 page on direct visit).",
+    "LOW: Fix hydration warning '<span> cannot be a child of <option>' in BudgetScenarios.jsx and other option-mapping pages."
+  ],
+  "critical_code_review_comments": [
+    "Dark-mode global scope in /app/frontend/src/index.css correctly gated behind html.theme-dark — light mode fully intact per regression screenshots.",
+    "ToolExplainer AUTHENTICATED_ROUTES for reassessment-letter should probably use the canonical /ai-tools/letters-and-follow-ups URL rather than relying on a redirect.",
+    "The pre-existing broad 'bg-primary-k/[0.0x] -> solid clay in dark' rule is now producing a real UX regression on radio/checkbox option rows (Voice Check page). The request called this out as 'acceptable' but only if text is illegible — the visual selected-state ambiguity IS a usability defect and should not be dismissed.",
+    "Dead-link scrub is complete: no in-app anchor points to /app/tools/invoice-checker/list any more; feature cards and ToolExplainer routes all resolve 200."
+  ],
+  "updated_files": [
+    "/app/test_reports/iteration_130.json",
+    "/app/test_reports/dark_audit_iter130_results.json",
+    "/app/test_reports/dark_audit_iter130_part2.json"
+  ],
+  "success_rate": {"backend": "N/A - frontend only", "frontend": "70% (light mode 100%, dark mode has 4 real contrast/UX bugs; routing 100%)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All routing fixes verified (invoice-checker, provider-price-checker, support-plan-reviewer, statement-decoder all 200). Reassessment-letter aliases to /ai-tools/letters-and-follow-ups. Dead URL /app/tools/invoice-checker/list still renders 404 on direct visit but is no longer linked anywhere in-app. Sidebar 429 errors during my sweep were rate-limit artifacts, not routing bugs. The main outstanding items are dark-mode contrast/UX defects listed under ui_bugs — the Voice Check radios and Dashboard 'Complete now' button are the top-priority fixes. Contrast walker sometimes reports false positives on light-tint info tiles (What This Does cards) because the walker mis-attributes transparent bgs — verify via screenshots before treating those as bugs.",
+  "rca_of_the_issue": "Dark mode 'Complete now' teal-on-terracotta: warning banner uses .btn-primary style whose text color in dark mode has been remapped globally to the accent teal, but the button already sits on a terracotta accent bg — creating accent-on-accent. Voice Check radio rows: labels use a bg-primary-k/[0.0x] utility that the global dark rule promotes to solid clay, losing the selected-vs-unselected distinction. Amber-800 disclaimer text: the light-tint bg was remapped for dark but the text-amber-800 utility is still applied unchanged. Fix scope: tighten the html.theme-dark selectors to exclude interactive-inside-accent contexts and to bump text-amber-800/900 to a lighter shade."
+}

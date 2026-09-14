@@ -1,0 +1,49 @@
+{
+  "summary": "Web verified end-to-end. Mobile blocked by 1 critical TDZ bug in /app/mobile/app/letters/[id].tsx (useEffect at lines 414-438 references isGuided/isResponseDraft in its dep-array before they are declared at lines 441-443 → ReferenceError on every letter open, breaks the whole situation-prefill + chips flow the review is asking about). WEB: (1) Global uniform width WORKS — /app/statements, /app/invoices, /app/participants/{pid}/contribution-position and /settings/billing all measure app-page=1408px / first-child=1400px, exactly the founder's request. (2) Contribution Position redesign renders at /app/participants/0c538637-.../contribution-position with the teal 'Where you stand' gauge hero (ce3-lifetime-cap-card/-headline/-remaining), Refresh button clicks and re-fetches, Annual projection card + range + estimate render (ce3-annual-confidence is conditional and hidden in cathy's empty state — not a bug), 'At your current pace — about 75 years' years-at-pace card renders (ce3-years-card + ce3-lifetime-cap-years), Reconciliation card + month picker + Check-this-month button + list render (ce3-reconcile-empty is hidden because list has months — correct), Change pension status button opens ce3-pension-wizard-modal, and 'Back to profile' link renders. (3) Settings billing is de-coloured: 0 large solid-teal/clay panels detected (bigSolidBrand=[]), current-plan-card + billing-open-portal readable; screenshot confirms clean subtle style. (4) Letter cross-tool chip → draft on WEB works: on /tools/letters-and-follow-ups/{id} the CrossToolImportPanel renders lf1-import-provider_price_checker + lf1-import-contribution_estimator; clicking a chip merges facts AND regenerates the draft — cover note appears + body updates with imported price data (visible in iter299_letter_after_chip.jpeg). MOBILE: could not verify because of the TDZ crash above.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "CorrespondenceDetail (letters/[id].tsx)", "issue": "Prefill useEffect (lines 414-438) lists `isGuided` and `isResponseDraft` in its dependency array before those `const`s are declared (lines 441-443). Because the dep-array is evaluated during render, this triggers a ReferenceError (temporal dead zone) as soon as any letter detail screen mounts, crashing situation-prefill AND the cross-tool import panel — i.e. exactly the two things this review asks us to verify.", "testID": "lf1-detail-starter-note", "priority": "CRITICAL"}
+      ],
+      "integration_issues": [
+        {"flow": "Mobile letter situation prefill / cross-tool chips → regenerate", "issue": "Blocked by TDZ crash above — could not observe lf1-prefill-busy, lf1-detail-starter-note, lf1-cross-tool-panel or chip regeneration on Expo web preview.", "affected_testIDs": ["lf1-prefill-busy","lf1-detail-starter-note","lf1-cross-tool-panel","lf1-import-statement_decoder","lf1-import-provider_price_checker"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Letters situation prefill + cross-tool chip regenerate", "platform": "mobile", "issue": "Works on web (verified: chip click adds cover note + regenerates body with imported price-checker data). Mobile screen throws before it mounts because of the TDZ bug in letters/[id].tsx.", "expected": "Same behaviour as web: prefill busy → starter note → tap chip → body regenerates.", "actual": "Runtime ReferenceError on mount."}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter299_cp.jpeg",
+    "/app/test_reports/iter299_billing.jpeg",
+    "/app/test_reports/iter299_letter.jpeg",
+    "/app/test_reports/iter299_letter_after_chip.jpeg"
+  ],
+  "action_items": [
+    "MOBILE CRITICAL: In /app/mobile/app/letters/[id].tsx, move the two const declarations `const isGuided = archetype === 'guided_pathway';` and `const isResponseDraft = archetype === 'response_draft' || entry?.situation_id === 12;` (currently at lines 441-443) ABOVE the prefill useEffect at lines 414-438 (right after the `entry`/`intake` state is derived). This clears the temporal-dead-zone ReferenceError. Then verify lf1-prefill-busy → lf1-detail-starter-note → chip click regenerates the draft.",
+    "(Optional) On web Contribution Position, ce3-annual-confidence is only rendered when annual data has a confidence value; the review spec calls it out — consider always rendering the testid (empty state) so automation isn't confused.",
+    "(Optional) On web billing, one hardcoded solid-teal 'Manage payment method' button remains — subtle but the loudest colour on an otherwise calm page; check if this is intentional after the de-colour brief."
+  ],
+  "critical_code_review_comments": [
+    "/app/mobile/app/letters/[id].tsx uses `isGuided`/`isResponseDraft` in a useEffect dep-array before they are declared — this is a hard runtime crash on mobile letters detail. This crash alone blocks 2 of the 3 mobile deliverables in the review request.",
+    "/app/mobile/app/letters/[id].tsx is 900+ lines and mixes intake form, cross-tool panel, tone check, share panel, and reply modal — split into 3-4 files (matches the ~700-line file-size guideline).",
+    "In /app/mobile/app/participant/[id].tsx the BudgetGauge/SpendBar work looks solid; empty state 'Run the Budget Calculator or upload a statement to see …' correctly renders when quarterly_budget is null (matches the reviewer's note about cathy having no budget data — parity with web empty state)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "web 100%, mobile 0% (blocked by TDZ crash)"},
+  "test_credentials": "cathy@example.com / testpass123 verified working; participant 0c538637-b0dd-4982-8f78-b32814c6a5eb (Dorothy) used for CP page and letter list.",
+  "seed_data_creation": "",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Web side of this batch is DONE and passing — do not re-verify unless main agent changes web code. The one blocker is the mobile TDZ bug in /app/mobile/app/letters/[id].tsx. Once main agent moves the two const declarations above the prefill useEffect, restart mobile (sudo supervisorctl restart mobile) then re-test on the Expo preview host https://wayly-engagement-hub.expo.preview.emergentagent.com with token bootstrap via localStorage 'kindred_token' (JSON.stringified). Test flow: login → /letters (pick a situation from LettersFollowUps tool) → confirm lf1-prefill-busy shows briefly, then lf1-detail-starter-note appears, then click lf1-import-provider_price_checker chip and confirm the draft regenerates. Also open /participant/{pid} on cathy to confirm pp-financial-position renders the empty-state copy (no budget data) — that's correct parity with web.",
+  "rca of the issue": "Mobile letter detail screen (letters/[id].tsx) declares a useEffect with dependency array `[entry, isGuided, isResponseDraft, id, draft]` on line 438, but the `const isGuided`/`isResponseDraft` are declared 3-5 lines LATER at 441-443. JavaScript `const` bindings are in the temporal dead zone until their declaration line executes, so evaluating the dep-array during render throws `ReferenceError: Cannot access 'isGuided' before initialization`. Fix: hoist those two consts to just above the useEffect (after `entry` state is available). Zero-risk change."
+}

@@ -1,0 +1,29 @@
+{
+  "summary": "PERSONA-1 Workstreams C+F+3a (admin persona preview) — end-to-end verified. Backend: 28/28 base persona pytests pass; added a new test_iter76_admin_override.py (4 additional cases) that (a) grants admin_role on cathy in-mongo, (b) exercises the admin-only override path, and (c) unsets admin_role in fixture teardown. All 32 backend tests green. Frontend: signup persona toggle (caregiver → participant → caregiver) works and the 3 caregiver fields (signup-cr-first-name / signup-cr-relationship / signup-cr-pronouns) render only for caregiver role. Full caregiver signup (Louisa / daughter / she_her) and participant signup both persist correctly (viewer_persona, care_recipient.is_self, first_name mirror, pronouns, relationship). DEC-1 retrofit hero swaps through 3 states verified live on /app/statements/{id} (Louisa preview → participant preview → cleared/default care_recipient), ADM disclosure renders with the substituted name. Non-admin gating verified: cathy without admin_role does NOT see persona-preview-card on /settings/profile, and any override_persona sent from her session is ignored server-side. localStorage persistence + hydration + clear all work.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_persona_registry.py",
+    "/app/backend/tests/test_persona_routes.py",
+    "/app/backend/tests/test_iter76_admin_override.py",
+    "/app/test_reports/pytest/iter76_persona.xml",
+    "/app/test_reports/pytest/iter76_admin_override.xml",
+    "/app/test_reports/pytest/iter76_final.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Signup POST → PUT /api/persona is fire-and-forget with a swallowed catch. That's fine for MVP, but consider logging via `track` / Sentry so silent persona-set failures are observable — a caregiver whose PUT quietly failed will look 'clean' in the DB but see the fallback caregiver copy forever until they visit Settings.",
+    "DecoderResultView.jsx keeps two persona-hero + adm defaults hardcoded (line 129-134). If the /persona/resolve call fails silently on network error the user sees the generic 'the statement' / no ADM disclosure copy — matches spec, but consider a lightweight retry once (1s backoff) before falling back so a transient blip doesn't degrade Tier-1 copy on first paint.",
+    "PersonaPreviewCard writes directly to localStorage and fires a window event. That's fine same-tab, but a multi-tab admin will see the second tab's preview override not update until reload. Optional: subscribe to the `storage` event too if multi-tab is a desired workflow.",
+    "usePersona hook's _bundleCache is a module-level singleton that never invalidates on user logout/switch. If admin A switches to non-admin session B without a hard reload, B could briefly see A's cached tokens. Suggest clearing _bundleCache on the logout path.",
+    "test_persona_routes.py::TestAdminPreviewOverride only covers the non-admin negative case (positive admin path lives in test_iter76_admin_override.py which needs direct mongo access). Fine for now, but if this suite ever moves off the preview env you'll want a fixture that provisions an admin user via API rather than mongo write."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (32/32 pytest)", "frontend": "100% (signup persona, DEC-1 retrofit hero for all 3 preview states, admin gating, localStorage hydration)"},
+  "test_credentials": "cathy@example.com / testpass123 (non-admin; iter76 briefly granted admin_role via mongo and UNSET in teardown — confirmed via post-run query). Iter76 signup fixtures iter76_caregiver@example.com and iter76_participant@example.com were created + deleted during this run.",
+  "seed_data_creation": "None permanent. Ephemeral: 2 signup users created for the flow test and removed in teardown; cathy.admin_role temporarily set='super_admin' twice and unset both times (post-run mongo query returns admin_role=None and key absent).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "PERSONA_V1_ENABLED=true in backend/.env. Full pytest suite for PERSONA-1 lives across test_persona_registry.py, test_persona_routes.py, test_iter76_admin_override.py — 32 tests total, all green. cathy@example.com must remain without admin_role for the base persona_routes suite to pass (its TestAdminPreviewOverride::test_non_admin_override_ignored assumes no admin_role). Statement /app/statements/112f91e4-7f85-419c-86f4-bd3128382678 in cathy's household is the golden fixture for the DEC-1 retrofit view (1 high anomaly → charged-correctly banner correctly hidden). PersonaPreviewCard hydration + wayly:persona-preview-changed event flow are working — subsequent iters can rely on both for downstream Tier-1 retrofits (LF-1 / CE-2 in Workstreams G/H).",
+  "rca of the issue": "N/A — no bugs found in this iteration. Every requested acceptance criterion held on first pass."
+}

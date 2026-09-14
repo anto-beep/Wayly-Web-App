@@ -1,0 +1,49 @@
+{
+  "summary": "Iteration 334 — frontend-only, both platforms. All P0s VERIFIED PASSING: (1) Mobile onboarding DOB masking now works (typing '01011940' auto-formats to '01/01/1940', partial '15'->'15','1506'->'15/06','15061955'->'15/06/1955'; with valid ISO DOB + all other required fields, onboarding-step1-continue becomes enabled and advances to step 2/authorisation). (2) Aged Care Q&A on web /ai-tools/family-coordinator renders proper markdown (bold text, links, multiple short paragraphs) — no literal '**' or '[text](url)' visible in body text; the 'Report an Issue With This Result' button now sits BELOW the input bar (btnTop≈1032 > inputTop≈946). (3) Letters required-field GATE web: lf1-required-gate + lf1-required-missing + lf1-required-missing-jump present and lf1-generate-button disabled until required fields are filled; missing message correctly lists 'Complaint category'. (4) Letters required-field GATE mobile: lf1-required-missing present with correct wording and lf1-generate-button DISABLED — but lf1-required-gate wrapper testID and lf1-required-missing-jump testID are MISSING on mobile (parity gap; behavior itself works). (5) Letter TITLE capitalisation: web lf1-detail-title = 'Services on the plan aren't being delivered' (capital S); mobile lf-detail-summary same. (6) Auto-address: web+mobile show lf1-recipient-use-provider with 'Address to Test Provider 8c1af9aa / profile@testprovider.com.au / One tap' and tapping updates lf1-recipient-current. (7) Mobile Notifications regression: tapping a notification-item-* removes it from the list; mark-all-read empties the sheet. Fresh signup on mobile is BLOCKED behind Stripe payment (signup-payment-gate) — could not run onboarding via a brand-new account without a card, so DOB flow was verified against cathy's account via deep-linked step-1 (draft PUT with step:1). This is a pre-existing product flow (Stripe trial gate), NOT a regression from this session.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "CorrespondenceDetail (letter detail /letters/[id])", "issue": "Wrapper testID lf1-required-gate and jump-to-fields testID lf1-required-missing-jump are missing on mobile; only lf1-required-missing is rendered. Functional behavior (disabled Generate + missing list) is correct, but this breaks parity with web and the automated parity contract in the review request. Reference: /app/mobile/app/letters/[id].tsx", "testID": "lf1-required-gate,lf1-required-missing-jump", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Letters required-field gate", "platform": "mobile", "issue": "Web renders lf1-required-gate wrapper and lf1-required-missing-jump; mobile only renders lf1-required-missing (no gate wrapper, no jump button).", "expected": "Same three testIDs on both surfaces", "actual": "Mobile missing lf1-required-gate and lf1-required-missing-jump"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter334_fc_answered.jpeg",
+    "/app/test_reports/iter334_lf_detail_gate.jpeg",
+    "/app/test_reports/iter334_mob_step1_filled.jpeg",
+    "/app/test_reports/iter334_mob_step2.jpeg",
+    "/app/test_reports/iter334_mob_letter_detail.jpeg",
+    "/app/test_reports/iter334_mob_letter_scroll.jpeg",
+    "/app/test_reports/iter334_mob_notif_sheet.jpeg"
+  ],
+  "action_items": [
+    "MOBILE: add data-testid='lf1-required-gate' wrapper around the required-gate block and a 'Take me to the fields' pressable with testID='lf1-required-missing-jump' in /app/mobile/app/letters/[id].tsx to match the web contract.",
+    "Consider: allow reaching /onboarding on a fresh signup without Stripe card (or add a preview-only bypass) so end-to-end onboarding DOB flow can be tested from Sign Up on mobile. Current preview forces signup-payment-gate before onboarding, which blocks brand-new-account testing."
+  ],
+  "critical_code_review_comments": [
+    "DateField web mask implementation in /app/mobile/src/components/ui.tsx is correct and handles focused-vs-blurred syncing well (focusedRef prevents clobber-on-parent-re-render).",
+    "AGED_CARE_QA_SYSTEM prompt output now renders through the markdown pipeline on FamilyCoordinator — verified visually.",
+    "In mobile letter detail, the required-missing UI is functional but does not use the same three testIDs as web — small parity fix required."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "web 100% / mobile ~90% (parity gap on gate testIDs)"},
+  "test_credentials": "cathy@example.com / testpass123 (used). Mobile fresh signup path blocked at Stripe gate.",
+  "seed_data_creation": "Overwrote cathy's /onboarding/draft with step:1 to force step-1 rendering (harmless — signup flow only).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "For mobile onboarding step-1 testing you can PUT /api/onboarding/draft {data:{tier1:{...},tier2:{},auth:{confirmed:false},step:1}} using cathy's kindred_token from localStorage (value is a JSON-quoted string, strip the surrounding quotes). Then load /onboarding — the client will restore step 1. Fresh signups on mobile currently pass through signup-payment-gate (Stripe) before onboarding so cannot be used to test onboarding directly without a card.",
+  "rca of the issue": "The DOB mobile onboarding blocker root cause was that DateField on the Expo web platform previously rendered a native-style picker Pressable that never produced an ISO date when the user typed. The fix (onWebText in DateField) now digit-masks the TextInput to DD/MM/YYYY and only calls onChange with an ISO 'YYYY-MM-DD' when all 8 digits form a valid calendar date, unblocking step1Valid which requires /^\\d{4}-\\d{2}-\\d{2}$/ on t1.dob."
+}

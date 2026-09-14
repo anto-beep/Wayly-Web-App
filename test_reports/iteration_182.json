@@ -1,0 +1,34 @@
+{
+  "summary": "Mobile-only frontend parity verification for the new reusable SmartAISummary across all 11 target screens using cathy@example.com (Family plan). All 11 pageKeys render the card with testID `smart-ai-summary-{pageKey}`, body via `smart-ai-summary-body-{pageKey}`, working Refresh (`smart-ai-summary-refresh-{pageKey}`), and severity-tinted alerts (`smart-ai-summary-alert-{pageKey}-{i}`). sanitizeAI verified — no ' - ', em- or en-dashes in any body or alert. Dark-mode legibility verified on dashboard, audit-log, and budget-scenarios (dark card bg + white Text, tinted alert borders remain distinguishable).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter182_dashboard.jpeg",
+    "/app/test_reports/iter182_invoice_detail.jpeg",
+    "/app/test_reports/iter182_dashboard_dark2.jpeg",
+    "/app/test_reports/iter182_audit_dark2.jpeg",
+    "/app/test_reports/iter182_budget_dark.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "SmartAISummary.tsx: fallback string 'Looking at your latest data. One moment while we pull the highlights together.' is not passed through sanitizeAI (harmless, no dashes) but for consistency it could be. Minor.",
+    "Refresh visibly works (network call issued and body content changed on dashboard). No debouncing needed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (11/11 SmartAISummary targets present and functional)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, participant Mum, Jul–Sep 2026 classification 4)",
+  "seed_data_creation": "None. Existing data: 39 statements, 25 invoices, 30 letters, 50 cases, 149 anomalies, 1 saved provider rating, 1 in-progress switch — all target screens had data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "SmartAISummary matrix verified on Expo web preview at https://mobile-exact-parity.expo.preview.emergentagent.com. Per-screen results: dashboard (3 alerts, refresh re-fetched & body changed), statements-list (2), statement-detail (1) — statement id 1e6f55e6..., invoices-list (2), invoice-detail (3, needs ~10s for LLM), budget-scenarios (3), provider-comparison (1 — BlueBerry Care rating already saved), letters-mailbox (1), audit-log (3), provider-switches (1 — a switch row exists), complaints-list (3 — 50 open cases). Dark mode toggled via Settings → theme-dark, card_bg switched to rgba(168,199,171,0.12) with white body text; alert tints preserved.",
+  "rca of the issue": ""
+}

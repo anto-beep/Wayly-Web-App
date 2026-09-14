@@ -1,0 +1,62 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "I want the admin to use the light colour as the user backend on login. Also with the dark background, some text are hard to see as they are not white - I have attached screenshots. I want this to be fixed throughout the entire backend. I want a section where they can change this.",
+  "summary": "No relevant testing skill found. Focused admin-theme verification found the primary contrast/login fixes working, but the new Preferences theme controls are not synchronized with the top-bar theme toggle, so the theme-changing section is only partially fixed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Admin theme controls",
+        "issue": "After choosing Light on /admin/preferences, the page switches immediately and localStorage is updated, but the top-bar Light button still has aria-pressed='false'. After choosing Dark from the top bar while on Preferences, the Preferences Dark radio still has aria-checked='false' and Light remains checked.",
+        "selector": "[data-testid='prefs-theme-light'], [data-testid='admin-theme-light'], [data-testid='admin-theme-dark'], [data-testid='prefs-theme-dark']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Admin theme preference sync",
+        "issue": "AdminShell and AdminPreferences each keep independent theme state. localStorage/root data-theme update succeeds, but mounted controls do not stay in sync until navigation/remount.",
+        "affected_selectors": [
+          "[data-testid='admin-theme-light']",
+          "[data-testid='admin-theme-dark']",
+          "[data-testid='prefs-theme-light']",
+          "[data-testid='prefs-theme-dark']"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/admin_theme_bug_verification_iter83.py",
+    "/app/tests/create_admin_theme_token_iter83.py",
+    "/app/test_reports/admin_theme_bug_iter83_results.json"
+  ],
+  "action_items": [
+    "Move admin theme state into a shared context/store (or pass AdminShell setter to Preferences) so both the top-bar segmented control and /admin/preferences radio group render from the same state.",
+    "Do not have AdminPreferences directly mutate .admin-root only; update the shared state and localStorage together, or dispatch/listen for a theme-change event while mounted.",
+    "Retest Preferences-to-topbar and topbar-to-Preferences sync after the change."
+  ],
+  "critical_code_review_comments": [
+    "AdminPreferences has its own useState initialized from localStorage and directly sets document.querySelector('.admin-root').setAttribute('data-theme', t), but AdminShell owns the top-bar theme state and is not updated by this action.",
+    "AdminShell writes localStorage when the top-bar toggle changes, but AdminPreferences does not observe that change while mounted, leaving its aria-checked state stale."
+  ],
+  "updated_files": [
+    "/app/tests/admin_theme_bug_verification_iter83.py",
+    "/app/tests/create_admin_theme_token_iter83.py",
+    "/app/test_reports/admin_theme_bug_iter83_results.json",
+    "/app/test_reports/bug_verification_83.json",
+    "/app/test_reports/iteration_83.json"
+  ],
+  "success_rate": {
+    "backend": "N/A",
+    "frontend": "80%"
+  },
+  "seed_data_creation": "Created short-lived admin_sessions DB entries for hello@techglove.com.au to authenticate the admin UI without consuming MFA backup codes or changing TOTP setup. Temporary token file was deleted after testing.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Primary symptoms passed: /admin/login renders light (root data-theme='light', contrast 14.3:1); /admin Overview h1 contrast 15.53:1; TOTAL USERS/MRR labels contrast 10.0:1; /admin/feature-flags h1 contrast 15.53:1; Preferences page exists; Light toggle applies immediately and persists across navigation; System follows emulated light/dark OS. Remaining failure: top-bar and Preferences controls do not stay in sync while mounted.",
+  "rca_of_the_issue": "Repro: login as admin, open /admin/preferences, click Light. The admin root switches to light and localStorage['wayly.admin.theme']='light', but [data-testid='admin-theme-light'] remains aria-pressed='false'. Then click top-bar D; root/localStorage switch to dark, but [data-testid='prefs-theme-dark'] remains aria-checked='false' and Preferences still shows Light:true. Root cause is split theme state between AdminShell and AdminPreferences with local DOM/localStorage mutation instead of a shared state source. No APIs were MOCKED."
+}

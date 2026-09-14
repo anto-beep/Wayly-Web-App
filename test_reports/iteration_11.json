@@ -1,0 +1,31 @@
+{
+  "summary": "Iter11 E2E verification of AI-tools gating overhaul + Lifetime-tier purge + product screenshots. Backend 9/9 passed (pytest). Frontend verified via Playwright on public URL: AI-tools index badges correct (SD 'FREE — 1 USE/DAY' + 7 'SOLO & FAMILY' cards with '7-day free trial' subtext); Budget Calculator unauth renders ToolGate with all CTAs + Statement Decoder escape hatch + blurred preview; Statement Decoder unauth page has no gate, sd-screenshot-tour present, 1st submit returns 200 with sd-conversion-panel (Start free 7-day trial visible), 2nd submit returns 429 with sd-daily-limit panel (countdown + Start free trial + Sign in CTAs); Landing how-it-works + dashboard-strip present; Pricing pricing-devices-strip present; ForAdvisors advisor-screenshots present. Lifetime pricing tier has been purged (no $799 anywhere, no tier card); remaining occurrences of 'Lifetime' refer to the NDIS lifetime-cap domain concept (Lifetime Cap tracker/calculator) which is product content, not the tier. Regressions clean: Cathy login + /app dashboard + nav-bell + Cmd-K palette all work.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter11_gating.py",
+    "/app/test_reports/pytest/iter11_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is ~1920 lines — previously flagged; still recommend splitting into routers (public/tools, digest, notifications, billing, household, auth).",
+    "On gated /public/* endpoints, the Pydantic body parameter is resolved BEFORE the `_require_paid_plan` dependency, so an unauthenticated request with a malformed body returns 422 instead of 401. Not a blocker — valid payloads correctly hit 401. To make gating strictly outermost, convert `_require_paid_plan` into a FastAPI `Depends(...)` declared BEFORE the body parameter (or move the auth check to middleware). Observed on /public/price-check and /public/classification-check during testing.",
+    "SD cookie set via `Response.set_cookie(..., samesite='lax', secure=True)` — confirmed working over the public HTTPS preview URL. Good.",
+    "_trial_active only parses ISO strings; if trial_ends_at ever becomes a native datetime in Mongo, the branch returns False silently. Consider handling datetime objects too.",
+    "AIToolsIndex renders 'SOLO & FAMILY' via uppercase utility — semantically the label is 'Solo & Family' in source, which matches spec. OK."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter11_gating.py (NEW — 9 tests, 9 pass)"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan). Throwaway Free signups created per test; one patched with trial_ends_at=now+3d to verify trial_active bypass.",
+  "seed_data_creation": "Created ~3 throwaway Free-plan users (it11*@example.com) via /api/auth/signup; one patched in Mongo to set trial_ends_at in the future for the trial-active test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All iter11 acceptance criteria verified. Backend gating helpers (_require_paid_plan, _enforce_statement_decoder_limit, _trial_active) all functioning. Cookie name confirmed 'kindred_sd_used'. PAID_PLANS={solo,family,advisor,advisor_pro}. Frontend data-testids confirmed present: tool-gate, sd-conversion-panel, sd-daily-limit, sd-screenshot-tour, how-it-works, dashboard-strip, pricing-devices-strip, advisor-screenshots, nav-bell. Landing/Pricing 'Lifetime' strings that remain are all the NDIS lifetime-cap product concept (legitimate), not the purged pricing tier. If next iteration tightens the spec to disallow ANY 'Lifetime' substring on those pages, main agent will need to rename 'Budget & Lifetime Cap Calculator' and related copy — flagging for awareness.",
+  "rca of the issue": "N/A — all acceptance tests green."
+}

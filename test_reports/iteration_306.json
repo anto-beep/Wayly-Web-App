@@ -1,0 +1,101 @@
+{
+  "summary": "Responsive audit of Wayly web app at 390 (phone) / 768 (tablet) / 1440 (desktop). Logged in as cathy@example.com. Programmatically measured document.scrollWidth vs clientWidth and enumerated every DOM element wider than the viewport, on 11 screens (landing, pricing, dashboard, statements list, statement detail — user-reported, ai-tools, reports, pacing, invoices, profile, billing). GOOD NEWS: no top-level horizontal page overflow at any viewport on any screen — document.scrollWidth == clientWidth everywhere (see /app/test_reports/iter306_web/findings.json). Nothing bleeds past the html/body. However, TWO screens ship a table with min-w-[720px] that lives inside an overflow-x:auto wrapper, so on phone (390px) the user must swipe sideways inside the table to see columns — this is the biggest mobile UX issue found. The user-cited 'long orange Things to Know section' on Statement Detail (/app/statements/d5267556-…) is in fact well-contained on phone: the orange 'WHAT WE FOUND' summary card and the cream/orange 'Ask Wayly / Things to Know / disclaimer' blocks all render inside 358px (viewport 390 with 16px page padding); nothing is cut off. It just looks visually 'long' because on a narrow column the vertically-stacked cards run for ~5,500px of scroll. That is expected mobile-stack behaviour, NOT broken layout. Tablet (768) renders essentially the same layout as desktop — content flows well, header + action-button row fit, cards are single-column but wider. See detailed per-screen findings below.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "StatementsTable",
+          "issue": "Table forces min-w-[720px] so on phone (390) the columns (Period / Provider / Uploaded / Gross Total / Closing Balance) overflow the viewport-width and require sideways scrolling inside the table wrapper. Column headers and cell content get clipped at the right edge until the user swipes. Same layout is used at tablet (768) where it just barely fits.",
+          "selector": "[data-testid='statements-table'] (table.w-full.text-sm + inner div.grid.min-w-[720px])",
+          "priority": "HIGH"
+        },
+        {
+          "component": "InvoicesTable",
+          "issue": "Identical pattern to Statements: inner div.grid uses min-w-[720px] so at phone (390) users must horizontally-scroll inside the container to see the Amount / Findings / Vetted columns. Columns Invoice date, Provider, Uploaded, Amount, Findings, Vetted don't reflow.",
+          "selector": "table.w-full.text-sm on /app/invoices (rows [data-testid^='invoice-row-'])",
+          "priority": "HIGH"
+        },
+        {
+          "component": "StatementDetail — 'WHAT WE FOUND' orange summary card",
+          "issue": "At phone (390) the compact card is contained (358x~180px) but the right-side chip label 'Worth a look' wraps to two lines while the '3' donut consumes ~50% width — feels cramped. Not broken, but density is high. Consider stacking the donut above the chips at <sm.",
+          "selector": "[data-testid='decoder-stream-breakdown'] sibling 'WHAT WE FOUND' card in [data-testid='decoder-result-v2']",
+          "priority": "LOW"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {
+          "screen": "/app/statements (phone 390)",
+          "issues": [
+            "Table uses horizontal-scroll inside a card instead of collapsing to a card/list layout on <sm; discoverability of the hidden columns is poor (no scroll shadow/hint).",
+            "Row min-height at 720px width means each row's tall padding still applies at phone, so vertical footprint is larger than needed."
+          ]
+        },
+        {
+          "screen": "/app/invoices (phone 390)",
+          "issues": [
+            "Same horizontal-scroll-in-card issue as statements; no visible affordance that the row is wider than the viewport."
+          ]
+        },
+        {
+          "screen": "/app/statements/{id} — StatementDetail (phone 390)",
+          "issues": [
+            "Overall LOOKS FINE — no overflow, cards stack cleanly. Total scroll height ~5.5k px which is expected for the amount of content (Reconcile CTA, Ask Wayly card, decoder hero, stream-breakdown donut, WHAT WE FOUND, severity groups, line-item table, disclosure, Your rights section, disclaimer).",
+            "The line-item table (Show full line-item table) if expanded may also require horizontal scroll (same table pattern — not verified expanded on phone in this pass)."
+          ]
+        },
+        {
+          "screen": "/app/statements/{id} — StatementDetail (tablet 768)",
+          "issues": [
+            "Layout stays single-column (no lg:grid-cols-2 kicks in) which is fine but leaves large white space to the right of narrow cards on tablet in portrait. Could benefit from a 2-col grid at md."
+          ]
+        }
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "per_screen_audit": [
+    {"screen": "/", "phone": "PASS — no overflow, clean scroll", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/pricing", "phone": "PASS — cards stack, CTA visible", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/app (dashboard)", "phone": "PASS — action bar, at-a-glance, Wayly Summary, anomaly warning chips all render clean at 358px content width", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/app/statements", "phone": "FAIL — table 720px wide inside 390 viewport (horizontal scroll inside card)", "tablet": "PASS (720 fits in 768)", "desktop": "PASS"},
+    {"screen": "/app/statements/d5267556-…", "phone": "PASS visually — no bleed; content is long but expected; orange WHAT WE FOUND is CONTAINED", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/app/ai-tools", "phone": "PASS", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/app/reports", "phone": "PASS — 'Reports · Dorothy' loads with proper stacked cards; first navigation transient 404-like screen was cache, retry loaded correctly", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/app/pacing", "phone": "PASS — no overflow reported", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/app/invoices", "phone": "FAIL — same 720px table pattern as statements", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/settings/profile", "phone": "PASS", "tablet": "PASS", "desktop": "PASS"},
+    {"screen": "/settings/billing", "phone": "PASS", "tablet": "PASS", "desktop": "PASS"}
+  ],
+  "measurement_evidence": {
+    "method": "For each (viewport, screen) tuple: document.documentElement.scrollWidth - clientWidth = 0 EVERYWHERE. Additionally enumerated any element with getBoundingClientRect().width > innerWidth+4. The only hits were the two table constructs (min-w-[720px]) which live inside a scrollable wrapper so they do not push the page.",
+    "raw_findings_file": "/app/test_reports/iter306_web/findings.json",
+    "screenshots_dir": "/app/test_reports/iter306_web/",
+    "bottom_nav": "Present at phone (data-testid='mobile-bottom-nav' count=1). Hamburger by that testID not found — top-right menu button in Layout uses a different testID (three-line icon). Bottom nav confirmed rendering."
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter306_web/findings.json",
+    "/app/test_reports/iter306_web/audit.py"
+  ],
+  "action_items": [
+    "Statements list (/app/statements) and Invoices list (/app/invoices) both force min-w-[720px] on the grid rows — replace with a phone-first card list at <sm (or drop non-essential columns to Period+Provider+Amount) and keep the current 6-column grid at md+.",
+    "Add a small right-edge scroll indicator on the wrapper (or a shadow) so phone users know the table scrolls horizontally, if you elect to keep the min-w-[720px] approach.",
+    "StatementDetail 'WHAT WE FOUND' card: consider stacking donut ABOVE the chips on <sm so the 'Worth a look 2' chip doesn't wrap awkwardly (LOW priority — cosmetic).",
+    "StatementDetail on TABLET (768) — no md:grid-cols-2 is applied to the mid-page cards; consider a 2-col layout at md to reduce vertical scroll on iPad portrait (nice-to-have)."
+  ],
+  "critical_code_review_comments": [
+    "The user-reported 'long orange Things to Know section looks bad on phone' is NOT a broken-layout bug — the orange section is fully contained (w=358 inside vpw=390 with 16px page padding). Perceived length is a function of vertical stacking of ~8 sections (Reconcile → Private note → Ask Wayly → decoder hero → stream breakdown → WHAT WE FOUND → severity groups → line items → disclosure → Your rights → disclaimer). If the intent is a shorter mobile page, consider collapsing 'Your rights' + disclaimer behind an accordion at <sm.",
+    "Two data tables (statements, invoices) use a hard min-w-[720px] which is the ONLY objective responsive defect found. Everything else — Layout, dashboard, ai-tools, reports, pacing, settings, landing, pricing — passes the audit cleanly at all three viewports.",
+    "StatementDetail total content height ~5,535px at phone: acceptable but suggests opportunity to defer 'Your rights' / disclaimer / disclosure blocks behind an expand-on-tap at <sm."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "9/11 screens fully clean; 2/11 (statements + invoices) have horizontal-scroll-in-card table issue"},
+  "seed_data_creation": "None — used existing cathy@example.com Family account and existing statement d5267556-57c4-4925-90c7-13eca0ba24f3.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "iter306 audited responsive layout at 390/768/1440. Punch-list is short: (1) Statements table min-w-[720px] on phone, (2) Invoices table min-w-[720px] on phone, (3) minor cosmetic densities on StatementDetail orange 'WHAT WE FOUND' chip wrap. StatementDetail is otherwise contained and correct on phone — user's report of the orange section looking bad is perception of stacked-card height, not overflow/clipping. If main agent implements card-list at <sm, retest by loading /app/statements + /app/invoices at 390 and confirming no min-w and no inner horizontal scroll.",
+  "rca of the issue": "Root cause of the ONLY concrete responsive-layout defect found: StatementsTable and InvoicesTable both use a grid row with Tailwind class 'grid items-center gap-4 px-6 py-3 min-w-[720px]'. That hard min-width is applied at all breakpoints, so on a 390px viewport the row is 720px wide and the parent overflow-x wrapper accepts sideways scrolling inside the card. Fix: remove the min-w-[720px] and switch to a phone-first stacked-card layout (or use responsive column visibility — hidden md:table-cell) and only apply the 6-col grid at md+."
+}

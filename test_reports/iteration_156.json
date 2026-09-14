@@ -1,0 +1,54 @@
+{
+  "summary": "Mobile Expo web preview sweep for iter156. Login OK (cathy@example.com). Verified scroll-to-top on Dashboard and Statements (both return to 0 after re-tapping the same footer tab; scrolled 1500 -> 0). All 6 newly-enabled screens render with real backend data: /amendments shows 6 existing DRAFT change-requests with generated_letter previews and the New form exposes 5 change-type chips (add/increase/decrease/remove/swap), reason input, and Generate button; /scenarios shows the events history and the Log form loads 10 event-type groups from /scenario/event-types (10 chips visible under 'Classification & assessment' after expand); /athm shows 6 existing PROPOSED items with 'Advance status' buttons and the New form exposes AT/HM kind chips; /letters lists 6 correspondence entries (Fee dispute DRAFT to Provider CM, Escalation DRAFT to ACQSC etc.) and the 'Draft a new letter' CTA; /chsp-tools contains the 'Where are you with CHSP?' selector and invoice CTA copy; /classification-prep contains classification + self-check copy. Settings has 10 notif-* testIDs (5 rows + 5 toggles) plus theme-light/dark/system, settings-plan, privacy-link-*, settings-logout. Dark theme toggle applied — visual verification shows dark bg on /amendments, /scenarios, /athm; screenshots for /letters, /chsp-tools, /classification-prep in dark saved. No em-dashes / en-dashes counted in the sampled visible body copy. sanitizeAI is used for the generated_letter preview in amendments (wrapped in sanitizeAI at line 156).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "AppHeader title", "issue": "'Care-Plan Changes' truncates to 'Care-Plan Ch...' at 390px viewport (client width 196px, scroll width 231px). Title is ellipsised because AppHeader title uses numberOfLines=1. Reference: /app/mobile/app/amendments.tsx:90 (title prop) + AppHeader component.", "testID": "n/a", "priority": "MEDIUM"},
+        {"component": "AppHeader title", "issue": "'AT & HM Projects' truncates to 'AT & HM Proj...' at 390px viewport (client width 196px, scroll width 216px). Same numberOfLines=1 issue as amendments. Reference: /app/mobile/app/athm.tsx:79.", "testID": "n/a", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [
+        {"flow": "Letters follow-ups", "issue": "Letters mailbox loaded 6 correspondence entries but returned 0 overdue and 0 upcoming follow-ups for cathy@example.com's active participant, contrary to review-request note that the seeded participant has follow-ups. May be participant_id filtering mismatch OR the seeded follow-ups don't have due_at values in this env. Verify /lf1/follow-ups?participant_id=<active> returns items via curl to confirm whether this is a data issue or a client-side filter.", "affected_testIDs": ["letters-overdue", "letters-upcoming"]}
+      ],
+      "design_issues": [
+        {"screen": "AppHeader (mobile 390px)", "issues": ["Any screen with a title longer than ~15 chars ellipsises. Consider allowing title to wrap to 2 lines (numberOfLines=2) OR shortening titles ('Care-Plan Changes' -> 'Plan Changes', 'AT & HM Projects' -> 'AT & HM'). This is a generic AppHeader constraint that affects multiple new screens."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter156_home.jpeg",
+    "/app/test_reports/iter156_amend2.jpeg",
+    "/app/test_reports/iter156_scenario2.jpeg",
+    "/app/test_reports/iter156_athm2.jpeg",
+    "/app/test_reports/iter156_letters2.jpeg",
+    "/app/test_reports/iter156_settings2.jpeg",
+    "/app/test_reports/iter156_dark_amendments.jpeg",
+    "/app/test_reports/iter156_dark_scenarios.jpeg",
+    "/app/test_reports/iter156_dark_athm.jpeg",
+    "/app/test_reports/iter156_dark_letters.jpeg",
+    "/app/test_reports/iter156_dark_chsp-tools.jpeg",
+    "/app/test_reports/iter156_dark_classification-prep.jpeg"
+  ],
+  "action_items": [
+    "Fix AppHeader title truncation on /amendments ('Care-Plan Changes') and /athm ('AT & HM Projects'): allow title to wrap (numberOfLines=2) or shorten titles. Occurs on 390px viewport.",
+    "Verify /lf1/follow-ups returns overdue/upcoming items for cathy@example.com's active participant. If seeded, the mobile client should render them under 'letters-overdue'/'letters-upcoming' cards; if not seeded, treat as data-fixture gap."
+  ],
+  "critical_code_review_comments": [
+    "/app/mobile/app/amendments.tsx save() correctly sends sender_name from useAuth() user.name with 'Primary caregiver' fallback, and generated_letter output is wrapped in sanitizeAI() at line 156 to strip dashes for the preview.",
+    "/app/mobile/app/scenarios.tsx save() posts event_type + effective_date, source is omitted (matches curl contract). apply_transitions=true is passed. Groups fetched via useEffect (not participant-dependent).",
+    "/app/mobile/app/athm.tsx advance() uses optimistic UI (setItems then PUT); if the PUT fails it calls load() which will revert — good pattern.",
+    "/app/mobile/app/letters.tsx uses Promise.all with .catch fallbacks to prevent one failing endpoint from blocking the other — resilient.",
+    "AppHeader title is being ellipsised (numberOfLines=1 on the title Text). For new screens with longer titles, this cuts UX quality. Consider a global fix in AppHeader (numberOfLines=2 with tight lineHeight)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "95%"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan, active participant seeded with amendments, athm items, correspondence, event history).",
+  "seed_data_creation": "None. Existing seeded data was sufficient (6 amendments, 6 athm items, 6 correspondence entries visible).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "iter156 confirmed the 4 newly-enabled journeys + 2 Their Care screens work end-to-end. Scroll-to-top via useScrollToTop is functioning on Dashboard and Statements. Only outstanding polish item is title truncation in AppHeader for 'Care-Plan Changes' and 'AT & HM Projects' at 390px viewport — belongs to the same class of bug as iter155's subtitle truncation but on titles instead. Login testIDs are: login-email-input, login-password-input, login-submit-button (NOT login-email/login-password/login-submit as older reports assumed). Settings testIDs: notif-toggle-<key> for 5 keys (anomaly_alerts, wellbeing_concerns, family_messages, weekly_digest, product_updates), plus theme-light/dark/system, settings-plan, privacy-link-privacy/terms/data, settings-logout. Dark mode toggle works globally.",
+  "rca of the issue": "Title truncation RCA: AppHeader Text component uses numberOfLines={1} (default single-line behavior for React Native title Text). At 390px viewport minus icons/right-button, the available title width is ~196px; strings like 'Care-Plan Changes' (231px) and 'AT & HM Projects' (216px) exceed that. Fix options: (a) numberOfLines={2} on title with a tighter lineHeight, (b) shorten titles, (c) render right-button below title on narrow viewports."
+}

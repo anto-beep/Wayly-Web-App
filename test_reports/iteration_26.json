@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 26 (Iteration A) — CMS + Admin Invite + ReDoS fix + password toggle. 37/37 backend pytest cases pass; all critical frontend flows verified.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "AdminLogin", "issues": ["React console warning: 'Cannot update a component (BrowserRouter) while rendering a different component (AdminLogin)'. Non-blocking but indicates a setState being called during render — likely a navigate() or setState invoked in the function body. Recommend wrapping in useEffect."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter26_cms_invite.py",
+    "/app/test_reports/pytest/iter26.xml"
+  ],
+  "action_items": [
+    "(Low priority) Fix React setState-in-render warning on AdminLogin — wrap any auto-nav/redirect side-effect in useEffect.",
+    "(Optional) Consider exposing data-testid='admin-login-email' / 'admin-login-submit' / 'admin-2fa-code' / 'admin-2fa-submit' if not already done (testing assumed presence and they worked)."
+  ],
+  "critical_code_review_comments": [
+    "ReDoS fix is correctly applied: /admin/search now re.escapes the query before passing to Mongo $regex. Verified: q='.*' and q='(a+)+b' both return 200 in <2s and q='hello@techglove' still finds the matching user.",
+    "Admin invite flow correctly: (a) supersedes prior pending invites, (b) flips to 'accepted' on success, (c) rejects re-acceptance with 400, (d) returns 404 on revoking non-pending, (e) returns 409 if email already an admin, (f) freshly-created admin can log in with new password and is offered 2FA setup (requires_2fa_setup:true).",
+    "CMS endpoints: slugs are lowercased server-side; slug validation, duplicate-slug 409, public 404-on-draft, publish-then-public-200 all working. Glossary bulk-import idempotent (added=2 / skipped=1 verified).",
+    "Magic-link accept page handles all 3 states correctly: invalid → 'Invite unavailable' (accept-invite-error), success → accept-invite-done w/ accept-invite-signin, second visit → accept-invite-stale ('This invite is no longer valid')."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter26_cms_invite.py"],
+  "success_rate": {"backend": "100% (37/37)", "frontend": "100% on tested flows"},
+  "test_credentials": "hello@techglove.com.au / AdminPass!2026 (TOTP CYB5PKTKR4F2JM4ACWIFTY2C67RUVUTI). Test invite acceptee: smoke-ui-1778507224@example.com / NewAdminPass1!",
+  "seed_data_creation": "All test data prefixed TEST_ (glossary terms) or test- (article/template/changelog slugs); auto-cleaned in pytest session fixture. smoke-test-e2e@* and smoke-ui-* user/invite docs also auto-cleaned.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend test file is /app/backend/tests/test_iter26_cms_invite.py (37 cases, runs in ~9s). Note: ArticleBody and TemplateBody server-side lowercase the slug, so pass slugs in lowercase (e.g. 'test-aged-care-os') when creating. Accept-invite confirm field testid is 'accept-confirm' (NOT 'accept-password-confirm' as review brief loosely stated)."
+}

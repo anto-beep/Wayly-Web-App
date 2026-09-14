@@ -1,0 +1,41 @@
+{
+  "summary": "Verified 3 audit-gap closures for iter 116: LF-2 dedicated router (public status, templates/chains listing, generate-chain, list-per-participant, patch/get/send draft, guards), BC-2 dashboard projection widget, and multi-step wizard LF-2 hand-offs on both PSW-1 decision walkthrough and hardship walkthrough. Backend: 11/11 pytest passed. Frontend: BC-2 widget renders on /app with all required testids and Full View link -> /app/pacing. Hardship walkthrough final step shows LF2ChainGenerator with chain_key=hardship_full and successfully generated 2 drafts (provider + my_aged_care). PSW-1 walkthrough (Save walkthrough on step 5) transitions to step 6 done state with psw1-lf2-chain block; LF2ChainGenerator with chain_key=psw_switch_full generated 2 drafts (formal notice + welcome letter).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "LF2ChainGenerator button while busy", "issues": ["Loading label reads 'Generating,' with a trailing comma instead of an ellipsis. Cosmetic only. Mirrors the same pattern already noted in HardshipWalkthrough Save Notes button ('Saving,')."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter116_lf2.py",
+    "/app/test_reports/pytest/iter116.xml"
+  ],
+  "action_items": [
+    "(Optional cosmetic) Replace 'Generating,' with 'Generating...' in /app/frontend/src/components/LF2ChainGenerator.jsx line 81. Same tiny bug pattern exists in HardshipWalkthrough Save button.",
+    "(Optional) LF-2 send_draft endpoint returns 200 with {sent:true|false, result:...}. When Resend is live but recipient isn't verified, result is mocked. Test asserts only shape, not delivery. Consider explicit 'mocked:true' surfacing in UI if user tries to send to non-verified addresses."
+  ],
+  "critical_code_review_comments": [
+    "lf2.py _fill_template: unused inner _lookup function and unused imports (Callable ok). No effect on behavior.",
+    "lf2.py generate_chain returns drafts with created_at ISO but does not include updated_at; get_draft returns updated_at only if a patch has occurred. Minor inconsistency, non-blocking.",
+    "lf2.py send_draft happily marks status='send_failed' but does NOT surface the exception detail beyond the delivery_result. UI has no dedicated retry endpoint. Consider a /retry or explicit send-status polling if send failures become common.",
+    "LF2ChainGenerator falls back to /core/participants when participantIdParam is null; if user has no participant (fresh signup), UI shows disabled button with no explanatory text.",
+    "BC2Projection: silent null return on error hides diagnostics from users. Could show a small 'Unable to load projection' pill instead."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter116_lf2.py",
+    "/app/test_reports/iteration_116.json",
+    "/app/test_reports/pytest/iter116.xml"
+  ],
+  "success_rate": {"backend": "100% (11/11)", "frontend": "100% (3/3 flows)"},
+  "test_credentials": "cathy@example.com / testpass123; Dorothy participant id 0c538637-b0dd-4982-8f78-b32814c6a5eb.",
+  "seed_data_creation": "Created 3 TEST_iter116 provider switches (CoA, CoB, CoC) for Cathy's Dorothy participant; 2 LF-2 chains (hardship_full x1, psw_switch_full x1) with 4 total drafts, one draft patched with recipient e2e-test@example.com and successfully dispatched via LF-2 send endpoint.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "LF-2 router has 8 endpoints under /api/lf2/*. Status is public; all others require auth + core1 access. Chain generation guards check core1_assert_access which returns 403 for cross-household, and returns 404 (no data leak) for participants that don't exist under the caller's household. Wizard integration: hardship walkthrough auto-lands on the final step showing hardship-handoffs section which renders LF2ChainGenerator unconditionally. PSW-1 decision walkthrough has 5 visible steps; Save walkthrough on step 5 submits POST /api/psw1/switches/{sid}/decision-walkthrough and transitions to step 6 with psw1-walkthrough-done + conditional psw1-lf2-chain (only when final_decision === 'proceed_with_switch'). LF2ChainGenerator button testid follows pattern 'lf2-chain-generate-<chain_key>' and result card is 'lf2-chain-result' with draft rows 'lf2-chain-draft-{i}'.",
+  "rca_of_the_issue": "N/A - no failures observed. All requested audit-gap endpoints and UI hand-offs behave per spec."
+}

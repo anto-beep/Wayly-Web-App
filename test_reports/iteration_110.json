@@ -1,0 +1,42 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "also there are now two Wayly's showing in the dashboard, I want this tool to be one consolidated tool.",
+  "summary": "No relevant testing skill found. Focused verification confirmed Cathy can log in, the desktop sidebar and mobile drawer each show exactly one visible 'Ask Wayly' navigation item, no 'Ask Wayly (Beta)' label appears, the item links to /app/ask-wayly, and old /app/chat plus /app/ask-wayly-v2 bookmarks redirect to the consolidated AW-2 UI with aw2-root/aw2-input. AW-2 API data-pull regression also passed: budget_projection was returned in context_flags_used/citations after consent.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/ask_wayly_consolidation_iter110_playwright.py",
+    "/app/test_reports/aw2_context_iter110_api.py",
+    "/app/test_reports/aw2_context_iter110_api_results.json",
+    "/app/test_reports/bug_verification_110.json",
+    "/app/test_reports/iteration_110.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Inspected frontend/src/components/Layout.jsx, frontend/src/App.js, frontend/src/components/CommandPalette.jsx, frontend/src/pages/CaregiverDashboard.jsx, frontend/src/pages/StatementDetail.jsx, frontend/src/config/toolRegistry.js, frontend/src/pages/AskWaylyV2.jsx, and backend/routes/aw2.py. rg found no 'Ask Wayly (Beta)' label in frontend/src or backend. Recent relevant commit observed: f630bb6.",
+    "Focused on the user-reported Ask Wayly consolidation bug and directly related AW-2 redirect/data-pull checks; unrelated CSC-2, ATHM-1, and CHSP-1 happy paths were not re-tested in this bug-only pass."
+  ],
+  "updated_files": [
+    "/app/test_reports/ask_wayly_consolidation_iter110_playwright.py",
+    "/app/test_reports/aw2_context_iter110_api.py",
+    "/app/test_reports/aw2_context_iter110_api_results.json",
+    "/app/test_reports/bug_verification_110.json",
+    "/app/test_reports/iteration_110.json"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "No seed data created. Test granted budget_projection consent for Cathy/Dorothy and created one AW-2 test conversation via API.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Primary proof: browser automation output showed desktop primary-nav askExact=1/askContains=1/beta=0 with href /app/ask-wayly, mobile drawer askExact=1/askContains=1/beta=0, and AW-2 page loaded from /app/ask-wayly plus old /app/chat and /app/ask-wayly-v2 redirects. API proof: /app/test_reports/aw2_context_iter110_api_results.json has context_flags_used=['budget_projection'] and cited_source_types=['budget_projection'] with no old fallback text.",
+  "rca_of_the_issue": "The earlier duplicate user-visible tool was caused by separate Ask Wayly/Ask Wayly (Beta) surfaces in navigation. Current code presents one sidebar nav item in Layout.jsx pointing to /app/ask-wayly, keeps legacy routes as redirects in App.js, and the AI Tools registry does not add a second Ask Wayly entry."
+}

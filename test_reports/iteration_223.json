@@ -1,0 +1,36 @@
+{
+  "summary": "Iter (Jun 2026) — Google OAuth 2.0 (Wayly's own client ID) integration testing across web + mobile + shared backend. Backend contract for POST /api/auth/google verified: 422 on empty/missing/short credential, 401 with detail 'Could not verify Google sign-in' on invalid JWT, endpoint exists (not 404, not 500). Email/password login + signup regression PASS on both surfaces. Google 'Continue with Google' button renders on web /login and /signup (data-testid login-google / signup-google) with the Google GIS iframe injected, no console errors that crash the page. Mobile /login and /signup render the Google button (testID login-google-button / signup-google-button) with text 'Continue with Google', no red screen. Real end-to-end Google consent handshake NOT attempted (Google blocks automated browsers, per agent-to-agent note).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter_google_oauth_contract.py",
+    "/app/test_reports/pytest/iter_google_oauth.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Web: [GSI_LOGGER] warning 'google.accounts.id.initialize() is called multiple times' appears — non-fatal but suggests GoogleOAuthProvider or GoogleLogin is remounting; consider memoisation to silence noise.",
+    "Backend GoogleCredentialBody uses Field(min_length=10) — so 'short credential' returns 422 instead of 401. Contract is coherent (Pydantic-level rejection before verify), matches expected 422 behavior for malformed payloads.",
+    "Mobile Google flow relies on expo-auth-session Google.useIdTokenAuthRequest opening a WebBrowser — cannot be exercised end-to-end in the Expo web preview against Google's real consent screen (Google blocks automation). Button + prompt wiring verified only up to the tap; server-side token verification tested separately."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter_google_oauth_contract.py"],
+  "success_rate": {"backend": "100% (9/9 tests)", "frontend": "100% (web + mobile button renders + regression login PASS)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family caregiver — verified working on both web and mobile)",
+  "seed_data_creation": "test_signup created one TEST_googletest_<timestamp>_<hex>@example.com user via /api/auth/signup (family caregiver) to verify email/password signup regression.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Google OAuth wiring is verified structurally (backend contract, button render, GIS iframe, mobile Continue-with-Google button). A REAL Google sign-in cannot be automated — main agent must smoke-test manually with a real Google account listed on the OAuth consent screen's Test users (or after publishing). Test file at /app/backend/tests/test_iter_google_oauth_contract.py can be reused as regression for /api/auth/google contract + cathy login."
+}

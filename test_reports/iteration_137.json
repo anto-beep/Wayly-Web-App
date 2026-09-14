@@ -1,0 +1,22 @@
+{
+  "summary": "Iter 137 wave verified end-to-end. Backend C12 pricebook fallback: uploading the Glorious Services INV-2026-07-4471 sample now returns reconciliation.ppc_snapshot_id='sah_indicative_2026-02-01' with multiple C12 findings including domestic-assistance lines where observed.unit_price is $102.50 vs expected.published_price $72.00 (SaH indicative ceiling). Total findings on the sample = 18 (target >=10) covering distinct check_ids C1, C6, C8, C10, C11, C12 (all six required IDs present). Frontend Bulk Draft: on /app/invoices/{id} with 18 findings, data-testid='invoice-detail-draft-all-letter' is visible above the Issue Register; clicking it navigates to /app/letters?compose=1&source_type=inv1_bulk&source_id=...::bulk::18&provider_name=Glorious+Services+Pty+L...&subject=...&body=... and the URL-encoded body contains numbered enumeration '1.' through '18.' for every finding. data-testid='inv1-issue-letter-0' still coexists (per-finding regression passes). On a 1-finding invoice the bulk button is correctly hidden (count=0). Stripe/pricing endpoints intentionally not tested.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": { "ui_bugs": [], "integration_issues": [], "design_issues": [] },
+  "test_report_links": [
+    "/app/backend/tests/test_inv1_iter137_c12_bulk.py",
+    "/app/test_reports/pytest/iter137.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "checks.py C12 fallback path is nicely self-contained but the `except Exception: pass` around sah_pricebook import silently swallows any error — if a future refactor breaks the module import, C12 would silently stop firing. Consider logging.warning() there so ops notices.",
+    "sah_pricebook.SAH_PUBLISHED_PRICES_2026 contains 'transport': 45.00 which the docstring notes is 'per one-way trip, not hourly' — the check treats it uniformly as ceiling on unit_price, which could cause false positives on hourly-priced transport lines. Not blocking for this wave but worth a follow-up when C12 gets promoted to real PPC data."
+  ],
+  "updated_files": ["/app/backend/tests/test_inv1_iter137_c12_bulk.py"],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "cathy@example.com / testpass123 (frontend token stored in localStorage['kindred_token'])",
+  "seed_data_creation": "Uploaded the Glorious Services INV-2026-07-4471 sample PDF once during backend tests. It joins the existing 24 invoices in cathy's household (25 total).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Frontend auth token key is 'kindred_token' (NOT 'token' or 'access_token') — evaluate `localStorage.getItem('kindred_token')` when hitting /api/invoices from Playwright. Login response body has both `token` and `refresh_token`; backend tests use `resp.json()['token']`. To find an invoice with multiple findings for UI tests, GET /api/invoices and pick one where reconciliation.findings.length >= 2; the Glorious sample yields 18. To find one with <=1 finding for the hidden-state test, there is at least one C10-only invoice in the fixture with exactly 1 finding.",
+  "rca of the issue": "n/a — both wave-137 items pass first attempt."
+}

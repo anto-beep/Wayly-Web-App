@@ -1,0 +1,37 @@
+{
+  "summary": "Frontend-only verification of the DEC-1 publish-gate UI in DecoderResultView.jsx (Wayly Statement Decoder). Live E2E on the preview URL was blocked by the '1 free decode per 120-day window' gate (usage banner already showed '0 of 1 free decodes remaining' before any submit, and POST returned 429). To validate the NEW frontend rendering (which is the only ask this iteration), the /api/public/decode-statement-text and /api/public/decode-job/* endpoints were stubbed via Playwright route interception with (a) a hard-blocked Sam-Burke-style payload (publishable:false, publish_block.items x4, RULE_G1/G2/G3/G3) and (b) a clean/reconciling payload. All 13 blocked-path assertions passed and all 5 clean-path assertions passed.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iteration_317_blocked_top.jpeg",
+    "/app/test_reports/iteration_317_blocked_table.jpeg",
+    "/app/test_reports/iteration_317_clean_top.jpeg",
+    "/app/test_reports/iteration_317_limit.jpeg"
+  ],
+  "action_items": [
+    "None required for the publish-gate rendering itself — all data-testid contracts render as specified.",
+    "Optional/nice-to-have: the free-decode usage gate (1 per 120 days by fingerprint) has been fully consumed on this preview environment, so future E2E testing agents CANNOT hit the real /api/public/decode-statement-text without either (a) resetting the free-tool usage record for this fingerprint/IP, or (b) authenticating as a paid/trialing user. Recommend main agent add a way for testing agents to bypass the 120-day gate on the preview env (e.g. a header, seeded test user, or admin-reset endpoint)."
+  ],
+  "critical_code_review_comments": [
+    "DecoderResultView.jsx correctly hides trusted totals when publishable===false: summary banner, BalancePanel, stream breakdown, and persona hero are all gated behind !blocked. Anomaly panel and full line-item table (with unverified note) remain visible. Good.",
+    "PublishBlockPanel gracefully falls back to a plain 'decoder-publish-block-message' paragraph when block.items is empty — worth keeping in a follow-up test.",
+    "Confirmed low_confidence banner is NOT shown when low_confidence:false, and publish-block correctly overrides everything at the top even without low_confidence being set.",
+    "StatementInsightGraphics is still rendered inside StatementDecoderTool.jsx BEFORE DecoderResultView regardless of publishable — it consumes result.audit/anomalies. When publishable:false the audit.statement_summary still holds untrusted totals, so any charts it renders could still surface those totals visually. Worth main-agent verifying: does StatementInsightGraphics need the same !blocked guard as the summary banner? (Not in scope of this iteration's assertions, but flagging as a potential leak of untrusted numbers.)",
+    "Chart 'width(-1) height(-1)' console warnings appear on this page from a Recharts container — harmless but noisy, worth cleaning up."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (18/18 assertions)"},
+  "seed_data_creation": "None. Two synthetic API payloads were injected client-side via Playwright route interception; no server-side data was created or mutated.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The Statement Decoder public tool's free-decode counter is EXHAUSTED for this preview fingerprint — expect '0 of 1 free decodes remaining' + POST 429 on any live submit. To retest against the real backend, main agent will need to reset the fingerprint usage or use an authenticated paid user. All required data-testids for the publish-gate view (decoder-publish-block, decoder-publish-block-title, decoder-publish-block-item-{0..3}, decoder-anomaly-panel, decoder-full-table, decoder-table-unverified-note, decoder-summary-banner-hidden, decoder-stream-breakdown-hidden) are wired correctly in DecoderResultView.jsx.",
+  "rca of the issue": "N/A — no defect found in the frontend publish-gate rendering. The only blocker to live E2E was the 1-per-120-day free-decode rate limit (expected behaviour, explicitly called out in the review request as 'not a rendering failure')."
+}

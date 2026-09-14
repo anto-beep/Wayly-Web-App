@@ -1,0 +1,53 @@
+{
+  "summary": "Iter 332 — CSC saved-checks + Care Plan Reviewer polish end-to-end verified. Backend CSC CRUD suite (12/12 tests) passes against the shared FastAPI, incl. auth guards, score-and-persist, list, patch(name/saved), rename-only, delete, 404s. Web CSC fully green: hover no longer shifts option grid (Q1 x,width,height identical before/after hover — bounding_box match), csc-cta-help says 'Almost there — N questions still to answer' at partial state and hides at 16/16, csc-submit disabled at 0/16 & enables at 16/16, csc-actions renders 3 distinctly-colored buttons (csc-download-pdf teal rgb(14,77,82), csc-email-self gold rgb(165,81,43), csc-rerun sage rgb(109,144,125)), csc-save-card → csc-save-submit → csc-save-done → csc-saved-panel with csc-saved-reopen/rerun/delete controls; reopen restores selected answers (Q1-moderate re-shows 'border-primary-k bg-primary-k' selected state); delete removes the row. Web Support Plan Reviewer (/ai-tools/care-plan-reviewer) mounts cleanly for signed-in cathy — NO 'useRef is not defined' crash (page rendered full UI incl. cp-classification-... testid and prefilled 7,617.13 budget). Mobile Expo web preview: CSC screen mounts (csc-cta-help, csc-submit visible on quiz landing); CarePlanReviewer.tsx uses autoSaveRef to fire once after review completes; all required testIDs present in mobile source (csc-cta-help, csc-submit, csc-actions, csc-download-pdf, csc-email-self, csc-rerun, csc-save-card, csc-save-name, csc-save-submit, csc-save-done, csc-saved-panel, csc-saved-reopen-*, csc-saved-rerun-*, csc-saved-delete-*, cp-save-cta, cp-open-saved-plan). Mobile end-to-end quiz submission was not exercised (result-screen-only testids were verified via source-grep, not runtime).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Support Plan Reviewer & Classification Self-Check", "issues": ["React DevTools hydration warning: <span> cannot be a child of <option> (ClassificationCheck.jsx:903, CarePlanReviewer.jsx:559). This is a preview-only dev-tool <select> instrumentation wrapper (data-ve-dynamic span) — visible only in dev bundles and does not affect functionality. Consider stripping x-source/data-ve-dynamic wrappers from <option> descendants in the ve-plugin so production DOM stays clean."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_csc_saved_runs_iter332.py",
+    "/app/test_reports/pytest/iter332_csc_saved_runs.xml",
+    "/app/test_reports/iter332_web_cpr.jpeg",
+    "/app/test_reports/iter332_web_csc_landing.jpeg",
+    "/app/test_reports/iter332_web_csc_filled.jpeg",
+    "/app/test_reports/iter332_web_csc_result.jpeg",
+    "/app/test_reports/iter332_web_csc_after_rerun.jpeg",
+    "/app/test_reports/iter332_mobile_csc.jpeg",
+    "/app/test_reports/iter332_mobile_cpr.jpeg"
+  ],
+  "action_items": [
+    "(Optional / non-blocking) Suppress the <span> inside <option> hydration warning in the ve-plugin dev instrumentation — CarePlanReviewer.jsx:559 & ClassificationCheck.jsx:903 <select> children.",
+    "Main agent should self-verify the full mobile CSC saved-checks and mobile CarePlanReviewer auto-save flows end-to-end once (fill quiz on Expo preview + upload a plan) — source-grep + backend CRUD tests confirm all the plumbing is present and green, but a runtime walkthrough on mobile is recommended before ship."
+  ],
+  "critical_code_review_comments": [
+    "routes/csc.py CRUD is well-scoped (user_id filter on list/patch/delete), returns 401/404 correctly, and _run_summary safely excludes MongoDB _id.",
+    "_store_run() persists both raw answers and current_classification so re-open/re-run works without another server round-trip (verified in test_3_patch_save_and_name).",
+    "Web ClassificationCheck.jsx correctly renders a fixed-height csc-q-<id>-anchor slot under each question grid — hover measurement confirms zero size shift (395x44 before == 395x44 during hover).",
+    "Mobile CarePlanReviewer.tsx line 292-295: autoSaveRef guarded correctly (result && !guard && !savedPlanId && !saving && !autoSaveRef.current) — cannot double-save.",
+    "Mobile ClassificationSelfCheck.tsx testIDs are exhaustive and match the web contract 1:1."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_csc_saved_runs_iter332.py"
+  ],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "100% web full-flow; mobile mount + testID audit passed (no runtime submit exercised)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, paid). JWT injected into localStorage 'kindred_token' after API login (browser Google-OAuth 403 in preview env is a known preview-only egress limit).",
+  "seed_data_creation": "A saved CSC check 'TEST_iter332_web' was created and then deleted during the web run; a run doc was created and deleted during backend tests. No residual data left on cathy's account.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend suite `backend/tests/test_csc_saved_runs_iter332.py` is regression-ready — pass BASE_URL via /app/frontend/.env. Web CSC flow covers everything the review request called for (hover no-shift, cta copy at partial, submit gating, 3 coloured actions, save→saved-panel→reopen→delete). Mobile runtime coverage was limited to screen mount + testID audit — a full mobile CSC 16-answer→save→reopen→delete pass and a mobile CarePlanReviewer upload→auto-save pass are the two things left to exercise end-to-end at runtime.",
+  "rca of the issue": "N/A — feature/bug set fully verified; only note is a preview-dev instrumentation hydration warning that does not affect prod."
+}
