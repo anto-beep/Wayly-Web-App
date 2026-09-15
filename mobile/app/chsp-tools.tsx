@@ -11,6 +11,7 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate } from "@/src/utils/format";
 import { serviceTypeLabel, chspStatusLabel, labelize } from "@/src/utils/labels";
+import ChspInvoiceAnalyzer from "@/src/components/tools/ChspInvoiceAnalyzer";
 
 const STATUS_OPTIONS = [
   { value: "on_chsp", label: "On CHSP" },
@@ -347,6 +348,8 @@ export default function ChspToolsScreen() {
                   </View>
 
                   {needsChange ? <TransitionWalkthrough colors={colors} /> : null}
+
+                  <ChspInvoiceAnalyzer colors={colors} />
 
                   <ChspServicesCard services={services} onAdded={load} colors={colors} />
                   {ws1 ? <WS1FeeCheck services={services} colors={colors} /> : <FeeCheckForm services={services} colors={colors} />}

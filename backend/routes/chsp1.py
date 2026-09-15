@@ -83,6 +83,7 @@ async def ensure_chsp1_indexes(db) -> None:
         await db.chsp_service_entries.create_index([("chsp_profile_id", 1), ("is_active", 1)])
         await db.chsp_fee_checks.create_index([("chsp_profile_id", 1), ("reviewed_at", -1)])
         await db.chsp_transition_considerations.create_index([("chsp_profile_id", 1)])
+        await db.chsp_invoices.create_index([("user_id", 1), ("created_at", -1)])
     except Exception as e:  # pragma: no cover
         logger.warning("chsp1 index creation skipped: %s", e)
 
@@ -540,6 +541,302 @@ async def parse_chsp_invoice(request: Request, file: UploadFile = File(...)):
         "extracted": bool(parsed),
         "rate_from_saved": prefilled_rate_from_saved,
     }
+
+
+CHSP_INVOICE_SYSTEM = (
+    "You are a careful billing assistant for the Australian Commonwealth Home Support "
+    "Programme (CHSP). Read the text of ONE CHSP invoice or statement and extract ALL "
+    "billing facts as STRICT JSON. Return ONLY one JSON object — no prose, no code fences. "
+    "Money values are plain numbers (no dollar sign or commas). Dates are DD/MM/YYYY or null. "
+    "Include EVERY service row you can see. Use null when a value is absent.\n"
+    "service_type must be one of: domestic_assistance, personal_care, meals, transport, "
+    "social_support_individual, social_support_group, allied_health, nursing, home_maintenance, "
+    "home_modifications_minor, goods_equipment_assistive_technology, respite, "
+    "specialised_support_services, other.\n"
+    "Keys:\n"
+    "header: {provider_name, invoice_reference, invoice_date, due_date, period_start, "
+    "period_end, client_name, client_id, programme}\n"
+    "line_items: array; each item {service_type, description (the service name exactly as "
+    "printed), sub_programme (code or null), dates (string as printed or null), units (number "
+    "or null), unit_label (e.g. 'hrs','trips','meals' or null), unit_rate (number or null, the "
+    "billed per-unit rate), gst (number or null), amount (number, the line total)}\n"
+    "totals: {subtotal, gst_total, grand_total, government_subsidy, client_contribution}\n"
+    "plain_summary: 2-3 short plain-English sentences a family carer can understand about what "
+    "this invoice charges.\n"
+    "next_steps: array of up to 4 short plain-English action strings."
+)
+
+_SERVICE_CATEGORY = {
+    "nursing": ("clinical", "Clinical care"),
+    "allied_health": ("clinical", "Clinical care"),
+    "personal_care": ("personal", "Personal care & respite"),
+    "respite": ("personal", "Personal care & respite"),
+    "domestic_assistance": ("everyday", "Everyday living"),
+    "meals": ("everyday", "Everyday living"),
+    "home_maintenance": ("everyday", "Everyday living"),
+    "home_modifications_minor": ("everyday", "Everyday living"),
+    "goods_equipment_assistive_technology": ("everyday", "Everyday living"),
+    "social_support_individual": ("social", "Social & transport"),
+    "social_support_group": ("social", "Social & transport"),
+    "transport": ("social", "Social & transport"),
+    "specialised_support_services": ("other", "Other"),
+    "other": ("other", "Other"),
+}
+_CATEGORY_ORDER = [
+    ("clinical", "Clinical care"), ("personal", "Personal care & respite"),
+    ("everyday", "Everyday living"), ("social", "Social & transport"), ("other", "Other"),
+]
+
+
+def _num(v):
+    try:
+        if v is None or v == "":
+            return None
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+async def _analyse_invoice_text(text: str, uid: str) -> Dict[str, Any]:
+    """Read a full CHSP invoice (all line items), flag per-line variance against
+    the user's saved agreed rates, and build graphics + a plain-English summary."""
+    import json as _json
+    parsed: Dict[str, Any] = {}
+    try:
+        from lib import llm_wrapper
+        reply = await llm_wrapper.chat_send(
+            model="claude-haiku-4-5-20251001",
+            provider="anthropic",
+            system=CHSP_INVOICE_SYSTEM,
+            user_text=f"CHSP invoice/statement text:\n\n{text[:12000]}\n\nReturn the JSON object now.",
+            apply_tone_rules=False,
+        )
+        obj = _json.loads(_strip_json_fences(str(reply or "")))
+        if isinstance(obj, dict):
+            parsed = obj
+        elif isinstance(obj, list):
+            # Model returned only the line-items array — wrap it so we still work.
+            parsed = {"line_items": obj}
+    except Exception as e:
+        logger.warning("chsp invoice analyse llm failed: %s", e)
+        parsed = {}
+
+    header = parsed.get("header") if isinstance(parsed.get("header"), dict) else {}
+    raw_items = parsed.get("line_items") if isinstance(parsed.get("line_items"), list) else []
+    totals = parsed.get("totals") if isinstance(parsed.get("totals"), dict) else {}
+
+    # Saved agreed per-unit rates for this user (keyed by service_type) so we can
+    # flag likely overcharges. We compare against the SAVED rate, never a value
+    # the model guessed off the invoice.
+    saved_rates: Dict[str, float] = {}
+    profile = await _db.chsp_profiles.find_one({"user_id": uid})
+    if profile:
+        async for s in _db.chsp_service_entries.find({"chsp_profile_id": profile["id"], "is_active": True}):
+            st = s.get("service_type")
+            amt = ((s.get("hourly_rate_or_fee") or {}).get("amount"))
+            if st and amt and st not in saved_rates:
+                saved_rates[st] = float(amt)
+
+    line_items: List[Dict[str, Any]] = []
+    for it in raw_items:
+        if not isinstance(it, dict):
+            continue
+        st = it.get("service_type") or "other"
+        cat_key, cat_label = _SERVICE_CATEGORY.get(st, ("other", "Other"))
+        amount = _num(it.get("amount")) or 0.0
+        unit_rate = _num(it.get("unit_rate"))
+        row: Dict[str, Any] = {
+            "service_type": st,
+            "description": it.get("description") or st.replace("_", " ").title(),
+            "sub_programme": it.get("sub_programme"),
+            "dates": it.get("dates"),
+            "units": _num(it.get("units")),
+            "unit_label": it.get("unit_label"),
+            "unit_rate": unit_rate,
+            "gst": _num(it.get("gst")),
+            "amount": amount,
+            "category": cat_key,
+            "category_label": cat_label,
+        }
+        agreed = saved_rates.get(st)
+        if agreed and unit_rate:
+            delta = round(unit_rate - agreed, 2)
+            pct = (delta / agreed * 100) if agreed else 0
+            if abs(delta) <= max(0.01, agreed * 0.02):
+                status = "within"
+            elif abs(pct) <= 5:
+                status = "minor"
+            else:
+                status = "material"
+            row["agreed_rate"] = agreed
+            row["variance_delta"] = delta
+            row["variance_status"] = status
+        line_items.append(row)
+
+    line_total = round(sum((li["amount"] or 0) for li in line_items), 2)
+    grand_total = _num(totals.get("grand_total"))
+    if grand_total is None:
+        grand_total = line_total
+    subtotal = _num(totals.get("subtotal"))
+    if subtotal is None:
+        subtotal = line_total
+
+    cat_totals: Dict[str, float] = {}
+    for li in line_items:
+        cat_totals[li["category"]] = round(cat_totals.get(li["category"], 0) + (li["amount"] or 0), 2)
+    by_category = [
+        {"key": k, "label": lbl, "amount": cat_totals[k]}
+        for (k, lbl) in _CATEGORY_ORDER if cat_totals.get(k)
+    ]
+
+    flags_count = sum(1 for li in line_items if li.get("variance_status") in ("minor", "material"))
+
+    next_steps = [str(s) for s in (parsed.get("next_steps") or []) if s][:4]
+    if not next_steps:
+        next_steps = [
+            "Read each line and check the service, dates and amount against your records.",
+            "Add your provider's agreed per-unit rates so Wayly can flag overcharges.",
+            "Save this invoice to keep a history you can filter later.",
+        ]
+
+    return {
+        "header": {
+            "provider_name": header.get("provider_name"),
+            "invoice_reference": header.get("invoice_reference"),
+            "invoice_date": header.get("invoice_date"),
+            "due_date": header.get("due_date"),
+            "period_start": header.get("period_start"),
+            "period_end": header.get("period_end"),
+            "client_name": header.get("client_name"),
+            "client_id": header.get("client_id"),
+            "programme": header.get("programme") or "CHSP",
+        },
+        "line_items": line_items,
+        "totals": {
+            "subtotal": subtotal,
+            "gst_total": _num(totals.get("gst_total")),
+            "grand_total": grand_total,
+            "government_subsidy": _num(totals.get("government_subsidy")),
+            "client_contribution": _num(totals.get("client_contribution")),
+        },
+        "by_category": by_category,
+        "flags_count": flags_count,
+        "plain_summary": str(parsed.get("plain_summary") or "We read your invoice below. Check each line against your paper copy, then save it to your history."),
+        "next_steps": next_steps,
+        "extracted": bool(line_items),
+    }
+
+
+@chsp1_router.post("/invoice/analyse")
+async def analyse_chsp_invoice(request: Request, file: UploadFile = File(...)):
+    """CHSP-INV-1 — read the WHOLE invoice: every line item, totals, a plain
+    summary, per-line variance flags and category graphics. Persists nothing."""
+    await _assert_flag()
+    if not _ws1_enabled():
+        raise HTTPException(status_code=404, detail="Not found")
+    uid = await _user_id(request)
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty file")
+    try:
+        import document_extract  # type: ignore
+    except Exception:  # pragma: no cover
+        from backend import document_extract  # type: ignore
+    try:
+        text, *_rest = await document_extract.extract_document(file.filename or "invoice", raw)
+    except Exception as e:
+        logger.warning("chsp invoice extract failed: %s", e)
+        raise HTTPException(status_code=422, detail="Could not read that file. Try a clearer PDF or photo.")
+    if not (text or "").strip():
+        raise HTTPException(status_code=422, detail="No readable text found in that file.")
+    analysis = await _analyse_invoice_text(text, uid)
+    return {"analysis": analysis}
+
+
+class InvoiceSaveIn(BaseModel):
+    participant_id: Optional[str] = None
+    header: Dict[str, Any] = Field(default_factory=dict)
+    line_items: List[Dict[str, Any]] = Field(default_factory=list)
+    totals: Dict[str, Any] = Field(default_factory=dict)
+    by_category: List[Dict[str, Any]] = Field(default_factory=list)
+    plain_summary: Optional[str] = None
+    next_steps: List[str] = Field(default_factory=list)
+    flags_count: int = 0
+
+
+@chsp1_router.post("/invoice/save")
+async def save_chsp_invoice(body: InvoiceSaveIn, request: Request):
+    """Persist an analysed invoice so the user can revisit and filter history."""
+    await _assert_flag()
+    uid = await _user_id(request)
+    now = _now()
+    header = body.header or {}
+    totals = body.totals or {}
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": uid,
+        "participant_id": body.participant_id,
+        "header": header,
+        "line_items": body.line_items,
+        "totals": totals,
+        "by_category": body.by_category,
+        "plain_summary": body.plain_summary,
+        "next_steps": body.next_steps,
+        "flags_count": body.flags_count,
+        # Denormalised columns for the filterable history table.
+        "provider_name": header.get("provider_name"),
+        "invoice_reference": header.get("invoice_reference"),
+        "invoice_date": header.get("invoice_date"),
+        "period_start": header.get("period_start"),
+        "period_end": header.get("period_end"),
+        "grand_total": totals.get("grand_total"),
+        "client_contribution": totals.get("client_contribution"),
+        "line_count": len(body.line_items or []),
+        "created_at": now,
+        "data_residency": "ap-southeast-2",
+    }
+    await _db.chsp_invoices.insert_one(doc)
+    doc.pop("_id", None)
+    doc["created_at"] = _iso(now)
+    return {"invoice": doc}
+
+
+@chsp1_router.get("/invoices")
+async def list_chsp_invoices(request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    cur = _db.chsp_invoices.find({"user_id": uid}).sort("created_at", -1)
+    rows = await cur.to_list(length=200)
+    out = []
+    for r in rows:
+        r.pop("_id", None)
+        if r.get("created_at"):
+            r["created_at"] = _iso(r["created_at"])
+        out.append(r)
+    return {"invoices": out}
+
+
+@chsp1_router.get("/invoices/{invoice_id}")
+async def get_chsp_invoice(invoice_id: str, request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    doc = await _db.chsp_invoices.find_one({"id": invoice_id, "user_id": uid})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Not found")
+    doc.pop("_id", None)
+    if doc.get("created_at"):
+        doc["created_at"] = _iso(doc["created_at"])
+    return {"invoice": doc}
+
+
+@chsp1_router.delete("/invoices/{invoice_id}")
+async def delete_chsp_invoice(invoice_id: str, request: Request):
+    await _assert_flag()
+    uid = await _user_id(request)
+    res = await _db.chsp_invoices.delete_one({"id": invoice_id, "user_id": uid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"deleted": True}
 
 
 class SavedCheckIn(BaseModel):

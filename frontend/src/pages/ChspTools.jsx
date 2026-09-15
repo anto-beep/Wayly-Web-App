@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
 import { RequiredBadge } from "@/components/RequiredHint";
+import ChspInvoiceAnalyzer from "@/components/chsp/ChspInvoiceAnalyzer";
 import { serviceTypeLabel, chspStatusLabel, labelize } from "@/lib/labels";
 import { formatDate } from "@/lib/formatDate";
 
@@ -907,6 +908,8 @@ export default function ChspTools() {
                     </div>
 
                     {needsChange && <TransitionWalkthrough/>}
+
+                    <ChspInvoiceAnalyzer />
 
                     {ws1 && <AgreedRateSchedule services={services} onChanged={load} />}
                     {ws1 ? <WS1FeeCheck services={services} /> : <FeeCheckForm services={services} onSubmitted={() => load()}/>}

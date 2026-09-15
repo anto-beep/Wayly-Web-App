@@ -1,0 +1,47 @@
+{
+  "summary": "iter339 verification of CHSP multi-line Invoice Analyzer (bug fix + new feature). BACKEND (100% via curl): (1) POST /api/chsp1/invoice/analyse with the real sample PDF (Peter Smith Jul 2026) returns extracted=true, header{provider_name='Sunshine Community Care Pty Ltd', invoice_reference='SCC-20260731-0412', invoice_date='05/08/2026', period_start='01/07/2026', period_end='31/07/2026', client_name='Peter Smith', programme='CHSP'}, 8 line items each with service_type/description/dates/units/unit_label/unit_rate/gst/amount/category+category_label, totals{subtotal=1429.5, gst_total=0.0, grand_total=1429.5, government_subsidy=1184.5, client_contribution=245.0} — MATCHES the spec exactly. by_category has 4 buckets, plain_summary + next_steps populated, flags_count=0 (peter has no saved agreed rates so no variance flags — expected). (2) GET /api/chsp1/invoices returns 2 seeded invoices newest-first with denormalised provider_name/invoice_reference/grand_total/line_count/flags_count. (3) GET /api/chsp1/invoices/{id} returns full detail incl. 8 line_items + totals + by_category + plain_summary. (4) DELETE /api/chsp1/invoices/{nonexistent} → 404 ✅. GET /api/chsp1/invoices/{nonexistent} → 404 ✅. Original bug (single-service parse ignored multi-line invoices → extracted=false) is RESOLVED — the new /invoice/analyse pipeline returns the full array of 8 line items with correct totals.\n\nWEB (peter@test.com on /app/chsp/tools): chsp-analyzer-root ✅, chsp-analyzer-history with 2 rows ✅, chsp-analyzer-history-search ✅, chsp-analyzer-history-filter ✅, chsp-analyzer-upload-input ✅. Clicking chsp-analyzer-history-view-{id} → GET /invoices/{id} → renders chsp-analyzer-summary ✅, chsp-analyzer-split ✅, chsp-analyzer-graphics with 4 chsp-analyzer-category-* bars ✅, chsp-analyzer-line-0..7 (all 8 rows) ✅. Save button correctly hidden when viewing an already-saved invoice from history (only shows post-upload before save — expected). Also verified iter338 regression fix: the dashboard 'Viewing care for Peter Smith' pill is now Title Case (previously reported lowercase in iter338) — main agent's /api/account patch is live.\n\nMOBILE (Expo web preview, /chsp-tools): could NOT verify live because the Expo web-preview session doesn't persist the auth token across `page.goto` (same known automation limitation flagged in iter338). Even with an in-page localStorage token injection the mobile app renders the 'Start a CHSP profile' empty state instead of peter's populated profile — meaning it's an automation limitation, not an app bug. Main agent's own screenshots showing the analyzer card + saved-invoice View on mobile stand; the review-request explicitly says mobile upload cannot be automated (native DocumentPicker). Backend endpoints that mobile calls are all verified working.\n\nMinor observation (not a bug): peter has 2 IDENTICAL seeded invoices in his history (same provider, reference, grand_total, line_count). If this is intentional seed for filter/search testing it's fine; if not, consider deduping the seed so history shows visibly distinct rows.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter339_web_analyzer.jpeg",
+    "/app/test_reports/iter339_mobile.jpeg",
+    "/app/test_reports/iter339_mobile2.jpeg"
+  ],
+  "action_items": [
+    "None blocking. Optional: dedupe peter's 2 identical seeded CHSP invoices so the filterable history table shows visibly distinct rows (currently both are 'Sunshine Community Care Pty Ltd · SCC-20260731-0412 · 8 lines · $1429.50').",
+    "Mobile live-preview automation session issue (documented iter338): consider adding an EXPO_PUBLIC_TEST_AUTH_TOKEN hook or exposing AsyncStorage keys for automation so future testing agents can verify mobile-gated views without native login."
+  ],
+  "critical_code_review_comments": [
+    "backend/routes/chsp1.py _analyse_invoice_text (line 600+) correctly handles the case where the LLM returns a bare array of line items (wraps it into {line_items: obj}) — a nice defensive path that directly fixes the reported bug's root cause.",
+    "chsp1.py:515 opens a NEW _user_id lookup inside parse_chsp_invoice's Agreed Rate fallback (`(await _user_id(request))`) even though `uid` is already resolved at line 465 — minor duplication, could reuse `uid`. Not a bug, just slightly wasteful.",
+    "chsp1.py invoice endpoints don't dedupe on invoice_reference — a user could hit Save twice and get two identical rows (which is exactly what peter's seed data shows). Consider an upsert-by-(user_id, provider_name, invoice_reference) or at least a client-side warning.",
+    "chsp1.py has no PATCH/PUT for /invoices/{id} — once saved, a user cannot edit a mistake in line-item text or totals without deleting and re-uploading. Acceptable for v1 but worth capturing as backlog."
+  ],
+  "updated_files": [
+    "/app/test_reports/iteration_339.json"
+  ],
+  "success_rate": {"backend": "100% (analyse+save+list+get+delete+404 all pass against real PDF, totals match spec exactly)", "frontend": "web 100% (all data-testids present, View round-trip renders 8 lines + 4 categories + summary + split + graphics); mobile 0% live (automation session limitation) — deferred to main-agent screenshot evidence"},
+  "test_credentials": "peter@test.com / Peter!2026 (has CHSP profile + 2 saved invoices seeded)",
+  "seed_data_creation": "None created. Note peter already has 2 duplicate seeded invoices (ids 0f8b7eab-5ce6-4831-8f14-405df2b64004 and b81c25f7-088a-4303-8628-76dc81d61ee9) — consider deduping.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "1. Sample PDF at https://customer-assets-jai6qajn.emergentagent.net/job_2e19f861-4826-43f9-833f-31bd47096828/artifacts/ko93ij7d_CHSP_Invoice_Peter_Smith_Jul2026.pdf — grand_total 1429.50 / gov_subsidy 1184.50 / client_contribution 245.00 / 8 lines / 4 categories. 2. Expo web preview does NOT persist auth token across page.goto — for mobile-gated views (like /chsp-tools which requires a CHSP profile), rely on main-agent screenshots or run tests from a single continuous session (login → in-app tap navigation only). 3. Mobile /chsp-tools uses DocumentPicker for upload — cannot be automated; only test the render+history+view+delete path. 4. All backend endpoints tested and green: /invoice/analyse (multipart), /invoice/save (JSON), /invoices (list), /invoices/{id} (detail), DELETE /invoices/{id}. 5. iter338 web pill regression ('Viewing care for peter smith' lowercase) is FIXED — pill now shows 'Peter Smith' Title Case.",
+  "rca of the issue": "Original bug RCA (now resolved): the legacy /chsp1/fee-check/parse-invoice endpoint (still present at chsp1.py:456) parses only a single-service JSON. When the LLM correctly returned an array for a multi-line invoice, the endpoint discarded it and returned extracted=false. Fix: a NEW endpoint /chsp1/invoice/analyse (chsp1.py:730) with a stronger system prompt CHSP_INVOICE_SYSTEM (chsp1.py:546) that asks for a {header, line_items[], totals, plain_summary, next_steps} structure, plus _analyse_invoice_text (chsp1.py:600) that defensively wraps a bare-array response into {line_items: obj}. Verified against the real PDF: 8 line items extracted, totals 1429.50/1184.50/245.00 match the spec exactly, extracted=true."
+}

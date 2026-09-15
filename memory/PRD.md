@@ -7442,3 +7442,23 @@ All verified — backend pytest 5/5 (test_iter338_titlecase.py), web + mobile da
 ### iteration_338 follow-up — web ProviderSwitch agentic edits (Jun 2026)
 - `frontend/src/pages/extended/ProviderSwitch.jsx`: Step 1 "Current Provider" input now PREFILLS from the active participant's `provider_name` (via `useParticipants()`) when no switch row exists and the field is empty (verified live: shows "MuffinCare" for peter@test.com).
 - Required/Optional field markers (shared `RequiredBadge`/`OptionalBadge`) applied across the step forms: Current Provider = Required; Target Provider (steps 1 & 3), the switching-reason textarea, Last Day of Service and Reason (step 4) = Optional. Steps 2 & 5 use choice buttons/checklists (no required inputs).
+
+---
+
+## Feature + Bug fix — Jun 2026 (iter339: CHSP multi-line Invoice Analyzer, web + mobile)
+
+Reported bug: uploading a real CHSP invoice (8 line items) to the CHSP tool prefilled nothing. Root cause: the old `/chsp1/fee-check/parse-invoice` accepted only a single-service JSON object, but the LLM returns an ARRAY of line items for a multi-line invoice, so the endpoint discarded everything (extracted=false). Fixed by building a full invoice analyzer (the old single-line Fee Check + Agreed Rate Schedule are unchanged and remain below the analyzer).
+
+### Backend (`backend/routes/chsp1.py`)
+- `POST /chsp1/invoice/analyse` (multipart upload): document_extract → Claude Haiku 4.5 (`CHSP_INVOICE_SYSTEM`, via `_analyse_invoice_text`) → returns header, ALL line_items (service_type, description, dates, units, unit_label, unit_rate, gst, amount, category + per-line variance vs the user's SAVED agreed rate), totals (subtotal/gst/grand_total/government_subsidy/client_contribution, with sum fallbacks), by_category graphics, plain_summary, next_steps, flags_count, extracted. Also wraps a bare array response so a single-line invoice still works.
+- `POST /chsp1/invoice/save`, `GET /chsp1/invoices`, `GET /chsp1/invoices/{id}`, `DELETE /chsp1/invoices/{id}` — persistence + filterable history. Collection `chsp_invoices` (denormalised provider/reference/total/contribution/line_count/flags_count columns), indexed on (user_id, created_at desc).
+
+### Web (`frontend/src/components/chsp/ChspInvoiceAnalyzer.jsx`, rendered in `ChspTools.jsx`)
+- Upload → summary card, "who pays" subsidy vs your-contribution stacked bar + tiles, "where the money went" category bars, line-by-line table (8 rows w/ rate-check badges), Save, and a filterable history table (search + All/Flagged) with View (re-renders) + Delete. Styled like the Statements page.
+
+### Mobile (`mobile/src/components/tools/ChspInvoiceAnalyzer.tsx`, rendered in `mobile/app/chsp-tools.tsx`)
+- Full parity via `expo-document-picker` upload → same summary, split bar + tiles, category bars, line-by-line list, Save, and filterable history (search + All/Flagged chips) with View + Delete.
+
+### Status
+Verified iter339: backend curl (8 lines, grand_total 1429.50 / subsidy 1184.50 / contribution 245.00; save/list/get/delete all pass), web live e2e (upload→analysis→save→history), mobile render + saved-invoice View via screenshots. Mobile native DocumentPicker can't be automated in the Expo web preview (known limitation). Not mocked — real Claude Haiku 4.5 via Emergent LLM key.
+- Backlog (v2, non-blocking): de-dupe on save by (user, provider, invoice_reference); PATCH/edit a saved invoice; per-participant scoping of invoice history.
