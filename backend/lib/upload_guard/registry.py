@@ -84,6 +84,23 @@ TOOL_PROFILES = {
             ("my aged care", 1.0), ("provider", 0.5),
         ],
     },
+    # CHSP invoices look like generic invoices ("tax invoice", "gst", "abn"),
+    # so their CHSP-specific markers must out-weigh the invoice-checker
+    # signals to win the raw-score tie-break and route the user here.
+    "chsp-tools": {
+        "label": "a CHSP invoice",
+        "name": "CHSP Tools",
+        "slug": "chsp-tools",
+        "route_web": "/app/chsp/tools",
+        "route_mobile": "/chsp-tools",
+        "signals": [
+            ("commonwealth home support", 3.0), ("chsp", 3.0),
+            ("home support programme", 2.5), ("home support program", 2.5),
+            ("domestic assistance", 1.5), ("client contribution", 1.0),
+            ("social support", 1.0), ("flexible respite", 1.0),
+            ("home maintenance", 0.8), ("sub-programme", 0.8), ("sub-program", 0.8),
+        ],
+    },
 }
 
 # Friendly detected-type label used in the wrong-tool message.
@@ -91,5 +108,6 @@ DETECTED_LABEL = {
     "invoice-checker": "an invoice",
     "statement-decoder": "a statement",
     "care-plan-reviewer": "a care plan",
+    "chsp-tools": "a CHSP invoice",
     "unknown": "an unrecognised document",
 }

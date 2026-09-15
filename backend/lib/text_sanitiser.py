@@ -75,11 +75,13 @@ def strip_wayly_dashes(text: str) -> str:
     out = out.replace(f"{EM_DASH} ", ", ").replace(f"{EN_DASH} ", ", ")
     # Case 4: bare dash between words like "word,word"
     out = out.replace(EM_DASH, ", ").replace(EN_DASH, ", ")
-    # Cleanups: collapse ", " and stray leading ", ".
-    while ", " in out:
-        out = out.replace(", ", ", ")
-    while "  " in out:
-        out = out.replace("  ", " ")
+    # Cleanups: collapse any run of commas/spaces the substitution produced
+    # (e.g. ", , " or ",,") down to a single ", ", then squeeze double spaces.
+    # NOTE: this must NOT be a `while x in s: s = s.replace(x, x)` loop, that
+    # never terminates when the needle equals the replacement (it span the
+    # event loop at 100% CPU on any reply containing a comma).
+    out = re.sub(r",[ \t]*(?:,[ \t]*)+", ", ", out)
+    out = re.sub(r"[ \t]{2,}", " ", out)
     if out.startswith(", "):
         out = out[2:]
     return out

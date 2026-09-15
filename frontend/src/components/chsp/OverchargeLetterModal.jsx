@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { X, Mail, Copy, Check, Loader2 } from "lucide-react";
 
-export default function OverchargeLetterModal({ open, facts, onClose }) {
+export default function OverchargeLetterModal({ open, facts, onClose, endpoint = "/chsp1/overcharge-letter", title = "Query Letter To Your Provider" }) {
     const [loading, setLoading] = useState(false);
     const [letter, setLetter] = useState("");
     const [copied, setCopied] = useState(false);
@@ -19,7 +19,7 @@ export default function OverchargeLetterModal({ open, facts, onClose }) {
         setLoading(true);
         (async () => {
             try {
-                const { data } = await api.post("/chsp1/overcharge-letter", facts || {});
+                const { data } = await api.post(endpoint, facts || {});
                 setLetter(data.letter || "");
             } catch {
                 toast.error("Could not draft the letter. Please try again.");
@@ -38,7 +38,7 @@ export default function OverchargeLetterModal({ open, facts, onClose }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" data-testid="chsp-letter-modal" onClick={onClose}>
             <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-3 bg-[#A5512B] text-white">
-                    <span className="inline-flex items-center gap-2 font-medium"><Mail className="w-4 h-4" /> Query Letter To Your Provider</span>
+                    <span className="inline-flex items-center gap-2 font-medium"><Mail className="w-4 h-4" /> {title}</span>
                     <button onClick={onClose} data-testid="chsp-letter-close" className="p-1 rounded-full hover:bg-white/20"><X className="w-4 h-4" /></button>
                 </div>
                 <div className="p-5 space-y-3">

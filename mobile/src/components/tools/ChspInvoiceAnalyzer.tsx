@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, TextInput, View } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { Upload, FileText, Sparkles, ArrowRight, Save, Trash2, Search, AlertTriangle, CheckCircle2, ReceiptText, Eye, ListChecks, Landmark, Wallet, Mail, TrendingUp } from "lucide-react-native";
+import { Upload, FileText, Sparkles, ArrowRight, Save, Trash2, Search, AlertTriangle, CheckCircle2, ReceiptText, Eye, ListChecks, Landmark, Wallet, Mail, TrendingUp, Download, ChevronDown, ChevronUp } from "lucide-react-native";
 
 import { Button, Card, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -10,7 +10,9 @@ import { useParticipants } from "@/src/context/ParticipantContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { serviceTypeLabel } from "@/src/utils/labels";
 import { shortDate } from "@/src/utils/format";
+import { sharePostPdf } from "@/src/lib/download";
 import OverchargeLetterModal from "@/src/components/tools/OverchargeLetterModal";
+import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 
 const CAT_COLOR: Record<string, string> = {
   clinical: "#0E4D52", personal: "#3E6A4C", everyday: "#A5512B", social: "#B7791F", other: "#6B7280",
@@ -73,10 +75,11 @@ function TrendsChart({ trends, colors }: any) {
   );
 }
 
-function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLetter }: any) {
+function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLetter, onDownloadPdf, downloadingPdf, onDraftFindings }: any) {
   const h = analysis.header || {};
   const t = analysis.totals || {};
   const lines = analysis.line_items || [];
+  const [linesOpen, setLinesOpen] = useState(false);
   const govt = Number(t.government_subsidy || 0);
   const you = Number(t.client_contribution || 0);
   const total = govt + you;
@@ -171,10 +174,17 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLett
       ) : null}
 
       <Card testID="chsp-analyzer-lines">
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <ListChecks size={16} color={colors.primary} />
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Line By Line ({lines.length})</T>
-        </View>
+        <Pressable testID="chsp-analyzer-lines-toggle" onPress={() => setLinesOpen((o) => !o)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <ListChecks size={16} color={colors.primary} />
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Line By Line ({lines.length})</T>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>{linesOpen ? "Hide" : "Show"}</T>
+            {linesOpen ? <ChevronUp size={16} color={colors.muted} /> : <ChevronDown size={16} color={colors.muted} />}
+          </View>
+        </Pressable>
+        {linesOpen ? (<>
         <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
           {lines.map((li: any, i: number) => {
             const flagged = li.variance_status === "minor" || li.variance_status === "material";
@@ -209,6 +219,7 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLett
           <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>Total</T>
           <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>{aud(t.grand_total)}</T>
         </View>
+        </>) : null}
       </Card>
 
       {!savedMode ? (
@@ -219,6 +230,12 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLett
           <T variant="small" style={{ color: colors.sage }}>Saved To Your Invoice History</T>
         </View>
       )}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+        <Button label={downloadingPdf ? "Preparing…" : "Download Results (PDF)"} icon={Download} variant="outline" loading={downloadingPdf} onPress={onDownloadPdf} testID="chsp-analyzer-download-pdf" style={{ flexGrow: 1 }} />
+        {analysis.flags_count > 0 ? (
+          <Button label="Draft Findings Letter" icon={Mail} onPress={onDraftFindings} testID="chsp-analyzer-findings-letter" style={{ flexGrow: 1 }} />
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -241,6 +258,9 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
   const [providerFilter, setProviderFilter] = useState("all");
   const [sort, setSort] = useState("newest");
   const [letterFacts, setLetterFacts] = useState<any>(null);
+  const [findingsFacts, setFindingsFacts] = useState<any>(null);
+  const [guard, setGuard] = useState<any>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const loadHistory = async () => {
     try { const d = await apiFetch<any>(`/chsp1/invoices${participantId ? `?participant_id=${participantId}` : ""}`); setHistory(d?.invoices || []); } catch { /* ignore */ }
@@ -255,14 +275,49 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
       const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
       if (res.canceled || !res.assets?.[0]) return;
       const a = res.assets[0];
-      setParsing(true); setError(""); setAnalysis(null); setSavedMode(false); setDupExisting(null);
+      setParsing(true); setError(""); setAnalysis(null); setSavedMode(false); setDupExisting(null); setGuard(null);
       const fd = new FormData();
       fd.append("file", { uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream" } as any);
       const data = await apiFetch<any>("/chsp1/invoice/analyse", { method: "POST", body: fd, isForm: true });
-      if (!data?.analysis?.extracted) setError("We couldn't read any service lines from that file. Try a clearer PDF or photo.");
+      if (data?.upload_guard) setGuard(data.upload_guard);
+      else if (!data?.analysis?.extracted) setError("We couldn't read any service lines from that file. Try a clearer PDF or photo.");
       else setAnalysis(data.analysis);
     } catch (e) { setError(e instanceof ApiError ? e.message : "Could not read that invoice."); }
     finally { setParsing(false); }
+  };
+
+  const downloadPdf = async () => {
+    if (!analysis) return;
+    setDownloadingPdf(true);
+    try {
+      await sharePostPdf("/chsp1/invoice/pdf", {
+        header: analysis.header, line_items: analysis.line_items, totals: analysis.totals,
+        by_category: analysis.by_category, plain_summary: analysis.plain_summary,
+        next_steps: analysis.next_steps, flags_count: analysis.flags_count || 0,
+      }, `Wayly-CHSP-Invoice-${(analysis.header?.provider_name || "review").replace(/[^\w.-]+/g, "-")}.pdf`);
+    } catch { setError("Could not build the PDF."); }
+    finally { setDownloadingPdf(false); }
+  };
+
+  const draftFindings = () => {
+    const hh = analysis?.header || {};
+    const flagged = (analysis?.line_items || []).filter((li: any) => li.variance_status === "minor" || li.variance_status === "material");
+    if (!flagged.length) return;
+    setFindingsFacts({
+      provider_name: hh.provider_name || null,
+      client_name: hh.client_name || active?.display_name || null,
+      invoice_reference: hh.invoice_reference || null,
+      period: hh.period_start ? `${hh.period_start}${hh.period_end ? ` – ${hh.period_end}` : ""}` : null,
+      lines: flagged.map((li: any) => ({
+        service_description: li.description || serviceTypeLabel(li.service_type),
+        units: li.units ?? null,
+        unit_label: li.unit_label || "units",
+        billed_unit_rate: li.unit_rate ?? null,
+        agreed_rate: li.agreed_rate ?? null,
+        billed_amount: li.amount ?? null,
+        expected_amount: li.agreed_rate != null && li.units != null ? Number((li.agreed_rate * li.units).toFixed(2)) : null,
+      })),
+    });
   };
 
   const doSave = async (force: boolean) => {
@@ -342,6 +397,8 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
 
       {error ? <T variant="small" style={{ color: c.terracotta, marginTop: spacing.sm }} testID="chsp-analyzer-error">{error}</T> : null}
 
+      {guard ? <View style={{ marginTop: spacing.sm }}><UploadGuardNotice verdict={guard} onChooseAnother={() => setGuard(null)} /></View> : null}
+
       {dupExisting ? (
         <View testID="chsp-analyzer-dup" style={{ marginTop: spacing.sm, backgroundColor: c.alertSoft, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }}>
           <T variant="small" style={{ color: c.text }}>You already saved this invoice ({dupExisting.invoice_reference || dupExisting.provider_name || "same invoice"}). Save it again anyway?</T>
@@ -352,7 +409,7 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
         </View>
       ) : null}
 
-      {analysis ? <View style={{ marginTop: spacing.md }}><AnalysisView analysis={analysis} colors={c} onSave={() => doSave(false)} saving={saving} savedMode={savedMode} onDraftLetter={draftLetterForLine} /></View> : null}
+      {analysis ? <View style={{ marginTop: spacing.md }}><AnalysisView analysis={analysis} colors={c} onSave={() => doSave(false)} saving={saving} savedMode={savedMode} onDraftLetter={draftLetterForLine} onDownloadPdf={downloadPdf} downloadingPdf={downloadingPdf} onDraftFindings={draftFindings} /></View> : null}
 
       {trends.length > 1 ? <View style={{ marginTop: spacing.md }}><TrendsChart trends={trends} colors={c} /></View> : null}
 
@@ -406,6 +463,7 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
       </View>
 
       <OverchargeLetterModal visible={Boolean(letterFacts)} facts={letterFacts || {}} onClose={() => setLetterFacts(null)} colors={c} />
+      <OverchargeLetterModal visible={Boolean(findingsFacts)} facts={findingsFacts || {}} endpoint="/chsp1/findings-letter" title="Findings Letter To Your Provider" onClose={() => setFindingsFacts(null)} colors={c} />
     </Card>
   );
 }

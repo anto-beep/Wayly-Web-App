@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
-import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, ClipboardCheck, Plus, Wrench, Clock, HelpCircle, LifeBuoy, Mail, AlertTriangle, Upload, FileText, Trash2, Sparkles, Save, ListChecks } from "lucide-react-native";
+import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, ClipboardCheck, Plus, Wrench, Clock, HelpCircle, LifeBuoy, Mail, AlertTriangle, Upload, FileText, Trash2, Sparkles, Save, ListChecks, Download } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, Select, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { sharePostPdf } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate } from "@/src/utils/format";
@@ -82,10 +83,10 @@ function AccessHardship({ colors, providerName, emphasise }: any) {
   return (
     <Card testID="chsp-access-hardship">
       <T variant="label">ACCESS AND HARDSHIP</T>
-      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Keep services running, and get help with fees</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Keep Services Running, And Get Help With Fees</T>
       <T variant="small" style={{ marginTop: 4 }}>Draft a letter to keep your services going, or start a hardship / fee-waiver request.</T>
-      <Button label="Service continuity letter" variant="outline" icon={Mail} testID="chsp-service-continuity-letter" loading={busy === "service_continuity"} onPress={() => draft("service_continuity")} style={{ marginTop: spacing.md }} />
-      <Button label="Apply for hardship / fee waiver" icon={LifeBuoy} testID="chsp-hardship-letter" loading={busy === "hardship"} variant={emphasise ? undefined : "outline"} onPress={() => draft("hardship")} style={{ marginTop: spacing.sm }} />
+      <Button label="Service Continuity Letter" icon={Mail} testID="chsp-service-continuity-letter" loading={busy === "service_continuity"} onPress={() => draft("service_continuity")} style={{ marginTop: spacing.md }} />
+      <Button label="Apply For Hardship / Fee Waiver" icon={LifeBuoy} testID="chsp-hardship-letter" loading={busy === "hardship"} variant={emphasise ? "secondary" : "primary"} onPress={() => draft("hardship")} style={{ marginTop: spacing.sm, ...(emphasise ? {} : { backgroundColor: "#A5512B" }) }} />
       {emphasise ? (
         <View testID="chsp-hardship-hint" style={{ marginTop: spacing.sm, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md }}>
           <T variant="small" style={{ color: colors.text }}>A material overcharge can add up. If contributions are hard to meet, a hardship or fee-waiver request may help.</T>
@@ -108,6 +109,8 @@ function WS1FeeCheck({ services, colors }: any) {
   const [result, setResult] = useState<any>(null);
   const [parsing, setParsing] = useState(false);
   const [parseInfo, setParseInfo] = useState<any>(null);
+  const [lineOptions, setLineOptions] = useState<any[]>([]);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<any[]>([]);
   const [showPast, setShowPast] = useState(false);
@@ -128,23 +131,48 @@ function WS1FeeCheck({ services, colors }: any) {
       const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
       if (res.canceled || !res.assets?.[0]) return;
       const a = res.assets[0];
-      setParsing(true); setParseInfo(null); setError("");
+      setParsing(true); setParseInfo(null); setError(""); setLineOptions([]);
       const fd = new FormData();
       fd.append("file", { uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream" } as any);
       const data = await apiFetch<any>("/chsp1/fee-check/parse-invoice", { method: "POST", body: fd, isForm: true });
-      const fx = data?.fields || {};
-      set({
-        invoice_reference: fx.invoice_reference ?? form.invoice_reference,
-        provider_name: fx.provider_name ?? form.provider_name,
-        service_type: SERVICE_TYPES.some((o: any) => o.value === fx.service_type) ? fx.service_type : form.service_type,
-        agreed_rate: fx.agreed_rate != null ? String(fx.agreed_rate) : form.agreed_rate,
-        units_billed: fx.units_billed != null ? String(fx.units_billed) : form.units_billed,
-        units_received: fx.units_received != null ? String(fx.units_received) : form.units_received,
-        billed_amount: fx.billed_amount != null ? String(fx.billed_amount) : form.billed_amount,
-      });
+      if (data?.upload_guard) { setError(data.upload_guard.message || "That file doesn't look like a CHSP invoice."); return; }
+      applyPrefill(data?.fields || {});
+      setLineOptions(Array.isArray(data?.line_options) ? data.line_options : []);
       setParseInfo({ plain_summary: data?.plain_summary, next_steps: data?.next_steps || [] });
     } catch (e) { setError(e instanceof ApiError ? e.message : "Could not read that invoice."); }
     finally { setParsing(false); }
+  };
+
+  const applyPrefill = (fx: any) => {
+    if (!fx) return;
+    set({
+      invoice_reference: fx.invoice_reference ?? form.invoice_reference,
+      provider_name: fx.provider_name ?? form.provider_name,
+      service_type: SERVICE_TYPES.some((o: any) => o.value === fx.service_type) ? fx.service_type : form.service_type,
+      agreed_rate: fx.agreed_rate != null ? String(fx.agreed_rate) : form.agreed_rate,
+      units_billed: fx.units_billed != null ? String(fx.units_billed) : form.units_billed,
+      units_received: fx.units_received != null ? String(fx.units_received) : form.units_received,
+      billed_amount: fx.billed_amount != null ? String(fx.billed_amount) : form.billed_amount,
+    });
+  };
+
+  const downloadFeeCheckPdf = async () => {
+    if (!result) return;
+    setDownloadingPdf(true);
+    try {
+      await sharePostPdf("/chsp1/fee-check/pdf", {
+        fields: {
+          provider_name: form.provider_name || null,
+          invoice_reference: form.invoice_reference || null,
+          service_type: form.service_type,
+          service_type_label: serviceTypeLabel(form.service_type),
+          agreed_rate: form.agreed_rate === "" ? null : Number(form.agreed_rate),
+          billed_amount: form.billed_amount === "" ? null : Number(form.billed_amount),
+        },
+        result,
+      }, `Wayly-CHSP-Fee-Check-${(form.provider_name || "check").replace(/[^\w.-]+/g, "-")}.pdf`);
+    } catch { setError("Could not build the PDF."); }
+    finally { setDownloadingPdf(false); }
   };
 
   const submit = async () => {
@@ -223,6 +251,25 @@ function WS1FeeCheck({ services, colors }: any) {
           </View>
         ) : null}
       </View>
+
+      {lineOptions.length > 1 ? (
+        <View testID="chsp-ws1-line-picker" style={{ marginTop: spacing.md, backgroundColor: colors.bg, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <ListChecks size={16} color={colors.primary} />
+            <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text, flex: 1 }}>This invoice has {lineOptions.length} service lines — pick one to check</T>
+          </View>
+          {lineOptions.map((o: any, i: number) => (
+            <Pressable key={i} testID={`chsp-ws1-line-option-${i}`} onPress={() => applyPrefill(o)}
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
+                <T variant="small" style={{ color: colors.text }} numberOfLines={1}>{o.label || serviceTypeLabel(o.service_type)}</T>
+                {(o.variance_status === "minor" || o.variance_status === "material") ? <T style={{ fontSize: 10, color: colors.terracotta, fontFamily: fonts.bodySemi }}>FLAGGED</T> : null}
+              </View>
+              <T variant="small" style={{ color: colors.text }}>{aud(o.billed_amount)}</T>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
 
       {services.length > 0 ? (
         <View style={{ marginTop: spacing.md }}>
@@ -322,6 +369,7 @@ function WS1FeeCheck({ services, colors }: any) {
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                       {result.action_label ? <Button label={result.action_label} icon={Mail} testID="chsp-ws1-draft-letter" onPress={() => setLetterOpen(true)} style={{ paddingHorizontal: 16 }} /> : null}
                       <Button label={saving ? "Saving…" : "Save This Check"} variant="outline" icon={Save} testID="chsp-ws1-save" loading={saving} onPress={saveCheck} style={{ paddingHorizontal: 16 }} />
+                      <Button label={downloadingPdf ? "Preparing…" : "Download (PDF)"} variant="outline" icon={Download} testID="chsp-ws1-download-pdf" loading={downloadingPdf} onPress={downloadFeeCheckPdf} style={{ paddingHorizontal: 16 }} />
                     </View>
                   </>
                 );
@@ -396,9 +444,9 @@ export default function ChspToolsScreen() {
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg }} keyboardShouldPersistTaps="handled" testID="chsp-tools-root">
           <PageIntro
             eyebrow="Commonwealth Home Support Programme"
-            title="Check your CHSP billing."
+            title="Check Your CHSP Billing."
             description="See whether your CHSP invoice looks right. CHSP may be exactly the right program for you. If your needs have changed, you can also think through a move to Support at Home, without pressure."
-            whatItDoes="Checks any CHSP invoice against your provider's agreed per-unit rate, and drafts letters to keep services running or apply for hardship. An optional walkthrough helps only if your needs have changed."
+            whatItDoes="Reads any CHSP invoice line by line, checks each service against your provider's agreed per-unit rate, and drafts letters to keep services running or apply for hardship. An optional walkthrough helps only if your needs have changed."
           />
 
           {loading ? <Loading label="Loading your CHSP profile…" /> : (
@@ -453,37 +501,42 @@ export default function ChspToolsScreen() {
 }
 
 function ChspProfileCard({ profile, onCreate, colors }: any) {
-  const [status, setStatus] = useState("on_chsp");
-  const [start, setStart] = useState("");
+  const [status, setStatus] = useState(profile?.current_chsp_status || "on_chsp");
+  const [start, setStart] = useState(profile?.chsp_start_date ? String(profile.chsp_start_date).slice(0, 10) : "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
-  if (profile) {
-    return (
-      <Card testID="chsp-profile-summary">
-        <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>CHSP PROFILE</T>
-        <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text, marginTop: 4 }}>Status: {chspStatusLabel(profile.current_chsp_status)}{profile.chsp_start_date ? ` · started ${shortDate(profile.chsp_start_date)}` : ""}</T>
-      </Card>
-    );
-  }
+  const [editing, setEditing] = useState(false);
 
   const submit = async () => {
     setBusy(true); setError("");
-    try { await apiFetch("/chsp1/profile", { method: "POST", body: { current_chsp_status: status, chsp_start_date: start || null } }); onCreate?.(); }
+    try { await apiFetch("/chsp1/profile", { method: "POST", body: { current_chsp_status: status, chsp_start_date: start || null } }); setEditing(false); onCreate?.(); }
     catch (e) { setError(e instanceof ApiError ? e.message : "Could not save profile."); }
     finally { setBusy(false); }
   };
 
+  if (profile && !editing) {
+    return (
+      <Card testID="chsp-profile-summary">
+        <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>CHSP PROFILE</T>
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text, marginTop: 4 }}>Status: {chspStatusLabel(profile.current_chsp_status)}{profile.chsp_start_date ? ` · started ${shortDate(profile.chsp_start_date)}` : ""}</T>
+        <Button label="Edit" variant="outline" testID="chsp-profile-edit" onPress={() => { setStatus(profile.current_chsp_status || "on_chsp"); setStart(profile.chsp_start_date ? String(profile.chsp_start_date).slice(0, 10) : ""); setEditing(true); }} style={{ marginTop: spacing.md, alignSelf: "flex-start", paddingHorizontal: 20 }} />
+      </Card>
+    );
+  }
+
   return (
     <Card testID="chsp-profile-form">
-      <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>START A CHSP PROFILE</T>
+      <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>{profile ? "UPDATE YOUR CHSP PROFILE" : "START A CHSP PROFILE"}</T>
       <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>Set your current CHSP status so we can check fees and walk through transition to Support at Home.</T>
       <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
         <Select label="Status" required value={status} onChange={setStatus} options={STATUS_OPTIONS} testID="chsp-status" />
         <LInput label="CHSP start date (optional, YYYY-MM-DD)" value={start} onChangeText={setStart} placeholder="2024-03-01" testID="chsp-start-date" colors={colors} />
       </View>
       {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
-      <Button label="Save profile" icon={Home} testID="chsp-profile-save" loading={busy} onPress={submit} style={{ marginTop: spacing.md }} />
+      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
+        <Button label={profile ? "Save changes" : "Save profile"} icon={Home} testID="chsp-profile-save" loading={busy} onPress={submit} style={{ flexGrow: 1 }} />
+        {profile ? <Button label="Cancel" variant="outline" testID="chsp-profile-cancel" onPress={() => setEditing(false)} style={{ flexGrow: 1 }} /> : null}
+      </View>
     </Card>
   );
 }

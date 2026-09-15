@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from lib.chsp1.fee_check import run_fee_check
@@ -67,6 +68,23 @@ def _iso(dt) -> Optional[str]:
     if isinstance(dt, str):
         return dt
     return dt.astimezone(timezone.utc).isoformat()
+
+
+def _chsp_upload_guard(text: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Guard a CHSP tool upload. A CHSP invoice IS an invoice, so we never
+    bounce invoice-like docs to the generic Invoice Checker — we only reject
+    a clear care plan or a clear HCP / Support-at-Home statement uploaded to
+    the wrong tool. Returns a block verdict to surface, or None to proceed."""
+    try:
+        from lib.upload_guard import classify_content
+        g = classify_content("chsp-tools", text or "")
+    except Exception:  # pragma: no cover - never block on a guard bug
+        return None
+    if g.get("reason") == "wrong_tool":
+        wt = (g.get("wrong_tool") or {}).get("slug")
+        if wt in ("care-plan-reviewer", "statement-decoder"):
+            return g
+    return None
 
 
 async def _user_id(request) -> str:
@@ -498,14 +516,14 @@ def _strip_json_fences(s: str) -> str:
 
 @chsp1_router.post("/fee-check/parse-invoice")
 async def parse_chsp_invoice(request: Request, file: UploadFile = File(...)):
-    """Reuse the shared document-extract + LLM pipeline to read an uploaded CHSP
-    invoice and return pre-fill fields, a plain-English summary and next steps.
-    Persists nothing: the caller reviews and then runs the Fee Check."""
-    import json as _json
+    """Read an uploaded CHSP invoice and return pre-fill options for the Fee
+    Check. Multi-line invoices return a ``line_options`` array so the caller
+    can pick the service to check; ``fields`` holds the primary (first flagged,
+    else first) line for one-tap pre-fill. Persists nothing."""
     await _assert_flag()
     if not _ws1_enabled():
         raise HTTPException(status_code=404, detail="Not found")
-    await _user_id(request)
+    uid = await _user_id(request)
 
     raw = await file.read()
     if not raw:
@@ -522,67 +540,79 @@ async def parse_chsp_invoice(request: Request, file: UploadFile = File(...)):
     if not (text or "").strip():
         raise HTTPException(status_code=422, detail="No readable text found in that file.")
 
-    parsed: Dict[str, Any] = {}
-    try:
-        from lib import llm_wrapper
-        reply = await llm_wrapper.chat_send(
-            model="claude-haiku-4-5-20251001",
-            provider="anthropic",
-            system=CHSP_PARSE_SYSTEM,
-            user_text=f"CHSP invoice/statement text:\n\n{text[:8000]}\n\nReturn the JSON now.",
-            apply_tone_rules=False,
-        )
-        parsed = _json.loads(_strip_json_fences(str(reply or "")))
-        if not isinstance(parsed, dict):
-            parsed = {}
-    except Exception as e:
-        logger.warning("chsp invoice parse llm failed: %s", e)
-        parsed = {}
+    guard = _chsp_upload_guard(text)
+    if guard is not None:
+        return {"upload_guard": guard, "fields": {}, "line_options": [], "plain_summary": "", "next_steps": [], "extracted": False}
 
-    fields = {
-        "provider_name": parsed.get("provider_name"),
-        "invoice_reference": parsed.get("invoice_reference"),
-        "service_type": parsed.get("service_type"),
-        "agreed_rate": parsed.get("agreed_rate"),
-        "units_billed": parsed.get("units_billed"),
-        "units_received": parsed.get("units_received") if parsed.get("units_received") is not None else parsed.get("units_billed"),
-        "billed_amount": parsed.get("billed_amount"),
-        "billed_period_start": parsed.get("billed_period_start"),
-        "billed_period_end": parsed.get("billed_period_end"),
-    }
-    # Contribution prefill: if the invoice didn't show a per-unit rate, fall back
-    # to the user's saved provider rate (Agreed Rate Schedule) so the Fee Check
-    # is one tap. Match on service_type first, narrow by provider_name if we have it.
-    prefilled_rate_from_saved = False
-    if fields.get("agreed_rate") in (None, "", 0) and fields.get("service_type"):
-        profile = await _db.chsp_profiles.find_one({"user_id": (await _user_id(request))})
-        if profile:
-            q: Dict[str, Any] = {"chsp_profile_id": profile["id"], "is_active": True, "service_type": fields["service_type"]}
-            saved = await _db.chsp_service_entries.find_one(q, sort=[("start_date", -1)])
-            if not saved and fields.get("provider_name"):
-                saved = await _db.chsp_service_entries.find_one({"chsp_profile_id": profile["id"], "is_active": True}, sort=[("start_date", -1)])
-            amount = ((saved or {}).get("hourly_rate_or_fee") or {}).get("amount")
-            if amount:
-                fields["agreed_rate"] = amount
-                if not fields.get("provider_name"):
-                    fields["provider_name"] = (saved or {}).get("provider_name")
-                prefilled_rate_from_saved = True
-    summary = parsed.get("plain_summary") or "We read your invoice. Check the pre-filled figures against the paper copy, then run the fee check."
-    next_steps = parsed.get("next_steps") if isinstance(parsed.get("next_steps"), list) else []
-    if not next_steps:
-        next_steps = [
-            "Check the pre-filled provider, rate and amounts against your invoice.",
-            "Add your provider's agreed per-unit rate if it is missing.",
-            "Run the fee check to see whether the amount looks right.",
+    analysis = await _analyse_invoice_text(text, uid)
+    header = analysis.get("header") or {}
+    lines = analysis.get("line_items") or []
+
+    def _line_option(li: Dict[str, Any], i: int) -> Dict[str, Any]:
+        agreed = li.get("agreed_rate")
+        if agreed in (None, "", 0):
+            agreed = li.get("unit_rate")
+        units = li.get("units")
+        return {
+            "index": i,
+            "label": li.get("description") or (li.get("service_type") or "service").replace("_", " ").title(),
+            "service_type": li.get("service_type") or "other",
+            "provider_name": header.get("provider_name"),
+            "invoice_reference": header.get("invoice_reference"),
+            "agreed_rate": agreed,
+            "units_billed": units,
+            "units_received": units,
+            "billed_amount": li.get("amount"),
+            "billed_period_start": header.get("period_start"),
+            "billed_period_end": header.get("period_end"),
+            "unit_label": li.get("unit_label"),
+            "variance_status": li.get("variance_status"),
+        }
+
+    line_options = [_line_option(li, i) for i, li in enumerate(lines)]
+
+    # Primary line for one-tap prefill: prefer a flagged (over-rate) line.
+    primary = next((o for o in line_options if o.get("variance_status") in ("minor", "material")), None)
+    primary = primary or (line_options[0] if line_options else None)
+
+    if primary:
+        fields = {
+            "provider_name": primary.get("provider_name"),
+            "invoice_reference": primary.get("invoice_reference"),
+            "service_type": primary.get("service_type"),
+            "agreed_rate": primary.get("agreed_rate"),
+            "units_billed": primary.get("units_billed"),
+            "units_received": primary.get("units_received"),
+            "billed_amount": primary.get("billed_amount"),
+            "billed_period_start": primary.get("billed_period_start"),
+            "billed_period_end": primary.get("billed_period_end"),
+        }
+    else:
+        fields = {
+            "provider_name": header.get("provider_name"),
+            "invoice_reference": header.get("invoice_reference"),
+            "service_type": None, "agreed_rate": None, "units_billed": None,
+            "units_received": None, "billed_amount": None,
+            "billed_period_start": header.get("period_start"),
+            "billed_period_end": header.get("period_end"),
+        }
+
+    summary = analysis.get("plain_summary") or "We read your invoice. Pick the service to check, review the pre-filled figures, then run the fee check."
+    next_steps = analysis.get("next_steps") or [
+        "Pick the service line you want to check below.",
+        "Check the pre-filled provider, rate and amounts against your invoice.",
+        "Run the fee check to see whether the amount looks right.",
+    ]
+    if len(line_options) > 1:
+        next_steps = ["This invoice has several service lines — pick the one to check."] + [
+            s for s in next_steps if not s.lower().startswith("pick the service")
         ]
-    if prefilled_rate_from_saved:
-        next_steps = ["We used your saved provider rate of $" + f"{fields['agreed_rate']}" + " per unit — tap Check fee."] + [s for s in next_steps if "agreed per-unit rate if it is missing" not in s]
     return {
         "fields": fields,
+        "line_options": line_options,
         "plain_summary": str(summary),
         "next_steps": [str(s) for s in next_steps][:4],
-        "extracted": bool(parsed),
-        "rate_from_saved": prefilled_rate_from_saved,
+        "extracted": bool(line_options),
     }
 
 
@@ -792,6 +822,9 @@ async def analyse_chsp_invoice(request: Request, file: UploadFile = File(...)):
         raise HTTPException(status_code=422, detail="Could not read that file. Try a clearer PDF or photo.")
     if not (text or "").strip():
         raise HTTPException(status_code=422, detail="No readable text found in that file.")
+    guard = _chsp_upload_guard(text)
+    if guard is not None:
+        return {"upload_guard": guard, "analysis": {"extracted": False}}
     analysis = await _analyse_invoice_text(text, uid)
     return {"analysis": analysis}
 
@@ -1004,6 +1037,141 @@ async def chsp_overcharge_letter(body: OverchargeLetterIn, request: Request):
     if not letter:
         raise HTTPException(status_code=502, detail="Could not draft the letter right now. Please try again.")
     return {"letter": letter}
+
+
+FINDINGS_LETTER_SYSTEM = (
+    "You write ONE short, polite but firm query letter for a family carer to send to their aged-care "
+    "(CHSP) provider about SEVERAL billing lines on the same invoice that look overcharged. Plain English, "
+    "warm and respectful, no legal jargon, no threats. Australian spelling. Return ONLY the letter body text "
+    "(greeting to sign-off), no preamble, no code fences, no placeholders in [brackets] unless a fact is "
+    "genuinely missing. Structure: a greeting, one sentence naming the invoice, then a short bulleted list "
+    "with one line per flagged service (service, the agreed rate vs what was billed, and the difference), "
+    "then a polite request to review and correct/credit the differences and confirm in writing, and a "
+    "courteous sign-off. Keep it under 240 words."
+)
+
+
+class FindingsLetterLine(BaseModel):
+    service_description: Optional[str] = None
+    units: Optional[float] = None
+    unit_label: Optional[str] = None
+    billed_unit_rate: Optional[float] = None
+    agreed_rate: Optional[float] = None
+    billed_amount: Optional[float] = None
+    expected_amount: Optional[float] = None
+
+
+class FindingsLetterIn(BaseModel):
+    provider_name: Optional[str] = None
+    client_name: Optional[str] = None
+    invoice_reference: Optional[str] = None
+    period: Optional[str] = None
+    lines: List[FindingsLetterLine] = Field(default_factory=list)
+
+
+@chsp1_router.post("/findings-letter")
+async def chsp_findings_letter(body: FindingsLetterIn, request: Request):
+    """Draft ONE consolidated query letter covering every flagged / overcharged
+    line from an invoice analysis."""
+    import json as _json
+    await _assert_flag()
+    await _user_id(request)
+    if not body.lines:
+        raise HTTPException(status_code=400, detail="No flagged lines to raise.")
+    lines_facts = []
+    for ln in body.lines:
+        diff = None
+        if ln.billed_amount is not None and ln.expected_amount is not None:
+            diff = round(ln.billed_amount - ln.expected_amount, 2)
+        lines_facts.append({
+            "service": ln.service_description,
+            "units": ln.units,
+            "unit_label": ln.unit_label,
+            "agreed_per_unit_rate": ln.agreed_rate,
+            "billed_per_unit_rate": ln.billed_unit_rate,
+            "billed_amount": ln.billed_amount,
+            "expected_amount": ln.expected_amount,
+            "difference_overcharged": diff,
+        })
+    facts = {
+        "provider_name": body.provider_name or "the provider",
+        "client_name": body.client_name or "the client",
+        "invoice_reference": body.invoice_reference,
+        "billed_period": body.period,
+        "flagged_lines": lines_facts,
+    }
+    letter = ""
+    try:
+        from lib import llm_wrapper
+        reply = await llm_wrapper.chat_send(
+            model="claude-haiku-4-5-20251001",
+            provider="anthropic",
+            system=FINDINGS_LETTER_SYSTEM,
+            user_text="Write the letter using these facts (omit any that are null):\n" + _json.dumps(facts),
+            apply_tone_rules=False,
+        )
+        letter = str(reply or "").strip()
+    except Exception as e:  # pragma: no cover
+        logger.warning("findings letter generation failed: %s", e)
+    if not letter:
+        raise HTTPException(status_code=502, detail="Could not draft the letter right now. Please try again.")
+    return {"letter": letter}
+
+
+def _safe_slug(s: Optional[str], fallback: str = "chsp") -> str:
+    import re as _re
+    out = _re.sub(r"[^\w.\-]+", "-", (s or "").strip()).strip("-")
+    return out[:40] or fallback
+
+
+class InvoicePdfIn(BaseModel):
+    header: Dict[str, Any] = Field(default_factory=dict)
+    line_items: List[Dict[str, Any]] = Field(default_factory=list)
+    totals: Dict[str, Any] = Field(default_factory=dict)
+    by_category: List[Dict[str, Any]] = Field(default_factory=list)
+    plain_summary: Optional[str] = None
+    next_steps: List[str] = Field(default_factory=list)
+    flags_count: int = 0
+
+
+@chsp1_router.post("/invoice/pdf")
+async def chsp_invoice_pdf(body: InvoicePdfIn, request: Request):
+    """Render a branded PDF of a CHSP invoice analysis. Persists nothing."""
+    await _assert_flag()
+    await _user_id(request)
+    from lib.chsp1 import chsp_pdf
+    try:
+        pdf = chsp_pdf.render_invoice_pdf(body.dict())
+    except Exception as e:  # pragma: no cover
+        logger.warning("chsp invoice pdf render failed: %s", e)
+        raise HTTPException(status_code=500, detail="Could not build the PDF right now.")
+    prov = _safe_slug((body.header or {}).get("provider_name"), "invoice")
+    ref = _safe_slug((body.header or {}).get("invoice_reference"), "")
+    fn = f"Wayly-CHSP-Invoice_{prov}{('_' + ref) if ref else ''}.pdf"
+    return Response(content=pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{fn}"'})
+
+
+class FeeCheckPdfIn(BaseModel):
+    fields: Dict[str, Any] = Field(default_factory=dict)
+    result: Dict[str, Any] = Field(default_factory=dict)
+
+
+@chsp1_router.post("/fee-check/pdf")
+async def chsp_fee_check_pdf(body: FeeCheckPdfIn, request: Request):
+    """Render a branded PDF of a single per-unit Fee Check result."""
+    await _assert_flag()
+    await _user_id(request)
+    from lib.chsp1 import chsp_pdf
+    try:
+        pdf = chsp_pdf.render_fee_check_pdf(body.dict())
+    except Exception as e:  # pragma: no cover
+        logger.warning("chsp fee check pdf render failed: %s", e)
+        raise HTTPException(status_code=500, detail="Could not build the PDF right now.")
+    prov = _safe_slug((body.fields or {}).get("provider_name"), "fee-check")
+    fn = f"Wayly-CHSP-Fee-Check_{prov}.pdf"
+    return Response(content=pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{fn}"'})
 
 
 class SavedCheckIn(BaseModel):

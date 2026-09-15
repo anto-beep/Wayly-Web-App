@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
     ChevronLeft, Receipt, ArrowRight, CheckCircle2, AlertTriangle,
     ShieldAlert, ClipboardCheck, Home, Clock, LifeBuoy, Mail, HelpCircle,
-    Upload, FileText, Save, Trash2, Sparkles, ListChecks,
+    Upload, FileText, Save, Trash2, Sparkles, ListChecks, Download,
 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
 import { RequiredBadge } from "@/components/RequiredHint";
@@ -76,25 +76,25 @@ function AccessHardshipCard({ providerName, emphasiseHardship }) {
     };
     return (
         <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-3" data-testid="chsp-access-hardship">
-            <p className="text-xs uppercase tracking-wide text-primary-k/50">Access and hardship</p>
-            <h2 className="font-heading text-xl text-primary-k">Keep services running, and get help with fees</h2>
+            <p className="text-xs uppercase tracking-wide text-primary-k/50">Access And Hardship</p>
+            <h2 className="font-heading text-xl text-primary-k">Keep Services Running, And Get Help With Fees</h2>
             <p className="text-sm text-muted-k">The pain most CHSP clients feel is about access, not billing. Draft a letter to keep your services going, or start a hardship / fee-waiver request.</p>
             <div className="grid sm:grid-cols-2 gap-3">
                 <button
                     onClick={() => draft("service_continuity")}
                     disabled={busy === "service_continuity"}
                     data-testid="chsp-service-continuity-letter"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary-k/25 bg-white px-4 py-3 text-sm text-primary-k hover:bg-primary-k hover:text-white transition-colors disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0E4D52] px-4 py-3 text-sm text-white hover:bg-[#0b3d41] transition-colors disabled:opacity-50"
                 >
-                    <Mail className="w-4 h-4" /> Service continuity letter
+                    <Mail className="w-4 h-4" /> Service Continuity Letter
                 </button>
                 <button
                     onClick={() => draft("hardship")}
                     disabled={busy === "hardship"}
                     data-testid="chsp-hardship-letter"
-                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm transition-colors disabled:opacity-50 ${emphasiseHardship ? "bg-gold text-white" : "border border-primary-k/25 bg-white text-primary-k hover:bg-primary-k hover:text-white"}`}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm text-white transition-colors disabled:opacity-50 ${emphasiseHardship ? "bg-gold hover:bg-gold/90" : "bg-[#A5512B] hover:bg-[#8f4523]"}`}
                 >
-                    <LifeBuoy className="w-4 h-4" /> Apply for hardship / fee waiver
+                    <LifeBuoy className="w-4 h-4" /> Apply For Hardship / Fee Waiver
                 </button>
             </div>
             {emphasiseHardship && (
@@ -118,6 +118,8 @@ function WS1FeeCheck({ services }) {
     const [result, setResult] = useState(null);
     const [parsing, setParsing] = useState(false);
     const [parseInfo, setParseInfo] = useState(null); // { plain_summary, next_steps }
+    const [lineOptions, setLineOptions] = useState([]); // multi-line invoice picker
+    const [downloadingPdf, setDownloadingPdf] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState([]);
     const [showPast, setShowPast] = useState(false);
@@ -139,6 +141,48 @@ function WS1FeeCheck({ services }) {
     };
     useEffect(() => { loadSaved(); }, []);
 
+    // Shared prefill from a parsed `fields` object or a chosen line option.
+    const applyPrefill = (fx) => {
+        if (!fx) return;
+        setForm((f) => ({
+            ...f,
+            invoice_reference: fx.invoice_reference ?? f.invoice_reference,
+            provider_name: fx.provider_name ?? f.provider_name,
+            service_type: SERVICE_TYPES.includes(fx.service_type) ? fx.service_type : f.service_type,
+            agreed_rate: fx.agreed_rate != null ? String(fx.agreed_rate) : f.agreed_rate,
+            units_billed: fx.units_billed != null ? String(fx.units_billed) : f.units_billed,
+            units_received: fx.units_received != null ? String(fx.units_received) : f.units_received,
+            billed_amount: fx.billed_amount != null ? String(fx.billed_amount) : f.billed_amount,
+            billed_period_start: toISODate(fx.billed_period_start) || f.billed_period_start,
+            billed_period_end: toISODate(fx.billed_period_end) || f.billed_period_end,
+        }));
+    };
+
+    const downloadPdf = async () => {
+        if (!result) return;
+        setDownloadingPdf(true);
+        try {
+            const res = await api.post("/chsp1/fee-check/pdf", {
+                fields: {
+                    provider_name: form.provider_name || null,
+                    invoice_reference: form.invoice_reference || null,
+                    service_type: form.service_type,
+                    service_type_label: serviceTypeLabel(form.service_type),
+                    agreed_rate: form.agreed_rate === "" ? null : Number(form.agreed_rate),
+                    billed_amount: form.billed_amount === "" ? null : Number(form.billed_amount),
+                },
+                result,
+            }, { responseType: "blob" });
+            const url = URL.createObjectURL(res.data);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Wayly-CHSP-Fee-Check-${(form.provider_name || "check").replace(/[^\w.-]+/g, "-")}.pdf`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+        } catch { toast.error("Could not build the PDF."); }
+        finally { setDownloadingPdf(false); }
+    };
+
     const onServiceChange = (id) => {
         const svc = services.find((s) => s.id === id);
         if (svc) {
@@ -158,25 +202,20 @@ function WS1FeeCheck({ services }) {
         if (!file) return;
         setParsing(true);
         setParseInfo(null);
+        setLineOptions([]);
         try {
             const fd = new FormData();
             fd.append("file", file);
             const { data } = await api.post("/chsp1/fee-check/parse-invoice", fd, { headers: { "Content-Type": "multipart/form-data" } });
-            const fx = data.fields || {};
-            setForm((f) => ({
-                ...f,
-                invoice_reference: fx.invoice_reference ?? f.invoice_reference,
-                provider_name: fx.provider_name ?? f.provider_name,
-                service_type: SERVICE_TYPES.includes(fx.service_type) ? fx.service_type : f.service_type,
-                agreed_rate: fx.agreed_rate != null ? String(fx.agreed_rate) : f.agreed_rate,
-                units_billed: fx.units_billed != null ? String(fx.units_billed) : f.units_billed,
-                units_received: fx.units_received != null ? String(fx.units_received) : f.units_received,
-                billed_amount: fx.billed_amount != null ? String(fx.billed_amount) : f.billed_amount,
-                billed_period_start: toISODate(fx.billed_period_start) || f.billed_period_start,
-                billed_period_end: toISODate(fx.billed_period_end) || f.billed_period_end,
-            }));
+            if (data?.upload_guard) {
+                toast.error(data.upload_guard.message || "That file doesn't look like a CHSP invoice.");
+                return;
+            }
+            applyPrefill(data.fields || {});
+            setLineOptions(Array.isArray(data.line_options) ? data.line_options : []);
             setParseInfo({ plain_summary: data.plain_summary, next_steps: data.next_steps || [] });
-            toast.success("We read your invoice and filled in what we could.");
+            const n = (data.line_options || []).length;
+            toast.success(n > 1 ? `We read ${n} service lines — pick one to check.` : "We read your invoice and filled in what we could.");
         } catch (err) {
             toast.error(err?.response?.data?.detail || "Could not read that invoice.");
         } finally { setParsing(false); }
@@ -274,6 +313,28 @@ function WS1FeeCheck({ services }) {
                     </div>
                 )}
             </div>
+
+            {lineOptions.length > 1 && (
+                <div className="rounded-xl bg-white/70 border border-primary-k/10 p-4 space-y-2" data-testid="chsp-ws1-line-picker">
+                    <p className="text-sm font-medium text-primary-k flex items-center gap-1.5">
+                        <ListChecks className="w-4 h-4" /> This invoice has {lineOptions.length} service lines — pick one to check
+                    </p>
+                    <div className="grid gap-2">
+                        {lineOptions.map((o, i) => (
+                            <button key={i} type="button" onClick={() => applyPrefill(o)} data-testid={`chsp-ws1-line-option-${i}`}
+                                    className="flex items-center justify-between gap-2 rounded-lg border border-kindred px-3 py-2 text-left text-sm hover:border-primary-k/40 hover:bg-primary-k/[0.02] transition-colors">
+                                <span className="min-w-0 truncate text-primary-k">
+                                    {o.label || serviceTypeLabel(o.service_type)}
+                                    {(o.variance_status === "minor" || o.variance_status === "material") && (
+                                        <span className="ml-2 text-[10px] uppercase tracking-wide text-red-700">flagged</span>
+                                    )}
+                                </span>
+                                <span className="shrink-0 tabular-nums text-primary-k">{AUD(o.billed_amount)}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="grid sm:grid-cols-2 gap-3 rounded-xl bg-white/70 border border-primary-k/10 p-4">
                 {services.length > 0 && (
@@ -416,6 +477,10 @@ function WS1FeeCheck({ services }) {
                                 <button onClick={saveCheck} disabled={saving} data-testid="chsp-ws1-save"
                                         className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full bg-primary-k text-white hover:bg-primary-k/90 disabled:opacity-50">
                                     <Save className="w-4 h-4"/> {saving ? "Saving…" : "Save This Check"}
+                                </button>
+                                <button onClick={downloadPdf} disabled={downloadingPdf} data-testid="chsp-ws1-download-pdf"
+                                        className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full border border-primary-k/25 bg-white text-primary-k hover:bg-primary-k hover:text-white transition-colors disabled:opacity-50">
+                                    <Download className="w-4 h-4"/> {downloadingPdf ? "Preparing…" : "Download (PDF)"}
                                 </button>
                             </div>
                         </>
@@ -568,29 +633,40 @@ function VarianceBadge({ status }) {
 }
 
 function ChspProfileCard({ profile, onCreate }) {
-    const [status, setStatus] = useState("on_chsp");
-    const [start, setStart] = useState("");
+    const [status, setStatus] = useState(profile?.current_chsp_status || "on_chsp");
+    const [start, setStart] = useState(profile?.chsp_start_date ? String(profile.chsp_start_date).slice(0, 10) : "");
     const [busy, setBusy] = useState(false);
-    if (profile) {
-        return (
-            <div className="rounded-2xl border border-primary-k/10 bg-white p-5" data-testid="chsp-profile-summary">
-                <p className="text-xs uppercase tracking-wide text-primary-k/50">CHSP profile</p>
-                <p className="text-sm text-primary-k mt-1">Status: {chspStatusLabel(profile.current_chsp_status)}
-                    {profile.chsp_start_date ? ` · started ${formatDate(profile.chsp_start_date)}` : ""}</p>
-            </div>
-        );
-    }
+    const [editing, setEditing] = useState(false);
+
     const submit = async () => {
         setBusy(true);
         try {
             await api.post("/chsp1/profile", { current_chsp_status: status, chsp_start_date: start || null });
+            setEditing(false);
             onCreate?.();
         } catch { toast.error("Could not save profile"); }
         finally { setBusy(false); }
     };
+
+    if (profile && !editing) {
+        return (
+            <div className="rounded-2xl border border-primary-k/10 bg-white p-5 flex items-start justify-between gap-3" data-testid="chsp-profile-summary">
+                <div>
+                    <p className="text-xs uppercase tracking-wide text-primary-k/50">CHSP Profile</p>
+                    <p className="text-sm text-primary-k mt-1">Status: {chspStatusLabel(profile.current_chsp_status)}
+                        {profile.chsp_start_date ? ` · started ${formatDate(profile.chsp_start_date)}` : ""}</p>
+                </div>
+                <button onClick={() => { setStatus(profile.current_chsp_status || "on_chsp"); setStart(profile.chsp_start_date ? String(profile.chsp_start_date).slice(0, 10) : ""); setEditing(true); }}
+                        data-testid="chsp-profile-edit"
+                        className="shrink-0 text-xs rounded-lg border border-primary-k/25 px-3 py-1.5 text-primary-k hover:bg-primary-k hover:text-white transition-colors">
+                    Edit
+                </button>
+            </div>
+        );
+    }
     return (
         <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-3" data-testid="chsp-profile-form">
-            <p className="text-xs uppercase tracking-wide text-primary-k/50">Start a CHSP profile</p>
+            <p className="text-xs uppercase tracking-wide text-primary-k/50">{profile ? "Update your CHSP profile" : "Start a CHSP profile"}</p>
             <p className="text-sm text-muted-k">Set your current CHSP status so we can check fees and walk through transition to Support at Home.</p>
             <div className="grid sm:grid-cols-2 gap-3">
                 <label className="text-xs text-muted-k">Status <Req/>
@@ -608,10 +684,16 @@ function ChspProfileCard({ profile, onCreate }) {
                            className="mt-1 w-full px-3 py-2 text-sm border rounded"/>
                 </label>
             </div>
-            <button onClick={submit} disabled={busy} data-testid="chsp-profile-save"
-                    className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-4 py-2 text-sm">
-                <Home className="w-4 h-4"/> Save profile
-            </button>
+            <div className="flex items-center gap-2">
+                <button onClick={submit} disabled={busy} data-testid="chsp-profile-save"
+                        className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-4 py-2 text-sm">
+                    <Home className="w-4 h-4"/> {profile ? "Save changes" : "Save profile"}
+                </button>
+                {profile && (
+                    <button onClick={() => setEditing(false)} data-testid="chsp-profile-cancel"
+                            className="text-xs rounded-full border border-primary-k/20 px-4 py-2 text-primary-k">Cancel</button>
+                )}
+            </div>
         </div>
     );
 }
@@ -965,19 +1047,19 @@ export default function ChspTools() {
             </Link>
             <PageIntro
                 eyebrow="Commonwealth Home Support Programme"
-                title="Check your CHSP billing."
+                title="Check Your CHSP Billing."
                 description="See whether your CHSP invoice looks right. CHSP may be exactly the right program for you. If your needs have changed, you can also think through a move to Support at Home, without pressure."
-                whatItDoes="Checks any CHSP invoice against your provider's agreed per-unit rate, and drafts letters to keep services running or apply for hardship. If your needs have changed, an optional walkthrough helps you think through Support at Home."
+                whatItDoes="Reads any CHSP invoice line by line, checks each service against your provider's agreed per-unit rate, and drafts letters to keep services running or apply for hardship. If your needs have changed, an optional walkthrough helps you think through Support at Home."
                 howToUse={[
-                    "Set your CHSP profile (status and start date).",
-                    "Enter the agreed per-unit rate, units billed and received, and the billed amount.",
-                    "Draft a service-continuity or hardship letter, or dispute a material overcharge.",
-                    "Only if your needs have changed, work through the optional transition self-check.",
+                    "Set your CHSP profile, then upload a CHSP invoice to read it line by line.",
+                    "Pick a service line to check it against your provider's agreed per-unit rate.",
+                    "Download your results as a PDF, or draft a findings letter for anything overcharged.",
+                    "Draft a service-continuity or hardship letter to keep services running or get help with fees.",
                 ]}
                 whatYouGet={[
-                    "A per-unit verdict on every fee check (within tolerance, minor, or material).",
-                    "Ready-to-send service-continuity and hardship / fee-waiver letters.",
-                    "An optional, documented decision on whether to stay on CHSP or move to Support at Home.",
+                    "A line-by-line read of every CHSP invoice, with overcharges flagged against your saved rates.",
+                    "A per-unit verdict on every fee check (within tolerance, minor, or material), downloadable as a PDF.",
+                    "Ready-to-send findings, service-continuity and hardship / fee-waiver letters.",
                 ]}
             />
 

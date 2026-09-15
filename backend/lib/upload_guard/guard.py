@@ -102,12 +102,16 @@ def check_file_gates(filename: str, raw: bytes, content_type: str, expected: str
     return None
 
 
-def _score(text_lower: str, tool_key: str) -> float:
+def _raw_score(text_lower: str, tool_key: str) -> float:
     raw = 0.0
     for token, weight in TOOL_PROFILES[tool_key]["signals"]:
         if token in text_lower:
             raw += weight
-    return min(1.0, raw / SIGNAL_TARGET)
+    return raw
+
+
+def _score(text_lower: str, tool_key: str) -> float:
+    return min(1.0, _raw_score(text_lower, tool_key) / SIGNAL_TARGET)
 
 
 def classify_content(expected: str, extracted_text: Optional[str]) -> Dict[str, Any]:
@@ -119,14 +123,23 @@ def classify_content(expected: str, extracted_text: Optional[str]) -> Dict[str, 
                         message="We couldn't read any text from this file. Try a clearer scan or photo, or paste the text instead.")
 
     tl = text.lower()
-    scores = {k: _score(tl, k) for k in TOOL_PROFILES}
+    raw = {k: _raw_score(tl, k) for k in TOOL_PROFILES}
+    scores = {k: min(1.0, raw[k] / SIGNAL_TARGET) for k in TOOL_PROFILES}
     expected_conf = scores[expected]
     others = {k: v for k, v in scores.items() if k != expected}
-    best_other_key = max(others, key=others.get) if others else "unknown"
+    # Pick the strongest other tool by capped confidence, breaking ties on the
+    # raw signal weight so a document that hits many specific markers (e.g. a
+    # CHSP invoice) out-ranks a shallow generic match (e.g. "tax invoice").
+    best_other_key = max(others, key=lambda k: (others[k], raw[k])) if others else "unknown"
     best_other_conf = others.get(best_other_key, 0.0)
 
     # A clearly-different document that belongs to another tool → wrong-tool block.
-    if best_other_conf >= ACCEPT_THRESHOLD and best_other_conf > expected_conf:
+    # Redirect when the other tool is a stronger match — either a higher capped
+    # confidence, or (when both saturate at 1.0) a decisively higher raw score.
+    other_is_better = best_other_conf > expected_conf or (
+        best_other_conf == expected_conf and raw.get(best_other_key, 0.0) > raw.get(expected, 0.0) + 0.5
+    )
+    if best_other_conf >= ACCEPT_THRESHOLD and other_is_better:
         wt = TOOL_PROFILES[best_other_key]
         return _verdict(
             "block", "wrong_tool", expected=expected, detected=best_other_key, confidence=best_other_conf,

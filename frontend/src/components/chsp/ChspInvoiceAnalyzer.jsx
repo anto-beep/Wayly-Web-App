@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import {
     Upload, FileText, Sparkles, ArrowRight, Save, Trash2, Search,
     AlertTriangle, CheckCircle2, ReceiptText, Eye, ListChecks, Landmark, Wallet,
-    Mail, TrendingUp,
+    Mail, TrendingUp, Download, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { serviceTypeLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/formatDate";
@@ -137,10 +137,11 @@ function TrendsChart({ trends }) {
     );
 }
 
-function AnalysisView({ analysis, onSave, saving, savedMode, onDraftLetter }) {
+function AnalysisView({ analysis, onSave, saving, savedMode, onDraftLetter, onDownloadPdf, downloadingPdf, onDraftFindings }) {
     const h = analysis.header || {};
     const t = analysis.totals || {};
     const lines = analysis.line_items || [];
+    const [linesOpen, setLinesOpen] = useState(false);
     return (
         <div className="space-y-4" data-testid="chsp-analyzer-result">
             <div className="rounded-xl border border-primary-k/10 bg-white p-4" data-testid="chsp-analyzer-summary">
@@ -182,10 +183,16 @@ function AnalysisView({ analysis, onSave, saving, savedMode, onDraftLetter }) {
             </div>
 
             <div className="rounded-xl border border-primary-k/10 bg-white overflow-hidden" data-testid="chsp-analyzer-lines">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-kindred">
-                    <ListChecks className="w-4 h-4 text-primary-k" />
-                    <p className="text-sm font-medium text-primary-k">Line By Line ({lines.length})</p>
-                </div>
+                <button onClick={() => setLinesOpen((o) => !o)} data-testid="chsp-analyzer-lines-toggle"
+                        className="w-full flex items-center justify-between gap-2 px-4 py-3 border-b border-kindred hover:bg-primary-k/[0.02]">
+                    <span className="flex items-center gap-2 text-sm font-medium text-primary-k">
+                        <ListChecks className="w-4 h-4 text-primary-k" /> Line By Line ({lines.length})
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-k">
+                        {linesOpen ? "Hide" : "Show"} {linesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </span>
+                </button>
+                {linesOpen && (
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
@@ -235,6 +242,7 @@ function AnalysisView({ analysis, onSave, saving, savedMode, onDraftLetter }) {
                         </tfoot>
                     </table>
                 </div>
+                )}
             </div>
 
             {!savedMode && (
@@ -248,6 +256,18 @@ function AnalysisView({ analysis, onSave, saving, savedMode, onDraftLetter }) {
                     <CheckCircle2 className="w-3.5 h-3.5" /> Saved To Your Invoice History
                 </div>
             )}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button onClick={onDownloadPdf} disabled={downloadingPdf} data-testid="chsp-analyzer-download-pdf"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-primary-k/25 bg-white px-4 py-2 text-sm text-primary-k hover:bg-primary-k hover:text-white transition-colors disabled:opacity-50">
+                    <Download className="w-4 h-4" /> {downloadingPdf ? "Preparing…" : "Download Results (PDF)"}
+                </button>
+                {analysis.flags_count > 0 && (
+                    <button onClick={onDraftFindings} data-testid="chsp-analyzer-findings-letter"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[#A5512B] px-4 py-2 text-sm text-white hover:bg-[#8f4523] transition-colors">
+                        <Mail className="w-4 h-4" /> Draft Findings Letter
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
@@ -266,6 +286,8 @@ export default function ChspInvoiceAnalyzer() {
     const [providerFilter, setProviderFilter] = useState("all");
     const [sort, setSort] = useState("newest"); // newest | oldest | highest
     const [letter, setLetter] = useState(null); // facts for the modal, or null
+    const [findings, setFindings] = useState(null); // facts for the consolidated findings letter
+    const [downloadingPdf, setDownloadingPdf] = useState(false);
     const fileRef = useRef(null);
 
     const loadHistory = async () => {
@@ -347,6 +369,46 @@ export default function ChspInvoiceAnalyzer() {
         catch { toast.error("Could not delete."); }
     };
 
+    const downloadPdf = async () => {
+        if (!analysis) return;
+        setDownloadingPdf(true);
+        try {
+            const res = await api.post("/chsp1/invoice/pdf", {
+                header: analysis.header, line_items: analysis.line_items, totals: analysis.totals,
+                by_category: analysis.by_category, plain_summary: analysis.plain_summary,
+                next_steps: analysis.next_steps, flags_count: analysis.flags_count || 0,
+            }, { responseType: "blob" });
+            const url = URL.createObjectURL(res.data);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Wayly-CHSP-Invoice-${(analysis.header?.provider_name || "review").replace(/[^\w.-]+/g, "-")}.pdf`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+        } catch { toast.error("Could not build the PDF."); }
+        finally { setDownloadingPdf(false); }
+    };
+
+    const draftFindings = () => {
+        const hdr = analysis?.header || {};
+        const flagged = (analysis?.line_items || []).filter((li) => li.variance_status === "minor" || li.variance_status === "material");
+        if (flagged.length === 0) { toast.info("No flagged lines to raise."); return; }
+        setFindings({
+            provider_name: hdr.provider_name || null,
+            client_name: hdr.client_name || active?.display_name || null,
+            invoice_reference: hdr.invoice_reference || null,
+            period: hdr.period_start ? `${hdr.period_start}${hdr.period_end ? ` – ${hdr.period_end}` : ""}` : null,
+            lines: flagged.map((li) => ({
+                service_description: li.description || serviceTypeLabel(li.service_type),
+                units: li.units ?? null,
+                unit_label: li.unit_label || "units",
+                billed_unit_rate: li.unit_rate ?? null,
+                agreed_rate: li.agreed_rate ?? null,
+                billed_amount: li.amount ?? null,
+                expected_amount: li.agreed_rate != null && li.units != null ? Number((li.agreed_rate * li.units).toFixed(2)) : null,
+            })),
+        });
+    };
+
     const draftLetterForLine = (li) => {
         const hdr = analysis?.header || {};
         setLetter({
@@ -404,7 +466,7 @@ export default function ChspInvoiceAnalyzer() {
                 </button>
             </div>
 
-            {analysis && <AnalysisView analysis={analysis} onSave={() => doSave(false)} saving={saving} savedMode={savedMode} onDraftLetter={draftLetterForLine} />}
+            {analysis && <AnalysisView analysis={analysis} onSave={() => doSave(false)} saving={saving} savedMode={savedMode} onDraftLetter={draftLetterForLine} onDownloadPdf={downloadPdf} downloadingPdf={downloadingPdf} onDraftFindings={draftFindings} />}
 
             {trends.length > 1 && <TrendsChart trends={trends} />}
 
@@ -493,6 +555,7 @@ export default function ChspInvoiceAnalyzer() {
             </div>
 
             <OverchargeLetterModal open={Boolean(letter)} facts={letter || {}} onClose={() => setLetter(null)} />
+            <OverchargeLetterModal open={Boolean(findings)} facts={findings || {}} endpoint="/chsp1/findings-letter" title="Findings Letter To Your Provider" onClose={() => setFindings(null)} />
         </div>
     );
 }

@@ -7489,3 +7489,21 @@ Verified iter340 (backend 5/5 pytest; web live screenshots; mobile parity via sc
 
 ### Status
 No critical bugs. Backend contracts confirmed by pytest (test_iter340_chsp_overhaul.py). Web e2e verified. Mobile parity verified by screenshots (native DocumentPicker upload can't be automated in the Expo web preview; all mobile backend calls green). Not mocked — real Claude Haiku 4.5 via Emergent LLM key.
+
+
+## iter341 — CHSP 10-item batch completion + P0 sanitiser infinite-loop fix (Jun 2026, web + mobile)
+
+### P0 ROOT-CAUSE FIX — `lib/text_sanitiser.py` `strip_wayly_dashes` infinite loop (backend-wide)
+- **Symptom:** the new `POST /api/chsp1/findings-letter` endpoint (and intermittently other LLM endpoints) froze the ENTIRE backend — `/api/health` returned HTTP 000, event-loop stalled, main thread pinned at 100% CPU. Previous testing_agent timed out because of this.
+- **Cause:** the post-LLM dash cleanup ran `while ", " in out: out = out.replace(", ", ", ")` — the needle equalled the replacement, so the condition never cleared. It only triggered when a reply contained an em/en dash (function returns early otherwise) AND a comma — i.e. essentially every generated letter. This is a shared sanitiser applied to EVERY LLM string reply (`llm_wrapper.call`/`chat_send`), so it was a latent freeze landmine across all AI text endpoints, not just CHSP.
+- **Fix:** replaced the non-terminating loop with terminating regex collapses: `re.sub(r",[ \t]*(?:,[ \t]*)+", ", ", out)` (collapse runs of commas/spaces to one ", ") and `re.sub(r"[ \t]{2,}", " ", out)` (squeeze double spaces, newlines preserved so letter formatting survives).
+- **Verified (curl, real Claude Haiku 4.5):** findings-letter → 200 in ~4.8s (correct multi-line consolidated letter over all flagged lines); overcharge-letter → 200 in ~4.8s; `/api/health` stays 200 throughout an in-flight LLM call (loop no longer freezes).
+
+### 10-item CHSP batch (implemented prior iter, now fully verified)
+- upload_guard classifies CHSP invoices correctly (no cross-tool contamination to Care Plan Reviewer / Statement Decoder).
+- PDF downloads: `POST /api/chsp1/invoice/pdf` + `POST /api/chsp1/fee-check/pdf` (branded, via `lib/chsp1/chsp_pdf.py`).
+- `POST /api/chsp1/findings-letter` — consolidated query letter covering every flagged line.
+- Web + mobile UI: collapsed line items by default, editable CHSP profile status, Access/Hardship button colour + capitalisation fixes, multi-line picker for Fee Check upload, PDF + Findings Letter buttons.
+
+### Status
+Pending item (findings-letter) resolved. Root cause was NOT an LLM timeout (as the handoff hypothesised) but a code-level infinite loop; fixed and verified backend-side via curl. Not mocked — real Claude Haiku 4.5 via Emergent LLM key.

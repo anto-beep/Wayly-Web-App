@@ -7,7 +7,7 @@ import { Button, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
-export default function OverchargeLetterModal({ visible, facts, onClose, colors }: any) {
+export default function OverchargeLetterModal({ visible, facts, onClose, colors, endpoint = "/chsp1/overcharge-letter", title = "Query Letter To Your Provider" }: any) {
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
   const [copied, setCopied] = useState(false);
@@ -17,7 +17,7 @@ export default function OverchargeLetterModal({ visible, facts, onClose, colors 
     setLetter(""); setCopied(false); setLoading(true);
     (async () => {
       try {
-        const d = await apiFetch<any>("/chsp1/overcharge-letter", { method: "POST", body: facts || {} });
+        const d = await apiFetch<any>(endpoint, { method: "POST", body: facts || {} });
         setLetter(d?.letter || "");
       } catch { setLetter("Sorry, we couldn't draft the letter right now. Please try again."); }
       finally { setLoading(false); }
@@ -35,7 +35,7 @@ export default function OverchargeLetterModal({ visible, facts, onClose, colors 
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#A5512B", paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Mail size={18} color="#fff" />
-              <T style={{ fontFamily: fonts.bodySemi, color: "#fff", fontSize: 15 }}>Query Letter To Your Provider</T>
+              <T style={{ fontFamily: fonts.bodySemi, color: "#fff", fontSize: 15 }}>{title}</T>
             </View>
             <Pressable onPress={onClose} testID="chsp-letter-close" hitSlop={10}><X size={20} color="#fff" /></Pressable>
           </View>
