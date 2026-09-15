@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, TextInput, View } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { Upload, FileText, Sparkles, ArrowRight, Save, Trash2, Search, AlertTriangle, CheckCircle2, ReceiptText, Eye, ListChecks, Landmark, Wallet } from "lucide-react-native";
+import { Upload, FileText, Sparkles, ArrowRight, Save, Trash2, Search, AlertTriangle, CheckCircle2, ReceiptText, Eye, ListChecks, Landmark, Wallet, Mail, TrendingUp } from "lucide-react-native";
 
 import { Button, Card, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
+import { useParticipants } from "@/src/context/ParticipantContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { serviceTypeLabel } from "@/src/utils/labels";
 import { shortDate } from "@/src/utils/format";
+import OverchargeLetterModal from "@/src/components/tools/OverchargeLetterModal";
 
 const CAT_COLOR: Record<string, string> = {
   clinical: "#0E4D52", personal: "#3E6A4C", everyday: "#A5512B", social: "#B7791F", other: "#6B7280",
@@ -16,7 +18,12 @@ const CAT_COLOR: Record<string, string> = {
 const aud = (v: any) =>
   v == null || v === "" || isNaN(Number(v)) ? "—" : `$${Number(v).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const VAR_LABEL: Record<string, string> = { within: "OK", minor: "Minor", material: "Overcharge" };
+const VAR_LABEL: Record<string, string> = { within: "OK", minor: "Slightly High", material: "Overcharged" };
+const MONTH_LABEL = (ym: string) => {
+  const [y, m] = String(ym).split("-");
+  const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return m ? `${names[Number(m) - 1] || m} '${y.slice(2)}` : ym;
+};
 
 function VarBadge({ status, colors }: any) {
   if (!status) return null;
@@ -30,7 +37,43 @@ function VarBadge({ status, colors }: any) {
   );
 }
 
-function AnalysisView({ analysis, colors, onSave, saving, savedMode }: any) {
+function Chip({ on, label, onPress, colors, testID }: any) {
+  return (
+    <Pressable testID={testID} onPress={onPress} style={{ flexShrink: 0, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent", borderRadius: radius.pill, paddingHorizontal: 12, height: 32, justifyContent: "center" }}>
+      <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{label}</T>
+    </Pressable>
+  );
+}
+
+function TrendsChart({ trends, colors }: any) {
+  if (!trends?.length) return null;
+  const max = Math.max(...trends.map((t: any) => Number(t.contribution || 0)), 1);
+  return (
+    <Card testID="chsp-analyzer-trends">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <TrendingUp size={16} color={colors.primary} />
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Your Monthly Contribution</T>
+      </View>
+      <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>Across your saved invoices — watch for costs creeping up.</T>
+      <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 10, height: 130, marginTop: spacing.md }}>
+        {trends.map((t: any) => {
+          const h = Math.max(6, Math.round((Number(t.contribution || 0) / max) * 100));
+          return (
+            <View key={t.month} style={{ flex: 1, alignItems: "center", gap: 4 }} testID={`chsp-analyzer-trend-${t.month}`}>
+              <T style={{ fontSize: 9, color: colors.text }}>{aud(t.contribution)}</T>
+              <View style={{ width: "100%", height: "100%", justifyContent: "flex-end" }}>
+                <View style={{ width: "100%", height: `${h}%`, backgroundColor: "#A5512B", borderTopLeftRadius: 5, borderTopRightRadius: 5 }} />
+              </View>
+              <T style={{ fontSize: 9, color: colors.muted }}>{MONTH_LABEL(t.month)}</T>
+            </View>
+          );
+        })}
+      </View>
+    </Card>
+  );
+}
+
+function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLetter }: any) {
   const h = analysis.header || {};
   const t = analysis.totals || {};
   const lines = analysis.line_items || [];
@@ -44,11 +87,10 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode }: any) {
 
   return (
     <View style={{ gap: spacing.md }} testID="chsp-analyzer-result">
-      {/* Header + summary */}
       <Card testID="chsp-analyzer-summary">
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: spacing.sm }}>
           <View style={{ flex: 1 }}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text }}>{h.provider_name || "CHSP provider"}</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text }}>{h.provider_name || "CHSP Provider"}</T>
             <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
               {h.invoice_reference ? `Invoice ${h.invoice_reference}` : "Invoice"}{h.period_start ? ` · ${h.period_start}${h.period_end ? ` – ${h.period_end}` : ""}` : ""}
             </T>
@@ -80,7 +122,6 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode }: any) {
         ) : null}
       </Card>
 
-      {/* Who pays */}
       {total > 0 ? (
         <Card testID="chsp-analyzer-split">
           <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>WHO PAYS FOR THIS INVOICE</T>
@@ -105,7 +146,6 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode }: any) {
         </Card>
       ) : null}
 
-      {/* Where the money went */}
       {cats.length ? (
         <Card testID="chsp-analyzer-graphics">
           <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>WHERE THE MONEY WENT</T>
@@ -130,29 +170,40 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode }: any) {
         </Card>
       ) : null}
 
-      {/* Line by line */}
       <Card testID="chsp-analyzer-lines">
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <ListChecks size={16} color={colors.primary} />
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Line by line ({lines.length})</T>
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Line By Line ({lines.length})</T>
         </View>
         <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-          {lines.map((li: any, i: number) => (
-            <View key={i} testID={`chsp-analyzer-line-${i}`} style={{ flexDirection: "row", gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: CAT_COLOR[li.category] || CAT_COLOR.other, marginTop: 5 }} />
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text, flex: 1 }} numberOfLines={2}>{li.description || serviceTypeLabel(li.service_type)}</T>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>{aud(li.amount)}</T>
+          {lines.map((li: any, i: number) => {
+            const flagged = li.variance_status === "minor" || li.variance_status === "material";
+            return (
+              <View key={i} testID={`chsp-analyzer-line-${i}`} style={{ flexDirection: "row", gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: CAT_COLOR[li.category] || CAT_COLOR.other, marginTop: 5 }} />
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text, flex: 1 }} numberOfLines={2}>{li.description || serviceTypeLabel(li.service_type)}</T>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>{aud(li.amount)}</T>
+                  </View>
+                  <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>
+                    {li.units != null ? `${li.units}${li.unit_label ? ` ${li.unit_label}` : ""} × ${aud(li.unit_rate)}` : li.category_label}
+                    {li.dates ? ` · ${li.dates}` : ""}
+                  </T>
+                  {li.variance_status ? (
+                    <View style={{ marginTop: 4, flexDirection: "row", alignItems: "center", gap: 10 }}>
+                      <VarBadge status={li.variance_status} colors={colors} />
+                      {flagged ? (
+                        <Pressable testID={`chsp-analyzer-line-letter-${i}`} onPress={() => onDraftLetter(li)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                          <Mail size={12} color="#A5512B" /><T style={{ fontSize: 11, color: "#A5512B", fontFamily: fonts.bodyMedium }}>Query</T>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  ) : null}
                 </View>
-                <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>
-                  {li.units != null ? `${li.units}${li.unit_label ? ` ${li.unit_label}` : ""} × ${aud(li.unit_rate)}` : li.category_label}
-                  {li.dates ? ` · ${li.dates}` : ""}
-                </T>
-                {li.variance_status ? <View style={{ marginTop: 4, alignSelf: "flex-start" }}><VarBadge status={li.variance_status} colors={colors} /></View> : null}
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
         <View style={{ flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: colors.border, marginTop: spacing.sm, paddingTop: spacing.sm }}>
           <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>Total</T>
@@ -161,11 +212,11 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode }: any) {
       </Card>
 
       {!savedMode ? (
-        <Button label={saving ? "Saving…" : "Save invoice to history"} icon={Save} loading={saving} onPress={onSave} testID="chsp-analyzer-save" />
+        <Button label={saving ? "Saving…" : "Save Invoice To History"} icon={Save} loading={saving} onPress={onSave} testID="chsp-analyzer-save" />
       ) : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.sageSoft, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 8, alignSelf: "flex-start" }}>
           <CheckCircle2 size={14} color={colors.sage} />
-          <T variant="small" style={{ color: colors.sage }}>Saved to your invoice history</T>
+          <T variant="small" style={{ color: colors.sage }}>Saved To Your Invoice History</T>
         </View>
       )}
     </View>
@@ -175,26 +226,36 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode }: any) {
 export default function ChspInvoiceAnalyzer({ colors }: any) {
   const theme = useTheme();
   const c = colors || theme.colors;
+  const { active } = useParticipants();
+  const participantId = active?.id || null;
   const [analysis, setAnalysis] = useState<any>(null);
   const [savedMode, setSavedMode] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [dupExisting, setDupExisting] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [trends, setTrends] = useState<any[]>([]);
   const [query, setQuery] = useState("");
   const [flaggedOnly, setFlaggedOnly] = useState(false);
+  const [providerFilter, setProviderFilter] = useState("all");
+  const [sort, setSort] = useState("newest");
+  const [letterFacts, setLetterFacts] = useState<any>(null);
 
   const loadHistory = async () => {
-    try { const d = await apiFetch<any>("/chsp1/invoices"); setHistory(d?.invoices || []); } catch { /* ignore */ }
+    try { const d = await apiFetch<any>(`/chsp1/invoices${participantId ? `?participant_id=${participantId}` : ""}`); setHistory(d?.invoices || []); } catch { /* ignore */ }
   };
-  useEffect(() => { loadHistory(); }, []);
+  const loadTrends = async () => {
+    try { const d = await apiFetch<any>(`/chsp1/invoice-trends${participantId ? `?participant_id=${participantId}` : ""}`); setTrends(d?.trends || []); } catch { /* ignore */ }
+  };
+  useEffect(() => { loadHistory(); loadTrends(); }, [participantId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const upload = async () => {
     try {
       const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
       if (res.canceled || !res.assets?.[0]) return;
       const a = res.assets[0];
-      setParsing(true); setError(""); setAnalysis(null); setSavedMode(false);
+      setParsing(true); setError(""); setAnalysis(null); setSavedMode(false); setDupExisting(null);
       const fd = new FormData();
       fd.append("file", { uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream" } as any);
       const data = await apiFetch<any>("/chsp1/invoice/analyse", { method: "POST", body: fd, isForm: true });
@@ -204,49 +265,75 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
     finally { setParsing(false); }
   };
 
-  const save = async () => {
+  const doSave = async (force: boolean) => {
     if (!analysis) return;
     setSaving(true);
     try {
-      await apiFetch("/chsp1/invoice/save", { method: "POST", body: {
+      const data = await apiFetch<any>("/chsp1/invoice/save", { method: "POST", body: {
+        participant_id: participantId, force,
         header: analysis.header, line_items: analysis.line_items, totals: analysis.totals,
         by_category: analysis.by_category, plain_summary: analysis.plain_summary,
         next_steps: analysis.next_steps, flags_count: analysis.flags_count || 0,
       } });
-      setSavedMode(true);
-      loadHistory();
+      if (data?.duplicate) { setDupExisting(data.existing || {}); setSaving(false); return; }
+      setSavedMode(true); setDupExisting(null);
+      loadHistory(); loadTrends();
     } catch { setError("Could not save this invoice."); }
     finally { setSaving(false); }
   };
 
   const viewSaved = async (id: string) => {
-    try { const d = await apiFetch<any>(`/chsp1/invoices/${id}`); setAnalysis(d.invoice); setSavedMode(true); }
-    catch { setError("Could not open that invoice."); }
+    try { const d = await apiFetch<any>(`/chsp1/invoices/${id}`); setAnalysis(d.invoice); setSavedMode(true); } catch { setError("Could not open that invoice."); }
   };
   const deleteSaved = async (id: string) => {
-    try { await apiFetch(`/chsp1/invoices/${id}`, { method: "DELETE" }); setHistory((l) => l.filter((r) => r.id !== id)); } catch { /* ignore */ }
+    try { await apiFetch(`/chsp1/invoices/${id}`, { method: "DELETE" }); setHistory((l) => l.filter((r) => r.id !== id)); loadTrends(); } catch { /* ignore */ }
   };
 
+  const draftLetterForLine = (li: any) => {
+    const h = analysis?.header || {};
+    setLetterFacts({
+      provider_name: h.provider_name || null,
+      client_name: h.client_name || active?.display_name || null,
+      invoice_reference: h.invoice_reference || null,
+      service_description: li.description || serviceTypeLabel(li.service_type),
+      period: h.period_start ? `${h.period_start}${h.period_end ? ` – ${h.period_end}` : ""}` : null,
+      units: li.units ?? null,
+      unit_label: li.unit_label || "units",
+      billed_unit_rate: li.unit_rate ?? null,
+      agreed_rate: li.agreed_rate ?? null,
+      billed_amount: li.amount ?? null,
+      expected_amount: li.agreed_rate != null && li.units != null ? Number((li.agreed_rate * li.units).toFixed(2)) : null,
+    });
+  };
+
+  const providers = useMemo(() => Array.from(new Set(history.map((r) => r.provider_name).filter(Boolean))) as string[], [history]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return history.filter((r) => {
+    let rows = history.filter((r) => {
       if (flaggedOnly && !(r.flags_count > 0)) return false;
+      if (providerFilter !== "all" && r.provider_name !== providerFilter) return false;
       if (!q) return true;
       return `${r.provider_name || ""} ${r.invoice_reference || ""}`.toLowerCase().includes(q);
     });
-  }, [history, query, flaggedOnly]);
+    rows = [...rows].sort((a, b) => {
+      if (sort === "highest") return Number(b.grand_total || 0) - Number(a.grand_total || 0);
+      const da = new Date(a.created_at || 0).getTime(), db = new Date(b.created_at || 0).getTime();
+      return sort === "oldest" ? da - db : db - da;
+    });
+    return rows;
+  }, [history, query, flaggedOnly, providerFilter, sort]);
 
   return (
     <Card testID="chsp-analyzer-root" style={{ backgroundColor: c.primarySoft }}>
-      <T variant="label" style={{ color: c.primary }}>INVOICE READER</T>
-      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: c.text, marginTop: 2 }}>Read a whole CHSP invoice</T>
+      <T variant="label" style={{ color: c.primary }}>STEP 1 · READ THE INVOICE</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: c.text, marginTop: 2 }}>Read A Whole CHSP Invoice</T>
       <T variant="small" style={{ color: c.muted, marginTop: 2, lineHeight: 19 }}>Upload a PDF or photo. Wayly reads every line, summarises it, shows where the money goes, and saves it to a history you can filter.</T>
 
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, backgroundColor: c.bg, borderWidth: 1, borderColor: c.border, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.md }}>
         <View style={{ flexDirection: "row", gap: 8, flex: 1 }}>
           <FileText size={18} color={c.primary} />
           <View style={{ flex: 1 }}>
-            <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: c.text }}>Have the invoice handy?</T>
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: c.text }}>Have The Invoice Handy?</T>
             <T variant="small" style={{ color: c.muted, fontSize: 11 }}>PDF or photo — analysed line by line.</T>
           </View>
         </View>
@@ -255,13 +342,25 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
 
       {error ? <T variant="small" style={{ color: c.terracotta, marginTop: spacing.sm }} testID="chsp-analyzer-error">{error}</T> : null}
 
-      {analysis ? <View style={{ marginTop: spacing.md }}><AnalysisView analysis={analysis} colors={c} onSave={save} saving={saving} savedMode={savedMode} /></View> : null}
+      {dupExisting ? (
+        <View testID="chsp-analyzer-dup" style={{ marginTop: spacing.sm, backgroundColor: c.alertSoft, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }}>
+          <T variant="small" style={{ color: c.text }}>You already saved this invoice ({dupExisting.invoice_reference || dupExisting.provider_name || "same invoice"}). Save it again anyway?</T>
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            <Button label="Save Anyway" testID="chsp-analyzer-dup-confirm" onPress={() => doSave(true)} style={{ paddingHorizontal: 16 }} />
+            <Button label="Cancel" variant="outline" testID="chsp-analyzer-dup-cancel" onPress={() => setDupExisting(null)} style={{ paddingHorizontal: 16 }} />
+          </View>
+        </View>
+      ) : null}
+
+      {analysis ? <View style={{ marginTop: spacing.md }}><AnalysisView analysis={analysis} colors={c} onSave={() => doSave(false)} saving={saving} savedMode={savedMode} onDraftLetter={draftLetterForLine} /></View> : null}
+
+      {trends.length > 1 ? <View style={{ marginTop: spacing.md }}><TrendsChart trends={trends} colors={c} /></View> : null}
 
       {/* History */}
       <View style={{ marginTop: spacing.md, backgroundColor: c.bg, borderWidth: 1, borderColor: c.border, borderRadius: radius.md, overflow: "hidden" }} testID="chsp-analyzer-history">
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, padding: spacing.sm, borderBottomWidth: 1, borderBottomColor: c.border }}>
           <ReceiptText size={16} color={c.primary} />
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: c.text }}>Invoice history ({history.length})</T>
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: c.text }}>Invoice History ({history.length})</T>
         </View>
         {history.length > 0 ? (
           <View style={{ padding: spacing.sm, gap: spacing.sm }}>
@@ -270,42 +369,43 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
               <TextInput testID="chsp-analyzer-history-search" value={query} onChangeText={setQuery} placeholder="Search provider or reference" placeholderTextColor={c.muted}
                 style={{ flex: 1, color: c.text, fontFamily: fonts.body, fontSize: 13, paddingVertical: 8 }} />
             </View>
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              {[{ k: false, l: "All" }, { k: true, l: "Flagged only" }].map((o: any) => {
-                const on = flaggedOnly === o.k;
-                return (
-                  <Pressable key={o.l} testID={`chsp-analyzer-history-filter-${o.k ? "flagged" : "all"}`} onPress={() => setFlaggedOnly(o.k)}
-                    style={{ borderWidth: 1, borderColor: on ? c.primary : c.border, backgroundColor: on ? c.primary : "transparent", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5 }}>
-                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : c.text }}>{o.l}</T>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.sm }}>
+              <Chip on={!flaggedOnly && providerFilter === "all"} label="All" onPress={() => { setFlaggedOnly(false); setProviderFilter("all"); }} colors={c} testID="chsp-analyzer-history-filter-all" />
+              <Chip on={flaggedOnly} label="Flagged" onPress={() => setFlaggedOnly((v) => !v)} colors={c} testID="chsp-analyzer-history-filter-flagged" />
+              {providers.map((p) => (
+                <Chip key={p} on={providerFilter === p} label={p.length > 18 ? p.slice(0, 18) + "…" : p} onPress={() => setProviderFilter((cur) => cur === p ? "all" : p)} colors={c} testID={`chsp-analyzer-history-provider-${p}`} />
+              ))}
+            </ScrollView>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.sm }}>
+              {[["newest", "Newest"], ["oldest", "Oldest"], ["highest", "Highest total"]].map(([v, l]) => (
+                <Chip key={v} on={sort === v} label={l} onPress={() => setSort(v)} colors={c} testID={`chsp-analyzer-history-sort-${v}`} />
+              ))}
+            </ScrollView>
           </View>
         ) : null}
         {history.length === 0 ? (
-          <T variant="small" style={{ color: c.muted, textAlign: "center", padding: spacing.lg }} testID="chsp-analyzer-history-empty">No saved invoices yet. Upload one above and tap “Save invoice to history”.</T>
+          <T variant="small" style={{ color: c.muted, textAlign: "center", padding: spacing.lg }} testID="chsp-analyzer-history-empty">No saved invoices yet{active?.display_name ? ` for ${active.display_name}` : ""}. Upload one above and tap “Save Invoice To History”.</T>
         ) : filtered.length === 0 ? (
           <T variant="small" style={{ color: c.muted, textAlign: "center", padding: spacing.lg }}>No invoices match your filter.</T>
         ) : (
           <View style={{ paddingHorizontal: spacing.sm, paddingBottom: spacing.sm }}>
             {filtered.map((r) => (
-              <View key={r.id} testID={`chsp-analyzer-history-row-${r.id}`} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: c.border }}>
+              <Pressable key={r.id} testID={`chsp-analyzer-history-row-${r.id}`} onPress={() => viewSaved(r.id)} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: c.border }}>
                 <View style={{ flex: 1 }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: c.text }} numberOfLines={1}>{r.provider_name || "Provider"}</T>
                   <T variant="small" style={{ color: c.muted, fontSize: 11 }} numberOfLines={1}>
                     {r.invoice_reference || "—"} · {aud(r.grand_total)}{r.flags_count > 0 ? ` · ${r.flags_count} flag(s)` : ""} · {shortDate(r.created_at) || ""}
                   </T>
                 </View>
-                <Pressable testID={`chsp-analyzer-history-view-${r.id}`} onPress={() => viewSaved(r.id)} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                  <Eye size={15} color={c.primary} /><T variant="small" style={{ color: c.primary, fontSize: 12 }}>View</T>
-                </Pressable>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}><Eye size={15} color={c.primary} /><T variant="small" style={{ color: c.primary, fontSize: 12 }} testID={`chsp-analyzer-history-view-${r.id}`}>View</T></View>
                 <Pressable testID={`chsp-analyzer-history-delete-${r.id}`} onPress={() => deleteSaved(r.id)} hitSlop={8}><Trash2 size={16} color={c.terracotta} /></Pressable>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
       </View>
+
+      <OverchargeLetterModal visible={Boolean(letterFacts)} facts={letterFacts || {}} onClose={() => setLetterFacts(null)} colors={c} />
     </Card>
   );
 }

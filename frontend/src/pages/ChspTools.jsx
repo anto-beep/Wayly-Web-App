@@ -15,6 +15,7 @@ import {
 import PageIntro from "@/components/PageIntro";
 import { RequiredBadge } from "@/components/RequiredHint";
 import ChspInvoiceAnalyzer from "@/components/chsp/ChspInvoiceAnalyzer";
+import OverchargeLetterModal from "@/components/chsp/OverchargeLetterModal";
 import { serviceTypeLabel, chspStatusLabel, labelize } from "@/lib/labels";
 import { formatDate } from "@/lib/formatDate";
 
@@ -50,6 +51,13 @@ const WS1_VERDICT = {
     minor: { tone: "bg-amber-50 text-amber-800 border-amber-200", label: "Minor", Icon: AlertTriangle },
     material: { tone: "bg-red-50 text-red-800 border-red-200", label: "Material", Icon: ShieldAlert },
     no_verdict: { tone: "bg-primary-k/5 text-primary-k/70 border-primary-k/15", label: "No verdict", Icon: HelpCircle },
+};
+
+// Tile colours for the Rate Check / Units Check result tiles.
+const WS1_TIER_TONE = {
+    within: "bg-emerald-50 border-emerald-200 text-emerald-900",
+    minor: "bg-amber-50 border-amber-200 text-amber-900",
+    material: "bg-red-50 border-red-200 text-red-900",
 };
 
 // WS-3 · Access & Hardship. The service-continuity letter is always available;
@@ -113,6 +121,7 @@ function WS1FeeCheck({ services }) {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState([]);
     const [showPast, setShowPast] = useState(false);
+    const [letterOpen, setLetterOpen] = useState(false);
     const fileRef = React.useRef(null);
     const resultRef = useScrollToResult(Boolean(result));
 
@@ -174,7 +183,7 @@ function WS1FeeCheck({ services }) {
     };
 
     const submit = async () => {
-        for (const k of ["units_billed", "units_received", "billed_amount"]) {
+        for (const k of ["agreed_rate", "units_billed", "units_received", "billed_amount"]) {
             if (form[k] === "" || form[k] == null) { toast.error(`Please enter ${k.replace(/_/g, " ")}`); return; }
         }
         setBusy(true);
@@ -228,10 +237,10 @@ function WS1FeeCheck({ services }) {
     const verdict = result ? (WS1_VERDICT[result.overall_verdict] || WS1_VERDICT.no_verdict) : null;
 
     return (
-        <div className="rounded-2xl bg-[#EAF3F3] p-5 space-y-4" data-testid="chsp-ws1-fee-check">
+        <div className="rounded-2xl bg-[#FBF1E7] border border-[#A5512B]/15 p-5 space-y-4" data-testid="chsp-ws1-fee-check">
             <div>
-                <p className="text-xs uppercase tracking-wide text-primary-k/60">Fee check</p>
-                <h2 className="font-heading text-xl text-primary-k">Was this CHSP invoice correct?</h2>
+                <p className="text-xs uppercase tracking-wide text-[#A5512B] font-semibold">Step 2 · Check A Charge</p>
+                <h2 className="font-heading text-xl text-primary-k">Was This CHSP Invoice Correct?</h2>
                 <p className="text-sm text-muted-k">We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields showing a Required label must be completed.</p>
             </div>
 
@@ -268,84 +277,147 @@ function WS1FeeCheck({ services }) {
 
             <div className="grid sm:grid-cols-2 gap-3 rounded-xl bg-white/70 border border-primary-k/10 p-4">
                 {services.length > 0 && (
-                    <label className="text-xs text-muted-k sm:col-span-2">Service entry (pre-fills provider, type, rate)
+                    <label className="text-xs text-muted-k sm:col-span-2">Service Entry (Pre-fills Provider, Type, Rate)
                         <select onChange={(e) => onServiceChange(e.target.value)} data-testid="chsp-ws1-service-entry" className="mt-1 w-full px-3 py-2 text-sm border rounded bg-white">
                             <option value="">Manual entry</option>
                             {services.map((s) => <option key={s.id} value={s.id}>{serviceTypeLabel(s.service_type)} · {s.provider_name}</option>)}
                         </select>
                     </label>
                 )}
-                <label className="text-xs text-muted-k">Invoice reference
+                <label className="text-xs text-muted-k">Invoice Reference
                     <input value={form.invoice_reference} data-testid="chsp-ws1-reference" onChange={(e) => setForm({ ...form, invoice_reference: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
                 <label className="text-xs text-muted-k">Provider
                     <input value={form.provider_name} data-testid="chsp-ws1-provider" onChange={(e) => setForm({ ...form, provider_name: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Service type <Req/>
+                <label className="text-xs text-muted-k">Service Type <Req/>
                     <select value={form.service_type} data-testid="chsp-ws1-service-type" onChange={(e) => setForm({ ...form, service_type: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded bg-white">
                         {SERVICE_TYPES.map((t) => <option key={t} value={t}>{serviceTypeLabel(t)}</option>)}
                     </select>
                 </label>
-                <label className="text-xs text-muted-k">Agreed per-unit rate (AUD)
-                    <input type="number" value={form.agreed_rate} data-testid="chsp-ws1-agreed-rate" placeholder="e.g. 6.00" onChange={(e) => setForm({ ...form, agreed_rate: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                <label className="text-xs text-muted-k">Agreed Per-Unit Rate <Req/>
+                    <div className="mt-1 relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-k">$</span>
+                        <input type="number" required aria-required="true" value={form.agreed_rate} data-testid="chsp-ws1-agreed-rate" placeholder="6.00" onChange={(e) => setForm({ ...form, agreed_rate: e.target.value })} className="w-full pl-7 pr-3 py-2 text-sm border rounded" />
+                    </div>
                 </label>
-                <label className="text-xs text-muted-k">Rate effective date
+                <label className="text-xs text-muted-k">Rate Effective Date
                     <input type="date" value={form.rate_effective_date} data-testid="chsp-ws1-rate-date" onChange={(e) => setForm({ ...form, rate_effective_date: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Units billed <Req/>
+                <label className="text-xs text-muted-k">Units Billed <Req/>
                     <input type="number" value={form.units_billed} data-testid="chsp-ws1-units-billed" placeholder="e.g. 4" onChange={(e) => setForm({ ...form, units_billed: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Units received <Req/>
+                <label className="text-xs text-muted-k">Units Received <Req/>
                     <input type="number" value={form.units_received} data-testid="chsp-ws1-units-received" placeholder="e.g. 4" onChange={(e) => setForm({ ...form, units_received: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Billed period start
+                <label className="text-xs text-muted-k">Billed Period Start
                     <input type="date" value={form.billed_period_start} data-testid="chsp-ws1-period-start" onChange={(e) => setForm({ ...form, billed_period_start: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Billed period end
+                <label className="text-xs text-muted-k">Billed Period End
                     <input type="date" value={form.billed_period_end} data-testid="chsp-ws1-period-end" onChange={(e) => setForm({ ...form, billed_period_end: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
                 </label>
-                <label className="text-xs text-muted-k">Billed amount (AUD) <Req/>
-                    <input type="number" value={form.billed_amount} data-testid="chsp-ws1-billed" onChange={(e) => setForm({ ...form, billed_amount: e.target.value })} className="mt-1 w-full px-3 py-2 text-sm border rounded" />
+                <label className="text-xs text-muted-k">Billed Amount <Req/>
+                    <div className="mt-1 relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-k">$</span>
+                        <input type="number" value={form.billed_amount} data-testid="chsp-ws1-billed" onChange={(e) => setForm({ ...form, billed_amount: e.target.value })} className="w-full pl-7 pr-3 py-2 text-sm border rounded" />
+                    </div>
                 </label>
             </div>
 
             <button onClick={submit} disabled={busy} data-testid="chsp-ws1-submit" className="inline-flex items-center gap-2 bg-primary-k text-white rounded-lg px-5 py-2 text-sm disabled:opacity-50">
-                <Receipt className="w-4 h-4" /> Check fee
+                <Receipt className="w-4 h-4" /> Check Fee
             </button>
 
             {result && (
                 <div ref={resultRef} className="mt-2 space-y-3 scroll-mt-20" data-testid="chsp-ws1-result">
                     {result.degraded ? (
                         <div className="rounded-xl border border-primary-k/20 bg-white p-4" data-testid="chsp-ws1-degraded">
-                            <div className="flex items-center gap-2 text-primary-k font-medium"><HelpCircle className="w-4 h-4" /> No verdict yet</div>
-                            <p className="text-sm text-muted-k mt-1">We can&apos;t give an authoritative verdict without your provider&apos;s agreed per-unit rate. Add the agreed fee schedule for this provider and service, then run the check again.</p>
+                            <div className="flex items-center gap-2 text-primary-k font-medium"><HelpCircle className="w-4 h-4" /> No Verdict Yet</div>
+                            <p className="text-sm text-muted-k mt-1">We can&apos;t give a clear verdict without your provider&apos;s agreed per-unit rate. Add it above (or in Your Saved Provider Rates), then run the check again.</p>
                         </div>
                     ) : (
                         <>
-                            <div className={`rounded-xl border p-4 ${verdict.tone}`}>
-                                <div className="flex items-center justify-between flex-wrap gap-2">
-                                    <span className="inline-flex items-center gap-1.5 font-semibold" data-testid="chsp-ws1-verdict">
-                                        <verdict.Icon className="w-4 h-4" /> {result.verdict_label}
-                                    </span>
-                                    <span className="text-sm font-heading tabular-nums">Difference {AUD(result.amount_delta)}</span>
+                            {/* Plain-English verdict */}
+                            <div className={`rounded-xl border p-4 ${verdict.tone}`} data-testid="chsp-ws1-verdict-card">
+                                <div className="flex items-start gap-2.5">
+                                    <verdict.Icon className="w-5 h-5 mt-0.5 shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                                            <span className="font-semibold" data-testid="chsp-ws1-verdict">{result.verdict_headline || result.verdict_label}</span>
+                                            {Number(result.amount_delta) !== 0
+                                                ? <span className="text-sm font-heading tabular-nums">{Number(result.amount_delta) > 0 ? "Overbilled by " : "Billed under by "}{AUD(Math.abs(Number(result.amount_delta)))}</span>
+                                                : <span className="text-sm font-medium">No difference</span>}
+                                        </div>
+                                        <p className="text-sm mt-1 opacity-90">{result.verdict_explanation}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                                <div className="rounded-lg bg-white border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Billed per unit</div><div className="text-primary-k tabular-nums mt-0.5">{AUD(result.billed_per_unit)}</div></div>
-                                <div className="rounded-lg bg-white border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Expected amount</div><div className="text-primary-k tabular-nums mt-0.5">{AUD(result.expected_amount)}</div></div>
-                                <div className="rounded-lg bg-white border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Rate check</div><div className="text-primary-k mt-0.5 capitalize">{result.rate_tier}</div></div>
-                                <div className="rounded-lg bg-white border border-kindred p-3"><div className="text-[10px] uppercase tracking-wide text-muted-k">Units check</div><div className="text-primary-k mt-0.5 capitalize">{result.units_tier}</div></div>
+
+                            {/* Billed vs expected graphic */}
+                            <div className="rounded-xl bg-white border border-kindred p-4 space-y-2.5" data-testid="chsp-ws1-graphic">
+                                <p className="text-[11px] uppercase tracking-wide text-muted-k">What You Were Billed vs What We Expected</p>
+                                {(() => {
+                                    const billedAmt = Number(form.billed_amount || 0);
+                                    const expectedAmt = Number(result.expected_amount || 0);
+                                    const barMax = Math.max(billedAmt, expectedAmt, 1);
+                                    const rows = [
+                                        { k: "billed", label: "Billed", amt: billedAmt, color: Number(result.amount_delta) > 0 ? "#C0392B" : "#0E4D52" },
+                                        { k: "expected", label: "Expected", amt: expectedAmt, color: "#3E6A4C" },
+                                    ];
+                                    return rows.map((r) => (
+                                        <div key={r.k} data-testid={`chsp-ws1-bar-${r.k}`}>
+                                            <div className="flex items-center justify-between text-xs text-primary-k"><span>{r.label}</span><span className="tabular-nums">{AUD(r.amt)}</span></div>
+                                            <div className="mt-1 h-3 w-full rounded-full bg-primary-k/5 overflow-hidden">
+                                                <div className="h-full rounded-full" style={{ width: `${Math.max(4, Math.round((r.amt / barMax) * 100))}%`, backgroundColor: r.color }} />
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
                             </div>
+
+                            {/* Four explained tiles */}
+                            <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                                <div className="rounded-lg bg-[#EAF3F3] border border-primary-k/10 p-3" data-testid="chsp-ws1-tile-billed">
+                                    <div className="text-[10px] uppercase tracking-wide text-primary-k/60">Billed Per Unit</div>
+                                    <div className="font-heading text-lg text-primary-k tabular-nums mt-0.5">{AUD(result.billed_per_unit)}</div>
+                                    <div className="text-xs text-muted-k mt-0.5">What you were charged for each hour, visit or unit.</div>
+                                </div>
+                                <div className="rounded-lg bg-[#EAF3F3] border border-primary-k/10 p-3" data-testid="chsp-ws1-tile-expected">
+                                    <div className="text-[10px] uppercase tracking-wide text-primary-k/60">Expected Amount</div>
+                                    <div className="font-heading text-lg text-primary-k tabular-nums mt-0.5">{AUD(result.expected_amount)}</div>
+                                    <div className="text-xs text-muted-k mt-0.5">Your agreed rate multiplied by the units you received.</div>
+                                </div>
+                                <div className={`rounded-lg border p-3 ${WS1_TIER_TONE[result.rate_tier] || WS1_TIER_TONE.within}`} data-testid="chsp-ws1-tile-rate">
+                                    <div className="text-[10px] uppercase tracking-wide opacity-70">Rate Check</div>
+                                    <div className="font-semibold mt-0.5">{result.rate_tier_label}</div>
+                                    <div className="text-xs mt-0.5 opacity-90">{result.rate_explanation}</div>
+                                </div>
+                                <div className={`rounded-lg border p-3 ${WS1_TIER_TONE[result.units_tier] || WS1_TIER_TONE.within}`} data-testid="chsp-ws1-tile-units">
+                                    <div className="text-[10px] uppercase tracking-wide opacity-70">Units Check</div>
+                                    <div className="font-semibold mt-0.5">{result.units_tier_label}</div>
+                                    <div className="text-xs mt-0.5 opacity-90">{result.units_explanation}</div>
+                                </div>
+                            </div>
+
                             {result.provisional && (
                                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" data-testid="chsp-ws1-staleness">
-                                    <div className="flex items-center gap-1.5 font-medium"><Clock className="w-4 h-4" /> Confirm this rate is current</div>
+                                    <div className="flex items-center gap-1.5 font-medium"><Clock className="w-4 h-4" /> Confirm This Rate Is Current</div>
                                     <p className="mt-1">{result.rate_age_days != null ? `This agreed rate is ${result.rate_age_days} days old.` : "This billed period may span a contribution change."} This verdict is provisional until you confirm the rate still applies.</p>
                                 </div>
                             )}
-                            <button onClick={saveCheck} disabled={saving} data-testid="chsp-ws1-save"
-                                    className="inline-flex items-center gap-1.5 text-xs px-4 py-2 rounded-full border border-primary-k/30 text-primary-k bg-white hover:bg-primary-k hover:text-white disabled:opacity-50">
-                                <Save className="w-3.5 h-3.5"/> {saving ? "Saving…" : "Save this check"}
-                            </button>
+
+                            <div className="flex flex-wrap gap-2">
+                                {result.action_label && (
+                                    <button onClick={() => setLetterOpen(true)} data-testid="chsp-ws1-draft-letter"
+                                            className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full bg-[#A5512B] text-white hover:bg-[#8f4523]">
+                                        <Mail className="w-4 h-4"/> {result.action_label}
+                                    </button>
+                                )}
+                                <button onClick={saveCheck} disabled={saving} data-testid="chsp-ws1-save"
+                                        className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full bg-primary-k text-white hover:bg-primary-k/90 disabled:opacity-50">
+                                    <Save className="w-4 h-4"/> {saving ? "Saving…" : "Save This Check"}
+                                </button>
+                            </div>
                         </>
                     )}
                 </div>
@@ -378,6 +450,23 @@ function WS1FeeCheck({ services }) {
             <AccessHardshipCard
                 providerName={form.provider_name}
                 emphasiseHardship={Boolean(result && !result.degraded && result.overall_verdict === "material")}
+            />
+
+            <OverchargeLetterModal
+                open={letterOpen}
+                onClose={() => setLetterOpen(false)}
+                facts={{
+                    provider_name: form.provider_name || null,
+                    invoice_reference: form.invoice_reference || null,
+                    service_description: serviceTypeLabel(form.service_type),
+                    period: form.billed_period_start ? `${formatDate(form.billed_period_start)}${form.billed_period_end ? ` – ${formatDate(form.billed_period_end)}` : ""}` : null,
+                    units: form.units_billed ? Number(form.units_billed) : null,
+                    unit_label: "units",
+                    billed_unit_rate: result ? Number(result.billed_per_unit) : null,
+                    agreed_rate: form.agreed_rate ? Number(form.agreed_rate) : null,
+                    billed_amount: form.billed_amount ? Number(form.billed_amount) : null,
+                    expected_amount: result ? Number(result.expected_amount) : null,
+                }}
             />
         </div>
     );
@@ -420,9 +509,9 @@ function AgreedRateSchedule({ services, onChanged }) {
     };
 
     return (
-        <div className="rounded-2xl border border-primary-k/10 bg-white p-5 space-y-3" data-testid="chsp-agreed-rate-schedule">
-            <p className="text-xs uppercase tracking-wide text-primary-k/50">Agreed rate schedule</p>
-            <h2 className="font-heading text-xl text-primary-k">Your saved provider rates</h2>
+        <div className="rounded-2xl border border-[#3E6A4C]/20 bg-[#EEF3EE] p-5 space-y-3" data-testid="chsp-agreed-rate-schedule">
+            <p className="text-xs uppercase tracking-wide text-[#3E6A4C] font-semibold">Setup · Agreed Rate Schedule</p>
+            <h2 className="font-heading text-xl text-primary-k">Your Saved Provider Rates</h2>
             <p className="text-sm text-muted-k">These pre-fill the Fee Check so you don&apos;t have to type the agreed rate each time. Keep them current, edit when a rate changes, expire one that no longer applies.</p>
             {active.length === 0 ? (
                 <p className="text-sm text-muted-k italic" data-testid="chsp-rate-empty">No saved rates yet. Add a service on the mobile app, or enter the agreed rate directly in the Fee Check below.</p>
@@ -432,8 +521,11 @@ function AgreedRateSchedule({ services, onChanged }) {
                         <li key={s.id} className="rounded-xl border border-kindred p-3" data-testid={`chsp-rate-${s.id}`}>
                             {editing === s.id ? (
                                 <div className="flex flex-wrap items-end gap-2">
-                                    <label className="text-xs text-muted-k">Rate (AUD)
-                                        <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} data-testid={`chsp-rate-edit-amount-${s.id}`} className="mt-1 block w-28 px-2 py-1.5 text-sm border rounded" />
+                                    <label className="text-xs text-muted-k">Rate
+                                        <div className="mt-1 relative w-28">
+                                            <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-k">$</span>
+                                            <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} data-testid={`chsp-rate-edit-amount-${s.id}`} className="block w-full pl-6 pr-2 py-1.5 text-sm border rounded" />
+                                        </div>
                                     </label>
                                     <label className="text-xs text-muted-k">Effective (DD/MM/YYYY)
                                         <input type="text" value={eff} placeholder="DD/MM/YYYY" onChange={(e) => setEff(e.target.value)} data-testid={`chsp-rate-edit-date-${s.id}`} className="mt-1 block w-36 px-2 py-1.5 text-sm border rounded" />

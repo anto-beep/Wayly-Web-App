@@ -2,9 +2,10 @@
  * CHSP Invoice Analyzer (CHSP-INV-1).
  *
  * Upload a CHSP invoice → Wayly reads the whole thing, summarises it, shows
- * visual graphics (spend by service category + government vs your contribution),
- * lists every line item so you can read it row by row, and lets you save it to a
- * filterable history table, styled like the Statements page.
+ * visual graphics (spend by category + government vs your contribution),
+ * lists every line item so you can read it row by row, drafts a query letter
+ * for any overcharged line, and saves it to a filterable, per-person history
+ * with a monthly contribution trend chart.
  */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
@@ -12,9 +13,12 @@ import { toast } from "sonner";
 import {
     Upload, FileText, Sparkles, ArrowRight, Save, Trash2, Search,
     AlertTriangle, CheckCircle2, ReceiptText, Eye, ListChecks, Landmark, Wallet,
+    Mail, TrendingUp,
 } from "lucide-react";
 import { serviceTypeLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/formatDate";
+import { useParticipants } from "@/context/ParticipantsContext";
+import OverchargeLetterModal from "@/components/chsp/OverchargeLetterModal";
 
 const AUD = (v) =>
     v == null || v === "" || isNaN(Number(v))
@@ -22,11 +26,7 @@ const AUD = (v) =>
         : `$${Number(v).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const CAT_COLOR = {
-    clinical: "#0E4D52",
-    personal: "#3E6A4C",
-    everyday: "#A5512B",
-    social: "#B7791F",
-    other: "#6B7280",
+    clinical: "#0E4D52", personal: "#3E6A4C", everyday: "#A5512B", social: "#B7791F", other: "#6B7280",
 };
 
 const VAR_TONE = {
@@ -34,7 +34,12 @@ const VAR_TONE = {
     minor: "bg-amber-50 text-amber-800 border-amber-200",
     material: "bg-red-50 text-red-800 border-red-200",
 };
-const VAR_LABEL = { within: "OK", minor: "Minor", material: "Overcharge" };
+const VAR_LABEL = { within: "OK", minor: "Slightly High", material: "Overcharged" };
+const MONTH_LABEL = (ym) => {
+    const [y, m] = String(ym).split("-");
+    const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return m ? `${names[Number(m) - 1] || m} ${y}` : ym;
+};
 
 function VarianceBadge({ status, delta }) {
     if (!status) return <span className="text-[11px] text-muted-k">—</span>;
@@ -46,7 +51,6 @@ function VarianceBadge({ status, delta }) {
     );
 }
 
-// Government subsidy vs the client's own contribution, as a stacked bar + tiles.
 function ContributionSplit({ totals }) {
     const govt = Number(totals?.government_subsidy || 0);
     const you = Number(totals?.client_contribution || 0);
@@ -56,7 +60,7 @@ function ContributionSplit({ totals }) {
     const youPct = 100 - govtPct;
     return (
         <div data-testid="chsp-analyzer-split" className="rounded-xl border border-primary-k/10 bg-white p-4">
-            <p className="text-[11px] uppercase tracking-wide text-primary-k/60">Who pays for this invoice</p>
+            <p className="text-[11px] uppercase tracking-wide text-primary-k/60">Who Pays For This Invoice</p>
             <div className="mt-3 flex h-11 w-full overflow-hidden rounded-lg">
                 <div className="flex items-center justify-center bg-[#0E4D52] text-white text-xs font-semibold" style={{ width: `${govtPct}%` }} title="Government subsidy">
                     {govtPct >= 12 ? `Govt ${govtPct}%` : ""}
@@ -67,11 +71,11 @@ function ContributionSplit({ totals }) {
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-[#0E4D52]/[0.06] p-3">
-                    <div className="flex items-center gap-1.5 text-[11px] text-primary-k/70"><Landmark className="w-3.5 h-3.5" /> Government subsidy</div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-primary-k/70"><Landmark className="w-3.5 h-3.5" /> Government Subsidy</div>
                     <div className="mt-0.5 font-heading text-lg text-primary-k tabular-nums">{AUD(govt)}</div>
                 </div>
                 <div className="rounded-lg bg-[#A5512B]/[0.08] p-3">
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#A5512B]"><Wallet className="w-3.5 h-3.5" /> Your contribution</div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-[#A5512B]"><Wallet className="w-3.5 h-3.5" /> Your Contribution</div>
                     <div className="mt-0.5 font-heading text-lg text-[#A5512B] tabular-nums">{AUD(you)}</div>
                 </div>
             </div>
@@ -79,13 +83,12 @@ function ContributionSplit({ totals }) {
     );
 }
 
-// Spend by service category, as labelled horizontal bars.
 function CategoryBars({ byCategory, grandTotal }) {
     if (!byCategory?.length) return null;
     const max = Math.max(...byCategory.map((c) => Number(c.amount || 0)), 1);
     return (
         <div data-testid="chsp-analyzer-graphics" className="rounded-xl border border-primary-k/10 bg-white p-4">
-            <p className="text-[11px] uppercase tracking-wide text-primary-k/60">Where the money went</p>
+            <p className="text-[11px] uppercase tracking-wide text-primary-k/60">Where The Money Went</p>
             <div className="mt-3 space-y-2.5">
                 {byCategory.map((c) => {
                     const amt = Number(c.amount || 0);
@@ -108,17 +111,42 @@ function CategoryBars({ byCategory, grandTotal }) {
     );
 }
 
-function AnalysisView({ analysis, onSave, saving, savedMode }) {
+// Monthly contribution trend across saved invoices.
+function TrendsChart({ trends }) {
+    if (!trends?.length) return null;
+    const max = Math.max(...trends.map((t) => Number(t.contribution || 0)), 1);
+    return (
+        <div className="rounded-xl bg-white/70 border border-primary-k/10 p-4" data-testid="chsp-analyzer-trends">
+            <span className="inline-flex items-center gap-2 text-sm font-medium text-primary-k"><TrendingUp className="w-4 h-4" /> Your Monthly Contribution</span>
+            <p className="text-[11px] text-muted-k mt-0.5">Across your saved invoices — watch for costs creeping up.</p>
+            <div className="mt-4 flex items-end gap-3 h-36">
+                {trends.map((t) => {
+                    const h = Math.max(6, Math.round((Number(t.contribution || 0) / max) * 100));
+                    return (
+                        <div key={t.month} className="flex-1 flex flex-col items-center gap-1" data-testid={`chsp-analyzer-trend-${t.month}`}>
+                            <span className="text-[10px] text-primary-k tabular-nums">{AUD(t.contribution)}</span>
+                            <div className="w-full flex items-end" style={{ height: "100%" }}>
+                                <div className="w-full rounded-t-md bg-[#A5512B]" style={{ height: `${h}%` }} />
+                            </div>
+                            <span className="text-[10px] text-muted-k">{MONTH_LABEL(t.month)}</span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function AnalysisView({ analysis, onSave, saving, savedMode, onDraftLetter }) {
     const h = analysis.header || {};
     const t = analysis.totals || {};
     const lines = analysis.line_items || [];
     return (
         <div className="space-y-4" data-testid="chsp-analyzer-result">
-            {/* Header + summary */}
             <div className="rounded-xl border border-primary-k/10 bg-white p-4" data-testid="chsp-analyzer-summary">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
-                        <p className="font-heading text-lg text-primary-k">{h.provider_name || "CHSP provider"}</p>
+                        <p className="font-heading text-lg text-primary-k">{h.provider_name || "CHSP Provider"}</p>
                         <p className="text-xs text-muted-k">
                             {h.invoice_reference ? `Invoice ${h.invoice_reference}` : "Invoice"}
                             {h.period_start ? ` · ${h.period_start}${h.period_end ? ` – ${h.period_end}` : ""}` : ""}
@@ -126,7 +154,7 @@ function AnalysisView({ analysis, onSave, saving, savedMode }) {
                         </p>
                     </div>
                     <div className="text-right">
-                        <div className="text-[10px] uppercase tracking-wide text-muted-k">Total billed</div>
+                        <div className="text-[10px] uppercase tracking-wide text-muted-k">Total Billed</div>
                         <div className="font-heading text-xl text-primary-k tabular-nums">{AUD(t.grand_total)}</div>
                     </div>
                 </div>
@@ -148,17 +176,15 @@ function AnalysisView({ analysis, onSave, saving, savedMode }) {
                 )}
             </div>
 
-            {/* Graphics */}
             <div className="grid md:grid-cols-2 gap-4">
                 <ContributionSplit totals={t} />
                 <CategoryBars byCategory={analysis.by_category} grandTotal={Number(t.grand_total || 0)} />
             </div>
 
-            {/* Line by line */}
             <div className="rounded-xl border border-primary-k/10 bg-white overflow-hidden" data-testid="chsp-analyzer-lines">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-kindred">
                     <ListChecks className="w-4 h-4 text-primary-k" />
-                    <p className="text-sm font-medium text-primary-k">Line by line ({lines.length})</p>
+                    <p className="text-sm font-medium text-primary-k">Line By Line ({lines.length})</p>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -167,9 +193,9 @@ function AnalysisView({ analysis, onSave, saving, savedMode }) {
                                 <th className="px-4 py-2 font-medium">Service</th>
                                 <th className="px-4 py-2 font-medium">Dates</th>
                                 <th className="px-4 py-2 font-medium text-right">Units</th>
-                                <th className="px-4 py-2 font-medium text-right">Unit rate</th>
+                                <th className="px-4 py-2 font-medium text-right">Unit Rate</th>
                                 <th className="px-4 py-2 font-medium text-right">Amount</th>
-                                <th className="px-4 py-2 font-medium text-right">Rate check</th>
+                                <th className="px-4 py-2 font-medium text-right">Rate Check</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-kindred">
@@ -188,7 +214,15 @@ function AnalysisView({ analysis, onSave, saving, savedMode }) {
                                     <td className="px-4 py-2.5 text-right tabular-nums text-primary-k">{li.units != null ? `${li.units}${li.unit_label ? ` ${li.unit_label}` : ""}` : "—"}</td>
                                     <td className="px-4 py-2.5 text-right tabular-nums text-primary-k">{AUD(li.unit_rate)}</td>
                                     <td className="px-4 py-2.5 text-right tabular-nums font-medium text-primary-k">{AUD(li.amount)}</td>
-                                    <td className="px-4 py-2.5 text-right"><VarianceBadge status={li.variance_status} delta={li.variance_delta} /></td>
+                                    <td className="px-4 py-2.5 text-right">
+                                        <VarianceBadge status={li.variance_status} delta={li.variance_delta} />
+                                        {(li.variance_status === "minor" || li.variance_status === "material") && (
+                                            <button onClick={() => onDraftLetter(li)} data-testid={`chsp-analyzer-line-letter-${i}`}
+                                                    className="mt-1 block ml-auto inline-flex items-center gap-1 text-[11px] text-[#A5512B] hover:underline">
+                                                <Mail className="w-3 h-3" /> Query
+                                            </button>
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -206,12 +240,12 @@ function AnalysisView({ analysis, onSave, saving, savedMode }) {
             {!savedMode && (
                 <button onClick={onSave} disabled={saving} data-testid="chsp-analyzer-save"
                         className="inline-flex items-center gap-2 rounded-full bg-primary-k px-5 py-2 text-sm text-white disabled:opacity-50">
-                    <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save invoice to history"}
+                    <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Invoice To History"}
                 </button>
             )}
             {savedMode && (
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-4 py-1.5 text-xs text-emerald-800">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Saved to your invoice history
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Saved To Your Invoice History
                 </div>
             )}
         </div>
@@ -219,20 +253,34 @@ function AnalysisView({ analysis, onSave, saving, savedMode }) {
 }
 
 export default function ChspInvoiceAnalyzer() {
+    const { active } = useParticipants();
+    const participantId = active?.id || null;
     const [analysis, setAnalysis] = useState(null);
     const [savedMode, setSavedMode] = useState(false);
     const [parsing, setParsing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [history, setHistory] = useState([]);
+    const [trends, setTrends] = useState([]);
     const [query, setQuery] = useState("");
     const [filter, setFilter] = useState("all"); // all | flagged
+    const [providerFilter, setProviderFilter] = useState("all");
+    const [sort, setSort] = useState("newest"); // newest | oldest | highest
+    const [letter, setLetter] = useState(null); // facts for the modal, or null
     const fileRef = useRef(null);
 
     const loadHistory = async () => {
-        try { const { data } = await api.get("/chsp1/invoices"); setHistory(data.invoices || []); }
-        catch { /* ignore */ }
+        try {
+            const { data } = await api.get("/chsp1/invoices", { params: participantId ? { participant_id: participantId } : {} });
+            setHistory(data.invoices || []);
+        } catch { /* ignore */ }
     };
-    useEffect(() => { loadHistory(); }, []);
+    const loadTrends = async () => {
+        try {
+            const { data } = await api.get("/chsp1/invoice-trends", { params: participantId ? { participant_id: participantId } : {} });
+            setTrends(data.trends || []);
+        } catch { /* ignore */ }
+    };
+    useEffect(() => { loadHistory(); loadTrends(); }, [participantId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const onPick = async (e) => {
         const file = e.target.files?.[0];
@@ -256,11 +304,13 @@ export default function ChspInvoiceAnalyzer() {
         } finally { setParsing(false); }
     };
 
-    const save = async () => {
+    const doSave = async (force) => {
         if (!analysis) return;
         setSaving(true);
         try {
-            await api.post("/chsp1/invoice/save", {
+            const { data } = await api.post("/chsp1/invoice/save", {
+                participant_id: participantId,
+                force: Boolean(force),
                 header: analysis.header,
                 line_items: analysis.line_items,
                 totals: analysis.totals,
@@ -269,9 +319,15 @@ export default function ChspInvoiceAnalyzer() {
                 next_steps: analysis.next_steps,
                 flags_count: analysis.flags_count || 0,
             });
+            if (data?.duplicate) {
+                const ok = window.confirm(`You already saved this invoice (${data.existing?.invoice_reference || data.existing?.provider_name || "same invoice"}). Save it again anyway?`);
+                if (ok) { await doSave(true); return; }
+                setSaving(false);
+                return;
+            }
             setSavedMode(true);
             toast.success("Invoice saved to your history.");
-            loadHistory();
+            loadHistory(); loadTrends();
         } catch { toast.error("Could not save this invoice."); }
         finally { setSaving(false); }
     };
@@ -285,67 +341,107 @@ export default function ChspInvoiceAnalyzer() {
         } catch { toast.error("Could not open that invoice."); }
     };
 
-    const deleteSaved = async (id) => {
-        try { await api.delete(`/chsp1/invoices/${id}`); setHistory((l) => l.filter((r) => r.id !== id)); }
+    const deleteSaved = async (id, e) => {
+        e?.stopPropagation();
+        try { await api.delete(`/chsp1/invoices/${id}`); setHistory((l) => l.filter((r) => r.id !== id)); loadTrends(); }
         catch { toast.error("Could not delete."); }
     };
 
+    const draftLetterForLine = (li) => {
+        const hdr = analysis?.header || {};
+        setLetter({
+            provider_name: hdr.provider_name || null,
+            client_name: hdr.client_name || active?.display_name || null,
+            invoice_reference: hdr.invoice_reference || null,
+            service_description: li.description || serviceTypeLabel(li.service_type),
+            period: hdr.period_start ? `${hdr.period_start}${hdr.period_end ? ` – ${hdr.period_end}` : ""}` : null,
+            units: li.units ?? null,
+            unit_label: li.unit_label || "units",
+            billed_unit_rate: li.unit_rate ?? null,
+            agreed_rate: li.agreed_rate ?? null,
+            billed_amount: li.amount ?? null,
+            expected_amount: li.agreed_rate != null && li.units != null ? Number((li.agreed_rate * li.units).toFixed(2)) : null,
+        });
+    };
+
+    const providers = useMemo(() => Array.from(new Set(history.map((r) => r.provider_name).filter(Boolean))), [history]);
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        return history.filter((r) => {
+        let rows = history.filter((r) => {
             if (filter === "flagged" && !(r.flags_count > 0)) return false;
+            if (providerFilter !== "all" && r.provider_name !== providerFilter) return false;
             if (!q) return true;
             return `${r.provider_name || ""} ${r.invoice_reference || ""}`.toLowerCase().includes(q);
         });
-    }, [history, query, filter]);
+        rows = [...rows].sort((a, b) => {
+            if (sort === "highest") return Number(b.grand_total || 0) - Number(a.grand_total || 0);
+            const da = new Date(a.created_at || 0).getTime(), db = new Date(b.created_at || 0).getTime();
+            return sort === "oldest" ? da - db : db - da;
+        });
+        return rows;
+    }, [history, query, filter, providerFilter, sort]);
 
     return (
-        <div className="rounded-2xl bg-[#EAF3F3] p-5 space-y-4" data-testid="chsp-analyzer-root">
+        <div className="rounded-2xl bg-[#EAF3F3] border border-primary-k/10 p-5 space-y-4" data-testid="chsp-analyzer-root">
             <div>
-                <p className="text-xs uppercase tracking-wide text-primary-k/60">Invoice reader</p>
-                <h2 className="font-heading text-xl text-primary-k">Read a whole CHSP invoice</h2>
+                <p className="text-xs uppercase tracking-wide text-primary-k font-semibold">Step 1 · Read The Invoice</p>
+                <h2 className="font-heading text-xl text-primary-k">Read A Whole CHSP Invoice</h2>
                 <p className="text-sm text-muted-k">Upload a PDF or photo. Wayly reads every line, summarises it, shows you where the money goes, and saves it to a history you can filter.</p>
             </div>
 
-            {/* Upload */}
             <div className="rounded-xl bg-white/70 border border-primary-k/10 p-4 flex items-center justify-between gap-2 flex-wrap" data-testid="chsp-analyzer-upload-card">
                 <div className="flex items-start gap-2">
                     <div className="p-2 rounded-lg bg-primary-k/10"><FileText className="w-4 h-4 text-primary-k" /></div>
                     <div>
-                        <p className="text-sm font-medium text-primary-k">Have the invoice handy?</p>
+                        <p className="text-sm font-medium text-primary-k">Have The Invoice Handy?</p>
                         <p className="text-[11px] text-muted-k">PDF or photo. We&apos;ll analyse it line by line.</p>
                     </div>
                 </div>
                 <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" onChange={onPick} className="hidden" data-testid="chsp-analyzer-upload-input" />
                 <button onClick={() => fileRef.current?.click()} disabled={parsing} data-testid="chsp-analyzer-upload"
                         className="text-xs inline-flex items-center gap-1 px-4 py-2 rounded-full bg-primary-k text-white disabled:opacity-50">
-                    <Upload className="w-3.5 h-3.5" /> {parsing ? "Reading…" : "Upload invoice"}
+                    <Upload className="w-3.5 h-3.5" /> {parsing ? "Reading…" : "Upload Invoice"}
                 </button>
             </div>
 
-            {analysis && <AnalysisView analysis={analysis} onSave={save} saving={saving} savedMode={savedMode} />}
+            {analysis && <AnalysisView analysis={analysis} onSave={() => doSave(false)} saving={saving} savedMode={savedMode} onDraftLetter={draftLetterForLine} />}
 
-            {/* History table (filterable, like Statements) */}
+            {trends.length > 1 && <TrendsChart trends={trends} />}
+
+            {/* History table (filterable, per-person) */}
             <div className="rounded-xl bg-white/70 border border-primary-k/10 overflow-hidden" data-testid="chsp-analyzer-history">
                 <div className="flex items-center justify-between gap-2 flex-wrap px-4 py-3 border-b border-kindred">
-                    <span className="inline-flex items-center gap-2 text-sm font-medium text-primary-k"><ReceiptText className="w-4 h-4" /> Invoice history ({history.length})</span>
-                    <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 text-sm font-medium text-primary-k"><ReceiptText className="w-4 h-4" /> Invoice History ({history.length})</span>
+                    <div className="flex items-center gap-2 flex-wrap">
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-k" />
                             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search provider or reference"
                                    data-testid="chsp-analyzer-history-search"
-                                   className="pl-8 pr-3 py-1.5 text-xs border border-kindred rounded-full bg-white w-56 max-w-[60vw]" />
+                                   className="pl-8 pr-3 py-1.5 text-xs border border-kindred rounded-full bg-white w-52 max-w-[55vw]" />
                         </div>
+                        {providers.length > 1 && (
+                            <select value={providerFilter} onChange={(e) => setProviderFilter(e.target.value)} data-testid="chsp-analyzer-history-provider"
+                                    className="text-xs border border-kindred rounded-full bg-white px-3 py-1.5 max-w-[40vw]">
+                                <option value="all">All providers</option>
+                                {providers.map((p) => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                        )}
                         <select value={filter} onChange={(e) => setFilter(e.target.value)} data-testid="chsp-analyzer-history-filter"
                                 className="text-xs border border-kindred rounded-full bg-white px-3 py-1.5">
                             <option value="all">All invoices</option>
                             <option value="flagged">Flagged only</option>
                         </select>
+                        <select value={sort} onChange={(e) => setSort(e.target.value)} data-testid="chsp-analyzer-history-sort"
+                                className="text-xs border border-kindred rounded-full bg-white px-3 py-1.5">
+                            <option value="newest">Newest first</option>
+                            <option value="oldest">Oldest first</option>
+                            <option value="highest">Highest total</option>
+                        </select>
                     </div>
                 </div>
                 {history.length === 0 ? (
                     <div className="px-4 py-8 text-center text-sm text-muted-k" data-testid="chsp-analyzer-history-empty">
-                        No saved invoices yet. Upload one above and tap “Save invoice to history”.
+                        No saved invoices yet{active?.display_name ? ` for ${active.display_name}` : ""}. Upload one above and tap “Save Invoice To History”.
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="px-4 py-8 text-center text-sm text-muted-k">No invoices match your filter.</div>
@@ -354,10 +450,10 @@ export default function ChspInvoiceAnalyzer() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-[11px] uppercase tracking-wide text-muted-k bg-primary-k/[0.03]">
-                                    <th className="px-4 py-2 font-medium">Provider / reference</th>
+                                    <th className="px-4 py-2 font-medium">Provider / Reference</th>
                                     <th className="px-4 py-2 font-medium">Period</th>
                                     <th className="px-4 py-2 font-medium text-right">Total</th>
-                                    <th className="px-4 py-2 font-medium text-right">Your contribution</th>
+                                    <th className="px-4 py-2 font-medium text-right">Your Contribution</th>
                                     <th className="px-4 py-2 font-medium text-center">Lines</th>
                                     <th className="px-4 py-2 font-medium text-center">Flags</th>
                                     <th className="px-4 py-2 font-medium text-right">Saved</th>
@@ -366,7 +462,8 @@ export default function ChspInvoiceAnalyzer() {
                             </thead>
                             <tbody className="divide-y divide-kindred">
                                 {filtered.map((r) => (
-                                    <tr key={r.id} data-testid={`chsp-analyzer-history-row-${r.id}`} className="hover:bg-primary-k/[0.02]">
+                                    <tr key={r.id} data-testid={`chsp-analyzer-history-row-${r.id}`} onClick={() => viewSaved(r.id)}
+                                        className="hover:bg-primary-k/[0.04] cursor-pointer">
                                         <td className="px-4 py-2.5">
                                             <div className="text-primary-k">{r.provider_name || "Provider"}</div>
                                             <div className="text-[11px] text-muted-k">{r.invoice_reference || "—"}</div>
@@ -383,8 +480,8 @@ export default function ChspInvoiceAnalyzer() {
                                         <td className="px-4 py-2.5 text-right text-xs text-muted-k">{formatDate(r.created_at) || ""}</td>
                                         <td className="px-4 py-2.5">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => viewSaved(r.id)} data-testid={`chsp-analyzer-history-view-${r.id}`} className="inline-flex items-center gap-1 text-xs text-primary-k hover:underline"><Eye className="w-3.5 h-3.5" /> View</button>
-                                                <button onClick={() => deleteSaved(r.id)} data-testid={`chsp-analyzer-history-delete-${r.id}`} className="text-red-600"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); viewSaved(r.id); }} data-testid={`chsp-analyzer-history-view-${r.id}`} className="inline-flex items-center gap-1 text-xs text-primary-k hover:underline"><Eye className="w-3.5 h-3.5" /> View</button>
+                                                <button onClick={(e) => deleteSaved(r.id, e)} data-testid={`chsp-analyzer-history-delete-${r.id}`} className="text-red-600"><Trash2 className="w-4 h-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -394,6 +491,8 @@ export default function ChspInvoiceAnalyzer() {
                     </div>
                 )}
             </div>
+
+            <OverchargeLetterModal open={Boolean(letter)} facts={letter || {}} onClose={() => setLetter(null)} />
         </div>
     );
 }

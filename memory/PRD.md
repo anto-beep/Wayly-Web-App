@@ -7462,3 +7462,30 @@ Reported bug: uploading a real CHSP invoice (8 line items) to the CHSP tool pref
 ### Status
 Verified iter339: backend curl (8 lines, grand_total 1429.50 / subsidy 1184.50 / contribution 245.00; save/list/get/delete all pass), web live e2e (upload→analysis→save→history), mobile render + saved-invoice View via screenshots. Mobile native DocumentPicker can't be automated in the Expo web preview (known limitation). Not mocked — real Claude Haiku 4.5 via Emergent LLM key.
 - Backlog (v2, non-blocking): de-dupe on save by (user, provider, invoice_reference); PATCH/edit a saved invoice; per-participant scoping of invoice history.
+
+---
+
+## Feature batch — Jun 2026 (iter340: CHSP Tools premium overhaul + 4 new features, web + mobile)
+
+Verified iter340 (backend 5/5 pytest; web live screenshots; mobile parity via screenshots).
+
+### CHSP Tools page — premium workflow + distinct section colours (web `ChspTools.jsx`, mobile `chsp-tools.tsx`)
+- Three clearly-different section backgrounds so users can tell them apart: Invoice Reader = teal (`#EAF3F3` / `primarySoft`), Fee Check "Was This CHSP Invoice Correct?" = clay (`#FBF1E7` / `goldSoft`), Your Saved Provider Rates = sage (`#EEF3EE` / `sageSoft`). Step eyebrows ("STEP 1 · READ THE INVOICE", "STEP 2 · CHECK A CHARGE", "SETUP · AGREED RATE SCHEDULE") give a workflow feel.
+- Title Case headers/labels/buttons throughout. "Save This Check" fixed (readable solid teal button, was unreadable-on-hover).
+
+### Fee Check overhaul
+- Agreed Per-Unit Rate now REQUIRED with a `$` prefix (web adds HTML `required`; both validate). Billed Amount also `$`-prefixed. All field labels Title Case.
+- Backend `fee_check_preview` attaches plain-English `verdict_headline`, `verdict_explanation`, `rate_tier_label`/`rate_explanation`, `units_tier_label`/`units_explanation`, `action_label` (via `_attach_ws1_explanations`). Tiers map: within→"Looks right", minor→"Slightly off", material→"Too high".
+- Result UI: plain verdict banner ("This invoice looks overcharged / Overbilled by $16.00"), billed-vs-expected bar graphic, four colour-coded tiles (Billed Per Unit, Expected Amount, Rate Check, Units Check) each with a one-line explanation.
+
+### Invoice history
+- Whole row clickable to open. Filters: search + provider + flagged + sort (newest/oldest/highest). Mobile uses horizontal chip scrollers.
+
+### Four new features (backend `chsp1.py`)
+- Overcharge Letter: `POST /chsp1/overcharge-letter` (Claude Haiku 4.5) → ready-to-send provider query letter; triggered from a material Fee Check ("Draft a query letter") or any flagged analyzer line ("Query"). Editable + copy in a modal (`OverchargeLetterModal` web + mobile).
+- Save De-dupe: `/chsp1/invoice/save` accepts `force`; a matching (user, provider, invoice_reference) returns `{duplicate:true, existing}` without saving. Web uses confirm(); mobile shows an inline "Save Anyway/Cancel" banner.
+- Invoice Trends: `GET /chsp1/invoice-trends?participant_id=` monthly contribution/total aggregation → bar chart (shown when >1 month).
+- Per-Person History: `chsp_invoices` carry `participant_id`; save + list + trends scoped by participant AND strictly by `user_id` (never shared across users).
+
+### Status
+No critical bugs. Backend contracts confirmed by pytest (test_iter340_chsp_overhaul.py). Web e2e verified. Mobile parity verified by screenshots (native DocumentPicker upload can't be automated in the Expo web preview; all mobile backend calls green). Not mocked — real Claude Haiku 4.5 via Emergent LLM key.

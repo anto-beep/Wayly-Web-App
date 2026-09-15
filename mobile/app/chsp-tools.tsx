@@ -12,6 +12,7 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate } from "@/src/utils/format";
 import { serviceTypeLabel, chspStatusLabel, labelize } from "@/src/utils/labels";
 import ChspInvoiceAnalyzer from "@/src/components/tools/ChspInvoiceAnalyzer";
+import OverchargeLetterModal from "@/src/components/tools/OverchargeLetterModal";
 
 const STATUS_OPTIONS = [
   { value: "on_chsp", label: "On CHSP" },
@@ -45,15 +46,18 @@ const DECISION_OPTIONS = [
   { value: "need_more_information", label: "Need more information" },
 ];
 
-function LInput({ label, value, onChangeText, placeholder, keyboardType, testID, colors, required, optional }: any) {
+function LInput({ label, value, onChangeText, placeholder, keyboardType, testID, colors, required, optional, prefix }: any) {
   return (
     <View style={{ flex: 1, minWidth: "45%" }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
         <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>{label}</T>
         {required ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.gold }}>Required</T> : optional ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>Optional</T> : null}
       </View>
-      <TextInput testID={testID} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.muted} keyboardType={keyboardType}
-        style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, minHeight: 44, color: colors.text, fontFamily: fonts.body, backgroundColor: colors.bg }} />
+      <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.bg }}>
+        {prefix ? <T style={{ color: colors.muted, fontFamily: fonts.body, marginRight: 2 }}>{prefix}</T> : null}
+        <TextInput testID={testID} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.muted} keyboardType={keyboardType}
+          style={{ flex: 1, minHeight: 44, color: colors.text, fontFamily: fonts.body }} />
+      </View>
     </View>
   );
 }
@@ -107,6 +111,7 @@ function WS1FeeCheck({ services, colors }: any) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<any[]>([]);
   const [showPast, setShowPast] = useState(false);
+  const [letterOpen, setLetterOpen] = useState(false);
 
   const loadSaved = async () => {
     try { const d = await apiFetch<any>("/chsp1/fee-check/saved"); setSaved(d?.saved_checks || []); } catch { /* ignore */ }
@@ -144,8 +149,8 @@ function WS1FeeCheck({ services, colors }: any) {
 
   const submit = async () => {
     setError("");
-    for (const k of ["units_billed", "units_received", "billed_amount"]) {
-      if (!form[k]) { setError("Enter units billed, units received and billed amount."); return; }
+    for (const k of ["agreed_rate", "units_billed", "units_received", "billed_amount"]) {
+      if (!form[k]) { setError("Enter the agreed rate, units billed, units received and billed amount."); return; }
     }
     setBusy(true);
     try {
@@ -191,13 +196,13 @@ function WS1FeeCheck({ services, colors }: any) {
   const VIcon = result ? (result.overall_verdict === "within" ? CheckCircle2 : result.overall_verdict === "material" ? ShieldAlert : result.overall_verdict === "no_verdict" ? HelpCircle : AlertTriangle) : HelpCircle;
 
   return (
-    <Card testID="chsp-ws1-fee-check">
-      <T variant="label">FEE CHECK</T>
-      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Was this CHSP invoice correct?</T>
+    <Card testID="chsp-ws1-fee-check" style={{ backgroundColor: colors.goldSoft }}>
+      <T variant="label" style={{ color: colors.gold }}>STEP 2 · CHECK A CHARGE</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Was This CHSP Invoice Correct?</T>
       <T variant="small" style={{ marginTop: 4 }}>We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields showing a Required label must be completed.</T>
 
       {/* Upload + auto-read */}
-      <View style={{ marginTop: spacing.md, backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="chsp-ws1-upload-card">
+      <View style={{ marginTop: spacing.md, backgroundColor: colors.bg, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="chsp-ws1-upload-card">
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
           <View style={{ flex: 1, flexDirection: "row", gap: 8, alignItems: "center" }}>
             <FileText size={18} color={colors.primary} />
@@ -221,53 +226,106 @@ function WS1FeeCheck({ services, colors }: any) {
 
       {services.length > 0 ? (
         <View style={{ marginTop: spacing.md }}>
-          <Select label="Service entry" optional value={""} onChange={onServiceChange} options={serviceOpts} testID="chsp-ws1-service-entry" />
+          <Select label="Service Entry" optional value={""} onChange={onServiceChange} options={serviceOpts} testID="chsp-ws1-service-entry" />
         </View>
       ) : null}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.md }}>
-        <LInput label="Invoice reference" optional value={form.invoice_reference} onChangeText={(v: string) => set({ invoice_reference: v })} testID="chsp-ws1-reference" colors={colors} />
+        <LInput label="Invoice Reference" optional value={form.invoice_reference} onChangeText={(v: string) => set({ invoice_reference: v })} testID="chsp-ws1-reference" colors={colors} />
         <LInput label="Provider" optional value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-ws1-provider" colors={colors} />
-        <LInput label="Agreed per-unit rate" optional value={form.agreed_rate} onChangeText={(v: string) => set({ agreed_rate: v })} placeholder="6.00" keyboardType="decimal-pad" testID="chsp-ws1-agreed-rate" colors={colors} />
-        <LInput label="Rate effective (DD/MM/YYYY)" optional value={form.rate_effective_date} onChangeText={(v: string) => set({ rate_effective_date: v })} placeholder="01/01/2026" testID="chsp-ws1-rate-date" colors={colors} />
-        <LInput label="Units billed" required value={form.units_billed} onChangeText={(v: string) => set({ units_billed: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-billed" colors={colors} />
-        <LInput label="Units received" required value={form.units_received} onChangeText={(v: string) => set({ units_received: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-received" colors={colors} />
-        <LInput label="Billed period start (DD/MM/YYYY)" optional value={form.billed_period_start} onChangeText={(v: string) => set({ billed_period_start: v })} placeholder="01/07/2026" testID="chsp-ws1-period-start" colors={colors} />
-        <LInput label="Billed amount" required value={form.billed_amount} onChangeText={(v: string) => set({ billed_amount: v })} keyboardType="decimal-pad" testID="chsp-ws1-billed" colors={colors} />
+        <LInput label="Agreed Per-Unit Rate" required prefix="$" value={form.agreed_rate} onChangeText={(v: string) => set({ agreed_rate: v })} placeholder="6.00" keyboardType="decimal-pad" testID="chsp-ws1-agreed-rate" colors={colors} />
+        <LInput label="Rate Effective (DD/MM/YYYY)" optional value={form.rate_effective_date} onChangeText={(v: string) => set({ rate_effective_date: v })} placeholder="01/01/2026" testID="chsp-ws1-rate-date" colors={colors} />
+        <LInput label="Units Billed" required value={form.units_billed} onChangeText={(v: string) => set({ units_billed: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-billed" colors={colors} />
+        <LInput label="Units Received" required value={form.units_received} onChangeText={(v: string) => set({ units_received: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-received" colors={colors} />
+        <LInput label="Billed Period Start (DD/MM/YYYY)" optional value={form.billed_period_start} onChangeText={(v: string) => set({ billed_period_start: v })} placeholder="01/07/2026" testID="chsp-ws1-period-start" colors={colors} />
+        <LInput label="Billed Amount" required prefix="$" value={form.billed_amount} onChangeText={(v: string) => set({ billed_amount: v })} keyboardType="decimal-pad" testID="chsp-ws1-billed" colors={colors} />
       </View>
       {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
-      <Button label="Check fee" icon={ReceiptText} testID="chsp-ws1-submit" loading={busy} onPress={submit} style={{ marginTop: spacing.md }} />
+      <Button label="Check Fee" icon={ReceiptText} testID="chsp-ws1-submit" loading={busy} onPress={submit} style={{ marginTop: spacing.md }} />
 
       {result ? (
         <View testID="chsp-ws1-result" style={{ marginTop: spacing.md, gap: spacing.sm }}>
           {result.degraded ? (
             <View testID="chsp-ws1-degraded" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, backgroundColor: colors.surface2 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><HelpCircle size={16} color={colors.text} /><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>No verdict yet</T></View>
-              <T variant="small" style={{ marginTop: 4 }}>We can&apos;t give an authoritative verdict without your provider&apos;s agreed per-unit rate. Add the agreed fee schedule, then run the check again.</T>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><HelpCircle size={16} color={colors.text} /><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>No Verdict Yet</T></View>
+              <T variant="small" style={{ marginTop: 4 }}>We can&apos;t give a clear verdict without your provider&apos;s agreed per-unit rate. Add it above, then run the check again.</T>
             </View>
           ) : (
             <>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <VIcon size={16} color={verdictTone === "success" ? colors.sage : verdictTone === "alert" ? colors.terracotta : colors.muted} />
-                  <T testID="chsp-ws1-verdict" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{result.verdict_label}</T>
-                </View>
-                <T style={{ fontFamily: fonts.heading, color: colors.text }}>Diff {aud(result.amount_delta)}</T>
-              </View>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-                {[["Billed / unit", aud(result.billed_per_unit)], ["Expected", aud(result.expected_amount)], ["Rate", result.rate_tier], ["Units", result.units_tier]].map(([l, v]: any) => (
-                  <View key={l} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm, minWidth: "45%" }}>
-                    <T style={{ fontFamily: fonts.body, fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>{l}</T>
-                    <T style={{ fontFamily: fonts.bodySemi, color: colors.text, marginTop: 2, textTransform: "capitalize" }}>{v}</T>
-                  </View>
-                ))}
-              </View>
-              {result.provisional ? (
-                <View testID="chsp-ws1-staleness" style={{ borderWidth: 1, borderColor: colors.gold, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Clock size={14} color={colors.gold} /><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Confirm this rate is current</T></View>
-                  <T variant="small" style={{ marginTop: 4 }}>{result.rate_age_days != null ? `This agreed rate is ${result.rate_age_days} days old.` : "This billed period may span a contribution change."} This verdict is provisional until you confirm the rate still applies.</T>
-                </View>
-              ) : null}
-              <Button label={saving ? "Saving…" : "Save this check"} variant="outline" icon={Save} testID="chsp-ws1-save" loading={saving} onPress={saveCheck} style={{ alignSelf: "flex-start" }} />
+              {(() => {
+                const vt = result.overall_verdict === "within" ? { bg: colors.sageSoft, fg: colors.sage } : result.overall_verdict === "material" ? { bg: colors.errorSoft, fg: colors.terracotta } : { bg: colors.alertSoft, fg: colors.alert };
+                const tierTone = (tier: string) => tier === "within" ? { bg: colors.sageSoft, fg: colors.sage } : tier === "minor" ? { bg: colors.alertSoft, fg: colors.alert } : { bg: colors.errorSoft, fg: colors.terracotta };
+                const billedAmt = Number(form.billed_amount || 0);
+                const expectedAmt = Number(result.expected_amount || 0);
+                const barMax = Math.max(billedAmt, expectedAmt, 1);
+                const rt = tierTone(result.rate_tier);
+                const utn = tierTone(result.units_tier);
+                return (
+                  <>
+                    {/* Plain-English verdict */}
+                    <View testID="chsp-ws1-verdict-card" style={{ borderWidth: 1, borderColor: vt.fg, backgroundColor: vt.bg, borderRadius: radius.md, padding: spacing.md }}>
+                      <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                        <VIcon size={18} color={vt.fg} style={{ marginTop: 1 }} />
+                        <View style={{ flex: 1 }}>
+                          <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                            <T testID="chsp-ws1-verdict" style={{ fontFamily: fonts.bodySemi, color: colors.text, flex: 1 }}>{result.verdict_headline || result.verdict_label}</T>
+                            <T style={{ fontFamily: fonts.heading, color: colors.text }}>{Number(result.amount_delta) !== 0 ? `${Number(result.amount_delta) > 0 ? "Overbilled " : "Under "}${aud(Math.abs(Number(result.amount_delta)))}` : "No difference"}</T>
+                          </View>
+                          <T variant="small" style={{ color: colors.text, marginTop: 4, lineHeight: 19 }}>{result.verdict_explanation}</T>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Billed vs expected */}
+                    <View testID="chsp-ws1-graphic" style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bg, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }}>
+                      <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>WHAT YOU WERE BILLED VS WHAT WE EXPECTED</T>
+                      {[["Billed", billedAmt, Number(result.amount_delta) > 0 ? "#C0392B" : "#0E4D52"], ["Expected", expectedAmt, "#3E6A4C"]].map(([lbl, amt, col]: any) => (
+                        <View key={lbl}>
+                          <View style={{ flexDirection: "row", justifyContent: "space-between" }}><T variant="small" style={{ color: colors.text }}>{lbl}</T><T variant="small" style={{ color: colors.text }}>{aud(amt)}</T></View>
+                          <View style={{ height: 11, borderRadius: 6, backgroundColor: colors.surface2, overflow: "hidden", marginTop: 3 }}>
+                            <View style={{ height: 11, width: `${Math.max(4, Math.round((Number(amt) / barMax) * 100))}%`, backgroundColor: col }} />
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* Explained tiles */}
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+                      <View testID="chsp-ws1-tile-billed" style={{ flex: 1, minWidth: "45%", backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.sm }}>
+                        <T style={{ fontSize: 10, color: colors.primary, letterSpacing: 0.5 }}>BILLED PER UNIT</T>
+                        <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.text, marginTop: 2 }}>{aud(result.billed_per_unit)}</T>
+                        <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>What you were charged for each hour, visit or unit.</T>
+                      </View>
+                      <View testID="chsp-ws1-tile-expected" style={{ flex: 1, minWidth: "45%", backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.sm }}>
+                        <T style={{ fontSize: 10, color: colors.primary, letterSpacing: 0.5 }}>EXPECTED AMOUNT</T>
+                        <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.text, marginTop: 2 }}>{aud(result.expected_amount)}</T>
+                        <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>Your agreed rate times the units you received.</T>
+                      </View>
+                      <View testID="chsp-ws1-tile-rate" style={{ flex: 1, minWidth: "45%", backgroundColor: rt.bg, borderRadius: radius.md, padding: spacing.sm }}>
+                        <T style={{ fontSize: 10, color: rt.fg, letterSpacing: 0.5 }}>RATE CHECK</T>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text, marginTop: 2 }}>{result.rate_tier_label}</T>
+                        <T variant="small" style={{ color: colors.text, fontSize: 11, marginTop: 1 }}>{result.rate_explanation}</T>
+                      </View>
+                      <View testID="chsp-ws1-tile-units" style={{ flex: 1, minWidth: "45%", backgroundColor: utn.bg, borderRadius: radius.md, padding: spacing.sm }}>
+                        <T style={{ fontSize: 10, color: utn.fg, letterSpacing: 0.5 }}>UNITS CHECK</T>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text, marginTop: 2 }}>{result.units_tier_label}</T>
+                        <T variant="small" style={{ color: colors.text, fontSize: 11, marginTop: 1 }}>{result.units_explanation}</T>
+                      </View>
+                    </View>
+
+                    {result.provisional ? (
+                      <View testID="chsp-ws1-staleness" style={{ borderWidth: 1, borderColor: colors.gold, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Clock size={14} color={colors.gold} /><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Confirm This Rate Is Current</T></View>
+                        <T variant="small" style={{ marginTop: 4 }}>{result.rate_age_days != null ? `This agreed rate is ${result.rate_age_days} days old.` : "This billed period may span a contribution change."} This verdict is provisional until you confirm the rate still applies.</T>
+                      </View>
+                    ) : null}
+
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+                      {result.action_label ? <Button label={result.action_label} icon={Mail} testID="chsp-ws1-draft-letter" onPress={() => setLetterOpen(true)} style={{ paddingHorizontal: 16 }} /> : null}
+                      <Button label={saving ? "Saving…" : "Save This Check"} variant="outline" icon={Save} testID="chsp-ws1-save" loading={saving} onPress={saveCheck} style={{ paddingHorizontal: 16 }} />
+                    </View>
+                  </>
+                );
+              })()}
             </>
           )}
         </View>
@@ -292,6 +350,24 @@ function WS1FeeCheck({ services, colors }: any) {
       ) : null}
 
       <AccessHardship colors={colors} providerName={form.provider_name} emphasise={Boolean(result && !result.degraded && result.overall_verdict === "material")} />
+
+      <OverchargeLetterModal
+        visible={letterOpen}
+        colors={colors}
+        onClose={() => setLetterOpen(false)}
+        facts={{
+          provider_name: form.provider_name || null,
+          invoice_reference: form.invoice_reference || null,
+          service_description: serviceTypeLabel(form.service_type),
+          period: form.billed_period_start || null,
+          units: form.units_billed ? Number(form.units_billed) : null,
+          unit_label: "units",
+          billed_unit_rate: result ? Number(result.billed_per_unit) : null,
+          agreed_rate: form.agreed_rate ? Number(form.agreed_rate) : null,
+          billed_amount: form.billed_amount ? Number(form.billed_amount) : null,
+          expected_amount: result ? Number(result.expected_amount) : null,
+        }}
+      />
     </Card>
   );
 }
@@ -461,10 +537,11 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
   };
 
   return (
-    <Card testID="chsp-services-card">
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <Card testID="chsp-services-card" style={{ backgroundColor: colors.sageSoft }}>
+      <T variant="label" style={{ color: colors.sage }}>SETUP · AGREED RATE SCHEDULE</T>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 }}>
         <Wrench size={18} color={colors.primary} />
-        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, flex: 1 }}>Your CHSP services</T>
+        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, flex: 1 }}>Your Saved Provider Rates</T>
         <T variant="small" style={{ color: colors.muted }} testID="chsp-services-count">{services.length}</T>
       </View>
       <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Record each service so fee checks pre-fill the provider and rate for you.</T>
@@ -480,7 +557,7 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
               {editId === s.id ? (
                 <View style={{ marginTop: spacing.sm, gap: spacing.sm }}>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-                    <LInput label="Rate (AUD)" value={editRate} onChangeText={setEditRate} keyboardType="decimal-pad" testID={`chsp-rate-edit-amount-${s.id}`} colors={colors} />
+                    <LInput label="Rate" prefix="$" value={editRate} onChangeText={setEditRate} keyboardType="decimal-pad" testID={`chsp-rate-edit-amount-${s.id}`} colors={colors} />
                     <LInput label="Effective (DD/MM/YYYY)" value={editEff} onChangeText={setEditEff} placeholder="DD/MM/YYYY" testID={`chsp-rate-edit-date-${s.id}`} colors={colors} />
                   </View>
                   <View style={{ flexDirection: "row", gap: spacing.sm }}>
@@ -506,7 +583,7 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
           <Select label="Service type" required value={form.service_type} onChange={(v: string) => set({ service_type: v })} options={SERVICE_TYPES} testID="chsp-svc-type" />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
             <LInput label="Provider" value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-svc-provider" colors={colors} />
-            <LInput label="Hourly rate / fee (AUD)" value={form.hourly_rate_or_fee} onChangeText={(v: string) => set({ hourly_rate_or_fee: v })} keyboardType="decimal-pad" testID="chsp-svc-rate" colors={colors} />
+            <LInput label="Hourly Rate / Fee" prefix="$" value={form.hourly_rate_or_fee} onChangeText={(v: string) => set({ hourly_rate_or_fee: v })} keyboardType="decimal-pad" testID="chsp-svc-rate" colors={colors} />
           </View>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
             <LInput label="Weekly frequency (optional)" value={form.weekly_frequency} onChangeText={(v: string) => set({ weekly_frequency: v })} placeholder="e.g. 2 hrs / week" testID="chsp-svc-frequency" colors={colors} />

@@ -424,7 +424,50 @@ async def fee_check_preview(body: FeeCheckPreviewIn, request: Request):
     result["invoice_reference"] = body.invoice_reference
     result["provider_name"] = body.provider_name
     result["service_type"] = body.service_type
+    _attach_ws1_explanations(result)
     return {"result": result}
+
+
+_WS1_TIER_LABEL = {"within": "Looks right", "minor": "Slightly off", "material": "Too high"}
+
+
+def _attach_ws1_explanations(result: dict) -> None:
+    """Turn the raw within/minor/material tiers into clear, plain-English guidance
+    both the web and mobile clients can show verbatim."""
+    if result.get("degraded"):
+        return
+    rt = result.get("rate_tier")
+    ut = result.get("units_tier")
+    overall = result.get("overall_verdict")
+    is_over = result.get("is_overcharge")
+    result["rate_tier_label"] = _WS1_TIER_LABEL.get(rt, "—")
+    result["units_tier_label"] = _WS1_TIER_LABEL.get(ut, "—")
+    result["rate_explanation"] = {
+        "within": "You were charged your agreed per-unit rate (or less).",
+        "minor": "You were billed a little above your agreed per-unit rate.",
+        "material": "You were billed well above your agreed per-unit rate.",
+    }.get(rt, "")
+    result["units_explanation"] = {
+        "within": "You were billed for the hours or visits you actually received.",
+        "minor": "You were billed for slightly more than you received.",
+        "material": "You were billed for noticeably more than you received.",
+    }.get(ut, "")
+    if overall == "within":
+        result["verdict_headline"] = "This invoice looks right"
+        result["verdict_explanation"] = "What you were billed matches your agreed rate and the services you received. No action needed."
+        result["action_label"] = None
+    elif overall == "minor":
+        result["verdict_headline"] = "This invoice is slightly off"
+        result["verdict_explanation"] = "The difference is small, but it is worth a quick check. Ask your provider to confirm the rate and the units billed."
+        result["action_label"] = "Draft a query letter"
+    elif overall == "material":
+        result["verdict_headline"] = "This invoice looks overcharged" if is_over else "This invoice does not add up"
+        result["verdict_explanation"] = "You appear to have been billed more than your agreed rate and units allow. It is worth querying this with your provider."
+        result["action_label"] = "Draft a query letter"
+    else:
+        result["verdict_headline"] = result.get("verdict_label") or "Checked"
+        result["verdict_explanation"] = ""
+        result["action_label"] = None
 
 
 CHSP_PARSE_SYSTEM = (
@@ -755,6 +798,7 @@ async def analyse_chsp_invoice(request: Request, file: UploadFile = File(...)):
 
 class InvoiceSaveIn(BaseModel):
     participant_id: Optional[str] = None
+    force: bool = False
     header: Dict[str, Any] = Field(default_factory=dict)
     line_items: List[Dict[str, Any]] = Field(default_factory=list)
     totals: Dict[str, Any] = Field(default_factory=dict)
@@ -772,6 +816,26 @@ async def save_chsp_invoice(body: InvoiceSaveIn, request: Request):
     now = _now()
     header = body.header or {}
     totals = body.totals or {}
+    ref = header.get("invoice_reference")
+    prov = header.get("provider_name")
+    # Save de-dupe: warn (do not save) if the same invoice already exists.
+    if not body.force and (ref or prov):
+        dq: Dict[str, Any] = {"user_id": uid}
+        if body.participant_id:
+            dq["participant_id"] = body.participant_id
+        if ref:
+            dq["invoice_reference"] = ref
+        if prov:
+            dq["provider_name"] = prov
+        existing = await _db.chsp_invoices.find_one(dq)
+        if existing:
+            return {"duplicate": True, "existing": {
+                "id": existing["id"],
+                "provider_name": existing.get("provider_name"),
+                "invoice_reference": existing.get("invoice_reference"),
+                "grand_total": (existing.get("totals") or {}).get("grand_total"),
+                "created_at": _iso(existing["created_at"]) if existing.get("created_at") else None,
+            }}
     doc = {
         "id": str(uuid.uuid4()),
         "user_id": uid,
@@ -798,14 +862,17 @@ async def save_chsp_invoice(body: InvoiceSaveIn, request: Request):
     await _db.chsp_invoices.insert_one(doc)
     doc.pop("_id", None)
     doc["created_at"] = _iso(now)
-    return {"invoice": doc}
+    return {"invoice": doc, "duplicate": False}
 
 
 @chsp1_router.get("/invoices")
-async def list_chsp_invoices(request: Request):
+async def list_chsp_invoices(request: Request, participant_id: Optional[str] = None):
     await _assert_flag()
     uid = await _user_id(request)
-    cur = _db.chsp_invoices.find({"user_id": uid}).sort("created_at", -1)
+    q: Dict[str, Any] = {"user_id": uid}
+    if participant_id:
+        q["participant_id"] = participant_id
+    cur = _db.chsp_invoices.find(q).sort("created_at", -1)
     rows = await cur.to_list(length=200)
     out = []
     for r in rows:
@@ -837,6 +904,106 @@ async def delete_chsp_invoice(invoice_id: str, request: Request):
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Not found")
     return {"deleted": True}
+
+
+@chsp1_router.get("/invoice-trends")
+async def chsp_invoice_trends(request: Request, participant_id: Optional[str] = None):
+    """Monthly client-contribution + total spend across saved invoices, so a
+    family can spot their CHSP costs creeping up. Strictly scoped to this user."""
+    import re as _re
+    await _assert_flag()
+    uid = await _user_id(request)
+    q: Dict[str, Any] = {"user_id": uid}
+    if participant_id:
+        q["participant_id"] = participant_id
+    buckets: Dict[str, Dict[str, Any]] = {}
+    async for r in _db.chsp_invoices.find(q):
+        d = str(r.get("invoice_date") or "")
+        key = None
+        m = _re.match(r"^(\d{2})/(\d{2})/(\d{4})$", d)
+        if m:
+            key = f"{m.group(3)}-{m.group(2)}"
+        elif r.get("created_at"):
+            ca = r["created_at"]
+            key = ca.strftime("%Y-%m") if hasattr(ca, "strftime") else str(ca)[:7]
+        if not key:
+            continue
+        b = buckets.setdefault(key, {"month": key, "contribution": 0.0, "total": 0.0, "count": 0})
+        t = r.get("totals") or {}
+        b["contribution"] += float(t.get("client_contribution") or 0)
+        b["total"] += float(t.get("grand_total") or 0)
+        b["count"] += 1
+    out = [
+        {**v, "contribution": round(v["contribution"], 2), "total": round(v["total"], 2)}
+        for _k, v in sorted(buckets.items())
+    ]
+    return {"trends": out}
+
+
+OVERCHARGE_LETTER_SYSTEM = (
+    "You write short, polite but firm query letters for a family carer to send to their aged-care "
+    "(CHSP) provider about a billing error. Plain English, warm and respectful, no legal jargon, no "
+    "threats. Australian spelling. Return ONLY the letter body text (greeting to sign-off), no preamble, "
+    "no code fences, no placeholders in [brackets] unless a fact is genuinely missing. Structure: a "
+    "greeting, one sentence stating the invoice and service, a clear statement of the agreed rate vs what "
+    "was billed and the difference, a polite request to review and correct/credit the difference and to "
+    "confirm in writing, and a courteous sign-off. Keep it under 180 words."
+)
+
+
+class OverchargeLetterIn(BaseModel):
+    provider_name: Optional[str] = None
+    client_name: Optional[str] = None
+    invoice_reference: Optional[str] = None
+    service_description: Optional[str] = None
+    period: Optional[str] = None
+    units: Optional[float] = None
+    unit_label: Optional[str] = None
+    billed_unit_rate: Optional[float] = None
+    agreed_rate: Optional[float] = None
+    billed_amount: Optional[float] = None
+    expected_amount: Optional[float] = None
+
+
+@chsp1_router.post("/overcharge-letter")
+async def chsp_overcharge_letter(body: OverchargeLetterIn, request: Request):
+    """Generate a ready-to-send query letter for a flagged / overcharged line."""
+    import json as _json
+    await _assert_flag()
+    await _user_id(request)
+    diff = None
+    if body.billed_amount is not None and body.expected_amount is not None:
+        diff = round(body.billed_amount - body.expected_amount, 2)
+    facts = {
+        "provider_name": body.provider_name or "the provider",
+        "client_name": body.client_name or "the client",
+        "invoice_reference": body.invoice_reference,
+        "service_description": body.service_description,
+        "billed_period": body.period,
+        "units": body.units,
+        "unit_label": body.unit_label,
+        "agreed_per_unit_rate": body.agreed_rate,
+        "billed_per_unit_rate": body.billed_unit_rate,
+        "billed_amount": body.billed_amount,
+        "expected_amount": body.expected_amount,
+        "difference_overcharged": diff,
+    }
+    letter = ""
+    try:
+        from lib import llm_wrapper
+        reply = await llm_wrapper.chat_send(
+            model="claude-haiku-4-5-20251001",
+            provider="anthropic",
+            system=OVERCHARGE_LETTER_SYSTEM,
+            user_text="Write the letter using these facts (omit any that are null):\n" + _json.dumps(facts),
+            apply_tone_rules=False,
+        )
+        letter = str(reply or "").strip()
+    except Exception as e:  # pragma: no cover
+        logger.warning("overcharge letter generation failed: %s", e)
+    if not letter:
+        raise HTTPException(status_code=502, detail="Could not draft the letter right now. Please try again.")
+    return {"letter": letter}
 
 
 class SavedCheckIn(BaseModel):
