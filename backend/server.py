@@ -447,7 +447,9 @@ async def login(payload: LoginRequest, request: Request):
     await clear_login_failures(user["id"])
     # Email-verification gate, block login when the 7-day grace period has
     # expired and the user still hasn't clicked the verification link.
-    if (not user.get("email_verified")) and is_past_deadline(user.get("verification_deadline")):
+    # Enforced in PRODUCTION only (WAYLY_ENV=production); preview/staging skip
+    # it so test and seeded accounts stay usable without live email delivery.
+    if _IS_PROD and (not user.get("email_verified")) and is_past_deadline(user.get("verification_deadline")):
         raise HTTPException(
             status_code=403,
             detail={
