@@ -8284,9 +8284,10 @@ def _real_browser_origin(request):
         ):
             return f"{u.scheme}://{host}"
     xfh = (request.headers.get("x-forwarded-host") or "").split(",")[0].strip().lower()
-    if xfh.endswith(".preview.emergentagent.com") and ".expo." not in xfh:
-        slug, rest = xfh.split(".", 1)
-        return f"https://{slug}.expo.{rest}"
+    # `x-forwarded-host` already carries the exact host the browser hit — the
+    # web preview host for the web app, the `.expo.` host for the Expo web
+    # preview. Return it AS-IS; do NOT force `.expo.` (that corrupted every web
+    # request's ACAO into the expo host and broke CORS preflight → login).
     if xfh:
         return f"https://{xfh}"
     return None

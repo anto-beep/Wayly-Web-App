@@ -7507,3 +7507,15 @@ No critical bugs. Backend contracts confirmed by pytest (test_iter340_chsp_overh
 
 ### Status
 Pending item (findings-letter) resolved. Root cause was NOT an LLM timeout (as the handoff hypothesised) but a code-level infinite loop; fixed and verified backend-side via curl. Not mocked — real Claude Haiku 4.5 via Emergent LLM key.
+
+
+## iter342 — Preview login broken ("Could not sign in") — CORS ACAO bug + email-gate preview toggle (Jun 2026, web)
+
+### Email-verification gate now PRODUCTION-only
+- `server.py` `/auth/login` gate wrapped with the existing `_IS_PROD` (`WAYLY_ENV=="production"`) constant. Preview/staging (WAYLY_ENV unset → "preview") skip the 7-day-grace lockout so test/seeded accounts stay usable without live email delivery. Production still enforces it. Verified: an unverified, past-deadline user now logs in 200 in preview (was 403).
+
+### P0 — web login CORS mismatch (root cause of "Could not sign in")
+- **Symptom:** every web login in preview failed with the generic "Could not sign in" toast (axios fallback when the error has no response body). Backend returned correct 401/200; the browser was blocking the response.
+- **Cause:** the `_fix_preview_cors_origin` middleware's `_real_browser_origin()` `x-forwarded-host` branch **forced `.expo.`** into any preview host, so the web host `<slug>.preview.emergentagent.com` was rewritten to `<slug>.expo.preview.emergentagent.com` in `Access-Control-Allow-Origin`. With `allow_credentials=true` the browser requires ACAO to exactly match the request origin, so it rejected it. The JSON login POST triggers a CORS **preflight (OPTIONS)** which carries **no `Referer`**, so it always hit this buggy branch → preflight failed → login POST never sent.
+- **Fix:** removed the `.expo.`-forcing special case; `x-forwarded-host` already carries the exact host the browser hit (web host for web, `.expo.` host for the Expo web preview — handled by the existing fall-through). No expo regression: the old branch only ever mis-fired on non-`.expo.` (web) hosts.
+- **Verified:** WEB OPTIONS preflight + POST (no Referer) now return `ACAO=<web host>` with credentials; full browser login (cathy@example.com) succeeds and lands on `/app`.
