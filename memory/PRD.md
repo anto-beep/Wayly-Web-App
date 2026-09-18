@@ -7608,3 +7608,22 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 **Files:** new `frontend/src/components/MarketingLayout.jsx`, new `frontend/src/hooks/usePublicPageMotion.js`, edited `frontend/src/App.js` (import + layout-route wrap + route move), edited `frontend/src/index.css`.
 
+
+
+---
+
+## Page-navigation motion REMOVED per user feedback (18 Sep 2026)
+
+**Feedback:** The staggered section reveal on the app Dashboard made it feel like it was re-loading section-by-section (search block, then Wayly Summary appearing late — the Summary delay is actually its async fetch, amplified by the animation). Separately, the public-page section reveals felt too fast / distracting ("quick little blur… too much on the eyes").
+
+**Change (web):**
+- App pages: removed the `.wayly-route` container cross-fade AND the `.wayly-route > *` staggered section reveal. `.wayly-route` stays as the keyed content container but carries NO animation → pages switch instantly/cleanly.
+- Public pages: removed the `.wayly-public` cross-fade and the on-scroll `<section>` reveals (deleted `usePublicPageMotion` hook; `MarketingLayout` is now a plain wrapper).
+- CSS + reduced-motion selectors cleaned up in `index.css`.
+
+**Kept (not flagged):** WaylyLoader self-drawing logo (login / app-open / route loading), aurora login background, button/hover micro-interactions, marketing decorative float animations. Mobile `Screen` FadeInDown entrance + Stack/Tabs fade left as-is (user's complaint was about web dashboard + public pages; can remove on mobile too if the same feel appears).
+
+**Verified:** Dashboard `.wayly-route` animationName=none, 0 hidden children, all sections render immediately. Pricing `.wayly-public` animationName=none, 5/5 sections visible, 0 hidden. No stuck content anywhere.
+
+**Files:** `frontend/src/index.css`, `frontend/src/components/MarketingLayout.jsx` (hook removed), deleted `frontend/src/hooks/usePublicPageMotion.js`.
+

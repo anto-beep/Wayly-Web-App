@@ -1,20 +1,15 @@
 import React from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import usePublicPageMotion from "@/hooks/usePublicPageMotion";
+import { Outlet } from "react-router-dom";
 
 /**
  * MarketingLayout — a pathless layout route wrapping every public / marketing
- * page. It gives each page a soft cross-fade entrance on navigation (the keyed
- * `.wayly-public` container remounts per route) and reveals its `<section>`
- * blocks with a graceful rise as they scroll into view. The authenticated app
- * (dashboard) pages are intentionally NOT wrapped here — they keep their own
- * Layout-scoped `.wayly-route` motion and persistent chrome.
+ * page. Page-navigation motion was removed (it felt distracting), so this is
+ * now just a plain structural wrapper. Kept in place so the public routes stay
+ * grouped and we can re-introduce (opt-in) motion later if desired.
  */
 export default function MarketingLayout() {
-    const { pathname } = useLocation();
-    usePublicPageMotion(pathname);
     return (
-        <div key={pathname} className="wayly-public" data-testid="marketing-motion-root">
+        <div className="wayly-public" data-testid="marketing-motion-root">
             <Outlet />
         </div>
     );
