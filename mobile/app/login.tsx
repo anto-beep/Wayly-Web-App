@@ -20,6 +20,38 @@ import { ApiError } from "@/src/lib/api";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { BRAND_TAGLINE } from "@/src/config/brand";
 
+function formatLockout(detail: any): string {
+  const secs = Number(detail?.retry_after_seconds) || 0;
+  const mins = Math.max(1, Math.ceil(secs / 60));
+  let whenStr = "";
+  try {
+    if (detail?.locked_until) {
+      const d = new Date(detail.locked_until);
+      const t = new Intl.DateTimeFormat(undefined, {
+        hour: "numeric", minute: "2-digit", timeZoneName: "short",
+      }).format(d);
+      whenStr = ` (around ${t})`;
+    }
+  } catch { /* fall back to the server message */ }
+  if (!whenStr && detail?.message) return String(detail.message);
+  return `Too many failed sign-in attempts, so this account is locked for a short while. Try again in about ${mins} minute${mins !== 1 ? "s" : ""}${whenStr} or reset your password.`;
+}
+
+// Map a login failure to a clear, specific message for the inline error box.
+function friendlyLoginError(e: unknown): string {
+  if (e instanceof ApiError) {
+    const detail = e.data?.detail;
+    if (detail && typeof detail === "object" && detail.code === "account_locked") {
+      return formatLockout(detail);
+    }
+    if (e.status === 401) return "That email or password doesn't match. Please double-check and try again.";
+    if (e.status === 429) return e.message || "Too many attempts just now. Please wait a minute and try again.";
+    if (e.status >= 500) return "Something went wrong on our end. Please try again in a moment.";
+    return e.message || "Could not sign in. Please try again.";
+  }
+  return "We couldn't reach Wayly. Check your internet connection and try again.";
+}
+
 export default function LoginScreen() {
   const { colors, isDark } = useTheme();
   const { login, loginWithGoogle, loginWithApple, loading: authLoading, user } = useAuth();
@@ -60,8 +92,7 @@ export default function LoginScreen() {
       await login(email, password);
       router.replace("/(tabs)");
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : "Something went wrong. Please try again.";
-      setError(msg);
+      setError(friendlyLoginError(e));
     } finally {
       setBusy(false);
     }

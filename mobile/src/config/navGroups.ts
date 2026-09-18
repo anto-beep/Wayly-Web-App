@@ -28,7 +28,6 @@ import {
   Timer,
   UserPlus,
   User as UserIcon,
-  Users,
   Wallet,
   Wrench,
   LifeBuoy,
@@ -101,7 +100,6 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "care",
     label: "Their Care",
     items: [
-      { label: "Care Team", route: "/care-team", icon: Users, implemented: true },
       { label: "Key Contacts", route: "/key-contacts", icon: Phone, implemented: true },
       { label: "Calendar", route: "/calendar", icon: Calendar, implemented: true },
       { label: "Hospital Mode", route: "/hospital", icon: HeartPulse, implemented: true },

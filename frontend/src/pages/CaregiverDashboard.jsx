@@ -722,8 +722,8 @@ export default function CaregiverDashboard() {
             {isFamily && (
                 <div className="bg-[linear-gradient(135deg,rgba(107,143,113,0.16),rgba(244,239,231,0.4))] border border-sage/30 rounded-xl p-6" data-testid="family-preview-card">
                     <div className="flex items-center justify-between">
-                        <span className="overline flex items-center gap-2"><Users2 className="h-4 w-4" /> Family thread</span>
-                        <Link to="/app/family" className="text-xs text-primary-k underline">Open thread</Link>
+                        <span className="overline flex items-center gap-2"><Users2 className="h-4 w-4" /> Family Wall</span>
+                        <Link to="/app/wall" className="text-xs text-primary-k underline">Open wall</Link>
                     </div>
                     {familyMsgs.length === 0 ? (
                         <div className="mt-4 text-sm text-muted-k">

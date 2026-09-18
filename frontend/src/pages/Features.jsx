@@ -6,7 +6,7 @@ import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 import {
     ArrowRight, FileSearch, Wallet, BarChart3, ListChecks, FileEdit, Receipt, ClipboardCheck,
-    MessageCircle, Users2, AlertTriangle, Calendar, Mic, ShieldCheck, Check, FileText, Lock,
+    MessageCircle, Users2, AlertTriangle, Calendar, ShieldCheck, Check, FileText, Lock,
     Wrench, HeartPulse, Repeat, Sparkles, TrendingDown,
 } from "lucide-react";
 import { BrowserFrame, ScreenshotMultiParticipant } from "@/components/Screenshots";
@@ -17,7 +17,6 @@ const TABS = [
     { id: "tools", label: "AI Tools" },
     { id: "wedge", label: "The Wedge" },
     { id: "caregiver", label: "Caregiver" },
-    { id: "participant", label: "Participant" },
     { id: "family", label: "Family" },
     { id: "trust", label: "Trust" },
 ];
@@ -42,15 +41,9 @@ const WEDGE = [
 
 const CAREGIVER = [
     { icon: Calendar, title: "30-Second Oversight", body: "One screen. What changed this week, what to action, what to ignore." },
-    { icon: Users2, title: "Family Thread", body: "Siblings, advisors, GPs in one place. Role-based visibility, finance-only access for the advisor, full access for the primary caregiver." },
+    { icon: Users2, title: "Family Wall", body: "Post updates, photos and notes to one shared wall the whole family sees, scoped to each participant." },
     { icon: FileText, title: "Care Plan Store", body: "Every plan, every review, every quote, searchable, dated, never lost in an inbox." },
     { icon: ShieldCheck, title: "Audit Log", body: "Every action by every person, immutable. Ready if you ever need to escalate to the ACQSC." },
-];
-
-const PARTICIPANT = [
-    { icon: Mic, title: "Voice-First Home Screen", body: "No menus. Today's appointment, this quarter's budget, two big buttons." },
-    { icon: AlertTriangle, title: "One-Tap Concern", body: "If something doesn't feel right, one button alerts the primary caregiver." },
-    { icon: Calendar, title: "Today, Simply", body: "Who's coming, when, what they'll do. In big text. Nothing else on the screen." },
 ];
 
 const FAMILY = [
@@ -394,12 +387,6 @@ export default function Features() {
             <Section id="caregiver" eyebrow="For the primary caregiver" title="Thirty-second oversight. Everything else when you want it." sub="You are working, parenting, sleeping. Wayly is your second brain for the parts of caregiving that don't fit in a Google calendar.">
                 <div className="grid sm:grid-cols-2 gap-5">
                     {CAREGIVER.map((w, i) => <Card key={w.title} {...w} i={i} />)}
-                </div>
-            </Section>
-
-            <Section id="participant" tone="sage" eyebrow="For the participant" title="Big text. Two buttons. Nothing else." sub="The participant view is voice-first, single-action, and quiet. No menus to learn, no dashboards to learn.">
-                <div className="grid sm:grid-cols-3 gap-5">
-                    {PARTICIPANT.map((w, i) => <Card key={w.title} {...w} dark i={i} />)}
                 </div>
             </Section>
 

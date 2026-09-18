@@ -43,7 +43,6 @@ const StatementCompare = lazy(() => import("@/pages/StatementCompare"));
 const ArchivedStatements = lazy(() => import("@/pages/statements/ArchivedStatements"));
 const StatementAuditLog = lazy(() => import("@/pages/statements/StatementAuditLog"));
 const Chat = lazy(() => import("@/pages/Chat"));
-const FamilyThread = lazy(() => import("@/pages/FamilyThread"));
 const AuditLog = lazy(() => import("@/pages/AuditLog"));
 const AIToolsIndex = lazy(() => import("@/pages/AIToolsIndex"));
 const StatementDecoderTool = lazy(() => import("@/pages/tools/StatementDecoderTool"));
@@ -504,7 +503,7 @@ function App() {
                     <Route path="/app/invoices/:id" element={<RequireAuth><Layout><InvoiceDetail /></Layout></RequireAuth>} />
                     <Route path="/app/chat" element={<Navigate to="/app/ask-wayly" replace />} />
                     <Route path="/app/chat-legacy" element={<RequireAuth><Layout><Chat /></Layout></RequireAuth>} />
-                    <Route path="/app/family" element={<RequireAuth><Layout><FamilyThread /></Layout></RequireAuth>} />
+                    <Route path="/app/family" element={<Navigate to="/app/wall" replace />} />
                     <Route path="/app/audit" element={<RequireAuth><Layout><AuditLog /></Layout></RequireAuth>} />
                     <Route path="/app/documents" element={<RequireAuth><Layout><DocumentVault /></Layout></RequireAuth>} />
                     <Route path="/app/calendar" element={<RequireAuth><Layout><VisitCalendar /></Layout></RequireAuth>} />

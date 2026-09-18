@@ -381,6 +381,32 @@ async def signup(payload: SignupRequest, request: Request):
     }
 
 
+# AEST (UTC+10) is the server-side default timezone for the account-lockout
+# message so the copy is deterministic; clients reformat `locked_until` into the
+# viewer's own timezone (see Login.jsx / login.tsx).
+_AEST = timezone(timedelta(hours=10))
+
+
+def _format_lockout(until: datetime, now: Optional[datetime] = None):
+    """Return (retry_after_seconds, friendly_message) for an account lockout.
+
+    Message always includes the minutes remaining and a wall-clock time in AEST
+    (the client localises it further). `until` is coerced to UTC if naive.
+    """
+    now = now or datetime.now(timezone.utc)
+    if until.tzinfo is None:
+        until = until.replace(tzinfo=timezone.utc)
+    retry_after = max(0, int((until - now).total_seconds()))
+    mins = max(1, (retry_after + 59) // 60)
+    local = until.astimezone(_AEST)
+    hhmm = local.strftime("%I:%M %p").lstrip("0")
+    return retry_after, (
+        "Too many failed sign-in attempts, so this account is locked for a short while. "
+        f"Try again in about {mins} minute{'s' if mins != 1 else ''} "
+        f"(around {hhmm} AEST) or reset your password."
+    )
+
+
 # ----------------- auth: login -----------------
 @api.post("/auth/login")
 async def login(payload: LoginRequest, request: Request):
@@ -420,12 +446,18 @@ async def login(payload: LoginRequest, request: Request):
     locked, until = await is_user_locked(user["id"])
     if locked:
         _obs.log_auth_lockout(_ip, user_id=user["id"])
+        if until.tzinfo is None:
+            until = until.replace(tzinfo=timezone.utc)
+        retry_after, msg = _format_lockout(until)
         raise HTTPException(
             status_code=423,
-            detail=(
-                "Account temporarily locked due to too many failed attempts. "
-                f"Try again after {until.strftime('%H:%M UTC')} or reset your password."
-            ),
+            detail={
+                "code": "account_locked",
+                "locked_until": until.astimezone(timezone.utc).isoformat(),
+                "retry_after_seconds": retry_after,
+                "message": msg,
+            },
+            headers={"Retry-After": str(max(1, retry_after))},
         )
 
     if not verify_password(payload.password, user["password_hash"]):

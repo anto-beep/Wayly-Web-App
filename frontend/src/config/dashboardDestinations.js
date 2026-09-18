@@ -124,8 +124,8 @@ export const DASHBOARD_DESTINATIONS = [
         keywords: "documents files vault paperwork download saved store find my files letters saved",
     },
     {
-        label: "Family thread", hint: "Share updates with family",
-        route: "/app/family", icon: Users,
+        label: "Family Wall", hint: "Share updates with family",
+        route: "/app/wall", icon: Users,
         concepts: ["family"],
         keywords: "family thread message share siblings advisor update wall talk keep everyone informed",
     },

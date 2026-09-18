@@ -35,7 +35,7 @@ export default function CommandPalette() {
         { label: "Statements", to: "/app/statements", icon: FileText, shortcut: "G S" },
         { label: "Upload statement", to: "/app/statements/upload", icon: FileText },
         { label: "Ask Wayly", to: "/app/ask-wayly", icon: MessageCircle, shortcut: "G C" },
-        { label: "Family thread", to: "/app/family", icon: Users },
+        { label: "Family Wall", to: "/app/wall", icon: Users },
         { label: "Audit Log", to: "/app/audit", icon: ScrollText },
     ];
     const settingsItems = [

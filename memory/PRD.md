@@ -7519,3 +7519,31 @@ Pending item (findings-letter) resolved. Root cause was NOT an LLM timeout (as t
 - **Cause:** the `_fix_preview_cors_origin` middleware's `_real_browser_origin()` `x-forwarded-host` branch **forced `.expo.`** into any preview host, so the web host `<slug>.preview.emergentagent.com` was rewritten to `<slug>.expo.preview.emergentagent.com` in `Access-Control-Allow-Origin`. With `allow_credentials=true` the browser requires ACAO to exactly match the request origin, so it rejected it. The JSON login POST triggers a CORS **preflight (OPTIONS)** which carries **no `Referer`**, so it always hit this buggy branch → preflight failed → login POST never sent.
 - **Fix:** removed the `.expo.`-forcing special case; `x-forwarded-host` already carries the exact host the browser hit (web host for web, `.expo.` host for the Expo web preview — handled by the existing fall-through). No expo regression: the old branch only ever mis-fired on non-`.expo.` (web) hosts.
 - **Verified:** WEB OPTIONS preflight + POST (no Referer) now return `ACAO=<web host>` with credentials; full browser login (cathy@example.com) succeeds and lands on `/app`.
+
+
+## iter343 — 17-item enhancement epic, Phase A (Jun 2026, web + mobile + backend)
+
+Plan confirmed with user: deliver in phases A→G across web + mobile with backend parity. #15 (email letter delivery) was **dropped** at the user's request. This entry covers **Phase A** (items #0, #1, #7, #10); Phases B–G remain.
+
+### #0 — Clearer login errors (web + mobile)
+- Both clients now map login failures to specific copy: no-response → "couldn't reach Wayly / check connection"; 401 → "email or password doesn't match"; 429 → rate-limit copy (web lets the global toast handle it); 500 → "something went wrong on our end"; account-locked → localised lockout message. `Login.jsx` `loginErrorMessage()` + `login.tsx` `friendlyLoginError()`.
+
+### #10 — Account-lockout message: local/AEST time + minutes (backend + both clients)
+- `server.py` login now returns a **structured 423**: `{code:"account_locked", locked_until (ISO UTC), retry_after_seconds, message}` + `Retry-After` header. `_format_lockout()` builds an AEST default message with minutes remaining. Clients reformat `locked_until` into the viewer's own timezone via `Intl.DateTimeFormat` (web + mobile), falling back to the AEST server message.
+
+### #1 — Care Team tab removed (web + mobile)
+- Web: removed the "Care Team" nav item (Layout.jsx) → replaced with "Family Wall" (`/app/wall`); `/app/family` now `<Navigate to="/app/wall">`; repointed CommandPalette, dashboardDestinations, CaregiverDashboard links; dropped the unused `FamilyThread` lazy import. Mobile: removed the "Care Team" item from `navGroups.ts`; `care-team.tsx` now `<Redirect href="/(tabs)/family">`. (Care Team source kept as the design reference for Phase C #9.)
+
+### #7 — Features page audit vs backend (web)
+- Removed the "For the participant / Big text. Two buttons. Nothing else." section (tab + `PARTICIPANT` array + `<Section id="participant">`) as no longer applicable; renamed the caregiver "Family Thread" card → "Family Wall" with accurate copy. Verified the WEDGE "Statement Auto-Decode" claim is real (`batch3_routes.py /inbound/mail`, `<participant>@in.wayly.com.au`) and the Sunday digest exists — kept.
+
+### Phase A status
+Self-verified: backend login 200; lockout formatter unit-checked; web Features renders with Participant removed + Family Wall present; web + mobile login screens render. NOT yet run through the testing agent (planned once more phases land, or on request).
+
+### Remaining phases (B–G)
+- B: Calendar overhaul (#3 Google-Calendar-style + click-to-add, #4 appointment bg colour, #5 required labels + expanded type & duration dropdowns + custom duration, #6 appointments list with edit/cancel/delete)
+- C: #9 restyle Family Wall to match old Care Team look; #8 timeline redesign (collapsed by default, must select what+when, search/filter)
+- D: #11 onboarding tailored participant vs caregiver (self-care detection + "both" path for family-plan participants)
+- E: #12/#13 premium motion (app-open, login/signup, dashboard, throughout)
+- F: CHSP letters #14 Findings Letter branded PDF, #16 overcharge-repeat alerts
+- G: #17 web/mobile parity sweep

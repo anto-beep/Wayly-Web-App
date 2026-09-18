@@ -9,6 +9,45 @@ import { Eye, EyeOff, MailWarning, Loader2, CheckCircle2 } from "lucide-react";
 
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
+
+function formatLockout(detail) {
+    const secs = Number(detail?.retry_after_seconds) || 0;
+    const mins = Math.max(1, Math.ceil(secs / 60));
+    let whenStr = "";
+    try {
+        if (detail?.locked_until) {
+            const d = new Date(detail.locked_until);
+            const t = new Intl.DateTimeFormat(undefined, {
+                hour: "numeric", minute: "2-digit", timeZoneName: "short",
+            }).format(d);
+            whenStr = ` (around ${t})`;
+        }
+    } catch { /* fall back to the server message */ }
+    if (!whenStr && detail?.message) return detail.message;
+    return `Too many failed sign-in attempts, so this account is locked for a short while. Try again in about ${mins} minute${mins !== 1 ? "s" : ""}${whenStr} or reset your password.`;
+}
+
+// Map a login failure to a clear, specific message. Returns null when the
+// global api.js interceptor already surfaces it (429 rate limit).
+function loginErrorMessage(err) {
+    if (!err?.response) {
+        return "We couldn't reach Wayly. Check your internet connection and try again.";
+    }
+    const status = err.response.status;
+    const detail = err.response.data?.detail;
+    if (detail && typeof detail === "object" && detail.code === "account_locked") {
+        return formatLockout(detail);
+    }
+    if (status === 401) {
+        return "That email or password doesn't match. Please double-check and try again.";
+    }
+    if (status === 429) return null; // handled by the global rate-limit toast
+    if (status >= 500) {
+        return "Something went wrong on our end. Please try again in a moment.";
+    }
+    return extractErrorMessage(err, "Could not sign in. Please try again.");
+}
+
 export default function Login() {
     const { login, verifyMfa } = useAuth();
     const nav = useNavigate();
@@ -70,7 +109,8 @@ export default function Login() {
                     message: detail.message || "Your email hasn't been verified yet.",
                 });
             } else {
-                toast.error(extractErrorMessage(err, "Could not sign in"));
+                const m = loginErrorMessage(err);
+                if (m) toast.error(m, { duration: 7000 });
             }
         } finally {
             setSubmitting(false);
