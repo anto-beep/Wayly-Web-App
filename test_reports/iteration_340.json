@@ -1,0 +1,46 @@
+{
+  "summary": "Phase B Calendar Overhaul (items #3-#6) verified end-to-end on web + mobile with shared backend. 22/22 pytest tests pass on /api/visits CRUD + new kinds (gp/specialist/allied_health/nurse/home_visit/telehealth/assessment/social_support/transport/respite/medication/reminder/personal/other/appointment) + all_day boolean; invalid kind correctly rejected with 422. Web /app/calendar renders react-big-calendar month grid, tinted form with 15 Type options + 9 duration presets + 'Custom...' revealing visits-form-duration-custom, submit creates entry, list (visits-list) exposes search/filter and per-row edit/cancel/delete. Mobile /calendar (react-native-calendars) renders calendar-month, day/all toggle works, form opens with explicit Required/Optional markers on every label, submit creates entry, cards expand to edit/cancel/archive/delete.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Calendar / New entry form", "issues": ["Required/Optional markers are rendered via <RequiredMark/> and <OptionalMark/> components but on desktop the visual glyph is very small (text-xs muted). Consider labelling with explicit 'Required' text like mobile does, so parity between platforms improves. Non-blocking."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "New-entry form required-field indicator", "platform": "web", "issue": "Mobile shows explicit 'Required' / 'Optional' text next to every label; web only shows a tiny asterisk/glyph via <RequiredMark/>. Both are technically present, but the on-screen text 'Required' is missing on web, whereas the task said 'must show which fields are Required'.", "expected": "Both surfaces show an obvious 'Required' text on required fields.", "actual": "Web relies on a subtle marker; mobile shows the word 'Required'."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_visits_calendar_iter340.py",
+    "/app/test_reports/pytest/iter340_visits.xml",
+    "/app/test_reports/iter340_web.jpeg",
+    "/app/test_reports/iter340_mobile.jpeg",
+    "/app/test_reports/iter340_mobile_final.jpeg"
+  ],
+  "action_items": [
+    "(Optional/parity) Make web required-field marker use the word 'Required' like mobile so users clearly see which inputs are mandatory."
+  ],
+  "critical_code_review_comments": [
+    "VisitBody.duration_minutes is validated ge=5, le=720 — matches UI custom-duration input min=5/max=720. Good.",
+    "PATCH /visits uses the same VisitBody so every update must resend all required fields (title/starts_at). This is fine because both UIs reconstruct full drafts before submitting, but a PartialVisitBody would be safer if a future surface tries to update a single field."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_visits_calendar_iter340.py (new)"
+  ],
+  "success_rate": {"backend": "100% (22/22)", "frontend": "100% (web + mobile core flows verified)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "Created and then cleaned up 22 backend TEST_iter340 visits + 2 UI-created (web + mobile) visits.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend /api/visits + new taxonomy + all_day are green. Web + mobile calendar overhaul work end-to-end for cathy@example.com. Only cosmetic parity nit: web required-field markers are visually subtle vs mobile's explicit 'Required' text. Preview backend can be slow (login ~20s) — use pytest timeout>=60."
+}

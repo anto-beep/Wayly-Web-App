@@ -1124,6 +1124,33 @@ def _safe_slug(s: Optional[str], fallback: str = "chsp") -> str:
     return out[:40] or fallback
 
 
+class FindingsLetterPdfIn(BaseModel):
+    letter: str
+    provider_name: Optional[str] = None
+    client_name: Optional[str] = None
+    invoice_reference: Optional[str] = None
+    period: Optional[str] = None
+
+
+@chsp1_router.post("/findings-letter/pdf")
+async def chsp_findings_letter_pdf(body: FindingsLetterPdfIn, request: Request):
+    """Render a branded PDF of the consolidated Findings letter for download."""
+    await _assert_flag()
+    await _user_id(request)
+    if not (body.letter or "").strip():
+        raise HTTPException(status_code=400, detail="There is no letter to download yet.")
+    from lib.chsp1 import chsp_pdf
+    try:
+        pdf = chsp_pdf.render_findings_letter_pdf(body.dict())
+    except Exception as e:  # pragma: no cover
+        logger.warning("chsp findings letter pdf render failed: %s", e)
+        raise HTTPException(status_code=500, detail="Could not build the PDF right now.")
+    prov = _safe_slug(body.provider_name, "provider")
+    fn = f"Wayly-CHSP-Findings-Letter_{prov}.pdf"
+    return Response(content=pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{fn}"'})
+
+
 class InvoicePdfIn(BaseModel):
     header: Dict[str, Any] = Field(default_factory=dict)
     line_items: List[Dict[str, Any]] = Field(default_factory=list)

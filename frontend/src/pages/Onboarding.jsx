@@ -24,6 +24,10 @@ export default function Onboarding() {
     const [step, setStep] = useState(1);
     const [participantId, setParticipantId] = useState(null);
     const [participantDoc, setParticipantDoc] = useState(null);
+    // Tailored onboarding: is the account holder setting up their OWN care, or
+    // someone else's? When self-managed we hide the "relationship to the
+    // participant" field (there's no one else to relate to).
+    const [selfManaged, setSelfManaged] = useState(() => user?.role === "participant");
     const [saving, setSaving] = useState(false);
     const [loadingExisting, setLoadingExisting] = useState(Boolean(editPid));
     const [_snapshotVersion, _setSnapshotVersion] = useState(0);
@@ -165,6 +169,7 @@ export default function Onboarding() {
                     caregiver_phone: data.caregiver_phone || "",
                 });
                 setAuth({ confirmed: Boolean(data.authorisation_confirmed) });
+                setSelfManaged(data.caregiver_relationship === "self" || user?.role === "participant");
             } catch (err) {
                 toast.error(extractErrorMessage(err, "Could not load participant"));
             } finally {
@@ -317,6 +322,20 @@ export default function Onboarding() {
         }
     };
 
+    const handleSelfManaged = (val) => {
+        setSelfManaged(val);
+        if (val) {
+            setTier2((t) => ({ ...t, caregiver_relationship: "self" }));
+            setTier1((t) => ({
+                ...t,
+                first_name: t.first_name || user?.first_name || user?.name?.split(" ")?.[0] || "",
+                last_name: t.last_name || user?.last_name || user?.name?.split(" ")?.slice(1).join(" ") || "",
+            }));
+        } else {
+            setTier2((t) => (t.caregiver_relationship === "self" ? { ...t, caregiver_relationship: "" } : t));
+        }
+    };
+
     return (
         <div className="min-h-screen bg-kindred">
             <header className="border-b border-kindred bg-white/80 backdrop-blur-xl sticky top-0 z-30 safe-top">
@@ -403,6 +422,8 @@ export default function Onboarding() {
                             setForm={setTier1}
                             classifications={CLASSIFICATIONS}
                             onSubmit={submitStep1}
+                            selfManaged={selfManaged}
+                            setSelfManaged={handleSelfManaged}
                         />
                     )}
                     {step === 2 && (
@@ -423,6 +444,7 @@ export default function Onboarding() {
                             onSkip={() => submitStep3(true)}
                             onBack={() => setStep(2)}
                             saving={saving}
+                            selfManaged={selfManaged}
                         />
                     )}
                     {step === 4 && (

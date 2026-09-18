@@ -327,10 +327,10 @@ export default function CaregiverDashboard() {
         : 0;
 
     return (
-        <div className="space-y-8" data-testid="caregiver-dashboard">
+        <div className="space-y-8 wayly-fade-in" data-testid="caregiver-dashboard">
             <JourneyStartBanner />
             <OnboardingEnvelopeTile />
-            <div>
+            <div className="wayly-fade-up wayly-stagger-1">
                 <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-primary-k tracking-tight" data-testid="dashboard-greeting">
                     {greeting}, {caregiverFirst}. What would you like to do?
                 </h1>

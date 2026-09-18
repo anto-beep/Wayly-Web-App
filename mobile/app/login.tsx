@@ -11,6 +11,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LogIn } from "lucide-react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { Button, Field, Loading, Screen, T } from "@/src/components/ui";
 import { WaylyMark } from "@/src/components/WaylyMark";
@@ -134,7 +135,7 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.brandMark}>
+          <Animated.View entering={FadeInDown.duration(650)} style={styles.brandMark}>
             <WaylyMark size={78} white={isDark} />
             <T
               testID="brand-tagline"
@@ -142,9 +143,9 @@ export default function LoginScreen() {
             >
               {BRAND_TAGLINE}
             </T>
-          </View>
+          </Animated.View>
 
-          <View style={styles.form}>
+          <Animated.View entering={FadeInDown.delay(160).duration(650)} style={styles.form}>
             <Field
               label="Email"
               required
@@ -248,7 +249,7 @@ export default function LoginScreen() {
                 New to Wayly? <T variant="body" style={{ color: colors.gold, fontFamily: fonts.bodySemi }}>Create an account</T>
               </T>
             </Pressable>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

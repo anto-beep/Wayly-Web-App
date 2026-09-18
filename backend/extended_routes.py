@@ -62,10 +62,17 @@ class VisitBody(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     starts_at: str  # ISO datetime
     duration_minutes: int = Field(default=60, ge=5, le=720)
+    all_day: bool = Field(default=False)
     location: Optional[str] = Field(default=None, max_length=200)
     provider: Optional[str] = Field(default=None, max_length=120)
     notes: Optional[str] = Field(default=None, max_length=1000)
-    kind: str = Field(default="appointment", pattern="^(appointment|home_visit|telehealth|assessment|other)$")
+    # Expanded appointment/entry taxonomy (Jun 2026). Reminders and personal
+    # entries let the calendar act like a general Google-style day planner, not
+    # only a clinical-appointment log. Legacy values stay valid.
+    kind: str = Field(
+        default="appointment",
+        pattern="^(appointment|gp|specialist|allied_health|nurse|home_visit|telehealth|assessment|social_support|transport|respite|medication|reminder|personal|other)$",
+    )
     # UI-1 §3, appointments are never hard-deleted by users. They are
     # archived once the date has passed, or cancelled if the user explicitly
     # chooses to cancel them ahead of time. The default is "active".

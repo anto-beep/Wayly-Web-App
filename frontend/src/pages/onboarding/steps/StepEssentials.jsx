@@ -11,15 +11,43 @@ import { formatAUD } from "@/lib/api";
 import { PENSION_OPTIONS, STATEMENT_DELIVERY_OPTIONS } from "../constants";
 import { WhyHint } from "../helpers";
 
-export default function StepEssentials({ form, setForm, classifications, onSubmit }) {
+export default function StepEssentials({ form, setForm, classifications, onSubmit, selfManaged, setSelfManaged }) {
     const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? e.target.value : e }));
 
     return (
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} data-testid="step-essentials">
             <h1 className="font-heading text-2xl md:text-3xl text-primary-k tracking-tight">The essentials</h1>
             <p className="text-muted-k mt-2 text-sm leading-relaxed">
-                Wayly needs a few core details about the participant so its calculators and AI tools return accurate figures.
+                {selfManaged
+                    ? "Wayly needs a few core details about you so its calculators and AI tools return accurate figures."
+                    : "Wayly needs a few core details about the participant so its calculators and AI tools return accurate figures."}
             </p>
+
+            {/* Who is this for? — tailors the rest of onboarding. */}
+            <fieldset className="mt-6" data-testid="onboarding-whose-care">
+                <legend className="mb-2 w-full">
+                    <span className="text-sm font-medium text-primary-k">Whose care are you setting up?</span>
+                </legend>
+                <div className="grid sm:grid-cols-2 gap-2">
+                    {[
+                        { v: true, label: "My own care", hint: "I'm the person receiving support" },
+                        { v: false, label: "Someone else's care", hint: "I'm helping a parent, partner or friend" },
+                    ].map((o) => (
+                        <button
+                            key={String(o.v)}
+                            type="button"
+                            data-testid={`onboarding-whose-care-${o.v ? "self" : "other"}`}
+                            onClick={() => setSelfManaged(o.v)}
+                            className={`rounded-lg border p-3 text-left transition-colors tap-target ${
+                                selfManaged === o.v ? "border-primary-k bg-surface-2" : "border-kindred hover:bg-surface-2"
+                            }`}
+                        >
+                            <div className="font-medium text-primary-k text-sm">{o.label}</div>
+                            <div className="text-xs text-muted-k mt-0.5">{o.hint}</div>
+                        </button>
+                    ))}
+                </div>
+            </fieldset>
 
             <div className="mt-6 grid sm:grid-cols-2 gap-4">
                 <label className="block">
@@ -124,7 +152,7 @@ export default function StepEssentials({ form, setForm, classifications, onSubmi
 
             <fieldset className="mt-5">
                 <legend className="mb-2 w-full">
-                    <FieldLabelText required>How do you receive their monthly statement?</FieldLabelText>
+                    <FieldLabelText required>{selfManaged ? "How do you receive your monthly statement?" : "How do you receive their monthly statement?"}</FieldLabelText>
                 </legend>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {STATEMENT_DELIVERY_OPTIONS.map((o) => (

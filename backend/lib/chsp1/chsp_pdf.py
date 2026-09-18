@@ -201,3 +201,41 @@ def render_fee_check_pdf(payload: Dict[str, Any]) -> bytes:
     out = buf.getvalue()
     buf.close()
     return out
+
+
+def render_findings_letter_pdf(payload: Dict[str, Any]) -> bytes:
+    """Render a branded PDF of the consolidated Findings / query letter so
+    families can download and send it. Matches the other CHSP artefacts."""
+    letter = str(payload.get("letter") or "").strip()
+    provider = payload.get("provider_name") or "your provider"
+    client = payload.get("client_name")
+    ref = payload.get("invoice_reference")
+    period = payload.get("period")
+    styles = pb.get_styles()
+
+    subtitle_bits = [provider, client, (f"Invoice {ref}" if ref else None), period]
+    subtitle = " · ".join(_esc(b) for b in subtitle_bits if b)
+
+    story: List[Any] = []
+    story += pb.header_block(
+        styles, title="Findings letter", subtitle=subtitle,
+        disclaimer="Drafted by Wayly from your invoice review. Check the details before you send it.",
+    )
+
+    # Render each paragraph / line of the letter, preserving blank-line breaks.
+    for block in re.split(r"\n\s*\n", letter):
+        block = block.strip()
+        if not block:
+            continue
+        html = _esc(block).replace("\n", "<br/>")
+        story.append(Paragraph(html, styles["body"]))
+        story.append(Spacer(1, 6))
+
+    story += pb.footer_block(styles)
+
+    buf = io.BytesIO()
+    doc = pb.make_doc(buf, title="Findings letter")
+    doc.build(story)
+    out = buf.getvalue()
+    buf.close()
+    return out

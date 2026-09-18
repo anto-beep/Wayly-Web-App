@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import { Mail, X, Copy, Check } from "lucide-react-native";
+import { Mail, X, Copy, Check, Download } from "lucide-react-native";
 
 import { Button, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
+import { sharePostPdf } from "@/src/lib/download";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
 export default function OverchargeLetterModal({ visible, facts, onClose, colors, endpoint = "/chsp1/overcharge-letter", title = "Query Letter To Your Provider" }: any) {
   const [loading, setLoading] = useState(false);
   const [letter, setLetter] = useState("");
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
@@ -26,6 +28,21 @@ export default function OverchargeLetterModal({ visible, facts, onClose, colors,
 
   const copy = async () => {
     try { await Clipboard.setStringAsync(letter); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignore */ }
+  };
+
+  const downloadPdf = async () => {
+    if (!letter.trim()) return;
+    setDownloading(true);
+    try {
+      await sharePostPdf("/chsp1/findings-letter/pdf", {
+        letter,
+        provider_name: facts?.provider_name || null,
+        client_name: facts?.client_name || null,
+        invoice_reference: facts?.invoice_reference || null,
+        period: facts?.period || null,
+      }, "Wayly-CHSP-Findings-Letter.pdf");
+    } catch { /* surfaced by the share sheet failing silently */ }
+    finally { setDownloading(false); }
   };
 
   return (
@@ -53,6 +70,7 @@ export default function OverchargeLetterModal({ visible, facts, onClose, colors,
                   style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, minHeight: 260, color: colors.text, fontFamily: fonts.body, backgroundColor: colors.surface2, textAlignVertical: "top", lineHeight: 21 }}
                 />
                 <Button label={copied ? "Copied" : "Copy Letter"} icon={copied ? Check : Copy} testID="chsp-letter-copy" onPress={copy} />
+                <Button label={downloading ? "Preparing…" : "Download PDF"} icon={Download} variant="outline" loading={downloading} testID="chsp-letter-download-pdf" onPress={downloadPdf} />
                 <Button label="Close" variant="outline" onPress={onClose} />
               </>
             )}

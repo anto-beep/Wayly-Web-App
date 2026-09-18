@@ -81,6 +81,23 @@ export default function OnboardingScreen() {
   const [participantId, setParticipantId] = useState<string | null>(editPid);
   const [completeness, setCompleteness] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
+  // Tailored onboarding: own care vs someone else's. Self-managed hides the
+  // "relationship to the participant" question (there's no one else to relate to).
+  const [selfManaged, setSelfManaged] = useState<boolean>(user?.role === "participant");
+
+  const chooseSelfManaged = (val: boolean) => {
+    setSelfManaged(val);
+    if (val) {
+      setT2((t) => ({ ...t, caregiver_relationship: "self" }));
+      setT1((t) => ({
+        ...t,
+        first_name: t.first_name || user?.first_name || (user?.name?.split(" ")?.[0] ?? ""),
+        last_name: t.last_name || user?.last_name || (user?.name?.split(" ")?.slice(1).join(" ") ?? ""),
+      }));
+    } else {
+      setT2((t) => (t.caregiver_relationship === "self" ? { ...t, caregiver_relationship: "" } : t));
+    }
+  };
 
   const [t1, setT1] = useState<Tier1>({
     first_name: user?.first_name || "", last_name: user?.last_name || "", dob: "",
@@ -147,6 +164,7 @@ export default function OnboardingScreen() {
         caregiver_relationship: p.caregiver_relationship || "",
         caregiver_phone: p.caregiver_phone || "",
       }));
+      if (p.caregiver_relationship === "self") setSelfManaged(true);
     } catch { /* if it fails, the form stays blank and PATCHes on submit */ }
   }, []);
 
@@ -297,7 +315,16 @@ export default function OnboardingScreen() {
             <View testID="onboarding-step-essentials" style={{ gap: spacing.md }}>
               <View>
                 <T style={{ fontFamily: fonts.heading, fontSize: 26 }}>The essentials</T>
-                <T variant="small" style={{ marginTop: 4 }}>A few core details about the participant so Wayly can return accurate figures.</T>
+                <T variant="small" style={{ marginTop: 4 }}>{selfManaged ? "A few core details about you so Wayly can return accurate figures." : "A few core details about the participant so Wayly can return accurate figures."}</T>
+              </View>
+
+              {/* Whose care? — tailors the rest of onboarding. */}
+              <View testID="onboarding-whose-care">
+                <T variant="label" style={{ marginBottom: 6 }}>WHOSE CARE ARE YOU SETTING UP?</T>
+                <View style={{ gap: spacing.sm }}>
+                  <OptionCard testID="onboarding-whose-care-self" label="My own care" hint="I'm the person receiving support" active={selfManaged === true} onPress={() => chooseSelfManaged(true)} />
+                  <OptionCard testID="onboarding-whose-care-other" label="Someone else's care" hint="I'm helping a parent, partner or friend" active={selfManaged === false} onPress={() => chooseSelfManaged(false)} />
+                </View>
               </View>
               <View style={{ flexDirection: "row", gap: spacing.md }}>
                 <Field label="First name" required testID="onboarding-first-name" value={t1.first_name} onChangeText={(v) => setT1({ ...t1, first_name: v })} style={{ flex: 1 }} />
@@ -340,7 +367,7 @@ export default function OnboardingScreen() {
 
               <View>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                  <T variant="label">HOW DO YOU RECEIVE THEIR STATEMENT?</T>
+                  <T variant="label">{selfManaged ? "HOW DO YOU RECEIVE YOUR STATEMENT?" : "HOW DO YOU RECEIVE THEIR STATEMENT?"}</T>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</T>
                 </View>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
@@ -364,7 +391,9 @@ export default function OnboardingScreen() {
                 <View style={{ flex: 1 }}>
                   <T style={{ fontFamily: fonts.heading, fontSize: 24 }}>Confirm authorisation</T>
                   <T variant="small" style={{ marginTop: 4 }}>
-                    You are about to store personal and financial information about {firstName || "the participant"}. Wayly needs you to confirm you are authorised to manage their aged care information.
+                    {selfManaged
+                      ? `You are about to store your own personal and financial aged care information. Please confirm the details are about you.`
+                      : `You are about to store personal and financial information about ${firstName || "the participant"}. Wayly needs you to confirm you are authorised to manage their aged care information.`}
                   </T>
                 </View>
               </View>
@@ -374,7 +403,9 @@ export default function OnboardingScreen() {
                   {confirmed ? <Check size={14} color="#fff" /> : null}
                 </View>
                 <T style={{ flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 20 }}>
-                  I confirm I am authorised to manage the aged care information for {firstName || "the participant"}. This includes power of attorney, being a nominated representative with My Aged Care, or explicit consent from the participant.
+                  {selfManaged
+                    ? `I confirm this is my own aged care information and the details are accurate.`
+                    : `I confirm I am authorised to manage the aged care information for ${firstName || "the participant"}. This includes power of attorney, being a nominated representative with My Aged Care, or explicit consent from the participant.`}
                 </T>
               </Pressable>
               <View style={{ flexDirection: "row", gap: spacing.sm }}>
@@ -415,12 +446,14 @@ export default function OnboardingScreen() {
                   </View>
                 ) : null}
               </View>
-              <View>
-                <T variant="label" style={{ marginBottom: 6 }}>YOUR RELATIONSHIP TO THE PARTICIPANT</T>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-                  {RELATIONSHIPS.map((r) => <Chip key={r.v} testID={`onboarding-rel-${r.v}`} label={r.label} active={t2.caregiver_relationship === r.v} onPress={() => setT2({ ...t2, caregiver_relationship: r.v })} />)}
+              {!selfManaged ? (
+                <View>
+                  <T variant="label" style={{ marginBottom: 6 }}>YOUR RELATIONSHIP TO THE PARTICIPANT</T>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+                    {RELATIONSHIPS.map((r) => <Chip key={r.v} testID={`onboarding-rel-${r.v}`} label={r.label} active={t2.caregiver_relationship === r.v} onPress={() => setT2({ ...t2, caregiver_relationship: r.v })} />)}
+                  </View>
                 </View>
-              </View>
+              ) : null}
               <Field label="Your phone" testID="onboarding-caregiver-phone" value={t2.caregiver_phone} onChangeText={(v) => setT2({ ...t2, caregiver_phone: v })} placeholder="04xx xxx xxx" keyboardType="phone-pad" />
               <View style={{ flexDirection: "row", gap: spacing.sm }}>
                 <Button label="Skip for now" testID="onboarding-step3-skip" variant="ghost" onPress={() => submitRecommended(true)} style={{ flex: 1 }} />

@@ -5,12 +5,13 @@
 import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { X, Mail, Copy, Check, Loader2 } from "lucide-react";
+import { X, Mail, Copy, Check, Loader2, FileDown } from "lucide-react";
 
 export default function OverchargeLetterModal({ open, facts, onClose, endpoint = "/chsp1/overcharge-letter", title = "Query Letter To Your Provider" }) {
     const [loading, setLoading] = useState(false);
     const [letter, setLetter] = useState("");
     const [copied, setCopied] = useState(false);
+    const [downloading, setDownloading] = useState(false);
 
     useEffect(() => {
         if (!open) return;
@@ -31,6 +32,30 @@ export default function OverchargeLetterModal({ open, facts, onClose, endpoint =
     const copy = async () => {
         try { await navigator.clipboard.writeText(letter); setCopied(true); toast.success("Letter copied"); setTimeout(() => setCopied(false), 2000); }
         catch { toast.error("Could not copy"); }
+    };
+
+    const downloadPdf = async () => {
+        if (!letter.trim()) return;
+        setDownloading(true);
+        try {
+            const { data } = await api.post("/chsp1/findings-letter/pdf", {
+                letter,
+                provider_name: facts?.provider_name || null,
+                client_name: facts?.client_name || null,
+                invoice_reference: facts?.invoice_reference || null,
+                period: facts?.period || null,
+            }, { responseType: "blob" });
+            const url = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "Wayly-CHSP-Findings-Letter.pdf";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch {
+            toast.error("Could not download the PDF. Please try again.");
+        } finally { setDownloading(false); }
     };
 
     if (!open) return null;
@@ -58,6 +83,9 @@ export default function OverchargeLetterModal({ open, facts, onClose, endpoint =
                             />
                             <div className="flex justify-end gap-2">
                                 <button onClick={onClose} className="text-sm px-4 py-2 rounded-full border border-primary-k/25 text-primary-k hover:bg-primary-k/5">Close</button>
+                                <button onClick={downloadPdf} disabled={downloading || !letter.trim()} data-testid="chsp-letter-download-pdf" className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full border border-primary-k/25 text-primary-k hover:bg-primary-k/5 disabled:opacity-60">
+                                    {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />} {downloading ? "Preparing…" : "Download PDF"}
+                                </button>
                                 <button onClick={copy} data-testid="chsp-letter-copy" className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full bg-primary-k text-white hover:bg-primary-k/90">
                                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />} {copied ? "Copied" : "Copy Letter"}
                                 </button>

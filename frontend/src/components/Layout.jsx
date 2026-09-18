@@ -133,7 +133,6 @@ const navGroups = [
         key: "care",
         label: "Their Care",
         items: [
-            { to: "/app/wall", label: "Family Wall", icon: Users },
             { to: "/app?contacts=open", label: "Key Contacts", icon: Phone },
             { to: "/app/calendar", label: "Calendar", icon: Calendar },
             { to: "/app/hospital", label: "Hospital Mode", icon: HeartPulse },

@@ -175,7 +175,12 @@ import { titleForPath } from "@/lib/appPageTitles";
 import { startReactivateCheckout } from "@/lib/reactivate";
 
 function Loading() {
-    return <div className="min-h-screen flex items-center justify-center text-muted-k">Loading…</div>;
+    return (
+        <div className="min-h-screen wayly-aurora flex flex-col items-center justify-center gap-4">
+            <img src="/branding/svg/wayly-mark.svg" alt="Wayly" className="h-14 w-14 rounded-xl wayly-breathe" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            <div className="text-sm text-muted-k wayly-fade-in">Loading…</div>
+        </div>
+    );
 }
 
 // Document title for authenticated pages that DON'T use the dashboard Layout

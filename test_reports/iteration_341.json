@@ -1,0 +1,35 @@
+{
+  "summary": "Iter341 — Phases E/D/F + nav parity verified on web + mobile. Backend POST /api/chsp1/findings-letter/pdf: 401 without auth, 400 on blank letter, 200 with branded Wayly-CHSP-Findings-Letter_*.pdf and application/pdf Content-Type. Phase F web modal (OverchargeLetterModal.jsx) has data-testid chsp-letter-download-pdf next to Copy Letter; mobile modal (OverchargeLetterModal.tsx) has testID chsp-letter-download-pdf using sharePostPdf. Phase D web: /onboarding Step 1 shows data-testid onboarding-whose-care with onboarding-whose-care-self and onboarding-whose-care-other; SELF hides data-testid onboarding-relationship on Step 3 (verified live); copy adapts (your vs their monthly statement) — visually confirmed. Phase D mobile source: testIDs onboarding-whose-care, onboarding-whose-care-self, onboarding-whose-care-other on Step 1; RELATIONSHIPS chips gated by selfManaged flag on Step 3. Phase E web: /login (data-testid login-submit-button) renders with aurora+fade-up, dashboard (caregiver-dashboard + dashboard-greeting) renders cleanly. Phase E mobile: Expo login shows brand mark + form (0 console errors, login-submit-button present). NAV: Family Wall appears once under Today only in Layout.jsx (line 96), NOT under Their Care — confirmed in live sidebar screenshot too.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_chsp_findings_letter_pdf_iter341.py",
+    "/app/test_reports/pytest/iter341_findings_pdf.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Cold-start latency: POST /api/chsp1/findings-letter/pdf without auth token took ~44s in one run (LLM/warm-up path?). Auth 401 short-circuit is correct but response time is slow when the pod is cold. Consider ensuring the auth check happens before any lazy imports on this route (currently _user_id runs first, so it should already 401 quickly — the slowness may be pod cold start, worth double-checking under load)."
+  ],
+  "updated_files": ["/app/backend/tests/test_chsp_findings_letter_pdf_iter341.py"],
+  "success_rate": {"backend": "100% (3/3 pytest)", "frontend": "100% (web+mobile render, testIDs present, SELF hides relationship, nav parity confirmed)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase F backend PDF endpoint fully covered by test_chsp_findings_letter_pdf_iter341.py (3 assertions: auth-required, empty-letter 400, valid 200 PDF with branded filename). Phase D/E only touched — animations not asserted per brief. Nav parity check is source-only for mobile (see /app/mobile/app/(tabs)/ index files). Item #15 (email delivery) is CANCELLED — do not test.",
+  "rca of the issue": ""
+}

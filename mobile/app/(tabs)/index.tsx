@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "expo-router";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import {
   TrendingUp, FileText, AlertTriangle, Sparkles, ChevronRight,
   MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info,
@@ -137,9 +138,9 @@ export default function Dashboard() {
           <ParticipantSwitcher householdName={user?.name} variant="bar" />
         </View>
         {/* Greeting header — hero */}
-        <View style={{ paddingHorizontal: spacing.lg }}>
+        <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: spacing.lg }}>
           <T style={{ fontFamily: fonts.headingSemi, fontSize: 27, lineHeight: 33, color: colors.text }} testID="dashboard-greeting">{greetingFor()}, {firstName}. What would you like to do?</T>
-        </View>
+        </Animated.View>
 
         {loading ? (
           <Loading label="Loading your dashboard…" />
@@ -148,12 +149,12 @@ export default function Dashboard() {
         ) : (
           <>
             {/* What would you like to do? — the navigator */}
-            <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+            <Animated.View entering={FadeInDown.delay(120).duration(600)} style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
               <DashboardActionBar />
-            </View>
+            </Animated.View>
 
             {/* Smart AI summary (Your Wayly Insight) */}
-            <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+            <Animated.View entering={FadeInDown.delay(220).duration(600)} style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
               <SmartAISummary
                 pageKey="dashboard"
                 context={{
@@ -178,7 +179,7 @@ export default function Dashboard() {
                   unread_family_messages: familyMsgs.filter((m) => !m.read).length,
                 }}
               />
-            </View>
+            </Animated.View>
 
             {/* Prominent budget status pill (parity with web AtAGlance headline) */}
             {!isFree && budget ? (

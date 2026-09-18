@@ -7,7 +7,7 @@ import React from "react";
 import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { STATES, CAREGIVER_RELATIONSHIPS } from "../constants";
 
-export default function StepRecommended({ form, setForm, onContinue, onSkip, onBack, saving }) {
+export default function StepRecommended({ form, setForm, onContinue, onSkip, onBack, saving, selfManaged }) {
     const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? e.target.value : e }));
 
     return (
@@ -98,18 +98,20 @@ export default function StepRecommended({ form, setForm, onContinue, onSkip, onB
             </fieldset>
 
             <div className="mt-5 grid sm:grid-cols-2 gap-4">
-                <label className="block">
-                    <span className="text-sm text-muted-k">Your relationship to the participant</span>
-                    <select
-                        value={form.caregiver_relationship}
-                        onChange={update("caregiver_relationship")}
-                        data-testid="onboarding-relationship"
-                        className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 bg-surface focus:outline-none focus:ring-2 ring-primary-k"
-                    >
-                        <option value="">Select…</option>
-                        {CAREGIVER_RELATIONSHIPS.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
-                    </select>
-                </label>
+                {!selfManaged && (
+                    <label className="block">
+                        <span className="text-sm text-muted-k">Your relationship to the participant</span>
+                        <select
+                            value={form.caregiver_relationship}
+                            onChange={update("caregiver_relationship")}
+                            data-testid="onboarding-relationship"
+                            className="mt-1 w-full rounded-md border border-kindred px-3 py-2.5 bg-surface focus:outline-none focus:ring-2 ring-primary-k"
+                        >
+                            <option value="">Select…</option>
+                            {CAREGIVER_RELATIONSHIPS.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
+                        </select>
+                    </label>
+                )}
                 <label className="block">
                     <span className="text-sm text-muted-k">Your phone</span>
                     <input

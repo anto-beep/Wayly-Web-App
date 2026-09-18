@@ -146,14 +146,17 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-kindred auth-shell flex items-center justify-center px-6">
+        <div className="min-h-screen bg-kindred auth-shell wayly-aurora relative overflow-hidden flex items-center justify-center px-6">
             <SeoHead {...SEO.login} noindex />
-            <div className="w-full max-w-md">
+            {/* Soft, slow-drifting orbs — calm ambient depth behind the card. */}
+            <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[var(--wayly-teal-600)]/10 blur-3xl wayly-breathe" />
+            <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-16 h-96 w-96 rounded-full bg-[var(--wayly-sage-400)]/10 blur-3xl wayly-float-slow" />
+            <div className="w-full max-w-md relative wayly-fade-up">
                 <Link to="/" className="flex items-center gap-2 mb-8">
                     <WaylyLogo size={32} className="rounded-md" />
                     <span className="font-heading text-lg text-primary-k">Wayly</span>
                 </Link>
-                <div className="bg-surface border border-kindred rounded-2xl p-8 auth-card">
+                <div className="bg-surface border border-kindred rounded-2xl p-8 auth-card wayly-fade-up wayly-stagger-2">
                     {!mfaToken ? (
                         <>
                             <span className="overline">Sign in</span>
