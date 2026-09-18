@@ -266,7 +266,7 @@ function PostCard({
   const mine = post.author_id === meId;
   const myReactions = new Set(post.reacted_by?.[meId] || []);
   return (
-    <View testID={`wall-post-${post.id}`} style={[styles.post, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
+    <View testID={`wall-post-${post.id}`} style={[styles.post, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: colors.primary }, shadow.card]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
         <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
           <T style={{ color: "#fff", fontFamily: fonts.bodyBold, fontSize: 14 }}>{initials(post.author_name).toUpperCase()}</T>

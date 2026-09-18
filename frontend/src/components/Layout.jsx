@@ -119,14 +119,14 @@ const navGroups = [
         key: "guided_journeys",
         label: "Guided Journeys",
         items: [
-            { to: "/app/ask-wayly", label: "Ask Wayly", icon: MessageCircle },
-            { to: "/app/short-term-pathways", label: "Short-Term Pathways", icon: HeartPulse },
-            { to: "/app/carer/self-assessment", label: "Carer Self-Check", icon: Heart },
-            { to: "/app/carer/handover-pack", label: "Handover Pack", icon: ClipboardEdit },
-            { to: "/app/csc/stream-mix-and-iat", label: "Classification Prep", icon: ClipboardList },
-            { to: "/app/athm/projects", label: "AT & HM Projects", icon: Wrench },
             { to: "/app/chsp/tools", label: "CHSP Tools", icon: HeartPulse },
+            { to: "/app/athm/projects", label: "AT & HM Projects", icon: Wrench },
+            { to: "/app/short-term-pathways", label: "Short-Term Pathways", icon: HeartPulse },
             { to: "/app/provider-switch", label: "Switch Provider", icon: Repeat },
+            { to: "/app/carer/handover-pack", label: "Handover Pack", icon: ClipboardEdit },
+            { to: "/app/carer/self-assessment", label: "Carer Self-Check", icon: Heart },
+            { to: "/app/csc/stream-mix-and-iat", label: "SAH Classification Prep", icon: ClipboardList },
+            { to: "/app/ask-wayly", label: "Ask Wayly", icon: MessageCircle },
         ],
     },
     {
@@ -327,7 +327,9 @@ export default function Layout({ children }) {
                 <main className="flex-1 min-w-0" key={activeParticipant?.id || "no-participant"}>
                     <div className="app-page">
                         <TrialCountdownBanner className="mb-4 md:mb-5" />
-                        {children}
+                        <div key={location.pathname} className="wayly-route">
+                            {children}
+                        </div>
                     </div>
                 </main>
             </div>

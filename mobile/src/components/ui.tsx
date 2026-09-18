@@ -15,6 +15,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { ChevronLeft, Calendar as CalendarIcon, ChevronDown, Check, LucideIcon } from "lucide-react-native";
 import { fonts, radius, spacing, typeScale } from "@/src/theme/tokens";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -42,7 +43,11 @@ export function Screen({
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {children}
+        {/* Soft, un-rushed page entrance — every screen rises + fades in on
+            navigation, mirroring the web `.wayly-route` transition for parity. */}
+        <Animated.View style={{ flex: 1 }} entering={FadeInDown.duration(520)}>
+          {children}
+        </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

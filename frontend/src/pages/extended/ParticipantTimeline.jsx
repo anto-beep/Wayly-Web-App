@@ -17,7 +17,7 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "@/lib/api";
-import { ArrowLeft, Plus, ChevronRight, FileText, RefreshCw, ClipboardList, DollarSign, Building2, Sparkles, Bell } from "lucide-react";
+import { ArrowLeft, Plus, ChevronRight, ChevronDown, Search, FileText, RefreshCw, ClipboardList, DollarSign, Building2, Sparkles, Bell } from "lucide-react";
 import { useExpiredTrial } from "@/hooks/useExpiredTrial";
 import { humanizeMonths } from "@/lib/formatDate";
 
@@ -135,6 +135,7 @@ export default function ParticipantTimeline() {
     const [loading, setLoading] = useState(true);
     const [errored, setErrored] = useState(false);
     const [filter, setFilter] = useState("all");
+    const [search, setSearch] = useState("");
     const [visibleCount, setVisibleCount] = useState(20);
     const sentinelRef = useRef(null);
 
@@ -202,10 +203,19 @@ export default function ParticipantTimeline() {
 
     const filteredItems = useMemo(() => {
         const all = tl?.items || [];
+        const q = search.trim().toLowerCase();
         // Keep the timeline meaningful: hide automatic lifecycle/state changes
-        // (the technical "status transition" noise) and honour the active filter.
-        return all.filter((it) => it.type !== "state" && categoryMatches(it, filter));
-    }, [tl?.items, filter]);
+        // (the technical "status transition" noise), honour the active filter,
+        // and honour the free-text search.
+        return all.filter((it) => {
+            if (it.type === "state") return false;
+            if (!categoryMatches(it, filter)) return false;
+            if (!q) return true;
+            const title = prettyTitle(it.type === "alert" ? it.data?.title : (it.data?.event_type || it.data?.kind || ""));
+            const hay = `${signatureFor(it)} ${meaningFor(it)} ${title}`.toLowerCase();
+            return hay.includes(q);
+        });
+    }, [tl?.items, filter, search]);
 
     const groups = useMemo(() => {
         const sliced = filteredItems.slice(0, visibleCount);
@@ -242,7 +252,7 @@ export default function ParticipantTimeline() {
             </header>
 
             {/* ---- Filter chips (Phase 3.2.4 = 9.8a wrapping chip grid) ---- */}
-            <div className="mb-6" data-testid="timeline-filters">
+            <div className="mb-4" data-testid="timeline-filters">
                 <div className="flex flex-wrap items-center gap-2">
                     {FILTERS.map((f) => {
                         const selected = filter === f.key;
@@ -267,6 +277,20 @@ export default function ParticipantTimeline() {
                 </div>
             </div>
 
+            {/* ---- Search ---- */}
+            <div className="mb-6 relative" data-testid="timeline-search-wrap">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-k" aria-hidden="true" />
+                <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setVisibleCount(20); }}
+                    placeholder="Search your timeline…"
+                    data-testid="timeline-search"
+                    aria-label="Search your timeline"
+                    className="w-full rounded-full border border-kindred bg-surface pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 ring-primary-k"
+                />
+            </div>
+
             {/* ---- Body ---- */}
             {loading && <TimelineSkeleton />}
 
@@ -277,7 +301,7 @@ export default function ParticipantTimeline() {
             )}
 
             {!loading && !errored && filteredItems.length === 0 && (
-                <EmptyState filterActive={filter !== "all"} onClearFilter={() => setFilter("all")} />
+                <EmptyState filterActive={filter !== "all" || search.trim() !== ""} onClearFilter={() => { setFilter("all"); setSearch(""); }} />
             )}
 
             {!loading && !errored && groups.length > 0 && (
@@ -322,6 +346,7 @@ export default function ParticipantTimeline() {
 }
 
 function EventCard({ item }) {
+    const [open, setOpen] = useState(false);
     const Icon = iconFor(item);
     const tint = tintFor(item);
     const { day, month } = dateLabel(item.at);
@@ -342,26 +367,41 @@ function EventCard({ item }) {
                 <Icon className="h-4 w-4" />
             </span>
             <div
-                className="rounded-2xl border border-kindred p-4"
+                className="rounded-2xl border border-kindred overflow-hidden"
                 style={{ backgroundColor: `${tint}0D`, borderLeftWidth: 3, borderLeftColor: tint }}
             >
-                <div className="flex items-start justify-between gap-3">
+                {/* Collapsed header — always visible, tap to expand. */}
+                <button
+                    type="button"
+                    onClick={() => setOpen((v) => !v)}
+                    data-testid="timeline-event-toggle"
+                    aria-expanded={open}
+                    className="w-full text-left p-4 flex items-start justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k"
+                >
                     <h3 className="font-heading text-base text-primary-k tracking-tight leading-snug">
                         {title}
                     </h3>
-                    <span className="text-xs text-muted-k whitespace-nowrap mt-0.5">{day} {month}</span>
-                </div>
-                <p className="mt-1.5 text-sm text-primary-k/70 leading-relaxed">
-                    {meaning}
-                </p>
-                {action && (
-                    <a
-                        href={action.href}
-                        data-testid="timeline-next-action"
-                        className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-primary-k hover:underline"
-                    >
-                        {action.label} <ChevronRight className="h-3.5 w-3.5" />
-                    </a>
+                    <span className="flex items-center gap-2 flex-none mt-0.5">
+                        <span className="text-xs text-muted-k whitespace-nowrap">{day} {month}</span>
+                        <ChevronDown className={`h-4 w-4 text-muted-k transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+                    </span>
+                </button>
+                {/* Expanded body — plain-English meaning + optional next step. */}
+                {open && (
+                    <div className="px-4 pb-4 -mt-1" data-testid="timeline-event-body">
+                        <p className="text-sm text-primary-k/70 leading-relaxed">
+                            {meaning}
+                        </p>
+                        {action && (
+                            <a
+                                href={action.href}
+                                data-testid="timeline-next-action"
+                                className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-primary-k hover:underline"
+                            >
+                                {action.label} <ChevronRight className="h-3.5 w-3.5" />
+                            </a>
+                        )}
+                    </div>
                 )}
             </div>
         </li>

@@ -7561,3 +7561,28 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 - E: #12/#13 premium motion (app-open, login/signup, dashboard, throughout)
 - F: CHSP letters #14 Findings Letter branded PDF, #16 overcharge-repeat alerts
 - G: #17 web/mobile parity sweep
+
+
+---
+
+## Global Premium Page-Navigation Motion — visibility + parity fix (18 Sep 2026)
+
+**Problem:** User reported the earlier "premium motion" wasn't visible — pages still felt static, and the self-drawing Wayly logo had effectively disappeared.
+
+**Root causes found:**
+- Web: the JS `useRouteReveal` hook fired on `pathname` change *before* the lazy Suspense page mounted, so it hid a skeleton, then real content appeared un-animated. The drawing logo only showed on rare auth-load / login moments; navigation used a marketing `RouteSkeleton` instead.
+- Mobile: Expo Router `Stack`, `Tabs`, and screens had no transition animations at all (hard cuts).
+
+**Fix (web `/app/frontend`):**
+- Removed fragile `src/hooks/useRouteReveal.js` (deleted) + its use in `Layout.jsx`.
+- Added robust CSS-only transitions in `src/index.css`: `.wayly-route` (keyed by pathname → remounts every navigation) animates `wayly-route-in` (0.55s soft fade+settle) and its top-level sections cascade in via staggered `wayly-fade-up` (`backwards` fill → no lingering transform, so sticky/fixed stay intact). Reduced-motion safe.
+- Suspense fallback switched from `RouteSkeleton` → `<Loading />` (aurora + self-drawing WaylyLoader) so the drawing logo appears on every navigation to an uncached route.
+
+**Fix (mobile `/app/mobile`):**
+- Shared `Screen` component (`src/components/ui.tsx`) now wraps content in a reanimated `Animated.View entering={FadeInDown.duration(520)}` → every screen rises+fades in on navigation (works on native + Expo web preview). Highest-leverage single change (all screens use `Screen`).
+- Root `Stack` (`app/_layout.tsx`) + `Tabs` (`app/(tabs)/_layout.tsx`) now use `animation: "fade"` for calm crossfades between screens/tabs on device.
+
+**Verification:** Smoke-tested both surfaces (login → dashboard → cross-page nav) — no blank/stuck content. Confirmed via computed-style that `.wayly-route` = `wayly-route-in` and children = `wayly-fade-up` fire on every client-side navigation. Motion "feel" pending live user verification.
+
+**Files touched:** `frontend/src/index.css`, `frontend/src/components/Layout.jsx`, `frontend/src/App.js`, deleted `frontend/src/hooks/useRouteReveal.js`; `mobile/src/components/ui.tsx`, `mobile/app/_layout.tsx`, `mobile/app/(tabs)/_layout.tsx`.
+

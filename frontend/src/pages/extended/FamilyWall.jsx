@@ -237,8 +237,8 @@ export default function FamilyWall() {
             {loading && <div className="text-sm text-muted-k">Loading…</div>}
 
             <div className="space-y-3" data-testid="wall-feed">
-                {posts.map((p, pi) => (
-                    <article key={p.id} className="rounded-2xl p-4 space-y-3 border border-kindred shadow-sm" style={{ backgroundColor: ["rgba(14,77,82,0.07)","rgba(165,81,43,0.08)","rgba(66,95,71,0.09)","rgba(95,78,118,0.09)","rgba(178,58,46,0.07)"][pi % 5], borderLeft: `5px solid ${["#0E4D52","#A5512B","#425F47","#5F4E76","#B23A2E"][pi % 5]}` }} data-testid={`wall-post-${p.id}`}>
+                {posts.map((p) => (
+                    <article key={p.id} className="rounded-2xl p-4 space-y-3 border border-kindred bg-surface shadow-sm" style={{ borderLeft: "4px solid rgba(14,77,82,0.5)" }} data-testid={`wall-post-${p.id}`}>
                         <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-full bg-primary-k/10 text-primary-k flex items-center justify-center text-xs font-semibold">

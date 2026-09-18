@@ -337,9 +337,52 @@
     .wayly-stagger-3 { animation-delay: 0.24s; }
     .wayly-stagger-4 { animation-delay: 0.36s; }
     .wayly-stagger-5 { animation-delay: 0.5s; }
+
+    /* Sleek self-drawing brand loader (login / app-open). */
+    @keyframes wayly-loader-draw {
+        0%   { stroke-dashoffset: 1480; }
+        55%  { stroke-dashoffset: 0; }
+        80%  { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: -1480; }
+    }
+    @keyframes wayly-loader-glow {
+        0%, 100% { filter: drop-shadow(0 4px 10px rgba(14,77,82,0.10)); transform: scale(1); }
+        50%      { filter: drop-shadow(0 10px 26px rgba(14,77,82,0.26)); transform: scale(1.035); }
+    }
+    @keyframes wayly-loader-dot {
+        0%, 42% { opacity: 0; transform: scale(0.6); }
+        58%     { opacity: 1; transform: scale(1); }
+        100%    { opacity: 1; transform: scale(1); }
+    }
+    .wayly-loader-mark { animation: wayly-loader-glow 3.4s ease-in-out infinite; transform-origin: center; }
+    .wayly-loader-path { stroke-dasharray: 1480; animation: wayly-loader-draw 3.4s cubic-bezier(0.65,0,0.35,1) infinite; }
+    .wayly-loader-dot { transform-origin: 446px 132px; animation: wayly-loader-dot 3.4s ease-in-out infinite; }
+    /* Slow, luxurious per-route entrance. */
+    @keyframes wayly-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .wayly-page-in { animation: wayly-page-in 0.85s cubic-bezier(0.16,1,0.3,1) both; }
+
+    /* Global page transition — fires on EVERY in-app navigation because the
+       `.wayly-route` container is keyed by pathname (it remounts each route).
+       The container gently cross-fades + settles while its top-level sections
+       rise and fade in a soft, staggered cascade. Calm, un-rushed, visible.
+       `backwards` fill = no lingering transform, so sticky/fixed descendants
+       keep working once the entrance finishes. */
+    @keyframes wayly-route-in { from { opacity: 0; transform: scale(0.988) translateY(8px); } to { opacity: 1; transform: none; } }
+    .wayly-route { animation: wayly-route-in 0.55s cubic-bezier(0.16,1,0.3,1) backwards; }
+    .wayly-route > * { animation: wayly-fade-up 0.72s cubic-bezier(0.16,1,0.3,1) backwards; }
+    .wayly-route > *:nth-child(1) { animation-delay: 0.06s; }
+    .wayly-route > *:nth-child(2) { animation-delay: 0.15s; }
+    .wayly-route > *:nth-child(3) { animation-delay: 0.25s; }
+    .wayly-route > *:nth-child(4) { animation-delay: 0.36s; }
+    .wayly-route > *:nth-child(5) { animation-delay: 0.48s; }
+    .wayly-route > *:nth-child(n+6) { animation-delay: 0.6s; }
+
     @media (prefers-reduced-motion: reduce) {
         .wayly-float, .wayly-float-slow, .wayly-float-x, .wayly-pulse-ring, .wayly-draw, .wayly-grow-bar,
-        .wayly-fade-up, .wayly-fade-in, .wayly-breathe, .wayly-aurora { animation: none !important; opacity: 1 !important; }
+        .wayly-fade-up, .wayly-fade-in, .wayly-breathe, .wayly-aurora,
+        .wayly-loader-mark, .wayly-loader-path, .wayly-loader-dot, .wayly-page-in,
+        .wayly-route, .wayly-route > * { animation: none !important; opacity: 1 !important; transform: none !important; }
+        .wayly-loader-path { stroke-dashoffset: 0 !important; }
     }
 
     /* --- Premium button feel, system-wide -------------------------------- */

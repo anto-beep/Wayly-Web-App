@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import WaylyLogo from "@/components/WaylyLogo";
+import WaylyLoader from "@/components/WaylyLoader";
 import { Eye, EyeOff, MailWarning, Loader2, CheckCircle2 } from "lucide-react";
 
 import SeoHead from "@/seo/SeoHead";
@@ -148,6 +149,11 @@ export default function Login() {
     return (
         <div className="min-h-screen bg-kindred auth-shell wayly-aurora relative overflow-hidden flex items-center justify-center px-6">
             <SeoHead {...SEO.login} noindex />
+            {submitting && (
+                <div className="fixed inset-0 z-[60] wayly-aurora flex items-center justify-center wayly-fade-in" data-testid="login-signing-overlay">
+                    <WaylyLoader size={110} label="Signing you in…" testId="login-loader" />
+                </div>
+            )}
             {/* Soft, slow-drifting orbs — calm ambient depth behind the card. */}
             <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[var(--wayly-teal-600)]/10 blur-3xl wayly-breathe" />
             <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-16 h-96 w-96 rounded-full bg-[var(--wayly-sage-400)]/10 blur-3xl wayly-float-slow" />

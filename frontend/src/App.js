@@ -168,7 +168,7 @@ import { ParticipantsProvider } from "@/context/ParticipantsContext";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import PaywallModal from "@/components/PaywallModal";
 import ScrollToTop from "@/components/ScrollToTop";
-import RouteSkeleton from "@/components/RouteSkeleton";
+import WaylyLoader from "@/components/WaylyLoader";
 import StubRedirect from "@/components/StubRedirect";
 import { Helmet } from "react-helmet-async";
 import { titleForPath } from "@/lib/appPageTitles";
@@ -176,9 +176,8 @@ import { startReactivateCheckout } from "@/lib/reactivate";
 
 function Loading() {
     return (
-        <div className="min-h-screen wayly-aurora flex flex-col items-center justify-center gap-4">
-            <img src="/branding/svg/wayly-mark.svg" alt="Wayly" className="h-14 w-14 rounded-xl wayly-breathe" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-            <div className="text-sm text-muted-k wayly-fade-in">Loading…</div>
+        <div className="min-h-screen wayly-aurora flex items-center justify-center">
+            <WaylyLoader size={104} label="Loading Wayly…" testId="app-loading" />
         </div>
     );
 }
@@ -397,7 +396,7 @@ function App() {
                 <OfflineIndicator />
                 <PaywallModal />
                 <ErrorBoundary>
-                <Suspense fallback={<RouteSkeleton />}>
+                <Suspense fallback={<Loading />}>
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />

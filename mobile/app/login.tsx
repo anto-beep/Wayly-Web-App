@@ -15,6 +15,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { Button, Field, Loading, Screen, T } from "@/src/components/ui";
 import { WaylyMark } from "@/src/components/WaylyMark";
+import { WaylyLoader } from "@/src/components/WaylyLoader";
 import { useAuth } from "@/src/context/AuthContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { ApiError } from "@/src/lib/api";
@@ -252,6 +253,18 @@ export default function LoginScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {busy || googleBusy ? (
+        <Animated.View
+          entering={FadeInDown.duration(300)}
+          testID="login-signing-overlay"
+          style={[styles.overlay, { backgroundColor: colors.bg }]}
+        >
+          <WaylyLoader size={110} white={isDark} />
+          <T style={{ fontFamily: fonts.body, fontSize: 15, color: colors.muted, marginTop: spacing.lg, letterSpacing: 0.3 }}>
+            Signing you in…
+          </T>
+        </Animated.View>
+      ) : null}
     </Screen>
   );
 }
@@ -282,4 +295,13 @@ const styles = StyleSheet.create({
     marginVertical: spacing.lg,
   },
   line: { flex: 1, height: 1 },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
