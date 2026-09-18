@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from "react";
 import "@/App.css";
 import "@/index.css";
 import "@/uxf/tokens.css";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useExpiredTrial } from "@/hooks/useExpiredTrial";
@@ -24,6 +24,7 @@ const SharedParticipantView = lazy(() => import("@/pages/SharedParticipantView")
 import AuthCallback from "@/pages/AuthCallback";
 // Layout is eager so authenticated routes don't show a double Suspense fall.
 import Layout from "@/components/Layout";
+import MarketingLayout from "@/components/MarketingLayout";
 
 // Everything else is route-level code-split. This was the single biggest
 // Lighthouse Performance fix in Phase 7 of the Feb 2026 audit, LCP went
@@ -401,7 +402,10 @@ function App() {
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />
 
-                    {/* Public marketing pages, accessible to everyone, logged in or not */}
+                    {/* Public marketing pages, accessible to everyone, logged in or not.
+                        Wrapped in MarketingLayout so every public page gets a soft
+                        cross-fade entrance + on-scroll section reveals. */}
+                    <Route element={<MarketingLayout />}>
                     <Route path="/" element={<Landing />} />
                     <Route path="/features" element={<Features />} />
                     <Route path="/pricing" element={<Pricing />} />
@@ -451,7 +455,6 @@ function App() {
                     <Route path="/tools/letters-and-follow-ups/log" element={<RequireAuth><CorrespondenceLog /></RequireAuth>} />
                     <Route path="/tools/letters-and-follow-ups/:entryId" element={<RequireAuth><CorrespondenceDetail /></RequireAuth>} />
                     <Route path="/ai-tools/contribution-estimator" element={<AIToolsRoute><ContributionEstimator /></AIToolsRoute>} />
-                    <Route path="/app/short-term-pathways" element={<RequireAuth><Layout><ToolLockGate><ShortTermPathways /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/ai-tools/care-plan-reviewer" element={<AIToolsRoute><CarePlanReviewer /></AIToolsRoute>} />
                     {/* CPR-2 v1 Support Plan Reviewer rename per Aged Care Act 2024.
                         Both slugs render the same page; care-plan-reviewer stays
@@ -483,6 +486,7 @@ function App() {
                     <Route path="/resources/guides" element={<StubRedirect to="/resources" />} />
                     <Route path="/resources/webinars" element={<StubRedirect to="/resources" />} />
                     <Route path="/press" element={<StubRedirect to="/contact" />} />
+                    </Route>
 
                     {/* Auth pages */}
                     <Route path="/login" element={<PublicAuthOnly><Login /></PublicAuthOnly>} />
@@ -552,6 +556,7 @@ function App() {
                     <Route path="/app/csc/stream-mix-and-iat" element={<RequireAuth><Layout><ToolLockGate><CscStreamMixIat /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/athm/projects" element={<RequireAuth><Layout><ToolLockGate><AthmProjects /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/chsp/tools" element={<RequireAuth><Layout><ToolLockGate><ChspTools /></ToolLockGate></Layout></RequireAuth>} />
+                    <Route path="/app/short-term-pathways" element={<RequireAuth><Layout><ToolLockGate><ShortTermPathways /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/letters" element={<Navigate to="/tools/letters-and-follow-ups/log" replace />} />
                     <Route path="/app/ask-wayly" element={<RequireAuth><Layout><ToolLockGate><AskWaylyV2 /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/ask-wayly-v2" element={<Navigate to="/app/ask-wayly" replace />} />

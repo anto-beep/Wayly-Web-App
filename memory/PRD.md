@@ -7586,3 +7586,25 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 **Files touched:** `frontend/src/index.css`, `frontend/src/components/Layout.jsx`, `frontend/src/App.js`, deleted `frontend/src/hooks/useRouteReveal.js`; `mobile/src/components/ui.tsx`, `mobile/app/_layout.tsx`, `mobile/app/(tabs)/_layout.tsx`.
 
+
+
+---
+
+## Marketing / Public-Page Motion — extend premium motion to ALL public pages (18 Sep 2026)
+
+**Ask:** User reported public pages (Pricing, Resources, Contact, Articles, etc.) still felt static with no transition on navigation — wanted the same graceful entrance + scroll reveals on every public webpage.
+
+**Why they had none:** Public pages don't use the app `Layout`, so they never got the `.wayly-route` motion. Each public page renders its own `MarketingHeader`/`Footer` with no shared wrapper.
+
+**Fix (web only — marketing pages are web-only):**
+- New pathless **layout route** `MarketingLayout` (`frontend/src/components/MarketingLayout.jsx`) wraps ALL public routes (Landing, Features, Pricing, Services, Policy, Guides, FAQ, About, CHSP, Trust, Demo, Contact, For-Advisors/GPs, Resources/Glossary/Templates/Articles, Legal, SAH levels, public AI-tool pages). One `<Route element={<MarketingLayout/>}>…</Route>` group in `App.js` — zero per-page edits. Moved the single mis-grouped app route `/app/short-term-pathways` out of the public cluster into the app section so the wrap stays clean.
+- `MarketingLayout` renders a keyed `.wayly-public` container (remounts per pathname) → soft **cross-fade entrance** on every public-page navigation (opacity-only, so sticky `MarketingHeader` keeps working).
+- `usePublicPageMotion` hook (`frontend/src/hooks/usePublicPageMotion.js`) does **on-scroll section reveals**: hides each top-level `<section>` before paint (`wy-pre`, via `useLayoutEffect` → no flash) then reveals with a soft rise+fade as it enters the viewport (IntersectionObserver → `wy-in`). Self-heals via a 1.8s safety timeout (content can never stay hidden) and no-ops under reduced-motion.
+- CSS added to `frontend/src/index.css` (`.wayly-public`, `.wy-pre`, `.wy-in` + reduced-motion guard).
+
+**Robustness:** Because MarketingLayout sits *inside* the app's single Suspense boundary, it (and the hook) mount atomically with the resolved lazy page — avoiding the Suspense timing bug that made the earlier `useRouteReveal` invisible.
+
+**Verification:** Smoke-tested Pricing (5/5 sections revealed), Resources (3/3), Contact (3/3), an article detail (0 stuck), and a section-less FAQ page (container cross-fade, renders fine). No stuck-hidden content anywhere; `.wayly-public` + reveal classes confirmed applied on each client-side navigation. App/dashboard pages untouched (still use `.wayly-route`). Motion "feel" pending live user verification.
+
+**Files:** new `frontend/src/components/MarketingLayout.jsx`, new `frontend/src/hooks/usePublicPageMotion.js`, edited `frontend/src/App.js` (import + layout-route wrap + route move), edited `frontend/src/index.css`.
+

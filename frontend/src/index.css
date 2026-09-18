@@ -377,6 +377,22 @@
     .wayly-route > *:nth-child(5) { animation-delay: 0.48s; }
     .wayly-route > *:nth-child(n+6) { animation-delay: 0.6s; }
 
+    /* --- Public / marketing page navigation motion ----------------------- */
+    /* A soft cross-fade on the whole page (opacity only, so sticky headers
+       keep working) + graceful on-scroll reveals for each <section> as it
+       enters the viewport. Driven by MarketingLayout + usePublicPageMotion. */
+    .wayly-public { animation: wayly-fade-in 0.5s ease-out backwards; }
+    .wayly-public section.wy-pre { opacity: 0; transform: translateY(26px); }
+    .wayly-public section.wy-in {
+        opacity: 1;
+        transform: none;
+        transition: opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .wayly-public { animation: none !important; }
+        .wayly-public section.wy-pre, .wayly-public section.wy-in { opacity: 1 !important; transform: none !important; transition: none !important; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .wayly-float, .wayly-float-slow, .wayly-float-x, .wayly-pulse-ring, .wayly-draw, .wayly-grow-bar,
         .wayly-fade-up, .wayly-fade-in, .wayly-breathe, .wayly-aurora,
