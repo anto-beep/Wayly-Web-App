@@ -7627,3 +7627,15 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 **Files:** `frontend/src/index.css`, `frontend/src/components/MarketingLayout.jsx` (hook removed), deleted `frontend/src/hooks/usePublicPageMotion.js`.
 
+
+
+---
+
+## Dashboard Summary skeleton + mobile fade removal (18 Sep 2026)
+
+**1. Faster Summary (web):** `SmartAISummary` (`frontend/src/components/SmartAISummary.jsx`, powers the Dashboard "Wayly Summary" via `/insights/summarise`) now shows a lightweight shimmer skeleton (3 pulsing bars, `animate-pulse`, testid `smart-ai-summary-skeleton-{pageKey}`) while `status === "loading"` instead of the plain fallback sentence. On `refreshing` (has cached data) it keeps showing the existing text dimmed. Verified the skeleton renders on Refresh (button shows "Thinking").
+
+**2. Mobile Motion Match:** Removed the mobile navigation fade for parity with web (which now has no nav motion). Reverted the shared `Screen` component (`mobile/src/components/ui.tsx`) to render `{children}` directly (dropped the `Animated.View`/`FadeInDown` wrapper + reanimated import), and removed `animation: "fade"` from the root `Stack` (`mobile/app/_layout.tsx`) and the `Tabs` (`mobile/app/(tabs)/_layout.tsx`). Mobile restarted; screens render cleanly with no entrance motion.
+
+**Verified:** web skeleton appears during load; mobile dashboard renders fully with no fade / no blank.
+

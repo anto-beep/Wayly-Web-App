@@ -108,20 +108,32 @@ export default function SmartAISummary({
               </button>
             )}
           </div>
-          <div
-            data-testid={`smart-ai-summary-body-${pageKey}`}
-            className={`mt-2 space-y-2 text-[0.95rem] leading-relaxed text-primary-k/90 ${
-              isLoading ? "opacity-70" : ""
-            }`}
-          >
-            {String(summary || "")
-              .split(/\n{2,}/)
-              .map((para) => para.trim())
-              .filter(Boolean)
-              .map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
-          </div>
+          {isLoading ? (
+            <div
+              data-testid={`smart-ai-summary-skeleton-${pageKey}`}
+              className="mt-3 space-y-2.5 animate-pulse"
+              aria-hidden="true"
+            >
+              <div className="h-3.5 w-[92%] rounded-full bg-primary-k/10" />
+              <div className="h-3.5 w-[84%] rounded-full bg-primary-k/10" />
+              <div className="h-3.5 w-[68%] rounded-full bg-primary-k/10" />
+            </div>
+          ) : (
+            <div
+              data-testid={`smart-ai-summary-body-${pageKey}`}
+              className={`mt-2 space-y-2 text-[0.95rem] leading-relaxed text-primary-k/90 ${
+                state.status === "refreshing" ? "opacity-70" : ""
+              }`}
+            >
+              {String(summary || "")
+                .split(/\n{2,}/)
+                .map((para) => para.trim())
+                .filter(Boolean)
+                .map((para, i) => (
+                  <p key={i}>{para}</p>
+                ))}
+            </div>
+          )}
           {alerts.length > 0 && (
             <ul className="mt-4 space-y-2">
               {alerts.map((a, i) => {
