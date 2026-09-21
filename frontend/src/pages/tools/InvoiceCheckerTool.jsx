@@ -445,7 +445,7 @@ export default function InvoiceCheckerTool() {
                 <div className="bg-surface border border-kindred rounded-2xl p-6 sm:p-8 mt-4" data-testid="inv1-upload-card">
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <h2 className="font-heading text-2xl text-primary-k">Upload your invoice</h2>
+                            <h2 className="font-heading text-2xl text-primary-k">Upload Your Invoice</h2>
                             <p className="mt-2 text-sm text-muted-k max-w-xl">
                                 Add the invoice your provider sent. Same formats as the statement decoder: PDF, DOC/DOCX, TXT, CSV, JPG, PNG, HEIC, WEBP. If your provider sends one document with both the statement and invoice combined, that works too.
                             </p>

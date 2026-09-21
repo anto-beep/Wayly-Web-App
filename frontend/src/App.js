@@ -169,7 +169,6 @@ import { ParticipantsProvider } from "@/context/ParticipantsContext";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import PaywallModal from "@/components/PaywallModal";
 import ScrollToTop from "@/components/ScrollToTop";
-import WaylyLoader from "@/components/WaylyLoader";
 import StubRedirect from "@/components/StubRedirect";
 import { Helmet } from "react-helmet-async";
 import { titleForPath } from "@/lib/appPageTitles";
@@ -177,8 +176,8 @@ import { startReactivateCheckout } from "@/lib/reactivate";
 
 function Loading() {
     return (
-        <div className="min-h-screen wayly-aurora flex items-center justify-center">
-            <WaylyLoader size={104} label="Loading Wayly…" testId="app-loading" />
+        <div className="min-h-screen flex items-center justify-center bg-kindred" data-testid="app-loading">
+            <div className="h-9 w-9 rounded-full border-[3px] border-primary-k/15 border-t-primary-k animate-spin" />
         </div>
     );
 }

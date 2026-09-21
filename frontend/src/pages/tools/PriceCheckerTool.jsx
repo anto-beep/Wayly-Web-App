@@ -13,6 +13,7 @@ import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import { useAuth } from "@/context/AuthContext";
+import { useParticipants } from "@/context/ParticipantsContext";
 import { api, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { track } from "@/lib/analytics";
 import {
@@ -53,6 +54,10 @@ const _toolJsonLd = (cfg) => {
 
 const UNIT_LABEL = { hour: "$ per hour", trip: "$ per trip", meal: "$ per meal", month: "$ per month", kilometre: "$ per kilometre" };
 
+// Map the profile's stored pension_status to this tool's inline picker keys so
+// we can pre-fill it from what the user already told us during onboarding.
+const PROFILE_PENSION_MAP = { full_pension: "full", part_pension: "part", cshc: "cshc", self_funded: "self" };
+
 // Title-case a service/provider label for display (keeps small joining words
 // lower-case). The underlying stored value is never changed.
 function titleCase(str) {
@@ -84,6 +89,7 @@ const POSITION_TONE = {
 export default function PriceCheckerTool() {
     const access = useToolAccess();
     const { user } = useAuth();
+    const { active: activeParticipant } = useParticipants();
 
     // ---- Service dictionary (WS1) ----
     const [servicesData, setServicesData] = useState({ services: [], snapshot_id: null });
@@ -102,6 +108,7 @@ export default function PriceCheckerTool() {
     // ---- CE read-through (§3.3) ----
     const [ceState, setCeState] = useState(null); // { pension_status, is_grandfathered, classification, created_at }
     const [inlinePension, setInlinePension] = useState("");
+    const [pensionFromProfile, setPensionFromProfile] = useState(false);
 
     // ---- Result ----
     const [loading, setLoading] = useState(false);
@@ -144,6 +151,18 @@ export default function PriceCheckerTool() {
             if (prov) setProvider((cur) => cur || prov);
         }).catch(() => { /* soft-fail: field stays empty and editable */ });
     }, [access]);
+
+    // Prefill the inline pension picker from the participant's profile
+    // (onboarding), so we don't ask again for something we already know. If the
+    // profile value is missing or "unsure", the picker simply stays empty.
+    useEffect(() => {
+        if (ceState || inlinePension) return;
+        const mapped = PROFILE_PENSION_MAP[(activeParticipant?.pension_status || "").toLowerCase()];
+        if (mapped) {
+            setInlinePension(mapped);
+            setPensionFromProfile(true);
+        }
+    }, [activeParticipant, ceState, inlinePension]);
 
     // ---- Selected service row + unit ----
     const selectedRow = useMemo(() => {
@@ -415,7 +434,12 @@ export default function PriceCheckerTool() {
                     {/* Inline pension picker (§4.3), visible when CE state absent */}
                     {!ceState && (
                         <div className="bg-surface-2 border border-kindred rounded-xl p-4" data-testid="pc-inline-picker">
-                            <div className="text-sm text-primary-k font-medium">Which best describes you?</div>
+                            <div className="text-sm text-primary-k font-medium flex items-center gap-2">
+                                Which best describes you?
+                                {pensionFromProfile && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-sage/15 text-sage border border-sage/25 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" data-testid="pc-pension-from-profile">From your profile</span>
+                                )}
+                            </div>
                             <p className="text-xs text-muted-k mt-0.5 mb-3">{'This determines your share of the rate. Optional, but it makes the "Your Share" figure real.'}</p>
                             <div className="grid sm:grid-cols-2 gap-2">
                                 {[
@@ -427,7 +451,7 @@ export default function PriceCheckerTool() {
                                     <button
                                         key={opt.key}
                                         type="button"
-                                        onClick={() => setInlinePension(opt.key)}
+                                        onClick={() => { setInlinePension(opt.key); setPensionFromProfile(false); }}
                                         data-testid={`pc-pension-${opt.key}`}
                                         className={`text-left px-3 py-2 rounded-md border text-sm transition-colors ${inlinePension === opt.key ? "bg-primary-k text-white border-primary-k" : "bg-surface border-kindred text-primary-k hover:border-primary-k"}`}
                                     >

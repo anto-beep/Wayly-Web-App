@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
@@ -342,8 +342,14 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
     const isLast = step === WIZARD_STEPS.length - 1;
     const next = () => setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
     const back = () => setStep((s) => Math.max(s - 1, 0));
+    const wizardRef = useRef(null);
+    const firstRender = useRef(true);
+    useEffect(() => {
+        if (firstRender.current) { firstRender.current = false; return; }
+        wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [step]);
     return (
-        <div data-testid="ce-wizard">
+        <div ref={wizardRef} className="scroll-mt-24" data-testid="ce-wizard">
             <WizardStepper step={step} setStep={setStep} />
             <div
                 key={step}
@@ -629,6 +635,34 @@ const CE2_PERSONA_DEFAULTS = {
 
 /* ---------- result screen (8 sections) ---------- */
 
+// Compact recap of the user's key answers, shown at the top of the results so
+// they can sanity-check what the estimate was based on.
+function EstimateRecap({ form }) {
+    const entry = ENTRY_PATHS.find((p) => p.v === form.entry_path);
+    const pension = PENSION_STATUS.find((p) => p.v === form.pension_status);
+    const cls = CLASSIFICATION_OPTIONS.find(([v]) => v === form.classification);
+    const chips = [
+        entry && { Icon: Compass, label: entry.label },
+        pension && { Icon: Wallet, label: pension.label },
+        { Icon: Info, label: form.relationship === "couple" ? "Couple" : "Single" },
+        { Icon: Info, label: form.homeowner ? "Homeowner" : "Non-homeowner" },
+        cls && form.assessment_status === "classified" ? { Icon: SlidersHorizontal, label: cls[1] } : null,
+    ].filter(Boolean);
+    if (chips.length === 0) return null;
+    return (
+        <div className="rounded-2xl border border-kindred bg-surface p-4 sm:p-5" data-testid="ce-recap">
+            <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-k mb-2.5">Based on your answers</div>
+            <div className="flex flex-wrap gap-2">
+                {chips.map((c, i) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface-2/70 px-3 py-1.5 text-xs font-medium text-primary-k" data-testid={`ce-recap-chip-${i}`}>
+                        <c.Icon className="h-3.5 w-3.5 text-primary-k/60" /> {c.label}
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function ResultScreen({ result, form, constants, onEdit, access }) {
     const { copy: personaCopy } = usePersonaTier1(CE2_PERSONA_KEYS, CE2_PERSONA_DEFAULTS);
     return (
@@ -640,6 +674,8 @@ function ResultScreen({ result, form, constants, onEdit, access }) {
             ) : (
                 <PointHeadline result={result} onEdit={onEdit} personaCopy={personaCopy} />
             )}
+
+            <EstimateRecap form={form} />
 
             {/* Section 2: Government-share hero bar */}
             {!result.range_mode && !result.is_fee_exempt && <GovernmentShareBar result={result} personaCopy={personaCopy} />}

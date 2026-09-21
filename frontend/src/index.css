@@ -340,10 +340,10 @@
 
     /* Sleek self-drawing brand loader (login / app-open). */
     @keyframes wayly-loader-draw {
-        0%   { stroke-dashoffset: 1480; }
+        0%   { stroke-dashoffset: 100; }
         55%  { stroke-dashoffset: 0; }
         80%  { stroke-dashoffset: 0; }
-        100% { stroke-dashoffset: -1480; }
+        100% { stroke-dashoffset: -100; }
     }
     @keyframes wayly-loader-glow {
         0%, 100% { filter: drop-shadow(0 4px 10px rgba(14,77,82,0.10)); transform: scale(1); }
@@ -355,7 +355,7 @@
         100%    { opacity: 1; transform: scale(1); }
     }
     .wayly-loader-mark { animation: wayly-loader-glow 3.4s ease-in-out infinite; transform-origin: center; }
-    .wayly-loader-path { stroke-dasharray: 1480; animation: wayly-loader-draw 3.4s cubic-bezier(0.65,0,0.35,1) infinite; }
+    .wayly-loader-path { stroke-dasharray: 100; animation: wayly-loader-draw 3.4s cubic-bezier(0.65,0,0.35,1) infinite; }
     .wayly-loader-dot { transform-origin: 446px 132px; animation: wayly-loader-dot 3.4s ease-in-out infinite; }
     /* Slow, luxurious per-route entrance. */
     @keyframes wayly-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

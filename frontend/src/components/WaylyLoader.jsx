@@ -24,6 +24,7 @@ export default function WaylyLoader({ size = 92, label = "", testId = "wayly-loa
         <path
           className="wayly-loader-path"
           d={MARK_PATH}
+          pathLength="100"
           fill="none"
           stroke="#0E4D52"
           strokeWidth="38"

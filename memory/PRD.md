@@ -7658,3 +7658,19 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 **Follow-up backlog:** roll out light SVG illustrations/graphics across other tools + marketing pages for a consistent premium feel (user requested product-wide).
 
+
+
+---
+
+## Estimator polish: loader fix, wizard scroll, estimate recap (18 Sep 2026)
+
+**1. Logo loader (only on login + full draw):**
+- App-refresh no longer shows the drawing logo — `App.js` `Loading()` is now a clean spinner (dropped the `WaylyLoader` import); Suspense fallback + auth-loading all use it. The self-drawing Wayly logo now appears ONLY on the login sign-in action (`Login.jsx`, unchanged).
+- Fixed the "half" draw: added `pathLength="100"` to the loader `<path>` and set `stroke-dasharray: 100` + keyframe offsets 100→0→-100 (`WaylyLoader.jsx` + `index.css`). Actual path length is 916, so the old `1480` dasharray mis-mapped the draw; normalizing to 100 draws the FULL W cleanly. Verified via computed style (dasharray 100px, offset →~0).
+
+**2. Wizard scroll-to-top:** On Continue/Back the `FormBody` now `scrollIntoView`s the wizard top (ref + `useEffect([step])`, `scroll-mt-24`, skips first render). Verified: scrollY 500→257, next step's panel top at viewport y≈156 (header + fields visible from the top).
+
+**3. Estimate Recap:** New `EstimateRecap` renders a "Based on your answers" chip row (situation, pension, single/couple, homeowner, classification) at the top of the results (`ContributionEstimator.jsx`). Verified 4 chips render below the hero.
+
+**Still open (user-requested, larger):** Illustrations Rollout across other AI tools; Wizard Everywhere (e.g. Classification Self-Check); Mobile Estimator wizard parity.
+
