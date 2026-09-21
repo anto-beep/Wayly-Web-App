@@ -176,7 +176,7 @@ export default function Landing() {
                 <div className="text-center max-w-2xl mx-auto">
                     <span className="overline">Built for the Whole Household</span>
                     <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight leading-tight">
-                        Six People. <span style={{ color: "#A5512B" }}>One Shared Calm.</span>
+                        Three People. <span style={{ color: "#A5512B" }}>One Shared Calm.</span>
                     </h2>
                     <p className="mt-4 text-base text-muted-k leading-relaxed">
                         Aged care is never just one person&apos;s problem. Wayly gives each
@@ -188,24 +188,27 @@ export default function Landing() {
                         { name: "Participants", body: "It's your care and your money. Read your own statement over breakfast, see where your budget is going, and stay in charge, no translator needed." },
                         { name: "Caregivers", body: "That 11pm envelope, understood in ten minutes. Know what's fair, what to query, and what to do next, without a finance degree." },
                         { name: "Family", body: "Everyone on the same page without three group chats. See exactly what your loved one sees, even from another state." },
-                        { name: "Advisers", body: "White-label reports, contribution modelling and ready-to-send letters, so clients act on clear numbers, not guesswork." },
-                        { name: "Providers", body: "Calmer conversations with participants who arrive already understanding their statement and their budget." },
-                        { name: "Clinicians", body: "Classification, care plan and services in one glance before the next review, so nothing gets missed." },
                     ].map((p, i) => {
-                        const tones = ["#0E3A3D", "#5E3520", "#2B402F", "#5A2F2A", "#38334A", "#173F42"];
-                        const bg = tones[i % tones.length];
+                        // Soft, brand-tinted card backgrounds — light shades of teal,
+                        // clay and sage with a matching accent. Calm, never loud.
+                        const themes = [
+                            { bg: "#E5EFEC", accent: "#0E4D52" },
+                            { bg: "#F4E8DE", accent: "#A5512B" },
+                            { bg: "#E9EFE7", accent: "#4E6E54" },
+                        ];
+                        const t = themes[i % themes.length];
                         return (
                         <RevealOnScroll key={p.name}>
                         <div
                             data-testid={`ecosystem-card-${p.name.toLowerCase()}`}
-                            className="h-full rounded-2xl p-6 force-white shadow-sm"
-                            style={{ backgroundColor: bg }}
+                            className="h-full rounded-2xl p-6 shadow-sm border border-black/5"
+                            style={{ backgroundColor: t.bg }}
                         >
-                            <div className="text-xs uppercase tracking-[0.18em] font-semibold opacity-80">
+                            <div className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: t.accent }}>
                                 Wayly for
                             </div>
-                            <h3 className="mt-2 font-heading text-2xl tracking-tight">{p.name}</h3>
-                            <p className="mt-2 text-sm leading-relaxed opacity-90">{p.body}</p>
+                            <h3 className="mt-2 font-heading text-2xl tracking-tight" style={{ color: "#123634" }}>{p.name}</h3>
+                            <p className="mt-2 text-sm leading-relaxed" style={{ color: "rgba(18,54,52,0.78)" }}>{p.body}</p>
                         </div>
                         </RevealOnScroll>
                         );
@@ -266,7 +269,7 @@ export default function Landing() {
                                     <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm transition-transform group-" style={{ backgroundColor: s.tone }}>
                                         <s.Icon className="h-5 w-5" aria-hidden="true" />
                                     </span>
-                                    <span className="font-heading text-4xl landing-step-number" style={{ color: s.tone, opacity: 0.15 }}>{s.n}</span>
+                                    <span className="font-heading text-4xl landing-step-number" style={{ color: s.tone, opacity: 0.32 }}>{s.n}</span>
                                 </div>
                                 <div className="mt-4 text-xs uppercase tracking-[0.18em] font-semibold landing-step-eyebrow" style={{ color: s.tone }}>{s.t}</div>
                                 <h3 className="mt-1 font-heading text-2xl text-primary-k tracking-tight">{s.h}</h3>
