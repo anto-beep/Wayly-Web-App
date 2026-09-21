@@ -269,7 +269,7 @@ function SectionHeader({ tone, title, desc }) {
         <div className="flex items-start gap-2.5">
             <span className={`mt-1.5 inline-block h-2.5 w-2.5 rounded-full ${dot}`} />
             <div>
-                <h3 className="font-heading text-lg text-primary-k leading-tight">{title}</h3>
+                <h3 className="font-heading text-lg text-primary-k leading-tight capitalize">{title}</h3>
                 {desc && <p className="text-xs text-muted-k mt-0.5">{desc}</p>}
             </div>
         </div>
@@ -291,7 +291,7 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
             </div>
 
             {/* SECTION · Your care situation (teal) */}
-            <div className="rounded-2xl border border-[#0E4D52]/20 bg-[#E7F1F1] p-5 space-y-4" data-testid="ce-section-situation">
+            <div className="rounded-2xl border border-kindred border-l-4 border-l-[#0E4D52] bg-surface p-5 shadow-sm space-y-4" data-testid="ce-section-situation">
                 <SectionHeader tone="teal" title="Your care situation" desc="Where you are in the Support at Home process." />
 
             {/* Entry path (5 options, replaces the old grandfathered checkbox) */}
@@ -385,7 +385,7 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
             </div>
 
             {/* SECTION · Your money (clay) */}
-            <div className="rounded-2xl border border-clay/30 bg-[#FBEFE7] p-5 space-y-4" data-testid="ce-section-money">
+            <div className="rounded-2xl border border-kindred border-l-4 border-l-clay bg-surface p-5 shadow-sm space-y-4" data-testid="ce-section-money">
                 <SectionHeader tone="clay" title="Your money" desc="Your pension, household and finances set what you contribute." />
 
             {/* Pension status */}
@@ -476,7 +476,7 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
             </div>
 
             {/* SECTION · Service mix (terracotta / red) */}
-            <div className="rounded-2xl border border-terracotta/30 bg-[#FBEAE3] p-5 space-y-3" data-testid="ce-section-mix">
+            <div className="rounded-2xl border border-kindred border-l-4 border-l-terracotta bg-surface p-5 shadow-sm space-y-3" data-testid="ce-section-mix">
                 <SectionHeader tone="terracotta" title="Service mix" desc="Fine-tune the split across clinical, independence and everyday services." />
 
             {/* Service mix advanced toggle */}
@@ -484,7 +484,7 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
                 <button
                     type="button" onClick={() => set({ mix_advanced: !form.mix_advanced })}
                     data-testid="ce-mix-toggle"
-                    className="text-sm text-muted-k inline-flex items-center gap-1 hover:text-primary-k"
+                    className="text-sm font-semibold text-primary-k inline-flex items-center gap-1 hover:text-terracotta transition-colors"
                 >
                     Service mix, defaults to 30 / 45 / 25 %
                     {form.mix_advanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -1229,11 +1229,11 @@ function PdfDownloadButton({ form, personName }) {
 /* ---------- primitives ---------- */
 
 const CE_TONES = {
-    plain: "bg-surface-2/50 border-kindred",
-    teal: "bg-[#0E4D52]/[0.05] border-[#0E4D52]/20",
-    sage: "bg-sage/[0.08] border-sage/25",
-    gold: "bg-gold/[0.08] border-gold/30",
-    clay: "bg-clay/[0.07] border-clay/25",
+    plain: "bg-surface-2/60 border-kindred",
+    teal: "bg-surface-2/60 border-kindred border-l-[3px] border-l-[#0E4D52]/70",
+    sage: "bg-surface-2/60 border-kindred border-l-[3px] border-l-sage/70",
+    gold: "bg-surface-2/60 border-kindred border-l-[3px] border-l-gold",
+    clay: "bg-surface-2/60 border-kindred border-l-[3px] border-l-clay/70",
 };
 
 function FieldRow({ label, children, testId, tone = "plain" }) {
