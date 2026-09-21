@@ -6,13 +6,13 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ToolExplainer from "@/components/ToolExplainer";
+import ToolHero from "@/components/ToolHero";
 import { api } from "@/lib/api";
 import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, ChevronDown } from "lucide-react";
 import EmailResultButton from "@/components/EmailResultButton";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
 import DecoderResultView from "@/components/DecoderResultView";
-import ToolEntriesButton from "@/components/ToolEntriesButton";
 import DecoderProgress from "@/components/DecoderProgress";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import ProfileInlinePrompts from "@/components/ProfileInlinePrompts";
@@ -224,18 +224,9 @@ export default function StatementDecoderTool() {
             <SeoHead {...SEO.toolStatementDecoder} jsonLd={_toolJsonLd(SEO.toolStatementDecoder)} />
             <MarketingHeader />
 
-            <section className="mx-auto max-w-[1720px] px-6 pt-12 pb-6">
-                <div className="flex items-center gap-4 flex-wrap">
-                    <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
-                    <AboutBackLink />
-                </div>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Statement Decoder</h1>
-                <p className="mt-4 text-lg text-muted-k max-w-3xl leading-relaxed">
-                    Upload, photograph, or paste any Support at Home monthly statement.
-                    We accept PDF, Word, photos, and more. Get a plain-English breakdown
-                    in under 2 minutes.
-                </p>
-                <ToolEntriesButton toolKey="statement-decoder" className="mt-5" />
+            <ToolHero toolKey="statement-decoder" wide />
+            <section className="mx-auto max-w-[1720px] px-6 pt-1 pb-2">
+                <AboutBackLink />
             </section>
 
             <section className="mx-auto max-w-[1720px] px-6 pb-20" data-testid="statement-decoder-tool">

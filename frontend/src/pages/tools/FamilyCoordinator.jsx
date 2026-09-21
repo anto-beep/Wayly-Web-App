@@ -78,17 +78,13 @@ export default function FamilyCoordinator() {
         <div className="min-h-screen bg-kindred flex flex-col">
             <SeoHead {...SEO.toolFamilyCoordinator} jsonLd={_toolJsonLd(SEO.toolFamilyCoordinator)} />
             <MarketingHeader />
-            <section className="mx-auto max-w-3xl px-6 pt-12 pb-6 w-full">
-                <div className="flex items-center gap-4 flex-wrap">
-                    <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
-                    <AboutBackLink />
-                </div>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Aged Care Q&amp;A</h1>
-                <p className="mt-4 text-lg text-muted-k leading-relaxed">Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.</p>
+            <ToolHero toolKey="family-coordinator" wide />
+            <section className="mx-auto max-w-[1720px] px-6 pt-1 pb-2 w-full">
+                <AboutBackLink />
                 <p className="mt-2 text-xs text-muted-k">This is a general Q&amp;A assistant, it can't see your account or statements. Signed-in members can ask the in-app assistant questions about their own household.</p>
             </section>
 
-            <section className="mx-auto max-w-3xl px-6 pb-12 w-full flex-1 flex flex-col" data-testid="aged-care-qa">
+            <section className="mx-auto max-w-[1720px] px-6 pb-12 w-full flex-1 flex flex-col" data-testid="aged-care-qa">
                 <div ref={ref} className="flex-1 min-h-[400px] overflow-y-auto bg-surface border border-kindred rounded-2xl p-5 space-y-4">
                     {msgs.length === 0 && !busy && (
                         <div className="h-full flex flex-col items-center justify-center text-center text-muted-k px-4 py-10">

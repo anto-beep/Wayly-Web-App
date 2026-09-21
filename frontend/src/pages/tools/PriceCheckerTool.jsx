@@ -286,27 +286,23 @@ export default function PriceCheckerTool() {
             <SeoHead {...SEO.toolPriceChecker} jsonLd={_toolJsonLd(SEO.toolPriceChecker)} />
             <MarketingHeader />
 
-            <section className="mx-auto max-w-4xl px-6 pt-12 pb-6">
+            <ToolHero toolKey="provider-price-checker" wide />
+            <section className="mx-auto max-w-[1720px] px-6 pt-1 pb-2">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-4 flex-wrap">
-                        <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k" data-testid="pc-back-link">← All AI Tools</Link>
                         <AboutBackLink />
+                        <Link to="/ai-tools/provider-price-checker/how-it-works" data-testid="pc-how-it-works-link" className="inline-flex items-center gap-1.5 text-sm font-medium text-gold hover:text-[#8f4523] transition-colors">
+                            How the fairness check works
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
                     </div>
                     <Link to="/tools/price-checker/history" className="inline-flex items-center gap-1.5 rounded-full border border-primary-k/30 bg-surface px-4 py-2 text-sm font-semibold text-primary-k transition-colors hover:bg-primary-k/[0.06]" data-testid="pc-history-link">
                         Your Price History <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                 </div>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight" data-testid="pc-title">Provider Price Checker</h1>
-                <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    {"Tell us what you are being charged. We compare your provider's rate against the Department of Health's indicative price range for that service, and show your out-of-pocket share."}
-                </p>
-                <Link to="/ai-tools/provider-price-checker/how-it-works" data-testid="pc-how-it-works-link" className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-gold hover:text-[#8f4523] transition-colors">
-                    How the fairness check works
-                    <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
             </section>
 
-            <section className="mx-auto max-w-4xl px-6 pb-20">
+            <section className="mx-auto max-w-[1720px] px-6 pb-20">
 
                 <SnapshotSelector
                     snapshots={snapshotList}

@@ -337,8 +337,13 @@ function UxfRouteFocus() {
  */
 function ReassessmentLetterRedirectOrPage() {
     const { search } = useLocation();
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
     const hasCscContext = /[?&](csc_run_id|primary)=/.test(search || "");
+    // Wait for /auth/me to resolve before deciding — otherwise the first render
+    // sees user=null and wrongly redirects a logged-in user to the Letters hub.
+    if (loading) {
+        return <AIToolsRoute><ReassessmentLetter /></AIToolsRoute>;
+    }
     // Logged-in users get the full standalone Reassessment Letter tool so
     // the participant switcher can cascade into the pre-fill fields.
     // Anonymous visitors are still guided to the consolidated Letters hub.

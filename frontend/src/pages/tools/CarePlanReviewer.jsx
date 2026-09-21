@@ -452,25 +452,21 @@ export default function CarePlanReviewer() {
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolCarePlan} jsonLd={_toolJsonLd(SEO.toolCarePlan)} />
             <MarketingHeader />
-            <section className="mx-auto max-w-4xl px-6 pt-12 pb-6">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
-                    {access === "allowed" && (
-                        <Link
-                            to="/app/care-plans"
-                            className="inline-flex items-center gap-1.5 text-sm text-primary-k hover:underline"
-                            data-testid="link-saved-plans"
-                        >
-                            <FolderOpen className="h-4 w-4" />
-                            Your Saved Plans
-                        </Link>
-                    )}
-                </div>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Support Plan Reviewer</h1>
-                <p className="mt-4 text-lg text-muted-k leading-relaxed max-w-3xl">Upload your care plan. Wayly checks it against Support at Home rules and the Statement of Rights, flags the gaps, and gets you ready for your provider meeting.</p>
-            </section>
+            <ToolHero toolKey="care-plan-reviewer" wide />
+            {access === "allowed" && (
+                <section className="mx-auto max-w-[1720px] px-6 pt-1 pb-2">
+                    <Link
+                        to="/app/care-plans"
+                        className="inline-flex items-center gap-1.5 text-sm text-primary-k hover:underline"
+                        data-testid="link-saved-plans"
+                    >
+                        <FolderOpen className="h-4 w-4" />
+                        Your Saved Plans
+                    </Link>
+                </section>
+            )}
 
-            <section className="mx-auto max-w-6xl px-6 pb-20">
+            <section className="mx-auto max-w-[1720px] px-6 pb-20">
                 <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="care-plan-form">
                     {/* File upload zone (Section B) */}
                     <div className="mb-5">

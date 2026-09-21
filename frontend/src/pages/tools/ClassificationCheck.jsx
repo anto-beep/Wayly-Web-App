@@ -868,7 +868,7 @@ export default function ClassificationCheck() {
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolClassification} jsonLd={_toolJsonLd(SEO.toolClassification)} />
             <MarketingHeader />
-            <section className="mx-auto max-w-4xl px-6 pt-12 pb-4">
+            <section className="mx-auto max-w-[1720px] px-6 pt-12 pb-4">
                 <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">
                     {persona === "participant" ? "Are you on the right classification?" : "Is your parent on the right classification?"}
@@ -881,7 +881,7 @@ export default function ClassificationCheck() {
             </section>
 
             {!result && (
-                <section className="mx-auto max-w-4xl px-6 pb-20">
+                <section className="mx-auto max-w-[1720px] px-6 pb-20">
                     <SavedChecksPanel
                         checks={savedChecks}
                         onReopen={reopenCheck}
@@ -969,7 +969,7 @@ export default function ClassificationCheck() {
             )}
 
             {result && (
-                <section ref={resultRef} className="mx-auto max-w-5xl px-6 pb-20 space-y-5 animate-fade-up scroll-mt-20" data-testid="csc-result">
+                <section ref={resultRef} className="mx-auto max-w-[1720px] px-6 pb-20 space-y-5 animate-fade-up scroll-mt-20" data-testid="csc-result">
                     <ProfileHeader result={result} current={current} bands={bands} />
                     <WaylySummary result={result} bands={bands} persona={persona} />
                     <ClassificationComparison result={result} bands={bands} />

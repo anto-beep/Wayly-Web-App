@@ -216,15 +216,9 @@ export default function BudgetCalculatorTool() {
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolBudgetCalculator} jsonLd={_toolJsonLd(SEO.toolBudgetCalculator)} />
             <MarketingHeader />
-            <section className="mx-auto max-w-4xl px-6 pt-12 pb-6">
-                <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Budget &amp; Lifetime Cap Calculator</h1>
-                <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    Enter your classification. We will show your annual budget, per-stream allocations, lifetime cap progress, and rollover risk, using the actual Support at Home rules (10% care management, $1,000 rollover floor).
-                </p>
-            </section>
+            <ToolHero toolKey="budget-calculator" wide />
 
-            <section className="mx-auto max-w-4xl px-6 pb-20">
+            <section className="mx-auto max-w-[1720px] px-6 pb-20">
                 <ProfileInlinePrompts where="budget_calculator" onParticipantUpdated={onParticipantUpdated} />
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5 mt-4" data-testid="budget-calculator">
                     <div>

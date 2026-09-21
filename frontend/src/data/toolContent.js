@@ -146,9 +146,9 @@ export const TOOL_CONTENT = {
     },
 
     "reassessment-letter": {
-        name: "Letters & Follow-ups",
+        name: "Reassessment Letter Drafter",
         heroOneLiner:
-            "Draft polished letters to My Aged Care, your provider, ACQSC, or the Ombudsman. Track responses and escalate on time.",
+            "Tell us what's changed and we'll draft a clear, polite letter for My Aged Care or your provider, including Restorative Care Pathway and care-plan amendment requests.",
         whatItDoes: [
             "When a parent's care needs a written response, a reassessment request, a fee dispute, a service complaint, a hardship notification, or a formal complaint to a regulator, Letters & Follow-ups drafts the letter for you, matches the tone to the recipient, and keeps every letter in a persistent correspondence log.",
             "Pick the situation that fits (twelve on the front door, from 'Mum's condition has changed' through to 'I need to respond to something they sent') and Wayly assembles the right archetype, evidence checklist, and cover-note. You always review the draft before sending. Wayly never sends anything on your behalf.",

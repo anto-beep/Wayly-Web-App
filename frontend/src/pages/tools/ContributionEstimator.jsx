@@ -172,15 +172,9 @@ export default function ContributionEstimator() {
             <SeoHead {...SEO.toolContribution} jsonLd={_toolJsonLd(SEO.toolContribution)} />
             <MarketingHeader />
 
-            <section className="mx-auto max-w-4xl px-6 pt-12 pb-6">
-                <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Contribution Estimator</h1>
-                <p className="mt-4 text-lg text-muted-k leading-relaxed max-w-3xl">
-                    See in plain English what you&apos;ll pay each week under Support at Home, and how much the government covers.
-                </p>
-            </section>
+            <ToolHero toolKey="contribution-estimator" wide />
 
-            <section className="mx-auto max-w-4xl px-6 pb-6" data-testid="ce-form">
+            <section className="mx-auto max-w-[1720px] px-6 pb-6" data-testid="ce-form">
                 <FormBody
                     form={form} set={set} constants={constants}
                     showFinancial={showFinancial}
@@ -193,7 +187,7 @@ export default function ContributionEstimator() {
             </section>
 
             {result && (
-                <section ref={resultRef} id="ce-result" className="mx-auto max-w-5xl px-6 pb-16 space-y-5 scroll-mt-20" data-testid="ce-result">
+                <section ref={resultRef} id="ce-result" className="mx-auto max-w-[1720px] px-6 pb-16 space-y-5 scroll-mt-20" data-testid="ce-result">
                     <ResultScreen result={result} form={form} constants={constants} onEdit={() => setResult(null)} access={access} />
                 </section>
             )}
@@ -646,7 +640,7 @@ function EstimateRecap({ form }) {
         pension && { Icon: Wallet, label: pension.label },
         { Icon: Info, label: form.relationship === "couple" ? "Couple" : "Single" },
         { Icon: Info, label: form.homeowner ? "Homeowner" : "Non-homeowner" },
-        cls && form.assessment_status === "classified" ? { Icon: SlidersHorizontal, label: cls[1] } : null,
+        cls && form.assessment_status === "have_classification" ? { Icon: SlidersHorizontal, label: cls[1] } : null,
     ].filter(Boolean);
     if (chips.length === 0) return null;
     return (

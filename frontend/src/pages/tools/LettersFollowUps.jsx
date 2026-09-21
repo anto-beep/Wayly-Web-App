@@ -260,14 +260,10 @@ export default function LettersFollowUps() {
             />
             <MarketingHeader />
 
-            <section className="mx-auto max-w-5xl px-6 pt-10 pb-4">
+            <ToolHero toolKey="letters-and-follow-ups" wide />
+            <section className="mx-auto max-w-[1720px] px-6 pt-1 pb-2">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div className="flex items-center gap-4 flex-wrap">
-                        <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k" data-testid="lf1-back-link">
-                            ← All AI Tools
-                        </Link>
-                        <AboutBackLink />
-                    </div>
+                    <AboutBackLink />
                     <Link
                         to="/tools/letters-and-follow-ups/log"
                         className="inline-flex items-center gap-1.5 rounded-full bg-primary-k text-white px-4 py-2 text-sm hover:bg-[#091D33] transition-colors"
@@ -276,18 +272,9 @@ export default function LettersFollowUps() {
                         <Mail className="h-4 w-4" /> Your mailbox
                     </Link>
                 </div>
-                <h1
-                    className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight"
-                    data-testid="lf1-title"
-                >
-                    Letters &amp; Follow-Ups
-                </h1>
-                <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    {"Draft a letter, track the reply, and know when to escalate. Pick the situation that fits, or start a blank letter — Wayly builds the draft from there."}
-                </p>
             </section>
 
-            <section className="mx-auto max-w-5xl px-6 pb-16">
+            <section className="mx-auto max-w-[1720px] px-6 pb-16">
                 {loading && (
                     <div className="text-muted-k inline-flex items-center gap-2 text-sm">
                         <Loader2 className="h-4 w-4 animate-spin" /> Loading…

@@ -196,13 +196,9 @@ export default function ReassessmentLetter() {
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolReassessment} jsonLd={_toolJsonLd(SEO.toolReassessment)} />
             <MarketingHeader />
-            <section className="mx-auto max-w-3xl px-6 pt-12 pb-6">
-                <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">Reassessment Letter Drafter</h1>
-                <p className="mt-4 text-lg text-muted-k leading-relaxed">Tell us what's changed. We will draft a clear, polite letter you can send to My Aged Care, the provider's care manager, or both, including Restorative Care Pathway and care-plan amendment requests.</p>
-            </section>
+            <ToolHero toolKey="reassessment-letter" wide />
 
-            <section className="mx-auto max-w-3xl px-6 pb-20">
+            <section className="mx-auto max-w-[1720px] px-6 pb-20">
                 <ProfileInlinePrompts where="reassessment_letter" onParticipantUpdated={onParticipantUpdated} />
                 {cscBadge && (
                     <div className="mt-4 rounded-lg border border-kindred bg-surface-2 p-4 flex items-start gap-3" data-testid="rl-csc-badge">
