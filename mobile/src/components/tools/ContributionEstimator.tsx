@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { router } from "expo-router";
-import { Sparkles, ChevronDown, ChevronUp, ShieldCheck, Calendar, LifeBuoy, TrendingUp } from "lucide-react-native";
+import { Sparkles, ChevronDown, ChevronUp, ShieldCheck, Calendar, LifeBuoy, TrendingUp, Compass, Wallet, SlidersHorizontal, Check, ArrowLeft, ArrowRight } from "lucide-react-native";
 
-import { AppHeader, Button, Card, T } from "@/src/components/ui";
+import { AppHeader, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -56,6 +56,7 @@ export default function ContributionEstimator() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [savedState, setSavedState] = useState<any>(null);
+  const [step, setStep] = useState(0);
 
   // CE-2 saved-state parity with web: load prior inputs (for the staleness
   // note) and persist rates after each estimate so Provider Price Checker can
@@ -100,6 +101,12 @@ export default function ContributionEstimator() {
     }));
   }, [active?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Scroll back to the top of the flow whenever the wizard step changes.
+  useEffect(() => {
+    if (result) return;
+    scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const showFinancial = form.pension_status === "part_pension" || form.pension_status === "cshc";
   const showHcpFeeQuestion = form.entry_path === "hcp_pre_sep_2024";
   const showHcpLevel = form.entry_path === "hcp_pre_sep_2024" || form.entry_path === "hcp_post_sep_pre_nov_2025";
@@ -141,6 +148,18 @@ export default function ContributionEstimator() {
     } finally { setBusy(false); }
   };
 
+  // ---- Wizard step model (mirrors web ContributionEstimator) ----
+  const WIZARD_STEPS = [
+    { id: "situation", title: "Your Situation", desc: "Where you are in the Support at Home journey — this sets which rules apply to you.", Icon: Compass, accent: colors.primary, soft: colors.primarySoft },
+    { id: "money", title: "Your Money", desc: "Your pension, household and finances shape how much you contribute.", Icon: Wallet, accent: colors.gold, soft: colors.goldSoft },
+    { id: "mix", title: "Service Mix", desc: "How your support splits across clinical, independence and everyday care.", Icon: SlidersHorizontal, accent: colors.sage, soft: colors.sageSoft },
+  ];
+  const meta = WIZARD_STEPS[step];
+  const StepIcon = meta.Icon;
+  const isLast = step === WIZARD_STEPS.length - 1;
+  const next = () => setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
+  const back = () => setStep((s) => Math.max(s - 1, 0));
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Contribution Estimator" onBack={() => router.back()} />
@@ -151,145 +170,192 @@ export default function ContributionEstimator() {
           </T>
 
           {!result ? (
-            <Card testID="ce-form">
+            <View style={{ gap: spacing.md }} testID="ce-form">
               {savedState && stateIsStale(savedState.created_at) ? (
-                <View testID="ce-stale-note" style={[styles.hint, { backgroundColor: colors.surface2, marginTop: 0, marginBottom: spacing.sm }]}>
+                <View testID="ce-stale-note" style={[styles.hint, { backgroundColor: colors.surface2, marginTop: 0 }]}>
                   <Calendar size={16} color={colors.gold} />
                   <T variant="small" style={{ flex: 1, lineHeight: 19 }}>{`Your saved inputs are from ${new Date(savedState.created_at).toLocaleDateString("en-AU")}. Contribution rates change each year on 1 July — re-run to confirm the current rate applies.`}</T>
                 </View>
               ) : null}
-              <Label colors={colors}>{"Person's name (optional)"}</Label>
-              <TextInput testID="ce-person-name" value={form.person_name} onChangeText={(v) => set({ person_name: v })} placeholder="e.g. Louisa Davids" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
 
-              <View style={{ marginTop: spacing.md, backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="ce-section-situation">
-                <SectionHead colors={colors} dot={colors.primary} title="Your care situation" desc="Where you are in the Support at Home process." />
-              <Label colors={colors}>Which best describes your situation?</Label>
-              <View testID="ce-entry-path" style={{ gap: spacing.sm }}>
-                {ENTRY_PATHS.map((p) => (
-                  <RadioTile key={p.v} checked={form.entry_path === p.v} label={p.label} sub={p.desc} colors={colors} testID={`ce-entry-${p.v}`}
-                    onPress={() => set({ entry_path: p.v, assessment_status: p.v === "not_assessed" ? "not_assessed" : form.assessment_status, hcp_paid_fees: p.v === "hcp_pre_sep_2024" ? form.hcp_paid_fees : null, hcp_level_when_grandfathered: (p.v === "hcp_pre_sep_2024" || p.v === "hcp_post_sep_pre_nov_2025") ? form.hcp_level_when_grandfathered : null })} />
-                ))}
-              </View>
+              <Stepper steps={WIZARD_STEPS} step={step} setStep={setStep} colors={colors} />
 
-              {showHcpFeeQuestion ? (
-                <View testID="ce-hcp-fee-followup">
-                  <Label colors={colors} top>{`Did ${voice.subject} pay any fees under ${voice.possessive} Home Care Package?`}</Label>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-                    <Pill active={form.hcp_paid_fees === false} onPress={() => set({ hcp_paid_fees: false })} colors={colors} testID="ce-hcp-fees-no">{`No, ${voice.isCaregiver ? "they" : "I"} never paid fees`}</Pill>
-                    <Pill active={form.hcp_paid_fees === true} onPress={() => set({ hcp_paid_fees: true })} colors={colors} testID="ce-hcp-fees-yes">{`Yes, ${voice.isCaregiver ? "they" : "I"} paid fees`}</Pill>
+              <View testID={`ce-step-panel-${meta.id}`} style={{ backgroundColor: meta.soft, borderRadius: radius.lg, borderWidth: 1, borderColor: meta.accent + "40", padding: spacing.lg }}>
+                {/* Step header */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                  <View style={{ width: 48, height: 48, borderRadius: 15, backgroundColor: meta.accent, alignItems: "center", justifyContent: "center" }}>
+                    <StepIcon size={24} color="#fff" />
                   </View>
-                  {form.hcp_paid_fees === false ? (
-                    <View testID="ce-hcp-exempt-hint" style={[styles.hint, { backgroundColor: colors.sageSoft }]}>
-                      <ShieldCheck size={16} color={colors.sage} />
-                      <T variant="small" style={{ flex: 1, lineHeight: 19 }}>You will not pay any Support at Home contribution. The no-worse-off rule guarantees a permanent zero because you paid no HCP fees.</T>
+                  <View style={{ flex: 1 }}>
+                    <T style={{ fontSize: 11, letterSpacing: 1.4, fontFamily: fonts.bodySemi, color: meta.accent }}>{`STEP ${step + 1} OF ${WIZARD_STEPS.length}`}</T>
+                    <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text }}>{meta.title}</T>
+                  </View>
+                </View>
+                <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm, lineHeight: 20 }}>{meta.desc}</T>
+
+                {/* ---- STEP 1: Situation ---- */}
+                {step === 0 ? (
+                  <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+                    <Label colors={colors}>{"Person's name (optional)"}</Label>
+                    <TextInput testID="ce-person-name" value={form.person_name} onChangeText={(v) => set({ person_name: v })} placeholder="e.g. Louisa Davids" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]} />
+
+                    <Label colors={colors} top>Which best describes your situation?</Label>
+                    <View testID="ce-entry-path" style={{ gap: spacing.sm }}>
+                      {ENTRY_PATHS.map((p) => (
+                        <RadioTile key={p.v} checked={form.entry_path === p.v} label={p.label} sub={p.desc} colors={colors} testID={`ce-entry-${p.v}`}
+                          onPress={() => set({ entry_path: p.v, assessment_status: p.v === "not_assessed" ? "not_assessed" : form.assessment_status, hcp_paid_fees: p.v === "hcp_pre_sep_2024" ? form.hcp_paid_fees : null, hcp_level_when_grandfathered: (p.v === "hcp_pre_sep_2024" || p.v === "hcp_post_sep_pre_nov_2025") ? form.hcp_level_when_grandfathered : null })} />
+                      ))}
                     </View>
-                  ) : null}
-                </View>
-              ) : null}
 
-              {showHcpLevel ? (
-                <View>
-                  <Label colors={colors} top>Which Home Care Package level were you on?</Label>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-                    {[1, 2, 3, 4].map((n) => (
-                      <Pill key={n} active={form.hcp_level_when_grandfathered === n} onPress={() => set({ hcp_level_when_grandfathered: n })} colors={colors} testID={`ce-hcp-level-${n}`}>Level {n}</Pill>
-                    ))}
+                    {showHcpFeeQuestion ? (
+                      <View testID="ce-hcp-fee-followup">
+                        <Label colors={colors} top>{`Did ${voice.subject} pay any fees under ${voice.possessive} Home Care Package?`}</Label>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+                          <Pill active={form.hcp_paid_fees === false} onPress={() => set({ hcp_paid_fees: false })} colors={colors} testID="ce-hcp-fees-no">{`No, ${voice.isCaregiver ? "they" : "I"} never paid fees`}</Pill>
+                          <Pill active={form.hcp_paid_fees === true} onPress={() => set({ hcp_paid_fees: true })} colors={colors} testID="ce-hcp-fees-yes">{`Yes, ${voice.isCaregiver ? "they" : "I"} paid fees`}</Pill>
+                        </View>
+                        {form.hcp_paid_fees === false ? (
+                          <View testID="ce-hcp-exempt-hint" style={[styles.hint, { backgroundColor: colors.sageSoft }]}>
+                            <ShieldCheck size={16} color={colors.sage} />
+                            <T variant="small" style={{ flex: 1, lineHeight: 19 }}>You will not pay any Support at Home contribution. The no-worse-off rule guarantees a permanent zero because you paid no HCP fees.</T>
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : null}
+
+                    {showHcpLevel ? (
+                      <View>
+                        <Label colors={colors} top>Which Home Care Package level were you on?</Label>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+                          {[1, 2, 3, 4].map((n) => (
+                            <Pill key={n} active={form.hcp_level_when_grandfathered === n} onPress={() => set({ hcp_level_when_grandfathered: n })} colors={colors} testID={`ce-hcp-level-${n}`}>Level {n}</Pill>
+                          ))}
+                        </View>
+                      </View>
+                    ) : null}
+
+                    {form.entry_path !== "not_assessed" ? (
+                      <View testID="ce-assessment-status">
+                        <Label colors={colors} top>Do you have a Support at Home classification?</Label>
+                        <View style={{ gap: spacing.sm }}>
+                          {ASSESSMENT_OPTIONS.map((a) => (
+                            <RadioTile key={a.v} checked={form.assessment_status === a.v} label={a.label} colors={colors} testID={`ce-assessment-${a.v}`} onPress={() => set({ assessment_status: a.v })} />
+                          ))}
+                        </View>
+                      </View>
+                    ) : null}
+
+                    {showClassificationPicker ? (
+                      <View>
+                        <Label colors={colors} top>Your classification</Label>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
+                          {CLASSIFICATION_OPTIONS.map(([v, l]) => (
+                            <Pill key={v} active={form.classification === v} onPress={() => set({ classification: v })} colors={colors} testID={`ce-classification-${v}`} small>{l}</Pill>
+                          ))}
+                        </View>
+                      </View>
+                    ) : null}
                   </View>
-                </View>
-              ) : null}
+                ) : null}
 
-              {form.entry_path !== "not_assessed" ? (
-                <View testID="ce-assessment-status">
-                  <Label colors={colors} top>Do you have a Support at Home classification?</Label>
-                  <View style={{ gap: spacing.sm }}>
-                    {ASSESSMENT_OPTIONS.map((a) => (
-                      <RadioTile key={a.v} checked={form.assessment_status === a.v} label={a.label} colors={colors} testID={`ce-assessment-${a.v}`} onPress={() => set({ assessment_status: a.v })} />
-                    ))}
-                  </View>
-                </View>
-              ) : null}
-
-              {showClassificationPicker ? (
-                <View>
-                  <Label colors={colors} top>Your classification</Label>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
-                    {CLASSIFICATION_OPTIONS.map(([v, l]) => (
-                      <Pill key={v} active={form.classification === v} onPress={() => set({ classification: v })} colors={colors} testID={`ce-classification-${v}`} small>{l}</Pill>
-                    ))}
-                  </View>
-                </View>
-              ) : null}
-
-              </View>
-
-              <View style={{ marginTop: spacing.md, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="ce-section-money">
-                <SectionHead colors={colors} dot={colors.gold} title="Your money" desc="Your pension, household and finances set what you contribute." />
-              <Label colors={colors}>Age Pension status</Label>
-              <View testID="ce-pension-status" style={{ gap: spacing.sm }}>
-                {PENSION_STATUS.map((p) => (
-                  <RadioTile key={p.v} checked={form.pension_status === p.v} label={p.label} colors={colors} testID={`ce-pension-${p.v}`} onPress={() => set({ pension_status: p.v })} />
-                ))}
-              </View>
-
-              <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.md, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md }} testID="ce-household-block">
-                <View style={{ flex: 1 }}>
-                  <Label colors={colors}>Household</Label>
-                  <View style={{ flexDirection: "row", gap: spacing.sm }}>
-                    <Pill active={form.relationship === "single"} onPress={() => set({ relationship: "single" })} colors={colors} testID="ce-relationship-single">Single</Pill>
-                    <Pill active={form.relationship === "couple"} onPress={() => set({ relationship: "couple" })} colors={colors} testID="ce-relationship-couple">Couple</Pill>
-                  </View>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Label colors={colors}>Homeowner?</Label>
-                  <View style={{ flexDirection: "row", gap: spacing.sm }}>
-                    <Pill active={form.homeowner === true} onPress={() => set({ homeowner: true })} colors={colors} testID="ce-homeowner-yes">Yes</Pill>
-                    <Pill active={form.homeowner === false} onPress={() => set({ homeowner: false })} colors={colors} testID="ce-homeowner-no">No</Pill>
-                  </View>
-                </View>
-              </View>
-
-              {showFinancial ? (
-                <View testID="ce-financial-details" style={[styles.innerBox, { borderColor: colors.border, backgroundColor: colors.surface2 }]}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Financial details (optional)</T>
-                  <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 18 }}>{"The exact means-tested rate depends on your assessable income and assets. Leave blank to see a range for now."}</T>
-                  <Label colors={colors} top>Your assessable income (excl. pension), $ per year</Label>
-                  <TextInput testID="ce-income" value={String(form.income_excluding_pension)} onChangeText={(v) => set({ income_excluding_pension: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="e.g. 19029" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
-                  <Label colors={colors} top>Assessable assets (not including the family home)</Label>
-                  <TextInput testID="ce-assets" value={String(form.financial_assets)} onChangeText={(v) => set({ financial_assets: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="e.g. 10000" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
-                  {form.relationship === "couple" ? (
-                    <View testID="ce-partner-block">
-                      <Label colors={colors} top>{"Your partner's assessable income"}</Label>
-                      <TextInput testID="ce-partner-income" value={String(form.partner_income)} onChangeText={(v) => set({ partner_income: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
-                      <Label colors={colors} top>{"Your partner's assessable assets"}</Label>
-                      <TextInput testID="ce-partner-assets" value={String(form.partner_assets)} onChangeText={(v) => set({ partner_assets: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
+                {/* ---- STEP 2: Money ---- */}
+                {step === 1 ? (
+                  <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+                    <Label colors={colors}>Age Pension status</Label>
+                    <View testID="ce-pension-status" style={{ gap: spacing.sm }}>
+                      {PENSION_STATUS.map((p) => (
+                        <RadioTile key={p.v} checked={form.pension_status === p.v} label={p.label} colors={colors} testID={`ce-pension-${p.v}`} onPress={() => set({ pension_status: p.v })} />
+                      ))}
                     </View>
-                  ) : null}
-                </View>
-              ) : null}
 
-              </View>
-
-              <View style={{ marginTop: spacing.md, backgroundColor: colors.errorSoft, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="ce-section-mix">
-                <SectionHead colors={colors} dot={colors.terracotta} title="Service mix" desc="Fine-tune the split across clinical, independence and everyday services." />
-              <Pressable testID="ce-mix-toggle" onPress={() => set({ mix_advanced: !form.mix_advanced })} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <T variant="small" style={{ color: colors.muted }}>Service mix, defaults to 30 / 45 / 25 %</T>
-                {form.mix_advanced ? <ChevronUp size={15} color={colors.muted} /> : <ChevronDown size={15} color={colors.muted} />}
-              </Pressable>
-              {form.mix_advanced ? (
-                <View testID="ce-mix-inputs" style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
-                  {["clinical", "independence", "everyday"].map((k) => (
-                    <View key={k} style={{ flex: 1 }}>
-                      <T variant="small" style={{ color: colors.muted, marginBottom: 4 }}>{k[0].toUpperCase() + k.slice(1)} %</T>
-                      <TextInput testID={`ce-mix-${k}`} value={String(form.service_mix[k])} onChangeText={(v) => set({ service_mix: { ...form.service_mix, [k]: Number(v.replace(/[^0-9]/g, "")) || 0 } })} keyboardType="number-pad" style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
+                    <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.sm, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md }} testID="ce-household-block">
+                      <View style={{ flex: 1 }}>
+                        <Label colors={colors}>Household</Label>
+                        <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                          <Pill active={form.relationship === "single"} onPress={() => set({ relationship: "single" })} colors={colors} testID="ce-relationship-single">Single</Pill>
+                          <Pill active={form.relationship === "couple"} onPress={() => set({ relationship: "couple" })} colors={colors} testID="ce-relationship-couple">Couple</Pill>
+                        </View>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Label colors={colors}>Homeowner?</Label>
+                        <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                          <Pill active={form.homeowner === true} onPress={() => set({ homeowner: true })} colors={colors} testID="ce-homeowner-yes">Yes</Pill>
+                          <Pill active={form.homeowner === false} onPress={() => set({ homeowner: false })} colors={colors} testID="ce-homeowner-no">No</Pill>
+                        </View>
+                      </View>
                     </View>
-                  ))}
-                </View>
-              ) : null}
-              </View>
 
-              {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }} testID="ce-error">{error}</T> : null}
-              <Button label="See my estimate" testID="ce-submit" icon={Sparkles} onPress={submit} loading={busy} style={{ marginTop: spacing.md }} />
-            </Card>
+                    {showFinancial ? (
+                      <View testID="ce-financial-details" style={[styles.innerBox, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Financial details (optional)</T>
+                        <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 18 }}>{"The exact means-tested rate depends on your assessable income and assets. Leave blank to see a range for now."}</T>
+                        <Label colors={colors} top>Your assessable income (excl. pension), $ per year</Label>
+                        <TextInput testID="ce-income" value={String(form.income_excluding_pension)} onChangeText={(v) => set({ income_excluding_pension: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="e.g. 19029" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
+                        <Label colors={colors} top>Assessable assets (not including the family home)</Label>
+                        <TextInput testID="ce-assets" value={String(form.financial_assets)} onChangeText={(v) => set({ financial_assets: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="e.g. 10000" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
+                        {form.relationship === "couple" ? (
+                          <View testID="ce-partner-block">
+                            <Label colors={colors} top>{"Your partner's assessable income"}</Label>
+                            <TextInput testID="ce-partner-income" value={String(form.partner_income)} onChangeText={(v) => set({ partner_income: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
+                            <Label colors={colors} top>{"Your partner's assessable assets"}</Label>
+                            <TextInput testID="ce-partner-assets" value={String(form.partner_assets)} onChangeText={(v) => set({ partner_assets: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                {/* ---- STEP 3: Service mix ---- */}
+                {step === 2 ? (
+                  <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+                    <Pressable testID="ce-mix-toggle" onPress={() => set({ mix_advanced: !form.mix_advanced })} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Service mix, defaults to 30 / 45 / 25 %</T>
+                      {form.mix_advanced ? <ChevronUp size={15} color={colors.muted} /> : <ChevronDown size={15} color={colors.muted} />}
+                    </Pressable>
+                    {form.mix_advanced ? (
+                      <>
+                        <View testID="ce-mix-inputs" style={{ flexDirection: "row", gap: spacing.sm }}>
+                          {["clinical", "independence", "everyday"].map((k) => (
+                            <View key={k} style={{ flex: 1 }}>
+                              <T variant="small" style={{ color: colors.muted, marginBottom: 4 }}>{k[0].toUpperCase() + k.slice(1)} %</T>
+                              <TextInput testID={`ce-mix-${k}`} value={String(form.service_mix[k])} onChangeText={(v) => set({ service_mix: { ...form.service_mix, [k]: Number(v.replace(/[^0-9]/g, "")) || 0 } })} keyboardType="number-pad" style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
+                            </View>
+                          ))}
+                        </View>
+                        <T variant="small" style={{ color: colors.muted }}>{`Total: ${form.service_mix.clinical + form.service_mix.independence + form.service_mix.everyday}%`}</T>
+                      </>
+                    ) : null}
+                    <View testID="ce-mix-hint" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.xs }}>
+                      <T variant="small" style={{ color: colors.muted, lineHeight: 20 }}>Most people leave this on the standard split. Open it only if you know the care leans more clinical or everyday. When you&apos;re ready, see the estimate.</T>
+                    </View>
+                  </View>
+                ) : null}
+
+                {error && isLast ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.md }} testID="ce-error">{error}</T> : null}
+
+                {/* Wizard navigation */}
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginTop: spacing.lg }}>
+                  {step > 0 ? (
+                    <Pressable testID="ce-back" onPress={back} style={{ flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: 18, paddingVertical: 11, backgroundColor: colors.surface }}>
+                      <ArrowLeft size={16} color={colors.text} />
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Back</T>
+                    </Pressable>
+                  ) : <View />}
+                  {!isLast ? (
+                    <Pressable testID="ce-next" onPress={next} style={{ flexDirection: "row", alignItems: "center", gap: 6, borderRadius: radius.pill, paddingHorizontal: 22, paddingVertical: 11, backgroundColor: meta.accent }}>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#fff" }}>Continue</T>
+                      <ArrowRight size={16} color="#fff" />
+                    </Pressable>
+                  ) : (
+                    <Pressable testID="ce-submit" onPress={submit} disabled={busy} style={{ flexDirection: "row", alignItems: "center", gap: 6, borderRadius: radius.pill, paddingHorizontal: 22, paddingVertical: 12, backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }}>
+                      {busy ? <ActivityIndicator color="#fff" size="small" /> : <Sparkles size={16} color="#fff" />}
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#fff" }}>See my estimate</T>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            </View>
           ) : (
             <View testID="ce-result" onLayout={onResultLayout} style={{ gap: spacing.md }}>
               <ResultScreen result={result} form={form} colors={colors} onEdit={() => setResult(null)} />
@@ -562,14 +628,33 @@ function RateCard({ label, rate, note, colors, testID }: any) {
     </View>
   );
 }
-function SectionHead({ colors, dot, title, desc }: any) {
+function Stepper({ steps, step, setStep, colors }: any) {
   return (
-    <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
-      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: dot, marginTop: 5 }} />
-      <View style={{ flex: 1 }}>
-        <T style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.text }}>{title}</T>
-        {desc ? <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>{desc}</T> : null}
-      </View>
+    <View style={{ flexDirection: "row", alignItems: "center" }} testID="ce-stepper">
+      {steps.map((s: any, i: number) => {
+        const done = i < step;
+        const active = i === step;
+        const on = done || active;
+        const Icon = s.Icon;
+        return (
+          <React.Fragment key={s.id}>
+            <Pressable testID={`ce-step-${s.id}`} onPress={() => setStep(i)} accessibilityRole="button">
+              <View style={{
+                width: 40, height: 40, borderRadius: 14, alignItems: "center", justifyContent: "center",
+                backgroundColor: on ? s.accent : colors.surface, borderWidth: on ? 0 : 1, borderColor: colors.border,
+                transform: [{ scale: active ? 1.08 : 1 }],
+              }}>
+                {done ? <Check size={18} color="#fff" /> : <Icon size={18} color={on ? "#fff" : colors.muted} />}
+              </View>
+            </Pressable>
+            {i < steps.length - 1 ? (
+              <View style={{ flex: 1, height: 3, borderRadius: 2, marginHorizontal: 8, backgroundColor: colors.border, overflow: "hidden" }}>
+                <View style={{ height: "100%", width: done ? "100%" : "0%", backgroundColor: s.accent }} />
+              </View>
+            ) : null}
+          </React.Fragment>
+        );
+      })}
     </View>
   );
 }

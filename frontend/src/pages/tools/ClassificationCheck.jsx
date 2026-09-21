@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
@@ -14,7 +14,7 @@ import { api, formatAUD } from "@/lib/api";
 import { usePersona } from "@/lib/persona";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { CSC_QUESTIONS } from "@/data/cscQuestions";
-import { Loader2, Sparkles, ArrowRight, ChevronDown, ChevronUp, RefreshCcw, CheckCircle2, Download, Mail, Info, BookmarkPlus, FolderOpen, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, ArrowRight, ArrowLeft, Check, ChevronDown, ChevronUp, RefreshCcw, CheckCircle2, Download, Mail, Info, BookmarkPlus, FolderOpen, Trash2, Droplet, Home, HeartPulse } from "lucide-react";
 
 import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
@@ -676,6 +676,91 @@ function SavedChecksPanel({ checks, onReopen, onRerun, onDelete, busyId }) {
 }
 
 // ============================================================================
+// Wizard scaffolding — 3 guided steps (mirrors the Contribution Estimator).
+// The 16 questions are grouped by theme; each step has its own brand accent,
+// icon and light inline-SVG motif.
+// ============================================================================
+
+const CSC_STEPS = [
+    { id: "care",   title: "Personal Care",         desc: "Getting through the day: washing, dressing, moving around and the bathroom.",                        Icon: Droplet,    accent: "#0E4D52", soft: "#E9F2F1", motif: "rings", from: 0, to: 4 },
+    { id: "home",   title: "Everyday Tasks",         desc: "Running the home: meals, cleaning, medications, shopping and getting out and about.",                 Icon: Home,       accent: "#4E6E54", soft: "#ECF1EA", motif: "waves", from: 4, to: 9 },
+    { id: "health", title: "Health, Mind & Safety",  desc: "Memory and mood, recent falls or hospital visits, the home itself, and the support already around.", Icon: HeartPulse, accent: "#A5512B", soft: "#F7ECE3", motif: "pie",   from: 9, to: 16 },
+];
+
+function CscStepArt({ accent, variant }) {
+    return (
+        <svg className="pointer-events-none absolute -top-10 -right-6 h-44 w-44 opacity-[0.12]" viewBox="0 0 200 200" aria-hidden="true">
+            {variant === "rings" && (
+                <g fill="none" stroke={accent} strokeWidth="11">
+                    <circle cx="122" cy="82" r="66" />
+                    <circle cx="122" cy="82" r="40" />
+                    <circle cx="122" cy="82" r="15" fill={accent} stroke="none" />
+                </g>
+            )}
+            {variant === "waves" && (
+                <g fill="none" stroke={accent} strokeWidth="10" strokeLinecap="round">
+                    <path d="M40 60 q30 -26 60 0 t60 0" />
+                    <path d="M40 100 q30 -26 60 0 t60 0" />
+                    <path d="M40 140 q30 -26 60 0 t60 0" />
+                </g>
+            )}
+            {variant === "pie" && (
+                <g>
+                    <circle cx="122" cy="82" r="60" fill="none" stroke={accent} strokeWidth="10" />
+                    <path d="M122 82 L122 22 A60 60 0 0 1 175 110 Z" fill={accent} />
+                </g>
+            )}
+        </svg>
+    );
+}
+
+function CscWizardStepper({ step, setStep }) {
+    return (
+        <div className="mb-5" data-testid="csc-stepper">
+            <div className="flex items-center">
+                {CSC_STEPS.map((s, i) => {
+                    const done = i < step;
+                    const active = i === step;
+                    const Icon = s.Icon;
+                    return (
+                        <React.Fragment key={s.id}>
+                            <button
+                                type="button"
+                                onClick={() => setStep(i)}
+                                data-testid={`csc-step-${s.id}`}
+                                aria-current={active ? "step" : undefined}
+                                className="flex items-center gap-2.5 shrink-0 focus:outline-none group"
+                            >
+                                <span
+                                    className="flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm transition-all duration-300"
+                                    style={{
+                                        backgroundColor: done || active ? s.accent : "#FFFFFF",
+                                        color: done || active ? "#FFFFFF" : "#9A9488",
+                                        border: done || active ? "none" : "1px solid #E5DFD5",
+                                        transform: active ? "scale(1.08)" : "scale(1)",
+                                    }}
+                                >
+                                    {done ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                                </span>
+                                <span className="hidden sm:block text-left leading-tight">
+                                    <span className="block text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-muted-k">Step {i + 1}</span>
+                                    <span className="block text-sm font-semibold" style={{ color: done || active ? s.accent : "#6b6459" }}>{s.title}</span>
+                                </span>
+                            </button>
+                            {i < CSC_STEPS.length - 1 && (
+                                <span className="mx-2 sm:mx-3 h-[3px] flex-1 rounded-full" style={{ backgroundColor: "#E9E3D8" }}>
+                                    <span className="block h-full rounded-full transition-all duration-500" style={{ width: i < step ? "100%" : "0%", backgroundColor: s.accent }} />
+                                </span>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+// ============================================================================
 // Main
 // ============================================================================
 
@@ -703,7 +788,14 @@ export default function ClassificationCheck() {
     const [bands, setBands] = useState([]);
     const [savedChecks, setSavedChecks] = useState([]);
     const [savedBusyId, setSavedBusyId] = useState(null);
+    const [step, setStep] = useState(0);
     const resultRef = useScrollToResult(result);
+    const wizardRef = useRef(null);
+    const firstWizardRender = useRef(true);
+    useEffect(() => {
+        if (firstWizardRender.current) { firstWizardRender.current = false; return; }
+        wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [step]);
 
     // Load the user's saved checks (signed-in, paid). Silent on failure.
     const loadSavedChecks = React.useCallback(() => {
@@ -838,7 +930,7 @@ export default function ClassificationCheck() {
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolClassification} jsonLd={_toolJsonLd(SEO.toolClassification)} />
             <MarketingHeader />
-            <ToolHero toolKey="classification-self-check" />
+            <ToolHero toolKey="classification-self-check" wide />
             <ToolGate toolName="Classification Self-Check"><ScreenshotStatement /></ToolGate>
             <section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="classification-self-check" /></section>
             <ToolRelatedLinks slug="classification-self-check" />
@@ -864,20 +956,25 @@ export default function ClassificationCheck() {
             ? `${answered} of ${CSC_QUESTIONS.length} done. Keep going.`
             : `Answer all ${CSC_QUESTIONS.length} questions to see your result.`;
 
+    // ---- Wizard step slicing ----
+    const stepDef = CSC_STEPS[step];
+    const StepIcon = stepDef.Icon;
+    const stepQuestions = CSC_QUESTIONS.slice(stepDef.from, stepDef.to);
+    const isLastStep = step === CSC_STEPS.length - 1;
+    const goNext = () => setStep((s) => Math.min(s + 1, CSC_STEPS.length - 1));
+    const goBack = () => setStep((s) => Math.max(s - 1, 0));
+
     return (
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolClassification} jsonLd={_toolJsonLd(SEO.toolClassification)} />
             <MarketingHeader />
-            <section className="mx-auto max-w-[1720px] px-6 pt-12 pb-4">
-                <Link to="/ai-tools" className="text-sm text-muted-k hover:text-primary-k">← All AI Tools</Link>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight">
-                    {persona === "participant" ? "Are you on the right classification?" : "Is your parent on the right classification?"}
-                </h1>
-                <p className="mt-4 text-lg text-muted-k leading-relaxed">{intro}</p>
-                <p className="mt-3 text-sm text-muted-k italic">
+            <ToolHero toolKey="classification-self-check" wide />
+            <section className="mx-auto max-w-[1720px] px-6 pt-2 pb-4">
+                <p className="text-lg text-muted-k leading-relaxed max-w-4xl">{intro}</p>
+                <p className="mt-3 text-sm text-muted-k italic max-w-4xl">
                     This is informational only. Only the My Aged Care Integrated Assessment Tool (IAT) determines actual classification.
                 </p>
-                <p className="mt-3 text-xs text-muted-k">Takes about 5 minutes. Your answers are saved as you go.</p>
+                <p className="mt-2 text-xs text-muted-k">Takes about 5 minutes. Your answers are saved as you go.</p>
             </section>
 
             {!result && (
@@ -889,52 +986,74 @@ export default function ClassificationCheck() {
                         onDelete={deleteCheck}
                         busyId={savedBusyId}
                     />
-                    <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="csc-quiz">
-                        {/* Current classification (top of flow) */}
-                        <div className="mb-6 pb-5 border-b border-kindred">
-                            <label className="block text-sm font-medium text-primary-k mb-2">{currentLabel} <span className="text-muted-k font-normal">(Optional)</span></label>
-                            <select
-                                value={current}
-                                onChange={(e) => setCurrent(e.target.value)}
-                                data-testid="csc-current"
-                                className="w-full rounded-lg border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
-                            >
-                                <option value="">Not sure or not yet assessed</option>
-                                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>Classification {n}</option>)}
-                            </select>
-                            {activeParticipant?.classification && String(activeParticipant.classification) === current && (
-                                <p className="mt-2 text-xs text-sage inline-flex items-center gap-1.5" data-testid="csc-current-prefilled">
-                                    <CheckCircle2 className="h-3.5 w-3.5" /> Prefilled from {activeParticipant.name || "your profile"}. Change it if it&apos;s out of date.
-                                </p>
-                            )}
+
+                    {/* Sticky overall progress + wizard stepper */}
+                    <div className="sticky top-16 z-30 -mx-6 px-6 py-4 bg-kindred/95 backdrop-blur-sm border-b border-kindred mb-6" data-testid="csc-progress-sticky">
+                        <ProgressBar answered={answered} total={CSC_QUESTIONS.length} />
+                        <CscWizardStepper step={step} setStep={setStep} />
+                    </div>
+
+                    {/* Resume banner */}
+                    {resumed && (
+                        <div className="mb-5 p-3 rounded-lg bg-surface-2 border border-kindred flex items-center justify-between" data-testid="csc-resumed">
+                            <div className="text-sm text-primary-k inline-flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-[#6d907d]" /> We restored your previous answers.
+                            </div>
+                            <button onClick={resetDraft} className="text-xs text-clay-k inline-flex items-center gap-1" data-testid="csc-restart">
+                                <RefreshCcw className="h-3 w-3" /> Start over
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Current step card */}
+                    <div
+                        ref={wizardRef}
+                        data-testid="csc-quiz"
+                        className="relative overflow-hidden bg-surface border rounded-3xl p-6 sm:p-8 scroll-mt-44 shadow-sm"
+                        style={{ borderColor: `${stepDef.accent}2E` }}
+                    >
+                        <CscStepArt accent={stepDef.accent} variant={stepDef.motif} />
+
+                        {/* Step header */}
+                        <div className="relative flex items-start gap-4 mb-6" data-testid={`csc-step-head-${stepDef.id}`}>
+                            <span className="flex h-14 w-14 flex-none items-center justify-center rounded-2xl text-white shadow" style={{ backgroundColor: stepDef.accent }}>
+                                <StepIcon className="h-7 w-7" />
+                            </span>
+                            <div className="min-w-0">
+                                <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em]" style={{ color: stepDef.accent }}>Step {step + 1} of {CSC_STEPS.length}</div>
+                                <h2 className="font-heading text-2xl sm:text-3xl text-primary-k tracking-tight leading-tight">{stepDef.title}</h2>
+                                <p className="mt-1 text-sm text-muted-k leading-snug">{stepDef.desc}</p>
+                            </div>
                         </div>
 
-                        {/* Progress bar (sticky so it stays visible while answering) */}
-                        <div className="sticky top-16 z-30 -mx-6 px-6 pt-4 bg-surface border-b border-kindred" data-testid="csc-progress-sticky">
-                            <ProgressBar answered={answered} total={CSC_QUESTIONS.length} />
-                        </div>
-
-                        {/* Resume banner */}
-                        {resumed && (
-                            <div className="mb-5 p-3 rounded-lg bg-surface-2 border border-kindred flex items-center justify-between" data-testid="csc-resumed">
-                                <div className="text-sm text-primary-k inline-flex items-center gap-2">
-                                    <CheckCircle2 className="h-4 w-4 text-[#6d907d]" /> We restored your previous answers.
-                                </div>
-                                <button onClick={resetDraft} className="text-xs text-clay-k inline-flex items-center gap-1" data-testid="csc-restart">
-                                    <RefreshCcw className="h-3 w-3" /> Start over
-                                </button>
+                        {/* Step 1 preamble: current classification + warm opener */}
+                        {step === 0 && (
+                            <div className="relative mb-6 pb-6 border-b border-kindred">
+                                <label className="block text-sm font-medium text-primary-k mb-2">{currentLabel} <span className="text-muted-k font-normal">(Optional)</span></label>
+                                <select
+                                    value={current}
+                                    onChange={(e) => setCurrent(e.target.value)}
+                                    data-testid="csc-current"
+                                    className="w-full sm:max-w-md rounded-lg border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
+                                >
+                                    <option value="">Not sure or not yet assessed</option>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{`Classification ${n}`}</option>)}
+                                </select>
+                                {activeParticipant?.classification && String(activeParticipant.classification) === current && (
+                                    <p className="mt-2 text-xs text-sage inline-flex items-center gap-1.5" data-testid="csc-current-prefilled">
+                                        <CheckCircle2 className="h-3.5 w-3.5" /> Prefilled from {activeParticipant.name || "your profile"}. Change it if it&apos;s out of date.
+                                    </p>
+                                )}
+                                <p className="mt-4 text-sm text-muted-k italic">{openerCopy}</p>
                             </div>
                         )}
 
-                        {/* Warm opener */}
-                        <p className="mb-6 text-sm text-muted-k italic">{openerCopy}</p>
-
-                        {/* Questions */}
-                        <div className="space-y-5">
-                            {CSC_QUESTIONS.map((q, idx) => (
+                        {/* Questions for this step */}
+                        <div className="relative space-y-5">
+                            {stepQuestions.map((q, i) => (
                                 <QuestionCard
                                     key={q.id}
-                                    index={idx}
+                                    index={stepDef.from + i}
                                     question={q}
                                     persona={persona}
                                     value={answers[q.id]}
@@ -943,27 +1062,50 @@ export default function ClassificationCheck() {
                             ))}
                         </div>
 
-                        {/* Submit */}
-                        <div className="mt-8 space-y-2">
-                            {!allDone && (
-                                <div className="flex items-center justify-center gap-2 rounded-lg bg-gold/10 border border-gold/30 px-4 py-2.5 text-sm text-primary-k font-medium" data-testid="csc-cta-help">
-                                    <Info className="h-4 w-4 text-clay-k flex-none" />
-                                    {answered === 0
-                                        ? "Answer all 16 questions to see your result."
-                                        : `Almost there — ${CSC_QUESTIONS.length - answered} question${CSC_QUESTIONS.length - answered === 1 ? "" : "s"} still to answer.`}
-                                </div>
-                            )}
+                        {/* Wizard navigation */}
+                        <div className="relative mt-8 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                             <button
-                                onClick={() => submit()}
-                                disabled={!allDone || loading}
-                                data-testid="csc-submit"
-                                className="w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 font-medium"
+                                type="button"
+                                onClick={goBack}
+                                disabled={step === 0}
+                                data-testid="csc-wizard-back"
+                                className="inline-flex items-center justify-center gap-2 rounded-full border border-kindred bg-surface px-5 py-3 text-sm font-medium text-primary-k hover:bg-kindred transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                                {loading ? "Scoring…" : ctaLabel}
+                                <ArrowLeft className="h-4 w-4" /> Back
                             </button>
-                            {error && <div className="text-sm text-clay-k text-center" data-testid="csc-error">{error}</div>}
+                            {!isLastStep ? (
+                                <button
+                                    type="button"
+                                    onClick={goNext}
+                                    data-testid="csc-wizard-next"
+                                    className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors hover:brightness-95"
+                                    style={{ backgroundColor: stepDef.accent }}
+                                >
+                                    Next: {CSC_STEPS[step + 1].title} <ArrowRight className="h-4 w-4" />
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => submit()}
+                                    disabled={!allDone || loading}
+                                    data-testid="csc-submit"
+                                    className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-full bg-primary-k px-6 py-3 text-sm font-semibold text-white hover:bg-[#091D33] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                                    {loading ? "Scoring…" : ctaLabel}
+                                </button>
+                            )}
                         </div>
+
+                        {isLastStep && !allDone && (
+                            <div className="relative mt-3 flex items-center justify-center gap-2 rounded-lg bg-gold/10 border border-gold/30 px-4 py-2.5 text-sm text-primary-k font-medium" data-testid="csc-cta-help">
+                                <Info className="h-4 w-4 text-clay-k flex-none" />
+                                {answered === 0
+                                    ? "Answer all 16 questions to see your result."
+                                    : `Almost there — ${CSC_QUESTIONS.length - answered} question${CSC_QUESTIONS.length - answered === 1 ? "" : "s"} still to answer. Use Back to find any you missed.`}
+                            </div>
+                        )}
+                        {error && <div className="relative mt-2 text-sm text-clay-k text-center" data-testid="csc-error">{error}</div>}
                     </div>
                 </section>
             )}

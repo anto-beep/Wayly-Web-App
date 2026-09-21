@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import PageIntro from "@/components/PageIntro";
 import SmartAISummary from "@/components/SmartAISummary";
 import InvoiceFilters from "@/components/invoices/InvoiceFilters";
+import OverchargeAlerts from "@/components/invoices/OverchargeAlerts";
 
 // Escapes a single CSV field. Wraps in quotes and doubles inner quotes to
 // keep spreadsheets happy on commas and multi-line narratives.
@@ -258,6 +259,10 @@ export default function InvoicesList() {
                     </Link>
                 </div>
             </div>
+
+            {items.length > 0 && !loading && (
+                <OverchargeAlerts onViewProvider={(p) => setSelectedProviders([p])} />
+            )}
 
             {items.length > 0 && !loading && (
                 <SmartAISummary

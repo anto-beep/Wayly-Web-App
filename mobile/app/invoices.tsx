@@ -6,6 +6,7 @@ import { AlertCircle, ChevronRight, Receipt, Search, Upload, X } from "lucide-re
 import { AppHeader, Badge, Button, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
+import { OverchargeAlerts } from "@/src/components/invoices/OverchargeAlerts";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -178,6 +179,10 @@ export default function InvoicesScreen() {
             ) : null}
           </View>
         </View>
+      ) : null}
+
+      {items.length > 0 ? (
+        <OverchargeAlerts onViewProvider={(p) => setProviderFilter(p)} />
       ) : null}
 
       {items.length > 0 ? (

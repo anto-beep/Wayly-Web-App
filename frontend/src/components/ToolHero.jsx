@@ -105,7 +105,7 @@ export default function ToolHero({ toolKey, wide = false }) {
                         </h1>
                     </div>
                 </div>
-                <p className="relative mt-3 text-base sm:text-lg text-primary-k/75 leading-relaxed max-w-3xl">
+                <p className="relative mt-3 text-base sm:text-lg text-primary-k/75 leading-relaxed max-w-6xl">
                     {c.heroOneLiner}
                 </p>
                 <div className="relative">

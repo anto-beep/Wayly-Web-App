@@ -477,6 +477,113 @@ def build_invoices_router(
             "identity_warning": identity_warning,
         }
 
+    # ---- Phase G — Overcharge Alerts -------------------------------------
+    # Checks that represent the provider charging MORE than they should. We
+    # only count tier >= 3 (worth a question / check before paying); purely
+    # informational hits never trigger an alert.
+    _OVERCHARGE_CHECKS = {
+        "C1": "Clinical care charged when it should be nil",
+        "C2": "Personal care charged after 1 Oct 2026 (should be nil)",
+        "C4": "Care management or prohibited fees",
+        "C6": "Line arithmetic overcharge",
+        "C11": "Duplicate line charged twice",
+        "C12": "Rate above the published price",
+    }
+
+    def _oc_check_id(f: dict) -> str:
+        return str(f.get("check_id") or f.get("code") or f.get("check") or "").split("_")[0].upper()
+
+    def _oc_tier(f: dict):
+        t = f.get("tier")
+        if isinstance(t, bool):
+            return None
+        if isinstance(t, (int, float)):
+            return int(t)
+        sev = str(f.get("severity") or "").lower()
+        return {"high": 4, "critical": 4, "medium": 3, "low": 2, "info": 1, "informational": 1}.get(sev)
+
+    def _oc_amount(f: dict) -> float:
+        fi = f.get("financial_impact") or {}
+        try:
+            return abs(float(fi.get("amount"))) if fi.get("amount") is not None else 0.0
+        except (TypeError, ValueError):
+            return 0.0
+
+    @router.get("/invoices/overcharge-alerts")
+    async def overcharge_alerts(user: dict = Depends(_current_user)) -> dict:
+        """Flag providers who overcharged on MORE THAN ONE invoice in the
+        user's history. A repeated pattern is a much stronger basis for a
+        complaint or refund than a one-off, so we surface it prominently."""
+        user_id = user.get("id") or user.get("user_id")
+        cursor = db.invoices.find(
+            {"user_id": user_id, "state": "active"},
+            {"_id": 0, "id": 1, "provider_name": 1, "invoice_date": 1, "created_at": 1, "reconciliation.findings": 1},
+        ).sort("created_at", -1)
+
+        groups: dict = {}
+        async for inv in cursor:
+            prov_display = (inv.get("provider_name") or "").strip()
+            key = prov_display.lower()
+            if not key:
+                continue
+            g = groups.setdefault(key, {
+                "provider_name": prov_display, "total_invoices": 0,
+                "flagged": [], "code_counts": {}, "total_amount": 0.0,
+            })
+            g["total_invoices"] += 1
+            findings = ((inv.get("reconciliation") or {}).get("findings")) or []
+            oc_codes: dict = {}
+            inv_amount = 0.0
+            for f in findings:
+                if not isinstance(f, dict):
+                    continue
+                code = _oc_check_id(f)
+                if code not in _OVERCHARGE_CHECKS:
+                    continue
+                tier = _oc_tier(f)
+                if tier is not None and tier < 3:
+                    continue
+                oc_codes[code] = oc_codes.get(code, 0) + 1
+                inv_amount += _oc_amount(f)
+            if oc_codes:
+                g["flagged"].append({
+                    "invoice_id": inv.get("id"),
+                    "invoice_date": inv.get("invoice_date"),
+                    "checked_at": inv.get("created_at"),
+                    "codes": sorted(oc_codes.keys()),
+                    "overcharge_count": sum(oc_codes.values()),
+                    "amount": round(inv_amount, 2),
+                })
+                for c, n in oc_codes.items():
+                    g["code_counts"][c] = g["code_counts"].get(c, 0) + n
+                g["total_amount"] += inv_amount
+
+        alerts = []
+        for g in groups.values():
+            if len(g["flagged"]) < 2:
+                continue
+            check_types = [
+                {"code": c, "title": _OVERCHARGE_CHECKS.get(c, c), "count": n}
+                for c, n in sorted(g["code_counts"].items(), key=lambda kv: (-kv[1], kv[0]))
+            ]
+            last_seen = None
+            for fl in g["flagged"]:
+                d = fl.get("invoice_date") or fl.get("checked_at")
+                if d and (last_seen is None or str(d) > str(last_seen)):
+                    last_seen = d
+            alerts.append({
+                "provider_name": g["provider_name"],
+                "invoice_count": len(g["flagged"]),
+                "total_invoices": g["total_invoices"],
+                "total_amount": round(g["total_amount"], 2),
+                "check_types": check_types,
+                "invoices": g["flagged"],
+                "last_seen": last_seen,
+            })
+
+        alerts.sort(key=lambda a: (a["invoice_count"], a["total_amount"]), reverse=True)
+        return {"count": len(alerts), "threshold": 2, "alerts": alerts}
+
     @router.get("/invoices/{invoice_id}")
     async def get_invoice(
         invoice_id: str,

@@ -1,0 +1,27 @@
+{
+  "summary": "Phase G — Overcharge Alerts validated end-to-end on backend + mobile. Backend GET /api/invoices/overcharge-alerts returns count=2 for cathy with both seeded providers (Glorious Services Pty Ltd flagged 14/14; Meridian Home Care Pty Ltd flagged 10/10) and the expected overcharge codes (C1, C2, C4, C6, C11, C12); 401 without auth; route ordering intact (GET /api/invoices/<bogus> still 404). Mobile /invoices renders the OverchargeAlerts banner (testID overcharge-alerts) with overcharge-alert-0/1, overcharge-count-0/1, and overcharge-view-0/1; tapping overcharge-view-1 filters the list to Meridian. For a user with no flagged invoices (trialactive@example.com), the banner is correctly hidden. Web banner was pre-verified by the main agent; I did not re-screenshot web.",
+  "platforms_tested": ["mobile", "backend"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter346_mobile_banner.jpeg",
+    "/app/test_reports/iter346_mobile_after_filter.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "OverchargeAlerts (mobile + web): 404/500 from the endpoint is silently swallowed (.catch(() => {})). That is deliberate (non-blocking), but consider a debug log so an accidental route regression doesn't disappear.",
+    "Backend list_invoices caps items at 50 while overcharge-alerts iterates ALL active invoices unbounded. Fine now (cathy has 39), but worth adding a soft limit if invoice-per-user grows significantly.",
+    "_oc_amount uses abs(financial_impact.amount); if a finding stores a negative refund amount as its impact, this correctly counts it as overcharge magnitude. Confirm findings never overload the field with non-currency values."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (2 repeated-overcharge providers); trialactive@example.com / AccessTest1! (hide-when-empty case)",
+  "seed_data_creation": "None. Used pre-seeded fixtures.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile Expo web preview host is https://final-verify-web.expo.preview.emergentagent.com — different from web preview. The overcharge banner appears ABOVE Smart AI Summary on /invoices and the 'Show' pill wires to setProviderFilter (mobile) / setSelectedProviders (web). For cathy, expect 2 alerts; for trialactive, expect the component to return null."
+}

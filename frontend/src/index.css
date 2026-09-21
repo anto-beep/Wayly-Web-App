@@ -243,7 +243,11 @@
        shares one comfortable wide column so pages feel consistent regardless
        of any per-page max-width wrapper (founder request: same width, wide). */
     .app-page { width: 100%; }
-    .app-page > * { max-width: 1400px !important; margin-left: auto !important; margin-right: auto !important; }
+    .app-page > * { max-width: 1720px !important; margin-left: auto !important; margin-right: auto !important; }
+    /* Also neutralise any per-page max-width wrapper so every /app screen fills
+       the same wide 1720 column (founder request: uniform wide, regardless of
+       a page's own max-w-* container). Inner cards/sections keep their widths. */
+    .wayly-route > * { max-width: 1720px !important; margin-left: auto !important; margin-right: auto !important; }
     .bg-primary-k   { background-color: var(--kindred-primary); }
     .text-primary-k { color: var(--kindred-primary); }
     .text-muted-k   { color: var(--kindred-muted); }
