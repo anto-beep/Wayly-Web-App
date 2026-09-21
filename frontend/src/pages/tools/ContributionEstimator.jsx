@@ -15,7 +15,7 @@ import { useParticipants } from "@/context/ParticipantsContext";
 import { useParticipantPrefill } from "@/hooks/useParticipantPrefill";
 import { api, formatAUD2, formatAUD } from "@/lib/api";
 import { usePersonaTier1 } from "@/lib/persona";
-import { Loader2, Sparkles, ArrowRight, ChevronDown, ChevronUp, Info, Calendar, ShieldCheck, LifeBuoy, FileDown, TrendingUp } from "lucide-react";
+import { Loader2, Sparkles, ArrowRight, ArrowLeft, ChevronDown, ChevronUp, Info, Calendar, ShieldCheck, LifeBuoy, FileDown, TrendingUp, Check, Compass, Wallet, SlidersHorizontal } from "lucide-react";
 import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
@@ -188,15 +188,8 @@ export default function ContributionEstimator() {
                     showHcpLevel={showHcpLevel}
                     showClassificationPicker={showClassificationPicker}
                     cscBadge={cscBadge}
+                    onSubmit={submit} loading={loading} error={error}
                 />
-                <button
-                    onClick={submit} disabled={loading} data-testid="ce-submit"
-                    className="mt-4 w-full bg-primary-k text-white rounded-full py-3 hover:bg-[#091D33] disabled:opacity-60 inline-flex items-center justify-center gap-2"
-                >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    See my estimate
-                </button>
-                {error && <div data-testid="ce-error" className="mt-3 text-sm text-terracotta">{typeof error === "string" ? error : JSON.stringify(error)}</div>}
             </section>
 
             {result && (
@@ -263,251 +256,353 @@ function buildPayload(form) {
 
 /* ---------- form body ---------- */
 
-function SectionHeader({ tone, title, desc }) {
-    const dot = { teal: "bg-[#0E4D52]", clay: "bg-clay", terracotta: "bg-terracotta" }[tone] || "bg-primary-k";
+const WIZARD_STEPS = [
+    { id: "situation", title: "Your Situation", desc: "Where you are in the Support at Home journey — this sets which rules apply to you.", Icon: Compass, accent: "#0E4D52", soft: "#E9F2F1" },
+    { id: "money", title: "Your Money", desc: "Your pension, household and finances shape how much you contribute.", Icon: Wallet, accent: "#A5512B", soft: "#F7ECE3" },
+    { id: "mix", title: "Service Mix", desc: "How your support splits across clinical, independence and everyday care.", Icon: SlidersHorizontal, accent: "#4E6E54", soft: "#ECF1EA" },
+];
+
+// Soft, brand-tinted decorative motif behind each step header — light and premium.
+function StepArt({ accent, variant }) {
     return (
-        <div className="flex items-start gap-2.5">
-            <span className={`mt-1.5 inline-block h-2.5 w-2.5 rounded-full ${dot}`} />
-            <div>
-                <h3 className="font-heading text-lg text-primary-k leading-tight capitalize">{title}</h3>
-                {desc && <p className="text-xs text-muted-k mt-0.5">{desc}</p>}
+        <svg className="pointer-events-none absolute -top-10 -right-6 h-44 w-44 opacity-[0.12]" viewBox="0 0 200 200" aria-hidden="true">
+            {variant === "situation" && (
+                <g fill="none" stroke={accent} strokeWidth="11">
+                    <circle cx="122" cy="82" r="66" />
+                    <circle cx="122" cy="82" r="40" />
+                    <circle cx="122" cy="82" r="15" fill={accent} stroke="none" />
+                </g>
+            )}
+            {variant === "money" && (
+                <g fill="none" stroke={accent} strokeWidth="10">
+                    <ellipse cx="122" cy="48" rx="52" ry="17" />
+                    <ellipse cx="122" cy="82" rx="52" ry="17" />
+                    <ellipse cx="122" cy="116" rx="52" ry="17" />
+                </g>
+            )}
+            {variant === "mix" && (
+                <g>
+                    <circle cx="122" cy="82" r="60" fill="none" stroke={accent} strokeWidth="10" />
+                    <path d="M122 82 L122 22 A60 60 0 0 1 175 110 Z" fill={accent} />
+                </g>
+            )}
+        </svg>
+    );
+}
+
+function WizardStepper({ step, setStep }) {
+    return (
+        <div className="mb-5" data-testid="ce-stepper">
+            <div className="flex items-center">
+                {WIZARD_STEPS.map((s, i) => {
+                    const done = i < step;
+                    const active = i === step;
+                    const Icon = s.Icon;
+                    return (
+                        <React.Fragment key={s.id}>
+                            <button
+                                type="button"
+                                onClick={() => setStep(i)}
+                                data-testid={`ce-step-${s.id}`}
+                                aria-current={active ? "step" : undefined}
+                                className="flex items-center gap-2.5 shrink-0 focus:outline-none group"
+                            >
+                                <span
+                                    className="flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm transition-all duration-300"
+                                    style={{
+                                        backgroundColor: done || active ? s.accent : "#FFFFFF",
+                                        color: done || active ? "#FFFFFF" : "#9A9488",
+                                        border: done || active ? "none" : "1px solid #E5DFD5",
+                                        transform: active ? "scale(1.08)" : "scale(1)",
+                                    }}
+                                >
+                                    {done ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                                </span>
+                                <span className="hidden sm:block text-left leading-tight">
+                                    <span className="block text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-muted-k">Step {i + 1}</span>
+                                    <span className="block text-sm font-semibold" style={{ color: done || active ? s.accent : "#6b6459" }}>{s.title}</span>
+                                </span>
+                            </button>
+                            {i < WIZARD_STEPS.length - 1 && (
+                                <span className="mx-2 sm:mx-3 h-[3px] flex-1 rounded-full" style={{ backgroundColor: "#E9E3D8" }}>
+                                    <span className="block h-full rounded-full transition-all duration-500" style={{ width: done ? "100%" : "0%", backgroundColor: s.accent }} />
+                                </span>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
             </div>
         </div>
     );
 }
 
-function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, showHcpLevel, showClassificationPicker, cscBadge }) {
+function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, showHcpLevel, showClassificationPicker, cscBadge, onSubmit, loading, error }) {
+    const [step, setStep] = useState(0);
+    const meta = WIZARD_STEPS[step];
+    const isLast = step === WIZARD_STEPS.length - 1;
+    const next = () => setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
+    const back = () => setStep((s) => Math.max(s - 1, 0));
     return (
-        <div className="space-y-5">
-            {/* Person name (neutral) */}
-            <div className="bg-surface border border-kindred rounded-2xl p-5">
-                <FieldRow label="Person's name (optional)">
-                    <input
-                        type="text" value={form.person_name} onChange={(e) => set({ person_name: e.target.value })}
-                        placeholder="e.g. Louisa Davids" data-testid="ce-person-name"
-                        className="w-full rounded-md border border-kindred px-3 py-2 focus:outline-none focus:ring-2 ring-primary-k"
-                    />
-                </FieldRow>
-            </div>
-
-            {/* SECTION · Your care situation (teal) */}
-            <div className="rounded-2xl border border-kindred border-l-4 border-l-[#0E4D52] bg-surface p-5 shadow-sm space-y-4" data-testid="ce-section-situation">
-                <SectionHeader tone="teal" title="Your care situation" desc="Where you are in the Support at Home process." />
-
-            {/* Entry path (5 options, replaces the old grandfathered checkbox) */}
-            <FieldRow label="Which best describes your situation?" tone="teal">
-                <div className="space-y-2" data-testid="ce-entry-path">
-                    {ENTRY_PATHS.map((p) => (
-                        <RadioTile
-                            key={p.v}
-                            checked={form.entry_path === p.v}
-                            onClick={() => set({
-                                entry_path: p.v,
-                                assessment_status: p.v === "not_assessed" ? "not_assessed" : form.assessment_status,
-                                hcp_paid_fees: p.v === "hcp_pre_sep_2024" ? form.hcp_paid_fees : null,
-                                hcp_level_when_grandfathered: (p.v === "hcp_pre_sep_2024" || p.v === "hcp_post_sep_pre_nov_2025") ? form.hcp_level_when_grandfathered : null,
-                            })}
-                            label={p.label} sub={p.desc}
-                            testId={`ce-entry-${p.v}`}
-                        />
-                    ))}
-                </div>
-            </FieldRow>
-
-            {/* HCP follow-up: did you pay fees? */}
-            {showHcpFeeQuestion && (
-                <FieldRow label="Did you pay any fees under your Home Care Package?" testId="ce-hcp-fee-followup">
-                    <div className="flex gap-2 flex-wrap">
-                        <PillButton active={form.hcp_paid_fees === false} onClick={() => set({ hcp_paid_fees: false })} testId="ce-hcp-fees-no">No, I never paid fees</PillButton>
-                        <PillButton active={form.hcp_paid_fees === true} onClick={() => set({ hcp_paid_fees: true })} testId="ce-hcp-fees-yes">Yes, I paid the basic daily fee, income-tested fee, or both</PillButton>
+        <div data-testid="ce-wizard">
+            <WizardStepper step={step} setStep={setStep} />
+            <div
+                key={step}
+                className="wayly-fade-up relative overflow-hidden rounded-3xl border shadow-sm p-6 sm:p-8"
+                style={{ borderColor: `${meta.accent}2E`, background: `linear-gradient(135deg, ${meta.soft} 0%, #FBF8F3 62%)` }}
+                data-testid={`ce-step-panel-${meta.id}`}
+            >
+                <StepArt accent={meta.accent} variant={meta.id} />
+                <div className="relative flex items-center gap-3.5">
+                    <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl text-white shadow" style={{ backgroundColor: meta.accent }}>
+                        <meta.Icon className="h-6 w-6" />
+                    </span>
+                    <div>
+                        <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em]" style={{ color: meta.accent }}>Step {step + 1} of {WIZARD_STEPS.length}</div>
+                        <h3 className="font-heading text-2xl sm:text-3xl text-primary-k tracking-tight">{meta.title}</h3>
                     </div>
-                    {form.hcp_paid_fees === false && (
-                        <div className="mt-3 rounded-lg bg-sage/10 border border-sage/25 p-3 text-sm text-primary-k" data-testid="ce-hcp-exempt-hint">
-                            <div className="flex items-start gap-2">
-                                <ShieldCheck className="h-4 w-4 mt-0.5 text-sage" />
-                                <div>You will not pay any Support at Home contribution. The no-worse-off rule guarantees a permanent zero because you paid no HCP fees.</div>
+                </div>
+                <p className="relative mt-2 text-sm text-primary-k/70 max-w-xl leading-relaxed">{meta.desc}</p>
+
+                <div className="relative mt-6 space-y-4">
+                    {step === 0 && (
+                        <>
+                            <FieldRow label="Person's name (optional)">
+                                <input
+                                    type="text" value={form.person_name} onChange={(e) => set({ person_name: e.target.value })}
+                                    placeholder="e.g. Louisa Davids" data-testid="ce-person-name"
+                                    className="w-full rounded-md border border-kindred px-3 py-2 focus:outline-none focus:ring-2 ring-primary-k"
+                                />
+                            </FieldRow>
+                            <FieldRow label="Which best describes your situation?" tone="teal">
+                                <div className="space-y-2" data-testid="ce-entry-path">
+                                    {ENTRY_PATHS.map((p) => (
+                                        <RadioTile
+                                            key={p.v}
+                                            checked={form.entry_path === p.v}
+                                            onClick={() => set({
+                                                entry_path: p.v,
+                                                assessment_status: p.v === "not_assessed" ? "not_assessed" : form.assessment_status,
+                                                hcp_paid_fees: p.v === "hcp_pre_sep_2024" ? form.hcp_paid_fees : null,
+                                                hcp_level_when_grandfathered: (p.v === "hcp_pre_sep_2024" || p.v === "hcp_post_sep_pre_nov_2025") ? form.hcp_level_when_grandfathered : null,
+                                            })}
+                                            label={p.label} sub={p.desc}
+                                            testId={`ce-entry-${p.v}`}
+                                        />
+                                    ))}
+                                </div>
+                            </FieldRow>
+                            {showHcpFeeQuestion && (
+                                <FieldRow label="Did you pay any fees under your Home Care Package?" testId="ce-hcp-fee-followup">
+                                    <div className="flex gap-2 flex-wrap">
+                                        <PillButton active={form.hcp_paid_fees === false} onClick={() => set({ hcp_paid_fees: false })} testId="ce-hcp-fees-no">No, I never paid fees</PillButton>
+                                        <PillButton active={form.hcp_paid_fees === true} onClick={() => set({ hcp_paid_fees: true })} testId="ce-hcp-fees-yes">Yes, I paid the basic daily fee, income-tested fee, or both</PillButton>
+                                    </div>
+                                    {form.hcp_paid_fees === false && (
+                                        <div className="mt-3 rounded-lg bg-sage/10 border border-sage/25 p-3 text-sm text-primary-k" data-testid="ce-hcp-exempt-hint">
+                                            <div className="flex items-start gap-2">
+                                                <ShieldCheck className="h-4 w-4 mt-0.5 text-sage" />
+                                                <div>You will not pay any Support at Home contribution. The no-worse-off rule guarantees a permanent zero because you paid no HCP fees.</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </FieldRow>
+                            )}
+                            {showHcpLevel && (
+                                <FieldRow label="Which Home Care Package level were you on?">
+                                    <select
+                                        value={form.hcp_level_when_grandfathered || ""}
+                                        onChange={(e) => set({ hcp_level_when_grandfathered: e.target.value ? Number(e.target.value) : null })}
+                                        data-testid="ce-hcp-level"
+                                        className="w-full rounded-md border border-kindred px-3 py-2"
+                                    >
+                                        <option value="">Choose your level</option>
+                                        {[1,2,3,4].map((n) => <option key={n} value={n}>{`Level ${n}`}</option>)}
+                                    </select>
+                                </FieldRow>
+                            )}
+                            {form.entry_path !== "not_assessed" && (
+                                <FieldRow label="Do you have a Support at Home classification?">
+                                    <div className="space-y-2" data-testid="ce-assessment-status">
+                                        {ASSESSMENT_OPTIONS.map((a) => (
+                                            <RadioTile
+                                                key={a.v}
+                                                checked={form.assessment_status === a.v}
+                                                onClick={() => set({ assessment_status: a.v })}
+                                                label={a.label}
+                                                testId={`ce-assessment-${a.v}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </FieldRow>
+                            )}
+                            {showClassificationPicker && (
+                                <FieldRow label="Your classification">
+                                    {cscBadge && (
+                                        <div className="mb-2 text-xs text-primary-k bg-surface-2 border border-kindred rounded-lg px-3 py-2 inline-flex items-center gap-2" data-testid="ce-csc-badge">
+                                            <span className="inline-block h-2 w-2 rounded-full bg-[#6d907d]" />
+                                            Based on your CSC run{cscBadge.date ? ` from ${cscBadge.date}` : ""}. You can change it below.
+                                        </div>
+                                    )}
+                                    <select
+                                        value={form.classification} onChange={(e) => set({ classification: e.target.value })}
+                                        data-testid="ce-classification"
+                                        className="w-full rounded-md border border-kindred px-3 py-2"
+                                    >
+                                        {CLASSIFICATION_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                                    </select>
+                                </FieldRow>
+                            )}
+                        </>
+                    )}
+
+                    {step === 1 && (
+                        <>
+                            <FieldRow label="Age Pension status" tone="sage">
+                                <div className="grid sm:grid-cols-2 gap-2" data-testid="ce-pension-status">
+                                    {PENSION_STATUS.map((p) => (
+                                        <RadioTile
+                                            key={p.v}
+                                            checked={form.pension_status === p.v}
+                                            onClick={() => set({ pension_status: p.v })}
+                                            label={p.label}
+                                            testId={`ce-pension-${p.v}`}
+                                            compact
+                                        />
+                                    ))}
+                                </div>
+                            </FieldRow>
+                            <div className="grid sm:grid-cols-2 gap-3" data-testid="ce-household-block">
+                                <FieldRow label="Household" tone="gold">
+                                    <div className="flex gap-2">
+                                        <PillButton active={form.relationship === "single"} onClick={() => set({ relationship: "single" })} testId="ce-relationship-single">Single</PillButton>
+                                        <PillButton active={form.relationship === "couple"} onClick={() => set({ relationship: "couple" })} testId="ce-relationship-couple">Couple</PillButton>
+                                    </div>
+                                </FieldRow>
+                                <FieldRow label="Homeowner?" tone="gold">
+                                    <div className="flex gap-2">
+                                        <PillButton active={form.homeowner === true} onClick={() => set({ homeowner: true })} testId="ce-homeowner-yes">Yes</PillButton>
+                                        <PillButton active={form.homeowner === false} onClick={() => set({ homeowner: false })} testId="ce-homeowner-no">No</PillButton>
+                                    </div>
+                                </FieldRow>
+                            </div>
+                            {showFinancial && (
+                                <div className="rounded-xl border border-kindred bg-surface p-4 space-y-3" data-testid="ce-financial-details">
+                                    <div>
+                                        <div className="text-sm font-medium text-primary-k">Financial details (optional)</div>
+                                        <p className="text-xs text-muted-k mt-1 leading-relaxed">
+                                            {"The exact means-tested rate depends on your assessable income and assets. Leave both blank if you'd rather see a range for now."}
+                                            {constants?.["means_test.income_free_area.individual"] && (
+                                                <> The current income-free area is <strong>${Math.round(constants["means_test.income_free_area.individual"].value).toLocaleString()}</strong> a year for a single person and the assets-free area for a homeowner is <strong>${Math.round(constants["means_test.assets_free_area.individual_homeowner"].value).toLocaleString()}</strong>.</>
+                                            )}
+                                        </p>
+                                    </div>
+                                    <div className="grid sm:grid-cols-2 gap-3">
+                                        <FieldRow label="Your assessable income (excl. pension), $ per year">
+                                            <input
+                                                type="number" min="0" step="1" value={form.income_excluding_pension}
+                                                onChange={(e) => set({ income_excluding_pension: e.target.value })}
+                                                data-testid="ce-income" placeholder="e.g. 19029"
+                                                className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums focus:outline-none focus:ring-2 ring-primary-k"
+                                            />
+                                        </FieldRow>
+                                        <FieldRow label="Assessable assets (not including the family home)">
+                                            <input
+                                                type="number" min="0" step="1" value={form.financial_assets}
+                                                onChange={(e) => set({ financial_assets: e.target.value })}
+                                                data-testid="ce-assets" placeholder="e.g. 10000"
+                                                className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums focus:outline-none focus:ring-2 ring-primary-k"
+                                            />
+                                        </FieldRow>
+                                    </div>
+                                    {form.relationship === "couple" && (
+                                        <div className="grid sm:grid-cols-2 gap-3" data-testid="ce-partner-block">
+                                            <FieldRow label="Your partner's assessable income">
+                                                <input
+                                                    type="number" min="0" step="1" value={form.partner_income}
+                                                    onChange={(e) => set({ partner_income: e.target.value })}
+                                                    data-testid="ce-partner-income"
+                                                    className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums"
+                                                />
+                                            </FieldRow>
+                                            <FieldRow label="Your partner's assessable assets">
+                                                <input
+                                                    type="number" min="0" step="1" value={form.partner_assets}
+                                                    onChange={(e) => set({ partner_assets: e.target.value })}
+                                                    data-testid="ce-partner-assets"
+                                                    className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums"
+                                                />
+                                            </FieldRow>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {step === 2 && (
+                        <div>
+                            <button
+                                type="button" onClick={() => set({ mix_advanced: !form.mix_advanced })}
+                                data-testid="ce-mix-toggle"
+                                className="text-sm font-semibold text-primary-k inline-flex items-center gap-1 hover:text-terracotta transition-colors"
+                            >
+                                Service mix, defaults to 30 / 45 / 25 %
+                                {form.mix_advanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                            </button>
+                            {form.mix_advanced && (
+                                <div className="mt-3 grid sm:grid-cols-3 gap-3" data-testid="ce-mix-inputs">
+                                    {["clinical", "independence", "everyday"].map((k) => (
+                                        <FieldRow key={k} label={`${k.charAt(0).toUpperCase() + k.slice(1)} %`}>
+                                            <input
+                                                type="number" min="0" max="100" value={form.service_mix[k]}
+                                                onChange={(e) => set({ service_mix: { ...form.service_mix, [k]: Number(e.target.value) || 0 } })}
+                                                data-testid={`ce-mix-${k}`}
+                                                className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums"
+                                            />
+                                        </FieldRow>
+                                    ))}
+                                </div>
+                            )}
+                            {form.mix_advanced && (
+                                <div className="text-xs text-muted-k mt-1">Total: {form.service_mix.clinical + form.service_mix.independence + form.service_mix.everyday}%</div>
+                            )}
+                            <div className="mt-4 rounded-xl border border-kindred bg-surface p-4 text-sm text-primary-k/75 leading-relaxed" data-testid="ce-mix-hint">
+                                Most people leave this on the standard split. Open it only if you know the care leans more clinical or everyday. When you&apos;re ready, see the estimate.
                             </div>
                         </div>
                     )}
-                </FieldRow>
-            )}
-
-            {showHcpLevel && (
-                <FieldRow label="Which Home Care Package level were you on?">
-                    <select
-                        value={form.hcp_level_when_grandfathered || ""}
-                        onChange={(e) => set({ hcp_level_when_grandfathered: e.target.value ? Number(e.target.value) : null })}
-                        data-testid="ce-hcp-level"
-                        className="w-full rounded-md border border-kindred px-3 py-2"
-                    >
-                        <option value="">Choose your level</option>
-                        {[1,2,3,4].map((n) => <option key={n} value={n}>{`Level ${n}`}</option>)}
-                    </select>
-                </FieldRow>
-            )}
-
-            {/* Assessment status (only if entry path is not "not_assessed") */}
-            {form.entry_path !== "not_assessed" && (
-                <FieldRow label="Do you have a Support at Home classification?">
-                    <div className="space-y-2" data-testid="ce-assessment-status">
-                        {ASSESSMENT_OPTIONS.map((a) => (
-                            <RadioTile
-                                key={a.v}
-                                checked={form.assessment_status === a.v}
-                                onClick={() => set({ assessment_status: a.v })}
-                                label={a.label}
-                                testId={`ce-assessment-${a.v}`}
-                            />
-                        ))}
-                    </div>
-                </FieldRow>
-            )}
-
-            {/* Classification picker */}
-            {showClassificationPicker && (
-                <FieldRow label="Your classification">
-                    {cscBadge && (
-                        <div className="mb-2 text-xs text-primary-k bg-surface-2 border border-kindred rounded-lg px-3 py-2 inline-flex items-center gap-2" data-testid="ce-csc-badge">
-                            <span className="inline-block h-2 w-2 rounded-full bg-[#6d907d]" />
-                            Based on your CSC run{cscBadge.date ? ` from ${cscBadge.date}` : ""}. You can change it below.
-                        </div>
-                    )}
-                    <select
-                        value={form.classification} onChange={(e) => set({ classification: e.target.value })}
-                        data-testid="ce-classification"
-                        className="w-full rounded-md border border-kindred px-3 py-2"
-                    >
-                        {CLASSIFICATION_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                    </select>
-                </FieldRow>
-            )}
-
-            </div>
-
-            {/* SECTION · Your money (clay) */}
-            <div className="rounded-2xl border border-kindred border-l-4 border-l-clay bg-surface p-5 shadow-sm space-y-4" data-testid="ce-section-money">
-                <SectionHeader tone="clay" title="Your money" desc="Your pension, household and finances set what you contribute." />
-
-            {/* Pension status */}
-            <FieldRow label="Age Pension status" tone="sage">
-                <div className="grid sm:grid-cols-2 gap-2" data-testid="ce-pension-status">
-                    {PENSION_STATUS.map((p) => (
-                        <RadioTile
-                            key={p.v}
-                            checked={form.pension_status === p.v}
-                            onClick={() => set({ pension_status: p.v })}
-                            label={p.label}
-                            testId={`ce-pension-${p.v}`}
-                            compact
-                        />
-                    ))}
                 </div>
-            </FieldRow>
 
-            {/* Household + homeownership */}
-            <div className="grid sm:grid-cols-2 gap-3" data-testid="ce-household-block">
-                <FieldRow label="Household" tone="gold">
-                    <div className="flex gap-2">
-                        <PillButton active={form.relationship === "single"} onClick={() => set({ relationship: "single" })} testId="ce-relationship-single">Single</PillButton>
-                        <PillButton active={form.relationship === "couple"} onClick={() => set({ relationship: "couple" })} testId="ce-relationship-couple">Couple</PillButton>
-                    </div>
-                </FieldRow>
-                <FieldRow label="Homeowner?" tone="gold">
-                    <div className="flex gap-2">
-                        <PillButton active={form.homeowner === true} onClick={() => set({ homeowner: true })} testId="ce-homeowner-yes">Yes</PillButton>
-                        <PillButton active={form.homeowner === false} onClick={() => set({ homeowner: false })} testId="ce-homeowner-no">No</PillButton>
-                    </div>
-                </FieldRow>
-            </div>
-
-            {/* Progressive-disclosure financial section for Part Pension and CSHC */}
-            {showFinancial && (
-                <div className="rounded-xl border border-kindred bg-surface-2/60 p-4 space-y-3" data-testid="ce-financial-details">
-                    <div>
-                        <div className="text-sm font-medium text-primary-k">Financial details (optional)</div>
-                        <p className="text-xs text-muted-k mt-1 leading-relaxed">
-                            {"The exact means-tested rate depends on your assessable income and assets. Leave both blank if you'd rather see a range for now."}
-                            {constants?.["means_test.income_free_area.individual"] && (
-                                <> The current income-free area is <strong>${Math.round(constants["means_test.income_free_area.individual"].value).toLocaleString()}</strong> a year for a single person and the assets-free area for a homeowner is <strong>${Math.round(constants["means_test.assets_free_area.individual_homeowner"].value).toLocaleString()}</strong>.</>
-                            )}
-                        </p>
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                        <FieldRow label="Your assessable income (excl. pension), $ per year">
-                            <input
-                                type="number" min="0" step="1" value={form.income_excluding_pension}
-                                onChange={(e) => set({ income_excluding_pension: e.target.value })}
-                                data-testid="ce-income" placeholder="e.g. 19029"
-                                className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums focus:outline-none focus:ring-2 ring-primary-k"
-                            />
-                        </FieldRow>
-                        <FieldRow label="Assessable assets (not including the family home)">
-                            <input
-                                type="number" min="0" step="1" value={form.financial_assets}
-                                onChange={(e) => set({ financial_assets: e.target.value })}
-                                data-testid="ce-assets" placeholder="e.g. 10000"
-                                className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums focus:outline-none focus:ring-2 ring-primary-k"
-                            />
-                        </FieldRow>
-                    </div>
-                    {form.relationship === "couple" && (
-                        <div className="grid sm:grid-cols-2 gap-3" data-testid="ce-partner-block">
-                            <FieldRow label="Your partner's assessable income">
-                                <input
-                                    type="number" min="0" step="1" value={form.partner_income}
-                                    onChange={(e) => set({ partner_income: e.target.value })}
-                                    data-testid="ce-partner-income"
-                                    className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums"
-                                />
-                            </FieldRow>
-                            <FieldRow label="Your partner's assessable assets">
-                                <input
-                                    type="number" min="0" step="1" value={form.partner_assets}
-                                    onChange={(e) => set({ partner_assets: e.target.value })}
-                                    data-testid="ce-partner-assets"
-                                    className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums"
-                                />
-                            </FieldRow>
-                        </div>
+                <div className="relative mt-7 flex items-center justify-between gap-3">
+                    {step > 0 ? (
+                        <button
+                            type="button" onClick={back} data-testid="ce-back"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-5 py-2.5 text-sm font-medium text-primary-k hover:bg-surface-2 transition-colors"
+                        >
+                            <ArrowLeft className="h-4 w-4" /> Back
+                        </button>
+                    ) : <span />}
+                    {!isLast ? (
+                        <button
+                            type="button" onClick={next} data-testid="ce-next"
+                            className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-px"
+                            style={{ backgroundColor: meta.accent }}
+                        >
+                            Continue <ArrowRight className="h-4 w-4" />
+                        </button>
+                    ) : (
+                        <button
+                            type="button" onClick={onSubmit} disabled={loading} data-testid="ce-submit"
+                            className="inline-flex items-center gap-2 rounded-full px-7 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 transition-transform hover:-translate-y-px"
+                            style={{ backgroundColor: "#0E4D52" }}
+                        >
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                            See my estimate
+                        </button>
                     )}
                 </div>
-            )}
-
             </div>
-
-            {/* SECTION · Service mix (terracotta / red) */}
-            <div className="rounded-2xl border border-kindred border-l-4 border-l-terracotta bg-surface p-5 shadow-sm space-y-3" data-testid="ce-section-mix">
-                <SectionHeader tone="terracotta" title="Service mix" desc="Fine-tune the split across clinical, independence and everyday services." />
-
-            {/* Service mix advanced toggle */}
-            <div>
-                <button
-                    type="button" onClick={() => set({ mix_advanced: !form.mix_advanced })}
-                    data-testid="ce-mix-toggle"
-                    className="text-sm font-semibold text-primary-k inline-flex items-center gap-1 hover:text-terracotta transition-colors"
-                >
-                    Service mix, defaults to 30 / 45 / 25 %
-                    {form.mix_advanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                </button>
-                {form.mix_advanced && (
-                    <div className="mt-3 grid sm:grid-cols-3 gap-3" data-testid="ce-mix-inputs">
-                        {["clinical", "independence", "everyday"].map((k) => (
-                            <FieldRow key={k} label={`${k.charAt(0).toUpperCase() + k.slice(1)} %`}>
-                                <input
-                                    type="number" min="0" max="100" value={form.service_mix[k]}
-                                    onChange={(e) => set({ service_mix: { ...form.service_mix, [k]: Number(e.target.value) || 0 } })}
-                                    data-testid={`ce-mix-${k}`}
-                                    className="w-full rounded-md border border-kindred px-3 py-2 tabular-nums"
-                                />
-                            </FieldRow>
-                        ))}
-                    </div>
-                )}
-                {form.mix_advanced && (
-                    <div className="text-xs text-muted-k mt-1">Total: {form.service_mix.clinical + form.service_mix.independence + form.service_mix.everyday}%</div>
-                )}
-            </div>
-            </div>
+            {error && <div data-testid="ce-error" className="mt-3 text-sm text-terracotta">{typeof error === "string" ? error : JSON.stringify(error)}</div>}
         </div>
     );
 }
@@ -1229,11 +1324,11 @@ function PdfDownloadButton({ form, personName }) {
 /* ---------- primitives ---------- */
 
 const CE_TONES = {
-    plain: "bg-surface-2/60 border-kindred",
-    teal: "bg-surface-2/60 border-kindred border-l-[3px] border-l-[#0E4D52]/70",
-    sage: "bg-surface-2/60 border-kindred border-l-[3px] border-l-sage/70",
-    gold: "bg-surface-2/60 border-kindred border-l-[3px] border-l-gold",
-    clay: "bg-surface-2/60 border-kindred border-l-[3px] border-l-clay/70",
+    plain: "bg-surface border-kindred",
+    teal: "bg-surface border-kindred border-l-[3px] border-l-[#0E4D52]/70",
+    sage: "bg-surface border-kindred border-l-[3px] border-l-sage/70",
+    gold: "bg-surface border-kindred border-l-[3px] border-l-gold",
+    clay: "bg-surface border-kindred border-l-[3px] border-l-clay/70",
 };
 
 function FieldRow({ label, children, testId, tone = "plain" }) {

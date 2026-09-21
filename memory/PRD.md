@@ -7639,3 +7639,22 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 **Verified:** web skeleton appears during load; mobile dashboard renders fully with no fade / no blank.
 
+
+
+---
+
+## Contribution Estimator → premium guided wizard (18 Sep 2026)
+
+**Ask:** The Estimator felt like one long form; user wanted it redesigned into an interactive, premium, colourful guided experience with light graphics — and wants light illustrations rolled out across all tools/pages over time.
+
+**Change (`frontend/src/pages/tools/ContributionEstimator.jsx`):** Converted the single-scroll `FormBody` into a 3-step wizard (form logic/fields unchanged, just re-grouped):
+- **WIZARD_STEPS** meta (id/title/desc/Icon/accent/soft) — Step 1 *Your Situation* (teal, Compass), Step 2 *Your Money* (clay, Wallet), Step 3 *Service Mix* (sage, SlidersHorizontal).
+- **WizardStepper**: colourful progress header — icon badges (active/complete states, Check on done), step labels, animated fill bars between steps; steps are clickable to jump.
+- Each step is its own **soft brand-tinted gradient panel** (accent→cream) with a decorative low-opacity **SVG motif** (`StepArt`: concentric rings / stacked coins / pie), a large accent icon badge, "Step X of 3" eyebrow, title + description. Panel re-mounts per step with a `wayly-fade-up` entrance.
+- Fields render as clean white cards (`CE_TONES` bg switched to `bg-surface` with thin colored left-accent) so they're crisp on the tinted panels.
+- **Back / Continue** nav; final step shows **See my estimate** (submit moved into the wizard). Results screen unchanged.
+
+**Verified (self-test, logged in as cathy@example.com):** full flow login → step 1 → Continue → step 2 → Continue → step 3 → See my estimate → results render ($/week, who-pays-what, rates). Stepper progress + step transitions work. Not run through the testing agent.
+
+**Follow-up backlog:** roll out light SVG illustrations/graphics across other tools + marketing pages for a consistent premium feel (user requested product-wide).
+
