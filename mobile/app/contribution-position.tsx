@@ -284,7 +284,7 @@ export default function ContributionPositionScreen() {
 
           {/* Reconciliation */}
           <Card testID="ce3-reconciliation-card">
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: spacing.sm }}>
               <T variant="label">RECONCILIATION</T>
               <Button label="Reconcile this month" testID="ce3-reconcile-btn" variant="outline" onPress={reconcileThisMonth} loading={reconciling} />
             </View>

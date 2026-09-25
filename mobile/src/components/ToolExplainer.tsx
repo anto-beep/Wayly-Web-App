@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { ChevronRight, AlertTriangle } from "lucide-react-native";
+import { ChevronRight, ChevronDown, AlertTriangle } from "lucide-react-native";
 
 import { Card, T } from "@/src/components/ui";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -20,19 +20,17 @@ export default function ToolExplainer({ toolKey }: { toolKey: string }) {
   return (
     <View style={{ gap: spacing.lg, marginTop: spacing.md }} testID={`tool-explainer-${toolKey}`}>
       {/* What This Tool Does */}
-      <View testID={`tool-what-${toolKey}`}>
-        <T variant="h2" style={{ color: colors.primary }}>What This Tool Does</T>
-        <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+      <CollapsibleSection title="What This Tool Does" testID={`tool-what-${toolKey}`}>
+        <View style={{ gap: spacing.sm }}>
           {c.whatItDoes.map((p, i) => (
             <T key={i} variant="body" style={{ color: colors.muted, lineHeight: 24 }}>{p}</T>
           ))}
         </View>
-      </View>
+      </CollapsibleSection>
 
       {/* How It Works */}
-      <View testID={`tool-how-${toolKey}`}>
-        <T variant="h2" style={{ color: colors.primary }}>How It Works</T>
-        <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+      <CollapsibleSection title="How It Works" testID={`tool-how-${toolKey}`}>
+        <View style={{ gap: spacing.sm }}>
           {c.howItWorks.map((step, i) => (
             <Card key={i} style={{ padding: spacing.md }}>
               <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "flex-start" }}>
@@ -47,7 +45,7 @@ export default function ToolExplainer({ toolKey }: { toolKey: string }) {
             </Card>
           ))}
         </View>
-      </View>
+      </CollapsibleSection>
 
       {/* AI accuracy disclaimer */}
       <View testID={`tool-disclaimer-${toolKey}`} style={[styles.disclaimer, { backgroundColor: colors.goldSoft }]}>
@@ -82,18 +80,35 @@ export default function ToolExplainer({ toolKey }: { toolKey: string }) {
       </Card>
 
       {/* Common Questions */}
-      <View testID={`tool-faq-${toolKey}`}>
-        <T variant="h2" style={{ color: colors.primary }}>Common Questions</T>
-        <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+      <CollapsibleSection title="Common Questions" testID={`tool-faq-${toolKey}`}>
+        <View style={{ gap: spacing.sm }}>
           {c.faqs.map((f, i) => <FaqItem key={i} q={f.q} a={f.a} testID={`tool-faq-${toolKey}-${i}`} />)}
         </View>
-      </View>
+      </CollapsibleSection>
 
       {/* Closing CTA */}
       <View testID={`tool-cta-${toolKey}`} style={[styles.cta, { backgroundColor: colors.primary }]}>
         <T variant="h3" style={{ color: "#fff" }}>{c.ctaHeading}</T>
         <T variant="small" style={{ color: "rgba(255,255,255,0.9)", marginTop: 4 }}>{c.ctaBody}</T>
       </View>
+    </View>
+  );
+}
+
+function CollapsibleSection({ title, testID, children }: { title: string; testID: string; children: React.ReactNode }) {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState(false);
+  return (
+    <View testID={testID}>
+      <Pressable
+        testID={`${testID}-toggle`}
+        onPress={() => setOpen((o) => !o)}
+        style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}
+      >
+        <T variant="h2" style={{ color: colors.primary, flex: 1 }}>{title}</T>
+        <ChevronDown size={22} color={colors.muted} style={{ transform: [{ rotate: open ? "180deg" : "0deg" }] }} />
+      </Pressable>
+      {open ? <View style={{ marginTop: spacing.sm }}>{children}</View> : null}
     </View>
   );
 }

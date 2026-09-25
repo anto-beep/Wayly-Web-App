@@ -60,7 +60,7 @@ function providerLabel(pr: any): string {
 
 // Budget-used gauge ring (SVG) — mirrors web ParticipantProfile FinancialCard.
 function BudgetGauge({ pct, danger }: { pct: number; danger: boolean }) {
-  const size = 128, stroke = 12;
+  const size = 112, stroke = 11;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const p = Math.max(0, Math.min(100, pct));
@@ -80,15 +80,14 @@ function BudgetGauge({ pct, danger }: { pct: number; danger: boolean }) {
   );
 }
 
-// Labelled comparison bar (white-on-teal).
+// Labelled comparison bar (white-on-teal). Label sits on its own line above the
+// value so it always has the full column width (no char-wrapping sliver).
 function SpendBar({ label, value, pct, tone }: { label: string; value: string; pct: number; tone: string }) {
   return (
     <View>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <T style={{ fontSize: 11, color: "rgba(255,255,255,0.82)" }}>{label}</T>
-        <T style={{ fontSize: 12, color: "#fff", fontFamily: fonts.bodySemi }}>{value}</T>
-      </View>
-      <View style={{ height: 8, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.15)", marginTop: 4, overflow: "hidden" }}>
+      <T numberOfLines={1} style={{ fontSize: 11, color: "rgba(255,255,255,0.82)" }}>{label}</T>
+      <T style={{ fontSize: 15, color: "#fff", fontFamily: fonts.bodySemi, marginTop: 1 }}>{value}</T>
+      <View style={{ height: 8, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.15)", marginTop: 5, overflow: "hidden" }}>
         <View style={{ height: "100%", width: `${Math.max(0, Math.min(100, pct))}%`, backgroundColor: tone, borderRadius: 999 }} />
       </View>
     </View>
@@ -147,12 +146,12 @@ export default function ParticipantProfileScreen() {
 
           {/* Financial position — gauge + spend bars (mirrors web) */}
           <View testID="pp-financial-position" style={{ borderRadius: radius.lg, padding: spacing.lg, backgroundColor: colors.primary }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: spacing.sm }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1, minWidth: 0 }}>
                 <DollarSign size={18} color="rgba(255,255,255,0.85)" />
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: "#fff" }}>Financial Position</T>
+                <T numberOfLines={1} style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: "#fff", flexShrink: 1 }}>Financial Position</T>
               </View>
-              <Pressable testID="pp-see-contribution" onPress={() => router.push("/contribution-position")} hitSlop={8}>
+              <Pressable testID="pp-see-contribution" onPress={() => router.push("/contribution-position")} hitSlop={8} style={{ flexShrink: 0 }}>
                 <T variant="small" style={{ color: "rgba(255,255,255,0.85)" }}>See Contribution Position →</T>
               </Pressable>
             </View>
@@ -199,13 +198,13 @@ export default function ParticipantProfileScreen() {
 
           {/* Open follow-ups */}
           <Card testID="pp-follow-ups" style={{ backgroundColor: colors.goldSoft }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: spacing.sm }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1, minWidth: 0 }}>
                 <AlertCircle size={16} color={colors.primary} />
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Open Follow-Ups</T>
+                <T numberOfLines={1} style={{ fontFamily: fonts.bodySemi, fontSize: 16, flexShrink: 1 }}>Open Follow-Ups</T>
                 <Badge label={String(data.open_cases_total || 0)} tone="neutral" />
               </View>
-              <Pressable onPress={() => router.push("/cases")}><T variant="small" style={{ color: colors.primary }}>View all →</T></Pressable>
+              <Pressable onPress={() => router.push("/cases")} style={{ flexShrink: 0 }}><T variant="small" style={{ color: colors.primary }}>View all →</T></Pressable>
             </View>
             {(data.open_cases || []).length === 0 ? (
               <T variant="small" style={{ marginTop: spacing.sm }}>No open follow-ups. Everything is up to date.</T>
@@ -226,19 +225,19 @@ export default function ParticipantProfileScreen() {
 
           {/* Household members */}
           <Card testID="pp-household">
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: spacing.sm }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1, minWidth: 0 }}>
                 <Users size={16} color={colors.primary} />
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Household Members</T>
+                <T numberOfLines={1} style={{ fontFamily: fonts.bodySemi, fontSize: 16, flexShrink: 1 }}>Household Members</T>
               </View>
-              <Pressable onPress={() => router.push("/family-members")}><T variant="small" style={{ color: colors.primary }}>Manage access →</T></Pressable>
+              <Pressable onPress={() => router.push("/family-members")} style={{ flexShrink: 0 }}><T variant="small" style={{ color: colors.primary }}>Manage access →</T></Pressable>
             </View>
             <View style={{ marginTop: spacing.sm, gap: 6 }}>
               {(data.household || []).map((m, i) => (
-                <View key={m.user_id || i} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>{m.name || m.email}</T>
-                  <T variant="small">{m.role}</T>
-                  {m.email ? <T variant="small" style={{ color: colors.muted }}>{m.email}</T> : null}
+                <View key={m.user_id || i} style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14, flexShrink: 0 }}>{m.name || m.email}</T>
+                  <T variant="small" style={{ flexShrink: 0 }}>{m.role}</T>
+                  {m.email ? <T variant="small" numberOfLines={1} style={{ color: colors.muted, flexShrink: 1, minWidth: 0 }}>{m.email}</T> : null}
                 </View>
               ))}
             </View>

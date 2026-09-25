@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   ClipboardEdit,
   ClipboardList,
-  Compass,
   FilePenLine,
   FileBarChart,
   FileText,
@@ -84,7 +83,6 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "journeys",
     label: "Guided Journeys",
     items: [
-      { label: "Guided Journeys", route: "/journeys", icon: Compass, implemented: true },
       { label: "CHSP Tools", route: "/chsp-tools", icon: HeartPulse, implemented: true },
       { label: "AT & HM Projects", route: "/athm", icon: Wrench, implemented: true },
       { label: "Short-Term Pathways", route: "/short-term-pathways", icon: HeartPulse, implemented: true },

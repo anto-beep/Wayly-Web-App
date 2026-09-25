@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { AlertCircle, ChevronRight, Receipt, Search, Upload, X } from "lucide-react-native";
 
@@ -7,6 +7,7 @@ import { AppHeader, Badge, Button, Loading, StatePanel, T } from "@/src/componen
 import { PageIntro } from "@/src/components/PageIntro";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { OverchargeAlerts } from "@/src/components/invoices/OverchargeAlerts";
+import HScrollFade from "@/src/components/HScrollFade";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -144,7 +145,7 @@ export default function InvoicesScreen() {
               <Pressable testID="invoices-search-clear" onPress={() => setSearch("")} hitSlop={8}><X size={16} color={colors.muted} /></Pressable>
             ) : null}
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingVertical: 2 }}>
+          <HScrollFade fadeColor={colors.bg} contentContainerStyle={{ gap: spacing.sm, paddingVertical: 2, paddingRight: 4 }}>
             {STATUS_CHIPS.map((c) => {
               const on = statusFilter === c.value;
               return (
@@ -171,7 +172,7 @@ export default function InvoicesScreen() {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </HScrollFade>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <T variant="small" style={{ color: colors.muted }}>{filtered.length === items.length ? `${items.length} shown` : `${filtered.length} of ${items.length} shown`}</T>
             {hasFilter ? (

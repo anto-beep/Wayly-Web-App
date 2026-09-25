@@ -1,0 +1,31 @@
+{
+  "summary": "Mobile parity/polish verification for iteration_350: ToolExplainer collapsible sections (default collapsed), removal of Guided Journeys nav item, Short-Term Pathways tool flow, four flex/wrap layout fixes at 320px, and HScrollFade chip rows on /invoices, /timeline, /budget-scenarios. Tested on Expo web preview as cathy@example.com at 390px and 320px. ALL 5 REQUESTED FEATURES VERIFIED PASSING. No regressions detected.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/invoices status/provider chip filter", "issues": ["Clicking the 'Issues' status chip (invoices-status-issues) did not reduce the invoice row count (39 -> 39) in Cathy's seed data. Chip is clickable and does not throw, but either every seeded invoice qualifies as an 'issue' or the filter predicate is a no-op. NOT a HScrollFade regression (the fade wrapper is orthogonal) — flagging for the main agent to confirm expected seed behaviour. 'All'/'All clear' were not exercised in this run."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "OPTIONAL: Confirm /invoices 'Issues' chip is expected to leave the list unchanged when every seeded invoice already has issues on cathy@example.com (or add a seed invoice without issues so the filter can be visually verified). Non-blocking."
+  ],
+  "critical_code_review_comments": [
+    "ToolExplainer.CollapsibleSection uses local useState per section — this is fine, but note the entire tool page re-renders on each toggle because ChevronDown rotates via inline transform. Acceptable at this scale but consider React.memo on children if a page has many sections."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "100% (5/5 requested features)"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan, access_state=active)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iteration_350 verified: (1) ToolExplainer on /tool/budget-calculator, /tool/provider-price-checker, /tool/classification-self-check, /tool/statement-decoder — What/How/FAQ sections all COLLAPSED BY DEFAULT (measured container h=32px collapsed, 512–584px expanded), tapping each toggle testID expands, second tap collapses back to 32px. (2) Drawer under 'GUIDED JOURNEYS' group NO LONGER shows a 'Guided Journeys' item (gj_item_count=0); group + all 9 sibling items (CHSP Tools, AT & HM Projects, Short-Term Pathways, Switch Provider, Handover Pack, Carer Self-Check, SAH Classification Prep, Ask Wayly, Complaints) present with drawer-item-* testIDs. /journeys route resolves to Expo 'Unmatched Route' page. (3) /short-term-pathways: stp-situation-recovering and stp-situation-end_of_life paths both submit successfully, stp-result renders with respective stp-card-restorative_care / stp-card-end_of_life, stp-draft-letter creates a real letter and navigates to /letters/{uuid}, stp-reset present. (4) 320px layout fixes ALL PASS: budget-calc price labels ('$11,010/yr'..'$80,137/yr') render at w=89 h=16 (no char-wrap); /contribution-position ce3-reconcile-btn wraps below RECONCILIATION title (btn.y=1450 > title.y=1424, btn.right=259 <= 320, no clip); /participant/{id} 'Spent this quarter' legend w=88 h=14 (no char-wrap); /invoice/{id} 'For your info' badge w=40 h=17 (no char-wrap). (5) HScrollFade chip rows present on /invoices (invoices-filter-bar), /timeline (timeline-filters), /budget-scenarios; timeline Statements filter reduced results from 200 → 92 confirming the underlying scroll/press wiring is intact. Only open observation: /invoices 'Issues' chip did not shrink 39-row list — likely seed-data behaviour, not a fade regression.",
+  "rca of the issue": "All prior iteration_349 defects appear fixed by: (a) BudgetCalculatorTool.tsx classCard minWidth+numberOfLines on price, (b) contribution-position.tsx flexWrap+gap on the reconciliation header row (button now wraps to its own row at 320px), (c) participant/[id].tsx SpendBar restructure + header flexShrink and InsightGraphics.tsx smaller donut + LegendRow numberOfLines/flexShrink, (d) invoice detail 'For your info' badge now single-line at h=17. ToolExplainer default-collapsed achieved by useState(false) on each CollapsibleSection. Guided Journeys nav item removed from /app/mobile/src/config/navGroups.ts and /app/mobile/app/journeys.tsx deleted."
+}

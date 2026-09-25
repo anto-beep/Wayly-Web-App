@@ -14,6 +14,7 @@ import { GitCompare, Loader2, Minus, Plus, Save, SlidersHorizontal, Trash2, Tren
 import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
+import HScrollFade from "@/src/components/HScrollFade";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -278,7 +279,7 @@ export default function BudgetScenariosScreen() {
                 <View style={{ marginTop: spacing.md, gap: spacing.lg }}>
                   <View>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Classification level</T>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 8 }}>
+                    <HScrollFade fadeColor={colors.surface} contentContainerStyle={{ gap: 8, paddingVertical: 8, paddingRight: 4 }}>
                       {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => {
                         const on = cls === n;
                         return (
@@ -290,7 +291,7 @@ export default function BudgetScenariosScreen() {
                           </Pressable>
                         );
                       })}
-                    </ScrollView>
+                    </HScrollFade>
                   </View>
 
                   <Stepper

@@ -8,6 +8,7 @@ import {
 } from "lucide-react-native";
 
 import { AppHeader, Card, Loading, StatePanel, T } from "@/src/components/ui";
+import HScrollFade from "@/src/components/HScrollFade";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -165,9 +166,8 @@ export default function TimelineScreen() {
               </Pressable>
             ) : null}
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
+          <HScrollFade
+            fadeColor={colors.bg}
             contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }}
             testID="timeline-filters"
           >
@@ -184,7 +184,7 @@ export default function TimelineScreen() {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </HScrollFade>
         </View>
       ) : null}
 

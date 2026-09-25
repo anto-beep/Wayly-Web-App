@@ -7741,3 +7741,27 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 - Other `/app/*` deep-links on tool pages are already gated behind `useToolAccess() === "allowed"` (paid/trial); anonymous users hit the ToolGate and never reach them.
 - Verified with screenshots: anonymous → button hidden; logged-in (cathy, family) → button shown. Mobile has no anonymous public tool pages, so no parity gap.
 
+
+
+---
+
+## Mobile parity polish — 25 Sep 2026 (iteration_350, all PASS)
+
+### Collapsible tool-explainer sections (user request) — DONE & verified
+- `mobile/src/components/ToolExplainer.tsx`: "What This Tool Does", "How It Works", and "Common Questions" are now COLLAPSED BY DEFAULT via a new local `CollapsibleSection` (tappable header + rotating ChevronDown). Toggles: `tool-what-<slug>-toggle`, `tool-how-<slug>-toggle`, `tool-faq-<slug>-toggle`. AI-disclaimer / What You'll Need / What You'll Get / CTA remain always-visible.
+
+### Removed mobile-only "Guided Journeys" nav item (user request) — DONE & verified
+- `mobile/src/config/navGroups.ts`: dropped the self-referential `{ label:"Guided Journeys", route:"/journeys" }` item (and the now-unused `Compass` import) from the Guided Journeys group so mobile matches web. Deleted the orphaned `mobile/app/journeys.tsx` onboarding screen. Group + 9 sibling items intact; `/journeys` now resolves to Unmatched Route.
+
+### iteration_349 layout audit close-out — verified at 320px & 390px
+- Budget-calc Class grid (`BudgetCalculatorTool.tsx`, classCard minWidth:92 + numberOfLines on price) — no char-wrap.
+- `contribution-position.tsx` reconciliation header (flexWrap+gap) — `ce3-reconcile-btn` wraps below title, no clip.
+- `participant/[id].tsx` (SpendBar label stacked above value, header flexShrink) — legend no char-wrap.
+- `InsightGraphics.tsx` (Donut 132→112, LegendRow numberOfLines/flexShrink/minWidth) — invoice "For your info" + statement legends no char-wrap.
+- NOTE: Short-Term Pathways was already fully implemented on mobile (`src/components/tools/ShortTermPathways.tsx`, route `/short-term-pathways`) and reachable from the Guided Journeys drawer group — matching web (STP lives under the Guided Journeys sidebar, NOT the AI Tools catalog). iter349's "parity gap" was stale; no rebuild needed. Draft-a-letter (stp-draft-letter) verified end-to-end.
+
+### Horizontal chip-row fade affordance — DONE & verified
+- New `mobile/src/components/HScrollFade.tsx` (expo-linear-gradient edge fades that show only on the side with hidden content). Wired into `/invoices`, `/timeline` (timeline-filters), and `/budget-scenarios` classification chips. Filters remain functional (verified timeline Statements 200→92).
+
+### Known non-blocking observation
+- `/invoices` "Issues" status chip did not reduce cathy's 39-row seed list — likely all seeded invoices qualify as issues (seed-data artifact, not a HScrollFade regression). Left as-is.

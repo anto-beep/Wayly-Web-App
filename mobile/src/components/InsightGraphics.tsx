@@ -25,7 +25,7 @@ function aud0(n: any): string {
 
 type Seg = { value: number; color: string };
 
-function Donut({ segments, size = 132, stroke = 22, children }: { segments: Seg[]; size?: number; stroke?: number; children?: React.ReactNode }) {
+function Donut({ segments, size = 112, stroke = 20, children }: { segments: Seg[]; size?: number; stroke?: number; children?: React.ReactNode }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const total = segments.reduce((s, x) => s + (x.value > 0 ? x.value : 0), 0) || 1;
@@ -65,11 +65,11 @@ function LegendRow({ color, label, value, onPress, chevron }: { color: string; l
   const Wrap: any = onPress ? Pressable : View;
   return (
     <Wrap onPress={onPress} style={styles.legendRow}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-        <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color }} />
-        <T style={{ fontFamily: fonts.body, fontSize: 13, color: "#fff" }}>{label}</T>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+        <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color, flexShrink: 0 }} />
+        <T numberOfLines={1} style={{ fontFamily: fonts.body, fontSize: 13, color: "#fff", flexShrink: 1 }}>{label}</T>
       </View>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 0 }}>
         <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>{value}</T>
         {chevron ? <ChevronRight size={14} color="rgba(255,255,255,0.7)" /> : null}
       </View>

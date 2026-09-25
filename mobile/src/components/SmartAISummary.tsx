@@ -95,8 +95,8 @@ export function SmartAISummary({
           <Sparkles size={18} color="#fff" />
         </View>
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.sm }}>
-            <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, flexWrap: "wrap" }}>
+            <View style={{ flexShrink: 1, minWidth: 0 }}>
               {eyebrow ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: "rgba(255,255,255,0.7)" }}>{eyebrow}</T> : null}
               <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: "#fff" }}>{title}</T>
             </View>
@@ -149,6 +149,6 @@ export default SmartAISummary;
 const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, borderWidth: 1, borderColor: "rgba(255,255,255,0.15)", borderLeftWidth: 4, borderLeftColor: "#F0B267", backgroundColor: "#0E4D52", padding: spacing.lg },
   iconWrap: { width: 38, height: 38, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.15)" },
-  refreshBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
+  refreshBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
   alert: { flexDirection: "row", gap: 8, borderLeftWidth: 3, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 9 },
 });

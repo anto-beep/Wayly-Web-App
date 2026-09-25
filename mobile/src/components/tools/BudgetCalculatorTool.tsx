@@ -67,7 +67,7 @@ export default function BudgetCalculatorTool() {
                 return (
                   <Pressable key={c.v} testID={`bc-class-${c.v}`} onPress={() => setClassification(c.v)} style={[styles.classCard, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.sageSoft : colors.surface }]}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }}>Class {c.v}</T>
-                    <T style={{ fontFamily: fonts.mono, fontSize: 12, color: colors.muted, marginTop: 2 }}>{moneyWhole(c.annual)}/yr</T>
+                    <T numberOfLines={1} style={{ fontFamily: fonts.mono, fontSize: 12, color: colors.muted, marginTop: 2 }}>{moneyWhole(c.annual)}/yr</T>
                   </Pressable>
                 );
               })}
@@ -207,7 +207,7 @@ function ResultStat({ label, value, colors }: any) {
 
 const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm },
-  classCard: { flexBasis: "22%", flexGrow: 1, borderWidth: 1.5, borderRadius: radius.md, padding: spacing.sm },
+  classCard: { flexBasis: "22%", flexGrow: 1, minWidth: 92, borderWidth: 1.5, borderRadius: radius.md, padding: spacing.sm },
   input: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, minHeight: 46, fontFamily: fonts.body, fontSize: 15 },
   gfBox: { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.md },
   suppRow: { flexDirection: "row", gap: 10, borderWidth: 1.5, borderRadius: radius.md, padding: spacing.md, alignItems: "flex-start" },

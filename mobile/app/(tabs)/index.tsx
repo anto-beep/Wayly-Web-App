@@ -235,7 +235,7 @@ export default function Dashboard() {
                     <View style={[styles.detailIcon, { backgroundColor: colors.goldSoft }]}>
                       <TrendingUp size={20} color={colors.gold} />
                     </View>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
                       <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text }}>Budget detail, insights and history</T>
                       <T variant="small" numberOfLines={2} style={{ marginTop: 2 }}>Spending streams, pathways, insights and your lifetime cap</T>
                     </View>
@@ -337,12 +337,12 @@ export default function Dashboard() {
                   <View style={[styles.detailIcon, { backgroundColor: "rgba(255,255,255,0.16)" }]}>
                     <AlertTriangle size={20} color="#fff" />
                   </View>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
                     <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: "#fff" }}>Things To Know</T>
                     <T variant="small" numberOfLines={2} style={{ marginTop: 2, color: "rgba(255,255,255,0.8)" }}>Based on your latest statement and invoice</T>
                   </View>
                   {ttkCount > 0 ? (
-                    <View testID="things-to-know-count" style={{ backgroundColor: "#fff", borderRadius: radius.pill, minWidth: 28, height: 28, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" }}>
+                    <View testID="things-to-know-count" style={{ flexShrink: 0, backgroundColor: "#fff", borderRadius: radius.pill, minWidth: 28, height: 28, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" }}>
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.terracotta }}>{ttkCount > 99 ? "99+" : ttkCount}</T>
                     </View>
                   ) : null}
@@ -608,8 +608,8 @@ const styles = StyleSheet.create({
   headerBtnOutline: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.pill, borderWidth: 2 },
   lockIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   detailToggle: { flexDirection: "row", alignItems: "center", gap: spacing.md, borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
-  detailIcon: { width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
-  detailBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 9 },
+  detailIcon: { flexShrink: 0, width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  detailBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 9 },
   statusPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
   note: { flexDirection: "row", gap: spacing.sm, alignItems: "center", borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
   sourceBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },

@@ -1,0 +1,48 @@
+{
+  "summary": "Mobile visual/layout parity audit at 320px and 390px across 32 logged-in screens (23 top-level + 5 detail + 9 AI tools) as cathy@example.com. Ran DOM-level scans for (a) horizontal document overflow, (b) elements extending past viewport OUTSIDE horizontal-scroll containers, and (c) character-wrapped headings/labels (narrow width, tall height, >6 chars). Fixed Dashboard + participant screen header rows verified clean at both widths. FIVE real defects found across 4 screens plus ONE parity gap (mobile tool page missing). All other screens (dashboard, ai-tools, statements, more, ask, family, settings, invoices list, letters, correspondence, care-plans, participants, documents, reports, timeline list body, cases, key-contacts, profile, plan-billing, usage, support, statement-detail, and the 8 implemented AI tools) render cleanly at 320 and 390 with no document overflow, no char-wrap, no title/action collisions.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "BudgetCalculator classification grid", "issue": "HIGH — At 320px viewport the Class 1..Class 8 grid renders 4 cards per row. The price labels ('$11,010/yr' through '$80,137/yr') are compressed into ~32px columns and character-wrap into 48px tall stacks (each digit/glyph on its own line). Grid needs to reflow to 2-columns (or 1) below ~360px. Renders cleanly at 390. Screen: /tool/budget-calculator", "testID": "n/a (Class cards)", "priority": "HIGH"},
+        {"component": "ContributionPosition Reconciliation row", "issue": "HIGH — 'Reconcile this month' pill (testID ce3-reconcile-btn, 210px wide) sits in a title+action row that at 320px is pushed with x=109.6 → right edge=319.6px, visually clipped against the right screen edge and colliding with the RECONCILIATION heading on the left (title truncated to 'RECONCILIATIO'). Header row is not flex-safe (missing flexWrap/gap with flexShrink:0 on the action). Screen: /contribution-position", "testID": "ce3-reconcile-btn", "priority": "HIGH"},
+        {"component": "Participant profile — Financial Position legend", "issue": "MED — At 320px the legend label 'Spent this quarter' char-wraps into a ~36px wide × 42px tall block (each word on multiple lines). Chart legend row needs more horizontal budget or a smaller donut. Screen: /participant/{id}", "testID": "n/a", "priority": "MEDIUM"},
+        {"component": "Invoice detail — 'For your info' badge", "issue": "MED — At 320px the 'For your info' pill/badge char-wraps into a 25px×51px block. Badge width is capped and text doesn't shrink. Screen: /invoice/{id}", "testID": "n/a", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/invoices, /timeline, /budget-scenarios filter chip rows", "issues": ["Horizontal ScrollView pill rows extend well past the viewport at 320/390 (last chip clipped at right edge with no fade/scroll affordance). Document itself does not overflow — content IS scrollable — but users cannot tell there are more filters. Add a right-edge fade mask or overflow indicator. Non-blocking."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "AI Tool: Short-Term Pathways", "platform": "mobile", "issue": "Route /tool/short-term-pathways is NOT registered in mobile /app/mobile/app/tool/[slug].tsx. Navigating to it renders the fallback header 'Tool' and literal body text 'Unknown tool.' (see /app/mobile/app/tool/[slug].tsx:334). Web has a full ShortTermPathways tool page at /app/short-term-pathways (see /app/frontend/src/pages/tools/ShortTermPathways.jsx and /app/frontend/src/App.js:563). Note: this tool is also NOT listed in the mobile /ai-tools catalog (/app/mobile/app/(tabs)/ai-tools.tsx lines 32–40), so end users won't reach it from the tabs — but the parity gap is real.", "expected": "Mobile version of ShortTermPathways tool page (guided journeys) reachable from /ai-tools", "actual": "Fallback 'Unknown tool.' page; no listing in AI Tools catalog"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter349_mobile/results_part1.json",
+    "/app/test_reports/iter349_mobile/results_part2.json"
+  ],
+  "action_items": [
+    "Reflow /tool/budget-calculator Class grid to 2 columns (or single) below ~360px so the '$XX,XXX/yr' labels don't char-wrap. (/app/mobile/app/tool/[slug].tsx around the BudgetCalculator UI)",
+    "Fix /contribution-position Reconciliation header row: apply the flex-safe pattern already used on Dashboard/participant — title flexShrink:1 + minWidth:0, ce3-reconcile-btn flexShrink:0, row flexWrap:'wrap' + gap so the button drops below the heading at 320px.",
+    "Fix /participant/{id} Financial Position legend: 'Spent this quarter' label is char-wrapping at 320. Either reduce donut size on narrow widths, or set legend rows to flexWrap with a min width on the label column.",
+    "Fix /invoice/{id} 'For your info' badge char-wrapping at 320: the badge/tag needs to either wrap words (not chars) or be allowed to sit on its own row.",
+    "Implement mobile Short-Term Pathways tool: add slug handler in /app/mobile/app/tool/[slug].tsx (mirror web /app/frontend/src/pages/tools/ShortTermPathways.jsx) AND add it to the mobile AI Tools catalog in /app/mobile/app/(tabs)/ai-tools.tsx.",
+    "OPTIONAL polish: add a right-edge fade / scroll affordance on horizontal chip rows in /invoices, /timeline, /budget-scenarios so users know they can scroll for more filters."
+  ],
+  "critical_code_review_comments": [
+    "Reconciliation row on /contribution-position is missing the flex-safe pattern applied elsewhere; same bug class as the previously fixed Dashboard/participant header rows.",
+    "/app/mobile/app/tool/[slug].tsx uses a long if/else chain of slug === '...' — a slug→component map would be cleaner and would make missing tools (like short-term-pathways) obvious.",
+    "Problem-statement slug names 'price-checker' and 'classification-check' differ from the actual mobile router slugs ('provider-price-checker' and 'classification-self-check'). Users reaching /tool/price-checker or /tool/classification-check directly (e.g. from an old deep link) would hit the 'Unknown tool.' fallback. Consider adding aliases."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "84%"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter349 audit ran a headless DOM sweep at 320 and 390 on 32 screens. Overflow/charwrap heuristic filters out horizontal-scroll ScrollViews (checks ancestor overflow-x). Raw per-screen data in /app/test_reports/iter349_mobile/results_part1.json (top-level screens) and results_part2.json (detail + tool screens). Cathy's family account has NO letters and NO care plans in preview seed data, so /letters/{id} and /care-plan/{id} detail screens could not be exercised — recommend seeding one of each on cathy for future audits. After main agent fixes the 4 flex-safe/wrap defects and adds the short-term-pathways handler, re-run just those 4 screens at 320px to confirm.",
+  "rca of the issue": "All four layout defects are the same class as the header row bug already partially fixed on Dashboard + participant screen: a title + a right-side pill/action are placed in a flexDirection:'row' container WITHOUT (A) flexShrink:1/minWidth:0 on the text container, (B) flexShrink:0 on the action, and (C) flexWrap:'wrap' + gap on the row. On narrow widths React Native Web falls back to character-level wrapping when a text node cannot fit. The budget-calculator grid variant is slightly different: it's a 4-column grid whose cell width becomes narrower than the widest label ('$11,010/yr'), so the label character-wraps within its cell. The Short-Term Pathways parity gap is not a layout bug — the mobile app simply never implemented the tool page or catalog entry."
+}
