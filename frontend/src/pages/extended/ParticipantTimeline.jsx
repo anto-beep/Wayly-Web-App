@@ -170,6 +170,7 @@ export default function ParticipantTimeline() {
                         data: {
                             id: e.id,
                             event_type: e.event_type,
+                            event_title: e.title,
                             event_source: src,
                             note: e.summary,
                             title: e.summary,
@@ -350,9 +351,9 @@ function EventCard({ item }) {
     const Icon = iconFor(item);
     const tint = tintFor(item);
     const { day, month } = dateLabel(item.at);
-    const title = prettyTitle(item.type === "alert"
-        ? humanizeMonths(item.data?.title)
-        : (item.data?.event_type || item.data?.kind || "Update"));
+    const title = item.type === "alert"
+        ? prettyTitle(humanizeMonths(item.data?.title))
+        : (item.data?.event_title || prettyTitle(item.data?.event_type || item.data?.kind || "Update"));
     const meaning = meaningFor(item);
     const action = nextActionFor(item);
 

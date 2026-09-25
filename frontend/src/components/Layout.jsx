@@ -19,6 +19,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import ParticipantSwitcher from "@/components/ParticipantSwitcher";
 import PlanComplianceGuard from "@/components/PlanComplianceGuard";
 import { useParticipants } from "@/context/ParticipantsContext";
+import { usePersonaVoice } from "@/lib/usePersonaVoice";
 import { LayoutContext } from "@/context/LayoutContext";
 import { TOOLS_ORDERED, isBadgeActive } from "@/config/toolRegistry";
 
@@ -138,7 +139,6 @@ const navGroups = [
             { to: "/app/hospital", label: "Hospital Mode", icon: HeartPulse },
             { to: "/app/care-plans", label: "Care Plans", icon: ClipboardList },
             { to: "/app/amendments", label: "Care-Plan Changes", icon: FilePenLine },
-            { to: "/app/scenarios", label: "Log a Scenario", icon: ClipboardEdit },
             { to: "/app/timeline", label: "Timeline", icon: Activity },
         ],
     },
@@ -231,6 +231,14 @@ function MobileDrawerGroup({ group, drawerPathname, onNavigate }) {
 export default function Layout({ children }) {
     const { user, household, logout } = useAuth();
     const { active: activeParticipant } = useParticipants();
+    const voice = usePersonaVoice();
+    // Persona-aware label: "Their Care" fits a caregiver; someone managing
+    // their own care sees "My Care".
+    const careLabel = voice.isCaregiver ? "Their Care" : "My Care";
+    const displayGroups = React.useMemo(
+        () => navGroups.map((g) => (g.key === "care" ? { ...g, label: careLabel } : g)),
+        [careLabel],
+    );
     const headerName = activeParticipant
         ? `${activeParticipant.first_name || ""} ${activeParticipant.last_name || ""}`.trim()
         : household?.participant_name;
@@ -313,7 +321,7 @@ export default function Layout({ children }) {
             <div className="mx-auto max-w-[1720px] flex flex-col lg:flex-row gap-6 px-3 lg:px-6 xl:px-8 py-5 lg:py-8">
                 <aside className="hidden lg:block lg:w-56 flex-shrink-0">
                     <nav className="flex flex-col gap-3" data-testid="primary-nav">
-                        {navGroups.map((g) => <NavGroup key={g.key} group={g} />)}
+                        {displayGroups.map((g) => <NavGroup key={g.key} group={g} />)}
                         <div className="pt-3 mt-1 border-t border-kindred flex flex-col gap-1">
                             {secondaryNav.map((item) => (
                                 <NavItem key={item.to} item={item} />
@@ -404,7 +412,7 @@ export default function Layout({ children }) {
                             </div>
                         )}
                         <nav className="flex flex-col p-2 gap-1" data-testid="drawer-nav-grouped">
-                            {navGroups.map((group) => (
+                            {displayGroups.map((group) => (
                                 <MobileDrawerGroup
                                     key={group.key}
                                     group={group}

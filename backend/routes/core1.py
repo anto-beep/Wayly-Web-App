@@ -344,11 +344,32 @@ async def get_timeline(
     }
 
 
+_EVENT_TITLES = {
+    "statement_decoded": "Statement decoded",
+    "invoice_checked": "Invoice checked",
+    "csc_completed": "Classification self-check",
+    "contribution_estimated": "Contribution estimate",
+    "letter_drafted": "Letter drafted",
+    "letter_sent": "Letter sent",
+    "life_event": "Life event logged",
+    "lifecycle_change": "Status update",
+    "alert": "Alert",
+    "care_plan_reviewed": "Support plan reviewed",
+}
+
+
+def _event_title(event_type: Optional[str]) -> str:
+    if event_type and event_type in _EVENT_TITLES:
+        return _EVENT_TITLES[event_type]
+    return (event_type or "Update").replace("_", " ").capitalize()
+
+
 def _render_timeline_event(ev: dict, persona: str) -> dict:
     return {
         "id": ev.get("id"),
         "participant_id": ev.get("participant_id"),
         "event_type": ev.get("event_type"),
+        "title": _event_title(ev.get("event_type")),
         "event_source": ev.get("event_source"),
         "event_timestamp": _iso(ev.get("event_timestamp")),
         "actor_type": ev.get("actor_type"),
@@ -484,7 +505,19 @@ async def _derived_events_for_participant(pid: str) -> List[dict]:
     if users_in_hh:
         for r in await _rows("csc_runs", {"user_id": {"$in": users_in_hh}}, limit=20):
             payload = (r.get("payload") or {})
-            band = payload.get("resolved_classification") or payload.get("classification")
+            cls = payload.get("resolved_classification") or payload.get("classification") or {}
+            if isinstance(cls, dict):
+                primary = cls.get("primary")
+                lo, hi = cls.get("range_low"), cls.get("range_high")
+            else:
+                primary, lo, hi = cls, None, None
+            if primary in (None, "", "?"):
+                cg = f"{name}'s classification self-check completed."
+                self_ = "Your classification self-check completed."
+            else:
+                rng = f" (range {lo}\u2013{hi})" if (lo and hi and (lo != primary or hi != primary)) else ""
+                cg = f"{name}'s classification self-check suggested Level {primary}{rng}."
+                self_ = f"Your classification self-check suggested Level {primary}{rng}."
             out.append({
                 "id": f"csc-{r.get('csc_run_id') or r.get('id')}",
                 "participant_id": pid,
@@ -492,10 +525,7 @@ async def _derived_events_for_participant(pid: str) -> List[dict]:
                 "event_source": "csc",
                 "event_timestamp": r.get("created_at"),
                 "actor_type": "user",
-                "summary_tokens": {
-                    "caregiver": f"Classification self-check completed. Result: Level {band or '?'}",
-                    "participant_self": f"Your classification self-check completed. Result: Level {band or '?'}",
-                },
+                "summary_tokens": {"caregiver": cg, "participant_self": self_},
                 "linked_artefact_id": r.get("csc_run_id") or r.get("id"),
                 "linked_artefact_type": "csc_run",
             })
@@ -503,6 +533,7 @@ async def _derived_events_for_participant(pid: str) -> List[dict]:
     # Contribution estimates
     if users_in_hh:
         for r in await _rows("contribution_estimates", {"user_id": {"$in": users_in_hh}}, limit=10):
+            cls_sfx = f" (Classification {r.get('classification')})" if r.get("classification") else ""
             out.append({
                 "id": f"ce-{r.get('id')}",
                 "participant_id": pid,
@@ -511,8 +542,8 @@ async def _derived_events_for_participant(pid: str) -> List[dict]:
                 "event_timestamp": r.get("created_at"),
                 "actor_type": "user",
                 "summary_tokens": {
-                    "caregiver": f"Contribution estimate saved (Class {r.get('classification')})",
-                    "participant_self": f"Your contribution estimate saved (Class {r.get('classification')})",
+                    "caregiver": f"{name}'s contribution estimate was saved{cls_sfx}.",
+                    "participant_self": f"Your contribution estimate was saved{cls_sfx}.",
                 },
                 "linked_artefact_id": r.get("id"),
                 "linked_artefact_type": "contribution_estimate",

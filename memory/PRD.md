@@ -7690,3 +7690,17 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 **Still open (user-requested, larger):** Illustrations Rollout across other AI tools; Wizard Everywhere (e.g. Classification Self-Check); Mobile Estimator wizard parity.
 
+
+
+---
+
+## Bug fix: contact form notifications not reaching hello@wayly.com.au (25 Sep 2026)
+
+**Report:** Submitting the contact form sent no email notification to hello@wayly.com.au.
+
+**Root cause:** `/api/contact` → `email_service.notify_team_contact()` sends to `TEAM_INBOX`. Resend was live and sending successfully, but `TEAM_INBOX` was set to a personal test address (`a.chiware2@gmail.com`), so notifications never landed in the intended inbox. Not a Resend/domain issue — the `wayly.com.au` sending domain is verified (live sends return real message ids).
+
+**Fix:** Changed `backend/.env` → `TEAM_INBOX=hello@wayly.com.au`; restarted backend.
+
+**Verified:** Live `notify_team_contact()` send returns `{ok: True, id: 01a0d6e8-...}` with `team_inbox=hello@wayly.com.au`; E2E `POST /api/contact` returns 200 `{"ok":true}`.
+

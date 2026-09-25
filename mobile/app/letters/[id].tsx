@@ -603,11 +603,13 @@ export default function CorrespondenceDetail() {
       "provider-price-checker": "Provider Price Checker",
     };
     const label = labels[si.tool] || (si.tool ? String(si.tool).replace(/-/g, " ") : "another tool");
+    // Only the factual observation (narrative/title), never the "what to ask"
+    // coaching line, and strip AI dashes so it reads like the user's own words.
     let items: string[] = [];
-    if (Array.isArray(si.issues) && si.issues.length) items = si.issues.map((x: any) => x.narrative || x.suggested_question || x.title || x.check_id).filter(Boolean);
-    else if (Array.isArray(si.findings) && si.findings.length) items = si.findings.map((x: any) => x.narrative || x.title || x.suggested_question).filter(Boolean);
-    else if (si.finding_title || si.finding_body || si.suggested_question || si.narrative) items = [si.finding_title || si.narrative || si.suggested_question].filter(Boolean);
-    return { tool: label, items };
+    if (Array.isArray(si.issues) && si.issues.length) items = si.issues.map((x: any) => x.narrative || x.title || x.check_id).filter(Boolean);
+    else if (Array.isArray(si.findings) && si.findings.length) items = si.findings.map((x: any) => x.narrative || x.title).filter(Boolean);
+    else if (si.finding_title || si.finding_body || si.narrative) items = [si.finding_title || si.narrative].filter(Boolean);
+    return { tool: label, items: items.map((t) => sanitizeAI(t)) };
   }, [entry]);
 
   // LF-1 v2 (mobile parity): when a letter opened fresh from a picked
@@ -1195,8 +1197,21 @@ function ToneCheckPanel({ entryId, body }: { entryId: string; body: string }) {
   );
 }
 
+const LF1_ROLE_LABELS: Record<string, string> = {
+  account_holder: "Account owner",
+  caregiver: "Carer",
+  participant: "Care recipient",
+  viewer: "Viewer",
+  adviser: "Adviser",
+};
+function friendlyRole(r?: string): string {
+  if (!r) return "";
+  return LF1_ROLE_LABELS[r] || r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function ShareAndSignOffPanel({ entry, entryId, onUpdated }: { entry: any; entryId: string; onUpdated: () => void }) {
   const { colors } = useTheme();
+  const { user } = useAuth();
   const [members, setMembers] = useState<any[]>([]);
   const [selected, setSelected] = useState<string[]>(entry?.shared_with || []);
   const [requireSignOff, setRequireSignOff] = useState(Boolean(entry?.sign_off_required));
@@ -1205,6 +1220,9 @@ function ShareAndSignOffPanel({ entry, entryId, onUpdated }: { entry: any; entry
   const [error, setError] = useState("");
 
   useEffect(() => { apiFetch<{ members: any[] }>("/household/members").then((r) => setMembers(r?.members || [])).catch(() => setMembers([])); }, []);
+
+  // Sharing is a family-plan capability; hide it entirely for other plans.
+  if (user?.plan !== "family") return null;
 
   const toggle = (uid: string) => setSelected((prev) => prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid]);
 
@@ -1232,7 +1250,7 @@ function ShareAndSignOffPanel({ entry, entryId, onUpdated }: { entry: any; entry
             {members.map((m) => (
               <Pressable key={m.user_id || m.email} testID={`lf1-share-member-${m.user_id}`} onPress={() => toggle(m.user_id)} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
                 <Checkbox checked={selected.includes(m.user_id)} colors={colors} />
-                <T variant="small" style={{ color: colors.text }}>{m.name || m.email}{m.role ? ` · ${m.role}` : ""}</T>
+                <T variant="small" style={{ color: colors.text }}>{m.name || m.email}{m.role ? ` · ${friendlyRole(m.role)}` : ""}</T>
               </Pressable>
             ))}
           </View>

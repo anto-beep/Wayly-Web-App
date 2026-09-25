@@ -789,6 +789,7 @@ export default function ClassificationCheck() {
     const [savedChecks, setSavedChecks] = useState([]);
     const [savedBusyId, setSavedBusyId] = useState(null);
     const [step, setStep] = useState(0);
+    const hydratedRef = useRef(false);
     const resultRef = useScrollToResult(result);
     const wizardRef = useRef(null);
     const firstWizardRender = useRef(true);
@@ -825,28 +826,30 @@ export default function ClassificationCheck() {
     const answered = useMemo(() => Object.values(answers).filter((v) => v !== null).length, [answers]);
     const allDone = answered === CSC_QUESTIONS.length;
 
-    // ---- Auto-save to localStorage on every answer change ----
+    // ---- Auto-save to localStorage on every answer/step change ----
     useEffect(() => {
-        if (result) return;
+        if (result || !hydratedRef.current) return;
         try {
-            window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ answers, current, persona, ts: new Date().toISOString() }));
+            window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ answers, current, persona, step, ts: new Date().toISOString() }));
         } catch { /* ignore quota */ }
-    }, [answers, current, persona, result]);
+    }, [answers, current, persona, step, result]);
 
-    // ---- Resume prompt on mount ----
+    // ---- Resume on mount: restore answers AND the step the user left off on ----
     useEffect(() => {
         try {
             const raw = window.localStorage.getItem(DRAFT_KEY);
-            if (!raw) return;
-            const draft = JSON.parse(raw);
-            if (!draft?.answers) return;
-            const draftAnswered = Object.values(draft.answers).filter((v) => v !== null).length;
-            if (draftAnswered > 0) {
-                setAnswers({ ...answers, ...draft.answers });
-                setCurrent(draft.current || "");
-                setResumed(true);
+            if (raw) {
+                const draft = JSON.parse(raw);
+                const draftAnswered = draft?.answers ? Object.values(draft.answers).filter((v) => v !== null).length : 0;
+                if (draftAnswered > 0) {
+                    setAnswers({ ...answers, ...draft.answers });
+                    setCurrent(draft.current || "");
+                    if (Number.isInteger(draft.step)) setStep(Math.min(Math.max(draft.step, 0), CSC_STEPS.length - 1));
+                    setResumed(true);
+                }
             }
         } catch { /* ignore */ }
+        hydratedRef.current = true;
     }, []);
 
     const setAnswer = (qid, value) => {
@@ -858,6 +861,7 @@ export default function ClassificationCheck() {
         try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
         setAnswers(Object.fromEntries(CSC_QUESTIONS.map((q) => [q.id, null])));
         setCurrent("");
+        setStep(0);
         setResumed(false);
         setResult(null);
     };
@@ -997,7 +1001,7 @@ export default function ClassificationCheck() {
                     {resumed && (
                         <div className="mb-5 p-3 rounded-lg bg-surface-2 border border-kindred flex items-center justify-between" data-testid="csc-resumed">
                             <div className="text-sm text-primary-k inline-flex items-center gap-2">
-                                <CheckCircle2 className="h-4 w-4 text-[#6d907d]" /> We restored your previous answers.
+                                <CheckCircle2 className="h-4 w-4 text-[#6d907d]" /> We picked up where you left off.
                             </div>
                             <button onClick={resetDraft} className="text-xs text-clay-k inline-flex items-center gap-1" data-testid="csc-restart">
                                 <RefreshCcw className="h-3 w-3" /> Start over

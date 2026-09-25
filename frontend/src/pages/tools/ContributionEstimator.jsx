@@ -15,7 +15,7 @@ import { useParticipants } from "@/context/ParticipantsContext";
 import { useParticipantPrefill } from "@/hooks/useParticipantPrefill";
 import { api, formatAUD2, formatAUD } from "@/lib/api";
 import { usePersonaTier1 } from "@/lib/persona";
-import { Loader2, Sparkles, ArrowRight, ArrowLeft, ChevronDown, ChevronUp, Info, Calendar, ShieldCheck, LifeBuoy, FileDown, TrendingUp, Check, Compass, Wallet, SlidersHorizontal } from "lucide-react";
+import { Loader2, Sparkles, ArrowRight, ArrowLeft, ChevronDown, ChevronUp, Info, Calendar, ShieldCheck, LifeBuoy, FileDown, TrendingUp, Check, CheckCircle2, RefreshCcw, Compass, Wallet, SlidersHorizontal } from "lucide-react";
 import SeoHead, { softwareApplicationLd, howToLd, faqLd, breadcrumbLd } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
@@ -85,6 +85,7 @@ const CLASSIFICATION_OPTIONS = [
 ];
 
 const CE2_ENDPOINT = "/ce2/calculate";
+const CE_DRAFT_KEY = "ce2.draft.v1";
 const CE2_CONSTANTS_ENDPOINT = "/ce2/constants";
 const CE2_PDF_ENDPOINT = "/ce2/pdf";
 const _fmt = (n) => (n == null || Number.isNaN(n) ? "," : formatAUD2(n));
@@ -100,6 +101,9 @@ export default function ContributionEstimator() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [cscBadge, setCscBadge] = useState(null); // { primary, date }
+    const [step, setStep] = useState(0);
+    const [resumed, setResumed] = useState(false);
+    const hydratedRef = useRef(false);
 
     // Sync person_name with active participant.
     useParticipantPrefill({
@@ -129,6 +133,39 @@ export default function ContributionEstimator() {
         } catch { /* ignore */ }
     }, []);
 
+    // ---- Wizard progress save: persist the form + step so the user can pick
+    // up where they left off on their next visit (or start over). ----
+    useEffect(() => {
+        if (result || !hydratedRef.current) return;
+        try {
+            window.localStorage.setItem(CE_DRAFT_KEY, JSON.stringify({ form, step, ts: new Date().toISOString() }));
+        } catch { /* ignore quota */ }
+    }, [form, step, result]);
+
+    useEffect(() => {
+        try {
+            const raw = window.localStorage.getItem(CE_DRAFT_KEY);
+            if (raw) {
+                const draft = JSON.parse(raw);
+                // Only offer resume if the user actually progressed past step 1.
+                if (draft && Number.isInteger(draft.step) && draft.step > 0 && draft.form) {
+                    setForm((f) => ({ ...f, ...draft.form }));
+                    setStep(Math.min(Math.max(draft.step, 0), WIZARD_STEPS.length - 1));
+                    setResumed(true);
+                }
+            }
+        } catch { /* ignore */ }
+        hydratedRef.current = true;
+    }, []);
+
+    const resetDraft = () => {
+        try { window.localStorage.removeItem(CE_DRAFT_KEY); } catch { /* noop */ }
+        setForm(defaultForm(activeParticipant));
+        setStep(0);
+        setResumed(false);
+        setResult(null);
+    };
+
     const showFinancial = form.pension_status === "part_pension" || form.pension_status === "cshc";
     const showHcpFeeQuestion = form.entry_path === "hcp_pre_sep_2024";
     const showHcpLevel = form.entry_path === "hcp_pre_sep_2024" || form.entry_path === "hcp_post_sep_pre_nov_2025";
@@ -142,6 +179,7 @@ export default function ContributionEstimator() {
             const payload = buildPayload(form);
             const { data } = await api.post(CE2_ENDPOINT, payload);
             setResult(data);
+            try { window.localStorage.removeItem(CE_DRAFT_KEY); } catch { /* noop */ }
         } catch (e) {
             setError(e?.response?.data?.detail || "Could not estimate contribution.");
         } finally { setLoading(false); }
@@ -175,8 +213,19 @@ export default function ContributionEstimator() {
             <ToolHero toolKey="contribution-estimator" wide />
 
             <section className="mx-auto max-w-[1720px] px-6 pb-6" data-testid="ce-form">
+                {resumed && !result && (
+                    <div className="mb-5 p-3 rounded-lg bg-surface-2 border border-kindred flex items-center justify-between" data-testid="ce-resumed">
+                        <div className="text-sm text-primary-k inline-flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-[#6d907d]" /> We picked up where you left off.
+                        </div>
+                        <button onClick={resetDraft} className="text-xs text-clay-k inline-flex items-center gap-1" data-testid="ce-restart">
+                            <RefreshCcw className="h-3 w-3" /> Start over
+                        </button>
+                    </div>
+                )}
                 <FormBody
                     form={form} set={set} constants={constants}
+                    step={step} setStep={setStep}
                     showFinancial={showFinancial}
                     showHcpFeeQuestion={showHcpFeeQuestion}
                     showHcpLevel={showHcpLevel}
@@ -330,8 +379,7 @@ function WizardStepper({ step, setStep }) {
     );
 }
 
-function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, showHcpLevel, showClassificationPicker, cscBadge, onSubmit, loading, error }) {
-    const [step, setStep] = useState(0);
+function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, showHcpLevel, showClassificationPicker, cscBadge, onSubmit, loading, error, step, setStep }) {
     const meta = WIZARD_STEPS[step];
     const isLast = step === WIZARD_STEPS.length - 1;
     const next = () => setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));

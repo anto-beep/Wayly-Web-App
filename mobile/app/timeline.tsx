@@ -16,6 +16,7 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 type Event = {
   id: string;
   event_type: string;
+  title?: string;
   event_source?: string;
   event_timestamp: string;
   actor_type?: string;
@@ -77,6 +78,7 @@ function fmt(s: string): string {
 }
 
 function titleFor(e: Event): string {
+  if (e.title) return e.title;
   const raw = (e.event_type || "update").replace(/_/g, " ");
   return raw.replace(/\b\w/g, (c) => c.toUpperCase());
 }

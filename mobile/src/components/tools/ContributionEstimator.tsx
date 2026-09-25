@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { router } from "expo-router";
-import { Sparkles, ChevronDown, ChevronUp, ShieldCheck, Calendar, LifeBuoy, TrendingUp, Compass, Wallet, SlidersHorizontal, Check, ArrowLeft, ArrowRight } from "lucide-react-native";
+import { Sparkles, ChevronDown, ChevronUp, ShieldCheck, Calendar, LifeBuoy, TrendingUp, Compass, Wallet, SlidersHorizontal, Check, CheckCircle2, RefreshCw, ArrowLeft, ArrowRight } from "lucide-react-native";
 
 import { AppHeader, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { cacheGet, cacheSet } from "@/src/lib/cache";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { usePersonaVoice } from "@/src/hooks/usePersonaVoice";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -40,23 +41,31 @@ const CLASSIFICATION_OPTIONS: [string, string][] = [
   ["rcp", "Restorative Care Pathway"], ["eolp", "End of Life Pathway"],
 ];
 
-export default function ContributionEstimator() {
-  const { colors } = useTheme();
-  const { active } = useParticipants();
-  const voice = usePersonaVoice();
-  const [form, setForm] = useState<any>({
+const CE_DRAFT_KEY = "ce.wizard.draft.v1";
+
+function makeInitialForm(active: any) {
+  return {
     person_name: active?.display_name || "", assessment_status: "have_classification", entry_path: "post_nov_2025",
     hcp_paid_fees: null, hcp_level_when_grandfathered: null, pension_status: "full_pension",
     relationship: "single", homeowner: true, income_excluding_pension: "", financial_assets: "",
     partner_income: "", partner_assets: "", classification: active?.classification_level ? `class_${active.classification_level}` : "class_5", mix_advanced: false,
     service_mix: { clinical: 30, independence: 45, everyday: 25 },
-  });
+  };
+}
+
+export default function ContributionEstimator() {
+  const { colors } = useTheme();
+  const { active } = useParticipants();
+  const voice = usePersonaVoice();
+  const [form, setForm] = useState<any>(() => makeInitialForm(active));
   const [result, setResult] = useState<any>(null);
   const { scrollRef, onResultLayout, scrollToResult } = useScrollToResult();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [savedState, setSavedState] = useState<any>(null);
   const [step, setStep] = useState(0);
+  const [resumed, setResumed] = useState(false);
+  const hydratedRef = useRef(false);
 
   // CE-2 saved-state parity with web: load prior inputs (for the staleness
   // note) and persist rates after each estimate so Provider Price Checker can
@@ -107,6 +116,35 @@ export default function ContributionEstimator() {
     scrollRef.current?.scrollTo?.({ y: 0, animated: true });
   }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ---- Wizard progress save: remember the form + step so the user can pick
+  // up where they left off on their next visit (or start over). ----
+  useEffect(() => {
+    if (result || !hydratedRef.current) return;
+    cacheSet(CE_DRAFT_KEY, { form, step });
+  }, [form, step, result]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const d = await cacheGet<{ form: any; step: number }>(CE_DRAFT_KEY);
+        if (d?.data && Number.isInteger(d.data.step) && d.data.step > 0 && d.data.form) {
+          setForm((f: any) => ({ ...f, ...d.data.form }));
+          setStep(Math.min(Math.max(d.data.step, 0), 2));
+          setResumed(true);
+        }
+      } catch { /* ignore */ }
+      hydratedRef.current = true;
+    })();
+  }, []);
+
+  const resetDraft = () => {
+    cacheSet(CE_DRAFT_KEY, { form: null, step: 0 });
+    setForm(makeInitialForm(active));
+    setStep(0);
+    setResumed(false);
+    setResult(null);
+  };
+
   const showFinancial = form.pension_status === "part_pension" || form.pension_status === "cshc";
   const showHcpFeeQuestion = form.entry_path === "hcp_pre_sep_2024";
   const showHcpLevel = form.entry_path === "hcp_pre_sep_2024" || form.entry_path === "hcp_post_sep_pre_nov_2025";
@@ -129,6 +167,7 @@ export default function ContributionEstimator() {
       const data = await apiFetch("/ce2/calculate", { method: "POST", body: payload });
       setResult(data);
       scrollToResult();
+      cacheSet(CE_DRAFT_KEY, { form: null, step: 0 });
       // Persist for cross-tool read-through (PPC). Best-effort; ignore failures.
       try {
         const saved: any = await apiFetch("/tools/ce/state", {
@@ -171,6 +210,18 @@ export default function ContributionEstimator() {
 
           {!result ? (
             <View style={{ gap: spacing.md }} testID="ce-form">
+              {resumed ? (
+                <View testID="ce-resumed" style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                    <CheckCircle2 size={16} color={colors.sage} />
+                    <T variant="small" style={{ color: colors.text, flex: 1 }}>We picked up where you left off.</T>
+                  </View>
+                  <Pressable testID="ce-restart" onPress={resetDraft} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <RefreshCw size={13} color={colors.gold} />
+                    <T variant="small" style={{ color: colors.gold, fontFamily: fonts.bodySemi }}>Start over</T>
+                  </Pressable>
+                </View>
+              ) : null}
               {savedState && stateIsStale(savedState.created_at) ? (
                 <View testID="ce-stale-note" style={[styles.hint, { backgroundColor: colors.surface2, marginTop: 0 }]}>
                   <Calendar size={16} color={colors.gold} />

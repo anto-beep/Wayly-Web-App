@@ -105,7 +105,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Hospital Mode", route: "/hospital", icon: HeartPulse, implemented: true },
       { label: "Care Plans", route: "/care-plans", icon: ClipboardList, implemented: true },
       { label: "Care-Plan Changes", route: "/amendments", icon: FilePenLine, implemented: true },
-      { label: "Log a Scenario", route: "/scenarios", icon: ClipboardEdit, implemented: true },
       { label: "Cases", route: "/cases", icon: ListChecks, implemented: true },
       { label: "Timeline", route: "/timeline", icon: Activity, implemented: true },
     ],

@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, LogOut, X } from "lucide-react-native";
 import { NAV_GROUPS } from "@/src/config/navGroups";
 import { useDrawer } from "@/src/context/DrawerContext";
 import { useAuth } from "@/src/context/AuthContext";
+import { usePersona } from "@/src/hooks/usePersona";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { WaylyMark } from "@/src/components/WaylyMark";
 import { T } from "@/src/components/ui";
@@ -15,6 +16,9 @@ export function AppDrawer() {
   const { open, closeDrawer } = useDrawer();
   const { colors, isDark } = useTheme();
   const { logout } = useAuth();
+  const persona = usePersona();
+  // Persona-aware: "Their Care" fits a caregiver; self-managed sees "My Care".
+  const careLabel = persona === "caregiver" ? "Their Care" : "My Care";
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ today: true });
 
   const go = (route: string) => {
@@ -47,7 +51,7 @@ export function AppDrawer() {
                     style={styles.groupHead}
                   >
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.muted, letterSpacing: 0.5 }}>
-                      {group.label.toUpperCase()}
+                      {(group.key === "care" ? careLabel : group.label).toUpperCase()}
                     </T>
                     {isOpen ? <ChevronDown size={18} color={colors.muted} /> : <ChevronRight size={18} color={colors.muted} />}
                   </Pressable>

@@ -6,6 +6,7 @@ import { api, extractErrorMessage } from "@/lib/api";
 import { generateLetterAsync } from "@/lib/lf1Generate";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { participantDisplayName } from "@/hooks/useParticipantPrefill";
+import { sanitizeAI } from "@/lib/sanitizeAI";
 import { Loader2, ArrowLeft, Trash2, Save, Info, ShieldAlert, MessageSquare, Sparkles, Eye, Users, CheckCircle2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
@@ -469,15 +470,18 @@ export default function CorrespondenceDetail() {
         const si = entry?.source_import;
         if (!si) return { tool: null, items: [] };
         const label = TOOL_LABELS[si.tool] || (si.tool ? si.tool.replace(/-/g, " ") : "another tool");
+        // Only carry the factual observation (narrative/title), never the
+        // "what to ask the provider" coaching line, and strip AI dashes so the
+        // context reads like the user's own words.
         let items = [];
         if (Array.isArray(si.issues) && si.issues.length) {
-            items = si.issues.map((x) => x.narrative || x.suggested_question || x.check_id).filter(Boolean);
+            items = si.issues.map((x) => x.narrative || x.title || x.check_id).filter(Boolean);
         } else if (Array.isArray(si.findings) && si.findings.length) {
-            items = si.findings.map((x) => x.narrative || x.title || x.suggested_question).filter(Boolean);
-        } else if (si.narrative || si.suggested_question) {
-            items = [si.narrative || si.suggested_question].filter(Boolean);
+            items = si.findings.map((x) => x.narrative || x.title).filter(Boolean);
+        } else if (si.narrative) {
+            items = [si.narrative].filter(Boolean);
         }
-        return { tool: label, items };
+        return { tool: label, items: items.map((t) => sanitizeAI(t)) };
     }, [entry]);
 
     // Auto-draft on arrival when the letter was created from a tool, so the

@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { api, extractErrorMessage } from "@/lib/api";
 import { generateLetterAsync } from "@/lib/lf1Generate";
+import { useAuth } from "@/context/AuthContext";
+import { useParticipants } from "@/context/ParticipantsContext";
 import ADMDisclosure, { ADMDisclosureTrigger } from "@/components/adm/ADMDisclosure";
 import { RequiredBadge } from "@/components/RequiredHint";
 import { useParticipantPrefill } from "@/hooks/useParticipantPrefill";
@@ -37,6 +39,20 @@ import {
 
 function humanise(field) {
     return field.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
+// Friendly, non-technical labels for household member roles (never surface the
+// raw backend value like "account_holder" to end users).
+const LF1_ROLE_LABELS = {
+    account_holder: "Account owner",
+    caregiver: "Carer",
+    participant: "Care recipient",
+    viewer: "Viewer",
+    adviser: "Adviser",
+};
+function friendlyRole(r) {
+    if (!r) return "";
+    return LF1_ROLE_LABELS[r] || r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function formatBytes(n) {
@@ -160,6 +176,9 @@ function Field({ label, hint, children, testId, required }) {
 // hand-off when the provider name is known.
 function RecipientField({ intake, set }) {
     const [saved, setSaved] = useState([]);
+    const { active } = useParticipants();
+    const providerName = active?.provider_name || "";
+    const prefilledRef = React.useRef(false);
     useEffect(() => {
         let cancelled = false;
         api.get("/lf1/recipients")
@@ -167,6 +186,15 @@ function RecipientField({ intake, set }) {
             .catch(() => { /* noop */ });
         return () => { cancelled = true; };
     }, []);
+
+    // Prefill the recipient from the participant's known provider (data we
+    // already hold) so the user does not retype it. Runs once, and never
+    // overwrites a name that is already set (e.g. from a tool hand-off).
+    useEffect(() => {
+        if (prefilledRef.current || !providerName) return;
+        prefilledRef.current = true;
+        if (!intake?.recipient_name) set({ recipient_name: providerName });
+    }, [providerName, intake?.recipient_name, set]);
 
     // Match the currently-typed recipient back to a saved id (so the dropdown
     // reflects the selection); "" = a new/other recipient.
@@ -222,6 +250,11 @@ function RecipientField({ intake, set }) {
                     />
                 </Field>
             </div>
+            {providerName && intake?.recipient_name === providerName && (
+                <p className="mt-2 text-xs text-sage inline-flex items-center gap-1.5" data-testid="lf1-intake-recipient-prefilled">
+                    <Check className="h-3.5 w-3.5" /> Prefilled from your saved provider. Change it if this letter is going elsewhere.
+                </p>
+            )}
         </div>
     );
 }
@@ -1361,6 +1394,7 @@ export function ShareAndSignOffPanel({ entry, onShared, onSignedOff }) {
     const signOffBy = entry?.sign_off_by;
     const signOffAt = entry?.sign_off_at;
 
+    const { user } = useAuth();
     const [members, setMembers] = useState([]);
     const [selected, setSelected] = useState(shared);
     const [requireSignOff, setRequireSignOff] = useState(signOffRequired);
@@ -1379,6 +1413,9 @@ export function ShareAndSignOffPanel({ entry, onShared, onSignedOff }) {
         setSelected(shared);
         setRequireSignOff(signOffRequired);
     }, [entry?.id]);
+
+    // Sharing is a family-plan capability; hide it entirely for other plans.
+    if (user?.plan !== "family") return null;
 
     const toggle = (uid) => setSelected((prev) => prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid]);
 
@@ -1437,7 +1474,7 @@ export function ShareAndSignOffPanel({ entry, onShared, onSignedOff }) {
                                         data-testid={`lf1-share-member-${m.user_id}`}
                                     />
                                     <span>{m.name || m.email}</span>
-                                    {m.role && <span className="text-xs text-muted-k">· {m.role}</span>}
+                                    {m.role && <span className="text-xs text-muted-k">· {friendlyRole(m.role)}</span>}
                                 </label>
                             </li>
                         ))}
