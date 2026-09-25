@@ -7704,3 +7704,23 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 **Verified:** Live `notify_team_contact()` send returns `{ok: True, id: 01a0d6e8-...}` with `team_inbox=hello@wayly.com.au`; E2E `POST /api/contact` returns 200 `{"ok":true}`.
 
+
+
+---
+
+## Contact-form cluster + Mobile QA (Group A + B) — 25 Sep 2026
+
+### Group A — Contact form (backend + web) — DONE & verified
+- **Premium enquiry notification email** (`email_service.notify_team_contact`): rebuilt on the shared `wrap_email_html` shell — teal header, name heading, intent/role pills, clean labelled details table, "Reply" button. Fixed the duplicate "ROLE" row (role/intent now shown once in the summary strip, skipped in the loop via `_CONTACT_SKIP_FIELDS`).
+- **Friendly auto-reply** (`email_service.email_contact_autoreply`): warm confirmation to the submitter with a "What you sent us" recap; contextual eyebrow (Message received / Demo request received); reply-to = team inbox. Best-effort (Resend rejects `example.com` test recipients; real addresses deliver).
+- **Contact page** (`frontend/src/pages/Contact.jsx`): split "Your name" into **First name + Last name** fields; **"Required"** word-labels on First name, Last name, Email, "I am a…", and the message field (per user: the word, not a star). Names title-cased + email lowercased on submit (also normalised server-side in `_titlecase_name`). Removed "Data in AWS Sydney." line.
+- **Backend** (`server.py`): `ContactBody` gained `first_name`/`last_name` (name composed); `contact_submit` normalises, stores `id` + `status='new'`, fires both emails.
+- **Admin Enquiries inbox**: `GET /api/admin/enquiries` (paginated, status filter) + `PATCH /api/admin/enquiries/{id}` (new/actioned). IMPORTANT: these use the **admin-console realm dep** `admin_auth.get_current_admin` (imported locally as `_get_current_admin`), NOT the legacy user-JWT `get_current_admin_id` — the console/adminApi token only satisfies the former. New `AdminEnquiries.jsx` page + "Enquiries" nav item (Support section) in `AdminApp.jsx`. Verified end-to-end with a real 2FA admin token (list + PATCH) and page render.
+
+### Group B — Mobile QA — DONE (iteration_348, all PASS)
+- Mobile Sign In already exposes `testID="login-submit-button"` (the iter347 block was a text-selector issue, not a code gap).
+- Verified: login, share-panel gating (`lf1-share-panel` visible family / hidden solo), provider prefill from `participant.provider_name` (not hardcoded), letter voice (no em/en-dashes, no coaching, first-person), CE wizard resume (`ce-resumed` + `ce-restart`).
+- No bugs found; no mobile code changed.
+
+### Still open (deferred by user): Group C — full Mobile↔Web parity (screen-by-screen). Awaiting the user's chosen approach (audit-first / high-traffic-first / specific list). Testing agent nice-to-have: seed one letter on the solo account so share-panel-hidden can be UI-verified (currently code-review-verified).
+

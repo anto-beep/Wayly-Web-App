@@ -32,7 +32,8 @@ export default function Contact() {
     const isDemo = useMemo(() => params.get("intent") === "demo", [params]);
 
     const [form, setForm] = useState({
-        name: "",
+        first_name: "",
+        last_name: "",
         email: "",
         phone: "",
         role: isDemo ? "advisor" : "family",
@@ -48,11 +49,24 @@ export default function Contact() {
 
     const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+    const titleCaseName = (s) =>
+        (s || "").trim().replace(/\s+/g, " ").replace(/[A-Za-z]+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
     const submit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
+        const first_name = titleCaseName(form.first_name);
+        const last_name = titleCaseName(form.last_name);
+        const email = (form.email || "").trim().toLowerCase();
+        // Reflect the normalised values back so the success screen greets them
+        // with the properly-capitalised first name.
+        setForm((f) => ({ ...f, first_name, last_name, email }));
         const payload = {
             ...form,
+            first_name,
+            last_name,
+            name: `${first_name} ${last_name}`.trim(),
+            email,
             intent: isDemo ? "demo" : "general",
             ts: new Date().toISOString(),
         };
@@ -97,7 +111,7 @@ export default function Contact() {
                                 <Check className="h-6 w-6 text-white" />
                             </div>
                             <h2 className="font-heading text-2xl text-primary-k mt-4">
-                                {isDemo ? "Booked." : "Got it."} {form.name.split(" ")[0] && `Thanks, ${form.name.split(" ")[0]}.`}
+                                {isDemo ? "Booked." : "Got it."} {form.first_name && `Thanks, ${form.first_name}.`}
                             </h2>
                             <p className="mt-3 text-muted-k max-w-md mx-auto">
                                 We will reach out at <span className="text-primary-k">{form.email}</span> within one business day to {isDemo ? `confirm a ${TIME_SLOTS.find((s) => s.v === form.preferred_time)?.label || ""} slot` : "answer your question"}.
@@ -107,27 +121,41 @@ export default function Contact() {
                         <form onSubmit={submit} className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="contact-form">
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <label className="block">
-                                    <span className="text-sm text-muted-k">Your name</span>
+                                    <span className="text-sm text-muted-k">First name <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>
                                     <input
-                                        value={form.name}
-                                        onChange={update("name")}
+                                        value={form.first_name}
+                                        onChange={update("first_name")}
                                         required
-                                        data-testid="contact-name"
+                                        autoCapitalize="words"
+                                        data-testid="contact-first-name"
                                         className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
                                     />
                                 </label>
                                 <label className="block">
-                                    <span className="text-sm text-muted-k">Email</span>
+                                    <span className="text-sm text-muted-k">Last name <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>
                                     <input
-                                        type="email"
-                                        value={form.email}
-                                        onChange={update("email")}
+                                        value={form.last_name}
+                                        onChange={update("last_name")}
                                         required
-                                        data-testid="contact-email"
+                                        autoCapitalize="words"
+                                        data-testid="contact-last-name"
                                         className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
                                     />
                                 </label>
                             </div>
+                            <label className="block">
+                                <span className="text-sm text-muted-k">Email <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>
+                                <input
+                                    type="email"
+                                    value={form.email}
+                                    onChange={update("email")}
+                                    required
+                                    inputMode="email"
+                                    autoCapitalize="none"
+                                    data-testid="contact-email"
+                                    className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
+                                />
+                            </label>
 
                             {isDemo && (
                                 <label className="block">
@@ -142,7 +170,7 @@ export default function Contact() {
                             )}
 
                             <div>
-                                <span className="text-sm text-muted-k">I am a…</span>
+                                <span className="text-sm text-muted-k">I am a… <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>
                                 <div className="mt-2 grid sm:grid-cols-3 gap-2" data-testid="contact-role-group">
                                     {ROLES.map((r) => (
                                         <button
@@ -176,7 +204,7 @@ export default function Contact() {
                                     </label>
 
                                     <label className="block">
-                                        <span className="text-sm text-muted-k">What's the single biggest pain right now?</span>
+                                        <span className="text-sm text-muted-k">What's the single biggest pain right now? <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>
                                         <textarea
                                             value={form.biggest_pain}
                                             onChange={update("biggest_pain")}
@@ -221,7 +249,7 @@ export default function Contact() {
                                 </>
                             ) : (
                                 <label className="block">
-                                    <span className="text-sm text-muted-k">What can we help with?</span>
+                                    <span className="text-sm text-muted-k">What can we help with? <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>
                                     <textarea
                                         value={form.context}
                                         onChange={update("context")}
@@ -262,7 +290,7 @@ export default function Contact() {
                         <span className="absolute left-0 top-0 h-1.5 w-full opacity-80 bg-[#425F47]" />
                         <div className="h-10 w-10 rounded-xl bg-[#425F47] flex items-center justify-center shadow-sm"><MapPin className="h-5 w-5 text-white" /></div>
                         <div className="overline mt-3">Where we are</div>
-                        <p className="mt-1 text-sm text-primary-k">Made in Australia.<br />Data in AWS Sydney.</p>
+                        <p className="mt-1 text-sm text-primary-k">Made in Australia.</p>
                     </div>
                     <div className="relative overflow-hidden bg-surface-2 border border-kindred rounded-2xl p-5">
                         <span className="absolute left-0 top-0 h-1.5 w-full opacity-80 bg-terracotta" />

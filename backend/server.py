@@ -11,7 +11,7 @@ from typing import List, Optional, Dict, Any
 from typing import Literal as _LiteralType  # noqa: F401
 
 from collections import defaultdict
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Request, Response, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Request, Response, status, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
 from starlette.middleware.cors import CORSMiddleware
@@ -6521,7 +6521,9 @@ async def authed_help_chat(body: HelpChatBody, request: Request, user_id: str = 
 # Contact / Book a demo
 # ---------------------------------------------------------------------------
 class ContactBody(BaseModel):
-    name: str
+    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     email: EmailStr
     phone: Optional[str] = None
     role: str
@@ -6533,9 +6535,31 @@ class ContactBody(BaseModel):
     preferred_time: Optional[str] = None
 
 
+def _titlecase_name(s: Optional[str]) -> Optional[str]:
+    """Proper-case a person's name (e.g. 'JANE  o'brien' -> 'Jane O'Brien').
+    Returns None for blank input."""
+    if not s:
+        return None
+    cleaned = " ".join(str(s).split())
+    if not cleaned:
+        return None
+    import re as _re
+    return _re.sub(r"[A-Za-z]+", lambda m: m.group(0).capitalize(), cleaned)
+
+
 @api.post("/contact")
 async def contact_submit(body: ContactBody):
     doc = body.model_dump()
+    # Normalise: proper-case names, lowercase email, compose a full name.
+    first = _titlecase_name(doc.get("first_name"))
+    last = _titlecase_name(doc.get("last_name"))
+    full = (" ".join(p for p in [first, last] if p)) or _titlecase_name(doc.get("name"))
+    doc["first_name"] = first
+    doc["last_name"] = last
+    doc["name"] = full
+    doc["email"] = (doc.get("email") or "").strip().lower()
+    doc["id"] = new_id()
+    doc["status"] = "new"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.contact_requests.insert_one(doc)
     doc.pop("_id", None)
@@ -6544,7 +6568,65 @@ async def contact_submit(body: ContactBody):
         await email_service.notify_team_contact(doc)
     except Exception as e:
         logger.warning("Contact notification failed: %s", e)
+    # Friendly confirmation to the person who submitted (best-effort).
+    try:
+        await email_service.email_contact_autoreply(doc)
+    except Exception as e:
+        logger.warning("Contact auto-reply failed: %s", e)
     return {"ok": True, "intent": body.intent}
+
+
+# ---- Admin: contact enquiries inbox (track + action without email) ----
+# Uses the admin-console realm dependency (admin_auth.get_current_admin), the
+# same gate the AdminApp UI + adminApi token satisfy. admin_auth does not
+# import server, so importing it here is safe (no circular dependency).
+from admin_auth import get_current_admin as _get_current_admin  # noqa: E402
+
+
+class EnquiryStatusBody(BaseModel):
+    status: str  # "new" | "actioned"
+
+
+@api.get("/admin/enquiries")
+async def admin_list_enquiries(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    page: int = 1,
+    page_size: int = 30,
+    admin: dict = Depends(_get_current_admin),  # noqa: ARG001
+):
+    q: dict = {}
+    if status_filter and status_filter not in ("all", ""):
+        q["status"] = status_filter
+    page = max(1, page)
+    page_size = min(max(1, page_size), 100)
+    total = await db.contact_requests.count_documents(q)
+    rows = (
+        await db.contact_requests.find(q, {"_id": 0})
+        .sort("created_at", -1)
+        .skip((page - 1) * page_size)
+        .limit(page_size)
+        .to_list(length=page_size)
+    )
+    new_count = await db.contact_requests.count_documents({"status": "new"})
+    return {"rows": rows, "total": total, "new_count": new_count, "page": page, "page_size": page_size}
+
+
+@api.patch("/admin/enquiries/{enquiry_id}")
+async def admin_update_enquiry(
+    enquiry_id: str,
+    body: EnquiryStatusBody,
+    admin: dict = Depends(_get_current_admin),  # noqa: ARG001
+):
+    if body.status not in ("new", "actioned"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    patch = {
+        "status": body.status,
+        "actioned_at": datetime.now(timezone.utc).isoformat() if body.status == "actioned" else None,
+    }
+    res = await db.contact_requests.update_one({"id": enquiry_id}, {"$set": patch})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Enquiry not found")
+    return {"ok": True, "status": body.status}
 
 
 # ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import "./admin.css";
 import {
     LayoutDashboard, Users, CreditCard, Bot, Headphones, Megaphone, FileText,
     LineChart, Lock, Settings, UserCog, Search, Bell, LogOut, ShieldAlert,
-    Menu,
+    Menu, Mail,
 } from "lucide-react";
 import { AdminAuthProvider, useAdminAuth, adminApi } from "./AdminAuthContext";
 import AdminLogin from "./AdminLogin";
@@ -47,6 +47,7 @@ const NAV = [
     {
         section: "Support",
         items: [
+            { to: "/admin/enquiries", label: "Enquiries", icon: Mail, testid: "admin-nav-enquiries" },
             { to: "/admin/support", label: "Support", icon: Headphones, testid: "admin-nav-support" },
             { to: "/admin/macros", label: "Macros", icon: FileText, testid: "admin-nav-macros" },
         ],
@@ -305,6 +306,7 @@ import {
 } from "./AdminPhaseE2";
 import AdminIndexNow from "./AdminIndexNow";
 import AdminSecurityAlerts from "./AdminSecurityAlerts";
+import AdminEnquiries from "./AdminEnquiries";
 import AdminErrorBoundary from "./AdminErrorBoundary";
 import { AdminSupport, AdminSupportDetail, AdminSupportDefects, AdminSupportMacros } from "./AdminSupport";
 
@@ -349,6 +351,8 @@ function AdminRoutes() {
                 <Route path="changelog" element={<AdminChangelog />} />
                 {/* SEO ops */}
                 <Route path="seo/indexnow" element={<AdminIndexNow />} />
+                {/* Contact-form enquiries inbox */}
+                <Route path="enquiries" element={<AdminEnquiries />} />
                 {/* SUP-2, Canonical Wayly Support console (parallel to legacy /tickets) */}
                 <Route path="support" element={<AdminSupport />} />
                 <Route path="support/defects" element={<AdminSupportDefects />} />
@@ -370,7 +374,7 @@ function AdminRoutes() {
                         "security-alerts",
                         "feature-flags", "health", "maintenance", "admins",
                         "blog", "glossary", "templates-library", "changelog",
-                        "seo/indexnow", "support",
+                        "seo/indexnow", "support", "enquiries",
                     ].includes(path) || P0P1_BUILT_PATHS.has(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}

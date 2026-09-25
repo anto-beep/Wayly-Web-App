@@ -83,38 +83,166 @@ async def _send(params: Dict[str, Any]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Public helpers
 # ---------------------------------------------------------------------------
+# Friendly labels + presentation for the contact-form details table.
+_CONTACT_FIELD_LABELS = {
+    "phone": "Phone",
+    "context": "Message",
+    "size": "Size / scale",
+    "biggest_pain": "Biggest pain right now",
+    "success_in_six_months": "Success in 6 months",
+    "preferred_time": "Preferred call time",
+}
+# Fields shown elsewhere (summary strip) or internal-only, never repeated in rows.
+_CONTACT_SKIP_FIELDS = {
+    "name", "first_name", "last_name", "email", "role", "intent",
+    "ts", "created_at", "status", "id", "actioned_at", "_id",
+}
+_CONTACT_ROLE_LABELS = {
+    "family": "Family Caregiver", "participant": "Participant",
+    "advisor": "Financial Advisor", "provider": "Aged-Care Provider",
+    "gp": "GP / Clinician", "press": "Press / Media", "other": "Other",
+}
+_CONTACT_TIME_LABELS = {
+    "morning": "Morning (9-12 AEST)", "lunch": "Lunchtime (12-2 AEST)",
+    "afternoon": "Afternoon (2-5 AEST)", "evening": "Evening (5-8 AEST)",
+}
+
+
+def _prettify_contact_value(key: str, value: Any) -> str:
+    if key == "preferred_time":
+        return _CONTACT_TIME_LABELS.get(str(value), str(value))
+    return str(value)
+
+
 async def notify_team_contact(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Notify the Wayly team inbox when someone submits /api/contact."""
-    intent = (payload.get("intent") or "general").upper()
-    name = payload.get("name", "(no name)")
-    email = payload.get("email", "(no email)")
-    role = payload.get("role", "(no role)")
+    """Notify the Wayly team inbox when someone submits /api/contact.
+
+    Premium, branded layout via the shared email shell. The details table is
+    de-duplicated (role + intent appear once in the summary strip, never again
+    as a row), fixing the old double-"role" rendering."""
+    from urllib.parse import quote
+    from wayly_email_branding import wrap_email_html, button_html, COLORS, BODY_FONT, HEADING_FONT
+
+    intent_raw = payload.get("intent") or "general"
+    intent = intent_raw.replace("_", " ").title()
+    name = payload.get("name") or "Someone"
+    first = (payload.get("first_name") or name.split(" ")[0] or "there").strip()
+    email = (payload.get("email") or "").strip()
+    role = _CONTACT_ROLE_LABELS.get(payload.get("role"), (payload.get("role") or "").replace("_", " ").title() or "Not given")
+
     rows = []
     for k, v in payload.items():
-        if k in {"name", "email"}:
+        if k in _CONTACT_SKIP_FIELDS or v in (None, ""):
             continue
-        if v in (None, ""):
-            continue
-        rows.append(f"<tr><td style='padding:6px 12px;color:#555;text-transform:uppercase;font-size:11px;letter-spacing:.05em'>{k}</td><td style='padding:6px 12px;color:#0E2A47'>{_html_escape(str(v))}</td></tr>")
-    rows_html = "".join(rows)
+        label = _CONTACT_FIELD_LABELS.get(k, k.replace("_", " ").title())
+        rows.append(
+            f'<tr>'
+            f'<td style="padding:12px 16px;color:{COLORS["muted"]};font-size:11px;letter-spacing:.08em;'
+            f'text-transform:uppercase;vertical-align:top;white-space:nowrap;border-top:1px solid {COLORS["border"]};'
+            f'font-family:{BODY_FONT};">{_html_escape(label)}</td>'
+            f'<td style="padding:12px 16px;color:{COLORS["text"]};font-size:15px;line-height:1.55;'
+            f'border-top:1px solid {COLORS["border"]};font-family:{BODY_FONT};">{_html_escape(_prettify_contact_value(k, v))}</td>'
+            f'</tr>'
+        )
+    rows_html = "".join(rows) or (
+        f'<tr><td colspan="2" style="padding:14px 16px;color:{COLORS["muted"]};font-size:14px;'
+        f'font-family:{BODY_FONT};">No extra details were provided.</td></tr>'
+    )
 
-    from wayly_email_branding import COLORS, BODY_FONT, HEADING_FONT
-    html = f"""<!doctype html>
-<html><body style="font-family:{BODY_FONT};background:{COLORS["canvas"]};padding:24px;color:{COLORS["text"]}">
-  <h2 style="margin:0 0 8px;font-family:{HEADING_FONT};color:{COLORS["teal"]}">New {intent} enquiry, {_html_escape(name)}</h2>
-  <p style="margin:0 0 16px;color:{COLORS["muted"]}">Reply to <a href="mailto:{_html_escape(email)}" style="color:{COLORS["clay"]}">{_html_escape(email)}</a></p>
-  <table style="border-collapse:collapse;background:#fff;border:1px solid {COLORS["border"]};border-radius:8px;overflow:hidden">
-    <tr><td style="padding:6px 12px;color:{COLORS["muted"]};text-transform:uppercase;font-size:11px;letter-spacing:.05em">role</td><td style="padding:6px 12px;color:{COLORS["teal"]}">{_html_escape(role)}</td></tr>
-    {rows_html}
-  </table>
-  <p style="margin-top:24px;color:{COLORS["muted"]};font-size:12px">Sent automatically from Wayly · /api/contact</p>
-</body></html>"""
+    reply_button = ""
+    if email:
+        reply_href = f"mailto:{email}?subject={quote(f'Re: your {intent_raw} enquiry to Wayly')}"
+        reply_button = button_html(href=reply_href, label=f"Reply to {first}", colour="teal")
+
+    inner = f"""
+      <div style="font-family:{HEADING_FONT};font-size:22px;font-weight:700;color:{COLORS["teal"]};letter-spacing:-.01em;line-height:1.25;">
+        {_html_escape(name)}
+      </div>
+      <div style="margin-top:6px;font-size:14px;font-family:{BODY_FONT};">
+        <a href="mailto:{_html_escape(email)}" style="color:{COLORS["clay"]};text-decoration:none;font-weight:600;">{_html_escape(email)}</a>
+      </div>
+      <div style="margin-top:14px;">
+        <span style="display:inline-block;background:{COLORS["teal_light"]};color:{COLORS["teal"]};font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;font-family:{BODY_FONT};margin-right:6px;">{_html_escape(intent)} enquiry</span>
+        <span style="display:inline-block;background:{COLORS["warm_surface"]};color:{COLORS["muted"]};font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;font-family:{BODY_FONT};">{_html_escape(role)}</span>
+      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+             style="margin-top:20px;border-collapse:collapse;background:{COLORS["white"]};border:1px solid {COLORS["border"]};border-radius:10px;overflow:hidden;">
+        {rows_html}
+      </table>
+      {reply_button}
+    """
+
+    html = wrap_email_html(
+        title=f"New {intent} enquiry from {name}",
+        eyebrow="New enquiry",
+        inner_html=inner,
+        footer_note="Sent automatically when someone submits the contact form at wayly.com.au.",
+    )
+
+    params: Dict[str, Any] = {
+        "from": _sender(),
+        "to": [_team_inbox()],
+        "subject": f"[Wayly · {intent}] {name} ({role})",
+        "html": html,
+    }
+    if email:
+        params["reply_to"] = email
+    return await _send(params)
+
+
+async def email_contact_autoreply(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Send a warm confirmation to the person who submitted the contact form,
+    so they know a real person will follow up. Best-effort; no-op if we have
+    no recipient address."""
+    from wayly_email_branding import wrap_email_html, note_callout_html, COLORS, BODY_FONT, HEADING_FONT
+
+    to = (payload.get("email") or "").strip()
+    if not to:
+        return {"ok": False, "reason": "no recipient"}
+
+    first = (payload.get("first_name") or (payload.get("name") or "").split(" ")[0] or "there").strip()
+    is_demo = (payload.get("intent") or "general") == "demo"
+    their_message = payload.get("context") or payload.get("biggest_pain") or ""
+
+    recap = ""
+    if their_message:
+        recap = note_callout_html(
+            text=f'<strong style="color:{COLORS["teal"]};display:block;margin-bottom:4px;">What you sent us</strong>{_html_escape(their_message)}',
+            tone="teal",
+        )
+
+    intro = "Thanks for booking a demo with Wayly." if is_demo else "Thanks for reaching out to Wayly."
+    action_line = (
+        "We'll be in touch within one business day to confirm a time that suits you."
+        if is_demo else
+        "We'll be in touch within one business day with a written reply."
+    )
+
+    inner = f"""
+      <h2 style="margin:0 0 12px;font-family:{HEADING_FONT};color:{COLORS["teal"]};font-size:24px;line-height:1.3;font-weight:700;letter-spacing:-.01em;">
+        Hi {_html_escape(first)},
+      </h2>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:{COLORS["text"]};">{intro}</p>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:{COLORS["text"]};">{action_line}</p>
+      {recap}
+      <p style="margin:16px 0 0;font-size:14px;line-height:1.65;color:{COLORS["muted"]};">
+        If anything is urgent, just reply to this email and it will reach a real person on the Wayly team.
+      </p>
+      <p style="margin:18px 0 0;font-size:15px;line-height:1.65;color:{COLORS["text"]};">Warmly,<br>The Wayly team</p>
+    """
+
+    html = wrap_email_html(
+        title="We've got your message",
+        eyebrow="Demo request received" if is_demo else "Message received",
+        inner_html=inner,
+        footer_note="You received this because you contacted Wayly at wayly.com.au. Crisis support: Lifeline 13 11 14 · 1800ELDERHelp 1800 353 374.",
+    )
 
     return await _send({
         "from": _sender(),
-        "to": [_team_inbox()],
-        "reply_to": email,
-        "subject": f"[Wayly · {intent}] {name} ({role})",
+        "to": [to],
+        "reply_to": _team_inbox(),
+        "subject": "Your Wayly demo request, we'll be in touch soon" if is_demo else "We've got your message, we'll be in touch soon",
         "html": html,
     })
 
