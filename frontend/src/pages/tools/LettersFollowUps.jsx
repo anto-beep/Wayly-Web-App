@@ -264,13 +264,6 @@ export default function LettersFollowUps() {
             <section className="mx-auto max-w-[1720px] px-6 pt-1 pb-2">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                     <AboutBackLink />
-                    <Link
-                        to="/tools/letters-and-follow-ups/log"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-primary-k text-white px-4 py-2 text-sm hover:bg-[#091D33] transition-colors"
-                        data-testid="lf1-log-link"
-                    >
-                        <Mail className="h-4 w-4" /> Your mailbox
-                    </Link>
                 </div>
             </section>
 
