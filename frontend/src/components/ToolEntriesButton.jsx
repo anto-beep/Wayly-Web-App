@@ -11,6 +11,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, FileText, ReceiptText, Mail, ClipboardList } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const TOOL_ENTRY = {
     "statement-decoder": { to: "/app/statements", label: "View My Statements", Icon: FileText },
@@ -20,8 +21,12 @@ const TOOL_ENTRY = {
 };
 
 export default function ToolEntriesButton({ toolKey, className = "" }) {
+    const { user } = useAuth();
     const e = TOOL_ENTRY[toolKey];
-    if (!e) return null;
+    // These CTAs deep-link into the logged-in app, so only surface them to
+    // authenticated users. Anonymous visitors on the public tool pages never
+    // see them.
+    if (!e || !user) return null;
     const Icon = e.Icon;
     return (
         <Link

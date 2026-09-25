@@ -7724,3 +7724,20 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 ### Still open (deferred by user): Group C — full Mobile↔Web parity (screen-by-screen). Awaiting the user's chosen approach (audit-first / high-traffic-first / specific list). Testing agent nice-to-have: seed one letter on the solo account so share-panel-hidden can be UI-verified (currently code-review-verified).
 
+
+
+---
+
+## Contact honeypot + auth-gated tool CTAs — 25 Sep 2026
+
+### Spam Guard (contact form honeypot) — DONE & verified
+- `ContactBody` gained a `website` honeypot field; `contact_submit` returns `{ok:true}` but drops the submission (no DB, no email) when `website` is non-empty. `website` is popped before storage.
+- Frontend `Contact.jsx`: hidden, off-screen, `tabIndex=-1`, `aria-hidden` honeypot input (`data-testid=contact-website-hp`) bound to `form.website`.
+- Verified via curl: honeypot-filled POST → 200 but stored count 0; clean POST → stored.
+
+### Auth-gated tool buttons — DONE & verified
+- User ask: "View My Statements / View My Invoices / other tool CTAs" must only show to authenticated users, not anonymous visitors.
+- Fix: `components/ToolEntriesButton.jsx` now reads `useAuth()` and returns null when `!user`. This single shared component (rendered by `ToolHero`) covers Statement Decoder → "View My Statements", Invoice Checker → "View My Invoices", Support Plan Reviewer → "View My Care Plans", Letters → "Open My Mailbox".
+- Other `/app/*` deep-links on tool pages are already gated behind `useToolAccess() === "allowed"` (paid/trial); anonymous users hit the ToolGate and never reach them.
+- Verified with screenshots: anonymous → button hidden; logged-in (cathy, family) → button shown. Mobile has no anonymous public tool pages, so no parity gap.
+

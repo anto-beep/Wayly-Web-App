@@ -35,6 +35,7 @@ export default function Contact() {
         first_name: "",
         last_name: "",
         email: "",
+        website: "", // honeypot — must stay empty for real people
         phone: "",
         role: isDemo ? "advisor" : "family",
         context: "",
@@ -119,6 +120,20 @@ export default function Contact() {
                         </div>
                     ) : (
                         <form onSubmit={submit} className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="contact-form">
+                            {/* Honeypot: invisible to humans, catches bots that fill every field. */}
+                            <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}>
+                                <label>
+                                    Leave this field empty
+                                    <input
+                                        type="text"
+                                        tabIndex={-1}
+                                        autoComplete="off"
+                                        value={form.website}
+                                        onChange={update("website")}
+                                        data-testid="contact-website-hp"
+                                    />
+                                </label>
+                            </div>
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <label className="block">
                                     <span className="text-sm text-muted-k">First name <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>

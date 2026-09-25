@@ -6533,6 +6533,7 @@ class ContactBody(BaseModel):
     biggest_pain: Optional[str] = None
     success_in_six_months: Optional[str] = None
     preferred_time: Optional[str] = None
+    website: Optional[str] = None  # honeypot — hidden from humans; bots fill it
 
 
 def _titlecase_name(s: Optional[str]) -> Optional[str]:
@@ -6549,7 +6550,14 @@ def _titlecase_name(s: Optional[str]) -> Optional[str]:
 
 @api.post("/contact")
 async def contact_submit(body: ContactBody):
+    # Spam guard: the `website` field is a honeypot no human ever sees. If it
+    # carries a value it's a bot, so we silently accept (return ok so the bot
+    # believes it succeeded) but drop the submission entirely, no DB, no email.
+    if (body.website or "").strip():
+        logger.info("Contact honeypot triggered; dropping likely-spam submission")
+        return {"ok": True, "intent": body.intent}
     doc = body.model_dump()
+    doc.pop("website", None)
     # Normalise: proper-case names, lowercase email, compose a full name.
     first = _titlecase_name(doc.get("first_name"))
     last = _titlecase_name(doc.get("last_name"))
