@@ -26,6 +26,7 @@ export type WaylyUser = {
   cancel_at_period_end?: boolean | null;
   // "active" | "trial" → full access; "view_only" → read-only. Admins: "active".
   access_state?: string | null;
+  email_verified?: boolean | null;
 };
 
 type AuthState = {

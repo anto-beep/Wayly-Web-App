@@ -7,6 +7,7 @@ import GoogleSignInButton from "@/components/GoogleSignInButton";
 import WaylyLogo from "@/components/WaylyLogo";
 import WaylyLoader from "@/components/WaylyLoader";
 import { Eye, EyeOff, MailWarning, Loader2, CheckCircle2 } from "lucide-react";
+import EmailCodeVerify from "@/components/EmailCodeVerify";
 
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
@@ -132,6 +133,27 @@ export default function Login() {
         }
     };
 
+    const onVerifiedRetryLogin = async () => {
+        // Code accepted, the account is now verified, complete sign-in with the
+        // password still held in state.
+        setVerificationRequired(null);
+        setSubmitting(true);
+        try {
+            const result = await login(email, password);
+            if (result?.requires_mfa) {
+                setMfaToken(result.temp_token);
+                return;
+            }
+            toast.success(`Welcome back, ${result.name}`);
+            routeAfterLogin(result);
+        } catch (err) {
+            const m = loginErrorMessage(err);
+            if (m) toast.error(m, { duration: 7000 });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const submitMfa = async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -189,26 +211,16 @@ export default function Login() {
                                         <div className="flex-1 text-sm text-primary-k">
                                             <p className="font-semibold text-terracotta">Verify your email to sign in</p>
                                             <p className="mt-1 text-primary-k/85 leading-relaxed">
-                                                {verificationRequired.message} We&apos;ll send a fresh link to{" "}
+                                                {verificationRequired.message} Enter the 6-digit code we sent to{" "}
                                                 <span className="font-semibold">{verificationRequired.email}</span>.
                                             </p>
-                                            {resentAt ? (
-                                                <div className="mt-3 inline-flex items-center gap-2 rounded-md bg-sage/15 px-3 py-1.5 text-xs text-primary-k" data-testid="login-verification-sent">
-                                                    <CheckCircle2 className="h-3.5 w-3.5 text-sage" aria-hidden="true" />
-                                                    Sent. Check your inbox (and spam folder).
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={resendVerification}
-                                                    disabled={resending}
-                                                    className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary-k text-white px-4 py-2 text-sm font-medium hover:bg-primary-k/90 disabled:opacity-60"
-                                                    data-testid="login-resend-verification-btn"
-                                                >
-                                                    {resending && <Loader2 className="h-4 w-4 animate-spin" />}
-                                                    {resending ? "Sending…" : "Resend verification email"}
-                                                </button>
-                                            )}
+                                            <div className="mt-3">
+                                                <EmailCodeVerify
+                                                    email={verificationRequired.email}
+                                                    authed={false}
+                                                    onVerified={onVerifiedRetryLogin}
+                                                />
+                                            </div>
                                             <p className="mt-3 text-xs text-muted-k">
                                                 Wrong address?{" "}
                                                 <button

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 import { MailWarning, X } from "lucide-react-native";
 
 import { T } from "@/src/components/ui";
@@ -29,8 +30,8 @@ async function loadStatus(): Promise<Status | null> {
 // hidden for 24 hours (mirrors keeping the nudge low-frequency).
 export function EmailVerifyBanner() {
   const { colors } = useTheme();
+  const router = useRouter();
   const [status, setStatus] = useState<Status | null>(null);
-  const [sent, setSent] = useState(false);
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -45,10 +46,9 @@ export function EmailVerifyBanner() {
     return () => { mounted = false; };
   }, []);
 
-  const resend = useCallback(async () => {
-    setSent(true);
-    try { await apiFetch("/auth/send-verification-email", { method: "POST", body: {} }); } catch { /* ignore */ }
-  }, []);
+  const goVerify = useCallback(() => {
+    router.push("/verify-email?send=1");
+  }, [router]);
 
   const dismiss = useCallback(async () => {
     setHidden(true);
@@ -56,7 +56,7 @@ export function EmailVerifyBanner() {
   }, []);
 
   // Once past the 7-day grace period the banner is NON-dismissible so the
-  // "resend verification email" action is always reachable (web parity).
+  // "verify email" action is always reachable (web parity).
   if (!status || status.email_verified) return null;
   if (hidden && !status.past_deadline) return null;
   const days = status.days_remaining ?? 0;
@@ -76,13 +76,11 @@ export function EmailVerifyBanner() {
       }}
     >
       <MailWarning size={15} color={status.past_deadline ? colors.terracotta : colors.alert} />
-      <Pressable style={{ flex: 1 }} onPress={resend} testID="verify-email-resend">
+      <Pressable style={{ flex: 1 }} onPress={goVerify} testID="verify-email-resend">
         <T variant="small" style={{ color: status.past_deadline ? colors.terracotta : colors.alert }}>
-          {sent
-            ? "Verification email sent, check your inbox."
-            : status.past_deadline
-              ? "Please verify your email to keep full access · tap to resend"
-              : `Verify your email${days > 0 ? ` within ${days} day${days === 1 ? "" : "s"}` : ""} · tap to resend`}
+          {status.past_deadline
+            ? "Please verify your email to keep full access · tap to verify"
+            : `Verify your email${days > 0 ? ` within ${days} day${days === 1 ? "" : "s"}` : ""} · tap to verify`}
         </T>
       </Pressable>
       {status.past_deadline ? null : (

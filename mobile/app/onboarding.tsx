@@ -483,6 +483,13 @@ export default function OnboardingScreen() {
                   <View style={{ width: `${Math.max(4, completeness)}%`, height: 8, backgroundColor: colors.sage }} />
                 </View>
               </Card>
+              {!user?.email_verified ? (
+                <Card style={{ borderColor: colors.gold, borderWidth: 2 }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: colors.text }}>Verify your email</T>
+                  <T variant="small" style={{ marginTop: 4 }}>Confirm {user?.email || "your email"} with a quick 6-digit code so you never lose access. You can also do this later.</T>
+                  <Button label="Verify email now" testID="onboarding-verify-email" icon={ArrowRight} onPress={() => router.push("/verify-email?send=1")} style={{ marginTop: spacing.md }} />
+                </Card>
+              ) : null}
               {nextIncomplete ? (
                 <>
                   <Card style={{ borderColor: colors.gold, borderWidth: 2, backgroundColor: colors.sageSoft }}>

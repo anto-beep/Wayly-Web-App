@@ -68,6 +68,8 @@ class UserPublic(BaseModel):
     access_state: Optional[str] = None
     # Phase 1 security: surfaced so the Settings UI can show 2FA state.
     totp_enabled: Optional[bool] = None
+    # Email verification state, so clients can nudge/gate without a second call.
+    email_verified: Optional[bool] = None
 
 
 class PlanUpdate(BaseModel):

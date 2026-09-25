@@ -7781,3 +7781,22 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 ### Dashboard collapsible cards char-wrap fix (mobile) — DONE & verified at 320px + 390px
 - `mobile/app/(tabs)/index.tsx`: the "Budget detail, insights and history" and "Things To Know" toggles were char-wrapping their titles at ~320px because the icon + count badge + Show button left the title column too narrow. Restructured each header into a `detailLeft` group (icon + title/subtitle, `flex:1 minWidth:150`) and a `detailRight` group (count + Show, `flexShrink:0`), and added `flexWrap:"wrap"` to `detailToggle`. Now the Show/count controls wrap below the title on very narrow screens; the title never breaks character-by-character. Action stays inline at 390px.
+
+
+---
+
+## Email verification → 6-digit OTP code + header/dashboard polish — 25 Sep 2026 (iteration_351)
+
+### Email verification migrated from link → 6-digit code (web + mobile) — DONE & verified
+- Backend `routes/email_verification.py` rewritten to a code flow (reuses existing Resend pipeline + wayly_email_branding; email only DISPLAYS the code, no reply-back/form per G2). Code is sha256-hashed, single active per user, 15-min TTL, 5-min resend cooldown, 6-attempt cap. Kept the 7-day grace helpers + migration; legacy GET /auth/verify-email retained for any old inbox links.
+  - Endpoints: GET /auth/verification-status (adds resend_available_in + debug_code in non-prod), POST /auth/send-verification-email (authed), POST /auth/resend-verification-email {email} (public), POST /auth/verify-code {email, code}.
+  - `WAYLY_ENV` unset ⇒ non-prod ⇒ debug_code surfaced for testing; login hard-block stays PROD-only.
+  - `UserPublic` + mobile `WaylyUser` now expose `email_verified`.
+- Web: new `EmailCodeVerify.jsx` (6-box, paste, resend countdown, preview hint). Dashboard banner "Verify email" expands it inline; Login 403 path renders it and auto-retries login (PROD-only); /verify-email route renders code entry.
+- Mobile: new `CodeInput.tsx` + `app/verify-email.tsx` screen; banner + onboarding step-4 card open it; login.tsx routes to it on 403. verify-email effect re-runs on auth hydration (iter_351 fix) so the status fetch/debug hint fire.
+- Verified: backend curl (wrong→400 w/ attempts, correct→ok, cooldown 429); web & mobile e2e via testing agent (iteration_351). Login-after-grace 403 auto-retry is PROD-only and not exercisable in preview.
+
+### Header + dashboard polish (mobile) — DONE & verified
+- Header shows the Wayly logo mark only (wordmark removed) and compacts on scroll (reanimated: padding + logo scale driven by dashboard scrollY).
+- Account-health % ring hides at 100% on mobile (`WaylyHeader`) and web (`AccountHealthMenu` returns null when complete). Verified visible at 17% (cathy).
+- Budget/Things-To-Know cards open on whole-card tap (Pressable wraps card); at 390px 'Things To Know' is one line, at 320px the Show/count control wraps below — no character-wrap.

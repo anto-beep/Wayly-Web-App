@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "expo-router";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
 import {
   TrendingUp, FileText, AlertTriangle, Sparkles, ChevronRight,
   MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info,
@@ -69,6 +69,8 @@ export default function Dashboard() {
   const [showAllTtk, setShowAllTtk] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   useScrollToTop(scrollRef);
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => { scrollY.value = e.contentOffset.y; });
 
   const plan = user?.plan || "free";
   const isFree = plan === "free";
@@ -125,10 +127,12 @@ export default function Dashboard() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <WaylyHeader />
-      <ScrollView
-        ref={scrollRef}
+      <WaylyHeader scrollY={scrollY} />
+      <Animated.ScrollView
+        ref={scrollRef as any}
         contentContainerStyle={styles.scroll}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >
         <MissingDetailsBanner />
@@ -602,7 +606,7 @@ export default function Dashboard() {
             ) : null}
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -613,11 +617,11 @@ const styles = StyleSheet.create({
   headerBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.pill },
   headerBtnOutline: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.pill, borderWidth: 2 },
   lockIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
-  detailToggle: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.md, borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
-  detailLeft: { flexDirection: "row", alignItems: "center", gap: spacing.md, flex: 1, minWidth: 150 },
+  detailToggle: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm, borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
+  detailLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1, minWidth: 150 },
   detailRight: { flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 0 },
-  detailIcon: { flexShrink: 0, width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
-  detailBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 9 },
+  detailIcon: { flexShrink: 0, width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  detailBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 9 },
   statusPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
   note: { flexDirection: "row", gap: spacing.sm, alignItems: "center", borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
   sourceBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },

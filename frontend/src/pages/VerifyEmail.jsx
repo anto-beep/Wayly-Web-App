@@ -4,6 +4,7 @@ import { CheckCircle2, AlertCircle, Clock, Loader2, Mail } from "lucide-react";
 import WaylyLogo from "@/components/WaylyLogo";
 import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
+import EmailCodeVerify from "@/components/EmailCodeVerify";
 
 /**
  * /verify-email landing page.
@@ -93,6 +94,39 @@ export default function VerifyEmail() {
     const Icon = meta.icon;
     const [resendEmail, setResendEmail] = useState("");
     const [sending, setSending] = useState(false);
+    const [verifyEmail, setVerifyEmail] = useState("");
+    const showCodeEntry = !statusFromUrl && !tokenFromUrl;
+
+    useEffect(() => {
+        if (!showCodeEntry) return;
+        (async () => {
+            try {
+                const { data } = await api.get("/auth/verification-status");
+                if (data?.email_verified) { nav("/app", { replace: true }); return; }
+                setVerifyEmail(data?.email || "");
+            } catch { nav("/login", { replace: true }); }
+        })();
+    }, [showCodeEntry]);
+
+    if (showCodeEntry) {
+        return (
+            <div className="min-h-screen bg-kindred flex items-center justify-center px-4 py-10">
+                <div className="w-full max-w-md bg-surface border border-kindred rounded-2xl p-6 sm:p-8" data-testid="verify-email-code-page">
+                    <div className="flex items-center gap-2 mb-6">
+                        <WaylyLogo size={32} className="rounded-md" />
+                        <span className="font-heading text-lg text-primary-k">Wayly</span>
+                    </div>
+                    <h1 className="font-heading text-2xl text-primary-k tracking-tight">Verify your email</h1>
+                    <p className="mt-2 text-sm text-muted-k">Enter the 6-digit code we sent to{" "}<strong>{verifyEmail || "your email"}</strong>.</p>
+                    <div className="mt-6">
+                        {verifyEmail
+                            ? <EmailCodeVerify email={verifyEmail} authed onVerified={() => nav("/app", { replace: true })} />
+                            : <Loader2 className="h-5 w-5 animate-spin text-primary-k" />}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const sendNew = async (e) => {
         e?.preventDefault?.();
@@ -177,8 +211,8 @@ export default function VerifyEmail() {
  */
 export function EmailVerificationBanner() {
     const [status, setStatus] = useState(null);
-    const [sending, setSending] = useState(false);
     const [dismissed, setDismissed] = useState(false);
+    const [showCode, setShowCode] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -193,18 +227,6 @@ export function EmailVerificationBanner() {
 
     if (!status || status.email_verified || dismissed) return null;
 
-    const resend = async () => {
-        setSending(true);
-        try {
-            await api.post("/auth/send-verification-email");
-            toast.success("Verification email sent. Check your inbox.");
-        } catch (err) {
-            toast.error(extractErrorMessage(err, "Could not send email"));
-        } finally {
-            setSending(false);
-        }
-    };
-
     const isCritical = status.days_remaining <= 1;
     const tone = isCritical
         ? "border-terracotta/40 bg-terracotta/10"
@@ -213,41 +235,51 @@ export function EmailVerificationBanner() {
     return (
         <div
             data-testid="email-verification-banner"
-            className={`rounded-xl border ${tone} px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3`}
+            className={`rounded-xl border ${tone} px-4 py-3`}
         >
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-                <Mail className="h-5 w-5 text-primary-k flex-none mt-0.5" />
-                <div className="flex-1 min-w-0">
-                    <div className="text-sm text-primary-k">
-                        Please verify your email, we sent a link to <strong>{status.email}</strong>.
-                    </div>
-                    <div className="text-xs text-muted-k mt-0.5">
-                        {status.days_remaining > 0
-                            ? `${status.days_remaining} day${status.days_remaining === 1 ? "" : "s"} remaining before login is locked.`
-                            : "Today is your last day, login will lock at midnight."}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <Mail className="h-5 w-5 text-primary-k flex-none mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                        <div className="text-sm text-primary-k">
+                            Please verify your email, we sent a code to <strong>{status.email}</strong>.
+                        </div>
+                        <div className="text-xs text-muted-k mt-0.5">
+                            {status.days_remaining > 0
+                                ? `${status.days_remaining} day${status.days_remaining === 1 ? "" : "s"} remaining before login is locked.`
+                                : "Today is your last day, login will lock at midnight."}
+                        </div>
                     </div>
                 </div>
+                <div className="flex items-center gap-2 flex-none">
+                    <button
+                        type="button"
+                        onClick={() => setShowCode((s) => !s)}
+                        data-testid="email-verification-resend"
+                        className="flex-1 sm:flex-none bg-primary-k text-white rounded-md px-3 py-2 text-xs hover:bg-[#091D33] inline-flex items-center justify-center gap-1"
+                    >
+                        <Mail className="h-3.5 w-3.5" />
+                        {showCode ? "Hide" : "Verify email"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setDismissed(true)}
+                        aria-label="Dismiss"
+                        className="flex-none text-muted-k hover:text-primary-k text-xs px-2 py-2"
+                    >
+                        Hide
+                    </button>
+                </div>
             </div>
-            <div className="flex items-center gap-2 flex-none">
-                <button
-                    type="button"
-                    onClick={resend}
-                    disabled={sending}
-                    data-testid="email-verification-resend"
-                    className="flex-1 sm:flex-none bg-primary-k text-white rounded-md px-3 py-2 text-xs hover:bg-[#091D33] inline-flex items-center justify-center gap-1 disabled:opacity-50"
-                >
-                    {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
-                    {sending ? "Sending…" : "Resend email"}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setDismissed(true)}
-                    aria-label="Dismiss"
-                    className="flex-none text-muted-k hover:text-primary-k text-xs px-2 py-2"
-                >
-                    Hide
-                </button>
-            </div>
+            {showCode && (
+                <div className="mt-4 max-w-sm" data-testid="email-verification-code">
+                    <EmailCodeVerify
+                        email={status.email}
+                        authed
+                        onVerified={() => { setStatus((s) => ({ ...s, email_verified: true })); toast.success("Email verified"); }}
+                    />
+                </div>
+            )}
         </div>
     );
 }

@@ -94,6 +94,15 @@ export default function LoginScreen() {
       await login(email, password);
       router.replace("/(tabs)");
     } catch (e) {
+      if (
+        e instanceof ApiError &&
+        e.status === 403 &&
+        (e.data as any)?.detail?.code === "email_verification_required"
+      ) {
+        const to = ((e.data as any)?.detail?.email || email).trim().toLowerCase();
+        router.push(`/verify-email?email=${encodeURIComponent(to)}&next=login&send=1`);
+        return;
+      }
       setError(friendlyLoginError(e));
     } finally {
       setBusy(false);

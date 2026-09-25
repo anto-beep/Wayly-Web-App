@@ -304,6 +304,7 @@ def _user_public(u: dict, sub: Optional[dict] = None) -> UserPublic:
         cancel_at_period_end=(sub or {}).get("cancel_at_period_end"),
         access_state=_compute_access_state(u, sub),
         totp_enabled=bool(u.get("totp_enabled", False)),
+        email_verified=bool(u.get("email_verified", False)),
     )
 
 

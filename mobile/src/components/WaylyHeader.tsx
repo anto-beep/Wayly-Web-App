@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { Extrapolation, interpolate, SharedValue, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, Menu, ArrowRight, CheckCircle2, ShieldCheck, X } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -23,9 +24,10 @@ function mobileFixRoute(route: string): string {
   return "/participants";
 }
 
-// Top app bar matching the web mobile header: logo + wordmark, notification
-// bell, avatar, and a hamburger that opens the grouped drawer.
-export function WaylyHeader() {
+// Top app bar matching the web mobile header: logo, notification bell, avatar,
+// and a hamburger that opens the grouped drawer. When a `scrollY` shared value
+// is supplied, the bar gently compacts as the screen scrolls (dashboard).
+export function WaylyHeader({ scrollY }: { scrollY?: SharedValue<number> }) {
   const { openDrawer } = useDrawer();
   const router = useRouter();
   const { user } = useAuth();
@@ -36,12 +38,24 @@ export function WaylyHeader() {
   const [healthOpen, setHealthOpen] = useState(false);
   const health = useAccountHealth();
 
+  const _fallback = useSharedValue(0);
+  const sy = scrollY ?? _fallback;
+  const barStyle = useAnimatedStyle(() => ({
+    paddingTop: insets.top + interpolate(sy.value, [0, 60], [8, 3], Extrapolation.CLAMP),
+    paddingBottom: interpolate(sy.value, [0, 60], [spacing.sm, 3], Extrapolation.CLAMP),
+  }));
+  const logoStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(sy.value, [0, 60], [1, 0.82], Extrapolation.CLAMP) }],
+  }));
+
   return (
     <>
-    <View style={[styles.bar, { backgroundColor: colors.bg, borderBottomColor: colors.border, paddingTop: insets.top + 8 }]}>
-      <Pressable testID="header-logo" onPress={() => router.push("/(tabs)")} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <WaylyMark size={30} white={isDark} />
-      </Pressable>
+    <Animated.View style={[styles.bar, { backgroundColor: colors.bg, borderBottomColor: colors.border }, barStyle]}>
+      <Animated.View style={logoStyle}>
+        <Pressable testID="header-logo" onPress={() => router.push("/(tabs)")} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <WaylyMark size={30} white={isDark} />
+        </Pressable>
+      </Animated.View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
         {health && !health.complete ? (
           <View style={{ position: "relative" }}>
@@ -70,7 +84,7 @@ export function WaylyHeader() {
           <Menu size={26} color={colors.text} />
         </Pressable>
       </View>
-    </View>
+    </Animated.View>
     <TrialBanner />
     <EmailVerifyBanner />
     <NotificationsSheet visible={notifOpen} onClose={() => setNotifOpen(false)} />
