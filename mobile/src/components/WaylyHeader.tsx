@@ -41,10 +41,9 @@ export function WaylyHeader() {
     <View style={[styles.bar, { backgroundColor: colors.bg, borderBottomColor: colors.border, paddingTop: insets.top + 8 }]}>
       <Pressable testID="header-logo" onPress={() => router.push("/(tabs)")} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <WaylyMark size={30} white={isDark} />
-        <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text, letterSpacing: -0.3 }}>Wayly</T>
       </Pressable>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-        {health ? (
+        {health && !health.complete ? (
           <View style={{ position: "relative" }}>
             <HealthRing pct={health.score_pct} size={34} stroke={4} light onPress={() => setHealthOpen(true)} testID="header-health-ring" />
             {!health.complete && health.outstanding_count > 0 ? (

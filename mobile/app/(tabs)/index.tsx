@@ -232,12 +232,14 @@ export default function Dashboard() {
                     onPress={() => setShowDetail((v) => !v)}
                     style={({ pressed }) => [styles.detailToggle, { backgroundColor: colors.surface, borderColor: colors.primary }, shadow.card, pressed && { opacity: 0.92 }]}
                   >
-                    <View style={[styles.detailIcon, { backgroundColor: colors.goldSoft }]}>
-                      <TrendingUp size={20} color={colors.gold} />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text }}>Budget detail, insights and history</T>
-                      <T variant="small" numberOfLines={2} style={{ marginTop: 2 }}>Spending streams, pathways, insights and your lifetime cap</T>
+                    <View style={styles.detailLeft}>
+                      <View style={[styles.detailIcon, { backgroundColor: colors.goldSoft }]}>
+                        <TrendingUp size={20} color={colors.gold} />
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text }}>Budget detail, insights and history</T>
+                        <T variant="small" numberOfLines={2} style={{ marginTop: 2 }}>Spending streams, pathways, insights and your lifetime cap</T>
+                      </View>
                     </View>
                     <View style={[styles.detailBtn, { backgroundColor: colors.cta }]}>
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>{showDetail ? "Hide" : "Show"}</T>
@@ -334,21 +336,25 @@ export default function Dashboard() {
                   onPress={() => setShowKnow((v) => !v)}
                   style={({ pressed }) => [styles.detailToggle, { backgroundColor: ttkCount > 0 ? colors.terracotta : colors.gold, borderColor: ttkCount > 0 ? colors.terracotta : colors.gold }, shadow.card, pressed && { opacity: 0.92 }]}
                 >
-                  <View style={[styles.detailIcon, { backgroundColor: "rgba(255,255,255,0.16)" }]}>
-                    <AlertTriangle size={20} color="#fff" />
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: "#fff" }}>Things To Know</T>
-                    <T variant="small" numberOfLines={2} style={{ marginTop: 2, color: "rgba(255,255,255,0.8)" }}>Based on your latest statement and invoice</T>
-                  </View>
-                  {ttkCount > 0 ? (
-                    <View testID="things-to-know-count" style={{ flexShrink: 0, backgroundColor: "#fff", borderRadius: radius.pill, minWidth: 28, height: 28, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" }}>
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.terracotta }}>{ttkCount > 99 ? "99+" : ttkCount}</T>
+                  <View style={styles.detailLeft}>
+                    <View style={[styles.detailIcon, { backgroundColor: "rgba(255,255,255,0.16)" }]}>
+                      <AlertTriangle size={20} color="#fff" />
                     </View>
-                  ) : null}
-                  <View style={[styles.detailBtn, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>{showKnow ? "Hide" : "Show"}</T>
-                    <ChevronDown size={15} color="#fff" style={{ transform: [{ rotate: showKnow ? "180deg" : "0deg" }] }} />
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: "#fff" }}>Things To Know</T>
+                      <T variant="small" numberOfLines={2} style={{ marginTop: 2, color: "rgba(255,255,255,0.8)" }}>Based on your latest statement and invoice</T>
+                    </View>
+                  </View>
+                  <View style={styles.detailRight}>
+                    {ttkCount > 0 ? (
+                      <View testID="things-to-know-count" style={{ flexShrink: 0, backgroundColor: "#fff", borderRadius: radius.pill, minWidth: 28, height: 28, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" }}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.terracotta }}>{ttkCount > 99 ? "99+" : ttkCount}</T>
+                      </View>
+                    ) : null}
+                    <View style={[styles.detailBtn, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }}>{showKnow ? "Hide" : "Show"}</T>
+                      <ChevronDown size={15} color="#fff" style={{ transform: [{ rotate: showKnow ? "180deg" : "0deg" }] }} />
+                    </View>
                   </View>
                 </Pressable>
 
@@ -607,7 +613,9 @@ const styles = StyleSheet.create({
   headerBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.pill },
   headerBtnOutline: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.pill, borderWidth: 2 },
   lockIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
-  detailToggle: { flexDirection: "row", alignItems: "center", gap: spacing.md, borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
+  detailToggle: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.md, borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
+  detailLeft: { flexDirection: "row", alignItems: "center", gap: spacing.md, flex: 1, minWidth: 150 },
+  detailRight: { flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 0 },
   detailIcon: { flexShrink: 0, width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   detailBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 9 },
   statusPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },

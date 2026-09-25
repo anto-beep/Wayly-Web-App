@@ -55,6 +55,9 @@ export default function AccountHealthMenu() {
     const done = (data.items || []).filter((i) => i.done);
     const complete = data.complete;
 
+    // At 100% there is nothing to action, so hide the ring entirely.
+    if (complete) return null;
+
     return (
         <div className="relative" ref={ref}>
             <button

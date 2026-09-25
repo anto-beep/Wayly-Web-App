@@ -7765,3 +7765,19 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 
 ### Known non-blocking observation
 - `/invoices` "Issues" status chip did not reduce cathy's 39-row seed list — likely all seeded invoices qualify as issues (seed-data artifact, not a HScrollFade regression). Left as-is.
+
+
+---
+
+## Header + dashboard polish — 25 Sep 2026
+
+### Mobile header — DONE & verified
+- `mobile/src/components/WaylyHeader.tsx`: removed the "Wayly" wordmark text; header now shows the logo mark only.
+
+### Account-health ring hidden at 100% (web + mobile) — DONE
+- Mobile `WaylyHeader.tsx`: the HealthRing block now renders only when `health && !health.complete` (hidden once the account is 100% complete).
+- Web `frontend/src/components/AccountHealthMenu.jsx`: returns null when `data.complete` (ring removed at 100%).
+- Verified the non-complete case renders unchanged (cathy at 17% still shows the ring on both surfaces). The 100% hidden-state is a simple early-return guard; no seeded account sits at 100% to screenshot, so it was verified by logic, not visually.
+
+### Dashboard collapsible cards char-wrap fix (mobile) — DONE & verified at 320px + 390px
+- `mobile/app/(tabs)/index.tsx`: the "Budget detail, insights and history" and "Things To Know" toggles were char-wrapping their titles at ~320px because the icon + count badge + Show button left the title column too narrow. Restructured each header into a `detailLeft` group (icon + title/subtitle, `flex:1 minWidth:150`) and a `detailRight` group (count + Show, `flexShrink:0`), and added `flexWrap:"wrap"` to `detailToggle`. Now the Show/count controls wrap below the title on very narrow screens; the title never breaks character-by-character. Action stays inline at 390px.
