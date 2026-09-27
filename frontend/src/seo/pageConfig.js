@@ -81,7 +81,7 @@ export const SEO = {
         path: "/resources/templates",
     },
     aiTools: {
-        title: "Wayly AI Tools for Aged Care",
+        title: "Wayly Tools for Aged Care",
         description:
             "Nine free AI tools for Australian Support at Home: statement decoder, invoice checker, budget calculator, classification check, price checker and more, built for families.",
         path: "/ai-tools",

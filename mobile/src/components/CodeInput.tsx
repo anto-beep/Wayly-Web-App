@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 import { T } from "@/src/components/ui";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius } from "@/src/theme/tokens";
@@ -31,22 +31,27 @@ export function CodeInput({
   };
 
   return (
-    <Pressable testID={testID} onPress={() => ref.current?.focus()} style={styles.row} disabled={disabled}>
-      {[0, 1, 2, 3, 4, 5].map((i) => {
-        const filled = i < value.length;
-        const active = i === value.length;
-        return (
-          <View
-            key={i}
-            style={[
-              styles.cell,
-              { borderColor: active ? colors.primary : colors.border, backgroundColor: colors.surface },
-            ]}
-          >
-            <T style={{ fontFamily: fonts.heading, fontSize: 26, color: colors.text }}>{filled ? value[i] : ""}</T>
-          </View>
-        );
-      })}
+    <View testID={testID} style={styles.wrap}>
+      <View style={styles.row} pointerEvents="none">
+        {[0, 1, 2, 3, 4, 5].map((i) => {
+          const filled = i < value.length;
+          const active = i === value.length;
+          return (
+            <View
+              key={i}
+              style={[
+                styles.cell,
+                { borderColor: active ? colors.primary : colors.border, backgroundColor: colors.surface },
+              ]}
+            >
+              <T style={{ fontFamily: fonts.heading, fontSize: 26, color: colors.text }}>{filled ? value[i] : ""}</T>
+            </View>
+          );
+        })}
+      </View>
+      {/* Full-size transparent field on top: tapping anywhere focuses it and,
+          crucially, lets iOS/Android surface the SMS/email one-time-code
+          autofill suggestion above the keyboard. */}
       <TextInput
         ref={ref}
         testID={`${testID}-field`}
@@ -56,15 +61,19 @@ export function CodeInput({
         maxLength={6}
         autoFocus={autoFocus}
         editable={!disabled}
+        caretHidden
+        selectionColor="transparent"
         textContentType="oneTimeCode"
         autoComplete="sms-otp"
-        style={styles.hidden}
+        importantForAutofill="yes"
+        style={styles.overlay}
       />
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: { position: "relative" },
   row: { flexDirection: "row", gap: 8, justifyContent: "space-between" },
   cell: {
     flex: 1,
@@ -75,5 +84,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  hidden: { position: "absolute", opacity: 0, height: 1, width: 1 },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    color: "transparent",
+    textAlign: "center",
+    fontSize: 26,
+  },
 });

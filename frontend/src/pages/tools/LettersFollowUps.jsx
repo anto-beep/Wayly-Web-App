@@ -253,7 +253,7 @@ export default function LettersFollowUps() {
                     }),
                     breadcrumbLd([
                         { name: "Home", url: "/" },
-                        { name: "AI Tools", url: "/ai-tools" },
+                        { name: "Tools", url: "/ai-tools" },
                         { name: "Letters & Follow-ups", url: "/ai-tools/letters-and-follow-ups" },
                     ]),
                 ]}

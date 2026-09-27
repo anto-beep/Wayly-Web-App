@@ -50,7 +50,7 @@ export const DASHBOARD_DESTINATIONS = [
         keywords: "budget money left spend spent remaining afford cost funding cap running out running low how much left this quarter balance whats left do i have enough overspending",
     },
     {
-        label: "All AI Tools", hint: "Every tool Wayly offers, in one place",
+        label: "All Tools", hint: "Every tool Wayly offers, in one place",
         route: "/ai-tools", icon: Sparkles, quick: true,
         concepts: ["tools"],
         keywords: "tools all ai everything features what can wayly do show me tools options menu",

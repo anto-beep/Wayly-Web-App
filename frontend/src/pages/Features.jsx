@@ -14,7 +14,7 @@ import { TOOL_COUNT, toolCountWord } from "@/config/toolRegistry";
 import Reveal from "@/components/Reveal";
 
 const TABS = [
-    { id: "tools", label: "AI Tools" },
+    { id: "tools", label: "Tools" },
     { id: "wedge", label: "The Wedge" },
     { id: "caregiver", label: "Caregiver" },
     { id: "family", label: "Family" },

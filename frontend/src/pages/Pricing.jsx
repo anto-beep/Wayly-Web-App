@@ -75,7 +75,7 @@ const SECTIONS = [
         ],
     },
     {
-        label: "AI Tools",
+        label: "Tools",
         rows: [
             ["Statement Decoder", true, true, true],
             ["Invoice Checker", true, true, true],

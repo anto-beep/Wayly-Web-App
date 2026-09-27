@@ -298,6 +298,8 @@ async def _statements_for(participant_id: str, household_id: Optional[str], star
     q: Dict[str, Any] = {}
     if household_id:
         q["household_id"] = household_id
+    # Archived/deleted statements must not feed report totals.
+    q["state"] = {"$nin": ["archived", "deleted"]}
     # Statements pre-participant rows live with the household; isolate primary's view.
     cursor = db.statements.find(q, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1)
     docs = await cursor.to_list(500)

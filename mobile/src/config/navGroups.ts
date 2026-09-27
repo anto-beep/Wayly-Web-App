@@ -48,12 +48,12 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Dashboard", route: "/(tabs)", icon: LayoutDashboard, implemented: true },
       { label: "Profile", route: "/profile", icon: UserIcon, implemented: true },
       { label: "Family Wall", route: "/(tabs)/family", icon: Heart, implemented: true },
-      { label: "AI Tools", route: "/(tabs)/ai-tools", icon: Sparkles, implemented: true },
+      { label: "Tools", route: "/(tabs)/ai-tools", icon: Sparkles, implemented: true },
     ],
   },
   {
     key: "aitools",
-    label: "AI Tools",
+    label: "Tools",
     items: [
       { label: "Statement Decoder", route: "/tool/statement-decoder", icon: FileText, implemented: true },
       { label: "Invoice Checker", route: "/tool/invoice-checker", icon: ReceiptText, implemented: true },

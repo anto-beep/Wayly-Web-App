@@ -274,6 +274,13 @@ async def _scope_query_to_participant(user_id: str, request: Request, base_q: Di
     return q
 
 
+# Statements that count toward live totals (dashboard, budget, insights, chat).
+# Archived/deleted rows stay in the DB for audit but must NOT feed any number
+# shown across the app. `$nin` also matches legacy docs that have no `state`
+# field, so pre-Phase-2 statements keep counting as active.
+_ACTIVE_STMT_STATE = {"$nin": ["archived", "deleted"]}
+
+
 async def _audit(household_id: str, actor_id: str, actor_name: str, action: str, detail: str) -> None:
     evt = AuditEvent(
         household_id=household_id,
@@ -1508,7 +1515,7 @@ async def share_dashboard(body: ShareDashboardBody, user_id: str = Depends(get_c
         raise HTTPException(status_code=400, detail="Too many recipients in a single send (max 15).")
 
     # Compute current-quarter snapshot (reuses budget logic)
-    docs = await db.statements.find({"household_id": h["id"]}, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1).to_list(50)
+    docs = await db.statements.find({"household_id": h["id"], "state": _ACTIVE_STMT_STATE}, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1).to_list(50)
     all_items: list[dict] = []
     for s in docs:
         all_items.extend(s.get("line_items", []))
@@ -2649,6 +2656,7 @@ async def get_eligible_pathways(request: Request, user_id: str = Depends(get_cur
             "disclaimer": "No household linked yet, link a household to see pathway suggestions.",
         }
     q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+    q["state"] = _ACTIVE_STMT_STATE
 
     # Pull the household's recent statements + free-text fields.
     docs = await db.statements.find(
@@ -2961,6 +2969,7 @@ async def current_budget(request: Request, user_id: str = Depends(get_current_us
     care_management_quarterly = round(quarterly_gross - quarterly_usable, 2)
 
     q = await _scope_query_to_participant(user_id, request, {"household_id": h["id"]})
+    q["state"] = _ACTIVE_STMT_STATE
     docs = await db.statements.find(q, STATEMENT_LIGHT_PROJECTION).to_list(200)
     all_items: List[dict] = []
     for s in docs:
@@ -3184,10 +3193,10 @@ async def _prepare_chat_context(user_id: str, request: Request, payload: "ChatRe
         )
         docs = [focused_stmt]
     else:
-        latest = await db.statements.find(base_q, STATEMENT_LIGHT_PROJECTION) \
+        latest = await db.statements.find({**base_q, "state": _ACTIVE_STMT_STATE}, STATEMENT_LIGHT_PROJECTION) \
             .sort("uploaded_at", -1).limit(1).to_list(1)
         latest_summary = latest[0].get("summary") if latest else "No statements uploaded yet."
-        docs = await db.statements.find(base_q, STATEMENT_LIGHT_PROJECTION).to_list(200)
+        docs = await db.statements.find({**base_q, "state": _ACTIVE_STMT_STATE}, STATEMENT_LIGHT_PROJECTION).to_list(200)
     items: List[dict] = []
     for s in docs:
         items.extend(s.get("line_items", []))
@@ -3364,7 +3373,7 @@ async def participant_today(user_id: str = Depends(get_current_user_id)):
     classification = h["classification"]
     q_start, q_end, q_label = budget_lib.get_quarter_window()
     quarterly_total = budget_lib.quarterly_budget(classification)
-    docs = await db.statements.find({"household_id": h["id"]}, STATEMENT_LIGHT_PROJECTION).to_list(200)
+    docs = await db.statements.find({"household_id": h["id"], "state": _ACTIVE_STMT_STATE}, STATEMENT_LIGHT_PROJECTION).to_list(200)
     items: List[dict] = []
     for s in docs:
         items.extend(s.get("line_items", []))
@@ -6379,7 +6388,7 @@ async def _build_user_context(user_id: str) -> str:
         q_start, q_end, q_label = budget_lib.get_quarter_window()
         allocations = budget_lib.stream_allocations(classification)
         quarterly_total = budget_lib.quarterly_budget(classification)
-        docs = await db.statements.find({"household_id": h["id"]}, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1).to_list(50)
+        docs = await db.statements.find({"household_id": h["id"], "state": _ACTIVE_STMT_STATE}, {"_id": 0, "file_b64": 0}).sort("uploaded_at", -1).to_list(50)
         all_items: list[dict] = []
         for s in docs:
             all_items.extend(s.get("line_items", []))
@@ -6403,7 +6412,7 @@ async def _build_user_context(user_id: str) -> str:
     # Statements (latest 3)
     try:
         recent = await db.statements.find(
-            {"household_id": h["id"]},
+            {"household_id": h["id"], "state": _ACTIVE_STMT_STATE},
             {"_id": 0, "id": 1, "filename": 1, "period_label": 1, "uploaded_at": 1, "summary": 1, "anomalies": 1, "line_items": 1},
         ).sort("uploaded_at", -1).to_list(3)
         if recent:

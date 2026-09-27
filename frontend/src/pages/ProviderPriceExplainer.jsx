@@ -113,7 +113,7 @@ export default function ProviderPriceExplainer() {
     const jsonLd = [
         breadcrumbLd([
             { name: "Wayly", url: "/" },
-            { name: "AI Tools", url: "/ai-tools" },
+            { name: "Tools", url: "/ai-tools" },
             { name: "Provider Price Checker", url: "/ai-tools/provider-price-checker" },
             { name: "How the fairness check works", url: path },
         ]),

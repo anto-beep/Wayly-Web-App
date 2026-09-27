@@ -5,7 +5,7 @@ import AppStoreBadges from "@/components/AppStoreBadges";
 
 const PRODUCT = [
     { to: "/features", label: "Features" },
-    { to: "/ai-tools", label: "AI Tools" },
+    { to: "/ai-tools", label: "Tools" },
     { to: "/services", label: "Services" },
     { to: "/policy", label: "Policy Explainers" },
     { to: "/pricing", label: "Pricing" },

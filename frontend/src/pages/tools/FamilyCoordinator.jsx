@@ -29,7 +29,7 @@ const _toolJsonLd = (cfg) => {
     if (cfg.faqs) blocks.push(faqLd(cfg.faqs));
     blocks.push(breadcrumbLd([
         { name: "Home", url: "/" },
-        { name: "AI Tools", url: "/ai-tools" },
+        { name: "Tools", url: "/ai-tools" },
         { name: cfg.toolName, url: cfg.path },
     ]));
     return blocks;

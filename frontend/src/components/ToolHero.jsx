@@ -86,7 +86,7 @@ export default function ToolHero({ toolKey, wide = false }) {
                 data-testid={`tool-hero-back-${toolKey}`}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-k hover:text-primary-k transition-colors"
             >
-                <ArrowLeft className="h-4 w-4" /> All AI Tools
+                <ArrowLeft className="h-4 w-4" /> All Tools
             </Link>
             <div
                 className="relative mt-4 overflow-hidden rounded-3xl border shadow-sm p-6 sm:p-8"
@@ -99,7 +99,7 @@ export default function ToolHero({ toolKey, wide = false }) {
                         <Icon className="h-7 w-7" />
                     </span>
                     <div className="min-w-0">
-                        <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em]" style={{ color: v.accent }}>AI Tool</div>
+                        <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em]" style={{ color: v.accent }}>Tool</div>
                         <h1 className="font-heading text-3xl sm:text-4xl lg:text-[2.75rem] text-primary-k tracking-tight leading-[1.05]">
                             {c.name}
                         </h1>

@@ -43,7 +43,7 @@ function TabsInner() {
         <Tabs.Screen
           name="ai-tools"
           options={{
-            title: "AI Tools",
+            title: "Tools",
             tabBarIcon: ({ color, size }) => <Sparkles size={size} color={color} />,
             tabBarButtonTestID: "tab-ai-tools",
           }}

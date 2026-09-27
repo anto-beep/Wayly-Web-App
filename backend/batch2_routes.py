@@ -1011,7 +1011,7 @@ async def adviser_global_alerts(
     # 1) Statement anomalies, from stored statements
     if not type_ or type_ == "anomaly":
         stmt_cur = _db.statements.find(
-            {"household_id": {"$in": hh_ids}, "anomalies": {"$exists": True, "$ne": []}},
+            {"household_id": {"$in": hh_ids}, "state": {"$nin": ["archived", "deleted"]}, "anomalies": {"$exists": True, "$ne": []}},
             {"_id": 0, "id": 1, "household_id": 1, "uploaded_at": 1, "filename": 1, "anomalies": 1, "period_label": 1},
         ).sort("uploaded_at", -1).limit(200)
         async for s in stmt_cur:

@@ -19,7 +19,7 @@ Command.displayName = CommandPrimitive.displayName
 const CommandDialog = ({
   children,
   title = "Command palette",
-  description = "Search Wayly, pages, settings, AI tools.",
+  description = "Search Wayly, pages, settings, tools.",
   ...props
 }) => {
   return (

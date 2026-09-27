@@ -9,7 +9,7 @@ import { useInLayout } from "@/context/LayoutContext";
 const NAV = [
     { to: "/about", label: "About" },
     { to: "/features", label: "Features" },
-    { to: "/ai-tools", label: "AI Tools" },
+    { to: "/ai-tools", label: "Tools" },
     { to: "/pricing", label: "Pricing" },
     { to: "/resources", label: "Resources" },
     { to: "/contact", label: "Contact" },
@@ -56,7 +56,7 @@ function SignedInControls({ user }) {
 
     const menuItems = [
         { to: "/app", icon: User, label: "Dashboard" },
-        { to: "/settings", icon: Settings, label: "Profile & settings" },
+        { to: "/settings", icon: Settings, label: "Profile & Settings" },
         { to: "/settings/billing", icon: CreditCard, label: "Plan & Billing" },
         ...(user.plan === "family" ? [{ to: "/settings/members", icon: Users, label: "Members" }] : []),
         { to: "/contact", icon: HelpCircle, label: "Help & support" },

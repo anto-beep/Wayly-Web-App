@@ -337,7 +337,7 @@ async def _load_client_household(adviser_user_id: str, cid: str) -> dict:
     if not household:
         raise HTTPException(status_code=410, detail="Client household no longer available")
     statements_cur = _db.statements.find(
-        {"household_id": hh_id},
+        {"household_id": hh_id, "state": {"$nin": ["archived", "deleted"]}},
         {"_id": 0, "file_b64": 0},
     ).sort("uploaded_at", -1).limit(12)
     statements = [s async for s in statements_cur]

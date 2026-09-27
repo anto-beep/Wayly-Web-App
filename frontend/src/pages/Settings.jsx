@@ -50,7 +50,7 @@ function TabNav({ active }) {
 }
 
 /* -------------------------- Email change section -------------------------- */
-function EmailChangeSection({ currentEmail }) {
+function EmailChangeSection({ currentEmail, verified }) {
     const [status, setStatus] = useState(null); // null | {pending, new_email, requested_at, expires_at}
     const [editing, setEditing] = useState(false);
     const [newEmail, setNewEmail] = useState("");
@@ -104,7 +104,17 @@ function EmailChangeSection({ currentEmail }) {
     return (
         <div className="mt-1" data-testid="email-change-section">
             <div className="rounded-md border border-kindred bg-surface-2 px-3 py-2.5 text-primary-k flex items-center justify-between gap-2">
-                <span className="truncate" data-testid="email-current">{currentEmail}</span>
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className="truncate" data-testid="email-current">{currentEmail}</span>
+                    {verified && (
+                        <span
+                            data-testid="email-verified-badge"
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-sage/15 text-sage px-2 py-0.5 text-xs font-medium"
+                        >
+                            <Check className="h-3 w-3" /> Email verified
+                        </span>
+                    )}
+                </div>
                 {!editing && !status?.pending && (
                     <button
                         type="button"
@@ -251,7 +261,7 @@ function ProfileTab() {
                 </label>
                 <div className="block">
                     <span className="text-sm text-muted-k">Email</span>
-                    <EmailChangeSection currentEmail={user?.email || ""} />
+                    <EmailChangeSection currentEmail={user?.email || ""} verified={!!user?.email_verified} />
                 </div>
                 <label className="block">
                     <span className="text-sm text-muted-k">Phone number</span>

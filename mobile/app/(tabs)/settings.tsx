@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router } from "expo-router";
 import { useScrollToTop } from "expo-router";
-import { Sun, Moon, Smartphone, LogOut, User, CreditCard, Bell, Shield, Phone, Mail, ChevronRight, Users, Mailbox, Gauge, AlertTriangle, Pencil, Info } from "lucide-react-native";
+import { Sun, Moon, Smartphone, LogOut, User, CreditCard, Bell, Shield, Phone, Mail, ChevronRight, Users, Mailbox, Gauge, AlertTriangle, Pencil, Info, CheckCircle2 } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
 import { Button, Card, T } from "@/src/components/ui";
@@ -132,7 +132,15 @@ export default function SettingsScreen() {
                 <Mail size={16} color={colors.muted} />
                 <T variant="small">Email</T>
               </View>
-              <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.text, flexShrink: 1 }} numberOfLines={1}>{user?.email || "—"}</T>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1 }}>
+                <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.text, flexShrink: 1 }} numberOfLines={1}>{user?.email || "—"}</T>
+                {(user as any)?.email_verified ? (
+                  <View testID="email-verified-badge" style={{ flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: colors.sageSoft, borderRadius: radius.pill, paddingHorizontal: 7, paddingVertical: 2 }}>
+                    <CheckCircle2 size={12} color={colors.sage400} />
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.sage400 }}>Verified</T>
+                  </View>
+                ) : null}
+              </View>
             </View>
             <View style={styles.acctRow}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>

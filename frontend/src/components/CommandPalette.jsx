@@ -91,7 +91,7 @@ export default function CommandPalette() {
                         <CommandSeparator />
                     </>
                 )}
-                <CommandGroup heading="AI tools">
+                <CommandGroup heading="Tools">
                     {toolItems.map((i) => (
                         <CommandItem key={i.to} onSelect={() => go(i.to)} value={i.label}>
                             <i.icon className="mr-2 h-4 w-4" /> {i.label}

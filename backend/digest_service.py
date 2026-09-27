@@ -66,7 +66,7 @@ async def build_digest(db, household: Dict[str, Any], since_days: int = 7, parti
             break
 
     # Anomalies, pull from statements uploaded this week
-    stmts_cur = db.statements.find(scoped({"household_id": hid, "uploaded_at": {"$gte": cutoff_iso}}), {"_id": 0})
+    stmts_cur = db.statements.find(scoped({"household_id": hid, "state": {"$nin": ["archived", "deleted"]}, "uploaded_at": {"$gte": cutoff_iso}}), {"_id": 0})
     statements = await stmts_cur.to_list(50)
     top_anomalies: List[Dict[str, Any]] = []
     total_new_spend = 0.0

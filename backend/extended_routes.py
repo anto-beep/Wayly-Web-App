@@ -649,6 +649,7 @@ async def global_search(request: Request, q: str = Query(min_length=2, max_lengt
         # statements (period_label / filename / summary)
         async for s in _db.statements.find({
             "household_id": hh,
+            "state": {"$nin": ["archived", "deleted"]},
             "$or": [{"period_label": rx}, {"filename": rx}, {"summary": rx}],
         }, {"_id": 0, "id": 1, "period_label": 1, "filename": 1, "uploaded_at": 1}).limit(20):
             results.append({
@@ -720,7 +721,7 @@ async def household_summary_pdf(request: Request, period: str = Query(default="q
     if not household:
         raise HTTPException(status_code=404, detail="Household not found")
     statements = [s async for s in _db.statements.find(
-        {"household_id": hh}, {"_id": 0, "file_b64": 0},
+        {"household_id": hh, "state": {"$nin": ["archived", "deleted"]}}, {"_id": 0, "file_b64": 0},
     ).sort("uploaded_at", -1).limit(12)]
     concerns = [c async for c in _db.audit_events.find(
         {"household_id": hh, "kind": {"$in": ["CONCERN_RAISED", "FAMILY_MESSAGE_POSTED"]}},

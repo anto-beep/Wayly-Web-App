@@ -222,7 +222,7 @@ export default function Landing() {
                 <section className="mx-auto max-w-7xl px-6 py-16" data-testid="what-wayly-does">
                     <span className="overline">What Wayly does</span>
                     <h2 className="font-heading text-3xl sm:text-4xl text-primary-k mt-3 max-w-3xl tracking-tight">
-                        {toolCountWord(TOOL_COUNT)} AI Tools. One Calm Dashboard.
+                        {toolCountWord(TOOL_COUNT)} Tools. One Calm Dashboard.
                     </h2>
                     <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         {FEATURES.map((f) => (

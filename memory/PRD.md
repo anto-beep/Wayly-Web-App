@@ -7800,3 +7800,24 @@ Self-verified: backend login 200; lockout formatter unit-checked; web Features r
 - Header shows the Wayly logo mark only (wordmark removed) and compacts on scroll (reanimated: padding + logo scale driven by dashboard scrollY).
 - Account-health % ring hides at 100% on mobile (`WaylyHeader`) and web (`AccountHealthMenu` returns null when complete). Verified visible at 17% (cathy).
 - Budget/Things-To-Know cards open on whole-card tap (Pressable wraps card); at 390px 'Things To Know' is one line, at 320px the Show/count control wraps below — no character-wrap.
+
+
+---
+
+## "AI Tools" → "Tools" rename + minor UI polish — 27 Sep 2026
+
+### Feature-label rename "AI Tools" → "Tools" (web + mobile) — DONE & verified
+User request: change the visible "AI Tools" wording to just "Tools" (remove "AI"), incl. the dashboard menu, across frontend + backend.
+- Web labels renamed: MarketingHeader nav, Layout sidebar nav item + group heading ("Tools"), Footer product link, dashboardDestinations "All Tools", CommandPalette group heading, command dialog description, ToolHero back-link + eyebrow ("Tool"), Pricing comparison label, Features tab label, Landing H2, SEO aiTools page title.
+- Web breadcrumbs (`{name:"AI Tools"}` → `{name:"Tools"}`) updated in ProviderPriceExplainer + all 10 tool pages.
+- Mobile labels renamed: bottom tab title ("Tools"), dashboard quick action ("All Tools"), drawer nav item + group heading (navGroups.ts). Mobile /ai-tools hub H1 already read "Nine Tools".
+- Left intentionally UNCHANGED (descriptive/legal prose where "AI" is substantive): legal pages (Terms, Privacy, AI Disclaimer), AI accuracy banner/disclaimer, marketing bullets like "All 9 AI tools", plan feature lists, FAQ answer. Backend has NO user-facing "AI Tools" strings (only code comments/logs) — nothing to change there. Route paths (`/ai-tools`), internal keys (`ai_tools`/`aitools`) and testids kept for stability.
+- Verified via screenshots: web marketing nav + logged-in sidebar show "Tools"; mobile dashboard shows "All Tools" + bottom tab "Tools".
+
+### MarketingHeader capitalisation — DONE
+- Account dropdown item "Profile & settings" → "Profile & Settings".
+
+### Mobile Settings "Verified" badge colour — DONE & verified
+- Badge icon + text switched from `colors.sage` (#425F47, read as near-black at 11px) to `colors.sage400` (#6B8F71) so it reads clearly green on the pale sageSoft chip. Confirmed on mobile Settings (cathy@example.com).
+
+Testing method: self-tested via Playwright screenshots on web + Expo previews (no testing_agent call — changes were label/colour only).

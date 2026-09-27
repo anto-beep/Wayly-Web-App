@@ -95,12 +95,12 @@ const navGroups = [
             { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, mobile: true },
             { to: "/app/me", label: "Profile", icon: UserIcon, matchPrefix: "/app/participants/" },
             { to: "/app/wall", label: "Family Wall", icon: Heart },
-            { to: "/ai-tools", label: "AI Tools", icon: Sparkles, mobile: true },
+            { to: "/ai-tools", label: "Tools", icon: Sparkles, mobile: true },
         ],
     },
     {
         key: "ai_tools",
-        label: "AI Tools",
+        label: "Tools",
         items: aiToolItems,
     },
     {
