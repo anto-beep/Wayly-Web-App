@@ -246,7 +246,7 @@ export default function InvoicesList() {
                         disabled={items.length === 0}
                         data-testid="invoices-list-export-csv-btn"
                         title="Export the current view as CSV"
-                        className="inline-flex items-center gap-1.5 rounded-full border border-primary-k/25 bg-white text-primary-k text-sm font-medium px-3.5 py-2 hover:bg-primary-k hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-primary-k/25 bg-white text-primary-k text-sm font-medium px-3.5 py-2 transition-colors hover:bg-primary-k/10 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Download className="h-3.5 w-3.5" /> Export CSV
                     </button>
@@ -255,7 +255,7 @@ export default function InvoicesList() {
                         data-testid="invoices-list-upload-btn"
                         className="inline-flex items-center gap-1.5 rounded-full bg-primary-k text-white text-sm font-medium px-4 py-2 hover:bg-primary-k/90"
                     >
-                        <Upload className="h-4 w-4" /> Check a new invoice
+                        <Upload className="h-4 w-4" /> Check a New Invoice
                     </Link>
                 </div>
             </div>
@@ -304,7 +304,7 @@ export default function InvoicesList() {
             ) : items.length === 0 ? (
                 <div className="rounded-2xl border-2 border-dashed border-primary-k/20 bg-white p-10 text-center" data-testid="invoices-list-empty">
                     <Receipt className="h-10 w-10 text-primary-k/60 mx-auto" />
-                    <h3 className="mt-3 font-heading text-xl text-primary-k">No invoices yet</h3>
+                    <h3 className="mt-3 font-heading text-xl text-primary-k">No Invoices Yet</h3>
                     <p className="mt-1.5 text-sm text-muted-k max-w-md mx-auto">
                         Upload the first invoice you were charged by your provider. We will read it, spot any errors, and tell you exactly what to do next.
                     </p>

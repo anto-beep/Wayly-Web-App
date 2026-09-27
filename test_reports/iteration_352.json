@@ -1,0 +1,31 @@
+{
+  "summary": "Web-only frontend verification of InvoicesList visual edits at /app/invoices. Logged in as cathy@example.com (has invoices) and verified: (1) top button row shows 'Export CSV' (data-testid invoices-list-export-csv-btn) with className containing 'transition-colors hover:bg-primary-k/10' and NO 'hover:text-white' — hover computed bg=rgb(251,252,254), text color rgb(14,77,82) (primary-k), label remained fully legible in both pre-hover and on-hover screenshots; (2) adjacent CTA (invoices-list-upload-btn) reads 'Check a New Invoice' (Title Case) and links to /ai-tools/invoice-checker; (3) Export CSV click still downloads wayly-invoices-YYYY-MM-DD.csv. Empty-state heading 'No Invoices Yet' at InvoicesList.jsx:307 verified by source review (unconditional literal inside the invoices-list-empty branch); attempt to create a fresh empty account through the signup form was blocked by unrelated field-name selector mismatch, not by a code issue.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iteration_352_pre_hover.jpeg",
+    "/app/test_reports/iteration_352_on_hover.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "InvoicesList.jsx:249 — hover class 'hover:bg-primary-k/10' with 'text-primary-k' base gives good contrast on hover (verified computed styles). No regression against the previously-reported dark-fill obscuring the label.",
+    "InvoicesList.jsx:307 — heading is 'No Invoices Yet' (Title Case).",
+    "InvoicesList.jsx:258 — CTA copy is 'Check a New Invoice' (Title Case)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Visual-only edit on /app/invoices verified. Export CSV hover no longer covers text (subtle tint, dark label). Heading + CTA are Title Case. CSV download regression check passed. Empty-state string was verified statically from source since a fresh signup could not be scripted in this run.",
+  "rca of the issue": ""
+}
