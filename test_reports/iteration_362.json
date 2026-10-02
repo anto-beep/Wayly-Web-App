@@ -1,0 +1,38 @@
+{
+  "summary": "PC-RECLASS-1 (personal-care reclassification, effective 2026-10-01) verified end-to-end on web + shared backend. Backend pytest suite is fully green: 96 passed, 11 skipped, 0 failed across the 6 requested files (107 collected). All 17 tests in test_pc_reclass_iter362.py pass, including the key control (test_wsc_pre_boundary_contribution_not_flagged — D2 by service-delivery date) and the rollback (test_wsc_flag_off_rollback, test_wsd_c2_flag_off_rollback). SAH Invoice Checker C2 covered: test_c2_flags_personal_care_after_cutoff + test_c2_silent_before_cutoff both pass. Live Statement Decoder flow was exercised against the real backend: uploaded /app/backend/tests/fixtures/POST_OCT_2026_November_2026.pdf, polled upload-job to done, fetched the saved statement — the response's audit.anomalies contains the HIGH RULE_PC_RECLASS_CONTRIB finding (title: 'A personal care charge on 2026-11-04 still shows a $8.20 contribution after personal care became fully funded.'), confirming the gate fires on real decode. D7 route parity (web): the SAVED /app/statements/{id} page renders the same finding (NEEDS ATTENTION card: 'A personal care charge on 04/11/2026 still shows a $8.20 contribution...' plus FYI card 'From 1 October 2026 personal care moves to Clinical Care with no co-contribution.'), proving fresh-run == saved-view parity via the shared DecoderResultView. Code-parity on frontend confirmed: web /app/frontend/src/lib/anomalyExplainer.js maps RULE_PC_RECLASS_CONTRIB -> 'Personal Care Should Be Free Now'; mobile /app/mobile/src/utils/format.ts ruleLabel regex maps PC_RECLASS -> 'Personal care now free'. Note: expected count in the request was ~186 — actual collected is 107 across the six listed files; this is a count discrepancy not a failure. Zero failures observed.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/pytest/pc_reclass_iter362.xml",
+    "/app/test_reports/iter362_pc_reclass_live.py",
+    "/app/test_reports/iter362_saved_statement.jpeg",
+    "/app/backend/tests/test_pc_reclass_iter362.py",
+    "/app/backend/tests/inv1/test_checks.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: expected test count in request (~186) did not match reality — the 6 listed files collect 107 tests. Main agent may want to update the expectation or add the missing files to the list; result (all pass, 11 skipped) is correct."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (worked for API login + web UI)",
+  "seed_data_creation": "Live decode created one Nov-2026 statement for Dorothy under Cathy's household (statement_id=cd9d9dda-1fe5-4793-ba7f-d41679c08ad2) from the committed POST_OCT_2026_November_2026.pdf fixture; left in place for next retest to re-verify the saved view.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Live decode statement_id for Cathy's household: cd9d9dda-1fe5-4793-ba7f-d41679c08ad2 — visit /app/statements/cd9d9dda-1fe5-4793-ba7f-d41679c08ad2 to re-see the RULE_PC_RECLASS_CONTRIB rendering without re-running the slow LLM. Live-decode helper: /app/test_reports/iter362_pc_reclass_live.py (reuses the fixture + upload-job polling, took ~25s end-to-end). Backend flag confirmed on in /app/backend/.env (pc_reclass_2026_10=1); rollback is covered by pytest only.",
+  "rca of the issue": ""
+}

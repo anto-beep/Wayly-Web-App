@@ -121,7 +121,17 @@ _CATEGORY_KEYWORDS: List[Tuple[ServiceCategory, Tuple[str, ...]]] = [
         "medication management", "dietitian", "speech pathology",
     )),
     (ServiceCategory.personal_care, (
-        "personal care", "showering", "dressing", "toileting", "hygiene",
+        # Official Support at Home personal-care set (My Aged Care definition):
+        # showering, continence support, dressing, eating, hygiene, and
+        # assistance with self-administration of medication. Kept specific so a
+        # continence CONSUMABLE (everyday living) or a clinical medication
+        # review is not mis-tagged into personal care.
+        "personal care", "showering", "shower assist", "bathing", "bath assist",
+        "dressing", "grooming", "toileting", "hygiene",
+        "continence support", "continence assistance", "continence care",
+        "assistance with eating", "feeding assistance",
+        "self-administration of medication", "self administer medication",
+        "medication prompting",
     )),
     (ServiceCategory.care_management, (
         "care management", "care coordination", "package management",

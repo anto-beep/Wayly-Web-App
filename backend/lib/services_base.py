@@ -217,3 +217,100 @@ def remediation_c_enabled() -> bool:
 def remediation_d_enabled() -> bool:
     """Per-line GOVT PAID identity + footer flag removal."""
     return _flag("DEC1_REMEDIATION_D")
+
+
+# ---------------------------------------------------------------------------
+# PC-RECLASS-1 — personal-care contribution reclassification (1 Oct 2026).
+#
+# From 1 October 2026 personal care moved from the Independence contribution
+# category to Clinical Supports under Support at Home. The Australian
+# Government fully funds personal care for approved participants with available
+# funds, so the participant share is $0. This module is the one date-aware
+# engine every tool reads (decision 1); the $0 share is the COMPUTED outcome of
+# the Clinical-supports rule, never a literal typed into a tool (decision 4);
+# and the boundary is applied by SERVICE DELIVERY date, never the statement
+# issue or processing date (decision 2).
+# ---------------------------------------------------------------------------
+import datetime as _dt
+
+
+def _as_iso_date(v: Any) -> Optional[str]:
+    """Normalise a date / datetime / 'YYYY-MM-DD...' value to an ISO date
+    string, or None when it cannot be read as a date."""
+    if v is None:
+        return None
+    if isinstance(v, _dt.datetime):
+        return v.date().isoformat()
+    if isinstance(v, _dt.date):
+        return v.isoformat()
+    s = str(v).strip()
+    return s[:10] if len(s) >= 10 else (s or None)
+
+
+def pc_reclass_enabled() -> bool:
+    """Feature flag ``pc_reclass_2026_10`` (PC-RECLASS-1 decision 7).
+
+    Defaults ON because the category move is legally in force from
+    1 October 2026 and the detection is the product value of the change. Set
+    ``pc_reclass_2026_10=0`` to roll back to pre-boundary behaviour (post
+    01/10/2026 personal care treated as contributory)."""
+    return _flag("pc_reclass_2026_10", "1")
+
+
+def personal_care_fully_funded_from(as_of: Any = None) -> str:
+    """The single source-of-truth boundary date (INDEX-1
+    ``policy_date.personal_care_free``). One upstream date; every date-aware
+    tool reads it (decision 1)."""
+    default = PERSONAL_CARE_RECLASS_DATE  # "2026-10-01"
+    try:
+        import program_reference as _pr
+        v = _pr.get_value("policy_date.personal_care_free", as_of, default=default)
+    except Exception:
+        v = default
+    return _as_iso_date(v) or default
+
+
+# The official Support at Home personal-care service set (My Aged Care
+# definition): showering, continence support, dressing, eating, hygiene, and
+# assistance with self-administration of medication (decision 3). Matched
+# against a line's description/stream text. Kept deliberately specific so a
+# mis-tagged everyday-living consumable (e.g. "continence consumables") or a
+# clinical "medication management/review" line does NOT trip a wrong-direction
+# contribution flag.
+_PERSONAL_CARE_TERMS = (
+    "personal care", "personal-care",
+    "showering", "shower assist", "bathing", "bath assist",
+    "dressing", "grooming",
+    "toileting", "toilet assist",
+    "continence support", "continence assistance", "continence care",
+    "assistance with eating", "feeding assistance", "assistance with meals at home",
+    "self-administration of medication", "self administer medication",
+    "medication prompting",
+    "personal hygiene", "hygiene assist",
+)
+
+
+def is_personal_care_text(*parts: Any) -> bool:
+    """True when the combined text describes a personal-care service."""
+    blob = " ".join(str(p or "") for p in parts).lower()
+    return any(term in blob for term in _PERSONAL_CARE_TERMS)
+
+
+def personal_care_is_fully_funded(service_date: Any, as_of: Any = None) -> bool:
+    """True when a personal-care service delivered on ``service_date`` falls on
+    or after the boundary (decision 2) AND the flag is enabled. The $0
+    participant share is the computed outcome of this rule (decision 4)."""
+    if not pc_reclass_enabled():
+        return False
+    sd = _as_iso_date(service_date)
+    if not sd:
+        return False
+    return sd >= personal_care_fully_funded_from(as_of)
+
+
+def expected_personal_care_participant_share(service_date: Any, as_of: Any = None) -> Optional[float]:
+    """Expected participant share for a personal-care line: 0.0 when fully
+    funded for this service date, else None (no override, normal contribution
+    logic applies). Personal care continues to draw on the participant's
+    Support at Home funds — only the participant share goes to $0 (decision 6)."""
+    return 0.0 if personal_care_is_fully_funded(service_date, as_of) else None

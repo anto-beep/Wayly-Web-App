@@ -1,16 +1,19 @@
 """
 build_post_oct_2026_v1.py
 
-Archetype: post-1-October-2026 personal care.
-Statement period starts AFTER the 1-Oct-2026 SAH program transition.
-Personal-care policy shifts to a new schedule — post-cutover statements
-must NOT be flagged as anomalous just because the period is post-Oct-2026.
+Archetype: post-1-October-2026 personal care — the PC-RECLASS-1 SEEDED ERROR.
+Statement period starts AFTER the 1-Oct-2026 Support at Home transition where
+personal care became fully government-funded ($0 participant share). These
+personal-care lines still carry an $8.20 participant contribution, so the
+Statement Decoder must raise RULE_PC_RECLASS_CONTRIB (the provider has not yet
+repriced personal care into Clinical Supports). The boundary is tested by
+SERVICE DELIVERY date, not the statement issue date.
 Provider: Southern Cross Home Care. Participant: Ivan Kowalski.
 
 Real-world defects tested:
-  * period_start >= 2026-10-01 → date-based detection triggers
-  * Contains personal-care line items with the post-cutover rate table
-  * No F1 fabrication — statement is well-formed
+  * personal-care line dated >= 2026-10-01 WITH a participant contribution
+    (> $0) → RULE_PC_RECLASS_CONTRIB flagged (new error class)
+  * No F1 fabrication — statement is otherwise well-formed
   * Line sum == declared services total (no arithmetic gap)
 """
 import sys

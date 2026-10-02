@@ -11,10 +11,14 @@ scheduled_changes:
     effective_from: 2026-10-01
     title: "Personal care funding change (Support at Home reforms)"
     summary: >
-      Personal care hourly funding split changes on 1 October 2026 under the
-      Aged Care Rules 2025 transitional provisions. All existing statements
-      before that date use the current rate table; statements dated on or
-      after 1 October 2026 use the new rates.
+      From 1 October 2026 personal care under Support at Home moves from the
+      Independence contribution category to Clinical Supports and is fully
+      government-funded for approved participants with available funds, so the
+      participant contribution for personal care is $0 from that date. Personal
+      care still draws on the participant's Support at Home funds; only the
+      participant share changes. Statements and invoices dated on or after
+      1 October 2026 should show a $0 personal-care contribution; a contribution
+      still appearing is likely a provider that has not yet repriced.
     affected_keys:
       - classification.1.daily_base_individual
       - classification.2.daily_base_individual

@@ -4,6 +4,7 @@ export function ruleLabel(rule?: string | null): string {
   if (!rule) return "";
   const r = String(rule).toUpperCase();
   const map: [RegExp, string][] = [
+    [/PC_RECLASS|RECLASS/, "Personal care now free"],
     [/DUPLICATE/, "Possible duplicate"],
     [/CARE_MGMT|CARE_MANAGEMENT|_CAP/, "Care management fee"],
     [/AT_HM|ATHM/, "Wrong funding category"],

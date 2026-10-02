@@ -151,8 +151,22 @@ def check_c2_personal_care_after_oct_2026(
     lines: List[ExtractedLine],
 ) -> List[Finding]:
     findings: List[Finding] = []
-    cutoff_iso = _index_get("inv1.personal_care.fully_funded_from", default="2026-10-01")
-    cutoff = _parse_iso(cutoff_iso) or date(2026, 10, 1)
+    # PC-RECLASS-1 decision 7: gated behind the rollout flag so turning it off
+    # reverts to pre-boundary behaviour (post 01/10/2026 personal care treated
+    # as contributory).
+    try:
+        from lib import services_base as _sb
+        if not _sb.pc_reclass_enabled():
+            return findings
+    except Exception:
+        pass
+    # Single source of truth (decision 1): the boundary date lives in INDEX-1
+    # under policy_date.personal_care_free; fall back to the legacy key, then
+    # the gazetted date.
+    cutoff_raw = _index_get("policy_date.personal_care_free", default=None)
+    if cutoff_raw is None:
+        cutoff_raw = _index_get("inv1.personal_care.fully_funded_from", default="2026-10-01")
+    cutoff = _parse_iso(_to_iso(cutoff_raw)) or date(2026, 10, 1)
     for ln in lines:
         if ln.service_category != ServiceCategory.personal_care:
             continue

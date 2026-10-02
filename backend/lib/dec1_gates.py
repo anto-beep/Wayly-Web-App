@@ -500,6 +500,60 @@ def run_reconciliation_gates(
                 "suggested_action": "Ask the provider to confirm the package management fee is within the 5% cap.",
             })
 
+    # ---------- GATE 11: personal-care reclassification contribution (PC-RECLASS-1) ----------
+    # From 1 Oct 2026 personal care is fully government-funded under Support at
+    # Home: the participant share is $0 where funds are available (decision 5).
+    # A personal-care line DELIVERED on/after the boundary that still shows a
+    # participant contribution is the new error class. The boundary is tested
+    # by SERVICE DELIVERY date (decision 2), never the statement issue date.
+    try:
+        from lib import services_base as _sb
+        _pc_on = _sb.pc_reclass_enabled()
+    except Exception:
+        _sb = None
+        _pc_on = False
+    if _sb is not None and _pc_on:
+        boundary = _sb.personal_care_fully_funded_from(as_of)
+        try:
+            _eff_str = date.fromisoformat(boundary[:10]).strftime("%-d %B %Y")
+        except Exception:
+            _eff_str = boundary
+        for li in line_items:
+            if li.get("is_cancellation"):
+                continue
+            stream_norm = re.sub(r"[^a-z]", "", str(li.get("stream") or "").lower())
+            # A correctly repriced personal-care line already sits in Clinical
+            # Care with a $0 contribution; the error we catch is a still
+            # contributory personal-care line (typically left in Independence).
+            if stream_norm in ("athm", "caremgmt", "supplement"):
+                continue
+            desc = str(li.get("service_description") or li.get("service_name") or "").strip()
+            if not _sb.is_personal_care_text(desc, li.get("stream")):
+                continue
+            sd = str(li.get("date") or "").strip()
+            if not sd or sd[:10] < boundary:
+                continue
+            contrib = _f(li.get("participant_contribution"))
+            if contrib <= _CENT:
+                continue
+            add({
+                "severity": "high",
+                "rule": "RULE_PC_RECLASS_CONTRIB",
+                "headline": f"A personal care charge on {sd} still shows a {_aud(contrib)} contribution after personal care became fully funded.",
+                "detail": (
+                    f"From {_eff_str} personal care under Support at Home is fully government-funded, so your share should be $0 "
+                    f"where you have funds available. The {sd} \"{desc or 'personal care'}\" line still charges you {_aud(contrib)}. "
+                    f"That usually means the provider has not yet repriced personal care into the Clinical Supports category."
+                ),
+                "dollar_impact": round(contrib, 2),
+                "evidence": [f"{sd} {desc or 'personal care'}: participant contribution {_aud(contrib)} on/after {boundary}"],
+                "suggested_action": (
+                    "Ask your provider to re-issue this line with personal care fully government-funded ($0 to you) from the "
+                    "reclassification date, and to refund any contribution already charged."
+                ),
+                "date": sd,
+            })
+
     # ---------- Low extraction confidence banner ----------
     confs = [_f(li.get("confidence")) for li in line_items if li.get("confidence") is not None]
     overall_conf = min(confs) if confs else None

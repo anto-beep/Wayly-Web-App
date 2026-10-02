@@ -146,11 +146,13 @@ ARCHETYPES: List[ArchetypeExpectation] = [
         expected_units_subset=["hr"],
         contribution_source="per_line",
         has_arithmetic_gap=False,
-        must_contain_rules=[],
+        # PC-RECLASS-1: these Nov-2026 personal-care lines still carry an $8.20
+        # contribution, which is the new error class (provider not yet repriced).
+        must_contain_rules=["RULE_PC_RECLASS_CONTRIB"],
         must_not_contain_rules=[
             "RULE_25_SOURCE_ARITHMETIC_GAP",
         ],
-        max_anomaly_count=5,
+        max_anomaly_count=6,
         care_mgmt_expected=True,
         period_start="2026-11-01",
     ),

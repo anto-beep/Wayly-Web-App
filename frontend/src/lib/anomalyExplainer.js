@@ -11,6 +11,11 @@
  */
 
 const EXPLAINERS = {
+    // Personal care reclassification (1 Oct 2026)
+    RULE_PC_RECLASS_CONTRIB: {
+        title: "Personal Care Should Be Free Now",
+        explanation: "From 1 October 2026 personal care is fully government funded, so your share should be $0. This line still charges you, which usually means the provider has not repriced it yet.",
+    },
     // Care management fee rules
     RULE_1_CARE_MGMT_CAP: {
         title: "Care Management Cap Exceeded",
