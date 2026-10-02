@@ -105,7 +105,7 @@ export default function Landing() {
                         <span className="overline">Three quick ways in</span>
                         <h2 className="font-heading text-3xl sm:text-4xl text-[#0E2A47] mt-3">Which describes you best?</h2>
                         <p className="mt-3 text-base text-muted-k max-w-xl leading-relaxed">
-                            Australia&apos;s aged-care system was rebuilt on 1 November 2025. Pick the path that fits your household and we will tailor the next step for you.
+                            Australia&apos;s aged-care system was rebuilt on 01/11/2025. Pick the path that fits your household and we will tailor the next step for you.
                         </p>
 
                         {/* Persona on-ramp */}
@@ -302,13 +302,13 @@ export default function Landing() {
                         <div className="lg:col-span-4 flex justify-center">
                             <div className="relative">
                                 <span aria-hidden className="wayly-pulse-ring absolute inset-0 rounded-full bg-[#F0B267]/15" />
-                                <GaugeRing pct={82} size={200} stroke={16} label="$1,847" sub="per year" />
+                                <GaugeRing pct={82} size={200} stroke={16} label="$1,847" sub="illustrative / year" />
                             </div>
                         </div>
                         <div className="lg:col-span-8 text-center lg:text-left">
-                            <span className="overline" style={{ color: "rgba(255,255,255,0.6)" }}>The Wayly difference</span>
+                            <span className="overline" style={{ color: "rgba(255,255,255,0.6)" }}>An illustrative example</span>
                             <h2 className="font-heading text-4xl sm:text-5xl text-white mt-4 leading-tight tracking-tight">
-                                The average Wayly household spots <span className="font-semibold" style={{ color: "#F0B267" }} data-testid="big-number-accent">$1,847/year</span> in incorrect charges and unused funding.
+                                In one illustrative household, Wayly surfaced <span className="font-semibold" style={{ color: "#F0B267" }} data-testid="big-number-accent">$1,847 a year</span> in incorrect charges and unused funding.
                             </h2>
                             <div className="mt-8 flex items-center justify-center lg:justify-start gap-3 flex-wrap">
                                 <Link
@@ -371,9 +371,9 @@ export default function Landing() {
                                 <span className="font-heading text-2xl text-white">A-</span>
                             </div>
                             <div className="flex-1 min-w-[240px]">
-                                <div className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-white/70"><Sparkles className="h-3.5 w-3.5" /> Provider Performance grade</div>
+                                <div className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-white/70"><Sparkles className="h-3.5 w-3.5" /> Sample report · Provider Performance grade</div>
                                 <p className="mt-1 text-white leading-relaxed text-sm">
-                                    Bluebell Care scored an A-: 98% of visits on time, one worker swap, and rates about 4% below the local average. No jargon, just a grade you can trust.
+                                    In this sample report, Bluebell Care scored an A-: 98% of visits on time, one worker swap, and rates about 4% below the local average. No jargon, just a grade you can trust.
                                 </p>
                             </div>
                             <div className="flex items-center gap-2 text-white/85 text-sm">
@@ -385,31 +385,52 @@ export default function Landing() {
             </section>
 
 
-            {/* COUNTDOWN */}
+            {/* PERSONAL CARE NOW FUNDED */}
             <section className="border-y border-kindred bg-surface-2">
                 <div className="mx-auto max-w-7xl px-6 py-12 grid lg:grid-cols-12 gap-8 items-center">
                     <div className="lg:col-span-8">
-                        <span className="overline">The 1 October 2026 moment</span>
-                        <h2 className="font-heading text-2xl sm:text-3xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
-                            Personal care becomes fully funded in <span className="text-accent-aa tabular-nums font-semibold">{countdown.days}</span> days.
-                        </h2>
-                        <p className="mt-4 text-muted-k max-w-2xl leading-relaxed">
-                            From 1 October 2026, showering, dressing and continence support move into Clinical Care under Support at Home, so families pay nothing for them. Until then, those visits still carry a contribution, and Wayly tracks every line so you know what should change on the day the rules do.
-                        </p>
+                        <span className="overline">The 1 October 2026 change</span>
+                        {countdown.expired ? (
+                            <>
+                                <h2 className="font-heading text-2xl sm:text-3xl text-primary-k mt-3 tracking-tight">
+                                    Personal care is now fully funded <span className="text-accent-aa">(since 01/10/2026)</span>.
+                                </h2>
+                                <p className="mt-4 text-muted-k max-w-2xl leading-relaxed">
+                                    Since 1 October 2026, showering, dressing and continence support moved into Clinical Care under Support at Home, so approved participants pay nothing for them. Your October statement (due by 30/11/2026) should show $0 on personal care. Wayly flags any personal care line dated on or after 01/10/2026 that still carries a contribution, so you can ask your provider to fix it.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <h2 className="font-heading text-2xl sm:text-3xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
+                                    Personal care becomes fully funded in <span className="text-accent-aa tabular-nums font-semibold">{countdown.days}</span> days.
+                                </h2>
+                                <p className="mt-4 text-muted-k max-w-2xl leading-relaxed">
+                                    From 1 October 2026, showering, dressing and continence support move into Clinical Care under Support at Home, so families pay nothing for them. Until then, those visits still carry a contribution, and Wayly tracks every line so you know what should change on the day the rules do.
+                                </p>
+                            </>
+                        )}
                     </div>
                     <div className="lg:col-span-4">
-                        <div className="bg-surface border border-kindred rounded-2xl p-6 grid grid-cols-3 gap-4 text-center" data-testid="countdown-card">
-                            {[
-                                { v: countdown.days, l: "days" },
-                                { v: countdown.hours, l: "hours" },
-                                { v: countdown.minutes, l: "minutes" },
-                            ].map((s) => (
-                                <div key={s.l}>
-                                    <div className="font-heading text-4xl text-primary-k tabular-nums">{String(s.v).padStart(2, "0")}</div>
-                                    <div className="text-xs text-muted-k uppercase tracking-wider mt-1">{s.l}</div>
-                                </div>
-                            ))}
-                        </div>
+                        {countdown.expired ? (
+                            <div className="bg-surface border border-kindred rounded-2xl p-6 text-center" data-testid="personal-care-live-card">
+                                <div className="font-heading text-5xl text-accent-aa tabular-nums">$0</div>
+                                <div className="text-xs text-muted-k uppercase tracking-wider mt-2">your share of approved personal care</div>
+                                <Link to="/ai-tools/statement-decoder" data-testid="personal-care-check-cta" className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-[#0E4D52] text-white px-4 py-2 text-sm font-semibold shadow-sm">Check your statement <ArrowRight className="h-3.5 w-3.5" /></Link>
+                            </div>
+                        ) : (
+                            <div className="bg-surface border border-kindred rounded-2xl p-6 grid grid-cols-3 gap-4 text-center" data-testid="countdown-card">
+                                {[
+                                    { v: countdown.days, l: "days" },
+                                    { v: countdown.hours, l: "hours" },
+                                    { v: countdown.minutes, l: "minutes" },
+                                ].map((s) => (
+                                    <div key={s.l}>
+                                        <div className="font-heading text-4xl text-primary-k tabular-nums">{String(s.v).padStart(2, "0")}</div>
+                                        <div className="text-xs text-muted-k uppercase tracking-wider mt-1">{s.l}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -475,7 +496,7 @@ export default function Landing() {
                                 cadence: "per fortnight",
                                 href: "/signup?plan=solo",
                                 cta: "Get started",
-                                bullets: ["For 1 person — one Participant, one Caregiver seat", "All nine Wayly tools, unlocked", "Statement Decoder + anomaly flagging", "Budget, contribution and lifetime-cap tracking", "Ask Wayly, grounded in the Aged Care Act 2024", "Your data stays in Australia"],
+                                bullets: ["For 1 person — one Participant, one Caregiver seat", "All nine Wayly tools included", "Statement Decoder + anomaly flagging", "Budget, contribution and lifetime-cap tracking", "Ask Wayly, grounded in the Aged Care Act 2024", "Your data stays in Australia"],
                             },
                             {
                                 key: "family",

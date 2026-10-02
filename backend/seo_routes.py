@@ -78,6 +78,9 @@ STATIC_PAGES = [
     ("/resources/articles/chsp-extension-2029-what-it-means", "0.9", "monthly"),
     ("/resources/articles/support-at-home-personal-care-free-1-october-2026", "0.9", "monthly"),
     ("/resources/articles/support-at-home-statement-vs-invoice-explained", "0.9", "monthly"),
+    # Oct 2026 · pillar refresh (A1 + A6), figures live from INDEX-1
+    ("/resources/articles/support-at-home-explained", "0.9", "monthly"),
+    ("/resources/articles/support-at-home-no-worse-off", "0.9", "monthly"),
     # Phase 4 Batch 1, Support at Home levels hub + 8 level pages (Feb 2026)
     ("/support-at-home-levels", "0.9", "monthly"),
     ("/support-at-home-levels/level-1", "0.7", "monthly"),
@@ -125,15 +128,32 @@ STATIC_PAGES = [
 ]
 
 
+# Content-level dateModified for static (non-CMS) SEO pages whose body has been
+# updated. Only add a slug here when its visible content actually changed
+# (Bing/Google treat lastmod as a recrawl signal). Keyed by sitemap path.
+# ISO 8601 (YYYY-MM-DD); machine formats are exempt from DD/MM/YYYY.
+STATIC_PAGE_MODIFIED = {
+    # PC-RECLASS-1 personal-care change went live 01/10/2026 — refreshed copy.
+    "/articles/support-at-home-personal-care-free-october-2026": "2026-10-02",
+    "/resources/articles/support-at-home-personal-care-free-1-october-2026": "2026-10-02",
+    "/policy/personal-care-free-1-october-2026": "2026-10-02",
+    "/services/personal-care": "2026-10-02",
+    # Oct 2026 · new pillar articles (A1 + A6) shipped with live INDEX-1 figures.
+    "/resources/articles/support-at-home-explained": "2026-10-02",
+    "/resources/articles/support-at-home-no-worse-off": "2026-10-02",
+}
+
+
 async def _build_sitemap_xml() -> str:
     today = datetime.now(timezone.utc).date().isoformat()
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
 
     for path, priority, freq in STATIC_PAGES:
+        lastmod = STATIC_PAGE_MODIFIED.get(path, today)
         out.append(
             f"  <url><loc>{SITE_DOMAIN}{path}</loc>"
-            f"<lastmod>{today}</lastmod>"
+            f"<lastmod>{lastmod}</lastmod>"
             f"<changefreq>{freq}</changefreq>"
             f"<priority>{priority}</priority></url>"
         )
@@ -193,7 +213,8 @@ async def sitemap_entries() -> list[dict]:
     entries: list[dict] = []
 
     for path, _priority, _freq in STATIC_PAGES:
-        entries.append({"url": f"{SITE_DOMAIN}{path}", "datePublished": None, "dateModified": None})
+        entries.append({"url": f"{SITE_DOMAIN}{path}", "datePublished": None,
+                        "dateModified": STATIC_PAGE_MODIFIED.get(path)})
 
     async for a in db.cms_articles.find({"published": True}, {"_id": 0, "slug": 1, "updated_at": 1, "published_at": 1}):
         slug = a.get("slug")

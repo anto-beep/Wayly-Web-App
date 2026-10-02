@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from "react";
 import "@/App.css";
 import "@/index.css";
 import "@/uxf/tokens.css";
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useExpiredTrial } from "@/hooks/useExpiredTrial";
@@ -353,6 +353,15 @@ function ReassessmentLetterRedirectOrPage() {
     return <Navigate to="/ai-tools/letters-and-follow-ups" replace />;
 }
 
+// Legacy /insights/* URLs redirect to the resources hub (SEO 301-style).
+// /insights and /insights/ → /resources; /insights/<rest> → the matching
+// /resources/articles/<rest>, falling back to the articles index.
+function InsightsRedirect() {
+    const params = useParams();
+    const rest = (params["*"] || "").replace(/^\/+|\/+$/g, "");
+    return <Navigate to={rest ? `/resources/articles/${rest}` : "/resources/articles"} replace />;
+}
+
 function App() {
     // Boot accessibility prefs (font size, dark, contrast, etc) BEFORE first paint
     if (typeof window !== "undefined") {
@@ -581,6 +590,10 @@ function App() {
                     {/* Admin, completely separate auth system (TOTP 2FA, role-based).
                         AdminApp manages its own auth via AdminAuthContext. */}
                     <Route path="/admin/*" element={<AdminApp />} />
+
+                    {/* Legacy /insights/* URLs → resources hub (SEO 301-style) */}
+                    <Route path="/insights" element={<Navigate to="/resources" replace />} />
+                    <Route path="/insights/*" element={<InsightsRedirect />} />
 
                     <Route path="*" element={<NotFound />} />
                 </Routes>

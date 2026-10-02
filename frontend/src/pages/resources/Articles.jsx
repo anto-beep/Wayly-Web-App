@@ -13,6 +13,40 @@ import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown
 
 import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
+import { loadProgramReference, getProgramReferenceSync } from "@/lib/programReference";
+
+// Resolve live Support at Home figures from INDEX-1 (program_reference) so
+// article prose never hardcodes a dollar figure. Tokens:
+//   {{annual:N}}     annual budget for classification N (1-8)
+//   {{quarterly:N}}  quarterly budget (annual / 4) for classification N
+//   {{cap:standard}} / {{cap:nwo}}  lifetime contribution caps
+//   {{pct:care_management}}         care-management share
+// Unknown/unloaded tokens are left verbatim so nothing renders as $undefined.
+function resolveFigures(md) {
+    if (!md || md.indexOf("{{") === -1) return md;
+    const snap = getProgramReferenceSync();
+    const aud = (n) => (typeof n === "number" && isFinite(n))
+        ? n.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2 })
+        : null;
+    return md.replace(/\{\{\s*(annual|quarterly|cap|pct)\s*:\s*([a-z0-9_]+)\s*\}\}/gi, (m, kind, key) => {
+        try {
+            if (kind === "annual") return aud(snap.classifications?.[key]?.annual) || m;
+            if (kind === "quarterly") {
+                const a = snap.classifications?.[key]?.annual;
+                return (typeof a === "number") ? (aud(+(a / 4).toFixed(2)) || m) : m;
+            }
+            if (kind === "cap") {
+                const v = key === "nwo" ? snap.lifetime_cap?.no_worse_off : snap.lifetime_cap?.standard;
+                return aud(v) || m;
+            }
+            if (kind === "pct" && key === "care_management") {
+                const p = snap.care_management?.cap_pct ?? 0.10;
+                return `${Math.round(p * 100)}%`;
+            }
+        } catch { /* leave token */ }
+        return m;
+    });
+}
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const fmtDate = (iso) => { if (!iso) return null; try { return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }); } catch { return iso; } };
@@ -250,6 +284,14 @@ export function ArticleDetail() {
 // ---------------------------------------------------------------------------
 
 function StructuredArticle({ article, slug }) {
+    // Load the live INDEX-1 snapshot once so figure tokens resolve to current
+    // Support at Home figures (and re-render when it arrives).
+    const [, setFiguresNonce] = useState(0);
+    useEffect(() => {
+        let alive = true;
+        loadProgramReference().then(() => { if (alive) setFiguresNonce((n) => n + 1); });
+        return () => { alive = false; };
+    }, []);
     // Articles can opt into a custom public path (e.g. /articles/<slug>) for
     // their canonical URL while still being reachable at /resources/articles/<slug>.
     const publicPath = article.canonical_path || `/resources/articles/${slug}`;
@@ -459,7 +501,7 @@ function ProseBlock({ children }) {
                 components={{
                     th: ({ node, ...p }) => <th scope="col" {...p} />,
                 }}
-            >{children}</ReactMarkdown>
+            >{resolveFigures(children)}</ReactMarkdown>
         </div>
     );
 }

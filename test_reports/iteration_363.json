@@ -1,0 +1,25 @@
+{
+  "summary": "Verified Wayly SEO/AEO content-refresh changes end-to-end on web + backend. Backend sitemap registers both new pillar article URLs (/support-at-home-explained and /support-at-home-no-worse-off) with lastmod=2026-10-02. Backend GET /api/program-reference/public returns live INDEX-1 figures (8 classifications, care_management.cap_pct=0.1, lifetime_cap.standard=$137,917.01, lifetime_cap.no_worse_off=$86,185.23). Both new articles render fully with NO raw {...} tokens, NO NaN, NO $undefined — the 8-classification quarterly/annual budget table on A1 shows resolved AUD values pulled live from the registry; A6 shows resolved $86,185.23 (no_worse_off) and $137,917.01 (standard) caps. Both A1 and A6 appear as cards in /resources/articles. Pillar cross-link clusters show 3 cards each (A1: Support at Home levels / Personal care change / Classification Self-Check; A6: Invoice Checker / Contribution Estimator / No worse off guarantee) and ALL 11 cross-link + related-reading destinations resolve to real pages (zero 404/NotFound). /insights redirects to /resources; /insights/support-at-home-explained redirects to /resources/articles/support-at-home-explained. Landing.jsx copy changes all live: '$1,847' is now framed as 'illustrative example', 'nine Wayly tools included' (no 'unlocked'), 'SAMPLE REPORT · PROVIDER PERFORMANCE GRADE' label present on the Bluebell panel, date rendered as '01/11/2025' (no '1 November 2025').",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "articlePillars.js line 89 references /ai-tools/reassessment-letter-generator but the registered sitemap route is /ai-tools/reassessment-letter — pillar card on the 'when-to-request-support-at-home-reassessment' article will 404. Not in scope of this iteration's targets (A1/A6) but worth fixing in the next pass."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "A1 (support-at-home-explained) and A6 (support-at-home-no-worse-off) are LIVE and rendering correctly with resolveFigures() pulling from /api/program-reference/public. All /insights* redirects work. Landing copy fixes verified. Only forward-looking note: articlePillars.js has one legacy pillar link (/ai-tools/reassessment-letter-generator) that doesn't match the sitemap slug (/ai-tools/reassessment-letter) — out of scope for A1/A6 but should be fixed before shipping the broader hub-and-spoke rollout.",
+  "rca of the issue": ""
+}

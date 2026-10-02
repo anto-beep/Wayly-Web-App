@@ -4,6 +4,16 @@
  * underneath the existing "Related reading" block on every tool article.
  */
 export const ARTICLE_PILLAR_MAP = {
+    "support-at-home-explained": [
+        { href: "/support-at-home-levels", label: "Support at Home levels", sub: "All eight classifications" },
+        { href: "/policy/personal-care-free-1-october-2026", label: "Personal care change", sub: "Free from 1 October 2026" },
+        { href: "/ai-tools/classification-self-check", label: "Classification Self-Check", sub: "See your likely level" },
+    ],
+    "support-at-home-no-worse-off": [
+        { href: "/ai-tools/invoice-checker", label: "Invoice Checker", sub: "Check your rate line by line" },
+        { href: "/ai-tools/contribution-estimator", label: "Contribution Estimator", sub: "What you'll actually pay" },
+        { href: "/policy/no-worse-off-guarantee", label: "No worse off guarantee", sub: "Transition protection" },
+    ],
     "wayly-statement-decoder-support-at-home-statement-explained": [
         { href: "/services/personal-care", label: "Personal care service", sub: "Free from 1 October 2026" },
         { href: "/guides/understanding-statement-line-items", label: "How to read your statement", sub: "Line items decoded" },
@@ -76,7 +86,7 @@ export const ARTICLE_PILLAR_MAP = {
     ],
     "when-to-request-support-at-home-reassessment": [
         { href: "/ai-tools/classification-self-check", label: "Classification Self-Check", sub: "See where you sit" },
-        { href: "/ai-tools/reassessment-letter-generator", label: "Reassessment letter", sub: "Draft the request" },
+        { href: "/ai-tools/reassessment-letter", label: "Reassessment letter", sub: "Draft the request" },
         { href: "/support-at-home-levels", label: "Classification levels", sub: "All eight bands" },
     ],
     "nine-most-common-support-at-home-invoice-errors": [

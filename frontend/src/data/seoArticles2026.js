@@ -16,6 +16,139 @@
  */
 export const SEO_ARTICLES_2026 = [
     {
+        slug: "support-at-home-explained",
+        title: "Support at Home Explained: What It Is and What Changed in 2026",
+        excerpt: "What Support at Home is, the 8 classification levels and their quarterly budgets, what you pay, and what changed on 01/10/2026. Plain English, figures live from Wayly's reference data.",
+        published_at: "2026-10-02",
+        updated_at: "2026-10-02",
+        author: { name: "Antony", role: "Founder of Wayly, Canberra" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        hero_alt: "Older Australian and adult child reviewing a Support at Home plan at home",
+        tags: ["Support at Home", "support at home program", "classification levels", "quarterly budget", "2026"],
+        related: ["support-at-home-no-worse-off", "support-at-home-personal-care-free-1-october-2026", "support-at-home-costs-and-contributions"],
+        meta: {
+            title: "Support at Home Explained (2026): Levels, Fees and Changes",
+            description: "What Support at Home is, the 8 classification levels, quarterly budgets, what you pay, and what changed on 01/10/2026. Plain English, updated October 2026.",
+        },
+        key_takeaways: [
+            "Support at Home replaced Home Care Packages and Short-Term Restorative Care on 01/11/2025.",
+            "There are 8 ongoing classifications, each with its own quarterly budget set by your aged care assessment.",
+            "Clinical supports cost you nothing, and since 01/10/2026 approved personal care is fully government funded too.",
+            "You can carry forward up to $1,000 or 10% of a quarterly budget, whichever is higher.",
+        ],
+        intro_md: `Support at Home is the Australian Government's main program for aged care at home. It replaced Home Care Packages and Short-Term Restorative Care on 01/11/2025. Each person is assessed and given one of 8 ongoing classifications, and each classification comes with a quarterly budget. Since 01/10/2026, approved personal care such as showering and dressing is fully government funded, so eligible participants pay nothing for it.`,
+        sections: [
+            {
+                heading: "What is Support at Home?",
+                body_md: `Support at Home pays for services from a published service list that help older Australians keep living at home. Services fall into three categories: clinical supports, independence and everyday living. Your provider delivers them, the government pays a subsidy, and you may pay a contribution depending on the service type and your finances.
+
+If you want to understand which category a service sits in, the [three streams explained](/resources/articles/three-streams-clinical-independence-everyday-living) guide breaks it down.`,
+            },
+            {
+                heading: "What are the 8 Support at Home classifications?",
+                body_md: `Your classification is set by your aged care assessment, not chosen by you or your provider. These are the current quarterly and annual budgets (figures read live from Wayly's Support at Home reference data):
+
+| Classification | Quarterly budget | Annual budget |
+|---|---|---|
+| 1 | {{quarterly:1}} | {{annual:1}} |
+| 2 | {{quarterly:2}} | {{annual:2}} |
+| 3 | {{quarterly:3}} | {{annual:3}} |
+| 4 | {{quarterly:4}} | {{annual:4}} |
+| 5 | {{quarterly:5}} | {{annual:5}} |
+| 6 | {{quarterly:6}} | {{annual:6}} |
+| 7 | {{quarterly:7}} | {{annual:7}} |
+| 8 | {{quarterly:8}} | {{annual:8}} |
+
+There are also short-term supports: the Restorative Care Pathway, the End-of-Life Pathway and the Assistive Technology and Home Modifications scheme. People who moved across from a Home Care Package keep a transitioned budget. See the [Support at Home levels](/support-at-home-levels) pages for a breakdown of each level, and the [Classification Self-Check](/ai-tools/classification-self-check) to see your likely level.`,
+            },
+            {
+                heading: "How does the quarterly budget work?",
+                body_md: `Your annual amount is split into 4 quarterly budgets, available from the first day of each quarter. {{pct:care_management}} of each quarterly budget goes to care management. You can carry forward up to $1,000 or 10% of your quarterly budget, whichever is higher. Anything above that is lost at the end of the quarter.
+
+The [Budget & Lifetime Cap Calculator](/ai-tools/budget-calculator) shows how fast you are spending and whether funds may go unused.`,
+            },
+            {
+                heading: "What will I pay?",
+                body_md: `Nothing for clinical supports such as nursing and physiotherapy, and since 01/10/2026, nothing for approved personal care. For independence and everyday living services you pay a percentage of each price, set by a Services Australia income and assets assessment. A lifetime cap limits your total contributions.
+
+See [Support at Home contributions explained](/resources/articles/support-at-home-costs-and-contributions) for the rates, and the [Contribution Estimator](/ai-tools/contribution-estimator) for what a typical quarter should cost.`,
+            },
+            {
+                heading: "What changed on 01/10/2026?",
+                body_md: `Personal care moved into clinical supports. If it is approved in your support plan and you have funding available, you pay no contribution for personal care delivered on or after 01/10/2026. Your October statement, due by 30/11/2026, should show $0 on those lines.
+
+Read [Personal care is now free under Support at Home](/resources/articles/support-at-home-personal-care-free-1-october-2026), and check your own statement free with the [Statement Decoder](/ai-tools/statement-decoder).`,
+            },
+            {
+                heading: "How is Support at Home different from a Home Care Package?",
+                body_md: `Home Care Packages had 4 levels, an annual pool you could save indefinitely, and a basic daily fee plus an income-tested care fee. Support at Home has 8 ongoing classifications plus short-term pathways, a quarterly budget with limited carry-forward, and a contribution set as a percentage of each service by category.
+
+If you had a package on or before 12/09/2024, the [no worse off rule](/resources/articles/support-at-home-no-worse-off) protects you.`,
+            },
+            {
+                heading: "Are there price caps on Support at Home services?",
+                body_md: `Not yet. Caps were due on 01/07/2026 but were deferred on 19/05/2026. Providers set and publish their own prices, and the government publishes a quarterly National Summary of Support at Home Prices, which the [Provider Price Checker](/ai-tools/provider-price-checker) uses as a guide.
+
+Wayly explains statements in plain English. This article is general information, not financial, legal or clinical advice. Check anything important with your provider, My Aged Care on 1800 200 422, or a qualified professional.`,
+            },
+        ],
+        faqs: [
+            { q: "Who decides my classification?", a: "Your aged care assessor, through My Aged Care. You cannot choose it yourself." },
+            { q: "Is CHSP part of Support at Home?", a: "No. The Commonwealth Home Support Programme is extended to 30/06/2029 and stays separate." },
+            { q: "Can someone check my statement?", a: "Yes. Wayly's free Statement Decoder explains every line in about 60 seconds, with no signup needed." },
+        ],
+    },
+    {
+        slug: "support-at-home-no-worse-off",
+        title: "The \u201cNo Worse Off\u201d Rule: What It Means If You Had a Home Care Package",
+        excerpt: "Had a Home Care Package on or before 12/09/2024? Here is how the no worse off rule protects your fees, your lifetime cap and your unspent funds under Support at Home.",
+        published_at: "2026-10-02",
+        updated_at: "2026-10-02",
+        author: { name: "Antony", role: "Founder of Wayly, Canberra" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        hero_alt: "Family member reading a Services Australia letter about aged care contributions",
+        tags: ["Support at Home", "no worse off", "grandfathering", "home care package transition", "lifetime cap"],
+        related: ["support-at-home-explained", "support-at-home-costs-and-contributions", "home-care-package-vs-support-at-home"],
+        meta: {
+            title: "Support at Home \u201cNo Worse Off\u201d Rule Explained (2026)",
+            description: "Had a Home Care Package on or before 12/09/2024? How the no worse off rule protects your fees, your lifetime cap and your unspent funds under Support at Home.",
+        },
+        key_takeaways: [
+            "The rule applies if you were receiving, or approved for, a Home Care Package on or before 12/09/2024.",
+            "If you paid an income-tested care fee you pay the same or less; if you did not, you will never be asked to pay Support at Home contributions.",
+            "Your lifetime contribution cap stays at the lower Home Care Package amount.",
+            "Home Care Package funds saved before the changeover stay available to you.",
+        ],
+        intro_md: `If you were receiving, or approved for, a Home Care Package on or before 12/09/2024, the no worse off rule protects you under Support at Home. If you paid an income-tested care fee, you pay the same or less. If you did not, you will never be asked to pay Support at Home contributions. Your lifetime cap also stays at the lower Home Care Package amount.`,
+        sections: [
+            {
+                heading: "What does the rule protect?",
+                body_md: `The no worse off rule protects three things:
+
+- **Your contributions.** The same or less than before, or nothing at all if you paid no income-tested care fee.
+- **Your lifetime cap.** {{cap:nwo}} under the no worse off cohort, instead of the standard cap of {{cap:standard}} (both figures read live from Wayly's reference data and are indexed on 20/03 and 20/09).
+- **Your saved funds.** Home Care Package money held at the changeover stays available to you.`,
+            },
+            {
+                heading: "What budget do I get if I moved across from a package?",
+                body_md: `You keep a transitioned budget matched to your old Home Care Package level until your next reassessment. The exact amount depends on your former level. You can see how your budget compares to the standard Support at Home classifications on the [Support at Home levels](/support-at-home-levels) pages, and read [Home Care Package vs Support at Home](/resources/articles/home-care-package-vs-support-at-home) for what else changed.`,
+            },
+            {
+                heading: "How do I check I am charged correctly?",
+                body_md: `Find your rate on your Services Australia letter and check every invoice line uses it, or shows $0 if you paid no income-tested care fee before. Remember that since 01/10/2026 personal care is fully government funded for everyone, so those lines should be $0 regardless of your cohort.
+
+The [Invoice Checker](/ai-tools/invoice-checker) flags lines that do not match your rate or category, and [Letters & Follow-ups](/ai-tools/letters-and-follow-ups) drafts the message to your provider if something needs correcting.
+
+Wayly explains statements in plain English. This article is general information, not financial, legal or clinical advice. Check anything important with your provider, My Aged Care on 1800 200 422, or a qualified professional.`,
+            },
+        ],
+        faqs: [
+            { q: "Does the rule apply if I am reassessed into a higher classification?", a: "Yes. The contribution protection holds even if you are later reassessed into a higher classification." },
+            { q: "What is the cut-off date?", a: "You must have been receiving, or approved for, a Home Care Package on or before 12/09/2024." },
+            { q: "Do I keep my unspent Home Care Package funds?", a: "Yes. Home Care Package funds you had saved before the changeover stay available and are kept separately from your quarterly budget." },
+        ],
+    },
+    {
         slug: "chsp-extension-2029-what-it-means",
         title: "The CHSP Extension to 30 June 2029: What It Means for Older Australians and Their Families",
         excerpt: "The Commonwealth Home Support Program has been extended to 30/06/2029 and will stay separate from Support at Home. Here is what changes, what does not, and what it means for your household.",
@@ -111,7 +244,7 @@ For the average family, the honest headline is: no drama this month, more certai
         title: "Personal Care Under Support at Home Becomes Free on 1 October 2026: What to Check on Your First Invoice",
         excerpt: "From 01/10/2026, personal care under Support at Home is fully government funded. Here is exactly what changes, what stays the same, and what to check on your first invoice and monthly statement after that date.",
         published_at: "2026-08-23",
-        updated_at: "2026-08-23",
+        updated_at: "2026-10-02",
         author: { name: "Wayly Editorial", role: "Financial clarity for Support at Home" },
         reviewer: { name: "Wayly Editorial", role: "" },
         hero_alt: "Family caregiver checking a Support at Home invoice at the kitchen table",
@@ -129,7 +262,7 @@ For the average family, the honest headline is: no drama this month, more certai
             "Personal care delivered on or before 30/09/2026 still attracts your old means tested contribution, even if it is invoiced later.",
             "Contributions for Independence and Everyday Living services (transport, gardening, cleaning, meals) continue at your assessed rate.",
         ],
-        intro_md: `From 01/10/2026, personal care services delivered under the Support at Home program will be fully funded by the Australian Government. If personal care is on your support plan and you have available Support at Home budget, you will pay no out of pocket contribution for it from that date. That is a real change to your monthly costs. It is also a change that is easy to get wrong on an invoice, because personal care delivered on 30/09/2026 is still billed the old way, personal care delivered on 01/10/2026 is billed the new way, and both can appear on the same statement.
+        intro_md: `Since 01/10/2026, personal care services delivered under the Support at Home program are fully funded by the Australian Government. If personal care is on your support plan and you have available Support at Home budget, you pay no out of pocket contribution for it. That is a real change to your monthly costs. It is also a change that is easy to get wrong on an invoice, because personal care delivered on 30/09/2026 is still billed the old way, personal care delivered on 01/10/2026 is billed the new way, and both can appear on the same statement.
 
 This article walks through what is changing, what is not, and what to check on the first invoice and monthly statement you receive after 01/10/2026. It is written for participants and family caregivers, not providers.
 
@@ -704,14 +837,14 @@ Start with the My Aged Care fee estimator to get a guide, then let Wayly keep tr
         title: "Personal Care Becomes Free Under Support at Home From 1 October 2026",
         excerpt: "From 1 October 2026, showering, dressing and continence support under Support at Home cost families nothing. What changes, what to check, in plain English.",
         published_at: "2026-06-24",
-        updated_at: "2026-06-24",
+        updated_at: "2026-10-02",
         author: { name: "Wayly Editorial", role: "Wayly" },
         hero_alt: "Adult daughter sitting beside her father at home reviewing a Support at Home statement",
         meta: {
             title: "Personal Care Free From 1 October 2026 | Wayly",
             description: "From 1 October 2026, showering, dressing and continence support under Support at Home cost families nothing. What changes, what to check, in plain English.",
         },
-        intro_md: `From 1 October 2026, help with showering, dressing and continence support will cost Support at Home families nothing. Here is what is changing, why it matters for your budget, and exactly what to check on your statements when the date arrives.`,
+        intro_md: `Since 1 October 2026, help with showering, dressing and continence support costs Support at Home families nothing. Here is what changed, why it matters for your budget, and exactly what to check on your statements now that the change is in effect.`,
         sections: [
             {
                 heading: "The short version",
