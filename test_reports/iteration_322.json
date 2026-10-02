@@ -1,0 +1,39 @@
+{
+  "summary": "Verified the Wayly Invoice Checker fixes end-to-end (backend probe + web UI). All key acceptance criteria PASS: GET /api/tools=200 (regression fix), the saved invoice page uses the shared InvoiceResultBody and renders every required component (dark-teal summary banner, TWO donut graphics 'Where your money stands' + 'What we found', metadata strip, download/compare bar, Wayly Summary card, Issue Register grouped by severity, charges section). Severity banding is correct: the C10-only invoice (37fb5b99...) has ZERO high/medium items, ONE low entry, and the top banner reads '1 small note, mostly informational' — no panic-inducing red flag. The rich Meridian invoice (db513099...) groups correctly: 4 High (T4), 11 Medium (T3), 2 Low (T2+T1) matching the backend tier histogram {4:4, 3:11, 2:1, 1:1}. No 'Tier 4/Tier 3' technical chips leak into the UI. Fresh-run and saved views share the exported InvoiceResultBody component (structural parity by construction). Invoice Checker upload dropzone renders (drag-and-drop + click-to-browse). ONE minor design issue: Compare button (bg-gold) and CSV button (bg-[#A5512B]) resolve to the SAME clay color #A5512B — they are not visually distinct.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "InvoiceDownloadBar Compare vs CSV button", "issue": "Both buttons render with background rgb(165,81,43) = #A5512B. `bg-gold` (Compare) is defined as #A5512B in tailwind.config.js, which is the exact same clay color the CSV button uses via bg-[#A5512B]. Task required each button to have a DISTINCT solid colour. Recommend giving Compare a truly different token (e.g. an amber/gold like #F0B267 or the sage variant), or swapping CSV to another palette colour.", "selector": "[data-testid='inv1-compare-btn'] vs [data-testid='inv1-download-csv-btn']", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/app/invoices/{id} download bar", "issues": ["Compare button and CSV button share #A5512B — visually indistinguishable side-by-side"]}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter322_invoice_probe.py",
+    "/app/test_reports/iter322_c10_saved.jpeg",
+    "/app/test_reports/iter322_rich_saved.jpeg",
+    "/app/test_reports/iter322_checker_upload.jpeg"
+  ],
+  "action_items": [
+    "Give the Compare button and CSV button DIFFERENT background colours in InvoiceDownloadBar (InvoiceResultView.jsx L497-535). Compare uses `bg-gold` and CSV uses `bg-[#A5512B]` — both resolve to #A5512B. Suggested: Compare -> bg-[#F0B267] (amber) with a darker hover, or move CSV to a distinct token."
+  ],
+  "critical_code_review_comments": [
+    "InvoiceResultView.jsx is 580 lines — approaching the 700-line split threshold. Consider extracting InvoiceDownloadBar / InvoiceCompareView / InvoiceChargesTable into their own files.",
+    "Severity mapping (_severityKey + _bandOf in InvoiceResultView.jsx and bandOf in InvoiceInsightGraphics.jsx) is now consistent: Tier>=4→high, 3→medium, 1/2→low. Kept as intended (higher tier = more severe).",
+    "The 'inv1-issue-top-banner' text prefers `highCount` regardless of `topBand`; if there are zero high items it correctly falls through to medium/low copy. Verified with C10-only invoice."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "95%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family). Login via POST /api/auth/login, put token into localStorage.kindred_token (NOT 'wayly_token' or 'token'). Refresh token goes to kindred_refresh_token.",
+  "seed_data_creation": "None — used existing invoices 37fb5b99-4c5b-4720-9051-b3a54685cc9f (C10-only, tier 1) and db513099-8f5d-4175-987d-9f8b3c090c03 (rich Meridian).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "For fresh-run vs saved parity, the two pages import the SAME exported `InvoiceResultBody` from `/app/frontend/src/components/invoices/InvoiceResultView.jsx` (InvoiceDetail.jsx L20/L146 and InvoiceCheckerTool.jsx L49/L644) so any layout/graphics change now cascades to both. A true fresh-run upload flow was NOT executed (no test PDF was on hand) — if E1 wants that verified, upload any small invoice PDF at /ai-tools/invoice-checker after login and confirm the resulting screen renders inv1-summary-banner + invoice-graphics + inv1-issue-register + inv1-charges (no Tier N chips, no duplicate metadata card). C10 wording ('lifetime contribution cap') and the new INV-1 Wayly Summary prompt only apply to NEWLY-run checks — the two saved invoices here still carry their cached older text and that is expected.",
+  "rca of the issue": "Severity-inversion RCA (already fixed by E1 before this run, re-verified here): backend Tier field uses higher=more-severe (T4 check_before_paying is TOP, T1 informational is BOTTOM), but the previous web mapping inverted it (Tier 1→critical). Fix landed in _severityKey (InvoiceResultView.jsx L129-147) and bandOf (InvoiceInsightGraphics.jsx L30-38): both now do `t>=4→high, t===3→medium, t<=2→low/info`. Verified live: C10-only invoice (tier 1) → 'low, 1 small note, mostly informational' (no red panic flag). Rich invoice (4×T4 / 11×T3 / 1×T2 / 1×T1) → 4/11/2 in High/Medium/Low buckets. Remaining minor issue: Compare button (`bg-gold` = #A5512B) collides with CSV button (`bg-[#A5512B]`); needs distinct colour."
+}

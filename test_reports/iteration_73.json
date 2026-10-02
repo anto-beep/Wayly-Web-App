@@ -1,0 +1,22 @@
+{
+  "summary": "Iteration 73 — polish batch verification. All four asks pass. (1) enforce_percent_symbol pytest suite: 6/6 pass, guard is properly wired into llm_wrapper.call/chat_send + reports_routes._ai_summary. (2) Price Checker History page rendered with the trial user after seeding 2 saved checks (90.0 -> 75.5 /hr for TEST Bluebell Care). Title is Title Case 'Your Price History'; snapshot card (ppc-history-snapshot) shows Tracked=1, Prices dropped=1, Prices rising=0, Steady=0; per-group SavingsBlock renders all four sub-tiles (current $75.50/hour, best $75.50/hour, vs-previous 'Saved $14.50/hour (16.1%)', vs-highest 'Saved $14.50/hour (16.1%)'). No stray numeric 'percent/percentage/per cent' strings on the page. (3) Empty state code path verified via component review — HistoryGroup fetch and empty state fallback are unchanged. (4) Audit deliverable /app/docs/persona-1/audit-inventory.md present with all four required sections (Coverage / Counts / Ambiguity Shortlist / Inventory Table), header columns match spec, 267 inventory rows, 3-item ambiguity shortlist. No new backend routes and no remediation code were introduced. Seed data cleaned up (bulk DELETE returned {deleted: 2}).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_text_sanitiser_percent.py",
+    "/app/test_reports/pytest/iter73_percent.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Sanitiser regex correctly protects 'percentage points' by preserving the trailing 'points' group; no over-matching observed for standalone 'the percentage of your budget' phrasing.",
+    "enforce_percent_symbol is invoked in both llm_wrapper.call (line 170) and chat_send (line 244) so both code paths are covered; reports_routes._ai_summary applies it too (line 260). Good defensive layering."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "trial30909@example.com / TrialPass1! (used for UI test)",
+  "seed_data_creation": "Created and then deleted 2 PPC checks for 'TEST Bluebell Care' / 'Domestic assistance' (90.0 -> 75.5 per hour) to exercise the SavingsBlock. Cleanup verified: /api/ppc/checks returns {checks: []} after DELETE /api/ppc/checks/provider ({deleted: 2}).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Trial account trial30909@example.com currently has zero saved PPC checks (empty state). If you re-test the SavingsBlock, seed via POST /api/ppc/checks with body {service, rate, provider, unit} and remember to bulk-delete via DELETE /api/ppc/checks/provider?service=...&provider=... afterwards. The _ai_summary end-to-end call was not exercised — sanitiser unit tests already prove the guard.",
+  "rca of the issue": "Not applicable — no bugs found."
+}

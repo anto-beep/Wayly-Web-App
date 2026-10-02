@@ -1,0 +1,32 @@
+{
+  "summary": "Iter 206: verified 3 mobile fixes on Expo web preview (390x844, cathy@example.com / testpass123). (1) Header avatar → Settings: PASS. Tapping [data-testid=header-avatar] on the dashboard router.push('/(tabs)/settings') fired — URL flipped from '/' to '/settings' and the Settings screen rendered (profile card, Appearance toggle, Current Plan Family, Plan & Billing link). Screenshot iter206_after_avatar_tap.jpeg. (2) Screen-level KeyboardAvoidingView: PASS (code + smoke). Screen in src/components/ui.tsx (lines 37-46) now wraps children in KeyboardAvoidingView with behavior=Platform.OS==='ios'?'padding':'height'. This is a native-only concern (browsers do not overlap inputs), so on the web preview KAV renders as a plain flex View — verified no crash, and Screen-wrapped screens (login.tsx, signup.tsx) still focus/fill inputs correctly (login used to sign in successfully). (3) Onboarding DOB DateField legibility: PASS. Loaded /onboarding, DateField at testID 'onboarding-dob' rendered as a native TextInput (Platform.OS==='web' branch, ui.tsx:278-292) with COMPUTED style color=rgb(28,43,45), background=rgb(255,255,255), borderColor=rgb(231,224,213), fontSize=16px — dark-on-white, plainly legible (screenshot iter206_onboarding_dob.jpeg). Placeholder 'DD/MM/YYYY' visible when empty; typed value '15/03/1950' shows in the same dark text. The native spinner styling (textColor=colors.text, themeVariant='light', surface bg, bordered container, iOS Done button at *-done) is platform-guarded at ui.tsx:305-324 and only mounts off-web — cannot be exercised on the web preview but the code path is present and legibility-improving as specified.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter206_load.jpeg",
+    "/app/test_reports/iter206_after_login.jpeg",
+    "/app/test_reports/iter206_after_avatar_tap.jpeg",
+    "/app/test_reports/iter206_onboarding.jpeg",
+    "/app/test_reports/iter206_onboarding_dob.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "mobile/src/components/WaylyHeader.tsx:46 — Pressable with testID 'header-avatar' correctly calls router.push('/(tabs)/settings'); hitSlop=8 gives an acceptable tap target given the visible 34x34 circle. Verified live navigation dashboard→settings.",
+    "mobile/src/components/ui.tsx:37-46 — Screen wraps children in KeyboardAvoidingView; SafeAreaView remains the outer container. behavior branch (ios:padding, else:height) is the standard RN pattern. On web this is a no-op wrapper — not harmful. Note: onboarding.tsx uses its OWN inline KeyboardAvoidingView (line 273), which is fine but slightly duplicative with the Screen KAV; onboarding doesn't wrap in Screen so no double-KAV.",
+    "mobile/src/components/ui.tsx:305-324 — On native the DateField renders DateTimePicker inside a bordered surface-colored container (borderRadius=radius.md, borderWidth=1, borderColor=colors.border, backgroundColor=colors.surface) with textColor=colors.text and themeVariant='light', plus an iOS-only Done button at testID `${testID}-done`. This directly addresses the 'invisible / blended with background' bug on iOS. On web the field falls back to a plain TextInput (verified legible: dark rgb(28,43,45) on white, 16px).",
+    "mobile/src/components/ui.tsx:22-25 — DateTimePicker is required() only when Platform.OS !== 'web'; this correctly avoids the requireNativeComponent throw under react-native-web."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100% (3/3 spec points verified — one is native-only and verified by code)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, existing account with Mum + secondary participants).",
+  "seed_data_creation": "None — reused cathy@example.com.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Header-avatar → Settings nav is live on mobile (React Native Web). DateField textarea is legible on web preview; the native-only bordered picker fix requires an iOS/Android build to visually confirm — expect the surface-colored container to now stand out from the app background. Screen wrapper KAV is a global fix — future screens that use <Screen> get keyboard avoidance for free. On the Expo web preview KeyboardAvoidingView is inert (browsers handle their own scroll-into-view), so 'input hidden by keyboard' cannot be exercised here — call it out as native-only in future testing.",
+  "rca of the issue": "N/A — three targeted fixes verified. (1) The avatar was previously a display-only View; making it a Pressable with router.push resolves it. (2) Inputs on screens that use the shared Screen wrapper were previously covered by the on-screen keyboard because Screen did not include KeyboardAvoidingView; adding KAV with behavior=ios:padding/android:height moves content up on native. (3) The DOB picker was 'invisible' because the raw DateTimePicker inherited unspecified colors that matched the app bg; wrapping it in a bordered colors.surface container plus explicit textColor=colors.text and themeVariant='light' guarantees contrast on iOS."
+}

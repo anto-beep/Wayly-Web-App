@@ -1,0 +1,41 @@
+{
+  "summary": "Iter 42 polish items verified end-to-end. Backend regression (17/17 pytest in test_participant_profile_v2.py + test_iter41_inline_prompts.py) all pass. Frontend: title uses middot (no em-dash); bell count white; plan badge white on clay bg rgb(165,81,43); inline-prompt headers correct per where slug; Budget Calc supplements save → 'Saved' pill flashes mid-animation → row disappears → budget form's Oxygen checkbox auto-checked (profile-aware re-run sync working); Contribution Estimator save also flashes pill and removes row; bell decrement wires through item click.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "ContributionEstimator / ReassessmentLetter (dev console only)",
+        "issues": [
+          "Pre-existing React hydration warning '<span> cannot be a child of <option>' in dev mode (already reported in iter41, caused by dev-mode source-injection wrapper — not from product code, should be absent in prod build)."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_participant_profile_v2.py",
+    "/app/backend/tests/test_iter41_inline_prompts.py",
+    "/app/test_reports/pytest/iter42_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "NotificationsBell badge caps at '9+' — when a single notification is clicked while >10 are unread, the visible count stays '9+' which makes the decrement invisible until count drops below 10. Functionally correct (optimistic update sent to /api/notifications/read), but consider testing the decrement E2E against a freshly-seeded account with ≤9 unread to make the behaviour observable.",
+    "ProfileInlinePrompts: 'Saved' pill animation is 900ms and the row disappears thereafter — feels good but the simultaneous parent re-render (calc() re-run on BudgetCalculator) can introduce a brief layout shift. Not blocking; consider a 150ms fade-out transform if perceived as janky on slower devices.",
+    "BudgetCalculatorTool onParticipantUpdated correctly syncs applicable_supplements + enteral_feeding_type into form state and re-runs calc() when a result exists — verified via the budget form's Oxygen checkbox being checked after the inline prompt save."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (17/17 regression — 10 participant_profile_v2 + 7 iter41_inline_prompts)",
+    "frontend": "100% — all 6 polish items verified (title, plan badge, bell badge, bell decrement wiring, profile-aware budget calc re-run, header copy by where, saved-pill animation on multiple tools)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (primary participant pid 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "PATCHed Cathy's primary participant to clear applicable_supplements / care_manager_name / part_pension_actual_* rates to make all 5 prompts visible; then saved oxygen via the inline supplements panel and 17.5 via the contribution_estimator inline input. Final state: applicable_supplements=['oxygen'], part_pension_actual_independence_pct=17.5. Other TEST_-prefixed participants from iter40/41 remain (15 total participants including legacy seeds).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 6 iter-42 polish items pass: (1) static title middot ✓, (2) inline prompt header per where ✓, (3) saved pill animation 900ms ✓, (4) bell decrement via item click optimistic update ✓ (note: cap '9+' hides decrement visually until count<10), (5) plan-badge/avatar/bell-badge white text on solid bg ✓, (6) profile-aware budget re-run (oxygen tick in inline panel auto-checks form Oxygen checkbox and triggers calc re-run) ✓. Cathy's primary participant is now at applicable_supplements=['oxygen'] + part_pension_actual_independence_pct=17.5 — if next agent wants to retest the inline prompts they must PATCH those back to [] / null first.",
+  "rca of the issue": "No issues — all review-request items verified. The single console-only hydration warning (<span> inside <option>) is from dev-mode source wrapper, pre-existing and not from product code."
+}

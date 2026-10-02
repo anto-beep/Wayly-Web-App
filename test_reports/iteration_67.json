@@ -1,0 +1,47 @@
+{
+  "summary": "CE-2 v1.1 Phase 2 UI validation. All 11 previously-skipped acceptance-criterion tests from spec §6 (Tests 17-28 + John fee-exempt + Not-assessed range + participant prefill) now pass end-to-end on live preview URL as trial user (trial30909@example.com). Backend regression re-run: 207 passed, 11 skipped (as expected). Statement Decoder + LF-1 regression smoke pages render without console errors. Participant name is correctly prefilled from active participant (Dorothy). Bill scenario returns weekly $88.67 dominant, government share 88.3% / 11.7%, Independence 11.30%, Everyday 26.25%, lifetime cap $137,917.01, Oct-2026 comparison $88.67→$73.19 (saving $15.48/wk = $804.96/yr), 6 source citations with external links. John (hcp_pre_sep_2024 + hcp_paid_fees=no) → ce-fee-exempt-headline 'You will not pay any contribution.'. Not-assessed range → ce-range-headline with min $27.91 / max $99.24 and 3 anchor rows (Class 3, 5, 8). Service-mix invalid sum (110%) → API 400 surfaced in ce-error: 'Service mix must sum to 100%, got 110.0'.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verified_features": [
+    {"test": "Test 17 — Financial reveal on Part Pension", "evidence": "Default full_pension → ce-financial-details HIDDEN. Click ce-pension-part_pension → ce-financial-details visible with ce-income + ce-assets."},
+    {"test": "Test 18 — Financial reveal on CSHC", "evidence": "Click ce-pension-cshc → ce-financial-details visible."},
+    {"test": "Test 19 — Financial hidden on Full/Self-funded", "evidence": "Click ce-pension-full_pension → hidden. Click ce-pension-self_funded → still hidden."},
+    {"test": "Test 20 — 5-option entry-path radio (no Grandfathered checkbox)", "evidence": "ce-entry-path renders with all 5 tiles: ce-entry-not_assessed / hcp_pre_sep_2024 / npq_pre_sep_2024 / hcp_post_sep_pre_nov_2025 / post_nov_2025. No 'Grandfathered' checkbox anywhere in DOM."},
+    {"test": "Test 21 — HCP follow-up conditional", "evidence": "After ce-entry-hcp_pre_sep_2024 click: ce-hcp-fee-followup + ce-hcp-fees-no + ce-hcp-fees-yes + ce-hcp-level all render. Click ce-hcp-fees-no → ce-hcp-exempt-hint (green) appears. Switch to ce-entry-post_nov_2025 → followup + hcp-level both disappear."},
+    {"test": "Test 22 — Service mix custom sum validation", "evidence": "Setting clinical=50/indep=30/everyday=30 (total 110) and submitting returns 400. ce-error shows 'Service mix must sum to 100%, got 110.0'."},
+    {"test": "Test 23 — Weekly figure dominant (Bill)", "evidence": "ce-result-weekly='$88.67' with classes 'font-heading text-6xl tabular-nums' (visually dominant). ce-result-annual='$4,623.71 a year · $1,155.93 a quarter' in smaller text."},
+    {"test": "Test 24 — Government share bar (Bill)", "evidence": "ce-govt-share-bar renders. ce-govt-share-govt='Government · 88.3%', ce-govt-share-you='You · 11.7%'. role='img' aria-label='Government pays 88.3%, you pay 11.7%'."},
+    {"test": "Test 25 — Rate breakdown (Bill)", "evidence": "ce-rate-breakdown renders. ce-rate-clinical=0%, ce-rate-independence=11.30%, ce-rate-everyday=26.25%. ce-rate-prose mentions both 11.30% and 26.25%."},
+    {"test": "Test 26 — Safety net + hardship link", "evidence": "ce-safety-net shows $137,917.01. ce-hardship-link href='https://www.servicesaustralia.gov.au/financial-hardship-for-people-getting-aged-care' target='_blank' inside ce-also-worth-knowing."},
+    {"test": "Test 27 — October 2026 comparison (Bill)", "evidence": "ce-oct-2026 renders. ce-oct-now='$88.67 / wk', ce-oct-after='$73.19 / wk', ce-oct-saving delta text: 'about $15.48 a week less, or $804.96 a year.'"},
+    {"test": "Test 28 — Source citations expandable", "evidence": "Clicking ce-how-calculated-toggle expands section 8. 6 ce-citation-* entries render (starting with ce-citation-means_test.income_free_area.individual). Each has an anchor with href to servicesaustralia/BT etc. target='_blank'."},
+    {"test": "John fee-exempt E2E", "evidence": "entry_path=hcp_pre_sep_2024 + ce-hcp-fees-no + submit → ce-fee-exempt-headline visible with body containing 'You will not pay any contribution.' No other input required (per spec)."},
+    {"test": "Not-assessed range E2E", "evidence": "Reload + ce-entry-not_assessed + submit → ce-range-headline with ce-range-min $27.91 and ce-range-max $99.24; ce-range-anchor-class_3 ($27.91), class_5 ($50.44), class_8 ($99.24) all present."},
+    {"test": "Participant prefill", "evidence": "ce-person-name input value='Dorothy' on page load (matches active participant for trial user)."},
+    {"test": "Regression — Statement Decoder", "evidence": "/ai-tools/statement-decoder renders, h1='Statement Decoder', no console errors."},
+    {"test": "Regression — LF-1", "evidence": "/ai-tools/letters-and-follow-ups renders 12-situation grid, h1='Letters & Follow-ups', trial banner shows '20 days remaining' — no console errors."},
+    {"test": "Backend regression pytest", "evidence": "cd /app/backend && python -m pytest tests/test_ce2_engine.py tests/test_ce2_phase0_gate.py tests/test_cpr1_endpoints.py tests/test_cpr1_ingestion.py tests/test_cpr1_foundation.py tests/test_lf1_iter1.py tests/test_ppc_v2.py tests/test_text_sanitiser.py -q → 207 passed, 11 skipped in 56.66s (matches spec expectation)."}
+  ],
+  "test_report_links": [
+    "/app/test_reports/pytest/iter67_backend_regression.xml",
+    "/app/backend/tests/test_ce2_engine.py",
+    "/app/backend/tests/test_ce2_phase0_gate.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ContributionEstimator.jsx is 871 lines — just above the 700-line threshold. Consider splitting the 8 result sections (PointHeadline / FeeExemptHeadline / RangeHeadline / GovernmentShareBar / RateBreakdown / SafetyNetPanel / OctoberComparison / WhatIfPanel / AlsoWorthKnowing / HowThisWasCalculated) into /components/ce2/result-sections/*.jsx to improve maintainability. Not blocking — the file is well-structured with clear section comments.",
+    "In WhatIfPanel line 707 the 'Full Age Pension' scenario cites hard-coded rates (5% / 17.5%). These should ideally be pulled from constants or the engine to stay in sync with any future rate change. Currently correct but a source of drift risk.",
+    "The 'Grandfathered' string does not appear anywhere in ContributionEstimator.jsx — confirms the old CE-1 checkbox has been fully removed as spec required.",
+    "buildScenarios (line 705) computes yearsToCap only when contribution_annual > 0 — nicely guarded against divide-by-zero. Note that when result.contribution_weekly === 0 (fee-exempt path) the whole WhatIfPanel is short-circuited above via !is_fee_exempt, so this is safe.",
+    "Small polish: on the Bill result screen, the '20 days remaining' trial banner from MarketingHeader sits above the tool hero and slightly reduces vertical breathing room; not a bug.",
+    "The /api/ce2/constants call in useEffect line 99 swallows the error silently. If it fails the UI still renders (helper text just omits dollar figures). This is acceptable per the spec's 'other_misc_info' note but a Sentry breadcrumb on catch would help diagnose future 502s."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (207/207 passed, 11 skipped as expected)", "frontend": "100% — all 11 previously-skipped Playwright acceptance-criterion tests now green"},
+  "test_credentials": "trial30909@example.com / TrialPass1! (family plan, trialing 20 days, active participant Dorothy)",
+  "seed_data_creation": "None. All /api/ce2/calculate calls are stateless — no writes.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "CE-2 v1.1 Phase 2 UI is fully validated and shippable. All 11 acceptance tests from spec §6 pass on the live preview URL. Bill's canonical scenario (part_pension + homeowner=yes + income=$19,029 + assets=$10,000 + post_nov_2025 + defaults) → $88.67/wk, 88.3% govt share, Ind 11.30%, EL 26.25%. John's fee-exempt path (hcp_pre_sep_2024 + hcp_paid_fees=false) → ce-fee-exempt-headline. Not-assessed range → ce-range-min/max with 3 class anchors. All 8 result sections have data-testid attributes matching spec. Participant prefill via useParticipantPrefill works; Dorothy auto-populates ce-person-name. No mocked APIs. LLM tools untouched by this change — the CE-2 calculator is deterministic, no LLM in the flow. Backend regression (207/207) confirms Phase 1 engine + CE-2 Phase 0 gate + CPR1 + LF-1 iter1 + PPC-v2 + text sanitiser all intact.",
+  "rca_of_the_issue": "N/A — no bugs found."
+}

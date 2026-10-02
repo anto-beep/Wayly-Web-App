@@ -1,0 +1,50 @@
+{
+  "summary": "All 3 iter-353 asks verified end-to-end across shared backend, web (/app) and mobile (Expo web preview). (1) BACKEND statement-archive data consistency: pytest /app/backend/tests/test_statement_archive_iter353.py PASSED — /budget/current streams-spent sum baseline 5295.50 → after DELETE /api/statements/d5267556-.../archive drops to 5045.50 (delta 250.0) → after POST /api/statements/.../restore returns to 5295.50; /api/statements count 47→46→47, target id absent while archived and present after restore; cathy's data unchanged at end. (2) WEB green 'Email verified' badge: /settings/profile shows the pill next to cathy@example.com with data-testid 'email-verified-badge', text 'Email verified', classes 'bg-sage/15 text-sage' (computed color rgb(66,95,71) — sage green). (3) MOBILE 'Verified' pill: /settings shows data-testid 'email-verified-badge' with text 'Verified' on the email row in the Account card, background rgb(238,243,238) (light sage) with green check glyph. (4) MOBILE CodeInput autofill refactor: the full-size transparent overlay TextInput (data-testid 'verify-code-input-field', 342x58, position absolute, opacity 1, inputMode numeric, maxLength 6) still accepts typed digits — visible cells filled to '1','2','3' after typing 3, and after typing 6 the onComplete auto-submit fired (RN-web state cleared afterwards, as expected on server error). Source (/app/mobile/src/components/CodeInput.tsx) sets textContentType='oneTimeCode', autoComplete='sms-otp', importantForAutofill='yes' — native SMS/email OTP autofill will work in real builds (not testable in web preview). (5) REGRESSION: /app (dashboard) renders with $5,295.50 streams-spent visible; /app/invoices renders with provider list and refund copy.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "settings.tsx — Verified pill", "issues": ["Pill label text color computes to rgb(0,0,0) (black) over the light sage bg rgb(238,243,238). It reads fine because the check icon is green and the pill is subtle, but for strict brand consistency the text could match sage/emerald green like the web version (which uses text-sage rgb(66,95,71)). Non-blocking."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Verified badge copy", "platform": "mobile", "issue": "Web pill reads 'Email verified'; mobile pill reads 'Verified'. Copy divergence is intentional per the request spec ('green Verified pill' on mobile, 'green Email verified badge' on web), so flagged for awareness only — not a bug.", "expected": "Web: 'Email verified'. Mobile: 'Verified' (per spec).", "actual": "As specified."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_statement_archive_iter353.py",
+    "/app/test_reports/pytest/iter353_archive.xml",
+    "/app/test_reports/iter353_web_settings_badge.jpeg",
+    "/app/test_reports/iter353_web_app_dashboard.jpeg",
+    "/app/test_reports/iter353_web_invoices.jpeg",
+    "/app/test_reports/iter353_mobile_settings.jpeg",
+    "/app/test_reports/iter353_mobile_verify_email.jpeg",
+    "/app/test_reports/iter353_mobile_code_typed.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "/app/mobile/src/components/CodeInput.tsx correctly sets all three native autofill props (textContentType=oneTimeCode iOS / autoComplete=sms-otp Android / importantForAutofill=yes). The full-size overlay TextInput sits above the display row and the display <View> uses pointerEvents='none' so taps always route to the field — correct pattern.",
+    "Backend statement-archive data consistency: independently reproduced main agent's numbers exactly (5295.50 → 5045.50 → 5295.50) via pytest against the shared preview backend as cathy@example.com. GET /api/statements list count also updates (47 ↔ 46).",
+    "Web Settings.jsx renders the 'Email verified' badge with subtle 'bg-sage/15 text-sage' — good contrast (WCAG-safe on the surface white card). No dark-on-dark issue.",
+    "Mobile settings.tsx Verified pill uses black text on a very light sage bg — legible but off-brand vs the web sage-green text; consider matching the web class to keep parity strict."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_statement_archive_iter353.py (new pytest — regression-safe: archives then always restores)"
+  ],
+  "success_rate": {"backend": "100% (1/1 pytest passed; archive+restore round-trip clean)", "frontend": "100% (web verified badge ✓, mobile verified pill ✓, mobile code input still functional after full-overlay refactor ✓, regression /invoices + /app dashboard ✓)"},
+  "test_credentials": "cathy@example.com / testpass123 (verified account, family plan; current-quarter statement d5267556-57c4-4925-90c7-13eca0ba24f3 archived+restored during testing so end-state unchanged)",
+  "seed_data_creation": "None. Backend test archives the target statement then restores it in a finally-block; verified count and streams-spent sum match baseline after run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter353 verified 3 asks: statement-archive-affects-dashboard numbers (backend), Settings 'Email verified' badge on web + 'Verified' pill on mobile, and mobile CodeInput full-overlay refactor still lets users type + auto-submit. Regression pytest kept at /app/backend/tests/test_statement_archive_iter353.py — always restores the archived statement, safe to rerun. The mobile Verified pill's text color is currently black rgb(0,0,0); the web equivalent uses sage green — flag only, not a bug. Native OS SMS/email autofill cannot be validated in the web preview but the CodeInput.tsx source contains all correct native props (textContentType=oneTimeCode, autoComplete=sms-otp, importantForAutofill=yes) and the full-size transparent overlay is verified to correctly capture typed input and update the visible boxes.",
+  "rca of the issue": ""
+}

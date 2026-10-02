@@ -1,0 +1,75 @@
+{
+  "summary": "Verified iter306 responsive fix for /app/statements and /app/invoices. Both pages now render a stacked card layout at <md and the aligned 6-column grid at md+. All acceptance criteria pass at 390 / 768 / 1440.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "verification_evidence": {
+    "phone_390_statements": {
+      "min_w_720_elements": 0,
+      "inner_scroller": {"scrollWidth": 356, "clientWidth": 356, "hasInnerScroll": false},
+      "doc_scrollWidth_vs_clientWidth": "390 == 390 (no page overflow)",
+      "stacked_mobile_cards_rendered": 25,
+      "row_content_sample": "Period '01/09/2026 to 30/09/2026', Provider 'Sunrise Care Pty Ltd', status badge 'Flagged \u00b7 2', 'Gross $250.00', 'Yesterday'",
+      "row_click_navigates": "statement-row-d5267556-... -> /app/statements/d5267556-...  \u2713"
+    },
+    "phone_390_invoices": {
+      "min_w_720_elements": 0,
+      "inner_scroller": {"scrollWidth": 356, "clientWidth": 356, "hasInnerScroll": false},
+      "doc_scrollWidth_vs_clientWidth": "390 == 390 (no page overflow)",
+      "stacked_mobile_cards_rendered": 37,
+      "row_content_sample": "Provider 'Meridian Home Care Pty Ltd', verdict 'Issues', amount '$1,791.36', date '02 Nov 2026', '7 findings'",
+      "row_click_navigates": "invoice-row-a0b36408-... -> /app/invoices/a0b36408-...  \u2713"
+    },
+    "tablet_768_statements": {
+      "min_w_720_elements": 0,
+      "inner_scroller": {"scrollWidth": 734, "clientWidth": 734, "hasInnerScroll": false},
+      "page_overflow": 0,
+      "layout": "md:grid active (25 aligned rows); em-dash rendered for null closing balance (count=25, commaBug=0)"
+    },
+    "tablet_768_invoices": {
+      "min_w_720_elements": 0,
+      "inner_scroller": {"scrollWidth": 734, "clientWidth": 734, "hasInnerScroll": false},
+      "page_overflow": 0,
+      "layout": "md:grid active (37 aligned rows)"
+    },
+    "desktop_1440_statements": {
+      "page_overflow": 0,
+      "columns_present": "Period / Provider / Uploaded / Gross total / Closing balance / Status \u2013 all 25 rows",
+      "null_closing_balance_shows_emdash": "25/25 rows (no stray comma)"
+    },
+    "desktop_1440_invoices": {
+      "page_overflow": 0,
+      "columns_present": "Invoice date / Provider / Uploaded / Amount / Findings / Verdict \u2013 all 37 rows"
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter307_findings.json",
+    "/app/test_reports/iter307_statements_390.png",
+    "/app/test_reports/iter307_invoices_390.png",
+    "/app/test_reports/iter307_statements_768.png",
+    "/app/test_reports/iter307_invoices_768.png",
+    "/app/test_reports/iter307_statements_1440.png",
+    "/app/test_reports/iter307_invoices_1440.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix implemented correctly: no min-w-[720px] anywhere in either list. Mobile block (md:hidden) shows stacked cards with all required meta; desktop block (hidden md:grid) preserves the 6-column grid at md+.",
+    "Em-dash '\u2014' correctly rendered for null closing balance in the statements grid (confirmed on 25 rows at 768 and 1440); no stray comma bug.",
+    "Row-level Link wrapper preserves data-testid statement-row-<id> / invoice-row-<id> and navigation works on phone (verified end-to-end)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100% (all 6 viewport/page combinations pass)"},
+  "test_credentials": "cathy@example.com / testpass123 (used as specified)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter306 responsive defect (statements + invoices min-w-[720px]) is FIXED. Stacked-card at <md, 6-col grid at md+, no inner horizontal scroll, no page-level overflow at 390/768/1440, em-dash renders for null closing balance, row click navigation intact."
+}

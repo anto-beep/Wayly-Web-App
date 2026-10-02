@@ -1,0 +1,30 @@
+{
+  "summary": "Iteration 105 review of (1) CPR-2 Voice Check module (Section H) and (2) CE-3 Hardship Pathway (Section J) plus regression across ce3 v1+v2 pension+hardship, cpr2 v1+voice-check, lca1 iter111/112, loop1, core1. Backend pytest: 117 passed / 1 skipped / 0 failed. GET /api/cpr2/status confirms 'voice_check' in surfaces and primary_label='Support Plan Reviewer'. GET /api/ce3/status returns version='v1+pension_wizard+hardship' and includes 'hardship_pathway' surface. Hardship walkthrough content endpoint returns 5 steps (intro/eligibility/documents/how_to_apply/what_to_expect), 2 hand_offs (provider_letter/maca_letter), and disclosures. Frontend Playwright as cathy@example.com: ContributionPosition (/app/participants/{pid}/contribution-position) shows ce3-hardship-banner + ce3-hardship-open-walkthrough link (href=/app/tools/contribution-estimator/hardship-walkthrough) when an open user_indication trigger exists. HardshipWalkthrough page renders hardship-walkthrough-page + hardship-stepper + all 5 hardship-step-* buttons; hardship-next-btn advances intro->eligibility->documents->how_to_apply->what_to_expect with correct hardship-content-{step} slots; documents step exposes hardship-checklist + clickable hardship-checklist-0; how_to_apply step surfaces phone numbers 13 23 00 and 1800 200 422; what_to_expect step exposes hardship-handoffs with hardship-handoff-provider_letter and hardship-handoff-maca_letter LF-1 links. Sidebar shows 'Support Plan Reviewer' rename. Auto-trigger tests (step_change_variance + pension_step_down full->self_funded, and non-trigger on upward moves) are exercised by pytest and pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/cpr2/test_cpr2_voice_check.py",
+    "/app/backend/tests/ce3/test_ce3_v2_hardship.py",
+    "/app/backend/tests/ce3/test_ce3_v2_pension.py",
+    "/app/backend/tests/ce3/test_ce3_v1.py",
+    "/app/backend/tests/cpr2/test_cpr2_v1.py",
+    "/app/test_reports/pytest/iter105.xml"
+  ],
+  "action_items": [
+    "Docstring drift (non-blocking): The review request referenced 'Contribution Estimator' page location as /app/tools/contribution-estimator for the hardship banner. In actual code the banner lives on ContributionPosition at /app/participants/{pid}/contribution-position — verified working. The /app/tools/contribution-estimator route in the docs is the Contribution Estimator wizard (a different tool), not the position page. Recommend clarifying this in the CE-3-v1 spec so future testers/agents don't chase the wrong URL.",
+    "Response-shape divergence between review-request text and impl: hardship trigger list endpoint returns {\"triggers\":[...]} (not a bare array), and idempotency key on POST /hardship/triggers is 'reconciliation_id' rather than 'source_artefact_id' as the review-request bullet phrased. Pytest was aligned with the impl and passed. Consider aligning naming (either rename request field to source_artefact_id everywhere or update spec) for clarity."
+  ],
+  "critical_code_review_comments": [
+    "GET /api/ce3/participants/{pid}/hardship/triggers returns {'triggers': [...]} envelope while GET /api/ce3/hardship/walkthrough is bare object and POST endpoints return the bare trigger — inconsistent response shape across the ce3 hardship surface. Consider unifying (bare list or envelope everywhere).",
+    "Hardship walkthrough hand_offs use 'key' field, whereas steps use 'id'. Minor consistency nit — pick one convention.",
+    "Voice check follow_up_suggestions is computed server-side and returned inline; that's fine for now but since the actions list drives client UI (draft_revision_letter, create_voice_note, discuss_with_care_manager, note_goals, draft_discussion_letter) it would be safer to add a small unit contract test enumerating the exact action ids per overall_finding so future refactors don't silently rename them."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (117/117 selected suites)", "frontend": "100% (banner + walkthrough e2e verified)"},
+  "test_credentials": "cathy@example.com / testpass123 (caregiver; participant Dorothy 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "Seeded 1 open user_indication hardship trigger via POST /api/ce3/participants/{pid}/hardship/triggers to exercise the ContributionPosition banner. Left as-is for downstream verification.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "CPR-2 Voice Check is BACKEND-ONLY this slice — no UI surface yet; verified via pytest (12/12). CE-3 Hardship Pathway backend (11/11) + frontend end-to-end fully verified: banner on ContributionPosition, 5-step walkthrough, checklist, phones 13 23 00 / 1800 200 422, and both LF-1 hand-offs. Auth token key is 'kindred_token' in localStorage (not 'token'). ContributionPosition lives at /app/participants/{pid}/contribution-position (not /app/tools/contribution-estimator, which is the Contribution Estimator wizard). Hardship list endpoint returns {'triggers':[...]} envelope; idempotency key in POST body is 'reconciliation_id'.",
+  "rca of the issue": "N/A — no issues found."
+}

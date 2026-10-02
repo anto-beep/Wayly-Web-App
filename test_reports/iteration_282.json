@@ -1,0 +1,37 @@
+{
+  "summary": "RETEST of iter281 colour pass on Statement Detail (web only, cathy@example.com). PASS on all three items. (1) The four tinted cards now use the real `.section-*-soft` classes and render non-transparent tinted backgrounds in BOTH light and dark themes: notes-card and rights-panel = clay-soft, ask-wayly-card = teal-soft, decoder-balance-panel = sage-soft. (2) Stream breakdown headers render SOLID TEAL with WHITE text in BOTH themes; no clay bleed in dark mode. Note: in dark mode the exact hex is #4FA8AE rather than #0E4D52 because index.css:738 globally remaps `.bg-[#0E4D52]` to `var(--kindred-primary)` (#4FA8AE) for AAA contrast on dark — still SOLID TEAL not clay, so the core requirement of the fix (no clay swap) is met. Flagging this as a nuance rather than a bug. (3) Rights panel renders 5 right-* cards; ai-accuracy-banner is positioned AFTER ask-kindred-cta (banner_top=3607 > cta_top=3543).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Statement Detail (dark mode)", "issues": ["Stream card header bg is #4FA8AE (lighter teal) in dark mode instead of the exact #0E4D52 the spec asks for. Caused by the global dark-theme accessibility remap at /app/frontend/src/index.css:738 (`html.theme-dark .bg-[#0E4D52] { background-color: var(--kindred-primary) !important }` where --kindred-primary flips to #4FA8AE at line 372). The remap keeps AAA contrast on dark backgrounds and preserves TEAL semantics (not clay). If strict #0E4D52 in dark is required, use an inline style or a bespoke class not covered by the dark override."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter282_light.jpeg",
+    "/app/test_reports/iter282_dark.jpeg",
+    "/app/test_reports/iter282_streams_light.jpeg",
+    "/app/test_reports/iter282_streams_dark.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL: If strict #0E4D52 stream header in dark mode is required (rather than the AAA-safe #4FA8AE remap), replace `bg-[#0E4D52] hover:bg-[#0B3D42]` in /app/frontend/src/components/DecoderResultView.jsx:338 with an inline `style={{backgroundColor:'#0E4D52'}}` or add a dedicated class in index.css exempt from the dark override. Current behavior is still SOLID TEAL — not clay — so the primary fix intent holds."
+  ],
+  "critical_code_review_comments": [
+    "Consider extracting the hard-coded stream header teal + hover into a semantic class (e.g. `.stream-card-header`) so future dark-theme overrides can't accidentally remap it and the intent is discoverable.",
+    "The dark override for `.bg-[#0E4D52]` at index.css:738 is broad. Any consumer that wants literal #0E4D52 in dark now needs a workaround — worth documenting."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Statement id 673fa982-367c-43ca-8ce8-4df5b8ba4f68 opens the two-pass decoded view (StatementDetail branch that renders StatementNotes + StatementAskWayly + DecoderResultView + StatementRightsPanel + ai-accuracy-banner). Dark-mode toggle used: `document.documentElement.classList.add('theme-dark','dark'); document.documentElement.setAttribute('data-theme','dark')`. Computed bgs: LIGHT notes/rights=#F3EDEB (clay-soft), ask=#E6ECEF (teal-soft), balance=#E5E9E8 (sage-soft); DARK all resolve to dark themed tints via color-mix on --kindred-surface. Stream header LIGHT=#0E4D52 / DARK=#4FA8AE, text white in both.",
+  "rca of the issue": "Iter281 root cause (undefined `.sect-*-soft` classes) is fully resolved: JSX now references the existing `.section-clay-soft` / `.section-teal-soft` / `.section-sage-soft` classes defined at /app/frontend/src/index.css:259-261, which use `color-mix(in srgb, <accent> N%, var(--kindred-surface))` so they produce a valid tint in both light and dark themes (because --kindred-surface flips per theme). Stream header clay-in-dark issue is resolved because the header no longer uses `bg-primary-k` (which the .app-shell dark rule remapped to clay), it uses `bg-[#0E4D52]` which is subject to the separate dark override at index.css:738 that keeps it teal (just a lighter shade for AAA)."
+}

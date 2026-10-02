@@ -1,0 +1,29 @@
+{
+  "summary": "Iteration 106 tested (1) Voice Check UI at /app/participants/:id/voice-check and (2) Hardship Companion Notes on the hardship walkthrough. Backend pytest across ce3 (v1+v2 pension+v2 hardship incl. 5 new companion-notes tests), cpr2 (v1+voice-check), core1, loop1, lca1: 122 passed / 1 skipped / 0 failed (junit at /app/test_reports/pytest/iter106.xml). Frontend Playwright as cathy@example.com verified: ParticipantProfile shows core1-voice-check-card with a working core1-voice-check-open link to /app/participants/{pid}/voice-check. VoiceCheck form loads with authored_on_behalf checkbox, voice-check-no-goals-hint (this participant has no active goals in ledger) + 1 blank freeform row, voice-check-add-goal adds rows, all voice-check-answer-{idx}-{key} radios select, voice-check-note-{idx} captures notes. Submitting 3 goals (2 provider-led + 1 participant-led) with the phrase 'scared' in a note transitions to voice-check-result showing overall_finding=Provider-led (tinted red), voice-check-sensitive-banner with Elder Abuse Helpline 1800 353 374 + Lifeline 13 11 14, and voice-check-actions incl. voice-check-action-draft_revision_letter linking to LF-1 with archetype=plan_review_request and voice_check_id in query. voice-check-do-another correctly resets to the form; voice-check-done navigates back to profile. Hardship: ContributionPosition banner now carries ?trigger={id} in the ce3-hardship-open-walkthrough href. HardshipWalkthrough at step 5 (what_to_expect) renders hardship-companion-notes-editor prefilled from GET /api/ce3/hardship/triggers/{tid}. Saving via hardship-companion-notes-save shows hardship-companion-notes-saved and persists across page reload. Both hardship-handoff-provider_letter and hardship-handoff-maca_letter carry hardship_trigger_id + companion_notes query params. Backend GET /api/ce3/hardship/triggers/{tid} returns 200 with the trigger, PATCH .../notes accepts non-empty, rejects empty (422), 404 on missing, and cross-household forbidden — all covered by pytest and passed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/ce3/test_ce3_v2_hardship.py",
+    "/app/backend/tests/cpr2/test_cpr2_voice_check.py",
+    "/app/test_reports/pytest/iter106.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "HardshipWalkthrough.jsx has a duplicated useEffect that calls api.get('/ce3/hardship/walkthrough') twice (lines 27-31 and 59-63). The second one is a no-op copy — remove it to avoid the double network request on mount.",
+    "In VoiceCheck.jsx, canSubmit gates on totalReady>0 & answered===totalReady, but rows without goal_text_shown are silently ignored on submit. Consider disabling submit or showing an inline validation hint when an answer was selected on a row with empty goal_text_shown, so users don't lose selections.",
+    "HardshipWalkthrough companion_notes query param is truncated to 500 chars in the LF-1 hand-off link (URL length hygiene) but there's no visual truncation warning to the user. Consider surfacing this or moving companion_notes hand-off to a server-side prefill fetch keyed by hardship_trigger_id (cleaner + no length ceiling).",
+    "GET /api/ce3/hardship/triggers/{tid} single-fetch endpoint returns bare trigger while list endpoint returns {'triggers':[...]} envelope — same shape inconsistency flagged in iter105 still stands."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (122/122 across ce3+cpr2+core1+loop1+lca1)", "frontend": "100% (voice-check happy path + sensitive banner + provider_led finding + LF-1 handoff; hardship companion notes save + reload persistence + query-param hand-off all verified)"},
+  "test_credentials": "cathy@example.com / testpass123 (participant Dorothy 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "Created 1 open user_indication hardship trigger for cathy's household to exercise the walkthrough companion-notes editor; deleted at the end of the run. Voice-check row created a voice_check + follow_ups records in Mongo; those are participant history and were left in place.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Voice Check UI is live at /app/participants/:id/voice-check and reachable via core1-voice-check-card on ParticipantProfile. When the participant has no active goals in the goal ledger the form shows voice-check-no-goals-hint + one freeform row (crypto.randomUUID goal_id, textarea for goal_text_shown). Sensitive keywords 'scared'/'hits me'/'threatens' etc. are detected server-side and set contains_sensitive_content_flag which reveals voice-check-sensitive-banner (Elder Abuse Helpline 1800 353 374 + Lifeline 13 11 14). Hardship walkthrough companion-notes editor only appears at the LAST step (what_to_expect) when ?trigger={id} is in the URL. LF-1 hand-off hrefs carry hardship_trigger_id + companion_notes (truncated to 500 chars). Auth token key in localStorage is 'kindred_token'.",
+  "rca of the issue": "N/A — no issues found. Ship it."
+}

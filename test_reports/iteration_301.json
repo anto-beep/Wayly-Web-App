@@ -1,0 +1,38 @@
+{
+  "summary": "Verified founder's cross-platform visual batch. WEB: all 5 flagged Landing h2s render on ONE line at 1440px (lines=1 measured via getBoundingClientRect / lineHeight); ToolClusterGrid heading reads 'More Tools, Grouped the Way Families Think.' also 1 line; hero-headline in DualFlagshipHero is teal rgb(14,77,82) on light gradient, clearly legible; 6 ecosystem-card-* all use muted palette (teal/clay/sage/dusty-rose/plum/deep-teal) with white text, readable in light & dark. WEB Contact (/contact): active chip in light mode ~ teal, in dark mode the selected chip renders CLAY (screenshot proves 'GP / Clinician' pill in clay/terracotta while others stay outlined) — matches spec. 0 console errors on Landing. MOBILE (/tabs/index): dashboard-at-a-glance ABSENT (as required), dashboard-greeting present with copy 'Good morning, Cathy. What would you like to do?', dashboard-more-detail-toggle present (Budget detail collapsible retained), dashboard-action-bar present, no crashes/red screen, 0 console errors. Preview backend healthy (login 200 in <1s).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter301_hero_light.jpeg",
+    "/app/test_reports/iter301_hero_dark.jpeg",
+    "/app/test_reports/iter301_contact_dark.jpeg",
+    "/app/test_reports/iter301_mobile_dash.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: setting localStorage 'wayly:app:appearance' = JSON.stringified('dark') on marketing routes (Landing/Contact) does NOT flip html.theme-dark on reload — the theme provider probably lives in the app shell only. It's not a regression from this batch (marketing pages were always outside .app-shell) and dark-mode styling was still verifiable by manually toggling html.classList.add('theme-dark') on /contact where the CSS rules for .contact-choice-active correctly switched to clay. If founder expects marketing to react to the same key, main agent may want to hoist the theme reader to <html> root; otherwise this is expected.",
+    "Non-blocking: /app/mobile/app/(tabs)/index.tsx is ~470 lines — still tidy, but adding a stable testID like dashboard-greeting-firstname would let automation assert the name split without regex; already good enough for now."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "web 100% (6/6 heading assertions + hero + eco cards + TCG + contact chip color), mobile 100% (at-a-glance absent, greeting/action bar/more-detail-toggle present, no errors)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, mobile dashboard).",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Founder visual batch (WEB DualFlagshipHero lighter/hero-headline legible, 5 Landing h2s one-line, ToolClusterGrid heading rewrite, ecosystem palette muted, Contact chip teal-in-light/clay-in-dark, MOBILE dashboard at-a-glance removal) is verified end-to-end. Regression sweep of Contribution Position, Settings billing, participant gauge, letters starter-note prefill was NOT re-executed this iteration because iter299/iter300 already verified those and no touching code changed. If a follow-up asks to run those regressions, use cathy@example.com and /letters/2CJbGVKx0g2TqZ4c (see iter300 notes).",
+  "rca of the issue": "n/a — no bug found, this was a verification pass."
+}

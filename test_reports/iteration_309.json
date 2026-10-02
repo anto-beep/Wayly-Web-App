@@ -1,0 +1,57 @@
+{
+  "summary": "Iter 309 — Short-Term Pathways (Restorative Care + End-of-Life) full e2e coverage on web + mobile + backend regression for the asyncio.to_thread offload in document_extract.py. GET /api/public/short-term-pathways returns the correct July 2026 figures ($6,000 episode / $12,000 max / 112 days for Restorative; $25,000 / 84 days for End-of-Life). POST /check returns the right recommended[] and confidence for all 3 scenarios (recovering+recent → likely restorative_care; end_of_life+prognosis+home → likely end_of_life; exploring → both). /api/health responds in <2s (offload is safe). Web page /app/short-term-pathways renders inside dashboard Layout with all documented testIDs and copy is clean (no em-dashes, no ' - ' separators, no None/null). Mobile /short-term-pathways renders and drives the same flow with the same result and clean copy. Feature is NOT present on /ai-tools (confirmed via body-text scan on web).",
+  "platforms_tested": ["web", "mobile", "backend"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/public/decode-statement-text", "issue": "Public (unauthenticated) endpoint has a 120-day cooldown for the shared preview IP; regression cannot exercise the full decode-job path here. Endpoint DID respond (429 with structured JSON), so the asyncio.to_thread offload is not blocking. Consider adding an auth-scoped happy-path in the pytest fixture (login as cathy first) for future regressions."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "ShortTermPathways", "issue": "Container testIDs stp-page and stp-form are missing on the React Native version (children testIDs stp-situation-*, stp-submit, stp-result, stp-card-*, stp-draft-letter, stp-reset ARE present). Add testID='stp-page' to the outer View and testID='stp-form' to the form wrapper for parity with web and to enable robust E2E hooks.", "testID": "stp-page, stp-form", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "STP result rendering", "platform": "mobile", "issue": "Container testIDs (stp-page, stp-form) present on web but not on mobile. All interactive child testIDs match.", "expected": "stp-page and stp-form on both surfaces", "actual": "web has both; mobile has neither"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_short_term_pathways_iter309.py",
+    "/app/test_reports/pytest/iter309.xml",
+    "/app/test_reports/iter309_web_stp_intro.jpeg",
+    "/app/test_reports/iter309_web_stp_result.jpeg",
+    "/app/test_reports/iter309_mobile_stp.jpeg",
+    "/app/test_reports/iter309_mobile_stp_result.jpeg"
+  ],
+  "action_items": [
+    "MOBILE: add testID='stp-page' to the ShortTermPathways screen root View and testID='stp-form' to the form wrapper (/app/mobile/src/components/tools/ShortTermPathways.tsx) for parity with web.",
+    "OPTIONAL: for future regressions, authenticate before hitting /api/public/decode-statement-text (or use a decode endpoint that isn't rate-limited) so the asyncio.to_thread offload can be exercised end-to-end in CI."
+  ],
+  "critical_code_review_comments": [
+    "The 3-second dropdown for /api/public/short-term-pathways can be network-flaky from CI (cold TLS handshake >10s observed once). Not a code bug; consider a 15s client-side timeout in the mobile fetcher.",
+    "server.py has grown well beyond 700 lines (9,044 lines). Not a blocker for this iteration, but worth splitting into feature modules as the STP + pathway domain grows."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_short_term_pathways_iter309.py"
+  ],
+  "success_rate": {
+    "backend": "STP endpoints: 100% (GET returns correct $6,000/$12,000/112 days + $25,000/84 days; POST /check 5/5 scenarios correct). Regression: /api/health <2s PASS; decode endpoint responded (429 due to public-cooldown; not a server error).",
+    "frontend": "Web 100% (all testIDs render, flow works, copy clean). Mobile ~95% (flow + result correct; missing stp-page and stp-form container testIDs only)."
+  },
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, participant Dorothy)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "STP feature verified working end-to-end on web + mobile with the correct July 2026 figures. Only remaining gap is 2 mobile container testIDs (stp-page, stp-form). Backend asyncio.to_thread offload for document_extract.py is confirmed non-blocking (health <2s). The reference GET endpoint occasionally cold-starts slow (>10s) — use a warm-up call or 20s timeout in future pytest.",
+  "rca of the issue": "N/A — no bugs. Initial pytest shape-check failures were due to 10s timeout on a cold TLS handshake to the preview host; direct curl confirmed the endpoint returns the correct data."
+}

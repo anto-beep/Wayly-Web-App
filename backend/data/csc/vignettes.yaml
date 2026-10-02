@@ -1,0 +1,254 @@
+# CSC-1 reference vignettes (v1 DRAFT — awaiting Antony's Phase 0 sign-off)
+#
+# One synthetic answer vector per classification (1..8). Vectors are the
+# ground truth used to compute vignette-anchored confidence per CSC-1 §5.4.
+#
+# Answer keys map to the normalised score in CSC-1 §5.1:
+#   5-point difficulty (Q1..Q11, Q15): "no_difficulty=0, slight=1, moderate=2,
+#                                       significant=3, cannot_alone=4"
+#   5-point frequency  (Q12):          "never=0, rarely=1, sometimes=2,
+#                                       often=3, every_day=4"
+#   Count              (Q13, Q14):     "zero=0, one=1.3, two_to_three=2.7,
+#                                       more_than_three=4"
+#   Amount, inverse    (Q16):          "full_time=0, a_lot=1, some=2,
+#                                       a_little=3, none=4"
+#
+# Calibration sources
+#   - DoH classification descriptions per Aged Care Rules 2025 s.229-5, s.194-5.
+#   - Published industry vignettes: Robert (C3), Wendy (C4), Jean (C5).
+#   - Wayly fixtures: Louisa Davids (C8) prompt §9, Margaret Chen (C6) prompt §9.1
+#     (Margaret is a Branch-A fixture, not a canonical vignette — she sits between
+#      the C6 vignette and the C5 vignette by design).
+#
+# Sign-off rule
+#   Scoring code, threshold constants, and confidence math are NOT written until
+#   Antony has approved these eight vectors. This is the Phase 0 gate (CSC-1 §3.E).
+
+schema_version: csc.vignettes.v1
+effective_from: 2026-02-01
+legislativeVerificationStatus: PENDING     # Wayly-defined calibration, not statutory
+
+vignettes:
+
+  # -------------------------------------------------------------------------
+  # C1 — Fully independent, minimal support
+  #   DoH shorthand: living independently, no personal-care need, some IADL
+  #   assistance available on request. Composite target ≈ 0.05.
+  # -------------------------------------------------------------------------
+  - classification: 1
+    profile_summary: >
+      Independent older adult in own home. Manages personal care and most
+      household tasks without help. Occasional support for heavy shopping
+      or gardening. No cognitive or mood concerns.
+    vector:
+      Q1_self_care_shower:        no_difficulty
+      Q2_self_care_dress:         no_difficulty
+      Q3_self_care_mobility:      no_difficulty
+      Q4_self_care_continence:    no_difficulty
+      Q5_iadl_meals:              no_difficulty
+      Q6_iadl_cleaning_laundry:   slight
+      Q7_iadl_medication:         no_difficulty
+      Q8_iadl_shopping:           slight
+      Q9_iadl_transport:          no_difficulty
+      Q10_cognition:              no_difficulty
+      Q11_mood:                   no_difficulty
+      Q12_behaviour:              never
+      Q13_falls_6mo:              zero
+      Q14_hospital_12mo:          zero
+      Q15_home_environment:       slight
+      Q16_informal_support:       some          # inverse-scored
+
+  # -------------------------------------------------------------------------
+  # C2 — Mostly independent, occasional personal-care prompts
+  # -------------------------------------------------------------------------
+  - classification: 2
+    profile_summary: >
+      Mostly independent but slowing down. Uses aids for showering. Needs
+      prompts for medication or appointments. Cleaning done with help.
+    vector:
+      Q1_self_care_shower:        slight
+      Q2_self_care_dress:         slight
+      Q3_self_care_mobility:      slight
+      Q4_self_care_continence:    no_difficulty
+      Q5_iadl_meals:              slight
+      Q6_iadl_cleaning_laundry:   moderate
+      Q7_iadl_medication:         slight
+      Q8_iadl_shopping:           moderate
+      Q9_iadl_transport:          slight
+      Q10_cognition:              slight
+      Q11_mood:                   slight
+      Q12_behaviour:              rarely
+      Q13_falls_6mo:              zero
+      Q14_hospital_12mo:          zero
+      Q15_home_environment:       slight
+      Q16_informal_support:       some
+
+  # -------------------------------------------------------------------------
+  # C3 - "Robert" reference profile.
+  #   Robert: living at home, low-moderate ADL support, IADL help several
+  #   times a week, mild cognitive change. Composite target ~ 0.28.
+  # -------------------------------------------------------------------------
+  - classification: 3
+    profile_summary: >
+      Robert-style profile. Living at home, low-moderate ADL support, IADL
+      help several times a week, mild cognitive change. Needs prompts and
+      supervision for parts of daily routine.
+    vector:
+      Q1_self_care_shower:        slight
+      Q2_self_care_dress:         slight
+      Q3_self_care_mobility:      slight
+      Q4_self_care_continence:    slight
+      Q5_iadl_meals:              moderate
+      Q6_iadl_cleaning_laundry:   moderate
+      Q7_iadl_medication:         slight
+      Q8_iadl_shopping:           moderate
+      Q9_iadl_transport:          moderate
+      Q10_cognition:              slight
+      Q11_mood:                   slight
+      Q12_behaviour:              rarely
+      Q13_falls_6mo:              one
+      Q14_hospital_12mo:          zero
+      Q15_home_environment:       slight
+      Q16_informal_support:       some
+
+  # -------------------------------------------------------------------------
+  # C4 - "Wendy" reference profile.
+  #   Wendy: needs hands-on help with some ADLs, most IADLs done by others,
+  #   moderate cognitive change, occasional falls. Composite target ~ 0.41.
+  # -------------------------------------------------------------------------
+  - classification: 4
+    profile_summary: >
+      Wendy-style profile. Regular personal-care help. Most IADLs done by
+      others. Moderate cognitive change with prompting needed. Occasional
+      falls. Home safe but adjustments in place.
+    vector:
+      Q1_self_care_shower:        moderate
+      Q2_self_care_dress:         slight
+      Q3_self_care_mobility:      slight
+      Q4_self_care_continence:    slight
+      Q5_iadl_meals:              moderate
+      Q6_iadl_cleaning_laundry:   significant
+      Q7_iadl_medication:         moderate
+      Q8_iadl_shopping:           moderate
+      Q9_iadl_transport:          moderate
+      Q10_cognition:              moderate
+      Q11_mood:                   slight
+      Q12_behaviour:              sometimes
+      Q13_falls_6mo:              one
+      Q14_hospital_12mo:          zero
+      Q15_home_environment:       moderate
+      Q16_informal_support:       some
+
+  # -------------------------------------------------------------------------
+  # C5 - "Jean" reference profile.
+  #   Jean: significant hands-on help across ADLs and IADLs, notable
+  #   cognitive change, recurrent falls or one hospital visit. Composite
+  #   target ~ 0.54.
+  # -------------------------------------------------------------------------
+  - classification: 5
+    profile_summary: >
+      Jean-style profile. Significant hands-on help across most ADLs and
+      IADLs. Notable cognitive change with regular disorientation. Recurrent
+      falls or a recent ED visit. Informal support at low levels.
+    vector:
+      Q1_self_care_shower:        moderate
+      Q2_self_care_dress:         moderate
+      Q3_self_care_mobility:      moderate
+      Q4_self_care_continence:    moderate
+      Q5_iadl_meals:              significant
+      Q6_iadl_cleaning_laundry:   moderate
+      Q7_iadl_medication:         significant
+      Q8_iadl_shopping:           significant
+      Q9_iadl_transport:          moderate
+      Q10_cognition:              moderate
+      Q11_mood:                   moderate
+      Q12_behaviour:              sometimes
+      Q13_falls_6mo:              two_to_three
+      Q14_hospital_12mo:          one
+      Q15_home_environment:       moderate
+      Q16_informal_support:       some
+
+  # -------------------------------------------------------------------------
+  # C6 — Substantial ADL support most days, cognition prominent.
+  #   Margaret Chen (prompt §9.1) sits close to this vector but is a Branch A
+  #   fixture, not the canonical C6 vignette. Composite target ≈ 0.66.
+  # -------------------------------------------------------------------------
+  - classification: 6
+    profile_summary: >
+      Substantial daily-care needs. Hands-on help for most ADLs. Cognitive
+      change is prominent, prompts needed throughout the day. Multiple falls
+      or an ED visit. Home isn't well suited without modifications.
+    vector:
+      Q1_self_care_shower:        significant
+      Q2_self_care_dress:         significant
+      Q3_self_care_mobility:      significant
+      Q4_self_care_continence:    significant
+      Q5_iadl_meals:              cannot_alone
+      Q6_iadl_cleaning_laundry:   cannot_alone
+      Q7_iadl_medication:         significant
+      Q8_iadl_shopping:           cannot_alone
+      Q9_iadl_transport:          significant
+      Q10_cognition:              significant
+      Q11_mood:                   significant
+      Q12_behaviour:              often
+      Q13_falls_6mo:              two_to_three
+      Q14_hospital_12mo:          one
+      Q15_home_environment:       significant
+      Q16_informal_support:       a_little
+
+  # -------------------------------------------------------------------------
+  # C7 — Near-continuous personal care, cognition and behaviour prominent.
+  #   Composite target ≈ 0.78.
+  # -------------------------------------------------------------------------
+  - classification: 7
+    profile_summary: >
+      Near-continuous personal-care needs. Hands-on help required for all
+      ADLs. Cognitive change limits independent decision-making. Behavioural
+      symptoms (agitation, night confusion) are weekly or more. Recurrent
+      falls; multiple ED visits in the last year.
+    vector:
+      Q1_self_care_shower:        significant
+      Q2_self_care_dress:         cannot_alone
+      Q3_self_care_mobility:      significant
+      Q4_self_care_continence:    significant
+      Q5_iadl_meals:              cannot_alone
+      Q6_iadl_cleaning_laundry:   cannot_alone
+      Q7_iadl_medication:         cannot_alone
+      Q8_iadl_shopping:           cannot_alone
+      Q9_iadl_transport:          cannot_alone
+      Q10_cognition:              significant
+      Q11_mood:                   significant
+      Q12_behaviour:              often
+      Q13_falls_6mo:              more_than_three
+      Q14_hospital_12mo:          two_to_three
+      Q15_home_environment:       significant
+      Q16_informal_support:       a_little
+
+  # -------------------------------------------------------------------------
+  # C8 — "Louisa Davids" canonical Wayly fixture (prompt §9).
+  #   Louisa: Classification 8, full pensioner. Answer vector below MUST map
+  #   to primary=8, confidence=High, gap_detected=false, Branch B result path.
+  #   Composite target ≈ 0.92.
+  # -------------------------------------------------------------------------
+  - classification: 8
+    profile_summary: >
+      Louisa Davids canonical fixture. Full assistance required for nearly
+      every daily task. Significant cognitive change. Multiple falls and
+      hospital visits. Informal support present but not enough on its own.
+    vector:
+      Q1_self_care_shower:        cannot_alone
+      Q2_self_care_dress:         significant
+      Q3_self_care_mobility:      cannot_alone
+      Q4_self_care_continence:    significant
+      Q5_iadl_meals:              cannot_alone
+      Q6_iadl_cleaning_laundry:   cannot_alone
+      Q7_iadl_medication:         cannot_alone
+      Q8_iadl_shopping:           cannot_alone
+      Q9_iadl_transport:          cannot_alone
+      Q10_cognition:              significant
+      Q11_mood:                   moderate
+      Q12_behaviour:              often
+      Q13_falls_6mo:              two_to_three
+      Q14_hospital_12mo:          two_to_three
+      Q15_home_environment:       moderate
+      Q16_informal_support:       some

@@ -1,0 +1,37 @@
+{
+  "summary": "Mobile Phase-2 parity (Their Care / Providers & Paperwork / Your Account) verified via code review + Expo web-preview UI on 8 target screens. Logged in as cathy@example.com and navigated to care-plans, plan-billing, scenarios, hospital, amendments, participants. All required testIDs render, screens do not crash, and API calls hit the correct endpoints. No functional bugs found. One minor UX/parity note about the mobile DateField behaviour on the web preview only (native picker is used on iOS/Android per Platform check — web renders a DD/MM/YYYY TextInput as designed).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "verified_flows": [
+    {"screen": "care-plans", "checks": ["cp-tab-active FOUND", "cp-tab-archived FOUND (shows count 26 for cathy)", "cp-compare-toggle correctly hidden (plans.length < 2 for cathy — 0 active plans)", "cp-search correctly hidden when source empty", "Trash tab renders archived list (from GET /api/care-plans/archived/list)", "Compare-mode branch guarded by plans.length >= 2 (matches web parity)", "Router push to /care-plan-compare/{left}/{right} on cp-compare-run"]},
+    {"screen": "care-plan-compare/[left]/[right]", "checks": ["Component file exists with GET /api/care-plans/compare/{left}/{right}", "testIDs care-plan-compare, compare-only-left, compare-only-right, compare-both, compare-header-left, compare-header-right present", "Error branch StatePanel testID=compare-error", "Cannot exercise live compare in cathy account (0 active plans) — code review PASS"]},
+    {"screen": "amendments", "checks": ["amend-mark-sent-<id> renders on draft items (FOUND on live data)", "sent-state renders amend-mark-accepted-<id> and amend-mark-rejected-<id>", "POST /amendments/{id}/status with {status} body"]},
+    {"screen": "scenarios", "checks": ["scenario-state-panel FOUND (renders lifecycle_state + flag badges from GET /api/scenario/participants/{id}/state)", "scenario-date rendered via DateField (native date picker on iOS/Android; DD/MM/YYYY TextInput on web preview by design)"]},
+    {"screen": "hospital", "checks": ["hospital-date rendered via DateField (was previously a YYYY-MM-DD text box; now uses the shared DateField component)"]},
+    {"screen": "participants", "checks": ["participant-rotate-share-<id> action rendered (Alert confirm → POST /api/participants/{id}/share-link/rotate → shows new URL in second Alert)"]},
+    {"screen": "support/[id]", "checks": ["support-attach button + multipart FormData POST /api/support/tickets/{id}/attachments with expo-document-picker (PDF/PNG/JPEG/WebP mime filter)", "support-attachments card + support-attachment-<id> row with Download icon", "Purged attachments render '(expired)' and are non-tappable", "downloadAndShare used for GET /api/support/tickets/{id}/attachments/{aid}/download"]},
+    {"screen": "plan-billing", "checks": ["billing-history card FOUND (GET /api/payments/invoices; graceful empty state 'No invoices yet…')", "billing-history-row-<id> + billing-history-pdf-<id> render when invoices exist", "Reactivate button (billing-reactivate) correctly POSTs /payments/reactivate-subscription (bug from prior 404 path is fixed)"]}
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "DateField on Platform.OS==='web' renders a DD/MM/YYYY masked TextInput (not <input type=date>). Intentional for AU date parity, but reviewers testing via Expo web preview will not see a real calendar popover — the native picker only fires on iOS/Android. Consider swapping to <input type=date> under web if you want the calendar UX in preview as well.",
+    "care-plans.tsx cp-compare-toggle is only rendered when Active plans.length >= 2 — cathy@example.com currently has 0 active + 26 archived, so compare cannot be exercised via UI without restoring/uploading plans. Web has the same guard so this is parity-correct, but seed data would help future regression runs."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family). Live token obtained via POST /api/auth/login on mobile preview.",
+  "seed_data_creation": "None. Cathy has 0 active care plans + 26 archived + 3 participants + at least one draft amendment (amend-mark-sent-<id> observed).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 8 mobile Phase-2 targets pass code + UI checks. The compare screen exists but wasn't exercised end-to-end because the test account has 0 active care plans — if a future iteration needs live-compare coverage, restore two archived plans or upload two fresh PDFs on cathy first. billing-history renders (empty state) — to see real invoice rows you'd need a Stripe test-mode subscription that has produced at least one invoice."
+}

@@ -1,0 +1,269 @@
+{
+  "dark_html_class": "theme-dark",
+  "fresh_groups": [
+    {
+      "testid": "nav-group-toggle-today",
+      "expanded": "false",
+      "text": "Today"
+    },
+    {
+      "testid": "nav-group-toggle-ai_tools",
+      "expanded": "false",
+      "text": "Tools"
+    },
+    {
+      "testid": "nav-group-toggle-money",
+      "expanded": "false",
+      "text": "Money & Statements"
+    },
+    {
+      "testid": "nav-group-toggle-guided_journeys",
+      "expanded": "false",
+      "text": "Guided Journeys"
+    },
+    {
+      "testid": "nav-group-toggle-care",
+      "expanded": "false",
+      "text": "Their Care"
+    },
+    {
+      "testid": "nav-group-toggle-providers",
+      "expanded": "false",
+      "text": "Providers & Paperwork"
+    },
+    {
+      "testid": "nav-group-toggle-account",
+      "expanded": "false",
+      "text": "Your Account"
+    }
+  ],
+  "fresh_visible_items": 9,
+  "click_first": [
+    "nav-group-toggle-today"
+  ],
+  "click_second": [
+    "nav-group-toggle-ai_tools"
+  ],
+  "single_open": true,
+  "click_same_toggle_off": 0,
+  "after_reload_expanded": 0,
+  "budget": {
+    "tile": {
+      "cls": "rounded-lg border p-3 text-left transition-colors dm-clay-selected border-wayly-clay-400 bg-wayly-clay-500/15",
+      "bg": "rgb(165, 81, 43)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "tileHasDmClay": true,
+    "balance": {
+      "cls": "dm-input-light mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k tabular-nums",
+      "bg": "rgb(255, 255, 255)",
+      "color": "rgb(14, 42, 71)"
+    },
+    "balanceHasDmLight": true,
+    "burn": {
+      "cls": "dm-input-light mt-1 w-full rounded-md border border-kindred px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k tabular-nums",
+      "bg": "rgb(255, 255, 255)",
+      "color": "rgb(14, 42, 71)"
+    },
+    "burnHasDmLight": true,
+    "sup": {
+      "cls": "dm-supplements-section rounded-2xl border border-kindred border-l-4 p-5",
+      "bg": "rgb(51, 35, 26)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "supHasSection": true
+  },
+  "csc": {
+    "stepHead": {
+      "cls": "relative flex items-start gap-4 mb-6",
+      "color": "rgb(255, 255, 255)",
+      "text": "Step 1 of 3Personal CareGetting through the day: washing, dressing, moving aroun"
+    },
+    "stepXofN": null,
+    "quiz": {
+      "cls": "relative overflow-hidden bg-surface border rounded-3xl p-6 sm:p-8 scroll-mt-44 shadow-sm",
+      "borderColor": "rgba(165, 81, 43, 0.55)"
+    },
+    "intro": {
+      "cls": "text-base text-primary-k font-medium leading-relaxed max-w-5xl",
+      "text": "Answer 16 quick questions about the daily life of the person you care for. We'll estimate their likely classification ba"
+    }
+  },
+  "ce": {
+    "stepperFound": true,
+    "samples": [
+      {
+        "text": "1",
+        "color": "rgb(255, 255, 255)",
+        "tag": "SPAN"
+      },
+      {
+        "text": "Your Situation",
+        "color": "rgb(255, 255, 255)",
+        "tag": "SPAN"
+      },
+      {
+        "text": "2",
+        "color": "rgb(255, 255, 255)",
+        "tag": "SPAN"
+      },
+      {
+        "text": "Your Money",
+        "color": "rgb(199, 194, 184)",
+        "tag": "SPAN"
+      },
+      {
+        "text": "3",
+        "color": "rgb(255, 255, 255)",
+        "tag": "SPAN"
+      },
+      {
+        "text": "Service Mix",
+        "color": "rgb(199, 194, 184)",
+        "tag": "SPAN"
+      }
+    ],
+    "labels": [
+      {
+        "text": "Person's name (optional)",
+        "firstLetter": "none",
+        "hasFirstLetterCls": false
+      },
+      {
+        "text": "Which best describes your situation?I ha",
+        "firstLetter": "none",
+        "hasFirstLetterCls": false
+      },
+      {
+        "text": "Do you have a Support at Home classifica",
+        "firstLetter": "none",
+        "hasFirstLetterCls": false
+      },
+      {
+        "text": "Your classificationClass 1, lowest care ",
+        "firstLetter": "none",
+        "hasFirstLetterCls": false
+      }
+    ]
+  },
+  "landing": {
+    "cards": [
+      {
+        "id": "ecosystem-card-participants",
+        "found": true,
+        "bg": "rgb(14, 48, 51)",
+        "titleText": "Participants",
+        "titleColor": "rgb(255, 255, 255)",
+        "bodyText": "It's your care and your money. Read your own statement over ",
+        "bodyColor": "rgb(255, 255, 255)"
+      },
+      {
+        "id": "ecosystem-card-caregivers",
+        "found": true,
+        "bg": "rgb(46, 27, 18)",
+        "titleText": "Caregivers",
+        "titleColor": "rgb(255, 255, 255)",
+        "bodyText": "That 11pm envelope, understood in ten minutes. Know what's f",
+        "bodyColor": "rgb(255, 255, 255)"
+      },
+      {
+        "id": "ecosystem-card-family",
+        "found": true,
+        "bg": "rgb(22, 36, 26)",
+        "titleText": "Family",
+        "titleColor": "rgb(255, 255, 255)",
+        "bodyText": "Everyone on the same page without three group chats. See exa",
+        "bodyColor": "rgb(255, 255, 255)"
+      }
+    ],
+    "faqHeading": "Everything We Get Asked, Openly.",
+    "ctaHeading": "Ready When You Are",
+    "soloBullets": [
+      "For 1 person \u2014 one Participant, one Caregiver seat",
+      "All nine Wayly tools, unlocked",
+      "Statement Decoder + anomaly flagging",
+      "Budget, contribution and lifetime-cap tracking",
+      "Ask Wayly, grounded in the Aged Care Act 2024",
+      "Your data stays in Australia"
+    ],
+    "familyBullets": [
+      "For 2 people \u2014 two full Participants included",
+      "Three Caregiver seats, share with siblings",
+      "Everything in Solo, for two people",
+      "One shared, always-current source of truth",
+      "Ideal for couples or two parents",
+      "Best value per person"
+    ]
+  },
+  "footer": {
+    "found": true,
+    "links": [
+      {
+        "text": "Wayly",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Features",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Tools",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Services",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Policy Explainers",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Pricing",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Demo",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Caregiver Guides",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "FAQ",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Ask Wayly",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Support at Home Levels",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Articles",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Glossary",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "About Wayly",
+        "color": "rgba(255, 255, 255, 0.9)"
+      },
+      {
+        "text": "Terms of Service",
+        "color": "rgba(255, 255, 255, 0.9)"
+      }
+    ]
+  },
+  "light_bc_html": "",
+  "light_sidebar": {
+    "html": "",
+    "groups": 7,
+    "expanded": 0
+  }
+}

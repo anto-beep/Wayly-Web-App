@@ -1,0 +1,222 @@
+{
+  "dark": {
+    "csc": {
+      "[data-testid=\"csc-comparison\"]": {
+        "bg": "rgb(19, 33, 27)",
+        "color": "rgb(255, 255, 255)",
+        "bgImage": "none",
+        "text": "HOW THE LEVELS COMPARE\nThe 8 Support at Home levels\n\nEach level funds a set amount of care per year. Higher levels mean "
+      },
+      "[data-testid=\"csc-drivers\"]": {
+        "bg": "rgb(36, 26, 19)",
+        "color": "rgb(255, 255, 255)",
+        "bgImage": "none",
+        "text": "WHAT DROVE THIS RESULT\n\nThese answers had the biggest effect on your band.\n\nSAFETY\nMore than 3\nSAFETY\nMore than 3\nCOGNIT"
+      },
+      "[data-testid=\"csc-result-header\"]": {
+        "bg": "rgb(79, 168, 174)",
+        "color": "rgb(255, 255, 255)",
+        "bgImage": "none",
+        "text": "Low confidence\nHigher than your current Classification 4\nYOUR INDICATIVE BAND\nClassification 4 to 8\nVery high support\n\nN"
+      },
+      "[data-testid=\"csc-scale-hint\"]": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgba(255, 255, 255, 0.45)",
+        "bgImage": "none",
+        "text": "Tap any level to see its funding"
+      },
+      "comparison_rows": [
+        {
+          "tid": "csc-comparison-row-1",
+          "rowBg": "rgb(14, 48, 51)",
+          "fillBg": "rgba(79, 168, 174, 0.45)",
+          "fillW": "14%"
+        },
+        {
+          "tid": "csc-comparison-row-2",
+          "rowBg": "rgb(14, 48, 51)",
+          "fillBg": "rgba(79, 168, 174, 0.45)",
+          "fillW": "21%"
+        },
+        {
+          "tid": "csc-comparison-row-3",
+          "rowBg": "rgb(14, 48, 51)",
+          "fillBg": "rgba(79, 168, 174, 0.45)",
+          "fillW": "28%"
+        },
+        {
+          "tid": "csc-comparison-row-4",
+          "rowBg": "rgb(165, 81, 43)",
+          "fillBg": "rgb(79, 168, 174)",
+          "fillW": "38%"
+        },
+        {
+          "tid": "csc-comparison-row-5",
+          "rowBg": "rgb(165, 81, 43)",
+          "fillBg": "rgb(79, 168, 174)",
+          "fillW": "51%"
+        },
+        {
+          "tid": "csc-comparison-row-6",
+          "rowBg": "rgb(165, 81, 43)",
+          "fillBg": "rgb(232, 154, 111)",
+          "fillW": "62%"
+        },
+        {
+          "tid": "csc-comparison-row-7",
+          "rowBg": "rgb(165, 81, 43)",
+          "fillBg": "rgb(79, 168, 174)",
+          "fillW": "74%"
+        },
+        {
+          "tid": "csc-comparison-row-8",
+          "rowBg": "rgb(165, 81, 43)",
+          "fillBg": "rgb(79, 168, 174)",
+          "fillW": "100%"
+        }
+      ],
+      "driver_cards": [
+        {
+          "bg": "rgb(20, 64, 63)",
+          "text": "SAFETY\nMore than 3"
+        },
+        {
+          "bg": "rgb(20, 64, 63)",
+          "text": "SAFETY\nMore than 3"
+        },
+        {
+          "bg": "rgb(20, 64, 63)",
+          "text": "COGNITION AND BEHAVIOUR\nSignificant"
+        }
+      ]
+    }
+  },
+  "light": {
+    "csc": {
+      "[data-testid=\"csc-comparison\"]": {
+        "bg": "color(srgb 0.897255 0.914353 0.909961)",
+        "color": "rgb(28, 43, 45)",
+        "bgImage": "none",
+        "text": "HOW THE LEVELS COMPARE\nThe 8 Support at Home levels\n\nEach level funds a set amount of care per year. Higher levels mean "
+      },
+      "[data-testid=\"csc-drivers\"]": {
+        "bg": "color(srgb 0.953961 0.927882 0.921608)",
+        "color": "rgb(28, 43, 45)",
+        "bgImage": "none",
+        "text": "WHAT DROVE THIS RESULT\n\nThese answers had the biggest effect on your band.\n\nSAFETY\nMore than 3\nSAFETY\nMore than 3\nCOGNIT"
+      },
+      "[data-testid=\"csc-result-header\"]": {
+        "bg": "rgb(14, 77, 82)",
+        "color": "rgb(255, 255, 255)",
+        "bgImage": "none",
+        "text": "Low confidence\nHigher than your current Classification 4\nYOUR INDICATIVE BAND\nClassification 4 to 8\nVery high support\n\nN"
+      },
+      "[data-testid=\"csc-scale-hint\"]": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgba(255, 255, 255, 0.45)",
+        "bgImage": "none",
+        "text": "Tap any level to see its funding"
+      },
+      "comparison_rows": [
+        {
+          "tid": "csc-comparison-row-1",
+          "rowBg": "rgb(251, 252, 254)",
+          "fillBg": "rgba(14, 42, 71, 0.35)",
+          "fillW": "14%"
+        },
+        {
+          "tid": "csc-comparison-row-2",
+          "rowBg": "rgb(251, 252, 254)",
+          "fillBg": "rgba(14, 42, 71, 0.35)",
+          "fillW": "21%"
+        },
+        {
+          "tid": "csc-comparison-row-3",
+          "rowBg": "rgb(251, 252, 254)",
+          "fillBg": "rgba(14, 42, 71, 0.35)",
+          "fillW": "28%"
+        },
+        {
+          "tid": "csc-comparison-row-4",
+          "rowBg": "rgba(0, 0, 0, 0)",
+          "fillBg": "rgb(14, 42, 71)",
+          "fillW": "38%"
+        },
+        {
+          "tid": "csc-comparison-row-5",
+          "rowBg": "rgba(0, 0, 0, 0)",
+          "fillBg": "rgb(14, 42, 71)",
+          "fillW": "51%"
+        },
+        {
+          "tid": "csc-comparison-row-6",
+          "rowBg": "rgb(14, 77, 82)",
+          "fillBg": "rgb(165, 81, 43)",
+          "fillW": "62%"
+        },
+        {
+          "tid": "csc-comparison-row-7",
+          "rowBg": "rgba(0, 0, 0, 0)",
+          "fillBg": "rgb(14, 42, 71)",
+          "fillW": "74%"
+        },
+        {
+          "tid": "csc-comparison-row-8",
+          "rowBg": "rgba(0, 0, 0, 0)",
+          "fillBg": "rgb(14, 42, 71)",
+          "fillW": "100%"
+        }
+      ],
+      "driver_cards": [
+        {
+          "bg": "rgb(251, 252, 254)",
+          "text": "SAFETY\nMore than 3"
+        },
+        {
+          "bg": "rgb(251, 252, 254)",
+          "text": "SAFETY\nMore than 3"
+        },
+        {
+          "bg": "rgb(251, 252, 254)",
+          "text": "COGNITION AND BEHAVIOUR\nSignificant"
+        }
+      ]
+    }
+  },
+  "scale_detail": {
+    "dark_scale3": {
+      "visible": true,
+      "text": "Classification 3\nClose\nSteady daily help\nPER YEAR\n$22,537\nPER QUARTER\n$5,634\nPER WEEK\n$433"
+    },
+    "dark_toggle_hide": true,
+    "dark_scale6_text": "Classification 6 \u00b7 your likely band\nClose\nVery high support\nPER YEAR\n$49,365\nPER QUARTER\n$12,341\nPER WEEK\n$949",
+    "dark_close_hides": true,
+    "light_scale3": {
+      "visible": true,
+      "text": "Classification 3\nClose\nSteady daily help\nPER YEAR\n$22,537\nPER QUARTER\n$5,634\nPER WEEK\n$433"
+    },
+    "light_toggle_hide": true,
+    "light_scale6_text": "Classification 6 \u00b7 your likely band\nClose\nVery high support\nPER YEAR\n$49,365\nPER QUARTER\n$12,341\nPER WEEK\n$949",
+    "light_close_hides": true
+  },
+  "correspondence": {
+    "dark": {
+      "label": "Save As Draft",
+      "style": {
+        "bg": "rgb(165, 81, 43)",
+        "color": "rgb(255, 255, 255)",
+        "bgImage": "none",
+        "text": "Save As Draft"
+      }
+    },
+    "light": {
+      "label": "Save As Draft",
+      "style": {
+        "bg": "rgb(14, 77, 82)",
+        "color": "rgb(255, 255, 255)",
+        "bgImage": "none",
+        "text": "Save As Draft"
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "summary": "Visual verification of coloured action buttons, Ask Wayly card, Invoice download bar and Participant Profile header teal banner for the June-2026 batch of visual edits on Wayly Web. Logged in as cathy@example.com. All 5 requested changes verified in LIGHT mode via computed styles + screenshots + source-code inspection. Dark mode could not be flipped in the preview (localStorage toggle no-op). Participant Profile page could not be reached directly in this preview (\\/app\\/profile 404, \\/app\\/participants list did not expose per-participant links), so header banner was verified via source only.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "InvoiceResultView CSV button", "issue": "'text-clay-k' resolves visually to primary-k dark navy (rgb(28,43,45)) instead of clay orange — CSV button does not read as clay-tinted like the request describes ('CSV clay'). Original (sage) and PDF (teal) DO stand out. Border-clay/50 also fell back to kindred beige. Please confirm the clay-k utility class is wired to the clay palette (or use 'text-clay-k' variant that maps to a clay-orange value).", "selector": "[data-testid='inv1-download-csv-btn']", "priority": "LOW"},
+        {"component": "StatementDetail action bar borders", "issue": "border-sage/50, border-clay/50, border-terracotta/40, border-primary-k/40 are all reported as computed border-color rgb(231,223,213) (kindred/beige) rather than the intended tinted borders — the fill (bg-sage/10 etc.) and text-color DO apply, so the buttons still stand out subtly, but the border tints are lost. Not a blocker.", "selector": "[data-testid='statement-audit-log-link']", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Dark mode", "issues": ["Dark theme could not be toggled from automation (setting localStorage 'theme' or 'wayly-theme' to 'dark' and adding .dark class to <html> did NOT survive reload). Only LIGHT mode was visually verified. Main agent to confirm dark-mode contrast manually."]},
+        {"screen": "Participant profile route", "issues": ["/app/profile returns 'Page not found · Wayly'. /app/participants renders but exposes no /app/participants/{id} links to click through (empty scan). core1-profile-header verified by source only (linear-gradient(135deg,#0E4D52,#0A3E42) with text-white/white-80/white-60)."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/tmp/01_stmts_list_light.png",
+    "/tmp/02_stmt_detail_top_light.png",
+    "/tmp/03_ask_wayly_light.png",
+    "/tmp/04_stmt_bottom_light.png",
+    "/tmp/06_invoice_light.png"
+  ],
+  "action_items": [
+    "Confirm 'text-clay-k' utility resolves to the clay-orange tone on Invoice CSV button (currently rendering as primary-k dark navy) — otherwise CSV button does not read as clay per the request.",
+    "Confirm 'border-{sage,clay,terracotta,primary-k}/xx' opacity variants are configured in the theme — their computed borderColor currently falls back to kindred beige; text-color + bg tint still apply, so this is a polish issue.",
+    "Manually verify DARK theme contrast for statements-list buttons, statement-detail header buttons, statement-ask-wayly-card chips + input container, inv1-download-bar and core1-profile-header (dark toggle blocked in automated testing).",
+    "(Optional) sanity-check the /app/profile alias — direct hit returns 404 during this preview run."
+  ],
+  "critical_code_review_comments": [
+    "StatementDetail.jsx: ask-kindred-cta CTA is FULLY REMOVED — confirmed via DOM absence and full-source grep of 'ask-kindred-cta' / 'ai-accuracy' — pass.",
+    "AIAccuracyBanner still rendered at bottom via <AIAccuracyBanner className='mt-2'/> on line 549 — pass.",
+    "StatementAskWayly chips: bg-surface + border-clay/50 + text-clay-k renders as solid white chips against the teal panel (bg=rgb(251,252,254)) — clearly visible.",
+    "StatementAskWayly input container: rounded-xl bg-surface border border-primary-k/25 — solid white rounded container with teal-tinted border (visible).",
+    "InvoiceResultView download bar: section-teal-soft border border-kindred — teal-soft tinted panel visible; Original sage, PDF teal.",
+    "ParticipantProfile header: inline style linear-gradient(135deg,#0E4D52,#0A3E42) with text-white / text-white/80 / text-white/60 for h1, description, eyebrow — source-verified."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only run)", "frontend": "5 of 5 requested visual changes verified in LIGHT mode; dark mode & participant-profile route not reachable in preview"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Cathy has 41 statements. Sample statement id used: 673fa982-367c-43ca-8ce8-4df5b8ba4f68 (Glorious Services). Sample invoice id: a0b36408-c48d-43df-9eac-b9bc4b0e6866 (Meridian Home Care Pty Ltd, 7 issues, has inv1-download-bar). /app/profile returns 404; participant profile lives at /app/participants/{id} but list did not expose the id in this run — may need to enter via header 'Dorothy L4' participant switcher / dashboard 'Viewing care for Dorothy Smith' link. Dark-mode toggle: setting localStorage 'theme'|'wayly-theme'='dark' + document.documentElement.classList.add('dark') did NOT persist across reload — main agent should identify the correct theme-toggle mechanism (likely a settings UI or another storage key).",
+  "rca of the issue": "N/A — no bugs to root-cause. Two polish observations (clay-k text rendering as primary-k on CSV button, and tinted border-color opacity utilities falling back to kindred beige) are called out as LOW-priority action items."
+}

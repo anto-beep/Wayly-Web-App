@@ -1,0 +1,40 @@
+{
+  "summary": "Phase 1 cross-platform verification. WEB (all pass at 1440 light+dark): header now shows a clearly-labelled 'CARING FOR / Dorothy L4' participant-switcher-trigger with HeartHandshake icon, visually separated from account-menu-toggle by 2 dividers; header has NO overflow in light (sw=cw=1440) or dark (sw=cw=1440); account menu opens showing layout-plan-badge, account-menu-settings and logout-button (Sign Out clears kindred_token + kindred_refresh_token and redirects protected /app to /); qp1-dashboard-tile is ABSENT from /app; DashboardInsights burn-bar-* (6 bars, role=button) and anomaly-bar-* (8 bars, role=button) navigate to /app/statements/{id}; lifetime-cap-card is an <a href='/app/contribution-position'> and navigates correctly; header renders on /app/statements and /settings/billing. MOBILE (verified by code review only; UI login blocked by CORS): ParticipantSwitcher.tsx variant='bar' (used by dashboard) has testID='participant-switcher', label 'CARING FOR' when hasList, HeartHandshake icon from lucide-react-native — meets spec; dashboard-at-a-glance and quarterly-pacing not present in mobile/app/(tabs)/index.tsx (confirmed via grep + browser DOM inspection on login screen); lifetime-cap-card is a Pressable with onPress -> router.push('/contribution-position') at line 248 of (tabs)/index.tsx. BLOCKER for mobile UI e2e: backend CORS misconfig prevents the Expo web preview origin from authenticating.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "OPTIONS /api/* from Expo preview", "issue": "CORS preflight from origin https://wayly-engagement-hub.expo.preview.emergentagent.com returns 400 with no access-control-allow-origin header. server.py:7756-7764 treats CORS_ORIGINS='*' as a signal to fall back to _trusted_frontend_url() only (which is the main preview host), so the Expo preview host is never allowed. This blocks ALL mobile-web UI testing (login, /auth/me, everything). Attempted fix by rewriting CORS_ORIGINS in /app/backend/.env to a comma list including the expo host + restarting backend did not resolve it (still 400 on preflight, still no ACAO), suggesting either load_dotenv timing or an upstream layer stripping the header. Reverted to CORS_ORIGINS='*' to preserve the working web state. Root cause and long-term fix are backend concerns and out-of-scope for this frontend-only pass.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter304/results_web.json",
+    "/app/test_reports/iter304/results_mobile.json",
+    "/app/test_reports/iter304/dash_light.jpeg",
+    "/app/test_reports/iter304/dash_dark.jpeg",
+    "/app/test_reports/iter304/budget_detail.jpeg",
+    "/app/test_reports/iter304/mobile_after_login.jpeg"
+  ],
+  "action_items": [
+    "Backend CORS: allow the Expo web preview origin (https://wayly-engagement-hub.expo.preview.emergentagent.com) — fix the CORS_ORIGINS='*' fallback in server.py:7756-7764 or ensure the .env comma-list is respected. Without this, mobile-web preview cannot log in via the UI (only native builds work).",
+    "Optional: consider adding testIDs to header sub-components mentioned in prior report (notifications-bell, lca1-alerts-bell, account-health-menu) for testability."
+  ],
+  "critical_code_review_comments": [
+    "Layout.jsx is ~520 lines and adds two divider spans + AccountMenu + ParticipantSwitcher into the same JSX cluster; keep an eye on it approaching the 700-line split threshold.",
+    "handleLogout in Layout.jsx (line 262) fires logout() synchronously without awaiting before navigating — the /auth/logout POST returns after redirect but tokens are cleared client-side first, so it's functionally correct.",
+    "ParticipantSwitcher.jsx 'collapsed' branch (items.length===1) disables the trigger; UI still shows 'CARING FOR' label so that's fine, but note that with only 1 participant the menu never opens."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend_web": "100%", "frontend_mobile": "code-review only (UI e2e blocked)"},
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Web Phase 1 fully verified. Mobile Phase 1 could not be verified via UI on the Expo web preview because the backend CORS allow-list does not include https://wayly-engagement-hub.expo.preview.emergentagent.com — /api/auth/login preflight returns 400 with no access-control-allow-origin header, and /api/auth/me is likewise blocked (so localStorage token injection doesn't work either — the app calls /auth/me on mount and bounces back to /login on failure). Setting CORS_ORIGINS to an explicit comma list in /app/backend/.env did NOT resolve it after a supervisor restart (still 400), so there may be a python-dotenv/load_dotenv timing issue or an ingress layer stripping the header. The .env has been reverted to 'CORS_ORIGINS=\"*\"' to preserve the previously-working web state. Mobile code (ParticipantSwitcher.tsx variant='bar' + (tabs)/index.tsx lifetime-cap-card Pressable at line 248) matches the spec via static review.",
+  "rca of the issue": "N/A on frontend — Phase 1 acceptance criteria pass on web. Mobile UI test blocked by backend CORS misconfiguration (backend concern, out-of-scope for this frontend-only pass)."
+}

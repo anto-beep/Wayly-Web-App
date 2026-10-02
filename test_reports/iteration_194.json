@@ -1,0 +1,56 @@
+{
+  "summary": "Frontend-only e2e verification of iter194 UX cleanups on mobile (Expo web preview) and web. VERIFIED: (a) mobile double-heading removed on Invoices/Documents/Reports/Cases/Budget-Scenarios/Compare-Providers/Care-Plans/Contribution-Position/Handover-Pack/AT&HM/Classification-Prep/CHSP-Tools/Letters/Carer-Self-Check/Upload sub-screens — AppHeader shows only a back chevron and each screen renders exactly one hero (PageIntro), (b) participant Profile (/participant/<id>) header is chevron-only and hero 'PARTICIPANT PROFILE / <name>'s Profile' shows once, (c) mobile & web AI Tools chips (Try free / Grounded in law / Private by default) are HIDDEN for cathy (family plan trial), (d) mobile dashboard no longer renders '<name>'s care' hero; greeting + Family Plan · Trial badge remain; MoneyBig 'LEFT TO SPEND THIS QUARTER' renders single '$' ($2,469) — no double-bar glyph, (e) web /app dashboard removed '<name>'s care' h1 AND cfg.desc 'All 9 tools · 5 family seats · Sunday digest', (f) mobile More drawer has a dedicated 'AI TOOLS' group listing all 9 tools with correct routing (tapping 'Aged Care Q&A' navigates to /tool/family-coordinator), (g) participant Profile financial stat boxes render single '$' (e.g. Lifetime Cap $137,917.01), (h) PageIntro 'How this works' defaults collapsed on Invoices sub-screen. FAILED: /app/mobile/app/provider-switch.tsx still passes title=\"Switch Provider\" to AppHeader while ALSO rendering a PageIntro hero 'Managing a Provider Switch, End-to-End' — this is a lingering double-heading on the Provider Switch sub-screen listed in the request.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "ProviderSwitchScreen (AppHeader)",
+          "issue": "Double heading remains: AppHeader still receives title=\"Switch Provider\" while PageIntro renders hero 'Managing a Provider Switch, End-to-End'. Per iter194 request the AppHeader on this sub-screen should be chevron-only. Reference: /app/mobile/app/provider-switch.tsx:151",
+          "testID": "header-back-button",
+          "priority": "HIGH"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter194_login.jpeg",
+    "/app/test_reports/iter194_dashboard.jpeg",
+    "/app/test_reports/iter194_aitools.jpeg",
+    "/app/test_reports/iter194_more_expanded.jpeg",
+    "/app/test_reports/iter194_participants.jpeg",
+    "/app/test_reports/iter194_provider_switch.jpeg",
+    "/app/test_reports/iter194_pp_profile.jpeg",
+    "/app/test_reports/iter194_invoices.jpeg",
+    "/app/test_reports/iter194_web_aitools.jpeg",
+    "/app/test_reports/iter194_web_dash.jpeg"
+  ],
+  "action_items": [
+    "Remove title=\"Switch Provider\" from AppHeader in /app/mobile/app/provider-switch.tsx:151 (and the loading-state AppHeader on line 147 is already chevron-only — keep that). The PageIntro hero 'Managing a Provider Switch, End-to-End' already provides the single heading. After change, restart mobile (sudo supervisorctl restart mobile) before re-verifying."
+  ],
+  "critical_code_review_comments": [
+    "AppHeader in ui.tsx correctly renders a slim chevron-only bar when title is omitted — verified across ~16 sub-screens.",
+    "MoneyBig ($ in fonts.bodySemi at size*0.8, digits in fonts.heading) resolves the Fraunces double-bar glyph on both dashboard and participant Profile.",
+    "AIToolsIndex.jsx gates chips behind (plan.isPaid || plan.isTrialing) — mirrors mobile logic hasFullAccess = user.plan && user.plan !== 'free'. Both hide for cathy.",
+    "PLAN_LABELS.family.desc string still exists in CaregiverDashboard.jsx (line 30) but is no longer referenced by PlanBadge — safe dead field but consider deleting to prevent future accidental reintroduction.",
+    "navGroups.ts now has BOTH a Today→AI Tools link and a dedicated AI TOOLS group with 9 tools — the drawer renders them cleanly and duplication is intentional (mirrors web sidebar)."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (skipped per request)", "frontend": "~94% (17/18 verified; 1 mobile double-heading regression on Provider Switch)" },
+  "test_credentials": "cathy@example.com / testpass123 (family plan, trialing)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "After main agent removes the title from provider-switch.tsx line 151, re-navigate to /provider-switch on mobile and confirm the top bar shows only a back chevron and 'Managing a Provider Switch, End-to-End' appears exactly once. All other iter194 acceptance criteria are already green in this run — the one failing screen is the only retest needed. Cathy is a family-plan trialing user, so both web (/ai-tools) and mobile ((tabs)/ai-tools) correctly hide the three marketing chips; if you need to also verify the chips-shown path use an unauthenticated session on web (mobile ai-tools tab requires login).",
+  "rca of the issue": "Provider Switch: iter194 diff for /app/mobile/app/provider-switch.tsx dropped the title on the loading-state AppHeader (line 147) but left title=\"Switch Provider\" on the primary render path (line 151). Fix is a one-line removal of the title prop; the surrounding PageIntro already carries the eyebrow+title+description."
+}

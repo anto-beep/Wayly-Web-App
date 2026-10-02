@@ -1,0 +1,101 @@
+{
+  "summary": "Verified 5 features across web+mobile as cathy@example.com. AUTH DARK MODE (web): all 5 sub-checks pass — card bg rgb(22,70,72) with clay border-top rgb(181,98,58); Sign in / Create account buttons render clay rgb(165,81,43); Forgot password / Create one / Sign in links render clay rgb(232,160,122); .auth-google-caption present inside data-testid login-google (\"Continue with Google\") and signup-google (\"Sign up with Google\"), color cream rgb(244,239,231); selected signup-plan-family and signup-plan-solo cards get clay border+bg (rgb(165,81,43) + rgba(165,81,43,0.20)) — same for signup-role-caregiver. INVOICE PARITY (web): old inv1-draft-all-btn is GONE from both /ai-tools/invoice-checker AND /app/invoices/:id; the standalone \"Draft one letter covering all N issues\" button (data-testid invoice-detail-draft-all-letter) is present on InvoiceDetail; per-issue \"Draft a letter about this\" is wired via FlagCard onDraftLetter (data-testid <cardId>-draft-letter) and shown when a flag card is expanded (behaviour matches statement anomaly cards). FEE TRANSPARENCY: decoder-fee-breakdown + decoder-fee-total code paths verified in DecoderResultView.jsx L154-170 and DecoderResultView.tsx L512-525. In this preview fixture set, the seeded statements (blocked + 4 non-blocked tried) do not populate reported_total_gross/care_management/package_management/gst, so FeeBreakdown returns null by design (rows.length<=1 && reported<=0). CONFIDENCE LEGEND: decoder-confidence-legend visible on BOTH blocked and non-blocked statements — web (4 non-blocked + blocked) and mobile (blocked + non-blocked) all rendered the legend. BUTTON RESTYLE: button.jsx uses rounded-lg (not rounded-full) with only hover:bg-* colour changes (no translate/scale/brightness/shadow-lift); landing page and dashboard load cleanly with no broken layout.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "phase_results": {
+    "feature_1_auth_dark_mode": {
+      "status": "PASS (web only, per E1 note)",
+      "login": {
+        "auth-card.bg": "rgb(22,70,72)",
+        "auth-card.border-top": "rgb(181,98,58) clay",
+        "login-submit-button.bg": "rgb(165,81,43) clay",
+        "forgot-password link color": "rgb(232,160,122) clay",
+        "Create one link color": "rgb(232,160,122) clay",
+        "login-google > .auth-google-caption": "'Continue with Google' rgb(244,239,231)"
+      },
+      "signup": {
+        "signup-submit-button.bg": "rgb(165,81,43) clay",
+        "signup-google > .auth-google-caption": "'Sign up with Google' present",
+        "signup-plan-family (default selected)": "border=rgb(165,81,43) bg=rgba(165,81,43,0.20) aria-pressed=true",
+        "signup-plan-solo (after click)": "border=rgb(165,81,43) bg=rgba(165,81,43,0.20) aria-pressed=true",
+        "signup-role-caregiver (default)": "border=rgb(165,81,43) bg=rgba(165,81,43,0.20)"
+      }
+    },
+    "feature_2_invoice_parity_web": {
+      "status": "PASS",
+      "InvoiceDetail /app/invoices/457258cf...": {
+        "invoice-detail-draft-all-letter": true,
+        "inv1-draft-all-btn": "NOT FOUND (correct — was removed)",
+        "inv1-issue-register": true,
+        "per-issue-draft": "FlagCard.jsx L97-108 renders 'Draft a letter about this' with testId=<id>-draft-letter when card open (matches statement anomaly card pattern)"
+      },
+      "InvoiceCheckerTool /ai-tools/invoice-checker": {
+        "inv1-draft-all-btn": "NOT FOUND (correct)"
+      }
+    },
+    "feature_3_fee_transparency": {
+      "status": "PASS (code) / NOT DEMONSTRABLE ON CURRENT FIXTURES",
+      "web_source": "/app/frontend/src/components/DecoderResultView.jsx L130-179: renders decoder-fee-breakdown (rows: Services/Care mgmt/Package mgmt/GST/Cancellations/Credits + decoder-fee-total 'Total billed' + decoder-fee-reconcile-note). Guard: if(rows.length<=1 && reported<=0) return null",
+      "mobile_source": "/app/mobile/src/components/DecoderResultView.tsx L512-535: same structure, decoder-fee-breakdown + decoder-fee-total testIDs present",
+      "runtime_check": "4 non-blocked statements tried on web (9331a952, 7b2e2245, 0ca71c94, 112f91e4) and 1 on mobile — none rendered decoder-fee-breakdown. Reason: seeded fixtures have $200 total but reported_total_gross/care_management/package_management/gst are unset, so only 'Services' row exists → guard hides the panel. This is correct fallback behaviour, not a bug.",
+      "action_needed": "Seed at least one non-blocked statement whose extracted has reported_total_gross>0 and/or care_management_deducted/package_management_deducted/gst_total>0 so the Fee Transparency UI is visually demonstrable. Otherwise this feature is a no-op on the current preview data."
+    },
+    "feature_4_confidence_legend": {
+      "status": "PASS on both platforms",
+      "web": {
+        "non_blocked (4 statements)": "decoder-confidence-legend visible on all 4",
+        "blocked-demo-b6228253": "decoder-confidence-legend visible + decoder-publish-block visible"
+      },
+      "mobile": {
+        "non_blocked (9331a952)": "decoder-confidence-legend + decoder-confidence-legend-toggle visible",
+        "blocked-demo-b6228253": "decoder-confidence-legend + decoder-confidence-legend-toggle + decoder-publish-block all visible"
+      }
+    },
+    "feature_5_button_restyle": {
+      "status": "PASS (smoke)",
+      "button_jsx": "/app/frontend/src/components/ui/button.jsx L8-31 uses rounded-lg (default+lg+sm all rounded-lg); size lg = 'h-11 rounded-lg px-8'; hover states are colour-only (hover:bg-accent, hover:underline). No translate/scale/brightness/shadow-lift on the base button.",
+      "landing_border_radius_distribution": "{'9999px':7, '0px':1, '12px':3} — 9999px are pills/circles by design; 12px = rounded-lg",
+      "runtime_smoke": "Landing (/), login (/login), signup (/signup), dashboard (/app), statement, invoice detail, invoice checker — all rendered cleanly without broken layout or missing buttons"
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iter321/01_login_dark.jpeg",
+    "/app/test_reports/iter321/02_signup_dark.jpeg",
+    "/app/test_reports/iter321/03_web_stmt_nonblocked.jpeg",
+    "/app/test_reports/iter321/04_web_stmt_blocked.jpeg",
+    "/app/test_reports/iter321/06_web_invoice_detail.jpeg",
+    "/app/test_reports/iter321/08_web_landing.jpeg",
+    "/app/test_reports/iter321/12_mob_nonblocked.jpeg",
+    "/app/test_reports/iter321/13_mob_blocked.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL BUT RECOMMENDED: Seed at least one non-blocked statement fixture on cathy@example.com whose decoded extracted has reported_total_gross>0 plus at least one of care_management_deducted / package_management_deducted / gst_total>0, so the new decoder-fee-breakdown panel is visually demonstrable on the preview. The 5 statements I tried (blocked-demo, 9331a952, 7b2e2245, 0ca71c94, 112f91e4) all have $200 total with only 2 flat line items and no care/pkg/gst, so FeeBreakdown correctly hides itself.",
+    "No code fixes required — all 5 features PASS at the code + runtime level for what is testable with the current fixture."
+  ],
+  "critical_code_review_comments": [
+    "FeeBreakdown guard rows.length<=1 && reported<=0 is sensible — but consider a small placeholder note like 'Fee breakdown available once your provider itemises care/package management' so users on 1-row statements do not silently miss the new feature. Non-blocking.",
+    "FlagCard 'Draft a letter about this' button only renders when the card is EXPANDED. On the invoice detail with 16 findings, users must click each card to reveal its draft-letter button. Matches statement anomaly pattern per spec; parity confirmed. If E1 wants the button always visible on the collapsed card, that would be a separate UX decision."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (backend not exercised — testing_type=both but no backend endpoints changed)", "frontend": "5/5 features PASS at code+runtime level; Feature 3 UI cannot be visually rendered on current fixture data (expected fall-back)"},
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None. Suggested: seed a rich-fee fixture to demo Feature 3 visually.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All 5 features pass code inspection and runtime testIDs. Only Feature 3 (Fee Transparency) UI could not be visually observed because seeded statements lack reported_total_gross/care_management/package_management/gst. If main agent seeds ONE rich fixture (e.g. python script setting extracted.care_management_deducted=$X and reported_total_gross=$Y on any of the existing 46 non-blocked statements), the decoder-fee-breakdown + decoder-fee-total + decoder-fee-reconcile-note testIDs will render as designed. Mobile login uses [data-testid=login-email-input]/[data-testid=login-password-input]/[data-testid=login-submit-button] (with -input suffix); web uses [data-testid=login-submit-button] and plain input[type=email/password].",
+  "rca of the issue": ""
+}

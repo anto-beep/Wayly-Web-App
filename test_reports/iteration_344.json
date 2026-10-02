@@ -1,0 +1,31 @@
+{
+  "summary": "E2E frontend validation of the Classification Self-Check 3-step WIZARD at /ai-tools/classification-self-check as cathy@example.com (Family, active). All acceptance criteria met: premium ToolHero renders (data-testid tool-hero-classification-self-check); stepper renders 3 steps (csc-step-care/home/health) and step-3 is reachable by clicking the stepper; Step 1 shows Q1-Q4 + csc-current prefilled to '4' from Dorothy + csc-current-prefilled hint; Step 2 shows Q5-Q9 only (Q1 & Q10 correctly hidden); Step 3 shows Q10-Q16 with csc-submit visible and csc-wizard-next NOT present on the last step; Back is disabled on step 1; csc-submit stays disabled until all 16 answered and csc-cta-help correctly shows the remaining count ('7 questions still to answer'); progress bar updates across steps (25% → 100%); after submitting, csc-result, csc-result-header, csc-wayly-summary, csc-comparison, and csc-actions all render. Backend was not tested per request.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Classification Self-Check step 1 (csc-current select)", "issues": ["Dev-only React hydration warning: '<span> cannot be a child of <option>'. The console shows the ve-runtime editor wrapping the interpolated 'Classification {n}' text inside a <span> injected into each <option>. This appears to be an editor/tooling instrumentation artefact around line ClassificationCheck.jsx:1040, not app code. Confirm it does not leak into the production bundle; if it does, wrap the number in a stable text node (e.g. use a template string {`Classification ${n}`}) to avoid the injected span."]}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/test_reports/iter344_result.jpeg"],
+  "action_items": [
+    "Investigate the hydration warning about <span> inside <option> in the csc-current select (line ~1040). If it persists in a production build, refactor the option label to a single interpolated string so the ve-runtime instrumentation does not inject a <span> into <option>."
+  ],
+  "critical_code_review_comments": [
+    "Wizard implementation is clean and mirrors the Contribution Estimator: CSC_STEPS slice indices (0-4, 4-9, 9-16) correctly cover all 16 questions.",
+    "csc-submit correctly gated on allDone (answered === 16) — verified by observation that the button was disabled with 15 answers and enabled at 16.",
+    "Autosave to localStorage (DRAFT_KEY) still runs on every answers change and current change (verified logic path preserved; step change alone does not clear it)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested", "frontend": "100%"},
+  "seed_data_creation": "None — used existing cathy@example.com account.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Wizard rebuild verified end-to-end on web. Login via cathy@example.com/testpass123. Use wait_until='domcontentloaded' when navigating (Help chat socket keeps networkidle hanging as flagged). All key selectors confirmed: tool-hero-classification-self-check, csc-stepper, csc-step-{care|home|health}, csc-step-head-{care|home|health}, csc-current, csc-current-prefilled, csc-wizard-back, csc-wizard-next, csc-submit, csc-cta-help, csc-progress-sticky, csc-progress, csc-result, csc-result-header, csc-wayly-summary, csc-comparison, csc-actions. Individual question testIDs use csc-q-{QID} and csc-q-{QID}-{option-value} (e.g. csc-q-Q1_self_care_shower-moderate, csc-q-Q12_behaviour-sometimes, csc-q-Q13_falls_6mo-one, csc-q-Q16_informal_support-some). PDF/email actions and autosave/resume were not exercised end-to-end in this run but the code paths are unchanged from prior iterations and the ResultActions/SaveCheckCard/SavedChecksPanel components still render.",
+  "rca of the issue": "No blocking issue found. The observed hydration warning is caused by the preview environment's ve-runtime injecting a <span data-ve-dynamic> around the '{n}' expression inside the <option>Classification {n}</option> template at ClassificationCheck.jsx:1040. HTML disallows <span> inside <option>, hence React logs the warning. Because it comes from the editor instrumentation (x-ve-dynamic attributes), it likely does not affect production, but the safest fix is to keep the option's child a single text node: `<option key={n} value={n}>{`Classification ${n}`}</option>`."
+}

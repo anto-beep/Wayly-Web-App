@@ -1,0 +1,37 @@
+{
+  "summary": "Phase B admin (Overview metrics + LLM cost tracking, Activity Feed, User Profile w/ 5 tabs, impersonation, suspend/reinstate, extend-trial, notes, refund, audit-log) tested end-to-end. 28/28 backend test cases pass. Frontend: admin login → /admin Overview (11/11 testids present), user profile page (all 5 tab+pane pairs render, 7/8 action buttons present — action-reinstate is conditional and correctly hidden for non-suspended user), and notes-add flow all succeed. LLM cost recorder is wired into agents.py (verified by code inspection); no public LLM endpoint is open to anon callers so live cost insertion couldn't be triggered without a paid-plan auth context, but the /api/admin/overview ai_health block returns the correct zero-state shape and the aggregation reads from db.llm_calls correctly.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AdminLogin", "issue": "React 'Cannot update a component (BrowserRouter) while rendering a different component (AdminLogin)' warning still firing — same issue carried over from iter 21. Should wrap navigate() in useEffect.", "selector": "/admin/login", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_phase_b.py",
+    "/app/test_reports/pytest/iter22_admin_phaseB.xml"
+  ],
+  "action_items": [
+    "(Carry-over from iter 21) Fix React setState-in-render warning in AdminLogin.jsx by wrapping navigate() inside useEffect.",
+    "Optional: add a one-time backfill or admin-only LLM smoke endpoint to seed db.llm_calls in dev/preview so the AI Health overview shows non-zero values without needing real paid-user traffic."
+  ],
+  "critical_code_review_comments": [
+    "admin_routes.py POST /users/{id}/refund stores admin email in record but never calls Stripe — clearly noted as out of scope; status='pending_stripe' is correct. Recommend adding a background reconciler when Stripe call is wired.",
+    "admin_routes.py extend_trial: datetime.fromisoformat(sub.get('trial_ends_at') or _now_iso()) — if trial_ends_at is None/missing the fromisoformat call on _now_iso() works, but the max(current, now) construct quietly resets the trial from now even if the previous date was in the past — this is the intended UX but worth a comment.",
+    "admin_routes.py impersonate issues an impersonation JWT but does NOT enforce server-side that the token can ONLY hit /api/* (user) routes; today the user-side get_current_user accepts any JWT with valid signature, so the type='impersonation' claim is only enforced by the frontend interceptor. Recommend backend-side guard: explicitly reject type='impersonation' on admin endpoints, and on user mutations.",
+    "admin_routes.py refund permission gate uses admin.get('admin_role') == 'support_admin' — operations_admin path is allowed implicitly. With only 4 roles this is fine, but adding an allow-list (super_admin/operations_admin) is safer than denying support_admin only.",
+    "llm_costs.py uses asyncio.get_event_loop() in fire_record_llm_call — deprecated in 3.12; prefer asyncio.get_running_loop() inside async ctx. Low priority because every actual call site awaits record_llm_call directly.",
+    "admin_auth.py line 338 still has a placeholder bcrypt hash inside try/except — works correctly (raises ValueError caught silently) but generating a real hashpw at module load would give a proper timing decoy."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_phase_b.py (new pytest suite, 28 cases)"
+  ],
+  "success_rate": {"backend": "100% (28/28)", "frontend": "100% on critical flows (login, overview, user profile, tabs, notes add). action-reinstate intentionally absent because target user is not suspended."},
+  "test_credentials": "hello@techglove.com.au / AdminPass!2026, TOTP secret GC7AAYWT2JCCMIHDGLP5L3MPL3VIA6S2. cathy@example.com / testpass123 (target user id fbaf9ceb-9be3-4c9b-b1d6-bcfe4e13d852).",
+  "seed_data_creation": "Test fixtures create+cleanup TEST_-prefixed notes, refunds, and payment_transactions. Suspend/reinstate fixture reverts users.suspended after each test. extend-trial test creates a temporary user with no subscription, then deletes it. No persistent test data left over.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Phase B is fully green. Backend regression suite at /app/backend/tests/test_admin_phase_b.py (28 cases) covers overview shape, activity feed, llm-cost-trend, audit-log, user profile (9 sections), notes add/list/validation, suspend/reinstate + self-suspend guard, extend-trial validation (1..90) + no-sub 404 + success math, impersonation JWT claims + audit entry, refund happy-path + over-charge 400 + unpaid 400 + missing-fields 400, and authz/unauth checks across endpoints. Frontend smoke: 11 overview testids, 5 tab+pane pairs, action buttons, notes add. action-reinstate is conditional (only renders when user.suspended=true) — to assert it appears, first call /api/admin/users/{id}/suspend or seed users.suspended=true. The impersonation backend route works; verifying the cross-tab UI flow (window.open('/app') + ImpersonationBanner) requires multi-tab playwright which we did not exercise this iter — recommend a separate UI test pass on the consumer-app banner when next iter touches /app.",
+  "rca_of_the_issue": "No new bugs surfaced this iteration. The only outstanding warning (React setState-in-render in AdminLogin) was already logged in iter 21 and is benign — it fires because navigate() is called during the render phase after a successful 2FA call instead of in a useEffect."
+}

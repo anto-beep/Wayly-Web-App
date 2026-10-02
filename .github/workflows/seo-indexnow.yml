@@ -1,0 +1,50 @@
+name: SEO IndexNow (change-scoped ping)
+
+# SEO-2: after a production deploy, tell IndexNow (Bing/Yandex/etc.) about ONLY
+# the URLs whose content changed since the last run. A no-op deploy pings nothing.
+# The backend diffs the current sitemap dates against the stored manifest.
+#
+# Trigger it after your deploy finishes (manually, or chain it from your deploy
+# workflow with `workflow_run`). Requires two repo secrets:
+#   SEO_API_BASE   = https://wayly.com.au
+#   SEO_PING_TOKEN = (same value as backend .env SEO_PING_TOKEN)
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Deploy"]
+    types: [completed]
+
+jobs:
+  ping-indexnow:
+    runs-on: ubuntu-latest
+    # Only run when a manual dispatch, or when the upstream deploy succeeded.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Ping IndexNow for changed URLs
+        env:
+          SEO_API_BASE: ${{ secrets.SEO_API_BASE }}
+          SEO_PING_TOKEN: ${{ secrets.SEO_PING_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SEO_API_BASE:-}" ] || [ -z "${SEO_PING_TOKEN:-}" ]; then
+            echo "::error::SEO_API_BASE and SEO_PING_TOKEN repo secrets are required."
+            exit 1
+          fi
+          echo "Requesting change-scoped IndexNow ping at ${SEO_API_BASE}/api/internal/seo/indexnow-changed"
+          http_code=$(curl -sS -o /tmp/seo_ping.json -w "%{http_code}" \
+            -X POST "${SEO_API_BASE}/api/internal/seo/indexnow-changed" \
+            -H "X-Internal-Token: ${SEO_PING_TOKEN}" \
+            -H "Content-Type: application/json")
+          echo "HTTP ${http_code}"
+          cat /tmp/seo_ping.json || true
+          echo ""
+          # 409 => a published date changed (immutability violation) -> fail loudly.
+          if [ "${http_code}" = "409" ]; then
+            echo "::error::datePublished immutability violation. See response above."
+            exit 1
+          fi
+          if [ "${http_code}" -ge 400 ]; then
+            echo "::error::IndexNow ping failed with HTTP ${http_code}."
+            exit 1
+          fi

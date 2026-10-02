@@ -1,0 +1,16 @@
+TERM 'Billed monthly'
+TOTAL 0
+
+TERM '$19/month'
+/app/frontend/src/data/seoToolArticles.js:838: a: "No, it's included in the 7-day free trial and in every paid Wayly plan (Solo at $19/month, Family at $39/month). There's no per-invoice charge and no upsell mid-check. Verdicts, findings and PDF reports are all included.",
+/app/frontend/src/pages/extended/Participants.jsx:288: Up to {account?.participants_max || 10} per account. Family plan covers 2, additional participants are $19/month each.
+/app/frontend/src/pages/extended/Participants.jsx:315: : (active.indexOf(p) < 2 ? "Covered by Family plan" : "Add-on · $19/month");
+/app/frontend/src/pages/extended/Participants.jsx:514: <li>Plan: Solo $19/month → <strong className="text-primary-k">Family $39/month</strong></li>
+/app/frontend/src/pages/extended/Participants.jsx:546: <p className="text-sm text-primary-k">You can add as many participants as you need. Each one is $19/month and cancels independently.</p>
+/app/frontend/src/pages/extended/Participants.jsx:555: <div>{addPreview.addons_needed} × $19/month = <strong>${addPreview.addon_monthly_total.toFixed(0)}/month</strong> added</div>
+TOTAL 6
+
+TERM '$19 per month'
+/app/frontend/src/data/faq.js:61: { q: "How much does Wayly cost?", a: "Free plan with one decoded statement per month and one participant. Solo $19 per month. Family $39 per month. Adviser $299 per month. Cancel anytime." },
+TOTAL 1
+

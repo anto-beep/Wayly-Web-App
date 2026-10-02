@@ -1,0 +1,50 @@
+{
+  "summary": "Wave 2 (Dec 2026 Refit) tested end-to-end. Backend 402 trial-expired enforcement, read endpoints, and trial email subjects all verified. Frontend ToolHero strip, removed SD escape, updated CTA copy + clay button, larger preview frame, Pricing-page Free-plan removal, /signup?plan=free redirect, and the new hard PaywallModal (mounts via window event, blocks backdrop, no close button) all confirmed visually. TrialCountdownBanner code statically verified — render path requires a live trialing user (not present in test seed).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_wave2_trial_paywall.py",
+    "/app/test_reports/pytest/wave2_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Brief lists data-testid='tool-hero-aged-care-os' but the ToolHero component uses dynamic per-tool testids: 'tool-hero-budget-calculator', 'tool-hero-price-checker', etc. (implementation: ToolHero.jsx line 20 → `tool-hero-${toolKey}`). Implementation is sensible; the brief's testid string is the inaccurate one. Confirm test docs reference the dynamic pattern, not the literal 'aged-care-os' string.",
+    "_require_paid_plan applies a per-IP burst limit (10/hour) BEFORE the trial check, so once a tester (or an unlucky shared-NAT real user) crosses the threshold they get 429 with no path to upgrade — same IP can never see the 402+modal flow until the bucket cools. Consider running the burst check AFTER the trial-expired gate so the paywall always takes priority. Encountered during test runs: had to flush redis tools_unauth_ip keys mid-suite.",
+    "TrialCountdownBanner is wired in Layout.jsx but has no live trialing user in /app/memory/test_credentials.md (the listed `trial30909@example.com` is now subscription_status='expired'). For repeatable regression coverage, seed a fresh `trial_active@example.com` with trial_ends_at = now()+5d on next run."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_wave2_trial_paywall.py"
+  ],
+  "success_rate": {
+    "backend": "100% (7/7)",
+    "frontend": "100% on visible Wave 2 surfaces verified (ToolHero, ToolGate copy/CTA, PaywallModal, Pricing, Signup redirect)"
+  },
+  "test_credentials": "trial30909@example.com / TrialPass1! (expired-trial, plan=free) — usable for paywall + 402; cathy@example.com / testpass123 (family, paid)",
+  "seed_data_creation": "None — used existing seeded expired-trial user.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests at /app/backend/tests/test_wave2_trial_paywall.py (7 tests, 100%). Note the rate-limit bucket: `tools_unauth_ip` per-IP allows only 10/hour. If you see 429s on /api/public/budget-calc during testing, run: `cd /app/backend && python -c \"import asyncio, sys; sys.path.insert(0,'.'); from dotenv import load_dotenv; load_dotenv(); import rate_limit as rl; async def m():\\n  r=await rl._get_redis()\\n  async for k in r.scan_iter('*tools_unauth_ip*'): await r.delete(k)\\nasyncio.run(m())\"` — or just wait an hour. PaywallModal is triggered via custom event 'wayly:trial-expired' dispatched by the axios 402 interceptor in /app/frontend/src/lib/api.js. To test the modal manually: log in (any user), then in devtools console: `window.dispatchEvent(new CustomEvent('wayly:trial-expired',{detail:{}}))`.",
+  "verified_features": [
+    "402 trial_expired body on /api/public/budget-calc + /api/public/price-check",
+    "GET /api/auth/me + GET /api/billing/subscription return 200 for expired user (read-only mode works)",
+    "/api/public/budget-calc returns 401 for unauthenticated",
+    "_require_paid_plan in server.py uses status_code=402 + error='trial_expired' + upgrade_url='/pricing'",
+    "Trial email subjects verbatim: 'Two days left in your Wayly trial', 'Your Wayly trial ends today', 'Your Wayly trial has ended'",
+    "ToolHero strip with back-link 'All AI tools' + H1 + one-liner visible above gate card on /ai-tools/budget-calculator",
+    "ToolHero mounted in all 7 paid tool pages (BudgetCalculatorTool, CarePlanReviewer, ClassificationCheck, ContributionEstimator, FamilyCoordinator, PriceCheckerTool, ReassessmentLetter)",
+    "tool-gate-sd-escape testid removed from ToolGate",
+    "Gate CTA copy 'Start with a 7-day free trial. Full access to every tool. No card required to start.'",
+    "Preview frame uses max-w-4xl (verified in ToolGate.jsx line 85)",
+    "Pricing page Hero H1 'Simple, Honest Pricing.' / 'Start Your 7-Day Free Trial.' and Free plan tier absent; Solo/Family/Adviser cards present",
+    "/signup?plan=free redirects to /signup (URL transition confirmed in browser test)",
+    "PaywallModal renders with [data-testid=paywall-modal], paywall-plan-solo, paywall-plan-family, paywall-logout; NO close X button; backdrop click does NOT dismiss",
+    "TrialCountdownBanner code present, mounted in Layout.jsx, exposes trial-countdown-banner / trial-banner-upgrade / trial-banner-dismiss testids with correct copy"
+  ]
+}

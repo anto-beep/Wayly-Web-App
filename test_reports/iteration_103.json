@@ -1,0 +1,39 @@
+{
+  "summary": "CE-3 v1 slice VERIFIED end-to-end. Backend: 12/12 CE-3 acceptance tests pass (test_ce3_v1.py) covering status flag, lifetime-cap shape+bounds ($137,917.01 standard cap, remaining math), years_at_current_pace null-when-new contract, /lifetime-cap/refresh, annual projection FY label + range brackets estimate + persona-aware caregiver/participant_self explanations + band_percent {5/15/30} + confidence {high/medium/low}, reconciliation idempotency (same rec id on repeat), 422 on bad month '2026-XX', months_back=12 list, step_change_variance auto-opens LOOP-1 case with source_tool='ce3', source_artefact_type='contribution_reconciliation', metadata.contribution_variance=true, add-user-note, action=confirmed_correct, cross-household random-UUID 404. Regression: LCA-1 iter112 4/4 green; loop1+core1 31/31 green (total 47/47). /api/health cold path 88-107ms (5 hits) – well under 300ms. Frontend: /app/participants/:id/contribution-position renders ce3-contribution-position-page with all 3 cards (lifetime-cap, annual, reconciliation). Live values for Cathy/Dorothy: 'You've paid $800.00 toward your $137,917 lifetime cap', Remaining $137,117, 'approximately 31 years'. Refresh button POSTs /lifetime-cap/refresh (1 call). Reconcile button POSTs and the new row (ce3-reconcile-row-2026-11) appears in ce3-reconcile-list. ParticipantProfile link (core1-view-contribution-position) verified after a 1-line fix (see below).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ParticipantProfile → FinancialCard", "issue": "FIXED by testing agent. participantId prop was not passed at line 524, so the guard `{participantId && (...)}` around the Link never rendered — the 'See contribution position →' link was completely missing from the profile page. One-line fix: passed participantId={id}. Verified end-to-end after fix.", "selector": "core1-view-contribution-position", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Annual projection card (Cathy/Dorothy)", "issues": ["Estimate shows $0 with 'Range $0 – $0 (±15%)' and 'medium confidence' because no saved CE-2 contribution_estimate exists for this participant yet. The card copy 'Once you save a contribution estimate, we'll show the annual projection here.' is on-message, but showing '$0 · medium confidence' feels contradictory — either drop the confidence pill or downgrade to 'low' when annual_estimate == 0. Cosmetic, not blocking."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/ce3/test_ce3_v1.py",
+    "/app/backend/tests/lca1/test_iteration_112.py",
+    "/app/backend/tests/loop1/",
+    "/app/backend/tests/core1/",
+    "/app/test_reports/pytest/iter103_ce3.xml"
+  ],
+  "action_items": [
+    "(Optional cosmetic) When annual_estimate == 0, the annual card should show 'low confidence' or hide the confidence pill entirely — currently shows 'medium confidence' next to '$0'.",
+    "Confirm intended UX for participantId={id} prop pass in FinancialCard — testing agent applied the trivial one-liner so the link would render; main agent may want to sanity-check no other consumer relied on the old signature (grep shows FinancialCard is only called once at line 524)."
+  ],
+  "critical_code_review_comments": [
+    "Bug: /app/frontend/src/pages/ParticipantProfile.jsx line 524 was missing participantId prop to <FinancialCard/>. Because the link is guarded by `{participantId && (...)}`, it silently disappeared and the whole CE-3 entry point was inaccessible from the UI. Fixed. Would have failed the review_request bullet '...has a See contribution position → link (core1-view-contribution-position) inside the Financial position card that navigates to /app/participants/:id/contribution-position'.",
+    "ContributionPosition.jsx cards are well-instrumented with data-testid on every meaningful element (cap headline, remaining, years, progress, reconcile row per month, per-row case link). Excellent testability.",
+    "test_ce3_v1.py uses live MongoDB to seed a future-month (2027-03) statement to force step_change_variance, then cleans up statements + reconciliations + case + case_events in a finally block. Good hygiene.",
+    "server.py background startup batches (batch2, batch3) still working — verified by /api/health responding <300ms (max 107ms across 5 probes).",
+    "Known orthogonal issue (out of scope per main agent, NOT flagged as a new bug): GET /api/statements + GET /api/budget/current return 500 for cathy on the dashboard. Documented since iter101."
+  ],
+  "updated_files": ["/app/frontend/src/pages/ParticipantProfile.jsx"],
+  "success_rate": {"backend": "100% (12/12 CE-3 + 4/4 LCA-1 iter112 + 31/31 loop1+core1 = 47/47)", "frontend": "100% after 1-line fix to ParticipantProfile (link, navigation, refresh POST, reconcile POST + row-in-list all verified)"},
+  "test_credentials": "cathy@example.com / testpass123 · primary participant 0c538637-b0dd-4982-8f78-b32814c6a5eb",
+  "seed_data_creation": "Backend tests seed a March-2027 statement (contribution $2000) to force step_change_variance and clean up statements/reconciliations/case/case_events in finally. Frontend test created reconciliations for 2026-08, 2026-09, 2026-11 for pid 0c53... — these persist but are idempotent (same-month POST returns existing id) and low risk.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "CE-3 v1 selectors (all stable): ce3-contribution-position-page, ce3-lifetime-cap-card, ce3-lifetime-cap-refresh, ce3-lifetime-cap-headline, ce3-lifetime-cap-remaining, ce3-lifetime-cap-years, ce3-annual-card, ce3-annual-estimate, ce3-annual-range, ce3-annual-confidence, ce3-reconciliation-card, ce3-reconcile-month-picker, ce3-reconcile-btn, ce3-reconcile-list, ce3-reconcile-row-{YYYY-MM}, ce3-reconcile-case-link-{rid}, core1-view-contribution-position. If FinancialCard is refactored, remember to pass participantId — otherwise the CE-3 entry link disappears silently.",
+  "rca of the issue": "ParticipantProfile.jsx defined FinancialCard with a participantId prop guarding the 'See contribution position →' Link, but the caller at line 524 did NOT pass participantId, so `{participantId && (...)}` evaluated falsy and the link never rendered. Reproduction: log in as cathy, navigate to /app/participants/0c538637-.../ — before fix, no link in Financial position card. Mitigation: pass participantId={id} in the JSX call site. Verified after fix: link visible, click navigates, page renders 3 cards with real data ($800/$137,917, ~31 years)."
+}

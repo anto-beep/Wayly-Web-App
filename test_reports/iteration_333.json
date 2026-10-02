@@ -1,0 +1,62 @@
+{
+  "summary": "Iter 333 web verification for the 8-point batch (identity-guard client rendering, provider-email fields, price-checker sanity-guard redesign, plus regression touchpoints). VERIFIED end-to-end on web: (a) Provider Price Checker quality-guard redesign — data-testid='pc-quality-guard' renders with the terracotta/clay 2px border card + Alert/Quick sanity check icon; data-testid='pc-guard-continue' is a solid teal button (computed backgroundColor rgb(14, 77, 82) = colors.primary) and CLICK REVEALS the full price comparison result (You pay $250/hour vs typical $85–$115 range). Tested against extreme rate $250/hr Personal care by cathy on Dorothy. (b) All source-level testIDs required by the review are present in the code paths (grep-verified): decoder-identity-warning (StatementDecoderTool.jsx:388, tool/[slug].tsx:264), inv1-identity-warning (InvoiceCheckerTool.jsx:620, InvoiceResultView.tsx:20), form-provider-email + edit-provider-email (Participants.jsx:769,904 + mobile participants.tsx:483), lf1-edit-letter / lf1-generated-body-edit / lf1-open-in-email (mobile letters/[id].tsx:935,953,937), NotificationsContext.markRead does setItems(filter !== id) + POST /notifications/read and markAllRead does setItems([]) + POST /notifications/read {ids:[]} (context lines 76 & 89). NOT RUNTIME-EXERCISED in this pass (see action_items): decoder-identity-warning + inv1-identity-warning banners did not render at runtime because (i) my paste-text sample triggered the DEC-1 pre-decode UploadGuard 'We can't review this document' strict block (visible in screenshot iter333_decoder_mismatch.jpeg — a real PDF upload of a mismatched participant is required to reach the decode result and surface the advisory identity_warning); (ii) Invoice Checker UI is upload-only (no paste-text tab) so the same real-PDF walkthrough is needed. Participants Add-form open did not surface data-testid='form-provider-email' or 'edit-provider-email' in my automation click — source shows the fields are wired, so this is likely a modal-selector miss in my script rather than a code regression; main-agent should self-verify with a real click. Mobile Expo preview was NOT exercised at runtime this iteration due to token budget; all mobile testIDs are source-grep verified.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Statement Decoder paste-text with mismatched name (Robert Jones while viewing Dorothy)", "issue": "Paste-text path hit the DEC-1 strict UploadGuard 'We can't review this document' pre-decode block so the tool never produced a result, therefore result.identity_warning could not render. The advisory guard code path at StatementDecoderTool.jsx:387-394 is unchanged and correct; needs a real statement PDF upload to reach the decode result. Backend server.py:4376-4384 attaches result.identity_warning as expected.", "affected_selectors": ["[data-testid='decoder-identity-warning']"]},
+        {"flow": "Invoice Checker paste-text", "issue": "Tool is UPLOAD-ONLY on web (no 'Paste text' tab like the Decoder). To surface inv1-identity-warning at runtime a real invoice PDF for a non-Dorothy name must be uploaded. Not a code regression — the testID is wired at InvoiceCheckerTool.jsx:620.", "affected_selectors": ["[data-testid='inv1-identity-warning']"]}
+      ],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "verified_at_runtime": [
+    "Web /ai-tools/provider-price-checker: pc-quality-guard renders (terracotta border + Alert icon + 'QUICK SANITY CHECK' heading, standout redesign confirmed) — screenshot iter333_pc_guard.jpeg.",
+    "Web pc-guard-continue: solid TEAL button (backgroundColor rgb(14,77,82) = colors.primary), high-contrast, click reveals the full range/median comparison view — screenshot iter333_pc_after_cont.jpeg.",
+    "Auth path: POST /api/auth/login for cathy@example.com returned 200 + token; token seeded into localStorage['kindred_token']+['wayly_token']; /app dashboard loaded with 'Viewing care for Dorothy Smith' banner."
+  ],
+  "verified_at_source_only": [
+    "decoder-identity-warning wired in StatementDecoderTool.jsx:388 (terracotta banner, title + message from result.identity_warning) and mobile tool/[slug].tsx:264.",
+    "inv1-identity-warning wired in InvoiceCheckerTool.jsx:620 and mobile InvoiceResultView.tsx:20.",
+    "form-provider-email at Participants.jsx:769 (Add form) + edit-provider-email at Participants.jsx:904 (Edit form) + mobile participants.tsx:483.",
+    "Mobile letters/[id].tsx:935 lf1-edit-letter (Edit toggle button), :953 lf1-generated-body-edit (TextInput), :937 lf1-open-in-email (mailto Button).",
+    "NotificationsContext.tsx:70-84 markRead filters out the item on view; :86-97 markAllRead sets items to []; both POST /notifications/read to persist.",
+    "Backend identity_guard.check_document_identity() logic (name-token matching w/ placeholder guard for 'Mum'/'Dad') and attach in server.py:4376 for decode + routes/invoices.py for invoice."
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter333_decoder_mismatch.jpeg",
+    "/app/test_reports/iter333_decoder_match.jpeg",
+    "/app/test_reports/iter333_participants.jpeg",
+    "/app/test_reports/iter333_pc_guard.jpeg",
+    "/app/test_reports/iter333_pc_after_cont.jpeg",
+    "/app/test_reports/iter333_invoice.jpeg"
+  ],
+  "action_items": [
+    "Main agent to self-verify at runtime with a REAL statement PDF upload (mismatched participant → Robert Jones) that data-testid='decoder-identity-warning' renders below decoder-result. Paste-text was blocked by DEC-1 UploadGuard so the advisory banner path could not be exercised end-to-end in automation.",
+    "Main agent to self-verify with a REAL invoice PDF upload (mismatched participant) that data-testid='inv1-identity-warning' renders on the Invoice result. UI is upload-only so paste-text automation cannot reach it.",
+    "Main agent to click 'Add Participant' on /app/participants manually and confirm data-testid='form-provider-email' is visible (source is wired at Participants.jsx:769). Automation likely missed the correct trigger element in the modal.",
+    "Mobile Expo runtime verification of: decoder-identity-warning, inv1-identity-warning, pc-quality-guard/continue/after-hours (both light AND dark), lf1-edit-letter+lf1-generated-body-edit+lf1-open-in-email, notification remove-on-view + mark-all-read clears list, form-provider-email — was NOT executed this iteration. All mobile testIDs source-verified but need a runtime pass on the Expo preview."
+  ],
+  "critical_code_review_comments": [
+    "Price Checker QualityGuardPanel redesign lands the requested standout treatment: terracotta 2px border + Alert icon badge + solid teal Continue button (rgb 14,77,82) — visually distinct and high-contrast in light. Dark-theme legibility not verified in this run.",
+    "NotificationsContext markRead/markAllRead correctly perform optimistic mutation THEN network call with rollback on error (context lines 76-83, 88-96) — good pattern.",
+    "identity_guard._is_match is intentionally lenient (single-token → substring; multi-token → surname + shared token) and includes a _PLACEHOLDERS suppression for 'Mum'/'Dad' when there are no other real-named participants — avoids false positives when the primary is stored as a nickname. cathy's household has Dorothy Smith as primary (real name), so 'Robert Jones' would correctly fire the 'no_match' branch (or the 'other_participant' branch if Patricia Holloway had a matching token — not the case here).",
+    "Decoder result.identity_warning is only surfaced when a decode result exists — good gating (won't render on the strict UploadGuard block screen).",
+    "Non-blocking: Add-participant modal open selector 'button:has-text(Add Participant)' matched but subsequent form-provider-email locator returned 0. Suggests the field is behind a Provider section that may be collapsed by default OR requires scrolling; main agent should verify visibility on modal open."
+  ],
+  "updated_files": [
+    "/app/test_reports/iteration_333.json",
+    "/app/test_reports/iter333_web.py (stub)"
+  ],
+  "success_rate": {"backend": "N/A (skipped this pass — request said backend was already curl-verified)", "frontend": "Web: 1/4 flows fully runtime-verified (Price Checker guard). 3/4 need real-PDF or fresh selector pass. Mobile: 0/4 runtime; 100% source-testID audit."},
+  "test_credentials": "cathy@example.com / testpass123 (Family, Dorothy Smith primary)",
+  "seed_data_creation": "None — no data was persisted during this run (Add-participant modal was closed without submitting; Price Checker save was not clicked).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Focus a mobile runtime pass on the Expo web preview at https://classification-check.expo.preview.emergentagent.com: (1) open Notifications bell → tap a notification → assert it disappears from the list AND does not return on reload; (2) 'Mark all read' clears list to notifications-empty; (3) open a letter draft → tap lf1-edit-letter, assert lf1-generated-body-edit TextInput appears + edits persist on Save; tap lf1-open-in-email and confirm mailto: URL fires; (4) Provider Price Checker with high Personal care rate → confirm pc-quality-guard + pc-guard-continue (teal) + pc-guard-after-hours (sage) render and remain legible after toggling dark theme; (5) Statement Decoder + Invoice Checker with a real MISMATCHED participant PDF → assert decoder-identity-warning / inv1-identity-warning. On web, just click through Add Participant on /app/participants and confirm form-provider-email is visible in the modal (source confirms it is wired).",
+  "rca of the issue": "N/A — no bug root-caused. Blockers were test-setup (paste-text hitting DEC-1 strict UploadGuard; invoice tool is upload-only; add-participant modal selector likely needed a scroll or a specific 'Add Participant' button variant) rather than code regressions. All source-level plumbing for the 8-point batch matches the review spec 1:1."
+}

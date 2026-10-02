@@ -1,0 +1,47 @@
+{
+  "summary": "Iteration 9 backend + frontend verification of Family Digest, Notifications (bell+prefs+read), Settings new tabs (Digest/Notifications/Appearance/Usage/Danger Zone), ⌘K command palette, dashboard skeleton, constants extraction, and regressions. Backend: 18/18 pass (all scoped endpoints healthy). Frontend: 9/10 scoped UI flows verified. One HIGH-priority issue found: NotificationsBell is only wired into MarketingHeader (public pages) and is MISSING from the authenticated caregiver Layout used for /app, /settings, /app/chat, /app/statements etc., so logged-in users cannot access in-app notifications from their primary workspace.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/participant/wellbeing", "issue": "When caller IS the household owner and logs mood=not_great+notify_caregiver=true, no self-notification is created (owner_id != user_id guard). Intentional, but the spec only documents the positive case; add inline comment explaining the guard."},
+      {"endpoint": "POST /api/household/invite", "issue": "Solo-plan user without a household receives 400 'Create a household first' before the 402 plan-gate check — spec expects 402 for non-Family plans. Order of checks: household_required precedes plan_required. Consider checking plan first so Solo gets a clear 402 even before creating a household."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Layout (authenticated)", "issue": "NotificationsBell is NOT rendered in /app-side Layout header (only MarketingHeader has it). Logged-in users on /app, /app/statements, /app/chat, /settings/*, /participant cannot see the bell/unread badge or access notifications dropdown. data-testid='nav-bell' absent on /app; present only on public /pricing, /features, /landing.", "selector": "[data-testid='nav-bell']", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/settings/notifications", "issues": ["Category label for 'family_messages' in UI reads 'Family & invites' — matches feature intent but diverges from backend category key/spec copy. Cosmetic only."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter9.py",
+    "/app/test_reports/pytest/iter9_results.xml"
+  ],
+  "action_items": [
+    "[HIGH] Mount <NotificationsBell /> inside /app/frontend/src/components/Layout.jsx header (right-hand cluster, e.g. before the plan badge) so authenticated users can access notifications on /app and /settings. Currently only MarketingHeader renders it.",
+    "[LOW] In backend POST /api/household/invite, run plan gate before the 'create a household first' check so Solo users get 402 consistently (spec expectation).",
+    "[LOW] Consider renaming Settings > Notifications row 'Family & invites' → 'Family messages' to match backend category key 'family_messages' (or leave as-is — label is more descriptive).",
+    "[OPTIONAL] Add a VisuallyHidden DialogTitle inside CommandPalette's CommandDialog to silence the Radix a11y console warnings observed on ⌘K open."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1802 lines — previously flagged; strongly recommend splitting into routers (digest/notifications/billing/household/auth). Compounding debt.",
+    "digest_service.build_digest returns a flat dict with keys like 'household_id', 'household_name', 'wellbeing', 'anomalies' — not wrapped under 'household' or 'chat' sub-objects as the review request phrased it. Current shape works fine for UI; just keep the UI and API contract aligned.",
+    "NotificationsBell polls every 60s regardless of tab visibility — consider pausing when document.hidden to reduce backend calls.",
+    "No rate-limit on POST /digest/send — a Family user could spam the endpoint and generate repeated audit/log entries. Add a simple per-household cooldown (e.g. 1/minute) or leverage notification_prefs.",
+    "DELETE /api/auth/account soft-deletes user row but does not null out/cleanup statements, chat_turns, wellbeing, family_messages the user created — data stays tied to a household that may also be orphaned. Flag for GDPR-style hard delete follow-up.",
+    "Radix DialogContent accessibility warnings fired by CommandPalette — CommandDialog needs an embedded (or VisuallyHidden) DialogTitle + aria-describedby for screen-reader compliance."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter9.py (NEW — 18 tests, 18 pass)"
+  ],
+  "success_rate": {"backend": "100% (18/18)", "frontend": "90% (9/10 — bell missing from authenticated Layout)"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan, has household Dorothy with 3 statements, 4 chat msgs, 4 family thread posts, wellbeing data). Throwaway Family/Solo signups used for plan-gate and account-delete tests.",
+  "seed_data_creation": "Created multiple throwaway test<uuid>@example.com Family/Solo accounts for plan gating + account-delete coverage; logged one 'not_great' wellbeing entry on Cathy's household during regression; triggered one digest send (1 recipient) which added an audit entry + a wellbeing concern notification.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter9 scope 95% verified. Backend fully green — 18 pass. Frontend: everything works (Digest preview+send+history UI, 5 notification toggles persist, Dark mode applies theme-dark to <html> and persists in localStorage key 'kindred_theme', Usage grid renders all 6 testids usage-<key>, Danger Zone gates the DELETE button until text 'delete my account' matches, ⌘K opens CommandDialog and lists App/Settings/AI tools/Resources items). ONE blocker: NotificationsBell is only inside MarketingHeader.jsx; it needs to also be mounted in Layout.jsx (the auth-side header) so /app/* and /settings/* users can reach the dropdown. Once fixed, retest data-testid='nav-bell' presence on /app and verify the unread badge updates after creating a notification (POST /api/digest/send creates a weekly_digest notification for the sender).",
+  "rca of the issue": "NotificationsBell absence on authenticated Layout: grep confirms only MarketingHeader.jsx imports NotificationsBell; /app/frontend/src/components/Layout.jsx (used by all /app and /settings routes) has header markup with brand-link, household meta, layout-plan-badge, participant-view-link, logout-button — but no bell. Fix: add <NotificationsBell /> into the right-hand flex cluster in Layout.jsx (line ~41-73), probably immediately before the layout-plan-badge Link. No backend changes required."
+}

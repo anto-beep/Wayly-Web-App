@@ -1,0 +1,46 @@
+{
+  "summary": "Iter 356 dark-mode + sidebar accordion verification (web only). All 7 requested features PASS. Sidebar is a controlled single-open accordion: fresh load shows 0 expanded groups (all 7 collapsed including 'Today'), clicking a header expands only that group, clicking a different group collapses the previous (exactly one open), clicking the open group again collapses it, and reload resets to 0 expanded (not persisted). Budget Calculator dark: bc-class-4 tile has dm-clay-selected class with solid clay bg rgb(165,81,43) + white text; bc-balance/bc-burn inputs have dm-input-light with white bg rgb(255,255,255) + dark text rgb(14,42,71); bc-supplements panel has dm-supplements-section with warm dark clay-brown bg rgb(51,35,26). Classification Self-Check dark: csc-step-head text 'Step 1 of 3...' renders in rgb(255,255,255) (bright/legible, NOT dark teal); csc-quiz border is rgba(165,81,43,0.55) clay-tinted; intro paragraph uses max-w-5xl class. Contribution Estimator dark: ce-stepper active step titles white rgb(255,255,255), done/upcoming titles light warm off-white rgb(199,194,184) — NOT teal, all legible. Landing dark (public /): ecosystem persona cards all dark and readable — Participants bg rgb(14,48,51), Caregivers bg rgb(46,27,18), Family bg rgb(22,36,26), all titles + body white; FAQ heading = 'Everything We Get Asked, Openly.', CTA heading = 'Ready When You Are' (both Title Case); Solo tier first bullet = 'For 1 person — one Participant, one Caregiver seat', Family tier first bullet = 'For 2 people — two full Participants included'. Footer dark: all 15 sampled links render rgba(255,255,255,0.9) (white). Light-mode regression clean: html has no theme-dark class on Budget Calculator, CSC, Landing, /app — sidebar unchanged (7 groups, 0 expanded).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/ai-tools/contribution-estimator", "issues": ["Minor: FieldRow <label> elements do NOT carry the tailwind 'first-letter:uppercase' class as described in the request. Computed style getComputedStyle(label,'::first-letter').textTransform returns 'none' for all sampled labels ('Person's name (optional)', 'Which best describes your situation?...', 'Do you have a Support at Home classification?', 'Your classification...'). Visually acceptable because the underlying label copy is already written with a capitalised first letter, so the rendered output looks identical to what the CSS rule would produce. Flagging as a spec vs implementation gap only — no user-visible defect."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter356_dark_mode/results.json",
+    "/app/test_reports/iter356_dark_mode/01_sidebar_dark.jpeg",
+    "/app/test_reports/iter356_dark_mode/02_budget_dark.jpeg",
+    "/app/test_reports/iter356_dark_mode/03_csc_dark.jpeg",
+    "/app/test_reports/iter356_dark_mode/04_ce_dark.jpeg",
+    "/app/test_reports/iter356_dark_mode/05_landing_dark.jpeg",
+    "/app/test_reports/iter356_dark_mode/06_footer_dark.jpeg",
+    "/app/test_reports/iter356_dark_mode/07_budget_light.jpeg",
+    "/app/test_reports/iter356_dark_mode/08_csc_light.jpeg",
+    "/app/test_reports/iter356_dark_mode/09_landing_light.jpeg",
+    "/app/test_reports/iter356_dark_mode/10_app_sidebar_light.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL / low priority: If you specifically want tailwind's first-letter:uppercase CSS rule applied to Contribution Estimator FieldRow labels (as mentioned in the request), add the 'first-letter:uppercase' class to the label in the FieldRow component. Currently the underlying copy is already capitalised so this has no visual impact — visually the requirement is satisfied but the CSS spec is not."
+  ],
+  "critical_code_review_comments": [
+    "Sidebar accordion behaviour is correct end-to-end: fresh 0-expanded, single-open enforcement, toggle-off on same group, and non-persistence across reload — all verified via aria-expanded state on the 7 nav-group-toggle-* elements.",
+    "Dark-mode CSS classes (dm-clay-selected, dm-input-light, dm-supplements-section) are all applied and produce the intended computed background/color combinations. No black-on-black or teal-on-teal contrast issues detected on the requested surfaces.",
+    "Landing persona cards now correctly branch on isDark: computed backgrounds are dark and titles/body copy are white rgba — resolves the previous white-on-light invisibility issue described in the request.",
+    "Footer dark override 'html.theme-dark footer a' works — all sampled links render rgba(255,255,255,0.9) (was teal previously).",
+    "Light-mode regression clean: <html> has NO theme-dark class after localStorage flip, and all four spot-checked routes render normally."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (7/7 features pass; 1 minor CSS-vs-copy note)"},
+  "seed_data_creation": "None. Used existing cathy@example.com / testpass123 account.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter 356 web dark-mode + sidebar accordion signed off. Test scaffolding lives at /app/test_reports/iter356_dark_mode/ (screenshots + results.json). Login flow used: POST /api/auth/login with cathy@example.com / testpass123, store token in localStorage.kindred_token; toggle dark via localStorage.setItem('wayly:app:appearance','dark') then goto/reload; toggle light via .setItem(...,'light'). All 7 navigation groups now use data-testid='nav-group-toggle-<key>' with aria-expanded reflecting open/closed state — reuse this DOM contract for future accordion regression tests. Landing persona cards, pricing tiers, and Budget Calculator all have stable data-testids (ecosystem-card-*, landing-tier-solo|family, bc-class-1..8, bc-balance, bc-burn, bc-supplements).",
+  "rca of the issue": "N/A — no failures. The only note is a spec/impl gap: request mentions 'first-letter:uppercase' on Contribution Estimator FieldRow labels but the class is not present on <label> elements. Visually invisible because label copy is already capitalised at the source (e.g. 'Person's name (optional)', 'Which best describes...'), so getComputedStyle(el,'::first-letter').textTransform returns 'none' but the rendered UI matches the intent."
+}

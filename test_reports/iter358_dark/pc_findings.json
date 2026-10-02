@@ -1,0 +1,144 @@
+{
+  "dark": {
+    "[data-testid=\"pc-stat-charged\"]": {
+      "bg": "rgb(14, 58, 62)",
+      "color": "rgb(79, 168, 174)",
+      "bgImage": "none",
+      "text": "YOU ARE CHARGED\n$250.00\nper hour"
+    },
+    "[data-testid=\"pc-your-share\"]": {
+      "bg": "rgb(51, 35, 26)",
+      "color": "rgb(79, 168, 174)",
+      "bgImage": "none",
+      "text": "YOUR SHARE\nChoose your situation above to see your out-of-pocket per unit."
+    },
+    "[data-testid=\"pc-range\"]": {
+      "bg": "rgb(22, 40, 28)",
+      "color": "rgb(79, 168, 174)",
+      "bgImage": "none",
+      "text": "INDICATIVE RANGE\n$85.00 to $115.00\nDoH October 2025"
+    },
+    "[data-testid=\"pc-range-unavailable\"]": null,
+    "[data-testid=\"pc-save-check\"]": {
+      "bg": "rgb(165, 81, 43)",
+      "color": "rgb(255, 255, 255)",
+      "bgImage": "none",
+      "text": "Save this result"
+    },
+    "[data-testid=\"pc-pdf-export\"]": {
+      "bg": "rgb(194, 104, 61)",
+      "color": "rgb(255, 255, 255)",
+      "bgImage": "none",
+      "text": "Download PDF"
+    },
+    "[data-testid=\"pc-open-email\"]": {
+      "bg": "rgb(92, 128, 99)",
+      "color": "rgb(255, 255, 255)",
+      "bgImage": "none",
+      "text": "Email the provider"
+    },
+    "[data-testid=\"pc-compare-bars\"] .dm-bar-track": {
+      "bg": "rgb(165, 81, 43)",
+      "color": "rgb(255, 255, 255)",
+      "bgImage": "none",
+      "text": "$250.00/hour"
+    },
+    ".pc-num-hl": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(232, 149, 107)",
+      "bgImage": "none",
+      "text": "$135.00"
+    },
+    "[data-testid=\"pc-position\"]": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(255, 255, 255)",
+      "bgImage": "none",
+      "text": "Your rate of $250.00 per hour is above the published range of $85.00 to $115.00 for personal care."
+    },
+    "all_tracks": [
+      {
+        "bg": "rgb(165, 81, 43)",
+        "bgi": "none"
+      },
+      {
+        "bg": "rgb(165, 81, 43)",
+        "bgi": "none"
+      },
+      {
+        "bg": "rgb(165, 81, 43)",
+        "bgi": "none"
+      }
+    ]
+  },
+  "light": {
+    "[data-testid=\"pc-stat-charged\"]": {
+      "bg": "rgba(14, 77, 82, 0.08)",
+      "color": "rgb(14, 77, 82)",
+      "bgImage": "none",
+      "text": "YOU ARE CHARGED\n$250.00\nper hour"
+    },
+    "[data-testid=\"pc-your-share\"]": {
+      "bg": "rgba(165, 81, 43, 0.09)",
+      "color": "rgb(14, 77, 82)",
+      "bgImage": "none",
+      "text": "YOUR SHARE\nChoose your situation above to see your out-of-pocket per unit."
+    },
+    "[data-testid=\"pc-range\"]": {
+      "bg": "rgba(66, 95, 71, 0.1)",
+      "color": "rgb(14, 77, 82)",
+      "bgImage": "none",
+      "text": "INDICATIVE RANGE\n$85.00 to $115.00\nDoH October 2025"
+    },
+    "[data-testid=\"pc-range-unavailable\"]": null,
+    "[data-testid=\"pc-save-check\"]": {
+      "bg": "rgb(14, 77, 82)",
+      "color": "rgb(255, 255, 255)",
+      "bgImage": "none",
+      "text": "Save this result"
+    },
+    "[data-testid=\"pc-pdf-export\"]": {
+      "bg": "rgb(165, 81, 43)",
+      "color": "rgb(255, 255, 255)",
+      "bgImage": "none",
+      "text": "Download PDF"
+    },
+    "[data-testid=\"pc-open-email\"]": {
+      "bg": "rgb(66, 95, 71)",
+      "color": "rgb(255, 255, 255)",
+      "bgImage": "none",
+      "text": "Email the provider"
+    },
+    "[data-testid=\"pc-compare-bars\"] .dm-bar-track": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(28, 43, 45)",
+      "bgImage": "none",
+      "text": "$250.00/hour"
+    },
+    ".pc-num-hl": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(165, 81, 43)",
+      "bgImage": "none",
+      "text": "$135.00"
+    },
+    "[data-testid=\"pc-position\"]": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(192, 57, 43)",
+      "bgImage": "none",
+      "text": "Your rate of $250.00 per hour is above the published range of $85.00 to $115.00 for personal care."
+    },
+    "all_tracks": [
+      {
+        "bg": "rgba(0, 0, 0, 0)",
+        "bgi": "none"
+      },
+      {
+        "bg": "rgba(0, 0, 0, 0)",
+        "bgi": "none"
+      },
+      {
+        "bg": "rgba(0, 0, 0, 0)",
+        "bgi": "none"
+      }
+    ]
+  }
+}

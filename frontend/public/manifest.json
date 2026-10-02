@@ -1,0 +1,50 @@
+{
+    "name": "Wayly · AI for Australian Support at Home",
+    "short_name": "Wayly",
+    "description": "Decode Support at Home statements, track budgets, catch anomalies. For Australian families.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "theme_color": "#0E2A47",
+    "background_color": "#EAF4FB",
+    "categories": ["finance", "health", "lifestyle", "productivity"],
+    "lang": "en-AU",
+    "dir": "ltr",
+    "icons": [
+        {
+            "src": "/branding/png/wayly-mark-192.png",
+            "type": "image/png",
+            "sizes": "192x192",
+            "purpose": "any"
+        },
+        {
+            "src": "/branding/png/wayly-mark-512.png",
+            "type": "image/png",
+            "sizes": "512x512",
+            "purpose": "any"
+        },
+        {
+            "src": "/branding/png/wayly-mark-512.png",
+            "type": "image/png",
+            "sizes": "512x512",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Statement Decoder",
+            "short_name": "Decode",
+            "description": "Decode a Support at Home statement",
+            "url": "/ai-tools/statement-decoder",
+            "icons": [{ "src": "/branding/png/wayly-mark-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "Open your caregiver dashboard",
+            "url": "/app",
+            "icons": [{ "src": "/branding/png/wayly-mark-192.png", "sizes": "192x192", "type": "image/png" }]
+        }
+    ]
+}

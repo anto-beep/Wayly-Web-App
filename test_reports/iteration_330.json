@@ -1,0 +1,49 @@
+{
+  "summary": "Iter 330 frontend-only parity test on BOTH surfaces (web + mobile Expo web preview) for Wayly. Verified: mobile dashboard budget pill + Things To Know split + collapsible Wayly Chat; mobile letters editor NO auto-draft (generate button label stays 'Generate letter' until tapped); mobile Recipient Directory renders with saved BlueBerry Care; mobile + web Blocker Bundle button on publish-blocked statement (blocked-demo-b6228253) reads 'Draft one email to your provider covering all 2 blockers' and creates one consolidated letter opening the editor on both surfaces; web CorrespondenceDetail 'Deliver to' card (lf1-recipient-directory) with add-form + Use flow works. Care Plan Reviewer (mobile) copy verified in source only (WAYLY SUMMARY / cp-couldnt-check / cp-draft-letter-all = 'Draft an email to your provider') — not visually exercised due to no attached plan in test scope.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "verified_flows": [
+    {"platform": "mobile", "flow": "Dashboard budget pill", "result": "PASS — dashboard-budget-status + glance-budget-status show 'LEFT TO SPEND THIS QUARTER' with $2,321.63 of $7,617"},
+    {"platform": "mobile", "flow": "Things To Know count badge", "result": "PASS — things-to-know-count = 19 rendered; ttk-statements-section + ttk-invoices-section render behind 'Show' toggle (conditional on showKnow state) — testIDs correctly wired in source (index.tsx lines 357, 407)"},
+    {"platform": "mobile", "flow": "Chat preview toggle", "result": "PASS — chat-preview-card + chat-preview-toggle show 'WAYLY CHAT, LAST CONVERSATION' and toggle Show/Hide"},
+    {"platform": "mobile", "flow": "Blocker Bundle on statement", "result": "PASS — /statement/blocked-demo-b6228253 shows decoder-publish-block with bundle button labelled 'Draft one email to your provider covering all 2 blockers'; tap creates one letter and routes to /letters/{id}"},
+    {"platform": "mobile", "flow": "Letters editor NO auto-draft", "result": "PASS — on arrival lf1-generate-button label = 'Generate letter' (would say 'Regenerate letter' if auto-drafted). Intake carried over from decoder shown but body not auto-generated."},
+    {"platform": "mobile", "flow": "Recipient Directory", "result": "PASS — lf1-recipient-directory + lf1-recipient-add + saved 'BlueBerry Care' visible. lf1-recipient-current appears only after 'Use' tap (expected)."},
+    {"platform": "web", "flow": "Blocker Bundle on statement detail", "result": "PASS — /app/statements/blocked-demo-b6228253 renders decoder-publish-block + decoder-publish-block-email-all with correct label; click creates one letter and routes to /tools/letters-and-follow-ups/{id}"},
+    {"platform": "web", "flow": "Deliver to (Recipient Directory)", "result": "PASS — lf1-recipient-directory + lf1-recipient-add reveals lf1-recipient-name/email/save. Selecting saved BlueBerry Care with 'Use' renders lf1-recipient-current"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter330_mobile_dash.jpeg",
+    "/app/test_reports/iter330_mobile_blocked.jpeg",
+    "/app/test_reports/iter330_mobile_letter_editor.jpeg",
+    "/app/test_reports/iter330_web_blocked.jpeg",
+    "/app/test_reports/iter330_web_letter.jpeg",
+    "/app/test_reports/iter330_web_recipient.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Care Plan Reviewer WAYLY SUMMARY / cp-couldnt-check / cp-draft-letter-all copy verified in source (mobile/src/components/tools/CarePlanReviewer.tsx lines 437, 440, 459, 548, 551) — visual exercise skipped since testing scope didn't include uploading a plan; recommend main agent smoke-test with a real care plan upload before release.",
+    "Mobile TTK statements/invoices sections are only visible after the user taps 'Show' on the Things To Know card (state var showKnow). Consider whether current default (collapsed) matches iter 329 web parity — web may default to expanded. If parity is expected, mobile should default showKnow=true or match web behaviour."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, blocked-demo-b6228253 seeded)",
+  "seed_data_creation": "None — used existing seeded blocked statement and saved recipient",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All P1 iter-330 features are wired and working end-to-end on both surfaces. Blocker Bundle button correctly reads 'Draft one email to your provider covering all N blockers' (N=2 on seeded blocked-demo-b6228253) on mobile /statement/[id] and web /app/statements/[id]. Bundle creates ONE letter and opens editor. Mobile letters editor no longer auto-drafts. Recipient Directory works on mobile letters editor and web CorrespondenceDetail. One observation: mobile TTK sub-sections (ttk-statements-section / ttk-invoices-section) render only after the user expands the 'Things To Know' card via the Show toggle — testIDs and content are correct; if E1 wants them visible by default (web parity), flip the initial showKnow state."
+}

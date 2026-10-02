@@ -1,0 +1,31 @@
+{
+  "summary": "Verified redesigned DashboardInsights charts (burn-rate-chart + anomaly-timeline) on web as Cathy. Both charts render the required headline figures, legends, month-word+year x-axis labels (no raw date fragments), value labels, and plain-English footer summaries. Bar keyboard/click navigation to /app/statements/{id} works. No JS errors from the redesigned components. Success criteria all met.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Dashboard insights", "issues": ["Duplicate month labels (e.g. two 'Aug '26' bars) appear when multiple statements sit in the same month. Not a bug — data-driven — but consider disambiguating (e.g. 'Aug '26 (2)') in a follow-up."]}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/test_reports/iter316_light.jpeg", "/app/test_reports/iter316_dark.jpeg"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "SpendingChart+ChecksChart use hardcoded hex palette (C.funded/copay/attention/watch/ok) which is theme-agnostic; text (text-primary-k, text-muted-k) uses tokens and stays legible on bg-surface-2 in both themes.",
+    "monthYearLabel handles month-word, DD/MM/YYYY (AU), and ISO uploaded_at fallbacks — verified live output produces only 'Mon 'YY' labels (no raw '01/08/' fragments).",
+    "Bars are keyboardable (role=button, tabIndex, Enter/Space handler) and clickable — verified navigation to /app/statements/{id}.",
+    "Verified findings on live preview against Cathy/Dorothy (6 burn bars, 8 anomaly bars, 5 alerts, $3,496 total)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "DashboardInsights redesign validated iter316. burn-rate-chart shows 'What you pay vs what's funded' with total billed headline + legend + value-label bars + summary sentence. anomaly-timeline shows 'N statements reviewed' + 'N need your attention' (terracotta) or checks-all-clear pill + legend (Needs attention/Worth a look/Just so you know) + stacked bars + summary. Month labels are 'Mon 'YY' (e.g. Aug '26). Clicking bar with id navigates to /app/statements/{id}.",
+  "rca of the issue": ""
+}

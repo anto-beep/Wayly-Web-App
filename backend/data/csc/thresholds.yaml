@@ -1,0 +1,50 @@
+# CSC-1 composite-score → primary-classification thresholds
+#
+# Anchored to the reference vignettes in ``vignettes.yaml``. Drift-checked by
+# CI: a run of every vignette must resolve to its stated classification.
+#
+# Composite score domain: [0.0, 1.0]. The primary classification is the row
+# whose ``max_score`` first exceeds the run's composite. Rows are sorted
+# ascending by ``max_score``.
+
+schema_version: csc.thresholds.v1
+effective_from: 2026-02-01
+legislativeVerificationStatus: VERIFIED    # Wayly-defined calibration
+source: CSC-1-v1.md §5.3
+
+thresholds:
+  - { max_score: 0.08, primary: 1 }
+  - { max_score: 0.18, primary: 2 }
+  - { max_score: 0.30, primary: 3 }
+  - { max_score: 0.42, primary: 4 }
+  - { max_score: 0.55, primary: 5 }
+  - { max_score: 0.76, primary: 6 }
+  - { max_score: 0.80, primary: 7 }
+  - { max_score: 1.00, primary: 8 }
+
+# Confidence policy (§5.4 - §5.5)
+confidence:
+  # High: primary alone.  Medium: primary ± 1.  Low: primary ± 2 (capped 1..8).
+  high_ratio_max: 0.55         # d1/d2 <= 0.55  → High (if unanswered_count < 2)
+  medium_ratio_max: 0.80       # 0.55 < d1/d2 <= 0.80 → Medium (if unanswered_count < 2)
+  # Otherwise Low.
+  low_high_weight_notsure_min: 2  # 2+ high-weight "Not sure" → force Low
+  high_weight_questions:
+    - Q1_self_care_shower
+    - Q2_self_care_dress
+    - Q3_self_care_mobility
+    - Q4_self_care_continence
+    - Q7_iadl_medication
+    - Q10_cognition
+    - Q12_behaviour
+
+# Domain groupings and weights (§5.2). Domain score = mean of non-null
+# normalised answers / 4. Composite = Σ domain_score × weight.
+domains:
+  self_care:            { weight: 0.40, questions: [Q1_self_care_shower, Q2_self_care_dress, Q3_self_care_mobility, Q4_self_care_continence] }
+  iadl:                 { weight: 0.20, questions: [Q5_iadl_meals, Q6_iadl_cleaning_laundry, Q7_iadl_medication, Q8_iadl_shopping, Q9_iadl_transport] }
+  cognition_behaviour:  { weight: 0.20, questions: [Q10_cognition, Q12_behaviour] }
+  safety_hospitalisation: { weight: 0.05, questions: [Q13_falls_6mo, Q14_hospital_12mo] }
+  informal_support:     { weight: 0.05, questions: [Q16_informal_support], inverse: true }
+  home_environment:     { weight: 0.05, questions: [Q15_home_environment] }
+  mood:                 { weight: 0.05, questions: [Q11_mood] }

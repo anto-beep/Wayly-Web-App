@@ -1,0 +1,49 @@
+{
+  "summary": "DOC-PARITY-1 v2 RETEST PASS. Both critical fixes from iter230 verified: (1) POST /api/decoder/artifact?fmt=pdf now returns hash-identical bytes across 3 repeated calls with the SAME payload (sha256 = 7d5319edca4ae1b5bd0a15283b14ebc5171168d6be73d0a0210c3fc4328ca3c0, all 3 runs identical, 30228 bytes each). (2) In-app decoded summary header renders DD/MM/YYYY range on BOTH surfaces: web shows '01/07/2026 to 30/09/2026 · LOUISA DAVIDS · 8 · GLORIOUS SERVICES PTY LTD · QUARTERLY' at data-testid=decoder-summary-header-line; mobile shows '01/07/2026 to 30/09/2026 · Louisa Davids · 8 · Glorious Services Pty Ltd' at same testID. Pytest: 22/22 GREEN (test_docparity_artifact_iter230.py + test_docparity_naming.py + test_sderrc_golden.py). Regression glance: severity groups render high, medium, low (informational absent because this decode carries no info finding — parity across web+mobile), Download PDF/CSV buttons present and wired to /api/decoder/artifact. Out-of-scope: statements-list-row 'X Jul,Y Sep 2026' comma glitch (web) and StatementDetail outer h2/subheader 'X July YYYY to Y September YYYY' (web h2 + mobile page title above DecoderResultView) still exist — main agent explicitly deferred these as a separate list component out of scope.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "StatementDetail outer h2 (above DecoderResultView) + statements-list row", "issues": ["Outer h2 still shows '1 Jul,30 Sep 2026' (comma glitch + spelled-out). Out of scope for this retest per agent-to-agent context, but should be aligned to DD/MM/YYYY in a follow-up."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/statement/[id] page header above DecoderResultView", "issues": ["Page title + subheader still render '1 July 2026 to 30 September 2026' (spelled-out). The DecoderResultView decoder-summary-header-line inside now correctly shows '01/07/2026 to 30/09/2026'. Out of scope for this retest; follow-up to normalise the outer page header too."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_docparity_artifact_iter230.py",
+    "/app/backend/tests/test_docparity_naming.py",
+    "/app/backend/tests/test_sderrc_golden.py",
+    "/app/test_reports/pytest/iter231_docparity.xml",
+    "/app/test_reports/iter231_web.jpeg",
+    "/app/test_reports/iter231_mobile.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL FOLLOW-UP (out of scope for this retest but tracked): normalise the outer StatementDetail h2 (web) and mobile /statement/[id] page-title/subheader to DD/MM/YYYY, and fix the '1 Jul,30 Sep 2026' comma glitch on the statements-list rows. The core DOC-PARITY-1 v2 spec (server-authoritative artefact + decoded summary header) is now fully met."
+  ],
+  "critical_code_review_comments": [
+    "pdf_branding.make_doc now sets doc.invariant=True and render_decoded_pdf toggles reportlab rl_config.invariant=1 during the build — good. Threading footer date from period_end (not datetime.now()) means both PDF metadata AND the visible 'Generated ...' footer are stable. Confirmed by 3-call hash-identity live test.",
+    "Web + mobile DecoderResultView both derive periodLabel from extracted.period_start/period_end as `${DD/MM/YYYY} to ${DD/MM/YYYY}` — consistent implementation across surfaces."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (22/22 pytest)", "frontend": "100% for locked decoder summary header + severity ordering + download wiring"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None — reused seeded statement 673fa982-367c-43ca-8ce8-4df5b8ba4f68 (Louisa Davids, Q1 FY26).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "DOC-PARITY-1 v2 is now GREEN end-to-end (backend hash-identity + web/mobile DD/MM/YYYY summary header). If revisiting: outer StatementDetail h2 (web) + /statement/[id] page-title (mobile) + statements-list row comma glitch are still spelled-out — those are the remaining UI-parity gaps a follow-up story should address.",
+  "rca of the issue": "iter230 root cause (PDF non-determinism) fixed by (a) setting SimpleDocTemplate.invariant=True + reportlab rl_config.invariant=1 during build to suppress /CreationDate + /ModDate metadata, and (b) passing a deterministic 'as of' date derived from payload.extracted.period_end into footer_block so the visible footer text is stable. UI spelled-out header fixed by computing periodLabel from ISO bounds via formatDate/fmtDate helpers on both surfaces."
+}

@@ -1,0 +1,46 @@
+{
+  "summary": "iter198 RETEST after main agent's iter197 fixes. 12/14 pytest pass. FIX #1 (webhook route consolidation) VERIFIED — the legacy /api/webhook/stripe handler in server.py:6118 is renamed to /webhook/stripe-legacy-disabled, and POST /api/webhook/stripe with a bad signature now returns lowercase {\"detail\":\"invalid signature\"} confirming routes/payments.py:679 is the sole handler. New portal alias (return_url ↔ origin_url) VERIFIED. Regressions on cs_test_ checkout for solo/family, cancel/reactivate, reconcile-on-return, invoices all PASS. FIX #2 (schedule-downgrade) FAILS at Stripe: the new phases spec uses `iterations: 1`, but Stripe REMOVED the `iterations` parameter on phase objects in API version basil 2025-08-27 (https://docs.stripe.com/changelog/basil/2025-08-27/remove_schedule_phase_iterations.md). Live Stripe error: 'Received unknown parameter: phases[iterations]' → 502 in Wayly. Must switch to `duration: {interval, interval_count}` (or fall back to end_date computed from cpe).",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/payments/schedule-downgrade", "issue": "Stripe rejects the phase spec: `Received unknown parameter: phases[iterations]`. Stripe REMOVED `iterations` from SubscriptionSchedule phases in API version basil, 2025-08-27. Backend at /app/backend/routes/payments.py:583-590 sends `phases=[{items:..., iterations:1}, {items:..., iterations:1}]` → HTTP 400 from Stripe → 502 to caller. Fix: replace `iterations: 1` with `duration: {\"interval\": \"day\", \"interval_count\": 14}` (Wayly bills fortnightly), or better read the phase duration from the current price (price.recurring.interval / interval_count), or compute an `end_date` from `_sub_period_end(sub)` for phase 0 and drop the iterations key for phase 1. Root cause docs: https://docs.stripe.com/changelog/basil/2025-08-27/remove_schedule_phase_iterations.md", "priority": "CRITICAL"}
+    ],
+    "minor": [
+      {"endpoint": "/api/payments/schedule-downgrade", "issue": "When the Stripe API call fails after the SubscriptionSchedule.create-from_subscription step has succeeded, the empty (phases=[]) schedule is left orphaned on the sub until manually released. Consider try/except around the modify call that releases the schedule on error."},
+      {"endpoint": "/api/auth/signup", "issue": "Aggressive per-IP + per-email signup rate-limit (redis rl:signup_ip / rl:signup_email buckets, ~7-min lockout after ~5 hits) blocks pytest reruns. Cleared via redis flush for this run."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/billing/test_iter197_billing_consolidation.py",
+    "/app/test_reports/pytest/iter198.xml"
+  ],
+  "action_items": [
+    "CRITICAL: /app/backend/routes/payments.py:583-590 — replace `\"iterations\": 1` with `\"duration\": {\"interval\": \"day\", \"interval_count\": 14}` on BOTH phases (Wayly bills every 14 days per trial-end email copy) OR read interval/interval_count from the current Stripe price object. Confirmed against Stripe basil 2025-08-27 changelog (iterations parameter removed). After fix, re-run test_schedule_downgrade_family_to_solo + test_cancel_scheduled_change_releases_schedule.",
+    "OPTIONAL: on Stripe error inside schedule-downgrade, release the just-created empty schedule before raising so the sub isn't left in a half-scheduled state.",
+    "OPTIONAL: add a signup-rate-limit bypass hook for CI/testing (or a longer retry-after in test env)."
+  ],
+  "critical_code_review_comments": [
+    "routes/payments.py:583-590 — uses deprecated `phases[].iterations`; Stripe basil (2025-08-27+) rejects with parameter_unknown. Same failure mode the iter197 report predicted for a different symptom (start_date=None); the current fix swapped one broken shape for another broken shape.",
+    "routes/payments.py:105-122 — _sub_period_end/_sub_period_start now read from items[0] correctly ✓ (verified by /api/payments/checkout/status returning a non-null current_period_end for cs_test_b1QVji... in db.subscriptions).",
+    "server.py:6118 — legacy webhook renamed to /webhook/stripe-legacy-disabled ✓ so include_router(stripe_webhook_router) now serves /api/webhook/stripe from routes/payments.py.",
+    "routes/payments.py:409-440 — PortalBody now accepts origin_url OR return_url ✓, portal endpoint returns 400 (no Stripe customer) as expected for cathy who has no stripe_customer_id, not 422."
+  ],
+  "updated_files": [
+    "/app/backend/tests/billing/test_iter197_billing_consolidation.py"
+  ],
+  "success_rate": {
+    "backend": "86% (12/14 — 2 failures are ONE root cause: Stripe removed phases[iterations])",
+    "frontend": "n/a (backend-only retest)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 · mobtrial+1786972023@example.com / MobTrial1! (reconcile-on-return verified). Fresh accounts iter197.solo.*, iter197.family.*, iter197.famsub.* auto-created; each has a real Stripe test-mode subscription (cancelled in teardown).",
+  "seed_data_creation": "Programmatic Stripe test-mode Customer + trialing Family Subscription via stripe.Customer.create(pm_card_visa) + stripe.Subscription.create(trial_period_days=7). Teardown deletes the sub.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Only remaining backend issue is /api/payments/schedule-downgrade using the Stripe-deprecated `iterations` parameter on phase objects. Change to `duration: {interval, interval_count}` per Stripe basil 2025-08-27 changelog. After that fix, run: `cd /app/backend && python -m pytest tests/billing/test_iter197_billing_consolidation.py -v --tb=short --junitxml=/app/test_reports/pytest/iter199.xml`. If the two failing tests still error 429 on signup, flush redis keys: `python -c \"import os,redis;from dotenv import load_dotenv;load_dotenv('/app/backend/.env');r=redis.Redis.from_url(os.environ.get('REDIS_URL','redis://localhost:6379/0'));[r.delete(k) for k in r.keys('rl:signup*')]\"`. Webhook consolidation is now fully verified — POST /api/webhook/stripe returns {\"detail\":\"invalid signature\"} (lowercase = new handler). Portal alias verified.",
+  "rca of the issue": "Stripe API version basil (2025-08-27) removed the `iterations` parameter from SubscriptionSchedule phases; the parameter is now rejected as unknown. Wayly's schedule-downgrade fix (routes/payments.py:583-590) uses `iterations: 1` on both phases, so every call fails with `parameter_unknown` and the handler surfaces a 502. Fix: use `duration: {interval: 'day', interval_count: 14}` for each phase (matches Wayly's 14-day billing cycle stated in the trial-end reminder email), OR read the interval from the current Stripe price via `price.recurring.interval` / `interval_count` so it stays in sync if pricing terms change."
+}

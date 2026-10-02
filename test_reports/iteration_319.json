@@ -1,0 +1,88 @@
+{
+  "summary": "Mobile parity for Statement Decoder publish-gate, Letters front door, Mailbox redesign, consolidated /letters/[id] detail screen, and Required/Optional field badges. All 5 phases verified on the Expo web preview at mobile viewport 390x844 as cathy@example.com. Phases 2/3/4/5 fully exercised; Phase 1 exercised only along the non-blocked path (no publishable===false statement exists in this account — flagged as environmental limitation, not a code defect).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter319_mobile/03b_post_login.jpeg",
+    "/app/test_reports/iter319_mobile/04_letters_frontdoor.jpeg",
+    "/app/test_reports/iter319_mobile/05_mailbox.jpeg",
+    "/app/test_reports/iter319_mobile/06_letter_detail.jpeg",
+    "/app/test_reports/iter319_mobile/07_delete_modal.jpeg",
+    "/app/test_reports/iter319_mobile/08_blank_type_letter.jpeg",
+    "/app/test_reports/iter319_mobile/09_forgot_password.jpeg",
+    "/app/test_reports/iter319_mobile/10_reset.jpeg",
+    "/app/test_reports/iter319_mobile/11b_profile_edit_change_email.jpeg",
+    "/app/test_reports/iter319_mobile/13_statement_detail.jpeg",
+    "/app/test_reports/iter319_mobile/15_situation_letter_correct.jpeg"
+  ],
+  "phase_results": {
+    "phase_1_decoder": {
+      "status": "PARTIAL - non-blocked path OK; blocked path not exercisable (no publishable===false statement in fixture data)",
+      "non_blocked_path": {
+        "decoder-summary-banner": "visible (1)",
+        "anomaly-card-*-evidence": "2 evidence blocks rendered on anomaly cards",
+        "decoder-publish-block": "correctly hidden (0)",
+        "decoder-low-confidence-banner": "hidden (statement not low-confidence)",
+        "decoder-table-unverified-note": "hidden (statement not blocked)"
+      },
+      "note": "Per E1 instruction, blocked-state UI could not be exercised. Code inspection of /app/mobile/src/components/DecoderResultView.tsx confirms all required testIDs exist (decoder-publish-block L381, decoder-publish-block-evidence-* L405, decoder-publish-block-email-* L414, decoder-publish-block-message L427, decoder-low-confidence-banner L438, decoder-table-unverified-note L343, decoder-summary-banner L168, anomaly-card-*-evidence L273)."
+    },
+    "phase_2_letters_front_door": {
+      "status": "PASS",
+      "lf1-blank-letter-panel": "present",
+      "lf1-blank-type-6/3/4/10/7/12": "all 6 present, clickable",
+      "lf1-group-change/dispute/escalate/notify/reply/safety": "all 6 groups render with coloured dot + description",
+      "situation_cards_count": 12,
+      "blank-type-3 click": "→ /letters/A2a34IEzPztdQMXx (routes to consolidated /letters/[id] with carried-issues panel visible)",
+      "situation-1 click": "→ /letters/ZLaPcbwUVFhvUC_t (routes to /letters/[id])",
+      "lf1-open-log": "present, opens /letters"
+    },
+    "phase_3_mailbox": {
+      "status": "PASS",
+      "lf1-log-search": "filters entries; typing 'xyz123nomatch' shows lf1-log-no-matches card",
+      "lf1-log-search-clear": "clears query",
+      "status_filter_chips": "present for non-zero counts (all=16, drafts=16). By design, chips with count=0 are hidden — sent/awaiting_response/responded/escalated/closed are absent because Cathy has 0 letters in those states. This is CORRECT behaviour per source /app/mobile/app/letters.tsx:205.",
+      "lf1-log-type-filter": "Select present",
+      "lf1-log-list": "renders 16 entries with lf1-log-entry-<id> cards and lf1-log-entry-status-<id> badges",
+      "row_click": "opens /letters/[id]",
+      "lf1-log-delete-<id>": "opens lf1-log-delete-modal; lf1-log-delete-confirm removes entry (16→15 verified)",
+      "lf1-follow-up-panel": "not rendered — expected because there are 0 overdue and 0 upcoming follow-ups on this account (guard at overdue.length+upcoming.length>0)"
+    },
+    "phase_4_consolidated_detail": {
+      "status": "PASS",
+      "correspondence_redirect": "GET /correspondence/47c7901b-0960-44c0-b04f-c21b3424f6f7 → /letters/47c7901b-0960-44c0-b04f-c21b3424f6f7 (URL redirect confirmed)",
+      "carried_issues_panel": "visible when landing on a letter created from Statement Decoder — screenshot 06_letter_detail.jpeg shows '1 ISSUE CARRIED OVER FROM STATEMENT DECODER' with bullet 'Cancellation charged despite cancellation'",
+      "autodraft": "verified on tool-created letters (both blank-type and situation-card entry points land on the draft editor with fields ready)"
+    },
+    "phase_5_required_optional_badges": {
+      "status": "PASS",
+      "login": "Email Required + Password Required badges visible",
+      "forgot_password": "Email Required (1 Required marker)",
+      "reset": "New password Required + Confirm password Required (2 Required markers)",
+      "profile_edit_default": "Phone number Optional (1 Optional marker)",
+      "profile_edit_change_email_expanded": "New email address Required + Confirm your password Required (2 Required, 1 Optional)"
+    }
+  },
+  "action_items": [
+    "OPTIONAL: To fully exercise Phase 1 blocked-state UI, seed a decoded statement with publishable=false so testers can visually verify decoder-publish-block, decoder-publish-block-evidence-*, decoder-publish-block-email-*, decoder-low-confidence-banner, and decoder-table-unverified-note render together and the money summary + graphics + streams are hidden. Code paths exist; only fixture is missing."
+  ],
+  "critical_code_review_comments": [
+    "letters.tsx line 205: status filter chips are hidden when count=0. This matches the visual delivered but differs from the review request wording which listed all seven chips as always-present. Confirm this is the intended design — if all chips (with 0 counts) should always show for discoverability, invert the guard."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% of exercisable flows (Phase 1 blocked-path not exercisable due to fixture data)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, cathy@example.com — read from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Deleted 1 draft letter from mailbox as part of the delete-confirm exercise (started at 16, ended at 15). No new seed data created.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phases 2–5 all verified against live backend on mobile Expo web preview. For Phase 1 blocked-state, either (a) seed a fixture statement whose decode has publishable=false OR (b) main agent can manually verify by toggling publishable on an existing decode. All required testIDs are confirmed present in DecoderResultView.tsx (see phase_results.phase_1_decoder.note above)."
+}

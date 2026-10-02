@@ -1,0 +1,29 @@
+{
+  "summary": "Mobile ATHM-1 full-depth parity smoke on Expo web preview: login (cathy@example.com) → /athm projects list → create project inline form → project detail → advance-stage → AT item add → start-trial (countdown card) → HM modification add → 2 quotes side-by-side with cheapest/dearest highlighting and HIGH VARIANCE 60% flag → OT referrals section (upload button renders; picker not automatable). All six requested flows PASS. Mobile detail matches web /athm behavior described in the review.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "advance() in /app/mobile/app/athm-project/[id].tsx uses Math.min(idx + 1, STATUS_STEPS.length - 3) which caps advancement at 'in_use' (index len-3) — good, but silently no-ops at the cap without user feedback. Consider surfacing a toast or hiding the button once the cap is reached (web parity check recommended).",
+    "In refreshAll(), items and modifications are fetched with Promise.all of individual GETs (one per id). Fine for small projects but O(n) round-trips; consider a batched endpoint if lists grow.",
+    "uploadReferral() swallows all errors silently (catch { /* ignore */ }). If the /documents upload or attach fails, the user gets no feedback. Same pattern in addItem/addMod/startTrial/detachReferral. Consider surfacing errors like AthmProjects.jsx does on the web."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "Created 1 ATHM project ('TEST Bathroom safety upgrade'), 1 AT item ('TEST Walking Frame') with active 14-day trial, 1 HM modification ('Walk-in shower') with 2 quotes ($5k, $8k) under Cathy → Mum participant.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The /athm route requires a signed-in caregiver with an active participant (uses ParticipantContext active id). Cathy defaults to 'Mum' as active. To reach the project detail, tap a card at /athm, which routes to /athm-project/[id]. All key testIDs verified working: athm-projects-root, athm-new-project, athm-new-project-form, athm-project-type, athm-project-title, athm-project-need, athm-project-save, athm-project-card-<id>, athm-project-detail-<id>, athm-advance-<id>, athm-add-item-toggle-<id>, athm-item-category/name/save, athm-item-<id>, athm-item-trial-days-<id>, athm-item-start-trial-<id>, trial-countdown-<id>, athm-add-mod-toggle-<id>, athm-mod-category/name/location/save, mod-quote-block-<mid>, mod-add-supplier/amount/quote-<mid>, mod-quote-row-<mid>-N, athm-ot-referrals-<id>, athm-ot-referral-upload-<id>. Note: RN Pressable buttons don't render as <button>, so use get_by_text or data-testid for Sign In. expo-document-picker cannot be exercised on the web preview.",
+  "rca of the issue": ""
+}

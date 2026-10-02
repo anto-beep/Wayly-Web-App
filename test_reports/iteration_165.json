@@ -1,0 +1,33 @@
+{
+  "summary": "Mobile-only frontend copy/label batch verification for signup, login and Settings logout. All 6 requested acceptance criteria pass end-to-end on the Expo web preview at 390x844: (1) /signup no standalone 'Wayly' wordmark, no 'Create account' header, no 'Join Wayly…' tagline — only 'AGED CARE, MADE EASY'; (2) Field labels are Title Case ('First Name', 'Last Name', 'Mobile Number'), 'First Name'/'Last Name'/'Email'/'Password' each render a clay 'Required' hint, 'Mobile Number' renders 'Optional'; (3) Password requirements list ('At least 8 characters', 'An uppercase and a lowercase letter', 'A number and a symbol', 'Not your name or email') is visible BEFORE typing; (4) Plan picker shows Solo '1 participant tracked · 1 caregiver seat' and Family '2 participants · Up to 3 caregiver seats' — no '5 caregiver seats', no 'two parents on one plan' string; radios toggle when tapping the plan card; (5) /login shows 'Welcome Back' + subtitle 'Sign in to your account' (no 'Wayly' in subtitle) and no standalone 'Wayly' wordmark under the logo; (6) Settings logout button label is exactly 'Log Out' (testID settings-logout). Regression: cathy@example.com/testpass123 logs in and lands on the dashboard (viewing 'Mum', Family plan, ACTIVE).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter_signup_top.jpeg",
+    "/app/test_reports/iter_signup_plans.jpeg",
+    "/app/test_reports/iter_login.jpeg",
+    "/app/test_reports/iter_dashboard.jpeg",
+    "/app/test_reports/iter_settings_logout.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Note (informational, not a failure): the login screen renders the sign-up link as 'New to Wayly? Create an account'. The batch removed the 'Create account' HEADER on /signup as required, but the word 'Wayly' still appears in the /login footer link ('New to Wayly?') and in a few Settings copy strings (e.g. 'When Wayly flags…', 'What you have done with Wayly'). These were NOT called out in the acceptance criteria so are left as-is; flagging in case a broader wordmark sweep is planned."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only scope)", "frontend": "100% (23/23 assertions across signup, login, plan toggle, login regression, settings logout)"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan, worked on preview)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Copy-only mobile polish batch verified on the Expo web preview at https://wayly-rn-build.expo.preview.emergentagent.com. Signup screen (/signup) checked visually (no submit — Stripe Checkout intentionally skipped per request). All testIDs relied upon still present: signup-plan-solo, signup-plan-family, signup-first-name-input, signup-last-name-input, signup-email-input, signup-mobile-input, signup-password-input, signup-password-rules, brand-tagline, login-email-input, login-password-input, login-submit-button, settings-logout. No React Native red screen, no deprecated packages surfaced during this run.",
+  "rca of the issue": ""
+}

@@ -1,0 +1,57 @@
+{
+  "summary": "Iter265 punchlist verified on WEB + MOBILE against shared backend. WEB Guided Journeys (8 routes: /app/letters, /app/carer/self-assessment, /app/carer/handover-pack, /app/csc/stream-mix-and-iat, /app/athm/projects, /app/chsp/tools, /app/ask-wayly, /app/provider-switch) all render tool-lock-gate + tool-locked-banner with a 'Reactivate' CTA for cancelled.vo, and the CTA click was empirically navigated to checkout.stripe.com/c/pay/cs_test_... (real Stripe hosted checkout). ACTIVE user (cathy@example.com) sees NO gate on those routes — content interactive. MOBILE ViewOnlyToolGate (view-only-tool-gate) present on /tool/budget-calculator and /tool/letters-and-follow-ups for view_only user with 'Reactivate' + 'View tool (read-only)' buttons. Mobile plan-billing family features string reads 'up to 5 Caregiver seats' (verified via source at plan-billing.tsx:32 and plans.ts:35). BACKEND: 9/9 iter264 regression tests + 7/7 new iter265 tests pass (portal returns 400 'No Stripe customer on record. Start a subscription first.'; checkout returns checkout.stripe.com URL for both plans with trial_days:0). ONE BUG FOUND (web): Settings.jsx openPortal fallback dead-ends because it calls startCheckout() which tries /billing/start-trial FIRST — that endpoint returns 500 (not a trial_used error) for cancelled.vo, so the fallback hits its !trialUsed branch, shows toast.error('Could not start trial'), and never redirects to Stripe. Portal Manage-payment-method therefore still dead-ends contrary to spec.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/billing/start-trial", "issue": "Returns 500 (Internal Server Error) with body 'Internal Server Error' when the caller is a view_only user whose trial was previously consumed. Ideal contract is 400 with detail.error='trial_used' so the client fallback in Settings.startCheckout can branch to paid checkout. Right now it triggers the wrong branch and breaks the Settings openPortal→checkout fallback."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Settings /settings/billing → 'Manage payment method' (openPortal) → fallback to Stripe Checkout when No Stripe Customer", "issue": "openPortal correctly catches the 400 'No Stripe customer on record' and enters its fallback, but the fallback calls startCheckout() which tries POST /billing/start-trial first. For cancelled.vo that endpoint returns 500 → startCheckout treats it as a non-trial_used error → toast.error 'Could not start trial' → NO redirect to checkout.stripe.com. The user still dead-ends. Verified via UI (screenshot: stayed on /settings/billing, error 500 in network) AND direct curl (POST /api/billing/start-trial for cancelled.vo → HTTP 500 'Internal Server Error'). FIX: In Settings.jsx:466, replace `await startCheckout(currentPlan)` with `await startReactivateCheckout(currentPlan)` (already exists at /app/frontend/src/lib/reactivate.js — POSTs /payments/checkout with trial_days:0 directly). This is exactly what ReadOnlyLock and ToolLockGate already use.", "affected_selectors": ["button:has-text('Manage payment method')"]}
+      ],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "openPortal 'No Stripe customer' fallback", "platform": "web", "issue": "Mobile plan-billing.tsx openPortal correctly routes to /plan-select on the no-customer error (verified in source). Web openPortal attempts to redirect to Stripe checkout via startCheckout(), but that path is broken by the /billing/start-trial 500 (see integration issue). Result: parity claim not met — mobile: user reaches a functional Reactivate surface; web: user is stuck on /settings/billing with an error toast.", "expected": "Both web and mobile take the user out of the dead-end (mobile → /plan-select; web → checkout.stripe.com).", "actual": "Mobile works; web dead-ends with error toast."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_paywall_checkout_iter264.py",
+    "/app/backend/tests/test_reactivate_flow_iter265.py",
+    "/app/test_reports/pytest/iter265_regression.xml",
+    "/app/test_reports/pytest/iter265_reactivate.xml",
+    "/app/test_reports/iter265_mobile.jpeg",
+    "/app/test_reports/iter265_active_letters.jpeg"
+  ],
+  "action_items": [
+    "Fix web Settings.jsx openPortal 'No Stripe customer' fallback: replace `await startCheckout(currentPlan)` (Settings.jsx:466) with `await startReactivateCheckout(currentPlan)` from /app/frontend/src/lib/reactivate.js so the fallback goes straight to Stripe with trial_days:0 (matches ToolLockGate + ReadOnlyLock behaviour).",
+    "OR (belt-and-braces) fix /api/billing/start-trial to return 400 detail.error='trial_used' instead of 500 when the caller has already consumed a trial. This would make the existing startCheckout branch work too."
+  ],
+  "critical_code_review_comments": [
+    "Settings.jsx:450-471 openPortal error-fallback calls startCheckout(currentPlan) which tries /billing/start-trial first (Settings.jsx:313). For a cancelled/lapsed user the trial endpoint returns 500, and startCheckout only recognises detail.error='trial_used' — so the intended 'send to checkout' fallback never fires. The lib/reactivate.js `startReactivateCheckout()` helper already exists precisely for this case and is used by ToolLockGate (App.js:230) and ReadOnlyLock (ReadOnlyLock.jsx:37). Use it here for consistency.",
+    "App.js:218-263 ToolLockGate — solid: view_only users see a dimmed, inert copy of the tool with a single Reactivate CTA that goes STRAIGHT to Stripe. Verified on all 8 Guided Journeys routes; empirically navigated to checkout.stripe.com/c/pay/cs_test_... on /app/letters.",
+    "/api/public/* endpoints (budget-calc, classification-check, reassessment-letter, care-plan-review) are EXEMPT from the read-only middleware (server.py:7464 '/api/public/'). Enforcement of the Guided-Journeys gate is therefore purely client-side (ToolLockGate wraps the route component but the tool's underlying POSTs would go through if the middleware were bypassed). Documented in test_reactivate_flow_iter265.py::test_view_only_guided_journey_public_endpoints_are_reachable.",
+    "mobile/app/plan-billing.tsx:79-96 openPortal correctly routes to /plan-select on the no-customer message — matches spec. Family features string reads 'up to 5 Caregiver seats' (was 3).",
+    "mobile/src/components/ViewOnlyToolGate.tsx: testIDs match spec (view-only-tool-gate, view-only-tool-reactivate → /plan-select, view-only-tool-reveal). Verified live on 2 tool slugs."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_reactivate_flow_iter265.py (NEW — 7 pytest cases, all pass)"
+  ],
+  "success_rate": {"backend": "100% (16/16 combined: 9 iter264 + 7 iter265)", "frontend": "~92% (all gates + Reactivate wording + Stripe redirect on tool-lock verified; 1 flow broken: web openPortal fallback dead-ends due to /billing/start-trial 500)"},
+  "test_credentials": "cancelled.vo@example.com/AccessTest1! (view_only, verified access_state=view_only, no Stripe customer), cathy@example.com/testpass123 (active family user).",
+  "seed_data_creation": "None. iter265 Stripe checkout sessions created during testing are harmless cs_test_ dry-runs.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Regression: /app/backend/tests/test_paywall_checkout_iter264.py + /app/backend/tests/test_reactivate_flow_iter265.py. Run with REACT_APP_BACKEND_URL env set. The bug to retest after main-agent fix: (1) login as cancelled.vo, (2) go to /settings/billing, (3) click 'Manage payment method', (4) MUST navigate to checkout.stripe.com (not stay on /settings/billing with a red toast). Mobile paywall/gate flows are fine as of iter265.",
+  "rca of the issue": "RCA — Settings openPortal 'No Stripe customer' fallback dead-end (web only)\n\nSteps to reproduce:\n1. Login as cancelled.vo@example.com / AccessTest1! (access_state=view_only, no Stripe customer)\n2. Navigate to /settings/billing\n3. Click 'Manage payment method' button (bottom-right of Payment method card)\n\nObserved:\n- Network: POST /api/payments/portal → 400 {\"detail\":\"No Stripe customer on record. Start a subscription first.\"}  (correct — this is the trigger for the fallback)\n- Network: POST /api/billing/start-trial → 500 Internal Server Error  (unexpected)\n- UI: red toast 'Could not start trial', user remains on /settings/billing. No redirect to Stripe.\n\nRoot cause: Settings.jsx openPortal (line 450) catches the 400 and calls startCheckout(currentPlan). startCheckout (line 307) always tries /billing/start-trial FIRST, and only recognises a payload with detail.error='trial_used' as its trigger to move on to the paid /payments/checkout branch. For cancelled.vo the trial endpoint returns HTTP 500 with a plain 'Internal Server Error' body (no JSON detail), so the trialUsed variable is false, the code takes the `!trialUsed` branch (line 323) and shows toast.error + returns without ever POSTing /payments/checkout.\n\nMitigation (main-agent):\nA. Change Settings.jsx:466 from `await startCheckout(currentPlan)` to `await startReactivateCheckout(currentPlan)` (import from `@/lib/reactivate`). This directly POSTs /payments/checkout {trial_days:0} — the same helper ToolLockGate and ReadOnlyLock already use. One-line fix, matches the app-wide reactivation contract.\nB. Optionally also fix the backend so /api/billing/start-trial returns 400 {detail:{error:'trial_used'}} for users whose trial was already consumed, instead of 500.\n\nWhy this is a real (not cosmetic) bug: spec 3.(a) says 'when backend returns 400 No Stripe customer on record, the UI must NOT dead-end; it should fall back to starting checkout (redirect to checkout.stripe.com).' Empirically the UI dead-ends — spec not met on web.\n\nBackend check: shared endpoints are otherwise correct — /api/payments/checkout returns real cs_test_ URLs, portal 400 message is exactly what the client pattern-matches on, /api/auth/me reports access_state=view_only for cancelled.vo. Only the /billing/start-trial 500 + Settings fallback branching combine to break the flow."
+}

@@ -1,0 +1,14 @@
+{
+  "/ai-tools/statement-decoder": {
+    "dark_class": false,
+    "body_bg": "rgb(234, 237, 240)"
+  },
+  "/app/chsp/tools": {
+    "dark_class": false,
+    "body_bg": "rgb(234, 237, 240)"
+  },
+  "/support": {
+    "dark_class": false,
+    "body_bg": "rgb(234, 237, 240)"
+  }
+}

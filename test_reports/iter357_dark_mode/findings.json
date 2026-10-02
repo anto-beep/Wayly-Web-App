@@ -1,0 +1,63 @@
+{
+  "html_class_dark": "theme-dark",
+  "dark": {
+    "pc_position_text": "Your rate of $250.00 per hour is above the published range of $85.00 to $115.00 for personal care.",
+    "pc_position_whitespace": "nowrap",
+    "pc_position_lineHeight": 33,
+    "pc_position_height": 33,
+    "pc_position_estLines": 1,
+    "pc_position_color": "rgb(255, 255, 255)",
+    "pc_position_overflow": false,
+    "pc_distance_text": "That is $135.00 above the top of the published range.",
+    "pc_distance_numhl_count": 1,
+    "pc_distance_numhl_color": "rgb(232, 149, 107)",
+    "pc_distance_numhl_weight": "700",
+    "pc_distance_numhl_sample": [
+      "$135.00"
+    ],
+    "pc_compare_bars_present": true,
+    "pc_charge_pin_present": true,
+    "dm_bar_track_count": 3,
+    "dm_bar_track_bg": "rgb(165, 81, 43)",
+    "stat_charged_bg": "rgb(14, 48, 51)",
+    "stat_your_share_bg": "rgb(14, 48, 51)",
+    "stat_range_bg": "rgb(14, 48, 51)",
+    "stat_range_testid": "pc-range",
+    "btn_save": {
+      "present": true,
+      "bg": "rgb(165, 81, 43)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "btn_pdf": {
+      "present": true,
+      "bg": "rgb(194, 104, 61)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "btn_eml": {
+      "present": true,
+      "bg": "rgb(92, 128, 99)",
+      "color": "rgb(255, 255, 255)"
+    }
+  },
+  "html_class_light": "",
+  "light": {
+    "pc_position_text": "Your rate of $250.00 per hour is above the published range of $85.00 to $115.00 for personal care.",
+    "pc_position_whitespace": "nowrap",
+    "pc_position_estLines": 1,
+    "pc_position_color": "rgb(192, 57, 43)",
+    "pc_position_overflow": false,
+    "pc_distance_text": "That is $135.00 above the top of the published range.",
+    "pc_distance_numhl_count": 1,
+    "pc_distance_numhl_color": "rgb(165, 81, 43)",
+    "pc_distance_numhl_weight": "700",
+    "stat_charged_bg": "rgba(14, 77, 82, 0.08)",
+    "stat_your_share_bg": "rgba(165, 81, 43, 0.09)",
+    "stat_range_bg": "rgba(66, 95, 71, 0.1)",
+    "stat_range_testid": "pc-range",
+    "btn_save_bg": "rgb(14, 77, 82)",
+    "btn_pdf_bg": "rgb(165, 81, 43)",
+    "btn_eml_bg": "rgb(66, 95, 71)",
+    "dm_bar_track_count": 3,
+    "dm_bar_track_bg": "rgba(0, 0, 0, 0)"
+  }
+}

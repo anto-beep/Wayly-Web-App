@@ -1,0 +1,39 @@
+{
+  "summary": "Mobile Add-Participant form parity verified end-to-end against web. All Their-details fields render exactly as web: First name (Required), Last name (Required), Date of birth (Optional, DD/MM/YYYY), Classification (dropdown Not sure yet + Class 1-8), Provider (ProviderPicker showing dropdown of both sibling providers 'Test Provider 8c1af9aa' and 'Acacia Aged Care' plus 'Add a different provider' link that toggles to free-text with a back link), Statement delivery (Not sure yet / Email PDF / Provider portal / Paper). Created participant 'TESTIter209 Parity' with Class 4 + Acacia Aged Care + Email PDF; POST /v2/participants succeeded, done step shows forwarding email testiter209-c37e63@in.wayly.com.au, and new card correctly shows 'Classification 4 · Acacia Aged Care'.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter209_p1.png",
+    "/app/test_reports/iter209_p2_preview.png",
+    "/app/test_reports/iter209_p3_form.png",
+    "/app/test_reports/iter209_class_open.png",
+    "/app/test_reports/iter209_provider_open.png",
+    "/app/test_reports/iter209_filled.png",
+    "/app/test_reports/iter209_done.png",
+    "/app/test_reports/iter209_final.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "participants.tsx line 407: `existing={active.map(p=>p.provider_name||'').filter(Boolean)}` correctly mirrors web sibling-provider derivation. Confirmed both siblings ('Test Provider 8c1af9aa' and 'Acacia Aged Care') appear in the dropdown.",
+    "ProviderPicker (participants.tsx 62-96) correctly handles both modes; toggle to freetext via 'Add a different provider' and back via 'Pick from existing providers' works. When there are no existing providers, it falls back to plain <Field> — matches web contract user confirmed.",
+    "Select component (ui.tsx 334-403) uses bottom-sheet Modal with proper testIDs of the form `${testID}-option-${value}`; empty value uses '-option-empty'. Consider ensuring the Provider modal shows a title — currently it does (label='Provider'), good.",
+    "Minor: In ProviderPicker `useState<'pick'|'type'>(uniq.length>0 && (!value||uniq.includes(value)) ? 'pick' : 'type')` is initialized once; if the sibling list loads asynchronously AFTER the form opens the picker could remain in 'type' mode. Not observed here (list preloaded before modal open) but worth a note.",
+    "The Provider Select uses `optional` label and shows 'Choose a provider' both in the placeholder text AND as the first option with value=''. This works, but selecting the empty option looks identical to placeholder — fine, matches web behaviour."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "seed_data_creation": "Created 1 participant on cathy@example.com: TESTIter209 Parity (Class 4, Acacia Aged Care, Email PDF, DOB 15/03/1955). Left in place as test data. Household now has 3 active participants (Dorothy Smith, Patricia Holloway, TESTIter209 Parity) and 1 additional-participant add-on billed at $24.50/fortnight.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile Add-Participant form now has full parity with web. Existing testIDs used: participants-add-btn, confirm-family-add, add-form-step, form-first-name, form-last-name, form-dob, form-classification, form-classification-option-{value}, form-provider-select, form-provider-select-option-{provider name}, form-provider-add-new, form-provider-pick-existing, form-provider (freetext branch), form-statement-format, form-statement-format-option-{value}, form-submit-add, add-done-step, add-done-btn. cathy@example.com sibling providers active in DB are 'Test Provider 8c1af9aa' and 'Acacia Aged Care'.",
+  "test_credentials": "cathy@example.com / testpass123"
+}

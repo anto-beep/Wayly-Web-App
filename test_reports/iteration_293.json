@@ -1,0 +1,51 @@
+{
+  "summary": "Iter293 attempted to complete the 5 AI-tool output-legibility checks iter292 could not reach (Classification Self-Check, Statement Decoder, Invoice Checker, Care Plan Reviewer, Family Coordinator) on web at desktop 1440x900. BLOCKER hit: password login for cathy@example.com / testpass123 via /login (data-testid=login-email-input / login-password-input / login-submit-button) did NOT authenticate — after clicking Sign in the URL stayed at /login and the marketing header still showed 'Sign in' / 'Start free trial'. Because 4 of the 5 tools are gated (Solo/Family plans), every one of them rendered the paywall lock screen ('X is available on Solo and Family plans.' + 'Start free 7-day trial' CTA) instead of their tool UI, so their OUTPUT panels were NEVER reachable. The 5th tool (Statement Decoder — free) DID render its paste-text UI and accepted the input, submit fired, and the loader progressed through 'Reading your statement...' / 'Decoding your statement... Auditing extracted data with pension-aware contribution rules.' with a running 92s counter, but decoder-result never appeared within the 90s wait window in this preview environment. No legibility verdicts (pass/fail) can be given for any of the 5 output panels this iteration.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "LoginPage /login", "issue": "Password sign-in for cathy@example.com / testpass123 (credentials from /app/memory/test_credentials.md — canonical ACTIVE Family user) does not authenticate. Filled data-testid=login-email-input + login-password-input, clicked login-submit-button, waited 4.5s — URL remained /login, header still showed 'Sign in / Start free trial'. Reproduced twice in this iteration. Blocks all gated flows (Classification Self-Check, Invoice Checker, Care Plan Reviewer, Family Coordinator, Support Plan Reviewer).", "selector": "[data-testid=login-submit-button]", "priority": "CRITICAL"},
+        {"component": "StatementDecoderTool /ai-tools/statement-decoder", "issue": "Free-tier paste-text decode did not produce decoder-result within a 90s wait after submit. Loader banner progressed correctly ('Reading your statement...' → 'Decoding your statement... Auditing extracted data with pension-aware contribution rules.') with a 92s counter visible, but result panel never appeared. Could be a slow LLM in the preview env or a completion bug — main agent should retry manually and confirm.", "selector": "[data-testid=decoder-result]", "priority": "HIGH"}
+      ],
+      "integration_issues": [
+        {"flow": "Login → gated AI tools", "issue": "Because /login never authenticated, all 4 gated tools redirected to the paywall lock card (see paywall copy 'X is available on Solo and Family plans.'). Tool UI (csc-quiz, inv1-file-input, cp-text/cp-submit, fc-input/fc-send) is NEVER rendered — so 0 output panels reachable.", "affected_selectors": ["login-submit-button", "csc-quiz", "inv1-file-input", "cp-text", "fc-input"]}
+      ],
+      "design_issues": [
+        {"screen": "Classification Self-Check /ai-tools/classification-self-check (locked view)", "issues": ["Legibility verdict: NOT VERIFIED this iter — paywall lock card rendered instead of tool because login failed. csc-result-header, csc-band, csc-wayly-summary, csc-comparison, csc-drivers were NEVER on the DOM."]},
+        {"screen": "Statement Decoder /ai-tools/statement-decoder (loader visible, output not reached)", "issues": ["Legibility verdict: NOT VERIFIED this iter — decoder-result never rendered within 90s. Loader itself is legible (grey pill 'Reading your statement...' + white/bg-surface card 'Decoding your statement... Auditing extracted data with pension-aware contribution rules.' with 92s counter — dark ink on light bg, clean)."]},
+        {"screen": "Invoice Checker /ai-tools/invoice-checker (locked view)", "issues": ["Legibility verdict: NOT VERIFIED this iter — paywall lock card rendered because login failed. inv1-file-input / inv1-result / inv1-summary / inv1-clean-reconciliation / inv1-meta-card were NEVER on the DOM."]},
+        {"screen": "Care Plan Reviewer (Support Plan Reviewer) /ai-tools/care-plan-reviewer (locked view)", "issues": ["Legibility verdict: NOT VERIFIED this iter — paywall lock card rendered because login failed. cp-text / cp-submit / cp-result / cp-file-result / cp-file-findings were NEVER on the DOM."]},
+        {"screen": "Family Coordinator / Aged Care Q&A /ai-tools/family-coordinator (locked view)", "issues": ["Legibility verdict: NOT VERIFIED this iter — paywall lock card rendered because login failed. fc-input / fc-send / fc-msg-assistant were NEVER on the DOM."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter293_web/csc.jpeg",
+    "/app/test_reports/iter293_web/sd.jpeg",
+    "/app/test_reports/iter293_web/inv.jpeg",
+    "/app/test_reports/iter293_web/cp.jpeg",
+    "/app/test_reports/iter293_web/fc.jpeg",
+    "/app/test_reports/iter293_web/results.json"
+  ],
+  "action_items": [
+    "CRITICAL: Investigate why POST /api/auth/login for cathy@example.com / testpass123 is not authenticating in the current preview build. The submit fires, but the SPA neither redirects nor stores a token — no visible error toast either. Check /var/log/supervisor/backend.*.log for login attempts; check frontend network tab for 401/500/CORS or a silent /api/auth/login failure. Once login is restored, re-run this iteration to reach the 5 output panels.",
+    "HIGH: Manual sanity-check on Statement Decoder — submit the free paste-text flow and confirm decoder-result renders in <2 min. If preview LLM is chronically slow, extend the frontend loader copy or shrink the wait budget.",
+    "After login is fixed, main agent (or a re-run of this iteration) should verify legibility of: csc-result-header + csc-wayly-summary + csc-comparison + csc-drivers; decoder-result body; inv1-summary + inv1-clean-reconciliation + inv1-meta-card + inv1-result; cp-result / cp-file-result / cp-file-findings; fc-msg-assistant bubble."
+  ],
+  "critical_code_review_comments": [
+    "Login regression risk: iter292 successfully logged cathy@example.com in for its 3 completed tools (CE / PC / BC). This iteration's failure suggests something changed on the auth path between iter292 and iter293. Given the review-request's context note ('reverted all tool-output panels from solid .panel-solid-* back to light .sect-* / .bg-surface cards') this shouldn't have touched auth — check if any other unintended change landed (e.g. axios base URL, auth interceptor, cookie/localStorage change) or if backend /api/auth/login is 5xx.",
+    "The paywall lock card shown on 4 gated tools has GOOD legibility (light bg-surface card, dark serif heading, muted body, teal underlined 'Sign in' link, clay 'Start free 7-day trial' CTA) — no legibility issue there; this is just noted so it isn't misread as an intentional design change to the tool output panels.",
+    "Statement Decoder loader UX: the 92-second countdown while 'Decoding your statement...' is visible is prominent but not obviously reassuring — copy might benefit from a 'typical time ~60s' hint or a spinner-with-percent, since a 90s wait with only a running counter feels like it could hang."
+  ],
+  "updated_files": ["/app/test_reports/iter293_web/results.json"],
+  "success_rate": {"backend": "N/A (frontend-only iteration)", "frontend": "0 of 5 tool outputs verified legible this iter. Login blocker prevented 4 gated tools; Statement Decoder LLM did not complete within 90s. Screenshots captured (5) but they show paywall lock or in-flight loader, not final output."},
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md — DID NOT authenticate in this iter; needs main-agent investigation).",
+  "seed_data_creation": "None new. /tmp/test_stmt.csv from iter292 still present and was fed into Invoice Checker attempt.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter293 blocked at LOGIN — cathy@example.com / testpass123 via /login (selectors data-testid=login-email-input, login-password-input, login-submit-button) does not authenticate; URL stays at /login. This must be fixed before the 5 tool-output legibility checks (CSC, SD, INV, CP, FC) can be exercised. When re-attempting: (a) verify /api/auth/login is 200 for cathy; (b) then hit each of the 5 tool URLs (already listed in review-request), interact with them (CSC = click first option in every div[data-testid^='csc-q-'] then click csc-submit; SD = paste text, submit, wait up to 120s for decoder-result; INV = set_input_files('/tmp/test_stmt.csv') on inv1-file-input then click inv1-upload-submit, wait up to 90s; CP = fill cp-text with sample care plan, click cp-submit, wait up to 120s for cp-result or cp-file-result; FC = fill fc-input, click fc-send, wait up to 60s for fc-msg-assistant with text length > 30 and no 'Thinking'). Screenshot each result and inspect for invisible/white-on-white/blended text.",
+  "rca of the issue": "Root cause of iter293 blocker: LOGIN endpoint or client-side auth handler is silently failing for cathy@example.com — form submits, no error is rendered, no navigation occurs. Cannot RCA further without backend logs / network trace. Recommend main agent open the browser DevTools Network tab against /login and inspect the /api/auth/login response."
+}

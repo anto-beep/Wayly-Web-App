@@ -1,0 +1,28 @@
+{
+  "summary": "Meridian invoice bug-fix verified end-to-end. Backend: 10/10 pytest cases pass — verdict=check_before_paying, 3× C2 personal-care post-Oct-2026, 1× C4 exit-fee, 1× C11 duplicate, 1× C10 lifetime-cap Tier-1 informational, header extraction returns provider='Meridian Home Care Pty Ltd' / abn='47831205619' / invoice_date='2026-11-02' / quarterly_budget=12904.0. C3 rate-mismatch fires as 1 rolled-up finding covering 5 lines (4× domestic assistance + 1× social support) once pension_status is set to self_funded_no_cshc via POST /situation (empty situation yields plausible rate range spanning 5-80% so 17.5% is spec-correctly silent). LF-1 letter bridge returns editor_path='/tools/letters-and-follow-ups/{entry_id}'. Frontend: cathy@example.com uploads meridian.pdf via /ai-tools/invoice-checker, the redesigned results screen renders in the exact 6-zone order (VerdictBanner @y=718 → tier-count-4 chip → Wayly Summary → InvoiceMetaCard → ConsequenceLadderList → CleanReconciliation → SituationForm). 5 draft-letter buttons attached to Tier-3/4 findings.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_inv1_meridian_bug.py",
+    "/app/test_reports/pytest/inv1_meridian.xml"
+  ],
+  "action_items": [
+    "Note for main agent: C3 rate mismatch is intentionally silent when situation.pension_status='unknown' because the plausible range (5-80%) engulfs the observed 17.5%. If the product intent is 'flag on upload even without pension status known', consider lowering the tier to T2 with a caveat (rather than full silence). Otherwise the current behaviour is spec-correct — the user just needs to select pension status in SituationForm to see it fire.",
+    "(Cosmetic, pre-existing from iter87) hydration warning about <span> inside <option> on /ai-tools/* still present."
+  ],
+  "critical_code_review_comments": [
+    "extractor.py _reassemble_rows correctly stitches column-per-line PDFs; header now returns quarterly_budget; ABN normalised to 11 digits.",
+    "checks.py run_checks propagates quarterly_budget to C4 pro-rata cap; C3 findings rolled up per (rate,expected) so 5 identical mismatches surface as 1 finding.",
+    "invoices.py upload_invoice writes provider_name/provider_abn/invoice_date/due_date/quarterly_budget to both DB doc and response — good for frontend meta card.",
+    "InvoiceCheckerTool.jsx renders zones in the exact spec order; data-testids present for all major sections.",
+    "Minor: C3 rolled-up suggested_question interpolates the raw service_type string which includes '5 hrs $77.20 $115.80 17.5% $20.27' remnants — the row-reassembler still leaves a noisy service_type when there are multiple money columns on one row. Consider stripping trailing tokens after the first non-numeric word run."
+  ],
+  "updated_files": ["/app/backend/tests/test_inv1_meridian_bug.py"],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "100% (6/6 zones + 5/5 letter buttons)"},
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, family plan)",
+  "seed_data_creation": "Test uploads persist as db.invoices docs owned by cathy; each run creates a new invoice_id. No cleanup fixture — safe because Invoice Checker docs are per-user.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Meridian bug fix verified iter88. Pytest suite /app/backend/tests/test_inv1_meridian_bug.py (10 tests, ~40s) is the regression harness — pdf is streamed from customer-assets CDN each run. Screenshot at /app/test_reports/inv1_meridian_results.png shows the final 6-zone layout. C3 only fires after pension_status is set; this is by design.",
+  "rca of the issue": "Prior 'all clear' output was caused by (a) money regex catching percentages and hrs quantities as $ amounts, breaking the (gross, contribution) mapping; (b) header not extracting quarterly_budget so C4 pro-rata cap defaulted; (c) year-less dates like '3 Oct' resolving to current year causing C2 to miss the Oct-2026 fully-funded gate; (d) exit-fee keyword list missing 'account closure'. The six-part fix (row-reassembler, money filter, 2-money+rate shape, expanded exit-fee keywords, invoice_year date resolution, quarterly_budget in header, C3 rollup) is verified working — all four answer-key expectations now surface."
+}

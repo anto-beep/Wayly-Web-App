@@ -1,0 +1,748 @@
+{
+  "screens": {
+    "dashboard": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/"
+      }
+    },
+    "ai-tools": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/ai-tools"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/ai-tools"
+      }
+    },
+    "statements": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/statements"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/statements"
+      }
+    },
+    "more": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/"
+      }
+    },
+    "ask": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/ask"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/ask"
+      }
+    },
+    "family": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/family"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/family"
+      }
+    },
+    "settings": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/settings"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/settings"
+      }
+    },
+    "invoices": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-flexDirection-18u37iz",
+            "tid": "",
+            "txt": "All\nIssues\nAll clear\nGlorious Services Pty Ltd\nMeridian Home",
+            "right": 603,
+            "width": 579
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73",
+            "tid": "invoices-provider-Glorious Services Pty Ltd",
+            "txt": "Glorious Services Pty Ltd",
+            "right": 408,
+            "width": 169
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1 r-maxWidth-dnmrzs r-overflow-1udh08x r-text",
+            "tid": "",
+            "txt": "Glorious Services Pty Ltd",
+            "right": 393,
+            "width": 139
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73",
+            "tid": "invoices-provider-Meridian Home Care Pty Ltd",
+            "txt": "Meridian Home Care Pty Ltd",
+            "right": 603,
+            "width": 187
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1 r-maxWidth-dnmrzs r-overflow-1udh08x r-text",
+            "tid": "",
+            "txt": "Meridian Home Care Pty Ltd",
+            "right": 588,
+            "width": 157
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx",
+            "tid": "",
+            "txt": "Personal care charged after 1 Oct 2026 (should be nil) \u00d76",
+            "right": 371,
+            "width": 312
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Personal care charged after 1 Oct 2026 (should be nil) \u00d76",
+            "right": 360,
+            "width": 290
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx",
+            "tid": "",
+            "txt": "Personal care charged after 1 Oct 2026 (should be nil) \u00d730",
+            "right": 378,
+            "width": 319
+          }
+        ],
+        "narrow": [],
+        "url": "/invoices"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-flexDirection-18u37iz",
+            "tid": "",
+            "txt": "All\nIssues\nAll clear\nGlorious Services Pty Ltd\nMeridian Home",
+            "right": 603,
+            "width": 579
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73",
+            "tid": "invoices-provider-Glorious Services Pty Ltd",
+            "txt": "Glorious Services Pty Ltd",
+            "right": 408,
+            "width": 169
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1 r-maxWidth-dnmrzs r-overflow-1udh08x r-text",
+            "tid": "",
+            "txt": "Glorious Services Pty Ltd",
+            "right": 393,
+            "width": 139
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73",
+            "tid": "invoices-provider-Meridian Home Care Pty Ltd",
+            "txt": "Meridian Home Care Pty Ltd",
+            "right": 603,
+            "width": 187
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1 r-maxWidth-dnmrzs r-overflow-1udh08x r-text",
+            "tid": "",
+            "txt": "Meridian Home Care Pty Ltd",
+            "right": 588,
+            "width": 157
+          }
+        ],
+        "narrow": [],
+        "url": "/invoices"
+      }
+    },
+    "letters": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/letters"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/letters"
+      }
+    },
+    "correspondence": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/correspondence"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/correspondence"
+      }
+    },
+    "care-plans": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/care-plans"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/care-plans"
+      }
+    },
+    "participants": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/participants"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/participants"
+      }
+    },
+    "documents": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/documents"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/documents"
+      }
+    },
+    "reports": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/reports"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/reports"
+      }
+    },
+    "timeline": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-ali",
+            "tid": "timeline-filter-care_plan",
+            "txt": "Care Plan Changes",
+            "right": 327,
+            "width": 141
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-ali",
+            "tid": "timeline-filter-reassessments",
+            "txt": "Reassessments",
+            "right": 456,
+            "width": 121
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Reassessments",
+            "right": 441,
+            "width": 91
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-ali",
+            "tid": "timeline-filter-contributions",
+            "txt": "Contribution Changes",
+            "right": 623,
+            "width": 159
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Contribution Changes",
+            "right": 608,
+            "width": 129
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-ali",
+            "tid": "timeline-filter-providers",
+            "txt": "Provider Changes",
+            "right": 765,
+            "width": 134
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Provider Changes",
+            "right": 750,
+            "width": 104
+          }
+        ],
+        "narrow": [],
+        "url": "/timeline"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-flexDirection-18u37iz",
+            "tid": "",
+            "txt": "All\nStatements\nCare Plan Changes\nReassessments\nContribution ",
+            "right": 789,
+            "width": 765
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-ali",
+            "tid": "timeline-filter-reassessments",
+            "txt": "Reassessments",
+            "right": 456,
+            "width": 121
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Reassessments",
+            "right": 441,
+            "width": 91
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-ali",
+            "tid": "timeline-filter-contributions",
+            "txt": "Contribution Changes",
+            "right": 623,
+            "width": 159
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Contribution Changes",
+            "right": 608,
+            "width": 129
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-ali",
+            "tid": "timeline-filter-providers",
+            "txt": "Provider Changes",
+            "right": 765,
+            "width": 134
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Provider Changes",
+            "right": 750,
+            "width": 104
+          }
+        ],
+        "narrow": [],
+        "url": "/timeline"
+      }
+    },
+    "contribution-position": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-ali",
+            "tid": "ce3-reconcile-btn",
+            "txt": "Reconcile this month",
+            "right": 375,
+            "width": 210
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx",
+            "tid": "",
+            "txt": "Reconcile this month",
+            "right": 350,
+            "width": 160
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1 r-fontFamily-4k2sph r-fontSize-ubezar r-let",
+            "tid": "",
+            "txt": "Reconcile this month",
+            "right": 350,
+            "width": 160
+          }
+        ],
+        "narrow": [],
+        "url": "/contribution-position"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/contribution-position"
+      }
+    },
+    "budget-scenarios": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-bor",
+            "tid": "bc2-class-4",
+            "txt": "Level 4 (current)",
+            "right": 421,
+            "width": 129
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Level 4 (current)",
+            "right": 406,
+            "width": 99
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-bor",
+            "tid": "bc2-class-5",
+            "txt": "Level 5",
+            "right": 502,
+            "width": 73
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Level 5",
+            "right": 487,
+            "width": 43
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-bor",
+            "tid": "bc2-class-6",
+            "txt": "Level 6",
+            "right": 583,
+            "width": 73
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Level 6",
+            "right": 568,
+            "width": 43
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-bor",
+            "tid": "bc2-class-7",
+            "txt": "Level 7",
+            "right": 664,
+            "width": 73
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Level 7",
+            "right": 649,
+            "width": 43
+          }
+        ],
+        "narrow": [],
+        "url": "/budget-scenarios"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-flexDirection-18u37iz",
+            "tid": "",
+            "txt": "Level 1\nLevel 2\nLevel 3\nLevel 4 (current)\nLevel 5\nLevel 6\nLe",
+            "right": 745,
+            "width": 696
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-bor",
+            "tid": "bc2-class-4",
+            "txt": "Level 4 (current)",
+            "right": 421,
+            "width": 129
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Level 4 (current)",
+            "right": 406,
+            "width": 99
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-bor",
+            "tid": "bc2-class-5",
+            "txt": "Level 5",
+            "right": 502,
+            "width": 73
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Level 5",
+            "right": 487,
+            "width": 43
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-bor",
+            "tid": "bc2-class-6",
+            "txt": "Level 6",
+            "right": 583,
+            "width": 73
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-text-146c3p1",
+            "tid": "",
+            "txt": "Level 6",
+            "right": 568,
+            "width": 43
+          },
+          {
+            "tag": "DIV",
+            "cls": "css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-bor",
+            "tid": "bc2-class-7",
+            "txt": "Level 7",
+            "right": 664,
+            "width": 73
+          }
+        ],
+        "narrow": [],
+        "url": "/budget-scenarios"
+      }
+    },
+    "cases": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/cases"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/cases"
+      }
+    },
+    "key-contacts": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/key-contacts"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/key-contacts"
+      }
+    },
+    "profile": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/participant/0c538637-b0dd-4982-8f78-b32814c6a5eb"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/participant/0c538637-b0dd-4982-8f78-b32814c6a5eb"
+      }
+    },
+    "plan-billing": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/plan-billing"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/plan-billing"
+      }
+    },
+    "usage": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/usage"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/usage"
+      }
+    },
+    "support": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "narrow": [],
+        "url": "/support"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "narrow": [],
+        "url": "/support"
+      }
+    }
+  },
+  "errors": []
+}

@@ -1,0 +1,27 @@
+{
+  "summary": "Re-verified ONE bug from iteration_173 on mobile Expo web preview after login as cathy@example.com (Family plan). Bug #2 (teal CTA must render WHITE text) is now FIXED via the shared <T> component style-order change in /app/mobile/src/components/ui.tsx line 271 (style={[{ color }, merged]}). DOM computed styles on the Dashboard 'Upload a Statement' CTA: bg=rgb(14,77,82) teal, text color=rgb(255,255,255) WHITE — matches expected. Regression check confirms normal body/muted text elsewhere is unaffected: subtitle 'All 9 tools · 5 family seats · Sunday digest' renders muted dark rgb(82,75,66), budget line same, Smart Summary body dark rgb(28,43,45), greeting sage, plan badge primary teal. Outline 'Key Contacts' button still shows teal text on transparent/light bg (readable). No text inverted to white on light backgrounds.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/tmp/dashboard_v2.png", "/tmp/dashboard_verify.png"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix applied correctly in /app/mobile/src/components/ui.tsx L271: style={[{ color }, merged]} — caller-supplied color in merged now wins over the default while variant defaults remain a fallback for callers that don't pass a color. Good."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "1/1 re-verification PASS (bug #2 fixed, no regression observed)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 6 bugs from iteration_173 now verified fixed on mobile. Dashboard teal CTA text renders white (rgb 255,255,255) on teal bg (rgb 14,77,82). No regressions in ordinary text colors after the <T> style-order change.",
+  "rca of the issue": "Previous (iter 173): T component rendered style={[merged, { color }]} — default color came AFTER caller's merged style, silently overriding caller color:'#fff'. Fix (iter 174-verified): swapped to style={[{ color }, merged]} so default is a fallback and merged (containing caller color) wins. Verified via getComputedStyle on the Pressable's inner Text element."
+}

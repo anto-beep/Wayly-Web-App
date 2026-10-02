@@ -1,0 +1,29 @@
+{
+  "summary": "Iter283 frontend-only retest of Wayly Statement Detail bolder-panel + multi-coloured stream headers on WEB (light+dark) and MOBILE. ALL 3 items PASS. (1) statement-notes-card renders panel-clay: light bg=srgb(0.924,0.868,0.847) with 4px clay left border rgb(165,81,43) and 'PRIVATE NOTE' label visible; dark bg=srgb(0.209,0.263,0.242) with 4px clay left border rgb(232,154,111). Clearly non-transparent and warmer than canvas (light canvas=rgb(234,237,240); dark canvas=rgb(6,32,31)). (2) statement-ask-wayly-card renders panel-teal: light bg=srgb(0.854,0.892,0.902) with 4px teal left border rgb(14,77,82); dark bg=srgb(0.091,0.254,0.268) with 4px teal left border rgb(79,168,174). Notes vs Ask bgs are clearly DISTINCT (clay vs teal) in both themes. (3) stream-card-* headers use inline backgroundColor cycling: stream-card-Independence=rgb(14,77,82) TEAL, stream-card-ATHM=rgb(165,81,43) CLAY. Inline style is NOT remapped in dark mode — computed backgroundColor identical to light. MOBILE parity: same inline stream colours render on /statement/{id} which embeds the decoder view (decoder-stream-breakdown + stream-card-Independence + stream-card-ATHM), teal + clay clearly distinct with white text and legible in default (light) rendering.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter283_light.jpeg",
+    "/app/test_reports/iter283_dark.jpeg",
+    "/app/test_reports/iter283_mobile_stmt.jpeg",
+    "/app/test_reports/iter283_mobile_streams_light.jpeg",
+    "/app/test_reports/iter283_mobile_streams_dark.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "The mobile /decode/{id} route does NOT render stream-card-* (no DecoderResultView streams for this statement) — the multi-colour stream test relies on the /statement/{id} route which embeds decoder-stream-breakdown. Not a bug (matches the retained decoder view in statement/[id].tsx) but worth flagging so future testers know where stream-card-* renders on mobile.",
+    "Statement in preview only has 2 streams so only the first 2 STREAM_TONES entries (teal + clay) are exercised; the remaining tones (terracotta-red, sage, dark-clay, dark-teal) are code-verified in DecoderResultView.jsx:333 and DecoderResultView.tsx:234 but not exercised at runtime — consider a >4-stream seed statement to visually confirm the full cycle."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend only)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Statement id 673fa982-367c-43ca-8ce8-4df5b8ba4f68 (Glorious Services Pty Ltd) has 2 streams: Independence + ATHM. Web route = /app/statements/{id}; mobile route = /statement/{id} (embeds decoder-stream-breakdown). Panel classes in /app/frontend/src/index.css:266-269 (panel-clay/teal/sage/terracotta) render color-mix at 13-18% + solid 4px left border and are NOT overridden by the dark theme remap at index.css:738. Stream headers use inline style={{backgroundColor: STREAM_TONES[sIdx%6]}} which bypasses the dark bg-[#hex] remap — verified same inline & computed value across light+dark. Dark mode was toggled via document.documentElement.classList.add('theme-dark','dark') on web; mobile web preview does not switch theme via that class (React Native web uses its own theme system), so mobile dark parity was not visually re-rendered — however inline-style colours are provably theme-independent."
+}

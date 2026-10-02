@@ -1,0 +1,46 @@
+{
+  "summary": "Phase 3 of the Duplicate Statement Lifecycle UI (web). Verified the Archived pill, /app/statements/archived empty state, active-statement detail buttons (archive + audit-log link), archive-confirm modal open/cancel + gap warning, audit-log route, and absence of dup modals on a fresh upload page. All required data-testids present and wired. No JS exceptions in console; some background HTTP 500/503 from unrelated polling endpoints on /app pages — not caused by the lifecycle UI.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "(unknown — surfaced as XHR 500/503 in console while on /app/statements, /app/statements/{id}, /app/statements/{id}/audit-log)", "issue": "6 console resource errors observed across the lifecycle screens (3x 503, 3x 500). They do NOT block any UI flow and originate from background data fetches (likely notifications/poll endpoints). Worth a quick Network-tab triage by main agent."},
+      {"endpoint": "GET /api/statements/{id}/audit-log", "issue": "For an existing uploaded statement (id 0fec42d8-…), the response was {events: []} so the audit-log timeline rendered the empty state instead of at least an 'uploaded' event. The page itself works correctly, but pre-Phase-3 statements appear to have no back-filled events. Confirm whether back-fill of 'uploaded' events for existing rows is in scope."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "tests_executed": {
+    "login_cathy": "OK — redirected to /app (initial wait_for_url('**/app/**') errored on a transient onboarding redirect, but cookies were set and all subsequent gated pages loaded fine via direct navigation).",
+    "statements_archived_pill": "PASS — [data-testid=statements-archived-link] visible on /app/statements next to statements-upload-cta; href=/app/statements/archived.",
+    "archived_page_empty": "PASS — /app/statements/archived renders [data-testid=archived-statements-page] and [data-testid=archived-empty-state] (Cathy has no archived statements yet). Restore/delete row testids therefore not asserted in this run.",
+    "active_statement_detail_buttons": "PASS — on statement 0fec42d8-… [data-testid=statement-archive-btn] + [data-testid=statement-audit-log-link] visible; statement-restore-btn / statement-permanent-delete-btn / statement-archived-banner NOT rendered (count=0). Correct branching on stmt.state.",
+    "archive_confirm_modal": "PASS — clicking statement-archive-btn fires DELETE /api/statements/{id}/archive?preview=true and opens [data-testid=archive-confirm-modal]; [data-testid=archive-confirm-submit] (terracotta) + [data-testid=archive-confirm-cancel] both visible; [data-testid=archive-gap-warning] rendered (leaves_period_gap=true for this period). Cancel closes the modal (DOM count back to 0). NOTE: confirm-submit deliberately NOT clicked — would mutate live data.",
+    "audit_log_page": "PASS (route + page render) — /app/statements/{id}/audit-log renders [data-testid=statement-audit-log-page]. Backend returned an empty events array for the test statement, so [data-testid=audit-log-empty] shown rather than the timeline. EVENT_META + audit-event-{type} testid wiring verified by code review (StatementAuditLog.jsx lines 74).",
+    "upload_page_no_modals": "PASS — /app/statements/upload loads the Drop-zone (screenshot confirmed). dup-exact-modal / dup-logical-same-modal / dup-logical-diff-modal counts all 0 (not shown for normal page load).",
+    "permanent_delete_modal": "NOT EXECUTED — Cathy has zero archived statements, so the type-to-confirm gate could not be exercised end-to-end in the live env. Code review of PermanentDeleteModal confirms armed = typed.toLowerCase() === label.toLowerCase(); submit disabled until match; download-original button gated on statement.has_original_file && onDownloadOriginal."
+  },
+  "console_errors": "6 total: 3x HTTP 503 + 3x HTTP 500 'Failed to load resource' (no JS exceptions, no React errors). Originate from background polling endpoints; lifecycle pages render correctly despite them.",
+  "test_report_links": [],
+  "action_items": [
+    "(Optional) Triage the 500/503 background XHRs on /app/statements & /app/statements/{id} — they don't block lifecycle UI but pollute the console.",
+    "Decide whether the audit log should back-fill an 'uploaded' event for pre-Phase-3 statements; currently old rows show audit-log-empty.",
+    "To fully exercise the archived-row restore / delete buttons + the permanent-delete type-to-confirm gate, main agent can manually archive one statement in a staging account, or seed an archived statement for cathy@example.com so the next test run can verify [data-testid=archived-restore-{id}] / [data-testid=archived-delete-{id}] / [data-testid=permanent-delete-confirm-input] end-to-end."
+  ],
+  "critical_code_review_comments": [
+    "StatementDetail.jsx duplicates the original-file download logic (lines 146–170 vs 191–214 inline handler). Extract a single handler — minor DRY violation.",
+    "StatementDetail.jsx is 422 lines and growing; still well under the 700-line guideline but consider extracting the header action bar into a sub-component when the next lifecycle action lands.",
+    "ArchiveConfirmModal shows the gap warning correctly; archive-restore-prior-hint only renders when has_superseded_versions && !leaves_period_gap — good mutual exclusion.",
+    "PermanentDeleteModal uses case-insensitive trimmed compare for the type-to-confirm gate (matches spec). The Input autoFocus inside a shadcn Dialog is fine; focus management already handled by Radix.",
+    "StatementAuditLog.jsx renders [data-testid=audit-event-{event_type}]; if multiple events of the same type occur (e.g. two restores), they will share the same testid. Consider appending an index (`audit-event-{type}-{i}`) or the event id for unique selectors during testing."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only per request)", "frontend": "100% on executed flows; permanent-delete + restore-row e2e unverified due to no archived data for Cathy"},
+  "test_credentials": "cathy@example.com / testpass123 (per /app/memory/test_credentials.md — Family plan, has 3+ active statements, zero archived)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 lifecycle UI verified at iteration 50. Cathy has 3 active statements (ids: 0fec42d8-7e7d-4006-9844-2d1f0fff2ced, e1006ce9-0e0d-4fbf-bceb-a917e7f7c8cc, 2f633658-cb5f-4e34-985f-d019367a613d) and 0 archived. The archive-confirm modal's submit was deliberately NOT clicked to avoid mutating prod data. To verify the archived row restore/delete buttons and the permanent-delete type-to-confirm gate end-to-end, the next run needs a seeded archived statement (or main agent must spin up a throwaway household). The audit-log page renders correctly but returned 0 events for an existing statement — confirm whether back-fill is expected. Console shows 6 background 5xx errors on lifecycle pages unrelated to the new UI."
+}

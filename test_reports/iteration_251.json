@@ -1,0 +1,36 @@
+{
+  "summary": "Re-verified Items 5 (AI punctuation) and 8 (tagline). WEB: /app landing hero-eyebrow renders exactly 'AGED CARE, MADE EASY' (no trailing period, no em/en dashes). Care Plan detail (/app/care-plans/9905bc8b-...) as cathy@example.com: question-script (data-testid) has 0 em dashes and 0 en dashes across all 13 verbatim questions; main content area has 0 em/en dashes. Follow-up email draft modal (email-subject and email-body) both contain 0 em/en dashes; sanitizeAI is correctly applied to subject/body on render. MOBILE: /login (brand-tagline testID) and /signup both display 'AGED CARE, MADE EASY' identical to web, sourced from shared BRAND_TAGLINE constant. All regression checks pass, landing/care-plan detail/mobile login/signup all load without blocking errors. No parity issues.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": [
+        {"component": "Login/Signup View text node", "issue": "Console warns: 'Unexpected text node: . A text node cannot be a child of a <View>.' Likely stray whitespace/newlines directly inside a <View> in login or signup screens. Not blocking; cosmetic. Reference: /app/mobile/app/login.tsx or /app/mobile/app/signup.tsx"}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "(Low priority) Fix mobile React Native warning 'Unexpected text node' on login/signup by removing stray whitespace/newlines that sit directly inside a <View> (must be inside <Text> or wrapped)."
+  ],
+  "critical_code_review_comments": [
+    "sanitizeAI is applied consistently at render time on Care Plan detail: finding title/detail (lines 65-66), suggested_question in All-Findings list (line 89), question-script (line 211), All-findings summary (line 234), email-subject value (line 655), email-body value (line 666), and copy-to-clipboard (line 335). Shared BRAND_TAGLINE constant used by both frontend/src/lib/brand.js and mobile/src/config/brand.ts, and consumed by DualFlagshipHero (hero-eyebrow) and mobile login/signup screens. Items 5 and 8 are fully fixed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend only)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Items 5 (AI dashes) and 8 (tagline parity) verified fixed on both web and mobile. Web care-plan-detail: verified on plan id 9905bc8b-5ed8-4490-a9a7-f53daef4a1ef (Glorious Services Pty Ltd). Follow-up email modal opens via role=button name='Follow-up email'; email-subject/email-body are textarea/input elements accessible via input_value(). Mobile expo web preview URL: https://wayly-care-review.expo.preview.emergentagent.com — brand-tagline testID is present on /login and /signup.",
+  "rca of the issue": "N/A - both items verified fixed."
+}

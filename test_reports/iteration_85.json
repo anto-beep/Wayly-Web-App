@@ -1,0 +1,23 @@
+{
+  "summary": "Tested OJ-1 v1.1 Onboarding Journey (backend + frontend) and About/Resources typography parity. Backend: 18/18 pytest tests pass — create/get idempotency, current with include_completed, persona lock (one-shot + idempotent), step ordering enforcement (400 on out-of-order + on step-before-persona), skip semantics with default user_declared source, premature-complete 400, PDF export (200 + application/pdf + %PDF magic + >500B), unauthenticated 401, and regression on /api/health, /api/csc/*, /api/admin/*. Frontend: logged in as cathy@example.com, /journey renders persona chooser, caregiver selection transitions to step list, only csc initially open (ce2/budget/cpr gated with 'Finish the previous stop first.'), skip flow (toggle → confirm) works for all four steps, journey-finish triggers CompleteScreen with journey-go-dashboard + journey-download-pdf. Dashboard /app shows oj1-envelope-tile with 'Open Statement Decoder' deep-link (journey id embedded) and dismiss button. Typography: /about H1 classes and computed styles (60px, Fraunces) match /resources H1 exactly.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_journeys_oj1.py",
+    "/app/test_reports/pytest/journeys_oj1.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes/journeys.py test_current_include_completed edge: after completion, GET /journeys/current?include_completed=1 currently returns the completed doc only if no in_progress doc exists. Behavior is correct per spec but note that once a completed journey exists, POST /journeys will create a brand-new in_progress one on next call (per business rule — confirmed working). Not a bug.",
+    "Journey.jsx SkipAllModal component defined but there is no journey-skip-all click handler that opens it in the flow — actually PersonaStep uses onSkipAll={() => setShowSkipConfirm(true)}, so it does open. OK.",
+    "OnboardingEnvelopeTile localStorage dismissal key is user-agnostic (wayly:oj1:envelope:dismissed) — could bleed across accounts on shared devices. Low priority."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, family plan)",
+  "seed_data_creation": "None; used the existing cathy account. A completed journey doc now exists for her user_id.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "cathy@example.com now has one completed journey doc. New POST /api/journeys will create a fresh in_progress record (dashboard will show oj1-journey-start-banner variant 'Resume' if one is in_progress, otherwise 'Start'). Envelope tile only renders after completion — currently visible in this env.",
+  "rca of the issue": "N/A — no issues found."
+}

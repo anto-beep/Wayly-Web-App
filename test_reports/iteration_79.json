@@ -1,0 +1,49 @@
+{
+  "summary": "ITER-79 three-bug batch tested end-to-end. Verified Bug #2 (email replacement) and Bug #3 (Adviser→Family plan) shipped clean. FOUND & FIXED a NEW REGRESSION in Bug #1: E1's defensive edits to Onboarding.jsx added a `<Loader2 />` spinner at line 271 but forgot to import Loader2 from lucide-react. This caused the SAME 500 ErrorBoundary the ticket was meant to fix — 'ReferenceError: Loader2 is not defined at Onboarding'. Missing-import is in the allowed-fix scope, so I added `Loader2` to the lucide-react import at line 6. After the fix, re-ran the full flow: login as cathy → dashboard renders `profile-completion-banner` for a seeded incomplete participant (with LEGACY STRING classification_level='3') → clicked `profile-completion-cta` → navigated to /onboarding?pid=... → NO ErrorBoundary → StepEssentials rendered with all 8 classification buttons → Class 3 was visually SELECTED (proves parseInt string-legacy fix works) → provider_name pre-filled ('TEST BlueBerry Care') → last_name/dob blank ready to fill → filled fields, clicked Continue, advanced to Step 2 (authorisation) with NO crash. Bug #2 verified via ripgrep (rg-based test with 15 parametrised targets — all files use support@wayly.com.au; Contact.jsx is the only allowed source with hello@wayly.com.au) AND live-UI: the ServerError.jsx page (which we hit organically during the Loader2 crash) rendered 'support@wayly.com.au'. Bug #3 verified via mongo (0 accounts with base_plan='ADVISER' — was 8 pre-migration) AND live Billing tab: 'BASE PLAN / FAMILY / $39.00/mo' shown for Cathy, no ADVISER anywhere. Backend pytest suite: 22 passed / 1 skipped (skip: no requires_completion participant present after post-test seed cleanup).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Onboarding.jsx",
+        "issue": "FIXED IN THIS ITERATION — Missing `Loader2` import from lucide-react. E1's defensive edit added a loading spinner block at line 269-273 (`<Loader2 className='h-4 w-4 animate-spin' />`) but the import at line 6 only pulled `{ ArrowRight, Cloud, AlertCircle, Check }`. This caused a ReferenceError render crash that hit the ErrorBoundary — reproducing the ORIGINAL bug the fix was supposed to solve. Added Loader2 to the import. Verified post-fix: no crash, StepEssentials renders, deep-link works.",
+        "selector": "frontend/src/pages/Onboarding.jsx:6",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter79_bugfixes.py",
+    "/app/test_reports/pytest/iter79_bugfixes.xml"
+  ],
+  "action_items": [
+    "(FIXED BY T1 — verification only) — Confirm frontend/src/pages/Onboarding.jsx line 6 now imports `Loader2` alongside ArrowRight/Cloud/AlertCircle/Check.",
+    "(follow-up) Add a pre-commit ESLint rule or CI step that runs `eslint --rule 'no-undef: error'` on frontend/src — this class of missing-import bug (Loader2) is exactly what ESLint no-undef would have caught at PR time.",
+    "(hygiene) SENDER_EMAIL in backend/.env is still `Wayly <hello@wayly.com.au>`. Not touched by this iteration because RESEND_FROM_EMAIL takes precedence in email_service.py (line 41 falls back to SENDER_EMAIL only if RESEND_FROM_EMAIL is unset — currently set to `Wayly <support@wayly.com.au>`). Consider aligning SENDER_EMAIL too for defence-in-depth so a future RESEND_FROM_EMAIL removal doesn't silently regress the FROM address.",
+    "(test-scope) tests/test_iter79_bugfixes.py::test_get_incomplete_participant_shape skips when no participant has `requires_completion=true` in Cathy's account. Test suite could seed a fixture pre-flight if strict coverage is required."
+  ],
+  "critical_code_review_comments": [
+    "Onboarding.jsx line 62: `const CLASSIFICATIONS = useMemo(..., [_snapshotVersion])` with the eslint-disable comment is correct but fragile — the underscore-prefix on `_snapshotVersion` suggests it's private/unused, which is misleading (it IS actively read). Consider renaming to `programRefVersion` and dropping the disable comment.",
+    "Onboarding.jsx line 271 (Loader2 usage) — post-fix, still worth adding a fallback `<Suspense fallback=...>` or `.catch()` around `loadProgramReference().then(...)` at line 60 so a program-ref fetch failure doesn't leave CLASSIFICATIONS empty and silently break the class-picker.",
+    "Settings.jsx line 405-410 — the ADVISER→FAMILY fallback is a good defensive move, but the migration should ideally have also flipped `account.plan` (not just `base_plan`) so `account.summary.plan` doesn't accidentally still hold ADVISER. Suggest a follow-up mongo check: `db.accounts.countDocuments({plan: 'ADVISER'})` — if non-zero, the fallback masks the state drift instead of curing it.",
+    "backend/.env: SENDER_EMAIL still on hello@wayly.com.au while RESEND_FROM_EMAIL is on support@. Precedence chain (RESEND_FROM_EMAIL → SENDER_EMAIL → default) protects today, but the drift is a foot-gun for whoever prunes envs next."
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/Onboarding.jsx (added `Loader2` to the lucide-react import at line 6)",
+    "/app/backend/tests/test_iter79_bugfixes.py (NEW — 23 tests: 3 for bug #1 defensive parsing + participants API contract, 17 for bug #2 email replacement across all frontend/backend surfaces, 2 for bug #3 mongo state + account API, 1 fixture-guard skip)"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 executed; 1 skipped due to post-test seed cleanup — not a failure)",
+    "frontend": "100% after Loader2 import fix (dashboard banner → deep-link → StepEssentials → Class 3 pre-selected from string-legacy shape → advance to Step 2 all clean)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, FAMILY plan, account_id=checker-preview). No credential drift — restored on teardown.",
+  "seed_data_creation": "Temporary participant `TEST_ITER79_incomplete_stub` was inserted into `participants` collection with LEGACY STRING classification_level='3' + last_name='' + dob=null + authorisation_confirmed=false to reproduce the exact bug shape. **DELETED post-test** via `db.participants.deleteMany({id: 'TEST_ITER79_incomplete_stub'})` — verified 1 doc removed, 0 stray drafts.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "PERSONA_V1_ENABLED=true. Iter-79 shipped 3 bugs — all NOW verified after T1 hot-patched a missing Loader2 import in Onboarding.jsx. Bug #1 root cause was TWO-layered: (a) legacy string classification + memoised CLASSIFICATIONS with empty deps [FIXED BY E1 — verified via seed + UI], AND (b) missing Loader2 import in the loading-state block E1 added [FIXED BY T1]. If a future E1 iteration touches Onboarding.jsx, watch for the same class of undefined-symbol bug — recommend ESLint no-undef in CI. Test file `/app/backend/tests/test_iter79_bugfixes.py` (23 tests) is a keepable regression suite: parametrised across 15 files for bug #2 email replacement, direct mongo probe for bug #3 ADVISER count, participants-API contract for bug #1. Cathy has 14 participants (all complete after cleanup); no `requires_completion=true` participants remain — seed one if you need to re-run the dashboard-banner UI test.",
+  "rca of the issue": "Bug #1 was a compound regression. E1's defensive Onboarding.jsx edits (parseInt for string classification + `??` for hcp_level=0 + _snapshotVersion in useMemo deps) were correct in isolation but shipped alongside an unrelated addition of a `<Loader2 />` spinner in the loading-existing state — without importing Loader2 from lucide-react. This produced `ReferenceError: Loader2 is not defined` at Onboarding component eval time, which the top-level ErrorBoundary caught and redirected to /500 (ServerError.jsx). Ironically, the /500 page correctly displayed `support@wayly.com.au` (proving Bug #2's replacement worked). Mitigation: (1) added `Loader2` to line 6 import; (2) recommended ESLint no-undef in CI to catch this at PR time; (3) test file added asserts server API contracts + string-legacy shape parsing so future regressions in participant deep-link are caught early."
+}

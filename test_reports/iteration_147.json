@@ -1,0 +1,22 @@
+{
+  "summary": "Verified the Participant+Family signup bug fix (Caren-style second participant now pre-created). Backend: 8/8 pytest tests PASS covering signup, v2/participants stub semantics (is_primary=false), primary-slot preservation, default derivation, no-downgrade guarantee, and legacy /api/participants create becoming primary when only a non-primary stub exists. Frontend: verified /signup?plan=family renders the second-participant block with participant-specific copy, field sets match between participant and caregiver roles (first_name required + relationship optional), and end-to-end submit fires POST /v2/participants (first_name=Caren, is_primary=false) BEFORE the Stripe Checkout redirect. Auto-heal on /app/participants verified by code review (logic matches spec; idempotent by first_name, gated on exactly 1 active participant, intent cleared on success).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter147_signup_family_participant.py",
+    "/app/test_reports/pytest/iter147.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "batch2_routes.py POST /participants is dead code — the participant_profile router (registered first at line 6403 of server.py) shadows POST /api/participants with a stricter Tier1 schema (first_name/last_name/dob/classification_level/pension_status/provider_name/statement_delivery/authorisation_confirmed). The fix in batch2_routes.py (has_primary count-based derivation) is never reached in production; the equivalent correct logic lives in participant_profile.py line 380-415 (is_primary=(existing_primary is None)). The batch2 fix isn't harmful, just redundant — consider removing or documenting the shadowing.",
+    "The signup flow's fallback (localStorage intent) plus the auto-heal on Participants page provide good safety net for legacy accounts, but note the auto-heal only triggers with EXACTLY 1 active participant. If the user manually created 2 participants via UI before ever visiting /app/participants, the intent will linger — cleanup on account load might be safer (clear intent whenever list already contains a participant with matching first_name)."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter147_signup_family_participant.py"],
+  "success_rate": {"backend": "100% (8/8)", "frontend": "100% (all verified flows pass)"},
+  "test_credentials": "Ad-hoc created: autotest+*@example.com / TestPass!2026 (unique per run)",
+  "seed_data_creation": "Each pytest run creates 2 disposable user accounts via /auth/signup",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter 147 verified the participant+family signup pre-create fix end-to-end. Backend contract tests live in /app/backend/tests/test_iter147_signup_family_participant.py (fast, ~4s). Frontend testids to use: signup-role-participant, signup-role-caregiver, signup-second-participant-block, signup-second-participant-toggle, signup-second-participant-first-name, signup-first-name-input, signup-last-name-input, signup-email-input, signup-password-input. Note: POST /api/participants is actually handled by participant_profile router (Tier1 strict schema), NOT batch2_routes.py.",
+  "rca of the issue": "Original bug: John's Caren was stored only in localStorage as an 'intent' from Signup.jsx and required John to click 'Set up X now' from the All Done page. He never did, so Caren was never persisted. Fix confirmed: Signup.jsx now POSTs /v2/participants with is_primary=false immediately after successful signup and BEFORE the Stripe redirect. Participants.jsx has a client-side auto-heal for existing legacy accounts. Primary-derivation in both /participants (participant_profile router) and /v2/participants uses 'no primary exists' rather than 'zero participants exist', so the non-primary stub never displaces the true primary."
+}

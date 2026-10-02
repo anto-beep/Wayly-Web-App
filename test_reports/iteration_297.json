@@ -1,0 +1,60 @@
+{
+  "summary": "Iter 297 full-stack regression of the UI/UX polish pass (sect-* solid brand panels, clickable Statement Decoder graphics, PageIntro eyebrow removal, Pricing 'RECOMMENDED' badge, About/Contact redesign, Journey hero band + benefits + progress, mobile DecoderResultView + /journeys, access_state fixtures). Backend: 3/3 access_state fixtures PASS (cathy=active, trialactive=trial, cancelled.vo=view_only). trialactive fixture re-seed from iter296 is confirmed working. Web: /about, /contact (form submit -> contact-success), /pricing (RECOMMENDED badge fully visible above card in BOTH light and dark, featured price white rgb(255,255,255) at 36px), /journey (progress + step-list; benefits strip only renders in persona step which is bypassed for onboarded cathy), Handover Pack authenticated tool page confirms (a) NO eyebrow above H1 (aboveH1Count=0) and (b) sect-teal/clay/sage panels are solid rgb(14,77,82)/rgb(165,81,43)/rgb(66,95,71) with WHITE inner text in light mode; dark mode still legible (dark surface rgb(14,48,51) + white text). Statement Decoder click flow verified by code inspection (money-graphic-donut/gov/you and severity-graphic-* rendered as <button> with onClick scrollToFirst handlers) — no saved statements in preview DB for cathy so live click-through was skipped. Mobile: /journeys renders gradient hero linear-gradient(114.52deg,rgb(14,77,82),rgb(16,54,58)) + 25% progress ring + all 4 journey-step-* cards + 3 journey-more-* tiles. Mobile DecoderResultView code review confirms decoder-summary-banner uses colors.primary (teal) with white text and stream cards use STREAM_TONES solid teal/clay with white labels; the who-paid bar, stream cards and severity groups are Pressable/expandable. Old iter296 responder-prop console warnings still present on /journeys — cosmetic only.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": [
+        {"component": "Pressable/View responder handlers", "issue": "Non-blocking console warnings 'Unknown event handler property onStartShouldSetResponder/onResponderGrant/onResponderMove/onResponderRelease/onResponderTerminate/onResponderTerminationRequest' still fire on the mobile web preview after login. Cosmetic log noise only; taps still work. Same finding as iter296. Reference: leaking through one of the RN wrappers on the root layout / journeys screen."}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_access_state_iter297.py",
+    "/app/test_reports/pytest/iter297_access_state.xml",
+    "/app/test_reports/iter297_about.jpg",
+    "/app/test_reports/iter297_pricing_light.jpg",
+    "/app/test_reports/iter297_pricing_dark.jpg",
+    "/app/test_reports/iter297_handover_light.jpg",
+    "/app/test_reports/iter297_handover_dark.jpg",
+    "/app/test_reports/iter297_journey.jpg",
+    "/app/test_reports/iter297_mobile_journeys.jpg",
+    "/app/test_reports/iter297_mobile_after_login.jpg"
+  ],
+  "action_items": [
+    "(Nice-to-have, carried over from iter296) Silence RN responder-prop console warnings on mobile /journeys (onStartShouldSetResponder etc. leaking to DOM).",
+    "(Not blocking) For deterministic frontend testing of the Statement Decoder graphic click flow on web, seed at least one statement for cathy@example.com — /app/statements list is currently empty so the live donut/legend click was verified by code inspection only."
+  ],
+  "critical_code_review_comments": [
+    "PageIntro (/app/frontend/src/components/PageIntro.jsx) has the eyebrow prop destructured but NEVER rendered — good, but consider removing the now-dead prop entirely to avoid dead-code confusion and to make the API honest.",
+    "index.css sect-* rules use `!important` and a broad :is() selector that whites-out EVERY nested text element without a bg-* class. Verified on Handover Pack — labels, list items and paragraphs are all rgb(255,255,255). Ok, but any future nested muted/secondary text inside a sect-* panel will need an explicit bg-* class or its own override.",
+    "StatementInsightGraphics: donut and legend rows use real <button type=button> with onClick — accessible, focus-ringed, tabbable, correct data-testids (statement-money-graphic, money-graphic-donut, money-graphic-gov, money-graphic-you, statement-severity-graphic, severity-graphic-donut, severity-graphic-*). Scroll targets fall back gracefully across three selectors each.",
+    "Pricing.jsx: 'Recommended' badge positioned with negative top offset so it sits ABOVE the tier-family card (measured badge.top=349.78 vs family.top=360.78) — no clipping in light OR dark mode. Featured price colour computed to rgb(255,255,255) at 36px inside the teal gradient card — legible.",
+    "About.jsx renders about-cluster-card with rgb(251,252,254) background — white/cream, no heavy full-colour panel. Matches spec.",
+    "Contact.jsx submit flow works end-to-end: contact-form -> contact-submit -> contact-success renders. contact-info-cards renders.",
+    "Journey.jsx has journey-progress + journey-step-list + coloured hero band; journey-benefits is inside journey-persona (only shown when user is NOT onboarded), so Cathy (already onboarded) sees the reduced layout without the persona strip — expected.",
+    "Mobile DecoderResultView.tsx: decoder-summary-banner backgroundColor=colors.primary; header line color 'rgba(255,255,255,0.85)'; stream-card uses STREAM_TONES=['#0E4D52','#A5512B',...] with white 'rgba(255,255,255,0.75)' labels; who-paid stacked bar + severity-group-toggle-* Pressables + anomaly-card-* Cards are all interactive. All required testIDs present.",
+    "Mobile /journeys renders gradient linear-gradient(114.52deg,#0E4D52,#10363A) + journeys-progress + all 4 journey-step-{csc,ce2,budget,cpr} + 3 journey-more-* tiles.",
+    "Backend access_state contract (_compute_access_state) is stable — three canonical fixtures now resolve to the expected states."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_access_state_iter297.py",
+    "/app/test_reports/iteration_297.json"
+  ],
+  "success_rate": {"backend": "100% (3/3 access_state fixtures)", "frontend": "100% (all in-scope testIDs and visual assertions verified)"},
+  "test_credentials": "cathy@example.com / testpass123; trialactive@example.com / AccessTest1!; cancelled.vo@example.com / AccessTest1!",
+  "seed_data_creation": "None. Suggest seeding 1+ statement for cathy for future decoder-graphic click regression.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 9 items in the iter297 review request are green. Web sect-* panels are solid brand colour + white text (light & dark), Pricing badge unclipped in both modes, About/Contact redesigned, Journey has hero+progress, PageIntro has no eyebrow, StatementInsightGraphics has fully clickable donuts/legend (code-verified — no saved statements for cathy in preview DB to click through live). Mobile /journeys and DecoderResultView code both use solid teal/clay banners + white text and are tappable. Only residual is the cosmetic RN responder-prop warnings on mobile (also flagged iter296). Backend access_state contract is stable and the trialactive fixture re-seed from iter296 is holding.",
+  "rca of the issue": "No new issues. Prior iter296 fixture drift is resolved — trialactive@example.com now returns access_state=trial as expected."
+}

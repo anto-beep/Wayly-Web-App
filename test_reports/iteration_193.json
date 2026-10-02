@@ -1,0 +1,55 @@
+{
+  "summary": "Frontend-only parity test for iter 193 UI changes (Wayly): (1) Web + Mobile dashboard 'Things to know' collapsible default-collapsed, (2) Mobile AI Tools info-chip hide/show by paid vs trialing state, (3) Mobile shared PageIntro default-collapsed, (4) Mobile Plan & Billing Family copy '2 Participants included and 3 Caregiver seats', (5) Capitalisation of 'Participant'/'Caregiver' on web visible copy. Overall the changes work as designed. One residual lowercase 'participants' string found on the web Landing page ('Providers' block) and one on the Landing FAQ ('adult-child caregiver').",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Landing '/'", "issues": [
+          "Lowercase 'participants' remains in Providers bullet: 'Calmer conversations with participants who arrive already understanding their statement and their budget.' — should be 'Participants'. Reference: /app/frontend/src/pages/Landing.jsx:184",
+          "FAQ answer contains lowercase 'caregiver': 'Most households are run by an adult-child caregiver.' — should be 'Caregiver'. Reference: /app/frontend/src/pages/Landing.jsx:58 (visible only when FAQ is expanded)"
+        ]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Family plan feature list copy", "platform": "web", "issue": "Web Signup Family plan bullets read 'Track two parents on one plan / Up to 5 Caregiver seats' while mobile Plan & Billing now reads '2 Participants included and 3 Caregiver seats'. Not requested to change on web in this iteration, but flagged for parity awareness.", "expected": "Mobile copy: '2 Participants included and 3 Caregiver seats'", "actual": "Web copy still: 'Track two parents on one plan' + 'Up to 5 Caregiver seats'"}
+  ],
+  "verified_behaviours": {
+    "web_dashboard_things_to_know": "PASS — <details data-testid='things-to-know-details'> present, .open=false on mount, [data-testid='alerts-card'] hidden until 'things-to-know-btn' clicked, opens on click. Existing 'dashboard-more-detail' collapsible still works (open=false → true after click).",
+    "mobile_dashboard_things_to_know": "PASS — testID='dashboard-things-to-know-toggle' present, alerts-card not rendered until tap, tapping toggle reveals alerts-card. 'dashboard-more-detail-toggle' also present and works.",
+    "mobile_ai_tools_chips_paid_active": "PASS — Cathy (plan=family, subscription_status=active) sees NO 'Try free.' / 'Grounded in law.' / 'Private by default.' chips on /ai-tools.",
+    "mobile_ai_tools_chips_trialing": "PASS — trial30909@example.com (plan=family, subscription_status=trialing) sees all three chips on /ai-tools.",
+    "mobile_page_intro_collapsed_default": "PASS — Documents screen shows 'How this works' (testID='page-intro-toggle') collapsed by default; WHAT THIS DOES / HOW TO USE IT / WHAT YOU GET cards only appear after tap.",
+    "mobile_plan_billing_family_copy": "PASS — /plan-billing shows '2 Participants included and 3 Caregiver seats' for Family; no 'Up to 4 participants' string present.",
+    "web_capitalisation_pricing": "PASS — no lowercase 'participant(s)' or 'caregiver(s)' found in visible Pricing page copy.",
+    "web_capitalisation_signup": "PASS — no lowercase 'participant(s)' or 'caregiver(s)' in visible Signup copy (right-hand plan bullets capitalised).",
+    "web_capitalisation_participants_page": "PASS — /app/participants shows 'Participants', 'additional Participants', 'Removed Participants' all capitalised."
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix lowercase 'participants' in /app/frontend/src/pages/Landing.jsx:184 ('Calmer conversations with participants...' → 'Participants').",
+    "Fix lowercase 'caregiver' in /app/frontend/src/pages/Landing.jsx:58 FAQ answer ('adult-child caregiver' → 'Caregiver').",
+    "(Optional / not requested this iteration) Bring web Signup Family plan bullets into copy-parity with mobile: 'Track two parents on one plan' + 'Up to 5 Caregiver seats' vs mobile's '2 Participants included and 3 Caregiver seats'."
+  ],
+  "critical_code_review_comments": [
+    "ai-tools.tsx chip-visibility logic (showInfoChips = !hasFullAccess || isTrialing) matches the spec.",
+    "mobile PageIntro default state useState(false) correctly makes it collapsed on all mobile screens.",
+    "Family plan copy update in /app/mobile/app/plan-billing.tsx:26 is correct."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "not tested (frontend-only run)", "frontend": "~95%" },
+  "test_credentials": "cathy@example.com/testpass123 (family active), trial30909@example.com/TrialPass1! (family trialing).",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All iter-193 mobile/web collapsible + copy changes verified. Only outstanding items are two lowercase copy misses on Landing.jsx (lines 58 and 184). Web Signup family bullets diverge from mobile plan-billing but that was NOT in scope this iteration."
+}

@@ -1,0 +1,36 @@
+{
+  "summary": "Mobile Statement Decoder Phase 1 parity fully verified. Tool loads at /tool/statement-decoder. Logged-out usage-counter-banner renders '0 of 1 free decodes remaining in your 120-day window' (this preview IP had already consumed its free decode so sd-daily-limit ('You have used your free decode.') appeared on submit — this is the intended gated path, not a bug). All 3 mode chips present (decoder-mode-text/file/email); switching modes reveals decoder-email-panel and decoder-file-launcher. Signed in as cathy@example.com to bypass the free-tool cooldown and ran a full decode with the provided sample: job completed in ~16s. DecoderResultView (decoder-result-v2) rendered every required section with REAL data: decoder-plain-english-summary (real AI text mentioning Dorothy Smith, Class 4, $409.20, 18.3% contribution split); decoder-summary-banner with header line '1 May 2026 to 31 May 2026 · Dorothy Smith · 4 · Acacia Aged Care' and 4 tiles GROSS BILLED $409.20 / YOUR CONTRIBUTION $75.00 / GOVERNMENT PAID $334.20 / BUDGET REMAINING $0.00; decoder-anomaly-panel with top banner '1 high-priority thing to review' + 3 anomaly cards (anomaly-card-0 HIGH rule 9 contribution mismatch, anomaly-card-1 MEDIUM rule 27 GST on GST free, anomaly-card-2 LOW rule 29 missing act disclosure — each with severity chip, rule badge, headline, detail, evidence, suggested action); decoder-stream-breakdown with stream-card-Clinical ($120), stream-card-Independence ($150), stream-card-EverydayLiving ($102), each expandable with line items; decoder-full-table (4 line items via decoder-table-toggle). Download bar works: decoder-download-csv-btn ran without crash and shareTextFile fired; decoder-download-pdf-btn opened a new window with a fully-formed HTML doc containing 'Decoded statement' + 'Gross billed' + all metrics (web-preview Print branch). Logged-in state correctly HIDES usage-counter-banner. No console errors beyond expected expo-notifications web warning.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter210_landing.png",
+    "/app/test_reports/iter210_result_logged.png",
+    "/app/test_reports/iter210_full_result.png",
+    "/app/test_reports/iter210_expanded.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "DecoderResultView.tsx L27-31: METHOD_LABELS map is defined but only referenced via `void METHOD_LABELS` — dead code. The methodBody string inlines the labels directly. Consider removing METHOD_LABELS or using it in the disclaimer for consistency with web.",
+    "DecoderResultView.tsx L191 uses an inline object cast `(({ EverydayLiving: 'Everyday Living', ATHM: 'AT-HM', CareMgmt: 'Care Management' } as any)[s.stream] || s.stream)` twice (also L196). Extract to a top-level STREAM_DISPLAY_MAP to remove duplication and keep the mobile map in sync with STREAM_DISP in decoderExport.ts (currently both maps hard-code the same strings).",
+    "decoderExport.ts L191-200 exportDecodedPdf on Platform.OS==='web' calls globalThis.open('') and writes HTML — on Expo web preview this works but pop-up blockers can silently null-out `win`; there is no user feedback when that happens. Consider fallback to a Blob URL + anchor click (mirrors web decoderExport.js).",
+    "[slug].tsx L138 polls 90×2s = 180s max on client while backend cap is usually ~90s — fine, but the phase copy 'Reading your statement…' is used both as initial and as fallback for missing phase; setting `phase` on each poll but not clearing it between polls could show a stale phase if backend stops emitting phase mid-run (minor).",
+    "[slug].tsx L148 optimistically decrements usage on decode success without re-fetching /free-tool/usage — matches web behaviour, but on retry after cooldown the banner won't refresh until next reload. Small UX gap, not blocking."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (used to bypass logged-out cooldown)",
+  "seed_data_creation": "None. Decode ran against public /public/decode-statement-text endpoint; job returned 1 high + 1 medium + 1 low anomaly, 3 streams, 3 line items as documented in the request.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile Statement Decoder now at full parity with web. Key testIDs verified: decoder-mode-{text,file,email}, decoder-email-panel, decoder-file-launcher, decoder-text-input, decoder-submit, usage-counter-banner (logged-out only), sd-daily-limit + sd-limit-trial (cooldown state), decoder-result, decoder-result-v2, decoder-plain-english-summary, decoder-summary-banner, decoder-summary-header-line, decoder-balance-panel + decoder-opening-balance/allocation/closing-balance (when 2+ balances known — did NOT appear for the sample statement because it has no opening/allocation/closing values, which is correct), decoder-anomaly-panel, anomaly-top-banner, anomaly-card-{i}, anomaly-rule-badge-rule_{n}, decoder-advisories + advisory-card-{i} (none in sample), decoder-stream-breakdown, stream-card-{Clinical,Independence,EverydayLiving,ATHM,CareMgmt}, decoder-full-table, decoder-table-toggle, decoder-download-bar, decoder-download-csv-btn, decoder-download-pdf-btn, decoder-partial-warning, decoder-redaction-notice, decoder-format-disclaimer, decoder-guardrail. On the preview env the free-tool cooldown persists across runs — either sign in as cathy@example.com or reset the /free-tool/usage record before re-running the logged-out banner path.",
+  "rca of the issue": ""
+}

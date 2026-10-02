@@ -1,0 +1,81 @@
+# Dependabot configuration for Wayly
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Strategy:
+#   - Run weekly so we don't get flooded with PRs.
+#   - Group patch + minor bumps for low-risk packages into a single PR.
+#   - Surface high-risk packages (cryptography, jwt, db driver) as
+#     individual PRs so we can read the changelog carefully.
+#   - Ignore: openai (pinned by emergentintegrations).
+
+version: 2
+updates:
+  # -----------------------------------------------------------------
+  # Python backend
+  # -----------------------------------------------------------------
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "deps(py)"
+      include: "scope"
+    ignore:
+      # Pinned by emergentintegrations==0.1.0 — cannot upgrade independently.
+      - dependency-name: "openai"
+      # Pinned by openai pin above (transitive).
+      - dependency-name: "litellm"
+    groups:
+      patches:
+        applies-to: version-updates
+        update-types: ["patch"]
+      types-and-stubs:
+        applies-to: version-updates
+        patterns:
+          - "types-*"
+          - "*-stubs"
+
+  # -----------------------------------------------------------------
+  # JS frontend
+  # -----------------------------------------------------------------
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "deps(js)"
+      include: "scope"
+    groups:
+      patches:
+        applies-to: version-updates
+        update-types: ["patch"]
+      types-and-stubs:
+        applies-to: version-updates
+        patterns:
+          - "@types/*"
+
+  # -----------------------------------------------------------------
+  # GitHub Actions (workflows)
+  # -----------------------------------------------------------------
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"

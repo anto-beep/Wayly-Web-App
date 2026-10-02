@@ -1,0 +1,55 @@
+{
+  "summary": "SUP Phase-1 Zendesk-grade upgrade — backend 26/26 pytest passed for every new endpoint + regressions; user & admin frontends load and their flows work. One CRITICAL frontend/backend integration bug found in the user 'Edit my report' flow that crashes the React tree.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PATCH /api/support/tickets/{id}", "issue": "user_claimed_source is typed as Literal[...] with no '' escape hatch. Frontend sends empty string '' when the select is left on the placeholder option -> 422 literal_error. Recommend accepting '' and coercing to None (or make the field an EmptyStr | Literal[...] union)."},
+      {"endpoint": "GET /api/support/tickets sort=activity", "issue": "sort_map uses only 'last_activity_at' desc. Older seeded tickets may have null last_activity_at (populated on first activity). Not a defect for new tickets but consider $ifNull fallback for legacy rows."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "MySupport.jsx / TicketDetail edit form",
+        "issue": "Saving the edit report form with no source selected sends user_claimed_source='' -> backend returns 422. The catch block then tries to render the validation-error object directly, throwing 'Objects are not valid as a React child (found: object with keys {type, loc, msg, input, ctx})' which unmounts the entire /support tree and lands on the generic 500 error page.",
+        "selector": "[data-testid=\"my-support-edit-save\"]",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "User edit-my-report",
+        "issue": "Frontend must (a) omit empty string fields when PATCHing, and (b) surface API errors safely (err.response.data.detail[0].msg) rather than rendering the raw object.",
+        "affected_selectors": ["[data-testid=\"my-support-edit-save\"]", "[data-testid=\"my-support-edit-source\"]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sup_phase1_zendesk.py",
+    "/app/test_reports/pytest/iter69_sup_phase1.xml"
+  ],
+  "action_items": [
+    "MySupport.jsx `saveEdit`: strip empty-string fields from payload before PATCH (send user_claimed_source only if truthy), and wrap error rendering with String(err?.response?.data?.detail?.[0]?.msg || err.message).",
+    "Backend: relax UserEditTicket.user_claimed_source to accept '' as None (defensive) so third-party clients don't hit the same footgun.",
+    "Consider adding a data-testid=\"my-support-error\" toast/inline element so error rendering has a stable target and never crashes the tree."
+  ],
+  "critical_code_review_comments": [
+    "support.py is now 1826 lines — well past the 700-line file-size guideline. Recommend splitting into support_user.py, support_admin.py, support_defects.py, support_macros.py + shared models.",
+    "AdminSupport.jsx 1142 lines — also over the 700-line guideline. Split AdminSupport / AdminSupportDetail / AdminSupportMacros into separate files.",
+    "PATCH /admin/support/tickets/{id}: tags input is silently lower-cased+trimmed; not documented in the response. Consider echoing back the normalised tag list so the UI doesn't need to re-fetch to see 'BILLING' -> 'billing'.",
+    "admin_bulk_action: raises 400 mid-loop if value invalid — some tickets may already have been updated before the exception is thrown. Validate `body.value` once BEFORE the ticket loop for set_priority / set_status.",
+    "close_my_ticket / reopen_my_ticket both parse ISO strings with .replace('Z', '+00:00') — works but consider datetime.fromisoformat directly if strings are already offset-aware.",
+    "PATCH /support/tickets/{id}: `Literal[...]` field with no explicit '' handling; every ticketing API should be defensive for form-submitted empty strings. See action item above."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sup_phase1_zendesk.py (new)"
+  ],
+  "success_rate": {"backend": "100% (26/26)", "frontend": "90% (admin flow fully works; user flow works except the edit-save crash on empty source)"},
+  "test_credentials": "trial30909@example.com / TrialPass1! (3 seeded tickets WAY-0028..0030); hello@techglove.com.au / AdminPass!2026 + TOTP (secret fetched from DB and decrypted via security_utils.decrypt_totp_secret).",
+  "seed_data_creation": "None new. Used the 3 pre-seeded tickets. Bulk-action test set some tickets priority=high; a temporary TEST tag was added-then-removed. Test macro 'TEST Phase1 Macro' created and deleted within test lifecycle.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend fully green — /app/backend/tests/test_sup_phase1_zendesk.py runs in ~8s and covers every new endpoint (list stats, edit report+409, close+reopen+409, admin list/stats/admins/export CSV/patch priority/patch tags/patch assignee/bulk-5-actions/timeline/macros CRUD) plus regressions (admin detail, admin reply, admin status). Load /app/backend/.env before importing security_utils (already done in test file). For admin UI E2E, use POST /api/admin/auth/login then /api/admin/auth/2fa/verify with pyotp code from decrypt_totp_secret(users.totp_secret) and inject the resulting token into localStorage['wayly_admin_token'] to bypass the 2FA challenge in Playwright. The critical frontend bug is in MySupport.jsx line ~422 (saveEdit) — sends empty '' for user_claimed_source; renders error object directly.",
+  "rca_of_the_issue": "Reproduction: Log in as trial30909@example.com. Open a 'received' ticket. Click 'Edit my report'. Change the note text (leave 'Where you are getting that from' at placeholder). Click 'Save changes'. Root cause: the initial editForm sets user_claimed_source: (ticket.user_claimed_source || '') and the field is spread whole into the PATCH body. Because the backend Pydantic Literal only accepts a fixed set of strings or omission, '' fails with 422. The frontend's catch block then renders err.response.data.detail (an array of Pydantic validation-error objects) directly as JSX, breaking React's tree and unmounting the app to the generic 500 page. Two-line fix: (1) filter empty strings from payload before PATCH; (2) render String(err?.response?.data?.detail?.[0]?.msg || err.message) inside the toast instead of the raw object."
+}

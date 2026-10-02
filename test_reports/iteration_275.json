@@ -1,0 +1,36 @@
+{
+  "summary": "CPR async reviewer resilience fix VERIFIED. Backend: 5 concurrent submits all return in <2s, /api/health stays responsive during the burst, all 5 jobs complete with findings, unknown job returns 404 (not 5xx). Frontend: /ai-tools/care-plan-reviewer with cathy@example.com submits, shows cp-progress, and renders findings after 63.7s — comfortably past the old 60s axios timeout — with NO 'timeout of 60000ms exceeded', NO 502, cp-draft-letter-all button present.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "CarePlanReviewer classification select", "issues": ["Console warning: '<span> cannot be a child of <option>' hydration warning. Caused by dev-only instrumentation wrapping <option> children — no runtime break, but noisy. Reference: CarePlanReviewer.jsx:372"]}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_cpr_resilience_iter275.py",
+    "/app/test_reports/pytest/iter275_resilience.xml",
+    "/app/test_reports/iter275_frontend_result.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix looks correct: pollReviewJob uses 20s per-request timeout with 8-consecutive-error tolerance and only aborts on explicit status='error' — matches the described contract.",
+    "asyncio.Semaphore(CPR_REVIEW_CONCURRENCY=4) around the LLM call is applied inside _run_review_job, so the submit endpoint stays instant and the burst queues rather than saturates.",
+    "Minor: hydration warning about <span> inside <option> is instrumentation-only, safe to ignore in production build."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_cpr_resilience_iter275.py"
+  ],
+  "success_rate": {"backend": "100% (2/2)", "frontend": "100% (1/1 flow)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter 275 verified the async CPR reviewer resilience fix. Backend test file test_cpr_resilience_iter275.py can be reused as a regression test — it fires 5 concurrent /public/care-plans/review-async submits, verifies /api/health stays responsive during the burst, and polls all jobs to completion. On this run all 5 completed within ~6s of pytest wall time (likely LLM/cache hit path), which still exercises the semaphore + submit-return-instantly code paths. Frontend polling correctly tolerates >60s completion (observed 63.7s render), so the 60000ms axios client timeout regression is fixed.",
+  "rca of the issue": "Original bug: axios client default 60s timeout was fatal to a single slow LLM poll during transient backend overload. Fix (verified): (a) frontend pollReviewJob uses per-request timeout=20000 and only aborts on explicit status='error' or 8 consecutive network errors, so a slow poll does not surface a 60000ms error to the user; (b) submit timeouts raised to 90s so the initial POST does not race; (c) backend Semaphore(CPR_REVIEW_CONCURRENCY=4) around _run_review_job prevents a burst of concurrent LLM calls from stalling the ASGI worker. Reproduction verified: 5 concurrent submits + immediate /api/health call — health returned 200 quickly, no worker stall. End-to-end result render at 63.7s (>60s) confirms the client-side timeout no longer triggers."
+}

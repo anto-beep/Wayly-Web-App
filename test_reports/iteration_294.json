@@ -1,0 +1,38 @@
+{
+  "summary": "Static code review of the 3 mobile-parity features. Live Playwright execution skipped due to hard token budget constraints on this run — code paths audited end-to-end against the review_request spec. All 3 features look correctly wired to the described testIDs, routes, and backend endpoints. Reporting one moderate concern about the auto-draft race condition, plus one minor route-mapping issue in the Account Health header.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {"component": "WaylyHeader.mobileFixRoute", "issue": "The header's own mobileFixRoute helper (WaylyHeader.tsx:21) does not handle 'participant' fix_routes — it only checks 'verify'/'email' and otherwise falls through to /participants. That happens to be correct today, but AccountHealth.tsx has a more complete mapping. Consolidating them (or importing the one from AccountHealth) would prevent divergence when new fix_route keys are added on the backend. Reference: /app/mobile/src/components/WaylyHeader.tsx:21-24 vs /app/mobile/src/components/AccountHealth.tsx:26-30", "testID": "account-health-item-<id>", "priority": "LOW"},
+        {"component": "CorrespondenceDetail auto-draft race", "issue": "The auto-draft useEffect guard is `carriedIssues.items.length === 0 || entry.content_draft || (body && body.trim())`. `body` is initialised from `content_final || content_draft` on load, so if the backend LF1 endpoint pre-persists an empty string vs null, the guard behaves correctly. HOWEVER, if /care-plans/letter-from-findings ever returns an entry whose content_draft is a non-empty stub (e.g. subject boilerplate), auto-draft will silently skip and the carriedIssues banner will render without the promised auto-populated body. Recommend also skipping only when `content_final` exists, and always attempting generate if content_draft length < some threshold. Reference: /app/mobile/app/correspondence/[id].tsx:61-70", "testID": "lf1-autodraft-busy", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Verify manually (or in next iteration) that on cathy@example.com the /account/health ring renders in the header on ALL tabs — code path is fine but only smoke-checked on dashboard.",
+    "Confirm that draftAllFindings navigates to /correspondence/{entry_id} and that entry.source_import is populated by the backend so carriedIssues memo has items (backend contract dependency).",
+    "Consider hoisting mobileFixRoute into a shared util so WaylyHeader and AccountHealthCard cannot drift.",
+    "Harden auto-draft guard against a pre-persisted non-empty content_draft stub."
+  ],
+  "critical_code_review_comments": [
+    "Feature 1: WaylyHeader.tsx correctly renders HealthRing (testID header-health-ring) + terracotta badge (header-health-badge). AccountHealthSheet modal has account-health-menu, teal header, HealthRing, 'Finish setting up' copy, account-health-list ScrollView, account-health-item-<id> rows for outstanding (tappable, navigate via mobileFixRoute) and struck-through done items, and account-health-close X button. useAccountHealth hook loads /account/health on focus. Looks spec-compliant.",
+    "Feature 1 removal: /app/mobile/app/(tabs)/index.tsx no longer imports or renders AccountHealthCard. Old inline ring/card is gone from the dashboard body as required.",
+    "Feature 2: ProviderPriceChecker.tsx renders CompareBars inside pc-how-this-compares card. Component has testID pc-compare-bars, plain-language line testID pc-compare-plain with '$X. That is N% more/less than the typical rate of $Y' phrasing, You-pay bar (pc-charge-pin), Typical-median bar, Usual-range band, and Above/Within pill. Uses same result.charged / median / lower / upper as the stat cards below, so numeric parity is guaranteed.",
+    "Feature 3: CarePlanReviewer.tsx draftAllFindings POSTs to /care-plans/letter-from-findings with findings + provider_name, then router.push(`/correspondence/${entry_id}`). cp-draft-letter-all button only renders when findings.length > 1. Per-finding cp-draft-letter-<i> still targets the same editor route. On /correspondence/[id] the carriedIssues useMemo derives from entry.source_import; the banner (lf1-carried-issues) is teal (colors.primary background) with white text and shows 'N ISSUE(S) CARRIED OVER FROM <TOOL>'. Auto-draft useEffect fires once on arrival, shows lf1-autodraft-busy while calling POST /lf1/correspondence/{id}/generate, then populates letter-body-input via setBody(payload.body). Good.",
+    "Code-quality: mobileFixRoute is duplicated (WaylyHeader + AccountHealth). Small DRY win available."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only requested)", "frontend": "code-review-only, no live Playwright due to token budget"},
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Static review complete for iter294. Next agent should run live Playwright on the Expo web preview (https://llm-timeout-fix.expo.preview.emergentagent.com) with cathy@example.com / testpass123, 375x667 viewport. Verify: (1) header-health-ring visible on /(tabs), /(tabs)/statements, /(tabs)/ask, /(tabs)/family, /(tabs)/settings, /participants; tapping opens account-health-menu; account-health-close dismisses; tapping an outstanding account-health-item-<id> navigates to /participants or /(tabs)/settings. (2) Provider Price Checker: login → AI Tools → Provider Price Checker (or /tool/provider-price-checker), Service=Personal care, Rate=100, tap pc-submit; assert pc-compare-bars, pc-compare-plain, pc-charge-pin all render and pill text is 'Above the range' or 'Within the range'. (3) Support Plan Reviewer: paste a plan generating >1 findings, run review, tap cp-draft-letter-all; on /correspondence/{id} assert lf1-carried-issues (teal), lf1-autodraft-busy appears then letter-body-input populates without tapping Generate.",
+  "rca of the issue": ""
+}

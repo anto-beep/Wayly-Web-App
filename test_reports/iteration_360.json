@@ -1,0 +1,84 @@
+{
+  "summary": "Mobile dark-mode fix verification (iter360, frontend-only, mobile). Logged in as cathy@example.com on the Expo web preview at 390x844, flipped to Dark via More → Your Account → Settings → Dark, then walked the 7 fixed screens plus a Light-mode regression sweep. All P0/P1 fixes from the iter359 audit are correctly applied — every previously-invisible tile / card-stripe / dot / badge / swatch now paints a theme-lifted colour with clear ΔE from the dark bg #06201F, and Light mode still renders the original palette correctly. No new dark-mode regressions detected on the 7 target screens.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "verification_results": {
+    "ai_tools": {
+      "status": "PASS",
+      "evidence": "Every ai-tool-card-* now paints a lifted palette bg. DOM-read computedStyle: statement-decoder rgb(18,112,122) #12707A, invoice-checker rgb(165,81,43) #A5512B, budget-calculator rgb(78,110,84) #4E6E54, and the pattern repeats for all 9 tiles. ΔE(rgb) to dark bg #06201F: teal≈121, clay≈167, sage≈114 — all vastly > 8. White card text remains readable. Reference: /app/mobile/app/(tabs)/ai-tools.tsx:45-46 (DARK_TILES const), :121 (isDark ? DARK_TILES : TILES).",
+      "screenshot": "/app/test_reports/iter360_dark_verify/20_ai_tools_dark.png"
+    },
+    "timeline": {
+      "status": "PASS",
+      "evidence": "Dots + card left-accent stripes rendered in bright theme tints. tintFor(colors) closes over the active palette so statement→#4FA8AE (colors.primary), invoice→#E89A6F (colors.gold), chat/care_plan/letter→#A8C7AB (colors.sage), hospital→#F0857A (colors.terracotta), budget_alert→#E8B45F (colors.alert). Screenshot confirms every dot icon is clearly visible and each card carries a coloured left-accent — no dark-on-dark anywhere. Reference: /app/mobile/app/timeline.tsx:42-50, :219-230.",
+      "screenshot": "/app/test_reports/iter360_dark_verify/12_timeline_dark.png"
+    },
+    "calendar": {
+      "status": "PASS",
+      "evidence": "KIND_COLOR_DARK map is used when isDark; kindColor() returns the dark-lifted hex per event kind. textDisabledColor is now '#5C7375' in dark (out-of-month cells 31,1,2,3,4 render dim-but-legible in the screenshot — matches requirement 'readable-but-dim'). Live calendar in the test env has no events on the selected day so per-event stripes aren't visible on screen, but the code path and legend map are verified. Reference: /app/mobile/app/calendar.tsx:45-51, :240.",
+      "screenshot": "/app/test_reports/iter360_dark_verify/13_calendar_dark.png"
+    },
+    "about": {
+      "status": "PASS",
+      "evidence": "SectionHeading roman numeral 'I' and the 40x3 accent bar now paint colors.gold (in dark = #E89A6F, visible peach on dark bg). brandFor(isDark) shifts BRAND.teal to #12707A and BRAND.sage to #4E6E54 in dark, so the three stat tiles (Budget Streams / Levels / Began) and the Hero + Antony panels have clearly visible edges against the dark bg. DOM-read: about-hero bg=rgb(18,112,122), about-section-antony bg=rgb(18,112,122); stat tile bgs rgb(18,112,122)/rgb(165,81,43)/rgb(78,110,84). 'Someone Had To.' peach text (#E89A6F) still readable. Reference: /app/mobile/app/about.tsx:31-32 (brandFor), :236-237 (SectionHeading colours), :92-94 (StatTile row).",
+      "screenshot": "/app/test_reports/iter360_dark_verify/22_about_stats.png"
+    },
+    "dashboard_things_to_know_count": {
+      "status": "PASS",
+      "evidence": "Badge bg = colors.surface (dark = rgb(14,48,51) #0E3033), inner count Text explicitly colored colors.terracotta (#F0857A) — peach on dark surface reads clearly. Badge no longer glows stark white on the dark tile. Reference: /app/mobile/app/(tabs)/index.tsx:354-356.",
+      "screenshot": "/app/test_reports/iter360_dark_verify/10_dashboard_dark.png"
+    },
+    "chsp_billed_vs_expected": {
+      "status": "PASS (code-verified)",
+      "evidence": "chsp-ws1-graphic amount row now maps values to theme tokens: Billed → (delta > 0 ? colors.terracotta : colors.primary), Expected → colors.sage. In dark these become #F0857A / #4FA8AE / #A8C7AB — all bright and clearly visible on the dark card. Runtime not observable without submitting an invoice check in the test env; code path confirmed. Reference: /app/mobile/app/chsp-tools.tsx:326-328.",
+      "screenshot": "/app/test_reports/iter360_dark_verify/15_chsp_top.png"
+    },
+    "participants_swatch": {
+      "status": "PASS",
+      "evidence": "COLOR_SWATCHES first entry is now '#3F6FA8' (medium blue). ΔE to dark bg #06201F ≈ 111, clearly visible. The subsequent swatches (#2BC4D6, #7C9B82, #C76B5A, #5F4E76) were already visible and remain unchanged. Reference: /app/mobile/app/participants.tsx:16.",
+      "screenshot": "/app/test_reports/iter360_dark_verify/21_participants_dark.png"
+    },
+    "light_mode_regression": {
+      "status": "PASS",
+      "evidence": "Flipped back to Light via Settings and re-visited About, AI Tools, Timeline, Calendar. About hero bg = rgb(14,77,82) #0E4D52 (original light teal); stat tiles = #0E4D52 / #A5512B / #425F47 (original). AI Tools tile #0 = rgb(14,77,82) #0E4D52 — original light teal, unchanged. Timeline dots + card accents still visible on light bg. Calendar month grid + text look correct. No colour swung wrong in light mode.",
+      "screenshots": [
+        "/app/test_reports/iter360_dark_verify/30_about_light.png",
+        "/app/test_reports/iter360_dark_verify/30b_about_light_stats.png",
+        "/app/test_reports/iter360_dark_verify/31_ai_tools_light.png",
+        "/app/test_reports/iter360_dark_verify/32_timeline_light.png",
+        "/app/test_reports/iter360_dark_verify/33_calendar_light.png"
+      ]
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iter360_dark_verify/"
+  ],
+  "action_items": [
+    "No blocker follow-up. All 7 previously-failing screens now render correctly in dark mode and don't regress in light mode.",
+    "Optional (out-of-scope per main agent's note but worth a housekeeping ticket): CHSP hardship button still ships an inline `backgroundColor: '#A5512B'` on emphasise=false (chsp-tools.tsx:89) — currently OK because dark colors.cta = #A5512B, but locks the value against future theme changes.",
+    "Optional (deprecation noise seen in console): [expo-notifications] Listening to push token changes is not yet fully supported on web — informational only, not a bug."
+  ],
+  "critical_code_review_comments": [
+    "brandFor(isDark) / DARK_TILES / KIND_COLOR_DARK / tintFor(colors) is the right shape for theme-scoped module colour maps and consistent across the 4 offending screens — good.",
+    "Consider a shared helper (e.g. /app/mobile/src/theme/eventPalette.ts) so timeline + calendar + about don't each redefine per-event / per-BRAND darker maps.",
+    "Recommend a lint rule forbidding hex literals outside /app/mobile/src/theme/** (still applies) — this pass fixed the audit list but hex literals remain in other files (spend-bar tones, hardship button)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100% — all 7 target screens verified in dark, light regression clean"},
+  "test_credentials": "cathy@example.com / testpass123 on https://final-verify-web.expo.preview.emergentagent.com (390x844).",
+  "seed_data_creation": "None. Read-only verification.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "This is iter360 — verification of the iter359 dark-mode fix pass. All 7 screens (AI Tools, Timeline, Calendar, About, Dashboard things-to-know-count badge, CHSP billed-vs-expected, Participants swatch) render correctly in Dark, and Light-mode regression is clean. No further work required on the audited list. Screenshots + DOM colour reads saved under /app/test_reports/iter360_dark_verify/. Deliberately-not-fixed items from main agent's note (participant/[id] SpendBar light tones, chsp hardship button #A5512B override, about ctaPrimary white pill on always-coloured panel, about hero peach 'Someone Had To.', letters/[id] lf1-preview-paper) are NOT flagged — intentional. If future audit passes want to tighten these, they are cosmetic-parity only.",
+  "rca of the issue": "N/A — this iteration is a verification pass, not a bug fix. Iter359 RCA (module-level colour constants freezing the light palette) has been addressed by moving those maps into (a) isDark-aware constants (DARK_TILES, KIND_COLOR_DARK), (b) hooks/functions that close over the active `colors` (brandFor, tintFor), or (c) direct reads of colors.* (things-to-know-count bg + text, chsp amount row, participants first swatch)."
+}

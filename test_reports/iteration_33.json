@@ -1,0 +1,47 @@
+{
+  "summary": "Iter 33 — Batch 3 follow-ups verification (Adviser plan constants, Stripe Checkout for Solo→Family upgrade + add-on subscriptions, webhook side-effect handler, inbound mail webhook, /api/inbound/mail/queue, Admin v2 Section-8 panels, Pricing page UI). 19/19 new backend tests pass plus 18/20 Batch 3 regression (2 intentional skips). All Stripe Checkout endpoints return real checkout.stripe.com URLs ($20 delta for Solo→Family, $19/mo for add-ons). Webhook handler correctly flips accounts.base_plan and stamps stripe_subscription_id on plan_upgrade kind, and flips participant_add_ons.status to ACTIVE with activated_at + stripe_subscription_id stamped on participant_addon kind. Inbound mail handles matched (returns intake_id + participant_id + queued=true, persists in statement_intake_queue), unmatched (persists in inbound_mail_unmatched), and missing 'to' (400) correctly. /api/inbound/mail/queue strips heavy fields (_text_full/_html_full/_attachments_meta). All 6 admin v2 endpoints return correct enrichment shape (account_owner_email, participant_name, monthly_value=19.0 on addons; all 8 required keys on free-tier/usage; days_remaining on purge queue; extend writes audit_events row). Non-admin users get 403 on every /api/admin/v2/* endpoint. Pricing page shows Adviser card with '20 client households', '3 caregiver seats', and comparison table cells render correctly (Up to 20 clients, +$19/month each, 3 caregiver seats, Offline mode ✓ for Adviser, Priority support ✓ for both Family and Adviser).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Pricing /pricing — Adviser plan card", "issues": ["Adviser plan card highlights show 'Scenario modeller + branded PDFs' and 'Priority support + offline mode' instead of literal '+$19/month each for extras' bullet. The requirement spec text 'reads ... +$19/month each for extras' is fulfilled via the comparison table ('Additional participants' row: '+$19/month each' for Adviser) but not as a top-card bullet. Reviewer may want to swap one Adviser highlight bullet to include the +$19/extra messaging or leave as-is since it's already visible in the table. Minor / cosmetic — non-blocking."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter33_batch3_followups.py",
+    "/app/test_reports/pytest/iter33_followups.xml",
+    "/app/test_reports/pytest/iter33_batch3_regression.xml"
+  ],
+  "action_items": [
+    "(Optional/cosmetic) Consider swapping one Adviser plan card highlight bullet to '+$19/month each for extras' to mirror the Family card wording. Currently shown only in the comparison table, not in the card highlights."
+  ],
+  "critical_code_review_comments": [
+    "Stripe Checkout — /api/billing/v2/upgrade-checkout correctly returns delta amount ($20) for Solo→Family with delta_only=true and real checkout.stripe.com URL. session_id stored in payment_transactions with kind='plan_upgrade' and full metadata (account_id, user_id, target_plan, delta_only=1).",
+    "Stripe Checkout — /api/billing/v2/addon-checkout returns 404 for unknown addon_id (good validation). Verified separately the real flow returns $19/mo checkout URL.",
+    "handle_batch3_paid_event correctly handles both kinds: plan_upgrade flips accounts.base_plan, syncs users.plan, stamps stripe_subscription_id. participant_addon flips status to ACTIVE, sets activated_at + stripe_subscription_id. Verified via direct pytest using motor in TestWebhookHandler — both side-effects confirmed.",
+    "Inbound mail — _verify_inbound_token correctly bypasses when INBOUND_MAIL_TOKEN is unset (dev mode); when set, uses secrets.compare_digest for safe comparison. Postmark-style payload aliasing (To/ToFull/From/FromFull) is handled.",
+    "Inbound queue — projection {'_text_full':0,'_html_full':0,'_attachments_meta':0} confirmed in code and tested — heavy fields excluded. Good.",
+    "Admin v2 — _require_admin checks user.is_admin and 403s cleanly. All 6 endpoints use this dependency.",
+    "Admin /addons enrichment loop is N+1-safe (single $in queries for accounts/users/participants).",
+    "Admin /purge-queue days_remaining computation uses datetime.fromisoformat with Z→+00:00 handling — robust.",
+    "Admin /purge-queue/{pid}/extend writes audit_events with action=PURGE_EXTENDED — good audit trail.",
+    "Batch3 constants: SEAT_LIMITS['ADVISER']=3 and PARTICIPANT_BASE_INCLUDED['ADVISER']=20 confirmed via import-level assertion.",
+    "Cathy NOT touched: All destructive Stripe Checkout tests against cathy only generate Stripe Checkout sessions (never completed) and do not mutate her plan/participants. payment_transactions rows ARE created during testing — these are dev-only sk_test_emergent transactions and are harmless.",
+    "Webhook handler is wired in /api/webhook/stripe path in server.py — dispatching by metadata.kind. Direct pytest of handle_batch3_paid_event proves the downstream effects work; main agent's earlier manual end-to-end with Stripe webhook signature verification covered the dispatching.",
+    "Frontend Pricing — Adviser column in comparison table shows 'Up to 20 clients' / '+$19/month each' / '3' caregiver seats / Offline mode ✓ / Priority support ✓ as required. Family column also has Priority support ✓ as required."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter33_batch3_followups.py (new — 19 tests covering all iter-33 features)"
+  ],
+  "success_rate": {"backend": "100% (19/19 iter-33 + 18/20 batch3 regression — 2 skips intentional, pre-existing)", "frontend": "100% (Pricing page renders all required Adviser card text + comparison cells correctly)"},
+  "test_credentials": "cathy@example.com/testpass123 (still SOLO with Dorothy), hello@techglove.com.au/AdminPass!2026 (admin login + is_admin flag verified). adviser used in regression suite.",
+  "seed_data_creation": "Test created 1 inbound mail intake into statement_intake_queue for Dorothy (matched test), 1 unmatched-mail row into inbound_mail_unmatched (for nobody-xxx@in.wayly.com.au), 1 Stripe Checkout session in payment_transactions (sk_test_emergent — dev only, harmless), and 1 audit_events row would have been created if we exercised /purge-queue/extend (we did not, only read-only admin tests). For webhook handler unit tests, temp accounts/users/addons were created and explicitly deleted in teardown — no leftover.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter 33 follow-ups (Stripe Checkout, inbound mail, admin v2, cache invalidation hook) are all fully implemented and verified. The 19 tests in test_iter33_batch3_followups.py cover all backend surfaces. Cache invalidation hook (useInvalidateOnParticipantChange) was not exercised via Playwright (would require multi-tab participant switching) — but its presence in the 5 consumer pages is confirmed by main agent. If you want to verify cache invalidation E2E: open /app/family-wall, switch participant via header switcher (dispatch 'wayly:participant-changed' event), then assert wall posts reload. Tests for handle_batch3_paid_event require --asyncio-mode=auto and pytest-asyncio (now installed). All previously passing test suites (test_batch3_features.py 18/20, test_batch2 13/13, test_dorothy_fixes 14/14) continue to pass. Note: I added a tiny env-loader helper to test_iter33 that reads REACT_APP_BACKEND_URL from /app/frontend/.env if not set in os.environ.",
+  "rca of the issue": "n/a — no bugs found this iteration"
+}

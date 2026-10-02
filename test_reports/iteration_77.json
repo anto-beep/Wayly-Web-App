@@ -1,0 +1,57 @@
+{
+  "summary": "PERSONA-1 Workstreams G+H + Ask Wayly + Logout Cache Bust — end-to-end verified. Backend: 32/32 base persona pytests still green (test_persona_context 4, test_persona_registry 17, test_persona_routes 11). NEW: /app/backend/tests/test_iter77_persona_injection.py (8 tests) exercises the four LLM injection surfaces in both caregiver and participant modes for cathy — all pass: (a) /api/chat caregiver→third-person + no banned 'my mother/parent' phrasing, participant→'you/your' framing with no Dorothy leakage; (b) /api/help-chat mirror; (c) /api/lf1/correspondence/{id}/generate dispute archetype letter — caregiver body includes 'Dorothy' or 'the care recipient', participant body switches to first-person 'my ...' and drops Dorothy; (d) /api/reports/generate HOUSEHOLD_SUMMARY exec_summary — caregiver summary correctly names Dorothy in third person ('Dorothy's care spending is tracking well...'), participant regen has no Dorothy leakage. Cathy restored to caregiver+Dorothy defaults on teardown. Frontend: CE-2 page had a HARD syntax error at line 468-472 (Python-style adjacent string literals in JS object) that blocked the entire /ai-tools/contribution-estimator route with 'Compiled with problems: SyntaxError, expected \",\"'. Fixed with '+' concatenation — now loads clean. CE-2 range flow (I have not been assessed yet) renders the persona hero label 'THE CARE RECIPIENT'S ESTIMATED WEEKLY CONTRIBUTION' for cathy (caregiver, pronouns=unknown → Tier-2 fallback, correct per spec). Logout via [data-testid=logout-button] clears localStorage['wayly.persona_preview'] and clears _bundleCache (dynamic-imported clearPersonaCache invoked from AuthContext.logout). Statement Decoder, Price Checker, Signup regression pages render with 0 console errors after the shared usePersonaTier1 hook shipped.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ContributionEstimator.jsx (CE2_PERSONA_DEFAULTS)",
+        "issue": "CRITICAL SYNTAX ERROR (fixed by T1): lines 468-472 used Python-style adjacent-string concatenation inside a JS object literal for 'ce2.results.fee_exempt_body'. This raised 'SyntaxError: Unexpected token, expected \",\"' at compile time and broke the entire /ai-tools/contribution-estimator route (and any lazy chunk importing it) with a full-page ErrorBoundary. Fixed by inserting explicit '+' operators between the three string fragments. Root cause: JS does NOT support Python's implicit adjacent-string concatenation.",
+        "selector": "N/A (build-time)",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "ContributionEstimator.jsx RangeHeadline (line 600)",
+        "issue": "Acceptance-criteria miss: the ce-result-hero-label data-testid is only present on PointHeadline (line 562). RangeHeadline and FeeExemptHeadline render the persona hero label but do NOT expose data-testid=\"ce-result-hero-label\" (Range uses raw <div> at line 600; FeeExempt uses ce-fee-exempt-hero at line 585). The review spec says the hero label testid should read 'estimated weekly contribution' / '{name}'s ...' across all result paths, so QA harnesses can't target Range/FeeExempt via ce-result-hero-label. Text still renders correctly; only the testid is missing.",
+        "selector": "[data-testid=\"ce-range-headline\"] first-child div",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter77_persona_injection.py",
+    "/app/test_reports/pytest/iter77_persona_base.xml",
+    "/app/test_reports/pytest/iter77_persona_injection.xml",
+    "/app/test_reports/pytest/iter77_full.xml"
+  ],
+  "action_items": [
+    "(low) Add data-testid=\"ce-result-hero-label\" to the label <div> inside RangeHeadline (line 600) so all three result paths surface the same testid contract. FeeExemptHeadline already has ce-fee-exempt-hero which is fine.",
+    "(review) The Python-style string-concat mistake in CE2_PERSONA_DEFAULTS is easy to repeat elsewhere — consider a repo lint rule or CI check on jsx/js files to flag adjacent string literals inside object properties.",
+    "(no-op for T1) Live-switch of PersonaPreviewCard (super_admin flow) still requires TOTP login and cannot be exercised end-to-end from this preview env without setting admin_role on a non-2FA test user. Iter76 already covered that path via mongo-granted admin_role — no regression needed."
+  ],
+  "critical_code_review_comments": [
+    "ContributionEstimator.jsx CE2_PERSONA_DEFAULTS used Python-style multi-line string juxtaposition inside a JS object literal — hard error, blocked the entire /ai-tools/contribution-estimator lazy chunk on the very first paint. Add ESLint no-adjacent-strings or equivalent so we catch it at PR time.",
+    "RangeHeadline (line 596-624) omits the ce-result-hero-label testid on the label element, breaking QA/acceptance-criteria contract for the range path. Add the testid on line 600.",
+    "backend/services/lf1_generate.py:_build_user_message inlines the persona context inside the user message even though the same block is also appended to the system message in generate_letter (line 406). Not incorrect (the model sees it twice) but redundant — consider dropping the duplication for token cost.",
+    "reports_routes.py lines 486/614/715/800/909 all call _ai_summary(facts, report.get('_persona_context')) with the same _persona_context ref, meaning any Failed report retry still uses stale persona if the user switched persona mid-generation. Low-risk given async lifetime, but worth noting.",
+    "Frontend usePersonaTier1 uses `Array.isArray(keys) ? keys.join('|') : ''` as the effect key (line 219). If a caller passes the array inline each render, the join is still stable, but it defeats React DevTools memoization insight — consider requiring callers to memo the keys array."
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/tools/ContributionEstimator.jsx (fixed Python-style string concatenation → JS '+' at lines 468-472)",
+    "/app/backend/tests/test_iter77_persona_injection.py (new, 8 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (40/40: 32 base persona + 8 new persona-injection)",
+    "frontend": "100% after CE-2 syntax fix (CE-2 loads, persona hero label renders correctly for cathy caregiver default, logout clears persona_preview + _bundleCache, statement decoder/price checker/signup regression pages render with 0 console errors)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, care_recipient=Dorothy, pronouns=unknown — confirmed restored on teardown via GET /api/persona). trial30909@example.com / TrialPass1! used for CE-2 syntax repro. Super admin persona-preview live-switch requires TOTP; not exercised end-to-end in this iter (covered by iter76).",
+  "seed_data_creation": "None permanent. Ephemeral: LF-1 dispute correspondence entries + reports (HOUSEHOLD_SUMMARY) created + deleted per-test in test_iter77_persona_injection.py.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "PERSONA_V1_ENABLED=true. Full persona pytest suite is now 40 tests (test_persona_context, test_persona_registry, test_persona_routes, test_iter77_persona_injection) — all green in iter77. ContributionEstimator.jsx line 468-472 was fixed for a Python-vs-JS string-concat bug; DO NOT reintroduce Python-style adjacent strings in the CE2_PERSONA_DEFAULTS map. RangeHeadline (line 596) still lacks the ce-result-hero-label testid — flagged as MEDIUM in this iter. Cathy is restored to caregiver + Dorothy + pronouns=unknown; for a caregiver 'DOROTHY'S ...' possessive hero, pronouns need to be one of she_her/he_him/they_them (unknown falls back to 'the care recipient's' by spec).",
+  "rca of the issue": "CE-2 blank page RCA: E1 authored CE2_PERSONA_DEFAULTS['ce2.results.fee_exempt_body'] using three adjacent string literals wrapped in parens (Python idiom). JS parses `\"str1\" \"str2\"` as two separate expressions and expects a `,` between object properties, so Babel raised 'Unexpected token, expected \",\"' at line 470:8. The lazy chunk for /ai-tools/contribution-estimator therefore failed the entire route with a hot-reload compilation error and the ErrorBoundary fallback screen. Fix: change the three concatenated strings to use JS '+' operator explicitly. Repro: git-blame shows the exact PR that landed CE2_PERSONA_DEFAULTS; the same author (or a copy-paste from the backend Python registry.py TIER1_VARIANTS map) is the likely source, since backend/lib/persona/registry.py uses the exact same three-line adjacent-string pattern (valid in Python). Mitigation: add ESLint rule 'no-adjacent-string-literals' (custom) or `no-multi-str` + explicit review checklist item when porting Python copy dictionaries to JS."
+}

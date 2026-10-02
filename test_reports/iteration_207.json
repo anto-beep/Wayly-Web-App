@@ -1,0 +1,45 @@
+{
+  "summary": "Mobile Plan & Billing breakdown verified against the shared backend for FAMILY (2 & 3 participants) and SOLO (3 participants). The reported bug — mobile showing hardcoded $49.50 with no participants/add-ons row even when a 3rd participant was added — is FIXED. Breakdown now correctly reflects included participants, extra add-ons at $24.50, and the correct Fortnightly total. useFocusEffect reload works.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_scenarios": [
+    {"case": "FAMILY, 2 participants (cathy@example.com)", "expected": "$49.50, no extra-participants row, count '2 (2 included)'", "actual": "$49.50, no addon row, '2 (2 included)'", "result": "PASS"},
+    {"case": "FAMILY, 3 participants (cathy + added TestExtra via POST /v2/participants)", "expected": "count '3 (2 included)', 'Extra participants (1 × $24.50)' = $24.50, total $74.00", "actual": "count '3 (2 included)', 'Extra participants (1 × $24.50)' = $24.50, total $74.00", "result": "PASS"},
+    {"case": "SOLO trialing, 3 participants (trial30909@example.com)", "expected": "count '3 (1 included)', 'Extra participants (2 × $24.50)' = $49.00, total $73.50", "actual": "same as expected", "result": "PASS"},
+    {"case": "useFocusEffect reload — navigate /plan-billing → /participants → /plan-billing", "expected": "count/total re-populated on return", "actual": "values re-render correctly", "result": "PASS"}
+  ],
+  "testIDs_verified": [
+    "billing-breakdown",
+    "billing-participant-count",
+    "billing-addon-label",
+    "billing-addon-amount",
+    "billing-fortnightly-total"
+  ],
+  "seed_data_creation": "Added and then hard-deleted a TestExtra Third participant on cathy@example.com to exercise the 3-participant case (final count restored to 2: Dorothy, Patricia).",
+  "test_report_links": [
+    "/app/test_reports/iter207_cathy_billing.jpeg",
+    "/app/test_reports/iter207_cathy_3p_billing.jpeg",
+    "/app/test_reports/iter207_solo_billing.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "plan-billing.tsx L116: activeCount fallback uses participants.length when the filter yields 0 — could hide removed participants during an in-flight reload but not a functional issue as ParticipantContext already filters status='removed'/'purged' upstream. Safe as-is.",
+    "SOLO edge case: if a solo user somehow has 0 active participants, breakdown shows '0 (1 included)' with total $24.50 (correct math). Not a bug, just an odd UI string; matches web behaviour so parity is preserved."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only run)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, 2 participants baseline; add-participant scenario driven via POST /api/v2/participants). trial30909@example.com / TrialPass1! (Solo trialing, 3 participants).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The mobile Plan & Billing breakdown card (billing-breakdown) is now participant-driven and correctly matches the web. cathy@example.com in preview has exactly 2 participants (Dorothy + Patricia), not 3 as previously documented in test_credentials.md — update if you rely on that. To reproduce the 3-participant case, POST /api/v2/participants and then re-open /plan-billing.",
+  "rca of the issue": "Previously mobile plan-billing hardcoded the total to the base plan price and did not read from ParticipantContext. Fix: consumes useParticipants(), computes included=(family?2:1), addonCount=max(0,active-included), baseFortnight=(family?49.5:solo?24.5:0), fortnightTotal=base + addonCount*24.5. useFocusEffect triggers reloadParticipants() on screen focus so counts stay fresh after navigating from the Participants screen."
+}

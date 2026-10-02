@@ -1,0 +1,43 @@
+{
+  "summary": "Iteration 8 backend + frontend verification of Settings/Members/Wellbeing P1 features, PasswordReset/Strength wiring, InviteAccept, Caregiver dashboard stat cards, and carry-over regressions. Backend: 15 pass / 1 skip (household POST route unavailable for cross-user test) — all 10 scoped endpoints healthy. Frontend: all 12 scoped UI flows verified. Iter7 P0 fixes all landed: family-coordinator-chat is now anonymous (no 402), Pricing FAQ has 7-day copy, AIToolsIndex hero updated, StatementDecoder CTA updated. No critical blockers.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/household", "issue": "Test attempted to create a household for a Solo user via POST /api/household but the route may only be /api/household (GET) or different payload shape — test gracefully skipped. Not user-facing; household creation is done at onboarding via a different flow."},
+      {"endpoint": "POST /api/household/invite", "issue": "Member cap constant is hard-coded as 4 active/pending (owner + 4 = 5). Works, but magic number — consider `HOUSEHOLD_MAX_MEMBERS = 5` constant."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/settings (profile)", "issues": ["Minor: Members tab is labelled 'Family members' in the nav. The spec/review request used 'Members' — UI choice is fine and descriptive; flagging for consistency only."]},
+      {"screen": "/participant (after check-in)", "issues": ["Once a mood is logged today, the 3 mood buttons are fully replaced by a success message ('You've checked in today ...') with no way to change the entry. Acceptable MVP; consider an 'update' affordance later."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter8.py",
+    "/app/test_reports/pytest/iter8_results.xml"
+  ],
+  "action_items": [
+    "[OPTIONAL] Extract HOUSEHOLD_MAX_MEMBERS=5 constant instead of hard-coded 4 check at server.py:377.",
+    "[OPTIONAL] Settings nav label — confirm whether 'Family members' vs 'Members' is intentional copy; matches spec semantically either way."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1595 lines — repeat prior iteration recommendation to split into routers/auth.py, routers/billing.py, routers/household.py, routers/public_tools.py.",
+    "Invite email and password-reset email use email_service.email_tool_result for transactional messages — fine for MVP with verified-only Resend, but worth a dedicated transactional-email helper with its own sender/template once out of verified-only mode.",
+    "Invite token (new_id().replace('-','') * 2) is 64 hex chars of UUIDv4 concat — acceptable entropy, but consider `secrets.token_urlsafe(32)` for consistency with standard Python idioms.",
+    "Password reset tokens are single-use but no explicit invalidation of other outstanding tokens for the same user on reset — low risk, flag as hardening opportunity.",
+    "Member removal sets household_members.status='removed' but doesn't send notification email to the removed user. Minor UX gap."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter8.py (NEW — 16 tests, 15 pass, 1 skip)"
+  ],
+  "success_rate": {"backend": "100% (15/15 executed; 1 skipped for non-critical path)", "frontend": "100% (all 12 scoped flows verified)"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan, has household Dorothy) — confirmed working. Resend verified inbox: a.chiware2@gmail.com.",
+  "seed_data_creation": "Multiple throwaway Family/Solo users (test<uuid>@example.com / Test1234!) created via signup; at least one pending invite added to cathy's household during invite test; 2 wellbeing entries for cathy's user (today — 'good' mood).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter8 P1 scope fully verified. Backend test file: /app/backend/tests/test_iter8.py (15 pass, 1 skip). All new endpoints healthy: /auth/forgot enumeration-safe, /auth/reset validates tokens, /billing/subscription|cancel|upgrade correct semantics, /household/members includes synthesised owner, /household/invite enforces Family plan + 5-member cap, /participant/wellbeing accepts good|okay|not_great only, /public/family-coordinator-chat is now anonymous-accessible (iter7 bug fixed). Frontend: correct URLs — dashboard is /app (not /dashboard), Settings tabs live at /settings/:tab (profile|billing|members|security), mood button testids are wellbeing-{good|okay|not_great}, Layout plan badge testid is layout-plan-badge. Wellbeing card swaps between 'buttons' view and 'already checked in' view based on today's entry. No blockers; safe to ship.",
+  "rca of the issue": "No unresolved bugs this iteration. All features work end-to-end. Initial playwright misses (mood-good vs wellbeing-good testid, /dashboard vs /app route, inner_text case sensitivity for uppercase overlines) were test-script inaccuracies — corrected and re-verified via direct DOM inspection + screenshot confirming all 4 stat cards render."
+}

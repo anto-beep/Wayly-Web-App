@@ -1,0 +1,28 @@
+{
+  "summary": "Frontend-only verification of the two Wave 1 Stripe fixes on the preview env. (1) Pricing CTA labels correctly branch on auth: guest sees 'Start 7-day free trial' / 'Contact us'; logged-in cathy@example.com sees 'Buy Solo', 'Buy Family', 'Talk to us'. (2) End-to-end Stripe checkout completed with the 4242 test card via 'Pay without Link' path; /billing/success rendered the SUCCESS state ('You are on Wayly Solo.') and did NOT show the 'We couldn't confirm your payment' error. GET /api/payments/checkout/status/{session_id} returned 200 with session_id, payment_status=paid, status=complete, subscription_id, customer_email, plan=solo. Both reported bugs are FIXED. One minor deviation: expected testids billing-success-go-dashboard and billing-success-manage are NOT present in BillingSuccess.jsx — only billing-success-continue (Complete onboarding) is rendered.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "BillingSuccess", "issue": "Success state renders a single 'Complete onboarding' button (data-testid=billing-success-continue). The review request explicitly expects two buttons with testids 'billing-success-go-dashboard' and 'billing-success-manage'. Neither is present.", "selector": "[data-testid='billing-success-go-dashboard'], [data-testid='billing-success-manage']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iter140_stripe2/"],
+  "action_items": [
+    "Optional: Update /app/frontend/src/pages/BillingSuccess.jsx to render both 'Go to your dashboard' (data-testid billing-success-go-dashboard, link /app) and 'Manage subscription' (data-testid billing-success-manage, link /settings/billing) in the paid state, as specified in the review request. Current implementation only shows 'Complete onboarding'."
+  ],
+  "critical_code_review_comments": [
+    "BillingSuccess.jsx: The double try/catch on api.get is fine, but if the /payments endpoint returns a non-2xx that isn't caught by axios (e.g. 200 with error body) the fallback won't fire; monitor.",
+    "BillingSuccess.jsx: POLL_MAX=6 * POLL_INTERVAL=2500ms = ~15s ceiling. If Stripe webhook lags on prod it may hit 'expired'. Consider bumping to POLL_MAX=10.",
+    "Pricing.jsx: 'Buy {t.name}' uses the plan display name — safe today because names are 'Solo'/'Family' but a future rename would leak into the button label."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "95%"},
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None. Live Stripe test-mode checkout used against real preview env; cathy now has an active sub_1U3ZKiFXu1wTzvp0fQDCKny1 on Wayly Solo trial.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The Solo Buy button on /pricing now correctly redirects to Stripe Checkout for logged-in users. Stripe hosted checkout defaults to a Link OTP challenge for cathy@example.com (already a Link user) — Playwright must click 'Pay without Link' before the card form is visible. Test card 4242 4242 4242 4242 with any future expiry, any CVC, postcode 2000 works. Because it is a subscription trial, Total due today = $0.00 but the API returns payment_status='paid' on completion (not 'no_payment_required' as expected). BillingSuccess correctly handles both.",
+  "rca of the issue": "Both original bugs were fixed by E1. Bug 1 (success page showing error): BillingSuccess.jsx now polls the new /api/payments/checkout/status/{id} endpoint and accepts payment_status in {paid,no_payment_required} OR session.status='complete' as success — API returned payment_status='paid' + status='complete' so the paid branch fires. Bug 2 (guest CTA copy for logged-in users): Pricing.jsx now branches on useAuth().user and swaps 'Start 7-day free trial' -> 'Buy {name}' / 'Talk to us' for adviser. Verified on preview env."
+}

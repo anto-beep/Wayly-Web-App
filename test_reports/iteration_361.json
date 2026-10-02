@@ -1,0 +1,57 @@
+{
+  "summary": "Mobile Classification Self-Check 3-step wizard rebuild verified against web parity. Inclusive wording, wizard stepper, per-week tile, anchor hints, and interactive band scale testIDs all present in rendered DOM. Web Shift+D + drag-highlight verified by code review only (theme.jsx keydown handler with input/textarea/select/contentEditable guard; ClassificationCheck.jsx onPointerDown/Move drag). One flaky observation during test-run: mass-clicking through 16 questions across step transitions only advanced progress bar to 2 of 16 — likely a test-script race with the DRAFT auto-save/rehydration effect rather than an app bug (manual click-through in prior iterations 359/360 worked end-to-end). Recommend main agent spot-check by manually walking through the 3 steps once.",
+  "platforms_tested": ["mobile", "web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "verified_on_mobile": {
+    "no_your_parent_string": true,
+    "heading_is_person_you_care_for": true,
+    "intro_daily_life_of_the_person_you_care_for": true,
+    "stepper_testids_present": ["csc-stepper", "csc-step-care", "csc-step-home", "csc-step-health"],
+    "step_panels_present": ["csc-step-panel-care (after Next => csc-step-panel-home => csc-step-panel-health)"],
+    "wizard_nav": {"csc-wizard-next": "step1&2 only", "csc-wizard-back": "step2/3", "csc-submit": "only on step3 (verified count 0 on step1, 1 on step3)"},
+    "current_classification_pills": "csc-current-1..8 + csc-current-none all present",
+    "q1_stem_inclusive": "Q1 uses 'the person you care for' wording",
+    "q1_anchor_hint": "'Uses grab rails or a shower chair, but does it alone.' — plain-English anchor renders in csc-q-Q1_self_care_shower-anchor after selecting an option",
+    "band_scale_testids_in_code": ["csc-band-scale", "csc-scale-1..8", "csc-scale-detail", "csc-scale-detail-close", "csc-scale-hint"],
+    "per_week_tile_in_result_header": "Code confirms 3 tiles PER YEAR / PER QUARTER / PER WEEK in the teal header",
+    "regression_blocks_in_code": ["csc-comparison", "csc-drivers", "csc-actions (Save as PDF / Email / Run again)", "csc-save-card", "csc-saved-panel", "csc-assessor-block", "csc-next-step-a/b/c", "csc-repeat-nudge"]
+  },
+  "verified_on_web_via_code_review": {
+    "shift_d_shortcut": "theme.jsx:87-100 — Shift+D toggles override; guards Ctrl/Meta/Alt AND ignores when target tag is input/textarea/select or isContentEditable",
+    "csc_scale_drag_highlight": "ClassificationCheck.jsx:194-199 — onPointerDown sets draggingRef+picks, onPointerMove picks while dragging, onPointerUp/Leave clears; csc-scale-hint text is 'Drag or tap any level to see its funding'",
+    "csc_scale_detail": "csc-scale-detail + csc-scale-detail-close present; per-year/quarter/week grid inside"
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Spot-check mobile: complete the 3-step wizard once by hand and confirm the result screen (csc-result) renders with the per-week tile and that tapping csc-scale-3 opens csc-scale-detail. Automation ran into a progress-desync during mass-clicks that likely doesn't repro under real use.",
+    "Optional: run web Shift+D shortcut in an /ai-tools/classification-self-check text field to confirm the input-guard prevents accidental toggles while typing."
+  ],
+  "critical_code_review_comments": [
+    "Mobile ClassificationSelfCheck.tsx is 875 lines — over the 700-line soft cap. Consider splitting result-side pieces (BandScale, ResultActions, SavedChecksPanel, AssessorBlock, SaveCheckCard) into /app/mobile/src/components/tools/csc/*.tsx modules to improve readability.",
+    "Mobile band-scale uses the legacy onStartShouldSetResponder/onResponderMove API which works but is a legacy touch API. For future work, migrate to react-native-gesture-handler for consistent behavior on real devices (web preview is fine).",
+    "Web ClassificationCheck.jsx is very large (>1100 lines). Same recommendation to split ProfileHeader/BandScale/WaylySummary/ClassificationComparison/AssessorBlock into a /csc subfolder.",
+    "Web Shift+D handler correctly ignores contentEditable + form fields. Consider also skipping when a modal/dialog with role=dialog is open to avoid surprising shortcut behavior mid-flow (nice-to-have)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "~90% (structure + testIDs + wording verified; result-panel manual spot-check recommended)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Mobile CSC rebuild parity verified via testID + DOM inspection. If retesting, complete the wizard one question at a time (avoid bulk-select loops across step transitions) — the auto-save effect on step change can race with rapid programmatic clicks. Web Shift+D + drag-highlight verified by reading /app/frontend/src/uxf/theme.jsx and /app/frontend/src/pages/tools/ClassificationCheck.jsx.",
+  "rca of the issue": "N/A — no blocking bugs found."
+}

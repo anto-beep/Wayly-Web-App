@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+{% if data.locked %}
+<div class="cream-card">
+  <h3>Provider Performance Report is locked</h3>
+  <p>This report requires at least {{ data.statements_needed }} decoded statements. You have <strong>{{ data.statements_available }}</strong>.</p>
+  <p class="muted">Keep decoding your monthly statements to unlock the full performance scorecard.</p>
+</div>
+{% else %}
+<div class="cream-card" style="background: #ECEEF2; border-color: #0E2A47;">
+  <p style="font-size: 10px; color: #0E2A47;"><strong>Private.</strong> This report is for your records only. It is not visible to your provider and will never be shared by Wayly.</p>
+</div>
+<p class="muted">{{ data.provider }} · {{ data.date_range.start }} to {{ data.date_range.end }}</p>
+
+<div class="cols-2">
+  <div class="grade-card">
+    <div class="grade-letter">{{ data.grade }}</div>
+    <div class="grade-label">{{ data.grade_label }}</div>
+  </div>
+  <div>
+    {% if data.exec_summary %}<div class="cream-card"><h3>Summary</h3><p>{{ data.exec_summary }}</p></div>{% endif %}
+  </div>
+</div>
+
+<h2>Service delivery</h2>
+<p>Of <strong>{{ data.delivery.total }}</strong> scheduled visits, <strong>{{ data.delivery.delivered }}</strong> were delivered ({{ data.delivery.pct }}%).</p>
+<table>
+  <tbody>
+    <tr><td>Delivered as scheduled</td><td>{{ data.delivery.delivered }}</td><td><span class="badge green">DELIVERED</span></td></tr>
+    <tr><td>Delivered with substitute worker</td><td>{{ data.delivery.substituted }}</td><td><span class="badge amber">SUBSTITUTED</span></td></tr>
+    <tr><td>Not delivered — no record</td><td>{{ data.delivery.not_delivered }}</td><td><span class="badge red">MISSING</span></td></tr>
+    <tr><td>Cancelled by provider</td><td>{{ data.delivery.cancelled_provider }}</td><td><span class="badge amber">CANCELLED</span></td></tr>
+    <tr><td>Cancelled by participant</td><td>{{ data.delivery.cancelled_participant }}</td><td><span class="badge grey">PARTICIPANT</span></td></tr>
+  </tbody>
+</table>
+
+<h2>Billing accuracy</h2>
+<p>Of <strong>{{ data.billing.statements_count }}</strong> statements, <strong>{{ data.billing.with_anomaly }}</strong> contained at least one anomaly. <strong>{{ data.billing.anomaly_free_pct }}%</strong> were anomaly-free.</p>
+<table>
+  <thead><tr><th>Statement</th><th>Anomalies</th><th>Total value</th><th>Resolved</th></tr></thead>
+  <tbody>
+    {% for r in data.billing.per_statement %}
+    <tr><td>{{ r.statement }}</td><td>{{ r.anomaly_count }}</td><td>{{ r.value|money }}</td><td>{{ r.resolved_count }} of {{ r.anomaly_count }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="muted">Average anomaly value per statement: {{ data.billing.avg_value|money }}</p>
+
+<h2>Correspondence and responsiveness</h2>
+<p>Of <strong>{{ data.correspondence.total }}</strong> letters or concerns raised, <strong>{{ data.correspondence.responded }}</strong> received a response.</p>
+
+{% if data.ratings %}
+<h2>Your private ratings</h2>
+<table>
+  <thead><tr><th>Date</th><th>Rating</th><th>Note</th></tr></thead>
+  <tbody>
+    {% for r in data.ratings %}
+    <tr><td>{{ r.created_at|niceDate }}</td><td>{{ r.rating }} / 5</td><td>{{ r.note or '—' }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<h2>What to do if you have concerns</h2>
+<div class="cream-card">
+  <p>If you have unresolved concerns about {{ data.provider }}:</p>
+  <p>1. Log a concern in Wayly's Concern Log with full details and dates.</p>
+  <p>2. Use the Correspondence Tracker to record any letters or calls.</p>
+  <p>3. If the provider does not respond satisfactorily, contact OPAN (free, confidential): <strong>1800 700 600</strong>.</p>
+  <p>4. For serious or ongoing issues, contact the Aged Care Quality and Safety Commission: <strong>1800 951 822</strong>.</p>
+  <p>5. If you are considering switching, Wayly's Provider Switching Workflow guides you through every step.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{
+  "summary": "Mobile QA (Group B) resumed from iter347 (blocked by login-selector). Using testID login-submit-button all 5 mobile flows now VERIFIED end-to-end on Expo web preview at 390x844: (1) Mobile login works with cathy@example.com and solo user (login-email-input + login-password-input + login-submit-button). (2) Share panel gating on /letters/[id]: visible for FAMILY (cathy) — lf1-share-panel present with member/require-signoff/submit sub-testids; correctly HIDDEN for SOLO (solo user has no letters, but code gate is `user?.plan !== 'family' return null` at letters/[id].tsx:1225 which returns null for any non-family plan). (3) Provider prefill: lf1-recipient-current for cathy reads 'Test Provider 8c1af9aa / profile@testprovider.com.au' — pulls from participant.provider_name/provider_email (Dorothy), NOT a hardcoded 'BlueBerry Care'. lf1-recipient-use-provider button not rendered because the recipient is already applied as current; lf1-recipient-current is showing the participant.provider source correctly. (4) Letter voice: opened dispute correspondence entry, tapped lf1-generate-button, backend returned 1495-char body — NO em-dashes, NO en-dashes, NO coaching lines ('Ask the provider to explain', 'You should request'), body reads in first-person ('I am writing to query...', 'I have checked...', 'I would appreciate...'). (5) CE wizard progress-save/resume at /tool/contribution-estimator: filled step-1 (name + entry_path + assessment_status), tapped ce-next twice (situation → money → mix), navigated away + full reload → ce-resumed banner + ce-restart control both visible, wizard resumed on step 'mix' (step 3 of 3). Tapping ce-restart correctly resets to step 1 (situation) and ce-resumed disappears. ALL 5 items PASS.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "lf1-recipient-use-provider (letters/[id].tsx:467) is defined but only appears if there is a saved provider that is NOT already the current recipient. When the participant already has a provider set as recipient, only lf1-recipient-current shows. Consider always showing lf1-recipient-use-provider as a quick 'reset to provider' option if that's the intended UX. Non-blocking.",
+    "Solo user has zero letters in preview seed data — could not visually verify lf1-share-panel is hidden. Code inspection confirms the gate (`if (user?.plan !== 'family') return null;` at letters/[id].tsx:1225) works correctly; consider seeding one letter on the solo test account for future automation."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (family); test+1777810269@example.com / SoloTest1! (solo)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile Group B 7-item UX batch fully green using login-submit-button testID. Provider prefill sources from participant.provider_name/provider_email; letter body voice generator (backend /api/lf1/... via UI Generate) produces first-person text with no em/en-dashes and no coaching lines. CE wizard progress-save works: state persisted across full app reload with ce-resumed + ce-restart, ce-restart resets to step 1. Solo share-panel hidden verified via code (letters/[id].tsx:1225); UI verification not possible on preview because solo account has no letters seeded.",
+  "rca of the issue": "iter347 was blocked because the automation used text selector 'Sign in' which does not submit the button. Using [data-testid=\"login-submit-button\"] resolves login on mobile (Pressable → RN Web maps testID to data-testid). No product bug; testing-agent selector fix only."
+}

@@ -1,0 +1,42 @@
+{
+  "dash_streams": {},
+  "profile": {
+    "pp-personal-details": {
+      "bg": "rgb(220, 233, 234)"
+    },
+    "pp-financial-position": {
+      "bg": "rgb(238, 243, 238)"
+    },
+    "pp-follow-ups": {
+      "bg": "rgb(243, 231, 222)"
+    },
+    "pp-latest-activity": {
+      "bg": "rgb(220, 233, 234)"
+    },
+    "pp-timeline": {
+      "bg": "rgb(243, 231, 222)"
+    },
+    "__banners": [
+      {
+        "bg": "rgb(234, 237, 240)",
+        "txt": "PARTICIPANT PROFILEMum's ProfileLevel 4A single place to see every important det"
+      },
+      {
+        "bg": "rgb(242, 242, 242)",
+        "txt": "PARTICIPANT PROFILEMum's ProfileLevel 4A single place to see every important det"
+      },
+      {
+        "bg": "rgb(234, 237, 240)",
+        "txt": "PARTICIPANT PROFILEMum's ProfileLevel 4A single place to see every important det"
+      },
+      {
+        "bg": "rgb(234, 237, 240)",
+        "txt": "PARTICIPANT PROFILEMum's ProfileLevel 4A single place to see every important det"
+      },
+      {
+        "bg": "rgb(234, 237, 240)",
+        "txt": ""
+      }
+    ]
+  }
+}

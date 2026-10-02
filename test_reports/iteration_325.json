@@ -1,0 +1,41 @@
+{
+  "summary": "P0 iter325 — all 4 items verified GREEN. Backend pytest 4/4 pass (1 skip): autosave persistence PATCH /api/lf1/correspondence/{id}/autosave writes both intake AND content_draft and GET returns them; POST /api/care-plans/summary.pdf and POST /api/public/exports/pdf tool=care-plan both return 200 application/pdf containing 'SAFETY CHECKS WE RAN' + status labels 'All good' / 'Worth a look' / 'Need more info' + the amber safety-notice box; POST /api/public/exports/pdf tool=budget returns 200 application/pdf ~14kB. Web UI E2E on cathy@example.com verified: (a) Letter editor at /tools/letters-and-follow-ups/{id} exposes all 8 required testIDs and the leave-guard modal fires on lf1-detail-back after edits, with Save-as-Draft flipping lf1-detail-unsaved-hint → lf1-detail-saved-hint (persistence confirmed); (b) /ai-tools/budget-calculator shows bc-download-estimate for paid user cathy and clicking it downloads wayly-budget-estimate-2026-09-11.pdf (14,942 bytes). Class-4 parity (data-file): supportAtHomeLevels.js and budgetTool.ts both annual=30468.51; lifetime cap 137917.01 in both; runtime page shows quarterly $6,855.41 + care mgmt $761.72 + cap $137,917.01. Note: the classification card uses formatAUD (whole $) so $30,469/yr is shown while the underlying value is 30468.51 (used in downstream calcs and expected). Mobile Class-4 UI walk-through was NOT re-driven this iteration because the shared data files match and the mobile BudgetCalculatorTool uses the same reducer + ResultActions testID prefix 'bc-export' per review request.",
+  "platforms_tested": ["web", "backend"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter325_p0.py",
+    "/app/test_reports/pytest/iter325.xml"
+  ],
+  "action_items": [
+    "None — all P0 acceptance criteria pass on backend + web. Mobile parity was validated by code review only (data files identical, ResultActions with testIDPrefix 'bc-export' present). Optional: main-agent self-test the mobile Save-as-Draft leave-guard on /letters/[id] since the mobile-specific usePreventRemove wiring was not re-driven in this run."
+  ],
+  "critical_code_review_comments": [
+    "care_plan_pdf.py:76-214 correctly renders both safety_notice (amber banner with title+body) and SAFETY CHECKS WE RAN section with status labels 'All good' / 'Worth a look' / 'Need more info' — matches the on-screen contract.",
+    "routes/lf1.py:352-370 autosave persists intake dict + content_draft; the same GET route returns them — behaviour matches the CorrespondenceDetail.jsx contract.",
+    "CorrespondenceDetail.jsx:171-189 replaces the debounced silent autosave with an explicit Save-as-Draft PATCH — verified in browser. Comment L171 confirms intent."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter325_p0.py (new)"
+  ],
+  "success_rate": {"backend": "100% (4/4 executed, 1 skip on non-existent /api/budget/calculate endpoint)", "frontend": "100% (2/2 UI flows: Save-as-Draft + Printable Estimate)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family / paid)",
+  "seed_data_creation": "Created 2 disposable LF-1 draft letters via the automation (TEST_ITER325_* markers on cathy). Safe to leave in place.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend harness at /app/backend/tests/test_iter325_p0.py is small and idempotent — re-run to spot-check any of the 4 P0s. All 4 P0 items are GREEN on web + backend. Mobile UI parity for BudgetCalculator + Save-as-Draft leave-guard on /letters/[id] was not re-driven in-browser this iteration; code review only. If mobile regression needed, focus on /letters/[id] usePreventRemove for gesture/hardware back + the header back tap and mailbox link tap (all three should trigger the same 'Save before leaving?' prompt).",
+  "rca of the issue": ""
+}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="muted">A chronological view of significant events in {{ data.participant.first_name }}'s care.</p>
+
+{% if data.events %}
+{% for ev in data.events %}
+<div class="timeline-event">
+  <div class="timeline-dot dot-{{ ev.color }}"></div>
+  <div style="flex: 1;">
+    <div style="display: flex; gap: 8px; align-items: baseline;">
+      <strong style="color: #0E2A47;">{{ ev.date|niceDate }}</strong>
+      <span>{{ ev.headline }}</span>
+    </div>
+    {% if ev.detail %}<div class="muted" style="font-size: 9px;">{{ ev.detail }}</div>{% endif %}
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="cream-card"><p class="muted">No significant events recorded yet. Events appear here as you log hospitalisations, care plan changes, AT-HM installations, and concerns.</p></div>
+{% endif %}
+
+<div class="cream-card" style="margin-top: 14px;">
+  <h3>Legend</h3>
+  <p><span class="timeline-dot dot-navy" style="display: inline-block;"></span> Classification / admin · <span class="timeline-dot dot-gold" style="display: inline-block;"></span> Financial / budget · <span class="timeline-dot dot-teal" style="display: inline-block;"></span> Care plan · <span class="timeline-dot dot-red" style="display: inline-block;"></span> Concern · <span class="timeline-dot dot-purple" style="display: inline-block;"></span> Hospitalisation · <span class="timeline-dot dot-green" style="display: inline-block;"></span> Positive / resolved</p>
+</div>
+{% endblock %}

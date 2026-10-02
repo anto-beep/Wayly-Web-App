@@ -1,0 +1,62 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "I want you to look at the capitalisation and formatting of everything. I want it for example heading to be capitalised properly 'Prepare for your SAH assessment' should be 'Prepare for your SAH Assessment'. I also want you to look at how the side dashboard and grouping of things. it shouldnt feel too overwhelming. I need you to review where things are and how they are grouped and how they fit with the other AI Tools. Otherwise the menu will become too long. I want you to look at the layout of pages and see if they can be made better. I want more information on pages for users to know exactly what they tools are, to know what the page is about. to be quite informative and even how to use the page. I want it to be so user intuitive and easy to use. Pages shouldnt just have one line sentences, I want them to be instructional, outcome focused so users know the tool, the outcome, see the value.",
+  "summary": "No relevant testing skill found. Focused UI verification with cathy@example.com confirmed the specified Title Case headings and sidebar regrouping are fixed, and 12 of 13 requested PageIntro pages render the three instructional sub-cards. The bug is not fully fixed because /app/wall still has no data-testid=page-intro block and shows only a short Family Wall intro; follow-up navigation also captured console errors on AI Tools routes.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Family Wall (/app/wall)",
+        "issue": "Missing the required rich PageIntro component with 'What This Does', 'How to Use It', and 'What You Get'. The page still displays a simple heading and one-line description, which directly violates the user's requested outcome-focused/instructional page layout.",
+        "selector": "[data-testid='page-intro']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Sidebar AI Tools navigation regression",
+        "issue": "All tested Today, Guided Journeys, and AI Tools routes loaded non-blank pages, but console errors were captured on /ai-tools/classification-self-check and /ai-tools/care-plan-reviewer: invalid <span> inside <option> hydration warnings. Two 404 resource console errors were also captured during the navigation sweep.",
+        "affected_selectors": ["nav-classification-self-check", "nav-support-plan-reviewer"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "/app/wall",
+        "issues": [
+          "Not using the shared PageIntro.jsx pattern applied elsewhere.",
+          "Does not provide the requested instructional, outcome-focused guidance cards."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/ux_capitalisation_sidebar_pageintro_iter111_playwright.py",
+    "/app/test_reports/ux_iter111_followup_playwright.py"
+  ],
+  "action_items": [
+    "Add the shared PageIntro with the three required sub-cards to the actual /app/wall route component: /app/frontend/src/pages/extended/FamilyWall.jsx, or reroute /app/wall to the updated component if that was intended.",
+    "Fix or suppress the real React console errors on AI Tools routes caused by invalid span children inside option elements; investigate the two 404 resource errors from the navigation sweep.",
+    "Re-run the focused page-intro/sidebar/title-case verification after fixes."
+  ],
+  "critical_code_review_comments": [
+    "App.js maps /app/wall to /app/frontend/src/pages/extended/FamilyWall.jsx. That component does not import or render PageIntro, while /app/frontend/src/pages/FamilyThread.jsx does. The requested /app/wall page was therefore missed by the broad PageIntro rollout."
+  ],
+  "updated_files": [
+    "/app/test_reports/ux_capitalisation_sidebar_pageintro_iter111_playwright.py",
+    "/app/test_reports/ux_iter111_followup_playwright.py",
+    "/app/test_reports/bug_verification_111.json",
+    "/app/test_reports/iteration_111.json"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend-only bug",
+    "frontend": "Partial: title-case and sidebar checks passed; 12/13 requested PageIntro pages passed; /app/wall and AI Tools console-error regression failed"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use cathy@example.com / testpass123. The main failure is reproducible by logging in and opening /app/wall: [data-testid='page-intro'] never appears. Source confirms /app/wall maps to extended/FamilyWall.jsx, which lacks PageIntro. Earlier checks passed for title-case headings and sidebar group order.",
+  "rca_of_the_issue": "The PageIntro rollout appears to have updated FamilyThread.jsx, but the sidebar and App.js route for Family Wall use /app/wall -> pages/extended/FamilyWall.jsx. That actual routed component was missed, leaving the one-line intro in place."
+}

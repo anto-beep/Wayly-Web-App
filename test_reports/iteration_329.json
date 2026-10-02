@@ -1,0 +1,36 @@
+{
+  "summary": "Verified the admin console dark-bleed bug is FIXED. Reproduced the original repro path: set consumer dark (localStorage wayly:app:appearance=dark + html.theme-dark + data-theme=dark), logged in as super_admin via 2-step TOTP (hello@wayly.com.au), navigated to /admin/users, then HARD REFRESHED. In every case <html> ends up with data-theme='light' and NO theme-dark class, .admin-root data-theme='light', body bg rgb(234,237,240) (cream) with heading color rgb(14,42,44) (near-black) on white cards — fully readable. Repeated hard-refresh 4 times: stable. Navigated Overview/Subscriptions/Audit Log/Health: all stayed light. Admin top-bar theme toggle (D/L) still works. On leaving /admin to a consumer route the consumer dark theme is correctly restored (data-theme=dark, class theme-dark). Consumer localStorage 'wayly:app:appearance' was never mutated by the admin console (stayed 'dark' throughout the admin session). Screenshots confirm no white-on-white; text/cards render as intended.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter329_admin_theme/results.json",
+    "/app/test_reports/iter329_admin_theme/01_admin_after_nav.jpeg",
+    "/app/test_reports/iter329_admin_theme/02_hard_refresh.jpeg",
+    "/app/test_reports/iter329_admin_theme/03_after_nav.jpeg",
+    "/app/test_reports/iter329_admin_theme/04_admin_toggle_dark.jpeg",
+    "/app/test_reports/iter329_admin_theme/05_consumer_restored.jpeg",
+    "/app/test_reports/iter329_admin_theme/06_readability.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix is well-scoped: MutationObserver observes only class + data-theme attribute changes on <html>, guards with `applying` flag to avoid re-entrancy, and disconnects on unmount. Restoration on unmount reads wayly:app:appearance from localStorage and re-applies theme-dark class + data-theme attribute — matching ThemeProvider semantics.",
+    "useAdminTheme.js also writes data-theme to .admin-root only (scoped, not <html>), so the two hooks compose cleanly without clashing.",
+    "Minor: the observer callback runs on every child attribute mutation but is idempotent (early-return when state already matches) — cheap enough. No cleanup concern."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (7/7 assertions)"},
+  "test_credentials": "hello@wayly.com.au / Admin!2026 + TOTP M5A7R2XCCEXWYYKNJY55MVZYUHPYFA6W",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Admin dark-bleed bug verified fixed in iter329. Repro pattern to reuse: (1) set localStorage 'wayly:app:appearance'='dark' + document.documentElement.classList.add('theme-dark') + setAttribute('data-theme','dark'), (2) inject wayly_admin_token via page.request TOTP flow, (3) navigate to /admin/*, (4) hard refresh. Expected: <html> data-theme='light', no theme-dark class, .admin-root data-theme='light'. Playwright's page.request works for /api/admin/auth/*; python urllib was blocked with 403 (WAF/UA filter).",
+  "rca of the issue": "Original bug: The consumer ThemeProvider runs a useEffect on mount that reapplies its stored theme to <html> (setting class theme-dark + data-theme='dark' when user had chosen dark). Because AdminApp is nested under that provider, on hard-refresh the consumer provider's effect fires AFTER the admin's initial theme apply, overwriting <html> back to dark — leaving the light-designed admin CSS painted with dark globals (white text on white cards). Fix: AdminApp now installs a MutationObserver on <html>[class,data-theme] that re-asserts the admin theme (with an `applying` re-entrancy flag) whenever anything else mutates <html>, so consumer re-applications are immediately reverted while admin is mounted. On unmount, the observer disconnects and the consumer's stored theme is restored from localStorage. Verified end-to-end in preview."
+}

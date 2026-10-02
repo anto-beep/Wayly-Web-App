@@ -1,0 +1,29 @@
+{
+  "summary": "Verified INV-1 extractor tuning + refund/letter/CSV UX. Backend: on the Glorious Services INV-2026-07-4471 sample, extractor now yields 29 line items (target ≥25) and reconciliation.findings returns 7 findings including C1, C6 (x2), C8, C10, C11 (x2) — target ≥5 with C6/C8/C10/C11 all present. Both C6 findings expose a numeric observed.difference ($24.15 and $12.00). Frontend: /app/invoices shows 'Export CSV' button beside 'Check a new invoice'; clicking it downloads wayly-invoices-2026-08-12.csv with the exact expected 10-column header and one row per invoice (23 rows). Invoice detail page shows Draft-letter buttons per finding (data-testid inv1-issue-letter-N); clicking one navigates to /app/letters?compose=1&source_type=inv1_finding&... with subject/body/source_id/provider_name pre-seeded. Financial-impact accumulator works: on the Meridian sample opened for regression, 3 C2 findings each contributed $44.30 REFUND labels and the summary banner's Potential refund equalled $132.90 = 3×$44.30 (no double counting).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_inv1_iter136_tuning.py",
+    "/app/test_reports/pytest/iter136_inv1.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "InvoicesList.downloadInvoicesCsv joins with \\r\\n and wraps in a Blob — this works but the browser may normalise to \\n on some platforms; not a bug, just noting the split logic in tests must handle both.",
+    "Upload response does not return the extracted line_items array — tests had to re-run extract_line_items on the persisted payable_section to count lines. Consider surfacing total_line_items in the upload response for observability.",
+    "C6 finding message currently reads generic 'Line arithmetic differs by …' — consider naming after-hours vs. sum-mismatch variants so users understand why (nice-to-have)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_inv1_iter136_tuning.py"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "cathy@example.com / testpass123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Uploaded the Glorious Services INV-2026-07-4471 sample PDF (via /api/invoices/upload) 3 times during backend tests. No cleanup performed — invoices remain in cathy's household.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "test_inv1_iter136_tuning.py fetches the Glorious PDF from the customer-assets URL every run; it is idempotent and can be re-run. Login response key is 'token' (not 'access_token') and password-based login is at /login with data-testid=login-email-input / login-password-input / login-submit-button. Extracted line items are not returned by /api/invoices/upload or GET /api/invoices/{id} — to count, call lib.inv1.extractor.extract_line_items on doc.payable_section directly.",
+  "rca of the issue": "n/a — all four follow-ups pass end-to-end."
+}

@@ -1,0 +1,47 @@
+{
+  "summary": "Iteration 107 tested CMP-1 v1 (complaints intake + stages + evidence bundle + elder-abuse safeguard) and LF-1 v2 prefill consumer. Backend pytest across cmp1 (12/12), ce3 v1+v2 pension+v2 hardship, cpr2 v1+voice-check, core1, loop1, lca1: 134 passed / 1 skipped / 0 failed (junit at /app/test_reports/pytest/iter107_regression.xml). Frontend Playwright as cathy@example.com verified full CMP-1 flow: core1-complaints-card on ParticipantProfile with working core1-complaints-open link; /app/participants/:id/complaints renders cmp1-list-page with cmp1-empty state + cmp1-new-btn; cmp1-new-modal opens with all selectors (type/severity/provider-name/provider-email/subject/outcome/ongoing/submit/cancel); selecting type=elder_abuse surfaces cmp1-new-elder-safeguard banner listing Elder Abuse Helpline 1800 353 374 + 000; submitting an elder_abuse complaint creates a row with the Safeguard badge, red border tint, and a working cmp1-case-link linking to /app/participants/:id/cases/{case_id}; empty-state footer resource line 'Elder Abuse Helpline is 1800 353 374' renders. LF-1 v2 prefill consumer PARTIALLY works: when a request hits /ai-tools/letters-and-follow-ups?prefill=hardship&archetype=<existing archetype>&companion_notes=... it auto-begins the situation flow, POSTs /lf1/correspondence with intake, and CorrespondenceDetail renders lf1-detail-prefill-context banner + lf1-detail-companion-notes. HOWEVER two integration bugs were found that break the actual hardship→LF-1 hand-off path end-to-end (see backend_issues/frontend_issues).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Hardship walkthrough → LF-1 hand-off route",
+        "issue": "HardshipWalkthrough.jsx (line 232) builds Link to `/tools/letters-and-follow-ups?...` but the React route only exists at `/ai-tools/letters-and-follow-ups`. Clicking hardship-handoff-provider_letter or hardship-handoff-maca_letter results in the SPA 404 page ('This page has gone for a walk'). The LF-1 v2 prefill consumer is therefore never reached from the intended flow.",
+        "affected_selectors": ["hardship-handoff-provider_letter", "hardship-handoff-maca_letter"],
+        "priority": "HIGH"
+      },
+      {
+        "flow": "Hardship walkthrough → LF-1 prefill archetype matching",
+        "issue": "CE-3 hardship hand_offs emit lf1_archetype='billing_query' and 'plan_review_request' (backend/routes/ce3.py:998,1004) and CPR-2 voice check also emits 'plan_review_request' (routes/cpr2.py:582,593), but /api/lf1/situations only returns archetypes: request/dispute/complaint/escalation/notification/guided_pathway/response_draft. LettersFollowUps.jsx line 112 `situations.find(s => s.archetype === archetype || label-includes(situation-slice-20))` therefore never resolves a target and the prefill useEffect returns silently — no correspondence is created, no banner, user is dumped on the situation-picker with no feedback. Situation label fallback also fails because ce3 emits labels like 'Financial hardship consideration' which do not substring-match any lf1 situation label. Even if the route bug above is fixed, the flow will still no-op.",
+        "affected_selectors": ["lf1-detail-prefill-context", "lf1-detail-companion-notes"],
+        "priority": "HIGH"
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/cmp1/test_cmp1_v1.py",
+    "/app/test_reports/pytest/iter107_cmp1.xml",
+    "/app/test_reports/pytest/iter107_regression.xml"
+  ],
+  "action_items": [
+    "Fix HardshipWalkthrough.jsx line 232: change `to={`/tools/letters-and-follow-ups?...`}` to `to={`/ai-tools/letters-and-follow-ups?...`}` so the hand-off link doesn't 404. (Same audit needed for any other hand-off building this path — check CPR-2 voice check follow-up links too.)",
+    "Reconcile lf1_archetype values emitted by CE-3 hardship hand_offs ('billing_query', 'plan_review_request') and CPR-2 voice-check ('plan_review_request') with the archetypes actually present in /api/lf1/situations (request/dispute/complaint/escalation/notification/guided_pathway/response_draft). Either map the emitted archetypes to existing lf1 situations server-side, or extend LettersFollowUps.jsx target-resolution to fall back on a stable situation_id/intake_variant lookup so the prefill useEffect actually finds a target.",
+    "Consider surfacing a user-visible warning on the LF-1 picker if a prefill=... URL is present but no matching situation was found (currently the effect silently returns and the user has no idea the deep link failed)."
+  ],
+  "critical_code_review_comments": [
+    "LettersFollowUps.jsx line 112 target lookup uses `.includes(situation.slice(0,20))` on label — brittle. If archetype fails and label doesn't happen to substring-match, the prefill silently no-ops. Prefer a stable server-driven mapping (e.g. emit situation_id from the hand-off origin) rather than fuzzy label matching.",
+    "HardshipWalkthrough companion_notes is still truncated to 500 chars in the query string (line 228) — same URL-length hygiene concern flagged in iter106 still stands; a server-side prefill-token keyed by hardship_trigger_id would be cleaner.",
+    "CMP-1 ComplaintsList New modal 'Desired outcome' select on elder_abuse type still defaults to 'correction_of_billing' — for elder_abuse it would be nicer UX to default to 'correction_of_care_quality' or 'change_of_worker' to reduce clicks and avoid the initially-nonsensical pairing. Minor polish, not a blocker.",
+    "ComplaintsList.jsx: after successful complaint create the modal closes but there is no toast/announcement — a screen-reader user may miss the state change. Consider aria-live region confirming 'Complaint opened, LOOP-1 case linked'.",
+    "cmp1.py LEGAL_TRANSITIONS should probably also allow drafting → closed_resolved / closed_unresolved for the case where a complaint is created and immediately withdrawn without any provider engagement. Currently only advance-stage validates transitions; the close endpoint appears to bypass the matrix, which is fine, but worth documenting explicitly."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (134/134 across cmp1+ce3+cpr2+core1+loop1+lca1; 1 pre-existing skip)", "frontend": "CMP-1 100% (list + entry point + new modal + elder_abuse safeguard + row + case link all verified). LF-1 v2 prefill consumer 100% in isolation (banner + companion_notes render when archetype matches an existing lf1 situation), but the upstream hardship→LF-1 hand-off is 0% due to route + archetype mismatch."},
+  "test_credentials": "cathy@example.com / testpass123 (participant Dorothy 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "One elder_abuse complaint + auto-opened LOOP-1 case created for Dorothy via the UI happy-path test. Two disposable /lf1/correspondence entries created while probing the LF-1 prefill (archetype=request). These are participant history and were left in place; a follow-up cleanup can be done via the pytest _cleanup helper if desired.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "CMP-1 v1 backbone is solid — 12/12 pytest, full UI happy-path exercised, elder-abuse safeguard confirmed. LF-1 v2 prefill CONSUMER itself works (banner + notes render when archetype matches). The 2 open bugs are UPSTREAM: (a) route path `/tools/...` vs `/ai-tools/...` in HardshipWalkthrough.jsx line 232; (b) archetype vocabulary mismatch between ce3/cpr2 (billing_query/plan_review_request) and lf1/situations (request/dispute/complaint/...). Fix both to unblock the end-to-end hardship→LF-1 flow. Re-run test_cmp1_v1.py + a fresh Playwright covering the hardship-handoff-provider_letter click to verify banner appears on CorrespondenceDetail after fix. auth token key: localStorage['kindred_token'].",
+  "rca of the issue": "Bug 1 (route 404): HardshipWalkthrough.jsx was updated to build the new prefill query string but the base path was left as `/tools/letters-and-follow-ups`, which is not a registered React route (only /tools/letters-and-follow-ups/:entryId and /log are). App.js only registers /ai-tools/letters-and-follow-ups for the hub. Reproduction: from HardshipWalkthrough step 5, click hardship-handoff-provider_letter → 404 page. Mitigation: change `to` prop to `/ai-tools/letters-and-follow-ups?...`. Bug 2 (archetype mismatch): CE-3 hardship hand_offs and CPR-2 voice-check actions emit lf1_archetype values that don't exist in the LF-1 situations catalogue. LettersFollowUps.jsx prefill useEffect can't find a target and returns silently. Reproduction: navigate to /ai-tools/letters-and-follow-ups?prefill=hardship&archetype=billing_query&situation=Financial%20hardship%20consideration → user lands on the picker with no banner, no correspondence created. Mitigation: either update ce3/cpr2 to emit an existing archetype (or better: an lf1 situation_id/intake_variant), or add an alias map in LettersFollowUps.jsx / a backend endpoint that resolves logical archetype names to lf1 situation ids."
+}

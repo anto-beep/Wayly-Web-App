@@ -1,0 +1,59 @@
+{
+  "summary": "Iter289 visual QA (cathy@example.com, web + mobile). Verified 5 of 6 target areas via computed styles + screenshots in BOTH light and dark. WEB PARTICIPANT PROFILE could NOT be verified because /app/participants/{id} now returns a 500 'Something on our side broke' error page — the very route that hosts core1-profile-header, core1-artefacts-grid and core1-timeline-expand is broken (regression from iter288 which reported it as 404 on /app/profile). Everything else looked correct: Account Health ring '11%' is white on the teal gradient (rgb(255,255,255)); Settings billing-participants-card is solid clay (rgb(165,81,43)) with white text; web stream cards have distinct teal / sage / clay soft-tint backgrounds with 4px coloured left accent (borderLeftColor teal rgb(15,86,72) / sage rgb(94,126,99) / clay rgb(160,85,69)) — however the numeric % on each card is muted-grey rgb(82,75,66), NOT the coloured number the spec calls for. Mobile Participant Profile is fully compliant: solid teal banner with white 'Mum's Profile' heading; and all five cards render with the requested soft-tint backgrounds (personal-details teal rgb(220,233,234), financial-position sage rgb(238,243,238), follow-ups clay rgb(243,231,222), latest-activity teal, timeline clay — none plain grey).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "ParticipantProfile route", "issue": "GET /app/participants/{id} renders the '500 Something on our side broke' error page for cathy@example.com (participant id 0c538637-b0dd-4982-8f78-b32814c6a5eb). Only /app/participants/{id}/timeline works. Consequence: NONE of this iteration's participant-profile deliverables can be visually verified — core1-profile-header (teal banner + white text), core1-artefacts-grid (rotating solid tones + white text), core1-timeline-expand (collapsed-by-default) and core1-timeline-list (major events only, clay panel + white text) all rely on this route rendering. Reference: /app/frontend/src/pages/ParticipantProfile.jsx (route handler throws — likely a runtime exception in data fetch/render).", "selector": "core1-profile-header / core1-artefacts-grid / core1-timeline-expand", "priority": "CRITICAL"},
+        {"component": "StreamProgress numbers (dashboard stream-clinical / -independence / -everyday-living)", "issue": "The spec calls for a 'coloured number' per stream (teal/sage/clay). Current numeric % renders as rgb(82,75,66) muted-grey (text-muted-k class) on all three cards in BOTH light and dark. The soft-tint bg + 4px coloured left border are correct, but the number itself is not tone-coloured. Reference: /app/frontend/src/components/StreamProgress.jsx (the tabular-nums span uses text-muted-k instead of the tone.solid colour).", "selector": "[data-testid=\"stream-clinical\"] .tabular-nums", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Dashboard — Finish setting up card (light+dark)", "issues": ["PASS — '11%' ring text renders rgb(255,255,255) white on the teal linear-gradient (rgb(14,77,82) → rgb(10,62,66)). Previous iter288 dark-on-dark bug is fixed."]},
+        {"screen": "Settings > Plan and Billing (billing-participants-card, light+dark)", "issues": ["PASS — Panel bg rgb(165,81,43) solid clay; ALL child text nodes computed rgb(255,255,255). Bright, unambiguous, matches spec."]},
+        {"screen": "Dashboard stream cards (light+dark)", "issues": ["PASS on bg/border — Clinical soft teal rgba(15,86,72,0.12) + solid teal accent; Independence soft sage rgba(94,126,99,0.15) + solid sage accent; Everyday Living soft clay rgba(160,85,69,0.14) + solid clay accent. FAIL on number colour — see ui_bugs above."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Participant Profile (/participant/{id})", "issues": ["PASS — Header banner is solid teal with white 'Mum's Profile' heading and white body copy. Cards: pp-personal-details rgb(220,233,234) teal-soft ✓, pp-financial-position rgb(238,243,238) sage-soft ✓, pp-follow-ups rgb(243,231,222) clay-soft ✓, pp-latest-activity rgb(220,233,234) teal-soft ✓, pp-timeline rgb(243,231,222) clay-soft ✓. None plain grey — matches spec."]},
+        {"screen": "Dashboard stream cards", "issues": ["NOT VERIFIED — post-login the initial mobile dashboard did not render any [data-testid^=\"stream-\"] node in the DOM (query returned empty). Streams may live further down or under an expandable panel; testing agent did not scroll far enough. Main agent to spot-check on device or in Expo preview."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Participant Profile", "platform": "web", "issue": "Mobile participant profile renders end-to-end (header + 5 tinted cards); web equivalent 500s at the route entry.", "expected": "Both surfaces render the participant profile with matching colour treatment.", "actual": "Web: 500 error page. Mobile: fully rendered and compliant."}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter289_web/results.json",
+    "/app/test_reports/iter289_web/dash_light.jpeg",
+    "/app/test_reports/iter289_web/dash_dark.jpeg",
+    "/app/test_reports/iter289_web/billing_light.jpeg",
+    "/app/test_reports/iter289_web/billing_dark.jpeg",
+    "/app/test_reports/iter289_web2/results.json",
+    "/app/test_reports/iter289_mobile2/results.json",
+    "/app/test_reports/iter289_mobile2/profile.jpeg",
+    "/app/test_reports/iter289_mobile2/dash.jpeg"
+  ],
+  "action_items": [
+    "CRITICAL: Fix the /app/participants/:id route 500 error (ParticipantProfile.jsx). Without this the iter289 primary deliverables (core1-profile-header teal banner, core1-artefacts-grid rotating solid tones, core1-timeline-expand collapsed timeline, panel-solid-clay timeline section) cannot be reached. Inspect server-side console for the thrown exception on GET /app/participants/{cathy_active_participant_id}.",
+    "MEDIUM: In StreamProgress.jsx, colour the numeric % text with the stream's tone.solid (teal / sage / clay) instead of text-muted-k. Spec explicitly calls for a 'coloured number' per stream.",
+    "LOW: After the profile route is restored, re-run this iteration's participant-profile probes (artefact ARTEFACT_TONES rotation, force-white text, core1-timeline-expand → core1-timeline-list toggle, MAJOR_TIMELINE_EVENTS filtering) in both light and dark before shipping."
+  ],
+  "critical_code_review_comments": [
+    "ParticipantProfile.jsx: a 500 on a route that a signed-in caregiver's dashboard links to (via /app/participants/{id}/timeline navigation) is a data-fetch or render exception that also affects the parent /participants/{id} render. Add a defensive error boundary + surface the technical detail behind the existing '500 Something on our side broke' fallback so the actual thrown error is visible in preview.",
+    "StreamProgress.jsx: the number colour should track the stream tone (already computed as tone.solid for the border and header). Reusing text-muted-k defeats the point of the new colour treatment and drops the visual hierarchy in dark theme."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "~75% — 3 of 4 web deliverables verified, participant profile blocked by 500; mobile profile verified end-to-end; mobile streams not confirmed in this run."},
+  "test_credentials": "cathy@example.com / testpass123 (Family, active participant id 0c538637-b0dd-4982-8f78-b32814c6a5eb → 'Mum's Profile')",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter288 flagged /app/profile as 404; iter289 confirms the situation has degraded — /app/participants/{id} now 500s (only /participants/{id}/timeline resolves). After the main agent fixes ParticipantProfile.jsx render, re-run: (1) verify core1-profile-header background is teal gradient with white text; (2) core1-artefacts-grid children each have a UNIQUE ARTEFACT_TONES colour bg AND .force-white styling applied (no white-on-white); (3) core1-timeline-section is panel-solid-clay + white; core1-timeline-expand button appears by default, click reveals core1-timeline-list with only MAJOR_TIMELINE_EVENTS. Also revisit StreamProgress number colour (issue #2). Mobile stream cards were not found on Cathy's dashboard — either they require scrolling or the testIDs are 'stream-Clinical' (capitalised, with space) as the code implies; recheck via full-page screenshot before flagging.",
+  "rca of the issue": "The web participant profile 500 could not be root-caused from client-side only — the fallback page swallows the exception. Recommended: temporarily log the caught error to the console or expose it in the 'Technical detail' details block so the underlying cause (likely a null-dereference on a new API field consumed by ParticipantProfile.jsx that isn't populated for cathy's active participant, or a routing regression around the newly-collapsed TimelineList) is visible in preview."
+}
