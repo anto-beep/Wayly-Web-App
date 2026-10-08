@@ -160,11 +160,11 @@ export default function CarePlanDetailScreen() {
           ) : null}
 
           <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}>
-            <Button label="Re-run review" testID="cp-run-analysis" icon={Sparkles} variant="outline" onPress={reAnalyse} loading={analysing} style={{ minHeight: 44, paddingHorizontal: 14 }} />
-            <Button label="Follow-up email" testID="cp-draft-email" icon={Mail} variant="outline" onPress={draftEmail} loading={emailBusy} style={{ minHeight: 44, paddingHorizontal: 14 }} />
-            <Button label="Download PDF" testID="cp-download-pdf" icon={Download} variant="outline" onPress={downloadPdf} loading={downloading} style={{ minHeight: 44, paddingHorizontal: 14 }} />
-            <Button label="Archive" testID="cp-archive" icon={Archive} variant="outline" onPress={archivePlan} loading={actionBusy === "archive"} style={{ minHeight: 44, paddingHorizontal: 14 }} />
-            <Button label="Delete" testID="cp-delete" icon={Trash2} variant="outline" onPress={() => setConfirmDel(true)} style={{ minHeight: 44, paddingHorizontal: 14 }} />
+            <Button label="Re-run review" testID="cp-run-analysis" icon={Sparkles} variant="primary" onPress={reAnalyse} loading={analysing} style={{ minHeight: 44, paddingHorizontal: 14 }} />
+            <Button label="Follow-up email" testID="cp-draft-email" icon={Mail} variant="ghost" bg={colors.primarySoft} fg={colors.primary} onPress={draftEmail} loading={emailBusy} style={{ minHeight: 44, paddingHorizontal: 14 }} />
+            <Button label="Download PDF" testID="cp-download-pdf" icon={Download} variant="ghost" bg={colors.sageSoft} fg={colors.sage} onPress={downloadPdf} loading={downloading} style={{ minHeight: 44, paddingHorizontal: 14 }} />
+            <Button label="Archive" testID="cp-archive" icon={Archive} variant="ghost" bg={colors.goldSoft} fg={colors.gold} onPress={archivePlan} loading={actionBusy === "archive"} style={{ minHeight: 44, paddingHorizontal: 14 }} />
+            <Button label="Delete" testID="cp-delete" icon={Trash2} variant="ghost" bg={colors.errorSoft} fg={colors.terracotta} onPress={() => setConfirmDel(true)} style={{ minHeight: 44, paddingHorizontal: 14 }} />
           </View>
 
           {/* Findings */}

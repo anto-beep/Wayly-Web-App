@@ -19,6 +19,17 @@ import { formatDate } from "@/lib/formatDate";
 import { sanitizeAI } from "@/lib/sanitizeAI";
 import CarePlanReviewView from "@/components/CarePlanReviewView";
 
+// Capitalise the first letter of words that have no uppercase yet, preserving
+// already-correct names (e.g. "Pty", "Ltd", "McDonald") and acronyms.
+function toTitleCase(s) {
+    if (!s) return s;
+    return String(s)
+        .trim()
+        .split(/\s+/)
+        .map((w) => (/[A-Z]/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+        .join(" ");
+}
+
 const SEV_META = {
     compliance: { label: "Compliance", cls: "bg-terracotta text-white", Icon: AlertOctagon, ring: "ring-terracotta/40" },
     choice: { label: "Choice", cls: "bg-clay text-white", Icon: ShieldAlert, ring: "ring-clay/40" },
@@ -393,17 +404,38 @@ export default function CarePlanDetail() {
 
             <div className="mt-4 flex items-start justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
-                    <h1 className="text-3xl font-serif tracking-tight text-primary-k">
-                        {plan.provider_name || "Care plan"}
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-k">
+                        Support Plan Review
+                    </div>
+                    <h1 className="text-3xl font-serif tracking-tight text-primary-k mt-1">
+                        {plan.provider_name ? toTitleCase(plan.provider_name) : "Support Plan"}
                     </h1>
-                    <div className="text-xs text-muted-k mt-1">
-                        {plan.effective_from
-                            ? `Effective ${formatDate(plan.effective_from)}${
-                                  plan.effective_to ? ` → ${formatDate(plan.effective_to)}` : ""
-                              }`
-                            : `Uploaded ${formatDate(plan.uploaded_at)}`}
+                    <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+                        <span
+                            data-testid="care-plan-status"
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium ${
+                                latest_run ? "bg-sage/15 text-sage" : "bg-gold/15 text-gold"
+                            }`}
+                        >
+                            <span className={`h-1.5 w-1.5 rounded-full ${latest_run ? "bg-sage" : "bg-gold"}`} />
+                            {latest_run ? "Reviewed" : "Not yet reviewed"}
+                        </span>
                         {plan.classification_at_review && (
-                            <> · Classification {plan.classification_at_review}</>
+                            <span className="inline-flex items-center rounded-full bg-surface-2 text-primary-k px-2.5 py-1 font-medium">
+                                Classification {plan.classification_at_review}
+                            </span>
+                        )}
+                        <span className="text-muted-k">
+                            {plan.effective_from
+                                ? `${formatDate(plan.effective_from)}${
+                                      plan.effective_to ? ` → ${formatDate(plan.effective_to)}` : ""
+                                  }`
+                                : `Uploaded ${formatDate(plan.uploaded_at)}`}
+                        </span>
+                        {latest_run && Array.isArray(findings) && (
+                            <span className="text-muted-k">
+                                · {findings.length} finding{findings.length === 1 ? "" : "s"}
+                            </span>
                         )}
                     </div>
                 </div>
@@ -412,7 +444,7 @@ export default function CarePlanDetail() {
                         type="button"
                         onClick={runAnalysis}
                         disabled={!canAnalyze || analyzing}
-                        className="inline-flex items-center gap-2 rounded-full bg-primary-k text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+                        className="inline-flex items-center gap-2 rounded-full bg-primary-k text-white px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm"
                         data-testid="btn-run-analysis"
                     >
                         {analyzing ? (
@@ -432,7 +464,7 @@ export default function CarePlanDetail() {
                             type="button"
                             onClick={downloadPdf}
                             data-testid="btn-download-plan"
-                            className="inline-flex items-center gap-2 rounded-full border border-kindred text-primary-k px-4 py-2 text-sm hover:bg-surface-2"
+                            className="inline-flex items-center gap-2 rounded-full bg-sage text-white px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
                         >
                             <FileDown className="h-4 w-4" />
                             Download
@@ -443,7 +475,7 @@ export default function CarePlanDetail() {
                         onClick={archivePlan}
                         disabled={actionBusy === "archive"}
                         data-testid="btn-archive-plan"
-                        className="inline-flex items-center gap-2 rounded-full border border-kindred text-primary-k px-4 py-2 text-sm hover:bg-surface-2 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-full bg-gold text-white px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm"
                     >
                         {actionBusy === "archive" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
                         Archive
@@ -453,7 +485,7 @@ export default function CarePlanDetail() {
                         onClick={deletePlan}
                         disabled={actionBusy === "delete"}
                         data-testid="btn-delete-plan"
-                        className="inline-flex items-center gap-2 rounded-full border border-terracotta/40 text-terracotta px-4 py-2 text-sm hover:bg-terracotta/5 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-full bg-terracotta text-white px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm"
                     >
                         {actionBusy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         Delete

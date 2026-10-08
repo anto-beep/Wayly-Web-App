@@ -146,6 +146,8 @@ export function Button({
   icon: Icon,
   testID,
   style,
+  bg,
+  fg,
 }: {
   label: string;
   onPress: () => void;
@@ -155,6 +157,8 @@ export function Button({
   icon?: LucideIcon;
   testID?: string;
   style?: ViewStyle;
+  bg?: string;
+  fg?: string;
 }) {
   const { colors } = useTheme();
   const isDisabled = disabled || loading;
@@ -164,7 +168,9 @@ export function Button({
     ghost: { bg: "transparent", fg: colors.primary },
     outline: { bg: "transparent", fg: colors.primary, border: colors.primary },
   };
-  const p = palette[variant];
+  const p = { ...palette[variant] };
+  if (bg) p.bg = bg;
+  if (fg) p.fg = fg;
   return (
     <Pressable
       testID={testID}

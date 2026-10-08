@@ -1,5 +1,11 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — Care Plan detail header + action-button restyle; web + mobile, visual edits):**
+- **Header (web `CarePlanDetail.jsx`):** replaced the thin "provider / Effective …" header (which fell back to a mis-capitalised "Care plan") with an informative, correctly-capitalised block — an uppercase "Support Plan Review" eyebrow, a title-cased provider H1 (new `toTitleCase` helper; fallback "Support Plan"), and a meta row with a Reviewed / Not yet reviewed status pill, Classification chip, plan period (or upload date), and findings count.
+- **Action buttons (both surfaces):** made Run review / Download / Archive / Delete visually distinct and theme-safe. Web uses fixed-hue brand tokens as solid fills with white text (teal / sage / gold / terracotta) — readable in light AND dark. Mobile's dark brand colours are light, so solid+white would fail in dark; instead the primary action stays solid (Re-run) and the rest use tonal fills (soft bg + strong coloured text/icon: teal / sage / gold / terracotta) that the token system guarantees contrast for in both modes. Added optional `bg`/`fg` overrides to the shared mobile `Button`.
+- **Verified:** screenshots on web (light + dark) and mobile Expo (light + dark) — all four buttons distinct and legible in every state; header renders title-cased with status pill.
+
+
 **Just fixed (Jun 2026 — Support Plan Reviewer "Unspecified provider" bug):**
 - **Report:** running Sam Burke's support plan showed "Unspecified provider" even though "Blueberry Care Pty Ltd" is the letterhead at the top of the document.
 - **Root cause:** `backend/services/care_plan_ingestion.py::_extract_provider` only recognised `Provider: X` or a `… CARE PLAN — X` header. This plan's title is "INDIVIDUALISED SUPPORT PLAN" with the org name as a plain letterhead line, so extraction returned `None` → the web detail/store pages fell back to "Unspecified provider" (`plan.provider_name || "Unspecified provider"`).
