@@ -264,10 +264,17 @@ def _extract_quarterly_budget(text: str) -> Optional[float]:
 
 
 def _extract_provider(text: str) -> Optional[str]:
-    """Extract provider name. Recognises two patterns:
+    """Extract provider name. Recognises several patterns:
     1. `Provider: XXX`
     2. `SUPPORT AT HOME CARE PLAN, XXX` (header em-dash / hyphen)
+    3. Letterhead: the organisation name on the line directly above an
+       "Approved provider …" / "ABN …" credential line.
+    4. Letterhead: a name ending in a company / care suffix (Pty Ltd, Ltd,
+       Aged Care, etc.) near the top of the document.
     """
+    # Avoid matching the credential line "Approved provider under the Aged
+    # Care Act …" — the `[A-Z]` requirement after the colon/space already
+    # prevents that (next word "under" is lowercase).
     m = re.search(
         r"[Pp]rovider\s*:?\s*([A-Z][A-Za-z0-9 &,'\-]{2,80})", text,
     )
@@ -283,6 +290,26 @@ def _extract_provider(text: str) -> Optional[str]:
     if m2:
         candidate = m2.group(1).strip().rstrip(".,;:")
         candidate = re.split(r"[\n\r]", candidate)[0].strip()
+        return candidate or None
+    # Letterhead above an "Approved provider" / "ABN" credential line.
+    m3 = re.search(
+        r"(?m)^[ \t]*([A-Z][A-Za-z0-9 &,'\.\-]{2,80})[ \t]*\r?\n[ \t]*"
+        r"(?:Approved\s+[Pp]rovider\b|ABN\b)",
+        text,
+    )
+    if m3:
+        candidate = m3.group(1).strip().rstrip(".,;:")
+        return candidate or None
+    # Organisation-suffix letterhead near the top of the document.
+    m4 = re.search(
+        r"(?m)^[ \t]*([A-Z][A-Za-z0-9 &,'\.\-]{2,80}?"
+        r"(?:Pty\.?\s*Ltd\.?|Pty\s+Limited|Limited|Ltd\.?|Inc\.?|Incorporated|"
+        r"Aged\s+Care(?:\s+Services)?|Community\s+Care|Health\s*care|Care\s+Services))"
+        r"[ \t]*$",
+        text[:800],
+    )
+    if m4:
+        candidate = m4.group(1).strip().rstrip(".,;:")
         return candidate or None
     return None
 

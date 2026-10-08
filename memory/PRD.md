@@ -1,5 +1,12 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just fixed (Jun 2026 — Support Plan Reviewer "Unspecified provider" bug):**
+- **Report:** running Sam Burke's support plan showed "Unspecified provider" even though "Blueberry Care Pty Ltd" is the letterhead at the top of the document.
+- **Root cause:** `backend/services/care_plan_ingestion.py::_extract_provider` only recognised `Provider: X` or a `… CARE PLAN — X` header. This plan's title is "INDIVIDUALISED SUPPORT PLAN" with the org name as a plain letterhead line, so extraction returned `None` → the web detail/store pages fell back to "Unspecified provider" (`plan.provider_name || "Unspecified provider"`).
+- **Fix:** added two additive letterhead patterns — (3) the line directly above an "Approved provider …" / "ABN …" credential line, and (4) a name ending in a company/care suffix (Pty Ltd, Ltd, Limited, Aged Care, Community Care, Care Services, Healthcare) near the top. Patterns 1 & 2 unchanged.
+- **Verified:** unit checks (new pattern + 3 regression cases + a true-negative) and a real e2e upload of the actual PDF via `POST /api/care-plans/upload-files` → `provider_name: "Blueberry Care Pty Ltd"`. Backend-only change; web + mobile read the same field so both surfaces now show the provider.
+
+
 **Just shipped (Jun 2026 — Verify Reminder nudge; WEB banner mounted + mobile parity; verified iteration_365):**
 - **Problem:** web users who skipped email verification got NO in-app nudge during their 7-day grace period (the `EmailVerificationBanner` in `frontend/src/pages/VerifyEmail.jsx` existed but was never mounted anywhere), risking an unexpected access pause at the deadline. Mobile already had its banner (`mobile/src/components/EmailVerifyBanner.tsx`) wired into `WaylyHeader`.
 - **Web fix:** mounted `<EmailVerificationBanner />` at the top of the dashboard/content area in `components/Layout.jsx` (above `TrialCountdownBanner`). Brought to mobile parity — dismissal now persists 24h via `localStorage['wayly_verify_banner_dismissed_at']` (survives refresh) and the banner is **non-dismissible once past the deadline** (Hide button hidden, copy flips to "Your grace period has ended, verify now to keep full access."). Inline 6-digit verify (`EmailCodeVerify`) still works from the banner.
