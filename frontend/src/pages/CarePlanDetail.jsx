@@ -12,11 +12,12 @@
  *   * Print meeting-artefact PDF (client-side; window.print for now)
  */
 import React, { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { AlertOctagon, ArrowLeft, ChevronDown, ChevronUp, FileDown, Loader2, Mail, Printer, RefreshCw, Save, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { AlertOctagon, Archive, ArrowLeft, ChevronDown, ChevronUp, FileDown, Loader2, Mail, Printer, RefreshCw, Save, Shield, ShieldAlert, ShieldCheck, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
 import { sanitizeAI } from "@/lib/sanitizeAI";
+import CarePlanReviewView from "@/components/CarePlanReviewView";
 
 const SEV_META = {
     compliance: { label: "Compliance", cls: "bg-terracotta text-white", Icon: AlertOctagon, ring: "ring-terracotta/40" },
@@ -251,9 +252,11 @@ function MeetingArtefact({ data, extraction, planId, onDownloadPdf, onDraftEmail
 
 export default function CarePlanDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [analyzing, setAnalyzing] = useState(false);
+    const [actionBusy, setActionBusy] = useState("");
     const [error, setError] = useState("");
     const [tab, setTab] = useState("review");     // review | plan | history
     const [notesDraft, setNotesDraft] = useState("");
@@ -341,6 +344,31 @@ export default function CarePlanDetail() {
         }
     };
 
+    const archivePlan = async () => {
+        setActionBusy("archive");
+        try {
+            await api.post(`/care-plans/${id}/archive`);
+            navigate("/app/care-plans");
+        } catch (e) {
+            alert(e?.response?.data?.detail || e?.message || "Archive failed.");
+        } finally {
+            setActionBusy("");
+        }
+    };
+
+    const deletePlan = async () => {
+        if (!window.confirm("Delete this care plan? You can restore it within 30 days from the archived list.")) return;
+        setActionBusy("delete");
+        try {
+            await api.delete(`/care-plans/${id}`);
+            navigate("/app/care-plans");
+        } catch (e) {
+            alert(e?.response?.data?.detail || e?.message || "Delete failed.");
+        } finally {
+            setActionBusy("");
+        }
+    };
+
     if (loading) {
         return <div className="max-w-4xl mx-auto px-4 py-8 text-sm text-muted-k" data-testid="loading">Loading…</div>;
     }
@@ -349,7 +377,7 @@ export default function CarePlanDetail() {
     }
     if (!data) return null;
 
-    const { plan, extraction, findings, latest_run, history } = data;
+    const { plan, extraction, findings, latest_run, history, plan_summary, verification_panel, safety_notice } = data;
     const canAnalyze = !!extraction;
 
     return (
@@ -379,25 +407,58 @@ export default function CarePlanDetail() {
                         )}
                     </div>
                 </div>
-                <button
-                    type="button"
-                    onClick={runAnalysis}
-                    disabled={!canAnalyze || analyzing}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary-k text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 print:hidden transition-opacity"
-                    data-testid="btn-run-analysis"
-                >
-                    {analyzing ? (
-                        <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Analysing…
-                        </>
-                    ) : (
-                        <>
-                            <RefreshCw className="h-4 w-4" />
-                            {latest_run ? "Re-run review" : "Run review"}
-                        </>
+                <div className="flex items-center gap-2 flex-wrap print:hidden">
+                    <button
+                        type="button"
+                        onClick={runAnalysis}
+                        disabled={!canAnalyze || analyzing}
+                        className="inline-flex items-center gap-2 rounded-full bg-primary-k text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+                        data-testid="btn-run-analysis"
+                    >
+                        {analyzing ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Analysing…
+                            </>
+                        ) : (
+                            <>
+                                <RefreshCw className="h-4 w-4" />
+                                {latest_run ? "Re-run review" : "Run review"}
+                            </>
+                        )}
+                    </button>
+                    {latest_run && (
+                        <button
+                            type="button"
+                            onClick={downloadPdf}
+                            data-testid="btn-download-plan"
+                            className="inline-flex items-center gap-2 rounded-full border border-kindred text-primary-k px-4 py-2 text-sm hover:bg-surface-2"
+                        >
+                            <FileDown className="h-4 w-4" />
+                            Download
+                        </button>
                     )}
-                </button>
+                    <button
+                        type="button"
+                        onClick={archivePlan}
+                        disabled={actionBusy === "archive"}
+                        data-testid="btn-archive-plan"
+                        className="inline-flex items-center gap-2 rounded-full border border-kindred text-primary-k px-4 py-2 text-sm hover:bg-surface-2 disabled:opacity-50"
+                    >
+                        {actionBusy === "archive" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
+                        Archive
+                    </button>
+                    <button
+                        type="button"
+                        onClick={deletePlan}
+                        disabled={actionBusy === "delete"}
+                        data-testid="btn-delete-plan"
+                        className="inline-flex items-center gap-2 rounded-full border border-terracotta/40 text-terracotta px-4 py-2 text-sm hover:bg-terracotta/5 disabled:opacity-50"
+                    >
+                        {actionBusy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        Delete
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -434,34 +495,14 @@ export default function CarePlanDetail() {
                     )}
                     {latest_run && (
                         <>
-                            <MeetingArtefact
-                                data={{ findings }}
+                            <CarePlanReviewView
+                                planSummary={plan_summary}
+                                findings={findings}
+                                verificationPanel={verification_panel}
                                 extraction={extraction}
-                                planId={id}
-                                onDownloadPdf={downloadPdf}
-                                onDraftEmail={draftEmail}
+                                safetyNotice={safety_notice}
+                                onDownload={downloadPdf}
                             />
-
-                            <div>
-                                <h2 className="text-lg font-serif tracking-tight text-primary-k mb-3">
-                                    All findings
-                                </h2>
-                                {findings.length === 0 ? (
-                                    <div className="text-sm text-muted-k">
-                                        The last review produced no findings.
-                                    </div>
-                                ) : (
-                                    <ul className="space-y-3">
-                                        {findings.map((f, i) => (
-                                            <FindingCard
-                                                key={f.id || i}
-                                                f={f}
-                                                testid={`finding-card-${i}`}
-                                            />
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
 
                             <div className="mt-8 rounded-xl border border-kindred bg-surface p-4">
                                 <div className="flex items-center justify-between">

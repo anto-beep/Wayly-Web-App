@@ -1,0 +1,48 @@
+{
+  "summary": "Verify Reminder nudge — END-TO-END PASS on both web and mobile. WEB: EmailVerificationBanner now renders at top of /app content area (Layout.jsx:341, above TrialCountdownBanner) for an onboarded unverified user; shows 'Please verify your email, we sent a code to <email>' + 'N days remaining before access is paused.' + 'Verify email' button (data-testid email-verification-resend) + 'Hide' dismiss (data-testid email-verification-dismiss). Dismiss writes localStorage key 'wayly_verify_banner_dismissed_at' (verified value ≈ Date.now()); the banner stays hidden after a full reload within 24h; clearing the LS key brings it back. When verification_deadline is in the PAST (past_deadline=true from /api/auth/verification-status), the Hide button is NOT rendered even when the LS dismissal is set, and the copy flips to 'Your grace period has ended, verify now to keep full access.' Clicking 'Verify email' toggles the inline 6-digit code (data-testid email-verification-code with 6 <input>s); entering the real debug_code from /api/auth/verification-status verified the email (POST /api/auth/verify-code succeeded, backend flipped email_verified=true, banner unmounted). MOBILE: /verify-email-banner regression-verified — shows after Sign In, 'Verify your email within N days · tap to verify', 'tap to verify' routes to /verify-email?send=1, dismiss hides it; past_deadline branch exists in source (EmailVerifyBanner.tsx:86-87 — dismiss not rendered when past_deadline). Care Plans and Contribution Estimator checked via code review (see critical_code_review_comments) — the main agent's prior smoke-test is corroborated by the source. State restored on cathy@example.com (email_verified=true, verification_deadline=null).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter365_banner_grace.jpeg",
+    "/app/test_reports/iter365_banner_code.jpeg",
+    "/app/test_reports/iter365_banner_inline_code.jpeg",
+    "/app/test_reports/iter365_past_deadline.jpeg",
+    "/app/test_reports/iter365_after_verify.jpeg",
+    "/app/test_reports/iter365_mobile_dash.jpeg",
+    "/app/test_reports/iter365_mobile_verify_route.jpeg"
+  ],
+  "action_items": [
+    "No action required for the Verify Reminder nudge — all 4 web banner behaviours (render, 24h dismiss persistence, non-dismissible past deadline, inline code verify) pass and mobile regression is clean.",
+    "Minor polish (OPTIONAL): CarePlanReviewer.jsx:515-518 shows attached file as 'Care plan attached' + filename pill with CheckCircle2 icon + data-testid='cp-attached-name'. The spec described this as '✓ Attached: <filename>'. The semantic is equivalent (green check + filename) so this is a copy variation only, not a bug — raise with product only if literal copy matters."
+  ],
+  "critical_code_review_comments": [
+    "VerifyEmail.jsx:219-315 — EmailVerificationBanner is well-structured: single GET /auth/verification-status on mount, dismissal state hydrated from LS, past_deadline correctly suppresses the Hide button via `{!pastDeadline && (...)}` guard, and the inline EmailCodeVerify sets `email_verified: true` locally on success so the banner unmounts without a round-trip.",
+    "Layout.jsx:341 — EmailVerificationBanner mounted above TrialCountdownBanner inside <main>.app-page — the correct spot (above route-level content, below the sticky header). This fixes the previous bug where the banner existed but was never mounted.",
+    "ContributionEstimator (web + mobile) — grep confirms zero references to '1 October 2026' / 'October 2026' / 'from_1_oct' remain in /app/frontend/src/pages/tools/ContributionEstimator.jsx or /app/mobile/src/components/tools/ContributionEstimator.tsx. Removal is clean.",
+    "CarePlanDetail.jsx:380-459 — Archive (btn-archive-plan), Download (btn-download-plan) and Delete (btn-delete-plan) buttons render on the detail page; plan_summary + verification_panel + findings are destructured from /api/care-plans/{id} and passed into CarePlanReviewView without a re-run — matches the 'no re-run on detail entry' requirement.",
+    "backend/routes/care_plans.py:354-360 and :411 — on upload the service persists findings + verification_panel + plan_summary into the plan doc, so a later GET returns everything needed for the detail page to render without re-invoking the LLM. Correct.",
+    "Pre-existing (not in scope here): the previous iteration's web Signup/PublicAuthOnly race bug is unrelated to Verify Reminder and still awaits E1 fix per iteration_364."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (verification-status + verify-code happy path)", "frontend": "100% (4/4 web banner behaviours + 3/3 mobile banner behaviours + regression checks pass)"},
+  "test_credentials": "cathy@example.com / testpass123 was flipped to email_verified=false twice (grace deadline now+5-6d, then past deadline now-2d) via a one-off Mongo update, then successfully verified via inline code (debug_code=937417), then RESTORED to email_verified=true / verification_deadline=null. No residual drift.",
+  "seed_data_creation": "None persistent. The pending email verification code generated during the past_deadline test was consumed by the successful inline verify; nothing else was seeded.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Verify Reminder nudge is fully working on both web and mobile. If you need to re-exercise the UNVERIFIED web banner, flip the target account with db.users.updateOne({email:...},{\\$set:{email_verified:false, verification_deadline:<ISO now+Nd>}}) and ALWAYS restore to {email_verified:true, verification_deadline:null} afterwards. The debug_code is only present in the /auth/verification-status response AFTER a code has been issued (resend/send) — if you re-flip and don't see debug_code, call POST /api/auth/send-verification-code first or wait for the UI to toggle the inline code box (EmailCodeVerify auto-sends on mount). PublicAuthOnly signup race from iter364 is unrelated and still open.",
+  "rca of the issue": "N/A — no bugs this iteration."
+}

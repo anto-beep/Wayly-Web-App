@@ -495,8 +495,10 @@ def run_verification_panel(facts: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def plan_summary(extraction: Optional[Dict[str, Any]], verification_panel: Optional[Dict[str, Any]]) -> str:
-    """B7 Plan Summary panel — one plain-language paragraph for a family
-    caregiver who has never read a care plan, plus a one-sentence verdict."""
+    """B7 Plan Summary panel — a descriptive plain-language paragraph (4+
+    sentences) for a family caregiver who has never read a care plan, matching
+    the depth of the Invoice Checker / Statement Decoder summaries, plus a
+    one-sentence verdict pointing to the findings."""
     ex = extraction or {}
     _raw_name = (ex.get("participant_first_name") or "").strip()
     name = _raw_name if _raw_name and _raw_name.lower() not in {"name", "participant", "client", "for", "the"} else "the participant"
@@ -508,24 +510,55 @@ def plan_summary(extraction: Optional[Dict[str, Any]], verification_panel: Optio
     eff_from = _fmt_ddmmyyyy(ex.get("effective_from"))
     eff_to = _fmt_ddmmyyyy(ex.get("effective_to"))
     budget = ex.get("quarterly_budget")
+    provider = (ex.get("provider_name") or "").strip()
 
-    parts = [f"This is a Support at Home care plan for {name}"]
+    parts = []
+    # 1. What this document is + who it's for.
+    opening = f"This is a Support at Home care plan for {name}"
     if cls:
-        parts[0] += f", Classification {cls}"
-    parts[0] += "."
-    if eff_from and eff_to:
-        parts.append(f"It covers {eff_from} to {eff_to}.")
-    if n:
-        line = f"The plan provides {n} service{'s' if n != 1 else ''} across {stream_txt}"
-        parts.append(line + ".")
+        opening += f", who is on Classification {cls}"
+    opening += "."
+    parts.append(opening)
 
+    # 2. Who runs it + the period it covers.
+    if provider and eff_from and eff_to:
+        parts.append(f"It is managed by {provider} and covers the period {eff_from} to {eff_to}.")
+    elif provider:
+        parts.append(f"It is managed by {provider}.")
+    elif eff_from and eff_to:
+        parts.append(f"It covers the period {eff_from} to {eff_to}.")
+    elif eff_from:
+        parts.append(f"It takes effect from {eff_from}.")
+
+    # 3. What the plan actually provides (services + streams).
+    if n:
+        line = f"The plan sets out {n} funded service{'s' if n != 1 else ''} across {stream_txt}"
+        if budget:
+            try:
+                line += f", against a quarterly budget of ${float(budget):,.2f}"
+            except (TypeError, ValueError):
+                pass
+        parts.append(line + ".")
+    elif budget:
+        try:
+            parts.append(f"It works against a quarterly budget of ${float(budget):,.2f}.")
+        except (TypeError, ValueError):
+            pass
+
+    # 4. What Wayly did with it.
+    parts.append(
+        "Wayly read the plan and checked it against the Support at Home rules, "
+        "the Statement of Rights and the budget for this classification."
+    )
+
+    # 5. The verdict → findings.
     flagged = (verification_panel or {}).get("flagged_count", 0) or 0
     if flagged == 0:
-        verdict = "Overall, the plan appears to meet the flagship checks. See the findings below."
+        verdict = "Overall, the plan appears to meet the flagship checks — see the findings below for anything still worth raising with the provider."
     elif flagged == 1:
-        verdict = "Overall, the plan has flagged issues in one flagship check. See the findings below."
+        verdict = "Overall, the plan has a flagged issue in one flagship check — see the findings below for what to raise with the provider."
     else:
-        verdict = f"Overall, the plan has flagged issues in {flagged} flagship checks. See the findings below."
+        verdict = f"Overall, the plan has flagged issues in {flagged} flagship checks — see the findings below for what to raise with the provider."
     parts.append(verdict)
     return " ".join(parts)
 

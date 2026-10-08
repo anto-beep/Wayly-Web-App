@@ -424,7 +424,6 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
   const voice = usePersonaVoice();
   const govtPct = Math.max(0, Math.min(100, result.government_share_percent || 0));
   const youPct = 100 - govtPct;
-  const saving = (result.contribution_weekly || 0) - (result.contribution_post_october_2026_weekly || 0);
   return (
     <>
       {/* Headline */}
@@ -520,29 +519,6 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
             <View style={{ flex: 1 }}>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>{voice.possessiveTitle} lifetime cap: {money(result.applicable_lifetime_cap)}</T>
               <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>{`This is the total amount ${voice.subject}'ll ever pay for the Independence and Everyday Living components. Once ${voice.subject}'ve contributed this much, ${voice.subject} pay nothing further. Clinical care never counts towards this cap.`}</T>
-            </View>
-          </View>
-        </Card>
-      ) : null}
-
-      {/* October 2026 comparison */}
-      {!result.range_mode && !result.is_fee_exempt && result.contribution_post_october_2026_weekly != null ? (
-        <Card testID="ce-oct-2026">
-          <View style={{ flexDirection: "row", gap: spacing.sm }}>
-            <Calendar size={20} color={colors.primary} />
-            <View style={{ flex: 1 }}>
-              <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>From 1 October 2026, personal care becomes fully government-funded</T>
-              <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
-                <View style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm }}>
-                  <T variant="small" style={{ color: colors.muted }}>Now</T>
-                  <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }} testID="ce-oct-now">{money(result.contribution_weekly)} / wk</T>
-                </View>
-                <View style={{ flex: 1, borderWidth: 1, borderColor: colors.sage, borderRadius: radius.md, padding: spacing.sm, backgroundColor: colors.sageSoft }}>
-                  <T variant="small" style={{ color: colors.sage }}>From 1 Oct 2026</T>
-                  <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }} testID="ce-oct-after">{money(result.contribution_post_october_2026_weekly)} / wk</T>
-                </View>
-              </View>
-              {saving > 0.005 ? <T variant="small" style={{ marginTop: spacing.sm }} testID="ce-oct-saving">{`That's about ${money(saving)} a week less, or ${money(saving * 52)} a year.`}</T> : null}
             </View>
           </View>
         </Card>

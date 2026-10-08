@@ -736,9 +736,6 @@ function ResultScreen({ result, form, constants, onEdit, access }) {
             {/* Section 4: Safety net */}
             {!result.is_fee_exempt && <SafetyNetPanel result={result} />}
 
-            {/* Section 5: 1 October 2026 comparison */}
-            {!result.range_mode && !result.is_fee_exempt && <OctoberComparison result={result} />}
-
             {/* Workstream L: HCP comparison. Rendered inline for entry paths 2 + 4,
                 behind a toggle for 1 + 5, hidden entirely for path 3 (NPQ). */}
             <HcpComparisonPanel result={result} />
@@ -1064,48 +1061,6 @@ function SafetyNetPanel({ result }) {
 }
 
 
-/* ---------- section 5: October 2026 comparison ---------- */
-
-function OctoberComparison({ result }) {
-    if (result.contribution_post_october_2026_weekly == null) return null;
-    const saving = (result.contribution_weekly || 0) - (result.contribution_post_october_2026_weekly || 0);
-    return (
-        <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="ce-oct-2026">
-            <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 mt-0.5 text-primary-k" />
-                <div className="flex-1">
-                    <div className="text-primary-k font-medium">From 1 October 2026, personal care becomes fully government-funded</div>
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                        <div className="rounded-lg item-clay border p-3">
-                            <div className="text-xs uppercase tracking-wider text-muted-k">Now</div>
-                            <div className="mt-1 font-heading text-2xl text-primary-k tabular-nums" data-testid="ce-oct-now">{_fmt(result.contribution_weekly)} / wk</div>
-                            <div className="mt-2 h-2 w-full rounded-full bg-primary-k/10 overflow-hidden">
-                                <div className="h-full rounded-full bg-clay" style={{ width: "100%" }} />
-                            </div>
-                        </div>
-                        <div className="rounded-lg item-sage border p-3">
-                            <div className="text-xs uppercase tracking-wider text-sage">From 1 Oct 2026</div>
-                            <div className="mt-1 font-heading text-2xl text-primary-k tabular-nums" data-testid="ce-oct-after">{_fmt(result.contribution_post_october_2026_weekly)} / wk</div>
-                            <div className="mt-2 h-2 w-full rounded-full bg-primary-k/10 overflow-hidden">
-                                <div className="h-full rounded-full bg-sage" style={{ width: `${Math.max(4, Math.min(100, ((result.contribution_post_october_2026_weekly || 0) / (result.contribution_weekly || 1)) * 100))}%` }} />
-                            </div>
-                        </div>
-                    </div>
-                    {saving > 0.005 && (
-                        <p className="mt-3 text-sm text-primary-k leading-relaxed" data-testid="ce-oct-saving">
-                            {"That's about "}<strong className="tabular-nums">{_fmt(saving)}</strong>{" a week less, or "}<strong className="tabular-nums">{_fmt(saving * 52)}</strong>{" a year."}
-                        </p>
-                    )}
-                    <p className="mt-2 text-xs text-muted-k leading-relaxed">
-                        Personal care sits inside the Independence category. Wayly assumes personal care is about 40% of your Independence spend. If your care mix is different, your actual saving may vary.
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-
 /* ---------- section 6: what-if ---------- */
 
 function WhatIfPanel({ result, form }) {
@@ -1243,7 +1198,7 @@ function HowThisWasCalculated({ result, form, constants }) {
                     )}
 
                     <div className="text-xs text-muted-k italic leading-relaxed">
-                        {"Personal care is assumed to be 40% of your Independence spend, other Independence services the remaining 60%. This is Wayly's estimate, not a published Department of Health figure. From 1 October 2026 personal care becomes fully government-funded under the Aged Care Act 2024, which is why your weekly figure drops."}
+                        {"Personal care is assumed to be 40% of your Independence spend, other Independence services the remaining 60%. This is Wayly's estimate, not a published Department of Health figure."}
                     </div>
                 </div>
             )}

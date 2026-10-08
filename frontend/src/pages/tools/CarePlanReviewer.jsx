@@ -15,7 +15,7 @@ import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import UploadGuardNotice from "@/components/UploadGuardNotice";
 import { api } from "@/lib/api";
-import { Loader2, Sparkles, Check, X, FolderOpen, BookmarkPlus, Upload, File as FileIcon, Trash2, AlertOctagon, ShieldAlert, Shield, ShieldCheck, Download, Mail, ChevronDown } from "lucide-react";
+import { Loader2, Sparkles, Check, CheckCircle2, X, FolderOpen, BookmarkPlus, Upload, File as FileIcon, Trash2, AlertOctagon, ShieldAlert, Shield, ShieldCheck, Download, Mail, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AutomatedDecisionDisclosure, isEnabled } from "@/uxf";
 
@@ -259,6 +259,7 @@ export default function CarePlanReviewer() {
         setResult(null);
         setGuard(null);
         autoSaveRef.current = false;
+        attachedRef.current = false;
         try {
             const fd = new FormData();
             files.forEach((f) => fd.append("files", f));
@@ -318,6 +319,7 @@ export default function CarePlanReviewer() {
     // Auto-save a reviewed plan into "Your Saved Plans" for signed-in users, so
     // they don't have to remember to click Save. Runs once per review.
     const autoSaveRef = useRef(false);
+    const attachedRef = useRef(false);
     useEffect(() => {
         if (access !== "allowed") return;
         if (!fileResult || savedPlanId || saving || autoSaveRef.current) return;
@@ -326,6 +328,22 @@ export default function CarePlanReviewer() {
         else if (text && text.trim()) savePlan();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fileResult, access, savedPlanId, saving]);
+
+    // Persist the review we just ran onto the auto-saved plan, so the Care
+    // Plans entry shows the same Wayly Summary + findings + checks WITHOUT
+    // re-running the LLM.
+    useEffect(() => {
+        if (access !== "allowed" || !savedPlanId || !fileResult || attachedRef.current) return;
+        attachedRef.current = true;
+        api.post(`/care-plans/${savedPlanId}/attach-review`, {
+            findings: fileResult.findings || [],
+            verification_panel: fileResult.verification_panel || null,
+            plan_summary: fileResult.plan_summary || null,
+            safety_notice: fileResult.safety_notice || null,
+            review_run: fileResult.review_run || null,
+        }).catch(() => { /* non-fatal: the saved plan still opens, just without the attached run */ });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [savedPlanId, fileResult, access]);
 
     const draftAllFindings = async () => {
         setLetterBusyKey("all");
@@ -425,6 +443,7 @@ export default function CarePlanReviewer() {
         setFileResult(null);
         setGuard(null);
         autoSaveRef.current = false;
+        attachedRef.current = false;
         try {
             const payload = { text };
             if (classification) payload.classification = parseInt(classification, 10);
@@ -477,7 +496,7 @@ export default function CarePlanReviewer() {
                             className={`block rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
                                 loading ? "opacity-50 pointer-events-none cursor-not-allowed" : "cursor-pointer"
                             } ${
-                                dragActive ? "border-gold bg-surface scale-[1.01]" : "border-kindred hover:bg-surface bg-surface-2"
+                                dragActive ? "border-gold bg-surface scale-[1.01]" : files.length > 0 ? "border-sage bg-sage/5" : "border-kindred hover:bg-surface bg-surface-2"
                             }`}
                             data-testid="cp-dropzone"
                             aria-disabled={loading}
@@ -490,10 +509,23 @@ export default function CarePlanReviewer() {
                                 className="hidden"
                                 data-testid="cp-file-input"
                             />
-                            <Upload className={`h-12 w-12 mx-auto text-primary-k transition-transform ${dragActive ? "scale-110" : ""}`} />
-                            <div className="font-heading text-xl text-primary-k mt-3">{loading ? "Review in progress — attaching is locked" : "Upload your care plan here"}</div>
-                            {!loading && <div className="text-sm text-muted-k mt-1">or click to browse files</div>}
-                            <div className="text-xs text-muted-k mt-3">PDF · Word · TXT · JPG · PNG · HEIC · WEBP · one document at a time</div>
+                            {files.length > 0 && !loading ? (
+                                <>
+                                    <CheckCircle2 className="h-12 w-12 mx-auto text-sage" />
+                                    <div className="font-heading text-xl text-primary-k mt-3">Care plan attached</div>
+                                    <div className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-primary-k" data-testid="cp-attached-name">
+                                        <FileIcon className="h-4 w-4" /> {files[0].name}
+                                    </div>
+                                    <div className="text-xs text-muted-k mt-2">Click to replace, or press &ldquo;Review support care plan&rdquo; below.</div>
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className={`h-12 w-12 mx-auto text-primary-k transition-transform ${dragActive ? "scale-110" : ""}`} />
+                                    <div className="font-heading text-xl text-primary-k mt-3">{loading ? "Review in progress — attaching is locked" : "Upload your care plan here"}</div>
+                                    {!loading && <div className="text-sm text-muted-k mt-1">or click to browse files</div>}
+                                    <div className="text-xs text-muted-k mt-3">PDF · Word · TXT · JPG · PNG · HEIC · WEBP · one document at a time</div>
+                                </>
+                            )}
                         </label>
                         {files.length > 0 && (
                             <ul className="mt-3 space-y-1.5" data-testid="cp-file-list">

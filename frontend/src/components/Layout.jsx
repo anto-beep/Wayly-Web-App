@@ -15,6 +15,7 @@ import AccountHealthMenu from "@/components/AccountHealthMenu";
 import WaylyLogo from "@/components/WaylyLogo";
 import TrialCountdownBanner from "@/components/TrialCountdownBanner";
 import ReadOnlyBanner from "@/components/ReadOnlyBanner";
+import { EmailVerificationBanner } from "@/pages/VerifyEmail";
 import GlobalSearch from "@/components/GlobalSearch";
 import ParticipantSwitcher from "@/components/ParticipantSwitcher";
 import PlanComplianceGuard from "@/components/PlanComplianceGuard";
@@ -337,6 +338,7 @@ export default function Layout({ children }) {
                 </aside>
                 <main className="flex-1 min-w-0" key={activeParticipant?.id || "no-participant"}>
                     <div className="app-page">
+                        <EmailVerificationBanner />
                         <TrialCountdownBanner className="mb-4 md:mb-5" />
                         <div key={location.pathname} className="wayly-route">
                             {children}

@@ -97,6 +97,17 @@ class NotePatchBody(BaseModel):
     notes: str = Field(default="", max_length=4000)
 
 
+class AttachReviewBody(BaseModel):
+    """Persist the review the tool page JUST ran (findings already computed by
+    the LLM) onto a saved plan, so opening it in Care Plans shows the full
+    result without re-running the review."""
+    findings: List[Dict[str, Any]] = []
+    verification_panel: Optional[Dict[str, Any]] = None
+    plan_summary: Optional[str] = None
+    safety_notice: Optional[Dict[str, Any]] = None
+    review_run: Optional[Dict[str, Any]] = None
+
+
 class PublicReviewBody(BaseModel):
     """Anonymous / public-endpoint variant. No storage."""
     text: str = Field(min_length=50, max_length=50_000)
@@ -958,6 +969,58 @@ def build_care_plans_router() -> APIRouter:
             "safety_notice": _notice,
         }
 
+    # ---------------- Attach a tool-page review -------------------
+    @r.post("/care-plans/{plan_id}/attach-review")
+    async def attach_review(
+        plan_id: str,
+        body: AttachReviewBody,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Persist the review the tool page just ran onto the saved plan so the
+        Care Plans entry shows the same Wayly Summary + findings + checks WITHOUT
+        re-running the LLM. No-op if a completed run already exists."""
+        plan = await _load_plan_or_404(plan_id, user_id)
+        existing = await db[COLL_RUNS].find_one({"care_plan_id": plan_id, "status": "complete"})
+        if existing:
+            return {"ok": True, "already_attached": True, "review_run_id": existing["id"]}
+        meta = body.review_run or {}
+        review_run = CarePlanReviewRun(
+            care_plan_id=plan_id,
+            triggered_by_user_id=user_id,
+            model_used=meta.get("model_used") or "claude-sonnet-4-5-20250929",
+            prompt_version=meta.get("prompt_version") or "",
+            reference_snapshot_id=meta.get("reference_snapshot_id") or REFERENCE_SNAPSHOT_ID,
+            status="complete",
+            failure_reason=None,
+            completed_at=meta.get("completed_at") or utcnow_iso(),
+        )
+        await db[COLL_RUNS].insert_one(review_run.model_dump())
+        finding_docs = []
+        for f in (body.findings or []):
+            finding = CarePlanFinding(
+                care_plan_id=plan_id,
+                review_run_id=review_run.id,
+                category=f.get("category") or "",
+                severity=f.get("severity") or "info",
+                finding_key=f.get("finding_key") or "",
+                title=f.get("title") or "",
+                detail=f.get("detail") or "",
+                citation_source=f.get("citation_source"),
+                citation_url=f.get("citation_url"),
+                confidence=f.get("confidence") or "medium",
+                suggested_question=f.get("suggested_question"),
+                related_tool_slug=f.get("related_tool_slug"),
+            )
+            finding_docs.append(finding.model_dump())
+        if finding_docs:
+            await db[COLL_FINDINGS].insert_many(finding_docs)
+        if plan.get("status") == "uploaded":
+            await db[COLL_PLANS].update_one(
+                {"id": plan_id},
+                {"$set": {"status": "active", "updated_at": utcnow_iso()}},
+            )
+        return {"ok": True, "review_run_id": review_run.id, "findings_count": len(finding_docs)}
+
     # ---------------- List / register ----------------------------
     @r.get("/care-plans")
     async def list_care_plans(
@@ -1027,12 +1090,37 @@ def build_care_plans_router() -> APIRouter:
             _strip(run)
 
         _fmit, _notice = cpr_mitigate(_sort_findings(findings))
+        # Recompute the deterministic Wayly Summary + verification panel so the
+        # saved entry shows the SAME summary/checks as the initial tool run.
+        plan_summary = None
+        verification_panel = None
+        if latest_run and ext:
+            try:
+                from lib import cpr_rules as _cpr
+                _atext = ""
+                _tid = plan.get("extracted_text_id")
+                if _tid:
+                    _td = await db["care_plan_extracted_texts"].find_one({"id": _tid})
+                    if _td:
+                        _atext = _td.get("analysis_text") or _td.get("raw_text") or ""
+                _facts = _cpr.build_facts(
+                    extraction=ext,
+                    plan_text=_atext,
+                    classification=plan.get("classification_at_review"),
+                    quarterly_budget=plan.get("quarterly_budget_at_review"),
+                )
+                verification_panel = _cpr.run_verification_panel(_facts)
+                plan_summary = _cpr.plan_summary(ext, verification_panel)
+            except Exception:      # noqa: BLE001 — never block the detail view
+                plan_summary, verification_panel = None, None
         return {
             "plan": plan,
             "extraction": ext,
             "latest_run": latest_run,
             "findings": _fmit,
             "safety_notice": _notice,
+            "plan_summary": plan_summary,
+            "verification_panel": verification_panel,
             "history": all_runs,
         }
 
@@ -1088,20 +1176,35 @@ def build_care_plans_router() -> APIRouter:
         )
         return {"ok": True, "restore_within_days": 30}
 
+    @r.post("/care-plans/{plan_id}/archive")
+    async def archive_plan(
+        plan_id: str,
+        user_id: str = Depends(get_current_user_id),
+    ):
+        """Archive (reversible). Hidden from the main register, restorable from
+        the archived list. Mirrors the statements/invoices archive action."""
+        await _load_plan_or_404(plan_id, user_id)
+        await db[COLL_PLANS].update_one(
+            {"id": plan_id},
+            {"$set": {"status": "archived", "archived_at": utcnow_iso(), "updated_at": utcnow_iso()}},
+        )
+        return {"ok": True, "status": "archived"}
+
     @r.post("/care-plans/{plan_id}/restore")
     async def restore(
         plan_id: str,
         user_id: str = Depends(get_current_user_id),
     ):
         plan = await _load_plan_or_404(plan_id, user_id)
-        if plan.get("status") != "deleted":
-            raise HTTPException(status_code=400, detail="Plan is not deleted.")
+        if plan.get("status") not in ("deleted", "archived"):
+            raise HTTPException(status_code=400, detail="Plan is not archived or deleted.")
         await db[COLL_PLANS].update_one(
             {"id": plan_id},
             {"$set": {
                 "status": "active",
                 "soft_deleted_at": None,
                 "hard_delete_at": None,
+                "archived_at": None,
                 "updated_at": utcnow_iso(),
             }},
         )

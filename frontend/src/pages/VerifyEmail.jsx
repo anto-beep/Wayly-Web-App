@@ -205,13 +205,20 @@ export default function VerifyEmail() {
 }
 
 
+// Dismissal persistence (mobile parity): once hidden the nudge stays hidden for
+// 24 hours, surviving a page refresh. Past the grace deadline the banner is
+// NON-dismissible so the verify action is always reachable.
+const VERIFY_DISMISS_KEY = "wayly_verify_banner_dismissed_at";
+const VERIFY_DISMISS_MS = 24 * 60 * 60 * 1000; // 24h
+
 /**
  * Dashboard banner, visible whenever the signed-in user has
  * email_verified === false. Polls `/auth/verification-status` once on mount.
+ * Nudges users who skipped verification before their 7-day grace period ends.
  */
 export function EmailVerificationBanner() {
     const [status, setStatus] = useState(null);
-    const [dismissed, setDismissed] = useState(false);
+    const [hidden, setHidden] = useState(true);
     const [showCode, setShowCode] = useState(false);
 
     useEffect(() => {
@@ -219,15 +226,31 @@ export function EmailVerificationBanner() {
         (async () => {
             try {
                 const { data } = await api.get("/auth/verification-status");
-                if (!cancelled) setStatus(data);
+                if (cancelled) return;
+                setStatus(data);
+                let recentlyDismissed = false;
+                try {
+                    const at = Number(localStorage.getItem(VERIFY_DISMISS_KEY) || 0);
+                    recentlyDismissed = at > 0 && Date.now() - at < VERIFY_DISMISS_MS;
+                } catch { /* ignore */ }
+                setHidden(recentlyDismissed);
             } catch { /* unauthenticated */ }
         })();
         return () => { cancelled = true; };
     }, []);
 
-    if (!status || status.email_verified || dismissed) return null;
+    const dismiss = () => {
+        setHidden(true);
+        try { localStorage.setItem(VERIFY_DISMISS_KEY, String(Date.now())); } catch { /* ignore */ }
+    };
 
-    const isCritical = status.days_remaining <= 1;
+    if (!status || status.email_verified) return null;
+    const pastDeadline = !!status.past_deadline;
+    // Dismissible only while inside the grace window.
+    if (hidden && !pastDeadline) return null;
+
+    const days = status.days_remaining ?? 0;
+    const isCritical = pastDeadline || days <= 1;
     const tone = isCritical
         ? "border-terracotta/40 bg-terracotta/10"
         : "border-gold/40 bg-gold/10";
@@ -235,7 +258,7 @@ export function EmailVerificationBanner() {
     return (
         <div
             data-testid="email-verification-banner"
-            className={`rounded-xl border ${tone} px-4 py-3`}
+            className={`rounded-xl border ${tone} px-4 py-3 mb-4 md:mb-5`}
         >
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -245,9 +268,13 @@ export function EmailVerificationBanner() {
                             Please verify your email, we sent a code to <strong>{status.email}</strong>.
                         </div>
                         <div className="text-xs text-muted-k mt-0.5">
-                            {status.days_remaining > 0
-                                ? `${status.days_remaining} day${status.days_remaining === 1 ? "" : "s"} remaining before login is locked.`
-                                : "Today is your last day, login will lock at midnight."}
+                            {pastDeadline
+                                ? "Your grace period has ended, verify now to keep full access."
+                                : days > 1
+                                    ? `${days} days remaining before access is paused.`
+                                    : days === 1
+                                        ? "1 day remaining before access is paused."
+                                        : "Today is your last day, access will pause at midnight."}
                         </div>
                     </div>
                 </div>
@@ -261,14 +288,17 @@ export function EmailVerificationBanner() {
                         <Mail className="h-3.5 w-3.5" />
                         {showCode ? "Hide" : "Verify email"}
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => setDismissed(true)}
-                        aria-label="Dismiss"
-                        className="flex-none text-muted-k hover:text-primary-k text-xs px-2 py-2"
-                    >
-                        Hide
-                    </button>
+                    {!pastDeadline && (
+                        <button
+                            type="button"
+                            onClick={dismiss}
+                            aria-label="Dismiss"
+                            data-testid="email-verification-dismiss"
+                            className="flex-none text-muted-k hover:text-primary-k text-xs px-2 py-2"
+                        >
+                            Hide
+                        </button>
+                    )}
                 </div>
             </div>
             {showCode && (

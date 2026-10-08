@@ -250,6 +250,7 @@ export default function CarePlanReviewer() {
   const submit = async () => {
     setBusy(true); setError(""); setResult(null); setSavedPlanId(null); setGuard(null);
     autoSaveRef.current = false;
+    attachedRef.current = false;
     try {
       let job: any;
       if (files.length > 0) {
@@ -296,6 +297,25 @@ export default function CarePlanReviewer() {
     savePlan();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result, guard, savedPlanId, saving]);
+
+  // Persist the review we just ran onto the auto-saved plan so the Care Plans
+  // entry shows the same Wayly Summary + findings + checks WITHOUT re-running.
+  const attachedRef = useRef(false);
+  useEffect(() => {
+    if (!savedPlanId || savedPlanId === "saved" || !result || attachedRef.current) return;
+    attachedRef.current = true;
+    apiFetch(`/care-plans/${savedPlanId}/attach-review`, {
+      method: "POST",
+      body: {
+        findings: result.findings || [],
+        verification_panel: result.verification_panel || null,
+        plan_summary: result.plan_summary || null,
+        safety_notice: result.safety_notice || null,
+        review_run: result.review_run || null,
+      },
+    }).catch(() => { /* non-fatal */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedPlanId, result]);
 
   const findings = result?.findings || [];
   const ex = result?.extraction || {};
