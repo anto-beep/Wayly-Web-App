@@ -345,6 +345,10 @@ async def signup(payload: SignupRequest, request: Request):
         raise HTTPException(status_code=409, detail="Email already registered")
     # Phase 1: refuse passwords seen in HIBP breach corpus.
     await assert_password_not_pwned(payload.password)
+    # Internal/test accounts (example.com / test.com etc.) can't receive real
+    # mail, so pre-verify them: they skip the verification nudge and the
+    # grace-period soft block entirely.
+    _is_test = is_test_account(payload.email.lower())
     user_doc = {
         "id": new_id(),
         "email": payload.email.lower(),
@@ -358,17 +362,19 @@ async def signup(payload: SignupRequest, request: Request):
         "plan": payload.plan,
         "household_id": None,
         "created_at": now_iso(),
-        # Email verification, soft block, 7-day grace, link expires in 24h.
-        "email_verified": False,
-        "email_verified_at": None,
-        "verification_deadline": deadline_for(now_iso()),
+        # Email verification, soft block, 3-month (90-day) grace. Internal/test
+        # accounts are pre-verified (see _is_test above).
+        "email_verified": _is_test,
+        "email_verified_at": now_iso() if _is_test else None,
+        "verification_deadline": None if _is_test else deadline_for(now_iso()),
     }
     await db.users.insert_one(user_doc)
     # Fire-and-forget, failures here shouldn't block signup (Resend hiccups,
     # mocked preview, etc.). The user can request another email from the
     # banner if needed.
     try:
-        await send_verification_email_for(user_doc)
+        if not _is_test:
+            await send_verification_email_for(user_doc)
     except Exception as e:
         logger.warning("verification email send failed for %s: %s", user_doc["email"], e)
     # Adviser-portal auto-link: if any adviser invited this email, mark linked.
@@ -489,7 +495,7 @@ async def login(payload: LoginRequest, request: Request):
     # expired and the user still hasn't clicked the verification link.
     # Enforced in PRODUCTION only (WAYLY_ENV=production); preview/staging skip
     # it so test and seeded accounts stay usable without live email delivery.
-    if _IS_PROD and (not user.get("email_verified")) and is_past_deadline(user.get("verification_deadline")):
+    if _IS_PROD and (not user.get("email_verified")) and (not is_test_account(user.get("email"), user)) and is_past_deadline(user.get("verification_deadline")):
         raise HTTPException(
             status_code=403,
             detail={
@@ -7432,6 +7438,7 @@ from routes.email_verification import (
     deadline_for,
     is_past_deadline,
     days_remaining,
+    is_test_account,
     migrate_existing_users_verified,
 )
 from routes.email_change import (
@@ -7556,7 +7563,7 @@ init_email_verification_routes(
         or os.environ.get("PUBLIC_APP_URL")
         or "https://wayly.com.au"
     ),
-    grace_days=7,
+    grace_days=90,
     token_ttl_hours=24,
 )
 init_email_change_routes(

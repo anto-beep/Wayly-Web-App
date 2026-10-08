@@ -44,7 +44,7 @@ email_verification_router = APIRouter(tags=["email_verification"])
 
 _db = None
 _frontend_url: str = ""
-_grace_days: int = 7
+_grace_days: int = 90
 _code_ttl_minutes: int = 15
 _IS_PROD = os.environ.get("WAYLY_ENV") == "production"
 
@@ -55,8 +55,30 @@ _debug_codes: dict[str, str] = {}
 _RESEND_COOLDOWN_S = 300  # 5 minutes
 _MAX_ATTEMPTS = 6
 
+# Internal / QA accounts that can't receive real mail. They are exempt from the
+# verification nudge and the grace-period soft block.
+_TEST_EMAIL_DOMAINS = {"example.com", "test.com"}
 
-def init_email_verification_routes(*, db, frontend_url: str, grace_days: int = 7,
+
+def is_test_account(email: Optional[str], user: Optional[dict] = None) -> bool:
+    """True for internal/seed/QA accounts (reserved test domains, seed/smoke
+    markers, or a +test local part). Such accounts never get the verification
+    nudge and are never soft-blocked at login."""
+    if user and (user.get("is_smoke_account") or user.get("is_seed")
+                 or user.get("is_test_account")):
+        return True
+    if not email:
+        return False
+    e = email.strip().lower()
+    local, _, domain = e.partition("@")
+    if domain in _TEST_EMAIL_DOMAINS:
+        return True
+    if local.startswith("test+") or local.startswith("test_") or "+test" in local:
+        return True
+    return False
+
+
+def init_email_verification_routes(*, db, frontend_url: str, grace_days: int = 90,
                                    token_ttl_hours: int = 24):
     global _db, _frontend_url, _grace_days
     _db = db
@@ -196,7 +218,8 @@ async def verification_status(user_id: str = Depends(get_current_user_id)):
     u = await _db.users.find_one({"id": user_id}, {"_id": 0})
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
-    verified = bool(u.get("email_verified"))
+    # Internal/test accounts are treated as verified so the nudge never shows.
+    verified = bool(u.get("email_verified")) or is_test_account(u.get("email"), u)
     deadline = u.get("verification_deadline")
     out = {
         "email": u.get("email"),

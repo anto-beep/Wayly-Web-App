@@ -1,5 +1,16 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just fixed (Jun 2026 — verify-email nudge: exempt test accounts + 3-month grace; backend-only; verified iter366):**
+- **Report:** the "Please verify your email, we sent a code" nudge appeared for test accounts (it shouldn't), and the grace period was 7 days (should be 3 months).
+- **Fix (`backend/routes/email_verification.py` + `backend/server.py`):**
+  - Added `is_test_account(email, user)` — true for reserved/internal domains (`example.com`, `test.com`), a `+test`/`test+`/`test_` local part, or a `is_seed`/`is_smoke_account`/`is_test_account` marker.
+  - Grace period raised 7 → **90 days** (`_grace_days`/`init_email_verification_routes(grace_days=90)`; signup deadline via `deadline_for`). `grace_days:90` now in every `/auth/verification-status` payload.
+  - Signup pre-verifies test accounts (`email_verified=true`, `verification_deadline=null`) and sends NO code. `GET /auth/verification-status` also treats test accounts as verified, so EXISTING unverified test accounts are suppressed with no migration.
+  - Prod-only login soft-block now also exempts test accounts (defensive).
+- Both web (`EmailVerificationBanner` in Layout) and mobile (`EmailVerifyBanner` in WaylyHeader) read the shared status endpoint, so the nudge hides for test accounts on both surfaces with no frontend change.
+- **Verified:** testing_agent iter366 — backend pytest 4/4 PASS (test-domain auto-verify + no code; real gmail signup unverified w/ 89 days & grace_days=90 & debug_code; legacy unverified example.com suppressed), web banner absent across Layout routes for a test account, mobile banner absent for test accounts. No action items.
+
+
 **Just shipped (Jun 2026 — Care Plan detail header + action-button restyle; web + mobile, visual edits):**
 - **Header (web `CarePlanDetail.jsx`):** replaced the thin "provider / Effective …" header (which fell back to a mis-capitalised "Care plan") with an informative, correctly-capitalised block — an uppercase "Support Plan Review" eyebrow, a title-cased provider H1 (new `toTitleCase` helper; fallback "Support Plan"), and a meta row with a Reviewed / Not yet reviewed status pill, Classification chip, plan period (or upload date), and findings count.
 - **Action buttons (both surfaces):** made Run review / Download / Archive / Delete visually distinct and theme-safe. Web uses fixed-hue brand tokens as solid fills with white text (teal / sage / gold / terracotta) — readable in light AND dark. Mobile's dark brand colours are light, so solid+white would fail in dark; instead the primary action stays solid (Re-run) and the rest use tonal fills (soft bg + strong coloured text/icon: teal / sage / gold / terracotta) that the token system guarantees contrast for in both modes. Added optional `bg`/`fg` overrides to the shared mobile `Button`.
