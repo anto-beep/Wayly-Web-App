@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { Sparkles, ChevronDown, ChevronUp, ShieldCheck, Calendar, LifeBuoy, TrendingUp, Compass, Wallet, SlidersHorizontal, Check, CheckCircle2, RefreshCw, ArrowLeft, ArrowRight } from "lucide-react-native";
 
 import { AppHeader, Card, T } from "@/src/components/ui";
+import ToolHero from "@/src/components/ToolHero";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -201,12 +202,10 @@ export default function ContributionEstimator() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Contribution Estimator" onBack={() => router.back()} />
+      <AppHeader onBack={() => router.back()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
-          <T variant="bodyMuted" style={{ lineHeight: 22 }}>
-            A plain-English estimate of what your household will pay each week under Support at Home. Wayly walks through your situation and shows how the government share and your share are worked out.
-          </T>
+          <ToolHero toolKey="contribution-estimator" />
 
           {!result ? (
             <View style={{ gap: spacing.md }} testID="ce-form">

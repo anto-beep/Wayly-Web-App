@@ -8,7 +8,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import DecoderResultView from "@/src/components/DecoderResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
-import ToolEntriesButton from "@/src/components/ToolEntriesButton";
+import ToolHero from "@/src/components/ToolHero";
 import BudgetCalculatorTool from "@/src/components/tools/BudgetCalculatorTool";
 import ClassificationSelfCheck from "@/src/components/tools/ClassificationSelfCheck";
 import ProviderPriceChecker from "@/src/components/tools/ProviderPriceChecker";
@@ -201,11 +201,10 @@ function StatementDecoderTool() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Statement Decoder" onBack={() => router.back()} />
+      <AppHeader onBack={() => router.back()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
-          <T variant="bodyMuted" style={{ lineHeight: 22 }}>Upload, photograph, or paste any Support at Home monthly statement. Get a plain-English breakdown in under 2 minutes.</T>
-          <ToolEntriesButton toolKey="statement-decoder" />
+          <ToolHero toolKey="statement-decoder" />
 
           {showUsage ? (
             <View testID="usage-counter-banner" style={[styles.notice, { backgroundColor: (usage!.remaining || 0) > 0 ? colors.sageSoft : colors.goldSoft, borderColor: colors.border, borderWidth: 1 }]}>

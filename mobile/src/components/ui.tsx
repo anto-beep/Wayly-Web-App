@@ -15,16 +15,9 @@ import {
   ViewStyle,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, Calendar as CalendarIcon, ChevronDown, Check, LucideIcon } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, Check, LucideIcon } from "lucide-react-native";
 import { fonts, radius, spacing, typeScale } from "@/src/theme/tokens";
 import { useTheme } from "@/src/theme/ThemeContext";
-
-// The native date picker calls requireNativeComponent at import time, which
-// throws under react-native-web. Only load it off-web (native builds / Expo Go).
-let DateTimePicker: any = null;
-if (Platform.OS !== "web") {
-  DateTimePicker = require("@react-native-community/datetimepicker").default;
-}
 
 export function Screen({
   children,
@@ -228,8 +221,169 @@ export function Field({
   );
 }
 
-// Date picker with an explicit Australian DD/MM/YYYY display and a calendar
-// widget. Stores/emits ISO (YYYY-MM-DD) so the backend contract is unchanged.
+const CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const CAL_WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+// A clean, roomy month calendar used on BOTH web and native (no platform
+// divergence). Tap the month or year in the header to jump quickly — essential
+// for dates of birth that are decades back. Emits a Date on selection.
+function CalendarSheet({
+  visible,
+  onClose,
+  value,
+  onSelect,
+  label,
+  minDate,
+  maxDate,
+  testID,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  value: Date | null;
+  onSelect: (d: Date) => void;
+  label?: string;
+  minDate?: Date;
+  maxDate?: Date;
+  testID?: string;
+}) {
+  const { colors } = useTheme();
+  const [view, setView] = React.useState(() => {
+    const i = value || maxDate || new Date();
+    return { y: i.getFullYear(), m: i.getMonth() };
+  });
+  const [mode, setMode] = React.useState<"days" | "years" | "months">("days");
+
+  React.useEffect(() => {
+    if (visible) {
+      const i = value || maxDate || new Date();
+      setView({ y: i.getFullYear(), m: i.getMonth() });
+      setMode("days");
+    }
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const maxYear = (maxDate || new Date()).getFullYear();
+  const minYear = minDate ? minDate.getFullYear() : 1915;
+  const years: number[] = [];
+  for (let y = maxYear; y >= minYear; y--) years.push(y);
+
+  const startOffset = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
+  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const isDisabled = (d: number) => {
+    const dt = new Date(view.y, view.m, d);
+    if (maxDate && dt > maxDate) return true;
+    if (minDate && dt < minDate) return true;
+    return false;
+  };
+  const isSelected = (d: number) =>
+    !!value && value.getFullYear() === view.y && value.getMonth() === view.m && value.getDate() === d;
+
+  const prevMonth = () => setView((v) => (v.m === 0 ? { y: v.y - 1, m: 11 } : { y: v.y, m: v.m - 1 }));
+  const nextMonth = () => setView((v) => (v.m === 11 ? { y: v.y + 1, m: 0 } : { y: v.y, m: v.m + 1 }));
+
+  const navBtn: ViewStyle = { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: colors.surface2 };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay }} onPress={onClose}>
+        <Pressable
+          testID={testID ? `${testID}-sheet` : undefined}
+          style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: Platform.OS === "ios" ? spacing.xxl : spacing.lg }}
+          onPress={(e) => e.stopPropagation()}
+        >
+          {label ? (
+            <Text style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.text, marginBottom: spacing.md }}>{label}</Text>
+          ) : null}
+
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
+            <Pressable testID={testID ? `${testID}-prev` : undefined} onPress={prevMonth} hitSlop={8} style={navBtn}>
+              <ChevronLeft size={22} color={colors.primary} />
+            </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Pressable testID={testID ? `${testID}-month-toggle` : undefined} onPress={() => setMode((x) => (x === "months" ? "days" : "months"))}>
+                <Text style={{ fontFamily: fonts.bodySemi, fontSize: 17, color: colors.text }}>{CAL_MONTHS[view.m]}</Text>
+              </Pressable>
+              <Pressable testID={testID ? `${testID}-year-toggle` : undefined} onPress={() => setMode((x) => (x === "years" ? "days" : "years"))}>
+                <Text style={{ fontFamily: fonts.bodySemi, fontSize: 17, color: colors.primary }}>{view.y}</Text>
+              </Pressable>
+            </View>
+            <Pressable testID={testID ? `${testID}-next` : undefined} onPress={nextMonth} hitSlop={8} style={navBtn}>
+              <ChevronRight size={22} color={colors.primary} />
+            </Pressable>
+          </View>
+
+          {mode === "years" ? (
+            <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+              {years.map((y) => {
+                const on = y === view.y;
+                return (
+                  <Pressable key={y} testID={testID ? `${testID}-year-${y}` : undefined} onPress={() => { setView((v) => ({ ...v, y })); setMode("days"); }}
+                    style={{ width: "30%", paddingVertical: 12, borderRadius: radius.md, alignItems: "center", backgroundColor: on ? colors.primary : colors.surface2 }}>
+                    <Text style={{ fontFamily: on ? fonts.bodySemi : fonts.body, fontSize: 15, color: on ? "#fff" : colors.text }}>{y}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : mode === "months" ? (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+              {CAL_MONTHS.map((mn, i) => {
+                const on = i === view.m;
+                return (
+                  <Pressable key={mn} testID={testID ? `${testID}-month-${i}` : undefined} onPress={() => { setView((v) => ({ ...v, m: i })); setMode("days"); }}
+                    style={{ width: "30%", paddingVertical: 14, borderRadius: radius.md, alignItems: "center", backgroundColor: on ? colors.primary : colors.surface2 }}>
+                    <Text style={{ fontFamily: on ? fonts.bodySemi : fonts.body, fontSize: 14, color: on ? "#fff" : colors.text }}>{mn.slice(0, 3)}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <>
+              <View style={{ flexDirection: "row", marginBottom: 8 }}>
+                {CAL_WEEKDAYS.map((w) => (
+                  <View key={w} style={{ flex: 1, alignItems: "center" }}>
+                    <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.muted }}>{w}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                {cells.map((d, idx) =>
+                  d === null ? (
+                    <View key={`e-${idx}`} style={{ width: `${100 / 7}%`, height: 44 }} />
+                  ) : (
+                    <View key={`d-${d}`} style={{ width: `${100 / 7}%`, height: 44, alignItems: "center", justifyContent: "center" }}>
+                      <Pressable
+                        testID={testID ? `${testID}-day-${d}` : undefined}
+                        disabled={isDisabled(d)}
+                        onPress={() => onSelect(new Date(view.y, view.m, d))}
+                        style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: isSelected(d) ? colors.primary : "transparent" }}
+                      >
+                        <Text style={{ fontFamily: isSelected(d) ? fonts.bodySemi : fonts.body, fontSize: 16, color: isDisabled(d) ? colors.border : isSelected(d) ? "#fff" : colors.text }}>{d}</Text>
+                      </Pressable>
+                    </View>
+                  )
+                )}
+              </View>
+            </>
+          )}
+
+          <Pressable testID={testID ? `${testID}-close` : undefined} onPress={onClose} style={{ alignSelf: "flex-end", paddingVertical: 12, paddingHorizontal: 8, marginTop: spacing.sm }}>
+            <Text style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>Close</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// Date field with an explicit Australian DD/MM/YYYY display that opens a clean,
+// roomy month calendar (shared web + native). Stores/emits ISO (YYYY-MM-DD) so
+// the backend contract is unchanged.
 export function DateField({
   label,
   required,
@@ -253,39 +407,10 @@ export function DateField({
 }) {
   const { colors } = useTheme();
   const [show, setShow] = React.useState(false);
-  const [webText, setWebText] = React.useState("");
-  const focusedRef = React.useRef(false);
   const parsed = value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00`) : null;
   const display = parsed
     ? `${String(parsed.getDate()).padStart(2, "0")}/${String(parsed.getMonth() + 1).padStart(2, "0")}/${parsed.getFullYear()}`
     : "";
-  // Don't clobber what the user is actively typing; only sync from the ISO value when unfocused.
-  React.useEffect(() => { if (!focusedRef.current) setWebText(display); }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
-  const handle = (e: any, d?: Date) => {
-    if (Platform.OS !== "ios") setShow(false);
-    if (e?.type === "dismissed") return;
-    if (d) {
-      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      onChange(iso);
-    }
-  };
-  const onWebText = (t: string) => {
-    // Auto-mask to DD/MM/YYYY as the user types digits (so "01011940" -> "01/01/1940").
-    const digits = t.replace(/\D/g, "").slice(0, 8);
-    let masked = digits;
-    if (digits.length > 4) masked = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-    else if (digits.length > 2) masked = `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    setWebText(masked);
-    const m = masked.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (m) {
-      const [, dd, mm, yyyy] = m;
-      const dt = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-      const valid = !isNaN(dt.getTime()) && dt.getDate() === Number(dd) && dt.getMonth() === Number(mm) - 1 && dt.getFullYear() === Number(yyyy);
-      onChange(valid ? `${yyyy}-${mm}-${dd}` : "");
-    } else if (value) {
-      onChange("");
-    }
-  };
   const labelRow = label ? (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
       <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>{label}</Text>
@@ -293,22 +418,6 @@ export function DateField({
       {optional ? <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>Optional</Text> : null}
     </View>
   ) : null;
-  if (Platform.OS === "web") {
-    return (
-      <View>
-        {labelRow}
-        <TextInput
-          testID={testID}
-          value={webText}
-          onChangeText={onWebText}
-          placeholder={placeholder}
-          placeholderTextColor={colors.muted}
-          keyboardType="numbers-and-punctuation"
-          style={[styles.input, { borderColor: colors.border, backgroundColor: colors.surface, color: colors.text }]}
-        />
-      </View>
-    );
-  }
   return (
     <View>
       {labelRow}
@@ -320,27 +429,16 @@ export function DateField({
         <Text style={{ fontFamily: fonts.body, fontSize: 15, color: display ? colors.text : colors.muted }}>{display || placeholder}</Text>
         <CalendarIcon size={18} color={colors.muted} />
       </Pressable>
-      {show && DateTimePicker ? (
-        <View style={{ backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, marginTop: 8, overflow: "hidden" }}>
-          <DateTimePicker
-            testID={testID ? `${testID}-picker` : undefined}
-            value={parsed || new Date(1950, 0, 1)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={handle}
-            maximumDate={maximumDate || new Date()}
-            minimumDate={minimumDate}
-            textColor={colors.text}
-            themeVariant="light"
-            style={{ backgroundColor: colors.surface }}
-          />
-          {Platform.OS === "ios" ? (
-            <Pressable testID={testID ? `${testID}-done` : undefined} onPress={() => setShow(false)} style={{ alignSelf: "flex-end", paddingVertical: 8, paddingHorizontal: 16 }}>
-              <Text style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>Done</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : null}
+      <CalendarSheet
+        visible={show}
+        onClose={() => setShow(false)}
+        value={parsed}
+        label={label || "Select a date"}
+        minDate={minimumDate}
+        maxDate={maximumDate || new Date()}
+        onSelect={(d) => { onChange(toISO(d)); setShow(false); }}
+        testID={testID}
+      />
     </View>
   );
 }

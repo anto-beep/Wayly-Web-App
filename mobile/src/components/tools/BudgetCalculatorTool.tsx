@@ -5,6 +5,7 @@ import { Sparkles, AlertTriangle, Check } from "lucide-react-native";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import ToolHero from "@/src/components/ToolHero";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -51,12 +52,10 @@ export default function BudgetCalculatorTool() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Budget & Lifetime Cap Calculator" onBack={() => router.back()} />
+      <AppHeader onBack={() => router.back()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
-          <T variant="bodyMuted" style={{ lineHeight: 22 }}>
-            Enter your classification. We will show your annual budget, per-stream allocations, lifetime cap progress, and rollover risk, using the actual Support at Home rules (10% care management, $1,000 rollover floor).
-          </T>
+          <ToolHero toolKey="budget-calculator" />
 
           {/* Classification cards */}
           <Card>

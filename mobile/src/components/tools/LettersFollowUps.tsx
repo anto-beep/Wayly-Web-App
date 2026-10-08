@@ -5,7 +5,7 @@ import { FileText, MessageSquare, AlertTriangle, ShieldAlert, Clock, ChevronRigh
 
 import { AppHeader, Button, Card, Loading, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
-import ToolEntriesButton from "@/src/components/ToolEntriesButton";
+import ToolHero from "@/src/components/ToolHero";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -91,17 +91,14 @@ export default function LettersFollowUps() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Letters & Follow-ups" onBack={() => router.back()} right={
+      <AppHeader onBack={() => router.back()} right={
         <Pressable testID="lf1-log-link" onPress={() => router.push("/letters")} hitSlop={8}>
           <ArrowRight size={22} color={colors.primary} />
         </Pressable>
       } />
       {loading ? <Loading label="Loading…" /> : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
-          <T variant="bodyMuted" style={{ lineHeight: 22 }}>
-            {"Draft a letter, track the reply, and know when to escalate. Pick the situation that fits, or start a blank letter — Wayly builds the draft from there."}
-          </T>
-          <ToolEntriesButton toolKey="letters-and-follow-ups" />
+          <ToolHero toolKey="letters-and-follow-ups" />
 
           <Pressable testID="lf1-open-log" onPress={() => router.push("/letters")} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
             <Mail size={14} color={colors.primary} />

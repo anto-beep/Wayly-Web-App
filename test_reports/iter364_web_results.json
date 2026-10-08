@@ -1,0 +1,23 @@
+{
+  "results": {
+    "verify_stage_appears": false
+  },
+  "sig": [
+    [
+      200,
+      "https://statement-renderer.preview.emergentagent.com/api/auth/signup"
+    ],
+    [
+      200,
+      "https://statement-renderer.preview.emergentagent.com/api/persona"
+    ],
+    [
+      200,
+      "https://statement-renderer.preview.emergentagent.com/api/persona"
+    ],
+    [
+      200,
+      "https://statement-renderer.preview.emergentagent.com/api/persona"
+    ]
+  ]
+}

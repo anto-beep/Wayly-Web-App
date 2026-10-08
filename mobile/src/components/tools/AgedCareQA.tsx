@@ -5,6 +5,7 @@ import { Send, MessageCircle, AlertCircle } from "lucide-react-native";
 
 import { AppHeader, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import ToolHero from "@/src/components/ToolHero";
 import MarkdownText from "@/src/components/MarkdownText";
 import ReportSheet from "@/src/components/ReportSheet";
 import { apiFetch } from "@/src/lib/api";
@@ -48,10 +49,10 @@ export default function AgedCareQA() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Aged Care Q&A" onBack={() => router.back()} />
+      <AppHeader onBack={() => router.back()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={90}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md }} keyboardShouldPersistTaps="handled" testID="aged-care-qa">
-          <T variant="bodyMuted" style={{ lineHeight: 22 }}>Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.</T>
+          <ToolHero toolKey="family-coordinator" />
           <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>{"This is a general Q&A assistant, it can't see your account or statements."}</T>
 
           {msgs.length === 0 && !busy ? (

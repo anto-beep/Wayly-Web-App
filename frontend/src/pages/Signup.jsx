@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Check, Loader2, Briefcase, Eye, EyeOff, Users } from "lucide-react";
+import { Check, Loader2, Briefcase, Eye, EyeOff, Users, MailCheck } from "lucide-react";
 import WaylyLogo from "@/components/WaylyLogo";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { FieldLabelText } from "@/components/RequiredHint";
 import PasswordStrength, { evaluatePassword } from "@/components/PasswordStrength";
+import EmailCodeVerify from "@/components/EmailCodeVerify";
 
 import SeoHead from "@/seo/SeoHead";
 import { track } from "@/lib/analytics";
@@ -86,6 +87,11 @@ export default function Signup() {
     const [mobileError, setMobileError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    // After account creation we show a 6-digit email-code step BEFORE payment.
+    // Users can verify now or skip (7-day grace still applies), then we open
+    // Stripe Checkout. Mirrors the mobile code flow.
+    const [verifyStage, setVerifyStage] = useState(false);
+    const [checkoutBusy, setCheckoutBusy] = useState(false);
     // Family plan, inline second-participant intent. Streamlines onboarding
     // by letting the caregiver flag now that they'll add a 2nd person, so
     // step 4 of onboarding can auto-steer them (both email and Google flows).
@@ -180,7 +186,7 @@ export default function Signup() {
                 name: fullName,
                 mobile: mobileClean,
                 invite: inviteToken || undefined,
-            });
+            }, { deferUser: true });
             track.signup({ plan: form.plan, has_invite: Boolean(inviteToken) });
             track.identify(u);
             // PERSONA-1 §C, persist the persona choice on signup so the
@@ -228,23 +234,9 @@ export default function Signup() {
             // replaces the old no-card /billing/start-trial path so new
             // signups always have payment on file.
             if (form.plan === "solo" || form.plan === "family") {
-                try {
-                    const { data } = await api.post("/payments/checkout", {
-                        plan: form.plan,
-                        origin_url: window.location.origin,
-                        trial_days: 7,
-                    });
-                    track.trialStart({ plan: form.plan });
-                    if (data?.url) {
-                        window.location.href = data.url;
-                        return;
-                    }
-                    toast.error("Could not start checkout, please try again from Pricing.");
-                    nav("/pricing");
-                } catch (err) {
-                    toast.error(extractErrorMessage(err, "Could not start checkout."));
-                    nav("/pricing");
-                }
+                // Gate payment behind the optional 6-digit email verification
+                // step instead of jumping straight to Stripe Checkout.
+                setVerifyStage(true);
             } else {
                 toast.success(`Welcome, ${u.name.split(" ")[0]}`);
                 nav("/app");
@@ -256,7 +248,72 @@ export default function Signup() {
         }
     };
 
+    // Opens Stripe Checkout (7-day trial). Called after the user verifies their
+    // email OR taps "Skip for now" on the verification step.
+    const proceedToCheckout = async () => {
+        if (checkoutBusy) return;
+        setCheckoutBusy(true);
+        try {
+            const { data } = await api.post("/payments/checkout", {
+                plan: form.plan,
+                origin_url: window.location.origin,
+                trial_days: 7,
+            });
+            track.trialStart({ plan: form.plan });
+            if (data?.url) {
+                window.location.href = data.url;
+                return;
+            }
+            toast.error("Could not start checkout, please try again from Pricing.");
+            nav("/pricing");
+        } catch (err) {
+            toast.error(extractErrorMessage(err, "Could not start checkout."));
+            nav("/pricing");
+        } finally {
+            setCheckoutBusy(false);
+        }
+    };
+
     const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+    if (verifyStage) {
+        return (
+            <div className="min-h-screen bg-kindred auth-shell px-6 py-10">
+                <SeoHead {...SEO.signup} noindex />
+                <div className="mx-auto max-w-md">
+                    <Link to="/" className="flex items-center gap-2 mb-8">
+                        <WaylyLogo size={32} className="rounded-md" />
+                        <span className="font-heading text-lg text-primary-k">Wayly</span>
+                    </Link>
+                    <div className="bg-surface border border-kindred rounded-2xl p-6 lg:p-7 auth-card" data-testid="signup-verify-stage">
+                        <div className="h-12 w-12 rounded-2xl bg-primary-k/10 flex items-center justify-center mb-4">
+                            <MailCheck className="h-6 w-6 text-primary-k" />
+                        </div>
+                        <h1 className="font-heading text-2xl text-primary-k tracking-tight">Verify your email</h1>
+                        <p className="mt-2 text-sm text-muted-k leading-relaxed">
+                            We sent a 6-digit code to <span className="font-medium text-primary-k">{form.email}</span>. Enter it to confirm your email, then we&apos;ll take you to add your card.
+                        </p>
+                        <div className="mt-6">
+                            <EmailCodeVerify email={form.email} authed onVerified={proceedToCheckout} />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={proceedToCheckout}
+                            disabled={checkoutBusy}
+                            data-testid="signup-verify-skip"
+                            className="mt-5 w-full text-sm text-muted-k hover:text-primary-k underline disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        >
+                            {checkoutBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+                            {checkoutBusy ? "Opening secure checkout…" : "Skip for now, I'll verify later"}
+                        </button>
+                        <p className="mt-3 text-xs text-muted-k text-center">
+                            You have 7 days to verify before some features pause.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-kindred auth-shell px-6 py-10">

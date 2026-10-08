@@ -5,6 +5,7 @@ import { Sparkles, AlertTriangle, Info, CheckCircle2, ChevronDown, ExternalLink,
 import * as Clipboard from "expo-clipboard";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
+import ToolHero from "@/src/components/ToolHero";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { sharePostPdf } from "@/src/lib/download";
@@ -98,12 +99,10 @@ export default function ProviderPriceChecker() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Provider Price Checker" onBack={() => router.back()} />
+      <AppHeader onBack={() => router.back()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
-          <T variant="bodyMuted" style={{ lineHeight: 22 }}>
-            {"Tell us what you are being charged. We compare your provider's rate against the Department of Health's indicative price range for that service, and show your out-of-pocket share."}
-          </T>
+          <ToolHero toolKey="provider-price-checker" />
 
           {/* Snapshot selector (WS7) + price history link */}
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: spacing.sm }}>

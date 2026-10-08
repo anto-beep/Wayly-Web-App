@@ -108,12 +108,19 @@ export function AuthProvider({ children }) {
         return data.user;
     };
 
-    const signup = async (payload) => {
+    const signup = async (payload, opts = {}) => {
         const { data } = await api.post("/auth/signup", payload);
         setAuthToken(data.token);
         setRefreshToken(data.refresh_token || null);
-        setUser(data.user);
         if (data?.user?.id) setSentryUser(data.user.id);
+        // Paid-plan signups show a 6-digit email verify step before Stripe
+        // Checkout. Setting the user here would trip PublicAuthOnly and redirect
+        // Signup away before that UI can mount, so callers can defer it. The
+        // token is still persisted, so authed calls + checkout work, and
+        // bootstrap() hydrates the user on return from Checkout.
+        if (!opts.deferUser) {
+            setUser(data.user);
+        }
         return data.user;
     };
 

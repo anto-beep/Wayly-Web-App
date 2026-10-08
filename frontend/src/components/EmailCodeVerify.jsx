@@ -18,7 +18,6 @@ export default function EmailCodeVerify({ email, authed = true, onVerified, auto
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
     const [cooldown, setCooldown] = useState(0);
-    const [debugCode, setDebugCode] = useState(null);
     const [notice, setNotice] = useState("");
     const inputs = useRef([]);
     const sentGuard = useRef(false);
@@ -32,7 +31,6 @@ export default function EmailCodeVerify({ email, authed = true, onVerified, auto
                 ? await api.post("/auth/send-verification-email")
                 : await api.post("/auth/resend-verification-email", { email });
             if (data?.resend_available_in) setCooldown(data.resend_available_in);
-            if (data?.debug_code) setDebugCode(data.debug_code);
             if (!silent) setNotice(`We sent a fresh code to ${email}.`);
         } catch (err) {
             const status = err?.response?.status;
@@ -53,7 +51,6 @@ export default function EmailCodeVerify({ email, authed = true, onVerified, auto
                     const { data } = await api.get("/auth/verification-status");
                     if (data?.email_verified) { onVerified?.(); return; }
                     if (typeof data?.resend_available_in === "number") setCooldown(data.resend_available_in);
-                    if (data?.debug_code) setDebugCode(data.debug_code);
                 } catch { /* ignore */ }
             }
             if (autoSend && !sentGuard.current) { sentGuard.current = true; await send(true); }
@@ -137,10 +134,6 @@ export default function EmailCodeVerify({ email, authed = true, onVerified, auto
                 <p data-testid="code-error" className="mt-3 text-sm text-terracotta text-center">{error}</p>
             ) : notice ? (
                 <p data-testid="code-notice" className="mt-3 text-sm text-muted-k text-center">{notice}</p>
-            ) : null}
-
-            {debugCode ? (
-                <p data-testid="code-debug" className="mt-2 text-xs text-gold text-center">Preview code: {debugCode}</p>
             ) : null}
 
             <button

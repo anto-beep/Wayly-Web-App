@@ -25,7 +25,6 @@ export default function VerifyEmailScreen() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [debugCode, setDebugCode] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [verified, setVerified] = useState(false);
   const sendGuard = useRef(false);
@@ -38,7 +37,6 @@ export default function VerifyEmailScreen() {
         { method: "POST", body: authed ? {} : { email }, auth: authed },
       );
       if (res?.resend_available_in) setCooldown(res.resend_available_in);
-      if (res?.debug_code) setDebugCode(res.debug_code);
       if (!silent) setNotice(`We sent a fresh 6-digit code to ${email}.`);
     } catch (e) {
       if (e instanceof ApiError && e.status === 429) {
@@ -58,7 +56,6 @@ export default function VerifyEmailScreen() {
           const st = await apiFetch<any>("/auth/verification-status");
           if (st?.email_verified) { router.replace("/(tabs)"); return; }
           if (typeof st?.resend_available_in === "number") setCooldown(st.resend_available_in);
-          if (st?.debug_code) setDebugCode(st.debug_code);
         } catch { /* ignore */ }
       }
       if (params.send === "1" && !sendGuard.current && (authed || email)) {
@@ -131,12 +128,6 @@ export default function VerifyEmailScreen() {
                   <T testID="verify-error" variant="small" style={{ color: colors.terracotta, marginTop: spacing.md, textAlign: "center" }}>{error}</T>
                 ) : notice ? (
                   <T testID="verify-notice" variant="small" style={{ color: colors.muted, marginTop: spacing.md, textAlign: "center" }}>{notice}</T>
-                ) : null}
-
-                {debugCode ? (
-                  <T testID="verify-debug-code" variant="small" style={{ marginTop: spacing.sm, textAlign: "center", color: colors.gold }}>
-                    Preview code: {debugCode}
-                  </T>
                 ) : null}
 
                 <Button

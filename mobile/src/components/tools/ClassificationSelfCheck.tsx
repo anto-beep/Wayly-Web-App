@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { Sparkles, AlertTriangle, RefreshCcw, ArrowRight, ArrowLeft, Phone, Download, Mail, ChevronDown, ChevronUp, CheckCircle2, FolderOpen, BookmarkPlus, Trash2, Info, Check, Droplet, Home, HeartPulse } from "lucide-react-native";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
+import ToolHero from "@/src/components/ToolHero";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -541,7 +542,7 @@ export default function ClassificationSelfCheck() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Classification Self-Check" onBack={() => router.back()} />
+      <AppHeader onBack={() => router.back()} />
       {!result ? (
         <View style={[styles.stickyProgress, { backgroundColor: colors.surface, borderBottomColor: colors.border }]} testID="csc-progress-sticky">
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
@@ -555,6 +556,7 @@ export default function ClassificationSelfCheck() {
       ) : null}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
+          <ToolHero toolKey="classification-self-check" />
           <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 34 }}>{persona === "participant" ? "Are you on the right classification?" : "Is the person you care for on the right classification?"}</T>
           <T variant="bodyMuted" style={{ lineHeight: 22 }}>
             {persona === "participant"
