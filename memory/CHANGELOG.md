@@ -1,3 +1,10 @@
+## Iter 369 — Price Checker visual fixes (Jun 2026, fork) ✅ verified live (logged-in)
+Two requested edits to `frontend/src/pages/tools/PriceCheckerTool.jsx`:
+- **Required-field markers**: replaced the terracotta `*` star next to "Service" and "Rate charged" with explicit "(required)" text (`<span className="ml-1 text-[11px] font-medium text-terracotta">(required)</span>`).
+- **Provider prefill bug**: the field never populated because it read `r.data?.provider` from `GET /account/health`, which returns no `provider` field. Fixed to prefill from the active participant's profile — `activeParticipant?.provider_name` (via `useParticipants()`), title-cased. Verified live as cathy@example.com: provider auto-fills "Test Provider 8c1af9aa" from Dorothy's profile.
+
+
+
 ## Iter 368 — "How to Use" walkthrough videos for the 6 remaining AI tools (web + mobile) (Jun 2026, fork) ✅ verified iteration_368
 Completes the earlier Statement Decoder video rollout. Added instructional "How to use" videos to all 6 remaining AI tools on BOTH surfaces, visible to EVERY user (signed in or not). User choice: 16:9 player with letterboxing (contain, nothing cropped). Videos are public customer-assets .mp4 URLs (20–57 MB) — NOT bundled in the repo.
 - **NEW shared components** (DRY — one place per surface maps slug → {url, title, blurb}):

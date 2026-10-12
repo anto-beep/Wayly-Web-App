@@ -144,14 +144,12 @@ export default function PriceCheckerTool() {
         }).catch(() => setCeState(null));
     }, [access]);
 
-    // Prefill the user's provider so a price check is pre-addressed. Editable.
+    // Prefill the provider from the active participant's profile so a price
+    // check is pre-addressed. Editable.
     useEffect(() => {
-        if (access !== "allowed") return;
-        api.get("/account/health").then((r) => {
-            const prov = r.data?.provider;
-            if (prov) setProvider((cur) => cur || prov);
-        }).catch(() => { /* soft-fail: field stays empty and editable */ });
-    }, [access]);
+        const prov = activeParticipant?.provider_name;
+        if (prov) setProvider((cur) => cur || titleCase(prov));
+    }, [activeParticipant]);
 
     // Prefill the inline pension picker from the participant's profile
     // (onboarding), so we don't ask again for something we already know. If the
@@ -367,7 +365,7 @@ export default function PriceCheckerTool() {
                 {/* --- Input form --- */}
                 <div className="bg-surface border border-kindred rounded-2xl p-6 space-y-5" data-testid="price-checker">
                     <label className="block">
-                        <span className="text-sm text-muted-k">Service <span className="text-terracotta" aria-hidden="true">*</span></span>
+                        <span className="text-sm text-muted-k">Service <span className="ml-1 text-[11px] font-medium text-terracotta">(required)</span></span>
                         <select
                             value={service}
                             onChange={(e) => { setService(e.target.value); setResult(null); setContinueAnyway(false); }}
@@ -403,7 +401,7 @@ export default function PriceCheckerTool() {
 
                     <div className="grid sm:grid-cols-2 gap-4">
                         <label className="block">
-                            <span className="text-sm text-muted-k">Rate charged ({UNIT_LABEL[activeUnit] || "$ per unit"}) <span className="text-terracotta" aria-hidden="true">*</span></span>
+                            <span className="text-sm text-muted-k">Rate charged ({UNIT_LABEL[activeUnit] || "$ per unit"}) <span className="ml-1 text-[11px] font-medium text-terracotta">(required)</span></span>
                             <input
                                 type="number"
                                 value={rate}
