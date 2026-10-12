@@ -14,7 +14,7 @@ import { apiFetch, ApiError } from "@/src/lib/api";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
-import { money, sanitizeAI } from "@/src/utils/format";
+import { money, sanitizeAI, titleCase } from "@/src/utils/format";
 
 const UNIT_WORD: Record<string, string> = { hour: "per hour", trip: "per trip", meal: "per meal", month: "per month", kilometre: "per kilometre" };
 const UNIT_LABEL: Record<string, string> = { hour: "$ per hour", trip: "$ per trip", meal: "$ per meal", month: "$ per month", kilometre: "$ per kilometre" };
@@ -136,9 +136,9 @@ export default function ProviderPriceChecker() {
 
           {/* Form */}
           <Card testID="price-checker">
-            <T variant="small" style={{ color: colors.muted, marginBottom: 6 }}>Service</T>
+            <T variant="small" style={{ color: colors.muted, marginBottom: 6 }}>Service <T style={{ color: colors.terracotta, fontSize: 11, fontFamily: fonts.bodyMedium }}>(required)</T></T>
             <Pressable testID="pc-service" onPress={() => setPickerOpen((v) => !v)} style={[styles.select, { borderColor: colors.border, backgroundColor: colors.bg }]}>
-              <T style={{ flex: 1, color: colors.text }}>{service}</T>
+              <T style={{ flex: 1, color: colors.text }}>{titleCase(service)}</T>
               <ChevronDown size={18} color={colors.muted} />
             </Pressable>
             {pickerOpen ? (
@@ -149,7 +149,7 @@ export default function ProviderPriceChecker() {
                       <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.muted, paddingHorizontal: spacing.sm, paddingVertical: 6, backgroundColor: colors.surface2 }}>{streamName}</T>
                       {(grouped[streamName] || []).map((r) => (
                         <Pressable key={r.service} testID={`pc-service-opt-${r.service_code || r.service}`} onPress={() => { setService(r.service); setPickerOpen(false); setResult(null); setContinueAnyway(false); }} style={{ paddingHorizontal: spacing.md, paddingVertical: 10 }}>
-                          <T style={{ color: service === r.service ? colors.primary : colors.text, fontFamily: service === r.service ? fonts.bodySemi : fonts.body }}>{r.service}{!r.checkable ? ", no range published" : ""}</T>
+                          <T style={{ color: service === r.service ? colors.primary : colors.text, fontFamily: service === r.service ? fonts.bodySemi : fonts.body }}>{titleCase(r.service)}{!r.checkable ? ", no range published" : ""}</T>
                         </Pressable>
                       ))}
                     </View>
@@ -172,13 +172,13 @@ export default function ProviderPriceChecker() {
             ) : null}
 
             <View style={{ marginTop: spacing.md }}>
-              <T variant="small" style={{ color: colors.muted, marginBottom: 4 }}>Rate charged ({UNIT_LABEL[activeUnit] || "$ per unit"})</T>
+              <T variant="small" style={{ color: colors.muted, marginBottom: 4 }}>Rate charged ({UNIT_LABEL[activeUnit] || "$ per unit"}) <T style={{ color: colors.terracotta, fontSize: 11, fontFamily: fonts.bodyMedium }}>(required)</T></T>
               <TextInput testID="pc-rate" value={rate} onChangeText={(v) => { setRate(v.replace(/[^0-9.]/g, "")); setResult(null); setContinueAnyway(false); }} keyboardType="decimal-pad" placeholder="e.g. 100" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
             </View>
             <View style={{ marginTop: spacing.md }}>
-              <T variant="small" style={{ color: colors.muted, marginBottom: 4 }}>Provider (optional)</T>
+              <T variant="small" style={{ color: colors.muted, marginBottom: 4 }}>Provider</T>
               <TextInput testID="pc-provider" value={provider} onChangeText={setProvider} placeholder="Provider name" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
-              <T variant="small" style={{ color: colors.muted, marginTop: 4, fontSize: 11 }}>Optional. Helps Wayly build a provider price picture.</T>
+              <T variant="small" style={{ color: colors.muted, marginTop: 4, fontSize: 11 }}>Pre-filled from your account. Edit if this rate is from a different provider.</T>
             </View>
 
             {/* Inline pension picker when CE state absent */}

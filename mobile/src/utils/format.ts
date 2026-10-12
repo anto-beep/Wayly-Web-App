@@ -1,5 +1,18 @@
 // Friendly, plain-English category from a technical rule code like
 // "RULE_4_AT_HM_STREAM_MISCODING" -> "Wrong funding category".
+// Title-case a label for display (keeps small joining words lower-case).
+// Mirrors the web PriceCheckerTool titleCase so dropdowns read identically.
+export function titleCase(str?: string | null): string {
+  if (!str) return str || "";
+  const small = new Set(["a", "an", "and", "as", "at", "by", "for", "in", "of", "on", "or", "the", "to", "per"]);
+  return String(str).split(/(\s+)/).map((tok, i) => {
+    if (/^\s+$/.test(tok)) return tok;
+    const lower = tok.toLowerCase();
+    if (i !== 0 && small.has(lower)) return lower;
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  }).join("");
+}
+
 export function ruleLabel(rule?: string | null): string {
   if (!rule) return "";
   const r = String(rule).toUpperCase();

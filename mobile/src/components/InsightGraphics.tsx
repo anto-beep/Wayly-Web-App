@@ -33,7 +33,7 @@ function Donut({ segments, size = 112, stroke = 20, children }: { segments: Seg[
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill as any}>
-        <G rotation={-90} origin={`${size / 2}, ${size / 2}`}>
+        <G transform={`rotate(-90 ${size / 2} ${size / 2})`}>
           <Circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.16)" strokeWidth={stroke} fill="none" />
           {segments.map((seg, i) => {
             if (seg.value <= 0) return null;

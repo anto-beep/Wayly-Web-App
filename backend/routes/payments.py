@@ -900,10 +900,11 @@ async def stripe_webhook(request: Request):
                                   "updated_at": datetime.now(timezone.utc).isoformat()}},
                     )
         elif etype == "customer.subscription.trial_will_end":
-            # ONLY reminder email we ever send (user policy: no other
-            # reminders, no fortnightly pre-charge nags). Stripe fires this
-            # event exactly 3 days before the trial converts.
-            await _send_trial_end_reminder(obj)
+            # No email here. Per user policy the only trial reminder is the
+            # single "two days left" nudge sent by the in-app scheduler
+            # (server._process_trial_reminders_once). Stripe's T-3 event is
+            # acked and ignored so we don't double up or show pricing.
+            pass
         elif etype == "invoice.paid":
             # Confirm access — the subscription is paid up. Nothing to email,
             # Stripe already sends a receipt automatically (Settings → Emails
@@ -941,7 +942,12 @@ async def stripe_webhook(request: Request):
 
 
 async def _send_trial_end_reminder(sub_obj: dict) -> None:
-    """Send the ONE trial-end reminder email 3 days before conversion.
+    """DEPRECATED / UNUSED. The only trial reminder is now the single
+    "two days left" nudge in server._process_trial_reminders_once (no
+    pricing). Kept for reference; the trial_will_end webhook no longer
+    calls this.
+
+    Send the ONE trial-end reminder email 3 days before conversion.
 
     Fires on Stripe's `customer.subscription.trial_will_end` webhook. Per
     user policy this is the ONLY reminder email Wayly ever sends; there is

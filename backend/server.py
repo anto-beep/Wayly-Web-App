@@ -8562,18 +8562,14 @@ import asyncio as _asyncio
 
 async def _process_trial_reminders_once() -> dict:
     """Idempotent pass over trialing subscriptions:
-       - day-5 (~2 days remaining): send personalised mid-trial nudge with the
-         caregiver's top 3 wins so far.
-       - day-6 (~1 day remaining): send final personalised nudge with wins +
-         a stronger CTA to keep going.
-       - 24h-from-end: send reminder email, mark `trial_reminder_sent_at`.
+       - ~2 days remaining (36-48h): send the single "two days left" reminder
+         with the caregiver's top 3 wins so far (no pricing). This is the ONLY
+         trial reminder nudge we send (user policy).
        - past-end: flip user.plan to 'free', mark sub status 'expired', send
-         expiry email, mark `trial_expired_handled_at`.
+         the "trial has ended" notice, mark `trial_expired_handled_at`.
     Returns {midtrial_sent, final_nudge_sent, reminders_sent, expired_handled}."""
     now = datetime.now(timezone.utc)
-    in_24h = now + timedelta(hours=24)
     in_36h = now + timedelta(hours=36)
-    in_4d = now + timedelta(days=4)
     in_2d = now + timedelta(days=2)
     midtrial_sent = 0
     final_nudge_sent = 0
@@ -8591,12 +8587,13 @@ async def _process_trial_reminders_once() -> dict:
         to `user_id` for legacy records that don't have an `id`."""
         return {"id": sub["id"]} if sub.get("id") else {"user_id": sub["user_id"], "status": sub.get("status")}
 
-    # Day 5, "Two days left in your Wayly trial", now personalised with the
-    # caregiver's top 3 wins so far. Brief §4.8: subject + body verbatim.
+    # The ONLY trial reminder: "Two days left in your Wayly trial", fired when
+    # 36-48h remain, personalised with the caregiver's top 3 wins so far.
+    # No pricing in the body (user policy).
     cursor_mid = db.subscriptions.find(
         {
             "status": "trialing",
-            "trial_ends_at": {"$gte": in_2d.isoformat(), "$lte": in_4d.isoformat()},
+            "trial_ends_at": {"$gte": in_36h.isoformat(), "$lte": in_2d.isoformat()},
             "trial_midtrial_sent_at": {"$exists": False},
         },
         {"_id": 0},
@@ -8622,7 +8619,7 @@ async def _process_trial_reminders_once() -> dict:
                     f"<p>Hi {first_name},</p>"
                     "<p>Your Wayly free trial has two days to go. You still have full access to every tool, Ask Wayly, and your reports.</p>"
                     + wins_html
-                    + "<p>If Wayly is helping you make sense of aged care, you can choose a plan now so nothing pauses. Solo is $19/month and Family is $39/month. You can change or cancel any time.</p>"
+                    + "<p>If Wayly is helping you make sense of aged care, you can choose a plan now so nothing pauses. You can change or cancel any time.</p>"
                     "<p>Choose your plan: <a href='https://wayly.com.au/pricing'>https://wayly.com.au/pricing</a></p>"
                     "<p>Warm regards,<br>The Wayly team</p>"
                     "<p style='color:#666;font-size:12px'>Information only, not advice.</p>"
@@ -8635,89 +8632,6 @@ async def _process_trial_reminders_once() -> dict:
             midtrial_sent += 1
         except Exception as e:
             logger.warning("Mid-trial nudge failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
-
-    # Day 6, "One day left in your Wayly trial", final personalised nudge,
-    # sent when 24-36 hours remain (between the day-5 nudge and the 24h-out
-    # final reminder). Idempotent via `trial_final_nudge_sent_at`.
-    cursor_final = db.subscriptions.find(
-        {
-            "status": "trialing",
-            "trial_ends_at": {"$gt": in_24h.isoformat(), "$lte": in_36h.isoformat()},
-            "trial_final_nudge_sent_at": {"$exists": False},
-        },
-        {"_id": 0},
-    ).limit(50)
-    async for sub in cursor_final:
-        try:
-            user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
-            if not user:
-                continue
-            first_name = (user.get("name") or "there").split(" ")[0]
-            wins_html = ""
-            if compute_trial_wins and wins_to_html:
-                try:
-                    wins = await compute_trial_wins(db, user)
-                    wins_html = wins_to_html(wins)
-                except Exception as _we:
-                    logger.debug("wins render skipped: %s", _we)
-            await email_service.email_tool_result(
-                to=user["email"],
-                tool_name="One day left in your Wayly trial",
-                headline="One day left in your Wayly trial",
-                body_html=(
-                    f"<p>Hi {first_name},</p>"
-                    "<p>Just a quick heads-up, your Wayly free trial finishes tomorrow. Everything you've saved is safe, and picking a plan today keeps it all working without a break.</p>"
-                    + wins_html
-                    + "<p>Solo is $19/month for one caregiver. Family is $39/month and covers up to five family members plus a second participant. Change or cancel any time.</p>"
-                    "<p>Choose your plan: <a href='https://wayly.com.au/pricing'>https://wayly.com.au/pricing</a></p>"
-                    "<p>Warm regards,<br>The Wayly team</p>"
-                    "<p style='color:#666;font-size:12px'>Information only, not advice.</p>"
-                ),
-            )
-            await db.subscriptions.update_one(
-                _sub_match(sub),
-                {"$set": {"trial_final_nudge_sent_at": now.isoformat()}},
-            )
-            final_nudge_sent += 1
-        except Exception as e:
-            logger.warning("Day-6 nudge failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
-
-    # Day 7, "Your Wayly trial ends today". Sent in the final 24 hours.
-    # Brief §4.8: subject + body verbatim.
-    cursor = db.subscriptions.find(
-        {
-            "status": "trialing",
-            "trial_ends_at": {"$gte": now.isoformat(), "$lte": in_24h.isoformat()},
-            "trial_reminder_sent_at": {"$exists": False},
-        },
-        {"_id": 0},
-    ).limit(50)
-    async for sub in cursor:
-        try:
-            user = await db.users.find_one({"id": sub["user_id"]}, {"_id": 0})
-            if not user:
-                continue
-            first_name = (user.get("name") or "there").split(" ")[0]
-            await email_service.email_tool_result(
-                to=user["email"],
-                tool_name="Your Wayly trial ends today",
-                headline="Your Wayly trial ends today",
-                body_html=(
-                    f"<p>Hi {first_name},</p>"
-                    "<p>Your free trial ends today. To keep using your tools, reports and Ask Wayly without a break, choose a plan before the day is out.</p>"
-                    "<p>Solo is $19/month. Family is $39/month, and it lets you coordinate care across the whole family. You can change or cancel any time.</p>"
-                    "<p>Choose your plan: <a href='https://wayly.com.au/pricing'>https://wayly.com.au/pricing</a></p>"
-                    "<p>Warm regards,<br>The Wayly team</p>"
-                    "<p style='color:#666;font-size:12px'>Information only, not advice.</p>"
-                ),
-            )
-            await db.subscriptions.update_one(
-                _sub_match(sub),
-                {"$set": {"trial_reminder_sent_at": now.isoformat()}},
-            )
-            reminders_sent += 1
-        except Exception as e:
-            logger.warning("Trial reminder failed for sub %s: %s", sub.get("id") or sub.get("user_id"), e)
 
     # Trial expiries, past trial_ends_at, still status=trialing, not handled
     cursor2 = db.subscriptions.find(

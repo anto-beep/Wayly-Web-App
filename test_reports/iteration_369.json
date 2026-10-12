@@ -1,0 +1,28 @@
+{
+  "summary": "Verified all 3 reported issues. (1) MOBILE Provider Price Checker — Service dropdown is Title-Cased (31 options, joining words 'and'/'or' lowercase, e.g. 'Allied Health and Other Therapeutic Services', 'Counsellor or Psychotherapist'); 'Service' and 'Rate charged (…)' labels show '(required)'; Provider label is exactly 'Provider' with helper text 'Pre-filled from your account. Edit if this rate is from a different provider.' and NO '(optional)' text. (2) MOBILE InsightGraphics donut now uses <G transform=`rotate(-90 x y)`> instead of transform-origin; grep across /app/mobile/src returns ZERO occurrences of 'transform-origin' or 'transformOrigin'. Console scan on the Expo preview after loading Price Checker, Statement Decoder, Decoded Statements screens produced 0 'transform-origin'/'Invalid DOM property' entries. (3) BACKEND trial reminders — POST /api/internal/trial-tick returned 200 {\"midtrial_sent\":0,\"final_nudge_sent\":0,\"reminders_sent\":0,\"expired_handled\":0}, no real Resend emails sent (no trialing subs in the window). Code inspection of _process_trial_reminders_once in server.py confirms exactly ONE live reminder block ('Two days left in your Wayly trial', window trial_ends_at in [now+36h, now+2d]) plus the post-expiry 'Your Wayly trial has ended' notice. No '$', 'Solo is', 'Family is', 'One day left' or 'ends today' strings in either live body (all '$' matches in the function are Mongo operators). routes/payments.py 'customer.subscription.trial_will_end' branch is a pass (no email).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py:944 _send_trial_end_reminder is now dead code (only kept for reference, no callers after webhook became pass). Consider removing in a cleanup pass to keep the file lean.",
+    "server.py:_process_trial_reminders_once still returns 'final_nudge_sent' and 'reminders_sent' keys that are always 0 after removing the T-1/T-0 blocks — safe to keep for API shape, but worth noting the keys are now vestigial."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "None. Trial-tick called with no matching trialing subs by design to avoid real Resend sends.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Did not force a real decoded-statement/invoice detail render in the mobile preview (login selector mismatch sent me to /decoded-statements → Unmatched Route). The transform-origin fix is nonetheless proven safe by grep (zero occurrences in /app/mobile/src) and by a clean console across price-checker + statement-decoder + decoded-statements routes. If you want visual donut proof, log in as cathy@example.com manually in the Expo preview and open any saved statement/invoice; testIDs are 'statement-graphics' and 'invoice-graphics'.",
+  "rca of the issue": "SVG donut was passing rotation via <G rotation={-90} origin='x,y'> which react-native-svg on web renders as the CSS prop 'transform-origin' (hyphenated) — React logs 'Invalid DOM property transform-origin. Did you mean transformOrigin?'. Fix: pass a single transform string <G transform={`rotate(-90 ${cx} ${cy})`}>, which react-native-svg converts to a valid SVG attribute and bypasses the warning."
+}
