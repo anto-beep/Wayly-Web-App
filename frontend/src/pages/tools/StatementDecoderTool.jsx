@@ -36,6 +36,10 @@ import { SEO } from "@/seo/pageConfig";
 import { AutomatedDecisionDisclosure, isEnabled } from "@/uxf";
 import { TOOL_COUNT } from "@/config/toolRegistry";
 
+// "How to use the Statement Decoder" walkthrough video (public asset, plays for
+// everyone — authenticated or not — on both web and mobile).
+const HOW_TO_VIDEO_URL = "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/fb62f81a34118d7b_How%20to%20Use%20Statement%20Decoder%20Final_Video.mp4";
+
 const _toolJsonLd = (cfg) => {
     const blocks = [softwareApplicationLd({
         name: cfg.toolName,
@@ -514,23 +518,27 @@ export default function StatementDecoderTool() {
                     )}
                 </div>
 
-                {/* What you'll see after a decode, real screenshot of the statement decoder result. */}
-                <section className="mt-16" data-testid="sd-screenshot-tour" aria-label="Screenshot tour">
+                {/* How-to walkthrough video, plays for everyone (authed or not), web + mobile. */}
+                <section className="mt-16" data-testid="sd-how-to-video" aria-label="How to use the Statement Decoder">
                     <div className="text-center max-w-2xl mx-auto">
-                        <span className="overline">What you'll see after a decode</span>
-                        <h2 className="font-heading text-3xl text-primary-k tracking-tight mt-3">Plain English. Numbers that add up. Anomalies you can act on.</h2>
+                        <span className="overline">Watch the walkthrough</span>
+                        <h2 className="font-heading text-3xl text-primary-k tracking-tight mt-3">How to use the Statement Decoder</h2>
+                        <p className="mt-3 text-muted-k leading-relaxed">A quick walkthrough: paste or upload a Support at Home statement, then read the plain-English summary, line items, and anomaly flags Wayly pulls out for you.</p>
                     </div>
                     <div className="mt-10 max-w-4xl mx-auto">
-                        <img
-                            src="/marketing/ai-tool-statement-decoder.png"
-                            alt="Statement decoder result with stream breakdown, anomaly flags, and contribution amount"
-                            width="1440"
-                            height="900"
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full aspect-[16/10] object-cover object-top rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-kindred"
-                            data-testid="sd-result-screenshot"
-                        />
+                        <div className="rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-kindred bg-black">
+                            <video
+                                src={HOW_TO_VIDEO_URL}
+                                controls
+                                playsInline
+                                preload="metadata"
+                                poster="/marketing/ai-tool-statement-decoder.png"
+                                className="w-full aspect-[3840/2084] bg-black"
+                                data-testid="sd-how-to-video-player"
+                            >
+                                Sorry, your browser does not support embedded videos.
+                            </video>
+                        </div>
                     </div>
                 </section>
 

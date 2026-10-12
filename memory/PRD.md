@@ -1,5 +1,13 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — Statement Decoder "how-to" walkthrough video; web + mobile; verified iter367):**
+- Replaced the static "What you'll see after a decode" screenshot-tour on the Statement Decoder tool with a **"How to use the Statement Decoder" walkthrough video**, visible to everyone (authenticated or not) on both surfaces.
+- Web (`frontend/src/pages/tools/StatementDecoderTool.jsx`): new `sd-how-to-video` section — overline "Watch the walkthrough", H2 "How to use the Statement Decoder", a descriptive line, and an HTML5 `<video>` (`sd-how-to-video-player`, controls, poster = existing tool screenshot). Old `sd-screenshot-tour`/`sd-result-screenshot` removed.
+- Mobile (`mobile/app/tool/[slug].tsx`): new `expo-video@57.0.5` (config plugin in `app.json`) — a `sd-how-to-video` Card with the same heading/copy and a `VideoView` (`sd-how-to-video-player`, nativeControls, contentFit contain) inserted right after `ToolHero`.
+- Video is a public customer-assets `.mp4` (landscape ~3840×2084, aspect `3840/2084`), referenced by URL on both surfaces (not committed to the repo).
+- **Verified:** testing_agent iter367 — section + headings + player present on web (logged-out AND logged-in) and mobile; old screenshot-tour gone; decoder form still renders below. Applied its low-priority fix (moved mobile player testID to the wrapping View).
+
+
 **Just fixed (Jun 2026 — verify-email nudge: exempt test accounts + 3-month grace; backend-only; verified iter366):**
 - **Report:** the "Please verify your email, we sent a code" nudge appeared for test accounts (it shouldn't), and the grace period was 7 days (should be 3 months).
 - **Fix (`backend/routes/email_verification.py` + `backend/server.py`):**

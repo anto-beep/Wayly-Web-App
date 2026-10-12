@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { Sparkles, AlertTriangle, FileText, Clock, MessageCircle } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Field, T } from "@/src/components/ui";
@@ -30,6 +31,10 @@ type FormField = { key: string; label: string; type: FieldType; placeholder?: st
 type ToolCfg = { title: string; subtitle: string; endpoint: string; submitLabel: string; fields: FormField[] };
 
 const CLASS_OPTS = Array.from({ length: 8 }, (_, i) => ({ label: `${i + 1}`, value: i + 1 }));
+
+// "How to use the Statement Decoder" walkthrough video — plays for everyone
+// (authenticated or not), shared with the web app.
+const HOW_TO_VIDEO_URL = "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/fb62f81a34118d7b_How%20to%20Use%20Statement%20Decoder%20Final_Video.mp4";
 
 const TOOLS: Record<string, ToolCfg> = {
   "budget-calculator": {
@@ -125,6 +130,8 @@ function StatementDecoderTool() {
   const [usage, setUsage] = useState<{ allowed?: boolean; remaining?: number; days_until_next_use?: number } | null>(null);
   const [limitInfo, setLimitInfo] = useState<{ message?: string; days_until_next_use?: number } | null>(null);
 
+  const howToPlayer = useVideoPlayer(HOW_TO_VIDEO_URL, (p) => { p.loop = false; });
+
   // Free-use counter (logged-out visitors get 1 decode / 120 days).
   useEffect(() => {
     if (user) return;
@@ -205,6 +212,22 @@ function StatementDecoderTool() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="statement-decoder" />
+
+          {/* How-to walkthrough video, visible to everyone (authed or not). */}
+          <Card testID="sd-how-to-video">
+            <T variant="label" style={{ textTransform: "uppercase", letterSpacing: 1.4, color: colors.gold }}>Watch the walkthrough</T>
+            <T variant="h3" style={{ marginTop: 4 }}>How to use the Statement Decoder</T>
+            <T variant="small" style={{ marginTop: 6, lineHeight: 20 }}>A quick walkthrough: paste or upload a statement, then read the plain-English summary, line items, and anomaly flags Wayly pulls out for you.</T>
+            <View testID="sd-how-to-video-player" style={{ marginTop: spacing.md, borderRadius: radius.md, overflow: "hidden", backgroundColor: "#000", aspectRatio: 3840 / 2084 }}>
+              <VideoView
+                style={{ width: "100%", height: "100%" }}
+                player={howToPlayer}
+                nativeControls
+                allowsFullscreen
+                contentFit="contain"
+              />
+            </View>
+          </Card>
 
           {showUsage ? (
             <View testID="usage-counter-banner" style={[styles.notice, { backgroundColor: (usage!.remaining || 0) > 0 ? colors.sageSoft : colors.goldSoft, borderColor: colors.border, borderWidth: 1 }]}>

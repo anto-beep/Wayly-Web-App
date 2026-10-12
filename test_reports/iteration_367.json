@@ -1,0 +1,43 @@
+{
+  "summary": "Verified Statement Decoder visual edit: screenshot-tour replaced with how-to walkthrough video on web (logged-out AND logged-in) and mobile (public tool). Web passes all checks. Mobile card + heading + video element all render with correct .mp4 source and HTML5 controls; the only caveat is that expo-video VideoView does not propagate testID='sd-how-to-video-player' to the underlying <video> DOM node on web preview (works on native builds).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "VideoView (expo-video)", "issue": "testID='sd-how-to-video-player' is not forwarded to the underlying <video> element in the Expo web preview DOM, so automated selectors can't target the player directly. The video itself renders correctly inside the card [data-testid='sd-how-to-video'] with .mp4 src + controls. On native iOS/Android this testID still maps to accessibility identifier; the issue is web-preview-only.", "testID": "sd-how-to-video-player", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Statement Decoder how-to video section", "platform": "mobile", "issue": "Web exposes testID on the <video> element (data-testid='sd-how-to-video-player'); mobile Expo web preview does not (expo-video VideoView swallows testID). Visual + functional parity is intact; only automated-selector parity differs.", "expected": "Both surfaces expose a selectable player element at [data-testid=sd-how-to-video-player]", "actual": "Web exposes it; mobile exposes only the card [data-testid=sd-how-to-video] in the web-preview DOM"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter367_web_logged_out.jpeg",
+    "/app/test_reports/iter367_web_logged_in.jpeg",
+    "/app/test_reports/iter367_mobile_sd.jpeg"
+  ],
+  "action_items": [
+    "(Optional, low priority) On mobile, wrap the <VideoView ... testID='sd-how-to-video-player' /> in a <View testID='sd-how-to-video-player'> (or add an outer host View with the testID) so automated web-preview tests can target the player element directly. No functional change required — the video already plays and renders correctly."
+  ],
+  "critical_code_review_comments": [
+    "Web <video> currently has no poster image; on first paint the frame area is black until metadata loads. Adding a lightweight poster would improve perceived performance (not required by request).",
+    "Both surfaces hardcode the same HOW_TO_VIDEO_URL constant in two files. If the asset ever moves, both files must be edited. Consider centralising via a shared constants module or asset manifest (minor, not in scope)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested per request)", "frontend": "100% web, 95% mobile (minor testID propagation caveat)"},
+  "test_credentials": "cathy@example.com / testpass123 (used for logged-in web check)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Statement Decoder /ai-tools/statement-decoder (web) and /tool/statement-decoder (mobile) now show a 'How to use the Statement Decoder' walkthrough video instead of the old screenshot tour. Web section data-testid='sd-how-to-video', video player data-testid='sd-how-to-video-player' (HTML5 <video>, mp4, controls). Mobile card testID='sd-how-to-video' contains an expo-video VideoView; the <video> inside the card loads the same mp4 but the inner testID is not reflected in the web-preview DOM, so target the outer card data-testid or query 'video' inside the card. Both logged-out and logged-in users see the section on web; mobile tool screen is public.",
+  "rca of the issue": "expo-video's <VideoView> on react-native-web does not spread the testID prop to the underlying <video> element; it only applies accessibilityLabel-related attributes. Confirmed by DOM probe: card has data-testid='sd-how-to-video' but only one <video> inside with no data-testid. Mitigation: wrap VideoView in a host <View testID='sd-how-to-video-player'> on the mobile side."
+}
