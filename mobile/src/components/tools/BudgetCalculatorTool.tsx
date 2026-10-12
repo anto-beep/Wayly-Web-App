@@ -77,7 +77,7 @@ export default function BudgetCalculatorTool() {
             <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.md, flexWrap: "wrap" }}>
               <View style={{ flex: 1, minWidth: 140 }}>
                 <T variant="small" style={{ marginBottom: 4 }}>Current lifetime cap balance (optional)</T>
-                <TextInput testID="bc-lifetime-balance" value={lifetimeBalance} onChangeText={(v) => setLifetimeBalance(v.replace(/[^0-9.]/g, ""))} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
+                <TextInput testID="bc-lifetime-balance" value={lifetimeBalance} onChangeText={(v) => setLifetimeBalance(v.replace(/[^0-9.]/g, ""))} keyboardType="decimal-pad" style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
               </View>
               <View style={{ flex: 1, minWidth: 140 }}>
                 <T variant="small" style={{ marginBottom: 4 }}>Expected annual out-of-pocket contribution (optional)</T>

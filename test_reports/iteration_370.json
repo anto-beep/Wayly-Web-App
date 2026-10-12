@@ -1,0 +1,83 @@
+{
+  "summary": "PART A — PASS. (a1) Web homepage hero: /app/frontend/src/components/DualFlagshipHero.jsx lines 155-167 renders <video data-testid='hero-video' controls playsInline preload='metadata' poster='/branding/screenshots/dashboard-hero.png' src=<mp4>. Old data-testid 'hero-screenshot-img' is GONE (grep across /app/frontend/src → 0 hits). The .mp4 asset returns 200 (video/mp4, 84 MB) when curled. In the Playwright Chromium harness v.readyState=0, networkState=3, error.code=4 because the headless build lacks H.264 (canPlayType('avc1.42E01E') returned ''); canPlayType('video/mp4')='maybe' and the poster image renders fine, so real end-user browsers (Chrome/Safari/Firefox/Edge with H.264) will play it — the preview-harness error is a known codec limitation, not a code bug. (a2) Mobile donuts: logged in as cathy@example.com and loaded /statement/<id> and /invoice/<id>. '[data-testid=statement-graphics]' present (4 SVGs rendered on statement detail) and '[data-testid=invoice-graphics]' present (donut '100% PAYABLE' + 'What we found' donut rendered on invoice detail). Scanned console over login→statement→invoice flow: 0 entries matching 'transform-origin' or 'Invalid DOM property'. PART B — PARITY AUDIT (code-level + rendered diffs; no code modified).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [
+    {
+      "flow": "ai-tools/statement-decoder vs tool/statement-decoder",
+      "platform": "both",
+      "issue": "PASS — parity ok",
+      "expected": "Textarea with placeholder 'Paste your statement text here...' on both",
+      "actual": "Match. Web: data-testid=decoder-textarea placeholder 'Paste your statement text here...'. Mobile: same wording."
+    },
+    {
+      "flow": "ai-tools/invoice-checker vs tool/invoice-checker",
+      "platform": "both",
+      "issue": "PASS — parity ok (both are file-upload forms, no visible dropdowns or (required)/(optional) markers on either surface's primary form)",
+      "expected": "File upload CTA parity",
+      "actual": "Web CTA 'Upload Your Invoice' + sub-flow; Mobile button 'Check my invoice' (testID inv1-upload-submit). Headlines align."
+    },
+    {
+      "flow": "ai-tools/budget-calculator vs tool/budget-calculator",
+      "platform": "mobile",
+      "issue": "Minor: lifetime-balance input placeholder differs; the grandfathered-cap explainer paragraph is present on web but not on mobile.",
+      "expected": "Same placeholders and helper text on both surfaces",
+      "actual": "WEB: 'Current lifetime cap balance (optional)' input has NO placeholder shown; MOBILE (BudgetCalculatorTool.tsx:80): placeholder='0'. WEB shows helper under Grandfathered toggle: 'Grandfathered participants are covered by the Home Care Package no-worse-off arrangement. Lifetime cap is $86,185.23 (lower than the standard Support at Home cap of $137,917.01). Both caps are indexed on 20 March and 20 September each year.' — this helper paragraph was NOT observed on the mobile Budget Calculator card. 'Expected annual out-of-pocket contribution (optional)' + 'e.g. 1500' placeholder match on both. 'Applicable supplements (optional)' label matches."
+    },
+    {
+      "flow": "ai-tools/provider-price-checker vs tool/provider-price-checker",
+      "platform": "both",
+      "issue": "PASS — parity ok (as expected per iter_369).",
+      "expected": "Service (required) + title-cased 31 options; Rate charged (…) (required); Provider + prefill helper",
+      "actual": "WEB select 'pc-service' lists 31 title-cased options with joining words lowercase (e.g. 'Allied Health and Other Therapeutic Services', 'Counsellor or Psychotherapist', 'Nursing Care', 'Transport (per Kilometre), no range published'). MOBILE (ProviderPriceChecker.tsx:139,175,179,181): 'Service (required)', 'Rate charged ({unit}) (required)', 'Provider' with helper 'Pre-filled from your account. Edit if this rate is from a different provider.' Rate placeholder 'e.g. 100', provider placeholder 'Provider name' both match web."
+    },
+    {
+      "flow": "ai-tools/classification-self-check vs tool/classification-self-check",
+      "platform": "mobile",
+      "issue": "Current-classification dropdown option labels diverge: mobile uses short 'Class N' pills while web uses 'Classification N' select options; the 'not sure' option text also differs.",
+      "expected": "Identical option labels: 'Not sure or not yet assessed', 'Classification 1' … 'Classification 8'",
+      "actual": "WEB select 'csc-current' options: ['Not sure or not yet assessed','Classification 1','Classification 2','Classification 3','Classification 4','Classification 5','Classification 6','Classification 7','Classification 8']. MOBILE (ClassificationSelfCheck.tsx:26-27): [{v:'',label:'Not sure'}, ...Array.from({length:8},(_,i)=>({v:String(i+1), label:`Class ${i+1}`}))] → labels shown as 'Not sure','Class 1' … 'Class 8'."
+    },
+    {
+      "flow": "ai-tools/contribution-estimator vs tool/contribution-estimator",
+      "platform": "both",
+      "issue": "PASS — parity ok on dropdown labels, entry-path tiles, assessment tiles, pension tiles.",
+      "expected": "Identical labels on entry_path, assessment_status, classification, pension_status",
+      "actual": "Match. entry_path (5): 'I have not been assessed yet' / 'I was on a Home Care Package on or before 12 September 2024' / 'I was on the National Priority Queue before 12 September 2024' / 'I started my Home Care Package between 13 Sep 2024 and 31 Oct 2025' / 'I started (or will start) Support at Home from 1 November 2025' — same on both plus same sub-descriptions. assessment_status (3): 'I have my Support at Home classification' / 'I\\'ve been assessed but don\\'t have my classification yet' / 'I have not been assessed yet' — match. pension_status (4): 'Full Age Pension' / 'Part Age Pension' / 'Self-funded with a Commonwealth Seniors Health Card' / 'Self-funded, no CSHC' — match. classification (14): 'Class 1, lowest care needs' … 'Class 8, highest care needs' + 'Transitional HCP Level 1-4' + 'Restorative Care Pathway' + 'End of Life Pathway' — match. 'Person\\'s name (optional)' label + placeholder 'e.g. Louisa Davids' match."
+    },
+    {
+      "flow": "ai-tools/care-plan-reviewer vs tool/care-plan-reviewer",
+      "platform": "mobile",
+      "issue": "Classification picker option labels diverge (same shape as classification-self-check); the explicit 'Prefilled from <participant>. Change these if the plan is different.' confirmation line that appears under the web form is not present on mobile — mobile instead appends ' · prefilled from <name>' inline to the field label.",
+      "expected": "Identical option labels and prefill confirmation line",
+      "actual": "H1 'Support Plan Reviewer' matches on both. Classification: WEB select 'cp-classification' options: ['Choose a classification','Classification 1','Classification 2','Classification 3','Classification 4','Classification 5','Classification 6','Classification 7','Classification 8']. MOBILE (CarePlanReviewer.tsx:375,383): pills labelled 'Not set','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8'. Label text: WEB 'Classification level (optional, improves the review)' + separate line '✓ Prefilled from Dorothy Smith. Change these if the plan is different.' MOBILE (line 372): 'Classification level (optional, improves the review) · prefilled from <display_name>' (no separate confirmation line, no leading check). Quarterly budget label 'Quarterly budget ($), optional' matches; textarea placeholder 'Paste the full text of the care plan here…' matches. Button text: WEB 'Review support care plan' vs MOBILE 'Review my care plan' (CarePlanReviewer.tsx:402)."
+    }
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter370_hero.png",
+    "/app/test_reports/iter370_stmt_donut.png",
+    "/app/test_reports/iter370_invoice_donut.png"
+  ],
+  "action_items": [
+    "No action required for PART A fixes — hero-video + donut transform-origin are verified clean.",
+    "PARITY FIX 1 (Classification Self-Check mobile): change ClassificationSelfCheck.tsx:26-27 options to {label:'Not sure or not yet assessed'} and {label:`Classification ${i+1}`} so they match the web select ('csc-current').",
+    "PARITY FIX 2 (Care Plan Reviewer mobile): change CarePlanReviewer.tsx:383 pill label from `Class ${c}` / 'Not set' to `Classification ${c}` / 'Choose a classification' to match the web 'cp-classification' select, OR convert the web select to 'Class N' pills if we prefer the shorter mobile naming — pick one. Also add the explicit 'Prefilled from <name>. Change these if the plan is different.' confirmation line on mobile (or drop it from web) and align the submit button label to one of 'Review my care plan' / 'Review support care plan'.",
+    "PARITY FIX 3 (Budget Calculator mobile): either add the Grandfathered cap-amount explainer paragraph on mobile ('Grandfathered participants are covered by the Home Care Package no-worse-off arrangement. Lifetime cap is $86,185.23 …') or remove it from web. Also remove the '0' placeholder on BudgetCalculatorTool.tsx:80 (lifetime-balance) — web shows an empty placeholder."
+  ],
+  "critical_code_review_comments": [
+    "DualFlagshipHero.jsx hard-codes the hero video URL (HERO_VIDEO_URL, line 31). This URL points to the customer-assets CloudFront bucket and is 84 MB. Consider (a) preloading only the poster (preload='metadata' already set — good), (b) hosting a smaller/720p transcode, (c) adding a <source> fallback (webm) so Playwright/Chromium-based automation and users on codec-restricted builds still see something beyond the poster.",
+    "ProviderPriceChecker.tsx keeps initial state service='Personal care' (line 38) and immediately overwrites via /ppc/services. Harmless, but the first paint shows 'Personal Care' after titleCase; if the API fails the user is stuck on a service that may not be checkable. Consider gating the render on services.length > 0."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "100% (fixes), 71% (parity: 4/7 tools fully in parity, 3/7 with concrete gaps listed)"},
+  "test_credentials": "cathy@example.com / testpass123 (family, active)",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "PART A fixes (hero-video + mobile donuts) are verified clean. For PART B main agent is expected to apply the 3 parity fixes listed in action_items; re-test only the three tools mentioned (classification-self-check, care-plan-reviewer, budget-calculator) comparing (a) classification option labels, (b) prefill confirmation line placement, (c) grandfathered helper paragraph presence/text. All other tools (statement-decoder, invoice-checker, provider-price-checker, contribution-estimator) are at parity and do not need re-testing.",
+  "rca of the issue": "N/A — PART A was a straight verification pass. PART B gaps stem from independent authoring of web vs mobile tool forms: mobile authors shortened 'Classification N' to 'Class N' and compressed the prefill UX into an inline suffix instead of a separate confirmation row; the grandfathered cap-amount helper was never ported to mobile. Fix is purely copy/label alignment, no logic change."
+}

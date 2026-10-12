@@ -8611,9 +8611,9 @@ async def _process_trial_reminders_once() -> dict:
                     wins_html = wins_to_html(wins)
                 except Exception as _we:
                     logger.debug("wins render skipped: %s", _we)
-            await email_service.email_tool_result(
+            await email_service.email_trial_notice(
                 to=user["email"],
-                tool_name="Two days left in your Wayly trial",
+                subject="Two days left in your Wayly trial",
                 headline="Two days left in your Wayly trial",
                 body_html=(
                     f"<p>Hi {first_name},</p>"
@@ -8654,9 +8654,9 @@ async def _process_trial_reminders_once() -> dict:
             if user:
                 first_name = (user.get("name") or "there").split(" ")[0]
                 try:
-                    await email_service.email_tool_result(
+                    await email_service.email_trial_notice(
                         to=user["email"],
-                        tool_name="Your Wayly trial has ended",
+                        subject="Your Wayly trial has ended",
                         headline="Your Wayly trial has ended",
                         body_html=(
                             f"<p>Hi {first_name},</p>"

@@ -1,3 +1,16 @@
+## Iter 371 — Homepage hero video (web) + trial-email polish + web↔mobile tool parity pass (Jun 2026, fork) ✅ verified iteration_370
+- **Homepage hero video (WEB ONLY)** (`frontend/src/components/DualFlagshipHero.jsx`): replaced the static dashboard screenshot section with the uploaded "Aged Care Made Clear" product video (`<video>` with controls, playsInline, 16:9, poster = the old dashboard screenshot). Public customer-assets URL, not bundled. New testid `hero-video` (old `hero-screenshot-img` removed). Verified rendering; headless harness shows codec "error 4" (no H.264 in test Chromium) but real browsers play it.
+- **Trial email polish** (`backend/email_service.py` + `server.py`): added a dedicated `email_trial_notice(subject, headline, body_html)` that uses the account-holder shell — subject is exactly the passed string (no more "Your Wayly … result" wrapper) and the footer is the account footer (no public-tool "Start a free 7-day trial" CTA). Both live trial emails ("Two days left" reminder, "trial has ended" notice) now use it.
+- **Web↔mobile tool parity pass** (testing_agent iteration_370 compared all 7 AI tools; fixed the 3 flagged gaps, aligning mobile → web):
+  - `BudgetCalculatorTool.tsx`: removed the `placeholder="0"` on the lifetime-balance input (web has none). (Grandfathered helper paragraph already existed on mobile.)
+  - `ClassificationSelfCheck.tsx`: current-classification options `Class N`→`Classification N`, `Not sure`→`Not sure or not yet assessed` (matches web `csc-current` select).
+  - `CarePlanReviewer.tsx`: pills `Class N`→`Classification N`, `Not set`→`Choose a classification`; replaced the inline " · prefilled from X" label suffix with a web-matching hint row "Prefilled from {name}. Change these if the plan is different."; submit button `Review my care plan`→`Review support care plan`.
+  - PASS already: statement-decoder, invoice-checker, contribution-estimator, provider-price-checker (parity confirmed).
+- **Mobile donut regression check**: decoded-statement (`statement-graphics`) and invoice (`invoice-graphics`) donuts render with ZERO `transform-origin`/`Invalid DOM property` console errors (confirms iter-370 SVG fix holds).
+- **Verified**: testing_agent iteration_370 (Part A fixes + Part B parity report) + main-agent screenshots of the hero video (web) and the 3 corrected mobile tools.
+
+
+
 ## Iter 370 — Mobile Price Checker parity + statement SVG crash + trial-email policy (Jun 2026, fork) ✅ verified iteration_369
 Three user-reported items (start of the web↔mobile parity audit — Price Checker first):
 - **Mobile Provider Price Checker → web parity** (`mobile/src/components/tools/ProviderPriceChecker.tsx`): Service dropdown selected value + all 31 options now Title-Cased via a new shared `titleCase()` in `mobile/src/utils/format.ts` (mirrors web PriceCheckerTool; joining words like "and"/"or" stay lowercase). Added "(required)" markers on *Service* and *Rate charged*. Changed Provider field label "Provider (optional)" → "Provider" and helper → "Pre-filled from your account. Edit if this rate is from a different provider." to match web.

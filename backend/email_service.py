@@ -283,6 +283,43 @@ async def email_tool_result(
     })
 
 
+async def email_trial_notice(
+    *,
+    to: str,
+    subject: str,
+    headline: str,
+    body_html: str,
+) -> Dict[str, Any]:
+    """Send a trial lifecycle email (reminder / expiry) to a signed-up user.
+
+    Unlike ``email_tool_result`` this uses the account-holder shell: the
+    subject line is exactly ``subject`` (no "Your Wayly … result" wrapper) and
+    the footer is the account footer (no public-tool "start a free trial" CTA,
+    which made no sense for someone already trialing).
+    """
+    from wayly_email_branding import wrap_email_html, COLORS, BODY_FONT, HEADING_FONT
+    inner = f"""
+      <h2 style="margin:0 0 14px 0;font-family:{HEADING_FONT};color:{COLORS["teal"]};font-size:24px;line-height:1.3;font-weight:700;letter-spacing:-.01em;">
+        {_html_escape(headline)}
+      </h2>
+      <div style="font-family:{BODY_FONT};font-size:15px;line-height:1.65;color:{COLORS["text"]};">
+        {body_html}
+      </div>
+    """
+    html = wrap_email_html(
+        title=subject,
+        eyebrow="Your Wayly trial",
+        inner_html=inner,
+        footer_note="You received this because you started a free trial with Wayly. Crisis support: Lifeline 13 11 14 · 1800ELDERHelp 1800 353 374.",
+    )
+    return await _send({
+        "from": _sender(),
+        "to": [to],
+        "subject": subject,
+        "html": html,
+    })
+
+
 async def email_adviser_invite(
     *,
     to: str,

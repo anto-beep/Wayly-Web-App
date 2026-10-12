@@ -369,7 +369,7 @@ export default function CarePlanReviewer() {
             />
 
             <T variant="small" style={{ color: colors.muted, marginTop: spacing.md, marginBottom: 6 }}>
-              Classification level (optional, improves the review){active?.classification_level ? ` · prefilled from ${active.display_name}` : ""}
+              Classification level (optional, improves the review)
             </T>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
               {["", "1", "2", "3", "4", "5", "6", "7", "8"].map((c) => {
@@ -380,11 +380,17 @@ export default function CarePlanReviewer() {
                     const band = bands.find((b) => b.classification === Number(c));
                     if (band?.quarterly_budget != null) setQuarterlyBudget(fmtQb(band.quarterly_budget));
                   }} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
-                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{c ? `Class ${c}` : "Not set"}</T>
+                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{c ? `Classification ${c}` : "Choose a classification"}</T>
                   </Pressable>
                 );
               })}
             </View>
+            {active?.classification_level && (classification || quarterlyBudget) ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.sm }} testID="cp-prefilled-hint">
+                <Check size={14} color={colors.sage} />
+                <T variant="small" style={{ color: colors.sage }}>Prefilled from {active.display_name || "your profile"}. Change these if the plan is different.</T>
+              </View>
+            ) : null}
 
             <T variant="small" style={{ color: colors.muted, marginTop: spacing.md, marginBottom: 6 }}>Quarterly budget ($), optional</T>
             <View style={[styles.input, { borderColor: colors.border, backgroundColor: colors.bg, flexDirection: "row", alignItems: "center", paddingVertical: 0 }]}>
@@ -399,7 +405,7 @@ export default function CarePlanReviewer() {
 
           {error ? <View style={[styles.err, { backgroundColor: colors.errorSoft }]}><AlertOctagon size={18} color={colors.terracotta} /><T variant="small" style={{ color: colors.terracotta, flex: 1 }}>{error}</T></View> : null}
           {guard ? <UploadGuardNotice verdict={guard} onChooseAnother={() => { setFiles([]); setGuard(null); }} /> : null}
-          <Button label={files.length > 0 ? `Review ${files.length} file${files.length === 1 ? "" : "s"}` : "Review my care plan"} testID="cp-submit" icon={Sparkles} onPress={submit} loading={busy} disabled={!canSubmit} />
+          <Button label={files.length > 0 ? `Review ${files.length} file${files.length === 1 ? "" : "s"}` : "Review support care plan"} testID="cp-submit" icon={Sparkles} onPress={submit} loading={busy} disabled={!canSubmit} />
 
           {busy ? (
             <Card testID="cp-progress" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>

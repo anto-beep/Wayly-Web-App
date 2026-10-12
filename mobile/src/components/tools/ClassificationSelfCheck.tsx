@@ -23,8 +23,8 @@ const DRAFT_KEY = "csc.run.draft.v1";
 type Band = { classification: number; annual_budget: number; quarterly_budget: number; headline: string; plain: string };
 
 const CLASS_OPTS = [
-  { v: "", label: "Not sure" },
-  ...Array.from({ length: 8 }, (_, i) => ({ v: String(i + 1), label: `Class ${i + 1}` })),
+  { v: "", label: "Not sure or not yet assessed" },
+  ...Array.from({ length: 8 }, (_, i) => ({ v: String(i + 1), label: `Classification ${i + 1}` })),
 ];
 
 // 3-step wizard model (mirrors web ClassificationCheck CSC_STEPS). Accent keys
