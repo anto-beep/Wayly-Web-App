@@ -6,6 +6,7 @@ import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ReportIssueButton from "@/components/ReportIssueButton";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
+import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
@@ -987,6 +988,7 @@ export default function ClassificationCheck() {
             <MarketingHeader />
             <ToolHero toolKey="classification-self-check" wide />
             <ToolGate toolName="Classification Self-Check"><ScreenshotStatement /></ToolGate>
+            <ToolWalkthroughVideo slug="classification-self-check" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="classification-self-check" /></section>
             <ToolRelatedLinks slug="classification-self-check" />
             <Footer />
@@ -1197,6 +1199,7 @@ export default function ClassificationCheck() {
                 </section>
             )}
 
+            <ToolWalkthroughVideo slug="classification-self-check" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="classification-self-check" />
             </section>

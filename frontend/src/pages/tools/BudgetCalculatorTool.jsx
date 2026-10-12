@@ -7,6 +7,7 @@ import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ReportIssueButton from "@/components/ReportIssueButton";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
+import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import { api, formatAUD, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { ToolSummary, NumberMono } from "@/components/ToolShell";
 import { Loader2, ArrowRight, Sparkles, AlertTriangle, Printer } from "lucide-react";
@@ -204,6 +205,7 @@ export default function BudgetCalculatorTool() {
                 <ToolGate toolName="Budget Calculator">
                     <ScreenshotBudget />
                 </ToolGate>
+                <ToolWalkthroughVideo slug="budget-calculator" />
                 <section className="max-w-5xl mx-auto px-4 sm:px-8">
                     <ToolExplainer toolKey="budget-calculator" />
                 </section>
@@ -573,6 +575,7 @@ export default function BudgetCalculatorTool() {
                     </div>
                 )}
             </section>
+            <ToolWalkthroughVideo slug="budget-calculator" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="budget-calculator" />
             </section>

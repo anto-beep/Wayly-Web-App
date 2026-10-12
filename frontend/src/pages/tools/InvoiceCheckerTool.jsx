@@ -22,6 +22,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import ToolHero from "@/components/ToolHero";
+import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolRelatedLinks from "@/components/ToolRelatedLinks";
@@ -425,6 +426,7 @@ export default function InvoiceCheckerTool() {
                         </p>
                     </div>
                 </ToolGate>
+                <ToolWalkthroughVideo slug="invoice-checker" />
                 <section className="max-w-5xl mx-auto px-4 sm:px-8">
                     <ToolExplainer toolKey="invoice-checker" />
                 </section>
@@ -807,6 +809,7 @@ export default function InvoiceCheckerTool() {
                 </div>
             </section>
 
+            <ToolWalkthroughVideo slug="invoice-checker" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="invoice-checker" />
             </section>

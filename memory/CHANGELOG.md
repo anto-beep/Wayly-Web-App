@@ -1,3 +1,16 @@
+## Iter 368 — "How to Use" walkthrough videos for the 6 remaining AI tools (web + mobile) (Jun 2026, fork) ✅ verified iteration_368
+Completes the earlier Statement Decoder video rollout. Added instructional "How to use" videos to all 6 remaining AI tools on BOTH surfaces, visible to EVERY user (signed in or not). User choice: 16:9 player with letterboxing (contain, nothing cropped). Videos are public customer-assets .mp4 URLs (20–57 MB) — NOT bundled in the repo.
+- **NEW shared components** (DRY — one place per surface maps slug → {url, title, blurb}):
+  - Web: `/app/frontend/src/components/ToolWalkthroughVideo.jsx` — renders a "Watch the walkthrough" section with an HTML `<video>` (`aspect-video`, controls, preload=metadata). testIDs `<slug>-how-to-video` + `<slug>-how-to-video-player`.
+  - Mobile: `/app/mobile/src/components/ToolWalkthroughVideo.tsx` — renders a `Card` with `expo-video` `VideoView` (nativeControls, `contentFit="contain"`, `aspectRatio 16/9`). Same testIDs.
+- **Wired into 6 tools** (slugs): classification-self-check, budget-calculator, contribution-estimator, invoice-checker, care-plan-reviewer, provider-price-checker.
+  - Web pages: `ClassificationCheck.jsx`, `BudgetCalculatorTool.jsx`, `ContributionEstimator.jsx`, `InvoiceCheckerTool.jsx`, `CarePlanReviewer.jsx`, `PriceCheckerTool.jsx`. Inserted in BOTH the `access==="blocked"` (logged-out/free) branch AND the `allowed` branch so the video shows regardless of auth state (per `useToolAccess`).
+  - Mobile tool components: `src/components/tools/{BudgetCalculatorTool,ClassificationSelfCheck,ProviderPriceChecker,ContributionEstimator,CarePlanReviewer,InvoiceChecker}.tsx` — dropped in right after `<ToolHero>` inside the ScrollView.
+- Statement Decoder's own video (shipped earlier) left untouched (working/tested).
+- **Verified**: testing_agent iteration_368 — all 6 tools + SD regression render on web (both auth branches) and mobile (Expo preview); correct heading/title/blurb, 16:9 player, no layout breakage. Main agent also smoke-verified budget-calculator on both surfaces.
+
+
+
 ## Iter 364 — 4 reported bug fixes: mobile ToolHero parity, web verify-before-payment, date picker, Preview-code leak (Oct 2026, fork) ✅ verified iteration_364 + main-agent live e2e
 Cross-platform (web + mobile + shared auth). User reported 4 bugs; all fixed and verified.
 - **(1) Mobile AI-tool UI parity (P0).** Wired the existing `/app/mobile/src/components/ToolHero.tsx` branded banner into ALL 9 mobile tool screens (statement-decoder in `app/tool/[slug].tsx`, plus budget-calculator, classification-self-check, provider-price-checker, contribution-estimator, letters-and-follow-ups, care-plan-reviewer, invoice-checker, family-coordinator in `src/components/tools/*`). Each screen's `AppHeader` is now back-only (title prop removed) so the tool name shows once in the banner — matching web. Removed the now-duplicate leading `<T variant="bodyMuted">` intro + standalone `<ToolEntriesButton>` (ToolHero renders both). testID `tool-hero-<key>`.

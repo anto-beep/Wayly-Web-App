@@ -9,6 +9,7 @@ import ReportIssueButton from "@/components/ReportIssueButton";
 import { NumberMono } from "@/components/ToolShell";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
+import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
@@ -273,6 +274,7 @@ export default function PriceCheckerTool() {
             </section>
             <ToolHero toolKey="provider-price-checker" />
             <ToolGate toolName="Provider Price Checker"><ScreenshotStatement /></ToolGate>
+            <ToolWalkthroughVideo slug="provider-price-checker" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="provider-price-checker" />
             </section>
@@ -536,6 +538,7 @@ export default function PriceCheckerTool() {
                 <HowThisWorksPanel bullets={result?.how_this_works_bullets} />
             </section>
 
+            <ToolWalkthroughVideo slug="provider-price-checker" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="provider-price-checker" />
             </section>

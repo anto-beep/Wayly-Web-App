@@ -5,6 +5,7 @@ import { Sparkles, ChevronDown, ChevronUp, ShieldCheck, Calendar, LifeBuoy, Tren
 
 import { AppHeader, Card, T } from "@/src/components/ui";
 import ToolHero from "@/src/components/ToolHero";
+import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -206,6 +207,7 @@ export default function ContributionEstimator() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="contribution-estimator" />
+          <ToolWalkthroughVideo slug="contribution-estimator" />
 
           {!result ? (
             <View style={{ gap: spacing.md }} testID="ce-form">

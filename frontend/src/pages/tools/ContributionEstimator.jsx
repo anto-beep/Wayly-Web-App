@@ -7,6 +7,7 @@ import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ReportIssueButton from "@/components/ReportIssueButton";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
+import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
@@ -200,6 +201,7 @@ export default function ContributionEstimator() {
             <MarketingHeader />
             <ToolHero toolKey="contribution-estimator" />
             <ToolGate toolName="Contribution Estimator"><ScreenshotStatement /></ToolGate>
+            <ToolWalkthroughVideo slug="contribution-estimator" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="contribution-estimator" /></section>
             <ToolRelatedLinks slug="contribution-estimator" />
             <Footer />
@@ -242,6 +244,7 @@ export default function ContributionEstimator() {
                 </section>
             )}
 
+            <ToolWalkthroughVideo slug="contribution-estimator" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="contribution-estimator" /></section>
             <ToolRelatedLinks slug="contribution-estimator" />
             <AIAccuracyBanner disclaimer={TOOL_DISCLAIMERS?.contribution_estimator || TOOL_DISCLAIMERS?.default} className="max-w-5xl mx-auto px-4 sm:px-8 pb-16" />

@@ -9,6 +9,7 @@ import ReportIssueButton from "@/components/ReportIssueButton";
 import { ToolSummary } from "@/components/ToolShell";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
+import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
@@ -464,7 +465,7 @@ export default function CarePlanReviewer() {
             <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><ToolRelatedLinks slug="care-plan-reviewer" />
             <Footer /></div>);
     if (access === "blocked") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolCarePlan} jsonLd={_toolJsonLd(SEO.toolCarePlan)} />
-    <MarketingHeader /><ToolHero toolKey="care-plan-reviewer" /><ToolGate toolName="Support Plan Reviewer"><ScreenshotStatement /></ToolGate><section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="care-plan-reviewer" /></section><ToolRelatedLinks slug="care-plan-reviewer" />
+    <MarketingHeader /><ToolHero toolKey="care-plan-reviewer" /><ToolGate toolName="Support Plan Reviewer"><ScreenshotStatement /></ToolGate><ToolWalkthroughVideo slug="care-plan-reviewer" /><section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="care-plan-reviewer" /></section><ToolRelatedLinks slug="care-plan-reviewer" />
             <Footer /></div>);
 
     return (
@@ -1094,7 +1095,7 @@ export default function CarePlanReviewer() {
                     </div>
                 )}
             </section>
-            <section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="care-plan-reviewer" /></section>
+            <ToolWalkthroughVideo slug="care-plan-reviewer" /><section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="care-plan-reviewer" /></section>
             <ToolRelatedLinks slug="care-plan-reviewer" />
             <Footer />
         </div>

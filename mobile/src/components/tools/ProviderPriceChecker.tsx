@@ -6,6 +6,7 @@ import * as Clipboard from "expo-clipboard";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolHero from "@/src/components/ToolHero";
+import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { sharePostPdf } from "@/src/lib/download";
@@ -103,6 +104,7 @@ export default function ProviderPriceChecker() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="provider-price-checker" />
+          <ToolWalkthroughVideo slug="provider-price-checker" />
 
           {/* Snapshot selector (WS7) + price history link */}
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: spacing.sm }}>

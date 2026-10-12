@@ -7,6 +7,7 @@ import { Upload, ArrowRight, AlertTriangle, FileText, ReceiptText } from "lucide
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import ToolHero from "@/src/components/ToolHero";
+import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import InvoiceResultView from "@/src/components/invoices/InvoiceResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
@@ -65,6 +66,7 @@ export default function InvoiceChecker() {
       <AppHeader onBack={() => router.back()} />
       <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
         <ToolHero toolKey="invoice-checker" />
+        <ToolWalkthroughVideo slug="invoice-checker" />
 
         <Card testID="inv1-upload-card">
           <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>

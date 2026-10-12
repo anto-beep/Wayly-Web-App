@@ -6,6 +6,7 @@ import { Sparkles, AlertTriangle, Check } from "lucide-react-native";
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import ToolHero from "@/src/components/ToolHero";
+import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -56,6 +57,7 @@ export default function BudgetCalculatorTool() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="budget-calculator" />
+          <ToolWalkthroughVideo slug="budget-calculator" />
 
           {/* Classification cards */}
           <Card>

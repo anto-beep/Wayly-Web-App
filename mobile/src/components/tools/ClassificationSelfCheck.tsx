@@ -5,6 +5,7 @@ import { Sparkles, AlertTriangle, RefreshCcw, ArrowRight, ArrowLeft, Phone, Down
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolHero from "@/src/components/ToolHero";
+import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -557,6 +558,7 @@ export default function ClassificationSelfCheck() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="classification-self-check" />
+          <ToolWalkthroughVideo slug="classification-self-check" />
           <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 34 }}>{persona === "participant" ? "Are you on the right classification?" : "Is the person you care for on the right classification?"}</T>
           <T variant="bodyMuted" style={{ lineHeight: 22 }}>
             {persona === "participant"
