@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, FileSearch, ReceiptText, MessageCircle, Sparkles, MapPin, Scale, Info } from "lucide-react";
 import PersonaToggle from "@/components/PersonaToggle";
 import Reveal from "@/components/Reveal";
+import HeroVideo from "@/components/HeroVideo";
 import { track } from "@/lib/analytics";
 import { BRAND_TAGLINE } from "@/lib/brand";
 
@@ -24,11 +25,6 @@ import { BRAND_TAGLINE } from "@/lib/brand";
 const TAGLINE_PARTS = BRAND_TAGLINE.split(", ");
 const TAGLINE_HEAD = `${TAGLINE_PARTS[0]},`;
 const TAGLINE_TAIL = TAGLINE_PARTS.slice(1).join(", ");
-
-// Hero product video ("Aged Care Made Clear"). Public customer-assets URL,
-// not bundled. Poster reuses the dashboard screenshot so the frame looks
-// intentional before playback.
-const HERO_VIDEO_URL = "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/d8e771a35cb448a8_Aged%20Care%20Made%20Clear%20Final%20Video.mp4";
 
 const COPY = {
     caregiver: {
@@ -150,22 +146,7 @@ export default function DualFlagshipHero() {
                 </div>
 
                 {/* Hero product video, anchoring visual for the hero. */}
-                <div className="mt-14 relative" data-testid="hero-video-wrap">
-                    <div className="absolute inset-x-8 -bottom-6 h-24 bg-primary-k/10 blur-3xl rounded-full" aria-hidden="true" />
-                    <div className="relative rounded-2xl border border-kindred bg-black shadow-[0_30px_80px_-20px_rgba(15,42,68,0.35)] overflow-hidden">
-                        <video
-                            src={HERO_VIDEO_URL}
-                            controls
-                            playsInline
-                            preload="metadata"
-                            poster="/branding/screenshots/dashboard-hero.png"
-                            className="block w-full aspect-video bg-black"
-                            data-testid="hero-video"
-                        >
-                            Sorry, your browser does not support embedded videos.
-                        </video>
-                    </div>
-                </div>
+                <HeroVideo />
             </div>
         </section>
     );
