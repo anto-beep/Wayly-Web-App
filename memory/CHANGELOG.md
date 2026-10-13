@@ -1,3 +1,12 @@
+## Iter 373 — App Store creative assets (Header + Search sizes) + Mobile Dashboard tile-subtitle parity (Jun 2026, fork)
+**(1) App Store creative assets** — reviewed Apple asset-best-practices page; generated every size App Store Connect accepts for the two creative-asset slots via `/app/_caps/build_creative_assets.py` (warm-brand look, real mobile captures, no pricing/URLs/copyright, text centred in safe area):
+- Header slot: `header_3840x1646.png`, `header_5244x2950.png` (universal 16:9).
+- Search slot: `search_1920x1280.png`, `search_3840x2560.png`, `search_5244x2950.png` (universal 16:9, identical to header universal — Apple allows one universal asset for both slots).
+- Grouped for download in `/app/frontend/public/appstore/`: `wayly_header_assets.zip`, `wayly_search_assets.zip` (plus existing `wayly_appstore_iphone.zip`, `wayly_appstore_ipad.zip`). Served at `<APP_URL>/appstore/<zip>`.
+- Note: header phone mockups still show HTML5 video-player chrome on the Statement Decoder / Invoice Checker captures (cosmetic; design was previously user-approved).
+**(2) Mobile Dashboard parity (P0)** — `mobile/src/components/DashboardActionBar.tsx`: quick-action tiles now render the descriptive `hint` subtitle under each title (matching web `DashboardActionBar.jsx`), and the grid changed from 3 columns (`width: 31%`, minHeight 96) to 2 columns (`width: 48%`, minHeight 112) so the subtitle text fits — mirrors web's mobile-viewport layout. Verified via screenshot (logged in as cathy@example.com, all 6 tiles show title + subtitle).
+
+
 ## Iter 372 — Homepage hero video: fix black bars + autoplay/accessibility + branded poster + 720p clip (Jun 2026, fork) ✅ verified iteration_371
 Web-only, scoped to the hero video section (`frontend/src/components/DualFlagshipHero.jsx` → new `HeroVideo.jsx`).
 - **Diagnosis**: probed the source file with OpenCV — it is exactly **1920×1080 (16:9, 1.77778)**, 58.2s, 30fps, and has **NO baked-in black bars** (edge pixels ~220, not black). The bars in the user's screenshot were CSS: the old frame used `aspect-video` + `bg-black`, so any ratio rounding / native video letterboxing showed as black. No ffmpeg cropping needed.

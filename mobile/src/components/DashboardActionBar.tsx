@@ -105,7 +105,10 @@ export function DashboardActionBar() {
                 <View style={[styles.tileIcon, { backgroundColor: "rgba(255,255,255,0.18)" }]}>
                   <Icon size={20} color="#fff" />
                 </View>
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#fff" }} numberOfLines={2}>{toTitleLabel(a.label)}</T>
+                <View style={{ gap: 3 }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#fff", lineHeight: 18 }} numberOfLines={2}>{toTitleLabel(a.label)}</T>
+                  <T style={{ fontFamily: fonts.body, fontSize: 11.5, color: "rgba(255,255,255,0.82)", lineHeight: 15 }} numberOfLines={2}>{a.hint}</T>
+                </View>
               </Pressable>
             );
           })}
@@ -124,6 +127,6 @@ const styles = StyleSheet.create({
   resultRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1 },
   resultIcon: { width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.md },
-  tile: { width: "31%", minHeight: 96, borderRadius: radius.md, padding: spacing.sm, gap: spacing.sm, justifyContent: "flex-start" },
+  tile: { width: "48%", minHeight: 112, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm, justifyContent: "flex-start" },
   tileIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
 });
