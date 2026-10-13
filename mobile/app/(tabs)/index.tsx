@@ -195,6 +195,9 @@ export default function Dashboard() {
                       {budgetOver ? "OVER BUDGET THIS QUARTER" : "LEFT TO SPEND THIS QUARTER"}
                     </T>
                   </View>
+                  {budget?.quarter_label ? (
+                    <T variant="small" style={{ color: colors.muted, marginTop: 6, fontFamily: fonts.bodySemi, letterSpacing: 0.3 }} testID="glance-quarter-months">{String(budget.quarter_label).replace(/-/, " – ")}</T>
+                  ) : null}
                   <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
                     <T style={{ fontFamily: fonts.heading, fontSize: 27, lineHeight: 32, color: budgetOver ? colors.terracotta : colors.text }} testID="glance-left">{money(Math.abs(left))}</T>
                     <T variant="small" style={{ color: colors.muted }}>of {moneyWhole(quarterlyBudget)} this quarter</T>
@@ -215,11 +218,8 @@ export default function Dashboard() {
                   <View style={{ flexDirection: "row", gap: spacing.md }}>
                     <View style={[styles.lockIcon, { backgroundColor: colors.goldSoft }]}><Lock size={20} color={colors.primary} /></View>
                     <View style={{ flex: 1 }}>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 20 }}>Your trial has ended. Choose a plan to bring everything back.</T>
-                      <T variant="small" style={{ marginTop: 8, lineHeight: 21 }}>You can still view every statement, anomaly, contact and AT-HM record we have on file for you. To add new entries, decode new statements, lodge support tickets, or use the AI tools, choose a plan.</T>
-                      <Pressable testID="dashboard-upgrade-cta" onPress={() => router.push("/plan-select")} style={[styles.headerBtn, { backgroundColor: colors.cta, marginTop: spacing.md }]}>
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primaryFg }}>Choose a Plan</T>
-                      </Pressable>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 20 }}>Your plan is inactive.</T>
+                      <T variant="small" style={{ marginTop: 8, lineHeight: 21 }}>You can still view every statement, anomaly, contact and record we have on file for you. Your Wayly plan is managed on your account at wayly.com.au.</T>
                     </View>
                   </View>
                 </Card>
@@ -585,22 +585,6 @@ export default function Dashboard() {
                       ))}
                     </View>
                   )}
-                </Card>
-              </View>
-            ) : null}
-
-            {/* Solo upgrade nudge */}
-            {plan === "solo" ? (
-              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-                <Card testID="upgrade-to-family-card" style={{ backgroundColor: colors.surface2, borderColor: colors.border }}>
-                  <View style={{ flexDirection: "row", gap: spacing.sm }}>
-                    <Calendar size={20} color={colors.primary} style={{ marginTop: 2 }} />
-                    <View style={{ flex: 1 }}>
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>Want siblings, advisors, or a GP looped in?</T>
-                      <T variant="small" style={{ marginTop: 4, lineHeight: 21 }}>Family plan adds 5 seats, role-based permissions, and the Sunday digest. Upgrade any time, no card surprises.</T>
-                      <Pressable onPress={() => router.push("/plan-select")} style={{ marginTop: spacing.sm }}><T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 14 }}>Compare plans</T></Pressable>
-                    </View>
-                  </View>
                 </Card>
               </View>
             ) : null}

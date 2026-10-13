@@ -173,6 +173,12 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                         <span className={`block text-sm sm:text-[15px] uppercase tracking-[0.14em] font-bold ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-budget-status">
                             {over ? "Over budget this quarter" : "Left to spend this quarter"}
                         </span>
+                        {budget.quarter_label && (
+                            <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-pill bg-primary-k/[0.07] px-2.5 py-1 text-xs font-semibold tracking-wide text-primary-k/75" data-testid="glance-quarter-months">
+                                <Calendar className="h-3.5 w-3.5" />
+                                {String(budget.quarter_label).replace(/-/, " – ")}
+                            </span>
+                        )}
                         <div className="mt-1.5 flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
                             <span className={`font-heading text-3xl tabular-nums leading-tight ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-left">
                                 {formatAUD2(Math.abs(left))}

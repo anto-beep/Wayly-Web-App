@@ -1,3 +1,9 @@
+## Iter 375 — Dashboard agentic edits: current-quarter months + "Upload a statement" → Statement Decoder (web + mobile) (Jun 2026, fork) ✅ verified by screenshots
+Two user-requested visual edits, applied to BOTH surfaces:
+- **Current quarter months on the dashboard budget headline.** Backend already returns `budget.quarter_label` (e.g. "Oct-Dec 2026" from `budget.get_quarter_window()`), so surfaced it under the "Left to spend this quarter" eyebrow. Web `pages/CaregiverDashboard.jsx` (AtAGlance): new `glance-quarter-months` pill (Calendar icon + "Oct – Dec 2026"). Mobile `app/(tabs)/index.tsx` (dashboard-budget-status card): new `glance-quarter-months` label above the figures. Hyphen normalised to en-dash for display. Verified live: web + mobile both render "Oct – Dec 2026".
+- **"Upload a Statement" quick-action now opens the Statement Decoder tool page** (not the standalone upload screen). Web `config/dashboardDestinations.js` route `/app/statements/upload` → `/ai-tools/statement-decoder`. Mobile `src/config/dashboardDestinations.ts` route `/upload` → `/tool/statement-decoder`. Verified live on mobile: tapping the tile lands on `/tool/statement-decoder` (Statement Decoder ToolHero + walkthrough + paste/upload form).
+
+
 ## Iter 374 — Core-screens parity (Statements/Invoices) + mobile legal links + app display name (Jun 2026, fork)
 **Statements/Invoices parity (web vs mobile):**
 - **Invoice amount bug (real defect)** — `mobile/app/invoices.tsx` read `reconciliation.invoice_total_aud` (always null) so every row showed "—"; backend returns `reconciliation.invoice_total`. Fixed `invoiceTotal()` to read `invoice_total` (fallback `amount_billed_aud`). Verified live: rows now show $396.00 / $1,791.36 etc.

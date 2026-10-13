@@ -145,7 +145,6 @@ export default function FamilyMembersScreen() {
               <Card testID="members-upgrade-card">
                 <T style={{ fontFamily: fonts.headingSemi, fontSize: 18 }}>Family Members is on the Family plan</T>
                 <T variant="small" style={{ marginTop: 6 }}>Family members see the Family Wall and can post updates, but not statements, tools, or billing.</T>
-                <Button label="See plans" testID="members-upgrade-cta" onPress={() => router.push("/plan-select")} style={{ marginTop: spacing.md }} />
               </Card>
             ) : null}
 

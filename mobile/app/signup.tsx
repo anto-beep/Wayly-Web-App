@@ -10,7 +10,6 @@ import { WaylyMark } from "@/src/components/WaylyMark";
 import { useAuth } from "@/src/context/AuthContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { ApiError, apiFetch } from "@/src/lib/api";
-import { PLAN_OPTIONS, PlanKey, startCheckout } from "@/src/lib/plans";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { BRAND_TAGLINE } from "@/src/config/brand";
 
@@ -47,7 +46,7 @@ export default function SignupScreen() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
-  const [plan, setPlan] = useState<PlanKey>("family");
+  const plan = "family" as const;
   const [role, setRole] = useState<"caregiver" | "participant">("caregiver");
   const [caregiverRelationship, setCaregiverRelationship] = useState("");
   const [careRecipientFirstName, setCareRecipientFirstName] = useState("");
@@ -67,36 +66,6 @@ export default function SignupScreen() {
   const [addSecond, setAddSecond] = useState(false);
   const [secondFirstName, setSecondFirstName] = useState("");
   const [secondRelationship, setSecondRelationship] = useState("");
-  // Payment gate: once the account exists, a card MUST be captured via Stripe
-  // Checkout before entering the app. We never drop the user onto a free plan.
-  const [awaitingPayment, setAwaitingPayment] = useState(false);
-
-  // Opens Stripe Checkout (subscription + 7-day trial), then confirms a card is
-  // on file (trialing/active) before letting the user into onboarding. Called
-  // both right after account creation and from the Retry button.
-  const completePayment = async () => {
-    setError("");
-    setBusy(true);
-    try {
-      const opened = await startCheckout(plan, 7);
-      await refreshUser();
-      const sub = await apiFetch<{ status?: string }>("/billing/subscription").catch(() => null);
-      const status = (sub?.status || "").toLowerCase();
-      if (["trialing", "trial", "active", "past_due"].includes(status)) {
-        router.replace("/onboarding");
-        return;
-      }
-      setError(
-        opened
-          ? "We didn't see a completed payment yet. Please finish adding your card to start your free trial."
-          : "We couldn't open secure checkout. Please try again."
-      );
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "We couldn't start secure checkout. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const onSignup = async () => {
     setError("");
@@ -172,11 +141,10 @@ export default function SignupScreen() {
           }
         } catch { /* non-fatal: they can add them later from Participants */ }
       }
-      // Card capture is REQUIRED. Move to the payment gate and open Stripe
-      // Checkout (subscription mode + 7-day trial). The user only reaches
-      // onboarding once a card is on file — never a free plan.
-      setAwaitingPayment(true);
-      await completePayment();
+      // Reader app: account creation only — no in-app plan purchase. Move
+      // straight into onboarding. A Wayly plan is managed on the user's account.
+      await refreshUser();
+      router.replace("/onboarding");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not create your account. Please try again.");
     } finally {
@@ -209,44 +177,6 @@ export default function SignupScreen() {
       setError(e instanceof ApiError ? e.message : "Apple sign-in was cancelled or failed.");
     }
   };
-
-  if (awaitingPayment) {
-    const picked = PLAN_OPTIONS.find((p) => p.key === plan);
-    return (
-      <Screen edges={["top", "bottom"]}>
-        <AppHeader title="" onBack={() => setAwaitingPayment(false)} />
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View testID="signup-payment-gate" style={{ flex: 1, justifyContent: "center", gap: spacing.lg }}>
-            <View style={{ alignItems: "center", gap: 8 }}>
-              <Ionicons name="card-outline" size={44} color={colors.primary} />
-              <T style={{ fontFamily: fonts.heading, fontSize: 24, textAlign: "center", color: colors.text }}>Start your 7-day free trial</T>
-              <T variant="small" style={{ textAlign: "center", maxWidth: 320 }}>
-                Add a card to activate your {picked?.name} plan. You will not be charged today. After 7 days you move to {picked?.price} {picked?.period} unless you cancel.
-              </T>
-            </View>
-
-            <View style={{ borderWidth: 2, borderColor: colors.primary, backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.md }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>{picked?.name} plan</T>
-                <T style={{ fontFamily: fonts.bodySemi, color: colors.primary }}>{picked?.price} <T variant="small">{picked?.period}</T></T>
-              </View>
-              <T variant="small" style={{ marginTop: 4 }}>{picked?.participants} · {picked?.seats}</T>
-              <T variant="small" style={{ marginTop: 8, color: colors.gold, fontFamily: fonts.bodySemi }}>7 days free · Cancel anytime</T>
-            </View>
-
-            {error ? <T testID="signup-payment-error" variant="small" style={{ color: colors.danger, textAlign: "center" }}>{error}</T> : null}
-
-            <Button label="Add card & start free trial" testID="signup-complete-payment-btn" onPress={completePayment} loading={busy} />
-            <Button label="Choose a different plan" testID="signup-change-plan-btn" variant="ghost" onPress={() => { setAwaitingPayment(false); setError(""); }} />
-            <T variant="small" style={{ textAlign: "center", color: colors.muted }}>
-              Payment is required to use Wayly. Your card is held securely by Stripe.
-            </T>
-          </View>
-        </ScrollView>
-      </Screen>
-    );
-  }
-
 
   return (
     <Screen edges={["top", "bottom"]}>
@@ -306,39 +236,6 @@ export default function SignupScreen() {
             </View>
           ) : null}
 
-          <T variant="label" style={{ marginBottom: 8 }}>PICK A PLAN · 7-DAY FREE TRIAL</T>
-          <View style={{ gap: spacing.sm, marginBottom: spacing.lg }}>
-            {PLAN_OPTIONS.map((p) => {
-              const active = plan === p.key;
-              return (
-                <Pressable
-                  key={p.key}
-                  testID={`signup-plan-${p.key}`}
-                  onPress={() => { setPlan(p.key); if (p.key !== "family") { setAddSecond(false); setSecondFirstName(""); setSecondRelationship(""); } }}
-                  style={{
-                    borderWidth: 2,
-                    borderColor: active ? colors.primary : colors.border,
-                    backgroundColor: active ? colors.sageSoft : colors.surface,
-                    borderRadius: radius.md,
-                    padding: spacing.md,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: active ? colors.primary : colors.muted, alignItems: "center", justifyContent: "center" }}>
-                        {active ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} /> : null}
-                      </View>
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>{p.name}</T>
-                      {p.popular ? <T variant="small" style={{ color: colors.gold, fontFamily: fonts.bodySemi }}>Most popular</T> : null}
-                    </View>
-                    <T style={{ fontFamily: fonts.bodySemi, color: colors.primary }}>{p.price} <T variant="small">{p.period}</T></T>
-                  </View>
-                  <T variant="small" style={{ marginTop: 4 }}>{p.participants} · {p.seats}</T>
-                </Pressable>
-              );
-            })}
-          </View>
-
           {plan === "family" ? (
             <View
               testID="signup-second-participant-block"
@@ -354,7 +251,7 @@ export default function SignupScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }}>I&apos;m caring for two people</T>
-                  <T variant="small" style={{ marginTop: 2 }}>Your Family plan covers a second participant at no extra cost. Add their name now and we&apos;ll pick up where you leave off.</T>
+                  <T variant="small" style={{ marginTop: 2 }}>Caring for two people? Add their name now and we&apos;ll pick up where you leave off.</T>
                 </View>
               </Pressable>
 
@@ -480,15 +377,12 @@ export default function SignupScreen() {
           ) : null}
 
           <Button
-            label={`Start 7-day free ${plan === "family" ? "Family" : "Solo"} trial`}
+            label="Create your account"
             testID="signup-submit-button"
             onPress={onSignup}
             loading={busy}
             style={{ marginTop: spacing.lg }}
           />
-          <T variant="small" style={{ marginTop: 8, textAlign: "center" }}>
-            We take your card securely on Stripe. No charge until day 8, cancel any time.
-          </T>
 
           <View style={styles.divider}>
             <View style={[styles.line, { backgroundColor: colors.border }]} />

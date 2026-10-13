@@ -189,7 +189,7 @@ export default function AboutScreen() {
           </View>
           <T style={[s.h1b, { marginTop: spacing.sm }]}>Try Wayly</T>
           <T style={[s.body, { marginTop: spacing.sm }]}>
-            Every tool is free to try. Start a 7-day trial of any paid plan, no card needed.
+            Explore the tools and see how Wayly turns a twelve-page statement into a plain-English answer.
           </T>
           <Pressable
             testID="about-cta-decode"
@@ -198,13 +198,6 @@ export default function AboutScreen() {
           >
             <T style={[s.ctaPrimaryText, { color: BRAND.clay }]}>Decode a Statement</T>
             <ArrowRight size={16} color={BRAND.clay} />
-          </Pressable>
-          <Pressable
-            testID="about-cta-plans"
-            onPress={() => router.push("/plan-select")}
-            style={s.ctaSecondary}
-          >
-            <T style={s.ctaSecondaryText}>See Our Plans</T>
           </Pressable>
         </Panel>
       </ScrollView>

@@ -35,17 +35,8 @@ export function ViewOnlyBanner() {
     >
       <Lock size={16} color={colors.primaryFg} style={{ marginTop: 1 }} />
       <Text style={[styles.msg, { color: colors.primaryFg }]}>
-        Your plan is inactive. Reactivate to pick up right where you left off — everything you&apos;ve
-        saved is still here to view.
+        Your plan is inactive. Everything you&apos;ve saved is still here to view.
       </Text>
-      <TouchableOpacity
-        testID="view-only-banner-reactivate"
-        onPress={() => router.push("/plan-select")}
-        style={styles.btn}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.btnText}>Reactivate</Text>
-      </TouchableOpacity>
       <TouchableOpacity
         testID="view-only-banner-dismiss"
         onPress={() => setDismissed(true)}

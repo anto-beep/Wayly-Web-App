@@ -30,14 +30,14 @@ type Tool = { slug: string; name: string; body: string; icon: LucideIcon; planTo
 // names and body copy verbatim.
 const TOOLS: Tool[] = [
   { slug: "statement-decoder", name: "Statement Decoder", body: "Paste any Support at Home monthly statement and get a plain-English explanation in 60 seconds.", icon: FileSearch, planTone: "free", plan: "Free, 1 use/120 days", planSub: "No signup required" },
-  { slug: "invoice-checker", name: "Invoice Checker", body: "Upload the invoice your provider sends for the contribution you pay. We check it line by line against your funding, your expected contribution, and the current program rules, and flag anything worth raising with your provider before you pay.", icon: ReceiptText, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
-  { slug: "care-plan-reviewer", name: "Support Plan Reviewer", body: "Paste a support plan. We will check it against the Statement of Rights and the National Quality Standards.", icon: ClipboardCheck, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
-  { slug: "provider-price-checker", name: "Provider Price Checker", body: "Tell us what you are being charged. We compare it against published medians and the Wayly Provider Quality Index, and flag brokered service premiums.", icon: BarChart3, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
-  { slug: "contribution-estimator", name: "Contribution Estimator", body: "How much will you actually pay each quarter under Support at Home? Enter the situation, see a clear breakdown.", icon: Receipt, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
-  { slug: "budget-calculator", name: "Budget & Lifetime Cap Calculator", body: "Enter your classification and contribution status. See annual budget, per-stream allocation, and lifetime cap projection.", icon: Wallet, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
-  { slug: "classification-self-check", name: "Classification Self-Check", body: "Answer 12 questions about daily life. See which classification is likely, and whether to request a reassessment.", icon: ListChecks, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
-  { slug: "letters-and-follow-ups", name: "Letters & Follow-ups", body: "Draft a polished letter to My Aged Care, your provider, ACQSC, or the Ombudsman. Track responses and know when to escalate.", icon: FileEdit, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
-  { slug: "family-coordinator", name: "Aged Care Q&A", body: "Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.", icon: MessageCircle, planTone: "paid", plan: "Solo & Family", planSub: "7-day free trial" },
+  { slug: "invoice-checker", name: "Invoice Checker", body: "Upload the invoice your provider sends for the contribution you pay. We check it line by line against your funding, your expected contribution, and the current program rules, and flag anything worth raising with your provider before you pay.", icon: ReceiptText, planTone: "paid", plan: "Solo & Family", planSub: "" },
+  { slug: "care-plan-reviewer", name: "Support Plan Reviewer", body: "Paste a support plan. We will check it against the Statement of Rights and the National Quality Standards.", icon: ClipboardCheck, planTone: "paid", plan: "Solo & Family", planSub: "" },
+  { slug: "provider-price-checker", name: "Provider Price Checker", body: "Tell us what you are being charged. We compare it against published medians and the Wayly Provider Quality Index, and flag brokered service premiums.", icon: BarChart3, planTone: "paid", plan: "Solo & Family", planSub: "" },
+  { slug: "contribution-estimator", name: "Contribution Estimator", body: "How much will you actually pay each quarter under Support at Home? Enter the situation, see a clear breakdown.", icon: Receipt, planTone: "paid", plan: "Solo & Family", planSub: "" },
+  { slug: "budget-calculator", name: "Budget & Lifetime Cap Calculator", body: "Enter your classification and contribution status. See annual budget, per-stream allocation, and lifetime cap projection.", icon: Wallet, planTone: "paid", plan: "Solo & Family", planSub: "" },
+  { slug: "classification-self-check", name: "Classification Self-Check", body: "Answer 12 questions about daily life. See which classification is likely, and whether to request a reassessment.", icon: ListChecks, planTone: "paid", plan: "Solo & Family", planSub: "" },
+  { slug: "letters-and-follow-ups", name: "Letters & Follow-ups", body: "Draft a polished letter to My Aged Care, your provider, ACQSC, or the Ombudsman. Track responses and know when to escalate.", icon: FileEdit, planTone: "paid", plan: "Solo & Family", planSub: "" },
+  { slug: "family-coordinator", name: "Aged Care Q&A", body: "Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.", icon: MessageCircle, planTone: "paid", plan: "Solo & Family", planSub: "" },
 ];
 
 // Rotating solid brand color blocks (teal / clay / sage) for the tool grid.
@@ -47,7 +47,7 @@ const DARK_TILES = ["#12707A", "#A5512B", "#4E6E54"];
 
 
 const INFO_CHIPS = [
-  { lead: "Try free.", rest: " Statement Decoder is free; every other tool comes with a 7-day trial." },
+  { lead: "Try free.", rest: " Statement Decoder is free to use right now." },
   { lead: "Grounded in law.", rest: " Every answer cites the Aged Care Act 2024 rule that applies." },
   { lead: "Private by default.", rest: " Your data stays yours, no training on your files." },
 ];
@@ -83,15 +83,8 @@ export default function AiToolsHub() {
                 Tools are locked while your plan is inactive
               </T>
               <T variant="small" style={{ marginTop: 3, lineHeight: 19, color: colors.textSecondary }}>
-                You can still open and read everything. Reactivate to run any tool again.
+                You can still open and read everything you&apos;ve saved.
               </T>
-              <Pressable
-                testID="ai-tools-locked-reactivate"
-                onPress={() => router.push("/plan-select")}
-                style={[styles.lockBtn, { backgroundColor: colors.gold }]}
-              >
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: "#FFFFFF" }}>Reactivate</T>
-              </Pressable>
             </View>
             <Pressable testID="ai-tools-locked-dismiss" hitSlop={10} onPress={() => setLockDismissed(true)}>
               <X size={18} color={colors.textSecondary} />

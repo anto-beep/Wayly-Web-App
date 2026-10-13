@@ -78,8 +78,7 @@ export default function WeeklyDigestScreen() {
           {!onFamily ? (
             <Card testID="digest-upgrade-card">
               <T style={{ fontFamily: fonts.headingSemi, fontSize: 18 }}>Sending digests is on the Family plan</T>
-              <T variant="small" style={{ marginTop: 6 }}>You can still preview it below. Upgrade to Family to email the Sunday digest to your whole household.</T>
-              <Button label="See plans" testID="digest-upgrade-cta" onPress={() => router.push("/plan-select")} style={{ marginTop: spacing.md }} />
+              <T variant="small" style={{ marginTop: 6 }}>You can still preview it below. The Family plan emails the Sunday digest to your whole household.</T>
             </Card>
           ) : null}
 

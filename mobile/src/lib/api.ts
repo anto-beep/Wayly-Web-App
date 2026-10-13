@@ -45,7 +45,7 @@ export function isReadOnlyMode(): boolean {
   return _readOnlyMode;
 }
 export const READ_ONLY_MESSAGE =
-  "Your plan is inactive. Reactivate to add or change anything.";
+  "Your plan is inactive. You can still view everything you've saved.";
 const _READ_ONLY_ALLOW_PREFIXES = [
   "/auth/",
   "/billing/",

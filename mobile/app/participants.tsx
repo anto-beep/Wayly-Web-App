@@ -189,25 +189,6 @@ export default function ParticipantsScreen() {
       } });
       setLastAdded(data);
       setStep("done");
-      // Extra participant → charge the saved card immediately by reconciling
-      // the live Stripe subscription (prorated add-on subscription item,
-      // off-session). If no active subscription/card is on file, point the
-      // user to Plan & Billing to add one.
-      if (data.addon) {
-        try {
-          const sync = await apiFetch<any>("/payments/sync-plan-to-participants", { method: "POST", body: {} });
-          if (sync?.ok === false && sync?.reason === "no_active_subscription") {
-            Alert.alert(
-              "Add a payment method",
-              "This extra participant needs a card on file. Open Plan & Billing to finish setting up payment.",
-              [
-                { text: "Later", style: "cancel" },
-                { text: "Plan & Billing", onPress: () => router.push("/plan-billing") },
-              ],
-            );
-          }
-        } catch { /* the daily reconciliation cron backs this up */ }
-      }
       await loadAll(); await reload();
     } catch (e) {
       const detail = e instanceof ApiError ? (e.data as any)?.detail : null;
@@ -296,9 +277,9 @@ export default function ParticipantsScreen() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
           <View>
-            <T variant="small" style={{ lineHeight: 20 }}>Family plan covers 2, additional participants are $24.50 per fortnight each.</T>
+            <T variant="small" style={{ lineHeight: 20 }}>The people whose Support at Home care you track on this account.</T>
             <T style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted, marginTop: 6 }}>
-              Current plan: <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.text }}>{basePlan}</T> · ${fortnightTotal.toFixed(2)} per fortnight{addonCount > 0 ? ` · ${addonCount} additional participant${addonCount === 1 ? "" : "s"}` : ""}
+              Current plan: <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.text }}>{basePlan}</T>{active.length > 0 ? ` · ${active.length} participant${active.length === 1 ? "" : "s"}` : ""}
             </T>
           </View>
 
@@ -308,7 +289,7 @@ export default function ParticipantsScreen() {
             <Card testID="pending-addon-banner" style={{ backgroundColor: colors.goldSoft, borderColor: colors.goldSoft }}>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Pending add-on to confirm</T>
               <T variant="small" style={{ marginTop: 4, color: colors.text, lineHeight: 20 }}>
-                You have {pendingAddons.length === 1 ? "an extra-participant add-on" : `${pendingAddons.length} extra-participant add-ons`} at $24.50 per fortnight that has not been confirmed yet. You can cancel it and the participant it added will be removed so you are not charged.
+                You have {pendingAddons.length === 1 ? "an extra-participant add-on" : `${pendingAddons.length} extra-participant add-ons`} that has not been confirmed yet. You can cancel it and the participant it added will be removed.
               </T>
               <Button label="Cancel pending add-on" testID="cancel-pending-addon" variant="outline" onPress={cancelPendingAddon} loading={cancelingAddon} style={{ marginTop: spacing.sm }} />
             </Card>
@@ -319,7 +300,7 @@ export default function ParticipantsScreen() {
           ) : (
             active.map((p, idx) => {
               const color = COLOR_SWATCHES[(p.color_index ?? idx) % 5];
-              const planTag = basePlan === "SOLO" ? "Covered by Solo plan" : idx < included ? "Covered by Family plan" : "Additional participant · $24.50 per fortnight";
+              const planTag = basePlan === "SOLO" ? "Covered by Solo plan" : idx < included ? "Covered by Family plan" : "Additional participant";
               return (
                 <View key={p.id} testID={`participant-card-${p.id}`} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
                   <View style={{ height: 4, backgroundColor: color, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg }} />
@@ -411,55 +392,31 @@ export default function ParticipantsScreen() {
                 <View testID="add-preview-step" style={{ gap: spacing.sm }}>
                   {addPreview.branch === "upgrade_required" ? (
                     <View style={{ gap: spacing.sm }} testID="branch-upgrade-required">
-                      <T style={{ fontFamily: fonts.body, fontSize: 14 }}>Adding a Participant requires a paid plan.</T>
-                      <T variant="small">Upgrade to Solo ($24.50 per fortnight) for 1 Participant, or Family ($49.50 per fortnight) for 2 Participants and 3 Caregiver seats.</T>
-                      <Button label="See plans" testID="upgrade-family" onPress={() => { closeAdd(); router.push("/plan-select"); }} />
+                      <T style={{ fontFamily: fonts.body, fontSize: 14 }}>Adding a participant needs an active plan.</T>
+                      <T variant="small">Your Wayly plan is managed on your account. To add people to your plan, sign in at wayly.com.au, then they will appear here.</T>
+                      <Button label="Close" testID="branch-upgrade-close" variant="outline" onPress={closeAdd} />
                     </View>
                   ) : null}
 
                   {addPreview.branch === "solo_to_family" ? (
                     <View style={{ gap: spacing.sm }} testID="branch-solo-to-family">
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Solo covers one participant only.</T>
-                      <T variant="small" style={{ color: colors.muted, lineHeight: 20 }}>Adding another would cost $49.00 per fortnight (Solo $24.50 plus an additional participant $24.50). The Family plan at $49.50 per fortnight covers everyone and is the better choice.</T>
-                      {["Participants: 1 → 2 (and more if you need them)", "Caregiver seats: 1 → 3", "All features stay the same"].map((l, i) => (
-                        <View key={i} style={{ flexDirection: "row", gap: 8 }}>
-                          <CheckCircle2 size={15} color={colors.sage} style={{ marginTop: 2 }} />
-                          <T variant="small" style={{ flex: 1 }}>{l}</T>
-                        </View>
-                      ))}
-                      <T variant="small" style={{ color: colors.muted }}>Switch to Family and you will be billed $49.50 per fortnight from your next charge, with the prorated difference for the rest of your current fortnight applied now.</T>
-                      <Button label="Switch to Family and continue" testID="confirm-solo-to-family" onPress={() => { setConfirmUpgrade(true); setStep("form"); }} />
-                      <Button label="Cancel and stay on Solo" testID="cancel-stay-solo" variant="outline" onPress={closeAdd} />
+                      <T variant="small" style={{ color: colors.muted, lineHeight: 20 }}>To cover more than one person, manage your plan on your Wayly account at wayly.com.au. Once updated, you can add them here.</T>
+                      <Button label="Close" testID="cancel-stay-solo" variant="outline" onPress={closeAdd} />
                     </View>
                   ) : null}
 
-                  {addPreview.branch === "family_addons" || addPreview.branch === "covered_by_family" ? (
+                  {addPreview.branch === "covered_by_family" ? (
                     <View style={{ gap: spacing.sm }} testID="branch-family">
-                      <T variant="small">You can add as many participants as you need. Each additional participant is $24.50 per fortnight and cancels independently.</T>
-                      <T variant="label">HOW MANY TO ADD?</T>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-                        <Pressable testID="extra-count-minus" onPress={() => { const v = Math.max(1, extraCount - 1); setExtraCount(v); refreshPreview(v); }} style={[styles.stepBtn, { borderColor: colors.border }]}>
-                          <T style={{ fontFamily: fonts.bodyBold, fontSize: 18, color: colors.primary }}>−</T>
-                        </Pressable>
-                        <T testID="extra-count-value" style={{ fontFamily: fonts.heading, fontSize: 22, minWidth: 28, textAlign: "center" }}>{extraCount}</T>
-                        <Pressable testID="extra-count-plus" onPress={() => { const v = Math.min(10, extraCount + 1); setExtraCount(v); refreshPreview(v); }} style={[styles.stepBtn, { borderColor: colors.border }]}>
-                          <T style={{ fontFamily: fonts.bodyBold, fontSize: 18, color: colors.primary }}>+</T>
-                        </Pressable>
-                      </View>
-                      {(() => {
-                        const needed = Number(addPreview.addons_needed || 0);
-                        const addonFortnight = needed * 24.5;
-                        const totalFortnight = 49.5 + addonFortnight;
-                        return (
-                          <View testID="add-preview-summary" style={{ backgroundColor: colors.surface2, borderColor: colors.border, borderWidth: 1, borderRadius: radius.md, padding: spacing.md, gap: 2 }}>
-                            <T variant="small" style={{ color: colors.text }}>{needed} × $24.50 per fortnight = <T style={{ fontFamily: fonts.bodySemi }}>${addonFortnight.toFixed(2)} per fortnight</T> added</T>
-                            <T variant="small">Base Family plan: $49.50 per fortnight</T>
-                            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text, marginTop: 4 }}>New total: ${totalFortnight.toFixed(2)} per fortnight</T>
-                            <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted, marginTop: 2 }}>Includes GST. Prorated for the rest of your current fortnight, then billed in full from your next charge.</T>
-                          </View>
-                        );
-                      })()}
+                      <T variant="small">This person is covered by your Family plan at no extra cost.</T>
                       <Button label="Continue" testID="confirm-family-add" onPress={() => setStep("form")} />
+                    </View>
+                  ) : null}
+
+                  {addPreview.branch === "family_addons" ? (
+                    <View style={{ gap: spacing.sm }} testID="branch-family-addons">
+                      <T variant="small" style={{ lineHeight: 20 }}>Adding more people than your plan includes is managed on your Wayly account. Sign in at wayly.com.au to update your plan, then add them here.</T>
+                      <Button label="Close" testID="branch-family-addons-close" variant="outline" onPress={closeAdd} />
                     </View>
                   ) : null}
 
@@ -501,11 +458,6 @@ export default function ParticipantsScreen() {
                     </View>
                   ) : null}
                   <T variant="small" style={{ textAlign: "center" }}>Forward their monthly statements here and Wayly will decode them automatically.</T>
-                  {lastAdded.addon?.id ? (
-                    <View testID="addon-prorated-note" style={{ backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.md }}>
-                      <T variant="small" style={{ textAlign: "center", color: colors.text }}>A $24.50 per fortnight add-on was added to your subscription. You&apos;ve been charged the prorated amount for the rest of this fortnight; the full amount applies from your next charge.</T>
-                    </View>
-                  ) : null}
                   <Button label="Done" testID="add-done-btn" onPress={closeAdd} />
                 </View>
               ) : null}
@@ -522,15 +474,7 @@ export default function ParticipantsScreen() {
               <T style={{ fontFamily: fonts.headingSemi, fontSize: 18 }}>Remove {removeTarget?.first_name}?</T>
               <Pressable onPress={() => setRemoveTarget(null)} hitSlop={10}><X size={20} color={colors.muted} /></Pressable>
             </View>
-            {canDowngradeOnRemove ? (
-              <View style={{ gap: spacing.sm }}>
-                <T variant="small">{"You'll have 1 participant remaining. You can downgrade from Family to Solo and save $25 per fortnight."}</T>
-                <RemoveOption testID="rm-downgrade" label="Remove + downgrade to Solo at next billing date" active={removeChoice === "downgrade"} onPress={() => setRemoveChoice("downgrade")} colors={colors} />
-                <RemoveOption testID="rm-stay" label="Remove + stay on Family $49.50 per fortnight" active={removeChoice === "stay"} onPress={() => setRemoveChoice("stay")} colors={colors} />
-              </View>
-            ) : (
-              <T variant="small">Their data is kept for 60 days. You can restore them or export their data anytime within that window.</T>
-            )}
+            <T variant="small">Their data is kept for 60 days. You can restore them or export their data anytime within that window.</T>
             <Button label="Confirm removal" testID="confirm-remove" onPress={confirmRemove} loading={busy} style={{ marginTop: spacing.md }} />
           </View>
         </View>

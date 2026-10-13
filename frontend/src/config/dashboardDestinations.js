@@ -21,7 +21,7 @@ import {
 export const DASHBOARD_DESTINATIONS = [
     {
         label: "Upload a statement", hint: "Decode your monthly Support at Home statement",
-        route: "/app/statements/upload", icon: Upload, quick: true,
+        route: "/ai-tools/statement-decoder", icon: Upload, quick: true,
         concepts: ["statement", "upload"],
         keywords: "upload statement decode read explain understand monthly support at home what does this mean plain english translate scan document new statement add statement",
     },

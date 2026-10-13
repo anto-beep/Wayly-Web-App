@@ -269,8 +269,7 @@ function StatementDecoderTool() {
                 <Clock size={18} color={colors.primary} />
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>You have used your free decode.</T>
               </View>
-              <T variant="small">{(limitInfo.days_until_next_use || 0) > 0 ? `The next free one is available in ${limitInfo.days_until_next_use} day${limitInfo.days_until_next_use === 1 ? "" : "s"}. Or start a 7-day free trial to run unlimited decodes.` : "Start a 7-day free trial to run unlimited decodes."}</T>
-              <Button label="Start free trial" testID="sd-limit-trial" onPress={() => router.push("/plan-select")} style={{ marginTop: 4 }} />
+              <T variant="small">{(limitInfo.days_until_next_use || 0) > 0 ? `The next free one is available in ${limitInfo.days_until_next_use} day${limitInfo.days_until_next_use === 1 ? "" : "s"}.` : "Your free decode has been used."}</T>
             </View>
           ) : null}
 

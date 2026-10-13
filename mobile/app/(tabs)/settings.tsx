@@ -100,7 +100,7 @@ export default function SettingsScreen() {
   const planLabel = noPlan ? "No active plan" : plan.replace(/^\w/, (c) => c.toUpperCase());
   const rawStatus = (user?.subscription_status || "").toLowerCase();
   const isTrialing = rawStatus === "trialing" || rawStatus === "trial";
-  const status = noPlan ? "PAYMENT REQUIRED" : isTrialing ? "FREE TRIAL" : (user?.subscription_status || "active").toUpperCase();
+  const status = noPlan ? "NO ACTIVE PLAN" : isTrialing ? "FREE TRIAL" : (user?.subscription_status || "active").toUpperCase();
 
   const options: { key: ThemePref; label: string; icon: any }[] = [
     { key: "light", label: "Light", icon: Sun },
@@ -199,7 +199,7 @@ export default function SettingsScreen() {
           <T style={{ color: "rgba(255,255,255,0.85)", fontFamily: fonts.body, fontSize: 13, marginTop: 4 }}>Status: {status}</T>
           {noPlan ? (
             <T style={{ color: "rgba(255,255,255,0.75)", fontFamily: fonts.body, fontSize: 13, marginTop: 2 }}>
-              Add a card in Plan &amp; Billing to start your 7-day free trial.
+              Your Wayly plan is managed on your account at wayly.com.au.
             </T>
           ) : user?.trial_ends_at && isTrialing ? (
             <T style={{ color: "rgba(255,255,255,0.75)", fontFamily: fonts.body, fontSize: 13, marginTop: 2 }}>
@@ -209,7 +209,7 @@ export default function SettingsScreen() {
         </Card>
 
         <Card testID="settings-manage" style={{ padding: 0 }}>
-          <NavRow icon={CreditCard} label="Plan & Billing" desc="Your subscription, invoices, and payment method" testID="settings-nav-billing" onPress={() => router.push("/plan-billing")} />
+          <NavRow icon={CreditCard} label="Your plan" desc="Your Wayly subscription status" testID="settings-nav-billing" onPress={() => router.push("/plan-billing")} />
           <NavRow icon={Users} label="Family Members" desc="Invite family and manage seats" testID="settings-nav-members" onPress={() => router.push("/family-members")} />
           <NavRow icon={Mailbox} label="Weekly Digest" desc="Your Sunday household summary" testID="settings-nav-digest" onPress={() => router.push("/weekly-digest")} />
           <NavRow icon={Gauge} label="Usage" desc="What you have done with Wayly" testID="settings-nav-usage" onPress={() => router.push("/usage")} />

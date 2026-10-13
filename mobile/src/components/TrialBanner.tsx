@@ -29,6 +29,12 @@ async function loadSub(): Promise<Sub | null> {
 // Subtle amber strip shown across the app while a free trial is active, so
 // users convert before it lapses. Tapping jumps to Plan & Billing.
 export function TrialBanner() {
+  // Reader app: no in-app trial-conversion prompt. Status is shown on the
+  // Plan screen only.
+  return null;
+}
+
+function _UnusedTrialBanner() {
   const { colors } = useTheme();
   const [sub, setSub] = useState<Sub | null>(null);
 

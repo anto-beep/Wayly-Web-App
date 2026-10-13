@@ -34,20 +34,13 @@ export function ViewOnlyToolGate({ children }: { children: React.ReactNode }) {
           This tool is locked
         </T>
         <T variant="bodyMuted" style={{ textAlign: "center", marginTop: spacing.sm, lineHeight: 22 }}>
-          Your plan is inactive. Reactivate to run or change anything — everything you&apos;ve already saved stays here to view.
+          Your plan is inactive. You can still view everything you&apos;ve already saved.
         </T>
-        <Button
-          label="Reactivate"
-          testID="view-only-tool-reactivate"
-          onPress={() => router.push("/plan-select")}
-          style={{ marginTop: spacing.lg, alignSelf: "stretch" }}
-        />
         <Button
           label="View tool (read-only)"
           testID="view-only-tool-reveal"
-          variant="outline"
           onPress={() => setReveal(true)}
-          style={{ marginTop: spacing.sm, alignSelf: "stretch" }}
+          style={{ marginTop: spacing.lg, alignSelf: "stretch" }}
         />
       </View>
     </View>
