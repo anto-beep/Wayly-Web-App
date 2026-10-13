@@ -50,9 +50,9 @@ const DECISION_OPTIONS = [
 function LInput({ label, value, onChangeText, placeholder, keyboardType, testID, colors, required, optional, prefix }: any) {
   return (
     <View style={{ flex: 1, minWidth: "45%" }}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-        <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>{label}</T>
-        {required ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.gold }}>Required</T> : optional ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted }}>Optional</T> : null}
+      <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 4, gap: 6, minHeight: 28 }}>
+        <T variant="small" style={{ color: colors.muted, fontSize: 11, flex: 1, flexShrink: 1 }} numberOfLines={2}>{label}</T>
+        {required ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: colors.gold, flexShrink: 0 }}>Required</T> : optional ? <T style={{ fontFamily: fonts.body, fontSize: 11, color: colors.muted, flexShrink: 0 }}>Optional</T> : null}
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.bg }}>
         {prefix ? <T style={{ color: colors.muted, fontFamily: fonts.body, marginRight: 2 }}>{prefix}</T> : null}
@@ -68,6 +68,21 @@ function Checkbox({ checked, colors }: any) {
 }
 
 const aud = (v: any) => `$${Number(v ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Dates across CHSP tools are shown and entered as DD/MM/YYYY (AU). Storage is
+// ISO (YYYY-MM-DD); these helpers convert both ways and tolerate either input.
+function isoToAU(v?: string | null): string {
+  if (!v) return "";
+  const s = String(v).slice(0, 10);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
+}
+function auToISO(v?: string | null): string | null {
+  const t = (v || "").trim();
+  if (!t) return null;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(t);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : t;
+}
 
 // WS-3 · Access & Hardship letters (mobile parity).
 function AccessHardship({ colors, providerName, emphasise }: any) {
@@ -280,10 +295,10 @@ function WS1FeeCheck({ services, colors }: any) {
         <LInput label="Invoice Reference" optional value={form.invoice_reference} onChangeText={(v: string) => set({ invoice_reference: v })} testID="chsp-ws1-reference" colors={colors} />
         <LInput label="Provider" optional value={form.provider_name} onChangeText={(v: string) => set({ provider_name: v })} testID="chsp-ws1-provider" colors={colors} />
         <LInput label="Agreed Per-Unit Rate" required prefix="$" value={form.agreed_rate} onChangeText={(v: string) => set({ agreed_rate: v })} placeholder="6.00" keyboardType="decimal-pad" testID="chsp-ws1-agreed-rate" colors={colors} />
-        <LInput label="Rate Effective (DD/MM/YYYY)" optional value={form.rate_effective_date} onChangeText={(v: string) => set({ rate_effective_date: v })} placeholder="01/01/2026" testID="chsp-ws1-rate-date" colors={colors} />
+        <LInput label="Rate Effective" optional value={form.rate_effective_date} onChangeText={(v: string) => set({ rate_effective_date: v })} placeholder="DD/MM/YYYY" testID="chsp-ws1-rate-date" colors={colors} />
         <LInput label="Units Billed" required value={form.units_billed} onChangeText={(v: string) => set({ units_billed: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-billed" colors={colors} />
         <LInput label="Units Received" required value={form.units_received} onChangeText={(v: string) => set({ units_received: v })} keyboardType="decimal-pad" testID="chsp-ws1-units-received" colors={colors} />
-        <LInput label="Billed Period Start (DD/MM/YYYY)" optional value={form.billed_period_start} onChangeText={(v: string) => set({ billed_period_start: v })} placeholder="01/07/2026" testID="chsp-ws1-period-start" colors={colors} />
+        <LInput label="Billed Period Start" optional value={form.billed_period_start} onChangeText={(v: string) => set({ billed_period_start: v })} placeholder="DD/MM/YYYY" testID="chsp-ws1-period-start" colors={colors} />
         <LInput label="Billed Amount" required prefix="$" value={form.billed_amount} onChangeText={(v: string) => set({ billed_amount: v })} keyboardType="decimal-pad" testID="chsp-ws1-billed" colors={colors} />
       </View>
       {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
@@ -502,14 +517,14 @@ export default function ChspToolsScreen() {
 
 function ChspProfileCard({ profile, onCreate, colors }: any) {
   const [status, setStatus] = useState(profile?.current_chsp_status || "on_chsp");
-  const [start, setStart] = useState(profile?.chsp_start_date ? String(profile.chsp_start_date).slice(0, 10) : "");
+  const [start, setStart] = useState(isoToAU(profile?.chsp_start_date));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
 
   const submit = async () => {
     setBusy(true); setError("");
-    try { await apiFetch("/chsp1/profile", { method: "POST", body: { current_chsp_status: status, chsp_start_date: start || null } }); setEditing(false); onCreate?.(); }
+    try { await apiFetch("/chsp1/profile", { method: "POST", body: { current_chsp_status: status, chsp_start_date: auToISO(start) } }); setEditing(false); onCreate?.(); }
     catch (e) { setError(e instanceof ApiError ? e.message : "Could not save profile."); }
     finally { setBusy(false); }
   };
@@ -519,7 +534,7 @@ function ChspProfileCard({ profile, onCreate, colors }: any) {
       <Card testID="chsp-profile-summary">
         <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>CHSP PROFILE</T>
         <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text, marginTop: 4 }}>Status: {chspStatusLabel(profile.current_chsp_status)}{profile.chsp_start_date ? ` · started ${shortDate(profile.chsp_start_date)}` : ""}</T>
-        <Button label="Edit" variant="outline" testID="chsp-profile-edit" onPress={() => { setStatus(profile.current_chsp_status || "on_chsp"); setStart(profile.chsp_start_date ? String(profile.chsp_start_date).slice(0, 10) : ""); setEditing(true); }} style={{ marginTop: spacing.md, alignSelf: "flex-start", paddingHorizontal: 20 }} />
+        <Button label="Edit" variant="outline" testID="chsp-profile-edit" onPress={() => { setStatus(profile.current_chsp_status || "on_chsp"); setStart(isoToAU(profile.chsp_start_date)); setEditing(true); }} style={{ marginTop: spacing.md, alignSelf: "flex-start", paddingHorizontal: 20 }} />
       </Card>
     );
   }
@@ -530,7 +545,7 @@ function ChspProfileCard({ profile, onCreate, colors }: any) {
       <T variant="small" style={{ color: colors.muted, marginTop: 4, lineHeight: 20 }}>Set your current CHSP status so we can check fees and walk through transition to Support at Home.</T>
       <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
         <Select label="Status" required value={status} onChange={setStatus} options={STATUS_OPTIONS} testID="chsp-status" />
-        <LInput label="CHSP start date (optional, YYYY-MM-DD)" value={start} onChangeText={setStart} placeholder="2024-03-01" testID="chsp-start-date" colors={colors} />
+        <LInput label="CHSP start date (optional, DD/MM/YYYY)" value={start} onChangeText={setStart} placeholder="01/03/2024" testID="chsp-start-date" colors={colors} />
       </View>
       {error ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }}>{error}</T> : null}
       <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>

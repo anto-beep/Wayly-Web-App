@@ -99,9 +99,17 @@ export default function OnboardingScreen() {
     }
   };
 
-  const [t1, setT1] = useState<Tier1>({
-    first_name: user?.first_name || "", last_name: user?.last_name || "", dob: "",
-    pension_status: "", classification_level: null, provider_name: "", statement_delivery: "",
+  const [t1, setT1] = useState<Tier1>(() => {
+    // Only pre-fill the participant name with the account holder's OWN name when
+    // they are the participant. For a caregiver we leave it blank and fill it
+    // from the signup care-recipient carryover below, so the primary participant
+    // is named after the person being cared for — not the caregiver (web parity).
+    const isSelf = user?.role === "participant";
+    return {
+      first_name: isSelf ? (user?.first_name || user?.name?.split(" ")?.[0] || "") : "",
+      last_name: isSelf ? (user?.last_name || user?.name?.split(" ")?.slice(1).join(" ") || "") : "",
+      dob: "", pension_status: "", classification_level: null, provider_name: "", statement_delivery: "",
+    };
   });
   const [t2, setT2] = useState<Tier2>({
     preferred_name: "", mac_reference_number: "", suburb: "", state: "",
@@ -138,6 +146,34 @@ export default function OnboardingScreen() {
     })();
     return () => { cancelled = true; };
   }, [editPid]);
+
+  // Signup-carryover prefill (web parity): when a CAREGIVER entered the
+  // care-recipient's name + relationship at signup, surface those as the
+  // participant defaults here so the primary participant is named after the
+  // person being cared for — not the caregiver. Only fills EMPTY fields, so it
+  // never clobbers a draft the user has already edited. Skipped in edit mode
+  // and when the account holder is themselves the participant.
+  useEffect(() => {
+    if (editPid || user?.role === "participant") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch<{ profile?: { care_recipient?: any } }>("/persona");
+        if (cancelled) return;
+        const care = res?.profile?.care_recipient || {};
+        const carryFirst = (care.first_name || "").trim();
+        const carryLast = (care.last_name || "").trim();
+        const carryRel = (care.relationship_to_account || "").trim();
+        if (carryFirst || carryLast) {
+          setT1((t) => ({ ...t, first_name: t.first_name || carryFirst, last_name: t.last_name || carryLast }));
+        }
+        if (carryRel) {
+          setT2((t) => ({ ...t, caregiver_relationship: t.caregiver_relationship || carryRel }));
+        }
+      } catch { /* non-fatal: fields stay editable */ }
+    })();
+    return () => { cancelled = true; };
+  }, [editPid, user]);
 
   const hydrateFromParticipant = useCallback(async (id: string) => {
     try {

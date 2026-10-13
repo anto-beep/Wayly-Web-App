@@ -209,7 +209,7 @@ export default function SettingsScreen() {
         </Card>
 
         <Card testID="settings-manage" style={{ padding: 0 }}>
-          <NavRow icon={CreditCard} label="Your plan" desc="Your Wayly subscription status" testID="settings-nav-billing" onPress={() => router.push("/plan-billing")} />
+          <NavRow icon={CreditCard} label="Your Plan" desc="Your Wayly subscription status" testID="settings-nav-billing" onPress={() => router.push("/plan-billing")} />
           <NavRow icon={Users} label="Family Members" desc="Invite family and manage seats" testID="settings-nav-members" onPress={() => router.push("/family-members")} />
           <NavRow icon={Mailbox} label="Weekly Digest" desc="Your Sunday household summary" testID="settings-nav-digest" onPress={() => router.push("/weekly-digest")} />
           <NavRow icon={Gauge} label="Usage" desc="What you have done with Wayly" testID="settings-nav-usage" onPress={() => router.push("/usage")} />

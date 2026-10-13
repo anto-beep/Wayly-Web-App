@@ -53,7 +53,7 @@ export default function PlanSelectScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Choose your plan" onBack={onCancel} />
+      <AppHeader title="Choose Your Plan" onBack={onCancel} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
         <View style={{ gap: 6 }}>
           <T style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, color: colors.text }}>

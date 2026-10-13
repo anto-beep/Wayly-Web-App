@@ -10,8 +10,10 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, spacing } from "@/src/theme/tokens";
 import { formatDate } from "@/src/utils/format";
 
-const SITE_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "";
-const BILLING_URL = `${SITE_BASE}/settings/billing`;
+// Account/plan management lives on the public Wayly web app, not the API host.
+const WEB_APP_URL = process.env.EXPO_PUBLIC_WEB_URL || "https://wayly.com.au";
+const BILLING_URL = `${WEB_APP_URL}/settings/billing`;
+const PRICING_URL = `${WEB_APP_URL}/pricing`;
 
 type Sub = {
   plan?: string;
@@ -51,7 +53,7 @@ export default function PlanBillingScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Your plan" subtitle="Your Wayly subscription" onBack={() => router.back()} />
+      <AppHeader title="Your Plan" subtitle="Your Wayly subscription" onBack={() => router.back()} />
       {loading ? (
         <Loading label="Loading your plan…" />
       ) : error ? (
@@ -89,7 +91,7 @@ export default function PlanBillingScreen() {
             label={noPlan ? "Choose a plan on the web" : "Manage plan on the web"}
             testID="billing-manage-web"
             icon={ExternalLink}
-            onPress={() => { WebBrowser.openBrowserAsync(noPlan ? `${SITE_BASE}/pricing` : BILLING_URL); }}
+            onPress={() => { WebBrowser.openBrowserAsync(noPlan ? PRICING_URL : BILLING_URL); }}
           />
 
           {!noPlan ? (

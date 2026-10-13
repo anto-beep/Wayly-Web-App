@@ -80,7 +80,7 @@ export default function StatementAuditLog() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Audit log" subtitle="Every change we've recorded" onBack={() => router.back()} />
+      <AppHeader title="Audit Log" subtitle="Every change we've recorded" onBack={() => router.back()} />
       {loading ? (
         <Loading label="Loading audit log…" />
       ) : error ? (

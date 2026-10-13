@@ -28,7 +28,7 @@ export default function ArchivedStatements() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Archived statements" subtitle="Reviewed and put away" onBack={() => router.back()} />
+      <AppHeader title="Archived Statements" subtitle="Reviewed and put away" onBack={() => router.back()} />
       {loading ? (
         <Loading label="Loading archived statements…" />
       ) : error ? (

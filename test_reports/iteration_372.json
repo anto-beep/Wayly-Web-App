@@ -1,0 +1,59 @@
+{
+  "summary": "Code-review verification of 5 mobile-only bug fixes requested after TestFlight feedback. All 5 fixes are correctly implemented in source. Browser verification was skipped because the user flow requires full signup -> external Stripe checkout which cannot complete inside the Expo web preview, as the review request itself notes; so verification was done by close code inspection against the acceptance criteria in the request. Mobile .env has EXPO_PUBLIC_WEB_URL=https://wayly.com.au as required.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "verifications": [
+    {
+      "bug": "Identity prefill for caregiver onboarding",
+      "file": "/app/mobile/app/onboarding.tsx",
+      "evidence": "L102-113 blank first/last for role!=participant; L156-176 fetches GET /persona and sets t1.first_name/t1.last_name from care_recipient.first_name/last_name and t2.caregiver_relationship from care_recipient.relationship_to_account; only EMPTY fields are filled; skipped in editPid mode and when role=participant. Mirrors web Onboarding.jsx intent.",
+      "status": "PASS"
+    },
+    {
+      "bug": "CHSP DD/MM/YYYY display + round-trip",
+      "file": "/app/mobile/app/chsp-tools.tsx",
+      "evidence": "L74-85 isoToAU/auToISO helpers; L520 start initialised via isoToAU(profile.chsp_start_date); L527 submits with auToISO(start); L548 label 'CHSP start date (optional, DD/MM/YYYY)' placeholder '01/03/2024'; L298 and L301 WS-1 chsp-ws1-rate-date and chsp-ws1-period-start placeholders are 'DD/MM/YYYY'.",
+      "status": "PASS"
+    },
+    {
+      "bug": "WS-1 Invoice-checker label overflow",
+      "file": "/app/mobile/app/chsp-tools.tsx",
+      "evidence": "LInput at L50-63: label row is flexDirection:row justifyContent:space-between alignItems:flex-start minHeight:28; label uses flex:1, flexShrink:1, numberOfLines={2}; Optional/Required chip uses flexShrink:0. Columns wrap via flexWrap and each LInput has flex:1, minWidth:'45%' so a wrapped label pushes vertical height, not horizontal bleed. Two-line wrap for 'Agreed Per-Unit Rate', 'Billed Period Start', 'Rate Effective' etc. is clean.",
+      "status": "PASS"
+    },
+    {
+      "bug": "Your Plan screen title + external links",
+      "file": "/app/mobile/app/plan-billing.tsx, /app/mobile/.env, /app/mobile/app/(tabs)/settings.tsx",
+      "evidence": "plan-billing.tsx L14-16: WEB_APP_URL=process.env.EXPO_PUBLIC_WEB_URL||'https://wayly.com.au'; BILLING_URL=WEB_APP_URL+'/settings/billing'; PRICING_URL=WEB_APP_URL+'/pricing'. L56 AppHeader title='Your Plan' subtitle='Your Wayly subscription'. L94 opens PRICING_URL when noPlan else BILLING_URL — does NOT use EXPO_PUBLIC_BACKEND_URL. mobile/.env sets EXPO_PUBLIC_WEB_URL=https://wayly.com.au. settings.tsx L212 label='Your Plan' testID='settings-nav-billing'.",
+      "status": "PASS"
+    },
+    {
+      "bug": "Title-case sweep",
+      "file": "plan-select.tsx, care-plan/[id].tsx, statement-audit/[id].tsx, statements-archived.tsx",
+      "evidence": "plan-select.tsx L56 'Choose Your Plan'; care-plan/[id].tsx L123 'Care Plan Review'; statement-audit/[id].tsx L83 'Audit Log'; statements-archived.tsx L31 'Archived Statements'.",
+      "status": "PASS"
+    }
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: onboarding.tsx L94-95 chooseSelfManaged still pre-fills from user.first_name/last_name when user chooses 'My own care'. This is correct for a participant-role account AND for a caregiver who flips to self-management, but a caregiver who initially set care_recipient then flips to self-management will overwrite the care-recipient name with their own — expected behaviour per the UX, so this is informational only.",
+    "Minor: isoToAU falls back to the raw string if the ISO shape doesn't match. If profile.chsp_start_date already comes back as DD/MM/YYYY (unlikely) it will still display as-is, which is tolerable."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100% code-level"},
+  "seed_data_creation": "None. Review request acknowledges full signup -> Stripe checkout cannot complete in preview.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All 5 TestFlight-reported mobile bugs are implemented correctly in source. The only reliable live validation path is TestFlight / a native build because: (a) signup -> Stripe checkout is required to pass the plan-gate before /onboarding renders, and that external redirect does not complete in the Expo web preview; (b) WS-1 overflow needs a real mobile viewport (web preview often renders wide). For next-round validation, either (1) seed a caregiver + persona + start-trial via API then open the Expo preview directly at /onboarding with the auth cookie set, or (2) rely on native TestFlight build. The identity-fix hinges on GET /persona returning profile.care_recipient.{first_name,last_name,relationship_to_account} — confirm backend contract if the field names drift.",
+  "rca of the issue": "Original identity bug RCA (per the review note, now fixed): mobile onboarding initialised t1.first_name/t1.last_name from the account holder's own user.name/first_name/last_name, unconditionally — unlike the web Onboarding.jsx which reads persona.care_recipient. Result: a caregiver account would name the primary participant after themselves, propagating into every artefact (e.g. 'Luka's quarter' summary). Fix: role-gate the self-prefill to role==='participant' and add a persona-carryover useEffect that fills ONLY empty name/relationship fields from GET /persona.care_recipient."
+}

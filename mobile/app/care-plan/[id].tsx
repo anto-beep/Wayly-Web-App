@@ -120,7 +120,7 @@ export default function CarePlanDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Care plan review" subtitle={plan?.title || plan?.filename || undefined} onBack={() => router.back()} />
+      <AppHeader title="Care Plan Review" subtitle={plan?.title || plan?.filename || undefined} onBack={() => router.back()} />
       {loading ? (
         <Loading label="Loading care plan…" />
       ) : error || !plan ? (
