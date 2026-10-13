@@ -20,16 +20,21 @@ type Invoice = {
   provider_name?: string | null;
   invoice_date?: string | null;
   created_at?: string;
-  reconciliation?: { overall_verdict?: string; findings?: any[]; invoice_total_aud?: number; refund_owed_aud?: number };
+  reconciliation?: { overall_verdict?: string; findings?: any[]; invoice_total?: number };
   amount_billed_aud?: number;
 };
 
 function invoiceTotal(i: Invoice): number | null {
-  const v = i.reconciliation?.invoice_total_aud ?? i.amount_billed_aud;
+  const v = i.reconciliation?.invoice_total ?? i.amount_billed_aud;
   return typeof v === "number" ? v : null;
 }
 function findingCount(i: Invoice): number { return i.reconciliation?.findings?.length || 0; }
-function refundOwed(i: Invoice): number { return i.reconciliation?.refund_owed_aud || 0; }
+function refundOwed(i: Invoice): number {
+  return (i.reconciliation?.findings || []).reduce(
+    (acc: number, f: any) => acc + (Number(f?.financial_impact?.amount) || 0),
+    0,
+  );
+}
 function statusKey(i: Invoice): "all_clear" | "issues" {
   return findingCount(i) === 0 ? "all_clear" : "issues";
 }
@@ -95,7 +100,7 @@ export default function InvoicesScreen() {
     return (
       <Pressable testID={`invoice-row-${item.id}`} onPress={() => router.push(`/invoice/${item.id}`)} style={[styles.row, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
         <View style={{ flex: 1 }}>
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }} numberOfLines={1}>{item.provider_name || item.filename}</T>
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }} numberOfLines={1}>{item.provider_name || "Unknown provider"}</T>
           <T variant="small" style={{ marginTop: 2 }}>Invoice date {shortDate(item.invoice_date || item.created_at)} · Uploaded {shortDate(item.created_at)}</T>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
             <T style={{ fontFamily: fonts.mono, fontSize: 14 }}>{total != null ? money(total) : "—"}</T>

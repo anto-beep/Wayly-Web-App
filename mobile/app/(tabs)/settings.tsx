@@ -232,8 +232,8 @@ export default function SettingsScreen() {
             <ChevronRight size={18} color={colors.muted} />
           </Pressable>
           {[
-            { label: "Privacy policy", path: "/privacy", tid: "privacy-link-privacy" },
-            { label: "Terms of service", path: "/terms", tid: "privacy-link-terms" },
+            { label: "Privacy policy", path: "/legal/privacy", tid: "privacy-link-privacy" },
+            { label: "Terms of service", path: "/legal/terms", tid: "privacy-link-terms" },
             { label: "Manage your data", path: "/settings/security", tid: "privacy-link-data" },
           ].map((l, i, arr) => (
             <Pressable key={l.path} testID={l.tid} onPress={() => Linking.openURL(`${SITE_BASE}${l.path}`)}

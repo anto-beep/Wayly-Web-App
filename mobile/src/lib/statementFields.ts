@@ -25,20 +25,20 @@ function toDateSafe(iso?: string | null): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-/** Compact billing period, e.g. "1,31 Oct 2025", falling back to period_label. */
+function ddmmyyyy(d: Date | null): string | null {
+  if (!d) return null;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getUTCDate())}/${p(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
+}
+
+/** Billing-period range, DD/MM/YYYY (DOC-PARITY-1 v2 decision 8), e.g.
+ *  "01/10/2025 to 31/10/2025" — identical to web. Falls back to period_label. */
 export function periodCompact(stmt: Stmt): string {
   const ex = stmt?.extracted_json || {};
   const s = toDateSafe(ex.period_start || ex.statement_period_start);
   const e = toDateSafe(ex.period_end || ex.statement_period_end);
-  if (s && e) {
-    const sMonth = MONTHS_SHORT[s.getUTCMonth()];
-    const eMonth = MONTHS_SHORT[e.getUTCMonth()];
-    const sYear = s.getUTCFullYear();
-    const eYear = e.getUTCFullYear();
-    if (sMonth === eMonth && sYear === eYear) return `${s.getUTCDate()},${e.getUTCDate()} ${eMonth} ${eYear}`;
-    if (sYear === eYear) return `${s.getUTCDate()} ${sMonth},${e.getUTCDate()} ${eMonth} ${eYear}`;
-    return `${s.getUTCDate()} ${sMonth} ${sYear},${e.getUTCDate()} ${eMonth} ${eYear}`;
-  }
+  if (s && e) return `${ddmmyyyy(s)} to ${ddmmyyyy(e)}`;
+  if (e) return ddmmyyyy(e) as string;
   return stmt?.period_label || stmt?.filename || "—";
 }
 

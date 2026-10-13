@@ -1,3 +1,15 @@
+## Iter 374 — Core-screens parity (Statements/Invoices) + mobile legal links + app display name (Jun 2026, fork)
+**Statements/Invoices parity (web vs mobile):**
+- **Invoice amount bug (real defect)** — `mobile/app/invoices.tsx` read `reconciliation.invoice_total_aud` (always null) so every row showed "—"; backend returns `reconciliation.invoice_total`. Fixed `invoiceTotal()` to read `invoice_total` (fallback `amount_billed_aud`). Verified live: rows now show $396.00 / $1,791.36 etc.
+- **Refund derivation** — mobile read non-existent `reconciliation.refund_owed_aud`; aligned to web's `findings[].financial_impact.amount` sum (currently 0 in data on both — not visible, but consistent).
+- **Provider fallback** — mobile row now shows "Unknown provider" (matching web) instead of the filename when `provider_name` is null.
+- **Period format (real gap)** — `mobile/src/lib/statementFields.ts::periodCompact` rendered a confusing "1,30 Nov 2026" (comma); web renders "DD/MM/YYYY to DD/MM/YYYY" (DOC-PARITY-1 v2 decision 8). Rewrote mobile `periodCompact` + added `ddmmyyyy()` to match web exactly → "01/11/2026 to 30/11/2026". Affects statements list, dashboard recent, detail, CSV.
+- Statements list otherwise already at parity (PageIntro, SmartAISummary, search, status chips, upload/export/archived, status badge). Verdict badge already binary (All clear/Issues) on both in practice (backend verdicts items_to_note/questions_to_raise/check_before_paying fall through web's badge map to "Issues").
+**Mobile legal links** — `settings.tsx` Privacy policy/Terms pointed at `/privacy` + `/terms` (404 on web); web serves them at `/legal/privacy` + `/legal/terms`. Updated both so they open the real web pages.
+**App home-screen name** — `app.json` added `ios.infoPlist.CFBundleDisplayName="Wayly"` + `CFBundleName="Wayly"` (expo.name was already "Wayly"). Home-screen label will read "Wayly" (not "Wayly Aged Care") — **only applies after a native Publish build; not visible in Expo Go / web preview.**
+Scope note: focused parity pass on the core three screens (Dashboard done iter373, Statements, Invoices). Did NOT exhaustively audit all ~70 mobile screens.
+
+
 ## Iter 373 — App Store creative assets (Header + Search sizes) + Mobile Dashboard tile-subtitle parity (Jun 2026, fork)
 **(1) App Store creative assets** — reviewed Apple asset-best-practices page; generated every size App Store Connect accepts for the two creative-asset slots via `/app/_caps/build_creative_assets.py` (warm-brand look, real mobile captures, no pricing/URLs/copyright, text centred in safe area):
 - Header slot: `header_3840x1646.png`, `header_5244x2950.png` (universal 16:9).
