@@ -6,7 +6,7 @@ import { ArrowRight, Plus, TimerReset, AlertTriangle, FileText, Trash2, Papercli
 
 import { AppHeader, Button, Card, Loading, Select, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { PROJECT_TYPES } from "../athm";
@@ -98,11 +98,7 @@ export default function AthmProjectDetailScreen() {
       if (res.canceled || !res.assets?.[0]) return;
       const a = res.assets[0];
       setUploading(true);
-      const form = new FormData();
-      form.append("file", { uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream" } as any);
-      form.append("category", "ot_referral");
-      form.append("title", a.name);
-      const up = await apiFetch<any>("/documents", { method: "POST", body: form, isForm: true });
+      const up = await uploadFile<any>("/documents", { uri: a.uri, name: a.name, mimeType: a.mimeType || "application/octet-stream" }, { fields: { category: "ot_referral", title: a.name } });
       if (up?.id) {
         const attached = await apiFetch<any>(`/athm1/projects/${id}/ot-referrals/attach`, { method: "POST", body: { document_id: up.id, notes: "" } });
         setReferrals(attached.referrals || []);

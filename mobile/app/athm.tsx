@@ -7,7 +7,7 @@ import { Plus, ArrowRight, ClipboardList, Wrench, Hammer, Package, Upload, FileT
 import { AppHeader, Button, Card, Field, Loading, Select, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -82,11 +82,7 @@ export default function AthmProjectsScreen() {
       const projectId = created?.project?.id;
       for (const a of files) {
         try {
-          const fd = new FormData();
-          fd.append("file", { uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream" } as any);
-          fd.append("category", "ot_referral");
-          fd.append("title", a.name);
-          const up = await apiFetch<any>("/documents", { method: "POST", body: fd, isForm: true });
+          const up = await uploadFile<any>("/documents", { uri: a.uri, name: a.name, mimeType: a.mimeType || "application/octet-stream" }, { fields: { category: "ot_referral", title: a.name } });
           if (up?.id && projectId) await apiFetch(`/athm1/projects/${projectId}/ot-referrals/attach`, { method: "POST", body: { document_id: up.id, notes: "" } });
         } catch { /* keep going */ }
       }

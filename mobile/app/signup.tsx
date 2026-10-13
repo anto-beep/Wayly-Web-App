@@ -141,10 +141,11 @@ export default function SignupScreen() {
           }
         } catch { /* non-fatal: they can add them later from Participants */ }
       }
-      // Account created — now REQUIRE a plan. Pick a plan + complete the
-      // secure web-browser Stripe checkout (7-day free trial, no in-app
-      // purchase) before the app unlocks. Until then the user is held here.
-      router.replace("/plan-select");
+      // Account created — before the plan gate, offer email verification just
+      // like the web: the backend has already emailed a 6-digit code at signup;
+      // the user can enter it now or skip (verify later from their account).
+      // Either path lands on /plan-select to complete the Stripe trial checkout.
+      router.replace({ pathname: "/verify-email", params: { next: "/plan-select", skip: "1", email } });
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not create your account. Please try again.");
     } finally {

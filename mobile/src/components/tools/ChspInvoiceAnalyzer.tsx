@@ -4,7 +4,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { Upload, FileText, Sparkles, ArrowRight, Save, Trash2, Search, AlertTriangle, CheckCircle2, ReceiptText, Eye, ListChecks, Landmark, Wallet, Mail, TrendingUp, Download, ChevronDown, ChevronUp } from "lucide-react-native";
 
 import { Button, Card, T } from "@/src/components/ui";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -276,9 +276,7 @@ export default function ChspInvoiceAnalyzer({ colors }: any) {
       if (res.canceled || !res.assets?.[0]) return;
       const a = res.assets[0];
       setParsing(true); setError(""); setAnalysis(null); setSavedMode(false); setDupExisting(null); setGuard(null);
-      const fd = new FormData();
-      fd.append("file", { uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream" } as any);
-      const data = await apiFetch<any>("/chsp1/invoice/analyse", { method: "POST", body: fd, isForm: true });
+      const data = await uploadFile<any>("/chsp1/invoice/analyse", { uri: a.uri, name: a.name, mimeType: a.mimeType || "application/octet-stream" });
       if (data?.upload_guard) setGuard(data.upload_guard);
       else if (!data?.analysis?.extracted) setError("We couldn't read any service lines from that file. Try a clearer PDF or photo.");
       else setAnalysis(data.analysis);

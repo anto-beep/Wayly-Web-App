@@ -16,10 +16,20 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 export default function VerifyEmailScreen() {
   const { colors, isDark } = useTheme();
   const { user, refreshUser } = useAuth();
-  const params = useLocalSearchParams<{ email?: string; send?: string; next?: string }>();
+  const params = useLocalSearchParams<{ email?: string; send?: string; next?: string; skip?: string }>();
   const email = ((typeof params.email === "string" && params.email) || user?.email || "").toLowerCase();
   const authed = !!user;
   const nextIsLogin = params.next === "login";
+  const nextPath = typeof params.next === "string" && params.next !== "login" ? params.next : "";
+  const allowSkip = params.skip === "1";
+
+  // Where to go after verifying, skipping, or when already verified.
+  const go = useCallback(() => {
+    if (nextIsLogin) router.replace("/login");
+    else if (nextPath) router.replace(nextPath as any);
+    else if (authed) router.replace("/(tabs)");
+    else router.replace("/login");
+  }, [nextIsLogin, nextPath, authed]);
 
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -54,7 +64,7 @@ export default function VerifyEmailScreen() {
       if (authed) {
         try {
           const st = await apiFetch<any>("/auth/verification-status");
-          if (st?.email_verified) { router.replace("/(tabs)"); return; }
+          if (st?.email_verified) { go(); return; }
           if (typeof st?.resend_available_in === "number") setCooldown(st.resend_available_in);
         } catch { /* ignore */ }
       }
@@ -81,16 +91,12 @@ export default function VerifyEmailScreen() {
       invalidateVerifyCache();
       setVerified(true);
       if (authed) await refreshUser();
-      setTimeout(() => {
-        if (nextIsLogin) router.replace("/login");
-        else if (authed) router.replace("/(tabs)");
-        else router.replace("/login");
-      }, 900);
+      setTimeout(() => { go(); }, 900);
     } catch (e) {
       setCode("");
       setError(e instanceof ApiError ? e.message : "That code didn't work. Please try again.");
     } finally { setBusy(false); }
-  }, [email, authed, nextIsLogin, refreshUser]);
+  }, [email, authed, refreshUser, go]);
 
   return (
     <Screen edges={["top", "bottom"]}>
@@ -149,6 +155,12 @@ export default function VerifyEmailScreen() {
                     {cooldown > 0 ? `Resend code in ${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, "0")}` : "Resend code"}
                   </T>
                 </Pressable>
+
+                {allowSkip ? (
+                  <Pressable testID="verify-skip" onPress={go} style={{ marginTop: spacing.md, alignItems: "center" }}>
+                    <T variant="small" style={{ color: colors.muted, textDecorationLine: "underline" }}>Skip for now</T>
+                  </Pressable>
+                ) : null}
               </>
             )}
           </Animated.View>

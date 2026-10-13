@@ -12,7 +12,7 @@ import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -227,6 +227,23 @@ export default function CarePlanReviewer() {
     return form;
   };
 
+  const reviewExtraFields = (): Record<string, string> => {
+    const f: Record<string, string> = {};
+    if (classification) f.classification = String(parseInt(classification, 10));
+    if (quarterlyBudget) f.quarterly_budget = String(parseFloat(String(quarterlyBudget).replace(/,/g, "")));
+    return f;
+  };
+
+  // Native-safe upload: a single file goes through expo-file-system (reliable in
+  // release builds); multiple files keep the multipart FormData path.
+  const uploadReview = async (endpoint: string): Promise<any> => {
+    if (files.length === 1) {
+      const f = files[0];
+      return uploadFile(endpoint, { uri: f.uri, name: f.name, mimeType: f.mimeType || "application/octet-stream" }, { fieldName: "files", fields: reviewExtraFields() });
+    }
+    return apiFetch(endpoint, { method: "POST", body: buildForm(), isForm: true });
+  };
+
   // Poll a background review job until it finishes. The LLM review runs ~40-60s
   // which exceeds the gateway timeout, so the backend runs it async and we poll
   // here (parity with web) instead of holding one long request open.
@@ -255,7 +272,7 @@ export default function CarePlanReviewer() {
     try {
       let job: any;
       if (files.length > 0) {
-        job = await apiFetch("/public/care-plans/review-files-async", { method: "POST", body: buildForm(), isForm: true });
+        job = await uploadReview("/public/care-plans/review-files-async");
       } else {
         const body: any = { text };
         if (classification) body.classification = parseInt(classification, 10);
@@ -276,7 +293,7 @@ export default function CarePlanReviewer() {
     try {
       let data: any;
       if (files.length > 0) {
-        data = await apiFetch("/care-plans/upload-files", { method: "POST", body: buildForm(), isForm: true });
+        data = await uploadReview("/care-plans/upload-files");
       } else {
         const body: any = { text };
         if (classification) body.classification = parseInt(classification, 10);
@@ -329,7 +346,6 @@ export default function CarePlanReviewer() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="care-plan-reviewer" />
-          <ToolWalkthroughVideo slug="care-plan-reviewer" />
 
           <Card testID="care-plan-form">
             {/* Upload files */}
@@ -706,6 +722,7 @@ export default function CarePlanReviewer() {
           ) : null}
 
           <ToolExplainer toolKey="care-plan-reviewer" />
+          <ToolWalkthroughVideo slug="care-plan-reviewer" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

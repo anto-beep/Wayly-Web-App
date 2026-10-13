@@ -8,7 +8,7 @@ import * as ImagePicker from "expo-image-picker";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
 
@@ -92,17 +92,11 @@ export default function UploadScreen() {
     setBusy(true);
     setError("");
     setPhase("Uploading…");
-    const form = new FormData();
-    // React Native FormData file part.
-    form.append("file", { uri: picked.uri, name: picked.name, type: picked.mimeType } as any);
+    const filePart = { uri: picked.uri, name: picked.name, mimeType: picked.mimeType };
 
     try {
       if (docType === "statement") {
-        const res = await apiFetch<{ job_id: string }>("/statements/upload", {
-          method: "POST",
-          isForm: true,
-          body: form,
-        });
+        const res = await uploadFile<{ job_id: string }>("/statements/upload", filePart);
         setPhase("Reading the statement…");
         const statementId = await pollJob(res.job_id);
         setBusy(false);
@@ -113,11 +107,7 @@ export default function UploadScreen() {
         }
       } else {
         setPhase("Reading your invoice…");
-        const res = await apiFetch<{ invoice_id?: string; document_shape?: string }>("/invoices/upload", {
-          method: "POST",
-          isForm: true,
-          body: form,
-        });
+        const res = await uploadFile<{ invoice_id?: string; document_shape?: string }>("/invoices/upload", filePart);
         setBusy(false);
         if (res.document_shape === "statement" || !res.invoice_id) {
           Alert.alert(
@@ -218,7 +208,7 @@ export default function UploadScreen() {
 
         {picked ? (
           <Button
-            label={busy ? phase || "Reading the statement…" : `Upload ${docType}`}
+            label={busy ? phase || "Reading the statement…" : "Decode this statement"}
             testID="upload-submit-button"
             onPress={doUpload}
             loading={busy}

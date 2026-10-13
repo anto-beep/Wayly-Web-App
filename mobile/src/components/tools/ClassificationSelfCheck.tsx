@@ -558,7 +558,6 @@ export default function ClassificationSelfCheck() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="classification-self-check" />
-          <ToolWalkthroughVideo slug="classification-self-check" />
           <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 34 }}>{persona === "participant" ? "Are you on the right classification?" : "Is the person you care for on the right classification?"}</T>
           <T variant="bodyMuted" style={{ lineHeight: 22 }}>
             {persona === "participant"
@@ -861,6 +860,7 @@ export default function ClassificationSelfCheck() {
           )}
 
           <ToolExplainer toolKey="classification-self-check" />
+          <ToolWalkthroughVideo slug="classification-self-check" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

@@ -5,7 +5,7 @@ import { Send, Star, Paperclip, Download } from "lucide-react-native";
 import * as DocumentPicker from "expo-document-picker";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, T } from "@/src/components/ui";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { downloadAndShare } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -47,9 +47,7 @@ export default function SupportDetailScreen() {
     const a = res.assets[0];
     setAttaching(true);
     try {
-      const form = new FormData();
-      form.append("file", { uri: a.uri, name: a.name || "attachment", type: a.mimeType || "application/octet-stream" } as any);
-      await apiFetch(`/support/tickets/${id}/attachments`, { method: "POST", isForm: true, body: form });
+      await uploadFile(`/support/tickets/${id}/attachments`, { uri: a.uri, name: a.name || "attachment", mimeType: a.mimeType || "application/octet-stream" });
       await load();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not attach that file."); }
     finally { setAttaching(false); }

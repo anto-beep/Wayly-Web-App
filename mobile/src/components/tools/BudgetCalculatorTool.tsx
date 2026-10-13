@@ -57,7 +57,6 @@ export default function BudgetCalculatorTool() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="budget-calculator" />
-          <ToolWalkthroughVideo slug="budget-calculator" />
 
           {/* Classification cards */}
           <Card>
@@ -191,6 +190,7 @@ export default function BudgetCalculatorTool() {
           ) : null}
 
           <ToolExplainer toolKey="budget-calculator" />
+          <ToolWalkthroughVideo slug="budget-calculator" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

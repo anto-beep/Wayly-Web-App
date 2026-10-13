@@ -1,7 +1,9 @@
-import React from "react";
-import { View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Pressable, View } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
+import { ChevronDown, ChevronUp, PlayCircle } from "lucide-react-native";
 
+import { storage } from "@/src/utils/storage";
 import { Card, T } from "@/src/components/ui";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { radius, spacing } from "@/src/theme/tokens";
@@ -44,22 +46,55 @@ const TOOL_VIDEOS: Record<string, { url: string; title: string; blurb: string }>
 export default function ToolWalkthroughVideo({ slug }: { slug: string }) {
   const { colors } = useTheme();
   const v = TOOL_VIDEOS[slug];
-  const player = useVideoPlayer(v ? v.url : null, (p) => { p.loop = false; });
+  const storageKey = `wayly_walkthrough_open_${slug}`;
+  const [open, setOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Collapsed by default; the choice persists across app restarts so the
+  // walkthrough stays where the user left it and never pushes the tool down.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const saved = await storage.getItem<string>(storageKey, "");
+      if (!cancelled) { setOpen(saved === "1"); setHydrated(true); }
+    })();
+    return () => { cancelled = true; };
+  }, [storageKey]);
+
+  const toggle = async () => {
+    const next = !open;
+    setOpen(next);
+    await storage.setItem(storageKey, next ? "1" : "0");
+  };
+
+  // Only load the (20-57MB) video once the user expands the section.
+  const player = useVideoPlayer(open && v ? v.url : null, (p) => { p.loop = false; });
   if (!v) return null;
+
   return (
     <Card testID={`${slug}-how-to-video`}>
-      <T variant="label" style={{ textTransform: "uppercase", letterSpacing: 1.4, color: colors.gold }}>Watch the walkthrough</T>
-      <T variant="h3" style={{ marginTop: 4 }}>{v.title}</T>
-      <T variant="small" style={{ marginTop: 6, lineHeight: 20 }}>{v.blurb}</T>
-      <View testID={`${slug}-how-to-video-player`} style={{ marginTop: spacing.md, borderRadius: radius.md, overflow: "hidden", backgroundColor: "#000", aspectRatio: 16 / 9 }}>
-        <VideoView
-          style={{ width: "100%", height: "100%" }}
-          player={player}
-          nativeControls
-          allowsFullscreen
-          contentFit="contain"
-        />
-      </View>
+      <Pressable testID={`${slug}-how-to-video-toggle`} onPress={toggle} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+        <PlayCircle size={22} color={colors.gold} />
+        <View style={{ flex: 1 }}>
+          <T variant="label" style={{ textTransform: "uppercase", letterSpacing: 1.4, color: colors.gold }}>Watch the walkthrough</T>
+          <T variant="h3" style={{ marginTop: 2 }}>{v.title}</T>
+        </View>
+        {open ? <ChevronUp size={20} color={colors.muted} /> : <ChevronDown size={20} color={colors.muted} />}
+      </Pressable>
+      {open && hydrated ? (
+        <>
+          <T variant="small" style={{ marginTop: spacing.md, lineHeight: 20 }}>{v.blurb}</T>
+          <View testID={`${slug}-how-to-video-player`} style={{ marginTop: spacing.md, borderRadius: radius.md, overflow: "hidden", backgroundColor: "#000", aspectRatio: 16 / 9 }}>
+            <VideoView
+              style={{ width: "100%", height: "100%" }}
+              player={player}
+              nativeControls
+              allowsFullscreen
+              contentFit="contain"
+            />
+          </View>
+        </>
+      ) : null}
     </Card>
   );
 }

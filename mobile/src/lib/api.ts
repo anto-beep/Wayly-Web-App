@@ -1,6 +1,7 @@
 // Shared API client for the Wayly mobile app. Mirrors the web interceptor:
 // attaches Authorization: Bearer <token> + X-Participant-Id, and transparently
 // refreshes the access token on a 401 using the stored refresh token.
+import { Platform } from "react-native";
 import { storage } from "@/src/utils/storage";
 
 const BASE = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -268,6 +269,86 @@ export async function apiFetch<T = any>(path: string, opts: ReqOptions = {}): Pr
     const detail =
       (data && (data.detail?.message || data.detail || data.message)) || `Request failed (${res.status})`;
     throw new ApiError(res.status, typeof detail === "string" ? detail : "Request failed", data);
+  }
+  return data as T;
+}
+
+// ---- Native-safe file upload ---------------------------------------------
+// React Native's fetch()+FormData silently fails for file:// uploads in
+// release / TestFlight builds (works only in the Expo dev/web preview). On
+// native we stream the file with expo-file-system (File.upload, multipart),
+// which is reliable in production builds; on web we keep fetch()+FormData.
+// Mirrors apiFetch: attaches the bearer token + X-Participant-Id, honours the
+// view-only guard, refreshes the token once on 401, parses JSON, and throws
+// ApiError on a non-2xx response.
+export type UploadPart = { uri: string; name: string; mimeType?: string };
+
+export async function uploadFile<T = any>(
+  path: string,
+  file: UploadPart,
+  opts: { fieldName?: string; fields?: Record<string, string>; auth?: boolean } = {}
+): Promise<T> {
+  const { fieldName = "file", fields = {}, auth = true } = opts;
+
+  if (_readOnlyMode && !_isAllowedReadOnlyWrite(path)) {
+    throw new ApiError(402, READ_ONLY_MESSAGE, {
+      detail: { error: "trial_expired", message: READ_ONLY_MESSAGE, read_only: true },
+    });
+  }
+
+  const buildHeaders = async (): Promise<Record<string, string>> => {
+    const h: Record<string, string> = {};
+    if (auth) {
+      const token = await getToken();
+      if (token) h["Authorization"] = `Bearer ${token}`;
+      const pid = await getActiveParticipantId();
+      if (pid) h["X-Participant-Id"] = pid;
+    }
+    return h;
+  };
+
+  const send = async (headers: Record<string, string>): Promise<{ status: number; body: string }> => {
+    if (Platform.OS === "web") {
+      const form = new FormData();
+      const blob = await (await fetch(file.uri)).blob();
+      form.append(fieldName, blob, file.name);
+      Object.entries(fields).forEach(([k, v]) => form.append(k, v));
+      const res = await fetch(`${API}${path}`, { method: "POST", headers, body: form });
+      return { status: res.status, body: await res.text() };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const FS = require("expo-file-system");
+    const res = await new FS.File(file.uri).upload(`${API}${path}`, {
+      httpMethod: "POST",
+      uploadType: FS.UploadType.MULTIPART,
+      fieldName,
+      mimeType: file.mimeType || "application/octet-stream",
+      headers,
+      parameters: fields,
+    });
+    return { status: res.status, body: res.body };
+  };
+
+  let headers = await buildHeaders();
+  let out = await send(headers);
+  if (out.status === 401 && auth) {
+    const fresh = await refreshAccessToken();
+    if (fresh) {
+      headers = await buildHeaders();
+      out = await send(headers);
+    }
+  }
+
+  let data: any = null;
+  try {
+    data = out.body ? JSON.parse(out.body) : null;
+  } catch {
+    data = out.body;
+  }
+  if (out.status < 200 || out.status >= 300) {
+    const detail =
+      (data && (data.detail?.message || data.detail || data.message)) || `Request failed (${out.status})`;
+    throw new ApiError(out.status, typeof detail === "string" ? detail : "Request failed", data);
   }
   return data as T;
 }

@@ -104,7 +104,6 @@ export default function ProviderPriceChecker() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="provider-price-checker" />
-          <ToolWalkthroughVideo slug="provider-price-checker" />
 
           {/* Snapshot selector (WS7) + price history link */}
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: spacing.sm }}>
@@ -297,6 +296,7 @@ export default function ProviderPriceChecker() {
           ) : null}
 
           <ToolExplainer toolKey="provider-price-checker" />
+          <ToolWalkthroughVideo slug="provider-price-checker" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

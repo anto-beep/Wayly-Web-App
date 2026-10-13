@@ -6,7 +6,7 @@ import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, C
 
 import { AppHeader, Badge, Button, Card, Loading, Select, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { sharePostPdf } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -147,9 +147,7 @@ function WS1FeeCheck({ services, colors }: any) {
       if (res.canceled || !res.assets?.[0]) return;
       const a = res.assets[0];
       setParsing(true); setParseInfo(null); setError(""); setLineOptions([]);
-      const fd = new FormData();
-      fd.append("file", { uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream" } as any);
-      const data = await apiFetch<any>("/chsp1/fee-check/parse-invoice", { method: "POST", body: fd, isForm: true });
+      const data = await uploadFile<any>("/chsp1/fee-check/parse-invoice", { uri: a.uri, name: a.name, mimeType: a.mimeType || "application/octet-stream" });
       if (data?.upload_guard) { setError(data.upload_guard.message || "That file doesn't look like a CHSP invoice."); return; }
       applyPrefill(data?.fields || {});
       setLineOptions(Array.isArray(data?.line_options) ? data.line_options : []);

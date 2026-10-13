@@ -12,7 +12,7 @@ import InvoiceResultView from "@/src/components/invoices/InvoiceResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate } from "@/src/utils/format";
@@ -40,10 +40,7 @@ export default function InvoiceChecker() {
     if (!file) return;
     setBusy(true); setError(""); setResult(null); setGuard(null); setDupe(null);
     try {
-      const form = new FormData();
-      form.append("file", { uri: file.uri, name: file.name, type: file.mimeType || "application/octet-stream" } as any);
-      if (override) form.append("override_guard", "true");
-      const data: any = await apiFetch("/invoices/upload", { method: "POST", body: form, isForm: true });
+      const data: any = await uploadFile("/invoices/upload", { uri: file.uri, name: file.name, mimeType: file.mimeType }, { fields: override ? { override_guard: "true" } : {} });
       if (data?.upload_guard && data.upload_guard.decision !== "accept") { setGuard(data.upload_guard); return; }
       setResult(data);
       scrollToResult();
@@ -66,7 +63,6 @@ export default function InvoiceChecker() {
       <AppHeader onBack={() => router.back()} />
       <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
         <ToolHero toolKey="invoice-checker" />
-        <ToolWalkthroughVideo slug="invoice-checker" />
 
         <Card testID="inv1-upload-card">
           <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
@@ -168,6 +164,7 @@ export default function InvoiceChecker() {
         ) : null}
 
         <ToolExplainer toolKey="invoice-checker" />
+        <ToolWalkthroughVideo slug="invoice-checker" />
       </ScrollView>
     </View>
   );

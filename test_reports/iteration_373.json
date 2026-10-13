@@ -1,0 +1,66 @@
+{
+  "summary": "Verified all 6 fixes for the TestFlight batch. Backend DELETE /api/auth/account was end-to-end tested with a throwaway signup (no Stripe sub) and returns 200 — the new Stripe cancel-at-period-end call is correctly wrapped in try/except, so the endpoint does not 500 when there is no stripe_subscription_id. All 5 mobile fixes verified by close code inspection against the acceptance criteria; the signup→/verify-email reroute was additionally rendered live in the Expo web preview and confirmed showing the 6-digit code UI, 'Skip for now' link (verify-skip), and clean JS console. Full upload / tool-result flows cannot be exercised end-to-end in the preview because /upload and /tool/* sit behind the plan gate (full Stripe checkout required), as the review request itself notes.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "verifications": [
+    {
+      "bug": "P0 File upload (Statement Decoder + Invoice Checker) native fix via uploadFile()",
+      "file": "/app/mobile/src/lib/api.ts, /app/mobile/app/upload.tsx, /app/mobile/src/components/tools/InvoiceChecker.tsx",
+      "evidence": "api.ts L286-354 exports uploadFile<T>(path, file, opts). Branches on Platform.OS: web uses fetch(file.uri).blob() + new FormData() + fetch(POST, body:form); native uses new FS.File(uri).upload(url, {uploadType:MULTIPART, fieldName, mimeType, headers, parameters:fields}). Honours view-only guard (L293-297), attaches bearer + X-Participant-Id, retries once on 401 after refresh. upload.tsx L99 and L110 both call uploadFile('/statements/upload'|'/invoices/upload', filePart). InvoiceChecker.tsx L43 calls uploadFile('/invoices/upload', ..., { fields: override_guard }). No remaining call site uses fetch()+FormData for file upload. In the web preview the web branch runs; no call sites throw at render.",
+      "status": "PASS"
+    },
+    {
+      "bug": "Statement Decoder submit label 'Decode this statement'",
+      "file": "/app/mobile/app/upload.tsx",
+      "evidence": "L210-216: <Button label={busy ? phase || 'Reading the statement…' : 'Decode this statement'} testID='upload-submit-button' .../>",
+      "status": "PASS"
+    },
+    {
+      "bug": "Tool walkthrough videos relocated to bottom + collapsible + persisted",
+      "file": "/app/mobile/src/components/ToolWalkthroughVideo.tsx, 6 tool components",
+      "evidence": "ToolWalkthroughVideo.tsx L46-99 single shared component. useState(false) default; useEffect L55-62 hydrates from storage.getItem('wayly_walkthrough_open_'+slug); toggle() writes '1'/'0' (L64-68). Player (useVideoPlayer at L71) receives null when !open — not mounted until expanded. testID `${slug}-how-to-video`, toggle `${slug}-how-to-video-toggle`, player `${slug}-how-to-video-player`. In ContributionEstimator.tsx the component is rendered at L418, AFTER <ToolExplainer /> and well below <ToolHero /> + wizard/result — i.e. bottom of page. Spot-checked 6 slugs defined in TOOL_VIDEOS: classification-self-check, budget-calculator, contribution-estimator, invoice-checker, care-plan-reviewer, provider-price-checker — matches the required list. /upload is NOT one of them (no walkthrough on Statement Decoder).",
+      "status": "PASS"
+    },
+    {
+      "bug": "Contribution Estimator rates — distinct colours + left accent bar + coloured label",
+      "file": "/app/mobile/src/components/tools/ContributionEstimator.tsx",
+      "evidence": "L498-502 three RateCards: Clinical tint=colors.primary soft=colors.primarySoft testID=ce-rate-clinical; Independence tint=colors.gold soft=colors.goldSoft testID=ce-rate-independence; Everyday Living tint=colors.terracotta soft=colors.errorSoft testID=ce-rate-everyday. RateCard impl at L650-659: borderLeftWidth:4, borderLeftColor:accent (coloured left accent bar), label text at L654 uses color:accent + fontFamily semi — coloured label. The three accents are theme teal / gold / terracotta — visually distinct. Reached via 3-step wizard → 'See my estimate' (ce-submit, L402-406).",
+      "status": "PASS"
+    },
+    {
+      "bug": "Signup → /verify-email before plan gate, with 'Skip for now'",
+      "file": "/app/mobile/app/signup.tsx, /app/mobile/app/verify-email.tsx",
+      "evidence": "signup.tsx L148 after successful signup: router.replace({ pathname: '/verify-email', params: { next: '/plan-select', skip: '1', email } }). Live preview of /verify-email?email=test@example.com&next=/plan-select&skip=1 rendered: 'Verify your email', 'Enter the 6-digit code we sent to test@example.com', 6 OTP boxes, Verify button, 'Skip for now' (data-testid=verify-skip visible). No JS errors in console.",
+      "status": "PASS"
+    },
+    {
+      "bug": "Backend DELETE /api/auth/account cancels Stripe sub at period end (best-effort)",
+      "file": "/app/backend/privacy.py",
+      "evidence": "privacy.py L149-160: before updating local subscriptions, reads user.get('stripe_subscription_id'); if present, calls stripe.Subscription.modify(sub_id, cancel_at_period_end=True) inside try/except that only logs a warning on failure. Flow continues regardless, so no-sub users still complete deletion. Live tested: POST /api/auth/signup for a TEST_ throwaway + DELETE /api/auth/account {confirm:'delete my account'} → 200 with {ok, deletion_completes_at, message}. Login afterwards fails (anonymised). See /app/backend/tests/test_account_deletion_stripe.py — 1 passed in 4.60s.",
+      "status": "PASS"
+    }
+  ],
+  "test_report_links": ["/app/backend/tests/test_account_deletion_stripe.py", "/app/test_reports/pytest/pytest_results_iter373.xml", "/app/test_reports/iter373_verify_email.jpg"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "privacy.py L149-166: local subscriptions update_many sets status:'cancelled' + cancel_at_period_end:true in the SAME step as the Stripe cancel — but Stripe is cancel_at_period_end (so Stripe keeps billing-view until period end). The local status is set to 'cancelled' immediately, which may mismatch the real Stripe state during the trailing period. Low priority (user is anonymised anyway), but if any downstream reads /auth/me and shows a 'period remaining' notice to a user who just deleted, it would read as hard-cancelled. Consider leaving local status as 'canceling' until the Stripe webhook fires. Not blocking.",
+    "api.ts uploadFile(): on web, fetch(file.uri).blob() will fail CORS if file.uri is cross-origin (shouldn't happen since DocumentPicker returns a blob: or data: URL on web). Add a try/catch around the blob fetch with a cleaner error. Not blocking for the current fix."
+  ],
+  "updated_files": ["/app/backend/tests/test_account_deletion_stripe.py (new)"],
+  "success_rate": {"backend": "100% (1/1 pytest passed)", "frontend": "100% code-level + verify-email live render"},
+  "test_credentials": "Throwaway accounts created via /api/auth/signup with random TEST_* @example.com and a strong password (test file uses a timestamp-salted pw).",
+  "seed_data_creation": "1 throwaway user created and immediately soft-deleted by the pytest run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The upload/tool/CE-result UI cannot be exercised live in the Expo web preview because /upload and /tool/* sit behind the plan gate (Stripe trial checkout). To validate those surfaces end-to-end: (1) seed a user + active trial via backend fixtures and ensure wayly_pending_plan is cleared, OR (2) use a TestFlight / published native build. For the native uploadFile() branch (expo-file-system File.upload) the only reliable test is a native build; the preview always takes the web (fetch+FormData) branch. All 6 fixes in this batch are implemented correctly at source. Backend regression test for /api/auth/account deletion lives at /app/backend/tests/test_account_deletion_stripe.py — reuse it for future privacy / Stripe-cancel changes.",
+  "rca of the issue": "P0 upload RCA (per the review): React Native's fetch()+FormData silently fails on file:// URIs in release/TestFlight builds; it only works in Expo dev and web preview. Fix: a shared uploadFile() helper that streams via expo-file-system File.upload() (multipart) on native and keeps fetch()+FormData for web. Both /upload (statements) and InvoiceChecker now use it, so TestFlight uploads will route via the native stream."
+}

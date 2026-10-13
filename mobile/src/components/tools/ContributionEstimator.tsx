@@ -207,7 +207,6 @@ export default function ContributionEstimator() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="contribution-estimator" />
-          <ToolWalkthroughVideo slug="contribution-estimator" />
 
           {!result ? (
             <View style={{ gap: spacing.md }} testID="ce-form">
@@ -416,6 +415,7 @@ export default function ContributionEstimator() {
           )}
 
           <ToolExplainer toolKey="contribution-estimator" />
+          <ToolWalkthroughVideo slug="contribution-estimator" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -496,9 +496,9 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
         <Card testID="ce-rate-breakdown">
           <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, marginBottom: spacing.sm }}>{voice.possessiveTitle.toUpperCase()} RATES BY SERVICE TYPE</T>
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
-            <RateCard label="Clinical care" rate="0%" note="Always free" colors={colors} testID="ce-rate-clinical" />
-            <RateCard label="Independence" rate={`${result.independence_rate?.toFixed(1)}%`} note="Personal care, meals" colors={colors} testID="ce-rate-independence" />
-            <RateCard label="Everyday Living" rate={`${result.everyday_rate?.toFixed(1)}%`} note="Cleaning, transport" colors={colors} testID="ce-rate-everyday" />
+            <RateCard label="Clinical care" rate="0%" note="Always free" colors={colors} tint={colors.primary} soft={colors.primarySoft} testID="ce-rate-clinical" />
+            <RateCard label="Independence" rate={`${result.independence_rate?.toFixed(1)}%`} note="Personal care, meals" colors={colors} tint={colors.gold} soft={colors.goldSoft} testID="ce-rate-independence" />
+            <RateCard label="Everyday Living" rate={`${result.everyday_rate?.toFixed(1)}%`} note="Cleaning, transport" colors={colors} tint={colors.terracotta} soft={colors.errorSoft} testID="ce-rate-everyday" />
           </View>
           <T variant="small" style={{ marginTop: spacing.sm, lineHeight: 20 }} testID="ce-rate-prose">
             {result.is_no_worse_off
@@ -647,10 +647,11 @@ function BudgetBreakdown({ result, colors }: any) {
   );
 }
 
-function RateCard({ label, rate, note, colors, testID }: any) {
+function RateCard({ label, rate, note, colors, testID, tint, soft }: any) {
+  const accent = tint || colors.primary;
   return (
-    <View testID={testID} style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surface2, padding: spacing.sm }}>
-      <T style={{ fontSize: 10, letterSpacing: 0.3, color: colors.muted }}>{label.toUpperCase()}</T>
+    <View testID={testID} style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: accent, borderRadius: radius.md, backgroundColor: soft || colors.surface2, padding: spacing.sm }}>
+      <T style={{ fontSize: 10, letterSpacing: 0.3, color: accent, fontFamily: fonts.bodySemi }}>{label.toUpperCase()}</T>
       <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>{rate}</T>
       <T style={{ fontSize: 10, color: colors.muted, marginTop: 2 }}>{note}</T>
     </View>

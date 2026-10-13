@@ -145,8 +145,21 @@ async def soft_delete_account(user_id: str) -> dict:
         if total:
             counts[coll] = total
 
-    # 4. Sub status, set to cancelled (Stripe webhook handles the actual
-    #    refund / cancel at-period-end logic elsewhere).
+    # 4a. Cancel the Stripe subscription at the end of the current billing
+    #     period so billing actually stops in Stripe (not just locally). The
+    #     user keeps access until period end, matching the in-app cancel flow.
+    sub_id = user.get("stripe_subscription_id")
+    if sub_id:
+        try:
+            import stripe
+            api_key = os.environ.get("STRIPE_API_KEY")
+            if api_key:
+                stripe.api_key = api_key
+                stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
+        except Exception as e:
+            log.warning("Stripe cancel-at-period-end on account deletion failed for %s: %s", user_id, e)
+
+    # 4. Sub status, set to cancelled (local read-model; Stripe handled above).
     await _db.subscriptions.update_many(
         {"user_id": user_id},
         {"$set": {"status": "cancelled", "cancel_at_period_end": True, "deleted_at": iso}},

@@ -8,7 +8,7 @@ import * as ImagePicker from "expo-image-picker";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
-import { apiFetch, ApiError } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { downloadAndShare } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -208,12 +208,10 @@ export default function DocumentsScreen() {
     if (!picked) return;
     setUploading(true);
     setUploadError("");
-    const form = new FormData();
-    form.append("file", { uri: picked.uri, name: picked.name, type: picked.mimeType } as any);
-    form.append("category", category);
-    if (docTitle.trim()) form.append("title", docTitle.trim());
+    const fields: Record<string, string> = { category };
+    if (docTitle.trim()) fields.title = docTitle.trim();
     try {
-      await apiFetch("/documents", { method: "POST", isForm: true, body: form });
+      await uploadFile("/documents", { uri: picked.uri, name: picked.name, mimeType: picked.mimeType }, { fields });
       setShowUpload(false);
       setPicked(null);
       setDocTitle("");
