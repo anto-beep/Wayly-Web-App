@@ -40,7 +40,7 @@ function evaluatePassword(password: string, email: string, name: string) {
 
 export default function SignupScreen() {
   const { colors, isDark } = useTheme();
-  const { signup, loginWithGoogle, loginWithApple, refreshUser } = useAuth();
+  const { signup, loginWithGoogle, loginWithApple } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -99,7 +99,7 @@ export default function SignupScreen() {
         mobile: mobileClean || undefined,
         role,
         plan,
-      });
+      }, { deferUser: true });
       // PERSONA-1: persist the persona choice on signup so the account is
       // persona-correct from day zero, mirroring web. Best-effort, non-fatal.
       try {
@@ -141,10 +141,10 @@ export default function SignupScreen() {
           }
         } catch { /* non-fatal: they can add them later from Participants */ }
       }
-      // Reader app: account creation only — no in-app plan purchase. Move
-      // straight into onboarding. A Wayly plan is managed on the user's account.
-      await refreshUser();
-      router.replace("/onboarding");
+      // Account created — now REQUIRE a plan. Pick a plan + complete the
+      // secure web-browser Stripe checkout (7-day free trial, no in-app
+      // purchase) before the app unlocks. Until then the user is held here.
+      router.replace("/plan-select");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not create your account. Please try again.");
     } finally {

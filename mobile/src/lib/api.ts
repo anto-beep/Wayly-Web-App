@@ -31,6 +31,24 @@ export async function setActiveParticipantId(id: string): Promise<void> {
   else await storage.removeItem(ACTIVE_PARTICIPANT_KEY);
 }
 
+// ---- Pending-plan gate ----------------------------------------------------
+// A fresh email/password signup creates the account (so checkout can be run
+// against it) but MUST NOT be able to use the app until a valid Stripe
+// checkout (7-day trial) is completed. We set this flag at signup and clear it
+// once the subscription is active/trialing. The app-open gate (app/index.tsx)
+// routes a flagged account to /plan-select until it has a valid plan — so no
+// one can create and use an account without a valid plan.
+export const PENDING_PLAN_KEY = "wayly_pending_plan";
+export async function setPendingPlan(): Promise<void> { await storage.setItem(PENDING_PLAN_KEY, "1"); }
+export async function getPendingPlan(): Promise<boolean> { return !!(await storage.getItem<string>(PENDING_PLAN_KEY, "")); }
+export async function clearPendingPlan(): Promise<void> { await storage.removeItem(PENDING_PLAN_KEY); }
+
+// True when a subscription status grants app access (active paid or an open trial).
+export function planStatusIsValid(subscriptionStatus?: string | null): boolean {
+  const s = (subscriptionStatus || "").toLowerCase();
+  return s === "active" || s === "trialing" || s === "trial";
+}
+
 // ---- View-only (read-only) mode ------------------------------------------
 // Mirrors the web api.js guard. AuthContext flips this whenever /auth/me
 // reports access_state === "view_only" (cancelled trial, cancelled/ended paid

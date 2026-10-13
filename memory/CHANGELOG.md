@@ -1,3 +1,9 @@
+## Iter 376 — Mobile dashboard: remove top "Household" bar for web parity (Jun 2026, fork) ✅ verified by screenshot
+- Removed the `ParticipantSwitcher` "bar" block (HOUSEHOLD / CARING FOR + name + Switch pill) from the top of `mobile/app/(tabs)/index.tsx`, plus its now-unused import. The mobile dashboard now opens straight with the greeting + action bar, exactly like the web `CaregiverDashboard` (web keeps participant switching in the global `Layout` chrome, not in the dashboard body).
+- Multi-participant switching is unaffected — it still lives on the Family tab (`app/(tabs)/family.tsx` renders the chip-variant `ParticipantSwitcher`).
+- Verified via Expo screenshot as cathy@example.com: no household bar; greeting "Good morning, Cathy…" is now the first element below the banner.
+
+
 ## Iter 375 — Dashboard agentic edits: current-quarter months + "Upload a statement" → Statement Decoder (web + mobile) (Jun 2026, fork) ✅ verified by screenshots
 Two user-requested visual edits, applied to BOTH surfaces:
 - **Current quarter months on the dashboard budget headline.** Backend already returns `budget.quarter_label` (e.g. "Oct-Dec 2026" from `budget.get_quarter_window()`), so surfaced it under the "Left to spend this quarter" eyebrow. Web `pages/CaregiverDashboard.jsx` (AtAGlance): new `glance-quarter-months` pill (Calendar icon + "Oct – Dec 2026"). Mobile `app/(tabs)/index.tsx` (dashboard-budget-status card): new `glance-quarter-months` label above the figures. Hyphen normalised to en-dash for display. Verified live: web + mobile both render "Oct – Dec 2026".

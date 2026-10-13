@@ -352,8 +352,9 @@ async def checkout_status(session_id: str, request: Request):
     # so when Stripe confirms the session is complete we sync the user's plan
     # and trial/subscription state so the billing screen reflects reality
     # without waiting on (or requiring) webhook delivery. Idempotent.
-    if _db is not None and session.status == "complete" and sub_id:
-        meta = session.metadata or {}
+    meta = session.metadata or {}
+    kind = (meta.get("kind") or "").lower()
+    if _db is not None and session.status == "complete" and sub_id and kind not in ("participant_addon", "plan_upgrade"):
         user_id = meta.get("user_id")
         plan = meta.get("plan")
         try:
@@ -404,6 +405,17 @@ async def checkout_status(session_id: str, request: Request):
                 )
         except Exception as e:  # pragma: no cover
             logger.warning("checkout_status reconcile failed: %s", e)
+
+    # Participant add-on paid via the mobile external checkout: stamp the
+    # add-on ACTIVE + record its subscription id on return (idempotent),
+    # mirroring the main-subscription reconcile so preview reflects payment
+    # without waiting on a webhook.
+    if _db is not None and session.status == "complete" and kind == "participant_addon":
+        try:
+            from batch3_billing import handle_batch3_paid_event
+            await handle_batch3_paid_event(meta, sub_id or session.id)
+        except Exception as e:  # pragma: no cover
+            logger.warning("addon checkout reconcile failed: %s", e)
 
     return {
         "session_id": session.id,

@@ -10,7 +10,6 @@ import {
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
 import { MissingDetailsBanner } from "@/src/components/MissingDetailsBanner";
-import { ParticipantSwitcher } from "@/src/components/ParticipantSwitcher";
 import { StreamProgress, Stream } from "@/src/components/StreamProgress";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { DashboardActionBar } from "@/src/components/DashboardActionBar";
@@ -136,13 +135,9 @@ export default function Dashboard() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >
         <MissingDetailsBanner />
-        {/* Participant switcher — prominent at the top so families always know
-            whose care they are viewing and can switch quickly. */}
-        <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.xs, marginTop: spacing.sm }}>
-          <ParticipantSwitcher householdName={user?.name} variant="bar" />
-        </View>
-        {/* Greeting header — hero */}
-        <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: spacing.lg }}>
+        {/* Greeting header — hero (matches web: dashboard body opens straight
+            with the greeting; participant switching lives in app chrome/Family). */}
+        <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: spacing.lg, marginTop: spacing.sm }}>
           <T style={{ fontFamily: fonts.headingSemi, fontSize: 27, lineHeight: 33, color: colors.text }} testID="dashboard-greeting">{greetingFor()}, {firstName}. What would you like to do?</T>
         </Animated.View>
 

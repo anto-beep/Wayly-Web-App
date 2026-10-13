@@ -79,3 +79,27 @@ export async function startCheckout(plan: PlanKey, trialDays = 7): Promise<boole
   }
   return false;
 }
+
+// Extra-participant add-on checkout — IDENTICAL external-browser Stripe flow as
+// startCheckout (no in-app purchase). Pays for a recurring $24.50/fortnight
+// additional-participant subscription. `addonId` is the pending ParticipantAddOn
+// row id returned by POST /v2/participants. Returns true when the browser came
+// back with a completed session (payment done), false if cancelled/closed.
+export async function startAddonCheckout(addonId: string): Promise<boolean> {
+  const returnUrl = Linking.createURL("billing-return");
+  const res = await apiFetch<{ url?: string; already_paid?: boolean }>("/billing/v2/addon-checkout", {
+    method: "POST",
+    body: { addon_id: addonId, origin_url: SITE_BASE, app_return_url: returnUrl },
+  });
+  if (res?.already_paid) return true;
+  if (res?.url) {
+    const result = await WebBrowser.openAuthSessionAsync(res.url, returnUrl);
+    const url = (result as any)?.url as string | undefined;
+    const m = url?.match(/[?&]session_id=([^&]+)/);
+    if (m?.[1]) {
+      try { await apiFetch(`/payments/checkout/status/${decodeURIComponent(m[1])}`); } catch { /* non-fatal */ }
+      return true;
+    }
+  }
+  return false;
+}

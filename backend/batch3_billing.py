@@ -125,6 +125,7 @@ async def upgrade_checkout(body: _UpgradeCheckoutBody, request: Request):
 class _AddOnCheckoutBody(BaseModel):
     addon_id: str  # the ParticipantAddOn.id row we created when the participant was added
     origin_url: str
+    app_return_url: Optional[str] = None  # Expo deep link → return into the app (mobile)
 
 
 @billing_router.post("/billing/v2/addon-checkout")
@@ -141,9 +142,20 @@ async def addon_checkout(body: _AddOnCheckoutBody, request: Request):
     if addon.get("stripe_subscription_id"):
         return {"url": None, "session_id": None, "already_paid": True}
 
-    host_url = str(request.base_url).rstrip("/")
-    from emergentintegrations.payments.stripe.checkout import CheckoutSessionRequest  # type: ignore
-    stripe = _stripe_client(host_url)
+    # Use the SAME hosted-checkout mechanism as the main subscription
+    # (raw `stripe` SDK, subscription mode, the recurring ADDITIONAL price)
+    # so the add-on is a real $24.50/fortnight subscription paid in the
+    # browser — never an in-app purchase. app_return_url bounces back into
+    # the Expo app; the session is reconciled on return by
+    # GET /api/payments/checkout/status/{session_id}.
+    import stripe  # local import avoids a circular import at module load
+    from routes.payments import _price_for_plan
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Billing unavailable, STRIPE_API_KEY not set")
+    stripe.api_key = api_key
+    price_id = _price_for_plan("additional")
+
     metadata = {
         "kind": "participant_addon",
         "account_id": acct["id"],
@@ -151,28 +163,49 @@ async def addon_checkout(body: _AddOnCheckoutBody, request: Request):
         "addon_id": body.addon_id,
         "participant_id": addon["participant_id"],
     }
-    req = CheckoutSessionRequest(
-        amount=float(ADDON_PRICE_MONTHLY),
-        currency="aud",
-        success_url=f"{body.origin_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
-        cancel_url=f"{body.origin_url}/app/participants?cancelled=1",
+    origin = body.origin_url.rstrip("/")
+    if body.app_return_url:
+        from urllib.parse import quote
+        to_enc = quote(body.app_return_url, safe="")
+        success_url = f"{origin}/api/payments/app-return?status=success&to={to_enc}&session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{origin}/api/payments/app-return?status=cancel&to={to_enc}"
+    else:
+        success_url = f"{origin}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{origin}/app/participants?cancelled=1"
+
+    kwargs = dict(
+        mode="subscription",
+        payment_method_types=["card"],
+        line_items=[{"price": price_id, "quantity": 1}],
+        success_url=success_url,
+        cancel_url=cancel_url,
         metadata=metadata,
-        payment_methods=["card"],
+        subscription_data={"metadata": metadata},
+        allow_promotion_codes=True,
+        billing_address_collection="auto",
+        automatic_tax={"enabled": os.environ.get("STRIPE_AUTOMATIC_TAX", "1").lower() not in ("0", "false", "no")},
     )
-    session = await stripe.create_checkout_session(req)
+    if user.get("email"):
+        kwargs["customer_email"] = user.get("email")
+    try:
+        session = stripe.checkout.Session.create(**kwargs)
+    except stripe.error.StripeError as e:  # type: ignore[attr-defined]
+        msg = str(getattr(e, "user_message", None) or e)
+        logger.warning("addon checkout create failed (price=%s): %s", price_id, msg)
+        raise HTTPException(status_code=400, detail=f"Could not start checkout: {msg}")
+
     await _db.payment_transactions.insert_one({
-        "session_id": session.session_id,
+        "session_id": session.id,
         "user_id": user["id"],
         "account_id": acct["id"],
         "addon_id": body.addon_id,
-        "amount": float(ADDON_PRICE_MONTHLY),
-        "currency": "aud",
+        "price_id": price_id,
         "metadata": metadata,
         "payment_status": "initiated",
         "ts": _now_iso(),
         "kind": "participant_addon",
     })
-    return {"url": session.url, "session_id": session.session_id, "amount": ADDON_PRICE_MONTHLY}
+    return {"url": session.url, "session_id": session.id}
 
 
 # ============================================================================

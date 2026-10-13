@@ -9,6 +9,7 @@ import { AppHeader, Button, Card, DateField, Field, Loading, Select, StatePanel,
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { startAddonCheckout } from "@/src/lib/plans";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDate } from "@/src/utils/format";
@@ -187,6 +188,13 @@ export default function ParticipantsScreen() {
         provider_name: form.provider_name.trim() || null, provider_email: form.provider_email.trim() || null, statement_format: form.statement_format,
         confirm_upgrade: confirmUpgrade,
       } });
+      // Extra participant on Family → pay via the SAME external-browser Stripe
+      // checkout as signup (recurring $24.50/fortnight add-on). Never an in-app
+      // purchase. If the user cancels, the add-on stays as a cancellable
+      // "pending add-on" they can finish or remove later.
+      if ((data as any)?.addon?.id) {
+        try { await startAddonCheckout((data as any).addon.id); } catch { /* leaves a pending add-on */ }
+      }
       setLastAdded(data);
       setStep("done");
       await loadAll(); await reload();

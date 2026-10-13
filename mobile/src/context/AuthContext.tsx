@@ -3,7 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as AppleAuthentication from "expo-apple-authentication";
 
-import { apiFetch, clearTokens, getToken, setTokens, setReadOnlyMode } from "@/src/lib/api";
+import { apiFetch, clearTokens, getToken, setTokens, setReadOnlyMode, setPendingPlan, clearPendingPlan } from "@/src/lib/api";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -34,7 +34,7 @@ type AuthState = {
   loading: boolean; // initial session check
   viewOnly: boolean; // access_state === "view_only" → read-only mode
   login: (email: string, password: string) => Promise<void>;
-  signup: (payload: SignupPayload) => Promise<void>;
+  signup: (payload: SignupPayload, opts?: { deferUser?: boolean }) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithApple: () => Promise<void>;
   logout: () => Promise<void>;
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     applyUser(data.user);
   }, []);
 
-  const signup = useCallback(async (payload: SignupPayload) => {
+  const signup = useCallback(async (payload: SignupPayload, opts?: { deferUser?: boolean }) => {
     const data = await apiFetch<{ token: string; refresh_token?: string; user: WaylyUser }>(
       "/auth/signup",
       {
@@ -141,6 +141,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
     await setTokens(data.token, data.refresh_token);
+    if (opts?.deferUser) {
+      // Keep the token (so plan-select can run the authenticated Stripe
+      // checkout) but DON'T log the user in yet — the app-open gate holds
+      // them on /plan-select until a valid plan/trial exists.
+      await setPendingPlan();
+      return;
+    }
     applyUser(data.user);
   }, []);
 
@@ -179,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /* best-effort */
     }
     await clearTokens();
+    await clearPendingPlan();
     applyUser(null);
   }, [applyUser]);
 

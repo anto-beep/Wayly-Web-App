@@ -1,13 +1,17 @@
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { CreditCard, Info } from "lucide-react-native";
+import * as WebBrowser from "expo-web-browser";
+import { CreditCard, Info, ExternalLink } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, spacing } from "@/src/theme/tokens";
 import { formatDate } from "@/src/utils/format";
+
+const SITE_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "";
+const BILLING_URL = `${SITE_BASE}/settings/billing`;
 
 type Sub = {
   plan?: string;
@@ -76,10 +80,17 @@ export default function PlanBillingScreen() {
             <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
               <Info size={18} color={colors.primary} style={{ marginTop: 2 }} />
               <T variant="small" style={{ flex: 1, lineHeight: 21 }}>
-                Your Wayly plan and payment details are managed on your Wayly account. To change or update your plan, sign in at wayly.com.au.
+                Your plan and card details are managed securely on the web. The button below opens your Wayly account in your browser — nothing is purchased inside the app.
               </T>
             </View>
           </Card>
+
+          <Button
+            label={noPlan ? "Choose a plan on the web" : "Manage plan on the web"}
+            testID="billing-manage-web"
+            icon={ExternalLink}
+            onPress={() => { WebBrowser.openBrowserAsync(noPlan ? `${SITE_BASE}/pricing` : BILLING_URL); }}
+          />
 
           {!noPlan ? (
             <Button label="Manage participants" testID="billing-manage-participants" variant="outline" onPress={() => router.push("/participants")} />
