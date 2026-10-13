@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check, CheckCircle2, FilePenLine, Calculator, ClipboardList, FileText, Receipt, BarChart3, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check, FilePenLine, Calculator, ClipboardList, FileText, Receipt, BarChart3 } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
@@ -8,7 +8,7 @@ import HeroSpotlight from "@/components/HeroSpotlight";
 import DualFlagshipHero from "@/components/DualFlagshipHero";
 import ToolClusterGrid from "@/components/ToolClusterGrid";
 import RevealOnScroll from "@/components/RevealOnScroll";
-import { DotField, Orb, GaugeRing, CompareRow } from "@/components/BrandVisuals";
+import { Orb, CompareRow } from "@/components/BrandVisuals";
 
 import SeoHead, { organizationLd, websiteLd } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
@@ -99,7 +99,7 @@ export default function Landing() {
                 : <DualFlagshipHero />}
 
             {/* PERSONA ON-RAMP + DECODER EMBED */}
-            <section className="mx-auto max-w-7xl px-6 pt-16 pb-8" data-testid="persona-section">
+            <section className="mx-auto max-w-7xl px-6 pt-10 pb-6 sm:pt-16 sm:pb-8" data-testid="persona-section">
                 <div className="grid lg:grid-cols-12 gap-10 items-start">
                     <div className="lg:col-span-7">
                         <span className="overline">Three quick ways in</span>
@@ -174,7 +174,7 @@ export default function Landing() {
 
             {/* WHO WAYLY IS FOR, ecosystem grid, one card per audience.
                 Design ref: verify-athlete "Six users. One shared truth." */}
-            <section className="mx-auto max-w-7xl px-6 py-20" data-testid="ecosystem-section">
+            <section className="mx-auto max-w-7xl px-6 py-10 sm:py-20" data-testid="ecosystem-section">
                 <div className="text-center max-w-2xl mx-auto">
                     <span className="overline">Built for the Whole Household</span>
                     <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight leading-tight">
@@ -253,7 +253,7 @@ export default function Landing() {
             )}
 
             {/* HOW IT WORKS, skimmable step flow (no screenshots) */}
-            <section className="mx-auto max-w-7xl px-6 py-16" data-testid="how-it-works">
+            <section className="mx-auto max-w-7xl px-6 py-10 sm:py-16" data-testid="how-it-works">
                 <div className="max-w-2xl">
                     <span className="overline">How It Works</span>
                     <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">
@@ -289,41 +289,6 @@ export default function Landing() {
                     <Link to="/ai-tools/statement-decoder" className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white px-6 py-3 text-sm font-semibold" data-testid="how-it-works-cta">
                         Start your free 7-day trial <ArrowRight className="h-4 w-4" />
                     </Link>
-                </div>
-            </section>
-
-            {/* BIG NUMBER */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-[#0E4D52] to-[#10363A]">
-                <DotField />
-                <Orb className="wayly-float" style={{ width: 260, height: 260, top: -90, left: 40 }} from="#F0B267" to="#A5512B" />
-                <Orb className="wayly-float-slow" style={{ width: 220, height: 220, bottom: -100, right: 60 }} from="#6B8F71" to="#425F47" />
-                <div className="relative mx-auto max-w-7xl px-6 py-16 sm:py-20">
-                    <div className="grid lg:grid-cols-12 gap-10 items-center">
-                        <div className="lg:col-span-4 flex justify-center">
-                            <div className="relative">
-                                <span aria-hidden className="wayly-pulse-ring absolute inset-0 rounded-full bg-[#F0B267]/15" />
-                                <GaugeRing pct={82} size={200} stroke={16} label="$1,847" sub="illustrative / year" />
-                            </div>
-                        </div>
-                        <div className="lg:col-span-8 text-center lg:text-left">
-                            <span className="overline" style={{ color: "rgba(255,255,255,0.6)" }}>An illustrative example</span>
-                            <h2 className="font-heading text-4xl sm:text-5xl text-white mt-4 leading-tight tracking-tight">
-                                In one illustrative household, Wayly surfaced <span className="font-semibold" style={{ color: "#F0B267" }} data-testid="big-number-accent">$1,847 a year</span> in incorrect charges and unused funding.
-                            </h2>
-                            <div className="mt-8 flex items-center justify-center lg:justify-start gap-3 flex-wrap">
-                                <Link
-                                    to="/signup"
-                                    data-testid="big-number-cta"
-                                    className="landing-btn-clay inline-flex items-center justify-center bg-[#A5512B] text-white font-semibold rounded-lg px-6 py-3 shadow-md"
-                                >
-                                    Start free for 7 days
-                                </Link>
-                                <Link to="/ai-tools/budget-calculator" className="landing-cta-secondary inline-flex items-center justify-center border border-white/40 bg-white/10 text-white font-semibold rounded-lg px-6 py-3">
-                                    Or estimate your own budget →
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </section>
 
@@ -364,23 +329,6 @@ export default function Landing() {
                         ))}
                     </div>
 
-                    {/* Highlighted grade callout */}
-                    <RevealOnScroll>
-                        <div className="mt-6 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0E4D52] to-[#10363A] p-6 flex flex-wrap items-center gap-4">
-                            <div className="h-14 w-14 rounded-2xl bg-white/15 flex items-center justify-center flex-none">
-                                <span className="font-heading text-2xl text-white">A-</span>
-                            </div>
-                            <div className="flex-1 min-w-[240px]">
-                                <div className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-white/70"><Sparkles className="h-3.5 w-3.5" /> Sample report · Provider Performance grade</div>
-                                <p className="mt-1 text-white leading-relaxed text-sm">
-                                    In this sample report, Bluebell Care scored an A-: 98% of visits on time, one worker swap, and rates about 4% below the local average. No jargon, just a grade you can trust.
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2 text-white/85 text-sm">
-                                <CheckCircle2 className="h-4 w-4 flex-none" /> Stored safely in your Australian-hosted vault
-                            </div>
-                        </div>
-                    </RevealOnScroll>
                 </div>
             </section>
 
