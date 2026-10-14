@@ -1,0 +1,45 @@
+{
+  "summary": "Verified category-level recovery for both Statement Decoder (backend agents.py) and Invoice Checker (backend lib/inv1/extractor.py), plus mobile chart parity for both surfaces. 3/3 pytest tests pass. Backend: category-style statement decodes as publishable with correct stream_breakdown (Clinical $1,784.20 / Independence $356.70 / EverydayLiving $1,168.80), care_management_deducted $595.00, totals Billed $3,904.70 / Your share $222.38 / Govt $3,682.32, summary cites all three figures, no RULE_G2_GROSS_RECONCILE blocker. Regression: the normal per-line sample at /app/frontend/public/appstore/wayly-sample-support-at-home-statement.pdf still decodes with real per-line items and does NOT engage the fallback (_category_level_fallback falsy/absent). Invoice: reconciliation.invoice_total=222.38, 4 category lines (clinical 0 / independence 17.84 / everyday_living 204.54 / care_management 0) all with service_date=null, overall_verdict=all_clear, C5 marked ok=True in clean_reconciliation, no false 'charged after service' finding. Mobile parity (Expo web preview, 390x844): statement detail renders [data-testid=statement-graphics] with 'WHERE THE MONEY WENT' donut (Government $3,682 / You paid $222 / 94% FUNDED) and 'WHAT WE FOUND' severity donut (3 TO KNOW); money tiles below show TOTAL BILLED $3,904.70 / YOUR SHARE $222.38 / GOVERNMENT PAID $3,682.32. Invoice detail renders [data-testid=invoice-graphics] with 'WHERE YOUR MONEY STANDS' donut (Net payable $222 / Potential refund $0 / of $222 billed / 100% PAYABLE) and 'WHAT WE FOUND' donut (1 TO KNOW — the C10 lifetime-cap informational note, correctly NOT a C5 finding). The invoice page shows 14/11/2026 only as Due date, never as a service date, and does not contain the strings 'charged after' or 'service date after'. All 5 acceptance items in the review request pass.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "statement/[id] header strip", "issues": ["Header reads '3 line items · $3,309.70 total · $222.38 contribution', but the authoritative TOTAL BILLED tile just below correctly says $3,904.70. The $3,309.70 is the sum of per-line gross and excludes the $595.00 care_management_deducted. Minor polish — consider using reported_total_gross in the header strip for consistency with the money tile and the plain-English summary."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "verifications": [
+    {"item": "STATEMENT category-level recovery (publishable, correct stream_breakdown, care_mgmt, totals, summary)", "status": "PASS", "evidence": "pytest TestStatementCategoryRecovery, statement_id=1a67bf92-503a-410f-8ae5-edbe9df57287"},
+    {"item": "STATEMENT regression — normal per-line sample untouched (_category_level_fallback falsy/absent, per-line items with real dollars)", "status": "PASS", "evidence": "pytest TestStatementRegressionNormalSample using /app/frontend/public/appstore/wayly-sample-support-at-home-statement.pdf"},
+    {"item": "INVOICE category-summary fix (invoice_total=222.38, 4 category lines with service_date=null, overall_verdict=all_clear, no false C5)", "status": "PASS", "evidence": "pytest TestInvoiceCategoryRecovery, latest invoice_id=d0d583c9-77ef-4e6d-90c7-9f972faa1610"},
+    {"item": "MOBILE statement charts parity — statement-graphics with WHERE THE MONEY WENT donut + WHAT WE FOUND donut + money tiles", "status": "PASS", "evidence": "/tmp/mobile_stmt.jpg; donut text 'WHERE THE MONEY WENT94%FUNDEDGovernment$3,682You paid$222WHAT WE FOUND...3TO KNOW'; tiles show $3,904.70 / $222.38 / $3,682.32"},
+    {"item": "MOBILE invoice charts parity — invoice-graphics with WHERE YOUR MONEY STANDS donut + WHAT WE FOUND donut; no 14/11/2026 charged-after-service issue", "status": "PASS", "evidence": "/tmp/mobile_inv.jpg; donut text 'WHERE YOUR MONEY STANDS100%PAYABLENet payable$222Potential refund$0of $222 billedWHAT WE FOUND1TO KNOWFor your info1'; body contains '14/11/2026' only as Due date; body does NOT contain 'charged after' or 'service date after'"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_category_level_recovery_iter374.py",
+    "/app/test_reports/pytest/pytest_results_iter374.xml",
+    "/tmp/mobile_stmt.jpg",
+    "/tmp/mobile_inv.jpg"
+  ],
+  "action_items": [
+    "(Minor polish) Mobile statement header strip currently sums per-line gross ($3,309.70) which excludes $595 care_management_deducted; the authoritative total $3,904.70 is shown correctly in the money tile. Consider aligning the header to reported_total_gross."
+  ],
+  "critical_code_review_comments": [
+    "agents.py _recover_category_level_totals sets `assembled['_category_level_fallback'] = True` but this flag does not persist into the serialised extracted_json (checked at `/api/statements/{id}` — key is absent). If downstream UI or audit logic ever needs to know a fallback was used, the flag needs to be propagated through the serialisation pass. The business signal (correct numbers + no G2 blocker) is intact so this is not blocking.",
+    "lib/inv1/extractor.py category rows return `gross_cost` populated with the Your-share value (e.g. Independence gross_cost=17.84), with contribution_amount/contribution_rate=null. Semantically the gross_cost field name is slightly misleading when the invoice is 'your share only' and there is no gross on it. Not blocking — reconciliation.invoice_total=222.38 is correct and the overall verdict / UI copy are correct."
+  ],
+  "updated_files": ["/app/backend/tests/test_category_level_recovery_iter374.py (new)"],
+  "success_rate": {"backend": "100% (3/3 pytest passed)", "frontend": "100% (both mobile screens render required testIDs and expected content; no false findings)"},
+  "test_credentials": "cathy@example.com / testpass123 (family caregiver); active participant Dorothy Smith id=0c538637-b0dd-4982-8f78-b32814c6a5eb.",
+  "seed_data_creation": "Two uploads of the category-style PDFs via POST /api/statements/upload and /api/invoices/upload under Dorothy Smith. Statement upload hit the semantic-dedupe guard on repeat runs and reused existing_statement_id=1a67bf92-503a-410f-8ae5-edbe9df57287 (publishable). Latest category-style invoice id=d0d583c9-77ef-4e6d-90c7-9f972faa1610.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Reusable artefacts: category-style statement id=1a67bf92-503a-410f-8ae5-edbe9df57287 (publishable=true), category-style invoice id=d0d583c9-77ef-4e6d-90c7-9f972faa1610 (invoice_total=222.38, overall_verdict=all_clear). Both belong to Dorothy Smith under cathy@example.com. To hit the mobile preview with an authenticated session, inject the token into localStorage under keys 'kindred_token' AND '@AsyncStorage:kindred_token' (both JSON.stringified), plus 'kindred_refresh_token' and 'wayly_active_participant_id' the same way — the AsyncStorage web shim reads from both namespaces. The regression test file pytest `/app/backend/tests/test_category_level_recovery_iter374.py` is cheap to re-run (<15s on cache-hit) and covers both the fallback engagement and the regression guard.",
+  "rca of the issue": "The two parsing fixes verified here address PDFs that put dollars only in a per-category cost-share summary table (no per-line-item amounts). Statement side (agents.py _recover_category_level_totals + _parse_category_cost_table): previously the per-line-item extractor summed to ~$0 while reported_total_gross = $3,904.70, triggering RULE_G2_GROSS_RECONCILE and blocking publish; the new fallback engages only when summed per-line gross <= 5% of reported_total_gross AND a category table reconciles to that total, then synthesises stream-level line items (Clinical/Independence/EverydayLiving) that make the gross recon balance. Invoice side (lib/inv1/extractor.py _parse_invoice_category_table): previously the invoice parser read 14/11/2026 from the 'Due' field as a service_date and raised the false C5 'service date after invoice date'; the new fallback engages only when a 'what you are paying for'/'your share' + 'total payable'/'sub-total' table is present and category rows reconcile, then emits 4 category lines with service_date=null (so C5 cannot trigger) and sets invoice_total=222.38. Both fallbacks are guarded so the normal per-line format is untouched (confirmed by regression test)."
+}

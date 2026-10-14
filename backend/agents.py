@@ -1589,6 +1589,166 @@ def _dedupe_line_items(items: list[dict]) -> tuple[list[dict], int]:
     return dedup_out, dropped
 
 
+# ---------------------------------------------------------------------------
+# Category-level recovery backstop (DEC-1): some providers put the dollar
+# figures ONLY in a per-category cost-share summary table ("What it cost, and
+# your share": Clinical / Independence / Everyday living / Care & package
+# management) alongside a plain visit-count list, with no per-line dollar
+# columns. The stream extractors then read service names but $0 amounts, so the
+# statement can never reconcile. These two helpers parse that category table and
+# synthesise one line item per stream so such statements reconcile and
+# summarise at the category/stream level (no per-service amounts available).
+# ---------------------------------------------------------------------------
+_CATEGORY_STREAM_MAP = [
+    ("clinical", "Clinical"),
+    ("independence", "Independence"),
+    ("everyday", "EverydayLiving"),
+]
+_CATEGORY_MGMT_MARKERS = (
+    "care and package management",
+    "care & package management",
+    "package management",
+    "care management",
+)
+_CATEGORY_STREAM_LABELS = {
+    "Clinical": "Clinical care",
+    "Independence": "Independence",
+    "EverydayLiving": "Everyday living",
+}
+
+
+def _parse_category_cost_table(text: str) -> Optional[Dict[str, Any]]:
+    """Parse a per-category cost-share summary table of the shape:
+        <category label>
+        $full_cost  $government_paid  $you_pay
+    (cells may be inline or each on their own line). Returns per-stream
+    {gross, government_paid, participant_contribution} plus a combined
+    ``management`` entry for the care/package-management row. Only engages when
+    the statement clearly prints such a table; returns None otherwise.
+    """
+    import re as _re
+    if not text or not isinstance(text, str):
+        return None
+    low = text.lower()
+    table_start = low.find("full cost")
+    if table_start == -1 or ("you pay" not in low and "your share" not in low):
+        return None
+    cur = _re.compile(r"-?\$\s?([\d,]+\.\d{2})")
+
+    def _amounts_after(idx: int, n: int = 3) -> Optional[list]:
+        vals: list = []
+        for m in cur.finditer(text[idx:]):
+            try:
+                vals.append(round(float(m.group(1).replace(",", "")), 2))
+            except Exception:
+                continue
+            if len(vals) >= n:
+                break
+        return vals if len(vals) >= n else None
+
+    streams: Dict[str, Dict[str, float]] = {}
+    for marker, stream in _CATEGORY_STREAM_MAP:
+        idx = low.find(marker, table_start)
+        if idx == -1:
+            continue
+        amts = _amounts_after(idx)
+        if not amts:
+            continue
+        streams[stream] = {"gross": amts[0], "government_paid": amts[1], "participant_contribution": amts[2]}
+
+    mgmt = None
+    mgmt_idx = -1
+    for mk in _CATEGORY_MGMT_MARKERS:
+        i = low.find(mk, table_start)
+        if i != -1 and (mgmt_idx == -1 or i < mgmt_idx):
+            mgmt_idx = i
+    if mgmt_idx != -1:
+        amts = _amounts_after(mgmt_idx)
+        if amts:
+            mgmt = {"gross": amts[0], "government_paid": amts[1], "participant_contribution": amts[2]}
+
+    if not streams and not mgmt:
+        return None
+    return {"streams": streams, "management": mgmt}
+
+
+def _recover_category_level_totals(assembled: Dict[str, Any], line_items: list, text: str) -> list:
+    """When per-line extraction produced essentially no dollars but the
+    statement prints a category cost-share table that reconciles to its own
+    total, synthesise one line item per stream (and record the management fee)
+    so the statement reconciles and publishes. Guarded so statements that
+    already have per-line dollars are never touched.
+    """
+    try:
+        reported = float(assembled.get("reported_total_gross") or 0.0)
+    except Exception:
+        reported = 0.0
+    if reported <= 0:
+        return line_items
+    line_gross = round(sum(
+        float(li.get("gross") or li.get("total") or 0.0)
+        for li in line_items
+        if isinstance(li, dict) and not li.get("is_cancellation")
+    ), 2)
+    if line_gross > max(5.0, 0.05 * reported):
+        return line_items  # per-line dollars exist, leave the extraction alone
+    parsed = _parse_category_cost_table(text)
+    if not parsed:
+        return line_items
+    streams = parsed.get("streams") or {}
+    mgmt = parsed.get("management")
+    recovered_services = round(sum(float(s.get("gross") or 0.0) for s in streams.values()), 2)
+    mgmt_gross = round(float((mgmt or {}).get("gross") or 0.0), 2)
+    recovered_total = round(recovered_services + mgmt_gross, 2)
+    tol = max(5.0, 0.02 * reported)
+    if recovered_total <= 0 or abs(recovered_total - reported) > tol:
+        return line_items  # couldn't reconcile the table to the statement total
+    period_end = (assembled.get("period_end") or "") or None
+    synthetic: list = []
+    for stream, amt in streams.items():
+        g = round(float(amt.get("gross") or 0.0), 2)
+        if g <= 0:
+            continue
+        label = _CATEGORY_STREAM_LABELS.get(stream, stream)
+        synthetic.append({
+            "date": period_end,
+            "service_description": f"{label} (category total)",
+            "service_name": f"{label} (category total)",
+            "service_code": "",
+            "stream": stream,
+            "hours": None,
+            "units": None,
+            "unit_rate": None,
+            "gross": g,
+            "participant_contribution": round(float(amt.get("participant_contribution") or 0.0), 2),
+            "government_paid": round(float(amt.get("government_paid") or 0.0), 2),
+            "is_cancellation": False,
+            "_category_level": True,
+            "provider_notes": "Amount taken from this statement's category cost summary; the statement does not itemise per-service dollars.",
+        })
+    if not synthetic:
+        return line_items
+    if mgmt_gross > 0:
+        try:
+            cur_cm = float(assembled.get("care_management_deducted") or 0.0)
+        except Exception:
+            cur_cm = 0.0
+        if cur_cm <= 0.01:
+            assembled["care_management_deducted"] = mgmt_gross
+            assembled["care_management_source_text"] = "Care and package management (category cost summary)"
+    # Fill reported contribution / government totals from the table if absent.
+    tot_contrib = round(sum(float(s.get("participant_contribution") or 0.0) for s in streams.values())
+                        + float((mgmt or {}).get("participant_contribution") or 0.0), 2)
+    tot_gov = round(sum(float(s.get("government_paid") or 0.0) for s in streams.values())
+                    + float((mgmt or {}).get("government_paid") or 0.0), 2)
+    if not assembled.get("reported_total_participant_contribution") and tot_contrib > 0:
+        assembled["reported_total_participant_contribution"] = tot_contrib
+    if not assembled.get("reported_total_government_paid") and tot_gov > 0:
+        assembled["reported_total_government_paid"] = tot_gov
+    assembled["_category_level_fallback"] = True
+    return synthetic
+
+
 async def extract_statement(
     text: str,
     household_id: str,
@@ -2037,6 +2197,13 @@ async def extract_statement(
 
     # Dedupe line items (drops duplicates extracted from both stream + subtotal rows
     # the LLM accidentally treats as items)
+    # Deterministic category-level recovery backstop , engages ONLY when the
+    # per-line extraction produced essentially no dollars but the statement
+    # prints a category cost-share table (dollars by stream, not by service
+    # line). Synthesises one line item per stream so the statement reconciles
+    # and summarises at the category/stream level.
+    line_items = _recover_category_level_totals(assembled, line_items, text)
+
     line_items, n_dropped = _dedupe_line_items(line_items)
     assembled["line_items"] = line_items
     if n_dropped:

@@ -419,6 +419,115 @@ def _reassemble_rows(text: str) -> List[str]:
     return rows
 
 
+# Category-summary invoices (DEC-1 / INV1): some providers bill with a
+# "What you are paying for" table listing ONE "Your share" amount per support
+# category (Clinical / Independence / Everyday living / Care & package
+# management) and NO per-service rows or service dates. The generic row
+# reassembler mis-reads these , it glues the narrative header into one line and
+# picks up the payment-due date as a service date (false "service after invoice"
+# flag). When such a table is present we parse it deterministically into one
+# line per category instead, with no service dates.
+_INV_CATEGORY_MARKERS = [
+    ("clinical", ServiceCategory.clinical, "Clinical care"),
+    ("independence", ServiceCategory.independence, "Independence"),
+    ("everyday", ServiceCategory.everyday_living, "Everyday living"),
+]
+_INV_MGMT_MARKERS = (
+    "care and package management",
+    "care & package management",
+    "package management",
+    "care management",
+)
+_INV_CAT_MONEY_RE = re.compile(r"-?\$\s?([\d,]+\.\d{2})")
+
+
+def _parse_invoice_category_table(text: str) -> Optional[List["ExtractedLine"]]:
+    """Parse a category-summary invoice ("What you are paying for" / "Your
+    share" table) into one ExtractedLine per support category. Returns None
+    unless such a totals-style table is clearly present and reconciles to the
+    invoice's own "Total payable"/"Sub-total"."""
+    if not text or not text.strip():
+        return None
+    low = text.lower()
+    anchor = low.find("what you are paying for")
+    if anchor == -1:
+        anchor = low.find("your share")
+    if anchor == -1:
+        return None
+    if "total payable" not in low and "sub-total" not in low and "subtotal" not in low:
+        return None
+
+    def _money_after(idx: int) -> Optional[float]:
+        m = _INV_CAT_MONEY_RE.search(text, idx)
+        if not m:
+            return None
+        try:
+            return round(float(m.group(1).replace(",", "")), 2)
+        except Exception:
+            return None
+
+    out: List[ExtractedLine] = []
+    for marker, cat, label in _INV_CATEGORY_MARKERS:
+        idx = low.find(marker, anchor)
+        if idx == -1:
+            continue
+        amt = _money_after(idx + len(marker))
+        if amt is None:
+            continue
+        out.append(ExtractedLine(
+            line_id=str(uuid.uuid4()),
+            service_category=cat,
+            service_type=f"{label} (your share)",
+            service_date=None,
+            units_or_hours=None,
+            unit_price=None,
+            gross_cost=amt,
+            contribution_rate=None,
+            contribution_amount=None,
+            gst_amount=None,
+            read_confidence=0.9,
+            raw_text=f"{label}: ${amt:.2f}",
+        ))
+
+    mgmt_idx, mgmt_len = -1, 0
+    for mk in _INV_MGMT_MARKERS:
+        i = low.find(mk, anchor)
+        if i != -1 and (mgmt_idx == -1 or i < mgmt_idx):
+            mgmt_idx, mgmt_len = i, len(mk)
+    if mgmt_idx != -1:
+        amt = _money_after(mgmt_idx + mgmt_len)
+        if amt is not None:
+            out.append(ExtractedLine(
+                line_id=str(uuid.uuid4()),
+                service_category=ServiceCategory.care_management,
+                service_type="Care and package management (your share)",
+                service_date=None,
+                units_or_hours=None,
+                unit_price=None,
+                gross_cost=amt,
+                contribution_rate=None,
+                contribution_amount=None,
+                gst_amount=None,
+                read_confidence=0.9,
+                raw_text=f"Care and package management: ${amt:.2f}",
+            ))
+
+    if len(out) < 2:
+        return None
+    # Validate the category rows reconcile to the invoice's own printed total.
+    recovered = round(sum((ln.gross_cost or 0.0) for ln in out), 2)
+    declared = None
+    for label in ("total payable", "sub-total", "subtotal"):
+        li = low.find(label, anchor)
+        if li != -1:
+            declared = _money_after(li + len(label))
+            if declared is not None:
+                break
+    if declared is not None and abs(recovered - declared) > max(1.0, 0.02 * max(declared, 1.0)):
+        return None
+    return out
+
+
 def extract_line_items(text: str, invoice_year: Optional[int] = None) -> List[ExtractedLine]:
     """Parse the payable section into a list of :class:`ExtractedLine`.
 
@@ -442,6 +551,11 @@ def extract_line_items(text: str, invoice_year: Optional[int] = None) -> List[Ex
     if invoice_year is not None:
         _default_year = invoice_year
     try:
+        # Category-summary invoices: parse the per-category "Your share" table
+        # directly (no per-service rows / dates for the reassembler to misread).
+        cat_lines = _parse_invoice_category_table(text)
+        if cat_lines is not None:
+            return cat_lines
         lines = _reassemble_rows(text)
         items: List[ExtractedLine] = []
 
