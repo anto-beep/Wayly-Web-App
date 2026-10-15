@@ -205,7 +205,7 @@ export default function StatementDetail() {
           {/* Header — mirrors web: period · provider, then "N line items · $total total · $contribution contribution" */}
           <View testID="statement-overview">
             <T variant="label">STATEMENT</T>
-            <T style={{ fontFamily: fonts.heading, fontSize: 26, marginTop: 4, color: colors.text }}>
+            <T style={{ fontFamily: fonts.heading, fontSize: 26, marginTop: 4, color: colors.heading }}>
               {periodLabel}
               {providerName ? <T style={{ fontFamily: fonts.heading, fontSize: 26, color: colors.muted }}>{`  ·  ${providerName}`}</T> : null}
             </T>

@@ -11,6 +11,7 @@ export type Palette = {
   primary: string; // brand teal — headings, icons, accents
   primaryFg: string;
   primarySoft: string;
+  heading: string; // page/section headings — teal in light, white in dark (web .font-heading)
   cta: string; // primary button fill (teal on light, clay on dark — matches web)
   gold: string; // clay accent
   goldSoft: string;
@@ -38,6 +39,7 @@ export const lightColors: Palette = {
   primary: "#0E4D52",
   primaryFg: "#FFFFFF",
   primarySoft: "#DCE9EA",
+  heading: "#0E4D52",
   cta: "#0E4D52",
   gold: "#A5512B",
   goldSoft: "#F3E7DE",
@@ -65,6 +67,7 @@ export const darkColors: Palette = {
   primary: "#4FA8AE",
   primaryFg: "#FFFFFF",
   primarySoft: "rgba(79,168,174,0.15)",
+  heading: "#FFFFFF",
   cta: "#A5512B",
   gold: "#E89A6F",
   goldSoft: "rgba(232,154,111,0.16)",

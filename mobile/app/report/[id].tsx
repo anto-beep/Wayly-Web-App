@@ -46,7 +46,7 @@ function StatCard({ label, value, sub, tone }: { label: string; value: any; sub?
   return (
     <View style={[styles.stat, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <T style={{ fontFamily: fonts.body, fontSize: 10, letterSpacing: 0.4, color: colors.muted }}>{label}</T>
-      <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, marginTop: 2, color: tone || colors.text }}>{String(value)}</T>
+      <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, marginTop: 2, color: tone || colors.heading }}>{String(value)}</T>
       {sub ? <T variant="small" style={{ fontSize: 11, marginTop: 2 }}>{sub}</T> : null}
     </View>
   );

@@ -1,0 +1,98 @@
+{
+  "dark_dash": [
+    {
+      "text": "AGED CARE, MADE CLEAR",
+      "color": "rgb(165, 81, 43)"
+    }
+  ],
+  "dark_reports": [
+    {
+      "text": "Reports",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "Generate a Report",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "Your reports",
+      "color": "rgb(14, 77, 82)"
+    }
+  ],
+  "dark_chsp": [
+    {
+      "text": "CHSP Tools",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "Check Your CHSP Billing.",
+      "color": "rgb(14, 77, 82)"
+    }
+  ],
+  "dark_price": [
+    {
+      "text": "Your Price History",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "Couldn't load your history",
+      "color": "rgb(28, 43, 45)"
+    }
+  ],
+  "dark_pb": [
+    {
+      "text": "Your Plan",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "Couldn't load your plan",
+      "color": "rgb(28, 43, 45)"
+    }
+  ],
+  "dark_ps": [
+    {
+      "text": "Choose Your Plan",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "Start your 7-day free trial",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "Solo",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "$24.50",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "24.50",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "Family",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "$49.50",
+      "color": "rgb(14, 77, 82)"
+    },
+    {
+      "text": "49.50",
+      "color": "rgb(14, 77, 82)"
+    }
+  ],
+  "dark_doc": [
+    {
+      "text": "Couldn't load documents",
+      "color": "rgb(28, 43, 45)"
+    }
+  ],
+  "dark_tools": [
+    {
+      "text": "AGED CARE, MADE CLEAR",
+      "color": "rgb(165, 81, 43)"
+    }
+  ]
+}

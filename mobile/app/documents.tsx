@@ -329,7 +329,7 @@ export default function DocumentsScreen() {
         <View style={styles.modalBackdrop}>
           <View style={[styles.sheet, { backgroundColor: colors.bg }]}>
             <View style={styles.sheetHeader}>
-              <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text }}>Add a document</T>
+              <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading }}>Add a document</T>
               <Pressable testID="upload-close" onPress={() => setShowUpload(false)} hitSlop={12}>
                 <X size={24} color={colors.muted} />
               </Pressable>

@@ -77,7 +77,7 @@ export default function InvoiceChecker() {
                 <View style={{ width: 56, height: 56, borderRadius: radius.pill, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
                   <Upload size={26} color={colors.primary} />
                 </View>
-                <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text, marginTop: 10 }}>Tap to choose your invoice</T>
+                <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading, marginTop: 10 }}>Tap to choose your invoice</T>
                 <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>PDF, Word, image or CSV</T>
               </Pressable>
             ) : (
@@ -105,7 +105,7 @@ export default function InvoiceChecker() {
                 <View style={{ alignSelf: "flex-start", backgroundColor: colors.gold + "55", borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3 }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.text }}>ALREADY CHECKED</T>
                 </View>
-                <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.text, marginTop: 6 }}>You have already checked this invoice</T>
+                <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.heading, marginTop: 6 }}>You have already checked this invoice</T>
                 <T variant="small" style={{ color: colors.text, marginTop: 4, lineHeight: 20 }}>
                   {`This exact file was uploaded before${dupe.existing_created_at ? ` on ${shortDate(dupe.existing_created_at)}` : ""}${dupe.existing_provider_name ? ` for ${dupe.existing_provider_name}` : ""}. Open the existing check instead of creating a duplicate.`}
                 </T>

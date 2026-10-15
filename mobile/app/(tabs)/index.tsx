@@ -160,7 +160,7 @@ export default function Dashboard() {
         {/* Greeting header — hero (matches web: dashboard body opens straight
             with the greeting; participant switching lives in app chrome/Family). */}
         <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: spacing.lg, marginTop: spacing.sm }}>
-          <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 34, color: colors.primary }} testID="dashboard-greeting">{greetingFor()}, {firstName}. What would you like to do?</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 34, color: colors.heading }} testID="dashboard-greeting">{greetingFor()}, {firstName}. What would you like to do?</T>
           {active ? (
             <View testID="dashboard-viewing-for" style={{ flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", backgroundColor: colors.primary, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 8, marginTop: 12 }}>
               <Users size={16} color={colors.gold} />
@@ -234,7 +234,7 @@ export default function Dashboard() {
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 32, color: budgetOver ? colors.terracotta : colors.primary }} testID="glance-left">{money(Math.abs(left))}</T>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 32, color: budgetOver ? colors.terracotta : colors.heading }} testID="glance-left">{money(Math.abs(left))}</T>
                       <T variant="small" style={{ color: colors.muted }}>of {moneyWhole(quarterlyBudget)} this quarter</T>
                     </View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
@@ -251,7 +251,7 @@ export default function Dashboard() {
                       style={({ pressed }) => [styles.miniStat, { backgroundColor: colors.gold + "1A", borderColor: colors.gold + "4D", borderLeftColor: colors.gold }, pressed && { opacity: 0.85 }]}
                     >
                       <View style={styles.miniStatHead}><Bell size={14} color={colors.gold} /><T style={[styles.miniStatLabel, { color: colors.gold }]}>TO REVIEW</T></View>
-                      <T style={[styles.miniStatNum, { color: colors.primary }]}>{ttkCount}</T>
+                      <T style={[styles.miniStatNum, { color: colors.heading }]}>{ttkCount}</T>
                       <T style={[styles.miniStatSub, { color: colors.muted }]}>On your latest statement</T>
                     </Pressable>
                     <Pressable
@@ -260,14 +260,14 @@ export default function Dashboard() {
                       style={({ pressed }) => [styles.miniStat, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "26", borderLeftColor: colors.primary }, pressed && { opacity: 0.85 }]}
                     >
                       <View style={styles.miniStatHead}><FileText size={14} color={colors.primary} /><T style={[styles.miniStatLabel, { color: colors.primary }]}>STATEMENTS</T></View>
-                      <T style={[styles.miniStatNum, { color: colors.primary }]}>{statements.length}</T>
+                      <T style={[styles.miniStatNum, { color: colors.heading }]}>{statements.length}</T>
                     </Pressable>
                     <View
                       testID="glance-cap"
                       style={[styles.miniStat, { backgroundColor: "#B5623A1A", borderColor: "#B5623A4D", borderLeftColor: "#B5623A" }]}
                     >
                       <View style={styles.miniStatHead}><CheckCircle2 size={14} color="#B5623A" /><T style={[styles.miniStatLabel, { color: "#B5623A" }]}>LIFETIME CAP</T></View>
-                      <T style={[styles.miniStatNum, { color: colors.primary, fontSize: 22 }]}>{moneyWhole(budget.lifetime_contributions || 0)}</T>
+                      <T style={[styles.miniStatNum, { color: colors.heading, fontSize: 22 }]}>{moneyWhole(budget.lifetime_contributions || 0)}</T>
                       <T style={[styles.miniStatSub, { color: colors.muted }]}>{Math.round(budget.lifetime_pct || 0)}% of {moneyWhole(budget.lifetime_cap || 0)}</T>
                     </View>
                   </View>
@@ -305,7 +305,7 @@ export default function Dashboard() {
                         <TrendingUp size={20} color={colors.gold} />
                       </View>
                       <View style={{ flex: 1, minWidth: 0 }}>
-                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text }}>Budget detail, insights and history</T>
+                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>Budget detail, insights and history</T>
                         <T variant="small" numberOfLines={2} style={{ marginTop: 2 }}>Spending streams, pathways, insights and your lifetime cap</T>
                       </View>
                     </View>
@@ -432,7 +432,7 @@ export default function Dashboard() {
                     <View testID="ttk-statements-section">
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                         <FileText size={15} color={colors.primary} />
-                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 15, color: colors.text }}>Statements</T>
+                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 15, color: colors.heading }}>Statements</T>
                       </View>
                       <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
                         Based on the latest statement{latest?.period_label ? ` (${latest.period_label})` : ""}.
@@ -482,7 +482,7 @@ export default function Dashboard() {
                     <View testID="ttk-invoices-section" style={{ marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                         <FileText size={15} color={colors.gold} />
-                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 15, color: colors.text }}>Invoices</T>
+                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 15, color: colors.heading }}>Invoices</T>
                       </View>
                       <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
                         Based on the latest invoice{latestInvoice?.provider_name ? ` (${latestInvoice.provider_name})` : ""}.

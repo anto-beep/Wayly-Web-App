@@ -44,7 +44,7 @@ export function CodeInput({
                 { borderColor: active ? colors.primary : colors.border, backgroundColor: colors.surface },
               ]}
             >
-              <T style={{ fontFamily: fonts.heading, fontSize: 26, color: colors.text }}>{filled ? value[i] : ""}</T>
+              <T style={{ fontFamily: fonts.heading, fontSize: 26, color: colors.heading }}>{filled ? value[i] : ""}</T>
             </View>
           );
         })}

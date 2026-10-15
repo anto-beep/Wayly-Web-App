@@ -108,7 +108,7 @@ export default function AthmProjectsScreen() {
 
         {showForm ? (
           <Card testID="athm-new-project-form">
-            <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginBottom: spacing.sm }}>New Project</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginBottom: spacing.sm }}>New Project</T>
             <View style={{ gap: spacing.sm }}>
               <Select label="Project type" required value={form.project_type} onChange={(v: string) => setForm({ ...form, project_type: v })} options={PROJECT_TYPE_OPTIONS} testID="athm-project-type" />
               <Field label="Project title" required testID="athm-project-title" value={form.title} onChangeText={(v: string) => setForm({ ...form, title: v })} placeholder="e.g. Bathroom safety upgrade" />

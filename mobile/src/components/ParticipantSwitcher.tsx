@@ -32,7 +32,7 @@ export function ParticipantSwitcher({ householdName, variant = "chip" }: { house
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.6, color: colors.muted }}>
               {hasList ? "CARING FOR" : "HOUSEHOLD"}
             </T>
-            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }} numberOfLines={1}>
+            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }} numberOfLines={1}>
               {label}
             </T>
           </View>

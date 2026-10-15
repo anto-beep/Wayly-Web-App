@@ -38,7 +38,7 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
         <Pressable style={[styles.sheet, { backgroundColor: colors.bg }]} onPress={() => {}}>
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
           <View style={styles.header}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text }}>Notifications</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading }}>Notifications</T>
             <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
               {unread > 0 ? (
                 <Pressable testID="notifications-mark-all-read" onPress={markAllRead} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>

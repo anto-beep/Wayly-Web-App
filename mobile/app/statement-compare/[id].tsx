@@ -98,11 +98,11 @@ export default function StatementCompare() {
                   <View style={styles.totalsRow}>
                     <View style={{ flex: 1 }}>
                       <T variant="small">Total charges</T>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text }}>{money(total)}</T>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading }}>{money(total)}</T>
                     </View>
                     <View style={{ flex: 1 }}>
                       <T variant="small">You paid</T>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text }}>{money(contribution)}</T>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading }}>{money(contribution)}</T>
                     </View>
                   </View>
                 </Card>

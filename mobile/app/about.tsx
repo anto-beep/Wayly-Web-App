@@ -229,7 +229,7 @@ function SectionHeading({ num, title, testID }: { num: string; title: string; te
         <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.gold }}>{num}</T>
         <View style={{ height: 3, width: 40, borderRadius: 3, backgroundColor: colors.gold }} />
       </View>
-      <T style={{ fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, color: colors.text, marginTop: 6 }}>
+      <T style={{ fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, color: colors.heading, marginTop: 6 }}>
         {title}
       </T>
     </View>

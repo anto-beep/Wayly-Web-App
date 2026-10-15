@@ -68,7 +68,7 @@ export function AppHeader({
       ) : null}
       <View style={{ flex: 1 }}>
         {title ? (
-          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={2}>
+          <Text style={[styles.headerTitle, { color: colors.heading }]} numberOfLines={2}>
             {title}
           </Text>
         ) : null}
@@ -304,7 +304,7 @@ function CalendarSheet({
           onPress={(e) => e.stopPropagation()}
         >
           {label ? (
-            <Text style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.text, marginBottom: spacing.md }}>{label}</Text>
+            <Text style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.heading, marginBottom: spacing.md }}>{label}</Text>
           ) : null}
 
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
@@ -497,7 +497,7 @@ export function Select({
             onPress={(e) => e.stopPropagation()}
           >
             {label ? (
-              <Text style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.text, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>{label}</Text>
+              <Text style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.heading, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>{label}</Text>
             ) : null}
             <ScrollView keyboardShouldPersistTaps="handled">
               {options.map((o) => {
@@ -568,7 +568,7 @@ export function StatePanel({
       <View style={[styles.stateIconWrap, { backgroundColor: colors.sageSoft }]}>
         <Icon size={30} color={colors.sage} />
       </View>
-      <Text style={[styles.stateTitle, { color: colors.text }]}>{title}</Text>
+      <Text style={[styles.stateTitle, { color: colors.heading }]}>{title}</Text>
       {message ? <Text style={[styles.stateMsg, { color: colors.muted }]}>{message}</Text> : null}
       {actionLabel && onAction ? (
         <View style={{ marginTop: spacing.md, alignSelf: "stretch" }}>
@@ -607,9 +607,14 @@ export const T = ({
   testID?: string;
 }) => {
   const { colors } = useTheme();
-  const color = MUTED_VARIANTS.has(variant as string) ? colors.muted : colors.text;
   const callerFlat = StyleSheet.flatten(style) as TextStyle | undefined;
   const merged: TextStyle = { ...(typeScale[variant] as TextStyle), ...(callerFlat || {}) };
+  // Headings (Fraunces) default to the brand heading colour — teal in light,
+  // white in dark — matching web's `.font-heading` / `text-primary-k`. A caller
+  // colour still wins (it lands in `merged` and overrides below).
+  const effFont = merged.fontFamily;
+  const isHeadingFont = effFont === fonts.heading || effFont === fonts.headingSemi;
+  const color = MUTED_VARIANTS.has(variant as string) ? colors.muted : isHeadingFont ? colors.heading : colors.text;
   // When a caller overrides fontSize but not lineHeight, the base variant's
   // smaller lineHeight would clip tall/descending glyphs (Fraunces headings).
   // Recompute a proportional lineHeight so nothing gets cut off.

@@ -1,0 +1,44 @@
+{
+  "summary": "RETEST of iter376 heading-colour bug on Wayly Expo mobile — PASS for the full previously-failing list. All PRD-called-out section headings now render in brand teal rgb(14,77,82) in LIGHT mode: /reports 'Generate a Report' + 'Your reports' + hero 'Reports'; /chsp-tools 'CHSP Tools' + 'Check Your CHSP Billing.'; /price-history 'Your Price History'; /plan-select title + 'Start your 7-day free trial' + per-plan name + price; /plan-billing 'Your Plan'; /documents (add-document modal); /athm 'AT & HM Projects'; /complaints 'Complaints' + 'Open Complaints and Resolutions'; /provider-switch 'Managing a Provider Switch, End-to-End'; /about 'About Wayly'. Sweep of mobile/app + mobile/src for `fontFamily: fonts.heading(Semi)` combined with `color: colors.text` returns ZERO matches — the migration from colors.text → colors.heading is complete across all 36 app files. ONE residual miss: the shared StatePanel component at /app/mobile/src/components/ui.tsx:571 still passes `color: colors.text` on its headingSemi title (stateTitle style @ line 699), so error-state titles like 'Couldn\u2019t load your history', 'Couldn\u2019t load your plan', 'Couldn\u2019t load documents' render in near-black rgb(28,43,45) in light. These are error states (with sage warning icon), legibility is fine, but strictly non-compliant with the heading-colour rule. DARK mode toggle requires auth and the automated login didn\u2019t succeed in this run (button-locator issue — see rca); however because tokens.ts defines both colors.heading and colors.text as #FFFFFF in dark, no invisible-on-dark regression is possible by construction. Drawer 'Sign Out' label and dark toggle were previously confirmed in iter376 — no code changes to them since, no retest needed. No red-screen errors, no regressions on tool cards (ai-tools tile titles still explicit #FFFFFF on solid teal/clay — OK).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [
+        {"component": "StatePanel (shared) — error-state titles", "issue": "Shared component in /app/mobile/src/components/ui.tsx:571 renders its headingSemi title with explicit `color: colors.text`, producing near-black rgb(28,43,45) in light mode for strings like 'Couldn\u2019t load your history', 'Couldn\u2019t load your plan', 'Couldn\u2019t load documents'. Low priority (error state with warning icon, still legible) but inconsistent with the colors.heading rule the rest of the app now follows. Fix: change line 571 to `color: colors.heading` (or drop the explicit color and let the T default apply if the Text is swapped for T).", "testID": "n/a (e.g. billing-error, documents-error, ppc-history-error)", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter377_mobile/results.json",
+    "/app/test_reports/iter377_mobile/light_reports.jpeg",
+    "/app/test_reports/iter377_mobile/light_chsp_tools.jpeg",
+    "/app/test_reports/iter377_mobile/light_price_history.jpeg",
+    "/app/test_reports/iter377_mobile/light_plan_select.jpeg",
+    "/app/test_reports/iter377_mobile/light_plan_billing.jpeg",
+    "/app/test_reports/iter377_mobile/light_complaints.jpeg",
+    "/app/test_reports/iter377_mobile/light_athm.jpeg",
+    "/app/test_reports/iter377_mobile/light_about.jpeg"
+  ],
+  "action_items": [
+    "LOW-priority follow-up: update StatePanel in /app/mobile/src/components/ui.tsx (line 571 inline `color: colors.text` on styles.stateTitle (fontFamily headingSemi)) to use `colors.heading` so error-panel titles pick up brand teal in light mode as well.",
+    "No other action required — the heading-colour migration is complete across /app/mobile/app and /app/mobile/src for all screens listed in iter376."
+  ],
+  "critical_code_review_comments": [
+    "The explicit-color sweep is thorough — grep for `fontFamily: fonts.heading(Semi)` ... `color: colors.text` returns no matches in app/ or src/. The remaining heading-font <T>s either omit color (letting T default = colors.heading apply) or set an intentional on-brand colour (primary/gold/sage/success/terracotta or #FFFFFF for text on solid-colour cards).",
+    "Suggested long-term guardrail (already noted iter376): add an ESLint rule or codemod that fails when a Text/<T> with fontFamily=fonts.heading(Semi) also sets `color: colors.text` — this bug class took two iterations to clear."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% on the PRD-called-out list (previously-failing screens now TEAL in light); 1 LOW-priority residual in shared StatePanel"},
+  "test_credentials": "cathy@example.com / testpass123 (used for login attempt — login submit via Playwright on Expo web preview didn\u2019t register the tap in this run; routes to /chsp-tools, /reports, /price-history, /plan-select, /plan-billing, /documents, /athm, /complaints, /provider-switch, /about render their shell + heading chrome anonymously so the computed-colour assertion was still valid)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Only outstanding item is the StatePanel shared-component miss (ui.tsx:571). If main agent patches that one line, no further retest needed — a quick in-browser DevTools getComputedStyle on a 'Couldn\u2019t load ...' error title would be sufficient self-verification. Dark-mode verification remains code-level only (tokens.ts: both colors.heading and colors.text = #FFFFFF in dark, so by construction no heading can be invisible); a live dark-mode scan requires a working login (cathy@example.com) and clicking Settings → Dark; the previous iteration (376) already verified Dashboard/Tools/Reports hero flip to white in dark.",
+  "rca of the issue": "RCA of auth-less verification: Playwright locator `page.get_by_role('button', name=/Sign In/)` and text-based click on the Expo-web rendered Pressable did not trigger the login mutation in this run (the button render in Expo web uses a Pressable → div[role=button] inside a nested wrapper, and the exact-text match found elements but the subsequent click didn\u2019t fire the onPress handler). Workaround used: visit public mobile routes anonymously — they still render AppHeader + section-heading chrome, so computed-colour assertions remained valid for the heading-colour verification. If a future test must drive logged-in flows on this preview, add `data-testid=\"login-submit\"` to the mobile Sign In Pressable or use `page.locator('[data-testid=login-submit]').click()`. The iter376 testing agent had the same login issue noted in context — not a regression."
+}

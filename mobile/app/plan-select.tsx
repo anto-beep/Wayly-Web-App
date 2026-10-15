@@ -56,7 +56,7 @@ export default function PlanSelectScreen() {
       <AppHeader title="Choose Your Plan" onBack={onCancel} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
         <View style={{ gap: 6 }}>
-          <T style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, color: colors.text }}>
+          <T style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, color: colors.heading }}>
             Start your 7-day free trial
           </T>
           <T variant="small" style={{ lineHeight: 21 }}>
@@ -98,9 +98,9 @@ export default function PlanSelectScreen() {
               ) : null}
 
               <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
-                <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text }}>{p.name}</T>
+                <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading }}>{p.name}</T>
                 <View style={{ alignItems: "flex-end" }}>
-                  <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, color: colors.text }}>{p.price}</T>
+                  <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, color: colors.heading }}>{p.price}</T>
                   <T variant="small" style={{ color: colors.muted }}>{p.period}</T>
                 </View>
               </View>

@@ -68,7 +68,7 @@ export default function PlanBillingScreen() {
               <T variant="label">CURRENT PLAN</T>
               <Badge label={statusLabel} tone={statusTone} />
             </View>
-            <T style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.text, marginTop: 4 }}>{name}</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.heading, marginTop: 4 }}>{name}</T>
             {isTrial && sub?.trial_ends_at ? (
               <T variant="small" style={{ marginTop: 6 }}>Your free trial ends {formatDate(sub.trial_ends_at)}.</T>
             ) : isCancelling && sub?.current_period_end ? (

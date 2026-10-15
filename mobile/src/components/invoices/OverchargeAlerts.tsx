@@ -37,7 +37,7 @@ export function OverchargeAlerts({ onViewProvider }: { onViewProvider?: (p: stri
       <View style={{ flexDirection: "row", gap: spacing.sm }}>
         <AlertTriangle size={20} color={colors.terracotta} />
         <View style={{ flex: 1 }}>
-          <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.text }}>Repeated overcharges detected</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading }}>Repeated overcharges detected</T>
           <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 19 }}>
             The same provider has billed questionable charges on more than one invoice. A repeated pattern is worth raising as a formal complaint or refund request.
           </T>

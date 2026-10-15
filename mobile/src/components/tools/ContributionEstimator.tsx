@@ -239,7 +239,7 @@ export default function ContributionEstimator() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <T style={{ fontSize: 11, letterSpacing: 1.4, fontFamily: fonts.bodySemi, color: meta.accent }}>{`STEP ${step + 1} OF ${WIZARD_STEPS.length}`}</T>
-                    <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text }}>{meta.title}</T>
+                    <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading }}>{meta.title}</T>
                   </View>
                 </View>
                 <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm, lineHeight: 20 }}>{meta.desc}</T>
@@ -652,7 +652,7 @@ function RateCard({ label, rate, note, colors, testID, tint, soft }: any) {
   return (
     <View testID={testID} style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: accent, borderRadius: radius.md, backgroundColor: soft || colors.surface2, padding: spacing.sm }}>
       <T style={{ fontSize: 10, letterSpacing: 0.3, color: accent, fontFamily: fonts.bodySemi }}>{label.toUpperCase()}</T>
-      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>{rate}</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginTop: 2 }}>{rate}</T>
       <T style={{ fontSize: 10, color: colors.muted, marginTop: 2 }}>{note}</T>
     </View>
   );

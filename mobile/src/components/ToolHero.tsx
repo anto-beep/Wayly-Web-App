@@ -122,7 +122,7 @@ export default function ToolHero({
           <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1.6, color: isDark ? "rgba(255,255,255,0.75)" : v.accent }}>
             TOOL
           </T>
-          <T style={{ fontFamily: fonts.heading, fontSize: 27, lineHeight: 32, color: isDark ? "#fff" : colors.text, marginTop: 2 }}>
+          <T style={{ fontFamily: fonts.heading, fontSize: 27, lineHeight: 32, color: isDark ? "#fff" : colors.heading, marginTop: 2 }}>
             {name}
           </T>
         </View>

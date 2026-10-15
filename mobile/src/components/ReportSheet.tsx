@@ -63,7 +63,7 @@ export default function ReportSheet({
       <Pressable style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay }} onPress={close}>
         <Pressable style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: Platform.OS === "ios" ? spacing.xxl : spacing.lg, maxHeight: "86%" }} onPress={(e) => e.stopPropagation()} testID="aw2-report-sheet">
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>{reference ? "Thanks — we're on it" : "Report an issue"}</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>{reference ? "Thanks — we're on it" : "Report an issue"}</T>
             <Pressable onPress={close} hitSlop={8}><Ionicons name="close" size={22} color={colors.muted} /></Pressable>
           </View>
           {reference ? (

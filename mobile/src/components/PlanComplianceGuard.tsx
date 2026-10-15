@@ -34,7 +34,7 @@ export function PlanComplianceGuard() {
     <Modal visible transparent animationType="fade" onRequestClose={() => {}}>
       <View style={{ flex: 1, backgroundColor: colors.overlay, alignItems: "center", justifyContent: "center", padding: spacing.lg }}>
         <Card testID="plan-compliance-guard" style={{ width: "100%", maxWidth: 460 }}>
-          <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>Let us tidy up your plan</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>Let us tidy up your plan</T>
           <T variant="small" style={{ marginTop: spacing.sm, lineHeight: 20 }}>
             Your account is on Solo but has {state.active_participants} participants. Solo covers one participant only.
           </T>

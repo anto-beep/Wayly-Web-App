@@ -98,7 +98,7 @@ function AccessHardship({ colors, providerName, emphasise }: any) {
   return (
     <Card testID="chsp-access-hardship">
       <T variant="label">ACCESS AND HARDSHIP</T>
-      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Keep Services Running, And Get Help With Fees</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginTop: 2 }}>Keep Services Running, And Get Help With Fees</T>
       <T variant="small" style={{ marginTop: 4 }}>Draft a letter to keep your services going, or start a hardship / fee-waiver request.</T>
       <Button label="Service Continuity Letter" icon={Mail} testID="chsp-service-continuity-letter" loading={busy === "service_continuity"} onPress={() => draft("service_continuity")} style={{ marginTop: spacing.md }} />
       <Button label="Apply For Hardship / Fee Waiver" icon={LifeBuoy} testID="chsp-hardship-letter" loading={busy === "hardship"} variant={emphasise ? "secondary" : "primary"} onPress={() => draft("hardship")} style={{ marginTop: spacing.sm, ...(emphasise ? {} : { backgroundColor: "#A5512B" }) }} />
@@ -239,7 +239,7 @@ function WS1FeeCheck({ services, colors }: any) {
   return (
     <Card testID="chsp-ws1-fee-check" style={{ backgroundColor: colors.goldSoft }}>
       <T variant="label" style={{ color: colors.gold }}>STEP 2 · CHECK A CHARGE</T>
-      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Was This CHSP Invoice Correct?</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginTop: 2 }}>Was This CHSP Invoice Correct?</T>
       <T variant="small" style={{ marginTop: 4 }}>We compare what you were billed against your provider&apos;s agreed per-unit rate. Fields showing a Required label must be completed.</T>
 
       {/* Upload + auto-read */}
@@ -328,7 +328,7 @@ function WS1FeeCheck({ services, colors }: any) {
                         <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                             <T testID="chsp-ws1-verdict" style={{ fontFamily: fonts.bodySemi, color: colors.text, flex: 1 }}>{result.verdict_headline || result.verdict_label}</T>
-                            <T style={{ fontFamily: fonts.heading, color: colors.text }}>{Number(result.amount_delta) !== 0 ? `${Number(result.amount_delta) > 0 ? "Overbilled " : "Under "}${aud(Math.abs(Number(result.amount_delta)))}` : "No difference"}</T>
+                            <T style={{ fontFamily: fonts.heading, color: colors.heading }}>{Number(result.amount_delta) !== 0 ? `${Number(result.amount_delta) > 0 ? "Overbilled " : "Under "}${aud(Math.abs(Number(result.amount_delta)))}` : "No difference"}</T>
                           </View>
                           <T variant="small" style={{ color: colors.text, marginTop: 4, lineHeight: 19 }}>{result.verdict_explanation}</T>
                         </View>
@@ -352,12 +352,12 @@ function WS1FeeCheck({ services, colors }: any) {
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                       <View testID="chsp-ws1-tile-billed" style={{ flex: 1, minWidth: "45%", backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.sm }}>
                         <T style={{ fontSize: 10, color: colors.primary, letterSpacing: 0.5 }}>BILLED PER UNIT</T>
-                        <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.text, marginTop: 2 }}>{aud(result.billed_per_unit)}</T>
+                        <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading, marginTop: 2 }}>{aud(result.billed_per_unit)}</T>
                         <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>What you were charged for each hour, visit or unit.</T>
                       </View>
                       <View testID="chsp-ws1-tile-expected" style={{ flex: 1, minWidth: "45%", backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.sm }}>
                         <T style={{ fontSize: 10, color: colors.primary, letterSpacing: 0.5 }}>EXPECTED AMOUNT</T>
-                        <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.text, marginTop: 2 }}>{aud(result.expected_amount)}</T>
+                        <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading, marginTop: 2 }}>{aud(result.expected_amount)}</T>
                         <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>Your agreed rate times the units you received.</T>
                       </View>
                       <View testID="chsp-ws1-tile-rate" style={{ flex: 1, minWidth: "45%", backgroundColor: rt.bg, borderRadius: radius.md, padding: spacing.sm }}>
@@ -607,7 +607,7 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
       <T variant="label" style={{ color: colors.sage }}>SETUP · AGREED RATE SCHEDULE</T>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 }}>
         <Wrench size={18} color={colors.primary} />
-        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, flex: 1 }}>Your Saved Provider Rates</T>
+        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, flex: 1 }}>Your Saved Provider Rates</T>
         <T variant="small" style={{ color: colors.muted }} testID="chsp-services-count">{services.length}</T>
       </View>
       <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Record each service so fee checks pre-fill the provider and rate for you.</T>
@@ -724,7 +724,7 @@ function FeeCheckForm({ services, colors }: any) {
     <Card testID="chsp-fee-check-form">
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <ReceiptText size={18} color={colors.primary} />
-        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, flex: 1 }}>Was this CHSP invoice correct?</T>
+        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, flex: 1 }}>Was this CHSP invoice correct?</T>
       </View>
       <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Enter what you were billed and what you expected. We&apos;ll flag anything outside a 2% or $5 tolerance.</T>
 
@@ -798,7 +798,7 @@ function TransitionWalkthrough({ colors }: any) {
   return (
     <Card testID="chsp-transition-walkthrough">
       <T variant="small" style={{ color: colors.muted, fontSize: 11, letterSpacing: 0.5 }}>CONSIDERING A MOVE TO SUPPORT AT HOME?</T>
-      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 2 }}>Transition walkthrough</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginTop: 2 }}>Transition walkthrough</T>
 
       <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, flexWrap: "wrap" }}>
         {titles.map((t, i) => (

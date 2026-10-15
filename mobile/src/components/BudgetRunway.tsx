@@ -58,7 +58,7 @@ export function BudgetRunway({ participantId }: { participantId: string }) {
           <View style={[styles.headerIcon, { backgroundColor: colors.primary + "1A" }]}><TrendingUp size={18} color={colors.primary} /></View>
           <View style={{ flex: 1 }}>
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 1, color: colors.muted }}>BUDGET RUNWAY</T>
-            <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text }} numberOfLines={1}>Where your money stands</T>
+            <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }} numberOfLines={1}>Where your money stands</T>
           </View>
         </View>
         <Pressable testID="bc2-projection-open-scenarios" onPress={() => router.push("/budget-scenarios")} style={[styles.headerBtn, { borderWidth: 1, borderColor: colors.primary + "40", backgroundColor: colors.surface }]}>

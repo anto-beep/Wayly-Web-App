@@ -179,7 +179,7 @@ function NewSwitchModal({ visible, pid, colors, onClose, onCreated }: any) {
       <View style={styles.modalBackdrop}>
         <View style={[styles.modalCard, { backgroundColor: colors.bg }]} testID="psw1-new-modal">
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text }}>Start a Provider Switch</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading }}>Start a Provider Switch</T>
             <Pressable testID="psw1-modal-close" onPress={onClose} hitSlop={10}><X size={22} color={colors.muted} /></Pressable>
           </View>
           <T variant="small" style={{ color: colors.muted, marginTop: 4 }}>Wayly supports the switching process once decided. We do not recommend providers.</T>

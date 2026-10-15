@@ -222,7 +222,7 @@ export function VerdictBanner({ verdict, findings = [], lineCount = 0 }: { verdi
       <View style={{ flexDirection: "row", gap: spacing.sm }}>
         <VIcon size={28} color={tone} />
         <View style={{ flex: 1 }}>
-          <T style={{ fontFamily: fonts.heading, fontSize: 22, lineHeight: 28, color: colors.text }}>{meta.heading}</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 22, lineHeight: 28, color: colors.heading }}>{meta.heading}</T>
           <T variant="small" style={{ marginTop: 4, lineHeight: 20 }}>{meta.body}</T>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: spacing.sm }}>
             <View style={[styles.pill, { backgroundColor: colors.surface2 }]}><T style={{ fontFamily: fonts.bodyMedium, fontSize: 11, color: colors.muted }}>{lineCount} line{lineCount === 1 ? "" : "s"} read</T></View>
@@ -340,7 +340,7 @@ export function InvoiceIssueRegister({ findings, onDraftLetter, onDraftAll }: { 
     return (
       <Card testID="inv1-no-findings" style={{ borderStyle: "dashed", borderWidth: 2, borderColor: colors.sage, backgroundColor: colors.sageSoft, alignItems: "center" }}>
         <CheckCircle2 size={34} color={colors.sage} />
-        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: 8 }}>Nothing worth raising</T>
+        <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginTop: 8 }}>Nothing worth raising</T>
         <T variant="small" style={{ textAlign: "center", marginTop: 4 }}>Every check passed on this invoice. See the charges below for the full list of what we looked at.</T>
       </Card>
     );
@@ -354,7 +354,7 @@ export function InvoiceIssueRegister({ findings, onDraftLetter, onDraftAll }: { 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6, justifyContent: "space-between" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Receipt size={18} color={colors.primary} />
-          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text }}>Issue Register</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading }}>Issue Register</T>
         </View>
         <T variant="small" style={{ color: colors.muted }}>{findings.length} total</T>
       </View>

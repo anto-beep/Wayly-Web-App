@@ -89,7 +89,7 @@ export default function SwitchDecisionScreen() {
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm }} keyboardShouldPersistTaps="handled" testID="psw1-walkthrough-root">
         <View style={{ backgroundColor: colors.primarySoft, borderRadius: radius.lg, padding: spacing.lg }}>
           <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>DECISION WALKTHROUGH</T>
-          <T testID="psw1-walkthrough-title" style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text, marginTop: 4 }}>Confirm the Decision to Switch from {sw.current_provider_name}</T>
+          <T testID="psw1-walkthrough-title" style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading, marginTop: 4 }}>Confirm the Decision to Switch from {sw.current_provider_name}</T>
           <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Wayly does not push either direction. This walkthrough helps you think through the decision.</T>
           {step < 6 ? (
             <View style={{ marginTop: spacing.md }}>

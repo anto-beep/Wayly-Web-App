@@ -201,7 +201,7 @@ function ResultStat({ label, value, colors }: any) {
   return (
     <View style={{ minWidth: 130, flexGrow: 1 }}>
       <T style={{ fontFamily: fonts.body, fontSize: 10, letterSpacing: 0.4, color: colors.muted }}>{label.toUpperCase()}</T>
-      <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>{value}</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>{value}</T>
     </View>
   );
 }

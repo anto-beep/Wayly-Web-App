@@ -158,7 +158,7 @@ export default function ProviderQualityDetail() {
         <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl }}>
           <View>
             <T variant="small" style={{ color: colors.muted, textTransform: "uppercase", letterSpacing: 0.5, fontSize: 11 }}>Provider quality context</T>
-            <T style={{ fontFamily: fonts.heading, fontSize: 24, color: colors.text, marginTop: 2 }} testID="ppc3-provider-name">{profile?.provider_official_name || providerName}</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 24, color: colors.heading, marginTop: 2 }} testID="ppc3-provider-name">{profile?.provider_official_name || providerName}</T>
             <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 19 }}>
               Every publicly available quality signal we can lawfully surface, combined into one honest picture. This is not a rating or recommendation.
             </T>

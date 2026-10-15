@@ -102,7 +102,7 @@ export default function ReportsScreen() {
           />
 
           {/* Catalog — visible upfront so users see what they can create */}
-          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: spacing.sm }}>Generate a Report</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginTop: spacing.sm }}>Generate a Report</T>
           <View testID="reports-catalog" style={{ gap: spacing.md }}>
             {REPORT_CATALOG.map((rt) => (
               <View key={rt.type} testID={`report-card-${rt.type}`} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
@@ -131,7 +131,7 @@ export default function ReportsScreen() {
           </View>
 
           {/* History */}
-          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginTop: spacing.md }}>Your reports</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginTop: spacing.md }}>Your reports</T>
           {error ? (
             <View testID="reports-error" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: spacing.lg, alignItems: "center" }}>
               <FileBarChart size={28} color={colors.muted} />

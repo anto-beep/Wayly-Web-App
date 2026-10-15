@@ -67,7 +67,7 @@ export default function AiToolsHub() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <WaylyHeader />
       <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}>
-        <T style={{ fontFamily: fonts.heading, fontSize: 30, lineHeight: 38, color: colors.primary }} testID="ai-tools-heading">Nine Tools. Built for Australian Families.</T>
+        <T style={{ fontFamily: fonts.heading, fontSize: 30, lineHeight: 38, color: colors.heading }} testID="ai-tools-heading">Nine Tools. Built for Australian Families.</T>
         <T variant="bodyMuted" style={{ marginTop: 10, lineHeight: 23 }}>
           Drop in a statement, paste a care plan, or run the numbers. Every tool below turns 30 minutes of paperwork into a 2-minute plain-English answer.
         </T>

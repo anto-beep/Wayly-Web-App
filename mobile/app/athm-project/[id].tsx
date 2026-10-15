@@ -120,7 +120,7 @@ export default function AthmProjectDetailScreen() {
       <AppHeader title={PROJECT_TYPES[project.project_type]?.label || "Project"} onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled" testID={`athm-project-detail-${project.id}`}>
         <Card>
-          <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>{project.title}</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>{project.title}</T>
           <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>Status: {String(project.status || "").replace(/_/g, " ")}</T>
           <Button label="Advance stage" icon={ArrowRight} testID={`athm-advance-${project.id}`} variant="outline" loading={advancing} onPress={advance} style={{ marginTop: spacing.sm }} />
         </Card>

@@ -272,7 +272,7 @@ function NewComplaintModal({ visible, pid, colors, prefill, onClose, onCreated }
       <View style={styles.modalBackdrop}>
         <View style={[styles.modalCard, { backgroundColor: colors.bg }]} testID="cmp1-new-modal">
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.text }}>New Complaint · Step {step + 1} of 4</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.heading }}>New Complaint · Step {step + 1} of 4</T>
             <Pressable testID="cmp1-new-cancel" onPress={onClose} hitSlop={10}><X size={22} color={colors.muted} /></Pressable>
           </View>
           <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>{STEPS[step]}. A LOOP-1 case is opened automatically when you finish.</T>

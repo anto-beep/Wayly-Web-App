@@ -103,7 +103,7 @@ export default function PriceHistory() {
               <View style={{ flexDirection: "row", gap: spacing.sm }}>
                 <PartyPopper size={22} color={colors.sage} />
                 <View style={{ flex: 1 }}>
-                  <T testID="ppc-milestone-heading" style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text }}>You&apos;ve crossed {activeMilestone.label} saved</T>
+                  <T testID="ppc-milestone-heading" style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading }}>You&apos;ve crossed {activeMilestone.label} saved</T>
                   <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 19 }}>{activeMilestone.copy}</T>
                   <T variant="small" testID="ppc-milestone-total" style={{ color: colors.muted, marginTop: 6 }}>Estimated total tracked: {aud2(snapshot?.totalSaved || 0)}</T>
                 </View>
@@ -145,7 +145,7 @@ export default function PriceHistory() {
 
           {groups && groups.length === 0 ? (
             <Card testID="ppc-history-empty" style={{ alignItems: "center" }}>
-              <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>No saved checks yet</T>
+              <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>No saved checks yet</T>
               <T variant="small" style={{ textAlign: "center", color: colors.muted, marginTop: 6 }}>{"Head to the Price Checker and tap 'Save this result' after your first comparison, this page then builds up over time."}</T>
               <Button label="Open the Price Checker" testID="ppc-history-open-tool" onPress={() => router.replace("/tool/provider-price-checker")} style={{ marginTop: spacing.md }} />
             </Card>
@@ -215,7 +215,7 @@ function HistoryGroup({ group, colors, onChanged }: any) {
       <View style={{ flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <View style={{ flex: 1 }}>
           <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>{String(group.service).toUpperCase()}</T>
-          <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>{group.provider_display_name}</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>{group.provider_display_name}</T>
           <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>{group.rows.length} saved check{group.rows.length !== 1 ? "s" : ""}</T>
           {quality && quality.overall_signal ? (
             <Pressable
@@ -274,7 +274,7 @@ function HistoryGroup({ group, colors, onChanged }: any) {
       <Modal visible={bulkOpen} transparent animationType="fade" onRequestClose={() => setBulkOpen(false)}>
         <Pressable style={{ flex: 1, justifyContent: "center", padding: spacing.lg, backgroundColor: colors.overlay }} onPress={() => setBulkOpen(false)}>
           <Pressable style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg }} onPress={(e) => e.stopPropagation()} testID="ppc-history-bulk-modal">
-            <T style={{ fontFamily: fonts.heading, fontSize: 19, color: colors.text }}>Delete all history for this provider?</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 19, color: colors.heading }}>Delete all history for this provider?</T>
             <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm, lineHeight: 20 }}>{`This erases every saved check for ${group.provider_display_name} on ${group.service}. It also scrubs the anonymised rows from Wayly's provider aggregate. This cannot be undone.`}</T>
             <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
               <Button label="Cancel" variant="outline" testID="ppc-history-bulk-cancel" onPress={() => setBulkOpen(false)} style={{ flexGrow: 1 }} />
@@ -288,7 +288,7 @@ function HistoryGroup({ group, colors, onChanged }: any) {
       <Modal visible={Boolean(rowConfirm)} transparent animationType="fade" onRequestClose={() => setRowConfirm(null)}>
         <Pressable style={{ flex: 1, justifyContent: "center", padding: spacing.lg, backgroundColor: colors.overlay }} onPress={() => setRowConfirm(null)}>
           <Pressable style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg }} onPress={(e) => e.stopPropagation()} testID="ppc-history-row-delete-confirm">
-            <T style={{ fontFamily: fonts.heading, fontSize: 19, color: colors.text }}>Confirm delete</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 19, color: colors.heading }}>Confirm delete</T>
             <T variant="small" style={{ color: colors.text, marginTop: spacing.sm, lineHeight: 20 }}>{rowConfirm?.explanation}</T>
             <T variant="small" style={{ color: colors.muted, marginTop: 6, fontSize: 12 }}>{`Before: ${rowConfirm?.before ?? 0} increases counted. After: ${rowConfirm?.after ?? 0} increases.`}</T>
             <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>

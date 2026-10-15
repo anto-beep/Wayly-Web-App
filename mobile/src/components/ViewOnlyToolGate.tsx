@@ -30,7 +30,7 @@ export function ViewOnlyToolGate({ children }: { children: React.ReactNode }) {
         <View style={[styles.iconWrap, { backgroundColor: colors.goldSoft }]}>
           <Lock size={26} color={colors.gold} />
         </View>
-        <T style={{ fontFamily: fonts.heading, fontSize: 24, color: colors.text, textAlign: "center", marginTop: spacing.md }}>
+        <T style={{ fontFamily: fonts.heading, fontSize: 24, color: colors.heading, textAlign: "center", marginTop: spacing.md }}>
           This tool is locked
         </T>
         <T variant="bodyMuted" style={{ textAlign: "center", marginTop: spacing.sm, lineHeight: 22 }}>

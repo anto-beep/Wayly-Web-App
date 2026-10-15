@@ -239,7 +239,7 @@ function SettingsSheet({ open, onClose, ctx, onUpdated, participantId, colors }:
       <Pressable style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay }} onPress={onClose}>
         <Pressable style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: Platform.OS === "ios" ? spacing.xxl : spacing.lg, maxHeight: "86%" }} onPress={(e) => e.stopPropagation()} testID="aw2-settings-sheet">
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>What can Wayly read?</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>What can Wayly read?</T>
             <Pressable onPress={onClose} hitSlop={8}><Ionicons name="close" size={22} color={colors.muted} /></Pressable>
           </View>
           <ScrollView style={{ marginTop: spacing.md }} keyboardShouldPersistTaps="handled">

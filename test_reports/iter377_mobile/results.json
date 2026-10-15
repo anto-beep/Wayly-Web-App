@@ -1,0 +1,386 @@
+{
+  "findings": [],
+  "errors": [
+    "login:Locator.element_handle: Timeout 30000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"button\", name=re.compile(r\"Log in|Sign in\", re.IGNORECASE)).first\n"
+  ],
+  "light": {
+    "reports": [
+      {
+        "text": "Reports",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Generate a Report",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "18px"
+      },
+      {
+        "text": "Your reports",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "18px"
+      }
+    ],
+    "chsp_tools": [
+      {
+        "text": "CHSP Tools",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Check Your CHSP Billing.",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ],
+    "price_history": [
+      {
+        "text": "Your Price History",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Couldn't load your history",
+        "color": "rgb(28, 43, 45)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      }
+    ],
+    "plan_select": [
+      {
+        "text": "Choose Your Plan",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Start your 7-day free trial",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "24px"
+      },
+      {
+        "text": "Solo",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "22px"
+      },
+      {
+        "text": "$24.50",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      },
+      {
+        "text": "24.50",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      },
+      {
+        "text": "Family",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "22px"
+      },
+      {
+        "text": "$49.50",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      },
+      {
+        "text": "49.50",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      }
+    ],
+    "plan_billing": [
+      {
+        "text": "Your Plan",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Couldn't load your plan",
+        "color": "rgb(28, 43, 45)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      }
+    ],
+    "documents": [
+      {
+        "text": "Couldn't load documents",
+        "color": "rgb(28, 43, 45)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      }
+    ],
+    "athm": [
+      {
+        "text": "AT & HM Projects",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ],
+    "complaints": [
+      {
+        "text": "Complaints",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Open Complaints and Resolutions",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ],
+    "provider_switch": [
+      {
+        "text": "Managing a Provider Switch, End-to-End",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ],
+    "about": [
+      {
+        "text": "About Wayly",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "We Built Wayly Because Someone Had To.",
+        "color": "rgb(255, 255, 255)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "30px"
+      },
+      {
+        "text": "Someone Had To.",
+        "color": "rgb(232, 154, 111)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "30px"
+      },
+      {
+        "text": "I",
+        "color": "rgb(165, 81, 43)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "16px"
+      },
+      {
+        "text": "The Moments We're Building For",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "That is the moment Wayly was built for.",
+        "color": "rgb(255, 255, 255)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      },
+      {
+        "text": "II",
+        "color": "rgb(165, 81, 43)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "16px"
+      },
+      {
+        "text": "You Are Not Alone in This",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "None of you are getting a handbook.",
+        "color": "rgb(255, 255, 255)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "22px"
+      },
+      {
+        "text": "III",
+        "color": "rgb(165, 81, 43)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "16px"
+      },
+      {
+        "text": "Why Now",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "3",
+        "color": "rgb(255, 255, 255)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "28px"
+      }
+    ],
+    "ai_tools": [
+      {
+        "text": "AGED CARE, MADE CLEAR",
+        "color": "rgb(165, 81, 43)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ],
+    "dashboard": [
+      {
+        "text": "AGED CARE, MADE CLEAR",
+        "color": "rgb(165, 81, 43)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ]
+  },
+  "dark": {
+    "reports": [
+      {
+        "text": "Reports",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Generate a Report",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "18px"
+      },
+      {
+        "text": "Your reports",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "18px"
+      }
+    ],
+    "chsp_tools": [
+      {
+        "text": "CHSP Tools",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Check Your CHSP Billing.",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ],
+    "price_history": [
+      {
+        "text": "Your Price History",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Couldn't load your history",
+        "color": "rgb(28, 43, 45)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      }
+    ],
+    "plan_billing": [
+      {
+        "text": "Your Plan",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Couldn't load your plan",
+        "color": "rgb(28, 43, 45)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      }
+    ],
+    "plan_select": [
+      {
+        "text": "Choose Your Plan",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      },
+      {
+        "text": "Start your 7-day free trial",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "24px"
+      },
+      {
+        "text": "Solo",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "22px"
+      },
+      {
+        "text": "$24.50",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      },
+      {
+        "text": "24.50",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      },
+      {
+        "text": "Family",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "22px"
+      },
+      {
+        "text": "$49.50",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      },
+      {
+        "text": "49.50",
+        "color": "rgb(14, 77, 82)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      }
+    ],
+    "ai_tools": [
+      {
+        "text": "AGED CARE, MADE CLEAR",
+        "color": "rgb(165, 81, 43)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ],
+    "dashboard": [
+      {
+        "text": "AGED CARE, MADE CLEAR",
+        "color": "rgb(165, 81, 43)",
+        "fontFamily": "PlayfairDisplay-Bold",
+        "fontSize": "26px"
+      }
+    ],
+    "documents": [
+      {
+        "text": "Couldn't load documents",
+        "color": "rgb(28, 43, 45)",
+        "fontFamily": "PlayfairDisplay-SemiBold",
+        "fontSize": "20px"
+      }
+    ]
+  }
+}

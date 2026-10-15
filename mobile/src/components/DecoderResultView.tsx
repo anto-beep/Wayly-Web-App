@@ -520,7 +520,7 @@ function FeeBreakdown({ extracted, summary, colors }: { extracted: any; summary:
   return (
     <Card testID="decoder-fee-breakdown">
       <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
-        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text }}>Where the money goes</T>
+        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>Where the money goes</T>
         <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>Every fee, broken out</T>
       </View>
       <View style={{ marginTop: spacing.sm }}>

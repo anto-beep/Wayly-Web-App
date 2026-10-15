@@ -143,7 +143,7 @@ export function AppDrawer() {
               style={({ pressed }) => [styles.item, pressed && { backgroundColor: colors.terracotta + "1A" }]}
             >
               <LogOut size={18} color={colors.terracotta} />
-              <T style={{ flex: 1, fontFamily: fonts.bodySemi, fontSize: 15, color: colors.terracotta }}>Sign out</T>
+              <T style={{ flex: 1, fontFamily: fonts.bodySemi, fontSize: 15, color: colors.terracotta }}>Sign Out</T>
             </Pressable>
           </View>
         </Pressable>

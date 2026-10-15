@@ -1,0 +1,44 @@
+{
+  "light_dashboard_greeting_color": "rgb(14, 77, 82)",
+  "light_ai_tools_heading_color": "rgb(14, 77, 82)",
+  "light_reports_headings": [
+    {
+      "t": "Reports",
+      "c": "rgb(14, 77, 82)",
+      "f": "PlayfairDisplay-Bold"
+    },
+    {
+      "t": "Generate a Report",
+      "c": "rgb(28, 43, 45)",
+      "f": "PlayfairDisplay-Bold"
+    },
+    {
+      "t": "Your reports",
+      "c": "rgb(28, 43, 45)",
+      "f": "PlayfairDisplay-Bold"
+    }
+  ],
+  "drawer_logout_label": {
+    "text": "Sign Out",
+    "spans": [
+      "Sign Out"
+    ]
+  },
+  "drawer_caring_for_present": true,
+  "dark_dashboard_greeting_color": "rgb(255, 255, 255)",
+  "dark_ai_tools_heading_color": "rgb(255, 255, 255)",
+  "dark_reports_headings": [
+    {
+      "t": "Reports",
+      "c": "rgb(255, 255, 255)"
+    },
+    {
+      "t": "Generate a Report",
+      "c": "rgb(255, 255, 255)"
+    },
+    {
+      "t": "Your reports",
+      "c": "rgb(255, 255, 255)"
+    }
+  ]
+}

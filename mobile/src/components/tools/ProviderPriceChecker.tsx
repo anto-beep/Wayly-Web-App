@@ -234,7 +234,7 @@ export default function ProviderPriceChecker() {
                   <View style={{ flexDirection: "row", gap: spacing.sm }}>
                     <Info size={20} color={colors.primary} />
                     <View style={{ flex: 1 }}>
-                      <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, color: colors.text }}>No indicative range for this fee type</T>
+                      <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, color: colors.heading }}>No indicative range for this fee type</T>
                       <T variant="body" style={{ marginTop: 6, lineHeight: 22 }}>{sanitizeAI(result.plain_language)}</T>
                     </View>
                   </View>
@@ -540,7 +540,7 @@ function EmailProviderModal({ open, onClose, result, provider, colors }: any) {
       <Pressable style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay }} onPress={onClose}>
         <Pressable style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: Platform.OS === "ios" ? spacing.xxl : spacing.lg, maxHeight: "88%" }} onPress={(e) => e.stopPropagation()} testID="pc-email-modal">
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>Email the provider</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>Email the provider</T>
             <Pressable onPress={onClose} hitSlop={8}><X size={22} color={colors.muted} /></Pressable>
           </View>
           <ScrollView style={{ marginTop: spacing.md }} keyboardShouldPersistTaps="handled">

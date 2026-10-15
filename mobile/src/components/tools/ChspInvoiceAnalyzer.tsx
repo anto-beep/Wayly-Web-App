@@ -93,14 +93,14 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLett
       <Card testID="chsp-analyzer-summary">
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: spacing.sm }}>
           <View style={{ flex: 1 }}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.text }}>{h.provider_name || "CHSP Provider"}</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading }}>{h.provider_name || "CHSP Provider"}</T>
             <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
               {h.invoice_reference ? `Invoice ${h.invoice_reference}` : "Invoice"}{h.period_start ? ` · ${h.period_start}${h.period_end ? ` – ${h.period_end}` : ""}` : ""}
             </T>
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <T variant="small" style={{ color: colors.muted, fontSize: 10, letterSpacing: 0.5 }}>TOTAL</T>
-            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text }}>{aud(t.grand_total)}</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>{aud(t.grand_total)}</T>
           </View>
         </View>
         <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start", backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.sm, marginTop: spacing.sm }}>
@@ -139,11 +139,11 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLett
           <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
             <View style={{ flex: 1, backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.sm }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Landmark size={13} color={colors.primary} /><T variant="small" style={{ color: colors.primary, fontSize: 11 }}>Government</T></View>
-              <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.text, marginTop: 2 }}>{aud(govt)}</T>
+              <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading, marginTop: 2 }}>{aud(govt)}</T>
             </View>
             <View style={{ flex: 1, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.sm }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Wallet size={13} color={colors.gold} /><T variant="small" style={{ color: colors.gold, fontSize: 11 }}>Your share</T></View>
-              <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.text, marginTop: 2 }}>{aud(you)}</T>
+              <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading, marginTop: 2 }}>{aud(you)}</T>
             </View>
           </View>
         </Card>

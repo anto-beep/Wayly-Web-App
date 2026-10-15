@@ -1,3 +1,14 @@
+## Iter 383 — Systematic teal headings (light) / white (dark) across ALL mobile screens + "Sign Out" (Jun 2026, fork) ✅ testing-agent VERIFIED (iteration_377.json PASS)
+User-reported bug: mobile titles/headings weren't brand-teal like web. Root cause: headings default to ink, and web applies teal (`text-primary-k`) per-heading; mobile had near-black headings.
+- Added theme token **`colors.heading`** (light `#0E4D52` teal / dark `#FFFFFF` white) in `tokens.ts`, mirroring web's `.font-heading` which is teal in light and white in dark.
+- Shared `T` primitive now defaults any heading-font (`fonts.heading`/`headingSemi`) text to `colors.heading` (a caller colour still wins); `AppHeader` title + `StatePanel` title use `colors.heading`.
+- Swept all 36 mobile files: every `fontFamily: fonts.heading* … color: colors.text` → `colors.heading` (63 replacements). `grep` for the old pattern now returns zero. Explicit `#FFFFFF` on headings over solid teal/clay/sage cards was preserved (no invisible text).
+- Drawer footer label corrected "Sign out" → **"Sign Out"**.
+- Verified by testing agent (iter377): reports, chsp-tools, price-history, plan-select, plan-billing, documents, athm, complaints, provider-switch, about — all section titles now teal rgb(14,77,82) in light; dark headings white by construction; no contrast regressions; tool cards still correct.
+- Still pending (continuing sweep): deeper per-screen layout parity for Statements list/detail, Invoices, individual tool outputs, Care Plans, Settings, Reports/Budget charts; full interactive dark-mode visual pass.
+
+
+
 ## Iter 382 — Mobile drawer/menu rebuilt to match web + Tools parity (Jun 2026, fork) ✅ self-verified via Expo screenshots
 - **Drawer/menu (`AppDrawer.tsx`) fully rebuilt to mirror the web mobile menu** (user sent a reference screenshot): white (`colors.surface`) background, right-side panel, header = user first name + "<PLAN> PLAN" eyebrow + X, a **"CARING FOR" card** (surface2 bg) with the active participant's name + "Classification N · Provider", collapsible nav groups that **auto-open the group containing the active route**, the **active item highlighted teal (`colors.primary`) with white text/icon** (matching web `bg-primary-k text-white`), and a footer with **Plan & Billing (+ plan badge)** and **Sign out** (terracotta). Uses `usePathname()` + a `(tabs)`-normaliser for active detection. Verified by screenshot — matches the web reference closely.
 - **Tools screen (`(tabs)/ai-tools.tsx`)**: heading recoloured to brand teal (`colors.primary`) to match web `text-primary-k`. The solid teal/clay/sage tool cards already matched web (web also uses solid `bg-[#0E4D52]/#A5512B/#425F47` cards here), so no card change needed.

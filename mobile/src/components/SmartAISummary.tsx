@@ -90,7 +90,7 @@ export function SmartAISummary({
   const gradColors: [string, string] = isDark
     ? ["rgba(79,168,174,0.10)", "transparent"]
     : ["rgba(14,77,82,0.06)", "rgba(244,239,231,0.55)"];
-  const headText = isDark ? colors.text : colors.primary;
+  const headText = colors.heading;
 
   return (
     <View

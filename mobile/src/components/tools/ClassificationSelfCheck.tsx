@@ -602,7 +602,7 @@ export default function ClassificationSelfCheck() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <T style={{ fontSize: 11, letterSpacing: 1.4, fontFamily: fonts.bodySemi, color: accent }}>{`STEP ${step + 1} OF ${CSC_STEP_META.length}`}</T>
-                    <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.text }}>{meta.title}</T>
+                    <T style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading }}>{meta.title}</T>
                   </View>
                 </View>
                 <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm, lineHeight: 20 }}>{meta.desc}</T>
@@ -753,7 +753,7 @@ export default function ClassificationSelfCheck() {
               {bands.length ? (
                 <Card testID="csc-comparison" style={{ backgroundColor: colors.sageSoft }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.sage }}>HOW THE LEVELS COMPARE</T>
-                  <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.text, marginTop: 2 }}>The 8 Support at Home levels</T>
+                  <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading, marginTop: 2 }}>The 8 Support at Home levels</T>
                   <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 18 }}>Each level funds a set amount of care per year. Higher levels mean more help. Your likely band is highlighted.</T>
                   <View style={{ gap: 8, marginTop: spacing.md }}>
                     {bands.map((b) => {

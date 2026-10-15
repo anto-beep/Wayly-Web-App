@@ -1,0 +1,60 @@
+{
+  "summary": "Mobile heading-colour parity verification (iter376). Core fix for AppHeader title + T component default (heading-font → colors.heading) is WORKING: Dashboard greeting, AI Tools heading, and Reports hero all render brand TEAL rgb(14,77,82) in light and WHITE rgb(255,255,255) in dark. Drawer label reads exactly 'Sign Out' and 'drawer-caring-for' card is present. HOWEVER — the fix is incomplete: many screens still pass an explicit `color: colors.text` on heading-font <T> elements, which overrides the new default and makes those section titles render in near-black (#1C2B2D) in LIGHT mode. The PRD specifically called out that Reports 'Generate a Report' + 'Your reports' section titles must be teal — they are NOT. Dark mode happens to mask the bug because colors.text == colors.heading == #FFFFFF in dark. No invisible-on-solid-colour regressions found (tool cards still use explicit #FFFFFF on coloured tiles — OK). No red-screen errors; tabs navigate fine.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [], "integration_issues": [], "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "reports.tsx — 'Generate a Report' section title", "issue": "Light mode: renders in near-black rgb(28,43,45) instead of brand teal. Code at /app/mobile/app/reports.tsx:105 explicitly passes `color: colors.text` on a `fontFamily: fonts.heading` <T>, overriding the new T default (colors.heading). PRD explicitly called this out as a required teal heading.", "testID": "n/a (text node)", "priority": "HIGH"},
+        {"component": "reports.tsx — 'Your reports' section title", "issue": "Same bug — /app/mobile/app/reports.tsx:134 passes `color: colors.text` on heading-font <T>; renders near-black in light.", "testID": "n/a", "priority": "HIGH"},
+        {"component": "reports.tsx — report card titles ('Household Summary', 'Quarterly Budget', etc.)", "issue": "Line 114 uses `fontFamily: fonts.bodySemi` + `color: colors.text` — body font so arguably not a 'heading', but the PRD listed 'report card titles' as required teal. Currently renders near-black. If product intent is body-weight, ignore; if teal, change color to colors.primary / colors.heading.", "testID": "report-card-*", "priority": "MEDIUM"},
+        {"component": "plan-billing.tsx:71 (user name on Plan & Billing hero)", "issue": "Heading-font with explicit `color: colors.text` — near-black in light instead of teal.", "testID": "n/a", "priority": "MEDIUM"},
+        {"component": "chsp-tools.tsx (lines 101, 242, 331, 355, 360, 610, 727, 801)", "issue": "Multiple heading-font <T> elements explicitly set `color: colors.text`, rendering near-black section titles in light (e.g. 'Keep Services Running, And Get Help With Fees', 'Was This CHSP Invoice Correct?', 'Your Saved Provider Rates', 'Transition walkthrough').", "testID": "n/a", "priority": "MEDIUM"},
+        {"component": "price-history.tsx (lines 106, 148, 218, 277, 291)", "issue": "Heading-font titles ('You've crossed X saved', 'No saved checks yet', provider display name, delete dialogs) hard-coded to colors.text — not teal in light.", "testID": "ppc-milestone-heading et al.", "priority": "MEDIUM"},
+        {"component": "plan-select.tsx (lines 59, 101, 103)", "issue": "Plan selector page title + per-plan name + price are heading-font with colors.text — near-black in light.", "testID": "n/a", "priority": "MEDIUM"},
+        {"component": "documents.tsx:332", "issue": "'Add a document' modal title is heading-font with colors.text.", "testID": "n/a", "priority": "LOW"},
+        {"component": "athm.tsx:111 / athm-project/[id].tsx:123", "issue": "Project titles use heading-font with colors.text.", "testID": "n/a", "priority": "LOW"},
+        {"component": "complaints.tsx:275", "issue": "Complaint wizard step title heading-font with colors.text.", "testID": "n/a", "priority": "LOW"},
+        {"component": "provider-switch.tsx:182", "issue": "'Start a Provider Switch' heading uses colors.text.", "testID": "n/a", "priority": "LOW"},
+        {"component": "provider-quality/[name].tsx:161", "issue": "Provider page name heading uses colors.text.", "testID": "ppc3-provider-name", "priority": "LOW"},
+        {"component": "about.tsx:232", "issue": "About hero sub-heading uses colors.text.", "testID": "n/a", "priority": "LOW"},
+        {"component": "statement-compare/[id].tsx:101,105 / switch-decision/[sid].tsx:92 / report/[id].tsx:49", "issue": "Numeric/summary heading-font <T>s hard-coded to colors.text — near-black in light.", "testID": "psw1-walkthrough-title et al.", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Reports (light mode)", "issues": ["Visual inconsistency: hero 'Reports' is brand teal, but immediately-below 'Generate a Report' and 'Your reports' are near-black — breaks visual hierarchy and does not match web."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter376_mobile/results.json",
+    "/app/test_reports/iter376_mobile/01_dashboard_light.jpeg",
+    "/app/test_reports/iter376_mobile/02_tools_light.jpeg",
+    "/app/test_reports/iter376_mobile/03_reports_light.jpeg",
+    "/app/test_reports/iter376_mobile/06_drawer_light.jpeg",
+    "/app/test_reports/iter376_mobile/08_dashboard_dark.jpeg",
+    "/app/test_reports/iter376_mobile/10_reports_dark.jpeg"
+  ],
+  "action_items": [
+    "Sweep /app/mobile/app and /app/mobile/src for the pattern `fontFamily: fonts.heading` (or fonts.headingSemi) combined with `color: colors.text` and either (a) remove the explicit color so T's new default (colors.heading) applies, or (b) replace with `color: colors.heading`. Keep explicit white/primaryFg on heading-text that sits on solid teal/clay/sage backgrounds (ai-tools tool cards at ai-tools.tsx:140 are already correct).",
+    "Priority offenders (PRD-called-out): /app/mobile/app/reports.tsx:105 and :134.",
+    "Also fix: plan-billing.tsx:71, chsp-tools.tsx (8 spots), price-history.tsx (5 spots), plan-select.tsx (3 spots), documents.tsx:332, athm.tsx:111, athm-project/[id].tsx:123, complaints.tsx:275, provider-switch.tsx:182, provider-quality/[name].tsx:161, about.tsx:232, statement-compare/[id].tsx:101/105, switch-decision/[sid].tsx:92, report/[id].tsx:49.",
+    "Decide product intent for report card titles (reports.tsx:114) — if teal is wanted, promote to heading-font + colors.heading; otherwise leave as body."
+  ],
+  "critical_code_review_comments": [
+    "The T component now defaults heading-font text to colors.heading, which is the right systemic fix — but the migration is only half-done: ~25+ explicit `color: colors.text` overrides on heading-font <T> instances remain across the mobile code and silently defeat the fix in light mode. The bug is masked in dark mode only because colors.text and colors.heading both equal #FFFFFF there.",
+    "Suggest adding an ESLint rule or codemod check: a <T> whose style sets fontFamily to fonts.heading/headingSemi should not also set an explicit color unless it is colors.primaryFg or '#FFFFFF' (for on-solid-colour cases)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not tested)", "frontend": "partial — core T/AppHeader fix works, but ~15 screens still show non-teal headings in light"},
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After main agent sweeps the explicit `color: colors.text` overrides on heading-font <T>s, re-test by (1) logging in as cathy@example.com / testpass123 at the mobile Expo preview, (2) visiting /reports, /chsp-tools, /price-history, /plan-select, /plan-billing in LIGHT mode and asserting the colour of each section heading is rgb(14,77,82) via `getComputedStyle(el).color`, (3) toggling to DARK and asserting rgb(255,255,255). Drawer 'Sign Out' label and theme-dark toggle are confirmed working — no need to retest.",
+  "rca of the issue": "Main agent added `colors.heading` to tokens.ts and made the T component default heading-font text to `colors.heading`, and set AppHeader title to `colors.heading` — that part of the fix is correct and verified on Dashboard (dashboard-greeting), Tools (ai-tools-heading) and Reports hero. However existing screens (reports.tsx, chsp-tools.tsx, price-history.tsx, plan-select.tsx, plan-billing.tsx, documents.tsx, about.tsx, complaints.tsx, athm*.tsx, provider-switch/quality, statement-compare, switch-decision, report/[id]) all explicitly pass `color: colors.text` on their heading-font <T> elements. Because an explicit style wins over the component's default, those section headings continue to render in colors.text (#1C2B2D in light) instead of the new colors.heading teal. Dark mode hides the bug because both tokens are #FFFFFF in dark. Mitigation: either delete the explicit `color: colors.text` on heading-font <T> instances (so the default applies) or change it to `colors.heading`."
+}
