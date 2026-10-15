@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { Bell, CheckCheck, ChevronRight, X } from "lucide-react-native";
 
 import { useNotifications, Notification } from "@/src/context/NotificationsContext";
+import { resolveNotificationLink } from "@/src/lib/notificationLink";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { T } from "@/src/components/ui";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -16,13 +17,17 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   const { colors } = useTheme();
 
   const openOne = async (n: Notification) => {
+    // Viewing marks it read (removing it from the list). Only navigate when the
+    // link maps to a real mobile screen — a stale/unmappable link just dismisses
+    // so the user never hits the "Unmatched route" error screen.
     await markRead(n.id);
-    if (n.link && n.link.startsWith("/")) {
-      onClose();
+    const target = resolveNotificationLink(n.link);
+    onClose();
+    if (target) {
       try {
-        router.push(n.link as any);
+        router.push(target as any);
       } catch {
-        /* link may not map to a mobile route; badge is already decremented */
+        /* defensive: +not-found handles anything that slips through */
       }
     }
   };
@@ -72,7 +77,7 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
                     {n.body ? <T variant="small" style={{ marginTop: 2, lineHeight: 19 }}>{n.body}</T> : null}
                     {n.created_at ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.6, color: colors.muted, marginTop: 6 }}>{formatDateTime(n.created_at).toUpperCase()}</T> : null}
                   </View>
-                  {n.link ? <ChevronRight size={18} color={colors.muted} /> : null}
+                  {resolveNotificationLink(n.link) ? <ChevronRight size={18} color={colors.muted} /> : null}
                 </Pressable>
               ))
             )}

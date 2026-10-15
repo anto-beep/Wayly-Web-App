@@ -33,7 +33,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0E4D52"
       },
-      "package": "com.emergent.prorationpreview.x214np"
+      "package": "au.com.wayly.app"
     },
     "web": {
       "bundler": "metro",

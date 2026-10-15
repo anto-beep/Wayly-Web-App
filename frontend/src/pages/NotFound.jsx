@@ -1,9 +1,19 @@
 import React, { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Home, Search } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import SeoHead from "@/seo/SeoHead";
+
+function isAuthenticated() {
+    try {
+        return Boolean(
+            localStorage.getItem("wayly_token") ||
+            localStorage.getItem("kindred_token") ||
+            localStorage.getItem("token")
+        );
+    } catch { return false; }
+}
 
 /**
  * Phase 8, Custom 404 page.
@@ -13,9 +23,14 @@ import SeoHead from "@/seo/SeoHead";
  * helpful next-step. Logs to PostHog as `page_not_found` so we can spot
  * recurring broken paths and ship redirects in seo_routes.py when patterns
  * emerge.
+ *
+ * Logged-in users (or anyone on an /app path — e.g. a stale notification link
+ * to a deleted statement) get a calm in-app message with a one-tap route back
+ * to the dashboard instead of the public marketing 404.
  */
 export default function NotFound() {
     const location = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => {
         document.title = "Page not found · Wayly";
@@ -24,6 +39,32 @@ export default function NotFound() {
             try { window.posthog && window.posthog.capture("page_not_found", { path: location.pathname }); } catch (_) {}
         }
     }, [location.pathname]);
+
+    const inApp = isAuthenticated() || location.pathname.startsWith("/app");
+    if (inApp) {
+        return (
+            <div className="min-h-screen bg-kindred flex items-center justify-center px-6" data-testid="notfound-inapp">
+                <div className="w-full max-w-md text-center rounded-2xl border border-[#CFE0F0] bg-white p-8 shadow-[0_24px_64px_rgba(0,0,0,0.08)]">
+                    <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#E9F3F1]">
+                        <Search className="h-6 w-6 text-[#075866]" />
+                    </div>
+                    <h1 className="font-heading text-2xl text-[#0E2A47]">This page isn't available</h1>
+                    <p className="mt-3 text-sm leading-relaxed text-[#3F506B]">
+                        The link you followed may have moved, or the item it pointed to is no longer here.
+                        Nothing's wrong with your account — let's get you back.
+                    </p>
+                    <div className="mt-6 flex flex-col gap-2">
+                        <Link to="/app" data-testid="notfound-dashboard" className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0E2A47] hover:bg-[#091D33] text-white px-5 py-3 text-sm font-semibold">
+                            <Home className="h-4 w-4" /> Go to dashboard
+                        </Link>
+                        <button type="button" onClick={() => navigate(-1)} data-testid="notfound-goback" className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-[#0E2A47] border border-[#CFE0F0] px-5 py-3 text-sm font-semibold hover:border-[#2BC4D6]">
+                            Go back
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-kindred">

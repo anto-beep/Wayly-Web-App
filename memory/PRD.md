@@ -1,5 +1,16 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — Android package rename + graceful unmatched-route handling; web + mobile; self-verified):**
+- Android package id changed to **`au.com.wayly.app`** (`mobile/app.json`; applies on next native Publish).
+- Killed the mobile black **"Unmatched route"** screen: added `mobile/app/+not-found.tsx` (friendly branded catch-all with Go-home/Go-back) + `mobile/src/lib/notificationLink.ts` `resolveNotificationLink()` that maps the backend's web-shaped notification links (e.g. `/app/statements/{id}`) to real mobile routes; `NotificationsSheet` only navigates when the link resolves (else it just dismisses).
+- Web parity: `NotFound.jsx` now shows a calm in-app "This page isn't available" card (Go to dashboard / Go back) for logged-in users; `NotificationsBell` guards non-navigable links via `safePath()`.
+- Backend untouched. See CHANGELOG.md "Iter 379" for detail.
+
+---
+
+
+# Wayly — current fork status (Jun 2026)
+
 **Just shipped (Jun 2026 — Statement Decoder "how-to" walkthrough video; web + mobile; verified iter367):**
 - Replaced the static "What you'll see after a decode" screenshot-tour on the Statement Decoder tool with a **"How to use the Statement Decoder" walkthrough video**, visible to everyone (authenticated or not) on both surfaces.
 - Web (`frontend/src/pages/tools/StatementDecoderTool.jsx`): new `sd-how-to-video` section — overline "Watch the walkthrough", H2 "How to use the Statement Decoder", a descriptive line, and an HTML5 `<video>` (`sd-how-to-video-player`, controls, poster = existing tool screenshot). Old `sd-screenshot-tour`/`sd-result-screenshot` removed.

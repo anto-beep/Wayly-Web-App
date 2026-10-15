@@ -7,6 +7,15 @@ import { api } from "@/lib/api";
 
 const SEEN_IDS_KEY = "kindred_notif_seen_ids";
 
+// Only treat an internal, app-relative path as navigable. A missing/odd link
+// renders as a non-navigating item so a stale notification never dumps the
+// user on the 404 page. (Deleted statements/invoices/reports still resolve to
+// a real route that shows a friendly "no longer available" state.)
+function safePath(link) {
+    return typeof link === "string" && link.startsWith("/") ? link : null;
+}
+
+
 function loadSeenIds() {
     try {
         const raw = localStorage.getItem(SEEN_IDS_KEY);
@@ -55,10 +64,11 @@ export default function NotificationsBell({ tone = "dark" }) {
                 const newOnes = fresh.filter((n) => !n.read && !seenIdsRef.current.has(n.id));
                 if (newOnes.length > 0) {
                     const top = newOnes[0];
+                    const tp = safePath(top.link);
                     toast.info(top.title || "New notification", {
                         description: top.body,
                         duration: 8000,
-                        action: top.link ? { label: "View", onClick: () => { window.location.assign(top.link); } } : undefined,
+                        action: tp ? { label: "View", onClick: () => { window.location.assign(tp); } } : undefined,
                     });
                     newOnes.forEach((n) => seenIdsRef.current.add(n.id));
                     saveSeenIds(seenIdsRef.current);
@@ -121,10 +131,11 @@ export default function NotificationsBell({ tone = "dark" }) {
                 if (!seenIdsRef.current.has(n.id)) {
                     seenIdsRef.current.add(n.id);
                     saveSeenIds(seenIdsRef.current);
+                    const np = safePath(n.link);
                     toast.info(n.title || "New notification", {
                         description: n.body,
                         duration: 8000,
-                        action: n.link ? { label: "View", onClick: () => { window.location.assign(n.link); } } : undefined,
+                        action: np ? { label: "View", onClick: () => { window.location.assign(np); } } : undefined,
                     });
                 }
             } catch { /* ignore */ }
@@ -224,8 +235,8 @@ export default function NotificationsBell({ tone = "dark" }) {
                             <ul>
                                 {items.slice(0, 10).map((n) => (
                                     <li key={n.id} className={`px-4 py-3 border-b border-[#CFE0F0] last:border-0 ${!n.read ? "bg-[#EAF4FB]" : ""}`} data-testid={`notification-item-${n.id}`}>
-                                        {n.link ? (
-                                            <Link to={n.link} onClick={() => { markOneRead(n); setOpen(false); }} className="block">
+                                        {safePath(n.link) ? (
+                                            <Link to={safePath(n.link)} onClick={() => { markOneRead(n); setOpen(false); }} className="block">
                                                 <div className="text-sm font-medium text-[#0E2A47]">{n.title}</div>
                                                 {n.body && <div className="text-xs text-[#6B7280] mt-0.5">{n.body}</div>}
                                                 <div className="text-[10px] text-[#6B7280] mt-1 uppercase tracking-wider">{formatDateTime(n.created_at)}</div>
