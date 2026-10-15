@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { ChevronRight, ChevronDown, AlertTriangle } from "lucide-react-native";
 
 import { Card, T } from "@/src/components/ui";
+import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { TOOL_CONTENT } from "@/src/data/toolContent";
@@ -46,6 +47,9 @@ export default function ToolExplainer({ toolKey }: { toolKey: string }) {
           ))}
         </View>
       </CollapsibleSection>
+
+      {/* Walkthrough video — sits directly under How It Works (collapsed by default). */}
+      <ToolWalkthroughVideo slug={toolKey} />
 
       {/* AI accuracy disclaimer */}
       <View testID={`tool-disclaimer-${toolKey}`} style={[styles.disclaimer, { backgroundColor: colors.goldSoft }]}>

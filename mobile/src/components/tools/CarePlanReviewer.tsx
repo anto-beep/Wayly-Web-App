@@ -8,7 +8,6 @@ import { Sparkles, AlertOctagon, ShieldAlert, Shield, ShieldCheck, Upload, Camer
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import ToolHero from "@/src/components/ToolHero";
-import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
@@ -722,7 +721,6 @@ export default function CarePlanReviewer() {
           ) : null}
 
           <ToolExplainer toolKey="care-plan-reviewer" />
-          <ToolWalkthroughVideo slug="care-plan-reviewer" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

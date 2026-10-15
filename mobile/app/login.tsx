@@ -220,7 +220,7 @@ export default function LoginScreen() {
             ) : null}
 
             <Button
-              label="Sign In"
+              label="Log In"
               testID="login-submit-button"
               onPress={onLogin}
               loading={busy}
@@ -273,7 +273,7 @@ export default function LoginScreen() {
         >
           <WaylyLoader size={110} white={isDark} />
           <T style={{ fontFamily: fonts.body, fontSize: 15, color: colors.muted, marginTop: spacing.lg, letterSpacing: 0.3 }}>
-            Signing you in…
+            Logging you in…
           </T>
         </Animated.View>
       ) : null}

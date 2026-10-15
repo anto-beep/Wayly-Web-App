@@ -7,7 +7,6 @@ import { Upload, ArrowRight, AlertTriangle, FileText, ReceiptText } from "lucide
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import ToolHero from "@/src/components/ToolHero";
-import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import InvoiceResultView from "@/src/components/invoices/InvoiceResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
@@ -164,7 +163,6 @@ export default function InvoiceChecker() {
         ) : null}
 
         <ToolExplainer toolKey="invoice-checker" />
-        <ToolWalkthroughVideo slug="invoice-checker" />
       </ScrollView>
     </View>
   );

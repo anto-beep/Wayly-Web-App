@@ -6,7 +6,6 @@ import * as Clipboard from "expo-clipboard";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolHero from "@/src/components/ToolHero";
-import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { sharePostPdf } from "@/src/lib/download";
@@ -296,7 +295,6 @@ export default function ProviderPriceChecker() {
           ) : null}
 
           <ToolExplainer toolKey="provider-price-checker" />
-          <ToolWalkthroughVideo slug="provider-price-checker" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

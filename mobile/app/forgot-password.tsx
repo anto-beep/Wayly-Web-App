@@ -45,7 +45,7 @@ export default function ForgotPasswordScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Pressable testID="forgot-back" onPress={() => (router.canGoBack() ? router.back() : router.replace("/login"))} hitSlop={8} style={styles.back}>
             <ArrowLeft size={16} color={colors.muted} />
-            <T variant="small" style={{ color: colors.muted }}>Back to Sign In</T>
+            <T variant="small" style={{ color: colors.muted }}>Back to Log In</T>
           </Pressable>
 
           <View style={styles.brandMark}>
@@ -71,7 +71,7 @@ export default function ForgotPasswordScreen() {
                   style={{ marginTop: spacing.lg }}
                 />
                 <Pressable testID="forgot-goto-login" onPress={() => router.replace("/login")} style={{ marginTop: spacing.lg, alignItems: "center" }}>
-                  <T variant="body" style={{ color: colors.gold, fontFamily: fonts.bodySemi }}>Back to Sign In</T>
+                  <T variant="body" style={{ color: colors.gold, fontFamily: fonts.bodySemi }}>Back to Log In</T>
                 </Pressable>
               </>
             ) : (

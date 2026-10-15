@@ -46,7 +46,7 @@ export default function ResetPasswordScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Pressable testID="reset-back" onPress={() => router.replace("/login")} hitSlop={8} style={styles.back}>
             <ArrowLeft size={16} color={colors.muted} />
-            <T variant="small" style={{ color: colors.muted }}>Back to Sign In</T>
+            <T variant="small" style={{ color: colors.muted }}>Back to Log In</T>
           </Pressable>
 
           <View style={styles.brandMark}>

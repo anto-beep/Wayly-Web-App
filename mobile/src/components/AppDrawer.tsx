@@ -33,18 +33,12 @@ export function AppDrawer() {
     return pathname === n || pathname.startsWith(n + "/");
   };
 
-  // Mirror web: each group auto-opens if it holds the active route; reset every
-  // time the drawer opens. Multiple groups may be open at once.
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  // Single-open accordion, collapsed by default (matches web): everything
+  // starts closed each time the drawer opens, and opening one category closes
+  // any other — only one open at a time.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   useEffect(() => {
-    if (open) {
-      const init: Record<string, boolean> = {};
-      NAV_GROUPS.forEach((g) => {
-        init[g.key] = g.items.some((it) => isActive(it.route));
-      });
-      setOpenGroups(init);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (open) setOpenGroup(null);
   }, [open]);
 
   const go = (route: string) => {
@@ -87,13 +81,13 @@ export function AppDrawer() {
 
           <ScrollView contentContainerStyle={{ padding: spacing.sm, paddingBottom: spacing.lg }}>
             {NAV_GROUPS.map((group) => {
-              const isOpen = !!openGroups[group.key];
+              const isOpen = openGroup === group.key;
               const label = group.key === "care" ? careLabel : group.label;
               return (
                 <View key={group.key} style={[styles.group, { borderBottomColor: colors.border }]}>
                   <Pressable
                     testID={`drawer-group-${group.key}`}
-                    onPress={() => setOpenGroups((s) => ({ ...s, [group.key]: !s[group.key] }))}
+                    onPress={() => setOpenGroup((k) => (k === group.key ? null : group.key))}
                     style={styles.groupHead}
                   >
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1.5, color: colors.muted }}>{label.toUpperCase()}</T>
@@ -143,7 +137,7 @@ export function AppDrawer() {
               style={({ pressed }) => [styles.item, pressed && { backgroundColor: colors.terracotta + "1A" }]}
             >
               <LogOut size={18} color={colors.terracotta} />
-              <T style={{ flex: 1, fontFamily: fonts.bodySemi, fontSize: 15, color: colors.terracotta }}>Sign Out</T>
+              <T style={{ flex: 1, fontFamily: fonts.bodySemi, fontSize: 15, color: colors.terracotta }}>Log Out</T>
             </Pressable>
           </View>
         </Pressable>

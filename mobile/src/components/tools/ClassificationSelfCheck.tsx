@@ -5,7 +5,6 @@ import { Sparkles, AlertTriangle, RefreshCcw, ArrowRight, ArrowLeft, Phone, Down
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolHero from "@/src/components/ToolHero";
-import ToolWalkthroughVideo from "@/src/components/ToolWalkthroughVideo";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -860,7 +859,6 @@ export default function ClassificationSelfCheck() {
           )}
 
           <ToolExplainer toolKey="classification-self-check" />
-          <ToolWalkthroughVideo slug="classification-self-check" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
