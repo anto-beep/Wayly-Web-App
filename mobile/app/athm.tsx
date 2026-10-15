@@ -128,7 +128,7 @@ export default function AthmProjectsScreen() {
                   <View style={{ gap: spacing.xs }} testID="athm-project-file-list">
                     {files.map((f, i) => (
                       <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.bg, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 6 }}>
-                        <FileText size={14} color={colors.primary} />
+                        <FileText size={14} color={colors.heading} />
                         <T variant="small" style={{ color: colors.text, flex: 1 }} numberOfLines={1}>{f.name}</T>
                         <Pressable testID={`athm-project-file-remove-${i}`} onPress={() => setFiles((list) => list.filter((_, j) => j !== i))}><Trash2 size={14} color={colors.terracotta} /></Pressable>
                       </View>
@@ -176,7 +176,7 @@ export default function AthmProjectsScreen() {
                     <Card>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
                         <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface2, alignItems: "center", justifyContent: "center" }}>
-                          <Icon size={18} color={colors.primary} />
+                          <Icon size={18} color={colors.heading} />
                         </View>
                         <View style={{ flex: 1 }}>
                           <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }} numberOfLines={1}>{p.title}</T>

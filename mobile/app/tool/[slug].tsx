@@ -7,6 +7,8 @@ import { Sparkles, AlertTriangle, FileText, Clock, MessageCircle } from "lucide-
 import { AppHeader, Button, Card, Field, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
 import DecoderResultView from "@/src/components/DecoderResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ToolHero from "@/src/components/ToolHero";
@@ -266,7 +268,7 @@ function StatementDecoderTool() {
           {limitInfo ? (
             <View testID="sd-daily-limit" style={[styles.notice, { backgroundColor: colors.goldSoft, borderColor: colors.border, borderWidth: 1, gap: 8 }]}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Clock size={18} color={colors.primary} />
+                <Clock size={18} color={colors.heading} />
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>You have used your free decode.</T>
               </View>
               <T variant="small">{(limitInfo.days_until_next_use || 0) > 0 ? `The next free one is available in ${limitInfo.days_until_next_use} day${limitInfo.days_until_next_use === 1 ? "" : "s"}.` : "Your free decode has been used."}</T>
@@ -297,11 +299,25 @@ function StatementDecoderTool() {
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>{result.duplicate_warning.message}</T>
                     {result.duplicate_warning.existing_statement_id ? (
                       <Pressable testID="decoder-duplicate-view" onPress={() => router.push(`/statement/${result.duplicate_warning.existing_statement_id}` as any)} hitSlop={6}>
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary, marginTop: 4, textDecorationLine: "underline" }}>Open the statement you already have</T>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading, marginTop: 4, textDecorationLine: "underline" }}>Open the statement you already have</T>
                       </Pressable>
                     ) : null}
                   </View>
                 </View>
+              ) : null}
+              {result?.publishable !== false ? (
+                <SmartAISummary
+                  pageKey="statement-decoder-run"
+                  style={{ marginBottom: spacing.md }}
+                  context={{
+                    provider: result?.audit?.statement_summary?.provider_name || result?.audit?.statement_summary?.provider || result?.extracted?.provider_name || result?.summary?.provider || null,
+                    period: result?.audit?.statement_summary?.period_label || result?.extracted?.period_label || null,
+                    gross_aud: result?.audit?.statement_summary?.total_gross ?? null,
+                    you_paid_aud: result?.audit?.statement_summary?.total_participant_contribution ?? null,
+                    government_paid_aud: result?.audit?.statement_summary?.total_government_paid ?? null,
+                    anomaly_count: (result?.anomalies || result?.audit?.anomalies || []).length,
+                  }}
+                />
               ) : null}
               <DecoderResultView result={result} onDraftLetter={draftLetterFromAnomaly} onDraftAll={draftAllBlockers} />
               {result?.persisted_statement_id ? (
@@ -310,10 +326,11 @@ function StatementDecoderTool() {
                   onPress={() => router.push({ pathname: "/(tabs)/ask", params: { statement_id: result.persisted_statement_id } } as any)}
                   style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: spacing.lg, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.pill, paddingVertical: 13 }}
                 >
-                  <MessageCircle size={17} color={colors.primary} />
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }}>Ask Wayly about this statement</T>
+                  <MessageCircle size={17} color={colors.heading} />
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>Ask Wayly about this statement</T>
                 </Pressable>
               ) : null}
+              <ReportIssueButton toolName="Statement Decoder" />
             </View>
           ) : null}
 
@@ -403,6 +420,7 @@ function FormTool({ slug }: { slug: string }) {
           <Button label={cfg.submitLabel} testID="tool-submit" icon={Sparkles} onPress={submit} loading={busy} />
 
           {result ? <ToolResult slug={slug!} data={result} colors={colors} /> : null}
+          {result ? <ReportIssueButton toolName={cfg.title} /> : null}
 
           <ToolExplainer toolKey={slug || ""} />
         </ScrollView>

@@ -6,6 +6,8 @@ import { CloudOff, Sparkles, MessageCircle, Download, FileDown, History, GitComp
 
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import DecoderResultView from "@/src/components/DecoderResultView";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
 import { apiFetch } from "@/src/lib/api";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { cacheGet, cacheSet } from "@/src/lib/cache";
@@ -202,21 +204,38 @@ export default function StatementDetail() {
             </View>
           ) : null}
 
-          {/* Header — mirrors web: period · provider, then "N line items · $total total · $contribution contribution" */}
-          <View testID="statement-overview">
-            <T variant="label">STATEMENT</T>
-            <T style={{ fontFamily: fonts.heading, fontSize: 26, marginTop: 4, color: colors.heading }}>
-              {periodLabel}
-              {providerName ? <T style={{ fontFamily: fonts.heading, fontSize: 26, color: colors.muted }}>{`  ·  ${providerName}`}</T> : null}
-            </T>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexWrap: "wrap", marginTop: 6 }}>
-              <T variant="small">
-                {lineItems.length} line item{lineItems.length === 1 ? "" : "s"} · {money(total)} total · {money(totalContribution)} contribution
+          {/* Header — shown only for legacy statements; rich statements get the
+              single decoder banner (period · provider) as their title. */}
+          {!rich ? (
+            <View testID="statement-overview">
+              <T variant="label">STATEMENT</T>
+              <T style={{ fontFamily: fonts.heading, fontSize: 26, marginTop: 4, color: colors.heading }}>
+                {periodLabel}
+                {providerName ? <T style={{ fontFamily: fonts.heading, fontSize: 26, color: colors.muted }}>{`  ·  ${providerName}`}</T> : null}
               </T>
-              <Badge label={flags > 0 ? `Flagged · ${flags}` : "All clear"} tone={flags > 0 ? "alert" : "success" as any} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexWrap: "wrap", marginTop: 6 }}>
+                <T variant="small">
+                  {lineItems.length} line item{lineItems.length === 1 ? "" : "s"} · {money(total)} total · {money(totalContribution)} contribution
+                </T>
+                <Badge label={flags > 0 ? `Flagged · ${flags}` : "All clear"} tone={flags > 0 ? "alert" : "success" as any} />
+              </View>
+              <T variant="small" style={{ marginTop: 2 }}>Uploaded {shortDate(stmt.uploaded_at)}</T>
             </View>
-            <T variant="small" style={{ marginTop: 2 }}>Uploaded {shortDate(stmt.uploaded_at)}</T>
-          </View>
+          ) : null}
+
+          <SmartAISummary
+            pageKey="statement-detail"
+            context={{
+              participant_id: active?.id ?? null,
+              provider: providerName,
+              period: periodLabel,
+              gross_aud: stmt.audit_json?.statement_summary?.total_gross ?? null,
+              you_paid_aud: stmt.audit_json?.statement_summary?.total_participant_contribution ?? null,
+              government_paid_aud: stmt.audit_json?.statement_summary?.total_government_paid ?? null,
+              anomaly_count: flags,
+              anomaly_dollar_impact: stmt.anomaly_dollar_impact_total ?? null,
+            }}
+          />
 
           {/* Decoded result — identical component to the Statement Decoder tool + web StatementDetail */}
           {rich ? (
@@ -280,6 +299,7 @@ export default function StatementDetail() {
 
           <Button label="Decode with AI" testID="statement-decode-button" icon={Sparkles} onPress={() => router.push(`/decode/${stmt.id}`)} />
           <Button label="Ask Wayly about this statement" testID="statement-ask-button" icon={MessageCircle} variant="secondary" onPress={() => router.push({ pathname: "/(tabs)/ask", params: { statement_id: stmt.id } })} />
+          <ReportIssueButton toolName="Statement Decoder" />
         </ScrollView>
       )}
     </View>
@@ -320,7 +340,7 @@ function LegacyStatementView({ stmt, colors }: { stmt: Statement; colors: any })
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>{a.title || a.headline || "Flagged item"}</T>
                     {a.detail || a.description || a.message ? <T variant="small" style={{ marginTop: 2 }}>{a.detail || a.description || a.message}</T> : null}
                     {a.dollar_impact != null && a.dollar_impact > 0 ? <T variant="small" style={{ color: colors.terracotta, marginTop: 2 }}>Potential impact: {money(a.dollar_impact)}</T> : null}
-                    {a.suggested_action ? <T variant="small" style={{ color: colors.primary, marginTop: 4, fontStyle: "italic" }}>→ {a.suggested_action}</T> : null}
+                    {a.suggested_action ? <T variant="small" style={{ color: colors.heading, marginTop: 4, fontStyle: "italic" }}>→ {a.suggested_action}</T> : null}
                     {a.rule ? <T style={{ fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.5, color: colors.muted, marginTop: 4 }}>{String(a.rule).toUpperCase()}</T> : null}
                   </View>
                 </View>

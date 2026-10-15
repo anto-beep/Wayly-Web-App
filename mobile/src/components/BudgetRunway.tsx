@@ -55,15 +55,15 @@ export function BudgetRunway({ participantId }: { participantId: string }) {
       {/* Soft header */}
       <View style={[styles.header, { backgroundColor: colors.surface2, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
-          <View style={[styles.headerIcon, { backgroundColor: colors.primary + "1A" }]}><TrendingUp size={18} color={colors.primary} /></View>
+          <View style={[styles.headerIcon, { backgroundColor: colors.primary + "1A" }]}><TrendingUp size={18} color={colors.heading} /></View>
           <View style={{ flex: 1 }}>
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 1, color: colors.muted }}>BUDGET RUNWAY</T>
             <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }} numberOfLines={1}>Where your money stands</T>
           </View>
         </View>
         <Pressable testID="bc2-projection-open-scenarios" onPress={() => router.push("/budget-scenarios")} style={[styles.headerBtn, { borderWidth: 1, borderColor: colors.primary + "40", backgroundColor: colors.surface }]}>
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>Adjust</T>
-          <ArrowRight size={13} color={colors.primary} />
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading }}>Adjust</T>
+          <ArrowRight size={13} color={colors.heading} />
         </Pressable>
       </View>
 

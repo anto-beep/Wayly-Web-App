@@ -53,7 +53,7 @@ export default function ClassificationPrepScreen() {
         </Card>
 
         <View>
-          <T variant="h2" style={{ color: colors.primary }}>What to prepare</T>
+          <T variant="h2" style={{ color: colors.heading }}>What to prepare</T>
           <View style={{ gap: 10, marginTop: spacing.sm }}>
             {PREP.map((p, i) => (
               <View key={i} style={styles.row}>
@@ -65,7 +65,7 @@ export default function ClassificationPrepScreen() {
         </View>
 
         <View>
-          <T variant="h2" style={{ color: colors.primary }}>On the day</T>
+          <T variant="h2" style={{ color: colors.heading }}>On the day</T>
           <View style={{ gap: 10, marginTop: spacing.sm }}>
             {ON_THE_DAY.map((p, i) => (
               <View key={i} style={styles.row}>

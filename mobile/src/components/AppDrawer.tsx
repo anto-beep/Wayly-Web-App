@@ -38,7 +38,10 @@ export function AppDrawer() {
   // any other — only one open at a time.
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   useEffect(() => {
-    if (open) setOpenGroup(null);
+    if (!open) return;
+    const activeGroup = NAV_GROUPS.find((g) => g.items.some((it) => isActive(it.route)));
+    setOpenGroup(activeGroup ? activeGroup.key : NAV_GROUPS[0]?.key ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const go = (route: string) => {
@@ -56,11 +59,11 @@ export function AppDrawer() {
           {/* Header — user first name + plan */}
           <View style={[styles.head, { borderBottomColor: colors.border, paddingTop: insets.top + spacing.md }]}>
             <View style={{ flex: 1 }}>
-              <T testID="drawer-name" style={{ fontFamily: fonts.heading, fontSize: 19, color: colors.primary }}>{firstName}</T>
+              <T testID="drawer-name" style={{ fontFamily: fonts.heading, fontSize: 19, color: colors.heading }}>{firstName}</T>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.muted, marginTop: 2 }}>{plan} PLAN</T>
             </View>
             <Pressable testID="drawer-close" onPress={closeDrawer} hitSlop={10} style={styles.closeBtn}>
-              <X size={22} color={colors.primary} />
+              <X size={22} color={colors.heading} />
             </Pressable>
           </View>
 
@@ -68,7 +71,7 @@ export function AppDrawer() {
           {active ? (
             <View style={[styles.caringFor, { backgroundColor: colors.surface2, borderBottomColor: colors.border }]} testID="drawer-caring-for">
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.muted }}>CARING FOR</T>
-              <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary, marginTop: 3 }}>{active.display_name}</T>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading, marginTop: 3 }}>{active.display_name}</T>
               {active.classification_level || active.provider_name ? (
                 <T style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted, marginTop: 1 }}>
                   {active.classification_level ? `Classification ${active.classification_level}` : ""}
@@ -90,11 +93,11 @@ export function AppDrawer() {
                     onPress={() => setOpenGroup((k) => (k === group.key ? null : group.key))}
                     style={styles.groupHead}
                   >
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1.5, color: colors.muted }}>{label.toUpperCase()}</T>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 12.5, letterSpacing: 1.1, color: colors.muted }}>{label.toUpperCase()}</T>
                     {isOpen ? <ChevronDown size={16} color={colors.muted} /> : <ChevronRight size={16} color={colors.muted} />}
                   </Pressable>
                   {isOpen ? (
-                    <View style={{ gap: 2, paddingBottom: 4 }}>
+                    <View style={{ gap: 6, paddingBottom: 8 }}>
                       {group.items.map((item) => {
                         const Icon = item.icon;
                         const itemActive = isActive(item.route);
@@ -105,11 +108,11 @@ export function AppDrawer() {
                             onPress={() => go(item.route)}
                             style={({ pressed }) => [
                               styles.item,
-                              itemActive ? { backgroundColor: colors.primary } : pressed ? { backgroundColor: colors.surface2 } : null,
+                              itemActive ? { backgroundColor: colors.cta } : pressed ? { backgroundColor: colors.surface2 } : null,
                             ]}
                           >
-                            <Icon size={18} color={itemActive ? "#fff" : colors.primary} />
-                            <T style={{ flex: 1, fontFamily: fonts.bodyMedium, fontSize: 15, color: itemActive ? "#fff" : colors.primary }}>{item.label}</T>
+                            <Icon size={20} color={itemActive ? "#fff" : colors.heading} />
+                            <T style={{ flex: 1, fontFamily: fonts.bodyMedium, fontSize: 16, color: itemActive ? "#fff" : colors.heading }}>{item.label}</T>
                           </Pressable>
                         );
                       })}
@@ -123,8 +126,8 @@ export function AppDrawer() {
           {/* Footer — Plan & Billing + Sign out */}
           <View style={[styles.footer, { borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
             <Pressable testID="drawer-billing" onPress={() => go("/(tabs)/settings")} style={({ pressed }) => [styles.item, pressed && { backgroundColor: colors.surface2 }]}>
-              <SettingsIcon size={18} color={colors.primary} />
-              <T style={{ flex: 1, fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.primary }}>Plan &amp; Billing</T>
+              <SettingsIcon size={18} color={colors.heading} />
+              <T style={{ flex: 1, fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.heading }}>Plan &amp; Billing</T>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 1, color: colors.muted }}>{plan}</T>
             </Pressable>
             <Pressable
@@ -148,12 +151,12 @@ export function AppDrawer() {
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, flexDirection: "row", justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.6)" },
-  panel: { width: "86%", maxWidth: 324, height: "100%" },
+  panel: { width: "90%", maxWidth: 360, height: "100%" },
   head: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1 },
   closeBtn: { padding: 6, borderRadius: radius.sm },
   caringFor: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 1 },
-  group: { borderBottomWidth: 1, paddingVertical: 2 },
-  groupHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.sm + 2, paddingVertical: spacing.sm },
-  item: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: spacing.sm + 2, paddingVertical: 12, borderRadius: radius.md },
+  group: { borderBottomWidth: 1, paddingVertical: 4 },
+  groupHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 4 },
+  item: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: spacing.md, paddingVertical: 14, borderRadius: radius.md },
   footer: { borderTopWidth: 1, padding: spacing.sm },
 });

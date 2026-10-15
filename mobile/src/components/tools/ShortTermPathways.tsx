@@ -148,7 +148,7 @@ export default function ShortTermPathways() {
                 style={[styles.optRow, { backgroundColor: active ? "#E9F2F2" : colors.surface, borderColor: active ? colors.primary : colors.border }]}
               >
                 <View style={[styles.optIcon, { backgroundColor: active ? colors.primary : "#E9F2F2" }]}>
-                  <Icon size={18} color={active ? "#FFFFFF" : colors.primary} />
+                  <Icon size={18} color={active ? "#FFFFFF" : colors.heading} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>{s.label}</T>
@@ -194,8 +194,8 @@ export default function ShortTermPathways() {
               </T>
               <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, marginTop: spacing.md }}>
                 <Pressable testID="stp-reset" onPress={() => setResult(null)} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                  <RotateCcw size={14} color={colors.primary} />
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }}>Start again</T>
+                  <RotateCcw size={14} color={colors.heading} />
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>Start again</T>
                 </Pressable>
                 <Pressable testID="stp-draft-letter" onPress={draftRequestLetter} disabled={drafting} style={[styles.ctaBtn, { backgroundColor: colors.primary, opacity: drafting ? 0.7 : 1 }]}>
                   {drafting ? <ActivityIndicator color="#FFFFFF" size="small" /> : null}
@@ -224,7 +224,7 @@ function ResultHeadline({ result }: { result: Result }) {
       </View>
       <View style={{ flex: 1 }}>
         <T style={{ fontSize: 11, letterSpacing: 1, textTransform: "uppercase", color: accent.color, fontFamily: fonts.bodySemi }}>Your result</T>
-        <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.primary, marginTop: 4, lineHeight: 26 }}>{result.headline}</T>
+        <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading, marginTop: 4, lineHeight: 26 }}>{result.headline}</T>
       </View>
     </View>
   );
@@ -268,7 +268,7 @@ function PathwayCard({ p }: { p: Pathway }) {
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing.sm }}>
           <View style={[styles.iconChip, { backgroundColor: accent.soft }]}><Icon size={22} color={accent.color} /></View>
           <View style={{ flex: 1 }}>
-            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.primary, lineHeight: 26 }}>{p.title}</T>
+            <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading, lineHeight: 26 }}>{p.title}</T>
             <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 19 }}>{p.tagline}</T>
           </View>
           {p.confidence ? (
@@ -290,7 +290,7 @@ function PathwayCard({ p }: { p: Pathway }) {
           {(p.key_facts || []).map((k, i) => (
             <View key={i} style={[styles.factCell, { backgroundColor: colors.bg, borderColor: colors.border }]}>
               <T style={{ fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase", color: accent.color, lineHeight: 14, fontFamily: fonts.bodySemi }}>{k.label}</T>
-              <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.primary, marginTop: 3 }}>
+              <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading, marginTop: 3 }}>
                 {k.value_aud != null ? moneyWhole(k.value_aud) : k.value_text}
               </T>
             </View>
@@ -343,7 +343,7 @@ function PathwayCard({ p }: { p: Pathway }) {
         <View style={[styles.qBox, { backgroundColor: accent.soft }]} testID={`stp-questions-${p.id}`}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
             <HelpCircle size={15} color={accent.color} />
-            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }}>Questions to ask your provider</T>
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>Questions to ask your provider</T>
           </View>
           <View style={{ gap: 9 }}>
             {(p.provider_questions || []).map((q, i) => (

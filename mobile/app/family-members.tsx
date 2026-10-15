@@ -176,7 +176,7 @@ export default function FamilyMembersScreen() {
             {/* Current members */}
             <Card testID="members-list">
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: spacing.sm }}>
-                <Users size={18} color={colors.primary} />
+                <Users size={18} color={colors.heading} />
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Members</T>
               </View>
               {(data?.members || []).length === 0 ? (
@@ -206,7 +206,7 @@ export default function FamilyMembersScreen() {
             {onFamily ? (
               <Card testID="invite-card">
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: spacing.sm }}>
-                  <UserPlus size={18} color={colors.primary} />
+                  <UserPlus size={18} color={colors.heading} />
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Invite someone</T>
                 </View>
                 <T variant="small" style={{ marginBottom: spacing.sm }}>Family members help coordinate your household. They see the Family Wall and can post updates. They cannot see statements, use tools, or manage billing.</T>

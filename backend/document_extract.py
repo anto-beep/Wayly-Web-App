@@ -336,12 +336,17 @@ def _extract_pdf_selectable_text(raw: bytes) -> Tuple[str, int]:
         import pdfplumber
     except ImportError:
         # Fall back to pypdf only.
-        from pypdf import PdfReader
-        reader = PdfReader(io.BytesIO(raw))
-        if getattr(reader, "is_encrypted", False):
-            raise PasswordProtectedError("PDF is password-protected")
-        text = "\n".join((p.extract_text() or "") for p in reader.pages)
-        return text, len(reader.pages)
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(io.BytesIO(raw))
+            if getattr(reader, "is_encrypted", False):
+                raise PasswordProtectedError("PDF is password-protected")
+            text = "\n".join((p.extract_text() or "") for p in reader.pages)
+            return text, len(reader.pages)
+        except PasswordProtectedError:
+            raise
+        except Exception as e2:
+            raise CorruptFileError("the file may be incomplete or corrupted.") from e2
     try:
         with pdfplumber.open(io.BytesIO(raw)) as pdf:
             pages = pdf.pages
@@ -360,12 +365,17 @@ def _extract_pdf_selectable_text(raw: bytes) -> Tuple[str, int]:
         if "password" in msg or "encrypted" in msg:
             raise PasswordProtectedError("PDF is password-protected") from e
         # Fall back to pypdf
-        from pypdf import PdfReader
-        reader = PdfReader(io.BytesIO(raw))
-        if getattr(reader, "is_encrypted", False):
-            raise PasswordProtectedError("PDF is password-protected")
-        text = "\n".join((p.extract_text() or "") for p in reader.pages)
-        return text, len(reader.pages)
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(io.BytesIO(raw))
+            if getattr(reader, "is_encrypted", False):
+                raise PasswordProtectedError("PDF is password-protected")
+            text = "\n".join((p.extract_text() or "") for p in reader.pages)
+            return text, len(reader.pages)
+        except PasswordProtectedError:
+            raise
+        except Exception as e2:
+            raise CorruptFileError("the file may be incomplete or corrupted.") from e2
 
 
 def _extract_docx_text(raw: bytes) -> str:

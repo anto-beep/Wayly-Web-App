@@ -200,11 +200,11 @@ export default function ParticipantProfileScreen() {
           <Card testID="pp-follow-ups" style={{ backgroundColor: colors.goldSoft }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: spacing.sm }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1, minWidth: 0 }}>
-                <AlertCircle size={16} color={colors.primary} />
+                <AlertCircle size={16} color={colors.heading} />
                 <T numberOfLines={1} style={{ fontFamily: fonts.bodySemi, fontSize: 16, flexShrink: 1 }}>Open Follow-Ups</T>
                 <Badge label={String(data.open_cases_total || 0)} tone="neutral" />
               </View>
-              <Pressable onPress={() => router.push("/cases")} style={{ flexShrink: 0 }}><T variant="small" style={{ color: colors.primary }}>View all →</T></Pressable>
+              <Pressable onPress={() => router.push("/cases")} style={{ flexShrink: 0 }}><T variant="small" style={{ color: colors.heading }}>View all →</T></Pressable>
             </View>
             {(data.open_cases || []).length === 0 ? (
               <T variant="small" style={{ marginTop: spacing.sm }}>No open follow-ups. Everything is up to date.</T>
@@ -227,10 +227,10 @@ export default function ParticipantProfileScreen() {
           <Card testID="pp-household">
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: spacing.sm }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1, minWidth: 0 }}>
-                <Users size={16} color={colors.primary} />
+                <Users size={16} color={colors.heading} />
                 <T numberOfLines={1} style={{ fontFamily: fonts.bodySemi, fontSize: 16, flexShrink: 1 }}>Household Members</T>
               </View>
-              <Pressable onPress={() => router.push("/family-members")} style={{ flexShrink: 0 }}><T variant="small" style={{ color: colors.primary }}>Manage access →</T></Pressable>
+              <Pressable onPress={() => router.push("/family-members")} style={{ flexShrink: 0 }}><T variant="small" style={{ color: colors.heading }}>Manage access →</T></Pressable>
             </View>
             <View style={{ marginTop: spacing.sm, gap: 6 }}>
               {(data.household || []).map((m, i) => (
@@ -258,7 +258,7 @@ export default function ParticipantProfileScreen() {
                           {[art.summary, art.title, art.status].find((x) => typeof x === "string") || "Completed"}{typeof (art.created_at || art.date) === "string" ? ` · ${shortDate(art.created_at || art.date)}` : ""}
                         </T>
                       ) : (
-                        <T variant="small" style={{ marginTop: 2, color: colors.primary }}>{a.cta} ›</T>
+                        <T variant="small" style={{ marginTop: 2, color: colors.heading }}>{a.cta} ›</T>
                       )}
                     </View>
                     <ChevronRight size={18} color={colors.muted} />
@@ -272,7 +272,7 @@ export default function ParticipantProfileScreen() {
           <Card testID="pp-timeline" style={{ backgroundColor: colors.goldSoft }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Timeline</T>
-              <Pressable onPress={() => router.push("/timeline")}><T variant="small" style={{ color: colors.primary }}>Full Timeline →</T></Pressable>
+              <Pressable onPress={() => router.push("/timeline")}><T variant="small" style={{ color: colors.heading }}>Full Timeline →</T></Pressable>
             </View>
             {(data.timeline || []).length === 0 ? (
               <T variant="small">No recent activity yet.</T>

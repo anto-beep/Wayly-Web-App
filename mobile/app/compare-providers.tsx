@@ -187,7 +187,7 @@ export default function CompareProvidersScreen() {
                   <T
                     testID={`ppc3-compare-details-${p.provider_name_normalised}`}
                     onPress={() => router.push(`/provider-quality/${encodeURIComponent(p.provider_official_name)}` as any)}
-                    style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 13, marginTop: spacing.sm }}
+                    style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 13, marginTop: spacing.sm }}
                   >
                     See full details →
                   </T>

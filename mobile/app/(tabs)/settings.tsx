@@ -46,7 +46,7 @@ function NotificationsCard() {
   return (
     <Card testID="settings-notifications">
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: spacing.sm }}>
-        <Bell size={18} color={colors.primary} />
+        <Bell size={18} color={colors.heading} />
         <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Notifications</T>
       </View>
       {NOTIF_LABELS.map((n, i) => (
@@ -222,12 +222,12 @@ export default function SettingsScreen() {
         {/* Privacy & legal */}
         <Card testID="settings-privacy">
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: spacing.sm }}>
-            <Shield size={18} color={colors.primary} />
+            <Shield size={18} color={colors.heading} />
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Privacy & legal</T>
           </View>
           <Pressable testID="settings-nav-about" onPress={() => router.push("/about")}
             style={[styles.linkRow, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-            <Info size={18} color={colors.primary} />
+            <Info size={18} color={colors.heading} />
             <T style={{ fontFamily: fonts.bodyMedium, fontSize: 15, flex: 1, marginLeft: 8 }}>About Wayly</T>
             <ChevronRight size={18} color={colors.muted} />
           </Pressable>

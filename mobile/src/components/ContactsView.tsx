@@ -151,7 +151,7 @@ export default function ContactsView({
               <Card key={c.id} testID={`${testPrefix}-item-${c.id}`}>
                 <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing.md }}>
                   <View style={[styles.avatar, { backgroundColor: colors.sageSoft }]}>
-                    <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.primary }}>{(c.name || "?").charAt(0).toUpperCase()}</T>
+                    <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading }}>{(c.name || "?").charAt(0).toUpperCase()}</T>
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -168,14 +168,14 @@ export default function ContactsView({
                     <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm, flexWrap: "wrap" }}>
                       {c.phone ? (
                         <Pressable testID={`${testPrefix}-call-${c.id}`} onPress={() => Linking.openURL(`tel:${c.phone}`)} style={[styles.action, { borderColor: colors.border }]}>
-                          <Phone size={16} color={colors.primary} />
-                          <T variant="small" style={{ color: colors.primary }}>Call</T>
+                          <Phone size={16} color={colors.heading} />
+                          <T variant="small" style={{ color: colors.heading }}>Call</T>
                         </Pressable>
                       ) : null}
                       {c.email ? (
                         <Pressable testID={`${testPrefix}-email-${c.id}`} onPress={() => Linking.openURL(`mailto:${c.email}`)} style={[styles.action, { borderColor: colors.border }]}>
-                          <Mail size={16} color={colors.primary} />
-                          <T variant="small" style={{ color: colors.primary }}>Email</T>
+                          <Mail size={16} color={colors.heading} />
+                          <T variant="small" style={{ color: colors.heading }}>Email</T>
                         </Pressable>
                       ) : null}
                       <Pressable testID={`${testPrefix}-delete-${c.id}`} onPress={() => remove(c.id)} style={[styles.action, { borderColor: colors.border }]}>

@@ -193,7 +193,7 @@ function ComplaintRow({ complaint: c, colors, onChanged }: any) {
 
       {c.evidence_bundle_id ? (
         <Pressable testID={`cmp1-bundle-pdf-${c.id}`} onPress={openBundle} style={{ flexDirection: "row", gap: 4, alignItems: "center", marginTop: spacing.sm }}>
-          <FileDown size={13} color={colors.primary} /><T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>Download bundle PDF</T>
+          <FileDown size={13} color={colors.heading} /><T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>Download bundle PDF</T>
         </Pressable>
       ) : null}
 
@@ -201,10 +201,10 @@ function ComplaintRow({ complaint: c, colors, onChanged }: any) {
         <View style={{ marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm, gap: spacing.sm }}>
           <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "center", flexWrap: "wrap" }}>
             <Pressable testID={`cmp1-acqsc-open-${c.id}`} onPress={() => setAcqscOpen((v) => !v)} style={{ flexDirection: "row", gap: 4, alignItems: "center", borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
-              <Send size={13} color={colors.primary} /><T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{c.acqsc_last_submitted_at ? "Send another ACQSC referral" : "Send to ACQSC"}</T>
+              <Send size={13} color={colors.heading} /><T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>{c.acqsc_last_submitted_at ? "Send another ACQSC referral" : "Send to ACQSC"}</T>
             </Pressable>
             <Pressable testID={`cmp1-acqsc-trail-${c.id}`} onPress={async () => { setShowTrail((v) => !v); if (trail === null) await loadTrail(); }} style={{ flexDirection: "row", gap: 3, alignItems: "center" }}>
-              <ChevronDown size={13} color={colors.muted} /><T variant="small" style={{ color: colors.primary }}>{showTrail ? "Hide" : "View"} submission history</T>
+              <ChevronDown size={13} color={colors.muted} /><T variant="small" style={{ color: colors.heading }}>{showTrail ? "Hide" : "View"} submission history</T>
             </Pressable>
           </View>
           {acqscOpen ? (

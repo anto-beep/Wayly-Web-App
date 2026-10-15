@@ -139,7 +139,7 @@ export default function HospitalScreen() {
                 <Card key={a.id} testID={`hospital-item-${a.id}`}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-                      <Building2 size={18} color={colors.primary} />
+                      <Building2 size={18} color={colors.heading} />
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, flex: 1 }}>{a.hospital_name}{a.ward ? ` · ${a.ward}` : ""}</T>
                     </View>
                     <Badge label={active_stay ? "IN HOSPITAL" : "DISCHARGED"} tone={active_stay ? "alert" : "success"} />

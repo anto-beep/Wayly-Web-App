@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check, FilePenLine, Calculator, ClipboardList, FileText, Receipt, BarChart3 } from "lucide-react";
+import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check, FilePenLine, Calculator, ClipboardList, FileText, Receipt, BarChart3, Clock, Layers, Award, Folder } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
@@ -307,19 +307,19 @@ export default function Landing() {
 
                     <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         {[
-                            { icon: Wallet, title: "Annual Financial", body: "Everything spent this year, added up in one clean summary.", tone: "#0E4D52" },
+                            { icon: ClipboardList, title: "Household Summary", body: "A plain overview of your household's care and spending this quarter.", tone: "#0E4D52" },
+                            { icon: Calculator, title: "Quarterly Budget Report", body: "What your quarterly budget is and how much is left to spend.", tone: "#A5512B" },
+                            { icon: Wallet, title: "Annual Financial Summary", body: "Everything spent this year, added up in one clean summary.", tone: "#4E6E54" },
+                            { icon: AlertTriangle, title: "Anomaly & Savings Report", body: "The billing issues we caught and what they could save you.", tone: "#1A696E" },
+                            { icon: ShieldCheck, title: "Provider Performance Report", body: "A plain letter grade for your provider on reliability and price.", tone: "#A5512B" },
+                            { icon: Receipt, title: "Complaint & Correspondence Dossier", body: "Every complaint and letter, collected in one tidy file.", tone: "#0E4D52" },
+                            { icon: BarChart3, title: "Care Timeline", body: "Key care events and changes, laid out in date order.", tone: "#4E6E54" },
                             { icon: FileText, title: "Statement Digest", body: "A short recap of each monthly statement, so you skip the re-reading.", tone: "#A5512B" },
-                            { icon: Receipt, title: "Tax Summary", body: "The care costs that may matter at tax time, totalled and ready.", tone: "#4E6E54" },
-                            { icon: BarChart3, title: "Lifetime Cap Tracker", body: "How much of the lifetime cap is used, and how far off it is.", tone: "#1A696E" },
-                            { icon: Calculator, title: "Budget Forecast", body: "What the next few quarters are likely to cost, at today's pace.", tone: "#A5512B" },
-                            { icon: ClipboardList, title: "Care Plan Diff", body: "What changed between two care plans, highlighted side by side.", tone: "#0E4D52" },
-                            { icon: ShieldCheck, title: "Provider Performance", body: "A plain letter grade for your provider on reliability and price.", tone: "#4E6E54" },
-                            { icon: AlertTriangle, title: "Concerns Log", body: "Every concern you've raised and where it landed, in date order.", tone: "#A5512B" },
                         ].map((r, i) => (
                             <RevealOnScroll key={r.title} delay={(i % 4) * 70}>
                                 <div className="group relative h-full overflow-hidden rounded-2xl border border-kindred bg-surface p-5 transition-colors" data-testid={`report-card-${r.title.replace(/\W+/g, "-").toLowerCase()}`}>
                                     <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: r.tone }} />
-                                    <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-" style={{ backgroundColor: r.tone }}>
+                                    <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110" style={{ backgroundColor: r.tone }}>
                                         <r.icon className="h-5 w-5 text-white" strokeWidth={2} />
                                     </div>
                                     <h3 className="font-heading text-lg text-primary-k mt-4">{r.title}</h3>

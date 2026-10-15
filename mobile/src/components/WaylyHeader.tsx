@@ -10,6 +10,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import { useNotifications } from "@/src/context/NotificationsContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { WaylyMark } from "@/src/components/WaylyMark";
+import { scrollDashboardToTop } from "@/src/lib/dashboardScroll";
 import { NotificationsSheet } from "@/src/components/NotificationsSheet";
 import { HealthRing, useAccountHealth } from "@/src/components/AccountHealth";
 import { T } from "@/src/components/ui";
@@ -60,9 +61,9 @@ export function WaylyHeader({ scrollY }: { scrollY?: SharedValue<number> }) {
         pointerEvents="none"
       />
       <Animated.View style={logoStyle}>
-        <Pressable testID="header-logo" onPress={() => router.push("/(tabs)")} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Pressable testID="header-logo" onPress={() => { router.push("/(tabs)"); setTimeout(scrollDashboardToTop, 50); }} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <WaylyMark size={30} white={isDark} />
-          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.primary }}>Wayly</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading }}>Wayly</T>
         </Pressable>
       </Animated.View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
@@ -76,7 +77,7 @@ export function WaylyHeader({ scrollY }: { scrollY?: SharedValue<number> }) {
             ) : null}
           </View>
         ) : null}
-        <Pressable testID="header-notifications" onPress={() => setNotifOpen(true)} hitSlop={8} style={{ position: "relative" }}>
+        <Pressable testID="header-notifications" onPress={() => setNotifOpen(true)} hitSlop={8} style={{ position: "relative", display: unread > 0 ? "flex" : "none" }}>
           <Bell size={22} color={colors.text} />
           {unread > 0 ? (
             <View testID="header-notifications-badge" style={[styles.badge, { backgroundColor: colors.gold }]}>
@@ -128,7 +129,7 @@ function AccountHealthSheet({ visible, onClose, data, router, colors }: any) {
                 </View>
                 <View style={{ flex: 1 }}>
                   <T style={{ fontSize: 14, color: colors.text }}>{item.label}</T>
-                  <T style={{ fontSize: 12, fontFamily: fonts.bodySemi, color: colors.primary, marginTop: 2 }}>{item.fix_label}</T>
+                  <T style={{ fontSize: 12, fontFamily: fonts.bodySemi, color: colors.heading, marginTop: 2 }}>{item.fix_label}</T>
                 </View>
               </Pressable>
             ))}

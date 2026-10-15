@@ -97,7 +97,7 @@ export default function AiToolsHub() {
             {INFO_CHIPS.map((c) => (
               <View key={c.lead} style={[styles.infoChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <T variant="small" style={{ lineHeight: 20 }}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }}>{c.lead}</T>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>{c.lead}</T>
                   {c.rest}
                 </T>
               </View>

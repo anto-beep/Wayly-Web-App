@@ -5,7 +5,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppHeader, T } from "@/src/components/ui";
-import { PageIntro } from "@/src/components/PageIntro";
 import MarkdownText from "@/src/components/MarkdownText";
 import ReportSheet from "@/src/components/ReportSheet";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -113,20 +112,14 @@ export default function AskWayly() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Ask Wayly" right={
         <Pressable testID="aw2-toggle-settings" onPress={() => { setShowSettings(true); loadCtx(); }} hitSlop={8}>
-          <Ionicons name="options-outline" size={22} color={colors.primary} />
+          <Ionicons name="options-outline" size={22} color={colors.heading} />
         </Pressable>
       } />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}>
         {!conv ? (
           <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }} keyboardShouldPersistTaps="handled">
-            <PageIntro
-              eyebrow="Ask Wayly"
-              title="Your Context-Aware Aged Care Assistant"
-              description="Ask anything about Support at Home, budgets, statements, care plans, or the transition from CHSP. Ask Wayly answers using what you've explicitly consented to share, nothing more."
-              whatItDoes="Grounds every answer in the Aged Care Act 2024 and, when you grant consent per data source, the participant's real budget, statements, and care plan."
-            />
             <View style={{ alignItems: "center", marginTop: spacing.xl, gap: spacing.md }} testID="aw2-empty">
-              <View style={styles.orb}><Ionicons name="sparkles" size={30} color={colors.primary} /></View>
+              <View style={styles.orb}><Ionicons name="sparkles" size={30} color={colors.heading} /></View>
               <T variant="h2" style={{ textAlign: "center" }}>How can I help today?</T>
               <T variant="bodyMuted" style={{ textAlign: "center", marginTop: -4 }}>Tap the settings icon to choose what Wayly can read. Your session is retained per your policy.</T>
               <View style={{ marginTop: spacing.md, gap: spacing.sm, alignSelf: "stretch" }}>
@@ -152,7 +145,7 @@ export default function AskWayly() {
         )}
 
         {sending && !(conv && conv.messages.length > 0 && conv.messages[conv.messages.length - 1].role === "assistant" && conv.messages[conv.messages.length - 1].content.length > 0) ? (
-          <View style={styles.typing}><ActivityIndicator size="small" color={colors.primary} /><T variant="small">Wayly is thinking…</T></View>
+          <View style={styles.typing}><ActivityIndicator size="small" color={colors.heading} /><T variant="small">Wayly is thinking…</T></View>
         ) : null}
 
         <View style={styles.inputBar}>

@@ -13,6 +13,7 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money, moneyWhole } from "@/src/utils/format";
 import { CLASSIFICATIONS, SUPPLEMENT_OPTIONS, ENTERAL_TYPE_OPTIONS, OXYGEN_CERTIFICATION_SHORT, toWireSupplements } from "@/src/data/budgetTool";
 import ResultActions from "@/src/components/tools/ResultActions";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
 
 export default function BudgetCalculatorTool() {
   const { colors } = useTheme();
@@ -185,6 +186,7 @@ export default function BudgetCalculatorTool() {
               </View>
             </Card>
             <ResultActions mode="payload" tool="budget" payload={result} fileBaseName={`wayly-budget-class-${classification}`} testIDPrefix="bc-export" />
+            <ReportIssueButton toolName="Budget Calculator" />
             </View>
           ) : null}
 

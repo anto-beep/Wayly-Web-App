@@ -40,7 +40,7 @@ function DuplicateNotice({ dup }: { dup: any }) {
         </T>
         {dup.invoice_id ? (
           <Pressable testID="inv1-duplicate-view" onPress={() => router.push(`/invoices/${dup.invoice_id}` as any)} hitSlop={6}>
-            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary, marginTop: 4, textDecorationLine: "underline" }}>View the earlier check</T>
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading, marginTop: 4, textDecorationLine: "underline" }}>View the earlier check</T>
           </Pressable>
         ) : null}
       </View>
@@ -298,8 +298,8 @@ function IssueCard({ f, idx, band, onDraftLetter }: { f: any; idx: number; band:
             {impact > 0 ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text }}>Potential refund: {aud(impact)}</T> : null}
             {onDraftLetter ? (
               <Pressable testID={`inv1-issue-letter-${idx}`} onPress={() => onDraftLetter(idx)} style={{ flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
-                <PenLine size={13} color={colors.primary} />
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>Draft letter</T>
+                <PenLine size={13} color={colors.heading} />
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading }}>Draft letter</T>
               </Pressable>
             ) : null}
           </View>
@@ -353,7 +353,7 @@ export function InvoiceIssueRegister({ findings, onDraftLetter, onDraftAll }: { 
     <View testID="inv1-issue-register" style={{ gap: 2 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6, justifyContent: "space-between" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Receipt size={18} color={colors.primary} />
+          <Receipt size={18} color={colors.heading} />
           <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading }}>Issue Register</T>
         </View>
         <T variant="small" style={{ color: colors.muted }}>{findings.length} total</T>
@@ -385,8 +385,8 @@ export function InvoiceChargesTable({ result }: { result: any }) {
   return (
     <View testID="inv1-charges">
       <Pressable testID="inv1-charges-toggle" onPress={() => setOpen((s) => !s)} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        {open ? <ChevronUp size={16} color={colors.primary} /> : <ChevronDown size={16} color={colors.primary} />}
-        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }}>{open ? "Hide" : "Show"} what&apos;s been charged ({lines.length} line{lines.length === 1 ? "" : "s"})</T>
+        {open ? <ChevronUp size={16} color={colors.heading} /> : <ChevronDown size={16} color={colors.heading} />}
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>{open ? "Hide" : "Show"} what&apos;s been charged ({lines.length} line{lines.length === 1 ? "" : "s"})</T>
       </Pressable>
       {open ? (
         <View testID="inv1-charges-table" style={{ marginTop: spacing.sm, gap: spacing.sm }}>

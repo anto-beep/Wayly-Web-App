@@ -60,7 +60,7 @@ function paceMeta(status: string | undefined, colors: any) {
     case "green": return { label: "On track", color: colors.success, bg: colors.successSoft, Icon: CheckCircle2 };
     case "amber": return { label: "Watch this", color: colors.alert, bg: colors.alertSoft, Icon: AlertTriangle };
     case "red": return { label: "Over pace", color: colors.terracotta, bg: colors.errorSoft, Icon: TrendingUp };
-    case "underspend": return { label: "Underspending", color: colors.primary, bg: colors.sageSoft, Icon: TrendingDown };
+    case "underspend": return { label: "Underspending", color: colors.heading, bg: colors.sageSoft, Icon: TrendingDown };
     default: return { label: "Not enough data yet", color: colors.muted, bg: colors.surface2, Icon: Info };
   }
 }
@@ -182,7 +182,7 @@ function PacingTab({ pacing }: { pacing: Pacing }) {
 
         {pacing.underspend_flag ? (
           <View testID="qp1-underspend-warning" style={{ flexDirection: "row", gap: 10, marginTop: spacing.md, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.surface }}>
-            <TrendingDown size={16} color={colors.primary} style={{ marginTop: 2 }} />
+            <TrendingDown size={16} color={colors.heading} style={{ marginTop: 2 }} />
             <T variant="small" style={{ flex: 1, lineHeight: 20 }}>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Heads up, funds may roll off. </T>
               You&apos;re on track to underspend by more than the rollover cap ({money(pacing.rollover_cap_aud)}). Consider bringing forward services that were paused.

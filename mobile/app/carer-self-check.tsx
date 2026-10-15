@@ -230,8 +230,8 @@ export default function CarerSelfCheckScreen() {
           <>
             <Card testID="csc-result" style={{ backgroundColor: colors.primarySoft }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: spacing.sm }}>
-                <CheckCircle2 size={18} color={colors.primary} />
-                <T style={{ fontFamily: fonts.bodySemi, color: colors.primary }}>Here is what you shared</T>
+                <CheckCircle2 size={18} color={colors.heading} />
+                <T style={{ fontFamily: fonts.bodySemi, color: colors.heading }}>Here is what you shared</T>
               </View>
               {result.personal_summary ? (
                 <T style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: colors.text }} testID="csc-personal-summary">{sanitizeAI(result.personal_summary)}</T>
@@ -268,7 +268,7 @@ export default function CarerSelfCheckScreen() {
                 <View style={{ marginTop: spacing.sm, gap: 8 }}>
                   {tailored.map((r) => (
                     <View key={r} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <Phone size={15} color={colors.primary} />
+                      <Phone size={15} color={colors.heading} />
                       <T variant="small" style={{ color: colors.text }}>{RESOURCE_LABEL[r] || r}</T>
                     </View>
                   ))}
@@ -292,7 +292,7 @@ export default function CarerSelfCheckScreen() {
 
             <Card testID="csc-checkin">
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <CalendarCheck size={18} color={colors.primary} />
+                <CalendarCheck size={18} color={colors.heading} />
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, flex: 1 }}>When would you like to check in again?</T>
               </View>
               {checkinSet ? (

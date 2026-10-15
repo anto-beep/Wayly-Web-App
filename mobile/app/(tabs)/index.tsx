@@ -1,8 +1,8 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "expo-router";
-import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
+import { registerDashboardScroll } from "@/src/lib/dashboardScroll";import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import {
   TrendingUp, FileText, AlertTriangle, Sparkles, ChevronRight,
@@ -57,14 +57,15 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 124, stroke = 16 }: { pct
   const c = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, pctFill));
   const off = c - (clamped / 100) * c;
-  const track = isDark ? "rgba(255,255,255,0.12)" : "rgba(14,77,82,0.10)";
+  const track = isDark ? "rgba(255,255,255,0.18)" : "rgba(14,77,82,0.10)";
+  const t = isDark ? (({ "#C0392B": "#F0857A", "#C2683D": "#E89A6F", "#4E6E54": "#7FC8A0" } as Record<string, string>)[tone] || tone) : tone;
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }} testID="glance-donut">
       <Svg width={size} height={size} style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}>
         <Circle cx={size / 2} cy={size / 2} r={r} stroke={track} strokeWidth={stroke} fill="none" />
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={tone} strokeWidth={stroke} strokeLinecap="round" fill="none" strokeDasharray={c} strokeDashoffset={off} />
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={t} strokeWidth={stroke} strokeLinecap="round" fill="none" strokeDasharray={c} strokeDashoffset={off} />
       </Svg>
-      <T style={{ fontFamily: fonts.heading, fontSize: 30, lineHeight: 32, color: tone }} testID="glance-donut-pct">{pctLabel}%</T>
+      <T style={{ fontFamily: fonts.heading, fontSize: 30, lineHeight: 32, color: t }} testID="glance-donut-pct">{pctLabel}%</T>
       <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 1.4, color: colors.muted, marginTop: 2 }}>USED</T>
     </View>
   );
@@ -90,6 +91,10 @@ export default function Dashboard() {
   const [showAllTtk, setShowAllTtk] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   useScrollToTop(scrollRef);
+  useEffect(() => {
+    registerDashboardScroll(() => scrollRef.current?.scrollTo({ y: 0, animated: true }));
+    return () => registerDashboardScroll(null);
+  }, []);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => { scrollY.value = e.contentOffset.y; });
 
@@ -229,8 +234,8 @@ export default function Dashboard() {
                     </View>
                     {budget?.quarter_label ? (
                       <View style={[styles.quarterPill, { backgroundColor: colors.primary + "12" }]} testID="glance-quarter-months">
-                        <Calendar size={13} color={colors.primary} />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.3, color: colors.primary }}>{String(budget.quarter_label).replace(/-/, " – ")}</T>
+                        <Calendar size={13} color={colors.heading} />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.3, color: colors.heading }}>{String(budget.quarter_label).replace(/-/, " – ")}</T>
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
@@ -259,7 +264,7 @@ export default function Dashboard() {
                       onPress={() => router.push("/(tabs)/statements")}
                       style={({ pressed }) => [styles.miniStat, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "26", borderLeftColor: colors.primary }, pressed && { opacity: 0.85 }]}
                     >
-                      <View style={styles.miniStatHead}><FileText size={14} color={colors.primary} /><T style={[styles.miniStatLabel, { color: colors.primary }]}>STATEMENTS</T></View>
+                      <View style={styles.miniStatHead}><FileText size={14} color={colors.heading} /><T style={[styles.miniStatLabel, { color: colors.heading }]}>STATEMENTS</T></View>
                       <T style={[styles.miniStatNum, { color: colors.heading }]}>{statements.length}</T>
                     </Pressable>
                     <View
@@ -280,7 +285,7 @@ export default function Dashboard() {
               <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
                 <Card testID="free-plan-limit-card" style={{ borderColor: colors.gold }}>
                   <View style={{ flexDirection: "row", gap: spacing.md }}>
-                    <View style={[styles.lockIcon, { backgroundColor: colors.goldSoft }]}><Lock size={20} color={colors.primary} /></View>
+                    <View style={[styles.lockIcon, { backgroundColor: colors.goldSoft }]}><Lock size={20} color={colors.heading} /></View>
                     <View style={{ flex: 1 }}>
                       <T style={{ fontFamily: fonts.heading, fontSize: 20 }}>Your plan is inactive.</T>
                       <T variant="small" style={{ marginTop: 8, lineHeight: 21 }}>You can still view every statement, anomaly, contact and record we have on file for you. Your Wayly plan is managed on your account at wayly.com.au.</T>
@@ -305,7 +310,7 @@ export default function Dashboard() {
                         <TrendingUp size={20} color={colors.gold} />
                       </View>
                       <View style={{ flex: 1, minWidth: 0 }}>
-                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>Budget detail, insights and history</T>
+                        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, lineHeight: 22, color: colors.heading }}>Budget Detail, Insights &amp; History</T>
                         <T variant="small" numberOfLines={2} style={{ marginTop: 2 }}>Spending streams, pathways, insights and your lifetime cap</T>
                       </View>
                     </View>
@@ -385,8 +390,8 @@ export default function Dashboard() {
                           <View style={{ width: `${Math.min(100, budget.lifetime_pct ?? 0)}%`, height: "100%", backgroundColor: colors.sage, borderRadius: 999 }} />
                         </View>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: spacing.sm }}>
-                          <T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>See your full contribution position</T>
-                          <ChevronRight size={14} color={colors.primary} />
+                          <T style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 12 }}>See your full contribution position</T>
+                          <ChevronRight size={14} color={colors.heading} />
                         </View>
                       </Card>
                       </Pressable>
@@ -431,7 +436,7 @@ export default function Dashboard() {
                     {/* STATEMENTS — latest statement only */}
                     <View testID="ttk-statements-section">
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <FileText size={15} color={colors.primary} />
+                        <FileText size={15} color={colors.heading} />
                         <T style={{ fontFamily: fonts.headingSemi, fontSize: 15, color: colors.heading }}>Statements</T>
                       </View>
                       <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>
@@ -460,7 +465,7 @@ export default function Dashboard() {
                                   {a.suggested_action ? (
                                     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 6, marginTop: 6 }}>
                                       <Lightbulb size={13} color={colors.gold} style={{ marginTop: 1 }} />
-                                      <T variant="small" style={{ flex: 1, color: colors.primary }}><T style={{ fontFamily: fonts.bodySemi }}>What to do: </T>{sanitizeAI(a.suggested_action)}</T>
+                                      <T variant="small" style={{ flex: 1, color: colors.heading }}><T style={{ fontFamily: fonts.bodySemi }}>What to do: </T>{sanitizeAI(a.suggested_action)}</T>
                                     </View>
                                   ) : null}
                                 </View>
@@ -491,7 +496,7 @@ export default function Dashboard() {
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.sm }}>
                           <Info size={16} color={colors.muted} />
                           <T variant="small">No invoice checked yet. </T>
-                          <Pressable onPress={() => router.push("/tool/invoice-checker")}><T variant="small" style={{ color: colors.primary, textDecorationLine: "underline" }}>Check one</T></Pressable>
+                          <Pressable onPress={() => router.push("/tool/invoice-checker")}><T variant="small" style={{ color: colors.heading, textDecorationLine: "underline" }}>Check one</T></Pressable>
                         </View>
                       ) : latestInvoiceFindings.length === 0 ? (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.sm }}>
@@ -514,7 +519,7 @@ export default function Dashboard() {
                                   {f.suggested_question && f.suggested_question !== body ? (
                                     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 6, marginTop: 6 }}>
                                       <Lightbulb size={13} color={colors.gold} style={{ marginTop: 1 }} />
-                                      <T variant="small" style={{ flex: 1, color: colors.primary }}><T style={{ fontFamily: fonts.bodySemi }}>What to ask: </T>{sanitizeAI(f.suggested_question)}</T>
+                                      <T variant="small" style={{ flex: 1, color: colors.heading }}><T style={{ fontFamily: fonts.bodySemi }}>What to ask: </T>{sanitizeAI(f.suggested_question)}</T>
                                     </View>
                                   ) : null}
                                 </View>
@@ -539,7 +544,7 @@ export default function Dashboard() {
                       <Users2 size={15} color={colors.muted} />
                       <Overline>Family thread</Overline>
                     </View>
-                    <Pressable onPress={() => router.push("/(tabs)/family")}><T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Open thread</T></Pressable>
+                    <Pressable onPress={() => router.push("/(tabs)/family")}><T style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 12 }}>Open thread</T></Pressable>
                   </View>
                   {familyMsgs.length === 0 ? (
                     <T variant="small" style={{ marginTop: spacing.md, lineHeight: 21 }}>{`No family messages yet. Share what's happening with siblings or your advisor without group SMS chains.`}</T>
@@ -571,7 +576,7 @@ export default function Dashboard() {
                     <View style={{ marginTop: spacing.sm }}>
                       {statements.slice(0, 5).map((s) => (
                         <Pressable key={s.id} onPress={() => router.push(`/statement/${s.id}`)} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                          <FileText size={18} color={colors.primary} />
+                          <FileText size={18} color={colors.heading} />
                           <View style={{ flex: 1 }}>
                             <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }} numberOfLines={1}>{s.period_label || s.filename}</T>
                             <T variant="small">{(s.line_items || []).length} line items</T>
@@ -595,8 +600,8 @@ export default function Dashboard() {
                       <Overline>Wayly Chat, last conversation</Overline>
                     </View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                      <T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>{showChat ? "Hide" : "Show"}</T>
-                      <ChevronDown size={15} color={colors.primary} style={{ transform: [{ rotate: showChat ? "180deg" : "0deg" }] }} />
+                      <T style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 12 }}>{showChat ? "Hide" : "Show"}</T>
+                      <ChevronDown size={15} color={colors.heading} style={{ transform: [{ rotate: showChat ? "180deg" : "0deg" }] }} />
                     </View>
                   </Pressable>
                   {showChat ? (
@@ -614,8 +619,8 @@ export default function Dashboard() {
                         </View>
                       )}
                       <Pressable testID="chat-preview-open" onPress={() => router.push("/(tabs)/ask")} style={{ marginTop: spacing.md, flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Open chat</T>
-                        <ChevronRight size={14} color={colors.primary} />
+                        <T style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 12 }}>Open chat</T>
+                        <ChevronRight size={14} color={colors.heading} />
                       </Pressable>
                     </>
                   ) : null}
@@ -632,7 +637,7 @@ export default function Dashboard() {
                       <Shield size={15} color={colors.muted} />
                       <Overline>Audit Log</Overline>
                     </View>
-                    <Pressable onPress={() => router.push("/audit")}><T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>View all</T></Pressable>
+                    <Pressable onPress={() => router.push("/audit")}><T style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 12 }}>View all</T></Pressable>
                   </View>
                   {audit.length === 0 ? (
                     <T variant="small" style={{ marginTop: spacing.md }}>No actions logged yet.</T>

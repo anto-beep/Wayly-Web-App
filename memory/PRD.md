@@ -1,5 +1,18 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — session-wave VERIFICATION pass + 3 fixes; web + mobile + backend; verified iter378 + self-tested):**
+- **Context:** forked to verify a prior agent's large untested UI/parity wave. Ran testing_agent (iter378) across both surfaces; it flagged 2 HIGH issues, both now FIXED + verified, plus I found & fixed one incomplete user request.
+- **FIX 1 (HIGH) — statement upload 500 on corrupt PDF:** `backend/document_extract.py::_extract_pdf_selectable_text` — the pypdf fallback (both the pdfplumber-missing path and the pdfplumber-failed path) wasn't wrapped, so a malformed PDF (`startxref not found`) raised an uncaught `PdfReadError` → 500. Now wrapped to raise the typed `CorruptFileError`, so BOTH `/api/statements/upload` (→ 400) and `/api/invoices/upload` (→ 422) return a friendly message. Curl-verified both routes.
+- **FIX 2 (HIGH) — web Landing reports strip didn't match backend:** `frontend/src/pages/Landing.jsx` reports strip was a stale hardcoded array (Tax Summary, Lifetime Cap Tracker, Budget Forecast, Care Plan Diff, Concerns Log — none in the catalog). Rewired to the exact 8 `reports_routes.REPORT_TYPES`: Household Summary, Quarterly Budget Report, Annual Financial Summary, Anomaly & Savings Report, Provider Performance Report, Complaint & Correspondence Dossier, Care Timeline, Statement Digest. Also fixed a broken truncated Tailwind class (`group-` → `group-hover:scale-110`). DOM-verified.
+- **FIX 3 (user request completeness) — "Report an issue" button was NOT on all tool result screens:** only Statement Decoder / Invoice Checker / Care Plan Reviewer had it. Added the shared `ReportIssueButton` to the 4 missing result views — Budget Calculator, Classification Self-Check, Provider Price Checker, Contribution Estimator — and to the Letters result (`app/letters/[id].tsx`). Aged Care Q&A already had its own `aw2-report-issue-btn`. Screenshot-verified on Budget Calculator (authenticated result).
+- **Verified by inspection:** dark-mode menu active/hover → clay (`index.css` 579-590, scoped to `.app-shell`); notification bell hidden when `totalUnread===0` (`NotificationsBell.jsx:197`, badge uses `bg-clay`); no off-brand blue in mobile `theme/tokens.ts`; CHSP parser (`routes/chsp1.py`) reads line `amount` directly from the LLM extraction (not computed) so the old $0.00 line-item bug is N/A.
+- **Mobile P0 upload e2e:** confirmed the exact client contract — Invoice Checker `uploadFile`→`/invoices/upload` returned 200 with extracted provider+findings; Care Plan Reviewer single-doc `/public/care-plans/review-files-async`→poll→done returned summary+12 findings. NOTE: Android/iOS *native* multipart can only be fully validated via a Published build (Expo web-preview + backend verified here).
+- Known non-blocker: pre-existing TS type-noise across the mobile app (Participant.name, `<T>` prop types, router route unions) — Metro bundles & runs fine; not introduced this session.
+
+---
+
+# Wayly — current fork status (Jun 2026)
+
 **Just shipped (Jun 2026 — Android package rename + graceful unmatched-route handling; web + mobile; self-verified):**
 - Android package id changed to **`au.com.wayly.app`** (`mobile/app.json`; applies on next native Publish).
 - Killed the mobile black **"Unmatched route"** screen: added `mobile/app/+not-found.tsx` (friendly branded catch-all with Go-home/Go-back) + `mobile/src/lib/notificationLink.ts` `resolveNotificationLink()` that maps the backend's web-shaped notification links (e.g. `/app/statements/{id}`) to real mobile routes; `NotificationsSheet` only navigates when the link resolves (else it just dismisses).

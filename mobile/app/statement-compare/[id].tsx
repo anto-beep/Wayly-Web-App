@@ -127,7 +127,7 @@ export default function StatementCompare() {
             ) : (
               <Card testID="compare-original-pane">
                 <View style={[styles.iconWrap, { backgroundColor: colors.sageSoft }]}>
-                  <FileText size={26} color={colors.primary} />
+                  <FileText size={26} color={colors.heading} />
                 </View>
                 {stmt.has_original_file ? (
                   <>

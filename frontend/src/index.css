@@ -584,6 +584,15 @@ html.theme-dark .app-shell [class*="bg-primary-k/"] {
     border-color: #A5512B !important;
 }
 html.theme-dark .app-shell .bg-primary-k:hover { background-color: #8A4423 !important; }
+/* Sidebar + mobile-drawer nav: hover highlight uses CLAY (not teal) in dark
+   mode, matching the clay active state, so the whole menu reads on-brand. */
+html.theme-dark .app-shell a[data-testid^="nav-"]:hover,
+html.theme-dark .app-shell a[data-testid^="drawer-nav-"]:hover {
+    background-color: rgba(165,81,43,0.20) !important;
+    color: #E89A6F !important;
+}
+html.theme-dark .app-shell a[data-testid^="nav-"]:hover *,
+html.theme-dark .app-shell a[data-testid^="drawer-nav-"]:hover * { color: #E89A6F !important; }
 /* Text: heading and body copy shifts to white inside the authenticated
  * shell so it reads strongly against the warm clay/teal surfaces. */
 html.theme-dark .app-shell .text-primary-k { color: #FFFFFF !important; }

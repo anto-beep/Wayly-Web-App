@@ -35,9 +35,9 @@ export function PageIntro({
             onPress={() => setOpen((o) => !o)}
             style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.sm }}
           >
-            <HelpCircle size={15} color={colors.primary} />
-            <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>How this works</T>
-            {open ? <ChevronUp size={15} color={colors.primary} /> : <ChevronDown size={15} color={colors.primary} />}
+            <HelpCircle size={15} color={colors.heading} />
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading }}>How this works</T>
+            {open ? <ChevronUp size={15} color={colors.heading} /> : <ChevronDown size={15} color={colors.heading} />}
           </Pressable>
 
           {open ? (

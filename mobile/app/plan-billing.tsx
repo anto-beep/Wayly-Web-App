@@ -80,7 +80,7 @@ export default function PlanBillingScreen() {
 
           <Card testID="billing-manage-note">
             <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
-              <Info size={18} color={colors.primary} style={{ marginTop: 2 }} />
+              <Info size={18} color={colors.heading} style={{ marginTop: 2 }} />
               <T variant="small" style={{ flex: 1, lineHeight: 21 }}>
                 Your plan and card details are managed securely on the web. The button below opens your Wayly account in your browser — nothing is purchased inside the app.
               </T>

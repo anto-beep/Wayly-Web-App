@@ -224,7 +224,7 @@ export default function FamilyWall() {
             ) : null}
             <View style={styles.composerRow}>
               <Pressable testID="wall-attach-photo" onPress={attachPhoto} hitSlop={8} style={[styles.iconBtn, { backgroundColor: colors.sageSoft }]}>
-                <Ionicons name="image" size={22} color={colors.primary} />
+                <Ionicons name="image" size={22} color={colors.heading} />
               </Pressable>
               <TextInput
                 testID="wall-input"

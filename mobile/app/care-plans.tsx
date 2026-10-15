@@ -194,7 +194,7 @@ export default function CarePlansScreen() {
                           <View style={[styles.checkbox, { borderColor: isSel ? colors.primary : colors.border, backgroundColor: isSel ? colors.primary : "transparent" }]}>
                             {isSel ? <Check size={14} color="#fff" /> : null}
                           </View>
-                        ) : <FileText size={18} color={colors.primary} />}
+                        ) : <FileText size={18} color={colors.heading} />}
                         <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, flex: 1 }} numberOfLines={2}>{p.title || p.filename || "Care plan"}</T>
                       </View>
                       {p.status ? <Badge label={p.status.toUpperCase()} tone={STATUS_TONE[p.status] || "neutral"} /> : null}

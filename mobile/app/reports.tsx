@@ -149,7 +149,7 @@ export default function ReportsScreen() {
               return (
                 <View key={item.id} testID={`report-${item.id}`} style={[styles.row, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card]}>
                   <View style={[styles.iconSm, { backgroundColor: colors.sageSoft }]}>
-                    <FileBarChart size={18} color={colors.primary} />
+                    <FileBarChart size={18} color={colors.heading} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }} numberOfLines={2}>{item.report_name || item.report_type}</T>
@@ -159,7 +159,7 @@ export default function ReportsScreen() {
                     <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
                       <Button label="View" testID={`report-view-${item.id}`} variant="outline" onPress={() => router.push(`/report/${item.id}` as any)} />
                       {downloading === item.id ? (
-                        <Loader2 size={18} color={colors.primary} />
+                        <Loader2 size={18} color={colors.heading} />
                       ) : (
                         <Button label="PDF" testID={`report-download-${item.id}`} variant="secondary" onPress={() => openReport(item)} icon={Download} style={{ minHeight: 40, paddingHorizontal: 12 }} />
                       )}

@@ -10,6 +10,8 @@ import ToolHero from "@/src/components/ToolHero";
 import InvoiceResultView from "@/src/components/invoices/InvoiceResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
+import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -65,7 +67,7 @@ export default function InvoiceChecker() {
 
         <Card testID="inv1-upload-card">
           <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-            <ReceiptText size={22} color={colors.primary} />
+            <ReceiptText size={22} color={colors.heading} />
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, flex: 1 }}>Upload your invoice</T>
           </View>
           <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 19 }}>PDF, DOC/DOCX, TXT, CSV, JPG, PNG, HEIC, WEBP. Combined statement + invoice documents work too.</T>
@@ -74,7 +76,7 @@ export default function InvoiceChecker() {
             {!file ? (
               <Pressable testID="inv1-pick-file" onPress={pick} style={{ alignItems: "center", paddingVertical: spacing.md }}>
                 <View style={{ width: 56, height: 56, borderRadius: radius.pill, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
-                  <Upload size={26} color={colors.primary} />
+                  <Upload size={26} color={colors.heading} />
                 </View>
                 <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading, marginTop: 10 }}>Tap to choose your invoice</T>
                 <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>PDF, Word, image or CSV</T>
@@ -82,7 +84,7 @@ export default function InvoiceChecker() {
             ) : (
               <View style={{ gap: spacing.sm, alignItems: "center" }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <FileText size={16} color={colors.primary} />
+                  <FileText size={16} color={colors.heading} />
                   <T variant="small" testID="inv1-file-name" numberOfLines={1} style={{ maxWidth: 220 }}>{file.name}</T>
                 </View>
                 <Button label={busy ? "Reading your invoice…" : "Check my invoice"} testID="inv1-upload-submit" icon={ArrowRight} onPress={() => upload()} loading={busy} />
@@ -138,6 +140,14 @@ export default function InvoiceChecker() {
 
         {result && !isStatement && result.document_shape ? (
           <View onLayout={onResultLayout} style={{ gap: spacing.md }}>
+            <SmartAISummary
+              pageKey="invoice-detail"
+              context={{
+                provider: result.provider_name || null,
+                billed_aud: result?.reconciliation?.invoice_total ?? result?.invoice_total ?? null,
+                issue_count: (result?.reconciliation?.findings || []).length,
+              }}
+            />
             <InvoiceResultView
               result={result}
               onDraftLetter={async (findingIndex: number) => {
@@ -159,6 +169,7 @@ export default function InvoiceChecker() {
             />
             <ResultActions mode="payload" tool="invoice" payload={result} personName={result.provider_name || undefined} fileBaseName="wayly-invoice-check" testIDPrefix="inv1-export" />
             <Button label="Check another invoice" variant="outline" testID="inv1-check-another" onPress={reset} />
+            <ReportIssueButton toolName="Invoice Checker" />
           </View>
         ) : null}
 

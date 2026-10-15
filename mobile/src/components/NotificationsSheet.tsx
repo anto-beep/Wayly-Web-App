@@ -42,8 +42,8 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
             <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
               {unread > 0 ? (
                 <Pressable testID="notifications-mark-all-read" onPress={markAllRead} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                  <CheckCheck size={16} color={colors.primary} />
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>Mark all read</T>
+                  <CheckCheck size={16} color={colors.heading} />
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading }}>Mark all read</T>
                 </Pressable>
               ) : null}
               <Pressable testID="notifications-close" onPress={onClose} hitSlop={10}>

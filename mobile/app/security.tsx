@@ -57,7 +57,7 @@ function MfaCard() {
     <Card testID="security-mfa-panel">
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-          <ShieldCheck size={18} color={colors.primary} />
+          <ShieldCheck size={18} color={colors.heading} />
           <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, flex: 1 }}>Two-factor authentication</T>
         </View>
         <Badge testID="security-mfa-status" label={enabled ? "ENABLED" : "DISABLED"} tone={enabled ? "success" : "alert"} />
@@ -132,7 +132,7 @@ export default function SecurityScreen() {
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <Card testID="security-password">
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <KeyRound size={18} color={colors.primary} />
+              <KeyRound size={18} color={colors.heading} />
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Password</T>
             </View>
             <T variant="small" style={{ marginTop: 6 }}>We will email you a secure link to set a new password.</T>
@@ -144,7 +144,7 @@ export default function SecurityScreen() {
 
           <Card testID="security-audit-trail-card">
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Shield size={18} color={colors.primary} />
+              <Shield size={18} color={colors.heading} />
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Your data audit trail</T>
             </View>
             <T variant="small" style={{ marginTop: 6 }}>

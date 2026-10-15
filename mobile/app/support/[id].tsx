@@ -137,7 +137,7 @@ export default function SupportDetailScreen() {
                   <Pressable key={att.id} testID={`support-attachment-${att.id}`} onPress={() => att.purged_at ? undefined : downloadAttachment(att)} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 8 }}>
                     <Paperclip size={16} color={colors.muted} />
                     <T variant="small" style={{ flex: 1 }} numberOfLines={1}>{att.filename || "attachment"}{att.purged_at ? " (expired)" : ""}</T>
-                    {!att.purged_at ? <Download size={16} color={colors.primary} /> : null}
+                    {!att.purged_at ? <Download size={16} color={colors.heading} /> : null}
                   </Pressable>
                 ))}
               </Card>

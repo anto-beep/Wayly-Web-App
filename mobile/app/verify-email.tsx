@@ -108,7 +108,7 @@ export default function VerifyEmailScreen() {
 
           <Animated.View entering={FadeInDown.duration(500)} style={{ alignItems: "center", marginBottom: spacing.xl }}>
             <View style={{ width: 64, height: 64, borderRadius: radius.pill, backgroundColor: colors.sageSoft, alignItems: "center", justifyContent: "center", marginBottom: spacing.md }}>
-              <MailCheck size={30} color={colors.primary} />
+              <MailCheck size={30} color={colors.heading} />
             </View>
             <WaylyMark size={30} white={isDark} />
           </Animated.View>

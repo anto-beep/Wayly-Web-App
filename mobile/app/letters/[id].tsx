@@ -10,6 +10,7 @@ import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
 
 import { AppHeader, Badge, Button, Card, Loading, Select, StatePanel, T } from "@/src/components/ui";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { generateLetterAsync } from "@/src/lib/lf1Generate";
 import { sharePostPdf } from "@/src/lib/download";
@@ -382,8 +383,8 @@ function CrossToolPanel({ entryId, onImport }: { entryId: string; onImport: (dat
         {chips.map((c) => (
           <Pressable key={c.key} testID={`lf1-import-${c.key}`} disabled={busy === c.key} onPress={c.onPress}
             style={[styles.chip, { borderColor: colors.primary, backgroundColor: colors.surface2 }, busy === c.key && { opacity: 0.5 }]}>
-            <LinkIcon size={13} color={colors.primary} />
-            <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{c.label}</T>
+            <LinkIcon size={13} color={colors.heading} />
+            <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>{c.label}</T>
             <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>· {c.detail}</T>
           </Pressable>
         ))}
@@ -466,12 +467,12 @@ function RecipientDirectoryCard({ entryId, currentSpecific, onApplied }: { entry
       {(active as any)?.provider_email && !(currentName === ((active as any)?.provider_name || "") && currentEmail === (active as any).provider_email) ? (
         <Pressable testID="lf1-recipient-use-provider" onPress={() => apply({ id: "__provider__", name: (active as any)?.provider_name || "Your provider", email: (active as any).provider_email })} disabled={busyId === "__provider__"}
           style={{ flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 2, borderColor: colors.primary, borderRadius: radius.md, paddingHorizontal: spacing.sm, paddingVertical: 10, marginBottom: spacing.sm, opacity: busyId === "__provider__" ? 0.6 : 1 }}>
-          <Users size={16} color={colors.primary} />
+          <Users size={16} color={colors.heading} />
           <View style={{ flex: 1 }}>
             <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Address to {(active as any)?.provider_name || "your saved provider"}</T>
             <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>{(active as any).provider_email}</T>
           </View>
-          <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>One tap</T>
+          <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 12 }}>One tap</T>
         </Pressable>
       ) : null}
       {currentName ? (
@@ -494,7 +495,7 @@ function RecipientDirectoryCard({ entryId, currentSpecific, onApplied }: { entry
                   <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{rec.name}</T>
                   {rec.email ? <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>{rec.email}</T> : null}
                 </View>
-                {selected ? <CheckCircle2 size={16} color={colors.primary} /> : <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Use</T>}
+                {selected ? <CheckCircle2 size={16} color={colors.heading} /> : <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 12 }}>Use</T>}
               </Pressable>
             );
           })}
@@ -511,8 +512,8 @@ function RecipientDirectoryCard({ entryId, currentSpecific, onApplied }: { entry
         </View>
       ) : (
         <Pressable testID="lf1-recipient-add" onPress={() => setAdding(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.sm }}>
-          <PenLine size={14} color={colors.primary} />
-          <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>Save a new recipient</T>
+          <PenLine size={14} color={colors.heading} />
+          <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>Save a new recipient</T>
         </Pressable>
       )}
     </Card>
@@ -822,7 +823,7 @@ export default function CorrespondenceDetail() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title={isGuided ? "Safeguarding record" : "Draft your letter"} onBack={() => requestLeave(() => router.back())} right={
-        <Pressable testID="lf-log-link" onPress={() => requestLeave(() => router.push("/letters"))} hitSlop={8}><FileText size={20} color={colors.primary} /></Pressable>
+        <Pressable testID="lf-log-link" onPress={() => requestLeave(() => router.push("/letters"))} hitSlop={8}><FileText size={20} color={colors.heading} /></Pressable>
       } />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
@@ -930,7 +931,7 @@ export default function CorrespondenceDetail() {
             <T variant="small" style={{ color: colors.muted, marginTop: 2, marginBottom: spacing.xs }}>Wayly only uses the facts you enter here. Nothing is invented.</T>
             {intake?.prefill_source === "situation" ? (
               <View style={[styles.softNote, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]} testID="lf1-detail-starter-note">
-                <Sparkles size={16} color={colors.primary} style={{ marginTop: 2 }} />
+                <Sparkles size={16} color={colors.heading} style={{ marginTop: 2 }} />
                 <T variant="small" style={{ flex: 1, lineHeight: 20 }}>Wayly has started this letter for you based on the situation you picked. Edit anything, fill in the details in brackets, then tap Generate letter.</T>
               </View>
             ) : null}
@@ -960,7 +961,7 @@ export default function CorrespondenceDetail() {
 
           {prefilling ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }} testID="lf1-prefill-busy">
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator size="small" color={colors.heading} />
               <T variant="small" style={{ color: colors.muted }}>Drafting a starting point from your situation…</T>
             </View>
           ) : null}
@@ -971,7 +972,7 @@ export default function CorrespondenceDetail() {
                   <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Complete these required fields before drafting:</T>
                   {requiredMissing.map((l) => <T key={l} variant="small" style={{ color: colors.muted, fontSize: 12 }}>• {l}</T>)}
                   <Pressable testID="lf1-required-missing-jump" onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })} style={{ marginTop: 6 }}>
-                    <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi, textDecorationLine: "underline" }}>Take me to the fields</T>
+                    <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi, textDecorationLine: "underline" }}>Take me to the fields</T>
                   </Pressable>
                 </View>
               </View>
@@ -1043,6 +1044,7 @@ export default function CorrespondenceDetail() {
                 <Info size={15} color={colors.muted} style={{ marginTop: 2 }} />
                 <T variant="small" style={{ flex: 1, lineHeight: 19, color: colors.muted, fontSize: 12 }}>This letter was drafted automatically from your intake and the linked tool state above. Read it in full before sending. Wayly Letters and Follow-ups is a drafting assistant, not legal advice.</T>
               </View>
+              <ReportIssueButton toolName="Letters & Follow-ups" />
             </>
           ) : null}
 
@@ -1241,7 +1243,7 @@ function ShareAndSignOffPanel({ entry, entryId, onUpdated }: { entry: any; entry
 
   return (
     <Card testID="lf1-share-panel">
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Users size={16} color={colors.primary} /><T variant="label" style={{ color: colors.muted }}>SHARE WITH FAMILY</T></View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Users size={16} color={colors.heading} /><T variant="label" style={{ color: colors.muted }}>SHARE WITH FAMILY</T></View>
       {members.length === 0 ? (
         <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm, lineHeight: 20 }}>Once you add household members in the Family Coordinator, you can share drafts here for a second pair of eyes.</T>
       ) : (
@@ -1300,7 +1302,7 @@ function LetterPreviewModal({ open, onClose, draft, entry, archetype, senderName
           <View testID="lf1-preview-paper" style={{ backgroundColor: "#ffffff", borderRadius: radius.md, padding: spacing.lg, gap: spacing.md }}>
             {/* Letterhead */}
             <View style={{ borderBottomWidth: 2, borderBottomColor: colors.primary, paddingBottom: spacing.sm }}>
-              <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.primary }}>Wayly</T>
+              <T style={{ fontFamily: fonts.heading, fontSize: 20, color: colors.heading }}>Wayly</T>
               <T style={{ fontFamily: fonts.body, fontSize: 10, letterSpacing: 1, color: "#7a736a" }}>LETTERS AND FOLLOW-UPS · {String(situationLine).toUpperCase()}</T>
             </View>
             {/* From / To */}
@@ -1319,7 +1321,7 @@ function LetterPreviewModal({ open, onClose, draft, entry, archetype, senderName
               </View>
             </View>
             <T style={{ fontFamily: fonts.body, fontSize: 12, color: "#524B42" }}>{today}</T>
-            {subject ? <T testID="lf1-preview-subject" style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.primary }}>{subject}</T> : null}
+            {subject ? <T testID="lf1-preview-subject" style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>{subject}</T> : null}
             {/* Body */}
             <View testID="lf1-preview-body" style={{ gap: spacing.sm }}>
               {paras.map((p: string, i: number) => (

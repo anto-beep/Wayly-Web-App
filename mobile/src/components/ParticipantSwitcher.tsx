@@ -26,7 +26,7 @@ export function ParticipantSwitcher({ householdName, variant = "chip" }: { house
           style={[styles.bar, { backgroundColor: colors.surface, borderColor: colors.primary }]}
         >
           <View style={[styles.avatarLg, { backgroundColor: `${colors.primary}22` }]}>
-            <HeartHandshake size={22} color={colors.primary} />
+            <HeartHandshake size={22} color={colors.heading} />
           </View>
           <View style={{ flex: 1 }}>
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.6, color: colors.muted }}>
@@ -38,8 +38,8 @@ export function ParticipantSwitcher({ householdName, variant = "chip" }: { house
           </View>
           {hasList ? (
             <View style={[styles.switchPill, { backgroundColor: colors.sageSoft }]}>
-              <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>Switch</T>
-              <ChevronDown size={15} color={colors.primary} />
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading }}>Switch</T>
+              <ChevronDown size={15} color={colors.heading} />
             </View>
           ) : null}
         </Pressable>
@@ -64,7 +64,7 @@ export function ParticipantSwitcher({ householdName, variant = "chip" }: { house
             {label}
           </T>
         </View>
-        {hasList ? <ChevronDown size={18} color={colors.primary} /> : null}
+        {hasList ? <ChevronDown size={18} color={colors.heading} /> : null}
       </Pressable>
       {renderModal()}
     </>
@@ -102,7 +102,7 @@ export function ParticipantSwitcher({ householdName, variant = "chip" }: { house
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>{p.display_name}</T>
                       {p.provider_name ? <T variant="small">{p.provider_name}</T> : null}
                     </View>
-                    {isActive ? <CheckCircle2 size={22} color={colors.primary} /> : null}
+                    {isActive ? <CheckCircle2 size={22} color={colors.heading} /> : null}
                   </Pressable>
                 );
               })}

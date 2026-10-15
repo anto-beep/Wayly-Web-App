@@ -246,7 +246,7 @@ function WS1FeeCheck({ services, colors }: any) {
       <View style={{ marginTop: spacing.md, backgroundColor: colors.bg, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm }} testID="chsp-ws1-upload-card">
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
           <View style={{ flex: 1, flexDirection: "row", gap: 8, alignItems: "center" }}>
-            <FileText size={18} color={colors.primary} />
+            <FileText size={18} color={colors.heading} />
             <View style={{ flex: 1 }}>
               <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Have the invoice handy?</T>
               <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>Upload a PDF or photo and we&apos;ll fill in the fields.</T>
@@ -259,7 +259,7 @@ function WS1FeeCheck({ services, colors }: any) {
             <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}><Sparkles size={14} color={colors.sage} /><T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>What we read</T></View>
             <T variant="small" style={{ color: colors.muted }}>{parseInfo.plain_summary}</T>
             {(parseInfo.next_steps || []).map((s: string, i: number) => (
-              <View key={i} style={{ flexDirection: "row", gap: 6, alignItems: "flex-start" }} testID={`chsp-ws1-next-step-${i}`}><ArrowRight size={12} color={colors.primary} style={{ marginTop: 2 }} /><T variant="small" style={{ flex: 1, color: colors.text }}>{s}</T></View>
+              <View key={i} style={{ flexDirection: "row", gap: 6, alignItems: "flex-start" }} testID={`chsp-ws1-next-step-${i}`}><ArrowRight size={12} color={colors.heading} style={{ marginTop: 2 }} /><T variant="small" style={{ flex: 1, color: colors.text }}>{s}</T></View>
             ))}
           </View>
         ) : null}
@@ -268,7 +268,7 @@ function WS1FeeCheck({ services, colors }: any) {
       {lineOptions.length > 1 ? (
         <View testID="chsp-ws1-line-picker" style={{ marginTop: spacing.md, backgroundColor: colors.bg, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <ListChecks size={16} color={colors.primary} />
+            <ListChecks size={16} color={colors.heading} />
             <T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text, flex: 1 }}>This invoice has {lineOptions.length} service lines — pick one to check</T>
           </View>
           {lineOptions.map((o: any, i: number) => (
@@ -351,12 +351,12 @@ function WS1FeeCheck({ services, colors }: any) {
                     {/* Explained tiles */}
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                       <View testID="chsp-ws1-tile-billed" style={{ flex: 1, minWidth: "45%", backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.sm }}>
-                        <T style={{ fontSize: 10, color: colors.primary, letterSpacing: 0.5 }}>BILLED PER UNIT</T>
+                        <T style={{ fontSize: 10, color: colors.heading, letterSpacing: 0.5 }}>BILLED PER UNIT</T>
                         <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading, marginTop: 2 }}>{aud(result.billed_per_unit)}</T>
                         <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>What you were charged for each hour, visit or unit.</T>
                       </View>
                       <View testID="chsp-ws1-tile-expected" style={{ flex: 1, minWidth: "45%", backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.sm }}>
-                        <T style={{ fontSize: 10, color: colors.primary, letterSpacing: 0.5 }}>EXPECTED AMOUNT</T>
+                        <T style={{ fontSize: 10, color: colors.heading, letterSpacing: 0.5 }}>EXPECTED AMOUNT</T>
                         <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading, marginTop: 2 }}>{aud(result.expected_amount)}</T>
                         <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>Your agreed rate times the units you received.</T>
                       </View>
@@ -395,7 +395,7 @@ function WS1FeeCheck({ services, colors }: any) {
       {saved.length > 0 ? (
         <View style={{ marginTop: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, overflow: "hidden" }} testID="chsp-ws1-past">
           <Pressable testID="chsp-ws1-past-toggle" onPress={() => setShowPast((s) => !s)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: spacing.md }}>
-            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}><ListChecks size={16} color={colors.primary} /><T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Past checks ({saved.length})</T></View>
+            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}><ListChecks size={16} color={colors.heading} /><T variant="small" style={{ fontFamily: fonts.bodySemi, color: colors.text }}>Past checks ({saved.length})</T></View>
             <T variant="small" style={{ color: colors.muted }}>{showPast ? "Hide" : "Show"}</T>
           </Pressable>
           {showPast ? saved.map((s) => (
@@ -471,10 +471,10 @@ export default function ChspToolsScreen() {
                   <View testID="chsp-fit-self-check" style={{ backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.primary + "33", borderRadius: radius.lg, padding: spacing.md }}>
                     <View style={{ flexDirection: "row", gap: spacing.sm, alignItems: "flex-start" }}>
                       <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary + "1A", alignItems: "center", justifyContent: "center" }}>
-                        <Home size={18} color={colors.primary} />
+                        <Home size={18} color={colors.heading} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <T variant="label" style={{ color: colors.primary }}>IS CHSP STILL THE RIGHT FIT?</T>
+                        <T variant="label" style={{ color: colors.heading }}>IS CHSP STILL THE RIGHT FIT?</T>
                         <T variant="small" style={{ marginTop: 4, lineHeight: 20, color: colors.text }}>Most people on CHSP are on the right program. You only need the transition walkthrough if your care needs have genuinely changed.</T>
                       </View>
                     </View>
@@ -606,7 +606,7 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
     <Card testID="chsp-services-card" style={{ backgroundColor: colors.sageSoft }}>
       <T variant="label" style={{ color: colors.sage }}>SETUP · AGREED RATE SCHEDULE</T>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 }}>
-        <Wrench size={18} color={colors.primary} />
+        <Wrench size={18} color={colors.heading} />
         <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, flex: 1 }}>Your Saved Provider Rates</T>
         <T variant="small" style={{ color: colors.muted }} testID="chsp-services-count">{services.length}</T>
       </View>
@@ -723,7 +723,7 @@ function FeeCheckForm({ services, colors }: any) {
   return (
     <Card testID="chsp-fee-check-form">
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <ReceiptText size={18} color={colors.primary} />
+        <ReceiptText size={18} color={colors.heading} />
         <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, flex: 1 }}>Was this CHSP invoice correct?</T>
       </View>
       <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Enter what you were billed and what you expected. We&apos;ll flag anything outside a 2% or $5 tolerance.</T>

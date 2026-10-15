@@ -6,6 +6,7 @@ import { Sparkles, AlertTriangle, RefreshCcw, ArrowRight, ArrowLeft, Phone, Down
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolHero from "@/src/components/ToolHero";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError } from "@/src/lib/api";
 import { sharePostPdf } from "@/src/lib/download";
@@ -855,6 +856,7 @@ export default function ClassificationSelfCheck() {
                   Payload version {result.schema_version}.{result.classification?.budget_source_version ? ` Budgets sourced from ${result.classification.budget_source_version}.` : ""}
                 </T>
               ) : null}
+              <ReportIssueButton toolName="Classification Self-Check" />
             </View>
           )}
 

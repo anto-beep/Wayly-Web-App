@@ -97,9 +97,9 @@ export default function SwitchSettlementScreen() {
             <Card testID="psw1-settle-summary" style={{ backgroundColor: colors.primarySoft, borderColor: colors.border }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <View>
-                  <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>STATUS</T>
+                  <T variant="small" style={{ color: colors.heading, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>STATUS</T>
                   <View style={{ backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6, alignSelf: "flex-start" }}>
-                    <T testID="psw1-settle-status" style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.primary }}>{(STATUS_LABEL[settlement.refund_status] || settlement.refund_status || "").toUpperCase()}</T>
+                    <T testID="psw1-settle-status" style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.heading }}>{(STATUS_LABEL[settlement.refund_status] || settlement.refund_status || "").toUpperCase()}</T>
                   </View>
                 </View>
                 <DollarSign size={24} color={colors.muted} />
@@ -199,7 +199,7 @@ function ReceiveRefundForm({ settlementId, colors, onRecorded }: any) {
   };
   return (
     <Card testID="psw1-settle-receive-form" style={{ backgroundColor: colors.primarySoft, borderColor: colors.border }}>
-      <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>RECORD REFUND RECEIPT</T>
+      <T variant="small" style={{ color: colors.heading, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>RECORD REFUND RECEIPT</T>
       <View style={{ marginTop: spacing.sm }}>
         <LInput label="Amount received (AUD)" value={amount} onChangeText={setAmount} testID="psw1-settle-amount-input" colors={colors} />
       </View>

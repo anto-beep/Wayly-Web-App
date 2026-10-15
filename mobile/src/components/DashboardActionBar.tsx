@@ -115,7 +115,7 @@ export function DashboardActionBar() {
                   <Icon size={20} color="#fff" />
                 </View>
                 <View style={{ gap: 3 }}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary, lineHeight: 18 }} numberOfLines={2}>{toTitleLabel(a.label)}</T>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading, lineHeight: 18 }} numberOfLines={2}>{toTitleLabel(a.label)}</T>
                   <T style={{ fontFamily: fonts.body, fontSize: 11.5, color: colors.muted, lineHeight: 15 }} numberOfLines={2}>{a.hint}</T>
                 </View>
               </Pressable>

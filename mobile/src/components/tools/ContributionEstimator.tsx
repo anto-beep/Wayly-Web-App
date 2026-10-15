@@ -15,6 +15,7 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money } from "@/src/utils/format";
 import ResultActions from "@/src/components/tools/ResultActions";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
 
 const ENTRY_PATHS = [
   { v: "not_assessed", label: "I have not been assessed yet", desc: "Range shown across Class 3, 5 and 8." },
@@ -410,6 +411,7 @@ export default function ContributionEstimator() {
             <View testID="ce-result" onLayout={onResultLayout} style={{ gap: spacing.md }}>
               <ResultScreen result={result} form={form} colors={colors} onEdit={() => setResult(null)} />
               <ResultActions mode="payload" tool="contribution" payload={result} personName={form.person_name || undefined} fileBaseName="wayly-contribution-estimate" testIDPrefix="ce-export" />
+              <ReportIssueButton toolName="Contribution Estimator" />
             </View>
           )}
 
@@ -550,7 +552,7 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>Also worth knowing</T>
             <T variant="small" style={{ marginTop: spacing.sm, lineHeight: 20 }}><T variant="small" style={{ fontFamily: fonts.bodySemi }}>Financial hardship. </T>{`If paying ${voice.possessive} contribution would cause serious financial difficulty, ${voice.subject} can apply to Services Australia for a hardship reduction.`}</T>
             <Pressable testID="ce-lf-link" onPress={() => router.push("/tool/letters-and-follow-ups")} style={{ marginTop: spacing.sm }}>
-              <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{"Reassessment: Wayly's Letters & Follow-ups tool can draft the request →"}</T>
+              <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>{"Reassessment: Wayly's Letters & Follow-ups tool can draft the request →"}</T>
             </Pressable>
             <T variant="small" style={{ color: colors.muted, marginTop: spacing.sm, fontSize: 12, lineHeight: 18 }}>{`This is a plain-English estimate for your household planning. ${voice.possessiveTitle} final rate is set by Services Australia based on ${voice.possessive} assessed income and assets.`}</T>
           </View>
@@ -587,7 +589,7 @@ function BudgetBreakdown({ result, colors }: any) {
         <View style={{ flexDirection: "row", backgroundColor: colors.bg, borderRadius: radius.pill, padding: 2, borderWidth: 1, borderColor: colors.border }} testID="ce-budget-period">
           {(["quarterly", "monthly"] as const).map((p) => (
             <Pressable key={p} testID={`ce-budget-period-${p}`} onPress={() => setPeriod(p)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: period === p ? colors.primary : "transparent" }}>
-              <T style={{ fontSize: 12, fontFamily: fonts.bodySemi, color: period === p ? "#FFFFFF" : colors.primary, textTransform: "capitalize" }}>{p}</T>
+              <T style={{ fontSize: 12, fontFamily: fonts.bodySemi, color: period === p ? "#FFFFFF" : colors.heading, textTransform: "capitalize" }}>{p}</T>
             </Pressable>
           ))}
         </View>
@@ -604,11 +606,11 @@ function BudgetBreakdown({ result, colors }: any) {
             <View key={r.key} style={{ backgroundColor: tone.soft, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: spacing.md }} testID={`ce-budget-row-${r.key}`}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <View style={{ flex: 1 }}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>{tone.label}</T>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.heading }}>{tone.label}</T>
                   <T variant="small" style={{ color: colors.muted }}>{tone.note}</T>
                 </View>
                 <View style={{ alignItems: "flex-end" }}>
-                  <T style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.primary }}>{money(budget)}</T>
+                  <T style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.heading }}>{money(budget)}</T>
                   <T style={{ fontSize: 10, color: colors.muted }}>in your budget {per}</T>
                 </View>
               </View>
@@ -616,7 +618,7 @@ function BudgetBreakdown({ result, colors }: any) {
                 <View style={{ width: `${youPct}%`, backgroundColor: tone.bar }} />
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
-                <T style={{ fontSize: 12, color: colors.primary }}><T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>{money(you)}</T> you {r.rate_pct > 0 ? `(${r.rate_pct}%)` : "(free)"}</T>
+                <T style={{ fontSize: 12, color: colors.heading }}><T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading }}>{money(you)}</T> you {r.rate_pct > 0 ? `(${r.rate_pct}%)` : "(free)"}</T>
                 <T style={{ fontSize: 12, color: colors.muted }}><T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.muted }}>{money(govt)}</T> government</T>
               </View>
             </View>

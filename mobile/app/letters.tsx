@@ -200,7 +200,7 @@ export default function LettersMailboxScreen() {
                 <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, flex: 1 }}>Follow-ups</T>
                 {followUpIds.length > 0 ? (
                   <Pressable testID="lf1-followups-select-toggle" onPress={() => (selectMode ? exitSelect() : setSelectMode(true))} hitSlop={8}>
-                    <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{selectMode ? "Cancel" : "Chase up"}</T>
+                    <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>{selectMode ? "Cancel" : "Chase up"}</T>
                   </Pressable>
                 ) : null}
               </View>
@@ -209,7 +209,7 @@ export default function LettersMailboxScreen() {
                   <T variant="small" style={{ color: colors.muted }} testID="lf1-followups-selected-count">{selectedIds.size} selected</T>
                   {overdue.length > 0 ? (
                     <Pressable testID="lf1-followups-select-all-overdue" onPress={selectAllOverdue} hitSlop={8}>
-                      <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>Select all overdue</T>
+                      <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>Select all overdue</T>
                     </Pressable>
                   ) : null}
                 </View>
@@ -327,20 +327,20 @@ function FollowUpRow({ entry, isOverdue = false, onEscalated, selectMode = false
     <View style={[styles.fuRow, { borderColor: selectMode && selected ? colors.primary : colors.border, backgroundColor: colors.surface2 }]}>
       {selectMode ? (
         <Pressable testID={`lf1-followup-select-${id}`} onPress={() => onToggle?.(id)} hitSlop={10} style={{ marginTop: 1 }}>
-          {selected ? <CheckCircle2 size={20} color={colors.primary} /> : <Circle size={20} color={colors.muted} />}
+          {selected ? <CheckCircle2 size={20} color={colors.heading} /> : <Circle size={20} color={colors.muted} />}
         </Pressable>
       ) : (
         <Clock size={16} color={isOverdue ? colors.terracotta : colors.muted} style={{ marginTop: 2 }} />
       )}
       <Pressable style={{ flex: 1 }} testID={`lf1-followup-open-${id}`} onPress={() => (selectMode ? onToggle?.(id) : router.push(`/letters/${id}` as any))}>
-        <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>{entry.situation_label || ARCHETYPE_LABEL[entry.archetype || ""] || entry.archetype || "Follow-up"}</T>
+        <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>{entry.situation_label || ARCHETYPE_LABEL[entry.archetype || ""] || entry.archetype || "Follow-up"}</T>
         <T variant="small" style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{daysCopy()}{entry.suggested_next_action ? ` · ${entry.suggested_next_action}` : ""}</T>
       </Pressable>
       {!selectMode && canEscalate ? (
         <Pressable testID={`lf1-followup-escalate-${id}`} disabled={busy} onPress={escalate}
           style={[styles.escalate, { borderColor: colors.primary, opacity: busy ? 0.5 : 1 }]}>
-          <ArrowUpRight size={13} color={colors.primary} />
-          <T variant="small" style={{ color: colors.primary, fontSize: 12, fontFamily: fonts.bodySemi }}>Escalate</T>
+          <ArrowUpRight size={13} color={colors.heading} />
+          <T variant="small" style={{ color: colors.heading, fontSize: 12, fontFamily: fonts.bodySemi }}>Escalate</T>
         </Pressable>
       ) : null}
     </View>
@@ -360,7 +360,7 @@ function MailboxRow({ entry, onDelete }: { entry: Entry; onDelete: () => void })
   return (
     <Card testID={`lf1-log-entry-${entry.id}`} style={{ padding: spacing.md }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-        <View style={[styles.iconWrap, { backgroundColor: colors.sageSoft }]}><DirIcon size={17} color={colors.primary} /></View>
+        <View style={[styles.iconWrap, { backgroundColor: colors.sageSoft }]}><DirIcon size={17} color={colors.heading} /></View>
         <Pressable style={{ flex: 1 }} onPress={() => router.push(`/letters/${entry.id}` as any)}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, flexShrink: 1 }} numberOfLines={1}>{entry.intake?.subject || entry.situation_label || typeLabel}</T>

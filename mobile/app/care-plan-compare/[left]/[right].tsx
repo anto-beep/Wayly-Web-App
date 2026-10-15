@@ -88,7 +88,7 @@ export default function CarePlanCompareScreen() {
 
           <Card testID="compare-only-left">
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <GitCompare size={16} color={colors.primary} />
+              <GitCompare size={16} color={colors.heading} />
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }}>Only in the earlier plan ({onlyLeft.length})</T>
             </View>
             {onlyLeft.length ? onlyLeft.map((f, i) => findingRow(f, `l${i}`)) : <T variant="small" style={{ marginTop: 6, color: colors.muted }}>Nothing unique.</T>}

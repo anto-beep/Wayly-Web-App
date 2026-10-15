@@ -57,7 +57,7 @@ export default function AuditLogScreen() {
             {events.map((e, i) => (
               <View key={e.id} testID={`audit-row-${i}`} style={{ flexDirection: "row", gap: spacing.md, padding: spacing.md, borderBottomWidth: i < events.length - 1 ? 1 : 0, borderBottomColor: colors.border }}>
                 <View style={{ width: 34, height: 34, borderRadius: radius.md, backgroundColor: colors.surface2, alignItems: "center", justifyContent: "center", marginTop: 2 }}>
-                  <ScrollText size={16} color={colors.primary} />
+                  <ScrollText size={16} color={colors.heading} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>{ACTION_LABEL[e.action] || e.action}</T>

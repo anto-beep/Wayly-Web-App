@@ -80,8 +80,8 @@ function ProviderPicker({ value, onChange, existing }: { value: string; onChange
           options={[{ value: "", label: "Choose a provider" }, ...uniq.map((p) => ({ value: p, label: p }))]}
         />
         <Pressable testID="form-provider-add-new" onPress={() => { setMode("type"); onChange(""); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-          <Plus size={13} color={colors.primary} />
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>Add a different provider</T>
+          <Plus size={13} color={colors.heading} />
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading }}>Add a different provider</T>
         </Pressable>
       </View>
     );
@@ -90,7 +90,7 @@ function ProviderPicker({ value, onChange, existing }: { value: string; onChange
     <View style={{ gap: 8 }}>
       <Field label="Provider" optional testID="form-provider" value={value} onChangeText={onChange} placeholder="Provider name" />
       <Pressable testID="form-provider-pick-existing" onPress={() => setMode("pick")}>
-        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>← Pick from {uniq.length === 1 ? "the existing provider" : "existing providers"}</T>
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading }}>← Pick from {uniq.length === 1 ? "the existing provider" : "existing providers"}</T>
       </Pressable>
     </View>
   );
@@ -333,11 +333,11 @@ export default function ParticipantsScreen() {
                       </View>
                     ) : null}
                     <View style={styles.actionRow}>
-                      <ActionLink icon={Activity} label="Timeline" testID={`participant-timeline-${p.id}`} onPress={() => router.push("/timeline")} color={colors.primary} />
-                      <ActionLink icon={Edit3} label="Edit details" testID={`participant-edit-${p.id}`} onPress={() => router.push(`/participant/${p.id}`)} color={colors.primary} />
-                      <ActionLink icon={ArrowUpRight} label="Share view" testID={`participant-share-${p.id}`} onPress={() => shareView(p)} color={colors.primary} />
-                      <ActionLink icon={RotateCcw} label="Rotate link" testID={`participant-rotate-share-${p.id}`} onPress={() => rotateShareLink(p)} color={colors.primary} />
-                      {!p.is_primary ? <ActionLink icon={Crown} label="Make primary" testID={`participant-promote-${p.id}`} onPress={() => promote(p)} color={colors.primary} /> : null}
+                      <ActionLink icon={Activity} label="Timeline" testID={`participant-timeline-${p.id}`} onPress={() => router.push("/timeline")} color={colors.heading} />
+                      <ActionLink icon={Edit3} label="Edit details" testID={`participant-edit-${p.id}`} onPress={() => router.push(`/participant/${p.id}`)} color={colors.heading} />
+                      <ActionLink icon={ArrowUpRight} label="Share view" testID={`participant-share-${p.id}`} onPress={() => shareView(p)} color={colors.heading} />
+                      <ActionLink icon={RotateCcw} label="Rotate link" testID={`participant-rotate-share-${p.id}`} onPress={() => rotateShareLink(p)} color={colors.heading} />
+                      {!p.is_primary ? <ActionLink icon={Crown} label="Make primary" testID={`participant-promote-${p.id}`} onPress={() => promote(p)} color={colors.heading} /> : null}
                       {!p.is_primary ? <ActionLink icon={Trash2} label="Remove" testID={`participant-remove-${p.id}`} onPress={() => openRemove(p)} color={colors.terracotta} /> : null}
                     </View>
                   </View>
@@ -461,7 +461,7 @@ export default function ParticipantsScreen() {
                       <T variant="label">THEIR FORWARDING EMAIL</T>
                       <T style={{ fontFamily: fonts.mono, fontSize: 13, marginTop: 4 }}>{lastAdded.participant.household_email}</T>
                       <Pressable onPress={() => copyText(lastAdded.participant!.household_email as string, () => Alert.alert("Copied"))} style={{ marginTop: 6 }}>
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>Copy</T>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading }}>Copy</T>
                       </Pressable>
                     </View>
                   ) : null}

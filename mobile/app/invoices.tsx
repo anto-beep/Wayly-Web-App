@@ -181,7 +181,7 @@ export default function InvoicesScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <T variant="small" style={{ color: colors.muted }}>{filtered.length === items.length ? `${items.length} shown` : `${filtered.length} of ${items.length} shown`}</T>
             {hasFilter ? (
-              <Pressable testID="invoices-clear-filters" onPress={clearAll}><T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary, textDecorationLine: "underline" }}>Clear filters</T></Pressable>
+              <Pressable testID="invoices-clear-filters" onPress={clearAll}><T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading, textDecorationLine: "underline" }}>Clear filters</T></Pressable>
             ) : null}
           </View>
         </View>
@@ -222,7 +222,7 @@ export default function InvoicesScreen() {
           ListEmptyComponent={
             <View style={{ paddingHorizontal: spacing.lg }}>
               <View testID="invoices-list-empty" style={{ borderWidth: 2, borderStyle: "dashed", borderColor: colors.border, borderRadius: radius.lg, padding: spacing.xl, alignItems: "center" }}>
-                <Receipt size={40} color={colors.primary} />
+                <Receipt size={40} color={colors.heading} />
                 <T style={{ fontFamily: fonts.heading, fontSize: 20, marginTop: spacing.sm }}>No invoices yet</T>
                 <T variant="small" style={{ marginTop: 6, textAlign: "center" }}>Upload the first invoice you were charged by your provider. We will read it, spot any errors, and tell you exactly what to do next.</T>
                 <Button label="Check your first invoice" testID="invoices-empty-upload" icon={Upload} onPress={() => router.push("/tool/invoice-checker")} style={{ marginTop: spacing.md }} />
@@ -241,7 +241,7 @@ export default function InvoicesScreen() {
             <View testID="invoices-list-no-results" style={{ padding: spacing.xl, alignItems: "center" }}>
               <T variant="small" style={{ color: colors.muted }}>No invoices match these filters.</T>
               <Pressable testID="invoices-no-results-clear" onPress={clearAll} style={{ marginTop: spacing.sm }}>
-                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary, textDecorationLine: "underline" }}>Clear filters</T>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading, textDecorationLine: "underline" }}>Clear filters</T>
               </Pressable>
             </View>
           }

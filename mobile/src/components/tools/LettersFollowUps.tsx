@@ -93,7 +93,7 @@ export default function LettersFollowUps() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader onBack={() => router.back()} right={
         <Pressable testID="lf1-log-link" onPress={() => router.push("/letters")} hitSlop={8}>
-          <ArrowRight size={22} color={colors.primary} />
+          <ArrowRight size={22} color={colors.heading} />
         </Pressable>
       } />
       {loading ? <Loading label="Loading…" /> : (
@@ -101,8 +101,8 @@ export default function LettersFollowUps() {
           <ToolHero toolKey="letters-and-follow-ups" />
 
           <Pressable testID="lf1-open-log" onPress={() => router.push("/letters")} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-            <Mail size={14} color={colors.primary} />
-            <T variant="small" style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>Your mailbox</T>
+            <Mail size={14} color={colors.heading} />
+            <T variant="small" style={{ color: colors.heading, fontFamily: fonts.bodySemi }}>Your mailbox</T>
           </Pressable>
 
           {error ? <View style={[styles.err, { backgroundColor: colors.errorSoft }]}><AlertTriangle size={18} color={colors.terracotta} /><T variant="small" style={{ color: colors.terracotta, flex: 1 }} testID="lf1-error">{error}</T></View> : null}
@@ -125,7 +125,7 @@ export default function LettersFollowUps() {
                 return (
                   <Pressable key={t.label} testID={`lf1-blank-type-${t.situationId}`} disabled={!sit || !!busyId} onPress={() => sit && begin(sit)}
                     style={[styles.blankBtn, { borderColor: colors.border, backgroundColor: colors.surface, opacity: !sit || busyId ? 0.6 : 1 }]}>
-                    <Icon size={15} color={colors.primary} />
+                    <Icon size={15} color={colors.heading} />
                     <T variant="small" style={{ flex: 1, color: colors.text }}>{t.label}</T>
                     <ChevronRight size={15} color={colors.muted} />
                   </Pressable>
@@ -204,8 +204,8 @@ export default function LettersFollowUps() {
                           <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>{c.note}</T>
                         </View>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                          <Phone size={15} color={colors.primary} />
-                          <T style={{ fontFamily: fonts.bodySemi, color: colors.primary }}>{c.phone}</T>
+                          <Phone size={15} color={colors.heading} />
+                          <T style={{ fontFamily: fonts.bodySemi, color: colors.heading }}>{c.phone}</T>
                         </View>
                       </Pressable>
                     ))}

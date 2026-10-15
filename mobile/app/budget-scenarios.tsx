@@ -120,11 +120,11 @@ function Stepper({ label, help, value, display, onDec, onInc, testID }: {
       <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>{label}</T>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, marginTop: 6 }}>
         <Pressable testID={`${testID}-dec`} onPress={onDec} style={[styles.stepBtn, { borderColor: colors.border }]}>
-          <Minus size={18} color={colors.primary} />
+          <Minus size={18} color={colors.heading} />
         </Pressable>
         <T testID={`${testID}-value`} style={{ fontFamily: fonts.monoMedium, fontSize: 18, minWidth: 70, textAlign: "center" }}>{display}</T>
         <Pressable testID={`${testID}-inc`} onPress={onInc} style={[styles.stepBtn, { borderColor: colors.border }]}>
-          <Plus size={18} color={colors.primary} />
+          <Plus size={18} color={colors.heading} />
         </Pressable>
       </View>
       {help ? <T variant="small" style={{ fontSize: 11, marginTop: 4 }}>{help}</T> : null}
@@ -271,7 +271,7 @@ export default function BudgetScenariosScreen() {
               {/* Adjustments */}
               <Card testID="bc2-sliders">
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <SlidersHorizontal size={16} color={colors.primary} />
+                  <SlidersHorizontal size={16} color={colors.heading} />
                   <T variant="h3">Adjustments</T>
                   {previewing ? <Loader2 size={14} color={colors.muted} /> : null}
                 </View>
@@ -331,7 +331,7 @@ export default function BudgetScenariosScreen() {
           {scenarios.length > 0 ? (
             <Card testID="bc2-scenarios-list">
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <GitCompare size={16} color={colors.primary} />
+                <GitCompare size={16} color={colors.heading} />
                 <T variant="h3">Saved scenarios</T>
               </View>
               <T variant="small" style={{ marginTop: 2 }}>Tick two to compare</T>

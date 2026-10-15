@@ -107,7 +107,7 @@ export default function ProviderSwitchScreen() {
           <>
             {activeRows.length > 0 ? (
               <View testID="psw1-active-list" style={{ gap: spacing.sm }}>
-                <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>ACTIVE SWITCHES</T>
+                <T variant="small" style={{ color: colors.heading, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>ACTIVE SWITCHES</T>
                 {activeRows.map((r) => <SwitchRow key={r.id} row={r} colors={colors} />)}
               </View>
             ) : null}
@@ -146,10 +146,10 @@ function SwitchRow({ row, colors }: any) {
         </View>
         {target ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: spacing.sm }}>
-            <T testID={isDeciding ? `psw1-decision-link-${row.id}` : `psw1-settlement-link-${row.id}`} style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.primary }}>
+            <T testID={isDeciding ? `psw1-decision-link-${row.id}` : `psw1-settlement-link-${row.id}`} style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading }}>
               {isDeciding ? "Complete Decision Walkthrough" : "Settlement & Refund"}
             </T>
-            <ChevronRight size={15} color={colors.primary} />
+            <ChevronRight size={15} color={colors.heading} />
           </View>
         ) : (
           <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: spacing.sm }}>Stage in progress</T>

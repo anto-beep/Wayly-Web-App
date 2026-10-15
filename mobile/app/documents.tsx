@@ -292,7 +292,7 @@ export default function DocumentsScreen() {
               <Card key={d.id} testID={`document-${d.id}`}>
                 <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing.md }}>
                   <View style={[styles.iconWrap, { backgroundColor: colors.sageSoft }]}>
-                    <Icon size={22} color={colors.primary} />
+                    <Icon size={22} color={colors.heading} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }} numberOfLines={2}>{d.title || d.filename || "Document"}</T>
@@ -302,17 +302,17 @@ export default function DocumentsScreen() {
                     </View>
                     <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap", alignItems: "center" }}>
                       <Pressable testID={`document-download-${d.id}`} onPress={() => download(d)} style={[styles.dlBtn, { borderColor: colors.border }]}>
-                        <Download size={16} color={colors.primary} />
-                        <T variant="small" style={{ color: colors.primary }}>{busyId === d.id ? "Working…" : "Download"}</T>
+                        <Download size={16} color={colors.heading} />
+                        <T variant="small" style={{ color: colors.heading }}>{busyId === d.id ? "Working…" : "Download"}</T>
                       </Pressable>
                       <Pressable testID={`document-edit-${d.id}`} onPress={() => openEdit(d)} style={[styles.dlBtn, { borderColor: colors.border }]}>
-                        <Pencil size={16} color={colors.primary} />
-                        <T variant="small" style={{ color: colors.primary }}>Edit</T>
+                        <Pencil size={16} color={colors.heading} />
+                        <T variant="small" style={{ color: colors.heading }}>Edit</T>
                       </Pressable>
                       {d.category === "statement" ? (
                         <Pressable testID={`document-decode-${d.id}`} onPress={() => sendToDecoder(d)} disabled={busyId === d.id} style={[styles.dlBtn, { borderColor: colors.primary, backgroundColor: colors.sageSoft }]}>
-                          <Sparkles size={16} color={colors.primary} />
-                          <T variant="small" style={{ color: colors.primary }}>Send to Decoder</T>
+                          <Sparkles size={16} color={colors.heading} />
+                          <T variant="small" style={{ color: colors.heading }}>Send to Decoder</T>
                         </Pressable>
                       ) : null}
                     </View>
@@ -345,7 +345,7 @@ export default function DocumentsScreen() {
                 <Card testID="upload-selected">
                   <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
                     <View style={[styles.iconWrap, { backgroundColor: colors.sageSoft }]}>
-                      <Ionicons name="document" size={22} color={colors.primary} />
+                      <Ionicons name="document" size={22} color={colors.heading} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }} numberOfLines={1}>{picked.name}</T>
@@ -440,7 +440,7 @@ function SourceRow({
   return (
     <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [styles.sourceRow, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && { opacity: 0.85 }]}>
       <View style={[styles.sourceIcon, { backgroundColor: colors.sageSoft }]}>
-        <Ionicons name={icon} size={22} color={colors.primary} />
+        <Ionicons name={icon} size={22} color={colors.heading} />
       </View>
       <T style={{ flex: 1, fontFamily: fonts.bodySemi, fontSize: 16 }}>{label}</T>
       <Ionicons name="chevron-forward" size={20} color={colors.muted} />

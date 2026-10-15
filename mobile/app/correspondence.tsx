@@ -128,7 +128,7 @@ export default function CorrespondenceScreen() {
                   <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                       <View style={[styles.iconWrap, { backgroundColor: colors.sageSoft }]}>
-                        <DirIcon size={18} color={colors.primary} />
+                        <DirIcon size={18} color={colors.heading} />
                       </View>
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, flex: 1 }}>{e.subject || "Correspondence"}</T>
                     </View>

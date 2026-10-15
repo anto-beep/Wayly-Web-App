@@ -248,8 +248,8 @@ export default function TimelineScreen() {
                       </T>
                       {tappable ? (
                         <Pressable testID={`timeline-event-open-${i}`} onPress={() => open(e)} style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: spacing.sm }}>
-                          <T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 13 }}>Open</T>
-                          <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                          <T style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 13 }}>Open</T>
+                          <Ionicons name="chevron-forward" size={14} color={colors.heading} />
                         </Pressable>
                       ) : null}
                     </View>

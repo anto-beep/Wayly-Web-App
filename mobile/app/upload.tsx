@@ -180,7 +180,7 @@ export default function UploadScreen() {
           <Card testID="upload-selected">
             <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
               <View style={styles.fileIcon}>
-                <Ionicons name="document" size={22} color={colors.primary} />
+                <Ionicons name="document" size={22} color={colors.heading} />
               </View>
               <View style={{ flex: 1 }}>
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 15 }} numberOfLines={1}>
@@ -252,7 +252,7 @@ function SourceRow({
   return (
     <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [styles.sourceRow, pressed && { opacity: 0.85 }]}>
       <View style={styles.sourceIcon}>
-        <Ionicons name={icon} size={22} color={colors.primary} />
+        <Ionicons name={icon} size={22} color={colors.heading} />
       </View>
       <T style={{ flex: 1, fontFamily: fonts.bodySemi, fontSize: 16 }}>{label}</T>
       <Ionicons name="chevron-forward" size={20} color={colors.muted} />

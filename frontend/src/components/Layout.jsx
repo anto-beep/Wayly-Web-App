@@ -474,7 +474,7 @@ function NavItem({ item }) {
             data-testid={`nav-${item.label.toLowerCase().replace(/\s/g, "-")}`}
             className={({ isActive }) => {
                 const active = (isActive || matchesPrefix) && !isModalTrigger;
-                return `tap-target flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                return `tap-target flex items-center gap-3 px-3 py-3 rounded-lg text-sm whitespace-nowrap transition-colors ${
                     active
                         ? "bg-primary-k text-white"
                         : "text-muted-k hover:bg-surface-2 hover:text-primary-k"
@@ -501,14 +501,14 @@ function NavGroup({ group, open, onToggle }) {
                 type="button"
                 onClick={onToggle}
                 data-testid={`nav-group-toggle-${group.key}`}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wide text-primary-k hover:text-clay transition-colors"
+                className="w-full flex items-center justify-between gap-2 px-3 py-3 text-sm font-bold uppercase tracking-wide text-primary-k hover:text-clay transition-colors"
                 aria-expanded={open}
             >
                 <span className="whitespace-nowrap truncate">{group.label}</span>
                 {open ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
             </button>
             {open && (
-                <div className="flex flex-col gap-0.5 mt-0.5 wayly-fade-up">
+                <div className="flex flex-col gap-1 mt-1 wayly-fade-up">
                     {group.items.map((item) => <NavItem key={item.to} item={item} />)}
                 </div>
             )}

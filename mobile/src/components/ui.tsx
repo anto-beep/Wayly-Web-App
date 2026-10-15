@@ -63,7 +63,7 @@ export function AppHeader({
           hitSlop={12}
           style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
-          <ChevronLeft size={24} color={colors.primary} />
+          <ChevronLeft size={24} color={colors.heading} />
         </Pressable>
       ) : null}
       <View style={{ flex: 1 }}>
@@ -165,8 +165,8 @@ export function Button({
   const palette: Record<BtnVariant, { bg: string; fg: string; border?: string }> = {
     primary: { bg: colors.cta, fg: "#fff" },
     secondary: { bg: colors.gold, fg: "#fff" },
-    ghost: { bg: "transparent", fg: colors.primary },
-    outline: { bg: "transparent", fg: colors.primary, border: colors.primary },
+    ghost: { bg: "transparent", fg: colors.heading },
+    outline: { bg: "transparent", fg: colors.heading, border: colors.primary },
   };
   const p = { ...palette[variant] };
   if (bg) p.bg = bg;
@@ -309,18 +309,18 @@ function CalendarSheet({
 
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
             <Pressable testID={testID ? `${testID}-prev` : undefined} onPress={prevMonth} hitSlop={8} style={navBtn}>
-              <ChevronLeft size={22} color={colors.primary} />
+              <ChevronLeft size={22} color={colors.heading} />
             </Pressable>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Pressable testID={testID ? `${testID}-month-toggle` : undefined} onPress={() => setMode((x) => (x === "months" ? "days" : "months"))}>
                 <Text style={{ fontFamily: fonts.bodySemi, fontSize: 17, color: colors.text }}>{CAL_MONTHS[view.m]}</Text>
               </Pressable>
               <Pressable testID={testID ? `${testID}-year-toggle` : undefined} onPress={() => setMode((x) => (x === "years" ? "days" : "years"))}>
-                <Text style={{ fontFamily: fonts.bodySemi, fontSize: 17, color: colors.primary }}>{view.y}</Text>
+                <Text style={{ fontFamily: fonts.bodySemi, fontSize: 17, color: colors.heading }}>{view.y}</Text>
               </Pressable>
             </View>
             <Pressable testID={testID ? `${testID}-next` : undefined} onPress={nextMonth} hitSlop={8} style={navBtn}>
-              <ChevronRight size={22} color={colors.primary} />
+              <ChevronRight size={22} color={colors.heading} />
             </Pressable>
           </View>
 
@@ -379,7 +379,7 @@ function CalendarSheet({
           )}
 
           <Pressable testID={testID ? `${testID}-close` : undefined} onPress={onClose} style={{ alignSelf: "flex-end", paddingVertical: 12, paddingHorizontal: 8, marginTop: spacing.sm }}>
-            <Text style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>Close</Text>
+            <Text style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.heading }}>Close</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -509,8 +509,8 @@ export function Select({
                     onPress={() => { onChange(o.value); setOpen(false); }}
                     style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}
                   >
-                    <Text style={{ fontFamily: active ? fonts.bodySemi : fonts.body, fontSize: 16, color: active ? colors.primary : colors.text }}>{o.label}</Text>
-                    {active ? <Check size={18} color={colors.primary} /> : null}
+                    <Text style={{ fontFamily: active ? fonts.bodySemi : fonts.body, fontSize: 16, color: active ? colors.heading : colors.text }}>{o.label}</Text>
+                    {active ? <Check size={18} color={colors.heading} /> : null}
                   </Pressable>
                 );
               })}
@@ -583,7 +583,7 @@ export function Loading({ label }: { label?: string }) {
   const { colors } = useTheme();
   return (
     <View style={styles.loading}>
-      <ActivityIndicator size="large" color={colors.primary} />
+      <ActivityIndicator size="large" color={colors.heading} />
       {label ? <Text style={[typeScale.bodyMuted, { color: colors.muted, marginTop: spacing.md }]}>{label}</Text> : null}
     </View>
   );

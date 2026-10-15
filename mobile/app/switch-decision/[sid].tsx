@@ -88,7 +88,7 @@ export default function SwitchDecisionScreen() {
       <AppHeader title="Decision Walkthrough" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm }} keyboardShouldPersistTaps="handled" testID="psw1-walkthrough-root">
         <View style={{ backgroundColor: colors.primarySoft, borderRadius: radius.lg, padding: spacing.lg }}>
-          <T variant="small" style={{ color: colors.primary, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>DECISION WALKTHROUGH</T>
+          <T variant="small" style={{ color: colors.heading, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>DECISION WALKTHROUGH</T>
           <T testID="psw1-walkthrough-title" style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading, marginTop: 4 }}>Confirm the Decision to Switch from {sw.current_provider_name}</T>
           <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Wayly does not push either direction. This walkthrough helps you think through the decision.</T>
           {step < 6 ? (
@@ -96,7 +96,7 @@ export default function SwitchDecisionScreen() {
               <View testID="psw1-progress" style={{ height: 8, borderRadius: 4, backgroundColor: "rgba(14,77,82,0.15)", overflow: "hidden" }}>
                 <View style={{ height: 8, width: `${(step / 5) * 100}%`, backgroundColor: colors.primary }} />
               </View>
-              <T variant="small" style={{ color: colors.primary, fontSize: 11, marginTop: 6, fontFamily: fonts.bodySemi }}>Step {step} of 5</T>
+              <T variant="small" style={{ color: colors.heading, fontSize: 11, marginTop: 6, fontFamily: fonts.bodySemi }}>Step {step} of 5</T>
             </View>
           ) : null}
         </View>
@@ -197,7 +197,7 @@ export default function SwitchDecisionScreen() {
               {context.final_decision === "proceed_with_switch" ? (
                 <Card testID="psw1-lf2-chain" style={{ backgroundColor: colors.primarySoft, borderColor: colors.border }}>
                   <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                    <FileText size={16} color={colors.primary} />
+                    <FileText size={16} color={colors.heading} />
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text, flex: 1 }}>Draft the provider letters</T>
                   </View>
                   <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 19 }}>Wayly can pre-fill the formal notice to your current provider and a welcome letter to the incoming provider. Review and send both from Letters & Follow-ups.</T>

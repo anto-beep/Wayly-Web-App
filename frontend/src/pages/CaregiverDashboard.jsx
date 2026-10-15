@@ -22,6 +22,7 @@ import BC2Projection from "@/components/BC2Projection";
 import SmartAISummary from "@/components/SmartAISummary";
 import DashboardActionBar from "@/components/DashboardActionBar";
 import { TOOL_COUNT } from "@/config/toolRegistry";
+import { useTheme } from "@/uxf/theme";
 
 const PLAN_LABELS = {
     free: { label: "Free plan", tone: "bg-sage/15 text-[#0F5648]", desc: `2 of ${TOOL_COUNT} AI tools · no household tracking` },
@@ -120,6 +121,9 @@ function LastTouchedByPill({ participant }) {
 // Budget donut — a simple, easily-read ring showing how much of the quarter's
 // budget has been used. Tone shifts sage → clay → red as it fills / goes over.
 function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20 }) {
+    const { isDark } = useTheme();
+    const t = isDark ? ({ "#C0392B": "#F0857A", "#C2683D": "#E89A6F", "#4E6E54": "#7FC8A0" }[tone] || tone) : tone;
+    const track = isDark ? "rgba(255,255,255,0.16)" : "rgba(14,77,82,0.10)";
     const r = (size - stroke) / 2;
     const c = 2 * Math.PI * r;
     const clamped = Math.max(0, Math.min(100, pctFill));
@@ -127,15 +131,15 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20 }) {
     return (
         <div className="relative inline-flex flex-none items-center justify-center" style={{ width: size, height: size }} data-testid="glance-donut">
             <svg width={size} height={size} className="-rotate-90">
-                <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(14,77,82,0.10)" strokeWidth={stroke} />
+                <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
                 <circle
-                    cx={size / 2} cy={size / 2} r={r} fill="none" stroke={tone} strokeWidth={stroke}
+                    cx={size / 2} cy={size / 2} r={r} fill="none" stroke={t} strokeWidth={stroke}
                     strokeLinecap="round" strokeDasharray={c}
                     style={{ strokeDashoffset: off, transition: "stroke-dashoffset 700ms ease" }}
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="font-heading text-3xl sm:text-4xl leading-none tabular-nums" style={{ color: tone }} data-testid="glance-donut-pct">{pctLabel}%</span>
+                <span className="font-heading text-3xl sm:text-4xl leading-none tabular-nums" style={{ color: t }} data-testid="glance-donut-pct">{pctLabel}%</span>
                 <span className="text-[10px] uppercase tracking-[0.16em] text-muted-k mt-1">used</span>
             </div>
         </div>

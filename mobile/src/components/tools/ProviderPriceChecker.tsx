@@ -7,6 +7,7 @@ import * as Clipboard from "expo-clipboard";
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolHero from "@/src/components/ToolHero";
 import ToolExplainer from "@/src/components/ToolExplainer";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { sharePostPdf } from "@/src/lib/download";
 import { apiFetch, ApiError } from "@/src/lib/api";
@@ -108,9 +109,9 @@ export default function ProviderPriceChecker() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: spacing.sm }}>
             <SnapshotSelector snapshots={snapshots} selected={selectedSnapshot} onChange={(v) => { setSelectedSnapshot(v); setResult(null); }} colors={colors} />
             <Pressable testID="pc-history-link" onPress={() => router.push("/price-history")} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-              <Clock size={13} color={colors.primary} />
-              <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.primary }}>Your price history</T>
-              <ArrowRight size={13} color={colors.primary} />
+              <Clock size={13} color={colors.heading} />
+              <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.heading }}>Your price history</T>
+              <ArrowRight size={13} color={colors.heading} />
             </Pressable>
           </View>
 
@@ -231,7 +232,7 @@ export default function ProviderPriceChecker() {
               ) : result.direction === "non_checkable" ? (
                 <Card testID="pc-non-checkable">
                   <View style={{ flexDirection: "row", gap: spacing.sm }}>
-                    <Info size={20} color={colors.primary} />
+                    <Info size={20} color={colors.heading} />
                     <View style={{ flex: 1 }}>
                       <T style={{ fontFamily: fonts.headingSemi, fontSize: 20, color: colors.heading }}>No indicative range for this fee type</T>
                       <T variant="body" style={{ marginTop: 6, lineHeight: 22 }}>{sanitizeAI(result.plain_language)}</T>
@@ -275,6 +276,7 @@ export default function ProviderPriceChecker() {
                   <PriceExportActions result={result} provider={provider} colors={colors} />
                 </>
               )}
+              {!showGuard ? <ReportIssueButton toolName="Provider Price Checker" /> : null}
             </View>
           ) : null}
 
@@ -288,8 +290,8 @@ export default function ProviderPriceChecker() {
                 </View>
               ))}
               <Pressable onPress={() => Linking.openURL("https://www.health.gov.au/topics/aged-care/support-at-home/prices")} style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6 }}>
-                <T variant="small" style={{ color: colors.primary }}>Department of Health, indicative prices</T>
-                <ExternalLink size={13} color={colors.primary} />
+                <T variant="small" style={{ color: colors.heading }}>Department of Health, indicative prices</T>
+                <ExternalLink size={13} color={colors.heading} />
               </Pressable>
             </Card>
           ) : null}

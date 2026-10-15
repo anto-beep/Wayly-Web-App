@@ -115,7 +115,7 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll }:
       {lowConfidence ? <LowConfidenceBanner confidence={extractionConfidence} /> : null}
       {/* Persona-aware hero (matches web default copy) */}
       {!blocked ? (
-        <T testID="decoder-persona-hero" style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 31, color: colors.primary }}>Here is what we found in the statement.</T>
+        <T testID="decoder-persona-hero" style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 31, color: colors.heading }}>Here is what we found in the statement.</T>
       ) : null}
       {isClean && !blocked ? (
         <T testID="decoder-charged-correctly" variant="small" style={{ marginTop: -6 }}>Everything on this statement has been charged in line with the Support at Home plan.</T>
@@ -138,25 +138,27 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll }:
 
       {/* Download bar */}
       <View testID="decoder-download-bar" style={[styles.downloadBar, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
-        <T variant="small" style={{ flex: 1 }}>Save a copy of this decoded statement for your records.</T>
-        <Pressable testID="decoder-share-pdf-btn" onPress={() => doExport("share")} disabled={!!busy} style={[styles.dlBtn, { borderColor: colors.primary }]}>
-          <Share2 size={14} color={colors.primary} />
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>{busy === "share" ? "…" : "Share this decode"}</T>
-        </Pressable>
-        <Pressable testID="decoder-download-csv-btn" onPress={() => doExport("csv")} disabled={!!busy} style={[styles.dlBtn, { borderColor: colors.border }]}>
-          <FileDown size={14} color={colors.primary} />
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>{busy === "csv" ? "…" : "Download CSV"}</T>
-        </Pressable>
-        <Pressable testID="decoder-download-pdf-btn" onPress={() => doExport("pdf")} disabled={!!busy} style={[styles.dlBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}>
-          <FileDown size={14} color="#fff" />
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: "#fff" }}>{busy === "pdf" ? "…" : "Download PDF"}</T>
-        </Pressable>
+        <T variant="small">Save a copy of this decoded statement for your records.</T>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+          <Pressable testID="decoder-share-pdf-btn" onPress={() => doExport("share")} disabled={!!busy} style={[styles.dlBtn, { borderColor: colors.primary }]}>
+            <Share2 size={15} color={colors.heading} />
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12.5, color: colors.heading }}>{busy === "share" ? "…" : "Share"}</T>
+          </Pressable>
+          <Pressable testID="decoder-download-csv-btn" onPress={() => doExport("csv")} disabled={!!busy} style={[styles.dlBtn, { borderColor: colors.primary }]}>
+            <FileDown size={15} color={colors.heading} />
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12.5, color: colors.heading }}>{busy === "csv" ? "…" : "CSV"}</T>
+          </Pressable>
+          <Pressable testID="decoder-download-pdf-btn" onPress={() => doExport("pdf")} disabled={!!busy} style={[styles.dlBtn, { borderColor: colors.primary }]}>
+            <FileDown size={15} color={colors.heading} />
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12.5, color: colors.heading }}>{busy === "pdf" ? "…" : "PDF"}</T>
+          </Pressable>
+        </View>
       </View>
 
       {/* Short plain-English summary (2 sentences) — worded overview, not a wall */}
       {n.summaryText && !blocked ? (
         <Card testID="decoder-plain-english-summary" style={{ backgroundColor: colors.surface2 }}>
-          <T variant="label" style={{ color: colors.primary }}>IN PLAIN ENGLISH</T>
+          <T variant="label" style={{ color: colors.heading }}>IN PLAIN ENGLISH</T>
           <T style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: colors.text, marginTop: 8 }}>
             {((sanitizeAI(n.summaryText).match(/[^.!?]+[.!?]+/g) || [sanitizeAI(n.summaryText)]).slice(0, 2).join(" ")).trim()}
           </T>
@@ -229,7 +231,7 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll }:
       {/* Confidence Legend — "how we read this" (Jun 2026) */}
       <Card testID="decoder-confidence-legend">
         <Pressable onPress={() => setLegendOpen((o) => !o)} style={{ flexDirection: "row", alignItems: "center", gap: 8 }} testID="decoder-confidence-legend-toggle">
-          <Info size={16} color={colors.primary} />
+          <Info size={16} color={colors.heading} />
           <T style={{ fontFamily: fonts.bodySemi, color: colors.text, flex: 1 }}>How we read this{typeof extractionConfidence === "number" && extractionConfidence > 0 && extractionConfidence <= 1 ? ` · ${Math.round(extractionConfidence * 100)}% read confidence` : ""}</T>
           {legendOpen ? <ChevronUp size={16} color={colors.muted} /> : <ChevronDown size={16} color={colors.muted} />}
         </Pressable>
@@ -362,8 +364,8 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll }:
             <T variant="small" testID="decoder-table-unverified-note" style={{ color: colors.muted, marginBottom: 8, lineHeight: 18 }}>These line items are shown exactly as decoded. The totals have not been verified because the statement does not reconcile, so treat every figure as unconfirmed until the provider corrects it.</T>
           ) : null}
           <Pressable testID="decoder-table-toggle" onPress={() => setShowTable((s) => !s)} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            {showTable ? <ChevronUp size={16} color={colors.primary} /> : <ChevronDown size={16} color={colors.primary} />}
-            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary }}>{showTable ? "Hide" : "Show"} full line-item table ({n.lineItems.length})</T>
+            {showTable ? <ChevronUp size={16} color={colors.heading} /> : <ChevronDown size={16} color={colors.heading} />}
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>{showTable ? "Hide" : "Show"} full line-item table ({n.lineItems.length})</T>
           </Pressable>
           {showTable ? (
             <Card style={{ marginTop: spacing.sm, padding: 0, overflow: "hidden" }}>
@@ -405,7 +407,7 @@ function PublishBlockPanel({ block, message, blockers = [], onDraftLetter, onDra
           <AlertOctagon size={18} color="#fff" />
         </View>
         <View style={{ flex: 1 }}>
-          <T testID="decoder-publish-block-title" style={{ fontFamily: fonts.heading, fontSize: 20, lineHeight: 26, color: colors.primary }}>We can&apos;t publish a trustworthy summary of this statement yet</T>
+          <T testID="decoder-publish-block-title" style={{ fontFamily: fonts.heading, fontSize: 20, lineHeight: 26, color: colors.heading }}>We can&apos;t publish a trustworthy summary of this statement yet</T>
           <T variant="small" style={{ marginTop: 6, color: colors.text, lineHeight: 20 }}>{reason}</T>
         </View>
       </View>
@@ -547,8 +549,8 @@ function FeeBreakdown({ extracted, summary, colors }: { extracted: any; summary:
 
 const styles = StyleSheet.create({
   notice: { borderRadius: radius.md, padding: spacing.md },
-  downloadBar: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: radius.md, borderWidth: 1, padding: spacing.sm, flexWrap: "wrap" },
-  dlBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 },
+  downloadBar: { borderRadius: radius.md, borderWidth: 1, padding: spacing.md, gap: spacing.sm },
+  dlBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 10, flexGrow: 1, flexBasis: 0, minWidth: 92 },
   banner: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.md },
   tileRow: { flexDirection: "row", gap: spacing.md },
   topBanner: { flexDirection: "row", alignItems: "center", gap: 10, borderLeftWidth: 4, borderRadius: radius.md, padding: spacing.md },

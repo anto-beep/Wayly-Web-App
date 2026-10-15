@@ -115,7 +115,7 @@ export function AccountHealthCard({ data }: { data: HealthData | null }) {
                   <ArrowRight size={16} color={colors.gold} />
                 </View>
                 <T style={{ flex: 1, fontSize: 14, color: colors.text }}>{item.label}</T>
-                <T style={{ fontSize: 12, fontFamily: fonts.bodySemi, color: colors.primary }}>{item.fix_label}</T>
+                <T style={{ fontSize: 12, fontFamily: fonts.bodySemi, color: colors.heading }}>{item.fix_label}</T>
               </Pressable>
             ))}
             {(data.items || []).filter((i) => i.done).map((item) => (

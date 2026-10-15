@@ -10,6 +10,7 @@ import ToolExplainer from "@/src/components/ToolExplainer";
 import ToolHero from "@/src/components/ToolHero";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
+import ReportIssueButton from "@/src/components/ReportIssueButton";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
 import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -34,7 +35,7 @@ const ddmmyyyy = (iso?: string) => {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 };
 const MAX_BYTES = 20 * 1024 * 1024;
-const MAX_FILES = 5;
+const MAX_FILES = 1;
 type PickedFile = { uri: string; name: string; mimeType?: string; size?: number };
 
 export default function CarePlanReviewer() {
@@ -236,7 +237,7 @@ export default function CarePlanReviewer() {
   // Native-safe upload: a single file goes through expo-file-system (reliable in
   // release builds); multiple files keep the multipart FormData path.
   const uploadReview = async (endpoint: string): Promise<any> => {
-    if (files.length === 1) {
+    if (files.length >= 1) {
       const f = files[0];
       return uploadFile(endpoint, { uri: f.uri, name: f.name, mimeType: f.mimeType || "application/octet-stream" }, { fieldName: "files", fields: reviewExtraFields() });
     }
@@ -425,9 +426,9 @@ export default function CarePlanReviewer() {
           {busy ? (
             <Card testID="cp-progress" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sageSoft }}>
               <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "center" }}>
-                <ActivityIndicator color={colors.primary} />
+                <ActivityIndicator color={colors.heading} />
                 <View style={{ flex: 1 }}>
-                  <T testID="cp-progress-stage" style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>{PROGRESS_STAGES[progressStage]}…</T>
+                  <T testID="cp-progress-stage" style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.heading }}>{PROGRESS_STAGES[progressStage]}…</T>
                   <T variant="small" style={{ color: colors.text, marginTop: 2, lineHeight: 19 }}>{"This usually takes about a minute. You can leave this screen and come back; we'll save the result to your list."}</T>
                   <View style={{ flexDirection: "row", gap: 6, marginTop: 8 }}>
                     {PROGRESS_STAGES.map((_, i) => (
@@ -538,7 +539,7 @@ export default function CarePlanReviewer() {
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }} testID="cp-findings-tally">
                       <Chip n={urgent} color={colors.terracotta} label="Need attention" />
                       <Chip n={check} color="#A5512B" label="Worth checking" />
-                      <Chip n={info} color={colors.primary} label="Good to know" />
+                      <Chip n={info} color={colors.heading} label="Good to know" />
                     </View>
                   );
                 })() : null}
@@ -584,8 +585,8 @@ export default function CarePlanReviewer() {
                                 {f.citation_source ? <T variant="small" style={{ color: colors.muted, fontSize: 11 }}>From the plan: {f.citation_source}</T> : null}
                                 {(f.addressee_primary || f.rule_id) ? (
                                   <Pressable testID={`cp-draft-letter-${i}`} onPress={() => draftLetter(f, `f${i}`, f.addressee_primary)} disabled={letterBusyKey === `f${i}`} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4, alignSelf: "flex-start", borderWidth: 1, borderColor: colors.primary, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, opacity: letterBusyKey === `f${i}` ? 0.6 : 1 }}>
-                                    <Mail size={13} color={colors.primary} />
-                                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.primary }}>Draft a letter about this</T>
+                                    <Mail size={13} color={colors.heading} />
+                                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.heading }}>Draft a letter about this</T>
                                   </Pressable>
                                 ) : null}
                               </View>
@@ -631,8 +632,8 @@ export default function CarePlanReviewer() {
                               <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 6 }}><Check size={13} color="#fff" /><T style={{ color: "#fff", fontSize: 12 }}>Added</T></View>
                             ) : (
                               <Pressable testID="cp-goal-add" onPress={() => addGoal(t, goalType)} disabled={st === "adding"} style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#fff", borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 6, opacity: st === "adding" ? 0.6 : 1 }}>
-                                {st === "adding" ? <ActivityIndicator size="small" color={colors.primary} /> : <BookmarkPlus size={13} color={colors.primary} />}
-                                <T style={{ color: colors.primary, fontFamily: fonts.bodySemi, fontSize: 12 }}>Add</T>
+                                {st === "adding" ? <ActivityIndicator size="small" color={colors.heading} /> : <BookmarkPlus size={13} color={colors.heading} />}
+                                <T style={{ color: colors.heading, fontFamily: fonts.bodySemi, fontSize: 12 }}>Add</T>
                               </Pressable>
                             )}
                           </View>
@@ -717,6 +718,7 @@ export default function CarePlanReviewer() {
               </Card>
 
               <ResultActions mode="payload" tool="care-plan" payload={result} personName={ex.provider_name || undefined} fileBaseName="wayly-care-plan-review" testIDPrefix="cp-export" />
+              <ReportIssueButton toolName="Support Plan Reviewer" />
             </View>
           ) : null}
 

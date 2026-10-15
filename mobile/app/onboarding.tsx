@@ -503,7 +503,7 @@ export default function OnboardingScreen() {
             <View testID="onboarding-step-all-done" style={{ gap: spacing.md }}>
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <View style={{ width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.sageSoft, alignItems: "center", justifyContent: "center" }}>
-                  <Sparkles size={20} color={colors.primary} />
+                  <Sparkles size={20} color={colors.heading} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <T style={{ fontFamily: fonts.heading, fontSize: 26 }}>All done</T>

@@ -130,8 +130,8 @@ export default function ScenariosScreen() {
                 <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>What happened?</T>
                 {form.event_type ? (
                   <View style={[styles.selected, { borderColor: colors.primary, backgroundColor: colors.sageSoft }]}>
-                    <T style={{ fontFamily: fonts.bodyMedium, color: colors.primary, flex: 1 }}>{labelFor(form.event_type)}</T>
-                    <Pressable testID="scenario-clear" onPress={() => setForm({ ...form, event_type: "" })}><X size={16} color={colors.primary} /></Pressable>
+                    <T style={{ fontFamily: fonts.bodyMedium, color: colors.heading, flex: 1 }}>{labelFor(form.event_type)}</T>
+                    <Pressable testID="scenario-clear" onPress={() => setForm({ ...form, event_type: "" })}><X size={16} color={colors.heading} /></Pressable>
                   </View>
                 ) : (
                   groups.map((g) => (

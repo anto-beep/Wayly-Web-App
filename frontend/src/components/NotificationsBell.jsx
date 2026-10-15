@@ -192,9 +192,13 @@ export default function NotificationsBell({ tone = "dark" }) {
 
     const totalUnread = unread + updatesUnread;
 
+    // Only present the bell when there is something to show (unread personal
+    // notifications or legislative updates); otherwise keep it hidden.
+    if (totalUnread === 0 && !open) return null;
+
     const btnTextCls = tone === "dark"
         ? "text-white/80 hover:text-white"
-        : "text-[#0E2A47]/70 hover:text-[#0E2A47]";
+        : "text-primary-k/70 hover:text-primary-k";
 
     return (
         <div className="relative" ref={ref}>
@@ -207,45 +211,45 @@ export default function NotificationsBell({ tone = "dark" }) {
             >
                 <Bell className="h-5 w-5" />
                 {totalUnread > 0 && (
-                    <span className="absolute top-0.5 right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-[#2BC4D6] text-white text-[10px] font-bold leading-4 text-center" data-testid="nav-bell-count">
+                    <span className="absolute top-0.5 right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-clay text-white text-[10px] font-bold leading-4 text-center" data-testid="nav-bell-count">
                         {totalUnread > 9 ? "9+" : totalUnread}
                     </span>
                 )}
             </button>
 
             {open && (
-                <div className="fixed left-3 right-3 top-16 w-auto max-w-none sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[22rem] sm:max-w-[95vw] bg-white rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-[#CFE0F0] overflow-hidden z-50" data-testid="notifications-dropdown">
+                <div className="fixed left-3 right-3 top-16 w-auto max-w-none sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[22rem] sm:max-w-[95vw] bg-white rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-kindred overflow-hidden z-50" data-testid="notifications-dropdown">
                     {/* ---- Personal notifications ---- */}
-                    <div className="px-4 py-3 border-b border-[#CFE0F0] flex items-center justify-between">
-                        <span className="text-sm font-semibold text-[#0E2A47]">Notifications</span>
+                    <div className="px-4 py-3 border-b border-kindred flex items-center justify-between">
+                        <span className="text-sm font-semibold text-primary-k">Notifications</span>
                         {items.length > 0 && (
-                            <button type="button" onClick={markAllRead} data-testid="notifications-mark-all-read" className="text-xs text-[#0E2A47] hover:underline">
+                            <button type="button" onClick={markAllRead} data-testid="notifications-mark-all-read" className="text-xs text-primary-k hover:underline">
                                 Mark all read
                             </button>
                         )}
                     </div>
                     <div className="max-h-72 overflow-y-auto">
                         {loading ? (
-                            <div className="p-6 text-center text-sm text-[#6B7280]">Loading…</div>
+                            <div className="p-6 text-center text-sm text-[#524B42]">Loading…</div>
                         ) : items.length === 0 ? (
-                            <div className="p-6 text-center text-sm text-[#6B7280]" data-testid="notifications-empty">
+                            <div className="p-6 text-center text-sm text-[#524B42]" data-testid="notifications-empty">
                                 You are all caught up.
                             </div>
                         ) : (
                             <ul>
                                 {items.slice(0, 10).map((n) => (
-                                    <li key={n.id} className={`px-4 py-3 border-b border-[#CFE0F0] last:border-0 ${!n.read ? "bg-[#EAF4FB]" : ""}`} data-testid={`notification-item-${n.id}`}>
+                                    <li key={n.id} className={`px-4 py-3 border-b border-[#E2E7EC] last:border-0 ${!n.read ? "bg-[#EAF4FB]" : ""}`} data-testid={`notification-item-${n.id}`}>
                                         {safePath(n.link) ? (
                                             <Link to={safePath(n.link)} onClick={() => { markOneRead(n); setOpen(false); }} className="block">
-                                                <div className="text-sm font-medium text-[#0E2A47]">{n.title}</div>
-                                                {n.body && <div className="text-xs text-[#6B7280] mt-0.5">{n.body}</div>}
-                                                <div className="text-[10px] text-[#6B7280] mt-1 uppercase tracking-wider">{formatDateTime(n.created_at)}</div>
+                                                <div className="text-sm font-medium text-[#1C2B2D]">{n.title}</div>
+                                                {n.body && <div className="text-xs text-[#524B42] mt-0.5">{n.body}</div>}
+                                                <div className="text-[10px] text-[#524B42] mt-1 uppercase tracking-wider">{formatDateTime(n.created_at)}</div>
                                             </Link>
                                         ) : (
                                             <button type="button" onClick={() => markOneRead(n)} className="text-left w-full" data-testid={`notification-item-${n.id}-mark`}>
-                                                <div className="text-sm font-medium text-[#0E2A47]">{n.title}</div>
-                                                {n.body && <div className="text-xs text-[#6B7280] mt-0.5">{n.body}</div>}
-                                                <div className="text-[10px] text-[#6B7280] mt-1 uppercase tracking-wider">{formatDateTime(n.created_at)}</div>
+                                                <div className="text-sm font-medium text-[#1C2B2D]">{n.title}</div>
+                                                {n.body && <div className="text-xs text-[#524B42] mt-0.5">{n.body}</div>}
+                                                <div className="text-[10px] text-[#524B42] mt-1 uppercase tracking-wider">{formatDateTime(n.created_at)}</div>
                                             </button>
                                         )}
                                     </li>
@@ -255,28 +259,28 @@ export default function NotificationsBell({ tone = "dark" }) {
                     </div>
 
                     {/* ---- Aged-care updates (legislative change alerts) ---- */}
-                    <div className="dm-notif-updates-header px-4 py-2.5 border-t border-b border-[#CFE0F0] bg-[#F6F1EA] flex items-center justify-between" data-testid="notif-updates-header">
-                        <span className="text-xs font-bold uppercase tracking-wider text-[#0E2A47]">Aged care updates</span>
+                    <div className="dm-notif-updates-header px-4 py-2.5 border-t border-b border-[#E2E7EC] bg-[#F6F1EA] flex items-center justify-between" data-testid="notif-updates-header">
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#1C2B2D]">Aged care updates</span>
                         {updatesUnread > 0 && <span className="text-[11px] text-clay font-semibold">{updatesUnread} new</span>}
                     </div>
                     <div className="max-h-72 overflow-y-auto" data-testid="notif-updates-section">
                         {updatesLoading ? (
-                            <div className="p-4 text-sm text-[#6B7280]">Loading…</div>
+                            <div className="p-4 text-sm text-[#524B42]">Loading…</div>
                         ) : updates.length === 0 ? (
-                            <div className="p-4 text-sm text-[#6B7280]" data-testid="lca1-alerts-empty">No updates yet. We&apos;ll ping you when new legislative changes affect your household.</div>
+                            <div className="p-4 text-sm text-[#524B42]" data-testid="lca1-alerts-empty">No updates yet. We&apos;ll ping you when new legislative changes affect your household.</div>
                         ) : (
                             <ul>
                                 {updates.map((a) => (
                                     <li
                                         key={a.id}
                                         data-testid={`lca1-alert-item-${a.id}`}
-                                        className={`px-4 py-3 border-b border-[#CFE0F0] last:border-0 ${a.alert_status === "shown" ? "bg-[#0E2A47]/[0.03]" : ""}`}
+                                        className={`px-4 py-3 border-b border-[#E2E7EC] last:border-0 ${a.alert_status === "shown" ? "bg-[#1C2B2D]/[0.03]" : ""}`}
                                     >
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0 flex-1">
-                                                <div className="text-sm font-semibold text-[#0E2A47] line-clamp-1">{a.title}</div>
-                                                {a.short_summary && <div className="text-xs text-[#6B7280] mt-0.5 line-clamp-2">{a.short_summary}</div>}
-                                                <div className="text-[10px] uppercase tracking-wide text-[#6B7280] mt-1">
+                                                <div className="text-sm font-semibold text-[#1C2B2D] line-clamp-1">{a.title}</div>
+                                                {a.short_summary && <div className="text-xs text-[#524B42] mt-0.5 line-clamp-2">{a.short_summary}</div>}
+                                                <div className="text-[10px] uppercase tracking-wide text-[#524B42] mt-1">
                                                     {a.category?.replace(/_/g, " ")} · effective {formatDate(a.effective_date)}
                                                 </div>
                                             </div>
@@ -285,7 +289,7 @@ export default function NotificationsBell({ tone = "dark" }) {
                                                     <button
                                                         data-testid={`lca1-alert-read-${a.id}`}
                                                         onClick={() => markUpdateRead(a.id)}
-                                                        className="p-1 rounded hover:bg-[#0E2A47]/10 text-[#6B7280]"
+                                                        className="p-1 rounded hover:bg-[#1C2B2D]/10 text-[#524B42]"
                                                         aria-label="Mark read"
                                                     >
                                                         <CheckCheck className="w-3.5 h-3.5" />
@@ -294,7 +298,7 @@ export default function NotificationsBell({ tone = "dark" }) {
                                                 <button
                                                     data-testid={`lca1-alert-dismiss-${a.id}`}
                                                     onClick={() => dismissUpdate(a.id)}
-                                                    className="p-1 rounded hover:bg-[#0E2A47]/10 text-[#6B7280]"
+                                                    className="p-1 rounded hover:bg-[#1C2B2D]/10 text-[#524B42]"
                                                     aria-label="Dismiss"
                                                 >
                                                     <X className="w-3.5 h-3.5" />
@@ -307,7 +311,7 @@ export default function NotificationsBell({ tone = "dark" }) {
                                                     <a
                                                         key={i}
                                                         href={ra.url || "#"}
-                                                        className="inline-flex items-center gap-1 text-[11px] text-[#0E2A47] hover:underline"
+                                                        className="inline-flex items-center gap-1 text-[11px] text-[#1C2B2D] hover:underline"
                                                     >
                                                         {ra.label || ra.title || "Take action"} <ExternalLink className="w-3 h-3" />
                                                     </a>
@@ -320,8 +324,8 @@ export default function NotificationsBell({ tone = "dark" }) {
                         )}
                     </div>
 
-                    <div className="px-4 py-2 border-t border-[#CFE0F0] bg-[#EAF4FB]">
-                        <Link to="/settings/notifications" onClick={() => setOpen(false)} className="text-xs text-[#0E2A47] hover:underline">
+                    <div className="px-4 py-2 border-t border-[#E2E7EC] bg-[#EAF4FB]">
+                        <Link to="/settings/notifications" onClick={() => setOpen(false)} className="text-xs text-[#1C2B2D] hover:underline">
                             Manage preferences
                         </Link>
                     </div>

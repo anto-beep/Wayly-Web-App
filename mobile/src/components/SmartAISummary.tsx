@@ -83,7 +83,7 @@ export function SmartAISummary({
   const toneFor = (level?: string) => {
     if (level === "warning") return { color: colors.alert, bg: isDark ? "rgba(232,180,95,0.14)" : "rgba(183,121,31,0.08)", icon: AlertTriangle };
     if (level === "success") return { color: colors.sage, bg: isDark ? "rgba(168,199,171,0.14)" : "rgba(66,95,71,0.08)", icon: CheckCircle2 };
-    return { color: colors.primary, bg: isDark ? "rgba(79,168,174,0.14)" : "rgba(14,77,82,0.06)", icon: Info };
+    return { color: colors.heading, bg: isDark ? "rgba(79,168,174,0.14)" : "rgba(14,77,82,0.06)", icon: Info };
   };
 
   // Light: web's teal→cream 135° wash. Dark: a faint teal glow over the surface.
@@ -115,8 +115,8 @@ export function SmartAISummary({
                 disabled={isLoading}
                 style={[styles.refreshBtn, { borderColor: colors.primary + "4D", backgroundColor: colors.surface, opacity: isLoading ? 0.5 : 1 }]}
               >
-                <RefreshCw size={13} color={colors.primary} />
-                <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.primary }}>{isLoading ? "Thinking" : "Refresh"}</T>
+                <RefreshCw size={13} color={colors.heading} />
+                <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.heading }}>{isLoading ? "Thinking" : "Refresh"}</T>
               </Pressable>
             ) : null}
           </View>

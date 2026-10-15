@@ -65,7 +65,7 @@ export default function PlanSelectScreen() {
         </View>
 
         <Card testID="plan-select-trust" style={{ backgroundColor: colors.sageSoft, borderColor: colors.sage, flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
-          <ShieldCheck size={20} color={colors.primary} style={{ marginTop: 2 }} />
+          <ShieldCheck size={20} color={colors.heading} style={{ marginTop: 2 }} />
           <T variant="small" style={{ flex: 1, lineHeight: 20 }}>
             Payment is handled securely by Stripe in your web browser. Wayly never sees your card details.
           </T>

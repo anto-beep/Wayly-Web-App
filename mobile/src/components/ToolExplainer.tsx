@@ -39,7 +39,7 @@ export default function ToolExplainer({ toolKey }: { toolKey: string }) {
                   <T style={{ color: "#fff", fontFamily: fonts.bodySemi, fontSize: 14 }}>{i + 1}</T>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary }}>{step.title}</T>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.heading }}>{step.title}</T>
                   <T variant="small" style={{ marginTop: 2 }}>{step.body}</T>
                 </View>
               </View>
@@ -59,11 +59,11 @@ export default function ToolExplainer({ toolKey }: { toolKey: string }) {
 
       {/* What You'll Need */}
       <Card testID={`tool-need-${toolKey}`}>
-        <T variant="h3" style={{ color: colors.primary }}>What You'll Need</T>
+        <T variant="h3" style={{ color: colors.heading }}>What You'll Need</T>
         <View style={{ gap: 8, marginTop: spacing.sm }}>
           {c.whatYouNeed.map((item, i) => (
             <View key={i} style={styles.bullet}>
-              <ChevronRight size={15} color={colors.primary} style={{ marginTop: 3 }} />
+              <ChevronRight size={15} color={colors.heading} style={{ marginTop: 3 }} />
               <T variant="small" style={{ flex: 1 }}>{item}</T>
             </View>
           ))}
@@ -72,11 +72,11 @@ export default function ToolExplainer({ toolKey }: { toolKey: string }) {
 
       {/* What You'll Get */}
       <Card testID={`tool-get-${toolKey}`}>
-        <T variant="h3" style={{ color: colors.primary }}>What You'll Get</T>
+        <T variant="h3" style={{ color: colors.heading }}>What You'll Get</T>
         <View style={{ gap: 8, marginTop: spacing.sm }}>
           {c.whatYouGet.map((item, i) => (
             <View key={i} style={styles.bullet}>
-              <ChevronRight size={15} color={colors.primary} style={{ marginTop: 3 }} />
+              <ChevronRight size={15} color={colors.heading} style={{ marginTop: 3 }} />
               <T variant="small" style={{ flex: 1 }}>{item}</T>
             </View>
           ))}
@@ -109,7 +109,7 @@ function CollapsibleSection({ title, testID, children }: { title: string; testID
         onPress={() => setOpen((o) => !o)}
         style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}
       >
-        <T variant="h2" style={{ color: colors.primary, flex: 1 }}>{title}</T>
+        <T variant="h2" style={{ color: colors.heading, flex: 1 }}>{title}</T>
         <ChevronDown size={22} color={colors.muted} style={{ transform: [{ rotate: open ? "180deg" : "0deg" }] }} />
       </Pressable>
       {open ? <View style={{ marginTop: spacing.sm }}>{children}</View> : null}
@@ -124,7 +124,7 @@ function FaqItem({ q, a, testID }: { q: string; a: string; testID: string }) {
     <Pressable testID={testID} onPress={() => setOpen((o) => !o)}>
       <Card style={{ padding: spacing.md }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.primary, flex: 1 }}>{q}</T>
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.heading, flex: 1 }}>{q}</T>
           <ChevronRight size={18} color={colors.muted} style={{ transform: [{ rotate: open ? "90deg" : "0deg" }] }} />
         </View>
         {open ? <T variant="small" style={{ marginTop: spacing.sm, lineHeight: 20 }}>{a}</T> : null}

@@ -53,7 +53,7 @@ function TrendsChart({ trends, colors }: any) {
   return (
     <Card testID="chsp-analyzer-trends">
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        <TrendingUp size={16} color={colors.primary} />
+        <TrendingUp size={16} color={colors.heading} />
         <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Your Monthly Contribution</T>
       </View>
       <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>Across your saved invoices — watch for costs creeping up.</T>
@@ -104,14 +104,14 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLett
           </View>
         </View>
         <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start", backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.sm, marginTop: spacing.sm }}>
-          <Sparkles size={16} color={colors.primary} />
+          <Sparkles size={16} color={colors.heading} />
           <T variant="small" style={{ flex: 1, lineHeight: 19, color: colors.text }}>{analysis.plain_summary}</T>
         </View>
         {analysis.next_steps?.length ? (
           <View style={{ gap: 4, marginTop: spacing.sm }} testID="chsp-analyzer-next-steps">
             {analysis.next_steps.map((s: string, i: number) => (
               <View key={i} style={{ flexDirection: "row", gap: 6, alignItems: "flex-start" }}>
-                <ArrowRight size={13} color={colors.primary} style={{ marginTop: 2 }} />
+                <ArrowRight size={13} color={colors.heading} style={{ marginTop: 2 }} />
                 <T variant="small" style={{ flex: 1, color: colors.text }}>{s}</T>
               </View>
             ))}
@@ -138,7 +138,7 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLett
           </View>
           <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
             <View style={{ flex: 1, backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.sm }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Landmark size={13} color={colors.primary} /><T variant="small" style={{ color: colors.primary, fontSize: 11 }}>Government</T></View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Landmark size={13} color={colors.heading} /><T variant="small" style={{ color: colors.heading, fontSize: 11 }}>Government</T></View>
               <T style={{ fontFamily: fonts.heading, fontSize: 16, color: colors.heading, marginTop: 2 }}>{aud(govt)}</T>
             </View>
             <View style={{ flex: 1, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.sm }}>
@@ -176,7 +176,7 @@ function AnalysisView({ analysis, colors, onSave, saving, savedMode, onDraftLett
       <Card testID="chsp-analyzer-lines">
         <Pressable testID="chsp-analyzer-lines-toggle" onPress={() => setLinesOpen((o) => !o)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <ListChecks size={16} color={colors.primary} />
+            <ListChecks size={16} color={colors.heading} />
             <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Line By Line ({lines.length})</T>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>

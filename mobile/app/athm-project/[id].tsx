@@ -156,9 +156,9 @@ export default function AthmProjectDetailScreen() {
             <View style={{ gap: spacing.xs, marginTop: spacing.sm }}>
               {referrals.map((r) => (
                 <View key={r.document_id} testID={`athm-ot-referral-row-${r.document_id}`} style={{ flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.sm }}>
-                  <FileText size={16} color={colors.primary} />
+                  <FileText size={16} color={colors.heading} />
                   <T variant="small" style={{ color: colors.text, flex: 1 }} numberOfLines={1}>{r.filename}</T>
-                  <Pressable onPress={() => { const base = process.env.EXPO_PUBLIC_BACKEND_URL; if (base) Linking.openURL(`${base}/api/documents/${r.document_id}/download`); }}><T variant="small" style={{ color: colors.primary }}>Open</T></Pressable>
+                  <Pressable onPress={() => { const base = process.env.EXPO_PUBLIC_BACKEND_URL; if (base) Linking.openURL(`${base}/api/documents/${r.document_id}/download`); }}><T variant="small" style={{ color: colors.heading }}>Open</T></Pressable>
                   <Pressable testID={`athm-ot-referral-detach-${r.document_id}`} onPress={() => detachReferral(r.document_id)}><Trash2 size={15} color={colors.terracotta} /></Pressable>
                 </View>
               ))}
@@ -170,7 +170,7 @@ export default function AthmProjectDetailScreen() {
         <Card>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>ASSISTIVE TECHNOLOGY ({items.length})</T>
-            <Pressable testID={`athm-add-item-toggle-${project.id}`} onPress={() => setShowItemForm((s) => !s)} style={{ flexDirection: "row", gap: 3, alignItems: "center" }}><Plus size={13} color={colors.primary} /><T variant="small" style={{ color: colors.primary }}>Add item</T></Pressable>
+            <Pressable testID={`athm-add-item-toggle-${project.id}`} onPress={() => setShowItemForm((s) => !s)} style={{ flexDirection: "row", gap: 3, alignItems: "center" }}><Plus size={13} color={colors.heading} /><T variant="small" style={{ color: colors.heading }}>Add item</T></Pressable>
           </View>
           {showItemForm ? (
             <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
@@ -195,7 +195,7 @@ export default function AthmProjectDetailScreen() {
         <Card>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11 }}>HOME MODIFICATIONS ({mods.length})</T>
-            <Pressable testID={`athm-add-mod-toggle-${project.id}`} onPress={() => setShowModForm((s) => !s)} style={{ flexDirection: "row", gap: 3, alignItems: "center" }}><Plus size={13} color={colors.primary} /><T variant="small" style={{ color: colors.primary }}>Add modification</T></Pressable>
+            <Pressable testID={`athm-add-mod-toggle-${project.id}`} onPress={() => setShowModForm((s) => !s)} style={{ flexDirection: "row", gap: 3, alignItems: "center" }}><Plus size={13} color={colors.heading} /><T variant="small" style={{ color: colors.heading }}>Add modification</T></Pressable>
           </View>
           {showModForm ? (
             <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
