@@ -1,3 +1,11 @@
+## Iter 381 — Dashboard "Today" parity completion + Google Auth 3-client wiring (Jun 2026, fork) ✅ self-verified via Expo screenshots
+- **Google Auth now works for all 3 clients.** Critical backend fix: `GOOGLE_OAUTH_ANDROID_CLIENT_ID` was referenced in server.py's `aud` allow-set but MISSING from backend `.env` → Android tokens would have been rejected. Added it (+ confirmed web/iOS). Frontend already had `androidClientId` wired. Web + iOS + Android each have their own client id on both frontend and backend. (iOS & Android only validate in a Published build.)
+- **Added the At-a-Glance mini-stat tiles** to the mobile dashboard budget card — "To Review" (gold), "Statements" (teal), "Lifetime Cap" (clay) — matching web, with left-accent borders + tinted bgs + icons. testIDs glance-alerts / glance-statements / glance-cap.
+- Dashboard ("Today") now at full visual parity with web mobile view: greeting, Viewing-care pill, light-tinted action tiles, light Wayly Summary, budget donut, mini-stats, shaded header/footer — all verified by screenshot in light mode.
+- **Remaining parity sweep (next):** Tools, Statements, Settings/More (incl. premium menu font), Reports, Budget detail, Care Plans — apply the same "light-tinted surfaces + theme-aware teal/muted font colours + web buttons" pattern, verify in light THEN dark.
+
+
+
 ## Iter 380 — Mobile↔web dashboard visual parity + Phase A/B/C fixes (Jun 2026, fork) ✅ self-verified via Expo screenshots + backend curl/pytest
 Big cross-platform parity + fixes batch. All mobile unless noted.
 **Phase A:**

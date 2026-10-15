@@ -6,7 +6,7 @@ import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from "
 import Svg, { Circle } from "react-native-svg";
 import {
   TrendingUp, FileText, AlertTriangle, Sparkles, ChevronRight,
-  MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info,
+  MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info, Bell, CheckCircle2,
 } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
@@ -242,6 +242,34 @@ export default function Dashboard() {
                       <T variant="small" style={{ color: colors.text }} testID="glance-spent"><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(spent)}</T> spent so far</T>
                     </View>
                     {careMgmt > 0 ? <T variant="small" style={{ color: colors.muted, marginTop: 6, textAlign: "center" }} testID="glance-care-management">{money(careMgmt)} of this is care management (10% of the quarterly budget).</T> : null}
+                  </View>
+                  {/* Mini-stats — To review / Statements / Lifetime cap (parity with web AtAGlance) */}
+                  <View style={[styles.miniStatRow, { borderTopColor: colors.border }]}>
+                    <Pressable
+                      testID="glance-alerts"
+                      onPress={() => router.push(latest ? `/statement/${latest.id}` : "/(tabs)/statements")}
+                      style={({ pressed }) => [styles.miniStat, { backgroundColor: colors.gold + "1A", borderColor: colors.gold + "4D", borderLeftColor: colors.gold }, pressed && { opacity: 0.85 }]}
+                    >
+                      <View style={styles.miniStatHead}><Bell size={14} color={colors.gold} /><T style={[styles.miniStatLabel, { color: colors.gold }]}>TO REVIEW</T></View>
+                      <T style={[styles.miniStatNum, { color: colors.primary }]}>{ttkCount}</T>
+                      <T style={[styles.miniStatSub, { color: colors.muted }]}>On your latest statement</T>
+                    </Pressable>
+                    <Pressable
+                      testID="glance-statements"
+                      onPress={() => router.push("/(tabs)/statements")}
+                      style={({ pressed }) => [styles.miniStat, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "26", borderLeftColor: colors.primary }, pressed && { opacity: 0.85 }]}
+                    >
+                      <View style={styles.miniStatHead}><FileText size={14} color={colors.primary} /><T style={[styles.miniStatLabel, { color: colors.primary }]}>STATEMENTS</T></View>
+                      <T style={[styles.miniStatNum, { color: colors.primary }]}>{statements.length}</T>
+                    </Pressable>
+                    <View
+                      testID="glance-cap"
+                      style={[styles.miniStat, { backgroundColor: "#B5623A1A", borderColor: "#B5623A4D", borderLeftColor: "#B5623A" }]}
+                    >
+                      <View style={styles.miniStatHead}><CheckCircle2 size={14} color="#B5623A" /><T style={[styles.miniStatLabel, { color: "#B5623A" }]}>LIFETIME CAP</T></View>
+                      <T style={[styles.miniStatNum, { color: colors.primary, fontSize: 22 }]}>{moneyWhole(budget.lifetime_contributions || 0)}</T>
+                      <T style={[styles.miniStatSub, { color: colors.muted }]}>{Math.round(budget.lifetime_pct || 0)}% of {moneyWhole(budget.lifetime_cap || 0)}</T>
+                    </View>
                   </View>
                 </Card>
               </View>
@@ -644,6 +672,12 @@ const styles = StyleSheet.create({
   detailBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 9 },
   statusPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
   quarterPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, marginTop: 8 },
+  miniStatRow: { flexDirection: "row", gap: 10, marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1 },
+  miniStat: { flex: 1, borderWidth: 1, borderLeftWidth: 4, borderRadius: radius.md, padding: 12 },
+  miniStatHead: { flexDirection: "row", alignItems: "center", gap: 5 },
+  miniStatLabel: { fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6 },
+  miniStatNum: { fontFamily: fonts.heading, fontSize: 26, lineHeight: 30, marginTop: 6 },
+  miniStatSub: { fontFamily: fonts.body, fontSize: 10, lineHeight: 13, marginTop: 2 },
   note: { flexDirection: "row", gap: spacing.sm, alignItems: "center", borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
   sourceBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
   matchBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
