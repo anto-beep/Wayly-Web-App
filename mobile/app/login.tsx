@@ -149,7 +149,10 @@ export default function LoginScreen() {
             <WaylyMark size={78} white={isDark} />
             <T
               testID="brand-tagline"
-              style={{ fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, letterSpacing: 1, color: colors.gold, marginTop: 14, textAlign: "center" }}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+              style={{ fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, letterSpacing: 0.5, color: colors.gold, marginTop: 14, textAlign: "center", alignSelf: "stretch" }}
             >
               {BRAND_TAGLINE}
             </T>

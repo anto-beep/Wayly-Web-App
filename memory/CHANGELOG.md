@@ -1,3 +1,25 @@
+## Iter 380 — Mobile↔web dashboard visual parity + Phase A/B/C fixes (Jun 2026, fork) ✅ self-verified via Expo screenshots + backend curl/pytest
+Big cross-platform parity + fixes batch. All mobile unless noted.
+**Phase A:**
+- Android package → `au.com.wayly.app` (earlier iter). Google **Android** Sign-In wired: added `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=511820950878-sr4r8a93…` to `mobile/.env` + `androidClientId` in `AuthContext` (fixes "Custom scheme URIs not allowed for WEB client type" — Android was falling back to the Web client). Final verification needs a published build (not Expo Go/preview).
+- Bottom tab bar no longer cut off by the Android nav bar — `(tabs)/_layout.tsx` now pads by `useSafeAreaInsets().bottom`.
+- App **defaults to Light mode** on first launch (`ThemeContext` default `light`, user can still pick dark/system).
+- Login/signup tagline "AGED CARE, MADE CLEAR" auto-shrinks to one line (`adjustsFontSizeToFit numberOfLines={1}`).
+- Removed the top-right hamburger (☰) from `WaylyHeader` (drawer still reached via the More tab).
+**Phase B (header/footer + dashboard hero parity):**
+- `WaylyHeader` + tab bar got the web `.app-topbar`/`.app-bottomnav` shaded teal→surface→clay LinearGradient wash + Wayly wordmark next to the logo.
+- Dashboard greeting now brand-teal serif (was near-black); added the "Viewing care for <name>" teal pill (testID `dashboard-viewing-for`) matching web.
+**Dashboard deep parity (this iter — the "it's not the same as web" items):**
+- `DashboardActionBar` tiles: were SOLID dark cards w/ white text → now **light accent-tinted cards (accent@12 bg, accent@33 border), solid accent icon circle, teal title, muted hint** — exact web match. Search field now surface-white; outer card border softened to gold/30% + faint gold wash.
+- `SmartAISummary` ("Wayly Summary"): was solid dark-teal w/ white text → now **light teal→cream 135° wash, solid teal icon, teal serif title + teal body, light-tinted alerts** (theme-aware: dark mode uses surface + white text). Font colours now consistent across light/dark.
+- Added the **budget donut** (`react-native-svg` ring, "N% USED", tone sage→clay→red) to `dashboard-budget-status`, mirroring web `BudgetDonut`/`AtAGlance`; headline centred like web mobile view.
+**Phase C (backlog):**
+- BACKEND `GET /api/notifications` now auto-prunes notifications whose linked statement/invoice/report was deleted (keeps list-page links); verified stale `/app/statements/<deleted>` removed from response + DB, `/app/statements` kept (pytest iter375 PASS).
+- `PushManager` routes tapped push (warm + cold start) through `resolveNotificationLink` so deep-links never dead-end on "Unmatched route".
+**Still pending (ongoing parity sweep):** per-screen visual parity for Statements, Tools, Settings/More, Reports, Budget detail, Care Plans (same "solid-dark→light-tinted + theme-aware font colour" pattern to apply where present).
+
+
+
 ## Iter 379 — Android package rename + graceful "unmatched route" handling (web + mobile) (Jun 2026, fork) ✅ self-verified (screenshots both surfaces + resolver unit check)
 User report: tapping an in-app/expired notification on TestFlight showed expo-router's black "Unmatched route / sitemap" error. Wanted that screen gone everywhere, invalid notifications to not dead-end, and the Android package renamed.
 - **Android package → `au.com.wayly.app`** (`mobile/app.json` `android.package`). Takes effect on the next native Publish build.

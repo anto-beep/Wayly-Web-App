@@ -6,12 +6,26 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useAuth } from "@/src/context/AuthContext";
 import { registerForPush } from "@/src/lib/push";
+import { resolveNotificationLink } from "@/src/lib/notificationLink";
 
 function routeFromData(data: any) {
-  const url = data?.deeplink || data?.action_url;
+  const url = data?.deeplink || data?.action_url || data?.link;
   if (!url) return;
-  if (String(url).startsWith("http")) Linking.openURL(url);
-  else router.push(url);
+  if (String(url).startsWith("http")) {
+    Linking.openURL(url);
+    return;
+  }
+  // Route internal links through the shared resolver so a tapped push (warm or
+  // cold start) maps web-shaped links to a real mobile route. Unresolvable
+  // links are skipped rather than dead-ending on the "Unmatched route" screen.
+  const target = resolveNotificationLink(String(url));
+  if (target) {
+    try {
+      router.push(target as any);
+    } catch {
+      /* +not-found handles anything that slips through */
+    }
+  }
 }
 
 // Handles push token registration, notification-tap routing (warm + cold start),

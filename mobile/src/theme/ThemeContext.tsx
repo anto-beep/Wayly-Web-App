@@ -19,7 +19,9 @@ const PREF_KEY = "wayly_theme_pref";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const system = useColorScheme();
-  const [pref, setPrefState] = useState<ThemePref>("system");
+  // Default to Light on first launch (don't inherit the phone's dark mode).
+  // Once the user picks a preference it's persisted and restored below.
+  const [pref, setPrefState] = useState<ThemePref>("light");
 
   useEffect(() => {
     (async () => {

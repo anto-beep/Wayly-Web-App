@@ -11,6 +11,7 @@ WebBrowser.maybeCompleteAuthSession();
 // THIS BREAKS THE AUTH.
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 
 export type WaylyUser = {
   id: string;
@@ -64,16 +65,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setReadOnlyMode(!!u && u.access_state === "view_only");
   }, []);
 
-  // Wayly's own Google OAuth (native client id). Yields a Google ID token
-  // which we verify server-side at POST /auth/google and swap for a Wayly JWT.
   // Wayly's own Google OAuth (native client ids). On iOS the native iOS
-  // client is used (Google blocks the web-client implicit flow on native);
-  // on the Expo web preview the web client is used. Yields a Google ID token
-  // which we verify server-side at POST /auth/google and swap for a Wayly JWT.
+  // client is used and on Android the native Android client — Google blocks
+  // the web-client implicit flow (custom-scheme redirect) on native, which is
+  // why each platform needs its own OAuth client id. On the Expo web preview
+  // the web client is used. Yields a Google ID token which we verify
+  // server-side at POST /auth/google and swap for a Wayly JWT.
   const [, googleResponse, googlePromptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
     webClientId: GOOGLE_CLIENT_ID,
     iosClientId: GOOGLE_IOS_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
   });
 
   const refreshUser = useCallback(async () => {

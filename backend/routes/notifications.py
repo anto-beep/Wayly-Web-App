@@ -57,10 +57,63 @@ class NotificationPrefsBody(BaseModel):
 
 
 # -- Routes -----------------------------------------------------------------
+_STATEMENT_SUBPAGES = {"upload", "archived"}
+
+
+def _parse_notification_target(link):
+    """For a notification ``link`` that points at a specific statement /
+    invoice / report, return (collection_name, resource_id). Returns None for
+    list pages, settings links, or anything without a concrete resource id.
+    Used to drop notifications whose underlying item has been deleted so the
+    bell never deep-links to a dead route."""
+    if not link or not isinstance(link, str) or not link.startswith("/"):
+        return None
+    path, _, query = link.partition("?")
+    parts = [p for p in path.split("/") if p]
+    if len(parts) >= 3 and parts[0] == "app" and parts[1] == "statements":
+        rid = parts[2]
+        if rid not in _STATEMENT_SUBPAGES:
+            return ("statements", rid)
+    if len(parts) >= 3 and parts[0] == "app" and parts[1] == "invoices":
+        return ("invoices", parts[2])
+    if path == "/app/reports" and "report_id=" in query:
+        from urllib.parse import parse_qs
+        rid = parse_qs(query).get("report_id", [None])[0]
+        if rid:
+            return ("generated_reports", rid)
+    return None
+
+
+async def _prune_stale_notifications(user_id, items):
+    """Delete notifications whose linked statement/invoice/report no longer
+    exists and return the surviving items. Runs on every bell fetch so a
+    deleted item's notification disappears on both web and mobile."""
+    targets: Dict[str, tuple] = {}
+    by_coll: Dict[str, set] = {}
+    for n in items:
+        t = _parse_notification_target(n.get("link"))
+        if t:
+            coll, rid = t
+            targets[n["id"]] = t
+            by_coll.setdefault(coll, set()).add(rid)
+    if not targets:
+        return items
+    existing: Dict[str, set] = {}
+    for coll, ids in by_coll.items():
+        rows = await _db[coll].find({"id": {"$in": list(ids)}}, {"_id": 0, "id": 1}).to_list(len(ids))
+        existing[coll] = {r["id"] for r in rows}
+    stale_ids = [nid for nid, (coll, rid) in targets.items() if rid not in existing.get(coll, set())]
+    if stale_ids:
+        await _db.notifications.delete_many({"user_id": user_id, "id": {"$in": stale_ids}})
+        return [n for n in items if n["id"] not in stale_ids]
+    return items
+
+
 @notification_router.get("/notifications")
 async def list_notifications(user_id: str = Depends(get_current_user_id)):
     cur = _db.notifications.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(30)
     items = await cur.to_list(30)
+    items = await _prune_stale_notifications(user_id, items)
     unread = await _db.notifications.count_documents({"user_id": user_id, "read": False})
     return {"items": items, "unread": unread}
 

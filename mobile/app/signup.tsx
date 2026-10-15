@@ -186,7 +186,7 @@ export default function SignupScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={{ alignItems: "center", marginBottom: spacing.lg }}>
             <WaylyMark size={64} white={isDark} />
-            <T testID="brand-tagline" style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, letterSpacing: 1, color: colors.gold, marginTop: 12, textAlign: "center" }}>
+            <T testID="brand-tagline" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, letterSpacing: 0.5, color: colors.gold, marginTop: 12, textAlign: "center", alignSelf: "stretch" }}>
               {BRAND_TAGLINE}
             </T>
           </View>

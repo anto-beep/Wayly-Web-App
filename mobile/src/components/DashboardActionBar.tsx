@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Search, ArrowRight } from "lucide-react-native";
 
@@ -43,10 +44,18 @@ export function DashboardActionBar() {
   return (
     <View
       testID="dashboard-action-bar"
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.gold }, shadow.card]}
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.gold + "4D" }, shadow.card]}
     >
+      {/* Faint gold wash matching web's from-gold/8% → surface gradient. */}
+      <LinearGradient
+        colors={[colors.gold + "16", "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
       {/* Search */}
-      <View style={[styles.searchWrap, { borderColor: colors.border, backgroundColor: colors.bg }]}>
+      <View style={[styles.searchWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
         <Search size={18} color={colors.gold} />
         <TextInput
           testID="dashboard-action-search"
@@ -93,21 +102,21 @@ export function DashboardActionBar() {
         <View style={styles.grid} testID="dashboard-quick-actions">
           {DASHBOARD_QUICK_ACTIONS.map((a, i) => {
             const Icon = a.icon;
-            const tones = ["#0E4D52", "#A5512B", "#3E6A4C", "#0B3B3E", "#B5623A", "#2E5540"];
-            const tone = tones[i % tones.length];
+            const accents = ["#0E4D52", "#A5512B", "#3E6A4C", "#0B3B3E", "#B5623A", "#2E5540"];
+            const accent = accents[i % accents.length];
             return (
               <Pressable
                 key={a.route}
                 testID={`dashboard-quick-${a.label.toLowerCase().replace(/\s+/g, "-")}`}
                 onPress={() => go(a.route)}
-                style={({ pressed }) => [styles.tile, { backgroundColor: tone }, pressed && { opacity: 0.9 }]}
+                style={({ pressed }) => [styles.tile, { backgroundColor: accent + "12", borderColor: accent + "33" }, pressed && { opacity: 0.85 }]}
               >
-                <View style={[styles.tileIcon, { backgroundColor: "rgba(255,255,255,0.18)" }]}>
+                <View style={[styles.tileIcon, { backgroundColor: accent }]}>
                   <Icon size={20} color="#fff" />
                 </View>
                 <View style={{ gap: 3 }}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: "#fff", lineHeight: 18 }} numberOfLines={2}>{toTitleLabel(a.label)}</T>
-                  <T style={{ fontFamily: fonts.body, fontSize: 11.5, color: "rgba(255,255,255,0.82)", lineHeight: 15 }} numberOfLines={2}>{a.hint}</T>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.primary, lineHeight: 18 }} numberOfLines={2}>{toTitleLabel(a.label)}</T>
+                  <T style={{ fontFamily: fonts.body, fontSize: 11.5, color: colors.muted, lineHeight: 15 }} numberOfLines={2}>{a.hint}</T>
                 </View>
               </Pressable>
             );
@@ -121,12 +130,12 @@ export function DashboardActionBar() {
 export default DashboardActionBar;
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radius.lg, borderWidth: 2, padding: spacing.lg },
+  card: { borderRadius: radius.lg, borderWidth: 2, padding: spacing.lg, overflow: "hidden" },
   searchWrap: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1.5, borderRadius: radius.pill, paddingHorizontal: spacing.md, marginTop: spacing.md, minHeight: 50 },
   searchInput: { flex: 1, fontFamily: fonts.body, fontSize: 16, paddingVertical: 10 },
   resultRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1 },
   resultIcon: { width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.md },
-  tile: { width: "48%", minHeight: 112, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm, justifyContent: "flex-start" },
-  tileIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  tile: { width: "48%", minHeight: 112, borderRadius: radius.md, borderWidth: 1, padding: spacing.md, gap: spacing.sm, justifyContent: "flex-start" },
+  tileIcon: { width: 44, height: 44, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
 });

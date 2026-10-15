@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info } from "lucide-react-native";
 
 import { T } from "@/src/components/ui";
@@ -34,7 +35,7 @@ export function SmartAISummary({
   refreshable?: boolean;
   style?: any;
 }) {
-  const { shadow } = useTheme();
+  const { colors, isDark, shadow } = useTheme();
   const [data, setData] = useState<InsightResponse | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const ctxKey = JSON.stringify(context);
@@ -80,42 +81,49 @@ export function SmartAISummary({
   if (!summary && !isLoading) return null;
 
   const toneFor = (level?: string) => {
-    if (level === "warning") return { border: "#F0B267", icon: AlertTriangle, iconColor: "#F0B267" };
-    if (level === "success") return { border: "#8FBF95", icon: CheckCircle2, iconColor: "#8FBF95" };
-    return { border: "#A3CBCC", icon: Info, iconColor: "#A3CBCC" };
+    if (level === "warning") return { color: colors.alert, bg: isDark ? "rgba(232,180,95,0.14)" : "rgba(183,121,31,0.08)", icon: AlertTriangle };
+    if (level === "success") return { color: colors.sage, bg: isDark ? "rgba(168,199,171,0.14)" : "rgba(66,95,71,0.08)", icon: CheckCircle2 };
+    return { color: colors.primary, bg: isDark ? "rgba(79,168,174,0.14)" : "rgba(14,77,82,0.06)", icon: Info };
   };
+
+  // Light: web's teal→cream 135° wash. Dark: a faint teal glow over the surface.
+  const gradColors: [string, string] = isDark
+    ? ["rgba(79,168,174,0.10)", "transparent"]
+    : ["rgba(14,77,82,0.06)", "rgba(244,239,231,0.55)"];
+  const headText = isDark ? colors.text : colors.primary;
 
   return (
     <View
       testID={`smart-ai-summary-${pageKey}`}
-      style={[styles.card, shadow.card, style]}
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.primary + "26", borderLeftColor: colors.primary }, shadow.card, style]}
     >
+      <LinearGradient colors={gradColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
       <View style={{ flexDirection: "row", gap: spacing.md }}>
-        <View style={styles.iconWrap}>
+        <View style={[styles.iconWrap, { backgroundColor: colors.primary }]}>
           <Sparkles size={18} color="#fff" />
         </View>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, flexWrap: "wrap" }}>
             <View style={{ flexShrink: 1, minWidth: 0 }}>
-              {eyebrow ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: "rgba(255,255,255,0.7)" }}>{eyebrow}</T> : null}
-              <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: "#fff" }}>{title}</T>
+              {eyebrow ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.muted }}>{eyebrow}</T> : null}
+              <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: headText }}>{title}</T>
             </View>
             {refreshable ? (
               <Pressable
                 testID={`smart-ai-summary-refresh-${pageKey}`}
                 onPress={() => run(true)}
                 disabled={isLoading}
-                style={[styles.refreshBtn, { opacity: isLoading ? 0.5 : 1 }]}
+                style={[styles.refreshBtn, { borderColor: colors.primary + "4D", backgroundColor: colors.surface, opacity: isLoading ? 0.5 : 1 }]}
               >
-                <RefreshCw size={13} color="#fff" />
-                <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: "#fff" }}>{isLoading ? "Thinking" : "Refresh"}</T>
+                <RefreshCw size={13} color={colors.primary} />
+                <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.primary }}>{isLoading ? "Thinking" : "Refresh"}</T>
               </Pressable>
             ) : null}
           </View>
 
           <T
             testID={`smart-ai-summary-body-${pageKey}`}
-            style={{ fontFamily: fonts.body, fontSize: 14, marginTop: 8, lineHeight: 22, color: "rgba(255,255,255,0.9)", opacity: isLoading ? 0.7 : 1 }}
+            style={{ fontFamily: fonts.body, fontSize: 14, marginTop: 8, lineHeight: 22, color: headText, opacity: isLoading ? 0.7 : 1 }}
           >
             {summary || "Looking at your latest data. One moment while we pull the highlights together."}
           </T>
@@ -129,10 +137,10 @@ export function SmartAISummary({
                   <View
                     key={i}
                     testID={`smart-ai-summary-alert-${pageKey}-${i}`}
-                    style={[styles.alert, { borderLeftColor: tone.border }]}
+                    style={[styles.alert, { borderColor: colors.border, borderLeftColor: tone.color, backgroundColor: tone.bg }]}
                   >
-                    <Icon size={16} color={tone.iconColor} style={{ marginTop: 1 }} />
-                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, lineHeight: 19, color: "#fff", flex: 1 }}>{sanitizeAI(a.text)}</T>
+                    <Icon size={16} color={tone.color} style={{ marginTop: 1 }} />
+                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, lineHeight: 19, color: colors.text, flex: 1 }}>{sanitizeAI(a.text)}</T>
                   </View>
                 );
               })}
@@ -147,8 +155,8 @@ export function SmartAISummary({
 export default SmartAISummary;
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radius.lg, borderWidth: 1, borderColor: "rgba(255,255,255,0.15)", borderLeftWidth: 4, borderLeftColor: "#F0B267", backgroundColor: "#0E4D52", padding: spacing.lg },
-  iconWrap: { width: 38, height: 38, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.15)" },
-  refreshBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
-  alert: { flexDirection: "row", gap: 8, borderLeftWidth: 3, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 9 },
+  card: { borderRadius: radius.lg, borderWidth: 1, borderLeftWidth: 4, padding: spacing.lg, overflow: "hidden" },
+  iconWrap: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  refreshBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
+  alert: { flexDirection: "row", gap: 8, borderWidth: 1, borderLeftWidth: 3, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 9 },
 });

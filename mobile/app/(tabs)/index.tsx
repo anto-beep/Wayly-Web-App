@@ -3,6 +3,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-n
 import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "expo-router";
 import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
+import Svg, { Circle } from "react-native-svg";
 import {
   TrendingUp, FileText, AlertTriangle, Sparkles, ChevronRight,
   MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info,
@@ -47,6 +48,27 @@ const Overline = ({ children }: { children: React.ReactNode }) => {
   const { colors } = useTheme();
   return <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.8, color: colors.muted }}>{String(children).toUpperCase()}</T>;
 };
+
+// Budget donut — mirrors the web AtAGlance ring: % of the quarter's budget used,
+// tone shifts sage → clay → red as it fills. Track tint matches web exactly.
+function BudgetDonut({ pctFill, pctLabel, tone, size = 124, stroke = 16 }: { pctFill: number; pctLabel: number; tone: string; size?: number; stroke?: number }) {
+  const { colors, isDark } = useTheme();
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pctFill));
+  const off = c - (clamped / 100) * c;
+  const track = isDark ? "rgba(255,255,255,0.12)" : "rgba(14,77,82,0.10)";
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }} testID="glance-donut">
+      <Svg width={size} height={size} style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}>
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={track} strokeWidth={stroke} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={tone} strokeWidth={stroke} strokeLinecap="round" fill="none" strokeDasharray={c} strokeDashoffset={off} />
+      </Svg>
+      <T style={{ fontFamily: fonts.heading, fontSize: 30, lineHeight: 32, color: tone }} testID="glance-donut-pct">{pctLabel}%</T>
+      <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 1.4, color: colors.muted, marginTop: 2 }}>USED</T>
+    </View>
+  );
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -138,7 +160,14 @@ export default function Dashboard() {
         {/* Greeting header — hero (matches web: dashboard body opens straight
             with the greeting; participant switching lives in app chrome/Family). */}
         <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: spacing.lg, marginTop: spacing.sm }}>
-          <T style={{ fontFamily: fonts.headingSemi, fontSize: 27, lineHeight: 33, color: colors.text }} testID="dashboard-greeting">{greetingFor()}, {firstName}. What would you like to do?</T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 34, color: colors.primary }} testID="dashboard-greeting">{greetingFor()}, {firstName}. What would you like to do?</T>
+          {active ? (
+            <View testID="dashboard-viewing-for" style={{ flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", backgroundColor: colors.primary, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 8, marginTop: 12 }}>
+              <Users size={16} color={colors.gold} />
+              <T style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>Viewing care for</T>
+              <T style={{ fontSize: 13, fontFamily: fonts.bodySemi, color: "#fff" }}>{displayName || "your household"}</T>
+            </View>
+          ) : null}
         </Animated.View>
 
         {loading ? (
@@ -180,28 +209,40 @@ export default function Dashboard() {
               />
             </Animated.View>
 
-            {/* Prominent budget status pill (parity with web AtAGlance headline) */}
+            {/* At-a-glance headline: budget donut + figures (parity with web AtAGlance) */}
             {!isFree && budget ? (
               <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
                 <Card testID="dashboard-budget-status" style={{ borderColor: budgetOver ? colors.terracotta : colors.border, borderWidth: budgetOver ? 1.5 : StyleSheet.hairlineWidth }}>
-                  <View style={[styles.statusPill, { backgroundColor: budgetOver ? colors.errorSoft : colors.sageSoft }]}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: budgetOver ? colors.terracotta : colors.sage }} />
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.7, color: budgetOver ? colors.terracotta : colors.sage }} testID="glance-budget-status">
-                      {budgetOver ? "OVER BUDGET THIS QUARTER" : "LEFT TO SPEND THIS QUARTER"}
-                    </T>
+                  <View style={{ alignItems: "center" }}>
+                    <BudgetDonut
+                      pctFill={budgetPctUsed}
+                      pctLabel={budgetPctUsed}
+                      tone={(budgetOver || budgetPctUsed >= 90) ? "#C0392B" : budgetPctUsed >= 75 ? "#C2683D" : "#4E6E54"}
+                    />
                   </View>
-                  {budget?.quarter_label ? (
-                    <T variant="small" style={{ color: colors.muted, marginTop: 6, fontFamily: fonts.bodySemi, letterSpacing: 0.3 }} testID="glance-quarter-months">{String(budget.quarter_label).replace(/-/, " – ")}</T>
-                  ) : null}
-                  <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-                    <T style={{ fontFamily: fonts.heading, fontSize: 27, lineHeight: 32, color: budgetOver ? colors.terracotta : colors.text }} testID="glance-left">{money(Math.abs(left))}</T>
-                    <T variant="small" style={{ color: colors.muted }}>of {moneyWhole(quarterlyBudget)} this quarter</T>
+                  <View style={{ alignItems: "center", marginTop: spacing.md }}>
+                    <View style={[styles.statusPill, { backgroundColor: budgetOver ? colors.errorSoft : colors.sageSoft }]}>
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: budgetOver ? colors.terracotta : colors.sage }} />
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.7, color: budgetOver ? colors.terracotta : colors.sage }} testID="glance-budget-status">
+                        {budgetOver ? "OVER BUDGET THIS QUARTER" : "LEFT TO SPEND THIS QUARTER"}
+                      </T>
+                    </View>
+                    {budget?.quarter_label ? (
+                      <View style={[styles.quarterPill, { backgroundColor: colors.primary + "12" }]} testID="glance-quarter-months">
+                        <Calendar size={13} color={colors.primary} />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.3, color: colors.primary }}>{String(budget.quarter_label).replace(/-/, " – ")}</T>
+                      </View>
+                    ) : null}
+                    <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 32, color: budgetOver ? colors.terracotta : colors.primary }} testID="glance-left">{money(Math.abs(left))}</T>
+                      <T variant="small" style={{ color: colors.muted }}>of {moneyWhole(quarterlyBudget)} this quarter</T>
+                    </View>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
+                      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage }} />
+                      <T variant="small" style={{ color: colors.text }} testID="glance-spent"><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(spent)}</T> spent so far</T>
+                    </View>
+                    {careMgmt > 0 ? <T variant="small" style={{ color: colors.muted, marginTop: 6, textAlign: "center" }} testID="glance-care-management">{money(careMgmt)} of this is care management (10% of the quarterly budget).</T> : null}
                   </View>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
-                    <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage }} />
-                    <T variant="small" style={{ color: colors.text }} testID="glance-spent"><T style={{ fontFamily: fonts.bodySemi }}>{money(spent)}</T> spent so far · {budgetPctUsed}% of budget used</T>
-                  </View>
-                  {careMgmt > 0 ? <T variant="small" style={{ color: colors.muted, marginTop: 6 }} testID="glance-care-management">{money(careMgmt)} of this is care management (10% of the quarterly budget).</T> : null}
                 </Card>
               </View>
             ) : null}
@@ -601,7 +642,8 @@ const styles = StyleSheet.create({
   detailRight: { flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 0 },
   detailIcon: { flexShrink: 0, width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   detailBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 9 },
-  statusPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
+  statusPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
+  quarterPill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, marginTop: 8 },
   note: { flexDirection: "row", gap: spacing.sm, alignItems: "center", borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginTop: spacing.md },
   sourceBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
   matchBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
