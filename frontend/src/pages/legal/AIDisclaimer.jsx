@@ -10,7 +10,7 @@ export default function AIDisclaimer() {
                 limitations of our AI tools.
             </p>
 
-            <h2>What Wayly’s AI tools do</h2>
+            <h2>What Wayly’s AI Tools Do</h2>
             <p>
                 Wayly’s AI tools use large language models to read, interpret and summarise Support at Home
                 monthly statements and related documents, so Australian families can understand complex
@@ -24,7 +24,7 @@ export default function AIDisclaimer() {
             </ul>
             <p>These tools are built to augment your own judgement, not replace it.</p>
 
-            <h2>Limitations of AI outputs</h2>
+            <h2>Limitations of AI Outputs</h2>
             <p>While Wayly strives for accuracy, AI-generated outputs have inherent limitations. Our AI tools may:</p>
             <ul>
                 <li>Produce incorrect, misleading or incomplete information — outputs should always be reviewed for factual accuracy.</li>
@@ -43,7 +43,7 @@ export default function AIDisclaimer() {
             </ul>
             <p>Wayly accepts no liability for any loss or damage arising from reliance on AI-generated content.</p>
 
-            <h2>Your responsibilities</h2>
+            <h2>Your Responsibilities</h2>
             <p>As a user of Wayly’s AI tools, you are responsible for:</p>
             <ul>
                 <li><strong>Verification:</strong> independently verifying the accuracy and appropriateness of any AI output before relying on it or sharing it.</li>
@@ -52,7 +52,7 @@ export default function AIDisclaimer() {
                 <li><strong>Data privacy:</strong> not inputting sensitive information beyond what is needed for the task.</li>
             </ul>
 
-            <h2>What you should always do</h2>
+            <h2>What You Should Always Do</h2>
             <p>Before taking any action based on a Wayly AI output:</p>
             <ol>
                 <li>Compare the output against your original statement.</li>
@@ -61,7 +61,7 @@ export default function AIDisclaimer() {
                 <li>Speak to a qualified professional for advice on your specific situation.</li>
             </ol>
 
-            <h2>What Wayly is not</h2>
+            <h2>What Wayly Is Not</h2>
             <ul>
                 <li>Wayly is not a registered Support at Home provider.</li>
                 <li>Wayly is not a financial adviser or financial services licensee.</li>
@@ -71,7 +71,7 @@ export default function AIDisclaimer() {
             </ul>
             <p>Nothing produced by Wayly’s tools is financial, legal or clinical advice.</p>
 
-            <h2>Privacy Act 1988 (Cth) disclosure: automated decision-making</h2>
+            <h2>Privacy Act 1988 (Cth) Disclosure: Automated Decision-Making</h2>
             <p>
                 In line with Australia’s Privacy Act 1988 (Cth), Wayly may use AI tools that contribute to
                 automated decision-making. Where such a decision would have a significant effect on an
@@ -83,7 +83,7 @@ export default function AIDisclaimer() {
                 guidance on automated decision-making.
             </p>
 
-            <h2>Adopted safety standard</h2>
+            <h2>Adopted Safety Standard</h2>
             <p>
                 Wayly adheres to the principles of the <strong>Voluntary AI Safety Standard 2024</strong>
                 {" "}adopted by the Australian Government. This standard guides our responsible development
@@ -91,7 +91,7 @@ export default function AIDisclaimer() {
                 accountability.
             </p>
 
-            <h2>Contact us</h2>
+            <h2>Contact Us</h2>
             <p>If you have questions about this disclaimer, our AI tools, or how your data is used:</p>
             <ul>
                 <li>General enquiries: <a href="mailto:hello@wayly.com.au">hello@wayly.com.au</a></li>

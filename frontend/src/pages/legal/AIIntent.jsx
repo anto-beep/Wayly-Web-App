@@ -3,15 +3,15 @@ import LegalPage from "./LegalPage";
 
 export default function AIIntent() {
     return (
-        <LegalPage title="Our commitment when our AI gets it wrong" path="/legal/ai-intent" description="What Wayly does when our AI gets a Support at Home result wrong: clear correction path, dual review on flagged calls, and refund commitments for paid tiers." lastUpdated="February 2026">
+        <LegalPage title="Our Commitment When Our AI Gets It Wrong" path="/legal/ai-intent" description="What Wayly does when our AI gets a Support at Home result wrong: clear correction path, dual review on flagged calls, and refund commitments for paid tiers." lastUpdated="February 2026">
             <p>
                 We know our AI tools can make mistakes. We say so on every page. This page explains what we
                 commit to do when an error causes a real problem.
             </p>
 
-            <h2>Our commitment</h2>
+            <h2>Our Commitment</h2>
 
-            <h3>1. We will listen</h3>
+            <h3>1. We Will Listen</h3>
             <p>
                 If you contact us because a Wayly AI output produced an error that caused you a problem,
                 we will take it seriously. Contact: <a href="mailto:errors@wayly.com.au">errors@wayly.com.au</a>{" "}
@@ -19,20 +19,20 @@ export default function AIIntent() {
                 days.
             </p>
 
-            <h3>2. We will investigate</h3>
+            <h3>2. We Will Investigate</h3>
             <p>
                 We will review the specific output that caused the problem, identify what went wrong, and
                 assess whether it was a genuine AI error, a data issue, or a user interpretation issue.
                 We will tell you what we found.
             </p>
 
-            <h3>3. We will be honest</h3>
+            <h3>3. We Will Be Honest</h3>
             <p>
                 If our AI made a clear error, we will say so. We will not hide behind disclaimers when the
                 fault is ours.
             </p>
 
-            <h3>4. We will act</h3>
+            <h3>4. We Will Act</h3>
             <p>
                 Where a Wayly AI error directly caused you a verifiable financial loss, we will work with
                 you to understand the impact and determine an appropriate response. This may include a
@@ -43,13 +43,13 @@ export default function AIIntent() {
                 unlimited liability warranty. Our full <a href="/legal/terms">Terms of Service</a> apply.
             </p>
 
-            <h3>5. We will improve</h3>
+            <h3>5. We Will Improve</h3>
             <p>
                 Every confirmed AI error is used to improve the tool. We track error patterns and fix them.
                 Your report makes the product better for every family using it.
             </p>
 
-            <h2>How to report an AI error</h2>
+            <h2>How to Report an AI Error</h2>
             <p>
                 Email: <a href="mailto:errors@wayly.com.au">errors@wayly.com.au</a><br />
                 Subject: AI Error Report<br />
@@ -57,7 +57,7 @@ export default function AIIntent() {
                 happened as a result.
             </p>
 
-            <h2>What this is not</h2>
+            <h2>What This Is Not</h2>
             <p>
                 This statement of intent is not a legal guarantee or an amendment to our Terms of Service.
                 It is a statement of how we intend to behave when things go wrong. We believe in

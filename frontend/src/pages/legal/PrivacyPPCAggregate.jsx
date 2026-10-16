@@ -36,13 +36,13 @@ export default function PrivacyPPCAggregatePage() {
                     className="font-heading text-4xl sm:text-5xl text-primary-k mt-3 tracking-tight"
                     data-testid="ppc-privacy-title"
                 >
-                    Provider Price Aggregate, a plain-language amendment
+                    Provider Price Aggregate, a Plain-Language Amendment
                 </h1>
                 <p className="text-sm text-muted-k mt-3">Effective: February 2026 · Applies to: Provider Price Checker (v2)</p>
 
                 <div className="mt-8 space-y-6 text-primary-k leading-relaxed">
                     <section>
-                        <h2 className="font-heading text-2xl text-primary-k">What we write when you save a price check</h2>
+                        <h2 className="font-heading text-2xl text-primary-k">What We Write When You Save a Price Check</h2>
                         <p className="mt-2">
                             When you click <em>Save this result</em> in the Provider Price Checker, we write two records:
                         </p>
@@ -67,7 +67,7 @@ export default function PrivacyPPCAggregatePage() {
                     </section>
 
                     <section>
-                        <h2 className="font-heading text-2xl text-primary-k">Why we keep the aggregate</h2>
+                        <h2 className="font-heading text-2xl text-primary-k">Why We Keep the Aggregate</h2>
                         <p className="mt-2">
                             The Department of Health publishes an indicative range once a quarter based on a survey of
                             {" ~300 providers. That's roughly one third of the market and only twice a year. The aggregate "}
@@ -82,7 +82,7 @@ export default function PrivacyPPCAggregatePage() {
                     </section>
 
                     <section>
-                        <h2 className="font-heading text-2xl text-primary-k">How to erase your data</h2>
+                        <h2 className="font-heading text-2xl text-primary-k">How to Erase Your Data</h2>
                         <p className="mt-2">
                             You have three erasure controls, all instant:
                         </p>
@@ -110,7 +110,7 @@ export default function PrivacyPPCAggregatePage() {
                     </section>
 
                     <section>
-                        <h2 className="font-heading text-2xl text-primary-k">Automated Decision Making disclosure</h2>
+                        <h2 className="font-heading text-2xl text-primary-k">Automated Decision Making Disclosure</h2>
                         <p className="mt-2">
                             The Provider Price Checker uses a deterministic rule (is the entered rate inside or outside
                             the DoH indicative range) to categorise your result. No human reviews individual results.

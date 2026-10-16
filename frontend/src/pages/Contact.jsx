@@ -94,7 +94,7 @@ export default function Contact() {
                 <div className="relative">
                     <span className="overline">{isDemo ? "Book a demo" : "Contact"}</span>
                     <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-3 leading-tight" data-testid="contact-heading">
-                        {isDemo ? "A 20‑minute walkthrough." : "Talk to a real person."}
+                        {isDemo ? "A 20‑Minute Walkthrough." : "Talk to a Real Person."}
                     </h1>
                     <p className="mt-3 text-base text-muted-k max-w-2xl leading-relaxed">
                         {isDemo
@@ -325,7 +325,7 @@ export default function Contact() {
                     <div className="px-6 pt-6 pb-4 border-b border-kindred flex items-start gap-3">
                         <Calendar className="h-5 w-5 text-primary-k mt-1 shrink-0" />
                         <div>
-                            <h2 className="font-heading text-2xl text-primary-k tracking-tight">Book a 30‑min call</h2>
+                            <h2 className="font-heading text-2xl text-primary-k tracking-tight">Book a 30‑Min Call</h2>
                             <p className="mt-1 text-sm text-muted-k">Pick a time that suits you, the call is a friendly walkthrough tailored to your situation.</p>
                         </div>
                     </div>

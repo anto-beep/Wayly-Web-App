@@ -12,7 +12,7 @@ import { useTheme, ThemePref } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate, initials } from "@/src/utils/format";
 
-const SITE_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "";
+const SITE_BASE = process.env.EXPO_PUBLIC_WEB_URL || "https://wayly.com.au";
 
 const NOTIF_LABELS: { key: string; label: string; desc: string }[] = [
   { key: "anomaly_alerts", label: "Anomaly alerts", desc: "When Wayly flags unusual charges on a new statement." },

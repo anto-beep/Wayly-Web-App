@@ -9,7 +9,7 @@ export default function Terms() {
             description="Wayly Terms of Service for Australian families using our Support at Home statement decoder, classification self-check and aged-care AI tools. Plain-English service terms, billing, cancellation, AI accuracy and your Australian Consumer Law rights."
             lastUpdated="June 2026"
         >
-            <h2>1. What Wayly is, and what it is not</h2>
+            <h2>1. What Wayly Is, and What It Is Not</h2>
             <p>
                 Wayly is an information and organisation tool for people using or considering Support at Home
                 and related aged-care services in Australia. We help you understand options, organise
@@ -41,7 +41,7 @@ export default function Terms() {
                 <li><strong>Support at Home:</strong> the Australian Government’s in-home aged-care program under the Aged Care Act 2024.</li>
             </ul>
 
-            <h2>3. Your account</h2>
+            <h2>3. Your Account</h2>
             <p>To use Wayly you need to be at least 18 years old and able to enter a contract under Australian law. You agree to:</p>
             <ul>
                 <li>give us accurate information when you sign up and keep it current</li>
@@ -51,7 +51,7 @@ export default function Terms() {
             </ul>
             <p>You are responsible for everything that happens under your account.</p>
 
-            <h2>4. Using Wayly responsibly</h2>
+            <h2>4. Using Wayly Responsibly</h2>
             <p>You agree not to:</p>
             <ul>
                 <li>use Wayly to make decisions on behalf of another person (including a parent, partner or care recipient) without verifying the output with a qualified professional and, where relevant, that person’s consent</li>
@@ -63,7 +63,7 @@ export default function Terms() {
             </ul>
             <p>We may suspend or close your account if you breach these rules. We will tell you why, except where doing so would itself be unlawful.</p>
 
-            <h2>5. AI outputs and verification</h2>
+            <h2>5. AI Outputs and Verification</h2>
             <p>Wayly uses AI to generate answers, summaries, checklists and drafts. AI can be incorrect, out of date or missing local context, and it can sound confident either way. You agree that:</p>
             <ul>
                 <li>AI outputs are general information, not advice</li>
@@ -73,7 +73,7 @@ export default function Terms() {
             </ul>
             <p><strong>Australian data residency:</strong> Wayly’s AI inference runs on infrastructure hosted in Australia. Your inputs are not shared with third-party AI vendors for their own model training. We do our best to make Wayly accurate and useful, but we cannot and do not guarantee that outputs will be correct, complete or current.</p>
 
-            <h2>6. Data and privacy</h2>
+            <h2>6. Data and Privacy</h2>
             <p>Our <a href="/legal/privacy">Privacy Policy</a> explains how we collect, use, store and disclose personal information under the Privacy Act 1988 (Cth) and the Australian Privacy Principles. In summary:</p>
             <ul>
                 <li>your data is stored in Australia</li>
@@ -83,14 +83,14 @@ export default function Terms() {
                 <li>if you close your account, we delete your personal data within 30 days, except where we are legally required to keep records (for example, financial records under the Corporations Act 2001 (Cth), or material under a legal hold). Backup copies are overwritten in the normal course within 90 days.</li>
             </ul>
 
-            <h2>7. Your content</h2>
+            <h2>7. Your Content</h2>
             <p>You keep ownership of anything you put into Wayly, including your questions, uploads, documents and notes (“Your Content”).</p>
             <p>You grant us a non-exclusive, royalty-free licence to host, store, process, display and transmit Your Content to the extent needed to provide the Service to you. This licence ends when you delete the content or close your account, subject to backup and legal retention as described in clause 6. You confirm that you have the right to give us this licence and that Your Content does not breach any law or another person’s rights.</p>
 
-            <h2>8. Feedback and ideas</h2>
+            <h2>8. Feedback and Ideas</h2>
             <p>If you send us feedback, suggestions or feature ideas, you agree we can use them in the Service without any obligation, payment or attribution to you. This does not give us any rights over Your Content beyond the licence in clause 7.</p>
 
-            <h2>9. Subscriptions and billing</h2>
+            <h2>9. Subscriptions and Billing</h2>
             <ul>
                 <li>Plans are billed fortnightly in advance (26 charges per year), in Australian dollars, including GST where applicable. Current pricing is on our pricing page.</li>
                 <li>Free trials are one per person and do not require a card. Before your first paid charge at the end of a trial, we send a single reminder email. Subsequent charges receive a receipt after the fact.</li>
@@ -100,16 +100,16 @@ export default function Terms() {
                 <li>Payments are processed by Stripe. If a payment fails, we will retry and let you know. If it remains unpaid, we may suspend access until it is resolved.</li>
             </ul>
 
-            <h2>10. Refunds and consumer rights</h2>
+            <h2>10. Refunds and Consumer Rights</h2>
             <p>We do not generally refund part-used billing periods when you cancel or downgrade. This is our commercial position, not a limit on your legal rights. If the Service is faulty, misdescribed, or fails to meet a consumer guarantee under the ACL, you may be entitled to a repair, replacement, refund or compensation (see clause 14 and our complaints process).</p>
 
-            <h2>11. Our content and intellectual property</h2>
+            <h2>11. Our Content and Intellectual Property</h2>
             <p>Wayly’s software, design, written content, prompts, brand, and any AI outputs generated for you (to the extent capable of protection) belong to us or our licensors. You may use Wayly for your own personal, family or professional purposes as set out in your plan. You may not copy, redistribute, sublicense, or build a competing product from any part of the Service.</p>
 
-            <h2>12. Third-party services</h2>
+            <h2>12. Third-Party Services</h2>
             <p>Wayly may link to or reference government services (such as My Aged Care and Services Australia), aged-care providers, health services, or other websites and products. We do not control them and are not responsible for their content, availability or accuracy — their terms and privacy policies apply when you use them. Payments are processed by Stripe, and Stripe’s terms apply to the payment itself.</p>
 
-            <h2>13. AI accuracy and liability</h2>
+            <h2>13. AI Accuracy and Liability</h2>
             <p>To the maximum extent permitted by law, and subject to clause 14:</p>
             <ul>
                 <li>the Service is provided “as is” and “as available”. We do not warrant that it will be uninterrupted, error-free, or fit for any particular purpose beyond what we describe on the site</li>
@@ -121,22 +121,22 @@ export default function Terms() {
             <h2>14. Australian Consumer Law</h2>
             <p>Nothing in these terms excludes, restricts or modifies any consumer guarantee, right or remedy you have under the Competition and Consumer Act 2010 (Cth), including the Australian Consumer Law, that cannot lawfully be excluded. Where our liability for breach of a non-excludable consumer guarantee can be limited by law, our liability is limited (at our option) to resupplying the Service or paying the cost of resupply.</p>
 
-            <h2>15. Beta features</h2>
+            <h2>15. Beta Features</h2>
             <p>From time to time we may make features available marked as “beta”, “preview” or similar. These are provided for testing and feedback, may change or be withdrawn at any time, and may not be as reliable as the rest of the Service. Use them on that basis.</p>
 
-            <h2>16. Events outside our control</h2>
+            <h2>16. Events Outside Our Control</h2>
             <p>We are not liable for any delay or failure to perform our obligations caused by events outside our reasonable control, including natural disasters, network outages, cyber attacks, acts of government, or third-party service failures. We will take reasonable steps to restore the Service as soon as we can.</p>
 
-            <h2>17. Changes to these terms</h2>
+            <h2>17. Changes to These Terms</h2>
             <p>We may update these terms from time to time. If a change materially affects you, we will give you at least 30 days notice by email or in-app before it takes effect. If you keep using Wayly after the notice period, you accept the change. If you do not accept it, you can cancel your account before it takes effect. Non-material changes (such as fixing typos or clarifying wording) take effect when we publish them. The “Last updated” date at the top of this page shows when the terms last changed.</p>
 
-            <h2>18. Ending the agreement</h2>
+            <h2>18. Ending the Agreement</h2>
             <p>You can stop using Wayly and close your account at any time from your account settings. We can suspend or close your account if you breach these terms, if we are required to by law, or if we discontinue the Service. If we discontinue the Service, we will give you reasonable notice and refund any prepaid unused period on a pro-rata basis. Clauses that by their nature should continue after the agreement ends (including intellectual property, liability, data retention and governing law) will continue.</p>
 
             <h2>19. Notices</h2>
             <p>We will send legal notices to the email address on your account. You are responsible for keeping that email address current. You can send notices to us at <a href="mailto:hello@wayly.com.au">hello@wayly.com.au</a>. Notices are treated as received the next business day after sending.</p>
 
-            <h2>20. Governing law</h2>
+            <h2>20. Governing Law</h2>
             <p>These terms are governed by the laws of Victoria, Australia. You and we submit to the non-exclusive jurisdiction of the courts of Victoria.</p>
 
             <h2>21. General</h2>
@@ -147,7 +147,7 @@ export default function Terms() {
                 <li>These terms, together with our Privacy Policy, are the whole agreement between us.</li>
             </ul>
 
-            <h2>22. Complaints and disputes</h2>
+            <h2>22. Complaints and Disputes</h2>
             <p>If you have a concern about Wayly, please contact us at <a href="mailto:support@wayly.com.au">support@wayly.com.au</a>. We aim to acknowledge complaints within 2 business days and to respond substantively within 10 business days. If we cannot resolve your concern, you can raise it with an external body, depending on the issue:</p>
             <ul>
                 <li>Privacy: the Office of the Australian Information Commissioner (OAIC) at <a href="https://oaic.gov.au" target="_blank" rel="noreferrer">oaic.gov.au</a></li>
@@ -155,7 +155,7 @@ export default function Terms() {
                 <li>Aged-care service quality (with a provider, not Wayly): the Aged Care Quality and Safety Commission at <a href="https://agedcarequality.gov.au" target="_blank" rel="noreferrer">agedcarequality.gov.au</a></li>
             </ul>
 
-            <h2>23. Contact us</h2>
+            <h2>23. Contact Us</h2>
             <p>
                 Wayly Pty Ltd — ACN 701 311 373, ABN 66 701 311 373<br />
                 General &amp; sales: <a href="mailto:hello@wayly.com.au">hello@wayly.com.au</a><br />

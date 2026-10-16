@@ -16,6 +16,7 @@ import {
     ArrowRight,
     Users,
     Quote,
+    ExternalLink,
 } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
@@ -34,6 +35,13 @@ const CLAY = "#A5512B";
 const SAGE = "#425F47";
 const PLUM = "#5F4E76";
 const TERRA = "#B23A2E";
+
+const GOV_SOURCES = [
+    { id: "mac-support-at-home", label: "My Aged Care — Support at Home", url: "https://www.myagedcare.gov.au/support-at-home" },
+    { id: "health-support-at-home", label: "Department of Health, Disability and Ageing — Support at Home", url: "https://www.health.gov.au/our-work/support-at-home" },
+    { id: "aged-care-act", label: "Aged Care Act 2024 (C2024A00096) — Federal Register of Legislation", url: "https://www.legislation.gov.au/C2024A00096" },
+    { id: "my-aged-care", label: "My Aged Care (official Australian Government site)", url: "https://www.myagedcare.gov.au" },
+];
 
 export default function About() {
     const jsonLd = {
@@ -106,6 +114,51 @@ export default function About() {
                             </a>
                         </div>
                     </header>
+                </Reveal>
+
+                {/* ---------------------------------------------------------------
+                    INDEPENDENCE DISCLAIMER + GOVERNMENT INFORMATION SOURCES.
+                    Required for Google Play Misleading Claims compliance.
+                    --------------------------------------------------------------- */}
+                <Reveal>
+                    <section
+                        data-testid="about-independence"
+                        className="rounded-3xl bg-surface border border-kindred p-8 sm:p-10 shadow-sm border-l-4"
+                        style={{ borderLeftColor: TERRA }}
+                    >
+                        <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: TERRA }}>
+                            <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+                            Independent &amp; Not Government
+                        </div>
+                        <p
+                            data-testid="about-disclaimer"
+                            className="mt-4 text-base sm:text-lg leading-relaxed text-primary-k/90 max-w-3xl"
+                        >
+                            Wayly is an independent, privately owned product made by Wayly Pty Ltd. We
+                            are not the Australian Government and are not affiliated with, endorsed by,
+                            or acting on behalf of any government agency or department. We do not
+                            deliver aged care services and we are not a registered aged care provider.
+                        </p>
+                        <h2 className="mt-7 font-heading text-xl sm:text-2xl text-primary-k tracking-tight">
+                            Government Information Sources
+                        </h2>
+                        <ul data-testid="about-gov-sources" className="mt-4 space-y-2.5">
+                            {GOV_SOURCES.map((g) => (
+                                <li key={g.url}>
+                                    <a
+                                        href={g.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        data-testid={`about-gov-link-${g.id}`}
+                                        className="group inline-flex items-start gap-2.5 text-base text-primary-k underline underline-offset-2 decoration-primary-k/40 hover:decoration-primary-k"
+                                    >
+                                        <ExternalLink className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: TEAL }} aria-hidden />
+                                        <span>{g.label}</span>
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
                 </Reveal>
 
                 {/* ---------------------------------------------------------------

@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, View, Pressable, StyleSheet } from "react-native";
+import { ScrollView, View, Pressable, StyleSheet, Linking } from "react-native";
 import { router } from "expo-router";
 import {
   Moon,
@@ -17,6 +17,7 @@ import {
   Quote,
   Compass,
   Feather,
+  ExternalLink,
 } from "lucide-react-native";
 
 import { AppHeader, T } from "@/src/components/ui";
@@ -30,6 +31,13 @@ import { useTheme } from "@/src/theme/ThemeContext";
 const brandFor = (isDark: boolean) => isDark
   ? { teal: "#12707A", tealDark: "#0A3E42", clay: "#A5512B", clayDark: "#7A3A1F", sage: "#4E6E54", plum: "#6A5A82", terra: "#B23A2E" }
   : { teal: "#0E4D52", tealDark: "#0A3E42", clay: "#A5512B", clayDark: "#7A3A1F", sage: "#425F47", plum: "#5F4E76", terra: "#B23A2E" };
+
+const GOV_SOURCES = [
+  { id: "mac-support-at-home", label: "My Aged Care — Support at Home", url: "https://www.myagedcare.gov.au/support-at-home" },
+  { id: "health-support-at-home", label: "Department of Health, Disability and Ageing — Support at Home", url: "https://www.health.gov.au/our-work/support-at-home" },
+  { id: "aged-care-act", label: "Aged Care Act 2024 (C2024A00096) — Federal Register of Legislation", url: "https://www.legislation.gov.au/C2024A00096" },
+  { id: "my-aged-care", label: "My Aged Care (official Australian Government site)", url: "https://www.myagedcare.gov.au" },
+];
 
 export default function AboutScreen() {
   const { colors, isDark } = useTheme();
@@ -54,6 +62,55 @@ export default function AboutScreen() {
             them.
           </T>
         </Panel>
+
+        {/* INDEPENDENCE DISCLAIMER + GOVERNMENT INFORMATION SOURCES
+            (Google Play Misleading Claims compliance) */}
+        <View
+          testID="about-independence"
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: radius.xl,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderLeftWidth: 4,
+            borderLeftColor: BRAND.terra,
+            padding: spacing.lg,
+          }}
+        >
+          <View style={s.rowCenter}>
+            <ShieldCheck size={14} color={BRAND.terra} />
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1.4, color: BRAND.terra }}>
+              INDEPENDENT & NOT GOVERNMENT
+            </T>
+          </View>
+          <T
+            testID="about-disclaimer"
+            style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: colors.text, marginTop: spacing.md }}
+          >
+            Wayly is an independent, privately owned product made by Wayly Pty Ltd. We are not the
+            Australian Government and are not affiliated with, endorsed by, or acting on behalf of any
+            government agency or department. We do not deliver aged care services and we are not a
+            registered aged care provider.
+          </T>
+          <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 25, color: colors.heading, marginTop: spacing.lg }}>
+            Government Information Sources
+          </T>
+          <View testID="about-gov-sources" style={{ marginTop: spacing.sm, gap: spacing.sm }}>
+            {GOV_SOURCES.map((g) => (
+              <Pressable
+                key={g.url}
+                testID={`about-gov-link-${g.id}`}
+                onPress={() => Linking.openURL(g.url)}
+                style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, paddingVertical: 4 }}
+              >
+                <ExternalLink size={16} color={BRAND.teal} style={{ marginTop: 2 }} />
+                <T style={{ flex: 1, fontFamily: fonts.bodyMedium, fontSize: 14, lineHeight: 20, color: colors.heading, textDecorationLine: "underline" }}>
+                  {g.label}
+                </T>
+              </Pressable>
+            ))}
+          </View>
+        </View>
 
         {/* SECTION I — The Moments */}
         <SectionHeading num="I" title="The Moments We're Building For" testID="about-section-moments" />

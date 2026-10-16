@@ -9,7 +9,7 @@ export default function Cookies() {
                 cookies or tracking cookies for third-party advertising purposes.
             </p>
 
-            <h2>Essential cookies (cannot be disabled)</h2>
+            <h2>Essential Cookies (Cannot Be Disabled)</h2>
             <ul>
                 <li><strong>Session cookie:</strong> keeps you logged in</li>
                 <li><strong>Security cookie:</strong> CSRF protection</li>
@@ -19,7 +19,7 @@ export default function Cookies() {
                 </li>
             </ul>
 
-            <h2>Analytics cookies (can be disabled)</h2>
+            <h2>Analytics Cookies (Can Be Disabled)</h2>
             <ul>
                 <li><strong>Plausible Analytics:</strong> cookieless by default, no cookie set</li>
                 <li>
@@ -28,14 +28,14 @@ export default function Cookies() {
                 </li>
             </ul>
 
-            <h2>Preference cookies</h2>
+            <h2>Preference Cookies</h2>
             <ul>
                 <li>Language preference</li>
                 <li>Appearance preference (light/dark/system)</li>
                 <li>Onboarding progress</li>
             </ul>
 
-            <h2>How to disable</h2>
+            <h2>How to Disable</h2>
             <p>
                 Manage cookies in your browser settings. Disabling essential cookies will prevent Wayly
                 from working correctly.

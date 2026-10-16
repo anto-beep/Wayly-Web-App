@@ -1,5 +1,15 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — Play Store compliance: About disclaimer + gov sources, mobile external-link domain fix, Title-Case legal headings; web + mobile; screenshot-verified):**
+- **About page — independence disclaimer + Government information sources (web + mobile):** added a prominent "Independent & Not Government" section right after the hero on BOTH `frontend/src/pages/About.jsx` and `mobile/app/about.tsx`, with the exact required disclaimer text plus 4 clickable Government source links (My Aged Care – Support at Home, Dept. of Health – Support at Home, Aged Care Act 2024 `C2024A00096` on the Federal Register, My Aged Care home). testIDs: `about-independence`, `about-disclaimer`, `about-gov-sources`, `about-gov-link-*`. Resolves the Google Play Misleading Claims rejection. Verified on both surfaces (links open the correct gov URLs).
+- **Mobile external links → wayly.com.au:** root cause was `mobile/app/(tabs)/settings.tsx` building the Privacy/Terms/Manage-data links from `EXPO_PUBLIC_BACKEND_URL` (the deployed backend host, i.e. `aged-care-os.emergent.host`) instead of the web URL. Switched `SITE_BASE` to `EXPO_PUBLIC_WEB_URL || "https://wayly.com.au"`. Backend-resource links (report/PDF in `app/reports.tsx`, `app/report/[id].tsx`) and Stripe origins (`src/lib/plans.ts`) correctly stay on the backend URL — left unchanged. `plan-billing.tsx` already used the web URL.
+- **Title-Case legal + company headings (web):** converted all section headings from sentence case to Wayly Title Case across the 7 `/legal` pages (Privacy, Terms, Cookies, Accessibility, AI Disclaimer, AI Intent, Privacy PPC Aggregate) plus the Contact page heading(s) and AIIntent's page title. Proper nouns/acronyms preserved (Wayly, AI, FAQ, Support at Home, Privacy Act 1988, Cth; pronoun "us" correctly → "Us"). Done via a one-off script (removed after use); verified Privacy page renders "1. Quick Read / 2. Who We Are / …".
+- **Native build note:** Android + iOS builds must be regenerated via the Emergent **Publish** button for these changes to reach the stores — cannot be triggered from here.
+
+---
+
+# Wayly — current fork status (Jun 2026)
+
 **Just shipped (Jun 2026 — session-wave VERIFICATION pass + 3 fixes; web + mobile + backend; verified iter378 + self-tested):**
 - **Context:** forked to verify a prior agent's large untested UI/parity wave. Ran testing_agent (iter378) across both surfaces; it flagged 2 HIGH issues, both now FIXED + verified, plus I found & fixed one incomplete user request.
 - **FIX 1 (HIGH) — statement upload 500 on corrupt PDF:** `backend/document_extract.py::_extract_pdf_selectable_text` — the pypdf fallback (both the pdfplumber-missing path and the pdfplumber-failed path) wasn't wrapped, so a malformed PDF (`startxref not found`) raised an uncaught `PdfReadError` → 500. Now wrapped to raise the typed `CorruptFileError`, so BOTH `/api/statements/upload` (→ 400) and `/api/invoices/upload` (→ 422) return a friendly message. Curl-verified both routes.

@@ -10,14 +10,14 @@ export default function Accessibility() {
                 accessibility standards.
             </p>
 
-            <h2>Our commitment to accessibility</h2>
+            <h2>Our Commitment to Accessibility</h2>
             <p>
                 Wayly is dedicated to making our digital platforms usable and accessible to all Australians,
                 including older adults and individuals with disability. We strive to meet and exceed the Web
                 Content Accessibility Guidelines (WCAG) 2.2.
             </p>
 
-            <h2>Conformance status</h2>
+            <h2>Conformance Status</h2>
             <p>
                 This website is partially conformant with WCAG 2.2. Partially conformant means that some
                 parts of the content do not yet fully conform to the accessibility standard.
@@ -27,7 +27,7 @@ export default function Accessibility() {
                 <li><strong>Participant view</strong> (designed for older adults using the product directly): we aim for WCAG 2.2 Level AAA conformance.</li>
             </ul>
 
-            <h2>Accessibility features</h2>
+            <h2>Accessibility Features</h2>
             <p>We have implemented several features to enhance accessibility:</p>
             <ul>
                 <li><strong>Keyboard navigation:</strong> all interactive elements are fully operable via keyboard.</li>
@@ -43,7 +43,7 @@ export default function Accessibility() {
                 <li><strong>Heading hierarchy:</strong> headings are logically structured, with no levels skipped.</li>
             </ul>
 
-            <h2>Technical specifications</h2>
+            <h2>Technical Specifications</h2>
             <p>Accessibility of this website relies on the following technologies:</p>
             <ul>
                 <li>HTML</li>
@@ -52,7 +52,7 @@ export default function Accessibility() {
                 <li>JavaScript</li>
             </ul>
 
-            <h2>Known limitations</h2>
+            <h2>Known Limitations</h2>
             <p>
                 Despite our best efforts, some limitations may remain. We are aware of the following and are
                 working to resolve them:
@@ -62,7 +62,7 @@ export default function Accessibility() {
                 <li><strong>External content:</strong> links to external websites may lead to content that does not meet our accessibility standards.</li>
             </ul>
 
-            <h2>Testing methodology</h2>
+            <h2>Testing Methodology</h2>
             <p>We use a multi-faceted approach to test accessibility:</p>
             <ul>
                 <li><strong>Automated testing</strong> with tools such as axe-core to catch common issues.</li>
@@ -71,14 +71,14 @@ export default function Accessibility() {
                 <li><strong>External review:</strong> we intend to commission external accessibility experts for comprehensive reviews.</li>
             </ul>
 
-            <h2>Assistive technology support</h2>
+            <h2>Assistive Technology Support</h2>
             <p>This website has been tested with:</p>
             <ul>
                 <li><strong>Screen readers:</strong> NVDA, JAWS, VoiceOver (macOS/iOS) and TalkBack (Android).</li>
                 <li><strong>Browsers:</strong> the latest versions of Chrome, Firefox, Safari and Edge.</li>
             </ul>
 
-            <h2>Feedback and contact</h2>
+            <h2>Feedback and Contact</h2>
             <p>
                 We welcome your feedback on the accessibility of Wayly. If you encounter a barrier or have a
                 suggestion, please tell us so we can prioritise it.
@@ -89,7 +89,7 @@ export default function Accessibility() {
             </ul>
             <p>We aim to respond to accessibility feedback within one business day.</p>
 
-            <h2>Legal compliance</h2>
+            <h2>Legal Compliance</h2>
             <p>
                 This statement aligns with our commitment to comply with the Disability Discrimination Act
                 1992 (Cth).
