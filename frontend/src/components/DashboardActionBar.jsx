@@ -130,7 +130,7 @@ export default function DashboardActionBar() {
                             className="group flex flex-col items-start gap-2.5 rounded-xl border p-4 text-left shadow-sm hover:shadow-card transition-colors min-h-[112px]"
                             style={{ backgroundColor: `${accent}12`, borderColor: `${accent}33` }}
                         >
-                            <span className="flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform group-" style={{ backgroundColor: accent }}>
+                            <span className="flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform group-hover:scale-110" style={{ backgroundColor: accent }}>
                                 <Icon className="h-5 w-5" />
                             </span>
                             <span className="min-w-0">

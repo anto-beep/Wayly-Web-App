@@ -501,10 +501,10 @@ function NavGroup({ group, open, onToggle }) {
                 type="button"
                 onClick={onToggle}
                 data-testid={`nav-group-toggle-${group.key}`}
-                className="w-full flex items-center justify-between gap-2 px-3 py-3 text-sm font-bold uppercase tracking-wide text-primary-k hover:text-clay transition-colors"
+                className="w-full flex items-center justify-between gap-2 px-3 py-3 text-[13px] font-bold uppercase tracking-[0.04em] text-primary-k hover:text-clay transition-colors"
                 aria-expanded={open}
             >
-                <span className="whitespace-nowrap truncate">{group.label}</span>
+                <span className="text-left leading-tight">{group.label}</span>
                 {open ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
             </button>
             {open && (
