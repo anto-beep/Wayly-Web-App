@@ -386,6 +386,41 @@ function loose(a, b) {
     return a.includes(b) || b.includes(a);
 }
 
+/** Damerau-Levenshtein edit distance (handles swaps like "bugdet"→"budget"). */
+function editDistance(a, b) {
+    const m = a.length, n = b.length;
+    if (Math.abs(m - n) > 2) return 3;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+            if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+                dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+            }
+        }
+    }
+    return dp[m][n];
+}
+
+/** Fuzzy equality for whole words — tolerant of 1–2 character typos. */
+function fuzzyEq(a, b) {
+    if (a === b) return true;
+    const len = Math.max(a.length, b.length);
+    if (len < 4) return false;
+    const tol = len >= 7 ? 2 : 1;
+    return editDistance(a, b) <= tol;
+}
+
+function anyFuzzy(t, words) {
+    for (const w of words) {
+        if (w.length >= 4 && fuzzyEq(t, w)) return true;
+    }
+    return false;
+}
+
 /**
  * Intent search. Returns a ranked list of destinations. Never returns an empty
  * array for a non-empty query — falls back to "Ask Wayly" so the user always
@@ -401,7 +436,7 @@ export function searchDestinations(query, limit = 8) {
     for (const t of tokens) {
         for (const [concept, triggers] of Object.entries(CONCEPT_TRIGGERS)) {
             if (concept.includes(t) || t.includes(concept)) { activeConcepts.add(concept); continue; }
-            if (triggers.some((tr) => loose(t, tr))) activeConcepts.add(concept);
+            if (triggers.some((tr) => loose(t, tr) || fuzzyEq(t, tr))) activeConcepts.add(concept);
         }
     }
 
@@ -411,6 +446,9 @@ export function searchDestinations(query, limit = 8) {
         const aliasList = (d.aliases || []).map((a) => a.toLowerCase());
         const aliasText = aliasList.join(" ");
         const hay = `${label} ${d.hint} ${aliasText} ${d.keywords}`.toLowerCase();
+        const labelWords = label.split(/\s+/);
+        const aliasWords = aliasText.split(/\s+/).filter(Boolean);
+        const hayWords = hay.split(/\s+/).filter(Boolean);
         let score = 0;
 
         // Phrase level — the strongest signal (typed a real name/function phrase).
@@ -422,11 +460,14 @@ export function searchDestinations(query, limit = 8) {
         }
         if (raw.length >= 3 && label.includes(raw)) score += 8;
 
-        // Token level.
+        // Token level, with a typo-tolerant fallback.
         for (const t of tokens) {
             if (label.includes(t)) score += 5;
             else if (aliasText.includes(t)) score += 4;
             else if (hay.includes(t)) score += 2;
+            else if (anyFuzzy(t, labelWords)) score += 4;
+            else if (anyFuzzy(t, aliasWords)) score += 3;
+            else if (anyFuzzy(t, hayWords)) score += 1;
         }
 
         // Concept overlap — the semantic layer.
