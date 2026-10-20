@@ -15,11 +15,10 @@ import { SEO } from "@/seo/pageConfig";
 import { TOOL_COUNT, TOOLS_ORDERED, toolCountWord } from "@/config/toolRegistry";
 import { useAuth } from "@/context/AuthContext";
 import INDEX1 from "@/data/index1";
-import { useTheme } from "@/uxf";
 const PERSONAS = [
     {
         id: "caregiver",
-        title: "I'm helping a parent",
+        title: "I'm helping a loved one",
         sub: "Most popular",
         cta: "Start free trial",
         href: "/signup",
@@ -79,7 +78,6 @@ function useCountdown(target) {
 }
 
 export default function Landing() {
-    const { isDark } = useTheme();
     const { user } = useAuth();
     const countdown = useCountdown(new Date("2026-10-01T00:00:00+10:00"));
     const [selectedPersona, setSelectedPersona] = useState("caregiver");
@@ -169,57 +167,6 @@ export default function Landing() {
                             </RevealOnScroll>
                         ))}
                     </div>
-                </div>
-            </section>
-
-            {/* WHO WAYLY IS FOR, ecosystem grid, one card per audience.
-                Design ref: verify-athlete "Six users. One shared truth." */}
-            <section className="mx-auto max-w-7xl px-6 py-10 sm:py-20" data-testid="ecosystem-section">
-                <div className="text-center max-w-2xl mx-auto">
-                    <span className="overline">Built for the Whole Household</span>
-                    <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight leading-tight">
-                        Three People. <span style={{ color: "#A5512B" }}>One Shared Calm.</span>
-                    </h2>
-                    <p className="mt-4 text-base text-muted-k leading-relaxed">
-                        Aged care is never just one person&apos;s problem. Wayly gives each
-                        person in the picture their own front door to the same source of truth.
-                    </p>
-                </div>
-                <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {[
-                        { name: "Participants", body: "It's your care and your money. Read your own statement over breakfast, see where your budget is going, and stay in charge, no translator needed." },
-                        { name: "Caregivers", body: "That 11pm envelope, understood in ten minutes. Know what's fair, what to query, and what to do next, without a finance degree." },
-                        { name: "Family", body: "Everyone on the same page without three group chats. See exactly what your loved one sees, even from another state." },
-                    ].map((p, i) => {
-                        // Soft, brand-tinted card backgrounds — light shades of teal,
-                        // clay and sage with a matching accent. Calm, never loud.
-                        const themesLight = [
-                            { bg: "#E5EFEC", accent: "#0E4D52", title: "#123634", body: "rgba(18,54,52,0.78)" },
-                            { bg: "#F4E8DE", accent: "#A5512B", title: "#123634", body: "rgba(18,54,52,0.78)" },
-                            { bg: "#E9EFE7", accent: "#4E6E54", title: "#123634", body: "rgba(18,54,52,0.78)" },
-                        ];
-                        const themesDark = [
-                            { bg: "#0E3033", accent: "#7FD1D6", title: "#FFFFFF", body: "rgba(255,255,255,0.85)" },
-                            { bg: "#2E1B12", accent: "#E8956B", title: "#FFFFFF", body: "rgba(255,255,255,0.85)" },
-                            { bg: "#16241A", accent: "#A8C7AB", title: "#FFFFFF", body: "rgba(255,255,255,0.85)" },
-                        ];
-                        const t = (isDark ? themesDark : themesLight)[i % themesLight.length];
-                        return (
-                        <RevealOnScroll key={p.name}>
-                        <div
-                            data-testid={`ecosystem-card-${p.name.toLowerCase()}`}
-                            className="h-full rounded-2xl p-6 shadow-sm border border-black/5"
-                            style={{ backgroundColor: t.bg }}
-                        >
-                            <div className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: t.accent }}>
-                                Wayly for
-                            </div>
-                            <h3 className="mt-2 font-heading text-2xl tracking-tight" style={{ color: t.title }}>{p.name}</h3>
-                            <p className="mt-2 text-sm leading-relaxed" style={{ color: t.body }}>{p.body}</p>
-                        </div>
-                        </RevealOnScroll>
-                        );
-                    })}
                 </div>
             </section>
 
@@ -528,11 +475,10 @@ export default function Landing() {
                     <p className="mt-4 text-white/80 max-w-xl mx-auto">
                         Try Wayly free for 7 days. Cancel anytime.
                     </p>
-                    <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
+                    <div className="mt-8 flex items-center justify-center">
                         <Link to="/signup" data-testid="final-cta-signup" className="landing-cta-primary inline-flex items-center justify-center bg-white text-primary-k font-bold rounded-lg px-7 py-3.5 shadow-lg">
                             Start free trial
                         </Link>
-                        <Link to="/ai-tools" className="landing-cta-secondary inline-flex items-center justify-center border border-white/40 bg-white/10 text-white font-semibold rounded-lg px-7 py-3.5">Or try a free AI tool</Link>
                     </div>
                 </div>
             </section>

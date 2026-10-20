@@ -1,5 +1,16 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — Landing page visual/copy polish, agentic edits; web only; screenshot-verified):**
+- **Eye-catching eyebrows:** enhanced the global `.overline` class (`frontend/src/index.css`) — now clay (`--wayly-clay-500`), bolder, with a leading accent bar. Lifts every eyebrow label across Landing + ToolClusterGrid (the 8 requested spans) in one consistent change.
+- **More inclusive persona:** Landing persona title "I'm helping a parent" → "I'm helping a loved one".
+- **Removed repetitive section:** deleted the "WHO WAYLY IS FOR / Three People. One Shared Calm." ecosystem section (`data-testid="ecosystem-section"`) — it duplicated the Problem section's three-audience cards. Cleaned up the now-unused `isDark`/`useTheme` import.
+- **Simpler final CTA:** removed the duplicate secondary "Or try a free AI tool" button (its hover turned text white/unreadable); the Final CTA is now a single centred "Start free trial".
+- **Stronger hero subhead (`DualFlagshipHero.jsx`):** reworded both caregiver + participant subheads so the hero promises the full product value (decode statements/invoices, catch overcharges, track funding, compare providers, ask anything) instead of just statements + invoices.
+
+---
+
+# Wayly — current fork status (Jun 2026)
+
 **Just shipped (Jun 2026 — mobile smart search parity + typo tolerance on both surfaces; web + mobile; verified live):**
 - **Mobile home-screen search upgraded to full parity.** The mobile home screen already had a `DashboardActionBar` search; its config (`mobile/src/config/dashboardDestinations.ts`) was the pre-upgrade version. Rewrote it to mirror the upgraded web index — real tool-name `aliases`, the added Budget & Lifetime Cap Calculator, all major system pages (Settings, Plan & Billing, Participants, Care Plans, Calendar, Timeline, Correspondence, Hospital, Support, CHSP/AT&HM/Short-Term/Handover/Carer Self-Check/Classification Prep, etc.), expanded synonyms, and the phrase/alias scoring — using **mobile expo-router routes** (`/tool/<slug>`, `/(tabs)/*`, top-level pages) and lucide-react-native icons. No mobile UI change needed; the existing component consumes the config. Verified live: "price checker" → Provider Price Checker.
 - **Typo tolerance added to BOTH web and mobile search** via Damerau-Levenshtein edit distance (`frontend/src/config/dashboardDestinations.js` + `mobile/src/config/dashboardDestinations.ts`). A query token that isn't an exact substring falls back to fuzzy word matching (tol 1 for ≤6 chars, 2 for ≥7; transpositions count as 1), feeding both concept activation and per-destination scoring at a lower weight than exact hits. Verified: "invoce"→Check an Invoice (mobile, live), plus web "classifcation"→Classification Self-Check, "bugdet"→budget, "statment decoder", "provder price checker", "setings"→Settings, "billign"→Plan & Billing, "compair providers", "leter"→Draft a letter — with exact-match ranking unchanged.
