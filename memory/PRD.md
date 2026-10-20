@@ -1,7 +1,7 @@
 # Wayly — current fork status (Jun 2026)
 
 **Just shipped (Jun 2026 — Landing page visual/copy polish, agentic edits; web only; screenshot-verified):**
-- **Eye-catching eyebrows:** enhanced the global `.overline` class (`frontend/src/index.css`) — now clay (`--wayly-clay-500`), bolder, with a leading accent bar. Lifts every eyebrow label across Landing + ToolClusterGrid (the 8 requested spans) in one consistent change.
+- **Eye-catching eyebrows:** enhanced the global `.overline` class (`frontend/src/index.css`) — now clay (`--wayly-clay-500`) and bolder (no leading bar/dash, per follow-up). Lifts every eyebrow label across Landing + ToolClusterGrid (the 8 requested spans) in one consistent change.
 - **More inclusive persona:** Landing persona title "I'm helping a parent" → "I'm helping a loved one".
 - **Removed repetitive section:** deleted the "WHO WAYLY IS FOR / Three People. One Shared Calm." ecosystem section (`data-testid="ecosystem-section"`) — it duplicated the Problem section's three-audience cards. Cleaned up the now-unused `isDark`/`useTheme` import.
 - **Simpler final CTA:** removed the duplicate secondary "Or try a free AI tool" button (its hover turned text white/unreadable); the Final CTA is now a single centred "Start free trial".

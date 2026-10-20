@@ -409,23 +409,12 @@
     }
 
     .overline {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.55em;
         text-transform: uppercase;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.16em;
         font-size: 0.75rem;
         font-weight: 700;
         color: var(--wayly-clay-500);
         font-family: 'Inter', sans-serif;
-    }
-    .overline::before {
-        content: "";
-        display: inline-block;
-        width: 1.75em;
-        height: 2px;
-        border-radius: 2px;
-        background-color: var(--wayly-clay-500);
     }
     .tabular-nums { font-variant-numeric: tabular-nums; }
 

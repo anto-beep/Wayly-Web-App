@@ -30,14 +30,14 @@ const COPY = {
     caregiver: {
         eyebrow: "Aged Care, Made Clear",
         headline: "Read the statement. Check the invoice. Sleep on Sunday.",
-        subhead: "Wayly is the calm command centre for aged care: decode any statement or invoice, catch overcharges before you pay, track every dollar of funding, compare providers and get plain-English answers to anything — all in one place.",
+        subhead: "Wayly is the calm command centre for aged care: decode any statement or invoice, catch overcharges before you pay, track every dollar of funding, compare providers and get plain-English answers to anything, all in one place.",
         flagship_statement_sub: "Upload the monthly statement. Get a plain-English breakdown of every stream, every rate, every flag.",
         flagship_invoice_sub: "Upload the contribution invoice. Wayly runs the C1 to C12 rule engine and tells you what to raise before you pay.",
     },
     participant: {
         eyebrow: "Aged Care, Made Clear",
         headline: "Your Care. Your Statement. Your Call.",
-        subhead: "Wayly puts you in control of your own care: understand every statement and invoice, see exactly where your funding goes, catch anything that looks off and get plain-English answers whenever you need them — all in one calm place.",
+        subhead: "Wayly puts you in control of your own care: understand every statement and invoice, see exactly where your funding goes, catch anything that looks off and get plain-English answers whenever you need them, all in one calm place.",
         flagship_statement_sub: "Drop in your monthly statement. See what every line means and where your quarterly budget stands.",
         flagship_invoice_sub: "Drop in an invoice from your provider. Wayly checks it against the rules and gives you the exact question to ask.",
     },
