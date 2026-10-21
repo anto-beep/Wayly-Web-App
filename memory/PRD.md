@@ -1,5 +1,15 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — de-Emergent branding (splash + app icons) + Google/Apple auth verification; mobile; needs a new Publish build):**
+- **Emergent splash removed → Wayly splash.** `mobile/assets/images/splash-image.png` was the default Emergent template image ("Start building apps on emergent" + "e" logo). Replaced it with a Wayly-branded splash rendered from the official `WaylyMark` SVG — white "W" + clay dot, centred, transparent (teal `#0E4D52` splash background from app.json).
+- **App icons were ALSO the Emergent "e" — fixed too.** `icon.png` (iOS, opaque teal square, white W + clay dot) and `adaptive-icon.png` (Android foreground, white W within the ~66% safe zone; teal bg from app.json) regenerated from the Wayly mark. Not requested but critical for a published app (the launcher icon is permanent Emergent branding otherwise).
+- **Google + Apple auth — verified, fully implemented on BOTH platforms.** `app/login.tsx` and `app/signup.tsx` have "Continue with Google" + Apple Sign-In buttons. `src/context/AuthContext.tsx` uses `expo-auth-session` Google `useIdTokenAuthRequest` with per-platform client IDs — `EXPO_PUBLIC_GOOGLE_CLIENT_ID` (web), `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` (all three SET in `mobile/.env`) — verified server-side at `POST /auth/google`; Apple via `expo-apple-authentication` → `POST /auth/apple`. iOS Google URL scheme present in `app.json`. No change needed.
+- **Note:** splash + icons are native build artifacts — they appear only after a NEW Publish build (not Expo Go / web preview). Native Google/Apple sign-in likewise only fully testable on a real build.
+
+---
+
+# Wayly — current fork status (Jun 2026)
+
 **Just shipped (Jun 2026 — Google Play Console compliance fixes for Android 15/16; mobile config only; needs a new Publish build):**
 - **Orientation / large-screen restriction (Play action #2) — FIXED in config.** `mobile/app.json` `orientation` changed from `"portrait"` to `"default"`, which removes the generated `android:screenOrientation="PORTRAIT"` on `au.com.wayly.app.MainActivity`. This is what Android 16 flags for foldables/tablets. Trade-off: the app can now rotate to landscape on phones too (responsive ScrollView layouts should adapt; verify after a build). If portrait-on-phones is preferred, we can add `expo-screen-orientation` per-screen locking instead.
 - **Edge-to-edge deprecated APIs (Play action #1) — app code already compliant.** The app only uses `<StatusBar style={...}>` (icon tint via WindowInsetsController — the modern API); there are NO manual `setStatusBarColor`/`setNavigationBarColor`/`androidStatusBar`/`edgeToEdgeEnabled`/`expo-navigation-bar` calls. Under Expo SDK 57 / RN 0.86, edge-to-edge is enforced and those setters are no-ops. The APIs Google flagged originate inside React Native core (`StatusBarModule`) and Google Material (`BottomSheetDialog`/`SheetDialog`), which a managed Expo app cannot patch; Google lists them as "recommended" (non-blocking). A fresh build on the current SDK 57 setup resolves/minimises the app's contribution. No app change required.
