@@ -1,5 +1,14 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — Google Play Console compliance fixes for Android 15/16; mobile config only; needs a new Publish build):**
+- **Orientation / large-screen restriction (Play action #2) — FIXED in config.** `mobile/app.json` `orientation` changed from `"portrait"` to `"default"`, which removes the generated `android:screenOrientation="PORTRAIT"` on `au.com.wayly.app.MainActivity`. This is what Android 16 flags for foldables/tablets. Trade-off: the app can now rotate to landscape on phones too (responsive ScrollView layouts should adapt; verify after a build). If portrait-on-phones is preferred, we can add `expo-screen-orientation` per-screen locking instead.
+- **Edge-to-edge deprecated APIs (Play action #1) — app code already compliant.** The app only uses `<StatusBar style={...}>` (icon tint via WindowInsetsController — the modern API); there are NO manual `setStatusBarColor`/`setNavigationBarColor`/`androidStatusBar`/`edgeToEdgeEnabled`/`expo-navigation-bar` calls. Under Expo SDK 57 / RN 0.86, edge-to-edge is enforced and those setters are no-ops. The APIs Google flagged originate inside React Native core (`StatusBarModule`) and Google Material (`BottomSheetDialog`/`SheetDialog`), which a managed Expo app cannot patch; Google lists them as "recommended" (non-blocking). A fresh build on the current SDK 57 setup resolves/minimises the app's contribution. No app change required.
+- **Note:** both only take effect in a NEW Android/iOS build via the Emergent Publish button, then re-submit to Play — cannot be validated on Expo Go or the web preview. The separate "DEX obfuscation 1%" item is a build-pipeline (R8) matter, not app code (deadline Feb 2027).
+
+---
+
+# Wayly — current fork status (Jun 2026)
+
 **Just shipped (Jun 2026 — Landing page visual/copy polish, agentic edits; web only; screenshot-verified):**
 - **Eye-catching eyebrows:** enhanced the global `.overline` class (`frontend/src/index.css`) — now clay (`--wayly-clay-500`) and bolder (no leading bar/dash, per follow-up). Lifts every eyebrow label across Landing + ToolClusterGrid (the 8 requested spans) in one consistent change.
 - **More inclusive persona:** Landing persona title "I'm helping a parent" → "I'm helping a loved one".
