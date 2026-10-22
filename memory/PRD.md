@@ -1,3 +1,13 @@
+# Wayly — current fork status (Oct 2026)
+
+**Just shipped (Oct 2026 — stale lifetime cap + instant plan-cancel UX + CE-2 verify; backend + web + mobile; testing_agent iter381 + live screenshot + pytest):**
+- **Stale lifetime cap fixed (user-reported).** Contribution Position page showed the old **$137,917**; now **$140,652.80** (20/09/2026 indexation) on BOTH web + mobile. Root cause: `backend/routes/ce3.py` hardcoded the cap — it now reads live from the `program_reference` registry (same source as `budget.py`/CE-2). Ask-Wayly static fallbacks in `agents.py` refreshed too.
+- **Plan cancel now reflects instantly (user-reported).** Cancelling previously needed a page refresh to show "scheduled to end … Reactivate". `routes/payments.py` cancel/reactivate (paid branch) now mirror the change into `db.subscriptions` (the read-model `GET /billing/subscription` serves), not just `db.users` — so the UI flips immediately. Live web screenshot verified; reactivate symmetric; new pytest `test_cancel_reflects_immediately_iter382.py`.
+- **CE-2 estimator UI additions verified** (threshold helper text, "as at 20/09/2026" badge, part-pensioner worked example) on web + mobile — testing_agent iter381 PASS. PDF byte-size test threshold corrected (premium font-embedding makes the PDF ~259 KB by design). See CHANGELOG "Iter 387".
+
+---
+
+
 # Wayly — current fork status (Jun 2026)
 
 **Just shipped (Jun 2026 — Provider Price Checker result-view visual fixes, agentic edits; web; testing_agent verified iter379):**

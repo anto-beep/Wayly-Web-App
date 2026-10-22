@@ -543,12 +543,7 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
                                 <div className="rounded-xl border border-kindred bg-surface p-4 space-y-3" data-testid="ce-financial-details">
                                     <div>
                                         <div className="text-sm font-medium text-primary-k">Financial details (optional)</div>
-                                        <p className="text-xs text-muted-k mt-1 leading-relaxed">
-                                            {"The exact means-tested rate depends on your assessable income and assets. Leave both blank if you'd rather see a range for now."}
-                                            {constants?.["means_test.income_free_area.individual"] && (
-                                                <> The current income-free area is <strong>${Math.round(constants["means_test.income_free_area.individual"].value).toLocaleString()}</strong> a year for a single person and the assets-free area for a homeowner is <strong>${Math.round(constants["means_test.assets_free_area.individual_homeowner"].value).toLocaleString()}</strong>.</>
-                                            )}
-                                        </p>
+                                        <MeansTestBracketHint constants={constants} form={form} />
                                     </div>
                                     <div className="grid sm:grid-cols-2 gap-3">
                                         <FieldRow label="Your assessable income (excl. pension), $ per year">
@@ -588,6 +583,7 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
                                             </FieldRow>
                                         </div>
                                     )}
+                                    <PartPensionerTaperExample constants={constants} />
                                 </div>
                             )}
                         </>
@@ -711,6 +707,63 @@ function EstimateRecap({ form }) {
     );
 }
 
+const _aud0 = (n) => "$" + Math.round(n).toLocaleString("en-AU");
+
+// Item 2: live means-test bracket helper text, aware of relationship + homeowner.
+function MeansTestBracketHint({ constants, form }) {
+    const base = "The exact means-tested rate depends on your assessable income and assets. Leave both blank if you'd rather see a range for now.";
+    if (!constants?.["means_test.income_free_area.individual"]) {
+        return <p className="text-xs text-muted-k mt-1 leading-relaxed">{base}</p>;
+    }
+    const couple = form.relationship === "couple";
+    const homeowner = !!form.homeowner;
+    const g = (k) => constants[k]?.value;
+    const incFree = couple ? g("means_test.income_free_area.couple_member") * 2 : g("means_test.income_free_area.individual");
+    const incLimit = couple ? g("means_test.income_limit.couple") * 2 : g("means_test.income_limit.individual");
+    const assetsFree = couple
+        ? (homeowner ? g("means_test.assets_free_area.couple_homeowner") : g("means_test.assets_free_area.couple_non_homeowner"))
+        : (homeowner ? g("means_test.assets_free_area.individual_homeowner") : g("means_test.assets_free_area.individual_non_homeowner"));
+    const who = couple ? "a couple (combined)" : "a single person";
+    const ownVerb = homeowner ? (couple ? "own" : "owns") : (couple ? "don't own" : "doesn't own");
+    return (
+        <div className="mt-1 space-y-1.5" data-testid="ce-means-test-hint">
+            <p className="text-xs text-muted-k leading-relaxed">{base}</p>
+            <p className="text-xs text-muted-k leading-relaxed">For {who} who {ownVerb} their home, the current brackets are:</p>
+            <ul className="text-xs text-primary-k leading-relaxed grid gap-1">
+                <li>At or below <strong>{_aud0(incFree)}</strong> assessable income a year: the <strong>minimum</strong> rate (5% Independence, 17.5% Everyday living).</li>
+                <li>At or above <strong>{_aud0(incLimit)}</strong> income: the <strong>maximum</strong> rate (50% / 80%).</li>
+                <li>Assets-free area: <strong>{_aud0(assetsFree)}</strong>. Income and assets are tested separately and the higher result applies.</li>
+            </ul>
+            <p className="text-[11px] text-muted-k">Thresholds as at 20/09/2026.</p>
+        </div>
+    );
+}
+
+// Item 4: worked example showing where a part pensioner lands between the bands.
+function PartPensionerTaperExample({ constants }) {
+    const incFree = constants?.["means_test.income_free_area.individual"]?.value ?? 5876;
+    const incLimit = constants?.["means_test.income_limit.individual"]?.value ?? 105048;
+    return (
+        <details className="rounded-xl border border-kindred bg-surface-2 p-4" data-testid="ce-taper-example">
+            <summary className="cursor-pointer text-sm font-medium text-primary-k">See a worked example: how the taper works</summary>
+            <div className="mt-3 text-xs text-muted-k leading-relaxed space-y-2">
+                <p><strong>Margaret</strong> is single, a part pensioner and owns her home. Her assessable income (excluding the pension) is about <strong>$28,000</strong> a year, with <strong>$120,000</strong> in savings.</p>
+                <p>Her income is above the {_aud0(incFree)} income-free area but well below the {_aud0(incLimit)} upper limit, and her savings are under the assets-free area. So she lands partway up the scale, not at either end.</p>
+                <div className="pt-1">
+                    <div className="flex items-center justify-between text-[11px] font-medium text-primary-k">
+                        <span>5% (full-pension floor)</span><span>50% (self-funded ceiling)</span>
+                    </div>
+                    <div className="relative mt-1 h-2.5 rounded-full bg-gradient-to-r from-emerald-200 to-rose-300">
+                        <span className="absolute -top-0.5 h-3.5 w-1.5 rounded bg-primary-k" style={{ left: "32%" }} aria-hidden="true" />
+                    </div>
+                    <p className="mt-1 text-[11px]">Margaret lands around the lower third on Independence services. Most part pensioners sit here, not at the 50% ceiling.</p>
+                </div>
+                <p>Everyday living services work the same way between 17.5% and 80%. Your own rate comes from the income and assets figures Services Australia holds: this is an illustration, not advice.</p>
+            </div>
+        </details>
+    );
+}
+
 function ResultScreen({ result, form, constants, onEdit, access }) {
     const { copy: personaCopy } = usePersonaTier1(CE2_PERSONA_KEYS, CE2_PERSONA_DEFAULTS);
     return (
@@ -722,6 +775,10 @@ function ResultScreen({ result, form, constants, onEdit, access }) {
             ) : (
                 <PointHeadline result={result} onEdit={onEdit} personaCopy={personaCopy} />
             )}
+
+            <div className="flex justify-center -mt-1" data-testid="ce-rates-asat">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface-2 px-3 py-1 text-xs text-muted-k">Contribution rates as at 20/09/2026</span>
+            </div>
 
             <EstimateRecap form={form} />
 
@@ -756,8 +813,8 @@ function ResultScreen({ result, form, constants, onEdit, access }) {
             {isEnabled("uxf_v3.provenance") && (
                 <div className="pt-2 -mt-2">
                     <DataFreshnessIndicator
-                        date="2025-09-20"
-                        sourceUrl="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
+                        date="2026-09-20"
+                        sourceUrl="https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
                         sourceLabel="Department of Health, Schedule of Contributions for Support at Home"
                         testId="ce-freshness"
                     />

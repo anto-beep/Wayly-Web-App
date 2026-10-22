@@ -61,6 +61,7 @@ export default function ContributionEstimator() {
   const voice = usePersonaVoice();
   const [form, setForm] = useState<any>(() => makeInitialForm(active));
   const [result, setResult] = useState<any>(null);
+  const [constants, setConstants] = useState<any>(null);
   const { scrollRef, onResultLayout, scrollToResult } = useScrollToResult();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -86,6 +87,15 @@ export default function ContributionEstimator() {
       })
       .catch(() => { /* signed-out or none saved — ignore */ });
     return () => { cancelled = true; };
+  }, []);
+
+  // Load live means-test thresholds for the helper text (as at 20/09/2026).
+  useEffect(() => {
+    let c = false;
+    apiFetch<{ constants: any }>("/ce2/constants")
+      .then((d) => { if (!c && d?.constants) setConstants(d.constants); })
+      .catch(() => { /* ignore */ });
+    return () => { c = true; };
   }, []);
 
   const classToInt = (c: string): number | null => {
@@ -225,7 +235,7 @@ export default function ContributionEstimator() {
               {savedState && stateIsStale(savedState.created_at) ? (
                 <View testID="ce-stale-note" style={[styles.hint, { backgroundColor: colors.surface2, marginTop: 0 }]}>
                   <Calendar size={16} color={colors.gold} />
-                  <T variant="small" style={{ flex: 1, lineHeight: 19 }}>{`Your saved inputs are from ${new Date(savedState.created_at).toLocaleDateString("en-AU")}. Contribution rates change each year on 1 July — re-run to confirm the current rate applies.`}</T>
+                  <T variant="small" style={{ flex: 1, lineHeight: 19 }}>{`Your saved inputs are from ${new Date(savedState.created_at).toLocaleDateString("en-AU")}. Contribution rates are indexed twice a year (20 March and 20 September) — re-run to confirm the current rate applies.`}</T>
                 </View>
               ) : null}
 
@@ -339,7 +349,7 @@ export default function ContributionEstimator() {
                     {showFinancial ? (
                       <View testID="ce-financial-details" style={[styles.innerBox, { borderColor: colors.border, backgroundColor: colors.surface }]}>
                         <T style={{ fontFamily: fonts.bodySemi, fontSize: 14 }}>Financial details (optional)</T>
-                        <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 18 }}>{"The exact means-tested rate depends on your assessable income and assets. Leave blank to see a range for now."}</T>
+                        <MeansTestHint constants={constants} form={form} colors={colors} />
                         <Label colors={colors} top>Your assessable income (excl. pension), $ per year</Label>
                         <TextInput testID="ce-income" value={String(form.income_excluding_pension)} onChangeText={(v) => set({ income_excluding_pension: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="e.g. 19029" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
                         <Label colors={colors} top>Assessable assets (not including the family home)</Label>
@@ -352,6 +362,7 @@ export default function ContributionEstimator() {
                             <TextInput testID="ce-partner-assets" value={String(form.partner_assets)} onChangeText={(v) => set({ partner_assets: v.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholderTextColor={colors.muted} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]} />
                           </View>
                         ) : null}
+                        <TaperExample constants={constants} colors={colors} />
                       </View>
                     ) : null}
                   </View>
@@ -475,6 +486,8 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
         </Card>
       )}
 
+      <AsAtBadge colors={colors} />
+
       {/* Government share bar */}
       {!result.range_mode && !result.is_fee_exempt ? (
         <Card testID="ce-govt-share-bar">
@@ -559,6 +572,77 @@ function ResultScreen({ result, form, colors, onEdit }: any) {
         </View>
       </Card>
     </>
+  );
+}
+
+const _aud0 = (n: number) => "$" + Math.round(n).toLocaleString("en-AU");
+
+// Item 2: live means-test bracket helper text (parity with web).
+function MeansTestHint({ constants, form, colors }: any) {
+  const base = "The exact means-tested rate depends on your assessable income and assets. Leave blank to see a range for now.";
+  const g = (k: string) => (constants?.[k]?.value != null ? Number(constants[k].value) : null);
+  if (!g("means_test.income_free_area.individual")) {
+    return <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 18 }}>{base}</T>;
+  }
+  const couple = form.relationship === "couple";
+  const homeowner = !!form.homeowner;
+  const incFree = couple ? (g("means_test.income_free_area.couple_member")! * 2) : g("means_test.income_free_area.individual")!;
+  const incLimit = couple ? (g("means_test.income_limit.couple")! * 2) : g("means_test.income_limit.individual")!;
+  const assetsFree = couple
+    ? (homeowner ? g("means_test.assets_free_area.couple_homeowner")! : g("means_test.assets_free_area.couple_non_homeowner")!)
+    : (homeowner ? g("means_test.assets_free_area.individual_homeowner")! : g("means_test.assets_free_area.individual_non_homeowner")!);
+  const who = couple ? "a couple (combined)" : "a single person";
+  const ownVerb = homeowner ? (couple ? "own" : "owns") : (couple ? "don't own" : "doesn't own");
+  return (
+    <View testID="ce-means-test-hint" style={{ marginTop: 4, gap: 4 }}>
+      <T variant="small" style={{ color: colors.muted, lineHeight: 18 }}>{base}</T>
+      <T variant="small" style={{ color: colors.muted, lineHeight: 18 }}>{`For ${who} who ${ownVerb} their home:`}</T>
+      <T variant="small" style={{ color: colors.text, lineHeight: 19 }}>{`\u2022 At or below ${_aud0(incFree)} income/yr: the minimum rate (5% / 17.5%).`}</T>
+      <T variant="small" style={{ color: colors.text, lineHeight: 19 }}>{`\u2022 At or above ${_aud0(incLimit)} income: the maximum rate (50% / 80%).`}</T>
+      <T variant="small" style={{ color: colors.text, lineHeight: 19 }}>{`\u2022 Assets-free area: ${_aud0(assetsFree)}. Income and assets are tested separately.`}</T>
+      <T style={{ fontSize: 11, color: colors.muted }}>Thresholds as at 20/09/2026.</T>
+    </View>
+  );
+}
+
+// Item 4: worked example of where a part pensioner lands between the bands.
+function TaperExample({ constants, colors }: any) {
+  const [open, setOpen] = useState(false);
+  const g = (k: string, d: number) => (constants?.[k]?.value != null ? Number(constants[k].value) : d);
+  const incFree = g("means_test.income_free_area.individual", 5876);
+  const incLimit = g("means_test.income_limit.individual", 105048);
+  return (
+    <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surface2, padding: spacing.md, marginTop: spacing.sm }} testID="ce-taper-example">
+      <Pressable onPress={() => setOpen((o) => !o)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text, flex: 1 }}>See a worked example: how the taper works</T>
+        {open ? <ChevronUp size={15} color={colors.muted} /> : <ChevronDown size={15} color={colors.muted} />}
+      </Pressable>
+      {open ? (
+        <View style={{ marginTop: spacing.sm, gap: 8 }}>
+          <T variant="small" style={{ color: colors.muted, lineHeight: 19 }}>{"Margaret is single, a part pensioner and owns her home. Her assessable income (excl. pension) is about $28,000 a year, with $120,000 in savings."}</T>
+          <T variant="small" style={{ color: colors.muted, lineHeight: 19 }}>{`Her income is above the ${_aud0(incFree)} income-free area but well below the ${_aud0(incLimit)} upper limit, and her savings are under the assets-free area. So she lands partway up the scale, not at either end.`}</T>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <T style={{ fontSize: 11, color: colors.text, fontFamily: fonts.bodySemi }}>5% floor</T>
+            <T style={{ fontSize: 11, color: colors.text, fontFamily: fonts.bodySemi }}>50% ceiling</T>
+          </View>
+          <View style={{ height: 10, borderRadius: 5, backgroundColor: colors.border }}>
+            <View style={{ position: "absolute", left: "32%", top: -2, width: 4, height: 14, borderRadius: 2, backgroundColor: colors.primary }} />
+          </View>
+          <T style={{ fontSize: 11, color: colors.muted }}>Margaret lands around the lower third on Independence services. Most part pensioners sit here, not at the 50% ceiling.</T>
+          <T variant="small" style={{ color: colors.muted, lineHeight: 19 }}>Everyday living works the same way between 17.5% and 80%. Your rate comes from Services Australia; this is an illustration, not advice.</T>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+// Item 3: "as at" freshness badge on the result.
+function AsAtBadge({ colors }: any) {
+  return (
+    <View testID="ce-rates-asat" style={{ flexDirection: "row", alignItems: "center", alignSelf: "center", gap: 6, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface2, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5 }}>
+      <Calendar size={13} color={colors.muted} />
+      <T style={{ fontSize: 12, color: colors.muted }}>Contribution rates as at 20/09/2026</T>
+    </View>
   );
 }
 

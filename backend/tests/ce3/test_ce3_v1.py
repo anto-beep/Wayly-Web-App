@@ -52,13 +52,14 @@ def test_lifetime_cap_shape_and_bounds(session, pid):
     r = session.get(f"{BASE}/api/ce3/participants/{pid}/lifetime-cap")
     assert r.status_code == 200, r.text
     body = r.json()
-    # Cap is $137,917.01 for a standard participant.
-    assert body["total_cap"] in (137917.01, 84571.66)
+    # Cap is $140,652.80 for a standard participant (20/09/2026 indexation),
+    # or $88,934.57 for a no-worse-off participant.
+    assert body["total_cap"] in (140652.80, 88934.57)
     assert body["cap_variant"] in ("standard", "no_worse_off")
     assert body["remaining"] == round(body["total_cap"] - body["used_to_date"], 2)
     assert body["participant_id"] == pid
     assert body["data_residency"] == "ap-southeast-2"
-    assert body["total_cap_effective_date"] == "2026-03-20"
+    assert body["total_cap_effective_date"] == "2026-09-20"
 
 
 def test_lifetime_cap_years_at_pace_null_when_new(session):

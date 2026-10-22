@@ -585,9 +585,21 @@ async def cancel_subscription(request: Request):
                           "updated_at": datetime.now(timezone.utc).isoformat()}},
             )
         else:
+            from datetime import datetime, timezone
+            period_end = _sub_period_end(sub)
             await _db.users.update_one(
                 {"id": user.get("id")},
-                {"$set": {"cancel_at_period_end": True, "current_period_end": _sub_period_end(sub)}},
+                {"$set": {"cancel_at_period_end": True, "current_period_end": period_end}},
+            )
+            # Mirror into the read-model (db.subscriptions) that
+            # GET /api/billing/subscription serves, so the Plan & Billing UI
+            # flips to the "scheduled to end … Reactivate" state immediately,
+            # without waiting on Stripe webhook delivery (which is what forced
+            # a manual page refresh before).
+            await _db.subscriptions.update_one(
+                {"user_id": user.get("id")},
+                {"$set": {"cancel_at_period_end": True, "current_period_end": period_end,
+                          "updated_at": datetime.now(timezone.utc).isoformat()}},
             )
     return {"ok": True, "cancel_at_period_end": (not is_trialing),
             "canceled_now": is_trialing, "current_period_end": _sub_period_end(sub)}
@@ -613,9 +625,18 @@ async def reactivate_subscription(request: Request):
         logger.warning("Stripe reactivate failed: %s", e)
         raise HTTPException(status_code=502, detail=str(getattr(e, "user_message", None) or e))
     if _db is not None:
+        from datetime import datetime, timezone
+        period_end = _sub_period_end(sub)
         await _db.users.update_one(
             {"id": user.get("id")},
-            {"$set": {"cancel_at_period_end": False, "current_period_end": _sub_period_end(sub)}},
+            {"$set": {"cancel_at_period_end": False, "current_period_end": period_end}},
+        )
+        # Mirror into the read-model so the UI drops the "scheduled to end"
+        # banner immediately on reactivate (no manual refresh).
+        await _db.subscriptions.update_one(
+            {"user_id": user.get("id")},
+            {"$set": {"cancel_at_period_end": False, "current_period_end": period_end,
+                      "updated_at": datetime.now(timezone.utc).isoformat()}},
         )
     return {"ok": True, "cancel_at_period_end": False, "current_period_end": _sub_period_end(sub)}
 

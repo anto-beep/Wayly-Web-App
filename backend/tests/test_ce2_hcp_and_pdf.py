@@ -162,7 +162,12 @@ class TestPdfRenderer:
         pdf_bytes = render_ce2_pdf(result=d, person_name="Bill")
         assert isinstance(pdf_bytes, bytes)
         assert pdf_bytes.startswith(b"%PDF")
-        assert len(pdf_bytes) < 60_000, f"PDF is {len(pdf_bytes)} bytes, expected <60 KB"
+        # The premium PDF redesign (Oct 2026) renders via the shared HTML→PDF
+        # pipeline, which embeds the Wayly brand fonts (Fraunces / Inter /
+        # IBM Plex Mono) as subset faces. A single branded page with three
+        # embedded families is ~250-300 KB; keep a generous guard so a runaway
+        # multi-MB regression still fails the build.
+        assert len(pdf_bytes) < 500_000, f"PDF is {len(pdf_bytes)} bytes, expected <500 KB"
 
     def test_john_fee_exempt_pdf_omits_govt_share_bar(self, registry):
         result = calculate(_john_input())

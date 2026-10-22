@@ -926,7 +926,7 @@ If their needs increase and they are reassessed, they then move into one of the 
 
 In plain terms, they will pay the same or less under Support at Home than they would have under the old package rules. If they were assessed as not having to pay an income-tested care fee, they will never be asked to pay contributions under Support at Home. This protection holds even if they are later reassessed into a higher classification.
 
-People in this group also keep a lower lifetime contribution cap of $84,571.66, compared with the higher cap that applies to brand new participants.
+People in this group also keep a lower lifetime contribution cap of $88,934.57, compared with the higher cap that applies to brand new participants.
 
 This is genuinely good news, and it is worth confirming. Check your parent's letters from My Aged Care and Services Australia to see which arrangements apply to them.`,
             },
@@ -1010,7 +1010,7 @@ If that feels like a lot to stay on top of from a distance, Wayly can track the 
             "Clinical care such as nursing and physiotherapy is fully funded. Your parent pays nothing for it.",
             "Contributions apply to Independence and Everyday Living services, and depend on income, assets and pension status.",
             "Full pensioners pay the lowest rates. Self-funded retirees pay the most.",
-            "There is a lifetime cap on contributions, set at $135,318.69 for new participants as at September 2025 and indexed twice a year.",
+            "There is a lifetime cap on contributions, set at $140,652.80 for new participants as at 20 September 2026 and indexed twice a year.",
             "Price caps that were due on 1 July 2026 have been deferred, so providers set their own prices for now.",
         ],
         intro_md: `"How much is this going to cost?" is usually the first question families ask when a parent is approved for Support at Home, and it is surprisingly hard to get a straight answer. The cost depends on your parent's income and assets, the type of services they use, and the prices their provider charges.
@@ -1047,7 +1047,7 @@ If your parent does not complete an income and assets assessment, they are treat
                 heading: "Is there a limit on what my parent can pay?",
                 body_md: `Yes. There is a lifetime cap on contributions. Once your parent reaches it, they stop paying contributions for non-clinical services for the rest of their life, whether the care is at home or in residential aged care.
 
-For new participants the cap is $135,318.69 as at 20 September 2025, and it is indexed on 20 March and 20 September each year. People protected by the no worse off rule have a lower cap of $84,571.66.
+For new participants the cap is $140,652.80 as at 20 September 2026, and it is indexed on 20 March and 20 September each year. People protected by the no worse off rule have a lower cap of $88,934.57.
 
 If your parent cannot afford their contributions, financial hardship assistance is available through Services Australia on 1800 227 475. If approved, the government covers some or all of the contributions.`,
             },
@@ -1093,7 +1093,7 @@ Start with the My Aged Care fee estimator to get a guide, then let Wayly keep tr
             { q: "Is there a free calculator for Support at Home fees?", a: "Yes. My Aged Care has a free Support at Home fee estimator and budget planner that gives a personalised estimate based on income, assets and pension status." },
             { q: "Do full pensioners pay for Support at Home?", a: "They pay nothing for clinical care, 5% for Independence services and 17.5% for Everyday Living services. These are the lowest rates." },
             { q: "Did the Support at Home price caps start on 1 July 2026?", a: "No. The government deferred the caps in May 2026 and has not set a new date. Providers set their own published prices for now." },
-            { q: "Is there a limit on total contributions?", a: "Yes. There is a lifetime cap, set at $135,318.69 for new participants as at September 2025 and indexed twice a year. People protected by the no worse off rule have a lower cap of $84,571.66." },
+            { q: "Is there a limit on total contributions?", a: "Yes. There is a lifetime cap, set at $140,652.80 for new participants as at 20 September 2026 and indexed twice a year. People protected by the no worse off rule have a lower cap of $88,934.57." },
         ],
         related: [
             "wayly-budget-calculator-support-at-home-quarterly-budget",
@@ -1262,7 +1262,7 @@ Diarise the statement check. Put a note in your calendar for mid November to che
         key_takeaways: [
             "Clinical care under Support at Home is fully government-funded. You only contribute towards independence and everyday living services.",
             "Full pensioners contribute 5% for independence and 17.5% for everyday living. Self-funded retirees contribute up to 50% and 80%. Part pensioners and Commonwealth Seniors Health Card holders sit between those bands based on Services Australia's income and assets test.",
-            "The standard lifetime cap is $137,917.01 (indexed 20 March 2026). Once you reach it, you pay nothing more, ever. Grandfathered participants have a lower $86,185.23 cap under the 'no worse off' principle.",
+            "The standard lifetime cap is $140,652.80 (indexed 20 September 2026). Once you reach it, you pay nothing more, ever. Grandfathered participants have a lower $88,934.57 cap under the 'no worse off' principle.",
             "The income and assets assessment (form SA456) is voluntary but skipping it means you are charged the maximum rate. Completing it can be the single fastest way to lower your bill.",
             "From 1 October 2026, personal care becomes fully government-funded for everyone. That is a real cut in monthly contributions for most participants using personal care.",
             "If you can genuinely not afford the contribution even at the correct rate, financial hardship assistance (SA462) exists. While your application is being processed, you do not have to pay.",
@@ -1287,7 +1287,7 @@ There are three service categories.
 
 **Everyday living services.** Cleaning, gardening, meal preparation, home maintenance, shopping assistance. Full pensioners pay **17.5%**. Self-funded retirees pay **80%**. Part pensioners and CSHC holders sit between 17.5% and 80%, again based on the assessment.
 
-A lifetime cap of **$137,917.01** applies to how much you can ever be asked to contribute across your time on Support at Home. Once you reach it, contributions stop for good. Grandfathered participants under the "no worse off" principle have a lower cap of **$86,185.23** and lower percentage bands to match.
+A lifetime cap of **$140,652.80** applies to how much you can ever be asked to contribute across your time on Support at Home. Once you reach it, contributions stop for good. Grandfathered participants under the "no worse off" principle have a lower cap of **$88,934.57** and lower percentage bands to match.
 
 Everything else on this page is an expansion of those five paragraphs.`,
             },
@@ -1321,14 +1321,14 @@ These are illustrative numbers only. Your actual rates depend on your provider's
             },
             {
                 heading: "The Lifetime Cap, and the 'No Worse Off' Principle",
-                body_md: `Support at Home puts an outer limit on how much you can ever be asked to contribute. The **standard lifetime cap is $137,917.01** (as at 20 March 2026, indexed twice a year on 20 March and 20 September). It is a **combined cap** with the non-clinical care contribution that would apply if your parent later moved into residential aged care. Contributions from both settings count towards the same total. When you reach it, Services Australia writes to you and to your provider, and you contribute nothing further, ever.
+                body_md: `Support at Home puts an outer limit on how much you can ever be asked to contribute. The **standard lifetime cap is $140,652.80** (as at 20 September 2026, indexed twice a year on 20 March and 20 September). It is a **combined cap** with the non-clinical care contribution that would apply if your parent later moved into residential aged care. Contributions from both settings count towards the same total. When you reach it, Services Australia writes to you and to your provider, and you contribute nothing further, ever.
 
 The **"no worse off" principle** applies to participants who were on a Home Care Package (or approved for one) before 12 September 2024. For that cohort, two things are lower:
 
-- The lifetime cap is **$86,185.23** rather than $137,917.01.
+- The lifetime cap is **$88,934.57** rather than $140,652.80.
 - The percentage bands are lower: 0% clinical, 0% independence, 0% everyday living for full pensioners; up to 25% for self-funded retirees on both independence and everyday living services.
 
-If you think your parent may be grandfathered but the letter from Services Australia says "standard," check by ringing 1800 227 475 and asking specifically whether the "no worse off" principle has been applied. Providers sometimes cite the wrong grandfathered cap on their websites: the correct current figure is **$86,185.23**, not $84,571.66 (that was the previous indexation) and not $82,018.15 (older still). Do not accept those older figures.`,
+If you think your parent may be grandfathered but the letter from Services Australia says "standard," check by ringing 1800 227 475 and asking specifically whether the "no worse off" principle has been applied. Providers sometimes cite the wrong grandfathered cap on their websites: the correct current figure is **$88,934.57**, not $86,185.23 (that was the 20 March 2026 indexation) and not $84,571.66 (older still). Do not accept those older figures.`,
             },
             {
                 heading: "Care Management: The Mandatory 10%",
@@ -1364,15 +1364,15 @@ Nothing else about the classification or the quarterly budget changes on 1 Octob
                 heading: "Where These Numbers Come From",
                 body_md: `We source every dollar figure on this page from the authoritative issuing body, not from a repackaged provider blog. Here is the trail.
 
-- **Standard lifetime cap ($137,917.01):** [My Aged Care · Changes to contributions while accessing Support at Home](https://www.myagedcare.gov.au) and [health.gov.au · Support at Home participant contributions](https://www.health.gov.au). Note: the health.gov.au page still displays the previous "$135,318.69 (current as of 1 November 2025)" in some places; the current, indexed figure is $137,917.01.
-- **"No worse off" cap ($86,185.23):** [My Aged Care · Changes to contributions while accessing Support at Home](https://www.myagedcare.gov.au).
+- **Standard lifetime cap ($140,652.80):** [My Aged Care · Changes to contributions while accessing Support at Home](https://www.myagedcare.gov.au) and [health.gov.au · Support at Home participant contributions](https://www.health.gov.au). Note: the health.gov.au page still displays the previous "$135,318.69 (current as of 1 November 2025)" in some places; the current, indexed figure is $140,652.80.
+- **"No worse off" cap ($88,934.57):** [My Aged Care · Changes to contributions while accessing Support at Home](https://www.myagedcare.gov.au).
 - **Contribution percentage bands (0% / 5% / 17.5% / 50% / 80%):** [Department of Health · Support at Home participant contributions fact sheet](https://www.health.gov.au). The "no worse off" cohort bands (0% and up to 25%) are from the same fact sheet.
 - **Care management cap (10% of the quarterly budget):** [health.gov.au · Care management for Support at Home](https://www.health.gov.au).
 - **Financial hardship threshold ($165.05 per fortnight):** [My Aged Care · Financial hardship assistance](https://www.myagedcare.gov.au).
 - **SA456 form:** [Services Australia · SA456](https://www.servicesaustralia.gov.au/sa456).
 - **SA462 hardship form:** [Services Australia · SA462](https://www.servicesaustralia.gov.au/sa462).
 
-All figures on this page are current as at 20 March 2026 and are due to reindex on **20 September 2026**. If you are reading this after that date, cross-check the caps and hardship threshold with My Aged Care before quoting them to a provider.
+All figures on this page are current as at 20 September 2026 and are due to reindex on **20 March 2027**. If you are reading this after that date, cross-check the caps and hardship threshold with My Aged Care before quoting them to a provider.
 
 For decisions about your specific financial situation, talk to Services Australia (1800 227 475) or a licensed financial adviser. Wayly is a plain-English translator, not a licensed adviser. Nothing here is personal financial advice.`,
             },
@@ -1380,7 +1380,7 @@ For decisions about your specific financial situation, talk to Services Australi
         faqs: [
             {
                 q: "How much do I have to pay for Support at Home?",
-                a: "That depends on which service and which cohort you sit in. Clinical care is 0% for everyone. Independence services are 5% for full pensioners, 50% for self-funded retirees, and somewhere between for part pensioners and Commonwealth Seniors Health Card holders (set by the income and assets assessment). Everyday living services are 17.5% / 80% at the extremes. Grandfathered ('no worse off') participants pay less. From 1 October 2026, personal care drops to 0% for everyone. There is also a lifetime cap of $137,917.01 (or $86,185.23 for grandfathered participants), after which you pay nothing more.",
+                a: "That depends on which service and which cohort you sit in. Clinical care is 0% for everyone. Independence services are 5% for full pensioners, 50% for self-funded retirees, and somewhere between for part pensioners and Commonwealth Seniors Health Card holders (set by the income and assets assessment). Everyday living services are 17.5% / 80% at the extremes. Grandfathered ('no worse off') participants pay less. From 1 October 2026, personal care drops to 0% for everyone. There is also a lifetime cap of $140,652.80 (or $88,934.57 for grandfathered participants), after which you pay nothing more.",
             },
             {
                 q: "Do full pensioners pay anything for Support at Home?",
@@ -1396,7 +1396,7 @@ For decisions about your specific financial situation, talk to Services Australi
             },
             {
                 q: "What is the Support at Home lifetime cap?",
-                a: "It is the total amount of contributions you can be asked to pay across your time on Support at Home. Once you reach it, the government covers all further non-clinical costs. The standard cap is $137,917.01 as at 20 March 2026, indexed twice a year. Grandfathered participants under the 'no worse off' principle have a lower cap of $86,185.23. The cap is combined with the residential non-clinical care contribution, so contributions in either setting count towards the same total.",
+                a: "It is the total amount of contributions you can be asked to pay across your time on Support at Home. Once you reach it, the government covers all further non-clinical costs. The standard cap is $140,652.80 as at 20 September 2026, indexed twice a year. Grandfathered participants under the 'no worse off' principle have a lower cap of $88,934.57. The cap is combined with the residential non-clinical care contribution, so contributions in either setting count towards the same total.",
             },
             {
                 q: "Is the Support at Home assessment the same as the pension means test?",
@@ -1813,7 +1813,7 @@ Common misclassifications we see: personal care billed under Everyday Living (sh
     {
         slug: "lifetime-contribution-cap-most-families-do-not-worry",
         title: "The Lifetime Contribution Cap and Why Most Families Don't Need to Worry",
-        excerpt: "The $137,917 lifetime cap on Support at Home contributions sounds scary. Here's what it actually covers, who reaches it, and why most families never do.",
+        excerpt: "The $140,653 lifetime cap on Support at Home contributions sounds scary. Here's what it actually covers, who reaches it, and why most families never do.",
         published_at: "2026-02-03",
         updated_at: "2026-02-03",
         author: { name: "Wayly Editorial", role: "Wayly" },
@@ -1821,23 +1821,23 @@ Common misclassifications we see: personal care billed under Everyday Living (sh
         hero_alt: "A financial adviser and family caregiver reviewing a lifetime contribution cap projection at a kitchen table.",
         meta: {
             title: "Support at Home Lifetime Cap: What It Means for Families",
-            description: "The $137,917 lifetime cap on Support at Home participant contributions, who it applies to, how it's tracked, and why most families never come close.",
-            keywords: ["support at home lifetime cap", "aged care lifetime contribution", "137917 aged care", "no worse off cap"],
+            description: "The $140,653 lifetime cap on Support at Home participant contributions, who it applies to, how it's tracked, and why most families never come close.",
+            keywords: ["support at home lifetime cap", "aged care lifetime contribution", "140653 aged care", "no worse off cap"],
         },
         key_takeaways: [
-            "The lifetime cap on Support at Home participant contributions is $137,917 (effective 2026).",
+            "The lifetime cap on Support at Home participant contributions is $140,653 (effective 20 September 2026).",
             "It applies to the sum of Independence and Everyday Living contributions across the participant's entire aged-care journey.",
             "Clinical care contributions ($0 from 01/10/2026) never count towards the cap.",
             "Once the cap is reached, the participant's contribution drops to $0 for the rest of their life on the program.",
-            "Grandfathered HCP participants under the No Worse Off principle carry a lower cap ($84,571) that transferred with them.",
+            "Grandfathered HCP participants under the No Worse Off principle carry a lower cap ($88,935) that transferred with them.",
         ],
-        intro_md: `When Support at Home launched, one figure spooked a lot of families: a $137,917 lifetime cap on participant contributions. Media coverage suggested this was what everyone would end up paying. In reality, most families never come close, and the cap acts as an insurance ceiling rather than a target. This guide explains what the cap covers, how it's tracked, and how to know when your parent is approaching it.`,
+        intro_md: `When Support at Home launched, one figure spooked a lot of families: a $140,653 lifetime cap on participant contributions. Media coverage suggested this was what everyone would end up paying. In reality, most families never come close, and the cap acts as an insurance ceiling rather than a target. This guide explains what the cap covers, how it's tracked, and how to know when your parent is approaching it.`,
         sections: [
             {
                 heading: "What does the lifetime cap actually cover?",
-                body_md: `The cap of $137,917 covers the participant's own contribution across two streams: **Independence** and **Everyday Living**. Clinical care contributions don't count because they're $0 for everyone from 01/10/2026. Neither does any Home Care Package amount paid before the transition (that sits in a separate lifetime cap under HCP rules for grandfathered participants).
+                body_md: `The cap of $140,653 covers the participant's own contribution across two streams: **Independence** and **Everyday Living**. Clinical care contributions don't count because they're $0 for everyone from 01/10/2026. Neither does any Home Care Package amount paid before the transition (that sits in a separate lifetime cap under HCP rules for grandfathered participants).
 
-Once the running total hits $137,917, the participant's contribution drops to $0 for the rest of their life on the program. The government picks up 100% of every service after that.`,
+Once the running total hits $140,653, the participant's contribution drops to $0 for the rest of their life on the program. The government picks up 100% of every service after that.`,
             },
             {
                 heading: "How is the cap actually tracked?",
@@ -1847,13 +1847,13 @@ The Aged Care Rules 2025 also require the provider to notify the participant in 
             },
             {
                 heading: "Why most families never reach it",
-                body_md: `Reaching the cap requires either very high service usage over a long period, or a self-funded retiree paying the ceiling rates on both Independence and Everyday Living for years. At an average full-pensioner contribution of about $2,000-$3,000 a year, hitting $137,917 would take 45+ years. The cap exists to protect against catastrophic care costs, not to describe a typical bill.
+                body_md: `Reaching the cap requires either very high service usage over a long period, or a self-funded retiree paying the ceiling rates on both Independence and Everyday Living for years. At an average full-pensioner contribution of about $2,000-$3,000 a year, hitting $140,653 would take 45+ years. The cap exists to protect against catastrophic care costs, not to describe a typical bill.
 
 For most families, the more relevant figure is the quarterly budget cap of about $7,424 (Classification 4), that's what they hit each quarter, not the lifetime figure.`,
             },
             {
                 heading: "Grandfathering and the No Worse Off cap",
-                body_md: `Participants on Home Care Packages as at 12/09/2024 carry a lower lifetime cap under the No Worse Off principle: $84,571.66 in 2026 dollars. Their remaining HCP contribution counts towards this figure, not the new $137,917 one.
+                body_md: `Participants on Home Care Packages as at 12/09/2024 carry a lower lifetime cap under the No Worse Off principle: $88,934.57 in 2026 dollars. Their remaining HCP contribution counts towards this figure, not the new $140,653 one.
 
 If you think your parent is grandfathered, the provider must be able to show which cap applies. Ask for it in writing, it's a compliance requirement under the Aged Care Rules 2025.`,
             },
@@ -1866,7 +1866,7 @@ Some families ask whether the cap should influence care choices earlier (e.g. de
         ],
         faqs: [
             { q: "What happens after my parent hits the lifetime cap?", a: "Their contribution drops to $0 for the rest of their life on the program. The government funds 100% of every service from that point." },
-            { q: "Does the lifetime cap indexate?", a: "Yes, the $137,917 figure is set for 2026 and increases annually at indexation (typically 01/07 each year). Wayly's INDEX-1 tracks the current figure." },
+            { q: "Does the lifetime cap indexate?", a: "Yes. The $140,653 figure is current as at 20 September 2026 and is indexed on 20 March and 20 September each year. Wayly's INDEX-1 tracks the current figure." },
             { q: "Do HCP contributions count towards the Support at Home cap?", a: "No, HCP contributions before 01/07/2025 sit under the HCP lifetime cap for grandfathered participants (and don't apply to new-entry participants at all)." },
             { q: "What if my parent hasn't received the 30-day notice but is close to the cap?", a: "Ask the provider in writing for a cap-tracker statement. If they can't produce one, that's a Tier 3 compliance issue worth raising." },
             { q: "Can the cap be waived or reduced under financial hardship?", a: "The hardship provisions in the Aged Care Act 2024 can reduce or waive contributions for eligible participants, separate from the cap. Contact My Aged Care on 1800 200 422 to apply." },

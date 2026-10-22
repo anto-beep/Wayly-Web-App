@@ -2,7 +2,7 @@
 
 Adds three surfaces on top of CE-2:
 
-  1. Lifetime cap accumulator     , how much of the $137,917 lifetime cap
+  1. Lifetime cap accumulator     , how much of the $140,652.80 lifetime cap
                                      has been used, remaining, and
                                      "years at current pace" (the flagship
                                      reassurance figure).
@@ -47,10 +47,12 @@ _core1_assert_access = None
 _core1_write_event = None
 _loop1_open_case = None
 
-# INDEX-1 lifetime cap constants (fallback if registry lookup fails)
-LIFETIME_CAP_STANDARD = 137917.01
-LIFETIME_CAP_NO_WORSE_OFF = 84571.66
-LIFETIME_CAP_EFFECTIVE_FROM = "2026-03-20"
+# INDEX-1 lifetime cap constants (fallback only if the registry lookup fails).
+# The live values are read from program_reference (the same single source
+# budget.py uses), so these stay in step with the 20/09/2026 indexation.
+LIFETIME_CAP_STANDARD = 140652.80
+LIFETIME_CAP_NO_WORSE_OFF = 88934.57
+LIFETIME_CAP_EFFECTIVE_FROM = "2026-09-20"
 
 
 def init_ce3_routes(*, db, user_dep, core1_assert_access, core1_write_timeline, loop1_open_case):
@@ -106,16 +108,31 @@ async def ensure_ce3_indexes(db) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _registry_cap(key: str, fallback: float) -> float:
+    """Read a lifetime-cap value from the shared program_reference registry.
+
+    Falls back to the module constant if the cache is not loaded (e.g. in a
+    bare test import before startup preload).
+    """
+    try:
+        from program_reference import get_value as _pr_get_value
+        return float(_pr_get_value(key))
+    except Exception:
+        return fallback
+
+
 def _lifetime_cap_for_participant(p: dict) -> tuple[float, str, str]:
     """Return (cap, effective_date, cap_variant) for a participant.
 
-    Grandfathered "no-worse-off" HCP transitioned participants get the
-    lower $84,571.66 cap; everyone else the standard $137,917.01 cap.
+    Grandfathered "no-worse-off" participants get the no-worse-off cap
+    ($88,934.57 as at 20/09/2026); everyone else the standard cap
+    ($140,652.80). Values are read live from the registry so they match the
+    rest of the app (budget.py, CE-2) and the 20/09/2026 indexation.
     """
     is_no_worse_off = bool(p.get("is_no_worse_off") or p.get("no_worse_off"))
     if is_no_worse_off:
-        return LIFETIME_CAP_NO_WORSE_OFF, LIFETIME_CAP_EFFECTIVE_FROM, "no_worse_off"
-    return LIFETIME_CAP_STANDARD, LIFETIME_CAP_EFFECTIVE_FROM, "standard"
+        return _registry_cap("lifetime_cap.no_worse_off", LIFETIME_CAP_NO_WORSE_OFF), LIFETIME_CAP_EFFECTIVE_FROM, "no_worse_off"
+    return _registry_cap("lifetime_cap.standard", LIFETIME_CAP_STANDARD), LIFETIME_CAP_EFFECTIVE_FROM, "standard"
 
 
 def _summary_dict(s: dict) -> dict:
