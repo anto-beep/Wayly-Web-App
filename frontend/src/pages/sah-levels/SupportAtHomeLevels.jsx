@@ -4,7 +4,7 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import SeoHubLinks from "@/components/SeoHubLinks";
 import SeoHead from "@/seo/SeoHead";
-import { SUPPORT_AT_HOME_LEVELS } from "@/data/supportAtHomeLevels";
+import { SUPPORT_AT_HOME_LEVELS, LEVELS_EFFECTIVE_DATE, LEVELS_LAST_CHECKED } from "@/data/supportAtHomeLevels";
 import { ArrowRight, Calculator, ClipboardCheck, FileSearch } from "lucide-react";
 
 /**
@@ -26,7 +26,7 @@ export default function SupportAtHomeLevels() {
         })),
     };
     const faqs = [
-        { q: "How many Support at Home levels are there?", a: "Eight ongoing classifications run from Level 1 to Level 8, with annual funding from $10,731 at Level 1 to $78,106 at Level 8 (effective 1 November 2025). Four extra transitioned levels exist for people who moved across from a Home Care Package." },
+        { q: "How many Support at Home levels are there?", a: "Eight ongoing classifications run from Level 1 to Level 8, with annual funding from $11,031.56 at Level 1 to $80,294.00 at Level 8 (effective 1 October 2026). Four extra transitioned levels exist for people who moved across from a Home Care Package." },
         { q: "Who decides which Support at Home level you are on?", a: "An assessor through the Single Assessment System, using the Integrated Assessment Tool. You start the process by calling My Aged Care on 1800 200 422. The assessor visits at home or in hospital, looks at daily tasks, mobility, health and goals, and recommends a classification." },
         { q: "Can my Support at Home level change?", a: "Yes. If needs grow you can request a support plan review through My Aged Care. The Wayly Classification Self-Check helps you decide whether to ask for one, and Wayly Letters & Follow-ups drafts the formal request." },
         { q: "Are these levels paid quarterly or annually?", a: "Each level's annual budget is paid as a quarterly budget. You get the full quarter's amount at the start of the quarter, with 10% set aside for care management." },
@@ -39,11 +39,11 @@ export default function SupportAtHomeLevels() {
     const articleLd = {
         "@type": "Article",
         headline: "Support at Home Levels, All 8 Classifications Explained",
-        description: "The eight Support at Home classifications and what each funds, with the current annual and quarterly budgets effective 1 November 2025.",
+        description: "The eight Support at Home classifications and what each funds, with the current annual and quarterly budgets effective 1 October 2026.",
         author: { "@type": "Person", name: "Wayly Editorial" },
         publisher: { "@type": "Organization", name: "Wayly", logo: { "@type": "ImageObject", url: "https://wayly.com.au/branding/png/wayly-mark-512.png" } },
         datePublished: "2026-02-05",
-        dateModified: "2026-02-05",
+        dateModified: "2026-10-22",
         mainEntityOfPage: { "@type": "WebPage", "@id": `https://wayly.com.au${path}` },
     };
     return (
@@ -70,6 +70,10 @@ export default function SupportAtHomeLevels() {
                 </p>
 
                 <div className="mt-10 overflow-x-auto rounded-2xl border border-kindred bg-surface" data-testid="levels-table">
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-1">
+                        <span className="text-sm font-medium text-primary-k">All 8 classification budgets</span>
+                        <span className="inline-flex items-center rounded-full bg-surface-2 px-3 py-1 text-xs text-muted-k" data-testid="levels-last-checked">Budgets effective {LEVELS_EFFECTIVE_DATE} · last checked {LEVELS_LAST_CHECKED}</span>
+                    </div>
                     <table className="w-full text-left text-sm min-w-[900px]">
                         <thead className="bg-surface-2 text-primary-k">
                             <tr>
@@ -137,7 +141,7 @@ export default function SupportAtHomeLevels() {
                 </section>
 
                 <footer className="mt-12 pt-6 border-t border-kindred text-xs text-muted-k space-y-1" data-testid="hub-trust-footer">
-                    <p>Last reviewed: 5 February 2026 · Reviewed by: Confirmed</p>
+                    <p>Last reviewed: 5 February 2026 · Budgets effective {LEVELS_EFFECTIVE_DATE}, last checked {LEVELS_LAST_CHECKED}</p>
                     <p>Sources: <a href="https://www.health.gov.au/our-work/support-at-home" className="underline" rel="noopener">health.gov.au, Support at Home</a> · <a href="https://www.myagedcare.gov.au/support-at-home" className="underline" rel="noopener">myagedcare.gov.au</a>. If you find an error, email <a href="mailto:support@wayly.com.au" className="underline">support@wayly.com.au</a>.</p>
                 </footer>
             </main>

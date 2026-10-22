@@ -161,7 +161,7 @@ export function websiteLd() {
     };
 }
 
-export function softwareApplicationLd({ name, description, url, category = "BusinessApplication", screenshot, faqs }) {
+export function softwareApplicationLd({ name, description, url, category = "BusinessApplication", screenshot, faqs, offers }) {
     const base = {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
@@ -169,10 +169,15 @@ export function softwareApplicationLd({ name, description, url, category = "Busi
         description,
         url,
         applicationCategory: category,
+        applicationSubCategory: "Aged care tool",
         operatingSystem: "Web",
-        offers: {
+        isAccessibleForFree: true,
+        offers: offers || {
             "@type": "Offer",
+            price: "0",
+            priceCurrency: "AUD",
             availability: "https://schema.org/InStock",
+            description: "Free to try, no account needed. Unlimited use on a Wayly plan.",
         },
         publisher: { "@type": "Organization", name: SITE.name, url: SITE.domain },
     };

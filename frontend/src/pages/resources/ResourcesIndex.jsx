@@ -2,13 +2,31 @@ import React from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
-import { ARTICLES, GLOSSARY, TEMPLATES } from "@/data/resources";
+import { ARTICLES, GLOSSARY } from "@/data/resources";
 import { SEO_ARTICLES_2026 } from "@/data/seoArticles2026";
 import { SEO_TOOL_ARTICLES } from "@/data/seoToolArticles";
-import { ArrowRight, BookOpen, FileText, ListOrdered } from "lucide-react";
+import { TEMPLATES_LIBRARY } from "@/data/templatesLibrary";
+import { ArrowRight, BookOpen, FileText, ListOrdered, TrendingUp } from "lucide-react";
 
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
+
+// Curated quick-access row of the topics families search for most, mixing the
+// highest-intent templates, articles and hub pages.
+const POPULAR_TOPICS = [
+    { label: "Decode my statement", href: "/resources/templates/support-at-home-statement-query-letter" },
+    { label: "Dispute an invoice", href: "/resources/templates/aged-care-invoice-dispute-letter" },
+    { label: "Get a refund", href: "/resources/templates/aged-care-overcharge-refund-request" },
+    { label: "Make a complaint", href: "/resources/articles/how-to-complain-about-aged-care-commission" },
+    { label: "Request a reassessment", href: "/resources/templates/my-aged-care-reassessment-request" },
+    { label: "Care plan review questions", href: "/resources/templates/care-plan-review-questions" },
+    { label: "Grab rails & equipment", href: "/resources/articles/at-hm-scheme-assistive-technology-home-modifications" },
+    { label: "Switch providers", href: "/resources/templates/switching-support-at-home-providers-checklist" },
+    { label: "Financial hardship", href: "/resources/templates/aged-care-financial-hardship-application" },
+    { label: "Support at Home levels", href: "/support-at-home-levels" },
+    { label: "CHSP explained", href: "/chsp" },
+];
+
 const Card = ({ icon: Icon, title, body, href, count, testId, tone }) => (
     <Link to={href} className="block rounded-2xl p-6 force-white transition-colors" style={{ backgroundColor: tone || "#0E4D52" }} data-testid={testId}>
         <div className="flex items-start gap-4">
@@ -45,7 +63,28 @@ export default function ResourcesIndex() {
             <section className="mx-auto max-w-7xl px-6 pb-12 grid sm:grid-cols-3 gap-5">
                 <Card icon={BookOpen} title="Articles" body="Pillar pieces on the parts of the program families ask about most." href="/resources/articles" count={`${ARTICLES.length + SEO_ARTICLES_2026.length + SEO_TOOL_ARTICLES.length}+ articles`} testId="resources-card-articles" tone="#0E4D52" />
                 <Card icon={ListOrdered} title="Glossary" body="Every acronym, every stream, every contribution rate, defined." href="/resources/glossary" count={`${GLOSSARY.length} terms`} testId="resources-card-glossary" tone="#A5512B" />
-                <Card icon={FileText} title="Templates" body="Letters, checklists and conversation prompts, copy, edit, send." href="/resources/templates" count={`${TEMPLATES.length} templates`} testId="resources-card-templates" tone="#425F47" />
+                <Card icon={FileText} title="Templates" body="Letters, checklists and conversation prompts, copy, edit, send." href="/resources/templates" count={`${TEMPLATES_LIBRARY.length} templates`} testId="resources-card-templates" tone="#425F47" />
+            </section>
+
+            {/* Popular topics quick-access row */}
+            <section className="mx-auto max-w-7xl px-6 pb-12" data-testid="resources-popular-topics">
+                <div className="flex items-center gap-2 text-primary-k">
+                    <TrendingUp className="h-4 w-4 text-gold" />
+                    <span className="overline">Popular right now</span>
+                </div>
+                <div className="mt-4 flex gap-2.5 overflow-x-auto pb-2 -mx-6 px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {POPULAR_TOPICS.map((topic, i) => (
+                        <Link
+                            key={topic.href}
+                            to={topic.href}
+                            data-testid={`resources-topic-${i}`}
+                            className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-4 py-2 text-sm font-medium text-primary-k hover:border-[#2BC4D6] hover:bg-surface-2 transition-colors whitespace-nowrap"
+                        >
+                            {topic.label}
+                            <ArrowRight className="h-3.5 w-3.5 opacity-60" />
+                        </Link>
+                    ))}
+                </div>
             </section>
 
             <section className="mx-auto max-w-7xl px-6 pb-20">

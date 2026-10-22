@@ -3,7 +3,7 @@ import { Link, useParams, Navigate } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import SeoHead from "@/seo/SeoHead";
-import { SUPPORT_AT_HOME_LEVELS, levelBySlug } from "@/data/supportAtHomeLevels";
+import { SUPPORT_AT_HOME_LEVELS, levelBySlug, LEVELS_EFFECTIVE_DATE, LEVELS_LAST_CHECKED } from "@/data/supportAtHomeLevels";
 import Reveal from "@/components/Reveal";
 import { ArrowLeft, ArrowRight, CheckCircle2, ClipboardCheck, Calculator, FileSearch, FilePen, Coins } from "lucide-react";
 
@@ -35,7 +35,7 @@ export default function SupportAtHomeLevelDetail() {
 
     const faqs = [
         { q: `Who is Support at Home Level ${level.number} for?`, a: level.suits },
-        { q: `How much funding does Support at Home Level ${level.number} provide?`, a: `Support at Home Level ${level.number} provides $${level.annual.toLocaleString()} per year, effective 1 November 2025. That is paid as a quarterly budget of roughly $${Math.round(level.quarterly).toLocaleString()}, with 10% of each quarter set aside for care management.` },
+        { q: `How much funding does Support at Home Level ${level.number} provide?`, a: `Support at Home Level ${level.number} provides $${level.annual.toLocaleString()} per year, effective 1 October 2026. That is paid as a quarterly budget of roughly $${Math.round(level.quarterly).toLocaleString()}, with 10% of each quarter set aside for care management.` },
         { q: `How do I move to a higher Support at Home level?`, a: "Request a support plan review through My Aged Care on 1800 200 422. The Wayly Classification Self-Check helps you decide if a review is worth requesting, and the Wayly Letters & Follow-ups tool drafts the formal letter to send." },
     ];
     const faqLd = {
@@ -45,7 +45,7 @@ export default function SupportAtHomeLevelDetail() {
     const articleLd = {
         "@type": "Article",
         headline: `Support at Home Level ${level.number}: Funding, Services and Who It Suits`,
-        description: `Support at Home Level ${level.number} explained: $${level.annual.toLocaleString()} a year (effective 1 November 2025), who it suits and what services it typically funds.`,
+        description: `Support at Home Level ${level.number} explained: $${level.annual.toLocaleString()} a year (effective 1 October 2026), who it suits and what services it typically funds.`,
         author: { "@type": "Person", name: "Wayly Editorial" },
         publisher: { "@type": "Organization", name: "Wayly", logo: { "@type": "ImageObject", url: "https://wayly.com.au/branding/png/wayly-mark-512.png" } },
         datePublished: "2026-02-05",
@@ -65,7 +65,7 @@ export default function SupportAtHomeLevelDetail() {
         <div className="min-h-screen bg-kindred">
             <SeoHead
                 title={`Support at Home Level ${level.number}: $${level.annual.toLocaleString()}/year · Wayly`}
-                description={`Support at Home Level ${level.number} explained: $${level.annual.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} a year (effective 1 November 2025), who it suits and what services it funds. Plain English, with current figures from health.gov.au.`}
+                description={`Support at Home Level ${level.number} explained: $${level.annual.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} a year (effective 1 October 2026), who it suits and what services it funds. Plain English, with current figures from health.gov.au.`}
                 path={path}
                 type="article"
                 jsonLd={[articleLd, faqLd, breadcrumbLd]}
@@ -80,13 +80,14 @@ export default function SupportAtHomeLevelDetail() {
                     <span className="text-primary-k font-medium">Reviewed and Published by Wayly Editorial</span>
                     <span>Reviewed by: Confirmed</span>
                     <span>Published 5 February 2026</span>
+                    <span className="inline-flex items-center rounded-full bg-surface-2 px-3 py-1 text-xs" data-testid={`last-checked-${level.slug}`}>Budgets last checked {LEVELS_LAST_CHECKED}</span>
                 </div>
 
                 <div className="mt-8 grid sm:grid-cols-2 gap-4">
                     <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="annual-card">
                         <div className="overline">Annual funding</div>
                         <div className="font-heading text-3xl text-primary-k mt-2 tabular-nums">${level.annual.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div className="text-xs text-muted-k mt-1">Effective 1 November 2025. Indexed each 1 July.</div>
+                        <div className="text-xs text-muted-k mt-1">Effective 1 October 2026. Indexed each quarter.</div>
                     </div>
                     <div className="bg-surface border border-kindred rounded-xl p-5" data-testid="quarterly-card">
                         <div className="overline">Quarterly budget</div>
@@ -171,8 +172,8 @@ export default function SupportAtHomeLevelDetail() {
                 </section>
 
                 <footer className="mt-12 pt-6 border-t border-kindred text-xs text-muted-k space-y-1" data-testid={`trust-${level.slug}`}>
-                    <p>Last reviewed: 5 February 2026 · Reviewed by: Confirmed</p>
-                    <p>Funding amounts effective 1 November 2025, indexed each 1 July. Sources: <a href="https://www.health.gov.au/our-work/support-at-home" className="underline" rel="noopener">health.gov.au, Support at Home</a> · <a href="https://www.myagedcare.gov.au/support-at-home" className="underline" rel="noopener">myagedcare.gov.au</a>. Spotted an error? Email <a href="mailto:support@wayly.com.au" className="underline">support@wayly.com.au</a>.</p>
+                    <p>Last reviewed: 5 February 2026 · Budgets effective {LEVELS_EFFECTIVE_DATE}, last checked {LEVELS_LAST_CHECKED}</p>
+                    <p>Funding amounts effective 1 October 2026, indexed each quarter. Sources: <a href="https://www.health.gov.au/our-work/support-at-home" className="underline" rel="noopener">health.gov.au, Support at Home</a> · <a href="https://www.myagedcare.gov.au/support-at-home" className="underline" rel="noopener">myagedcare.gov.au</a>. Spotted an error? Email <a href="mailto:support@wayly.com.au" className="underline">support@wayly.com.au</a>.</p>
                 </footer>
             </main>
             <Footer />

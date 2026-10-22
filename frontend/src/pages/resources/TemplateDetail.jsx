@@ -6,7 +6,7 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { getTemplateBySlug, titleCaseHeading, ESCALATION_LADDER, TEMPLATES_LIBRARY } from "@/data/templatesLibrary";
 import SeoHead, { canonicalFor } from "@/seo/SeoHead";
-import { ArrowLeft, ArrowRight, Copy, Download, Check, ShieldAlert, ChevronDown, FileText, ExternalLink, ArrowUpRight, ListChecks, PhoneCall } from "lucide-react";
+import { ArrowLeft, ArrowRight, Copy, Download, Check, ShieldAlert, ChevronDown, FileText, ExternalLink, ArrowUpRight, ListChecks, PhoneCall, Printer } from "lucide-react";
 
 const fmtDate = (iso) => { try { return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }); } catch { return iso; } };
 
@@ -27,7 +27,7 @@ function buildDocBlob(text) {
     return new Blob(["\ufeff", html], { type: "application/msword" });
 }
 
-function DocActions({ text, filename }) {
+function DocActions({ text, filename, pdfTitle }) {
     const [copied, setCopied] = useState(false);
     const onCopy = async () => {
         try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* ignore */ }
@@ -39,6 +39,16 @@ function DocActions({ text, filename }) {
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
     };
+    const onPdf = () => {
+        const w = window.open("", "_blank", "width=820,height=920");
+        if (!w) return;
+        const esc = String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const title = String(pdfTitle || "Wayly template").replace(/</g, "&lt;");
+        w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>@page{size:A4;margin:20mm;}body{font-family:Georgia,'Times New Roman',serif;color:#1a1a1a;line-height:1.55;}h1{font-family:Arial,Helvetica,sans-serif;font-size:18pt;color:#0E4D52;margin:0 0 18px;}pre{white-space:pre-wrap;font-family:inherit;font-size:12pt;margin:0;}.foot{margin-top:28px;font-size:9pt;color:#666;border-top:1px solid #ccc;padding-top:8px;}</style></head><body><h1>${title}</h1><pre>${esc}</pre><div class="foot">Prepared with Wayly · wayly.com.au · General information, not financial, legal or clinical advice.</div></body></html>`);
+        w.document.close();
+        w.focus();
+        setTimeout(() => { try { w.print(); } catch { /* ignore */ } }, 350);
+    };
     return (
         <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={onCopy} data-testid="template-copy-btn" className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-4 py-2 text-sm font-medium text-primary-k hover:bg-surface-2 transition-colors">
@@ -47,29 +57,32 @@ function DocActions({ text, filename }) {
             <button type="button" onClick={onDownload} data-testid="template-docx-btn" className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-4 py-2 text-sm font-medium text-primary-k hover:bg-surface-2 transition-colors">
                 <Download className="h-4 w-4" /> Download (DOCX)
             </button>
+            <button type="button" onClick={onPdf} data-testid="template-pdf-btn" className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-4 py-2 text-sm font-medium text-primary-k hover:bg-surface-2 transition-colors">
+                <Printer className="h-4 w-4" /> Print / PDF
+            </button>
         </div>
     );
 }
 
-function LetterBlock({ title, body, slug }) {
+function LetterBlock({ title, body, slug, pdfTitle }) {
     return (
         <section className="mt-10" data-testid="template-letter">
             <h2 className="font-heading text-2xl text-primary-k tracking-tight">{title}</h2>
-            <DocActions text={body} filename={`${slug}.doc`} />
+            <DocActions text={body} filename={`${slug}.doc`} pdfTitle={pdfTitle} />
             <div className="mt-4 rounded-2xl border border-kindred bg-surface-2 p-5 font-mono text-sm leading-relaxed text-primary-k whitespace-pre-wrap" data-testid="template-letter-body">
                 {highlightMergeFields(body)}
             </div>
-            <p className="mt-2 text-xs text-muted-k">Anything in [square brackets] is a prompt to fill in. The copy and download buttons keep the brackets so you can find them.</p>
+            <p className="mt-2 text-xs text-muted-k">Anything in [square brackets] is a prompt to fill in. The copy, download and print buttons keep the brackets so you can find them.</p>
         </section>
     );
 }
 
-function ChecklistBlock({ title, items, slug }) {
+function ChecklistBlock({ title, items, slug, pdfTitle }) {
     const text = `${title}\n\n${items.map((i) => `[ ] ${i}`).join("\n")}`;
     return (
         <section className="mt-10" data-testid="template-checklist">
             <h2 className="font-heading text-2xl text-primary-k tracking-tight flex items-center gap-2"><ListChecks className="h-5 w-5 text-gold" /> {title}</h2>
-            <DocActions text={text} filename={`${slug}.doc`} />
+            <DocActions text={text} filename={`${slug}.doc`} pdfTitle={`${pdfTitle} — ${title}`} />
             <ul className="mt-4 space-y-2">
                 {items.map((it, i) => (
                     <li key={i} className="flex items-start gap-3 rounded-xl border border-kindred bg-surface p-3 text-sm text-primary-k leading-relaxed">
@@ -82,12 +95,12 @@ function ChecklistBlock({ title, items, slug }) {
     );
 }
 
-function QuestionsBlock({ title, items, slug }) {
+function QuestionsBlock({ title, items, slug, pdfTitle }) {
     const text = `${title}\n\n${items.map((i, n) => `${n + 1}. ${i}`).join("\n")}`;
     return (
         <section className="mt-10" data-testid="template-questions">
             <h2 className="font-heading text-2xl text-primary-k tracking-tight">{title}</h2>
-            <DocActions text={text} filename={`${slug}.doc`} />
+            <DocActions text={text} filename={`${slug}.doc`} pdfTitle={`${pdfTitle} — ${title}`} />
             <ol className="mt-4 list-decimal pl-6 space-y-2 text-sm text-primary-k leading-relaxed">
                 {items.map((it, i) => <li key={i}>{it}</li>)}
             </ol>
@@ -264,9 +277,9 @@ export default function TemplateDetail() {
 
                 {(t.blocks || []).map((b, i) => {
                     const heading = titleCaseHeading(b.title);
-                    if (b.type === "letter") return <LetterBlock key={i} title={heading} body={b.body} slug={t.slug} />;
-                    if (b.type === "checklist") return <ChecklistBlock key={i} title={heading} items={b.items} slug={t.slug} />;
-                    if (b.type === "questions") return <QuestionsBlock key={i} title={heading} items={b.items} slug={t.slug} />;
+                    if (b.type === "letter") return <LetterBlock key={i} title={heading} body={b.body} slug={t.slug} pdfTitle={t.name} />;
+                    if (b.type === "checklist") return <ChecklistBlock key={i} title={heading} items={b.items} slug={t.slug} pdfTitle={t.name} />;
+                    if (b.type === "questions") return <QuestionsBlock key={i} title={heading} items={b.items} slug={t.slug} pdfTitle={t.name} />;
                     if (b.type === "note") return <NoteBlock key={i} title={heading} md={b.md} />;
                     return <ProseBlock key={i} title={heading} md={b.md} />;
                 })}
