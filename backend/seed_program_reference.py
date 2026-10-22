@@ -33,6 +33,8 @@ MAC = "https://www.myagedcare.gov.au"
 SAH_JUL2026 = "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
 # Effective 1 October 2026 indexation source (classifications & budgets).
 SAH_OCT2026 = "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+# Schedule of contributions for Support at Home services, effective 20 September 2026.
+SCHEDULE_SEP2026 = "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
 
 SEED_ROWS: List[dict] = [
     # ---------- Classification annual budgets (8 ongoing levels) ----------
@@ -583,33 +585,57 @@ SEED_ROWS: List[dict] = [
     # Used by services/ce2_engine.py::_means_test_constants for the six-step
     # means-test formula in spec section 2.4. Legislated under the Aged Care
     # Act 2024 and the Schedule of Contributions for Support at Home Services.
-    _row("means_test.income_free_area.individual", 5668.00, "2025-09-20",
+    _row("means_test.income_free_area.individual", 5668.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test income-free area, single. Income at or below this produces zero income reduction."),
-    _row("means_test.income_free_area.couple_member", 4940.00, "2025-09-20",
+    _row("means_test.income_free_area.couple_member", 4940.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test income-free area, couple living together, per partner. Combined 9880 / 2."),
-    _row("means_test.assets_free_area.individual_homeowner", 321500.00, "2025-09-20",
+    _row("means_test.assets_free_area.individual_homeowner", 321500.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test assets-free area, single homeowner. Principal home exempt."),
-    _row("means_test.assets_free_area.individual_non_homeowner", 566500.00, "2025-09-20",
+    _row("means_test.assets_free_area.individual_non_homeowner", 566500.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test assets-free area, single non-homeowner (321500 + 245000 homeowner offset)."),
-    _row("means_test.assets_free_area.couple_homeowner", 481500.00, "2025-09-20",
+    _row("means_test.assets_free_area.couple_homeowner", 481500.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test assets-free area, couple homeowner (combined)."),
-    _row("means_test.assets_free_area.couple_non_homeowner", 726500.00, "2025-09-20",
+    _row("means_test.assets_free_area.couple_non_homeowner", 726500.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test assets-free area, couple non-homeowner (481500 + 245000)."),
-    _row("means_test.income_limit.individual", 101105.00, "2025-09-20",
+    _row("means_test.income_limit.individual", 101105.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test income limit, single. Aligns with CSHC upper income limit."),
-    _row("means_test.income_limit.couple", 80884.00, "2025-09-20",
+    _row("means_test.income_limit.couple", 80884.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test income limit (couple, per partner). Combined 161768 / 2."),
-    _row("means_test.income_limit.couple_separated_by_illness", 101105.00, "2025-09-20",
+    _row("means_test.income_limit.couple_separated_by_illness", 101105.00, "2025-09-20", eff_to="2026-09-20",
          source="https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf",
          notes="SAH means-test income limit, couple separated by illness. Each partner assessed as single."),
+
+    # ---------- 20 September 2026 Schedule of Contributions indexation ----------
+    # Source: DoH "Schedule of contributions for Support at Home services" effective
+    # 20/09/2026 (published Sep 2026). Income/asset thresholds reviewed Mar/Jul/Sep.
+    # Verified 22/10/2026. Contribution bands (clinical 0%, independence 5-50%,
+    # everyday living 17.5-80%) and tapers (income 50%, assets 7.8%) are unchanged.
+    _row("means_test.income_free_area.individual", 5876.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test income-free area, single. Non-pension income minimum threshold = $5,876 (20/09/2026)."),
+    _row("means_test.income_free_area.couple_member", 5148.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test income-free area, couple living together, per partner. Combined $10,296 / 2 (20/09/2026)."),
+    _row("means_test.assets_free_area.individual_homeowner", 333000.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test assets-free area, single homeowner minimum threshold = $333,000 (20/09/2026). Principal home exempt."),
+    _row("means_test.assets_free_area.individual_non_homeowner", 600000.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test assets-free area, single non-homeowner minimum threshold = $600,000 (20/09/2026)."),
+    _row("means_test.assets_free_area.couple_homeowner", 499000.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test assets-free area, couple homeowner combined minimum = $499,000 (20/09/2026)."),
+    _row("means_test.assets_free_area.couple_non_homeowner", 766000.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test assets-free area, couple non-homeowner combined minimum = $766,000 (20/09/2026)."),
+    _row("means_test.income_limit.individual", 105048.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test income limit, single. Non-pension income maximum threshold = $105,048 (20/09/2026)."),
+    _row("means_test.income_limit.couple", 84038.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test income limit (couple, per partner). Combined $168,076 / 2 (20/09/2026)."),
+    _row("means_test.income_limit.couple_separated_by_illness", 105048.00, "2026-09-20", source=SCHEDULE_SEP2026,
+         notes="SAH means-test income limit, couple separated by illness. Each assessed as single, combined $210,096 (20/09/2026)."),
     _row("means_test.income_taper_pct", 50.0, "2025-11-01",
          source="https://www.health.gov.au/sites/default/files/2025-12/support-at-home-program-participant-contributions.pdf",
          notes="Aged Care Act 2024 - income taper for SAH means-test. 50% of income above the income-free area contributes."),

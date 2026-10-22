@@ -59,8 +59,10 @@
     "min_pct_of_quarterly": 10,
     "notes": "The greater of $1,000 or 10% of the current quarterly budget rolls into the next quarter. Balances above the greater-of are forfeited at quarter end."
   },
-  "lifetime_cap_aud": 137917,
-  "lifetime_cap_note": "Cumulative lifetime cap on the participant's own contribution across the Independence and Everyday Living streams combined. Once reached, further participant contribution is $0 for the rest of the participant's life. Clinical care never counts towards the cap.",
+  "lifetime_cap_aud": 140652.80,
+  "lifetime_cap_effective_from": "2026-09-20",
+  "lifetime_cap_no_worse_off_aud": 88934.57,
+  "lifetime_cap_note": "Cumulative lifetime cap on the participant's own contribution across the Independence and Everyday Living streams combined, indexed 20 September 2026 ($140,652.80 standard, $88,934.57 under the no-worse-off principle). Once reached, further participant contribution is $0 for the rest of the participant's life. Clinical care never counts towards the cap.",
   "exit_fees": {
     "prohibited": true,
     "note": "Exit fees are prohibited under the Aged Care Act 2024. Any exit-fee line on an invoice is a Tier-4 escalation to the ACQSC on 1800 951 822."

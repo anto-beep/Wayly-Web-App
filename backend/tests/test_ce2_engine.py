@@ -73,7 +73,7 @@ def test_1_bill_standard_arrangements(fixtures):
     assert out.everyday_rate == pytest.approx(26.25, abs=0.05)
     assert not out.is_fee_exempt
     assert not out.is_no_worse_off
-    assert out.applicable_lifetime_cap == 137917.01
+    assert out.applicable_lifetime_cap == 140652.80
 
 
 def test_2_john_no_worse_off_fee_exempt(fixtures):
@@ -101,7 +101,7 @@ def test_3_louisa_class_8_full_pensioner(fixtures):
     # Class 8 annual base $78,106 × (45% × 5% + 25% × 17.5%) = $5,175.51
     expected_annual = 78106.0 * (0.45 * 0.05 + 0.25 * 0.175)
     assert out.contribution_annual == pytest.approx(expected_annual, abs=0.5)
-    assert out.applicable_lifetime_cap == 137917.01
+    assert out.applicable_lifetime_cap == 140652.80
 
 
 # ==========================================================================
@@ -283,7 +283,7 @@ def test_13_hcp_with_fees_uses_no_worse_off(registry):
 def test_14_npq_uses_no_worse_off(registry):
     resolution = resolve_entry_path(registry, "npq_pre_sep_2024", hcp_paid_fees=None)
     assert resolution.is_no_worse_off is True
-    assert resolution.applicable_lifetime_cap == 86185.23
+    assert resolution.applicable_lifetime_cap == 88934.57
     assert resolution.show_hcp_comparison == "never"
 
 
@@ -291,7 +291,7 @@ def test_15_post_sep_2024_uses_standard_arrangements(registry):
     resolution = resolve_entry_path(registry, "post_nov_2025", hcp_paid_fees=None)
     assert resolution.is_no_worse_off is False
     assert resolution.rate_table == "standard"
-    assert resolution.applicable_lifetime_cap == 137917.01
+    assert resolution.applicable_lifetime_cap == 140652.80
 
 
 def test_16_not_yet_approved_shows_range_across_class_3_5_8():
@@ -351,7 +351,7 @@ def test_25_lifetime_cap_is_static_no_years_projection():
         service_mix=_default_mix(), effective_date=EFFECTIVE_DATE,
     )
     out = calculate(inp)
-    assert out.applicable_lifetime_cap == 137917.01
+    assert out.applicable_lifetime_cap == 140652.80
     assert not hasattr(out, "years_until_cap")
     assert not hasattr(out, "years_to_cap")
 

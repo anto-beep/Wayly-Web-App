@@ -416,124 +416,156 @@ constants:
     last_verified_by: antony
 
   - key: classification_annual.1
-    value_aud: 11010.01
+    value_aud: 11031.56
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Effective 1 July 2026. Quarterly budget $2,752.50."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Effective 1 October 2026. Quarterly budget $2,757.89."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 10731.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "Aged Care Rules 2025 sections 194-5(2) + 238-5. 29.40 × 365 = 10,731."
+      - value_aud: 11010.01
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Effective 1 July 2026. Quarterly budget $2,752.50."
 
   - key: classification_annual.2
-    value_aud: 16451.35
+    value_aud: 16483.55
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Effective 1 July 2026. Quarterly budget $4,112.84."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Effective 1 October 2026. Quarterly budget $4,120.89."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 16034.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "43.93 × 365 = 16,034.45 → rounded to 16,034."
+      - value_aud: 16451.35
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Effective 1 July 2026. Quarterly budget $4,112.84."
 
   - key: classification_annual.3
-    value_aud: 22536.81
+    value_aud: 22580.93
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Effective 1 July 2026. Quarterly budget $5,634.20."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Effective 1 October 2026. Quarterly budget $5,645.23."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 21966.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "60.18 × 365 = 21,965.70 → rounded to 21,966."
+      - value_aud: 22536.81
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Effective 1 July 2026. Quarterly budget $5,634.20."
 
   - key: classification_annual.4
-    value_aud: 30468.51
+    value_aud: 30528.15
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Effective 1 July 2026. Quarterly budget $7,617.13."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Effective 1 October 2026. Quarterly budget $7,632.04."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 29696.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "81.36 × 365 = 29,696.40 → rounded to 29,696."
+      - value_aud: 30468.51
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Effective 1 July 2026. Quarterly budget $7,617.13."
 
   - key: classification_annual.5
-    value_aud: 40729.53
+    value_aud: 40809.27
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Effective 1 July 2026. Quarterly budget $10,182.38."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Effective 1 October 2026. Quarterly budget $10,202.32."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 39697.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "108.76 × 365 = 39,697.40 → rounded to 39,697."
+      - value_aud: 40729.53
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Effective 1 July 2026. Quarterly budget $10,182.38."
 
   - key: classification_annual.6
-    value_aud: 49365.27
+    value_aud: 49461.91
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Effective 1 July 2026. Quarterly budget $12,341.32."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Effective 1 October 2026. Quarterly budget $12,365.48."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 48114.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "131.82 × 365 = 48,114.30 → rounded to 48,114."
+      - value_aud: 49365.27
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Effective 1 July 2026. Quarterly budget $12,341.32."
 
   - key: classification_annual.7
-    value_aud: 59660.0
+    value_aud: 59776.80
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Effective 1 July 2026. Quarterly budget $14,915.00."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Effective 1 October 2026. Quarterly budget $14,944.20."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 58148.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "159.31 × 365 = 58,148.15 → rounded to 58,148."
+      - value_aud: 59660.0
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Effective 1 July 2026. Quarterly budget $14,915.00."
 
   - key: classification_annual.8
-    value_aud: 80137.12
+    value_aud: 80294.00
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Effective 1 July 2026. Quarterly budget $20,034.28."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Effective 1 October 2026. Quarterly budget $20,073.50."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 78106.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "213.99 × 365 = 78,106.35 → rounded to 78,106."
+      - value_aud: 80137.12
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Effective 1 July 2026. Quarterly budget $20,034.28."
 
   - key: contribution.clinical_pct
     value_percentage: 0.0
@@ -1641,38 +1673,46 @@ constants:
     last_verified_by: antony
 
   - key: lifetime_cap.no_worse_off
-    value_aud: 86185.23
+    value_aud: 88934.57
     unit: AUD
-    effective_from: 2026-03-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.myagedcare.gov.au"
-    source_citation: "Indexed 20 March 2026."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "No-worse-off (NWOP) lifetime cap, indexed 20 September 2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 84571.66
         effective_from: 2025-11-01
         effective_to: 2026-03-20
         source_citation: "HCP no-worse-off cohort cap."
+      - value_aud: 86185.23
+        effective_from: 2026-03-20
+        effective_to: 2026-09-20
+        source_citation: "Indexed 20 March 2026."
 
   - key: lifetime_cap.standard
-    value_aud: 137917.01
+    value_aud: 140652.80
     unit: AUD
-    effective_from: 2026-03-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.myagedcare.gov.au"
-    source_citation: "Indexed 20 March 2026."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH standard lifetime contribution cap, indexed 20 September 2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 135318.69
         effective_from: 2025-11-01
         effective_to: 2026-03-20
         source_citation: "Combined cap with non-clinical care contribution in residential aged care."
+      - value_aud: 137917.01
+        effective_from: 2026-03-20
+        effective_to: 2026-09-20
+        source_citation: "Indexed 20 March 2026."
 
   - key: means_test.asset_taper_pct
     value_percentage: 7.8
@@ -1680,117 +1720,162 @@ constants:
     effective_from: 2025-11-01
     source_type: primary_legislation
     source_url: "https://www.health.gov.au/sites/default/files/2025-12/support-at-home-program-participant-contributions.pdf"
-    source_citation: "Aged Care Act 2024 - asset taper for SAH means-test. 7.8% of assets above the assets-free area contributes."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_citation: "Aged Care Act 2024 - asset taper for SAH means-test. 7.8% of assets above the assets-free area contributes. Unchanged by the 20/09/2026 schedule."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
 
   - key: means_test.assets_free_area.couple_homeowner
-    value_aud: 481500.0
+    value_aud: 499000.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test assets-free area, couple homeowner (combined)."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test assets-free area, couple homeowner combined minimum = $499,000. Schedule of Contributions, effective 20/09/2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 481500.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test assets-free area, couple homeowner (combined), Sep 2025 schedule."
 
   - key: means_test.assets_free_area.couple_non_homeowner
-    value_aud: 726500.0
+    value_aud: 766000.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test assets-free area, couple non-homeowner (481500 + 245000)."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test assets-free area, couple non-homeowner combined minimum = $766,000. Schedule of Contributions, effective 20/09/2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 726500.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test assets-free area, couple non-homeowner, Sep 2025 schedule."
 
   - key: means_test.assets_free_area.individual_homeowner
-    value_aud: 321500.0
+    value_aud: 333000.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test assets-free area, single homeowner. Principal home exempt."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test assets-free area, single homeowner minimum = $333,000. Schedule of Contributions, effective 20/09/2026. Principal home exempt."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 321500.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test assets-free area, single homeowner, Sep 2025 schedule."
 
   - key: means_test.assets_free_area.individual_non_homeowner
-    value_aud: 566500.0
+    value_aud: 600000.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test assets-free area, single non-homeowner (321500 + 245000 homeowner offset)."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test assets-free area, single non-homeowner minimum = $600,000. Schedule of Contributions, effective 20/09/2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 566500.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test assets-free area, single non-homeowner, Sep 2025 schedule."
 
   - key: means_test.income_free_area.couple_member
-    value_aud: 4940.0
+    value_aud: 5148.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test income-free area, couple living together, per partner. Combined 9880 / 2."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test income-free area, couple living together, per partner. Combined $10,296 / 2. Schedule of Contributions, effective 20/09/2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 4940.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test income-free area, couple per partner, Sep 2025 schedule."
 
   - key: means_test.income_free_area.individual
-    value_aud: 5668.0
+    value_aud: 5876.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test income-free area, single. Income at or below this produces zero income reduction."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test income-free area, single. Non-pension income minimum = $5,876. Schedule of Contributions, effective 20/09/2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 5668.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test income-free area, single, Sep 2025 schedule."
 
   - key: means_test.income_limit.couple
-    value_aud: 80884.0
+    value_aud: 84038.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test income limit (couple, per partner). Combined 161768 / 2."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test income limit (couple, per partner). Combined $168,076 / 2. Schedule of Contributions, effective 20/09/2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 80884.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test income limit, couple per partner, Sep 2025 schedule."
 
   - key: means_test.income_limit.couple_separated_by_illness
-    value_aud: 101105.0
+    value_aud: 105048.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test income limit, couple separated by illness. Each partner assessed as single."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test income limit, couple separated by illness. Each assessed as single; combined $210,096. Schedule of Contributions, effective 20/09/2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 101105.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test income limit, couple separated by illness, Sep 2025 schedule."
 
   - key: means_test.income_limit.individual
-    value_aud: 101105.0
+    value_aud: 105048.0
     unit: AUD
-    effective_from: 2025-09-20
+    effective_from: 2026-09-20
     indexation_schedule: 20_march_20_september
-    next_review_due: 2026-09-20
+    next_review_due: 2027-03-20
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/sites/default/files/2026-03/schedule-of-contributions-for-support-at-home-services.pdf"
-    source_citation: "SAH means-test income limit, single. Aligns with CSHC upper income limit."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/resources/publications/schedule-of-contributions-for-support-at-home-services"
+    source_citation: "SAH means-test income limit, single. Non-pension income maximum = $105,048. Schedule of Contributions, effective 20/09/2026."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
+    history:
+      - value_aud: 101105.0
+        effective_from: 2025-09-20
+        effective_to: 2026-09-20
+        source_citation: "SAH means-test income limit, single, Sep 2025 schedule."
 
   - key: means_test.income_taper_pct
     value_percentage: 50.0
@@ -1798,9 +1883,9 @@ constants:
     effective_from: 2025-11-01
     source_type: primary_legislation
     source_url: "https://www.health.gov.au/sites/default/files/2025-12/support-at-home-program-participant-contributions.pdf"
-    source_citation: "Aged Care Act 2024 - income taper for SAH means-test. 50% of income above the income-free area contributes."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_citation: "Aged Care Act 2024 - income taper for SAH means-test. 50% of income above the income-free area contributes. Unchanged by the 20/09/2026 schedule."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
 
   - key: pathway.end_of_life.daily_aud
     value_aud: 298.04
@@ -2218,19 +2303,23 @@ constants:
     last_verified_by: antony
 
   - key: transitional_hcp.1.annual_aud
-    value_aud: 11272.15
+    value_aud: 11294.22
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Transitioned HCP Level 1, effective 1 July 2026. Quarterly $2,818.04."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Transitioned HCP Level 1, effective 1 October 2026. Quarterly $2,823.55."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 10986.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "30.10 × 365 = 10,986.50 → rounded to 10,986."
+      - value_aud: 11272.15
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Transitioned HCP Level 1, effective 1 July 2026. Quarterly $2,818.04."
 
   - key: transitional_hcp.1.daily_base_individual
     value_aud: 27.09
@@ -2261,19 +2350,23 @@ constants:
     last_verified_by: antony
 
   - key: transitional_hcp.2.annual_aud
-    value_aud: 19821.76
+    value_aud: 19860.56
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Transitioned HCP Level 2, effective 1 July 2026. Quarterly $4,955.44."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Transitioned HCP Level 2, effective 1 October 2026. Quarterly $4,965.14."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 19319.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "52.93 × 365 = 19,319.45 → rounded to 19,319."
+      - value_aud: 19821.76
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Transitioned HCP Level 2, effective 1 July 2026. Quarterly $4,955.44."
 
   - key: transitional_hcp.2.daily_base_individual
     value_aud: 47.64
@@ -2303,19 +2396,23 @@ constants:
     last_verified_by: antony
 
   - key: transitional_hcp.3.annual_aud
-    value_aud: 43148.74
+    value_aud: 43233.21
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Transitioned HCP Level 3, effective 1 July 2026. Quarterly $10,787.18."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Transitioned HCP Level 3, effective 1 October 2026. Quarterly $10,808.30."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 42055.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "115.22 × 365 = 42,055.30 → rounded to 42,055."
+      - value_aud: 43148.74
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Transitioned HCP Level 3, effective 1 July 2026. Quarterly $10,787.18."
 
   - key: transitional_hcp.3.daily_base_individual
     value_aud: 103.7
@@ -2345,19 +2442,23 @@ constants:
     last_verified_by: antony
 
   - key: transitional_hcp.4.annual_aud
-    value_aud: 65415.91
+    value_aud: 65543.98
     unit: AUD
-    effective_from: 2026-07-01
+    effective_from: 2026-10-01
     source_type: delegated_instrument
-    source_url: "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
-    source_citation: "Transitioned HCP Level 4, effective 1 July 2026. Quarterly $16,353.98."
-    last_verified_at: 2026-07-08
-    last_verified_by: antony
+    source_url: "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
+    source_citation: "Transitioned HCP Level 4, effective 1 October 2026. Quarterly $16,385.99."
+    last_verified_at: 2026-10-22
+    last_verified_by: wayly-editorial
     history:
       - value_aud: 63758.0
         effective_from: 2025-11-01
         effective_to: 2026-07-01
         source_citation: "174.68 × 365 = 63,758.20 → rounded to 63,758."
+      - value_aud: 65415.91
+        effective_from: 2026-07-01
+        effective_to: 2026-10-01
+        source_citation: "Transitioned HCP Level 4, effective 1 July 2026. Quarterly $16,353.98."
 
   - key: transitional_hcp.4.daily_base_individual
     value_aud: 157.21
