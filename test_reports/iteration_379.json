@@ -1,0 +1,39 @@
+{
+  "summary": "Verified both reported visual bugs on the Provider Price Checker result view are fixed. BUG 1 (pc-position overflow): heading wraps and is fully visible at both desktop (1440px) and narrow mobile (390px) widths with no horizontal clipping or page overflow. BUG 2 (card distinction): pc-stat-charged renders teal-tinted bg, pc-range renders plum-tinted bg, pc-your-share renders a distinct tint (sage in the clinical-mode case tested, clay/terracotta in default/band/unavailable/picker modes per code) — three cards visually distinguishable. Regression check: end-to-end flow (login → price-checker form → submit high rate → quality guard dismissed → result rendered) runs without console or page errors. Minor finding: the intended coloured left-accent border on pc-stat-charged and pc-range is currently overridden by `border-kindred` from the same class list, so the 5px left bar paints in grey instead of teal/plum (background tint still carries the visual distinction).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {
+          "screen": "Provider Price Checker result cards (pc-stat-charged, pc-range, pc-range-unavailable)",
+          "issues": [
+            "Computed border-left-color on pc-stat-charged resolves to kindred grey rgb(226,231,236) instead of #0E4D52 (teal). Same for pc-range / pc-range-unavailable — the 5px left-accent bar paints grey instead of plum #5F4E76. Cause: Tailwind class order — `border border-kindred` emits `border-color` which overrides the later `border-l-[#0E4D52]` / `border-l-[#5F4E76]` border-left-color because of generated-utility ordering. Backgrounds still provide clear colour distinction so the user complaint (cards all looked the same) is resolved. Fix: either drop `border-kindred` from these three cards and set each side explicitly, or use `[border-left-color:#0E4D52]` arbitrary-property to raise specificity, or reorder so colour utilities come after border-kindred in the className string isn't enough — Tailwind utilities share specificity, so moving border-kindred into a conditional/variant that doesn't touch the left side (e.g. `border-y border-r border-kindred`) is the cleanest fix."
+          ]
+        }
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter379_pc_desktop.jpeg",
+    "/app/test_reports/iter379_pc_mobile.jpeg",
+    "/app/test_reports/iter379_pc_mobile_cards.jpeg"
+  ],
+  "action_items": [
+    "(Optional / low priority) Fix the three stat-card left-accent bars so they render in their intended brand colours (teal / clay / plum) rather than kindred grey — the border-kindred utility is overriding border-l-[color]. Suggested fix: replace `border border-kindred border-l-[5px] border-l-[<color>]` with `border-y border-r border-kindred border-l-[5px] border-l-[<color>]` on pc-stat-charged, pc-range, and pc-range-unavailable (PriceCheckerTool.jsx lines ~786, 794, 889). The StatCard component also needs updating. The default/band/picker/unavailable ShareStatCard variants on pc-your-share have the same pattern and should get the same fix."
+  ],
+  "critical_code_review_comments": [
+    "PriceCheckerTool.jsx is 1006 lines — exceeds the 700-line guideline. Consider splitting sub-components (CapDeferralNote, GrandfatheredGate, QualityGuardPanel, NonCheckablePanel, ResultCard, StatCard, ShareStatCard, HowThisWorksPanel) into their own files to improve maintainability."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "100% for the two reported bugs; minor cosmetic finding on left-accent border colour"},
+  "test_credentials": "cathy@example.com / testpass123 (used)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Price Checker result view: pc-position heading now has `text-2xl sm:text-3xl break-words` (no whitespace-nowrap) — verified to wrap properly at 1440 and 390 widths. Three stat cards have distinct bg tints (teal / clay / plum). Minor: left-accent bars currently paint grey because `border-kindred` in the same className overrides `border-l-[color]` (Tailwind ordering). Not a blocker — bg tints alone meet the user's distinction requirement.",
+  "rca of the issue": "BUG 1 root cause was `whitespace-nowrap` on a long sentence inside a flex container — fixed by removing it and adding `break-words`. BUG 2 root cause was all three stat cards using the same `bg-primary-k/5` tint — fixed by giving each card an explicit brand-tinted background (teal/clay/plum at 10% alpha). Verified via computed-style introspection and screenshots at desktop + 390px mobile widths."
+}

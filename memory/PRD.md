@@ -1,5 +1,13 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — Provider Price Checker result-view visual fixes, agentic edits; web; testing_agent verified iter379):**
+- **Result heading overflow fixed.** `frontend/src/pages/tools/PriceCheckerTool.jsx` `pc-position` heading had `whitespace-nowrap` on a long sentence, bleeding off the right edge. Changed to `text-2xl sm:text-3xl leading-tight break-words` so it wraps and is fully visible. Verified by testing_agent at desktop (1440) and mobile (390) widths — no clipping/horizontal overflow.
+- **Three result stat cards now visually distinct.** Replaced the near-identical subtle `sect-teal`/`sect-clay`/`sect-sage` tints with clearly different brand tints + coloured left-accent bars: `pc-stat-charged` = teal `#0E4D52`, `pc-your-share` = clay `#A5512B`, `pc-range`/`pc-range-unavailable` = plum `#5F4E76`. Used `border-y border-r border-kindred border-l-[5px] border-l-[color]` so the kindred border colour doesn't override the coloured left accent (fix for the testing_agent's cosmetic finding). Card distinction verified by testing_agent.
+
+---
+
+# Wayly — current fork status (Jun 2026)
+
 **Just shipped (Jun 2026 — de-Emergent branding (splash + app icons) + Google/Apple auth verification; mobile; needs a new Publish build):**
 - **Emergent splash removed → Wayly splash.** `mobile/assets/images/splash-image.png` was the default Emergent template image ("Start building apps on emergent" + "e" logo). Replaced it with a Wayly-branded splash rendered from the official `WaylyMark` SVG — white "W" + clay dot, centred, transparent (teal `#0E4D52` splash background from app.json).
 - **App icons were ALSO the Emergent "e" — fixed too.** `icon.png` (iOS, opaque teal square, white W + clay dot) and `adaptive-icon.png` (Android foreground, white W within the ~66% safe zone; teal bg from app.json) regenerated from the Wayly mark. Not requested but critical for a published app (the launcher icon is permanent Emergent branding otherwise).

@@ -683,7 +683,7 @@ function ResultCard({ result, onAdmOpen, provider, selectedSnapshot, ceState, in
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
                         <div className="overline text-muted-k">How this compares</div>
-                        <div className={`mt-2 font-heading text-3xl leading-tight whitespace-nowrap ${tone.text}`} data-testid="pc-position">
+                        <div className={`mt-2 font-heading text-2xl sm:text-3xl leading-tight break-words ${tone.text}`} data-testid="pc-position">
                             {result.plain_language}
                         </div>
                         {result.distance_summary && (
@@ -783,7 +783,7 @@ function ResultCard({ result, onAdmOpen, provider, selectedSnapshot, ceState, in
                 <StatCard label="You are charged" amount={result.charged} unit={result.unit} testId="pc-stat-charged" />
                 <ShareStatCard share={result.your_share} unit={result.unit} />
                 {(result.lower != null && result.upper != null) ? (
-                    <div className="sect-sage border border-kindred rounded-xl p-4" data-testid="pc-range">
+                    <div className="bg-[#5F4E76]/[0.10] border-y border-r border-kindred border-l-[5px] border-l-[#5F4E76] rounded-xl p-4" data-testid="pc-range">
                         <div className="text-xs uppercase tracking-wider text-muted-k">Indicative range</div>
                         <div className="mt-1 text-2xl text-primary-k tabular-nums">
                             <NumberMono>{formatAUD2(result.lower)} to {formatAUD2(result.upper)}</NumberMono>
@@ -791,7 +791,7 @@ function ResultCard({ result, onAdmOpen, provider, selectedSnapshot, ceState, in
                         <div className="text-xs text-muted-k mt-0.5">DoH {formatSnapshotDate(result.source_date)}</div>
                     </div>
                 ) : (
-                    <div className="sect-sage border border-kindred rounded-xl p-4" data-testid="pc-range-unavailable">
+                    <div className="bg-[#5F4E76]/[0.10] border-y border-r border-kindred border-l-[5px] border-l-[#5F4E76] rounded-xl p-4" data-testid="pc-range-unavailable">
                         <div className="text-xs uppercase tracking-wider text-muted-k">Indicative range</div>
                         <div className="mt-1 text-sm text-muted-k">Not published for this service in the current DoH snapshot.</div>
                     </div>
@@ -886,7 +886,7 @@ function highlightNumbers(text) {
 
 function StatCard({ label, amount, unit, testId }) {
     return (
-        <div className="sect-teal border border-kindred rounded-xl p-4" data-testid={testId}>
+        <div className="bg-[#0E4D52]/[0.10] border-y border-r border-kindred border-l-[5px] border-l-[#0E4D52] rounded-xl p-4" data-testid={testId}>
             <div className="text-xs uppercase tracking-wider text-muted-k">{label}</div>
             <div className="mt-1 text-2xl text-primary-k tabular-nums"><NumberMono>{formatAUD2(amount)}</NumberMono></div>
             {unit && <div className="text-xs text-muted-k mt-0.5">{UNIT_WORD[unit] || `per ${unit}`}</div>}
@@ -899,7 +899,7 @@ function ShareStatCard({ share, unit }) {
     const testId = "pc-your-share";
     if (share.mode === "picker") {
         return (
-            <div className="sect-clay border border-kindred rounded-xl p-4" data-testid={testId}>
+            <div className="bg-[#A5512B]/[0.10] border-y border-r border-kindred border-l-[5px] border-l-[#A5512B] rounded-xl p-4" data-testid={testId}>
                 <div className="text-xs uppercase tracking-wider text-muted-k">Your share</div>
                 <div className="mt-1 text-sm text-muted-k">Choose your situation above to see your out-of-pocket per unit.</div>
             </div>
@@ -925,7 +925,7 @@ function ShareStatCard({ share, unit }) {
     }
     if (share.mode === "band") {
         return (
-            <div className="sect-clay border border-kindred rounded-xl p-4" data-testid={testId}>
+            <div className="bg-[#A5512B]/[0.10] border-y border-r border-kindred border-l-[5px] border-l-[#A5512B] rounded-xl p-4" data-testid={testId}>
                 <div className="text-xs uppercase tracking-wider text-muted-k">Your share (range)</div>
                 <div className="mt-1 text-lg text-primary-k tabular-nums">
                     {formatAUD2(share.band?.share_low || 0)} to {formatAUD2(share.band?.share_high || 0)}
@@ -936,14 +936,14 @@ function ShareStatCard({ share, unit }) {
     }
     if (share.mode === "unavailable") {
         return (
-            <div className="sect-clay border border-kindred rounded-xl p-4" data-testid={testId}>
+            <div className="bg-[#A5512B]/[0.10] border-y border-r border-kindred border-l-[5px] border-l-[#A5512B] rounded-xl p-4" data-testid={testId}>
                 <div className="text-xs uppercase tracking-wider text-muted-k">Your share</div>
                 <div className="mt-1 text-sm text-muted-k leading-snug">{share.explanation}</div>
             </div>
         );
     }
     return (
-        <div className="sect-clay border border-kindred rounded-xl p-4" data-testid={testId}>
+        <div className="bg-[#A5512B]/[0.10] border-y border-r border-kindred border-l-[5px] border-l-[#A5512B] rounded-xl p-4" data-testid={testId}>
             <div className="text-xs uppercase tracking-wider text-muted-k">Your share</div>
             <div className="mt-1 text-2xl text-primary-k tabular-nums"><NumberMono>{formatAUD2(share.amount || 0)}</NumberMono></div>
             {unit && <div className="text-xs text-muted-k mt-0.5">{UNIT_WORD[unit] || `per ${unit}`}</div>}
