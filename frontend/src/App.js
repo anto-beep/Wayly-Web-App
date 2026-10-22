@@ -74,6 +74,7 @@ const ResourcesIndex = lazy(() => import("@/pages/resources/ResourcesIndex"));
 const Glossary = lazy(() => import("@/pages/resources/Glossary"));
 const GlossaryTerm = lazy(() => import("@/pages/resources/GlossaryTerm"));
 const Templates = lazy(() => import("@/pages/resources/Templates"));
+const TemplateDetail = lazy(() => import("@/pages/resources/TemplateDetail"));
 const ArticlesIndex = lazy(() => import("@/pages/resources/Articles").then((m) => ({ default: m.default })));
 const ArticleDetail = lazy(() => import("@/pages/resources/Articles").then((m) => ({ default: m.ArticleDetail })));
 const BillingSuccess = lazy(() => import("@/pages/BillingSuccess"));
@@ -152,7 +153,7 @@ const About = lazy(() => import("@/pages/About"));
 const ChspPillar = lazy(() => import("@/pages/chsp/ChspContent").then((m) => ({ default: m.ChspPillar })));
 const ChspCaregiverGuide = lazy(() => import("@/pages/chsp/ChspContent").then((m) => ({ default: m.ChspCaregiverGuide })));
 const ChspVsSupportAtHome = lazy(() => import("@/pages/chsp/ChspContent").then((m) => ({ default: m.ChspVsSupportAtHome })));
-const ChspTransition2027 = lazy(() => import("@/pages/chsp/ChspContent").then((m) => ({ default: m.ChspTransition2027 })));
+const ChspExtension2029 = lazy(() => import("@/pages/chsp/ChspContent").then((m) => ({ default: m.ChspExtension2029 })));
 // Phase 8, custom error pages
 const NotFound = lazy(() => import("@/pages/NotFound"));
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -438,7 +439,8 @@ function App() {
                     <Route path="/chsp" element={<ChspPillar />} />
                     <Route path="/chsp/caregiver-guide" element={<ChspCaregiverGuide />} />
                     <Route path="/chsp/vs-support-at-home" element={<ChspVsSupportAtHome />} />
-                    <Route path="/chsp/transition-2027" element={<ChspTransition2027 />} />
+                    <Route path="/chsp/extension-2029" element={<ChspExtension2029 />} />
+                    <Route path="/chsp/transition-2027" element={<Navigate to="/chsp/extension-2029" replace />} />
                     <Route path="/trust" element={<Trust />} />
                     <Route path="/demo" element={<Demo />} />
                     <Route path="/contact" element={<Contact />} />
@@ -448,6 +450,7 @@ function App() {
                     <Route path="/resources/glossary" element={<Glossary />} />
                     <Route path="/resources/glossary/:slug" element={<GlossaryTerm />} />
                     <Route path="/resources/templates" element={<Templates />} />
+                    <Route path="/resources/templates/:slug" element={<TemplateDetail />} />
                     <Route path="/resources/articles" element={<ArticlesIndex />} />
                     <Route path="/resources/articles/:slug" element={<ArticleDetail />} />
                     {/* Public alias for SEO-canonical /articles/<slug> URLs. */}

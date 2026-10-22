@@ -89,7 +89,7 @@ export const SEO = {
 
     // ----- AI TOOLS (each is a SoftwareApplication) -----
     toolStatementDecoder: {
-        title: "Support at Home Statement Decoder · Wayly",
+        title: "Statement Decoder: Check A Support At Home Statement",
         description:
             "Upload your Support at Home statement and Wayly's AI explains every charge in plain English, flags anomalies, double-billing and provider errors.",
         path: "/ai-tools/statement-decoder",
@@ -112,7 +112,7 @@ export const SEO = {
         ],
     },
     toolBudgetCalculator: {
-        title: "Support at Home Budget Calculator · Wayly",
+        title: "Budget Calculator: Support At Home Quarterly Budget",
         description:
             "Estimate your Support at Home quarterly budget by classification, see rollover allowances and plan care spending, works for legacy HCP budgets too.",
         path: "/ai-tools/budget-calculator",
@@ -146,7 +146,7 @@ export const SEO = {
         ],
     },
     toolClassification: {
-        title: "Support at Home Classification Self-Check",
+        title: "Classification Self-Check: Which Level Fits? | Wayly",
         description:
             "Quick self-check tool, answer 10 plain-English questions and Wayly estimates which Support at Home classification (1, 8) you'd likely be assessed at.",
         path: "/ai-tools/classification-self-check",
@@ -164,7 +164,7 @@ export const SEO = {
             "Draft letters to My Aged Care, providers, ACQSC, or the Ombudsman. Track responses and escalate on time.",
     },
     toolContribution: {
-        title: "Support at Home Contribution Estimator",
+        title: "Contribution Estimator: Support At Home Fees | Wayly",
         description:
             "Estimate your Support at Home means-tested contributions before your assessment, Wayly walks you through the income and assets test in plain English.",
         path: "/ai-tools/contribution-estimator",
@@ -189,7 +189,7 @@ export const SEO = {
         toolDesc: "Plain-English answers about the Support at Home program, grounded in the Aged Care Act 2024.",
     },
     toolInvoiceChecker: {
-        title: "Aged Care Invoice Checker · Wayly",
+        title: "Invoice Checker: Check An Aged Care Invoice | Wayly",
         description:
             "Upload the separate contribution invoice your Support at Home provider sends. Wayly checks it against your funding, expected contribution and the program rules, and flags anything worth raising before you pay.",
         path: "/ai-tools/invoice-checker",

@@ -53,7 +53,7 @@ const TOOL_LINKS = {
     "classification-self-check": {
         articleSlug: "wayly-classification-self-check-support-at-home-levels",
         articleTitle: "Inside the Wayly Classification Self-Check",
-        articleSub: "How the 12 questions map to Levels 1 through 8",
+        articleSub: "How the self-check maps to Levels 1 through 8",
         pillarHref: "/support-at-home-levels",
         pillarLabel: "Support at Home levels",
         pillarSub: "Every classification explained",

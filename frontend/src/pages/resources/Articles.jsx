@@ -9,7 +9,7 @@ import { ARTICLES as STATIC_ARTICLES } from "@/data/resources";
 import { SEO_ARTICLES_2026 } from "@/data/seoArticles2026";
 import { SEO_TOOL_ARTICLES } from "@/data/seoToolArticles";
 import { ARTICLE_PILLAR_MAP } from "@/data/articlePillars";
-import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown, Twitter, Linkedin, Mail, Link2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown, Twitter, Linkedin, Mail, Link2, Sparkles, Search, X } from "lucide-react";
 
 import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
@@ -90,14 +90,35 @@ function faqLd(faqs) {
     };
 }
 
+// Derive a browse category for an article. Uses an explicit `category` field
+// when present, otherwise infers one from the slug, tags and title so the
+// filter works across structured, CMS and older static articles.
+function deriveCategory(a) {
+    if (a.category) return a.category;
+    const hay = `${a.slug || ""} ${(a.tags || []).join(" ")} ${a.title || ""}`.toLowerCase();
+    if (hay.includes("chsp")) return "CHSP";
+    if (hay.includes("complaint") || hay.includes("commission")) return "Complaints";
+    if (hay.includes("at-hm") || hay.includes("assistive") || hay.includes("home modification") || hay.includes("equipment")) return "Equipment & AT-HM";
+    if (hay.includes("invoice") || hay.includes("statement")) return "Billing & statements";
+    if (hay.includes("reassessment") || hay.includes("assessment")) return "Assessment";
+    if (hay.includes("contribution") || hay.includes("cap") || hay.includes("fee") || hay.includes("hardship") || hay.includes("cost")) return "Fees & contributions";
+    if (hay.includes("level") || hay.includes("classification") || hay.includes("budget")) return "Levels & budgets";
+    if (hay.includes("switch") || hay.includes("provider")) return "Changing provider";
+    return "Support at Home basics";
+}
+
+const _artDate = (a) => a.published_at || a.updated_at || "";
+
 export default function ArticlesIndex() {
     const [articles, setArticles] = useState(null);
+    const [category, setCategory] = useState("All");
+    const [query, setQuery] = useState("");
+    const [sort, setSort] = useState("newest");
+
     useEffect(() => {
         axios.get(`${API}/public/cms/articles`)
             .then((r) => {
                 const cms = r.data.articles || [];
-                // Always include the structured SEO articles first (newest), then CMS,
-                // then the older static catalog as a fallback.
                 const cmsSlugs = new Set(cms.map((a) => a.slug));
                 const structured = STRUCTURED_SEO_ARTICLES.filter((a) => !cmsSlugs.has(a.slug));
                 const olderStatic = STATIC_ARTICLES.filter((a) => !cmsSlugs.has(a.slug) && !structured.find((s) => s.slug === a.slug));
@@ -105,7 +126,29 @@ export default function ArticlesIndex() {
             })
             .catch(() => setArticles(ALL_STATIC_ARTICLES));
     }, []);
-    const list = articles || ALL_STATIC_ARTICLES;
+
+    const baseList = articles || ALL_STATIC_ARTICLES;
+
+    const categories = useMemo(() => {
+        const counts = {};
+        baseList.forEach((a) => { const c = deriveCategory(a); counts[c] = (counts[c] || 0) + 1; });
+        return Object.keys(counts).sort((x, y) => counts[y] - counts[x]);
+    }, [baseList]);
+
+    const q = query.trim().toLowerCase();
+    const list = useMemo(() => {
+        let out = baseList.filter((a) => {
+            if (category !== "All" && deriveCategory(a) !== category) return false;
+            if (!q) return true;
+            const hay = `${a.title || ""} ${a.excerpt || ""} ${(a.tags || []).join(" ")}`.toLowerCase();
+            return hay.includes(q);
+        });
+        out = [...out].sort((a, b) => sort === "oldest"
+            ? String(_artDate(a)).localeCompare(String(_artDate(b)))
+            : String(_artDate(b)).localeCompare(String(_artDate(a))));
+        return out;
+    }, [baseList, category, q, sort]);
+
     return (
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.articlesIndex} />
@@ -113,18 +156,73 @@ export default function ArticlesIndex() {
             <section className="mx-auto max-w-5xl px-6 pt-12 pb-6" data-testid="articles-page">
                 <Link to="/resources" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> Resources</Link>
                 <span className="overline mt-6 block">Articles</span>
-                <h1 className="font-heading text-5xl text-primary-k tracking-tight mt-4 leading-tight">{list.length} pieces, no fluff.</h1>
+                <h1 className="font-heading text-5xl text-primary-k tracking-tight mt-4 leading-tight">Plain-English aged care, explained.</h1>
                 <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
                     The things Australian families ask us most often about Support at Home and Home Care Packages, written in plain English, with program citations behind every claim.
                 </p>
             </section>
-            <section className="mx-auto max-w-5xl px-6 pb-20 grid sm:grid-cols-2 gap-5">
+
+            {/* Search + filters */}
+            <section className="mx-auto max-w-5xl px-6 pb-6" data-testid="articles-controls">
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-k" />
+                        <input
+                            type="text"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search articles by topic or keyword"
+                            data-testid="articles-search"
+                            className="w-full rounded-full border border-kindred bg-surface pl-10 pr-10 py-2.5 text-sm text-primary-k placeholder:text-muted-k focus:outline-none focus:ring-2 focus:ring-gold"
+                        />
+                        {query && (
+                            <button type="button" onClick={() => setQuery("")} aria-label="Clear search" data-testid="articles-search-clear" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-k hover:text-primary-k"><X className="h-4 w-4" /></button>
+                        )}
+                    </div>
+                    <select
+                        value={sort}
+                        onChange={(e) => setSort(e.target.value)}
+                        data-testid="articles-sort"
+                        className="rounded-full border border-kindred bg-surface px-4 py-2.5 text-sm text-primary-k focus:outline-none focus:ring-2 focus:ring-gold"
+                    >
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                    </select>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2" data-testid="articles-category-filters">
+                    {["All", ...categories].map((c) => {
+                        const active = category === c;
+                        return (
+                            <button
+                                key={c}
+                                type="button"
+                                onClick={() => setCategory(c)}
+                                data-testid={`articles-category-${c.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                                className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${active ? "bg-primary-k text-white border-primary-k" : "bg-surface text-primary-k border-kindred hover:bg-surface-2"}`}
+                            >
+                                {c}
+                            </button>
+                        );
+                    })}
+                </div>
+                <p className="mt-3 text-sm text-muted-k" data-testid="articles-result-count">{list.length} {list.length === 1 ? "article" : "articles"}</p>
+            </section>
+
+            <section className="mx-auto max-w-5xl px-6 pb-20 grid sm:grid-cols-2 gap-5" data-testid="articles-grid">
+                {list.length === 0 && (
+                    <div className="sm:col-span-2 rounded-2xl border border-kindred bg-surface p-10 text-center" data-testid="articles-empty">
+                        <p className="text-muted-k">No articles match "{query}".</p>
+                        <button type="button" onClick={() => { setQuery(""); setCategory("All"); }} className="mt-3 text-sm text-primary-k underline">Clear filters</button>
+                    </div>
+                )}
                 {list.map((a) => (
-                    <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 transition-colors" data-testid={`articles-card-${a.slug}`}>
-                        <h2 className="font-heading text-xl text-primary-k">{a.title}</h2>
+                    <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 hover:border-[#2BC4D6] transition-colors" data-testid={`articles-card-${a.slug}`}>
+                        <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted-k" data-testid="articles-card-category">{deriveCategory(a)}</span>
+                        <h2 className="font-heading text-xl text-primary-k mt-3">{a.title}</h2>
                         <p className="mt-2 text-sm text-muted-k leading-relaxed">{a.excerpt}</p>
+                        {_artDate(a) && <p className="mt-3 text-xs text-muted-k" data-testid="articles-card-date">{fmtDate(_artDate(a))}</p>}
                         {a.is_draft_needs_review && (
-                            <span className="mt-3 inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-100 border border-amber-300 rounded px-2 py-0.5">DRAFT, NEEDS REVIEW</span>
+                            <span className="mt-2 inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-100 border border-amber-300 rounded px-2 py-0.5">DRAFT, NEEDS REVIEW</span>
                         )}
                         <span className="mt-3 inline-flex items-center gap-1 text-sm text-primary-k">Read <ArrowRight className="h-3.5 w-3.5" /></span>
                     </Link>

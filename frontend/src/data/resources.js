@@ -86,10 +86,10 @@ export const TEMPLATES = [
     },
     {
         slug: "care-plan-questions",
-        title: "Care Plan Review, 12 Questions",
-        desc: "Checklist of the 12 most important questions to bring to your annual care plan review.",
-        cta: "Use the AI tool",
-        href: "/ai-tools/care-plan-reviewer",
+        title: "Care Plan Review Question Checklist",
+        desc: "Questions to take to your care plan review, grouped by services, money, care management and what happens next.",
+        cta: "Open the template",
+        href: "/resources/templates/care-plan-review-questions",
     },
     {
         slug: "advance-care-directive",

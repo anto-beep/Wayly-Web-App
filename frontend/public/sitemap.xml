@@ -87,7 +87,7 @@
   <url><loc>https://wayly.com.au/chsp</loc><lastmod>2026-08-04</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://wayly.com.au/chsp/caregiver-guide</loc><lastmod>2026-08-04</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://wayly.com.au/chsp/vs-support-at-home</loc><lastmod>2026-08-04</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wayly.com.au/chsp/transition-2027</loc><lastmod>2026-08-04</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://wayly.com.au/chsp/extension-2029</loc><lastmod>2026-08-23</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://wayly.com.au/resources/articles/what-changes-for-hcp-families-july-2026</loc><lastmod>2026-06-13</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://wayly.com.au/resources/articles/reassessment-requests-how-and-when</loc><lastmod>2026-06-13</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://wayly.com.au/resources/articles/personal-care-becomes-free-1-october-2026</loc><lastmod>2026-06-13</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
@@ -127,4 +127,26 @@
   <url><loc>https://wayly.com.au/resources/articles/the-three-streams</loc><lastmod>2026-09-01</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://wayly.com.au/resources/articles/voice-first-for-the-participant</loc><lastmod>2026-09-01</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://wayly.com.au/resources/articles/what-kindred-doesnt-do</loc><lastmod>2026-09-01</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/articles/how-to-complain-about-aged-care-commission</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://wayly.com.au/resources/articles/at-hm-scheme-assistive-technology-home-modifications</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/support-at-home-statement-query-letter</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/rate-query-letter</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/aged-care-invoice-dispute-letter</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/aged-care-overcharge-refund-request</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/care-management-fee-query</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/personal-care-contribution-check-letter</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/request-service-records-visit-logs</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/aged-care-financial-hardship-application</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/services-australia-contribution-query</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/final-statement-and-unspent-funds-request</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/my-aged-care-reassessment-request</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/gp-letter-request-for-aged-care-reassessment</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/care-plan-review-questions</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/aged-care-complaint-letter-to-provider</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/aged-care-quality-and-safety-commission-complaint</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/opan-aged-care-advocate-call-sheet</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/switching-support-at-home-providers-checklist</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/registered-supporter-checklist</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/aged-care-family-meeting-agenda</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://wayly.com.au/resources/templates/advance-care-planning-conversation-guide</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>

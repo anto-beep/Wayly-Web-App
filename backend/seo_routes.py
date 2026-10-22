@@ -81,6 +81,30 @@ STATIC_PAGES = [
     # Oct 2026 · pillar refresh (A1 + A6), figures live from INDEX-1
     ("/resources/articles/support-at-home-explained", "0.9", "monthly"),
     ("/resources/articles/support-at-home-no-worse-off", "0.9", "monthly"),
+    # Oct 2026 · complaints + AT-HM articles (templates library build)
+    ("/resources/articles/how-to-complain-about-aged-care-commission", "0.9", "monthly"),
+    ("/resources/articles/at-hm-scheme-assistive-technology-home-modifications", "0.9", "monthly"),
+    # Oct 2026 · Templates library (20 individual template pages)
+    ("/resources/templates/support-at-home-statement-query-letter", "0.7", "monthly"),
+    ("/resources/templates/rate-query-letter", "0.7", "monthly"),
+    ("/resources/templates/aged-care-invoice-dispute-letter", "0.7", "monthly"),
+    ("/resources/templates/aged-care-overcharge-refund-request", "0.7", "monthly"),
+    ("/resources/templates/care-management-fee-query", "0.7", "monthly"),
+    ("/resources/templates/personal-care-contribution-check-letter", "0.7", "monthly"),
+    ("/resources/templates/request-service-records-visit-logs", "0.7", "monthly"),
+    ("/resources/templates/aged-care-financial-hardship-application", "0.7", "monthly"),
+    ("/resources/templates/services-australia-contribution-query", "0.7", "monthly"),
+    ("/resources/templates/final-statement-and-unspent-funds-request", "0.7", "monthly"),
+    ("/resources/templates/my-aged-care-reassessment-request", "0.7", "monthly"),
+    ("/resources/templates/gp-letter-request-for-aged-care-reassessment", "0.7", "monthly"),
+    ("/resources/templates/care-plan-review-questions", "0.7", "monthly"),
+    ("/resources/templates/aged-care-complaint-letter-to-provider", "0.7", "monthly"),
+    ("/resources/templates/aged-care-quality-and-safety-commission-complaint", "0.7", "monthly"),
+    ("/resources/templates/opan-aged-care-advocate-call-sheet", "0.7", "monthly"),
+    ("/resources/templates/switching-support-at-home-providers-checklist", "0.7", "monthly"),
+    ("/resources/templates/registered-supporter-checklist", "0.7", "monthly"),
+    ("/resources/templates/aged-care-family-meeting-agenda", "0.7", "monthly"),
+    ("/resources/templates/advance-care-planning-conversation-guide", "0.7", "monthly"),
     # Phase 4 Batch 1, Support at Home levels hub + 8 level pages (Feb 2026)
     ("/support-at-home-levels", "0.9", "monthly"),
     ("/support-at-home-levels/level-1", "0.7", "monthly"),
@@ -124,7 +148,7 @@ STATIC_PAGES = [
     ("/chsp", "0.9", "monthly"),
     ("/chsp/caregiver-guide", "0.8", "monthly"),
     ("/chsp/vs-support-at-home", "0.8", "monthly"),
-    ("/chsp/transition-2027", "0.8", "monthly"),
+    ("/chsp/extension-2029", "0.9", "monthly"),
 ]
 
 
@@ -141,6 +165,10 @@ STATIC_PAGE_MODIFIED = {
     # Oct 2026 · new pillar articles (A1 + A6) shipped with live INDEX-1 figures.
     "/resources/articles/support-at-home-explained": "2026-10-02",
     "/resources/articles/support-at-home-no-worse-off": "2026-10-02",
+    # Oct 2026 · complaints + AT-HM articles.
+    "/resources/articles/how-to-complain-about-aged-care-commission": "2026-10-22",
+    "/resources/articles/at-hm-scheme-assistive-technology-home-modifications": "2026-10-22",
+    "/chsp/extension-2029": "2026-08-23",
 }
 
 

@@ -176,6 +176,7 @@ async def apply_reseed_for_authoritative_keys(seed_rows: list[dict]) -> None:
         "transitional_hcp.",
         "athm.", "at_hm.",
         "pathway.", "supplement.",
+        "lifetime_cap.",
     )
     seed_by_key_eff: dict[tuple[str, str], dict] = {}
     for r in seed_rows:

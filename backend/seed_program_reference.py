@@ -31,6 +31,8 @@ DOH = "https://www.health.gov.au/our-work/support-at-home"
 MAC = "https://www.myagedcare.gov.au"
 # Effective 1 July 2026 indexation source (classifications & budgets + schedule).
 SAH_JUL2026 = "https://www.health.gov.au/resources/publications/support-at-home-program-classifications-and-budgets"
+# Effective 1 October 2026 indexation source (classifications & budgets).
+SAH_OCT2026 = "https://www.health.gov.au/sites/default/files/2026-09/support-at-home-program-classifications-and-budgets_1.pdf"
 
 SEED_ROWS: List[dict] = [
     # ---------- Classification annual budgets (8 ongoing levels) ----------
@@ -123,32 +125,64 @@ SEED_ROWS: List[dict] = [
     # and budgets" + "Schedule of Subsidies and Supplements for Support at Home"
     # (both July 2026). Annual amounts are published to the cent; the official
     # quarterly budget is annual / 4 and INCLUDES the 10% care-management slice.
-    _row("classification_annual.1", 11010.01, "2026-07-01", source=SAH_JUL2026,
+    _row("classification_annual.1", 11010.01, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Effective 1 July 2026. Quarterly budget $2,752.50."),
-    _row("classification_annual.2", 16451.35, "2026-07-01", source=SAH_JUL2026,
+    _row("classification_annual.2", 16451.35, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Effective 1 July 2026. Quarterly budget $4,112.84."),
-    _row("classification_annual.3", 22536.81, "2026-07-01", source=SAH_JUL2026,
+    _row("classification_annual.3", 22536.81, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Effective 1 July 2026. Quarterly budget $5,634.20."),
-    _row("classification_annual.4", 30468.51, "2026-07-01", source=SAH_JUL2026,
+    _row("classification_annual.4", 30468.51, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Effective 1 July 2026. Quarterly budget $7,617.13."),
-    _row("classification_annual.5", 40729.53, "2026-07-01", source=SAH_JUL2026,
+    _row("classification_annual.5", 40729.53, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Effective 1 July 2026. Quarterly budget $10,182.38."),
-    _row("classification_annual.6", 49365.27, "2026-07-01", source=SAH_JUL2026,
+    _row("classification_annual.6", 49365.27, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Effective 1 July 2026. Quarterly budget $12,341.32."),
-    _row("classification_annual.7", 59660.00, "2026-07-01", source=SAH_JUL2026,
+    _row("classification_annual.7", 59660.00, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Effective 1 July 2026. Quarterly budget $14,915.00."),
-    _row("classification_annual.8", 80137.12, "2026-07-01", source=SAH_JUL2026,
+    _row("classification_annual.8", 80137.12, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Effective 1 July 2026. Quarterly budget $20,034.28."),
 
+    # ---------- 1 October 2026 indexation, ongoing classification annual budgets ----------
+    # Effective 1 October 2026. Source: DoH "Support at Home program classifications
+    # and budgets, October 2026" fact sheet + My Aged Care "Support at Home costs and
+    # contributions" (current as of 01/10/2026). Quarterly budget = annual / 4 and
+    # INCLUDES the 10% care-management slice. Verified 22/10/2026.
+    _row("classification_annual.1", 11031.56, "2026-10-01", source=SAH_OCT2026,
+         notes="Effective 1 October 2026. Quarterly budget $2,757.89."),
+    _row("classification_annual.2", 16483.55, "2026-10-01", source=SAH_OCT2026,
+         notes="Effective 1 October 2026. Quarterly budget $4,120.89."),
+    _row("classification_annual.3", 22580.93, "2026-10-01", source=SAH_OCT2026,
+         notes="Effective 1 October 2026. Quarterly budget $5,645.23."),
+    _row("classification_annual.4", 30528.15, "2026-10-01", source=SAH_OCT2026,
+         notes="Effective 1 October 2026. Quarterly budget $7,632.04."),
+    _row("classification_annual.5", 40809.27, "2026-10-01", source=SAH_OCT2026,
+         notes="Effective 1 October 2026. Quarterly budget $10,202.32."),
+    _row("classification_annual.6", 49461.91, "2026-10-01", source=SAH_OCT2026,
+         notes="Effective 1 October 2026. Quarterly budget $12,365.48."),
+    _row("classification_annual.7", 59776.80, "2026-10-01", source=SAH_OCT2026,
+         notes="Effective 1 October 2026. Quarterly budget $14,944.20."),
+    _row("classification_annual.8", 80294.00, "2026-10-01", source=SAH_OCT2026,
+         notes="Effective 1 October 2026. Quarterly budget $20,073.50."),
+
     # ---------- July 2026 indexation, transitioned HCP annual amounts ----------
-    _row("transitional_hcp.1.annual_aud", 11272.15, "2026-07-01", source=SAH_JUL2026,
+    _row("transitional_hcp.1.annual_aud", 11272.15, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Transitioned HCP Level 1, effective 1 July 2026. Quarterly $2,818.04."),
-    _row("transitional_hcp.2.annual_aud", 19821.76, "2026-07-01", source=SAH_JUL2026,
+    _row("transitional_hcp.2.annual_aud", 19821.76, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Transitioned HCP Level 2, effective 1 July 2026. Quarterly $4,955.44."),
-    _row("transitional_hcp.3.annual_aud", 43148.74, "2026-07-01", source=SAH_JUL2026,
+    _row("transitional_hcp.3.annual_aud", 43148.74, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Transitioned HCP Level 3, effective 1 July 2026. Quarterly $10,787.18."),
-    _row("transitional_hcp.4.annual_aud", 65415.91, "2026-07-01", source=SAH_JUL2026,
+    _row("transitional_hcp.4.annual_aud", 65415.91, "2026-07-01", eff_to="2026-10-01", source=SAH_JUL2026,
          notes="Transitioned HCP Level 4, effective 1 July 2026. Quarterly $16,353.98."),
+
+    # ---------- 1 October 2026 indexation, transitioned HCP annual amounts ----------
+    _row("transitional_hcp.1.annual_aud", 11294.22, "2026-10-01", source=SAH_OCT2026,
+         notes="Transitioned HCP Level 1, effective 1 October 2026. Quarterly $2,823.55."),
+    _row("transitional_hcp.2.annual_aud", 19860.56, "2026-10-01", source=SAH_OCT2026,
+         notes="Transitioned HCP Level 2, effective 1 October 2026. Quarterly $4,965.14."),
+    _row("transitional_hcp.3.annual_aud", 43233.21, "2026-10-01", source=SAH_OCT2026,
+         notes="Transitioned HCP Level 3, effective 1 October 2026. Quarterly $10,808.30."),
+    _row("transitional_hcp.4.annual_aud", 65543.98, "2026-10-01", source=SAH_OCT2026,
+         notes="Transitioned HCP Level 4, effective 1 October 2026. Quarterly $16,385.99."),
 
     # ---------- Care management deduction and rollover ----------
     _row("care_management.cap_pct", 0.10, "2025-11-01", source=DOH,
@@ -166,10 +200,16 @@ SEED_ROWS: List[dict] = [
     _row("lifetime_cap.no_worse_off", 84571.66, "2025-11-01", eff_to="2026-03-20",
          source=DOH, notes="HCP no-worse-off cohort cap."),
     # 20 March 2026 indexation.
-    _row("lifetime_cap.standard", 137917.01, "2026-03-20",
+    _row("lifetime_cap.standard", 137917.01, "2026-03-20", eff_to="2026-09-20",
          source=MAC, notes="Indexed 20 March 2026."),
-    _row("lifetime_cap.no_worse_off", 86185.23, "2026-03-20",
+    _row("lifetime_cap.no_worse_off", 86185.23, "2026-03-20", eff_to="2026-09-20",
          source=MAC, notes="Indexed 20 March 2026."),
+    # 20 September 2026 indexation. Verified 22/10/2026 against My Aged Care
+    # "Changes to contributions while accessing Support at Home" and health.gov.au.
+    _row("lifetime_cap.standard", 140652.80, "2026-09-20",
+         source=MAC, notes="Indexed 20 September 2026."),
+    _row("lifetime_cap.no_worse_off", 88934.57, "2026-09-20",
+         source=MAC, notes="Indexed 20 September 2026."),
 
     # ---------- Time-limited contribution cap ----------
     _row("cap.time_limited_years", 4, "2025-11-01", source=DOH,

@@ -14,24 +14,24 @@
 const STORAGE_KEY = "wayly:program-reference:v2";
 const TTL_MS = 60 * 60 * 1000; // one hour
 
-// Lockstep with backend/seed_program_reference.py SEED_ROWS as of 1 July 2026.
+// Lockstep with backend/seed_program_reference.py SEED_ROWS as of 1 October 2026.
 const FALLBACK = Object.freeze({
-    as_of: "2026-07-01",
+    as_of: "2026-10-01",
     classifications: {
-        "1": { annual: 11010.01, label: "Classification 1" },
-        "2": { annual: 16451.35, label: "Classification 2" },
-        "3": { annual: 22536.81, label: "Classification 3" },
-        "4": { annual: 30468.51, label: "Classification 4" },
-        "5": { annual: 40729.53, label: "Classification 5" },
-        "6": { annual: 49365.27, label: "Classification 6" },
-        "7": { annual: 59660.00, label: "Classification 7" },
-        "8": { annual: 80137.12, label: "Classification 8" },
+        "1": { annual: 11031.56, label: "Classification 1" },
+        "2": { annual: 16483.55, label: "Classification 2" },
+        "3": { annual: 22580.93, label: "Classification 3" },
+        "4": { annual: 30528.15, label: "Classification 4" },
+        "5": { annual: 40809.27, label: "Classification 5" },
+        "6": { annual: 49461.91, label: "Classification 6" },
+        "7": { annual: 59776.80, label: "Classification 7" },
+        "8": { annual: 80294.00, label: "Classification 8" },
     },
     care_management: { cap_pct: 0.10 },
     rollover: { floor_aud: 1000.00, pct: 0.10 },
     lifetime_cap: {
-        standard: 137917.01,        // post-20-March-2026 indexed value
-        no_worse_off: 86185.23,
+        standard: 140652.80,        // indexed 20 September 2026
+        no_worse_off: 88934.57,
         time_limited_years: 4,
     },
     stream_proportion: {

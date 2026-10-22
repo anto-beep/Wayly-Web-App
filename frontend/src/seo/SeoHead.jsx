@@ -121,9 +121,16 @@ export function organizationLd() {
     return {
         "@context": "https://schema.org",
         "@type": "Organization",
+        "@id": `${SITE.domain}/#organization`,
         name: SITE.name,
+        legalName: "Wayly Pty Ltd",
         url: SITE.domain,
         logo: `${SITE.domain}/logo.png`,
+        slogan: "Aged care, made clear.",
+        description:
+            "Aged care software built for families, not providers. Wayly helps Australian families understand and check Support at Home statements, invoices, fees and contributions.",
+        foundingLocation: { "@type": "Place", name: "Canberra, ACT, Australia" },
+        areaServed: { "@type": "Country", name: "Australia" },
         sameAs: [
             "https://www.linkedin.com/company/wayly",
             "https://twitter.com/waylyhq",

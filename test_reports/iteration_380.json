@@ -1,0 +1,49 @@
+{
+  "summary": "Verified Wayly SEO/AEO web build (/app/frontend). All 9 feature groups PASS: Templates index (20 cards, 6 cluster chips, search 'refund'=1, Complaints cluster=3, empty state + clear) works; all 20 template detail pages render with no console errors, Title Case H1s, FAQ, and 'last checked' footer; Care Plan Review retitled to 'Care Plan Review Question Checklist' with zero '12 questions'/'12 most important'/'twelve questions' occurrences; Articles index shows 45 articles with working search/sort/category and both new articles present; complaints and AT-HM articles render fully (FAQ accordion, internal links, HTML tier table); CHSP /chsp/extension-2029 renders corrected content (2029, 30 June, standalone/not merging) and /chsp/transition-2027 client-side redirects to /chsp/extension-2029; /api/program-reference/public returns the expected 01/10/2026 classifications (C1 11031.56, C3 22580.93, C8 80294.00) and 20/09/2026 lifetime caps (standard 140652.80, no_worse_off 88934.57); Organization JSON-LD on the homepage includes @type Organization, legalName 'Wayly Pty Ltd', slogan, and areaServed. Zero console errors across all tested pages. One observation (not a bug) flagged for main-agent/user confirmation re: the 4 non-letter templates not exposing Copy/DOCX.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter380_web.py",
+    "/app/test_reports/iteration_380.json"
+  ],
+  "action_items": [
+    "OBSERVATION (not a defect — needs product confirmation): 4 of the 20 template detail pages do not render template-copy-btn / template-docx-btn because they use ChecklistBlock/QuestionsBlock/ProseBlock instead of LetterBlock. The brief says each template should show 'Copy text button... and Download (DOCX) button'. If the intent is letters-only, current implementation is correct and the brief wording is loose. Affected slugs: care-plan-review-questions, registered-supporter-checklist, aged-care-family-meeting-agenda, advance-care-planning-conversation-guide. If product wants Copy/DOCX everywhere, extend buttons to ChecklistBlock/QuestionsBlock/ProseBlock in /app/frontend/src/pages/resources/TemplateDetail.jsx."
+  ],
+  "critical_code_review_comments": [
+    "TemplateDetail.jsx cleanly separates LetterBlock/ChecklistBlock/QuestionsBlock/ProseBlock — good composition, each has a distinct data-testid (template-letter / template-checklist / template-questions / template-prose).",
+    "CHSP redirect from /chsp/transition-2027 → /chsp/extension-2029 is implemented client-side (React Router navigate) — functional for SPA users but returns 200 (not a true 301) at the HTTP level. For strict SEO, a server-side 301 at the ingress/CDN layer would be preferred; verify production CDN config honours this if the brief requires an HTTP 301 for crawlers.",
+    "Articles index exposes data-testid^='articles-card-<slug>' but a given article slug appears on multiple cards in some layouts (featured + grid + related), so testID matching by prefix yields more DOM nodes than the count_text. Non-breaking, but worth noting for future test authors — rely on articles-result-count for truth.",
+    "Organization JSON-LD now exposes legalName / slogan / areaServed on home page — confirmed via raw HTML. Good."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (1/1 endpoint spot-checked)", "frontend": "100% of in-scope flows"},
+  "test_credentials": "N/A — all tested surfaces are public marketing/SEO pages, no auth required.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "This iteration verified the SEO build (templates library, 2 new articles, CHSP redirect, program reference dates, Organization schema). Playwright script lives at /app/test_reports/iter380_web.py. Rerun by replaying its blocks. Key results: templates index renders 20 cards + 6 cluster chips, all 20 detail routes return a valid H1 and FAQ, Care Plan Review page is clean of '12 questions' text, both new articles exist and link out correctly. Only open item is the product question around Copy/DOCX for non-letter templates (see action_items).",
+  "evidence": {
+    "templates_index": {"total": "20 templates", "complaints_cluster": "3 templates", "search_refund": "1 template", "empty_state_text_shown": true, "clear_restores_20": true},
+    "template_details_all_20_render": true,
+    "care_plan_review": {"h1": "Care Plan Review Question Checklist", "contains_12_questions": false},
+    "articles_index": {"total": "45 articles", "search_complain": "1 article", "sort_toggle_clickable": true, "complaints_article_present": true, "athm_article_present": true},
+    "article_complaints": {"has_faq_accordion": true, "links_to_templates": true, "links_to_invoice_checker": true, "body_len": 21428},
+    "article_athm": {"has_html_table": true, "mentions_tier_amounts": true, "has_faq": true, "body_len": 21701},
+    "chsp": {"extension_2029_mentions_30_june_2029": true, "extension_2029_mentions_standalone": true, "transition_2027_final_url": "/chsp/extension-2029"},
+    "program_reference_api": {"status": 200, "C1": 11031.56, "C3": 22580.93, "C8": 80294.0, "lifetime_standard": 140652.8, "lifetime_no_worse_off": 88934.57, "as_of": "2026-10-22"},
+    "organization_jsonld": {"has_organization": true, "legal_name_Wayly_Pty_Ltd": true, "has_slogan": true, "has_areaServed": true},
+    "console_errors_total": 0
+  },
+  "rca of the issue": "N/A — no defects found."
+}

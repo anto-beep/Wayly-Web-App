@@ -237,13 +237,13 @@ export function ChspPillar() {
                 "The government funds providers through grants. Your parent pays a small contribution per service.",
                 "There is no income or assets test for CHSP.",
                 "In 2024-25, 838,694 people used CHSP through 1,273 providers (ANAO).",
-                "CHSP moves into Support at Home no earlier than 1 July 2027. Nothing changes for current clients right now.",
+                "CHSP has been extended to 30 June 2029 and will stay a standalone program. Nothing changes for current clients right now.",
             ]} />
             <h2 className="text-xl font-semibold text-[#0E4D52] mt-8 mb-2">Where to go next</h2>
             <div className="grid sm:grid-cols-3 gap-3">
                 <Link to="/chsp/caregiver-guide" className="rounded-md border border-[#E7E0D5] bg-white p-4 hover:border-[#0E4D52]" data-testid="chsp-card-caregiver-guide"><b>Parent on CHSP?</b><br /><span className="text-sm text-[#524B42]">A plain English caregiver guide.</span></Link>
                 <Link to="/chsp/vs-support-at-home" className="rounded-md border border-[#E7E0D5] bg-white p-4 hover:border-[#0E4D52]" data-testid="chsp-card-vs-sah"><b>CHSP vs Support at Home</b><br /><span className="text-sm text-[#524B42]">Side by side, plain English.</span></Link>
-                <Link to="/chsp/transition-2027" className="rounded-md border border-[#E7E0D5] bg-white p-4 hover:border-[#0E4D52]" data-testid="chsp-card-transition"><b>The 2027 transition</b><br /><span className="text-sm text-[#524B42]">What is known, what is not.</span></Link>
+                <Link to="/chsp/extension-2029" className="rounded-md border border-[#E7E0D5] bg-white p-4 hover:border-[#0E4D52]" data-testid="chsp-card-extension"><b>The 2029 extension</b><br /><span className="text-sm text-[#524B42]">CHSP stays standalone to 2029.</span></Link>
             </div>
             <CtaBlock />
             <p className="text-xs text-[#524B42] mt-6">External references: <a className="underline" href="https://www.myagedcare.gov.au/commonwealth-home-support-program" target="_blank" rel="noopener noreferrer">myagedcare.gov.au</a>, <a className="underline" href="https://www.health.gov.au/our-work/commonwealth-home-support-programme-chsp" target="_blank" rel="noopener noreferrer">health.gov.au</a>.</p>
@@ -260,7 +260,7 @@ const FAQ_1 = [
     { q: "Can my parent use more than one provider?", a: "Yes. CHSP clients can use a different provider for each service. Each provider needs its own Service Agreement." },
     { q: "What is the difference between CHSP and a Home Care Package?", a: "Home Care Packages no longer exist for new clients. They were replaced by Support at Home on 1 November 2025. CHSP is the entry level; Support at Home is for higher and ongoing needs." },
     { q: "How do I get my parent more help?", a: "Call My Aged Care on 1800 200 422 and ask for a reassessment, or use Wayly's Letters & Follow-ups to put the request in writing." },
-    { q: "Will CHSP disappear in 2027?", a: "CHSP will move into Support at Home no earlier than 1 July 2027. Your parent's current services continue until then, and the government has promised a supported transition." },
+    { q: "Will CHSP disappear in 2027?", a: "No. In August 2026 the government extended CHSP to 30 June 2029 and confirmed it will remain a standalone program, rather than merging into Support at Home as previously planned. Your parent's current services continue." },
 ];
 
 export function ChspCaregiverGuide() {
@@ -284,7 +284,7 @@ export function ChspCaregiverGuide() {
                 "The government pays most of the cost. Your parent pays a small contribution for each service.",
                 "There is no income or assets test. Nobody checks your parent's bank account for CHSP.",
                 "Your parent can use a different provider for each service.",
-                "CHSP will move into the Support at Home program no earlier than 1 July 2027. For now, nothing changes.",
+                "CHSP has been extended to 30 June 2029 and will remain a standalone program. For now, nothing changes.",
             ]} />
             <h2 className="text-xl font-semibold text-[#0E4D52] mt-8 mb-2">What CHSP actually is</h2>
             <p>CHSP stands for the Commonwealth Home Support Programme. It is the first rung on Australia&apos;s aged care ladder. The idea is simple: give older people a bit of help with the tasks that have become hard, so they can stay in their own home and stay connected to their community.</p>
@@ -337,7 +337,7 @@ export function ChspCaregiverGuide() {
             <p className="text-xs italic text-[#524B42]">This article is general information, not financial or care advice. CHSP contribution amounts vary by provider. Always confirm fees with your parent&apos;s provider and check details at myagedcare.gov.au.</p>
 
             <CtaBlock />
-            <p className="text-sm">See also: <Link className="underline text-[#0E4D52]" to="/chsp/">the CHSP pillar</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/vs-support-at-home">CHSP vs Support at Home</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/transition-2027">the 2027 transition</Link>.</p>
+            <p className="text-sm">See also: <Link className="underline text-[#0E4D52]" to="/chsp/">the CHSP pillar</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/vs-support-at-home">CHSP vs Support at Home</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/extension-2029">the 2029 extension</Link>.</p>
         </Layout>
     );
 }
@@ -392,7 +392,7 @@ export function ChspVsSupportAtHome() {
             <p>Use these quick tests.</p>
             <p className="mt-3"><b>Lean CHSP if:</b> your parent is independent most of the time, needs help with one or two specific tasks, and their needs have been stable. A fortnightly clean and a lift to the doctor is a classic CHSP picture.</p>
             <p className="mt-3"><b>Lean Support at Home if:</b> your parent needs help across several areas (personal care plus meals plus nursing, say), their needs are increasing, they have a condition likely to progress, or you are filling a lot of gaps yourself. Robert, who needs help showering, medication reminders, meal preparation and appointments, and whose wife also needs a break, is a Support at Home picture, not a CHSP one.</p>
-            <p className="mt-3">One more thing worth knowing. Because CHSP is heading into Support at Home from 2027, and because Support at Home is now the main program, the long-term momentum is with Support at Home. If your parent&apos;s needs are clearly growing, it can make sense to request the reassessment now rather than wait.</p>
+            <p className="mt-3">One more thing worth knowing. CHSP has been extended to 30 June 2029 and will stay a standalone program, so there is no looming 2027 merger to plan around. But Support at Home is now the main program for growing needs, so if your parent&apos;s needs are clearly increasing, it can still make sense to request the reassessment now rather than wait.</p>
 
             <h2 className="text-xl font-semibold text-[#0E4D52] mt-8 mb-2">How to move from one to the other</h2>
             <p>If your parent is on CHSP and you think they need more, you do not switch programs yourself. You request a reassessment through My Aged Care on 1800 200 422. A reassessment can approve them for a Support at Home classification. You do not need a reassessment simply because of the 2027 change; you need one when needs increase.</p>
@@ -403,7 +403,7 @@ export function ChspVsSupportAtHome() {
             <p className="text-xs italic text-[#524B42]">This article is general information, not financial or care advice. Funding amounts are indexed annually. Confirm current figures at myagedcare.gov.au.</p>
 
             <CtaBlock />
-            <p className="text-sm">See also: <Link className="underline text-[#0E4D52]" to="/chsp/">the CHSP pillar</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/caregiver-guide">the caregiver guide</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/transition-2027">the 2027 transition</Link>.</p>
+            <p className="text-sm">See also: <Link className="underline text-[#0E4D52]" to="/chsp/">the CHSP pillar</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/caregiver-guide">the caregiver guide</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/extension-2029">the 2029 extension</Link>.</p>
         </Layout>
     );
 }
@@ -484,6 +484,61 @@ export function ChspTransition2027() {
             <h2 className="text-xl font-semibold text-[#0E4D52] mt-8 mb-2">Frequently asked questions</h2>
             <Faq items={FAQ_3} testid="chsp-faq-3" />
             <p className="text-xs italic text-[#524B42]">This article is general information, not financial or care advice. Transition details may change. Check health.gov.au and myagedcare.gov.au for the latest.</p>
+
+            <CtaBlock />
+            <p className="text-sm">See also: <Link className="underline text-[#0E4D52]" to="/chsp/">the CHSP pillar</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/caregiver-guide">the caregiver guide</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/vs-support-at-home">CHSP vs Support at Home</Link>.</p>
+        </Layout>
+    );
+}
+
+// ============================================================
+// CHSP Extension to 2029 (replaces the old /chsp/transition-2027 page)
+// ============================================================
+const FAQ_EXT = [
+    { q: "Is CHSP being cancelled?", a: "No. CHSP has been extended for another two years to 30 June 2029, and the government has said it should remain a standalone program." },
+    { q: "Was CHSP supposed to be merged into Support at Home?", a: "Yes. The previous plan was that CHSP would be absorbed into Support at Home no earlier than 1 July 2027. That plan has been reversed, and the government now believes CHSP should stay separate." },
+    { q: "Do I need to do anything if my parent currently receives CHSP services?", a: "No. Their services continue as they are. Contracts with providers, including local councils, continue without interruption to 2029." },
+    { q: "Will my parent's CHSP fees change?", a: "The August 2026 announcement did not change CHSP contribution arrangements. Consultation on long-term contribution rules across CHSP and Support at Home is expected later in 2026." },
+    { q: "Does this affect Support at Home?", a: "Not directly. A separate change to personal care under Support at Home took effect on 1 October 2026, which is unrelated to the CHSP extension." },
+    { q: "Where can I get official updates?", a: "The Department of Health, Disability and Ageing publishes CHSP updates at health.gov.au, and My Aged Care at myagedcare.gov.au." },
+];
+
+export function ChspExtension2029() {
+    const url = `${SITE}/chsp/extension-2029/`;
+    const title = "CHSP Extended To 30/06/2029: What It Means For Families";
+    const description = "CHSP will keep running as its own program until 30 June 2029 and is no longer merging into Support at Home. What changes, and what doesn't.";
+    return (
+        <Layout title="extension-2029">
+            <SeoHead title={title} description={description} canonical={url} ogType="article" />
+            <ArticleSchema headline="CHSP Extended to 30 June 2029: What It Means for Older Australians and Their Families" description={description} url={url} datePublished="2026-08-23" />
+            <FaqSchema items={FAQ_EXT} />
+            <Breadcrumbs trail={[{ name: "Home", url: `${SITE}/` }, { name: "CHSP", url: `${SITE}/chsp/` }, { name: "Extension 2029", url }]} />
+            <CHSPBanner />
+            <h1 className="text-3xl sm:text-4xl font-bold text-[#0E4D52] mb-2">CHSP Extended to 30 June 2029: What It Means for Families</h1>
+            <Meta published="23 August 2026" />
+            <p>Here is the headline, so you can relax before you read further: the Commonwealth Home Support Programme (CHSP) will keep running as its own program until 30 June 2029, and the government is no longer merging it into Support at Home. Your parent&apos;s cleaner, transport and meals keep running under the current rules.</p>
+            <p className="mt-3">On 20 August 2026 the government confirmed it would extend CHSP for another two years and step away from the earlier plan to fold it into Support at Home from mid 2027. This page is the short version. For the full explainer, read <Link className="underline text-[#0E4D52]" to="/resources/articles/chsp-extension-2029-what-it-means">the CHSP extension article</Link>.</p>
+            <KeyFactsBox items={[
+                "CHSP is extended two more years, from 30 June 2027 to 30 June 2029.",
+                "CHSP will remain a standalone program and will not be merged into Support at Home as previously planned.",
+                "If your parent currently receives CHSP services, nothing changes: services and provider contracts continue to 2029.",
+                "Around 830,000 older Australians rely on CHSP, delivered by about 1,300 providers.",
+                "Support at Home is not directly affected by this announcement.",
+                "The financial change most likely to affect a Support at Home invoice is the personal care reclassification on 1 October 2026, which is unrelated to this CHSP news.",
+            ]} />
+
+            <h2 className="text-xl font-semibold text-[#0E4D52] mt-8 mb-2">What was announced</h2>
+            <p>Health and Ageing Minister Mark Butler and Aged Care Minister Sam Rae confirmed three things: CHSP funding will be extended to 30 June 2029; CHSP will remain a standalone program rather than being merged into Support at Home; and consultation on the long-term design of CHSP will begin later in 2026. The extension gives older Australians and providers certainty while that design work happens.</p>
+
+            <h2 className="text-xl font-semibold text-[#0E4D52] mt-8 mb-2">What changes for your parent</h2>
+            <p>Practically, not much this week, and a lot of certainty for the next few years. If your parent currently receives CHSP, their services continue without interruption. Council and other provider contracts continue to 2029, and providers can no longer cite uncertainty about the future of CHSP as a reason for withdrawing services. Any co-contributions they already make continue as before.</p>
+
+            <h2 className="text-xl font-semibold text-[#0E4D52] mt-8 mb-2">What this announcement does not do</h2>
+            <p>It does not increase CHSP funding, it does not undo the 1 October 2026 change to personal care under Support at Home, and it does not merge CHSP into Support at Home at some later date automatically. The government&apos;s stated position now is that CHSP should remain standalone.</p>
+
+            <h2 className="text-xl font-semibold text-[#0E4D52] mt-8 mb-2">Frequently asked questions</h2>
+            <Faq items={FAQ_EXT} testid="chsp-faq-extension" />
+            <p className="text-xs italic text-[#524B42]">This article is general information, not financial or care advice. Check health.gov.au and myagedcare.gov.au for the latest.</p>
 
             <CtaBlock />
             <p className="text-sm">See also: <Link className="underline text-[#0E4D52]" to="/chsp/">the CHSP pillar</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/caregiver-guide">the caregiver guide</Link>, <Link className="underline text-[#0E4D52]" to="/chsp/vs-support-at-home">CHSP vs Support at Home</Link>.</p>

@@ -16,6 +16,281 @@
  */
 export const SEO_ARTICLES_2026 = [
     {
+        slug: "how-to-complain-about-aged-care-commission",
+        title: "How To Complain About Aged Care In Australia: What Actually Happens",
+        excerpt: "How to complain about an aged care provider in 2026. Who to call, what to say, what happens next, and how long it actually takes.",
+        published_at: "2026-10-22",
+        updated_at: "2026-10-22",
+        author: { name: "Wayly Editorial", role: "" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        category: "Complaints",
+        hero_alt: "Adult daughter on the phone making an aged care complaint on behalf of a parent",
+        tags: ["aged care complaint", "Aged Care Quality and Safety Commission", "how to complain about aged care provider", "OPAN", "anonymous complaint", "Aged Care Act 2024"],
+        related: ["support-at-home-statement-vs-invoice-explained", "the-statement-of-rights"],
+        meta: {
+            title: "How To Complain About Aged Care: The Commission (2026)",
+            description: "How to complain about an aged care provider in 2026. Who to call, what to say, what happens next, and how long it actually takes.",
+        },
+        key_takeaways: [
+            "You can complain for free, anonymously, and you do not have to raise it with the provider first. The number is 1800 951 822.",
+            "Billing is a legitimate complaint subject: a wrong rate, a service never delivered, or a missing statement.",
+            "In the Commission's published data for September 2026, 61% of complaints were finalised within 90 days, so roughly two in five run longer.",
+            "Reconsideration applies only to a decision to take no further action or to end a complaint process, generally within 42 days. It is not a general appeal on the care.",
+        ],
+        intro_md: `*General information, not financial, legal or clinical advice.*
+
+You can complain about an aged care provider for free, you can do it anonymously, and you do not have to raise it with the provider first. The number is 1800 951 822.
+
+Most families never do. The reasons are always the same: not knowing where to start, assuming nothing will change, and a quiet fear that the care will get worse if they speak up. This article covers all three, including the part most guides skip, which is how long it really takes.`,
+        sections: [
+            {
+                heading: "Who Handles Aged Care Complaints?",
+                body_md: `Since 01/11/2025, complaints about Australian Government funded aged care have been handled under the Aged Care Act 2024 by the Aged Care Quality and Safety Commission, through its Complaints Commissioner.
+
+The Commission is not the provider, and it is not My Aged Care. My Aged Care, on 1800 200 422, is the front door for assessments and services. It does not handle complaints. If you ring it about a billing problem you will be redirected.
+
+The Commission can take complaints about a provider, a worker, or a responsible person, including complaints that they are not meeting their obligations.`,
+            },
+            {
+                heading: "What You Can Complain About",
+                body_md: `The obvious things: care that is unsafe or poor quality, missed or rushed visits, workers who change every week, being treated without dignity, food, medication, restrictive practices, a complaint to the provider that went nowhere.
+
+And the thing families rarely think of: money.
+
+A rate charged above the price you agreed. A service invoiced that was never delivered. A charge for a visit that was 20 minutes when the invoice says an hour. A contribution applied to a service that is fully government funded. A monthly statement that never arrives. A provider who will not explain a care management fee.
+
+These are provider obligations, not preferences. In May 2026 the government set out new consumer protections for Support at Home and signalled closer regulatory attention to pricing and charging. If your provider will not fix a billing problem, it is a legitimate complaint.
+
+If you are not sure whether a charge is wrong before you raise it, Wayly's Invoice Checker will [check the rates on an invoice](/ai-tools/invoice-checker) against what you were told you would pay.`,
+            },
+            {
+                heading: "The Order That Usually Works",
+                body_md: `**Step one: put it to the provider in writing.** Every provider must have a complaints process. Going to them first is usually faster, and it creates the paper trail you will need if it escalates. Keep it factual. Dates, times, what happened, what it cost, what you want done. "The worker did not attend on 14/10/2026 and the visit was invoiced at $68.40" is stronger than "the worker is unreliable". There is no legal deadline on a provider's reply, but ask for a realistic timeframe in writing. Wayly has [a letter to your provider](/resources/templates/aged-care-complaint-letter-to-provider) you can copy and fill in. If the issue is a charge, [dispute an invoice in writing](/resources/templates/aged-care-invoice-dispute-letter) or [query a line on your statement](/resources/templates/support-at-home-statement-query-letter) instead.
+
+**Step two: talk to a free advocate.** The Older Persons Advocacy Network runs the Aged Care Advocacy Line on 1800 700 600. It is free, confidential and independent of providers, open 8am to 8pm Monday to Friday and 10am to 4pm Saturday. An advocate can tell you whether what you are dealing with is normal or not, sit in on a meeting, or help you word the complaint. Have the facts in front of you before you ring: Wayly has a one page sheet to [get ready for the call](/resources/templates/opan-aged-care-advocate-call-sheet).
+
+**Step three: complain to the Commission.** You do not have to do steps one and two first. If you do not feel safe or comfortable raising it with the provider, go straight here.
+
+- **Phone:** 1800 951 822, free call. For food, nutrition and dining complaints, 1800 844 044.
+- **Online:** the complaint form at agedcarequality.gov.au.
+- **Email:** info@agedcarequality.gov.au
+- **Post:** Aged Care Quality and Safety Commission, GPO Box 9819, in your capital city.
+
+If you need an interpreter you can ask the Commission to arrange one, or call the Translating and Interpreting Service on 131 450, the Aboriginal Interpreter Service on 1800 334 944, or Aboriginal Interpreting Western Australia on 08 9192 3981. If you have a hearing or speech impairment, use the National Relay Service: TTY users call 1800 555 677, Speak and Listen users call 1800 555 727, and ask for 1800 951 822. Wayly has a template for [a written complaint to the Commission](/resources/templates/aged-care-quality-and-safety-commission-complaint) with every field laid out.`,
+            },
+            {
+                heading: "You Choose How Much Of Your Name To Give",
+                body_md: `This is the part that answers the fear of retaliation, and it is more flexible than most people realise. The Commission lets you choose one of three ways to complain.
+
+**Anonymous.** You do not give your name at all. The trade-off is that the Commission cannot come back to you for more detail, which can limit what it is able to do.
+
+**Confidential.** You give your name, and the Commission does not reveal it to anyone. This is the middle ground most families want, and the one most often overlooked.
+
+**Open.** You give your name and the Commission can share it.
+
+The Commission also states that it treats all complaints and feedback as though they qualify for whistleblower protections under the Aged Care Act.`,
+            },
+            {
+                heading: "What Happens After You Lodge It",
+                body_md: `The Commission's process runs in five stages: collect and triage, assess, resolve, finalise, and evaluate.
+
+Within three business days, it will let you know it received your complaint. It listens, asks for information, assesses the risk, asks what you want to happen, and explains what it can do. If an older person is at serious risk of harm, it takes immediate action rather than working through the queue.
+
+At the resolve stage, one option is provider-led resolution. With your permission, the Commission refers the complaint back to the provider to fix, and the provider must report back. That can be the fastest route. It is also the wrong route if the provider is the problem, and your permission is required. You can say no and ask the Commission to handle it directly.
+
+A complaint needs to be finalised within 90 days, unless there are reasons why it needs to take longer.`,
+            },
+            {
+                heading: "How Long It Really Takes",
+                body_md: `Here is the number nobody puts in their guide.
+
+In the Commission's published performance data for September 2026, **61% of complaints were finalised within 90 days**, and 93% of enquiries were finalised within 7 days.
+
+So the 90 day rule holds for roughly three in five complaints. Nearly two in five run longer, which is permitted where there are reasons for it.
+
+Plan for that. Keep your own dated record of every call and letter. Ask for a reference number at the start and quote it every time. If you have heard nothing for a few weeks, ring and ask what stage your complaint is at. Those are ordinary questions, not pushy ones.`,
+            },
+            {
+                heading: "If You Disagree With The Outcome",
+                body_md: `This is narrower than most people expect. You can ask the Commission to reconsider **a decision to take no further action on a complaint, or a decision to end a complaint resolution process**. You generally have 42 days from being notified. A reconsideration officer who was not involved in the original process handles it.
+
+What that is not: a general appeal on the merits of the care itself. Reconsideration is also not available for anonymous or withdrawn complaints, complaints found to be frivolous or vexatious, or decisions already reconsidered.
+
+To request one, email reconsideration@agedcarequality.gov.au, or write to the Review Manager, Aged Care Quality and Safety Commission, GPO Box 9819 Melbourne VIC 3001. Separately, if your issue is with how the Commission itself behaved, you can take it to the Commonwealth Ombudsman.`,
+            },
+            {
+                heading: "What To Do Right Now If Something Is Seriously Wrong",
+                body_md: `If someone is in immediate danger, call 000.
+
+If you suspect abuse, neglect or exploitation of an older person, the national elder abuse line is 1800 353 374, known as 1800ELDERHelp.
+
+Providers are required to report serious incidents to the Commission, the most serious within 24 hours, so in many cases the Commission will already know. That does not stop you lodging your own complaint, and you should.`,
+            },
+            {
+                heading: "A Short Word On Whether It Is Worth It",
+                body_md: `Complaining feels disloyal when the people doing the care are kind and underpaid, and when your parent depends on them. That feeling is real and it is why most problems go unreported.
+
+Two things help. Complaints are about the organisation and its obligations, not usually about the individual who turned up at the door. And patterns matter: a problem recorded three times by three families is treated very differently from one raised once.
+
+You also have a legal footing for it. The Aged Care Act 2024 sets out a Statement of Rights, and being told clearly what you are paying and why is part of it. If you have not read them, here are [your 14 rights in plain English](/resources/articles/the-statement-of-rights).
+
+Aged care, made clear.`,
+            },
+        ],
+        faqs: [
+            { q: "How do I make a complaint about an aged care provider in Australia?", a: "Call the Aged Care Quality and Safety Commission on 1800 951 822, use the online complaint form at agedcarequality.gov.au, email info@agedcarequality.gov.au, or write to the Commission at GPO Box 9819 in your capital city. The service is free." },
+            { q: "Do I have to complain to my provider first?", a: "No. You can go straight to the Commission, and you should if you do not feel safe or comfortable raising it with the provider. Raising it with the provider first is often faster, and it builds a record." },
+            { q: "Can I make an aged care complaint anonymously?", a: "Yes. You can be anonymous, confidential or open. Anonymous means no name at all, which limits what the Commission can follow up. Confidential means you give your name and the Commission does not reveal it." },
+            { q: "How long does an aged care complaint take?", a: "A complaint must be finalised within 90 days unless there are reasons it needs longer. In the Commission's published data for September 2026, 61% of complaints were finalised within 90 days, so expect that roughly two in five run longer." },
+            { q: "Can I complain about being overcharged by my aged care provider?", a: "Yes. Billing and charging are provider obligations. A rate above what you agreed, a service that was never delivered, a missing monthly statement or an unexplained fee are all legitimate complaints." },
+            { q: "What is the aged care complaints number?", a: "1800 951 822 for general complaints, and 1800 844 044 for food, nutrition and dining complaints. My Aged Care on 1800 200 422 is for assessments and services, not complaints." },
+            { q: "Can I appeal the Commission's decision?", a: "You can request reconsideration of a decision to take no further action, or a decision to end a complaint resolution process, generally within 42 days. It is not a general appeal on the care itself, and it is not available for anonymous or withdrawn complaints." },
+            { q: "Is there free help to make an aged care complaint?", a: "Yes. The Older Persons Advocacy Network runs a free, confidential and independent advocacy line on 1800 700 600, open 8am to 8pm Monday to Friday and 10am to 4pm Saturday." },
+        ],
+    },
+    {
+        slug: "at-hm-scheme-assistive-technology-home-modifications",
+        title: "The AT-HM Scheme: How Grab Rails, Ramps And Equipment Are Funded Under Support At Home",
+        excerpt: "Grab rails, ramps, wheelchairs and shower chairs are funded separately from your quarterly budget. How the AT-HM scheme works, and what to check.",
+        published_at: "2026-10-22",
+        updated_at: "2026-10-22",
+        author: { name: "Wayly Editorial", role: "" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        category: "Equipment & AT-HM",
+        hero_alt: "Occupational therapist fitting a grab rail in an older person's bathroom",
+        tags: ["AT-HM scheme", "assistive technology aged care", "home modifications aged care", "Support at Home equipment funding", "grab rails aged care", "shower chair"],
+        related: ["support-at-home-explained", "three-streams-clinical-independence-everyday-living"],
+        meta: {
+            title: "AT-HM Scheme: Aged Care Equipment And Home Changes",
+            description: "Grab rails, ramps, wheelchairs and shower chairs are funded separately from your quarterly budget. How the AT-HM scheme works, and what to check.",
+        },
+        key_takeaways: [
+            "AT-HM is a separate pool of funding, so equipment and home changes do not come out of your quarterly budget.",
+            "Funding is allocated in three tiers: low (under $500), medium (up to $2,000) and high (up to $15,000, and more for assistive technology if needs support it).",
+            "The prescription and wraparound support are clinical supports, which are fully government funded. A contribution against an assessment or prescription line is worth questioning.",
+            "AT-HM funding expires, generally 12 months from signing the service agreement, and the expiry date must be shown on your monthly statement.",
+        ],
+        intro_md: `*General information, not financial, legal or clinical advice.*
+
+A grab rail in the bathroom does not come out of your quarterly budget. Neither does a wheelchair, a shower chair or a ramp at the back step. Support at Home funds these through a separate scheme called Assistive Technology and Home Modifications, or AT-HM, and the money sits outside the budget that pays for your care workers.
+
+Most families do not know this. Under the old Home Care Package system you had to save up from your package to buy equipment, which meant going without hours of care to afford a handrail. That is no longer how it works.`,
+        sections: [
+            {
+                heading: "What Is The AT-HM Scheme?",
+                body_md: `AT-HM is a separate pool of Support at Home funding for equipment and physical changes to the home. The Department's own description is that it gives participants access to assistive technology and home modifications without needing to save up funds from their quarterly budgets for ongoing services.
+
+Two categories sit inside it.
+
+**Assistive technology** means items, equipment or products that help someone do things more easily, or do things they can no longer do on their own. Walking sticks, walking frames and wheelchairs. Bedpans and commodes. Shower chairs and bath boards.
+
+**Home modifications** means physical changes to the home that make it safer and easier to move around. Grab rails in the shower or bathroom. Internal and external handrails. Ramps and stair lifts. Bathroom redesign, and widening doorways and passages for a wheelchair.
+
+An assessor can approve someone for assistive technology funding, home modifications funding, or both.`,
+            },
+            {
+                heading: "How Much Funding Can You Get?",
+                body_md: `Funding is allocated in three tiers, and the tiers can be different for assistive technology and for home modifications.
+
+| Funding tier | Assistive technology | Home modifications |
+|---|---|---|
+| Low | Under $500 | Under $500 |
+| Medium | Up to $2,000 | Up to $2,000 |
+| High | Up to $15,000, or more if needed | Up to $15,000 |
+
+The difference in that last row matters. For assistive technology, $15,000 is not a hard ceiling. A participant can access more if it is required to meet their assessed needs, through a request form lodged with evidence such as a quote and a valid prescription. The Department aims to process those requests within 14 calendar days. For home modifications, $15,000 is the limit on high tier funding.
+
+If the tier you were given is not enough, your provider can request a support plan review and give evidence of need to increase it. That is a normal request, not a special favour.`,
+            },
+            {
+                heading: "The Part Families Get Wrong On Their Statement",
+                body_md: `Here is the detail worth reading twice.
+
+AT-HM items are classified as independence services under the Support at Home service list. Independence services attract a participant contribution, worked out from your income and assets assessment. So yes, you contribute towards the cost of the grab rail itself.
+
+But the prescription and the wraparound services are classified as clinical supports. Clinical supports are fully funded by the government. In the Department's words, you cannot ask a participant to contribute to that cost.
+
+In plain terms: if an occupational therapist assesses your mother and prescribes a shower chair, that assessment should cost her nothing. If the training to use the equipment safely is billed, that should cost her nothing. The contribution applies to the item, not to the clinician who prescribed it.
+
+If your statement shows a contribution against a prescription, an assessment or a wraparound support line, that is worth questioning before you pay. Wayly's Invoice Checker will [check the rates on an invoice](/ai-tools/invoice-checker), and there is a template to [ask about a charge that looks wrong](/resources/templates/rate-query-letter). For the wider picture of which services carry a contribution, read [what the three streams cover](/resources/articles/three-streams-clinical-independence-everyday-living).`,
+            },
+            {
+                heading: "AT-HM Funding Expires, And That Should Be On Your Statement",
+                body_md: `AT-HM funding does not accumulate and it does not sit there forever.
+
+Funding is generally available for 12 months from the participant signing the service agreement, and it must be shown on the monthly statement. High tier home modifications funding may be extended to 24 months if evidence of progress is given to Services Australia. Participants with specific progressive conditions automatically have 24 months to spend the funds, and can apply for a further 24 month extension, giving 48 months in total.
+
+Your provider is required to indicate when funding expires on the monthly statement. If you cannot find that date on yours, ask for it. An expiry date you did not know about is how a bathroom modification gets quoted, delayed and then unfunded. Wayly's Statement Decoder will [check your statement line by line](/ai-tools/statement-decoder), including the AT-HM lines and expiry dates.`,
+            },
+            {
+                heading: "If You Transitioned From A Home Care Package",
+                body_md: `If you came across from the Home Care Packages Program, you can access the AT-HM scheme without a further assessment. That is the good news.
+
+But you must use the Commonwealth portion of your unspent Home Care Package funds first, before AT-HM funding becomes available. Providers claim those funds in a set order: the provider-held portion first, which may apply to people who were on a package before 01/09/2021, then the government-held portion through Services Australia.
+
+If there are not enough unspent funds to cover what is needed, an AT-HM funding tier can then be allocated. So if someone tells you a ramp will have to wait because the funding is not there, the first question is whether the unspent package balance has been applied. The second is whether a support plan review has been requested. You can [request a support plan review](/resources/templates/my-aged-care-reassessment-request) if your needs have changed.`,
+            },
+            {
+                heading: "How The Items Are Approved",
+                body_md: `Not every item needs a prescription. The AT-HM list sorts products into three access categories.
+
+**Low risk.** Simple, low cost daily living products that need no prescription and no customisation. Your provider can help you get these directly.
+
+**Under advice.** Generally low risk, but better chosen with professional advice so the item is selected, installed and used properly.
+
+**Prescribed.** More complex or costly products, often adapted to the individual. A suitably qualified health professional, such as an occupational therapist or physiotherapist, must prescribe these.
+
+All home modifications must be prescribed by a suitably qualified health professional.`,
+            },
+            {
+                heading: "What The Scheme Will Not Fund",
+                body_md: `The AT-HM list excludes products and equipment that are:
+
+- more appropriately funded by other government services
+- a usual household or discretionary expense
+- for use in a workplace
+- for mass transit, such as public transport
+- for children
+
+That second one is where most disappointment comes from. A new recliner, a nicer bed or a bathroom renovation that goes beyond accessibility is a household expense, not an aged care modification. The test is whether the change is there to address an assessed need.`,
+            },
+            {
+                heading: "Two Things Worth Knowing About Timing",
+                body_md: `**AT-HM has its own queue.** Funding is allocated through the Assistive Technology Priority System and the Home Modifications Priority System. These are separate from the Support at Home Priority System, which means a participant may be allocated AT-HM funding before their ongoing services funding comes through. If you are waiting for a package and the bathroom is unsafe now, this is worth raising with your assessor.
+
+**Repairs come out of the same pot.** The cost of repairs and maintenance on equipment bought through the scheme should be funded from the AT-HM allocation. If the funds have expired and the equipment needs fixing, your provider can refer you for a support plan review to access more.
+
+If you live in a remote area classified 6 or 7 under the Modified Monash Model, a remote supplement applies to help with the higher cost of AT-HM services and items.`,
+            },
+            {
+                heading: "What To Ask Your Provider",
+                body_md: `Take these to your next conversation, or to your care plan review.
+
+1. Have we been approved for an AT-HM funding tier, and is it for assistive technology, home modifications, or both?
+2. What tier, and what does the Notice of Decision say?
+3. When does that funding expire, and where does that date appear on our statement?
+4. Do we have unspent Home Care Package funds that have to be used first?
+5. Is the item we need on the AT-HM list, and does it need a prescription?
+6. Is the prescription or assessment being billed to us? It should not be.
+7. If the tier is not enough, will you request a support plan review?
+
+There is a fuller set of [questions to take to your care plan review](/resources/templates/care-plan-review-questions), and you can [see every classification budget](/support-at-home-levels) to understand how AT-HM sits alongside your ongoing services funding.
+
+Aged care, made clear.`,
+            },
+        ],
+        faqs: [
+            { q: "Is a grab rail covered under Support at Home?", a: "Yes. Grab rails in the shower or bathroom are home modifications and are funded through the AT-HM scheme, separately from your quarterly budget. They must be prescribed by a suitably qualified health professional, and you contribute towards the cost of the item based on your income and assets assessment." },
+            { q: "Does equipment come out of my Support at Home quarterly budget?", a: "No. The AT-HM scheme is funded separately, so you do not need to save up from the budget that pays for your care workers. This is one of the main differences from the old Home Care Packages Program." },
+            { q: "How much AT-HM funding can I get?", a: "There are three tiers for each category. Low is under $500, medium is up to $2,000 and high is up to $15,000. Assistive technology funding can go above $15,000 where the assessed need supports it. For home modifications, $15,000 is the limit on high tier funding." },
+            { q: "Do I have to pay for the occupational therapist who prescribes my equipment?", a: "No. The prescription and wraparound supports are clinical supports, which are fully government funded. A provider cannot ask you to contribute to that cost. If a contribution appears against an assessment or prescription line on your statement, question it before you pay." },
+            { q: "How long do I have to spend AT-HM funding?", a: "Generally 12 months from signing the service agreement. High tier home modifications funding may be extended to 24 months with evidence of progress. People with specific progressive conditions automatically get 24 months and can apply for a further 24 months." },
+            { q: "What happens if my AT-HM funding tier is not enough?", a: "Your provider can request a support plan review and provide evidence of need to have the tier increased. For assistive technology over $15,000 there is a separate request process, which the Department aims to process within 14 calendar days." },
+            { q: "Can I use AT-HM funding if I transitioned from a Home Care Package?", a: "Yes, without a further assessment. But the Commonwealth portion of your unspent Home Care Package funds must be used first, starting with any provider-held portion, then the government-held portion through Services Australia." },
+            { q: "What does the AT-HM scheme not cover?", a: "Items better funded by other government services, usual household or discretionary expenses, workplace equipment, mass transit items, and anything for children." },
+        ],
+    },
+    {
         slug: "support-at-home-explained",
         title: "Support at Home Explained: What It Is and What Changed in 2026",
         excerpt: "What Support at Home is, the 8 classification levels and their quarterly budgets, what you pay, and what changed on 01/10/2026. Plain English, figures live from Wayly's reference data.",
