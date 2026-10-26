@@ -1,0 +1,43 @@
+{
+  "summary": "BSC-1 Budget Scenarios end-to-end verified on BOTH web and mobile. Backend 4/4 passing (service catalogue is 31 services identical to Provider Price Checker; compute+add_service with MANUAL price returns correct per-quarter delta of 95*2*2*13=$4,940; save→list→delete lifecycle 200). Web /app/budget-scenarios renders hero + colored stat pills + Confidence: High badge; opens the editor with 31 Title-Case service options (bsc1-sheet-service); bsc1-sheet-price is EMPTY by default and shows the median as placeholder ($195); adding a change renders bsc1-change-list with +$2,470/qtr delta and populates bsc1-compare (3 rows); save→open→delete via bsc1-saved works; Adjust drawer (bsc1-adjust-toggle) exposes bsc1-spend-to-date/pace/carry and triggers recompute (Today card updated from $4,565→$5,000 after setting spend-to-date=5000). Mobile /budget-scenarios achieves full parity — identical hero, 31 Title-Case service chips (bsc1-sheet-service-*), empty bsc1-sheet-price with median placeholder, change list +$2,288/qtr, Compare table, save→delete, Adjust drawer all present. NO auto-filled price on either platform (confirmed value='' on both).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_bsc1_iter383.py",
+    "/app/test_reports/pytest/iter383_bsc1.xml",
+    "/app/test_reports/iter383_web_final.jpeg",
+    "/app/test_reports/iter383_mob_bs.jpeg",
+    "/app/test_reports/iter383_mob_sheet.jpeg",
+    "/app/test_reports/iter383_mob_final.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ChangeSheet component: price state initializer at /app/frontend/src/pages/BudgetScenarios.jsx:384 correctly starts empty ('') for new changes and preserves user-entered value when editing — matches the 'manual price entry' requirement.",
+    "Service options at /app/frontend/src/pages/BudgetScenarios.jsx:437 use titleCase(s.name) over the 31-service ppc_v2 catalogue — parity with Provider Price Checker verified via GET /api/ppc/services returning same 31 service_codes.",
+    "Backend _build_service_catalogue at /app/backend/routes/bsc1.py:56 sources from lib.ppc_v2.list_services and never auto-populates unit_price into the engine — the client always sends the user-entered price (fallback to median only on client when field is blank)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_bsc1_iter383.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, active participant Dorothy — classification 4)",
+  "seed_data_creation": "No net-new seed; test-created scenarios are prefixed TEST_iter383_web/TEST_iter383_mob and were deleted at end of their flow.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "BSC-1 feature is production-ready on both surfaces. API endpoints: GET /api/bsc1/service-catalogue (31 services, parity w/ /api/ppc/services), POST /api/bsc1/compute (hero+quarters+baseline+change_deltas+delta_vs_baseline_aud+confidence), POST /api/bsc1/participants/{pid}/scenarios, GET list, DELETE /api/bsc1/scenarios/{id}. All passing. Web route /app/budget-scenarios, mobile route /budget-scenarios. The two new behaviors (manual price entry — bsc1-sheet-price starts empty, placeholder=median; service options sourced from ppc_v2 Title-Cased) are confirmed on both platforms.",
+  "rca of the issue": "N/A — no bugs found."
+}

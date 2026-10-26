@@ -44,10 +44,16 @@ export default function PlanBillingScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const planKey = (sub?.plan || "free").toLowerCase();
-  const noPlan = !sub?.plan || planKey === "free";
-  const name = PLAN_NAME[planKey] || "No active plan";
-  const isTrial = sub?.status === "trialing" || sub?.status === "trial";
-  const isCancelling = !!sub?.cancel_at_period_end;
+  const subStatus = (sub?.status || "").toLowerCase();
+  const periodEnded = sub?.current_period_end ? new Date(sub.current_period_end).getTime() <= Date.now() : false;
+  const isExpired = subStatus === "expired" || subStatus === "canceled" || subStatus === "cancelled" || subStatus === "none";
+  // A trial that has ended or a cancelled/expired sub (or a cancel whose end
+  // date has now passed) means there is NO active plan.
+  const planEnded = isExpired || (!!sub?.cancel_at_period_end && periodEnded);
+  const noPlan = !sub?.plan || planKey === "free" || planEnded;
+  const name = noPlan ? "No active plan" : (PLAN_NAME[planKey] || "No active plan");
+  const isTrial = (sub?.status === "trialing" || sub?.status === "trial") && !planEnded;
+  const isCancelling = !!sub?.cancel_at_period_end && !periodEnded && !noPlan;
   const statusLabel = noPlan ? "NO ACTIVE PLAN" : isCancelling ? "ENDS SOON" : isTrial ? "FREE TRIAL" : (sub?.status || "active").toUpperCase();
   const statusTone: "success" | "alert" | "brand" = noPlan ? "alert" : isCancelling ? "alert" : isTrial ? "brand" : "success";
 
@@ -71,6 +77,12 @@ export default function PlanBillingScreen() {
             <T style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.heading, marginTop: 4 }}>{name}</T>
             {isTrial && sub?.trial_ends_at ? (
               <T variant="small" style={{ marginTop: 6 }}>Your free trial ends {formatDate(sub.trial_ends_at)}.</T>
+            ) : noPlan ? (
+              <T variant="small" style={{ marginTop: 6, color: colors.alert }}>
+                {sub?.current_period_end && planEnded
+                  ? `Your plan ended on ${formatDate(sub.current_period_end)}. Choose a plan to reactivate — you keep access to all your data.`
+                  : "You don't have an active plan. Choose a plan to get started."}
+              </T>
             ) : isCancelling && sub?.current_period_end ? (
               <T variant="small" style={{ marginTop: 6, color: colors.alert }}>Your plan stays active until {formatDate(sub.current_period_end)}.</T>
             ) : sub?.current_period_end ? (

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { ChevronDown, ChevronUp, PlayCircle } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Maximize2, PlayCircle } from "lucide-react-native";
 
 import { storage } from "@/src/utils/storage";
 import { Card, T } from "@/src/components/ui";
 import { useTheme } from "@/src/theme/ThemeContext";
-import { radius, spacing } from "@/src/theme/tokens";
+import { fonts, radius, spacing } from "@/src/theme/tokens";
 
 // Public "How to use" walkthrough videos for the AI tools. Hosted as public
 // customer-assets URLs (not bundled, ~20-57 MB each) and shown to everyone.
@@ -69,6 +69,8 @@ export default function ToolWalkthroughVideo({ slug }: { slug: string }) {
 
   // Only load the (20-57MB) video once the user expands the section.
   const player = useVideoPlayer(open && v ? v.url : null, (p) => { p.loop = false; });
+  const videoRef = useRef<VideoView>(null);
+  const goFullscreen = async () => { try { await videoRef.current?.enterFullscreen(); } catch { /* ignore */ } };
   if (!v) return null;
 
   return (
@@ -86,13 +88,30 @@ export default function ToolWalkthroughVideo({ slug }: { slug: string }) {
           <T variant="small" style={{ marginTop: spacing.md, lineHeight: 20 }}>{v.blurb}</T>
           <View testID={`${slug}-how-to-video-player`} style={{ marginTop: spacing.md, borderRadius: radius.md, overflow: "hidden", backgroundColor: "#000", aspectRatio: 16 / 9 }}>
             <VideoView
+              ref={videoRef}
               style={{ width: "100%", height: "100%" }}
               player={player}
               nativeControls
-              allowsFullscreen
+              fullscreenOptions={{ enable: true }}
               contentFit="contain"
             />
+            <Pressable
+              testID={`${slug}-how-to-video-fullscreen`}
+              onPress={goFullscreen}
+              hitSlop={8}
+              style={{ position: "absolute", top: 8, right: 8, backgroundColor: "rgba(0,0,0,0.55)", borderRadius: radius.pill, width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
+            >
+              <Maximize2 size={18} color="#fff" />
+            </Pressable>
           </View>
+          <Pressable
+            testID={`${slug}-how-to-video-expand`}
+            onPress={goFullscreen}
+            style={{ marginTop: spacing.sm, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border }}
+          >
+            <Maximize2 size={16} color={colors.heading} />
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>Expand to full screen</T>
+          </Pressable>
         </>
       ) : null}
     </Card>

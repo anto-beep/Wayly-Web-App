@@ -295,6 +295,15 @@ const PLANS = {
     family: { name: "Family", price: "$49.50", period: "per fortnight", included_participants: 2 },
 };
 const ADDON_PRICE_FORTNIGHT = 24.50;
+// BILLING-UI: optional, non-mandatory cancellation reasons.
+const CANCEL_REASONS = [
+    "Too expensive",
+    "Not using it enough",
+    "Missing a feature I need",
+    "Found another service",
+    "Only needed it temporarily",
+    "Other",
+];
 
 function BillingTab() {
     const { user, refreshUser } = useAuth();
@@ -303,6 +312,9 @@ function BillingTab() {
     const [invoices, setInvoices] = useState(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
+    const [cancelOpen, setCancelOpen] = useState(false);
+    const [cancelReason, setCancelReason] = useState("");
+    const [cancelDetail, setCancelDetail] = useState("");
     const load = useCallback(async () => {
         setLoading(true);
         try {
@@ -429,19 +441,27 @@ function BillingTab() {
             toast.error(extractErrorMessage(err, "Could not cancel the scheduled change"));
         } finally { setBusy(false); }
     };
-    const cancel = async () => {
-        // BILLING-UI-1 v5 §4.5 — one click, honest, no retention hedge.
-        const periodEnd = sub?.current_period_end ? formatDate(sub.current_period_end) : "the end of your current fortnight";
-        if (!window.confirm(`Cancel plan? You'll keep full access until ${periodEnd}. After that, your data is kept for 30 days in case you come back, then permanently deleted. You will not be charged again.`)) return;
+    const cancel = () => {
+        // BILLING-UI-1 v5 §4.5 — honest, no retention hedge. We now also ask an
+        // OPTIONAL reason (skippable) before the cancel goes through.
+        setCancelReason("");
+        setCancelDetail("");
+        setCancelOpen(true);
+    };
+    const confirmCancel = async () => {
+        setCancelOpen(false);
         setBusy(true);
+        const payload = cancelReason
+            ? { reason: cancelReason, reason_detail: cancelReason === "Other" ? cancelDetail.trim() : "" }
+            : {};
         try {
-            await api.post("/payments/cancel-subscription");
+            await api.post("/payments/cancel-subscription", payload);
             toast.success("Your plan will end at the current period.");
             await load();
         } catch (err) {
             // Fallback to legacy endpoint if the new one isn't wired up yet.
             try {
-                await api.post("/billing/cancel");
+                await api.post("/billing/cancel", payload);
                 toast.success("Your plan will end at the current period.");
                 await load();
             } catch (err2) {
@@ -497,6 +517,16 @@ function BillingTab() {
     const basePriceFortnight = Number(PLANS[currentPlan].price.replace("$", ""));
     const addonSubtotalFortnight = addonCount * ADDON_PRICE_FORTNIGHT;
     const fortnightTotal = basePriceFortnight + addonSubtotalFortnight;
+    // Inactive-plan detection (items 3 & 4): a trial that has ended or a
+    // cancelled/expired sub means there is NO active plan — so nothing should
+    // read as "current", and a past end-date must say "ended", not "ends".
+    const subStatusLc = (user?.subscription_status || "").toLowerCase();
+    const isExpired = subStatusLc === "expired" || subStatusLc === "cancelled" || subStatusLc === "canceled";
+    const periodEndTs = sub?.current_period_end ? new Date(sub.current_period_end).getTime() : null;
+    const periodEnded = periodEndTs != null && periodEndTs <= Date.now();
+    // Active = a live sub or in-progress trial whose end-date hasn't passed.
+    const hasActivePlan = !isExpired && activeSub && !(sub?.cancel_at_period_end && periodEnded);
+    const periodEndLabel = sub?.current_period_end ? formatDate(sub.current_period_end) : "the end of your current fortnight";
 
     return (
         <div className="space-y-6" data-testid="settings-billing">
@@ -535,11 +565,59 @@ function BillingTab() {
                         </div>
                     </div>
                 )}
+                {/* Cancellation modal — optional, skippable reason (item 5) */}
+                {cancelOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" data-testid="cancel-modal" onClick={() => { if (!busy) setCancelOpen(false); }}>
+                        <div className="bg-surface rounded-2xl p-6 max-w-md w-full shadow-xl border border-kindred" onClick={(e) => e.stopPropagation()}>
+                            <h3 className="font-heading text-xl text-primary-k">Cancel your plan?</h3>
+                            <p className="text-sm text-muted-k mt-2">
+                                You&apos;ll keep full access until {periodEndLabel}. After that, your data is kept for 30 days in case you come back, then permanently deleted. You won&apos;t be charged again.
+                            </p>
+                            <p className="text-sm font-medium text-primary-k mt-4">Mind telling us why? <span className="text-muted-k font-normal">(optional)</span></p>
+                            <div className="mt-2 space-y-1.5" data-testid="cancel-reason-list">
+                                {CANCEL_REASONS.map((r) => {
+                                    const slug = r.toLowerCase().replace(/[^a-z]+/g, "-").replace(/(^-|-$)/g, "");
+                                    const selected = cancelReason === r;
+                                    return (
+                                        <button
+                                            key={r}
+                                            type="button"
+                                            data-testid={`cancel-reason-${slug}`}
+                                            onClick={() => setCancelReason(selected ? "" : r)}
+                                            className={`w-full text-left text-sm rounded-lg border px-3 py-2 transition-colors ${selected ? "border-primary-k bg-primary-k/[0.06] text-primary-k font-medium" : "border-kindred text-muted-k hover:border-primary-k/40"}`}
+                                        >
+                                            {r}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {cancelReason === "Other" && (
+                                <textarea
+                                    data-testid="cancel-reason-other-text"
+                                    value={cancelDetail}
+                                    onChange={(e) => setCancelDetail(e.target.value)}
+                                    placeholder="Tell us a little more (optional)"
+                                    rows={3}
+                                    className="mt-2 w-full text-sm rounded-lg border border-kindred bg-surface-2 px-3 py-2 focus:outline-none focus:border-primary-k"
+                                />
+                            )}
+                            <div className="mt-5 flex items-center justify-end gap-2">
+                                <button type="button" data-testid="cancel-modal-keep" onClick={() => setCancelOpen(false)} disabled={busy} className="text-sm text-primary-k font-semibold rounded-md px-4 py-2 hover:bg-primary-k/[0.06] disabled:opacity-60">
+                                    Keep my plan
+                                </button>
+                                <button type="button" data-testid="cancel-modal-confirm" onClick={confirmCancel} disabled={busy} className="inline-flex items-center gap-1.5 text-sm text-white bg-terracotta rounded-md px-4 py-2 hover:opacity-90 disabled:opacity-60">
+                                    <X className="h-3.5 w-3.5" /> Cancel plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {/* Current plan card */}
                 <div className="bg-[#0E4D52]/[0.04] border border-primary-k/15 border-l-4 border-l-primary-k rounded-2xl p-6" data-testid="current-plan-card">
                     <div className="flex items-start justify-between flex-wrap gap-4">
                         <div>
                             <div className="flex items-center gap-2"><Crown className="h-4 w-4 text-clay" /><span className="overline">Current plan</span></div>
+                            {hasActivePlan ? (<>
                             <div className="mt-2 font-heading text-2xl text-primary-k" data-testid="current-plan-name">
                                 {PLANS[currentPlan]?.name}{" "}
                                 <span className="text-base font-sans text-muted-k" data-testid="current-plan-price">
@@ -554,7 +632,17 @@ function BillingTab() {
                             {addonCount === 0 && (
                                 <p className="text-xs text-muted-k mt-1">Billed every 14 days · Includes GST</p>
                             )}
-                            {activeSub && sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() > Date.now() && (() => {
+                            </>) : (
+                            <div className="mt-2" data-testid="current-plan-none">
+                                <div className="font-heading text-2xl text-primary-k" data-testid="current-plan-name">No active plan</div>
+                                <p className="text-sm text-muted-k mt-1">
+                                    {sub?.current_period_end && (periodEnded || isExpired)
+                                        ? <>Your plan ended on {formatDate(sub.current_period_end)}. Choose a plan below to reactivate — you keep access to all your data.</>
+                                        : <>You don&apos;t have an active plan. Choose a plan below to get started.</>}
+                                </p>
+                            </div>
+                            )}
+                            {hasActivePlan && sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() > Date.now() && (() => {
                                 const ms = new Date(sub.trial_ends_at).getTime() - Date.now();
                                 const days = Math.max(0, Math.ceil(ms / 86_400_000));
                                 const ending = days <= 2;
@@ -577,13 +665,13 @@ function BillingTab() {
                                     </div>
                                 );
                             })()}
-                            {activeSub && sub.current_period_end && sub.status !== "trialing" && (
+                            {hasActivePlan && sub.current_period_end && sub.status !== "trialing" && (
                                 <p className="text-sm text-muted-k mt-1" data-testid="billing-next-charge">
                                     {sub.cancel_at_period_end ? "Ends" : "Next charge:"} {formatDate(sub.current_period_end)}
                                     {!sub.cancel_at_period_end && ` · $${fortnightTotal.toFixed(2)} including GST`}
                                 </p>
                             )}
-                            {sub?.cancel_at_period_end && (
+                            {hasActivePlan && sub?.cancel_at_period_end && !periodEnded && (
                                 <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" data-testid="billing-cancel-scheduled">
                                     Your plan is scheduled to end on {formatDate(sub.current_period_end)}. You keep full access until then.
                                     <button type="button" onClick={reactivate} disabled={busy} className="ml-2 text-xs text-amber-900 font-semibold underline hover:no-underline" data-testid="billing-reactivate">
@@ -609,7 +697,7 @@ function BillingTab() {
                                 </div>
                             )}
                         </div>
-                        {activeSub && !sub.cancel_at_period_end && (() => {
+                        {hasActivePlan && !sub.cancel_at_period_end && (() => {
                             const isTrialing = sub?.trial_ends_at && new Date(sub.trial_ends_at).getTime() > Date.now();
                             return (
                                 <button
@@ -628,7 +716,7 @@ function BillingTab() {
                 </div>
 
                 {/* What You Are Paying For — live view */}
-                {account?.summary && (
+                {hasActivePlan && account?.summary && (
                     <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-participants-card">
                         <div className="flex items-start justify-between flex-wrap gap-4">
                             <div>
@@ -687,7 +775,7 @@ function BillingTab() {
                 {/* Plan Options (Solo / Family) — Free tier removed per BILLING-UI-1 v5 §1 */}
                 <div className="grid md:grid-cols-2 gap-4">
                     {["solo", "family"].map((p) => {
-                        const isCurrent = p === currentPlan;
+                        const isCurrent = hasActivePlan && p === currentPlan;
                         const isRecommended = p === "family" && !isCurrent;
                         const participantsActiveHere = participantsActive;
                         const soloBlocked = p === "solo" && currentPlan === "family" && participantsActiveHere > 1;
@@ -709,7 +797,7 @@ function BillingTab() {
                                     <div className="mt-4 inline-flex items-center gap-1 text-xs text-gold" data-testid={`billing-plan-scheduled-${p}`}>
                                         <Check className="h-3.5 w-3.5" /> Scheduled{sub.pending_effective ? ` for ${formatDate(sub.pending_effective)}` : ""}
                                     </div>
-                                ) : activeSub ? (
+                                ) : hasActivePlan ? (
                                     <>
                                         <button
                                             onClick={() => changePlan(p)}

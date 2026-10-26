@@ -7152,14 +7152,33 @@ async def my_subscription(user_id: str = Depends(get_current_user_id)):
 
 
 @api.post("/billing/cancel")
-async def cancel_subscription(user_id: str = Depends(get_current_user_id)):
+async def cancel_subscription(request: Request, user_id: str = Depends(get_current_user_id)):
+    # Optional, non-mandatory cancellation feedback (item 5).
+    reason, reason_detail = None, None
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            reason = (body.get("reason") or "").strip() or None
+            reason_detail = (body.get("reason_detail") or "").strip() or None
+    except Exception:
+        pass
     sub = await db.subscriptions.find_one({"user_id": user_id, "status": {"$in": ["trialing", "active"]}}, {"_id": 0})
     if not sub:
         raise HTTPException(status_code=404, detail="No active plan to cancel")
+    now = now_iso()
+    set_fields = {"cancel_at_period_end": True, "updated_at": now}
+    if reason:
+        set_fields.update({"cancellation_reason": reason, "cancellation_reason_detail": reason_detail, "cancellation_feedback_at": now})
     await db.subscriptions.update_one(
         {"user_id": user_id},
-        {"$set": {"cancel_at_period_end": True, "updated_at": now_iso()}},
+        {"$set": set_fields},
     )
+    if reason:
+        await db.users.update_one({"id": user_id}, {"$set": {"cancellation_reason": reason, "cancellation_reason_detail": reason_detail, "cancellation_feedback_at": now}})
+        try:
+            await db.cancellation_feedback.insert_one({"user_id": user_id, "reason": reason, "reason_detail": reason_detail, "was_trialing": sub.get("status") == "trialing", "created_at": now})
+        except Exception:
+            pass
     # Plan continues until current_period_end; we don't flip plan here.
     try:
         u = await _get_user(user_id)
@@ -7483,6 +7502,7 @@ from routes.csc2 import csc2_router, init_csc2_routes, ensure_csc2_indexes
 from routes.athm1 import athm1_router, init_athm1_routes, ensure_athm1_indexes
 from routes.chsp1 import chsp1_router, init_chsp1_routes, ensure_chsp1_indexes
 from routes.bc2 import bc2_router, init_bc2_routes, ensure_bc2_indexes
+from routes.bsc1 import bsc1_router, init_bsc1_routes, ensure_bsc1_indexes
 from routes.sdl1 import sdl1_router, init_sdl1_routes, ensure_sdl1_indexes
 from routes.fc2 import fc2_router, init_fc2_routes, ensure_fc2_indexes
 from routes.lf2 import lf2_router, init_lf2_routes, ensure_lf2_indexes
@@ -7621,6 +7641,7 @@ init_csc2_routes(db=db, user_dep=_user_from_request_required, core1_write_timeli
 init_athm1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access)
 init_chsp1_routes(db=db, user_dep=_user_from_request_required, loop1_open_case=loop1_open_case)
 init_bc2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access)
+init_bsc1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access)
 init_sdl1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline, loop1_open_case=loop1_open_case)
 init_fc2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, loop1_open_case=loop1_open_case)
 try:
@@ -7673,6 +7694,7 @@ api.include_router(csc2_router)
 api.include_router(athm1_router)
 api.include_router(chsp1_router)
 api.include_router(bc2_router)
+api.include_router(bsc1_router)
 api.include_router(sdl1_router)
 api.include_router(fc2_router)
 api.include_router(lf2_router)
@@ -9189,6 +9211,7 @@ async def _start_batch3_migration_and_purge():
         # BC-2 indexes
         try:
             await ensure_bc2_indexes()
+            await ensure_bsc1_indexes()
         except Exception as e:
             logger.warning("BC-2 index creation failed: %s", e)
         # SDL-1 indexes

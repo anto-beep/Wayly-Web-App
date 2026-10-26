@@ -108,12 +108,10 @@ const navGroups = [
         key: "money",
         label: "Money & Statements",
         items: [
-            { to: "/app/pacing", label: "Quarterly Pacing", icon: Timer },
             { to: "/app/statements", label: "Statements", icon: FileText, mobile: true },
             { to: "/app/invoices", label: "Invoices", icon: ReceiptText },
-            { to: "/app/contribution-position", label: "Contribution Position", icon: TrendingUp },
-            { to: "/app/budget-alerts", label: "Budget Alerts", icon: Bell },
             { to: "/app/budget-scenarios", label: "Budget Scenarios", icon: Wallet },
+            { to: "/app/contribution-position", label: "Contribution Position", icon: TrendingUp },
             { to: "/app/reports", label: "Reports", icon: FileBarChart },
         ],
     },

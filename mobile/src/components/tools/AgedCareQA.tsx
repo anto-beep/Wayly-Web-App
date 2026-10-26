@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { router } from "expo-router";
-import { Send, MessageCircle, AlertCircle } from "lucide-react-native";
+import { Send, MessageCircle, AlertCircle, RotateCcw } from "lucide-react-native";
 
 import { AppHeader, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
@@ -11,9 +11,11 @@ import ReportSheet from "@/src/components/ReportSheet";
 import { apiFetch } from "@/src/lib/api";
 import { usePersona } from "@/src/hooks/usePersona";
 import { useTheme } from "@/src/theme/ThemeContext";
-import { fonts, radius, spacing } from "@/src/theme/tokens";
+import { fonts, radius, spacing, Palette } from "@/src/theme/tokens";
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
+type Exchange = { id: string; q: string; a: string | null; aId: string | null };
+
 const SUGGESTIONS = [
   "What is Support at Home and how is it different from Home Care Packages?",
   "What's the lifetime contribution cap and who does it apply to?",
@@ -23,6 +25,7 @@ const SUGGESTIONS = [
 
 export default function AgedCareQA() {
   const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const persona = usePersona();
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -31,7 +34,10 @@ export default function AgedCareQA() {
   const [showReport, setShowReport] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
-  useEffect(() => { scrollRef.current?.scrollToEnd({ animated: true }); }, [msgs, busy]);
+  // Input is at the TOP and the newest exchange renders first, so keep the
+  // viewport pinned to the top whenever a new answer arrives — the user never
+  // has to scroll to find the latest answer.
+  useEffect(() => { scrollRef.current?.scrollTo({ y: 0, animated: true }); }, [msgs, busy]);
 
   const send = async (text?: string) => {
     const m = (text ?? input).trim();
@@ -47,56 +53,104 @@ export default function AgedCareQA() {
     } finally { setBusy(false); }
   };
 
+  const clear = () => { setMsgs([]); setSessionId(null); setInput(""); };
+
+  // Group the flat message list into Q→A exchanges, newest first.
+  const exchanges = useMemo<Exchange[]>(() => {
+    const out: Exchange[] = [];
+    for (const m of msgs) {
+      if (m.role === "user") out.push({ id: m.id, q: m.content, a: null, aId: null });
+      else if (out.length) { const last = out[out.length - 1]; last.a = m.content; last.aId = m.id; }
+    }
+    return out.reverse();
+  }, [msgs]);
+
+  const hasConversation = exchanges.length > 0;
+  const canSend = !!input.trim() && !busy;
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader onBack={() => router.back()} />
+      <AppHeader title="Aged Care Q&A" onBack={() => router.back()} right={
+        hasConversation ? (
+          <Pressable testID="fc-clear" onPress={clear} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <RotateCcw size={16} color={colors.muted} />
+            <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>New</T>
+          </Pressable>
+        ) : undefined
+      } />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={90}>
-        <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md }} keyboardShouldPersistTaps="handled" testID="aged-care-qa">
-          <ToolHero toolKey="family-coordinator" />
-          <T variant="small" style={{ color: colors.muted, fontSize: 12 }}>{"This is a general Q&A assistant, it can't see your account or statements."}</T>
+        {/* Ask bar — pinned to the TOP so it is always visible. */}
+        <View style={styles.askPanel}>
+          <View style={styles.inputBar}>
+            <TextInput
+              testID="fc-input"
+              value={input}
+              onChangeText={setInput}
+              placeholder="Ask anything about aged care…"
+              placeholderTextColor={colors.muted}
+              onSubmitEditing={() => send()}
+              returnKeyType="send"
+              style={[styles.textInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+            />
+            <Pressable testID="fc-send" disabled={!canSend} onPress={() => send()} style={[styles.sendBtn, { backgroundColor: colors.cta, opacity: canSend ? 1 : 0.5 }]}>
+              <Send size={18} color="#fff" />
+            </Pressable>
+          </View>
+          <T variant="small" style={{ color: colors.muted, fontSize: 11, marginTop: 6 }}>{"General Q&A — it can't see your account or statements."}</T>
+        </View>
 
-          {msgs.length === 0 && !busy ? (
-            <View style={{ alignItems: "center", paddingVertical: spacing.lg }}>
-              <MessageCircle size={30} color={colors.sage} />
-              <T variant="body" style={{ textAlign: "center", color: colors.muted, marginTop: spacing.md, lineHeight: 22 }}>
-                {persona === "participant"
-                  ? "Ask anything about Support at Home, your classification, contributions, or the new Aged Care Act 2024."
-                  : "Ask anything about Support at Home, classifications, contributions, or the new Aged Care Act 2024."}
-              </T>
-              <View style={{ gap: spacing.sm, marginTop: spacing.lg, alignSelf: "stretch" }}>
+        <ScrollView ref={scrollRef} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled" testID="aged-care-qa">
+          {!hasConversation && !busy ? (
+            <View>
+              <ToolHero toolKey="family-coordinator" />
+              <View style={{ alignItems: "center", paddingVertical: spacing.md }}>
+                <MessageCircle size={28} color={colors.sage} />
+                <T variant="body" style={{ textAlign: "center", color: colors.muted, marginTop: spacing.sm, lineHeight: 22 }}>
+                  {persona === "participant"
+                    ? "Ask anything about Support at Home, your classification, contributions, or the new Aged Care Act 2024."
+                    : "Ask anything about Support at Home, classifications, contributions, or the new Aged Care Act 2024."}
+                </T>
+              </View>
+              <T variant="small" style={{ color: colors.muted, marginBottom: spacing.sm }}>Common questions</T>
+              <View style={{ gap: spacing.sm }}>
                 {SUGGESTIONS.map((s) => (
                   <Pressable key={s} testID={`fc-suggest-${s.slice(0, 12)}`} onPress={() => send(s)} style={[styles.suggest, { borderColor: colors.border, backgroundColor: colors.surface }]}>
                     <T variant="small" style={{ color: colors.text, lineHeight: 20 }}>{s}</T>
                   </Pressable>
                 ))}
               </View>
+              <View style={{ marginTop: spacing.lg }}><ToolExplainer toolKey="family-coordinator" /></View>
             </View>
-          ) : null}
-
-          {msgs.map((m) => (
-            <View key={m.id} testID={`fc-msg-${m.role}`} style={{ alignItems: m.role === "user" ? "flex-end" : "flex-start" }}>
-              <View style={[styles.bubble, m.role === "user" ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 } : { backgroundColor: colors.surface2, borderBottomLeftRadius: 4 }]}>
-                {m.role === "user" ? (
-                  <T style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 21, color: "#fff" }}>{m.content}</T>
-                ) : (
-                  <MarkdownText content={m.content} color={colors.text} size={14} lineHeight={21} chipBg={colors.goldSoft} chipColor={colors.text} />
-                )}
-              </View>
-            </View>
-          ))}
-          {busy ? <T variant="small" style={{ color: colors.muted }}>Thinking…</T> : null}
-
-          <ToolExplainer toolKey="family-coordinator" />
+          ) : (
+            exchanges.map((ex, idx) => {
+              const thinking = busy && idx === 0 && ex.a == null;
+              return (
+                <View key={ex.id} style={styles.exchange} testID={`fc-exchange-${idx}`}>
+                  <View testID="fc-msg-user" style={{ alignItems: "flex-end" }}>
+                    <View style={[styles.bubble, { backgroundColor: colors.primary, borderBottomRightRadius: 4 }]}>
+                      <T style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 21, color: "#fff" }}>{ex.q}</T>
+                    </View>
+                  </View>
+                  {thinking ? (
+                    <View testID="fc-thinking" style={[styles.bubble, styles.thinkingBubble]}>
+                      <ActivityIndicator size="small" color={colors.heading} />
+                      <T variant="small" style={{ color: colors.muted }}>Wayly is thinking…</T>
+                    </View>
+                  ) : ex.a != null ? (
+                    <View testID="fc-msg-assistant" style={{ alignItems: "flex-start" }}>
+                      <View style={[styles.bubble, { backgroundColor: colors.surface2, borderBottomLeftRadius: 4 }]}>
+                        <MarkdownText content={ex.a} color={colors.text} size={14} lineHeight={21} chipBg={colors.goldSoft} chipColor={colors.text} />
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })
+          )}
         </ScrollView>
 
-        <View style={[styles.inputBar, { backgroundColor: colors.bg, borderTopColor: colors.border }]}>
-          <TextInput testID="fc-input" value={input} onChangeText={setInput} placeholder="Ask anything…" placeholderTextColor={colors.muted} onSubmitEditing={() => send()} style={[styles.textInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]} />
-          <Pressable testID="fc-send" disabled={busy || !input.trim()} onPress={() => send()} style={[styles.sendBtn, { backgroundColor: colors.cta, opacity: busy || !input.trim() ? 0.5 : 1 }]}>
-            <Send size={18} color="#fff" />
-          </Pressable>
-        </View>
-        {/* Report an issue — sits BELOW the chat bar (parity with web) */}
-        {msgs.some((m) => m.role === "assistant") ? (
+        {/* Report an issue — only once an answer exists. */}
+        {exchanges.some((ex) => ex.a != null) ? (
           <View style={{ flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: spacing.md, paddingBottom: Platform.OS === "ios" ? spacing.sm : spacing.xs, backgroundColor: colors.bg }} testID="aw2-report-issue">
             <Pressable testID="aw2-report-issue-btn" onPress={() => setShowReport(true)} style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: 6, opacity: pressed ? 0.7 : 1 }]}>
               <AlertCircle size={15} color={colors.gold} />
@@ -110,10 +164,14 @@ export default function AgedCareQA() {
   );
 }
 
-const styles = StyleSheet.create({
-  suggest: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  bubble: { maxWidth: "88%", borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  inputBar: { flexDirection: "row", gap: spacing.sm, padding: spacing.md, borderTopWidth: 1, alignItems: "center" },
-  textInput: { flex: 1, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: spacing.md, minHeight: 46, fontFamily: fonts.body, fontSize: 15 },
-  sendBtn: { width: 46, height: 46, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
-});
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
+    askPanel: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.bg },
+    inputBar: { flexDirection: "row", gap: spacing.sm, alignItems: "center" },
+    textInput: { flex: 1, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: spacing.md, minHeight: 46, fontFamily: fonts.body, fontSize: 15 },
+    sendBtn: { width: 46, height: 46, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+    suggest: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 10 },
+    exchange: { gap: spacing.sm },
+    bubble: { maxWidth: "88%", borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: 10 },
+    thinkingBubble: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.surface2, borderBottomLeftRadius: 4, alignSelf: "flex-start" },
+  });

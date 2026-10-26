@@ -29,7 +29,7 @@ const TAGLINE_TAIL = TAGLINE_PARTS.slice(1).join(", ");
 const COPY = {
     caregiver: {
         eyebrow: "Aged Care, Made Clear",
-        headline: "Read the statement. Check the invoice. Sleep on Sunday.",
+        headline: "Read the statement. Check the invoice. Pay with confidence.",
         subhead: "Wayly is the calm command centre for aged care: decode any statement or invoice, catch overcharges before you pay, track every dollar of funding, compare providers and get plain-English answers to anything, all in one place.",
         flagship_statement_sub: "Upload the monthly statement. Get a plain-English breakdown of every stream, every rate, every flag.",
         flagship_invoice_sub: "Upload the contribution invoice. Wayly runs the C1 to C12 rule engine and tells you what to raise before you pay.",

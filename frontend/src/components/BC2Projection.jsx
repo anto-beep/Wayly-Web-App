@@ -68,7 +68,7 @@ export default function BC2Projection({ participantId }) {
                     </span>
                     <div className="min-w-0">
                         <p className="text-[10px] uppercase tracking-[0.14em] text-muted-k">Budget runway</p>
-                        <h3 className="font-heading text-lg text-primary-k leading-tight truncate">Where your money stands</h3>
+                        <h3 className="font-heading text-lg text-primary-k leading-tight truncate">Where Your Money Stands</h3>
                     </div>
                 </div>
                 <Link

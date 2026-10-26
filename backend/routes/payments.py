@@ -544,6 +544,15 @@ async def cancel_subscription(request: Request):
         raise HTTPException(status_code=503, detail="Billing unavailable")
     stripe.api_key = api_key
     user = await _require_user(request)
+    # Optional, non-mandatory cancellation feedback (item 5).
+    _reason, _reason_detail = None, None
+    try:
+        _body = await request.json()
+        if isinstance(_body, dict):
+            _reason = (_body.get("reason") or "").strip() or None
+            _reason_detail = (_body.get("reason_detail") or "").strip() or None
+    except Exception:
+        pass
     sub_id = user.get("stripe_subscription_id")
     if not sub_id and _db is not None:
         u = await _db.users.find_one({"id": user.get("id")})
@@ -569,6 +578,20 @@ async def cancel_subscription(request: Request):
         logger.warning("Stripe cancel failed: %s", e)
         raise HTTPException(status_code=502, detail=str(getattr(e, "user_message", None) or e))
     if _db is not None:
+        from datetime import datetime, timezone
+        if _reason:
+            _now_iso = datetime.now(timezone.utc).isoformat()
+            _fb = {"cancellation_reason": _reason, "cancellation_reason_detail": _reason_detail, "cancellation_feedback_at": _now_iso}
+            await _db.users.update_one({"id": user.get("id")}, {"$set": _fb})
+            await _db.subscriptions.update_one({"user_id": user.get("id")}, {"$set": _fb})
+            try:
+                await _db.cancellation_feedback.insert_one({
+                    "user_id": user.get("id"), "reason": _reason,
+                    "reason_detail": _reason_detail, "was_trialing": is_trialing,
+                    "created_at": _now_iso,
+                })
+            except Exception:
+                pass
         if is_trialing:
             # Immediate view-only. Mirror into the read-model so the app
             # reflects it without waiting on webhook delivery (preview safe).

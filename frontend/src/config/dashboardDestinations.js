@@ -52,11 +52,11 @@ export const DASHBOARD_DESTINATIONS = [
         keywords: "letter draft write complaint complain escalate ombudsman acqsc reassessment request formal email push back unhappy raise an issue not happy poor service problem with provider follow up chase response report them",
     },
     {
-        label: "See my budget", hint: "What is left this quarter and how it is tracking",
-        route: "/app/budget-scenarios", icon: Wallet, quick: true,
-        concepts: ["budget"],
-        aliases: ["my budget", "budget scenarios", "whats left", "money left", "budget tracker"],
-        keywords: "budget money left spend spent remaining afford cost funding cap running out running low how much left this quarter balance whats left do i have enough overspending scenarios forecast",
+        label: "Check a price", hint: "Compare your provider's charge against published medians",
+        route: "/ai-tools/provider-price-checker", icon: BarChart3, quick: true,
+        concepts: ["compare", "provider"],
+        aliases: ["check a price", "price check", "provider price checker", "price checker", "compare prices", "rate checker", "am i paying too much"],
+        keywords: "price check provider price compare charge median rate rates am i paying too much expensive overpriced quote cost how much should it cost going rate benchmark",
     },
     {
         label: "All Tools", hint: "Every tool Wayly offers, in one place",
@@ -119,25 +119,11 @@ export const DASHBOARD_DESTINATIONS = [
         keywords: "invoices list history bills checked past invoices",
     },
     {
-        label: "Budget alerts", hint: "Things worth reviewing on your budget",
-        route: "/app/budget-alerts", icon: Bell,
-        concepts: ["alerts", "invoice"],
-        aliases: ["budget alerts", "alerts", "flags", "anomalies"],
-        keywords: "alerts anomalies overcharge unusual review flags something wrong problem warning issues to check red flags suspicious",
-    },
-    {
         label: "Reports", hint: "Quarterly and lifetime-cap reports",
         route: "/app/reports", icon: FileBarChart,
         concepts: ["reports"],
         aliases: ["reports", "my reports", "quarterly report", "download report"],
         keywords: "reports quarterly lifetime cap summary download pdf export print share proof records household summary statement digest",
-    },
-    {
-        label: "Quarterly pacing", hint: "Are you spending too fast or too slow?",
-        route: "/app/pacing", icon: Timer,
-        concepts: ["pacing", "budget"],
-        aliases: ["quarterly pacing", "pacing", "spending rate", "on track"],
-        keywords: "pacing spending rate quarter too fast too slow on track running out will it last burn rate",
     },
     {
         label: "Care Plans", hint: "View your saved support plans",

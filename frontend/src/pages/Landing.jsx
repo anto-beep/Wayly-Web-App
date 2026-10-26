@@ -107,7 +107,7 @@ export default function Landing() {
                         </p>
 
                         {/* Persona on-ramp */}
-                        <div className="mt-6 grid sm:grid-cols-3 gap-3" data-testid="persona-onramp">
+                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3" data-testid="persona-onramp">
                             {PERSONAS.map((p) => (
                                 <button
                                     key={p.id}
@@ -123,7 +123,7 @@ export default function Landing() {
                                     <div className={`text-xs uppercase tracking-wider ${selectedPersona === p.id ? "text-white/85" : "text-muted-k"}`}>
                                         {p.sub}
                                     </div>
-                                    <div className={`font-heading text-lg mt-1 ${selectedPersona === p.id ? "text-white" : "text-[#0E2A47]"}`}>
+                                    <div className={`font-heading text-base mt-1 whitespace-nowrap ${selectedPersona === p.id ? "text-white" : "text-[#0E2A47]"}`}>
                                         {p.title}
                                     </div>
                                     <div className={`mt-3 text-sm inline-flex items-center gap-1 ${selectedPersona === p.id ? "text-white" : "text-[#0E2A47]"}`}>
