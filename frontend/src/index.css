@@ -15,6 +15,11 @@
 @tailwind utilities;
 
 :root {
+    /* Force light UA rendering (form controls, canvas, scrollbars, autofill)
+     * even when the device OS is in Dark Mode. Without this, iOS Safari paints
+     * unstyled areas dark on a dark-mode phone even though the Wayly theme is
+     * light. Dark mode re-declares `color-scheme: dark` on html.theme-dark. */
+    color-scheme: light;
     /* --- Wayly brand tokens (Feb 2026 spec) ---------------------------- */
     --kindred-bg:        #EAEDF0;   /* soft cool grey — main app canvas (founder Jun 2026: no cream, no bright white) */
     --kindred-surface:   #FBFCFE;   /* clean cool near-white card (NOT cream) */

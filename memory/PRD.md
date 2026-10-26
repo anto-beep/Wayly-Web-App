@@ -1,3 +1,12 @@
+# Wayly — current fork status (Jun 2026)
+
+**Just shipped (Jun 2026 — mobile Statement Decoder clarity + iOS Safari dark-mode fix; mobile + web; self-verified via screenshots):**
+- **Mobile Statement Decoder walkthrough video moved to "How It Works".** It was pinned at the very top of `mobile/app/tool/[slug].tsx` (inline `sd-how-to-video` card after `ToolHero`), unlike every other tool. Removed the inline card + its `useVideoPlayer`/`VideoView`/`HOW_TO_VIDEO_URL`, and added a `statement-decoder` entry to the shared `TOOL_VIDEOS` registry in `mobile/src/components/ToolWalkthroughVideo.tsx`. Since `ToolExplainer` already renders `<ToolWalkthroughVideo>` under How It Works, the walkthrough now appears there (collapsible, with the existing fullscreen button) — full parity with the other tools.
+- **Mobile Statement Decoder paste/upload now clear (parity with Invoice Checker).** Replaced the two faint pill chips + bare textarea with a prominent `decoder-input-card`: titled "Add your statement", a full-width segmented switch ("Paste text" / "Upload file or photo", icons, selected = teal fill), and in upload mode a dashed drop-zone with a big circular icon + "Tap to upload your statement" that routes to `/upload`. testIDs preserved (`decoder-mode-text/file`, `decoder-text-input`, `decoder-submit`, `decoder-open-upload`).
+- **iOS Safari showed the web app in dark mode on a dark-mode phone.** Root cause: `:root` in `frontend/src/index.css` never declared `color-scheme`, so WebKit painted unstyled areas (canvas, form controls, scrollbars) with the OS dark appearance even though the Wayly theme is light. Added `color-scheme: light;` to `:root` (dark theme already sets `color-scheme: dark` on `html.theme-dark`). Verified by emulating `prefers-color-scheme: dark`: `html` computes `color-scheme: light`, body bg stays light `rgb(234,237,240)`, page renders fully light.
+
+---
+
 # Wayly — current fork status (Oct 2026)
 
 **Just shipped (Oct 2026 — stale lifetime cap + instant plan-cancel UX + CE-2 verify; backend + web + mobile; testing_agent iter381 + live screenshot + pytest):**

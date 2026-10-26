@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useVideoPlayer, VideoView } from "expo-video";
-import { Sparkles, AlertTriangle, FileText, Clock, MessageCircle } from "lucide-react-native";
+import { Sparkles, AlertTriangle, FileText, Clock, MessageCircle, Upload, ClipboardList } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Field, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
@@ -33,10 +32,6 @@ type FormField = { key: string; label: string; type: FieldType; placeholder?: st
 type ToolCfg = { title: string; subtitle: string; endpoint: string; submitLabel: string; fields: FormField[] };
 
 const CLASS_OPTS = Array.from({ length: 8 }, (_, i) => ({ label: `${i + 1}`, value: i + 1 }));
-
-// "How to use the Statement Decoder" walkthrough video — plays for everyone
-// (authenticated or not), shared with the web app.
-const HOW_TO_VIDEO_URL = "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/fb62f81a34118d7b_How%20to%20Use%20Statement%20Decoder%20Final_Video.mp4";
 
 const TOOLS: Record<string, ToolCfg> = {
   "budget-calculator": {
@@ -132,8 +127,6 @@ function StatementDecoderTool() {
   const [usage, setUsage] = useState<{ allowed?: boolean; remaining?: number; days_until_next_use?: number } | null>(null);
   const [limitInfo, setLimitInfo] = useState<{ message?: string; days_until_next_use?: number } | null>(null);
 
-  const howToPlayer = useVideoPlayer(HOW_TO_VIDEO_URL, (p) => { p.loop = false; });
-
   // Free-use counter (logged-out visitors get 1 decode / 120 days).
   useEffect(() => {
     if (user) return;
@@ -215,22 +208,6 @@ function StatementDecoderTool() {
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }} keyboardShouldPersistTaps="handled">
           <ToolHero toolKey="statement-decoder" />
 
-          {/* How-to walkthrough video, visible to everyone (authed or not). */}
-          <Card testID="sd-how-to-video">
-            <T variant="label" style={{ textTransform: "uppercase", letterSpacing: 1.4, color: colors.gold }}>Watch the walkthrough</T>
-            <T variant="h3" style={{ marginTop: 4 }}>How to use the Statement Decoder</T>
-            <T variant="small" style={{ marginTop: 6, lineHeight: 20 }}>A quick walkthrough: paste or upload a statement, then read the plain-English summary, line items, and anomaly flags Wayly pulls out for you.</T>
-            <View testID="sd-how-to-video-player" style={{ marginTop: spacing.md, borderRadius: radius.md, overflow: "hidden", backgroundColor: "#000", aspectRatio: 3840 / 2084 }}>
-              <VideoView
-                style={{ width: "100%", height: "100%" }}
-                player={howToPlayer}
-                nativeControls
-                allowsFullscreen
-                contentFit="contain"
-              />
-            </View>
-          </Card>
-
           {showUsage ? (
             <View testID="usage-counter-banner" style={[styles.notice, { backgroundColor: (usage!.remaining || 0) > 0 ? colors.sageSoft : colors.goldSoft, borderColor: colors.border, borderWidth: 1 }]}>
               <T variant="small" style={{ color: colors.text }}>
@@ -240,30 +217,43 @@ function StatementDecoderTool() {
             </View>
           ) : null}
 
-          {/* Mode toggle */}
-          <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}>
-            {([["text", "Paste text"], ["file", "Upload file or photo"]] as const).map(([v, label]) => {
-              const on = mode === v;
-              return (
-                <Pressable key={v} testID={`decoder-mode-${v}`} onPress={() => { setMode(v); setResult(null); setError(""); }} style={[styles.chip, { alignItems: "center", borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: on ? "#fff" : colors.text }}>{label}</T>
-                </Pressable>
-              );
-            })}
-          </View>
+          {/* Add your statement — clear, prominent input card (parity with the Invoice Checker). */}
+          <Card testID="decoder-input-card">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+              <FileText size={22} color={colors.heading} />
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 16, flex: 1 }}>Add your statement</T>
+            </View>
+            <T variant="small" style={{ color: colors.muted, marginTop: 6, lineHeight: 19 }}>Choose how to add it — paste the text, or upload a PDF or photo.</T>
 
-          {mode === "text" ? (
-            <>
-              <Field label="" testID="decoder-text-input" value={text} onChangeText={setText} multiline placeholder="Paste your statement text here…" />
-              {error ? <View style={[styles.err, { backgroundColor: colors.errorSoft }]}><AlertTriangle size={18} color={colors.terracotta} /><T variant="small" style={{ color: colors.terracotta, flex: 1 }}>{error}</T></View> : null}
-              <Button label={busy ? (phase || "Reading your statement…") : "Decode this statement"} testID="decoder-submit" icon={Sparkles} onPress={decode} loading={busy} disabled={!!limitInfo} />
-            </>
-          ) : (
-            <Card testID="decoder-file-launcher">
-              <T variant="body" style={{ lineHeight: 22 }}>To decode a PDF or photo, use the secure uploader. Wayly extracts the text, decodes every line, and saves it to your statements.</T>
-              <Button label="Upload a Statement" testID="decoder-open-upload" icon={FileText} onPress={() => router.push("/upload")} style={{ marginTop: spacing.md }} />
-            </Card>
-          )}
+            {/* Segmented mode switch — full-width, clearly labelled with icons. */}
+            <View style={[styles.segment, { borderColor: colors.border, backgroundColor: colors.surface2 }]}>
+              {([["text", "Paste text", ClipboardList], ["file", "Upload file or photo", Upload]] as const).map(([v, label, Icon]) => {
+                const on = mode === v;
+                return (
+                  <Pressable key={v} testID={`decoder-mode-${v}`} onPress={() => { setMode(v); setResult(null); setError(""); }} style={[styles.segmentBtn, on && { backgroundColor: colors.primary }]}>
+                    <Icon size={17} color={on ? "#fff" : colors.heading} />
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: on ? "#fff" : colors.text }}>{label}</T>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {mode === "text" ? (
+              <View style={{ marginTop: spacing.md }}>
+                <Field label="" testID="decoder-text-input" value={text} onChangeText={setText} multiline placeholder="Paste your statement text here…" />
+                {error ? <View style={[styles.err, { backgroundColor: colors.errorSoft, marginTop: spacing.sm }]}><AlertTriangle size={18} color={colors.terracotta} /><T variant="small" style={{ color: colors.terracotta, flex: 1 }}>{error}</T></View> : null}
+                <Button label={busy ? (phase || "Reading your statement…") : "Decode this statement"} testID="decoder-submit" icon={Sparkles} onPress={decode} loading={busy} disabled={!!limitInfo} style={{ marginTop: spacing.md }} />
+              </View>
+            ) : (
+              <Pressable testID="decoder-open-upload" onPress={() => router.push("/upload")} style={[styles.drop, { borderColor: colors.border, backgroundColor: colors.surface2 }]}>
+                <View style={{ width: 56, height: 56, borderRadius: radius.pill, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
+                  <Upload size={26} color={colors.heading} />
+                </View>
+                <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading, marginTop: 10 }}>Tap to upload your statement</T>
+                <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>PDF, Word, image or CSV — we read it for you</T>
+              </Pressable>
+            )}
+          </Card>
 
           {limitInfo ? (
             <View testID="sd-daily-limit" style={[styles.notice, { backgroundColor: colors.goldSoft, borderColor: colors.border, borderWidth: 1, gap: 8 }]}>
@@ -576,6 +566,9 @@ function ToolResult({ slug, data, colors }: { slug: string; data: any; colors: a
 
 const styles = StyleSheet.create({
   chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: radius.pill, borderWidth: 1.5 },
+  segment: { flexDirection: "row", gap: 4, padding: 4, borderWidth: 1, borderRadius: radius.md, marginTop: spacing.md },
+  segmentBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingVertical: 11, borderRadius: radius.sm },
+  drop: { borderWidth: 2, borderStyle: "dashed", borderRadius: radius.md, padding: spacing.lg, marginTop: spacing.md, alignItems: "center" },
   notice: { borderRadius: radius.md, padding: spacing.md },
   scaleDot: { width: 34, height: 34, borderRadius: radius.pill, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
   err: { flexDirection: "row", gap: 8, alignItems: "center", borderRadius: radius.md, padding: spacing.md },

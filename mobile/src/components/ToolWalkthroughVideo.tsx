@@ -11,6 +11,11 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 // Public "How to use" walkthrough videos for the AI tools. Hosted as public
 // customer-assets URLs (not bundled, ~20-57 MB each) and shown to everyone.
 const TOOL_VIDEOS: Record<string, { url: string; title: string; blurb: string }> = {
+  "statement-decoder": {
+    url: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/fb62f81a34118d7b_How%20to%20Use%20Statement%20Decoder%20Final_Video.mp4",
+    title: "How to use the Statement Decoder",
+    blurb: "A quick walkthrough: paste or upload a statement, then read the plain-English summary, line items, and anomaly flags Wayly pulls out for you.",
+  },
   "classification-self-check": {
     url: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/4fa3799b3cb708b6_Classification%20Self%20Check%20Tutorial_Final%20Video.mp4",
     title: "How to use the Classification Self-Check",
