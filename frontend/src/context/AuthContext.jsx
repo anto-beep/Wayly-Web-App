@@ -162,6 +162,11 @@ export function AuthProvider({ children }) {
             }
             document.documentElement.classList.remove("theme-dark");
             document.documentElement.setAttribute("data-theme", "light");
+            // Reset any in-memory appearance state (ThemeProvider override,
+            // AccessibilityWidget prefs) so a same-tab logout returns to light
+            // immediately — clearing localStorage alone never touches React
+            // state, so the old dark pref would otherwise re-apply on re-render.
+            window.dispatchEvent(new Event("wayly:appearance-reset"));
         } catch (_) { /* best-effort */ }
         setAuthToken(null);
         setRefreshToken(null);

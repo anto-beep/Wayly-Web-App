@@ -78,6 +78,15 @@ export default function AccessibilityWidget() {
         savePrefs(prefs);
     }, [prefs]);
 
+    // Logout (AuthContext) broadcasts this so the in-memory dark pref drops
+    // back to light in the same tab — otherwise the widget keeps re-applying
+    // dark after the user signs out.
+    useEffect(() => {
+        const onReset = () => setPrefs((p) => ({ ...p, dark: false }));
+        window.addEventListener("wayly:appearance-reset", onReset);
+        return () => window.removeEventListener("wayly:appearance-reset", onReset);
+    }, []);
+
     // Stop any ongoing speech when widget unmounts (route change)
     useEffect(() => {
         return () => {

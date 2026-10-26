@@ -66,6 +66,16 @@ export function ThemeProvider({ children }) {
         };
     }, []);
 
+    // Reset to the light default when the auth layer broadcasts a logout.
+    // Clearing localStorage isn't enough — the in-memory override must drop
+    // too, or the next render re-applies the stale dark preference.
+    useEffect(() => {
+        if (typeof window === "undefined") return undefined;
+        const onReset = () => setOverride(null);
+        window.addEventListener("wayly:appearance-reset", onReset);
+        return () => window.removeEventListener("wayly:appearance-reset", onReset);
+    }, []);
+
     // Default to LIGHT for any new session (ignore OS dark preference).
     // Dark mode only applies when the user has explicitly chosen it via the
     // accessibility widget / Settings; that choice is cleared on logout.
