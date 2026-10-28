@@ -1380,6 +1380,15 @@ header.bg-wayly-teal-600, footer.bg-wayly-teal-600 {
     text-decoration-thickness: 2px !important;
     text-underline-offset: 6px !important;
 }
+/* Same exemption on hover: a solid white/surface button sitting on a teal
+   surface keeps its own dark label and never inherits the white-on-white +
+   underline link-hover treatment (fixes the final-CTA "Start free trial"
+   button going invisible on hover). */
+[data-teal-surface="true"] a.bg-white:hover, .bg-primary-k a.bg-white:hover, .wayly-gradient-bg a.bg-white:hover,
+.bg-primary-k a.bg-surface:hover, [data-teal-surface="true"] a.bg-surface:hover {
+    color: #0E4D52 !important;
+    text-decoration: none !important;
+}
 
 /* CLAY 500/600 BUTTONS — white text locked across every state. !important
  * so component-level `text-white` Tailwind classes don't override us. */
