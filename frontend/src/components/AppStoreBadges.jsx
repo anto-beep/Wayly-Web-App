@@ -3,17 +3,14 @@ import React, { useEffect, useState } from "react";
 /**
  * App store badges with smart device detection.
  *
- * Both store listings are pending publication. Until they ship the badges
- * render as "Coming soon" pills with no link, so we never serve a broken
- * 404 to a real user (the legacy Kindred ids were 404'ing in production).
- *
- * When the apps go live, set APP_STORE_URL / PLAY_STORE_URL to the real
- * URLs. The badges will automatically become clickable links again.
+ * The Android app is live on Google Play. The iOS app is still pending, so
+ * its badge renders as a "Coming soon" pill with no link (never a broken
+ * 404). When iOS ships, set APP_STORE_URL and the badge auto-activates.
  */
-const APP_STORE_URL = ""; // TODO: set when iOS app ships
-const PLAY_STORE_URL = ""; // TODO: set when Android app ships
+export const APP_STORE_URL = ""; // TODO: set when the iOS app ships (badge auto-activates)
+export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=au.com.wayly.app";
 
-function detectDevice() {
+export function detectDevice() {
     if (typeof navigator === "undefined") return "both";
     const ua = navigator.userAgent || "";
     if (/iPhone|iPad|iPod/i.test(ua)) return "ios";

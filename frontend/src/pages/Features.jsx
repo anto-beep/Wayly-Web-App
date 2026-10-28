@@ -353,7 +353,6 @@ export default function Features() {
 
                 <ToolGroup title="When the Statement Doesn't Add Up" description="Every dollar in and out, checked against medians and your budget the moment it lands." testId="features-group-money" startIndex={0} items={[
                     { icon: Receipt, title: "Invoice Checker", body: "Verify every line item against medians and budget the moment the invoice lands.", to: "/ai-tools/invoice-checker", plan: "Solo+" },
-                    { icon: FileSearch, title: "Bank-CSV Parsing", body: "Import a CSV once and Wayly maps every debit to the right provider, invoice, and stream.", to: "/app/statements", plan: "Solo+" },
                     { icon: BarChart3, title: "Financial Position Tracking", body: "Lifetime cap, quarterly burn, and contributions in one glanceable card.", to: "/app/pacing", plan: "Solo+" },
                     { icon: Wallet, title: "Multi-Quarter Budgeting", body: "Project the next 3 quarters, save scenarios, and compare them side-by-side.", to: "/app/pacing", plan: "Solo+" },
                 ]} />
@@ -369,12 +368,12 @@ export default function Features() {
                 <ToolGroup title="When You Need to Push Back" description="The polite, firm paper trail that stands up when you need it." testId="features-group-pushback" startIndex={2} items={[
                     { icon: MessageCircle, title: "Complaint Wizard", body: "A 4-step guided intake that opens a case and drafts every follow-up letter.", to: "/app/participants", plan: "Solo+" },
                     { icon: ShieldCheck, title: "ACQSC Bundle", body: "Bundle every complaint artefact ready to hand to the Aged Care regulator.", to: "/ai-tools/letters-and-follow-ups", plan: "Solo+" },
-                    { icon: Lock, title: "Digital Signatures And Audit", body: "Every consent, every letter, every send is signed, timestamped, and immutable.", to: "/app/audit", plan: "Solo+" },
+                    { icon: Lock, title: "Letter & Consent Trail", body: "Every letter and consent is logged with a full timestamped audit trail, ready if you ever need to escalate.", to: "/app/audit", plan: "Solo+" },
                 ]} />
 
                 <ToolGroup title="When the Whole Family's Involved" description="One shared view, so nobody is the only one paying attention." testId="features-group-family" startIndex={0} items={[
                     { icon: Users2, title: "Profile Management", body: "One profile per participant, with financial, care, and complaint history side by side.", to: "/app/me", plan: "Solo+" },
-                    { icon: ClipboardCheck, title: "Medication And My Care Goals", body: "Micro check-ins on goals and meds to spot missed doses or drifting priorities early.", to: "/app/wall", plan: "Solo+" },
+                    { icon: ClipboardCheck, title: "My Care Goals", body: "Micro check-ins on care goals to spot drifting priorities early, with every goal captured in the goal ledger.", to: "/app/wall", plan: "Solo+" },
                 ]} />
             </Section>
 
