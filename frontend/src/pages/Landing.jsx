@@ -54,7 +54,7 @@ const FEATURES = TOOLS_ORDERED.map((t) => ({
 const FAQ = [
     { q: "Are you a Support at Home provider?", a: "No. We're independent software. Your registered provider stays whoever you've chosen, Wayly sits on top of them." },
     { q: "Do I need to switch providers to use Wayly?", a: "No. Wayly works with any registered Support at Home provider." },
-    { q: "How much does it cost?", a: "Solo is $24.50 per fortnight and Family is $49.50 per fortnight, both billed every 14 days in AUD inclusive of GST. Every plan starts with a 7-day free trial, no card needed to start. Cancel any time." },
+    { q: "How much does it cost?", a: "Solo is $24.50 per fortnight and Family is $49.50 per fortnight, both billed every 14 days in AUD inclusive of GST. Every plan starts with a 7-day free trial. A card is required at signup, but you're not charged until day 8. Cancel any time." },
     { q: "Does my parent need to use it?", a: "Not at all. Most households are run by an adult-child caregiver. Your parent has their own simplified view but doesn't need to log in if they don't want to." },
     { q: "What about privacy?", a: "Australian-hosted, encrypted with per-household keys, never sold, never used to train AI without consent. Read more on our Trust page." },
     { q: "Will Wayly ever recommend a provider?", a: "We show provider prices and quality signals neutrally. We never accept commissions from providers, ever." },

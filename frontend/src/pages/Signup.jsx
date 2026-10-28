@@ -642,7 +642,7 @@ export default function Signup() {
                                 What&apos;s in your trial?
                             </h2>
                             <p className="mt-1 text-xs text-muted-k leading-relaxed">
-                                Full app for 7 days, no card. Switch or downgrade any time.
+                                Cancel any time. Two minutes so Wayly speaks in the right voice from day one.
                             </p>
 
                             <div className="mt-4 space-y-2.5">

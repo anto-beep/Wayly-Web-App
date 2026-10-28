@@ -424,8 +424,8 @@ export default function About() {
                             Try Wayly
                         </h2>
                         <p className="mt-5 text-base sm:text-lg leading-relaxed max-w-3xl text-white/90">
-                            Every tool is free to try. Start a 7-day trial of any paid plan, no card
-                            needed. Or run one free Statement Decode every 120 days, no signup.
+                            Every tool is free to try. Start a 7-day trial of any paid plan. Or
+                            run one free Statement Decode every 120 days, no signup.
                         </p>
                         <div className="mt-8 flex flex-wrap gap-3">
                             <Link

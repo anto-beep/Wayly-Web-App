@@ -247,7 +247,7 @@ export default function StatementDecoderTool() {
                                 </div>
                                 <div className="text-xs text-muted-k mt-0.5">
                                     {usage.remaining > 0
-                                        ? "Create a free account to unlock unlimited decodes and every Wayly tool."
+                                        ? "Start a free trial to unlock unlimited decodes and every Wayly tool."
                                         : (usage.reset_at && usage.days_until_next_use > 0
                                             ? `Your next free decode opens in ${usage.days_until_next_use} day${usage.days_until_next_use === 1 ? "" : "s"} — or start a plan to keep going now.`
                                             : "Start a plan to keep decoding right away.")}
@@ -511,7 +511,7 @@ export default function StatementDecoderTool() {
                                     <Link to="/signup?plan=solo" data-testid="sd-conversion-cta" className="mt-6 w-full bg-gold text-white font-semibold rounded-md py-3 inline-flex items-center justify-center gap-2">
                                         Start free 7-day trial <ArrowRight className="h-4 w-4" />
                                     </Link>
-                                    <p className="text-center text-xs text-white/70 mt-3">No card required. Cancel anytime.</p>
+                                    <p className="text-center text-xs text-white/70 mt-3">Cancel any time from your account.</p>
                                 </div>
                             )}
                         </div>

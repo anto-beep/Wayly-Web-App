@@ -434,7 +434,7 @@ export default function Features() {
                 <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
                     <Reveal>
                         <h2 className="font-heading text-4xl sm:text-5xl text-white tracking-tight">Ready when you are.</h2>
-                        <p className="mt-4 text-white/80 max-w-xl mx-auto">Start the free 7-day trial, no card needed, or book a 20-minute call with a real person on our team.</p>
+                        <p className="mt-4 text-white/80 max-w-xl mx-auto">Start the free 7-day trial, or book a 20-minute call with a real person on our team.</p>
                         <div className="mt-8 flex flex-wrap gap-3 justify-center">
                             <Link to="/signup" className="inline-flex items-center gap-2 bg-[#A5512B] text-white font-semibold rounded-lg px-6 py-3 hover:bg-[#8E4523] shadow-md transition-colors" data-testid="features-bottom-cta-trial">
                                 Start free trial <ArrowRight className="h-4 w-4" />

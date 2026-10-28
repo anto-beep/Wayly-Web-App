@@ -73,7 +73,7 @@ export default function ToolGate({ toolName }) {
                             {toolName} is available on Solo and Family plans.
                         </h2>
                         <p className="mt-3 text-sm text-muted-k">
-                            Start with a 7-day free trial. Full access to every tool. No card required to start.
+                            Start with a 7-day free trial for full access to every Wayly tool. Cancel any time from your account.
                         </p>
                         <Link
                             to="/signup?plan=solo"
@@ -88,26 +88,6 @@ export default function ToolGate({ toolName }) {
                         </p>
                     </>
                 )}
-            </div>
-
-            {/* Real screenshot of the actual tool UI, captured from a logged-in
-                Family-plan account. Shown on every viewport (responsive). */}
-            <div className="mt-12">
-                <div className="text-center text-[11px] uppercase tracking-[0.18em] text-muted-k mb-4" data-testid="tool-gate-preview-label">
-                    Here's what happens 90 seconds after you sign up
-                </div>
-                <div className="max-w-4xl mx-auto" data-testid="tool-gate-live-preview">
-                    <img
-                        src={SCREENSHOT_BY_TOOL[toolName] || "/marketing/02-caregiver-dashboard.png"}
-                        alt={`${toolName} screenshot showing the actual tool result`}
-                        width="1440"
-                        height="900"
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full aspect-[16/10] object-cover object-top rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-kindred"
-                        data-testid="tool-gate-screenshot"
-                    />
-                </div>
             </div>
         </div>
     );

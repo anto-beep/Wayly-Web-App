@@ -207,7 +207,7 @@ export default function AdviserPortal() {
                     <Briefcase className="h-10 w-10 text-gold mx-auto" />
                     <h1 className="font-heading text-3xl text-primary-k mt-4 tracking-tight">The Adviser portal is for financial advisers</h1>
                     <p className="text-sm text-muted-k mt-3 max-w-md mx-auto leading-relaxed">
-                        Manage up to 25 clients, run lifetime-cap forecasts, export review packs and more. Start the 7-day free trial, no card needed.
+                        Manage up to 25 clients, run lifetime-cap forecasts, export review packs and more. Start the 7-day free trial.
                     </p>
                     <div className="mt-6 flex items-center justify-center gap-3">
                         <Link
