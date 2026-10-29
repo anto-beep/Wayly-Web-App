@@ -1,6 +1,14 @@
 # Wayly — current fork status (Jun 2026)
 
-**Just shipped (Jun 2026 — marketing nav/CTA redesign + app-download QR + in-app nudge + landing layout polish; WEB only; testing agent iter 384 ALL PASS):**
+**Just shipped (Jun 2026 — nav refinements + mega-menu polish + landing paragraph widths; WEB only; self-verified via screenshots + computed-style):**
+- **Nav bar → full-width solid teal.** Replaced the floating glass bar with an edge-to-edge solid `#0E4D52` sticky header (inner content max-w-7xl px-6, h-16). Menu items spacing `gap-8`→`gap-10`. Mega menu now positioned relative to the content container (flush to nav content). Mobile drawer back to `top-16`.
+- **Primary CTA restyled.** "Start free trial" → "**Start Free Trial**", now clay `#A5512B` background with **white** text (was cyan bg + navy text); kept inset-shadow lift + `.cta-bloom` rotating conic glow on hover. Mobile drawer CTA matched.
+- **Tools mega menu — featured Statement Decoder** pinned at the top as a teal gradient card with a FREE badge + "No signup — try it now" (`mega-featured-statement-decoder`); the remaining 8 tools show in the grid below (label still "All 9 Wayly tools").
+- **Invoice Checker now has a preview image** in the mega-menu visual column (it had no asset → was an icon fallback). Generated an on-brand Invoice Checker screenshot via Emergent image gen; hosted URL wired into `ToolsMegaMenu` `TOOL_SHOT["invoice-checker"]`.
+- **Classification copy fixed: "12 questions" → "16 questions"** (the tool actually has 16; its own page already said 16). Updated `config/toolRegistry.js` (body), `pages/Features.jsx` ("Twelve"→"Sixteen"), and `backend/data/tool_registry.yaml`.
+- **Landing/ToolClusterGrid intro paragraphs now use the full width.** Removed the restrictive `max-w-2xl/3xl/4xl/5xl` caps (and the `[text-wrap:balance]`) on the 5 flagged paragraphs so they span the section content width (~1232px) and stop wrapping into narrow columns with trailing whitespace. Teaser left column got `flex-1 min-w-0`.
+
+
 - **Floating teal frosted-glass nav** (`components/MarketingHeader.jsx`, full rewrite): sticky floating bar — `bg-[#0E4D52]/75 backdrop-blur-xl`, rounded-2xl, 8px padding, border + shadow, gap above so content blurs through while scrolling. White text/links.
 - **Tools mega menu** (new `components/ToolsMegaMenu.jsx`): full-width panel flush to the nav container; left = all 9 tools (from `TOOLS_ORDERED`) in 2 columns with icon + short; right = teal "visual supporter" column showing the hovered tool's real product screenshot (`/public/marketing/ai-tool-*.png`) with body copy + "Open <tool>" link. Hover/click to open, Escape/mouse-leave to close. Invoice Checker has no screenshot asset → branded icon-panel fallback.
 - **Buttons**: "Sign in" → "**Log In**" (no outline, plain text link, still `nav-login` → /login). "Start free trial" CTA (`nav-start-trial`) got inset/indent shadow lift + a hover **rotating conic-gradient bloom glow** via `.cta-bloom` in `index.css` (animated `@property --bloom-angle`; respects reduced-motion). Account dropdown elevated (rounded-2xl, stronger shadow, glass).

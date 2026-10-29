@@ -25,7 +25,7 @@ const TOOLS = [
     { slug: "statement-decoder", title: "Statement Decoder", body: "Paste any monthly statement; get a plain-English breakdown in 60 seconds.", icon: FileSearch, plan: "Free" },
     { slug: "budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual + quarterly + per-stream budget, with a lifetime cap projection.", icon: Wallet, plan: "Solo+" },
     { slug: "provider-price-checker", title: "Provider Price Checker", body: "Tell us the rate; we tell you whether it's fair against published medians.", icon: BarChart3, plan: "Solo+" },
-    { slug: "classification-self-check", title: "Classification Self-Check", body: "Twelve questions, one likely classification range, one clear next step.", icon: ListChecks, plan: "Solo+" },
+    { slug: "classification-self-check", title: "Classification Self-Check", body: "Sixteen questions, one likely classification range, one clear next step.", icon: ListChecks, plan: "Solo+" },
     { slug: "letters-and-follow-ups", title: "Letters & Follow-ups", body: "Draft a polished letter to My Aged Care, your provider, ACQSC, or the Ombudsman. Track replies and escalate on time.", icon: FileEdit, plan: "Solo+" },
     { slug: "contribution-estimator", title: "Contribution Estimator", body: "What the participant actually pays each quarter, in clear dollars.", icon: Receipt, plan: "Solo+" },
     { slug: "care-plan-reviewer", title: "Support Plan Reviewer", body: "Checks a care plan against the Statement of Rights and the National Quality Standards.", icon: ClipboardCheck, plan: "Solo+" },

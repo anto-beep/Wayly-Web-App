@@ -82,7 +82,7 @@ export default function ToolClusterGrid() {
             <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
                 More Tools, <span style={{ color: "#A5512B" }}>Grouped the Way Families Think</span>.
             </h2>
-            <p className="mt-3 text-base text-muted-k max-w-4xl leading-relaxed [text-wrap:balance]">
+            <p className="mt-3 text-base text-muted-k leading-relaxed">
                 The Statement Decoder is your front door. Once you&apos;re inside, these are the tools waiting to help with the rest of your loved one&apos;s care.
             </p>
 
@@ -94,7 +94,7 @@ export default function ToolClusterGrid() {
                         <div key={cluster.id} data-testid={`cluster-${cluster.id}`}>
                             <div className="flex-1 min-w-0">
                                 <h3 className="font-heading text-3xl font-bold tracking-tight" style={{ color: "#A5512B" }}>{cluster.title}</h3>
-                                <p className="mt-2 text-base text-muted-k leading-relaxed max-w-4xl [text-wrap:balance]">{cluster.blurb}</p>
+                                <p className="mt-2 text-base text-muted-k leading-relaxed">{cluster.blurb}</p>
                             </div>
                             <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {tools.map((t, ti) => (

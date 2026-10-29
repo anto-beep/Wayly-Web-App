@@ -125,9 +125,9 @@ function SignedOutControls() {
             <Link
                 to="/signup?plan=family"
                 data-testid="nav-start-trial"
-                className="cta-bloom inline-flex items-center text-sm font-semibold bg-[#2BC4D6] text-[#0E2A47] rounded-lg px-5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.5),inset_0_-2px_5px_rgba(14,42,71,0.18),0_6px_18px_rgba(43,196,214,0.38)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_10px_28px_rgba(43,196,214,0.5)] active:scale-[0.97] transition-all duration-200"
+                className="cta-bloom inline-flex items-center text-sm font-semibold bg-[#A5512B] text-white rounded-lg px-5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_5px_rgba(0,0,0,0.2),0_6px_18px_rgba(165,81,43,0.42)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_10px_28px_rgba(165,81,43,0.58)] active:scale-[0.97] transition-all duration-200"
             >
-                Start free trial
+                Start Free Trial
             </Link>
         </div>
     );
@@ -163,15 +163,14 @@ export default function MarketingHeader() {
             >
                 Skip to main content
             </a>
-            <header className="sticky top-0 z-40 px-3 sm:px-4 pt-3" data-testid="marketing-header">
-                <div className="relative mx-auto max-w-7xl" onMouseLeave={scheduleClose}>
-                    <div className="rounded-2xl border border-white/15 bg-[#0E4D52]/75 backdrop-blur-xl shadow-[0_14px_44px_rgba(14,77,82,0.38)] p-2">
-                        <div className="flex items-center justify-between gap-4 pl-2 pr-1">
+            <header className="sticky top-0 z-40 bg-[#0E4D52] border-b border-black/10 shadow-sm" data-testid="marketing-header">
+                <div className="relative mx-auto max-w-7xl px-6" onMouseLeave={scheduleClose}>
+                    <div className="flex items-center justify-between gap-4 h-16">
                             <Link to="/" data-testid="nav-logo" onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "smooth" })} className="flex items-center gap-2 group">
                                 <WaylyLogo size={28} className="rounded-md" />
                                 <span className="font-heading text-[22px] text-white tracking-tight">Wayly</span>
                             </Link>
-                            <nav className="hidden md:flex items-center gap-8">
+                            <nav className="hidden md:flex items-center gap-10">
                                 {NAV.map((n) => (
                                     n.mega ? (
                                         <button
@@ -216,7 +215,6 @@ export default function MarketingHeader() {
                                 {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                             </button>
                         </div>
-                    </div>
 
                     {toolsOpen && (
                         <ToolsMegaMenu
@@ -229,7 +227,7 @@ export default function MarketingHeader() {
                 </div>
 
                 {open && (
-                    <div className="md:hidden fixed inset-0 top-0 pt-20 bg-[#0E4D52] z-50 p-6 animate-in slide-in-from-right duration-200" data-testid="nav-mobile-drawer">
+                    <div className="md:hidden fixed inset-0 top-16 bg-[#0E4D52] z-50 p-6 animate-in slide-in-from-right duration-200" data-testid="nav-mobile-drawer">
                         <nav className="flex flex-col">
                             {NAV.map((n) => (
                                 <Link
@@ -251,7 +249,7 @@ export default function MarketingHeader() {
                             ) : (
                                 <>
                                     <Link to="/login" onClick={() => setOpen(false)} className="block w-full text-center text-white rounded-lg py-3">Log In</Link>
-                                    <Link to="/signup?plan=family" onClick={() => setOpen(false)} className="block w-full text-center bg-[#2BC4D6] text-[#0E2A47] font-semibold rounded-lg py-3">Start free trial</Link>
+                                    <Link to="/signup?plan=family" onClick={() => setOpen(false)} className="block w-full text-center bg-[#A5512B] text-white font-semibold rounded-lg py-3">Start Free Trial</Link>
                                 </>
                             )}
                         </div>

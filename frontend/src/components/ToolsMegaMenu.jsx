@@ -16,6 +16,7 @@ const TOOL_SHOT = {
     "statement-decoder": "/marketing/ai-tool-statement-decoder.png",
     "budget-calculator": "/marketing/ai-tool-budget-calculator.png",
     "provider-price-checker": "/marketing/ai-tool-provider-price-checker.png",
+    "invoice-checker": "https://static.prod-images.emergentagent.com/jobs/8d74dc1c-0092-4bc2-8a55-b38254dd7592/images/cd255050811274a2c9be50c17776c2cc7814b5396b6933b89108ec147d99ec25.jpeg",
     "classification-self-check": "/marketing/ai-tool-classification-self-check.png",
     "letters-and-follow-ups": "/marketing/ai-tool-reassessment-letter.png",
     "contribution-estimator": "/marketing/ai-tool-contribution-estimator.png",
@@ -27,6 +28,9 @@ export default function ToolsMegaMenu({ active, setActive, onClose, onMouseEnter
     const activeTool = TOOLS_ORDERED.find((t) => t.slug === active) || TOOLS_ORDERED[0];
     const shot = TOOL_SHOT[activeTool?.slug];
     const ActiveIcon = activeTool?.IconComponent;
+    const featured = TOOLS_ORDERED.find((t) => t.slug === "statement-decoder");
+    const FeaturedIcon = featured?.IconComponent;
+    const rest = TOOLS_ORDERED.filter((t) => t.slug !== "statement-decoder");
 
     return (
         <div
@@ -37,11 +41,33 @@ export default function ToolsMegaMenu({ active, setActive, onClose, onMouseEnter
             <div className="rounded-2xl border border-[#0E4D52]/12 bg-white/95 backdrop-blur-xl shadow-[0_30px_80px_rgba(14,77,82,0.30)] overflow-hidden grid grid-cols-1 lg:grid-cols-[1.7fr_1fr]">
                 {/* Left: every tool, two columns */}
                 <div className="p-5">
+                    {featured && (
+                        <Link
+                            to={featured.marketingRoute || featured.route}
+                            onClick={onClose}
+                            onMouseEnter={() => setActive(featured.slug)}
+                            onFocus={() => setActive(featured.slug)}
+                            data-testid="mega-featured-statement-decoder"
+                            className="flex items-center gap-3 rounded-xl p-3 mb-4 bg-gradient-to-r from-[#0E4D52] to-[#13626B] text-white shadow-sm hover:shadow-md transition-shadow"
+                        >
+                            <span className="h-10 w-10 flex-none rounded-lg bg-white/15 flex items-center justify-center">
+                                {FeaturedIcon ? <FeaturedIcon className="h-5 w-5 text-white" strokeWidth={2} /> : null}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                                <span className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold">{featured.name}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 bg-[#2BC4D6] text-[#0E2A47]">Free</span>
+                                </span>
+                                <span className="block text-xs text-white/80 leading-snug mt-0.5">No signup — try it now in about 60 seconds.</span>
+                            </span>
+                            <ArrowRight className="h-4 w-4 text-white/80 flex-none" />
+                        </Link>
+                    )}
                     <div className="px-2 pb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0E4D52]/60">
                         All {TOOLS_ORDERED.length} Wayly tools
                     </div>
                     <div className="grid sm:grid-cols-2 gap-1">
-                        {TOOLS_ORDERED.map((t) => {
+                        {rest.map((t) => {
                             const Icon = t.IconComponent;
                             const on = t.slug === activeTool?.slug;
                             return (

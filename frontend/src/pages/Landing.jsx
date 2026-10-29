@@ -201,12 +201,12 @@ export default function Landing() {
 
             {/* HOW IT WORKS, skimmable step flow (no screenshots) */}
             <section className="mx-auto max-w-7xl px-6 py-10 sm:py-16" data-testid="how-it-works">
-                <div className="max-w-3xl">
+                <div>
                     <span className="overline">How It Works</span>
                     <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">
                         Three Steps to <span style={{ color: "#A5512B" }}>Calm</span>.
                     </h2>
-                    <p className="mt-3 text-base text-muted-k leading-relaxed [text-wrap:balance]">
+                    <p className="mt-3 text-base text-muted-k leading-relaxed">
                         No spreadsheets, no jargon, no finance degree. Start by checking a statement or an invoice, then let Wayly take it from there.
                     </p>
                 </div>
@@ -244,12 +244,12 @@ export default function Landing() {
             {/* AI TOOLS TEASER */}
             <section className="mx-auto max-w-7xl px-6 py-16">
                 <div className="flex items-end justify-between flex-wrap gap-4">
-                    <div>
+                    <div className="flex-1 min-w-0">
                         <span className="overline">Free to Try</span>
                         <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
                             Decode a Statement Now, <span style={{ color: "#A5512B" }}>No Signup Needed</span>.
                         </h2>
-                        <p className="mt-3 text-base text-muted-k leading-relaxed max-w-4xl [text-wrap:balance]">
+                        <p className="mt-3 text-base text-muted-k leading-relaxed">
                             Paste any Support at Home statement and get plain English in about 60 seconds, no account required. Every other Wayly tool is yours to explore during your 7-day free trial, then continues on a Solo or Family plan.
                         </p>
                     </div>
@@ -284,10 +284,10 @@ export default function Landing() {
             {/* REPORTS HUB STRIP — colourful, plain-English report library */}
             <section className="border-t border-kindred bg-surface-2" data-testid="reports-strip">
                 <div className="mx-auto max-w-7xl px-6 py-16">
-                    <div className="max-w-5xl">
+                    <div>
                         <span className="overline">Reports</span>
                         <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">Clear reports you can <span style={{ color: "#A5512B" }}>actually use</span>.</h2>
-                        <p className="mt-4 text-muted-k leading-relaxed [text-wrap:balance]">
+                        <p className="mt-4 text-muted-k leading-relaxed">
                             At the end of every quarter, Wayly turns the numbers into eight tidy one-click PDFs. Each one answers a single question in plain English, ready to save, print, or hand to your accountant or Centrelink.
                         </p>
                     </div>

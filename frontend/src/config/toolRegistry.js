@@ -107,7 +107,7 @@ export const TOOL_REGISTRY = [
         slug: "classification-self-check",
         name: "Classification Self-Check",
         short: "See which Support at Home classification is likely for you.",
-        body: "Answer 12 questions about daily life. See which classification is likely, and whether to request a reassessment.",
+        body: "Answer 16 questions about daily life. See which classification is likely, and whether to request a reassessment.",
         icon: "ListChecks",
         route: "/ai-tools/classification-self-check",
         marketingRoute: "/ai-tools/classification-self-check",

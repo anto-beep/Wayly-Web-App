@@ -100,7 +100,7 @@ tools:
     name: "Classification Self-Check"
     short_description: "See which Support at Home classification is likely for you."
     long_description: >
-      Answer 12 questions about daily life. See which classification is
+      Answer 16 questions about daily life. See which classification is
       likely, and whether to request a reassessment.
     icon: ListChecks
     route: "/ai-tools/classification-self-check"
