@@ -138,6 +138,7 @@ export default function MarketingHeader() {
     const inLayout = useInLayout();
     const [open, setOpen] = useState(false);
     const [toolsOpen, setToolsOpen] = useState(false);
+    const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
     const [activeTool, setActiveTool] = useState(TOOLS_ORDERED[0]?.slug);
     const closeTimer = useRef(null);
 
@@ -230,14 +231,58 @@ export default function MarketingHeader() {
                     <div className="md:hidden fixed inset-0 top-16 bg-[#0E4D52] z-50 p-6 animate-in slide-in-from-right duration-200" data-testid="nav-mobile-drawer">
                         <nav className="flex flex-col">
                             {NAV.map((n) => (
-                                <Link
-                                    key={n.to}
-                                    to={n.to}
-                                    onClick={() => setOpen(false)}
-                                    className="py-3 text-base font-medium text-white border-b border-white/10"
-                                >
-                                    {n.label}
-                                </Link>
+                                n.mega ? (
+                                    <div key={n.to} className="border-b border-white/10">
+                                        <button
+                                            type="button"
+                                            data-testid="mobile-tools-toggle"
+                                            aria-expanded={mobileToolsOpen}
+                                            onClick={() => setMobileToolsOpen((o) => !o)}
+                                            className="w-full flex items-center justify-between py-3 text-base font-medium text-white"
+                                        >
+                                            {n.label}
+                                            <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${mobileToolsOpen ? "rotate-180" : ""}`} />
+                                        </button>
+                                        {mobileToolsOpen && (
+                                            <div className="pb-3 flex flex-col gap-0.5" data-testid="mobile-tools-panel">
+                                                {TOOLS_ORDERED.map((t) => {
+                                                    const Icon = t.IconComponent;
+                                                    return (
+                                                        <Link
+                                                            key={t.slug}
+                                                            to={t.marketingRoute || t.route}
+                                                            onClick={() => { setMobileToolsOpen(false); setOpen(false); }}
+                                                            data-testid={`mobile-tool-${t.slug}`}
+                                                            className="flex items-center gap-3 rounded-lg px-2 py-2.5 text-[15px] text-white/90 hover:bg-white/10 transition-colors"
+                                                        >
+                                                            <span className="h-8 w-8 flex-none rounded-lg bg-white/10 flex items-center justify-center">
+                                                                {Icon ? <Icon className="h-4 w-4 text-[#2BC4D6]" strokeWidth={2} /> : null}
+                                                            </span>
+                                                            <span>{t.name}</span>
+                                                        </Link>
+                                                    );
+                                                })}
+                                                <Link
+                                                    to="/ai-tools"
+                                                    onClick={() => { setMobileToolsOpen(false); setOpen(false); }}
+                                                    data-testid="mobile-see-all-tools"
+                                                    className="mt-1.5 ml-2 inline-flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider text-[#2BC4D6]"
+                                                >
+                                                    See All Tools
+                                                </Link>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Link
+                                        key={n.to}
+                                        to={n.to}
+                                        onClick={() => setOpen(false)}
+                                        className="py-3 text-base font-medium text-white border-b border-white/10"
+                                    >
+                                        {n.label}
+                                    </Link>
+                                )
                             ))}
                         </nav>
                         <div className="mt-8 space-y-3">

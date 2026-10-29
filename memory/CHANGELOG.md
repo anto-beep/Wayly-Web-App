@@ -3591,3 +3591,11 @@ STILL REMAINING from user's overhaul brief (large follow-on, NOT yet done):
 
 ### Testing
 - iter 310: both features passed end-to-end on web + mobile. No critical bugs. Minor copy-parity nit (mobile "in budget" → fixed to "in your budget"). Pre-existing dev-only `<span> in <option>` hydration warning on CarePlanReviewer noted, not user-visible.
+
+## 2026-06-29 — Web marketing nav: dark-mode fixes, real mega-menu screenshots, mobile drawer accordion (iter 385)
+- Dark mode: pinned `header[data-testid="marketing-header"]` and `[data-testid="app-download-prompt"]` to brand teal `#0E4D52` (the generic `html.theme-dark .bg-[#0E4D52]` rule was repainting them to light `#4FA8AE`). Added higher-specificity `!important` rules in `index.css`.
+- Dark mode: forced `a[data-testid="nav-login"]` ("Log In") to white — the global `html.theme-dark a {color: --kindred-primary}` rule had turned it teal-on-teal (its class is `text-white/90`, not whitelisted `text-white`).
+- Mega menu "Free" pill: new `.mega-free-badge` class pins dark navy `#0E2A47` text on yellow `#FFCF6B` in both themes (global `.text-[#0E2A47]` override had made it unreadable).
+- Replaced AI-placeholder mega-menu images with REAL authenticated tool screenshots (logged in as cathy@example.com, hid app-shell chrome, Playwright + system Chromium) saved to `/app/frontend/public/marketing/ai-tool-*.png` — all 9 tools, unlocked working UIs (no paywall).
+- Mobile drawer (`MarketingHeader.jsx`): "Tools" is now an expandable accordion (`mobile-tools-toggle` → `mobile-tools-panel`) listing all 9 tools + a `mobile-see-all-tools` link, instead of a plain link.
+- Verified by testing agent iter 385 (web, light+dark+mobile viewport): all 6 checks passed, no bugs, no code changes needed. Report: `/app/test_reports/iteration_385.json`.

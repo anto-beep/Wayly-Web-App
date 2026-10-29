@@ -1156,6 +1156,22 @@ html.theme-dark .bg-\[\#C2683D\]\/15    { background-color: rgba(232, 154, 111, 
 html.theme-dark .border-\[\#C2683D\]\/30 { border-color: rgba(232, 154, 111, 0.55) !important; }
 html.theme-dark .text-\[\#C2683D\]      { color: var(--kindred-gold) !important; }
 
+/* ---- Marketing nav: keep the brand teal in dark mode ------------------
+ *      The generic `.bg-[#0E4D52]` override above repaints every teal fill
+ *      to the lighter `--kindred-primary` (#4FA8AE). The marketing header and
+ *      its solid-teal buttons/icon tiles must stay the dark brand teal, so we
+ *      re-pin them with a higher-specificity selector. */
+html.theme-dark header[data-testid="marketing-header"] { background-color: #0E4D52 !important; }
+html.theme-dark header[data-testid="marketing-header"] .bg-\[\#0E4D52\] { background-color: #0E4D52 !important; color: #FFFFFF !important; }
+html.theme-dark [data-testid="app-download-prompt"] { background-color: #0E4D52 !important; }
+/* "Log In" is text-white/90 (not plain text-white) so the generic dark-mode
+ * anchor rule (a -> --kindred-primary) was turning it teal-on-teal. Force white. */
+html.theme-dark header[data-testid="marketing-header"] a[data-testid="nav-login"],
+html.theme-dark header[data-testid="marketing-header"] a[data-testid="nav-login"]:hover { color: #FFFFFF !important; }
+/* Mega-menu "Free" pill: dark text on the light yellow pill in BOTH themes. */
+.mega-free-badge { background-color: #FFCF6B !important; color: #0E2A47 !important; }
+html.theme-dark .mega-free-badge { background-color: #FFCF6B !important; color: #0E2A47 !important; }
+
 /* Make sure hover variants of the primary fill remain visible in dark mode */
 html.theme-dark .hover\:bg-\[\#0a3d41\]:hover { background-color: #5FB5BB !important; }
 html.theme-dark .hover\:bg-\[\#E5DCC9\]:hover { background-color: var(--kindred-surface-2) !important; }
