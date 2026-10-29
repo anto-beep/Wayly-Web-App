@@ -20,6 +20,7 @@ import { downloadStatementsCsv } from "@/lib/statementsCsvExport";
 import { toast } from "sonner";
 import PageIntro from "@/components/PageIntro";
 import SmartAISummary from "@/components/SmartAISummary";
+import { useExpiredTrial } from "@/hooks/useExpiredTrial";
 
 const PAGE_SIZE = 25;
 
@@ -61,6 +62,7 @@ export default function StatementsList() {
     const [archivedCount, setArchivedCount] = useState(0);
     const [searchParams, setSearchParams] = useSearchParams();
     const searchInputRef = useRef(null);
+    const isExpired = useExpiredTrial();
 
     // Filter state (URL-backed for shareable views)
     const [search, setSearch] = useState(searchParams.get("q") || "");
@@ -250,13 +252,15 @@ export default function StatementsList() {
                         <Archive className="h-3.5 w-3.5" /> Archived
                         {archivedCount > 0 && <span className="tabular-nums text-xs">({archivedCount})</span>}
                     </Link>
-                    <Link
-                        to="/app/statements/upload"
-                        data-testid="statements-upload-cta"
-                        className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90"
-                    >
-                        <FileText className="h-4 w-4" /> Upload statement
-                    </Link>
+                    {!isExpired && (
+                        <Link
+                            to="/app/statements/upload"
+                            data-testid="statements-upload-cta"
+                            className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90"
+                        >
+                            <FileText className="h-4 w-4" /> Upload statement
+                        </Link>
+                    )}
                 </div>
             </div>
 
@@ -322,13 +326,9 @@ export default function StatementsList() {
             ) : items.length === 0 ? (
                 <div className="bg-surface border border-kindred rounded-xl p-10 text-center" data-testid="statements-empty-state">
                     <FileText className="h-8 w-8 text-muted-k mx-auto" />
-                    <p className="mt-3 text-muted-k">No statements yet.</p>
-                    <Link
-                        to="/app/statements/upload"
-                        className="mt-4 inline-block bg-primary-k text-white rounded-full px-5 py-2.5 text-sm hover:bg-primary-k/90"
-                    >
-                        Upload your first statement
-                    </Link>
+                    <p className="mt-3 text-muted-k">
+                        {isExpired ? "No statements yet." : "No statements yet. Use \u201CUpload statement\u201D above to add your first one."}
+                    </p>
                 </div>
             ) : sorted.length === 0 ? (
                 <div className="bg-surface border border-kindred rounded-xl p-10 text-center" data-testid="statements-no-results">

@@ -1,0 +1,54 @@
+{
+  "summary": "iter386 — Verified trial-eligibility gate + reactivation plan-switching + welcome-back wiring. Backend 8/8 tests pass (returning user gets eligible:false and server strips client-sent trial_days:7; fresh signup gets eligible:true and trial retained; _maybe_send_welcome_back is defined once and called in BOTH checkout_status reconcile and the webhook checkout.session.completed branch, with trial-end skip + per-session idempotency; statement-upload 402 regression confirmed for both view-only fixtures). Mobile /plan-select renders all expected testIDs (plan-option-solo/family, plan-choose-solo/family, plan-select-trust, plan-select-cancel) and correctly shows the fresh-trial branch when eligible=true. Web ReadOnlyLock on /app/provider-switch renders two Reactivate CTAs but under the testId prefix `switch-lock-cta-*` (consumer passes custom testId), and this surface's custom `sub` copy OMITS the mandated 'no free trial / immediate paid plan' wording. CRITICAL: clicking Reactivate Solo on the provider-switch surface did NOT trigger a POST to /api/payments/checkout — the Stripe redirect never began.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "ReadOnlyLock (switch-lock usage)", "issue": "Clicking Reactivate Solo on /app/provider-switch did not fire POST /api/payments/checkout (no network call captured, no Stripe redirect, no toast). Suspect reactivate() handler not being called — verify disabled state, event propagation, and startReactivateCheckout logging.", "selector": "[data-testid='switch-lock-cta-solo']", "priority": "HIGH"},
+        {"component": "ReadOnlyLock testID naming", "issue": "Review requested data-testid 'read-only-lock-cta-solo'/'read-only-lock-cta-family', but on /app/provider-switch the consumer passes testId=\"switch-lock\" so the rendered ids are switch-lock-cta-solo / switch-lock-cta-family. Component itself is correct — update consumers to use the default or document naming convention.", "selector": "[data-testid='switch-lock']", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [
+        {"flow": "Web view-only reactivate (provider-switch)", "issue": "Reactivate buttons visible but do not initiate Stripe checkout.", "affected_selectors": ["[data-testid='switch-lock-cta-solo']", "[data-testid='switch-lock-cta-family']"]}
+      ],
+      "design_issues": [
+        {"screen": "/app/provider-switch ReadOnlyLock", "issues": ["Custom `sub` copy on this surface (\"The full 5-step guided workflow… turns back on the moment you reactivate.\") omits the required 'no free trial / immediate paid plan' messaging the review request mandates. Default ReadOnlyLock copy has it; this consumer overrides it."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Reactivation copy", "platform": "web", "issue": "Mobile plan-select has clear 'there's no free trial, as you've used Wayly before' copy and 'Reactivate Solo/Family — $price' labels. Web switch-lock surface omits the no-trial wording and uses generic 'Reactivate Solo'/'Reactivate Family' labels without a price.", "expected": "Both surfaces communicate no-trial + immediate paid reactivation consistently.", "actual": "Only mobile explicitly states no trial."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_trial_eligibility_iter386.py",
+    "/app/test_reports/pytest/iter386.xml",
+    "/app/test_reports/iter386_mobile_plan_select.jpeg"
+  ],
+  "action_items": [
+    "FIX: Make Reactivate Solo/Family buttons on /app/provider-switch (and anywhere else ReadOnlyLock is used with a custom testId) actually call POST /api/payments/checkout. Likely a handler-wiring regression or an unhandled error swallowed by the try/catch in reactivate().",
+    "UPDATE: Either pass the default `sub` copy or extend the custom text on provider-switch (and other ReadOnlyLock consumers) so the 'immediate paid plan / no free trial' wording is always present per the roadmap.",
+    "DECIDE: Keep per-surface testIds (switch-lock-*, tool-lock-gate-*, etc.) OR normalize to read-only-lock-* to match review spec. Document whichever is chosen."
+  ],
+  "critical_code_review_comments": [
+    "/app/backend/routes/payments.py L311-315: Authoritative server-side trial gate is correctly implemented — client-sent trial_days is only honoured when _user_had_trial is False. ",
+    "/app/backend/routes/payments.py: _maybe_send_welcome_back is defined once and called in BOTH checkout_status reconcile (L474) and the webhook checkout.session.completed branch (L992). Guards: skip trials (sub.trial_end), skip non-active/past_due, idempotent via welcome_back_session claim. All correct.",
+    "/app/mobile/app/plan-select.tsx: branching on `eligible` is correct; buttonLabel on reactivation includes the price. One minor concern: on apiFetch failure the UI defaults to eligible=true. If the user is actually a returning user and the API is flaky, they would see trial copy — consider showing a loading error instead.",
+    "/app/frontend/src/components/ReadOnlyLock.jsx: The default `sub` text includes the required no-trial messaging, but consumers can override it (as done on /app/provider-switch) and lose the mandated wording. Consider moving the no-trial sentence into the component as a mandatory suffix."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_trial_eligibility_iter386.py"
+  ],
+  "success_rate": {"backend": "100% (8/8)", "frontend": "partial — mobile OK, web Reactivate CTAs non-functional on provider-switch"},
+  "test_credentials": "cathy@example.com/testpass123 (returning), cancelled.vo@example.com/AccessTest1! (view-only), viewonly@test.com/ViewOnly!2026 (view-only), fresh signups generated per test (TEST_iter386_* / TEST_iter386b_*).",
+  "seed_data_creation": "Pytest creates ephemeral TEST_iter386_<uuid>@example.com accounts to exercise the fresh-signup path. Safe to leave; prefixed TEST_ per convention.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend trial-eligibility + reactivation gate + welcome-back wiring are solid. Mobile plan-select testIDs confirmed. Open items: (1) web Reactivate Solo/Family buttons on /app/provider-switch do NOT trigger /api/payments/checkout — reproduce by logging in as cancelled.vo@example.com, visiting /app/provider-switch, clicking either Reactivate CTA. Expected: redirect to checkout.stripe.com; Actual: no POST /api/payments/checkout request fires. (2) Review-request testIDs 'read-only-lock-cta-solo/family' don't exist here because the consumer passes testId=\"switch-lock\" — buttons are 'switch-lock-cta-solo/family'. (3) The custom `sub` prop on this surface omits the required 'immediate paid / no free trial' wording. Full backend pytest results in /app/test_reports/pytest/iter386.xml.",
+  "rca of the issue": "Web Reactivate CTA non-functional (HIGH): In ReadOnlyLock.jsx the onClick → reactivate(plan) → startReactivateCheckout(plan) → api.post('/payments/checkout', ...) → window.location.href = data.url. During test, no network request to /api/payments/checkout was observed after clicking the button. Possible root causes to investigate: (a) the surrounding ReactivateLock/switch-lock wrapper intercepts clicks (there is also a tool-lock-gate on the same page that may stop event propagation); (b) startReactivateCheckout throws synchronously and the toast is being suppressed; (c) the button is wrapped by another element capturing the click. Suggested fix: add console.log at entry of reactivate() and inspect devtools, or ensure the inner click isn't delegated to the outer tool-lock-gate 'Reactivate' button."
+}

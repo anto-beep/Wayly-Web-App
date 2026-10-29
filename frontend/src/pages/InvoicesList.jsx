@@ -20,6 +20,7 @@ import PageIntro from "@/components/PageIntro";
 import SmartAISummary from "@/components/SmartAISummary";
 import InvoiceFilters from "@/components/invoices/InvoiceFilters";
 import OverchargeAlerts from "@/components/invoices/OverchargeAlerts";
+import { useExpiredTrial } from "@/hooks/useExpiredTrial";
 
 // Escapes a single CSV field. Wraps in quotes and doubles inner quotes to
 // keep spreadsheets happy on commas and multi-line narratives.
@@ -125,6 +126,7 @@ export default function InvoicesList() {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [errored, setErrored] = useState(false);
+    const isExpired = useExpiredTrial();
     const [sortKey, setSortKey] = useState("date");
     const [sortDir, setSortDir] = useState("desc");
 
@@ -250,13 +252,15 @@ export default function InvoicesList() {
                     >
                         <Download className="h-3.5 w-3.5" /> Export CSV
                     </button>
-                    <Link
-                        to="/ai-tools/invoice-checker"
-                        data-testid="invoices-list-upload-btn"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-primary-k text-white text-sm font-medium px-4 py-2 hover:bg-primary-k/90"
-                    >
-                        <Upload className="h-4 w-4" /> Check a New Invoice
-                    </Link>
+                    {!isExpired && (
+                        <Link
+                            to="/ai-tools/invoice-checker"
+                            data-testid="invoices-list-upload-btn"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-primary-k text-white text-sm font-medium px-4 py-2 hover:bg-primary-k/90"
+                        >
+                            <Upload className="h-4 w-4" /> Check a New Invoice
+                        </Link>
+                    )}
                 </div>
             </div>
 
@@ -306,14 +310,10 @@ export default function InvoicesList() {
                     <Receipt className="h-10 w-10 text-primary-k/60 mx-auto" />
                     <h3 className="mt-3 font-heading text-xl text-primary-k">No Invoices Yet</h3>
                     <p className="mt-1.5 text-sm text-muted-k max-w-md mx-auto">
-                        Upload the first invoice you were charged by your provider. We will read it, spot any errors, and tell you exactly what to do next.
+                        {isExpired
+                            ? "Your plan is inactive, so you can view past invoice checks but can't run new ones until you reactivate."
+                            : "Use \u201CCheck a New Invoice\u201D above to upload the first invoice you were charged by your provider. We will read it, spot any errors, and tell you exactly what to do next."}
                     </p>
-                    <Link
-                        to="/ai-tools/invoice-checker"
-                        className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary-k text-white text-sm font-medium px-4 py-2 hover:bg-primary-k/90"
-                    >
-                        <Upload className="h-4 w-4" /> Check your first invoice
-                    </Link>
                 </div>
             ) : sorted.length === 0 ? (
                 <div className="rounded-2xl border border-primary-k/10 bg-white p-10 text-center" data-testid="invoices-list-no-results">

@@ -1,0 +1,37 @@
+{
+  "summary": "Verified view-only create-button hide + active-user visibility across Statements, Invoices, Care Plans, and ATHM Projects on web. All 4 screens pass. Empty-state duplicate buttons confirmed removed. ReadOnlyLock widget was not located on the candidate routes I tried, so the reactivate POST → Stripe URL redirect could not be exercised end-to-end in the browser (code path reviewed and looks correct; backend already verified by main agent via curl).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {
+          "flow": "ReadOnlyLock reactivate (view_only)",
+          "issue": "Could not surface the ReadOnlyLock on tested routes (/app/statements/upload, /ai-tools/invoice-checker, /ai-tools/care-plan-reviewer, /ai-tools/statement-decoder) for viewonly@test.com. Routes may redirect / render different gating UI (global top banner 'Your plan is inactive. Reactivate...') instead of mounting the inline ReadOnlyLock. Code in /app/frontend/src/lib/reactivate.js correctly POSTs /api/payments/checkout and sets window.location.href to data.url, so wiring is correct — just unable to click-test it in browser. Main agent should confirm the specific route(s) where ReadOnlyLock is intended to render for view_only users.",
+          "affected_selectors": ["[data-testid='read-only-lock']", "[data-testid='read-only-lock-cta-solo']", "[data-testid='read-only-lock-cta-family']"]
+        }
+      ],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Clarify / document which routes should render <ReadOnlyLock /> inline for view_only users so this flow is UI-testable. Current pages (upload, AI tool pages) seem to be gated at a higher level (top banner + hidden CTAs) rather than mounting the inline lock."
+  ],
+  "critical_code_review_comments": [
+    "useExpiredTrial correctly treats access_state=='view_only' as expired and leaves active/trial/paid users untouched — matches brief (trial users keep full access).",
+    "All 4 target CTAs are properly wrapped with {!isExpired && ...}: statements-upload-cta, invoices-list-upload-btn, btn-upload-care-plan, athm-new-project. Empty-state duplicate buttons on Statements/Invoices/Care Plans are gone and replaced with plain copy (plus an inactive-plan nudge when view_only on Invoices/Care Plans/ATHM).",
+    "startReactivateCheckout in /app/frontend/src/lib/reactivate.js posts { plan, origin_url, trial_days:0 } to /api/payments/checkout and does window.location.href = data.url — correct per brief (immediate paid plan, no trial).",
+    "ReadOnlyLock.jsx has correct testIDs (read-only-lock, read-only-lock-cta-solo, read-only-lock-cta-family) and surfaces toast on error — no code issues spotted."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100% (4/4 CTA-hide screens pass for both users); reactivate click not exercised"},
+  "test_credentials": "ACTIVE: cathy@example.com / testpass123; VIEW_ONLY: viewonly@test.com / ViewOnly!2026",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Measured results (via Playwright on https://statement-renderer.preview.emergentagent.com): \n- VIEW_ONLY viewonly@test.com → all 4 header CTAs have 0 occurrences in DOM: statements-upload-cta, invoices-list-upload-btn, btn-upload-care-plan, athm-new-project. Empty-state 'Check your first invoice' and 'Upload your first plan' text also 0 occurrences. Screenshot confirms global top banner 'Your plan is inactive. Reactivate to add or change anything.' + a top-right 'Reactivate' button.\n- ACTIVE cathy@example.com → all 4 header CTAs rendered + visible (header_count=1, visible=true). Screenshot of /app/athm/projects shows '+ New Project' button correctly.\n- ReadOnlyLock could NOT be surfaced on /app/statements/upload, /ai-tools/invoice-checker, /ai-tools/care-plan-reviewer, /ai-tools/statement-decoder for the view_only user. Need to know which page actually mounts <ReadOnlyLock /> in-place for view_only to exercise the Stripe POST click.",
+  "rca of the issue": "n/a — core requirement verified passing."
+}

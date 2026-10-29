@@ -1,28 +1,29 @@
-import React, { useState } from "react";
+import React from "react";
 import { Pressable, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Lock, X } from "lucide-react-native";
 import { useRouter } from "expo-router";
 
-import { useAuth } from "@/src/context/AuthContext";
 import { useTheme } from "@/src/theme/ThemeContext";
+import { useViewOnlyBanner } from "@/src/context/ViewOnlyBannerContext";
 import { fonts } from "@/src/theme/tokens";
 
 /**
  * ViewOnlyBanner — a slim, consistent status strip pinned at the very top of
  * every authenticated screen when the plan is inactive (view_only). It is a
  * read-only indicator; tapping it (or "Reactivate") opens the plan picker.
- * Dismissible for the current screen only. On hard-locked screens the AccessGate
- * overlay sits above this, so the lock message is never doubled.
+ * Dismissible for the current session only (state lifted to
+ * ViewOnlyBannerContext so the header can reclaim the safe-area inset the
+ * moment it is dismissed). On hard-locked screens the AccessGate overlay sits
+ * above this, so the lock message is never doubled.
  */
 export function ViewOnlyBanner() {
-  const { user, viewOnly } = useAuth();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [dismissed, setDismissed] = useState(false);
+  const { visible, dismiss } = useViewOnlyBanner();
 
-  if (!user || !viewOnly || dismissed) return null;
+  if (!visible) return null;
 
   return (
     <Pressable
@@ -37,7 +38,7 @@ export function ViewOnlyBanner() {
       <Text style={[styles.cta, { color: colors.primaryFg }]}>Reactivate</Text>
       <TouchableOpacity
         testID="view-only-banner-dismiss"
-        onPress={() => setDismissed(true)}
+        onPress={dismiss}
         hitSlop={10}
         activeOpacity={0.7}
       >

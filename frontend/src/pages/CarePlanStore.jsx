@@ -17,6 +17,7 @@ import { AlertOctagon, ArchiveRestore, Bell, ChevronRight, FileText, GitCompare,
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
 import PageIntro from "@/components/PageIntro";
+import { useExpiredTrial } from "@/hooks/useExpiredTrial";
 
 const SEV_META = {
     compliance: { label: "Compliance", cls: "bg-terracotta text-white", Icon: AlertOctagon },
@@ -85,6 +86,7 @@ function RowContent({ plan }) {
 
 export default function CarePlanStore() {
     const navigate = useNavigate();
+    const isExpired = useExpiredTrial();
     const [plans, setPlans] = useState([]);
     const [archived, setArchived] = useState([]);
     const [prompts, setPrompts] = useState([]);
@@ -197,14 +199,16 @@ export default function CarePlanStore() {
                     ]}
                     className="flex-1 min-w-0"
                 />
-                <Link
-                    to="/ai-tools/care-plan-reviewer"
-                    className="inline-flex items-center gap-2 rounded-full bg-primary-k text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
-                    data-testid="btn-upload-care-plan"
-                >
-                    <Plus className="h-4 w-4" />
-                    Upload Plan
-                </Link>
+                {!isExpired && (
+                    <Link
+                        to="/ai-tools/care-plan-reviewer"
+                        className="inline-flex items-center gap-2 rounded-full bg-primary-k text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+                        data-testid="btn-upload-care-plan"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Upload Plan
+                    </Link>
+                )}
             </div>
 
             {/* Re-review reminders (Section I) */}
@@ -344,16 +348,10 @@ export default function CarePlanStore() {
                             ? "No plans match your filters."
                             : showArchived
                                 ? "No archived or deleted plans."
-                                : "You have not uploaded a care plan yet."}
+                                : isExpired
+                                    ? "Your plan is inactive. Reactivate to upload and review care plans again."
+                                    : "You have not uploaded a care plan yet. Use \u201CUpload Plan\u201D above to add your first one."}
                     </div>
-                    {!showArchived && !(query || classFilter || flaggedOnly) && (
-                        <Link
-                            to="/ai-tools/care-plan-reviewer"
-                            className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary-k underline underline-offset-4"
-                        >
-                            Upload your first plan
-                        </Link>
-                    )}
                 </div>
             )}
 

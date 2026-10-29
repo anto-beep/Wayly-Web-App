@@ -8109,3 +8109,17 @@ Architecture: a single shared headless-Chromium HTML→PDF pipeline for ALL tool
 - Item ordering fixed to match web: Tools group now follows `TOOLS_ORDERED` (Statement Decoder, Invoice Checker, Support Plan Reviewer, Provider Price Checker, Contribution Estimator, Budget & Lifetime Cap Calculator, Classification Self-Check, Letters & Follow-ups, Aged Care Q&A); Money group has Contribution Position after Invoices.
 - Removed mobile-only extras not present in the web drawer: "Complaints" (Guided Journeys) and "Cases" (Their Care). Screens still exist; just not surfaced in the drawer, matching web.
 - Verified on Expo preview (login → open drawer → expand Tools → expand Money collapses Tools → brand tap collapses all).
+
+## View-only entry-button hide + dedupe (WEB) & mobile inactive-header fix (Jun 2026)
+Request: for INACTIVE (access_state=view_only) accounts, HIDE every create/upload/Start entry button (not just lock) across list screens; TRIAL + PAID keep full access; DEDUPE so only ONE create button (header) remains (remove empty-state duplicates). Also fix the mobile inactive-account top header being too tall.
+WEB (`useExpiredTrial()` = view_only):
+- `StatementsList.jsx` — header `statements-upload-cta` hidden when view_only; empty-state upload button REMOVED for all (header is the single CTA).
+- `InvoicesList.jsx` — header `invoices-list-upload-btn` hidden when view_only; empty-state "Check your first invoice" REMOVED.
+- `CarePlanStore.jsx` — header `btn-upload-care-plan` hidden when view_only; empty-state "Upload your first plan" REMOVED.
+- `AthmProjects.jsx` — `athm-new-project` (CreateProjectCard) hidden when view_only; empty-state copy adapts.
+- Reactivate path verified end-to-end: the `ReadOnlyLock` on `/app/statements/upload` (testId `upload-lock`) → click `upload-lock-cta-solo` POSTs `/api/payments/checkout` and redirects to checkout.stripe.com. `lib/reactivate.js` now throws on a missing url (no silent no-op). Global `ReadOnlyBanner` Reactivate CTA routes to `/settings/billing` (unchanged).
+- Verified by testing agent (iteration_387.json: all 4 CTAs hidden for view_only / visible for active; dedupe = 0 duplicate buttons) + browser checkout redirect check.
+MOBILE inactive header fix:
+- Root cause: global `ViewOnlyBanner` pads `insets.top`, then `WaylyHeader` added `insets.top` AGAIN → doubled safe-area gap, bar too tall, logo/avatar pushed down.
+- Fix: new `src/context/ViewOnlyBannerContext.tsx` shares banner visibility (+ lifts dismiss state). `_layout.tsx` wraps banner+Stack in `ViewOnlyBannerProvider`. `WaylyHeader` now uses `spacing.sm` top pad (not `insets.top`) while the banner is visible; reclaims the inset when dismissed/not view_only. Verified on Expo preview (view_only dashboard header now compact/proportionate).
+- Test fixture: `viewonly@test.com` was given a household (participant "Margaret", provider "Sunrise Care", household_id set) so it passes the onboarding gate and renders dashboard/list screens.

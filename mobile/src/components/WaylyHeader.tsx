@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 
 import { useAuth } from "@/src/context/AuthContext";
 import { useNotifications } from "@/src/context/NotificationsContext";
+import { useViewOnlyBanner } from "@/src/context/ViewOnlyBannerContext";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { WaylyMark } from "@/src/components/WaylyMark";
 import { scrollDashboardToTop } from "@/src/lib/dashboardScroll";
@@ -34,14 +35,19 @@ export function WaylyHeader({ scrollY }: { scrollY?: SharedValue<number> }) {
   const { unread } = useNotifications();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { visible: bannerVisible } = useViewOnlyBanner();
   const [notifOpen, setNotifOpen] = useState(false);
   const [healthOpen, setHealthOpen] = useState(false);
   const health = useAccountHealth();
 
   const _fallback = useSharedValue(0);
   const sy = scrollY ?? _fallback;
+  // When the view-only banner is pinned above us it already pads for the
+  // notch, so skip insets.top here to avoid a doubled safe-area gap that made
+  // the bar too tall and pushed the logo/avatar down.
+  const topBase = bannerVisible ? spacing.sm : insets.top;
   const barStyle = useAnimatedStyle(() => ({
-    paddingTop: insets.top + interpolate(sy.value, [0, 60], [8, 3], Extrapolation.CLAMP),
+    paddingTop: topBase + interpolate(sy.value, [0, 60], [8, 3], Extrapolation.CLAMP),
     paddingBottom: interpolate(sy.value, [0, 60], [spacing.sm, 3], Extrapolation.CLAMP),
   }));
   const logoStyle = useAnimatedStyle(() => ({

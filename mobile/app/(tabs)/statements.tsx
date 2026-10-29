@@ -9,6 +9,7 @@ import { PageIntro } from "@/src/components/PageIntro";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
+import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch } from "@/src/lib/api";
 import { cacheGet, cacheSet } from "@/src/lib/cache";
 import { shareTextFile } from "@/src/lib/download";
@@ -43,6 +44,7 @@ function StatusBadge({ status, count, hasNote }: { status: string; count: number
 
 export default function StatementsScreen() {
   const { activeId } = useParticipants();
+  const { viewOnly } = useAuth();
   const { colors, shadow } = useTheme();
   const [items, setItems] = useState<Stmt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,7 +153,7 @@ export default function StatementsScreen() {
         ]}
       />
       <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" }}>
-        <Button label="Upload a Statement" testID="statements-upload-cta" icon={FileText} onPress={() => router.push("/upload")} style={{ flexGrow: 1 }} />
+        {!viewOnly ? <Button label="Upload a Statement" testID="statements-upload-cta" icon={FileText} onPress={() => router.push("/upload")} style={{ flexGrow: 1 }} /> : null}
         <Button label="Export CSV" testID="statements-export-csv-btn" icon={Download} variant="outline" onPress={exportCsv} style={{ flexGrow: 1 }} />
         <Button label={archivedCount > 0 ? `Archived (${archivedCount})` : "Archived"} testID="statements-archived-link" icon={Archive} variant="outline" onPress={() => router.push("/statements-archived" as any)} style={{ flexGrow: 1 }} />
       </View>
@@ -210,8 +212,7 @@ export default function StatementsScreen() {
           ListHeaderComponent={Header}
           ListEmptyComponent={
             <View style={{ paddingHorizontal: spacing.lg }}>
-              <StatePanel testID="statements-empty" icon={FileSearch} title="No statements yet." message="Upload a Support at Home statement (PDF or photo) and Wayly will decode the charges for you." />
-              <Button label="Upload your first statement" testID="statements-empty-upload" onPress={() => router.push("/upload")} icon={Plus} />
+              <StatePanel testID="statements-empty" icon={FileSearch} title="No statements yet." message={viewOnly ? "Your uploaded statements will appear here." : "Upload a Support at Home statement (PDF or photo) and Wayly will decode the charges for you."} />
             </View>
           }
           contentContainerStyle={{ padding: spacing.lg }}

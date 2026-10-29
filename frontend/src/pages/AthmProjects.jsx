@@ -15,6 +15,7 @@ import {
     Upload, Mail, Search,
 } from "lucide-react";
 import PageIntro from "@/components/PageIntro";
+import { useExpiredTrial } from "@/hooks/useExpiredTrial";
 
 const PROJECT_TYPES = {
     assistive_technology_only: { label: "Assistive Technology", icon: Wrench, tone: { bg: "#EAF3F3", chip: "#0E4D52" } },
@@ -733,6 +734,7 @@ function CreateProjectCard({ participantId, onCreated }) {
 
 export default function AthmProjects() {
     const pid = useParticipantId();
+    const isExpired = useExpiredTrial();
     const [projects, setProjects] = useState([]);
     const [selected, setSelected] = useState(null);
     const [typeFilter, setTypeFilter] = useState("all");
@@ -777,14 +779,20 @@ export default function AthmProjects() {
                 ]}
             >
                 <div className="flex justify-end">
-                    <CreateProjectCard participantId={pid} onCreated={() => refresh()}/>
+                    {!isExpired && (
+                        <CreateProjectCard participantId={pid} onCreated={() => refresh()}/>
+                    )}
                 </div>
             </PageIntro>
 
             {projects.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-primary-k/20 p-8 text-center" data-testid="athm-empty">
                     <ClipboardList className="w-8 h-8 text-primary-k/30 mx-auto"/>
-                    <p className="text-sm text-muted-k mt-3">No projects yet. Start one to track OT assessment, quotes, and trials.</p>
+                    <p className="text-sm text-muted-k mt-3">
+                        {isExpired
+                            ? "Your plan is inactive. Reactivate to start new AT & HM projects."
+                            : "No projects yet. Start one to track OT assessment, quotes, and trials."}
+                    </p>
                 </div>
             )}
 

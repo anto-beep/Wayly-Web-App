@@ -246,6 +246,53 @@ async def _user_had_trial(user_id: Optional[str]) -> bool:
     return bool(sub)
 
 
+async def _maybe_send_welcome_back(user_id: Optional[str], plan: Optional[str], session_id: Optional[str], sub: Optional[dict]) -> None:
+    """Send a one-off 'welcome back' email when a RETURNING user completes a
+    paid reactivation checkout (immediate charge, no trial). Idempotent per
+    checkout session (so the webhook + the on-return reconcile can't double
+    send). Brand-new trial signups do NOT get this email."""
+    if _db is None or not user_id or not session_id or not sub:
+        return
+    # Reactivation = immediate paid subscription (no Stripe trial). New trials skip.
+    if sub.get("trial_end"):
+        return
+    if (sub.get("status") or "") not in ("active", "past_due"):
+        return
+    # Atomically claim the send for this session so only one caller wins.
+    claim = await _db.subscriptions.update_one(
+        {"user_id": user_id, "welcome_back_session": {"$ne": session_id}},
+        {"$set": {"welcome_back_session": session_id}},
+    )
+    if claim.modified_count != 1:
+        return
+    user = await _db.users.find_one({"id": user_id})
+    if not user or not user.get("email"):
+        return
+    try:
+        import email_service
+        plan_label = (plan or user.get("plan") or "your").capitalize()
+        name = user.get("name") or "there"
+        await email_service.email_tool_result(
+            to=user["email"],
+            tool_name="Welcome back to Wayly",
+            headline="Welcome back to Wayly",
+            body_html=(
+                f"<p>Hi {name},</p>"
+                f"<p>Your <strong>{plan_label} plan</strong> is active again — welcome back! "
+                "Everything you'd saved is exactly where you left it, and every Wayly tool is unlocked once more.</p>"
+                "<p><strong>Ready when you are:</strong></p>"
+                "<ul>"
+                "<li>Upload and decode your latest Support at Home statement</li>"
+                "<li>Check an invoice against your funding and expected contribution</li>"
+                "<li>Track your budget, anomalies and lifetime cap</li>"
+                "</ul>"
+                "<p>Thanks for coming back to Wayly.</p>"
+            ),
+        )
+    except Exception as e:  # pragma: no cover
+        logger.warning("welcome-back email failed: %s", e)
+
+
 @payments_router.post("/checkout")
 async def create_checkout(body: CheckoutBody, request: Request):
     """Create a subscription-mode Stripe Checkout Session for the plan."""
@@ -424,6 +471,7 @@ async def checkout_status(session_id: str, request: Request):
                     },
                     upsert=True,
                 )
+                await _maybe_send_welcome_back(user_id, plan, session.id, sub)
         except Exception as e:  # pragma: no cover
             logger.warning("checkout_status reconcile failed: %s", e)
 
@@ -941,6 +989,7 @@ async def stripe_webhook(request: Request):
                 try:
                     full = stripe.Subscription.retrieve(sub_id)
                     await _upsert_sub_doc(user_id, full, plan=plan, extra={"stripe_session_id": obj.get("id")})
+                    await _maybe_send_welcome_back(user_id, plan, obj.get("id"), full)
                 except Exception as e:  # pragma: no cover
                     logger.warning("webhook checkout upsert sub doc failed: %s", e)
         elif etype in ("customer.subscription.updated", "customer.subscription.created"):

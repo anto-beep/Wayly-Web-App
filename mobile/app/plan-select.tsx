@@ -17,7 +17,7 @@ import { apiFetch, clearPendingPlan, planStatusIsValid } from "@/src/lib/api";
 // secure web browser (no in-app purchase); card details never touch the app.
 export default function PlanSelectScreen() {
   const { colors } = useTheme();
-  const { refreshUser, logout } = useAuth();
+  const { refreshUser, logout, user } = useAuth();
   const [busyPlan, setBusyPlan] = useState<PlanKey | null>(null);
   const [error, setError] = useState("");
   // null = still checking; true = new account (trial); false = reactivation (paid now)
@@ -81,9 +81,6 @@ export default function PlanSelectScreen() {
       <AppHeader title={isReactivation ? "Reactivate Your Plan" : "Choose Your Plan"} onBack={onCancel} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}>
         <View style={{ gap: 6 }}>
-          <T style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, color: colors.heading }}>
-            {isReactivation ? "Reactivate your plan" : "Start your 7-day free trial"}
-          </T>
           <T variant="small" style={{ lineHeight: 21 }}>
             {isReactivation
               ? "Pick a plan to pick up right where you left off — everything you saved is still here. You'll be charged today; there's no free trial, as you've used Wayly before."
@@ -124,6 +121,12 @@ export default function PlanSelectScreen() {
                 {p.popular ? (
                   <View style={{ alignSelf: "flex-start", backgroundColor: colors.gold, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 8 }}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.6, color: "#fff" }}>MOST POPULAR</T>
+                  </View>
+                ) : null}
+
+                {isReactivation && user?.plan === p.key ? (
+                  <View style={{ alignSelf: "flex-start", backgroundColor: colors.sageSoft, borderColor: colors.sage, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 8 }}>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 10, letterSpacing: 0.5, color: colors.heading }}>YOUR PREVIOUS PLAN</T>
                   </View>
                 ) : null}
 

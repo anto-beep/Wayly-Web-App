@@ -6,6 +6,7 @@ import { ClipboardList, Sparkles, FileText, Search, Trash2, RotateCcw, GitCompar
 import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
+import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -34,6 +35,7 @@ function fmt(s?: string): string {
 export default function CarePlansScreen() {
   const { colors } = useTheme();
   const { activeId, active } = useParticipants();
+  const { viewOnly } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [archived, setArchived] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,7 +209,7 @@ export default function CarePlansScreen() {
                     {p.summary ? <T variant="small" style={{ marginTop: 6, lineHeight: 20 }} numberOfLines={3}>{p.summary}</T> : null}
                   </Pressable>
 
-                  {!compareMode ? (
+                  {!compareMode && !viewOnly ? (
                     <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm, flexWrap: "wrap" }}>
                       {showArchived ? (
                         <>
@@ -224,7 +226,7 @@ export default function CarePlansScreen() {
             })
           )}
 
-          {!showArchived ? (
+          {!showArchived && !viewOnly ? (
             <Button label="Review a care plan with AI" testID="care-plans-review-cta" icon={Sparkles} onPress={() => router.push("/tool/care-plan-reviewer")} style={{ marginTop: spacing.sm }} />
           ) : null}
         </ScrollView>

@@ -9,6 +9,7 @@ import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { OverchargeAlerts } from "@/src/components/invoices/OverchargeAlerts";
 import HScrollFade from "@/src/components/HScrollFade";
 import { useParticipants } from "@/src/context/ParticipantContext";
+import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -47,6 +48,7 @@ const STATUS_CHIPS: { value: "all" | "issues" | "all_clear"; label: string }[] =
 
 export default function InvoicesScreen() {
   const { activeId } = useParticipants();
+  const { viewOnly } = useAuth();
   const { colors, shadow } = useTheme();
   const [items, setItems] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,9 +132,11 @@ export default function InvoicesScreen() {
           "A permanent, private audit trail of everything checked.",
         ]}
       />
-      <View style={{ flexDirection: "row", gap: spacing.sm }}>
-        <Button label="Check a new invoice" testID="invoices-list-upload-btn" icon={Upload} onPress={() => router.push("/tool/invoice-checker")} style={{ flex: 1 }} />
-      </View>
+      {!viewOnly ? (
+        <View style={{ flexDirection: "row", gap: spacing.sm }}>
+          <Button label="Check a new invoice" testID="invoices-list-upload-btn" icon={Upload} onPress={() => router.push("/tool/invoice-checker")} style={{ flex: 1 }} />
+        </View>
+      ) : null}
 
       {items.length > 0 ? (
         <View testID="invoices-filter-bar" style={{ gap: spacing.sm }}>
@@ -225,7 +229,6 @@ export default function InvoicesScreen() {
                 <Receipt size={40} color={colors.heading} />
                 <T style={{ fontFamily: fonts.heading, fontSize: 20, marginTop: spacing.sm }}>No invoices yet</T>
                 <T variant="small" style={{ marginTop: 6, textAlign: "center" }}>Upload the first invoice you were charged by your provider. We will read it, spot any errors, and tell you exactly what to do next.</T>
-                <Button label="Check your first invoice" testID="invoices-empty-upload" icon={Upload} onPress={() => router.push("/tool/invoice-checker")} style={{ marginTop: spacing.md }} />
               </View>
             </View>
           }

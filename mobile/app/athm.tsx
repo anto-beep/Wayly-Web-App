@@ -7,6 +7,7 @@ import { Plus, ArrowRight, ClipboardList, Wrench, Hammer, Package, Upload, FileT
 import { AppHeader, Button, Card, Field, Loading, Select, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
+import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -35,6 +36,7 @@ const PRIMARY_NEEDS = [
 export default function AthmProjectsScreen() {
   const { colors } = useTheme();
   const { active } = useParticipants();
+  const { viewOnly } = useAuth();
   const pid = active?.id;
   const [projects, setProjects] = useState<any[] | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -106,7 +108,7 @@ export default function AthmProjectsScreen() {
           whatItDoes="Groups related AT items and HM modifications into a single project. Compares supplier quotes side-by-side. Counts down each trial period so you never miss a return window."
         />
 
-        {showForm ? (
+        {!viewOnly && showForm ? (
           <Card testID="athm-new-project-form">
             <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading, marginBottom: spacing.sm }}>New Project</T>
             <View style={{ gap: spacing.sm }}>
@@ -144,7 +146,7 @@ export default function AthmProjectsScreen() {
               </View>
             </View>
           </Card>
-        ) : (
+        ) : viewOnly ? null : (
           <Button label="New Project" icon={Plus} testID="athm-new-project" onPress={() => setShowForm(true)} disabled={!pid} />
         )}
 

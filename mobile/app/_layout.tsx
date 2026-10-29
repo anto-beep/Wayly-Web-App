@@ -14,6 +14,7 @@ import { ParticipantProvider } from "@/src/context/ParticipantContext";
 import { NotificationsProvider } from "@/src/context/NotificationsContext";
 import { PushManager } from "@/src/components/PushManager";
 import { ViewOnlyBanner } from "@/src/components/ViewOnlyBanner";
+import { ViewOnlyBannerProvider } from "@/src/context/ViewOnlyBannerContext";
 import { AccessGate } from "@/src/components/AccessGate";
 import { ThemeProvider, useTheme } from "@/src/theme/ThemeContext";
 
@@ -46,8 +47,10 @@ function ThemedStack() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <ViewOnlyBanner />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+      <ViewOnlyBannerProvider>
+        <ViewOnlyBanner />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+      </ViewOnlyBannerProvider>
       <AccessGate />
     </View>
   );
