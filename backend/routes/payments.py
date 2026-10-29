@@ -232,6 +232,20 @@ class CheckoutBody(BaseModel):
     app_return_url: Optional[str] = None
 
 
+async def _user_had_trial(user_id: Optional[str]) -> bool:
+    """True if the user has previously started/used a trial OR has any prior
+    subscription record (every sub we create is stamped had_trial=True on
+    insert). Brand-new accounts with no history are the only ones eligible for
+    a free trial — reactivation/resubscribe is always an immediate paid charge."""
+    if _db is None or not user_id:
+        return False
+    sub = await _db.subscriptions.find_one(
+        {"user_id": user_id, "$or": [{"had_trial": True}, {"trial_ends_at": {"$ne": None}}]},
+        {"_id": 0, "id": 1},
+    )
+    return bool(sub)
+
+
 @payments_router.post("/checkout")
 async def create_checkout(body: CheckoutBody, request: Request):
     """Create a subscription-mode Stripe Checkout Session for the plan."""
@@ -245,6 +259,13 @@ async def create_checkout(body: CheckoutBody, request: Request):
     # flows create the account first, then start checkout, so the caller is
     # always authenticated here. This prevents anonymous session creation.
     user = await _require_user(request)
+
+    # AUTHORITATIVE trial gate: the free trial is for brand-new accounts only.
+    # Never trust the client's trial_days — a returning/reactivating user (one
+    # who has already had a trial or any prior subscription) is always charged
+    # immediately, regardless of what the UI sent.
+    requested_trial = int(body.trial_days) if (body.trial_days and body.trial_days > 0) else 0
+    trial_days = requested_trial if (requested_trial > 0 and not await _user_had_trial(user.get("id") if user else None)) else 0
 
     metadata = {
         "kind": "wayly_subscription",
@@ -282,7 +303,7 @@ async def create_checkout(body: CheckoutBody, request: Request):
         metadata=metadata,
         subscription_data={
             "metadata": metadata,
-            **({"trial_period_days": int(body.trial_days)} if body.trial_days and body.trial_days > 0 else {}),
+            **({"trial_period_days": trial_days} if trial_days > 0 else {}),
         },
         allow_promotion_codes=True,
         billing_address_collection="auto",
