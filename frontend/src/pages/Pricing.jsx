@@ -4,7 +4,7 @@
  * 4 plan cards (Free / Solo / Family / Adviser), add-on explanation, full
  * comparison table grouped by section, FAQ with JSON-LD.
  */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
@@ -181,6 +181,15 @@ function Cell({ v }) {
 export default function Pricing() {
     const { user } = useAuth();
     const [loadingPlan, setLoadingPlan] = useState(null);
+
+    // Stripe sends a cancelled trial checkout back to /pricing?cancelled=1.
+    // Clear the pending-trial-welcome flag so a later unrelated checkout can
+    // never resurface the one-time /welcome page.
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).get("cancelled") === "1") {
+            try { localStorage.removeItem("wayly_trial_welcome"); } catch (_) { /* no-op */ }
+        }
+    }, []);
 
     // For logged-in users we jump straight to a Stripe subscription
     // Checkout Session. For guests we still route through /signup which

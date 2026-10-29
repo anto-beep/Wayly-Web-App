@@ -8136,3 +8136,7 @@ Goal: measure Google Ads conversions on wayly.com.au with a consent-gated Google
 - **Privacy & Cookies pages** reconciled (they previously claimed "no advertising cookies"): Privacy §10/§17 updated + new "Advertising Measurement (Google Ads)" subsection + Google added to §12 sub-processors and §13 overseas (US); dates bumped to 27 Jun 2026. Cookies page: opening line reworded + new "Advertising Cookies (Google Ads) — Off by Default" + "Changing Your Choice" sections.
 - **gclid/utm (#7):** app code never strips query params; no app redirect drops them. The apex→www and http→https redirects are INFRASTRUCTURE/CDN-level (outside this codebase) and must be configured to preserve the query string at deploy.
 - Verified in preview via Playwright assertions: banner+wording+3 buttons, consent default (ad denied/analytics granted), tag injected on public pages with config AW-, consent update granted on accept-all + persisted, dashboard fresh-load untagged, /welcome legit render + guard redirect + once-only. Goes LIVE on wayly.com.au after Publish/deploy.
+
+## Google Ads follow-ups (Jun 2026)
+- Privacy §17 cookie section: added "To change your cookie choice, clear the cookies for wayly.com.au in your browser settings. The cookie banner will appear again on your next visit."
+- `Pricing.jsx`: on Stripe cancel return (`/pricing?cancelled=1`) we now `localStorage.removeItem('wayly_trial_welcome')`, so a later unrelated completed checkout can never resurface the one-time /welcome page. Verified: flag "1" → cleared after cancel return.
