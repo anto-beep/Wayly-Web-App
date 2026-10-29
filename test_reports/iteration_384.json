@@ -1,0 +1,28 @@
+{
+  "summary": "WEB-ONLY frontend regression test for Wayly marketing/nav polish (iter 384). Verified: floating teal frosted-glass marketing header (rgba(14,77,82,0.75) + 24px backdrop-blur + 16px radius + 8px padding), Tools mega menu opens on hover with 9 tools and visual supporter column, hovering updates active state, clicking navigates to /ai-tools/<slug>, Escape closes it, 'Log In' label with no border, Start free trial routes to /signup?plan=family with hover glow class, signed-in avatar dropdown + signout works, app-download-prompt renders with QR (desktop) + Google Play CTA + dismiss persists to localStorage, AI Tools teaser (see-all-tools-cta y=4388) renders BEFORE Reports strip (y=4755), mobile drawer opens with Log In + Start free trial. InAppNudge correctly does NOT render on desktop (expected). No new console errors introduced by the new components.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/test_reports/iter384_final.jpeg"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MarketingHeader.jsx — the mobile drawer uses `fixed inset-0 top-0 pt-20` so it covers the frosted header; z-50 vs header z-40, OK. No blocker.",
+    "AppDownloadPrompt only shows QR when device==='both' (desktop); the request explicitly says desktop so this is correct, but on tablet/large phones a QR is also useful — minor UX nit, not a bug.",
+    "ToolsMegaMenu — close-on-mouse-leave is handled by the parent header's onMouseLeave with a 160ms timeout; this works, but hovering OUT of the menu bar quickly (e.g. toward content below) will still close as expected. OK."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (used for signed-in header check)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter 384 validated the new MarketingHeader (floating teal glass), ToolsMegaMenu (9 tools, visual column, nav + Escape close), AppDownloadPrompt (QR + Google Play), InAppNudge (correctly not shown on desktop), landing AI-tools-teaser-before-reports order, Log In rename + Start free trial glow, mobile drawer, signed-in avatar dropdown. 2 pre-existing non-blocking console errors remain (favicon 403, Google GSI origin not allowlisted — unrelated to this change).",
+  "rca of the issue": "N/A — all requested checks pass."
+}

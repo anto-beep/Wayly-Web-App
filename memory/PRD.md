@@ -1,6 +1,14 @@
 # Wayly — current fork status (Jun 2026)
 
-**Just shipped (Jun 2026 — final-CTA button hover readability; web; verified via computed-style + screenshots in light & dark):**
+**Just shipped (Jun 2026 — marketing nav/CTA redesign + app-download QR + in-app nudge + landing layout polish; WEB only; testing agent iter 384 ALL PASS):**
+- **Floating teal frosted-glass nav** (`components/MarketingHeader.jsx`, full rewrite): sticky floating bar — `bg-[#0E4D52]/75 backdrop-blur-xl`, rounded-2xl, 8px padding, border + shadow, gap above so content blurs through while scrolling. White text/links.
+- **Tools mega menu** (new `components/ToolsMegaMenu.jsx`): full-width panel flush to the nav container; left = all 9 tools (from `TOOLS_ORDERED`) in 2 columns with icon + short; right = teal "visual supporter" column showing the hovered tool's real product screenshot (`/public/marketing/ai-tool-*.png`) with body copy + "Open <tool>" link. Hover/click to open, Escape/mouse-leave to close. Invoice Checker has no screenshot asset → branded icon-panel fallback.
+- **Buttons**: "Sign in" → "**Log In**" (no outline, plain text link, still `nav-login` → /login). "Start free trial" CTA (`nav-start-trial`) got inset/indent shadow lift + a hover **rotating conic-gradient bloom glow** via `.cta-bloom` in `index.css` (animated `@property --bloom-angle`; respects reduced-motion). Account dropdown elevated (rounded-2xl, stronger shadow, glass).
+- **Desktop QR** (`components/AppDownloadPrompt.jsx`): added `qrcode.react` (QRCodeSVG) — desktop banner now shows a scannable QR of the Play Store URL ("Scan to install") alongside the Google Play button.
+- **In-app nudge** (new `components/InAppNudge.jsx`, rendered in `App.js`): one-time dismissible "try the app" card for SIGNED-IN users on a PHONE browser, only after the top download banner is dismissed and ≥3 visits (`wayly:app-visits`, `wayly:app-nudge-shown`). Android → live Play link; iOS → coming-soon.
+- **Landing/ToolClusterGrid layout** (`pages/Landing.jsx`, `components/ToolClusterGrid.jsx`): moved the "AI Tools teaser" section ABOVE the "Reports" section; widened several intro paragraphs (max-w-2xl→4xl/5xl) + `[text-wrap:balance]` so they fit across the laptop width without awkward splits/whitespace. Also removed the ToolGate preview screenshot section (earlier agentic edit) and fixed the final-CTA hover readability (earlier).
+
+
 - **Landing final-CTA "Start free trial" button went invisible on hover.** The global teal-surface link rule (`index.css` ~L1372) forces `a:hover` white + underline, intended for links on teal backgrounds. The base state already exempted solid white/surface buttons (`.bg-primary-k a.bg-white` → dark teal), but the `:hover` rule had no matching exemption, so the white button's label turned white-on-white. Added the mirror hover exemption (`a.bg-white:hover` / `a.bg-surface:hover` on teal surfaces → `color:#0E4D52 !important; text-decoration:none`). Verified hover now keeps readable dark text and no underline in both light (dark teal on white) and dark (dark on teal) modes. Fixes all similarly-placed white buttons on teal surfaces, not just this one.
 
 

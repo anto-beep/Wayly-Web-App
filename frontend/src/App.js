@@ -166,6 +166,7 @@ import AddToHomeScreenPrompt from "@/components/AddToHomeScreenPrompt";
 import AccessibilityWidget, { bootAccessibilityPrefs } from "@/components/AccessibilityWidget";
 import ScrollHideWidgets from "@/components/ScrollHideWidgets";
 import AppDownloadPrompt from "@/components/AppDownloadPrompt";
+import InAppNudge from "@/components/InAppNudge";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import { ParticipantsProvider } from "@/context/ParticipantsContext";
 import OfflineIndicator from "@/components/OfflineIndicator";
@@ -412,6 +413,7 @@ function App() {
                 <OfflineIndicator />
                 <PaywallModal />
                 <AppDownloadPrompt />
+                <InAppNudge />
                 <ErrorBoundary>
                 <Suspense fallback={<Loading />}>
                 <Routes>

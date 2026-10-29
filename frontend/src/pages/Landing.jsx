@@ -201,12 +201,12 @@ export default function Landing() {
 
             {/* HOW IT WORKS, skimmable step flow (no screenshots) */}
             <section className="mx-auto max-w-7xl px-6 py-10 sm:py-16" data-testid="how-it-works">
-                <div className="max-w-2xl">
+                <div className="max-w-3xl">
                     <span className="overline">How It Works</span>
                     <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">
                         Three Steps to <span style={{ color: "#A5512B" }}>Calm</span>.
                     </h2>
-                    <p className="mt-3 text-base text-muted-k leading-relaxed">
+                    <p className="mt-3 text-base text-muted-k leading-relaxed [text-wrap:balance]">
                         No spreadsheets, no jargon, no finance degree. Start by checking a statement or an invoice, then let Wayly take it from there.
                     </p>
                 </div>
@@ -241,13 +241,53 @@ export default function Landing() {
 
             {/* FEATURE GRID moved above (see what-wayly-does section) */}
 
+            {/* AI TOOLS TEASER */}
+            <section className="mx-auto max-w-7xl px-6 py-16">
+                <div className="flex items-end justify-between flex-wrap gap-4">
+                    <div>
+                        <span className="overline">Free to Try</span>
+                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
+                            Decode a Statement Now, <span style={{ color: "#A5512B" }}>No Signup Needed</span>.
+                        </h2>
+                        <p className="mt-3 text-base text-muted-k leading-relaxed max-w-4xl [text-wrap:balance]">
+                            Paste any Support at Home statement and get plain English in about 60 seconds, no account required. Every other Wayly tool is yours to explore during your 7-day free trial, then continues on a Solo or Family plan.
+                        </p>
+                    </div>
+                    <Link to="/ai-tools" data-testid="see-all-tools-cta" className="landing-btn-clay inline-flex items-center gap-1.5 rounded-lg bg-[#A5512B] text-white px-5 py-2.5 text-sm font-semibold shadow-sm shrink-0">See all {TOOL_COUNT} tools <ArrowRight className="h-3.5 w-3.5" /></Link>
+                </div>
+                <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {[
+                        { to: "/ai-tools/statement-decoder", title: "Statement Decoder", body: "Paste any monthly statement. Get plain English in 60 seconds.", free: true, icon: FileSearch, tone: "#0E4D52" },
+                        { to: "/ai-tools/budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual, quarterly, per-stream and lifetime-cap projection.", free: false, icon: Wallet, tone: "#A5512B" },
+                        { to: "/ai-tools/provider-price-checker", title: "Provider Price Checker", body: "Tell us what you're charged. We'll tell you whether it's fair.", free: false, icon: BarChart3, tone: "#4E6E54" },
+                    ].map((t, i) => (
+                        <RevealOnScroll key={t.to} delay={i * 80}>
+                        <Link to={t.to} className="group relative block h-full overflow-hidden bg-surface border border-kindred rounded-2xl p-6 transition-colors" data-testid={`tool-teaser-${t.to.split('/').pop()}`}>
+                            <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: t.tone }} />
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110" style={{ backgroundColor: t.tone }}>
+                                    <t.icon className="h-5 w-5 text-white" strokeWidth={2} />
+                                </div>
+                                {t.free && <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 bg-sage/20 text-[#0F5648]">Free</span>}
+                            </div>
+                            <h3 className="font-heading text-xl text-primary-k mt-4">{t.title}</h3>
+                            <p className="mt-2 text-sm text-muted-k leading-relaxed">{t.body}</p>
+                            <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold" style={{ color: "#A5512B" }}>
+                                {t.free ? "Try free, no signup" : "7-day free trial, then Solo or Family"} <ArrowRight className="h-3.5 w-3.5" />
+                            </div>
+                        </Link>
+                        </RevealOnScroll>
+                    ))}
+                </div>
+            </section>
+
             {/* REPORTS HUB STRIP — colourful, plain-English report library */}
             <section className="border-t border-kindred bg-surface-2" data-testid="reports-strip">
                 <div className="mx-auto max-w-7xl px-6 py-16">
-                    <div className="max-w-4xl">
+                    <div className="max-w-5xl">
                         <span className="overline">Reports</span>
                         <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight">Clear reports you can <span style={{ color: "#A5512B" }}>actually use</span>.</h2>
-                        <p className="mt-4 text-muted-k leading-relaxed">
+                        <p className="mt-4 text-muted-k leading-relaxed [text-wrap:balance]">
                             At the end of every quarter, Wayly turns the numbers into eight tidy one-click PDFs. Each one answers a single question in plain English, ready to save, print, or hand to your accountant or Centrelink.
                         </p>
                     </div>
@@ -327,46 +367,6 @@ export default function Landing() {
                             </div>
                         )}
                     </div>
-                </div>
-            </section>
-
-            {/* AI TOOLS TEASER */}
-            <section className="mx-auto max-w-7xl px-6 py-16">
-                <div className="flex items-end justify-between flex-wrap gap-4">
-                    <div>
-                        <span className="overline">Free to Try</span>
-                        <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
-                            Decode a Statement Now, <span style={{ color: "#A5512B" }}>No Signup Needed</span>.
-                        </h2>
-                        <p className="mt-3 text-base text-muted-k leading-relaxed max-w-2xl">
-                            Paste any Support at Home statement and get plain English in about 60 seconds, no account required. Every other Wayly tool is yours to explore during your 7-day free trial, then continues on a Solo or Family plan.
-                        </p>
-                    </div>
-                    <Link to="/ai-tools" data-testid="see-all-tools-cta" className="landing-btn-clay inline-flex items-center gap-1.5 rounded-lg bg-[#A5512B] text-white px-5 py-2.5 text-sm font-semibold shadow-sm shrink-0">See all {TOOL_COUNT} tools <ArrowRight className="h-3.5 w-3.5" /></Link>
-                </div>
-                <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {[
-                        { to: "/ai-tools/statement-decoder", title: "Statement Decoder", body: "Paste any monthly statement. Get plain English in 60 seconds.", free: true, icon: FileSearch, tone: "#0E4D52" },
-                        { to: "/ai-tools/budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual, quarterly, per-stream and lifetime-cap projection.", free: false, icon: Wallet, tone: "#A5512B" },
-                        { to: "/ai-tools/provider-price-checker", title: "Provider Price Checker", body: "Tell us what you're charged. We'll tell you whether it's fair.", free: false, icon: BarChart3, tone: "#4E6E54" },
-                    ].map((t, i) => (
-                        <RevealOnScroll key={t.to} delay={i * 80}>
-                        <Link to={t.to} className="group relative block h-full overflow-hidden bg-surface border border-kindred rounded-2xl p-6 transition-colors" data-testid={`tool-teaser-${t.to.split('/').pop()}`}>
-                            <span className="absolute left-0 top-0 h-1.5 w-full opacity-80" style={{ backgroundColor: t.tone }} />
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-" style={{ backgroundColor: t.tone }}>
-                                    <t.icon className="h-5 w-5 text-white" strokeWidth={2} />
-                                </div>
-                                {t.free && <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full px-2.5 py-1 bg-sage/20 text-[#0F5648]">Free</span>}
-                            </div>
-                            <h3 className="font-heading text-xl text-primary-k mt-4">{t.title}</h3>
-                            <p className="mt-2 text-sm text-muted-k leading-relaxed">{t.body}</p>
-                            <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold" style={{ color: "#A5512B" }}>
-                                {t.free ? "Try free, no signup" : "7-day free trial, then Solo or Family"} <ArrowRight className="h-3.5 w-3.5" />
-                            </div>
-                        </Link>
-                        </RevealOnScroll>
-                    ))}
                 </div>
             </section>
 

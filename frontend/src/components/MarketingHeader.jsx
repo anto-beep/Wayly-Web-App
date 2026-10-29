@@ -5,11 +5,13 @@ import { Menu, X, ChevronDown, LogOut, User, CreditCard, Users, Settings, HelpCi
 import NotificationsBell from "@/components/NotificationsBell";
 import WaylyLogo from "@/components/WaylyLogo";
 import { useInLayout } from "@/context/LayoutContext";
+import ToolsMegaMenu from "@/components/ToolsMegaMenu";
+import { TOOLS_ORDERED } from "@/config/toolRegistry";
 
 const NAV = [
     { to: "/about", label: "About" },
     { to: "/features", label: "Features" },
-    { to: "/ai-tools", label: "Tools" },
+    { to: "/ai-tools", label: "Tools", mega: true },
     { to: "/pricing", label: "Pricing" },
     { to: "/resources", label: "Resources" },
     { to: "/contact", label: "Contact" },
@@ -32,7 +34,7 @@ function Avatar({ user, onClick, dataTestId }) {
         <button
             onClick={onClick}
             data-testid={dataTestId}
-            className="h-9 w-9 rounded-full bg-[#2BC4D6] text-white font-semibold text-sm inline-flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-colors"
+            className="h-9 w-9 rounded-full bg-[#2BC4D6] text-white font-semibold text-sm inline-flex items-center justify-center hover:ring-2 hover:ring-white/40 transition-all"
             title={user.name || user.email}
         >
             {user.picture ? (
@@ -74,8 +76,8 @@ function SignedInControls({ user }) {
                     </button>
                 </div>
                 {open && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.18)] border border-[#CFE0F0] overflow-hidden z-50" data-testid="nav-dropdown">
-                        <div className="px-4 py-3 border-b border-[#CFE0F0]">
+                    <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_30px_80px_rgba(14,77,82,0.30)] border border-[#0E4D52]/12 overflow-hidden z-50" data-testid="nav-dropdown">
+                        <div className="px-4 py-3 border-b border-[#0E4D52]/10">
                             <div className="text-sm font-semibold text-[#0E2A47]">{user.name}</div>
                             <div className="text-xs text-[#6B7280] mt-0.5">{user.email}</div>
                         </div>
@@ -85,19 +87,19 @@ function SignedInControls({ user }) {
                                     key={m.label}
                                     to={m.to}
                                     onClick={() => setOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#0E2A47] hover:bg-[#EAF4FB] transition-colors"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#0E2A47] hover:bg-[#0E4D52]/[0.06] transition-colors"
                                 >
                                     <m.icon className="h-4 w-4 text-[#6B7280]" />
                                     {m.label}
                                 </Link>
                             ))}
                         </div>
-                        <div className="border-t border-[#CFE0F0] py-1">
+                        <div className="border-t border-[#0E4D52]/10 py-1">
                             <button
                                 type="button"
                                 onClick={handleSignOut}
                                 data-testid="nav-signout"
-                                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[#E07A5F] hover:bg-[#EAF4FB] transition-colors"
+                                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[#E07A5F] hover:bg-[#0E4D52]/[0.06] transition-colors"
                             >
                                 <LogOut className="h-4 w-4" />
                                 Sign Out
@@ -116,14 +118,14 @@ function SignedOutControls() {
             <Link
                 to="/login"
                 data-testid="nav-login"
-                className="text-sm text-white border border-white/40 rounded-lg px-4 py-2 hover:bg-white hover:text-[#0E2A47] transition-colors duration-200"
+                className="text-sm font-medium text-white/90 hover:text-white px-3 py-2 transition-colors"
             >
-                Sign in
+                Log In
             </Link>
             <Link
                 to="/signup?plan=family"
                 data-testid="nav-start-trial"
-                className="inline-flex items-center text-sm font-semibold bg-[#2BC4D6] text-[#0E2A47] rounded-lg px-5 py-2 shadow-[0_2px_8px_rgba(212,162,78,0.40)] hover:bg-[#DDB567] hover:shadow-[0_4px_14px_rgba(212,162,78,0.55)] active:scale-[0.97] transition-colors duration-200"
+                className="cta-bloom inline-flex items-center text-sm font-semibold bg-[#2BC4D6] text-[#0E2A47] rounded-lg px-5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.5),inset_0_-2px_5px_rgba(14,42,71,0.18),0_6px_18px_rgba(43,196,214,0.38)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_10px_28px_rgba(43,196,214,0.5)] active:scale-[0.97] transition-all duration-200"
             >
                 Start free trial
             </Link>
@@ -135,85 +137,127 @@ export default function MarketingHeader() {
     const { user } = useAuth();
     const inLayout = useInLayout();
     const [open, setOpen] = useState(false);
+    const [toolsOpen, setToolsOpen] = useState(false);
+    const [activeTool, setActiveTool] = useState(TOOLS_ORDERED[0]?.slug);
+    const closeTimer = useRef(null);
+
+    const openTools = () => { clearTimeout(closeTimer.current); setToolsOpen(true); };
+    const scheduleClose = () => { clearTimeout(closeTimer.current); closeTimer.current = setTimeout(() => setToolsOpen(false), 160); };
+
+    useEffect(() => {
+        const onKey = (e) => { if (e.key === "Escape") setToolsOpen(false); };
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+    }, []);
+
     // When rendered inside the authenticated app Layout, the dashboard header
     // (with its own logo, search, bell, avatar) is already visible above us.
-    // Rendering this marketing top-nav would create a confusing double header.
     if (inLayout) return null;
+
     return (
         <>
-            {/* Skip to content link, visible only when keyboard-focused (Phase 6 a11y) */}
             <a
                 href="#main-content"
-                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-[#0E2A47] focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-[#2BC4D6]"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-[#0E4D52] focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-[#2BC4D6]"
                 data-testid="skip-to-content"
             >
                 Skip to main content
             </a>
-        <header className="sticky top-0 z-40 bg-[#0E2A47] border-b border-[#091D33] h-16" data-testid="marketing-header">
-            <div className="mx-auto max-w-7xl h-full flex items-center justify-between px-6">
-                <Link to="/" data-testid="nav-logo" onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "smooth" })} className="flex items-center gap-2 group">
-                    <WaylyLogo size={28} className="rounded-md" />
-                    <span className="font-heading text-[22px] text-white tracking-tight">Wayly</span>
-                </Link>
-                <nav className="hidden md:flex items-center gap-10">
-                    {NAV.map((n) => (
-                        <NavLink
-                            key={n.to}
-                            to={n.to}
-                            data-testid={`nav-link-${n.label.toLowerCase().replace(/\s+/g, "-")}`}
-                            className={({ isActive }) =>
-                                `relative text-[15px] font-medium tracking-wide text-white transition-colors py-1 no-underline ${
-                                    isActive ? "after:absolute after:inset-x-0 after:-bottom-1.5 after:h-[2px] after:bg-wayly-clay-400 after:content-['']" : "hover:after:absolute hover:after:inset-x-0 hover:after:-bottom-1.5 hover:after:h-[2px] hover:after:bg-wayly-clay-400 hover:after:content-['']"
-                                }`
-                            }
-                        >
-                            {n.label}
-                        </NavLink>
-                    ))}
-                </nav>
-                <div className="hidden md:block">
-                    {user ? <SignedInControls user={user} /> : <SignedOutControls />}
-                </div>
-                <button
-                    type="button"
-                    className="md:hidden text-white p-2"
-                    onClick={() => setOpen((o) => !o)}
-                    aria-label={open ? "Close menu" : "Open menu"}
-                    data-testid="nav-mobile-toggle"
-                >
-                    {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                </button>
-            </div>
-            {open && (
-                <div className="md:hidden fixed inset-0 top-16 bg-[#0E2A47] z-50 p-6 animate-in slide-in-from-right duration-200" data-testid="nav-mobile-drawer">
-                    <nav className="flex flex-col">
-                        {NAV.map((n) => (
-                            <Link
-                                key={n.to}
-                                to={n.to}
-                                onClick={() => setOpen(false)}
-                                className="py-3 text-base font-medium text-white border-b border-white/10"
-                            >
-                                {n.label}
+            <header className="sticky top-0 z-40 px-3 sm:px-4 pt-3" data-testid="marketing-header">
+                <div className="relative mx-auto max-w-7xl" onMouseLeave={scheduleClose}>
+                    <div className="rounded-2xl border border-white/15 bg-[#0E4D52]/75 backdrop-blur-xl shadow-[0_14px_44px_rgba(14,77,82,0.38)] p-2">
+                        <div className="flex items-center justify-between gap-4 pl-2 pr-1">
+                            <Link to="/" data-testid="nav-logo" onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "smooth" })} className="flex items-center gap-2 group">
+                                <WaylyLogo size={28} className="rounded-md" />
+                                <span className="font-heading text-[22px] text-white tracking-tight">Wayly</span>
                             </Link>
-                        ))}
-                    </nav>
-                    <div className="mt-8 space-y-3">
-                        {user ? (
-                            <>
-                                <Link to="/app" onClick={() => setOpen(false)} className="block w-full text-center bg-[#2BC4D6] text-[#0E2A47] font-semibold rounded-lg py-3">Go to dashboard</Link>
-                                <Link to="/settings" onClick={() => setOpen(false)} className="block w-full text-center border border-white/40 text-white rounded-lg py-3">Settings</Link>
-                            </>
-                        ) : (
-                            <>
-                                <Link to="/login" onClick={() => setOpen(false)} className="block w-full text-center border border-white/40 text-white rounded-lg py-3">Sign in</Link>
-                                <Link to="/signup?plan=family" onClick={() => setOpen(false)} className="block w-full text-center bg-[#2BC4D6] text-[#0E2A47] font-semibold rounded-lg py-3">Start free trial</Link>
-                            </>
-                        )}
+                            <nav className="hidden md:flex items-center gap-8">
+                                {NAV.map((n) => (
+                                    n.mega ? (
+                                        <button
+                                            key={n.to}
+                                            type="button"
+                                            data-testid="nav-tools-trigger"
+                                            aria-expanded={toolsOpen}
+                                            onMouseEnter={openTools}
+                                            onClick={() => setToolsOpen((o) => !o)}
+                                            className="relative inline-flex items-center gap-1 text-[15px] font-medium tracking-wide text-white py-1"
+                                        >
+                                            {n.label}
+                                            <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${toolsOpen ? "rotate-180" : ""}`} />
+                                        </button>
+                                    ) : (
+                                        <NavLink
+                                            key={n.to}
+                                            to={n.to}
+                                            data-testid={`nav-link-${n.label.toLowerCase().replace(/\s+/g, "-")}`}
+                                            onMouseEnter={() => setToolsOpen(false)}
+                                            className={({ isActive }) =>
+                                                `relative text-[15px] font-medium tracking-wide text-white transition-colors py-1 no-underline ${
+                                                    isActive ? "after:absolute after:inset-x-0 after:-bottom-1.5 after:h-[2px] after:bg-wayly-clay-400 after:content-['']" : "hover:after:absolute hover:after:inset-x-0 hover:after:-bottom-1.5 hover:after:h-[2px] hover:after:bg-wayly-clay-400 hover:after:content-['']"
+                                                }`
+                                            }
+                                        >
+                                            {n.label}
+                                        </NavLink>
+                                    )
+                                ))}
+                            </nav>
+                            <div className="hidden md:block">
+                                {user ? <SignedInControls user={user} /> : <SignedOutControls />}
+                            </div>
+                            <button
+                                type="button"
+                                className="md:hidden text-white p-2"
+                                onClick={() => setOpen((o) => !o)}
+                                aria-label={open ? "Close menu" : "Open menu"}
+                                data-testid="nav-mobile-toggle"
+                            >
+                                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                            </button>
+                        </div>
                     </div>
+
+                    {toolsOpen && (
+                        <ToolsMegaMenu
+                            active={activeTool}
+                            setActive={setActiveTool}
+                            onClose={() => setToolsOpen(false)}
+                            onMouseEnter={openTools}
+                        />
+                    )}
                 </div>
-            )}
-        </header>
+
+                {open && (
+                    <div className="md:hidden fixed inset-0 top-0 pt-20 bg-[#0E4D52] z-50 p-6 animate-in slide-in-from-right duration-200" data-testid="nav-mobile-drawer">
+                        <nav className="flex flex-col">
+                            {NAV.map((n) => (
+                                <Link
+                                    key={n.to}
+                                    to={n.to}
+                                    onClick={() => setOpen(false)}
+                                    className="py-3 text-base font-medium text-white border-b border-white/10"
+                                >
+                                    {n.label}
+                                </Link>
+                            ))}
+                        </nav>
+                        <div className="mt-8 space-y-3">
+                            {user ? (
+                                <>
+                                    <Link to="/app" onClick={() => setOpen(false)} className="block w-full text-center bg-[#2BC4D6] text-[#0E2A47] font-semibold rounded-lg py-3">Go to dashboard</Link>
+                                    <Link to="/settings" onClick={() => setOpen(false)} className="block w-full text-center border border-white/40 text-white rounded-lg py-3">Settings</Link>
+                                </>
+                            ) : (
+                                <>
+                                    <Link to="/login" onClick={() => setOpen(false)} className="block w-full text-center text-white rounded-lg py-3">Log In</Link>
+                                    <Link to="/signup?plan=family" onClick={() => setOpen(false)} className="block w-full text-center bg-[#2BC4D6] text-[#0E2A47] font-semibold rounded-lg py-3">Start free trial</Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </header>
         </>
     );
 }

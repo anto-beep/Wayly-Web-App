@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { APP_STORE_URL, PLAY_STORE_URL, detectDevice } from "@/components/AppStoreBadges";
 
 /**
@@ -73,6 +74,14 @@ export default function AppDownloadPrompt() {
                     >
                         {ctaLabel}
                     </a>
+                )}
+                {device === "both" && PLAY_STORE_URL && (
+                    <span className="hidden md:inline-flex items-center gap-2 pl-1" data-testid="app-download-qr">
+                        <span className="rounded-md bg-white p-1 leading-none">
+                            <QRCodeSVG value={PLAY_STORE_URL} size={48} level="M" fgColor="#0E2A47" bgColor="#ffffff" />
+                        </span>
+                        <span className="text-xs text-white/80">Scan to install</span>
+                    </span>
                 )}
             </div>
             <button
