@@ -43,6 +43,16 @@ export default function BillingSuccess() {
                 setStatus("paid");
                 setPlan(data.plan);
                 await refreshUser();
+                // Brand-new 7-day trial signups go to /welcome exactly once.
+                // Reactivations never set this flag, so they stay on this page.
+                try {
+                    if (localStorage.getItem("wayly_trial_welcome") === "1") {
+                        localStorage.removeItem("wayly_trial_welcome");
+                        sessionStorage.setItem("wayly_welcome_entry", "1");
+                        nav("/welcome", { replace: true });
+                        return;
+                    }
+                } catch (_) { /* no-op */ }
                 return;
             }
             if (data.status === "expired") {
@@ -53,7 +63,7 @@ export default function BillingSuccess() {
         } catch {
             setTimeout(() => poll(attempt + 1), POLL_INTERVAL);
         }
-    }, [sessionId, refreshUser]);
+    }, [sessionId, refreshUser, nav]);
 
     useEffect(() => {
         poll(0);

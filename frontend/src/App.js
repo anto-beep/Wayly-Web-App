@@ -25,6 +25,7 @@ import AuthCallback from "@/pages/AuthCallback";
 // Layout is eager so authenticated routes don't show a double Suspense fall.
 import Layout from "@/components/Layout";
 import MarketingLayout from "@/components/MarketingLayout";
+import GoogleAds from "@/components/analytics/GoogleAds";
 
 // Everything else is route-level code-split. This was the single biggest
 // Lighthouse Performance fix in Phase 7 of the Feb 2026 audit, LCP went
@@ -78,6 +79,7 @@ const TemplateDetail = lazy(() => import("@/pages/resources/TemplateDetail"));
 const ArticlesIndex = lazy(() => import("@/pages/resources/Articles").then((m) => ({ default: m.default })));
 const ArticleDetail = lazy(() => import("@/pages/resources/Articles").then((m) => ({ default: m.ArticleDetail })));
 const BillingSuccess = lazy(() => import("@/pages/BillingSuccess"));
+const Welcome = lazy(() => import("@/pages/Welcome"));
 const ForgotPassword = lazy(() => import("@/pages/PasswordReset").then((m) => ({ default: m.ForgotPassword })));
 const ResetPassword = lazy(() => import("@/pages/PasswordReset").then((m) => ({ default: m.ResetPassword })));
 const Settings = lazy(() => import("@/pages/Settings"));
@@ -402,6 +404,7 @@ function App() {
                 <ParticipantsProvider>
                 <BrowserRouter>
                 <ScrollToTop />
+                <GoogleAds />
                 <UxfRouteFocus />
                 <AppDocTitle />
                 <Toaster richColors position="top-right" />
@@ -515,6 +518,7 @@ function App() {
                     <Route path="/reset" element={<ResetPassword />} />
                     <Route path="/invite" element={<InviteAccept />} />
                     <Route path="/billing/success" element={<BillingSuccess />} />
+                    <Route path="/welcome" element={<Welcome />} />
 
                     {/* Authenticated app */}
                     <Route path="/onboarding" element={<RequireAuth requireHousehold={false}><Onboarding /></RequireAuth>} />

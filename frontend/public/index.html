@@ -15,6 +15,20 @@
         <meta name="apple-mobile-web-app-title" content="Wayly" />
         <meta name="format-detection" content="telephone=no" />
 
+        <!-- Google consent mode defaults — MUST load before the Google tag.
+             Advertising storage is denied until the visitor accepts in the
+             cookie banner (see /src/components/analytics/GoogleAds.jsx). -->
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('consent', 'default', {
+                'ad_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied',
+                'analytics_storage': 'granted'
+            });
+        </script>
+
         <!-- Per-page SEO (title / description / og / twitter / JSON-LD / canonical)
              is injected by react-helmet-async on every public page.
              See /src/seo/SeoHead.jsx. We intentionally do NOT declare a static

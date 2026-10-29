@@ -260,6 +260,9 @@ export default function Signup() {
                 trial_days: 7,
             });
             track.trialStart({ plan: form.plan });
+            // Brand-new 7-day trial: remember so that after Stripe confirms we
+            // can send this new user to /welcome exactly once (BillingSuccess).
+            try { localStorage.setItem("wayly_trial_welcome", "1"); } catch (_) { /* no-op */ }
             if (data?.url) {
                 window.location.href = data.url;
                 return;

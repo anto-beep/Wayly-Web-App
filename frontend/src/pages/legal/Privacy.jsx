@@ -7,7 +7,7 @@ export default function Privacy() {
             title="Privacy Policy"
             path="/legal/privacy"
             description="How Wayly handles your aged-care data under the Privacy Act 1988 (Cth) and the 13 Australian Privacy Principles: AI processing in Sydney, never sold, never used to train third-party models, and your rights to access, correct and delete."
-            lastUpdated="24 June 2026"
+            lastUpdated="27 June 2026"
         >
             <p>
                 Wayly Pty Ltd (ABN 66 701 311 373, ACN 701 311 373). This is the privacy policy for
@@ -172,7 +172,7 @@ export default function Privacy() {
                 <li>A regulator, court or law-enforcement agency where required or permitted by Australian law</li>
                 <li>A successor entity if Wayly is sold, restructured or wound up (we will tell you in advance where reasonably practicable)</li>
             </ul>
-            <p><strong>We do not:</strong> sell personal information; share it with aged-care providers, brokers or referrers for fees or commissions; use it for targeted advertising; or share statement contents with anyone outside your account.</p>
+            <p><strong>We do not:</strong> sell personal information; share it with aged-care providers, brokers or referrers for fees or commissions; or share anything you paste or upload into the tools (statement contents, dollar amounts, classification levels, names or service details) with advertisers or any other third party outside your account. We do use Google Ads cookies to measure the performance of our own advertising — only with your consent, and only standard web-analytics signals, never your tool inputs (see section 17).</p>
 
             <h2>11. Direct Marketing and Government Identifiers</h2>
             <p><strong>Direct marketing:</strong> we may send marketing where you have opted in, or where you are an existing customer and we are telling you about a related feature you would reasonably expect to hear about. Every marketing email has a clear unsubscribe link, and you can email <a href="mailto:support@wayly.com.au">support@wayly.com.au</a> to stop. We comply with the Spam Act 2003 (Cth) and APP 7, and we never use sensitive information for marketing.</p>
@@ -190,6 +190,7 @@ export default function Privacy() {
                 <li><strong>Beehiiv</strong> (United States) — newsletter/waitlist email, only if you subscribe.</li>
                 <li><strong>PostHog</strong> (EU region) — anonymised product analytics; no statement contents, no health information.</li>
                 <li><strong>Plausible Analytics</strong> (EU) — privacy-first page analytics; no personal information.</li>
+                <li><strong>Google (Google Ads)</strong> (United States) — advertising-performance measurement on our public website only, loaded only with your consent; receives standard web-analytics signals, never your tool inputs, health information or statement contents.</li>
                 <li><strong>Sentry</strong> (United States) — error monitoring; configured to scrub personal information from payloads.</li>
                 <li><strong>BetterStack</strong> (EU) — uptime and observability; no statement contents.</li>
                 <li><strong>GitHub Actions</strong> (United States) — CI/CD; source code only, no personal information.</li>
@@ -197,7 +198,7 @@ export default function Privacy() {
             <p>We review this list at least every 12 months and whenever we change a provider.</p>
 
             <h2>13. Sending Data Overseas</h2>
-            <p>Some providers above process personal information outside Australia — in the <strong>United States</strong> (Stripe, Resend, Beehiiv, Sentry, GitHub Actions and Emergent during launch) and the <strong>European Union</strong> (PostHog, Plausible, BetterStack). Before disclosing, we take reasonable steps under APP 8.1 to ensure they handle it consistently with the APPs, including contractual data-protection terms and security commitments. We do not disclose sensitive information overseas except where necessary to deliver the Wayly tool you have asked us to run. Personal information disclosed to overseas recipients may be accessible to the laws and authorities of those countries.</p>
+            <p>Some providers above process personal information outside Australia — in the <strong>United States</strong> (Stripe, Resend, Beehiiv, Sentry, GitHub Actions, Google Ads and Emergent during launch) and the <strong>European Union</strong> (PostHog, Plausible, BetterStack). Before disclosing, we take reasonable steps under APP 8.1 to ensure they handle it consistently with the APPs, including contractual data-protection terms and security commitments. We do not disclose sensitive information overseas except where necessary to deliver the Wayly tool you have asked us to run. Personal information disclosed to overseas recipients may be accessible to the laws and authorities of those countries.</p>
 
             <h2>14. How We Keep It Secure</h2>
             <p>We take reasonable steps to protect personal information from misuse, interference, loss, and unauthorised access, modification or disclosure. These steps include:</p>
@@ -239,7 +240,9 @@ export default function Privacy() {
 
             <h2>17. Anonymity, and Cookies</h2>
             <p><strong>Anonymity and pseudonymity:</strong> wherever lawful and practicable, you can deal with us anonymously — you can use the public Aged Care Q&A tool and read every article and resource without identifying yourself. The personalised tools require an account so we can save your information securely and give you accurate, account-specific answers.</p>
-            <p><strong>Cookies:</strong> we use a small number of cookies for authentication (keeping you signed in), security, preferences, and anonymised analytics (Plausible, PostHog). We do not use third-party advertising cookies and do not allow advertisers to track you across other sites through Wayly. You can refuse cookies in your browser, but some parts of Wayly will not work properly.</p>
+            <p><strong>Cookies:</strong> we use a small number of cookies for authentication (keeping you signed in), security, preferences, and anonymised analytics (Plausible, PostHog). You can refuse cookies in your browser, but some parts of Wayly will not work properly.</p>
+            <h3>Advertising Measurement (Google Ads)</h3>
+            <p>We advertise Wayly on Google. To understand which ads lead people to start a trial — and nothing more — we use Google Ads cookies and the Google tag on our public website. These cookies are switched <strong>off by default</strong>: they only load advertising measurement after you choose “Accept all” (or turn advertising on under “Choose”) in the cookie banner shown on your first visit. If you choose “Only necessary”, no Google Ads cookies are set, and you can decline or change your mind at any time through that banner. We never put your statement contents, dollar amounts, classification levels, names or service details into any advertising cookie, URL or tracking event, and the Google tag is never loaded inside the signed-in app or dashboard.</p>
 
             <h2>18. How to Make a Privacy Complaint</h2>
             <p>If you think we have mishandled your personal information or breached the Privacy Act or the APPs, please tell us first so we can fix it.</p>
@@ -281,7 +284,7 @@ export default function Privacy() {
             <h3>Does Wayly Give Financial, Legal or Medical Advice?</h3>
             <p>No. Wayly provides general information about the Support at Home program. For formal advice or decisions, contact My Aged Care, the Older Persons Advocacy Network, the ACQSC, Services Australia, a financial adviser or a solicitor (section 20).</p>
 
-            <p className="text-sm text-muted-k">This policy was last reviewed on 24 June 2026 and is reviewed at least every 12 months, and whenever the underlying law, our practices, or our service providers change in a way that affects you.</p>
+            <p className="text-sm text-muted-k">This policy was last reviewed on 27 June 2026 and is reviewed at least every 12 months, and whenever the underlying law, our practices, or our service providers change in a way that affects you.</p>
         </LegalPage>
     );
 }
