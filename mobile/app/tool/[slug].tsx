@@ -25,7 +25,6 @@ import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money, moneyWhole, sanitizeAI } from "@/src/utils/format";
 import { TOOL_CONTENT } from "@/src/data/toolContent";
-import { ViewOnlyToolGate } from "@/src/components/ViewOnlyToolGate";
 
 type FieldType = "number" | "text" | "textarea" | "switch" | "select" | "scale12";
 type FormField = { key: string; label: string; type: FieldType; placeholder?: string; options?: { label: string; value: any }[]; default?: any; help?: string };
@@ -111,7 +110,7 @@ export default function ToolScreen() {
     if (s === "family-coordinator") return <AgedCareQA />;
     return <FormTool slug={s} />;
   })();
-  return <ViewOnlyToolGate>{inner}</ViewOnlyToolGate>;
+  return inner;
 }
 
 function StatementDecoderTool() {

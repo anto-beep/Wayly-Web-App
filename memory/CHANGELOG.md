@@ -3599,3 +3599,13 @@ STILL REMAINING from user's overhaul brief (large follow-on, NOT yet done):
 - Replaced AI-placeholder mega-menu images with REAL authenticated tool screenshots (logged in as cathy@example.com, hid app-shell chrome, Playwright + system Chromium) saved to `/app/frontend/public/marketing/ai-tool-*.png` — all 9 tools, unlocked working UIs (no paywall).
 - Mobile drawer (`MarketingHeader.jsx`): "Tools" is now an expandable accordion (`mobile-tools-toggle` → `mobile-tools-panel`) listing all 9 tools + a `mobile-see-all-tools` link, instead of a plain link.
 - Verified by testing agent iter 385 (web, light+dark+mobile viewport): all 6 checks passed, no bugs, no code changes needed. Report: `/app/test_reports/iteration_385.json`.
+
+## 2026-06-29 — Mobile inactive-plan (view-only) hard-lock + premium redesign
+- Closed the server hole: POST `/api/statements/upload` and the decode endpoints (`/public/decode-statement-text`, `/public/decode-statement`) now hard-block inactive (view-only) plans with 402 via new `_block_if_view_only` / `_block_if_view_only_uid` helpers (previously statement upload had no paywall and view-only users could upload + run). Verified by curl (402).
+- New shared `src/components/ReactivateLock.tsx`: a single premium, top-aligned lock surface (lock icon, "Reactivate to unlock …", 3 perks, "Reactivate my plan" → `/plan-select`, "View my saved information"). No centred layout / blank gap.
+- New `src/components/AccessGate.tsx`: mounted once in `app/_layout.tsx` above the navigator; overlays the whole app (hiding the read-only banner so the message is never doubled) on hard-locked run/create routes: `/tool/*`, `/upload`, `/provider-switch`, `/switch-decision/*`, `/switch-settlement/*`, `/budget-scenarios`.
+- `app/tool/[slug].tsx`: removed the old `ViewOnlyToolGate` wrapper (now orphaned); tools are locked uniformly by `AccessGate`.
+- `ViewOnlyBanner` slimmed to a one-line read-only status strip (reduced top padding → fixes the "too much space at the top"); tapping it or "Reactivate" opens `/plan-select`.
+- Dashboard (`app/(tabs)/index.tsx`): removed the duplicate free-plan card; added a premium `dashboard-reactivate-hero` (Crown, clay card, Reactivate CTA) shown only when view-only. Read-only data screens otherwise render normally.
+- Policy (per user): read-only data everywhere, hard-lock all run/create actions. Active/trial users unaffected (verified: no hero, tools render).
+- Self-tested on the Expo preview with a view-only account (cathy temporarily flipped, then RESTORED to active): dashboard hero + banner, /upload lock, /tool lock, and active-user regression all pass. Test fixture `viewonly@test.com` / `ViewOnly!2026` documented in test_credentials.md.

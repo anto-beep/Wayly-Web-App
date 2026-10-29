@@ -14,6 +14,7 @@ import { ParticipantProvider } from "@/src/context/ParticipantContext";
 import { NotificationsProvider } from "@/src/context/NotificationsContext";
 import { PushManager } from "@/src/components/PushManager";
 import { ViewOnlyBanner } from "@/src/components/ViewOnlyBanner";
+import { AccessGate } from "@/src/components/AccessGate";
 import { ThemeProvider, useTheme } from "@/src/theme/ThemeContext";
 
 LogBox.ignoreAllLogs(true);
@@ -47,6 +48,7 @@ function ThemedStack() {
       <StatusBar style={isDark ? "light" : "dark"} />
       <ViewOnlyBanner />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+      <AccessGate />
     </View>
   );
 }

@@ -1792,6 +1792,8 @@ async def upload_statement(
     """
     h = await _require_household(user_id)
     user = await _get_user(user_id)
+    # Inactive (view-only) plans cannot upload/run statements — read-only only.
+    _block_if_view_only(user, "Statements")
     # Phase 3: cap uploads at 20/hour/account.
     await _rl.enforce(request, ("upload_account", user_id))
     # Resolve the active participant so this statement is correctly scoped.
@@ -3662,6 +3664,31 @@ async def _require_paid_plan(request: Request, response: Response, tool_label: s
     )
 
 
+def _block_if_view_only(user: Optional[dict], feature_label: str = "This feature") -> None:
+    """Defense-in-depth: raise 402 if an authenticated user is view-only
+    (inactive plan). No-op for admins and unauthenticated callers (free-tier
+    gating for the latter is handled separately). Use on run/create routes that
+    don't already go through _require_paid_plan (e.g. statement upload/decode)."""
+    if not user or user.get("is_admin"):
+        return
+    if _compute_access_state(user) == "view_only":
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "trial_expired",
+                "message": "Your plan is inactive. Reactivate to continue.",
+                "upgrade_url": "/settings/billing",
+            },
+        )
+
+
+async def _block_if_view_only_uid(caller_user_id: Optional[str]) -> None:
+    """Same as _block_if_view_only but resolves the user from an optional id."""
+    if not caller_user_id:
+        return
+    _block_if_view_only(await _get_user(caller_user_id))
+
+
 def require_plan(*allowed: str, feature_label: str = "This feature"):
     """Factory: FastAPI dependency that hard-gates a route to the listed plans.
 
@@ -5229,6 +5256,7 @@ async def public_decode_text(
     caller_user_id: Optional[str] = Depends(get_current_user_id_optional),
 ):
     await _enforce_statement_decoder_limit(request, response)
+    await _block_if_view_only_uid(caller_user_id)
     from lib.upload_guard import classify_content as _classify_content
     _sd_guard = _classify_content("statement-decoder", body.text or "")
     if _sd_guard["decision"] != "accept":
@@ -5248,6 +5276,7 @@ async def public_decode_file(
     caller_user_id: Optional[str] = Depends(get_current_user_id_optional),
 ):
     await _enforce_statement_decoder_limit(request, response)
+    await _block_if_view_only_uid(caller_user_id)
     # Phase 4: signature + virus scan + UUID rename before we touch it.
     from upload_security import secure_read_upload, PROFILE_STATEMENT, sanitize_for_prompt
     raw, safe_name, _kind = await secure_read_upload(

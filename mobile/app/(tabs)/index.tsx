@@ -6,7 +6,7 @@ import { registerDashboardScroll } from "@/src/lib/dashboardScroll";import Anima
 import Svg, { Circle } from "react-native-svg";
 import {
   TrendingUp, FileText, AlertTriangle, Sparkles, ChevronRight,
-  MessageCircle, Users, Activity, ArrowRight, Crown, Lock, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info, Bell, CheckCircle2,
+  MessageCircle, Users, Activity, ArrowRight, Crown, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info, Bell, CheckCircle2,
 } from "lucide-react-native";
 
 import { WaylyHeader } from "@/src/components/WaylyHeader";
@@ -15,7 +15,7 @@ import { StreamProgress, Stream } from "@/src/components/StreamProgress";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { DashboardActionBar } from "@/src/components/DashboardActionBar";
 import { BudgetRunway } from "@/src/components/BudgetRunway";
-import { Card, Loading, StatePanel, T } from "@/src/components/ui";
+import { Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
@@ -72,7 +72,7 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 124, stroke = 16 }: { pct
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, viewOnly } = useAuth();
   const { activeId, active } = useParticipants();
   const { colors, shadow } = useTheme();
   const [budget, setBudget] = useState<Budget | null>(null);
@@ -175,6 +175,25 @@ export default function Dashboard() {
           ) : null}
         </Animated.View>
 
+        {viewOnly ? (
+          <Animated.View entering={FadeInDown.delay(60).duration(600)} style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+            <Pressable testID="dashboard-reactivate-hero" onPress={() => router.push("/plan-select")} style={({ pressed }) => [pressed && { opacity: 0.95 }]}>
+              <Card style={{ borderColor: colors.gold, borderWidth: 1.5, backgroundColor: colors.goldSoft }}>
+                <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "flex-start" }}>
+                  <View style={{ width: 46, height: 46, borderRadius: radius.pill, backgroundColor: colors.gold, alignItems: "center", justifyContent: "center" }}>
+                    <Crown size={22} color="#fff" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <T style={{ fontFamily: fonts.heading, fontSize: 20, lineHeight: 26, color: colors.heading }}>Your Wayly plan is inactive</T>
+                    <T variant="small" style={{ marginTop: 6, lineHeight: 20, color: colors.text }}>Your records stay here to view. Reactivate to upload statements and run every Wayly tool again.</T>
+                  </View>
+                </View>
+                <Button label="Reactivate my plan" testID="dashboard-reactivate-cta" icon={Sparkles} onPress={() => router.push("/plan-select")} style={{ marginTop: spacing.md }} />
+              </Card>
+            </Pressable>
+          </Animated.View>
+        ) : null}
+
         {loading ? (
           <Loading label="Loading your dashboard…" />
         ) : error ? (
@@ -274,21 +293,6 @@ export default function Dashboard() {
                       <View style={styles.miniStatHead}><CheckCircle2 size={14} color="#B5623A" /><T style={[styles.miniStatLabel, { color: "#B5623A" }]}>LIFETIME CAP</T></View>
                       <T style={[styles.miniStatNum, { color: colors.heading, fontSize: 22 }]}>{moneyWhole(budget.lifetime_contributions || 0)}</T>
                       <T style={[styles.miniStatSub, { color: colors.muted }]}>{Math.round(budget.lifetime_pct || 0)}% of {moneyWhole(budget.lifetime_cap || 0)}</T>
-                    </View>
-                  </View>
-                </Card>
-              </View>
-            ) : null}
-
-            {/* Free plan paywall */}
-            {isFree ? (
-              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-                <Card testID="free-plan-limit-card" style={{ borderColor: colors.gold }}>
-                  <View style={{ flexDirection: "row", gap: spacing.md }}>
-                    <View style={[styles.lockIcon, { backgroundColor: colors.goldSoft }]}><Lock size={20} color={colors.heading} /></View>
-                    <View style={{ flex: 1 }}>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 20 }}>Your plan is inactive.</T>
-                      <T variant="small" style={{ marginTop: 8, lineHeight: 21 }}>You can still view every statement, anomaly, contact and record we have on file for you. Your Wayly plan is managed on your account at wayly.com.au.</T>
                     </View>
                   </View>
                 </Card>
