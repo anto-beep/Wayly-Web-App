@@ -8172,3 +8172,11 @@ STATEMENT DECODER BUG ("Decode job expired" + free decode burned on failure):
 - Fix 1 (durable jobs): decode job state now mirrored to Redis via lib.cache (`_decode_job_save`/`_decode_job_load`, key ns "decodejob", TTL 10 min). `_submit_decode_job` is now async and writes the pending state up front; `_run_decode_job` saves on every phase (wrapper/extract/audit/done/error/abuse); the status endpoint reads memory-then-Redis. Survives reloads/restarts and works across workers/replicas.
 - Fix 2 (consume-on-success): `_enforce_statement_decoder_limit` now only CHECKS eligibility and returns the identity (user_id/fingerprint/ip); it no longer records. Usage is recorded via new `record_free_tool_usage_raw()` (batch3_routes) inside `_run_decode_job` ONLY when the decode reaches status=done (non-abuse). Abuse-flagged submissions never consume. Minor concurrency race (two simultaneous submits) accepted; per-IP burst limit (10/hr) still applies.
 - Verified e2e (curl): usage before=1 → submit → immediately still=1 (not consumed) → poll wrapper/extract/audit/done with full result → usage after=0. Both bugs resolved.
+
+
+---
+## Oct 2026 — Meta ad creative pack (one-off marketing deliverable)
+- Generated 40 static Meta ad PNGs (5 ads × 2 variants × 4 sizes: 1x1 1080, 4x5 1080x1350, 9x16 1080x1920, 191x1 1200x628) + contact sheet + manifest.csv. Source engine: `/app/ads_build/render.py` (Pillow; Fraunces + Inter + IBM Plex Mono; Wayly brand palette). Output in `/app/ads_build/out/`, zipped to `/app/ads_build/wayly_meta_ads_2026-11.zip`.
+- Uses REAL Wayly sample-document data (Blueberry Care / Sam Burke decoded statement; Glorious Services invoice) — no "example/fictional" labels, real figures shown, no wayly.com.au url, no CTA text (per user direction).
+- Backend footprint: `server.py` mounts `/api/creative-assets` → `/app/ads_build` (StaticFiles, guarded by `isdir` so it is a no-op in production where the dir is absent). This is NOT linked from the marketing site; it only exists to hand the download link to the user. Safe to remove later.
+- Also live this session: `FREE_TOOL_UNLIMITED_IPS` in backend `.env` (unlimited Statement Decoder for an allowlisted test IP).

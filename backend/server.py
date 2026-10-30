@@ -8417,6 +8417,18 @@ except Exception as _e:
 
 app.include_router(api)
 
+# One-off: serve the Meta ad creative pack for download. NOT linked from the
+# marketing site; lives under /api so the ingress routes it to the backend.
+try:
+    from fastapi.staticfiles import StaticFiles as _StaticFiles
+    import os as _os_cre
+    if _os_cre.path.isdir("/app/ads_build"):
+        app.mount("/api/creative-assets", _StaticFiles(directory="/app/ads_build"), name="creative-assets")
+except Exception as _cre_e:
+    import logging as _cl
+    _cl.getLogger("wayly").warning(f"creative-assets mount failed: {_cre_e}")
+
+
 # Emergent managed push notifications (mobile). push_router carries its own
 # /api prefix, so mount it directly on the app.
 from push_notifications import push_router  # noqa: E402
