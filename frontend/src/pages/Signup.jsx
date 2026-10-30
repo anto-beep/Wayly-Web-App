@@ -279,6 +279,12 @@ export default function Signup() {
 
     const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+    const _trialPlanLabel = form.plan === "family" ? "Family" : "Solo";
+    const _trialPlanAmount = form.plan === "family" ? "A$49.50" : "A$24.50";
+    const _trialFirstCharge = new Date(Date.now() + 7 * 86400000).toLocaleDateString("en-AU", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
+    });
+
     if (verifyStage) {
         return (
             <div className="min-h-screen bg-kindred auth-shell px-6 py-10">
@@ -312,6 +318,14 @@ export default function Signup() {
                         <p className="mt-3 text-xs text-muted-k text-center">
                             You have 7 days to verify before some features pause.
                         </p>
+                        <div className="mt-4 rounded-xl bg-kindred/60 p-3.5" data-testid="signup-trial-terms">
+                            <p className="text-xs text-muted-k leading-relaxed">
+                                Your 7-day free trial is free. On <strong className="text-primary-k">{_trialFirstCharge}</strong> it
+                                continues automatically at <strong className="text-primary-k">{_trialPlanAmount} per fortnight ({_trialPlanLabel})</strong> unless
+                                you cancel first. Cancel any time before then from <strong className="text-primary-k">Settings → Billing</strong> and
+                                you won&apos;t be charged.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -356,7 +370,7 @@ export default function Signup() {
                                 Start your 7-day free trial
                             </h1>
                             <p className="mt-1.5 text-xs text-muted-k leading-relaxed">
-                                {"Cancel any time. Two minutes so Wayly speaks in the right voice from day one."}
+                                {`Free for 7 days, then ${_trialPlanAmount}/fortnight (${_trialPlanLabel}) unless cancelled. Card required at signup. Cancel any time.`}
                             </p>
 
                             <div className="mt-4 auth-google">

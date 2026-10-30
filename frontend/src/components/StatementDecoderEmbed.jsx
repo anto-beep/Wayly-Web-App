@@ -110,7 +110,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
                     <Sparkles className="h-4 w-4 text-gold" />
                     <span className="overline">Try it now, Statement Decoder</span>
                 </div>
-                <span className="text-xs text-muted-k">No signup needed</span>
+                <span className="text-xs text-muted-k">1 free decode every 120 days · unlimited on a Wayly plan</span>
             </div>
 
             {/* Mode toggle */}

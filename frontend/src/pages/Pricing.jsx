@@ -286,7 +286,7 @@ export default function Pricing() {
                     Two Plans. Both <span className="underline decoration-2 underline-offset-4" style={{ color: "#A5512B", textDecorationColor: "#A5512B" }}>Cost Less Than One Hour</span><br />With a Consultant.
                 </h1>
                 <p className="mt-4 text-xs text-muted-k max-w-xl mx-auto">
-                    Wayly is fortnightly billing. All prices in AUD including GST. Card required at signup. 7 day free trial, then $24.50 or $49.50 per fortnight. Cancel any time from your account.
+                    Wayly is fortnightly billing. All prices in AUD including GST. Card required at signup. Your 7-day free trial is free; it then continues automatically at A$24.50 per fortnight (Solo) or A$49.50 per fortnight (Family) unless you cancel. Your first charge is 7 days after you start. Cancel any time before then from Settings → Billing in your account.
                 </p>
             </section>
 
@@ -400,6 +400,7 @@ export default function Pricing() {
                 </div>
                 <p className="text-xs text-muted-k mt-4 leading-relaxed">
                     All prices in AUD including GST. 7-day free trial on Solo and Family plans. Card required at signup.
+                    Your 7-day trial is free; it then continues at $24.50 (Solo) or $49.50 (Family) per fortnight unless cancelled, with the first charge 7 days after you start.
                     Cancel any time, cancellations take effect at the end of the current fortnightly billing period.
                     Additional Participants on the Family plan: $24.50 per fortnight each, added or removed any time from your account.
                 </p>

@@ -6331,7 +6331,7 @@ HELP_CHAT_SYSTEM = (
     "make sense of it. Provider-agnostic, never takes commissions, never sells data. We work alongside the caregiver, "
     "not on behalf of the provider.\n\n"
     "PLANS\n"
-    "- Free $0/mo: 1 Statement Decoder use per calendar month. No card required.\n"
+    "- Free $0/mo: 1 Statement Decoder use per calendar month.\n"
     "- Solo $19/mo: unlimited tools, dashboard, statement uploads, 1 participant, 1 caregiver seat.\n"
     "- Family $39/mo (most popular): everything in Solo + 2 participants included + 3 caregiver seats + priority support.\n"
     "- Add extra participants on Family for $19/month each, billed separately, cancel anytime.\n"
@@ -8662,6 +8662,18 @@ async def _process_trial_reminders_once() -> dict:
                     wins_html = wins_to_html(wins)
                 except Exception as _we:
                     logger.debug("wins render skipped: %s", _we)
+            # Plain trial terms: plan, fortnightly amount, first-charge date, cancel link.
+            _plan = (user.get("plan") or "").lower()
+            _plan_label = {"solo": "Solo", "family": "Family"}.get(_plan, "Wayly")
+            _amount = {"solo": "A$24.50", "family": "A$49.50"}.get(_plan, "A$24.50")
+            _cancel_link = "https://wayly.com.au/settings/billing"
+            _when = "in two days"
+            try:
+                _te = sub.get("trial_ends_at")
+                if _te:
+                    _when = datetime.fromisoformat(_te.replace("Z", "+00:00")).strftime("%A, %d %B %Y")
+            except Exception:
+                _when = "in two days"
             await email_service.email_trial_notice(
                 to=user["email"],
                 subject="Two days left in your Wayly trial",
@@ -8670,8 +8682,10 @@ async def _process_trial_reminders_once() -> dict:
                     f"<p>Hi {first_name},</p>"
                     "<p>Your Wayly free trial has two days to go. You still have full access to every tool, Ask Wayly, and your reports.</p>"
                     + wins_html
-                    + "<p>If Wayly is helping you make sense of aged care, you can choose a plan now so nothing pauses. You can change or cancel any time.</p>"
-                    "<p>Choose your plan: <a href='https://wayly.com.au/pricing'>https://wayly.com.au/pricing</a></p>"
+                    + f"<p>Your trial ends on <strong>{_when}</strong>. After that it continues automatically at "
+                    f"<strong>{_amount} per fortnight ({_plan_label})</strong>, billed every 14 days, unless you cancel first.</p>"
+                    + f"<p>If Wayly isn't for you, cancel any time before then and you won't be charged — one click, no retention scripts: "
+                    f"<a href='{_cancel_link}'>{_cancel_link}</a>. Otherwise, do nothing and your plan simply continues.</p>"
                     "<p>Warm regards,<br>The Wayly team</p>"
                     "<p style='color:#666;font-size:12px'>Information only, not advice.</p>"
                 ),

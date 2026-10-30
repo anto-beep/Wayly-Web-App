@@ -98,7 +98,7 @@ export default function Contact() {
                     </h1>
                     <p className="mt-3 text-base text-muted-k max-w-2xl leading-relaxed">
                         {isDemo
-                            ? "We will show you how Wayly decodes statements, watches the budget, and keeps the whole family on the same page, using a sample household so you can see it work end‑to‑end. No card, no commitment."
+                            ? "We will show you how Wayly decodes statements, watches the budget, and keeps the whole family on the same page, using a sample household so you can see it work end‑to‑end. No commitment."
                             : "Fill in the form for a written reply, or scroll down to pick a time and we will meet you there."}
                     </p>
                 </div>

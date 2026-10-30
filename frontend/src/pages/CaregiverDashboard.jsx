@@ -818,7 +818,7 @@ export default function CaregiverDashboard() {
                     <Calendar className="h-5 w-5 text-primary-k mt-0.5" />
                     <div className="flex-1">
                         <div className="font-medium text-primary-k">Want siblings, advisors, or a GP looped in?</div>
-                        <p className="text-sm text-muted-k mt-1">Family plan adds 5 seats, role‑based permissions, and the Sunday digest. Upgrade any time, no card surprises.</p>
+                        <p className="text-sm text-muted-k mt-1">Family plan adds 5 seats, role‑based permissions, and the Sunday digest. Upgrade any time.</p>
                     </div>
                     <Link to="/pricing" className="text-sm text-primary-k underline whitespace-nowrap">Compare plans</Link>
                 </div>

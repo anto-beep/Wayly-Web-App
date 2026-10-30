@@ -266,7 +266,7 @@ async def email_tool_result(
       <hr style="border:0;border-top:1px solid {COLORS["border"]};margin:24px 0" />
       <p style="margin:0;font-size:13px;color:{COLORS["muted"]};line-height:1.6;">
         Want Wayly to do this every month, automatically?
-        <a href="https://wayly.com.au/signup" style="color:{COLORS["clay"]};font-weight:600;text-decoration:none;">Start a free 7-day trial</a>, no card needed.
+        <a href="https://wayly.com.au/signup" style="color:{COLORS["clay"]};font-weight:600;text-decoration:none;">Start a free 7-day trial</a>.
       </p>
     """
     html = wrap_email_html(
@@ -349,7 +349,7 @@ async def email_adviser_invite(
       {notes_block}
       {button_html(href=invite_url, label="Accept invitation & start free trial", colour="clay")}
       <ul style="margin:8px 0 0;padding-left:20px;color:{COLORS["muted"]};font-size:13px;line-height:1.9;">
-        <li>7-day free trial · no card required</li>
+        <li>7-day free trial</li>
         <li>Your data is yours, share back to your adviser any time, revoke any time</li>
         <li>Australian-hosted, encrypted, never sold</li>
       </ul>

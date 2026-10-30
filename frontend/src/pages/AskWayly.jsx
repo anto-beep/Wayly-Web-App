@@ -33,13 +33,13 @@ const QUESTION_GROUPS = [
 ];
 
 const HOW_IT_WORKS = [
-    { icon: MessageCircle, title: "Ask in Plain English", body: "Type your question the way you would ask a knowledgeable friend. No jargon, no forms, no account needed." },
+    { icon: MessageCircle, title: "Ask in Plain English", body: "Type your question the way you would ask a knowledgeable friend. No jargon, no forms." },
     { icon: Sparkles, title: "Get a Grounded Answer", body: "Wayly answers from the published Support at Home rules, using digits for money and % for percentages so the numbers are exact." },
     { icon: ShieldCheck, title: "Know the Limits", body: "When a question needs a human, Wayly says so and points you to your provider, case manager, or My Aged Care." },
 ];
 
 const SEO_FAQS = [
-    { q: "Is Ask Wayly Free?", a: "Yes. Ask Wayly is completely free with no login, no signup, and no marketing follow-up. You can ask as many Support at Home questions as you like." },
+    { q: "Is Ask Wayly included in the trial?", a: "Yes. Ask Wayly is included in your Wayly 7-day free trial, alongside every other tool, with no marketing follow-up. You can ask as many Support at Home questions as you like, and cancel any time." },
     { q: "Where Do Ask Wayly's Answers Come From?", a: "Answers are grounded in the Department of Health published Support at Home rules and the Wayly editorial team's plain-English interpretation of them. Wayly always uses $ for money and % for percentages, and never spells those out." },
     { q: "Does Ask Wayly Give Financial or Medical Advice?", a: "No. Ask Wayly explains how the program works, but it is not a financial adviser, case manager, or doctor. For personal financial, legal, or clinical decisions it will point you to the right qualified human." },
     { q: "Does Ask Wayly See My Statements?", a: "No. On this public page Ask Wayly only knows the general rules. It never sees your private statements unless you log in to Wayly and choose to share them, and conversations are never used to train AI without your consent." },
@@ -76,8 +76,8 @@ export default function AskWayly() {
     return (
         <div className="min-h-screen bg-kindred">
             <SeoHead
-                title="Ask Wayly: Free Plain-English Answers About Support at Home | Wayly"
-                description="Ask Wayly is a free, evidence-grounded chat that answers Support at Home questions from the public rules: budgets, contributions, providers, and reassessments. No login, no signup."
+                title="Ask Wayly: Plain-English Answers About Support at Home | Wayly"
+                description="Ask Wayly is an evidence-grounded chat that answers Support at Home questions from the public rules: budgets, contributions, providers, and reassessments. Included in your 7-day free trial."
                 canonical="https://wayly.com.au/ask-wayly"
                 jsonLd={jsonLd}
             />

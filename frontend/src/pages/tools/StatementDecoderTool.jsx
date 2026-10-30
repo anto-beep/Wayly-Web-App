@@ -439,6 +439,20 @@ export default function StatementDecoderTool() {
                             )}
                             <div className="mt-5" />
                             <DecoderResultView result={result} onDraftLetter={draftLetterFromAnomaly} onDraftAll={draftAllBlockers} />
+                            {!isPaidUser && (
+                                <div className="mt-5 rounded-xl border border-kindred bg-surface-2 p-5 text-center" data-testid="decoder-result-trial-block">
+                                    <Link
+                                        to="/signup?plan=solo"
+                                        data-testid="decoder-result-trial-cta"
+                                        className="inline-flex items-center gap-2 bg-gold text-white font-semibold rounded-full px-6 py-3 hover:opacity-90"
+                                    >
+                                        Start your 7-day free trial <ArrowRight className="h-4 w-4" />
+                                    </Link>
+                                    <p className="mt-2 text-xs text-muted-k">
+                                        Free for 7 days, then A$24.50 per fortnight (Solo) unless cancelled. Cancel any time.
+                                    </p>
+                                </div>
+                            )}
                             {result.persisted_statement_id && (() => {
                                 const ss = result.audit?.statement_summary || {};
                                 return (

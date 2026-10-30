@@ -94,9 +94,10 @@ export default function DualFlagshipHero() {
                     <FlagshipCard
                         testid="hero-flagship-statement-decoder"
                         Icon={FileSearch}
-                        eyebrow="Free · No signup"
+                        eyebrow="Free"
                         title="Statement Decoder"
                         sub={copy.flagship_statement_sub}
+                        note="1 free decode every 120 days. Unlimited with a Wayly plan."
                         cta="Decode a statement"
                         to="/ai-tools/statement-decoder"
                         onClick={() => onFlagshipClick("statement_decoder")}
@@ -152,7 +153,7 @@ export default function DualFlagshipHero() {
     );
 }
 
-function FlagshipCard({ testid, Icon, eyebrow, title, sub, cta, to, onClick, accent, badge }) {
+function FlagshipCard({ testid, Icon, eyebrow, title, sub, cta, to, onClick, accent, badge, note }) {
     const accentClasses = accent === "clay"
         ? "border-clay/40 hover:border-clay hover:shadow-[0_20px_60px_rgba(181,124,87,0.25)]"
         : "border-sage/40 hover:border-primary-k hover:shadow-[0_20px_60px_rgba(15,86,72,0.20)]";
@@ -181,6 +182,7 @@ function FlagshipCard({ testid, Icon, eyebrow, title, sub, cta, to, onClick, acc
                     </span>
                     <h2 className="mt-2.5 font-heading text-2xl text-primary-k tracking-tight">{title}</h2>
                     <p className="mt-2.5 text-sm text-primary-k/80 leading-relaxed">{sub}</p>
+                    {note && <p className="mt-1.5 text-xs font-medium text-primary-k/70">{note}</p>}
                     <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-k group-hover:gap-2 transition-colors">
                         {cta} <ArrowRight className="h-4 w-4" aria-hidden="true" />
                     </span>

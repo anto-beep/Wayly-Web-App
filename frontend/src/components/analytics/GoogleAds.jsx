@@ -94,6 +94,8 @@ function injectMetaPixel() {
     }
     // Consent OFF until the visitor accepts advertising — revoke BEFORE init.
     window.fbq("consent", "revoke");
+    // Disable automatic configuration so PageView etc. log as STANDARD events.
+    window.fbq("set", "autoConfig", false, META_PIXEL_ID);
     window.fbq("init", META_PIXEL_ID);
 }
 
