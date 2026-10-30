@@ -62,6 +62,47 @@ function injectGoogleTag() {
     window.gtag("config", GA_ADS_ID);
 }
 
+const META_PIXEL_ID = "1307197805819885";
+
+let metaInjected = false;
+function injectMetaPixel() {
+    if (metaInjected || typeof window === "undefined" || typeof document === "undefined") return;
+    metaInjected = true;
+    // Standard Meta Pixel bootstrap (defines window.fbq synchronously, then
+    // lazy-loads fbevents.js).
+    if (!window.fbq) {
+        const n = (window.fbq = function () {
+            if (n.callMethod) {
+                n.callMethod.apply(n, arguments);
+            } else {
+                n.queue.push(arguments);
+            }
+        });
+        if (!window._fbq) window._fbq = n;
+        n.push = n;
+        n.loaded = true;
+        n.version = "2.0";
+        n.queue = [];
+        if (!document.getElementById("meta-pixel-src")) {
+            const t = document.createElement("script");
+            t.async = true;
+            t.id = "meta-pixel-src";
+            t.src = "https://connect.facebook.net/en_US/fbevents.js";
+            const s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(t, s);
+        }
+    }
+    // Consent OFF until the visitor accepts advertising — revoke BEFORE init.
+    window.fbq("consent", "revoke");
+    window.fbq("init", META_PIXEL_ID);
+}
+
+function grantMetaConsent() {
+    if (typeof window !== "undefined" && typeof window.fbq === "function") {
+        window.fbq("consent", "grant");
+    }
+}
+
 export default function GoogleAds() {
     const { pathname } = useLocation();
     const publicRoute = !isAppRoute(pathname);
@@ -69,17 +110,26 @@ export default function GoogleAds() {
     const [choosing, setChoosing] = useState(false);
     const [adsOn, setAdsOn] = useState(false);
 
-    // On public pages: load the Google tag and re-apply any stored ad consent.
+    // On public pages: load the Google tag + Meta Pixel and re-apply stored ad consent.
     useEffect(() => {
         if (!publicRoute) return;
         injectGoogleTag();
-        if (consent && consent.ads) updateAdConsent(true);
+        injectMetaPixel();
+        if (consent && consent.ads) { updateAdConsent(true); grantMetaConsent(); }
     }, [publicRoute, consent]);
+
+    // Meta Pixel PageView on every public page (held until consent is granted).
+    useEffect(() => {
+        if (!publicRoute) return;
+        if (typeof window !== "undefined" && typeof window.fbq === "function") {
+            window.fbq("track", "PageView");
+        }
+    }, [pathname, publicRoute]);
 
     const decide = useCallback((ads) => {
         const value = { ads: !!ads, v: 1, ts: Date.now() };
         try { localStorage.setItem(CONSENT_KEY, JSON.stringify(value)); } catch { /* ignore */ }
-        if (ads) updateAdConsent(true);
+        if (ads) { updateAdConsent(true); grantMetaConsent(); }
         setChoosing(false);
         setConsent(value);
     }, []);

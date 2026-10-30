@@ -11,6 +11,7 @@ import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import useScrollToResult from "@/hooks/useScrollToResult";
+import { trackToolComplete } from "@/lib/metaPixel";
 import { api, formatAUD } from "@/lib/api";
 import { usePersona } from "@/lib/persona";
 import { useParticipants } from "@/context/ParticipantsContext";
@@ -843,6 +844,12 @@ export default function ClassificationCheck() {
     const [step, setStep] = useState(0);
     const hydratedRef = useRef(false);
     const resultRef = useScrollToResult(result);
+    // Meta Pixel: fire ToolComplete once when a result is shown (no params, no user data).
+    const toolCompleteRef = useRef(false);
+    useEffect(() => {
+        if (result && !toolCompleteRef.current) { toolCompleteRef.current = true; trackToolComplete(); }
+        else if (!result) { toolCompleteRef.current = false; }
+    }, [result]);
     const wizardRef = useRef(null);
     const firstWizardRender = useRef(true);
     useEffect(() => {

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
+import { trackToolComplete } from "@/lib/metaPixel";
 import { Link } from "react-router-dom";
 import AboutBackLink from "@/components/AboutBackLink";
 import MarketingHeader from "@/components/MarketingHeader";
@@ -72,6 +73,12 @@ export default function StatementDecoderTool() {
     const [usage, setUsage] = useState(null); // { allowed, used_count, remaining, reset_at }
     const [countdown, setCountdown] = useState("");
     const resultRef = useScrollToResult(Boolean(result));
+    // Meta Pixel: fire ToolComplete once when a result is shown (no params, no user data).
+    const toolCompleteRef = useRef(false);
+    useEffect(() => {
+        if (result && !toolCompleteRef.current) { toolCompleteRef.current = true; trackToolComplete(); }
+        else if (!result) { toolCompleteRef.current = false; }
+    }, [result]);
     const fileRef = useRef(null);
     const navigate = useNavigate();
     const { active: activeParticipant } = useParticipants();

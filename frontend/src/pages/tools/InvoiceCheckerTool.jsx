@@ -16,8 +16,9 @@
  * in Phase 1 WS4 + WS8. This page is the seven-sisters-shaped shell
  * that makes the tool discoverable and useful from day one.
  */
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
+import { trackToolComplete } from "@/lib/metaPixel";
 import { Link, useNavigate } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
@@ -280,6 +281,12 @@ export default function InvoiceCheckerTool() {
     const [comparing, setComparing] = useState(false);
     const fileRef = useRef(null);
     const resultRef = useScrollToResult(Boolean(result));
+    // Meta Pixel: fire ToolComplete once when a result is shown (no params, no user data).
+    const toolCompleteRef = useRef(false);
+    useEffect(() => {
+        if (result && !toolCompleteRef.current) { toolCompleteRef.current = true; trackToolComplete(); }
+        else if (!result) { toolCompleteRef.current = false; }
+    }, [result]);
     const navigate = useNavigate();
 
     const onDraftLetter = async (findingIndex) => {

@@ -36,7 +36,7 @@ export default function Cookies() {
                 <li>Onboarding progress</li>
             </ul>
 
-            <h2>Advertising Cookies (Google Ads) — Off by Default</h2>
+            <h2>Advertising Cookies (Google Ads &amp; Meta) — Off by Default</h2>
             <ul>
                 <li>
                     <strong>Google Ads / Google tag:</strong> measures which of our Google ads lead people
@@ -45,6 +45,12 @@ export default function Cookies() {
                     banner. Choose “Only necessary” and none are set. They carry standard web-analytics
                     signals only — never your statement contents, dollar amounts, classification levels,
                     names or service details — and are not loaded inside the signed-in app or dashboard.
+                </li>
+                <li>
+                    <strong>Meta Pixel:</strong> measures which of our Facebook and Instagram ads lead
+                    people to start a Wayly trial. It follows the exact same rule — <strong>revoked by
+                    default</strong>, nothing sent to Meta until you accept advertising in the banner, the
+                    same privacy limits, and never loaded inside the signed-in app or dashboard.
                 </li>
             </ul>
 

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import SeoHead from "@/seo/SeoHead";
 import MarketingHeader from "@/components/MarketingHeader";
+import { fbqTrack } from "@/lib/metaPixel";
 
 /**
  * /welcome — one-time trial confirmation page.
@@ -15,6 +16,7 @@ import MarketingHeader from "@/components/MarketingHeader";
  */
 
 let welcomeConsumed = false;
+let startTrialFired = false;
 function hasEntryToken() {
     if (welcomeConsumed) return true;
     let ok = false;
@@ -29,6 +31,14 @@ function hasEntryToken() {
 export default function Welcome() {
     const nav = useNavigate();
     const [allowed] = useState(() => hasEntryToken());
+
+    // Meta Pixel StartTrial — fires once, only on a legitimate welcome view.
+    useEffect(() => {
+        if (allowed && !startTrialFired) {
+            startTrialFired = true;
+            fbqTrack("track", "StartTrial", { value: 60, currency: "AUD" });
+        }
+    }, [allowed]);
 
     if (!allowed) return <Navigate to="/app" replace />;
 

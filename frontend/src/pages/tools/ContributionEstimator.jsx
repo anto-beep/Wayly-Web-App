@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
+import { trackToolComplete } from "@/lib/metaPixel";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
@@ -100,6 +101,12 @@ export default function ContributionEstimator() {
     const [constants, setConstants] = useState(null);
     const [result, setResult] = useState(null);
     const resultRef = useScrollToResult(Boolean(result));
+    // Meta Pixel: fire ToolComplete once when a result is shown (no params, no user data).
+    const toolCompleteRef = useRef(false);
+    useEffect(() => {
+        if (result && !toolCompleteRef.current) { toolCompleteRef.current = true; trackToolComplete(); }
+        else if (!result) { toolCompleteRef.current = false; }
+    }, [result]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [cscBadge, setCscBadge] = useState(null); // { primary, date }

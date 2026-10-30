@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
+import { trackToolComplete } from "@/lib/metaPixel";
 import { Link } from "react-router-dom";
 import { useParticipants } from "@/context/ParticipantsContext";
 import MarketingHeader from "@/components/MarketingHeader";
@@ -162,6 +163,12 @@ export default function CarePlanReviewer() {
     const [dragActive, setDragActive] = useState(false);
     const resultRef = useScrollToResult(Boolean(result));
     const fileResultRef = useScrollToResult(Boolean(fileResult));
+    // Meta Pixel: fire ToolComplete once when a review result is shown (no params, no user data).
+    const toolCompleteRef = useRef(false);
+    useEffect(() => {
+        if (fileResult && !toolCompleteRef.current) { toolCompleteRef.current = true; trackToolComplete(); }
+        else if (!fileResult) { toolCompleteRef.current = false; }
+    }, [fileResult]);
 
     // Load classification budget bands (for prefilling the quarterly budget).
     useEffect(() => {

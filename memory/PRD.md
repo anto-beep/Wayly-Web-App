@@ -8140,3 +8140,13 @@ Goal: measure Google Ads conversions on wayly.com.au with a consent-gated Google
 ## Google Ads follow-ups (Jun 2026)
 - Privacy §17 cookie section: added "To change your cookie choice, clear the cookies for wayly.com.au in your browser settings. The cookie banner will appear again on your next visit."
 - `Pricing.jsx`: on Stripe cancel return (`/pricing?cancelled=1`) we now `localStorage.removeItem('wayly_trial_welcome')`, so a later unrelated completed checkout can never resurface the one-time /welcome page. Verified: flag "1" → cleared after cancel return.
+
+## Meta Pixel tracking (WEB, Jun 2026)
+Added Meta Pixel ID 1307197805819885 alongside the Google tag, same consent + public-only rules.
+- `src/components/analytics/GoogleAds.jsx` now also bootstraps Meta: `injectMetaPixel()` defines fbq, loads fbevents.js, calls `fbq('consent','revoke')` BEFORE `fbq('init', ID)`. `grantMetaConsent()` calls `fbq('consent','grant')` on Accept-all / Choose-with-ads and on load when stored consent.ads is true. Injected only on public routes (same `publicRoute` gate as Google; excluded: /app, /onboarding, /journey, /adviser).
+- PageView: fired on every public pathname via an effect `fbq('track','PageView')`.
+- StartTrial: `src/pages/Welcome.jsx` fires `fbq('track','StartTrial',{value:60,currency:'AUD'})` once, only on a legitimate /welcome view (module-guard `startTrialFired`).
+- ToolComplete: `src/lib/metaPixel.js` exports `trackToolComplete()` → `fbq('trackCustom','ToolComplete')` (no params). Wired via a one-shot effect (ref-guarded, re-arms when result clears) in all 6 free tools: StatementDecoderTool, InvoiceCheckerTool, ContributionEstimator, ClassificationCheck, PriceCheckerTool (watch `result`), CarePlanReviewer (watch `fileResult`).
+- Privacy §17 heading → "Advertising Measurement (Google Ads & Meta)" + Meta paragraph (same opt-out wording); Meta Platforms added to §12 sub-processors and §13 overseas (US). Cookies page advertising section updated with a Meta bullet.
+- PRIVACY: only base PageView / StartTrial(value,currency) / ToolComplete(no params) — never statement contents, amounts, levels, names, emails or service details.
+- Verified in preview via Playwright: pre-consent NOTHING loads and no `_fbp` cookie; after Accept-all the pixel registers (signals/config/1307197805819885 request + `_fbp` cookie + getState pixels ['0']); dashboard `/app` fresh load has `fbq` undefined and zero Meta/GTM requests. NOTE: the raw `facebook.com/tr` event beacons are not surfaced by the preview/Playwright harness (confirmed harness artifact — even a clean manual pixel init set _fbp + loaded config but showed no /tr); they will fire in real browsers/production. Goes fully live on wayly.com.au after Publish/deploy.
