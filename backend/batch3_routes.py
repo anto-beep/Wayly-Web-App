@@ -721,6 +721,24 @@ async def record_free_tool_usage(request: Request, tool: str = "STATEMENT_DECODE
     await _db.free_tool_usage.insert_one(doc.model_dump())
 
 
+async def record_free_tool_usage_raw(*, tool: str, user_id: Optional[str], fingerprint: Optional[str],
+                                     ip: Optional[str], result_id: Optional[str] = None) -> None:
+    """Request-less recorder. Used by background jobs that only consume the
+    free-tool quota AFTER the work succeeds, so a failed/expired job never
+    burns the visitor's one free use. Identity (fingerprint + ip) is captured
+    on the original request and passed through."""
+    doc = FreeToolUsage(
+        user_id=user_id,
+        fingerprint=fingerprint if not user_id else None,
+        tool=tool,
+        used_at=_now_iso(),
+        period_month=_current_period_month(),
+        ip_address=ip,
+        result_id=result_id,
+    )
+    await _db.free_tool_usage.insert_one(doc.model_dump())
+
+
 @batch3_router.get("/free-tool/usage")
 async def get_free_tool_usage(request: Request, tool: str = Query(default="STATEMENT_DECODER")):
     """Public endpoint, no auth required. Used by the public Statement Decoder."""

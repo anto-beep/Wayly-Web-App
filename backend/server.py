@@ -3792,11 +3792,19 @@ async def _enforce_statement_decoder_limit(request: Request, response: Response)
                 "window_days": 120,
             },
         )
-    # First use this window, also enforce the global IP rate limit as a soft cap.
+    # First use this window. Enforce the global IP soft cap, but DO NOT record
+    # usage yet — the free decode is only consumed when the decode actually
+    # succeeds (see _run_decode_job). This stops a failed or expired job from
+    # burning the visitor's one free decode.
     _check_rate_limit(_client_ip(request))
-    # Record the usage immediately so concurrent requests don't slip past the gate.
-    await record_free_tool_usage(request, tool="STATEMENT_DECODER", user_id=user_id)
-    return {"user": user, "is_free_use": True, "days_until_next_use": 120}
+    return {
+        "user": user,
+        "is_free_use": True,
+        "days_until_next_use": 120,
+        "user_id": user_id,
+        "fingerprint": _sd_fingerprint(request) if not user_id else None,
+        "ip": _client_ip(request),
+    }
 
 
 class PublicTextBody(BaseModel):
@@ -4416,6 +4424,34 @@ def _prune_decode_jobs() -> None:
         DECODE_JOBS.pop(jid, None)
 
 
+def _decode_job_key(job_id: str) -> str:
+    return _cache.key_for("decodejob", job_id)
+
+
+async def _decode_job_save(job_id: str) -> None:
+    """Mirror the in-memory job into Redis so a poll that lands on another
+    worker (or after a reload/restart) still finds it instead of returning
+    'Decode job expired'."""
+    job = DECODE_JOBS.get(job_id)
+    if job is None:
+        return
+    try:
+        await _cache.set_("decodejob", _decode_job_key(job_id), job, ttl_seconds=_DECODE_JOB_TTL)
+    except Exception:
+        pass
+
+
+async def _decode_job_load(job_id: str) -> Optional[dict]:
+    """In-memory first (fast path), then Redis (survives reloads / other workers)."""
+    job = DECODE_JOBS.get(job_id)
+    if job is not None:
+        return job
+    try:
+        return await _cache.get("decodejob", _decode_job_key(job_id))
+    except Exception:
+        return None
+
+
 async def _run_decode_job(
     job_id: str, text: str,
     input_method: str = "text_paste",
@@ -4424,6 +4460,7 @@ async def _run_decode_job(
     original_filename: Optional[str] = None,
     persist_for_user_id: Optional[str] = None,
     identity_ctx: Optional[dict] = None,
+    record_usage_ctx: Optional[dict] = None,
 ) -> None:
     """Background runner. Updates DECODE_JOBS[job_id] as it progresses.
     Runs the wrapper (PII bypass + abuse classifier) FIRST so the POST handler
@@ -4443,23 +4480,29 @@ async def _run_decode_job(
     try:
         job["status"] = "running"
         job["phase"] = "wrapper"
+        await _decode_job_save(job_id)
         # PII redaction is OFF for the Statement Decoder, the visitor is uploading
         # their own statement and needs to see their own name in the result.
         # Abuse / distress / manipulation checks still run.
         wrapped = await run_wrapper(text, pii_redact=False)
         if wrapped.get("abuse_flag"):
             # Surface the abuse response as the final result so the frontend can render it.
+            # NOTE: an abuse-flagged submission is NOT a real decode, so we never
+            # record free-tool usage for it.
             job["result"] = {
                 "abuse_flag": wrapped["abuse_flag"],
                 "abuse_response": wrapped["abuse_response"],
             }
             job["status"] = "done"
             job["phase"] = "done"
+            await _decode_job_save(job_id)
             return
         decode_text = wrapped.get("redacted_input") or text
         job["phase"] = "extract"
+        await _decode_job_save(job_id)
         extracted = await extract_statement(decode_text, household_id="public")
         job["phase"] = "audit"
+        await _decode_job_save(job_id)
         audit = await audit_statement(extracted, household_id="public")
         result = _build_decode_payload(extracted, audit)
         result["input_method"] = input_method
@@ -4488,6 +4531,19 @@ async def _run_decode_job(
         job["result"] = result
         job["status"] = "done"
         job["phase"] = "done"
+        # The free decode is consumed ONLY now that it has succeeded. A failed
+        # or expired job therefore never burns the visitor's one free use.
+        if record_usage_ctx:
+            try:
+                await record_free_tool_usage_raw(
+                    tool=record_usage_ctx.get("tool", "STATEMENT_DECODER"),
+                    user_id=record_usage_ctx.get("user_id"),
+                    fingerprint=record_usage_ctx.get("fingerprint"),
+                    ip=record_usage_ctx.get("ip"),
+                )
+            except Exception:
+                logger.exception("failed to record free decode usage for job %s", job_id)
+        await _decode_job_save(job_id)
         # DEC-1 Phase 1: opportunistically persist for signed-in users so the
         # decoded statement appears in the Statements tab with the same
         # summary, detail view, and PDF as an upload-pathway decode.
@@ -4515,13 +4571,16 @@ async def _run_decode_job(
             except Exception:
                 # Persistence is best-effort, never fail the decode over it.
                 logger.exception("failed to persist AI-Tools decode for user %s", persist_for_user_id)
+            # Re-save so the persisted id / duplicate flag reach the Redis copy.
+            await _decode_job_save(job_id)
     except Exception as e:
         logger.exception("decode job %s failed", job_id)
         job["status"] = "error"
         job["error"] = str(e)
+        await _decode_job_save(job_id)
 
 
-def _submit_decode_job(
+async def _submit_decode_job(
     text: str,
     input_method: str = "text_paste",
     document_pages: int = 1,
@@ -4529,9 +4588,11 @@ def _submit_decode_job(
     original_filename: Optional[str] = None,
     persist_for_user_id: Optional[str] = None,
     identity_ctx: Optional[dict] = None,
+    record_usage_ctx: Optional[dict] = None,
 ) -> str:
     """Submit a decode job. Returns the job_id. Runs the pipeline as a
-    fire-and-forget asyncio task."""
+    fire-and-forget asyncio task. The pending state is written to Redis up
+    front so an immediate poll (even on another worker) finds the job."""
     import time
     _prune_decode_jobs()
     job_id = _new_job_id()
@@ -4542,6 +4603,7 @@ def _submit_decode_job(
         "error": None,
         "created_at": time.time(),
     }
+    await _decode_job_save(job_id)
     from lib.jobs import run_async as _run_async
     _run_async(_run_decode_job(
         job_id, text,
@@ -4551,6 +4613,7 @@ def _submit_decode_job(
         original_filename=original_filename,
         persist_for_user_id=persist_for_user_id,
         identity_ctx=identity_ctx,
+        record_usage_ctx=record_usage_ctx,
     ), name="public_decode_job", max_attempts=1)
     return job_id
 
@@ -5239,7 +5302,7 @@ def _submit_upload_job(
 
 @api.get("/public/decode-job/{job_id}")
 async def public_decode_job_status(job_id: str):
-    job = DECODE_JOBS.get(job_id)
+    job = await _decode_job_load(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found or expired")
     out = {"status": job["status"], "phase": job.get("phase", job["status"])}
@@ -5255,17 +5318,22 @@ async def public_decode_text(
     body: PublicTextBody, request: Request, response: Response,
     caller_user_id: Optional[str] = Depends(get_current_user_id_optional),
 ):
-    await _enforce_statement_decoder_limit(request, response)
+    _limit = await _enforce_statement_decoder_limit(request, response)
     await _block_if_view_only_uid(caller_user_id)
     from lib.upload_guard import classify_content as _classify_content
     _sd_guard = _classify_content("statement-decoder", body.text or "")
     if _sd_guard["decision"] != "accept":
         return {"upload_guard": _sd_guard}
     _identity_ctx = await _build_identity_ctx(caller_user_id, request)
-    job_id = _submit_decode_job(
+    _usage_ctx = {
+        "tool": "STATEMENT_DECODER", "user_id": _limit.get("user_id"),
+        "fingerprint": _limit.get("fingerprint"), "ip": _limit.get("ip"),
+    } if _limit.get("is_free_use") else None
+    job_id = await _submit_decode_job(
         body.text, input_method="text_paste", document_pages=1, parsing_warnings=[],
         persist_for_user_id=caller_user_id,
         identity_ctx=_identity_ctx,
+        record_usage_ctx=_usage_ctx,
     )
     return {"job_id": job_id, "status": "pending"}
 
@@ -5275,7 +5343,7 @@ async def public_decode_file(
     request: Request, response: Response, file: UploadFile = File(...),
     caller_user_id: Optional[str] = Depends(get_current_user_id_optional),
 ):
-    await _enforce_statement_decoder_limit(request, response)
+    _limit = await _enforce_statement_decoder_limit(request, response)
     await _block_if_view_only_uid(caller_user_id)
     # Phase 4: signature + virus scan + UUID rename before we touch it.
     from upload_security import secure_read_upload, PROFILE_STATEMENT, sanitize_for_prompt
@@ -5308,11 +5376,16 @@ async def public_decode_file(
     if _sd_guard["decision"] != "accept":
         return {"upload_guard": _sd_guard}
     _identity_ctx = await _build_identity_ctx(caller_user_id, request)
-    job_id = _submit_decode_job(
+    _usage_ctx = {
+        "tool": "STATEMENT_DECODER", "user_id": _limit.get("user_id"),
+        "fingerprint": _limit.get("fingerprint"), "ip": _limit.get("ip"),
+    } if _limit.get("is_free_use") else None
+    job_id = await _submit_decode_job(
         text, input_method=input_method, document_pages=page_count,
         parsing_warnings=parse_warnings, original_filename=safe_name,
         persist_for_user_id=caller_user_id,
         identity_ctx=_identity_ctx,
+        record_usage_ctx=_usage_ctx,
     )
     return {"job_id": job_id, "status": "pending"}
 
@@ -6331,15 +6404,15 @@ HELP_CHAT_SYSTEM = (
     "make sense of it. Provider-agnostic, never takes commissions, never sells data. We work alongside the caregiver, "
     "not on behalf of the provider.\n\n"
     "PLANS\n"
-    "- Free $0/mo: 1 Statement Decoder use per calendar month.\n"
-    "- Solo $19/mo: unlimited tools, dashboard, statement uploads, 1 participant, 1 caregiver seat.\n"
-    "- Family $39/mo (most popular): everything in Solo + 2 participants included + 3 caregiver seats + priority support.\n"
-    "- Add extra participants on Family for $19/month each, billed separately, cancel anytime.\n"
+    "- Free $0: 1 Statement Decoder decode every 120 days.\n"
+    "- Solo A$24.50 per fortnight: unlimited tools, dashboard, statement uploads, 1 participant, 1 caregiver seat.\n"
+    "- Family A$49.50 per fortnight (most popular): everything in Solo + 2 participants included + 3 caregiver seats + priority support.\n"
+    "- Add extra participants on Family for A$24.50 per fortnight each, billed separately, cancel anytime.\n"
     "- Adviser $299/mo: up to 20 client households, 3 caregiver seats, scenario modeller, branded PDFs, priority support, offline mode.\n"
     "- Adviser Pro $3500/mo: unlimited clients, white-label, custom domain, multi-advisor team.\n"
     "- Paid plans get a 7-day free trial, 14 days with a referral code.\n\n"
     "AI TOOLS (8 total)\n"
-    "1. Statement Decoder (free 1/month, unlimited on paid). Upload PDF, Word, photo (JPG/PNG/HEIC/WEBP), or paste text.\n"
+    "1. Statement Decoder (free 1 decode per 120 days, unlimited on paid). Upload PDF, Word, photo (JPG/PNG/HEIC/WEBP), or paste text.\n"
     "2. Budget & Lifetime Cap Calculator (Solo+).\n"
     "3. Provider Price Checker (Solo+).\n"
     "4. Classification Self-Check (Solo+).\n"
@@ -7467,7 +7540,8 @@ from extended_routes import extended_router, init_extended_routes
 from batch2_routes import batch2_router, init_batch2_routes, migrate_existing_households
 from batch3_routes import (
     batch3_router, init_batch3_routes, migrate_batch3, run_purge_job,
-    check_free_tool_usage, record_free_tool_usage,
+    check_free_tool_usage, record_free_tool_usage, record_free_tool_usage_raw,
+    _fingerprint_from_request as _sd_fingerprint,
 )
 from batch3_billing import billing_router as batch3_billing_router, init_billing_routes
 from participant_profile import (
