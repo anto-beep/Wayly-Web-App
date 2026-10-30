@@ -49,7 +49,7 @@ function _sum(findings) {
 }
 
 // Human-friendly titles for the C1..C12 backend checks so a caregiver sees
-// "Price cap exceeded" instead of the raw code.
+// "Rate above the indicative range" instead of the raw code.
 const _CHECK_TITLES = {
     C1: "Clinical care contribution should be nil",
     C2: "Personal care contribution after 1 October 2026 should be nil",
@@ -62,7 +62,7 @@ const _CHECK_TITLES = {
     C9: "Adjustment or refund line",
     C10: "About your lifetime contribution cap",
     C11: "Duplicate line",
-    C12: "Rate exceeds published price",
+    C12: "Rate above your provider's own rate",
 };
 function _titleForCheck(ref) {
     return _CHECK_TITLES[String(ref).toUpperCase()] || `Check ${ref}`;

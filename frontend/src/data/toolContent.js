@@ -113,15 +113,15 @@ export const TOOL_CONTENT = {
     "provider-price-checker": {
         name: "Provider Price Checker",
         heroOneLiner:
-            "Compare what your provider charges for common services against the legislated maximum service prices.",
+            "Compare what your provider charges for common services against the Department of Health's indicative price ranges.",
         whatItDoes: [
-            "Under Support at Home, the government sets maximum service prices for each service type. Providers can charge less, but not more. The Price Checker helps you see your provider's rate next to the cap so you can spot when something looks high.",
-            "Paste in the service name, units (hours or kilometres), and the rate your provider charges. The tool shows the legislated cap, the share you would contribute at your contribution rate, and whether the price is within bounds. It does not negotiate for you, but it gives you the facts to start a calm conversation.",
-            "All caps are indexed each 1 July from the current Schedule of Subsidies and Supplements. We update our reference values when they change, but always confirm the live figure on the My Aged Care website before relying on it for a decision.",
+            "The planned national provider price caps under Support at Home were deferred indefinitely, so providers set their own prices. The Price Checker helps you see your provider's rate next to the Department of Health's indicative range so you can spot when something looks high.",
+            "Paste in the service name, units (hours or kilometres), and the rate your provider charges. The tool shows the indicative range, the share you would contribute at your contribution rate, and where the rate sits in that range. It does not negotiate for you, but it gives you the facts to start a calm conversation.",
+            "The indicative ranges come from the Department of Health's published snapshot. We update our reference values when they change, but always confirm the live figure on the My Aged Care website before relying on it for a decision.",
         ],
         howItWorks: [
             { title: "Enter the Service", body: "Pick the service type from the list and add the units (hours, kilometres) and your provider's rate." },
-            { title: "See the Cap", body: "The tool shows the legislated maximum and whether your rate is above, at, or below it." },
+            { title: "See the Indicative Range", body: "The tool shows the Department of Health's indicative range and where the rate sits." },
             { title: "Estimate Your Contribution", body: "Adjust your contribution rate to see what the service would cost you out of pocket." },
             { title: "Ask Better Questions", body: "Take the numbers into a conversation with your provider, or use them to compare quotes." },
         ],
@@ -130,19 +130,19 @@ export const TOOL_CONTENT = {
             "Your contribution rate, if you know it (the tool defaults to common values)",
         ],
         whatYouGet: [
-            "A side-by-side view of your provider's rate vs. the legislated maximum",
+            "A side-by-side view of your provider's rate vs. the indicative range",
             "An estimate of your out-of-pocket share at your contribution rate",
-            "A clear status flag (within cap, at cap, or above cap)",
+            "A clear status flag (within the indicative range, above the indicative range, or below the indicative range)",
             "Notes on what the service usually covers under Support at Home",
         ],
         faqs: [
-            { q: "Are these caps current?", a: "They reflect the most recent Schedule of Subsidies and Supplements. Always confirm the live figure on My Aged Care before relying on it." },
-            { q: "What if my provider charges above the cap?", a: "Providers must not charge above the legislated maximum. If you see a rate above the cap, raise it with your provider and, if needed, the Aged Care Quality and Safety Commission." },
-            { q: "Does the cap include GST?", a: "Service prices under Support at Home are usually GST-free, but always check the line items on your statement." },
-            { q: "Can the cap change mid-year?", a: "Yes. Caps are indexed on 1 July each year and can be adjusted by the Department. The tool reflects the current values we hold." },
+            { q: "Are these indicative ranges current?", a: "They reflect the most recent Department of Health snapshot. Always confirm the live figure on My Aged Care before relying on it." },
+            { q: "What if a rate is above the indicative range?", a: "Ask the provider what's included and how the price was set. Providers set their own prices, so a higher rate isn't automatically wrong." },
+            { q: "Do the indicative ranges include GST?", a: "Service prices under Support at Home are usually GST-free, but always check the line items on your statement." },
+            { q: "Can the indicative ranges change?", a: "Yes. The Department can update the indicative ranges, and prices delivered outside standard business hours may sit above them. The tool reflects the current values we hold." },
         ],
-        ctaHeading: "See If Your Provider's Rate Is Within the Cap",
-        ctaBody: "Compare a service price against the legislated maximum in seconds.",
+        ctaHeading: "See How a Provider's Rate Compares",
+        ctaBody: "Compare a service price against the Department of Health's indicative range in seconds.",
     },
 
     "reassessment-letter": {

@@ -1761,7 +1761,7 @@ def _detect_anomalies(
             alerts.append({
                 "id": new_id(),
                 "severity": "alert",
-                "title": "Above published price",
+                "title": "Above provider's rate",
                 "detail": (
                     f"{it.get('service_name')} was charged above the provider's published rate."
                 ),

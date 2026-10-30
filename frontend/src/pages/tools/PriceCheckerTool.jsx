@@ -557,7 +557,7 @@ export default function PriceCheckerTool() {
                 toolName="the Provider Price Checker"
                 inputSummary={`The rate you entered for ${service.toLowerCase()}`}
                 referenceLabel={`the Department of Health's published indicative range in the DoH ${result?.source_date || "October 2025"} snapshot`}
-                computationRule={'If your rate is inside the published range, we report "in range." If it is above the top of the range, we report "above range" and calculate how many dollars above the top. If it is below the bottom, we report "below range."'}
+                computationRule={'If your rate is inside the Department of Health indicative range, we report "within the indicative range." If it is above the top of the range, we report "above the indicative range" and calculate how many dollars above the top. If it is below the bottom, we report "below the indicative range."'}
                 testIdPrefix="pc-adm"
             />
         </div>
@@ -742,8 +742,8 @@ function ResultCard({ result, onAdmOpen, provider, selectedSnapshot, ceState, in
                             <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                                 <span className="text-xs uppercase tracking-wider text-muted-k">What your provider charges vs typical</span>
                                 {overRange
-                                    ? <span className="text-xs font-semibold text-white bg-[#B23A2E] rounded-full px-2.5 py-0.5">Above the range</span>
-                                    : <span className="text-xs font-semibold text-white bg-[#425F47] rounded-full px-2.5 py-0.5">Within the range</span>}
+                                    ? <span className="text-xs font-semibold text-white bg-[#B23A2E] rounded-full px-2.5 py-0.5">Above the indicative range</span>
+                                    : <span className="text-xs font-semibold text-white bg-[#425F47] rounded-full px-2.5 py-0.5">Within the indicative range</span>}
                             </div>
                             {med > 0 && diffPct !== null && (
                                 <p className="text-sm text-primary-k mb-4 leading-relaxed" data-testid="pc-compare-plain">

@@ -8180,3 +8180,10 @@ STATEMENT DECODER BUG ("Decode job expired" + free decode burned on failure):
 - Uses REAL Wayly sample-document data (Blueberry Care / Sam Burke decoded statement; Glorious Services invoice) — no "example/fictional" labels, real figures shown, no wayly.com.au url, no CTA text (per user direction).
 - Backend footprint: `server.py` mounts `/api/creative-assets` → `/app/ads_build` (StaticFiles, guarded by `isdir` so it is a no-op in production where the dir is absent). This is NOT linked from the marketing site; it only exists to hand the download link to the user. Safe to remove later.
 - Also live this session: `FREE_TOOL_UNLIMITED_IPS` in backend `.env` (unlimited Statement Decoder for an allowlisted test IP).
+
+## Oct 2026 — Provider Price Checker "indicative range" copy fix
+- Removed stale "legislated maximum / cap / maximum service prices / providers can charge less but not more / must not charge above" wording so the page body matches the banner (caps deferred indefinitely; providers set own prices; tool compares vs DoH indicative ranges).
+- `frontend/src/data/toolContent.js` (provider-price-checker): hero, whatItDoes, howItWorks step 2 = "See the Indicative Range", whatYouGet flags = within/above/below the indicative range, 4 FAQs reworded, CTA = "See How a Provider's Rate Compares".
+- `PriceCheckerTool.jsx`: result chip + computation rule now say "within/above/below the indicative range".
+- `InvoiceResultView.jsx` C12 title → "Rate above your provider's own rate"; `server.py` statement anomaly title "Above published price" → "Above provider's rate" (both compare to the provider's OWN rate, consistent with "providers set their own prices").
+- Left intact (already accurate / different concept): PPC banner + ProviderPriceExplainer + backend ppc_v2 (above/in/below range; only names "legislated cap" to deny one exists); the dedicated `policies.js` "price-caps-status" explainer (historical, states caps are deferred/not in force); budget rollover cap in pdf_reports; the real lifetime contribution cap (invoice C10, Ask Wayly). Pricing page + emails had no stale cap/published-price wording.
