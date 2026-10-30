@@ -651,6 +651,17 @@ def _client_ip(request: Request) -> str:
     return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
 
 
+def _unlimited_ips() -> set:
+    """Comma-separated allowlist of IPs exempt from the free-tool cooldown
+    (set via FREE_TOOL_UNLIMITED_IPS). Used for internal/marketing testing."""
+    raw = os.environ.get("FREE_TOOL_UNLIMITED_IPS", "")
+    return {ip.strip() for ip in raw.split(",") if ip.strip()}
+
+
+def _is_unlimited_ip(ip: Optional[str]) -> bool:
+    return bool(ip) and ip in _unlimited_ips()
+
+
 async def check_free_tool_usage(request: Request, tool: str = "STATEMENT_DECODER", *, user_id: Optional[str] = None) -> Dict[str, Any]:
     """Returns {allowed, days_until_next_use, last_used_at, reset_at}. Does NOT
     increment.
@@ -665,6 +676,22 @@ async def check_free_tool_usage(request: Request, tool: str = "STATEMENT_DECODER
     from datetime import timedelta as _td
 
     now = datetime.now(timezone.utc)
+
+    # Allowlisted IPs (FREE_TOOL_UNLIMITED_IPS) bypass the cooldown entirely —
+    # used for internal / marketing-pixel testing. Never records a use.
+    if not user_id and _is_unlimited_ip(_client_ip(request)):
+        return {
+            "allowed": True,
+            "used_count": 0,
+            "remaining": 999,
+            "days_until_next_use": 0,
+            "last_used_at": None,
+            "reset_at": now.isoformat(),
+            "period_month": _current_period_month(),
+            "window_days": 120,
+            "unlimited": True,
+        }
+
     cutoff = now - _td(days=120)
     cutoff_iso = cutoff.isoformat()
 
@@ -709,6 +736,8 @@ async def check_free_tool_usage(request: Request, tool: str = "STATEMENT_DECODER
 
 
 async def record_free_tool_usage(request: Request, tool: str = "STATEMENT_DECODER", *, user_id: Optional[str] = None, result_id: Optional[str] = None) -> None:
+    if not user_id and _is_unlimited_ip(_client_ip(request)):
+        return
     doc = FreeToolUsage(
         user_id=user_id,
         fingerprint=_fingerprint_from_request(request) if not user_id else None,
@@ -727,6 +756,8 @@ async def record_free_tool_usage_raw(*, tool: str, user_id: Optional[str], finge
     free-tool quota AFTER the work succeeds, so a failed/expired job never
     burns the visitor's one free use. Identity (fingerprint + ip) is captured
     on the original request and passed through."""
+    if not user_id and _is_unlimited_ip(ip):
+        return
     doc = FreeToolUsage(
         user_id=user_id,
         fingerprint=fingerprint if not user_id else None,

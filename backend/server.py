@@ -3765,6 +3765,11 @@ async def _enforce_statement_decoder_limit(request: Request, response: Response)
     Phase 3: a per-IP burst limit (10/hour) is applied to everyone, even paid
     users, to absorb scraping/abuse.
     """
+    # Allowlisted test IP (FREE_TOOL_UNLIMITED_IPS): unlimited, un-throttled
+    # decodes for internal / marketing-pixel testing. Skip burst caps + quota.
+    if _is_unlimited_ip(_client_ip(request)):
+        user = await _user_from_request(request)
+        return {"user": user, "is_free_use": False}
     # Burst-protect first, fail-open if Redis is down (paid users still work).
     await _rl.enforce(request, ("tools_unauth_ip", _rl._client_ip(request)))
     user = await _user_from_request(request)
@@ -7542,6 +7547,7 @@ from batch3_routes import (
     batch3_router, init_batch3_routes, migrate_batch3, run_purge_job,
     check_free_tool_usage, record_free_tool_usage, record_free_tool_usage_raw,
     _fingerprint_from_request as _sd_fingerprint,
+    _is_unlimited_ip as _is_unlimited_ip,
 )
 from batch3_billing import billing_router as batch3_billing_router, init_billing_routes
 from participant_profile import (
