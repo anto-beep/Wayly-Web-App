@@ -45,7 +45,9 @@ api.interceptors.request.use((config) => {
         const method = (config.method || "get").toLowerCase();
         if (_readOnlyMode && ["post", "put", "patch", "delete"].includes(method)) {
             if (!_isAllowedReadOnlyWrite(config.url || "")) {
-                toast.warning("Your plan is inactive. Reactivate to add or change anything.");
+                // Route through the same once-per-session hard paywall instead of
+                // a toast on every blocked write (no toast at all, per product).
+                try { window.dispatchEvent(new CustomEvent("wayly:trial-expired", { detail: { error: "trial_expired", read_only: true } })); } catch { /* ignore */ }
                 return Promise.reject({
                     config,
                     response: {

@@ -1,5 +1,12 @@
 # Wayly — current fork status (Jun 2026)
 
+**Just shipped (Jun 2026 — billing/paywall UX honesty fixes; WEB only; testing_agent iter388 PASS):**
+- Cancel-reason modal (Settings → Plan & Billing): selected reason now clearly highlighted (teal ring + border + bold + check icon + aria-pressed). `frontend/src/pages/Settings.jsx`.
+- TrialCountdownBanner: when a trial is cancelled (`user.cancel_at_period_end`), copy no longer falsely says the plan "starts automatically" — now "Access ends when your trial ends — you won't be charged." Also suppressed the misleading in-card trial box in Settings when cancelled. `frontend/src/components/TrialCountdownBanner.jsx`.
+- PaywallModal ("Your Wayly plan is inactive"): now shows at most ONCE per session (sessionStorage `wayly_paywall_shown`); removed the per-blocked-write "plan is inactive" toast in `frontend/src/lib/api.js` (blocked writes route through the single paywall, no toast).
+- Bing investigation (#4): NOT a code/system issue — robots.txt open, no noindex / no X-Robots-Tag, Bing `msvalidate.01` token served, homepage prerendered for bingbot (~128KB real content), valid sitemap.xml, IndexNow wired. Most likely external: Cloudflare Bot Fight / Super Bot Fight Mode challenging the real Bingbot (Google unaffected) and/or normal Bing new-domain index+rank lag. No code change made (user is checking Cloudflare + Bing Webmaster Tools).
+
+
 **Just shipped (Jun 2026 — nav refinements + mega-menu polish + landing paragraph widths; WEB only; self-verified via screenshots + computed-style):**
 - **Nav bar → full-width solid teal.** Replaced the floating glass bar with an edge-to-edge solid `#0E4D52` sticky header (inner content max-w-7xl px-6, h-16). Menu items spacing `gap-8`→`gap-10`. Mega menu now positioned relative to the content container (flush to nav content). Mobile drawer back to `top-16`.
 - **Primary CTA restyled.** "Start free trial" → "**Start Free Trial**", now clay `#A5512B` background with **white** text (was cyan bg + navy text); kept inset-shadow lift + `.cta-bloom` rotating conic glow on hover. Mobile drawer CTA matched.

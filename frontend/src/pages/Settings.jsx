@@ -582,11 +582,13 @@ function BillingTab() {
                                         <button
                                             key={r}
                                             type="button"
+                                            aria-pressed={selected}
                                             data-testid={`cancel-reason-${slug}`}
                                             onClick={() => setCancelReason(selected ? "" : r)}
-                                            className={`w-full text-left text-sm rounded-lg border px-3 py-2 transition-colors ${selected ? "border-primary-k bg-primary-k/[0.06] text-primary-k font-medium" : "border-kindred text-muted-k hover:border-primary-k/40"}`}
+                                            className={`w-full flex items-center justify-between gap-2 text-left text-sm rounded-lg border px-3 py-2.5 transition-all ${selected ? "border-primary-k bg-primary-k/10 text-primary-k font-semibold ring-2 ring-primary-k/30 shadow-sm" : "border-kindred text-muted-k hover:border-primary-k/40 hover:bg-primary-k/[0.03]"}`}
                                         >
-                                            {r}
+                                            <span>{r}</span>
+                                            {selected && <Check className="h-4 w-4 flex-none text-primary-k" />}
                                         </button>
                                     );
                                 })}
@@ -642,7 +644,7 @@ function BillingTab() {
                                 </p>
                             </div>
                             )}
-                            {hasActivePlan && sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() > Date.now() && (() => {
+                            {hasActivePlan && !sub?.cancel_at_period_end && sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() > Date.now() && (() => {
                                 const ms = new Date(sub.trial_ends_at).getTime() - Date.now();
                                 const days = Math.max(0, Math.ceil(ms / 86_400_000));
                                 const ending = days <= 2;

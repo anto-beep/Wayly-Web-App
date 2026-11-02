@@ -24,6 +24,7 @@ export default function TrialCountdownBanner({ className = "" }) {
 
     const status = user?.subscription_status;
     const endsAt = user?.trial_ends_at;
+    const cancelled = !!user?.cancel_at_period_end;
     const onTrial = status === "trialing" && !!endsAt;
 
     useEffect(() => {
@@ -57,9 +58,15 @@ export default function TrialCountdownBanner({ className = "" }) {
             className={`flex items-center gap-3 rounded-xl px-4 py-3 border bg-surface-2 border-kindred text-primary-k ${className}`}
         >
             <div className="flex-1 text-sm leading-relaxed">
-                {isGrace
-                    ? <>Your trial ends tomorrow. Your plan starts automatically, no action needed.</>
-                    : <>Trial: <strong>{dayLabel} remaining</strong>. Your plan starts automatically when the trial ends.</>}
+                {cancelled ? (
+                    isGrace
+                        ? <>Your trial ends tomorrow. Access ends then — you won&apos;t be charged.</>
+                        : <>Trial: <strong>{dayLabel} remaining</strong>. Access ends when your trial ends — you won&apos;t be charged.</>
+                ) : (
+                    isGrace
+                        ? <>Your trial ends tomorrow. Your plan starts automatically, no action needed.</>
+                        : <>Trial: <strong>{dayLabel} remaining</strong>. Your plan starts automatically when the trial ends.</>
+                )}
             </div>
             <Link
                 to="/settings/billing"

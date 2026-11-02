@@ -47,13 +47,23 @@ const PLAN_CARDS = [
     },
 ];
 
+const SESSION_SHOWN_KEY = "wayly_paywall_shown";
+
 export default function PaywallModal() {
     const [open, setOpen] = useState(false);
     const [busy, setBusy] = useState("");
     const { logout } = useAuth();
     const nav = useNavigate();
 
-    const handler = useCallback(() => setOpen(true), []);
+    // Show the hard paywall at most once per browser session. After it has
+    // appeared once, later blocked writes stay silent (no repeat popup, no toast).
+    const handler = useCallback(() => {
+        try {
+            if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return;
+            sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
+        } catch { /* ignore */ }
+        setOpen(true);
+    }, []);
 
     useEffect(() => {
         window.addEventListener("wayly:trial-expired", handler);
