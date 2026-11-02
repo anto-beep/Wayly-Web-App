@@ -639,10 +639,14 @@ async def cancel_subscription(request: Request):
     except stripe.error.StripeError:  # type: ignore[attr-defined]
         is_trialing = False
     try:
-        if is_trialing:
-            sub = stripe.Subscription.cancel(sub_id)  # cancel now → status "canceled"
-        else:
-            sub = stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
+        # Both trial and paid cancellations are scheduled for the END of the
+        # current period (the trial end date for trials). Access is retained
+        # until then and NO charge is taken — Stripe cancels at period end
+        # instead of converting the trial to a paid plan. (Previously a trial
+        # cancel revoked access immediately, which contradicted the cancel
+        # dialog's "you keep full access until <date>" promise and locked the
+        # tools while the trial was still valid.)
+        sub = stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
     except stripe.error.StripeError as e:  # type: ignore[attr-defined]
         logger.warning("Stripe cancel failed: %s", e)
         raise HTTPException(status_code=502, detail=str(getattr(e, "user_message", None) or e))
@@ -661,40 +665,24 @@ async def cancel_subscription(request: Request):
                 })
             except Exception:
                 pass
-        if is_trialing:
-            # Immediate view-only. Mirror into the read-model so the app
-            # reflects it without waiting on webhook delivery (preview safe).
-            from datetime import datetime, timezone
-            await _db.users.update_one(
-                {"id": user.get("id")},
-                {"$set": {"subscription_status": "canceled", "plan": "free",
-                          "cancel_at_period_end": False}},
-            )
-            await _db.subscriptions.update_one(
-                {"user_id": user.get("id")},
-                {"$set": {"status": "canceled", "plan": "free",
-                          "cancel_at_period_end": False,
-                          "updated_at": datetime.now(timezone.utc).isoformat()}},
-            )
-        else:
-            from datetime import datetime, timezone
-            period_end = _sub_period_end(sub)
-            await _db.users.update_one(
-                {"id": user.get("id")},
-                {"$set": {"cancel_at_period_end": True, "current_period_end": period_end}},
-            )
-            # Mirror into the read-model (db.subscriptions) that
-            # GET /api/billing/subscription serves, so the Plan & Billing UI
-            # flips to the "scheduled to end … Reactivate" state immediately,
-            # without waiting on Stripe webhook delivery (which is what forced
-            # a manual page refresh before).
-            await _db.subscriptions.update_one(
-                {"user_id": user.get("id")},
-                {"$set": {"cancel_at_period_end": True, "current_period_end": period_end,
-                          "updated_at": datetime.now(timezone.utc).isoformat()}},
-            )
-    return {"ok": True, "cancel_at_period_end": (not is_trialing),
-            "canceled_now": is_trialing, "current_period_end": _sub_period_end(sub)}
+        # Keep subscription_status + plan untouched (a trial stays "trialing",
+        # a paid plan stays "active") so the account keeps FULL access until the
+        # end date; only flag the scheduled cancellation and mirror the period
+        # end into the read-model GET /api/billing/subscription serves, so the
+        # Plan & Billing UI flips to "scheduled to end … Reactivate" immediately
+        # without waiting on a Stripe webhook.
+        period_end = _sub_period_end(sub)
+        await _db.users.update_one(
+            {"id": user.get("id")},
+            {"$set": {"cancel_at_period_end": True, "current_period_end": period_end}},
+        )
+        await _db.subscriptions.update_one(
+            {"user_id": user.get("id")},
+            {"$set": {"cancel_at_period_end": True, "current_period_end": period_end,
+                      "updated_at": datetime.now(timezone.utc).isoformat()}},
+        )
+    return {"ok": True, "cancel_at_period_end": True,
+            "canceled_now": False, "current_period_end": _sub_period_end(sub)}
 
 
 @payments_router.post("/reactivate-subscription")
