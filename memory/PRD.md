@@ -8187,3 +8187,10 @@ STATEMENT DECODER BUG ("Decode job expired" + free decode burned on failure):
 - `PriceCheckerTool.jsx`: result chip + computation rule now say "within/above/below the indicative range".
 - `InvoiceResultView.jsx` C12 title → "Rate above your provider's own rate"; `server.py` statement anomaly title "Above published price" → "Above provider's rate" (both compare to the provider's OWN rate, consistent with "providers set their own prices").
 - Left intact (already accurate / different concept): PPC banner + ProviderPriceExplainer + backend ppc_v2 (above/in/below range; only names "legislated cap" to deny one exists); the dedicated `policies.js` "price-caps-status" explainer (historical, states caps are deferred/not in force); budget rollover cap in pdf_reports; the real lifetime contribution cap (invoice C10, Ask Wayly). Pricing page + emails had no stale cap/published-price wording.
+
+## Nov 2026 — Microsoft Advertising (UET) tracking
+- Added UET tag (ti=343283166) in `frontend/src/components/analytics/GoogleAds.jsx`, mirroring the Google tag + Meta Pixel consent/gating rules.
+- Consent-first: `window.uetq.push('consent','default',{ad_storage:'denied'})` primed on public pages BEFORE anything loads. The bat.js tag is injected ONLY after advertising consent is granted ("Accept all" or advertising-on under "Choose"), which also pushes `consent/update/granted`. If consent isn't given, the tag never loads or fires.
+- Public pages only (same `isAppRoute` gate — never in /app, /onboarding, /journey, /adviser; never on result views). No custom UET events; `enableAutoSpaTracking:true` so /welcome page view = the auto conversion. No tool inputs/amounts/names/emails sent to Microsoft.
+- Privacy policy §17 (`Privacy.jsx`) + subprocessor list + overseas list + Cookie Policy (`Cookies.jsx`) updated to name Microsoft Advertising alongside Google and Meta with the same opt-out wording.
+- Verified in preview: no tag pre-consent; after Accept all, bat.js?ti=343283166 injects. Goes live on wayly.com.au after the user clicks Publish.

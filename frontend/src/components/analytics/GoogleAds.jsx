@@ -105,6 +105,57 @@ function grantMetaConsent() {
     }
 }
 
+// --- Microsoft Advertising (UET) ---------------------------------------
+// Same rules as the Google tag + Meta Pixel: public pages only, consent-first.
+// Consent default is set to DENIED before anything loads; the bat.js tag is
+// only injected once the visitor grants advertising consent, so it never loads
+// or fires otherwise. No custom events — enableAutoSpaTracking registers SPA
+// page views (the /welcome page view is the conversion). We never pass tool
+// inputs, amounts, names, emails or service details to Microsoft.
+const UET_TAG_ID = "343283166";
+
+let uetPrimed = false;
+function primeUetConsent() {
+    if (uetPrimed || typeof window === "undefined") return;
+    uetPrimed = true;
+    window.uetq = window.uetq || [];
+    window.uetq.push("consent", "default", { ad_storage: "denied" });
+}
+
+let uetInjected = false;
+function injectUetTag() {
+    if (uetInjected || typeof document === "undefined") return;
+    uetInjected = true;
+    if (document.getElementById("uet-bat-src")) return;
+    const o = { ti: UET_TAG_ID, enableAutoSpaTracking: true, ts: Date.now() };
+    window.uetq = window.uetq || [];
+    const n = document.createElement("script");
+    n.src = "https://bat.bing.net/bat.js?ti=" + o.ti;
+    n.async = true;
+    n.id = "uet-bat-src";
+    n.onload = n.onreadystatechange = function () {
+        const s = this.readyState;
+        if (s && s !== "loaded" && s !== "complete") return;
+        o.q = window.uetq;
+        window.uetq = new window.UET(o);
+        window.uetq.push("pageLoad");
+        n.onload = n.onreadystatechange = null;
+    };
+    const i = document.getElementsByTagName("script")[0];
+    i.parentNode.insertBefore(n, i);
+}
+
+let uetGranted = false;
+function grantUetConsent() {
+    if (typeof window === "undefined") return;
+    window.uetq = window.uetq || [];
+    if (!uetGranted) {
+        window.uetq.push("consent", "update", { ad_storage: "granted" });
+        uetGranted = true;
+    }
+    injectUetTag();
+}
+
 export default function GoogleAds() {
     const { pathname } = useLocation();
     const publicRoute = !isAppRoute(pathname);
@@ -117,7 +168,8 @@ export default function GoogleAds() {
         if (!publicRoute) return;
         injectGoogleTag();
         injectMetaPixel();
-        if (consent && consent.ads) { updateAdConsent(true); grantMetaConsent(); }
+        primeUetConsent();
+        if (consent && consent.ads) { updateAdConsent(true); grantMetaConsent(); grantUetConsent(); }
     }, [publicRoute, consent]);
 
     // Meta Pixel PageView on every public page (held until consent is granted).
@@ -131,7 +183,7 @@ export default function GoogleAds() {
     const decide = useCallback((ads) => {
         const value = { ads: !!ads, v: 1, ts: Date.now() };
         try { localStorage.setItem(CONSENT_KEY, JSON.stringify(value)); } catch { /* ignore */ }
-        if (ads) { updateAdConsent(true); grantMetaConsent(); }
+        if (ads) { updateAdConsent(true); grantMetaConsent(); grantUetConsent(); }
         setChoosing(false);
         setConsent(value);
     }, []);

@@ -36,7 +36,7 @@ export default function Cookies() {
                 <li>Onboarding progress</li>
             </ul>
 
-            <h2>Advertising Cookies (Google Ads &amp; Meta) — Off by Default</h2>
+            <h2>Advertising Cookies (Google Ads, Meta &amp; Microsoft) — Off by Default</h2>
             <ul>
                 <li>
                     <strong>Google Ads / Google tag:</strong> measures which of our Google ads lead people
@@ -51,6 +51,13 @@ export default function Cookies() {
                     people to start a Wayly trial. It follows the exact same rule — <strong>revoked by
                     default</strong>, nothing sent to Meta until you accept advertising in the banner, the
                     same privacy limits, and never loaded inside the signed-in app or dashboard.
+                </li>
+                <li>
+                    <strong>Microsoft Advertising (UET tag):</strong> measures which of our Microsoft and
+                    Bing ads lead people to start a Wayly trial. It follows the exact same rule —
+                    consent <strong>denied by default</strong>, the tag never loads or fires until you
+                    accept advertising in the banner, the same privacy limits, and never loaded inside the
+                    signed-in app or dashboard.
                 </li>
             </ul>
 
