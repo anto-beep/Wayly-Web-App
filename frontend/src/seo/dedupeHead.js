@@ -49,8 +49,43 @@ export function dedupeHead() {
     }
 }
 
+// Remove ONLY prerendered (`data-prerendered`) copies, and only when a live
+// (React-managed) copy of the same tag already exists. Never touches a
+// React-managed node, so it is safe to run on every <head> mutation, including
+// during client-side navigation. Used by observeDedupeHead().
+export function dedupePrerenderedHead() {
+    if (typeof document === "undefined") return;
+    const head = document.head;
+    if (!head) return;
+    for (const sel of SELECTORS) {
+        const els = Array.from(head.querySelectorAll(sel));
+        if (els.length <= 1) continue;
+        const hasLive = els.some((e) => !e.hasAttribute("data-prerendered"));
+        if (!hasLive) continue; // never drop to zero
+        for (const el of els) {
+            if (el.hasAttribute("data-prerendered")) el.remove();
+        }
+    }
+}
+
+// Deterministic dedupe: watch <head> and drop the prerendered copy the moment
+// React 19 hoists its own. Replaces the timing race of scheduleDedupeHead(),
+// where a snapshot taken between React's commit and the next timer (0/200/800/
+// 2000 ms) captured two titles, descriptions and canonicals. Call BEFORE
+// hydrateRoot. Stays connected so client-side navigation is covered too.
+export function observeDedupeHead() {
+    if (typeof window === "undefined" || typeof MutationObserver === "undefined") return null;
+    const head = document.head;
+    if (!head) return null;
+    const observer = new MutationObserver(() => dedupePrerenderedHead());
+    observer.observe(head, { childList: true });
+    dedupePrerenderedHead();
+    return observer;
+}
+
 // React 19 commits hoisted metadata asynchronously after hydration; run a few
-// times over the first couple of seconds to catch it, then stop.
+// times over the first couple of seconds to catch it, then stop. Kept as a
+// fallback behind observeDedupeHead().
 export function scheduleDedupeHead() {
     if (typeof window === "undefined") return;
     const runs = [0, 200, 800, 2000];

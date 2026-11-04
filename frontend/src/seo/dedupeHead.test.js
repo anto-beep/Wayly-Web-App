@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { dedupeHead } from "./dedupeHead";
+import { dedupeHead, dedupePrerenderedHead, observeDedupeHead } from "./dedupeHead";
 
 function setHead(html) {
     document.head.innerHTML = html;
@@ -54,5 +54,53 @@ describe("dedupeHead (SEO-1.1.1 runtime de-duplication)", () => {
         dedupeHead();
         expect(document.head.querySelectorAll("title").length).toBe(1);
         expect(document.head.querySelectorAll('meta[name="description"]').length).toBe(1);
+    });
+});
+
+describe("dedupePrerenderedHead + observeDedupeHead (no timing gap)", () => {
+    afterEach(() => { document.head.innerHTML = ""; });
+
+    test("dedupePrerenderedHead removes only prerendered copies when a live copy exists", () => {
+        setHead(`
+      <title data-prerendered="1">Pre</title>
+      <title>Live</title>
+      <link data-prerendered="1" rel="canonical" href="https://x/a">
+      <link rel="canonical" href="https://x/a">
+    `);
+        dedupePrerenderedHead();
+        expect(document.head.querySelectorAll("title").length).toBe(1);
+        expect(document.head.querySelector("title").textContent).toBe("Live");
+        expect(document.head.querySelectorAll('link[rel="canonical"]').length).toBe(1);
+    });
+
+    test("dedupePrerenderedHead never removes a React-managed node or drops to zero", () => {
+        setHead(`<title>LiveA</title><title>LiveB</title>`);
+        dedupePrerenderedHead();
+        expect(document.head.querySelectorAll("title").length).toBe(2); // untouched
+        setHead(`<title data-prerendered="1">Only</title>`);
+        dedupePrerenderedHead();
+        expect(document.head.querySelectorAll("title").length).toBe(1);
+    });
+
+    test("observer removes the prerendered copy as soon as a live tag is inserted", async () => {
+        setHead(`
+      <title data-prerendered="1">Pre</title>
+      <meta data-prerendered="1" name="description" content="pre">
+      <link data-prerendered="1" rel="canonical" href="https://x/a">
+    `);
+        const observer = observeDedupeHead();
+        expect(document.head.querySelectorAll("title").length).toBe(1);
+        // Simulate React 19 hoisting its own copies.
+        const t = document.createElement("title"); t.textContent = "Live";
+        const m = document.createElement("meta"); m.setAttribute("name", "description"); m.setAttribute("content", "live");
+        const c = document.createElement("link"); c.setAttribute("rel", "canonical"); c.setAttribute("href", "https://x/a");
+        document.head.append(t, m, c);
+        await Promise.resolve(); // MutationObserver callbacks run as microtasks
+        await Promise.resolve();
+        expect(document.head.querySelectorAll("title").length).toBe(1);
+        expect(document.head.querySelector("title").textContent).toBe("Live");
+        expect(document.head.querySelectorAll('meta[name="description"]').length).toBe(1);
+        expect(document.head.querySelectorAll('link[rel="canonical"]').length).toBe(1);
+        observer.disconnect();
     });
 });

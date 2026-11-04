@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import "@/index.css";
 import App from "@/App";
 import { initSentry, Sentry } from "@/lib/sentry";
-import { scheduleDedupeHead } from "@/seo/dedupeHead";
+import { scheduleDedupeHead, observeDedupeHead } from "@/seo/dedupeHead";
 
 initSentry();
 
@@ -46,9 +46,12 @@ const app = (
 // is an ELEMENT node, not accidental whitespace/text injection).
 const firstChild = rootEl?.firstElementChild;
 if (firstChild) {
-    ReactDOM.hydrateRoot(rootEl, app);
     // Prerendered page: React 19 re-hoists metadata on hydration, duplicating
-    // the react-snap head tags. Collapse the duplicates once React commits.
+    // the react-snap head tags. Observe <head> BEFORE hydrating so the
+    // prerendered copy is removed the moment React inserts its own (no timing
+    // gap for a crawler snapshot to land in). The timers stay as a fallback.
+    observeDedupeHead();
+    ReactDOM.hydrateRoot(rootEl, app);
     scheduleDedupeHead();
 } else {
     ReactDOM.createRoot(rootEl).render(app);
