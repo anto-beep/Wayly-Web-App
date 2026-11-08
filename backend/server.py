@@ -8919,6 +8919,33 @@ async def _start_trial_scheduler():
 
 
 @app.on_event("startup")
+async def _seed_app_review_account():
+    """Provision / repair the Apple App Review demo account (samburke@test.com)
+    on every boot so production is fixed automatically on deploy. Idempotent
+    and fully best-effort — it NEVER blocks or crashes startup. Runs as an
+    isolated subprocess after a short delay so the HTTP server is listening."""
+    import sys as _sys
+
+    async def _run():
+        await asyncio.sleep(75)  # let uvicorn start serving before we call it
+        try:
+            script = os.path.join(os.path.dirname(__file__), "seed_app_review.py")
+            proc = await asyncio.create_subprocess_exec(
+                _sys.executable, script,
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT,
+            )
+            out, _ = await asyncio.wait_for(proc.communicate(), timeout=180)
+            logger.info("[app-review-seed] %s", (out or b"").decode(errors="ignore")[-1500:])
+        except Exception as e:  # pragma: no cover
+            logger.warning("[app-review-seed] failed: %s", e)
+
+    try:
+        asyncio.create_task(_run())
+    except Exception as e:  # pragma: no cover
+        logger.warning("[app-review-seed] could not schedule: %s", e)
+
+
+@app.on_event("startup")
 async def _program_reference_bootstrap():
     """Phase 1 scenario engine: seed program_reference and load the cache.
 
