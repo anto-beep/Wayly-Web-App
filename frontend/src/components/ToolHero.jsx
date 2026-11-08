@@ -18,6 +18,7 @@ import {
 import { TOOL_CONTENT } from "@/data/toolContent";
 import ToolEntriesButton from "@/components/ToolEntriesButton";
 import { useTheme } from "@/uxf/theme";
+import { useAuth } from "@/context/AuthContext";
 
 const SOFT = {
     "#0E4D52": "#E9F2F1",
@@ -76,6 +77,7 @@ function HeroArt({ accent, variant }) {
 
 export default function ToolHero({ toolKey, wide = false }) {
     const { isDark } = useTheme();
+    const { user } = useAuth();
     const c = TOOL_CONTENT[toolKey];
     if (!c) return null;
     const v = TOOL_VISUALS[toolKey] || TOOL_VISUALS._default;
@@ -117,17 +119,19 @@ export default function ToolHero({ toolKey, wide = false }) {
                 <p className="relative mt-3 text-base sm:text-lg text-primary-k/75 leading-relaxed max-w-6xl" style={heroDescStyle}>
                     {c.heroOneLiner}
                 </p>
-                <div className="relative mt-3">
-                    <span
-                        data-testid={`tool-plan-badge-${toolKey}`}
-                        className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold"
-                        style={{ borderColor: bannerBorder, color: eyebrowColor }}
-                    >
-                        {toolKey === "statement-decoder"
-                            ? "1 free decode every 120 days \u00b7 Unlimited with a Wayly plan"
-                            : "Included in your 7-day free trial"}
-                    </span>
-                </div>
+                {!user && (
+                    <div className="relative mt-3">
+                        <span
+                            data-testid={`tool-plan-badge-${toolKey}`}
+                            className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold"
+                            style={{ borderColor: bannerBorder, color: eyebrowColor }}
+                        >
+                            {toolKey === "statement-decoder"
+                                ? "1 free decode every 120 days \u00b7 Unlimited with a Wayly plan"
+                                : "Included in your 7-day free trial"}
+                        </span>
+                    </div>
+                )}
                 <div className="relative">
                     <ToolEntriesButton toolKey={toolKey} className="mt-5" />
                 </div>
