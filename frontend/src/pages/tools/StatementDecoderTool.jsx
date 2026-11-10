@@ -314,7 +314,8 @@ export default function StatementDecoderTool() {
                         )}
                     </div>
                 )}
-                {/* Entry point for visitors who don't have a statement to hand. */}
+                {/* Entry point for LOGGED-OUT visitors who don't have a statement to hand. */}
+                {!user && (
                 <div className="mb-6 rounded-2xl border border-kindred bg-surface p-5 sm:p-6" data-testid="sd-start-here">
                     <div className="flex items-center gap-2">
                         <HelpCircle className="h-5 w-5 text-primary-k" />
@@ -355,6 +356,7 @@ export default function StatementDecoderTool() {
                         </button>
                     </div>
                 </div>
+                )}
 
                 <div className="bg-surface border border-kindred rounded-2xl p-6">
                     <div className="flex gap-2 flex-wrap" role="tablist">
