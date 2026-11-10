@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { track } from "@/lib/analytics";
 import { Sparkles, Loader2, AlertTriangle, Check, Upload, FileText, X } from "lucide-react";
+import { SAMPLE_STATEMENT } from "@/data/sampleStatement";
 
 const ACCEPT_ATTR = ".pdf,.doc,.docx,.txt,.csv,.jpg,.jpeg,.png,.heic,.heif,.webp";
 
@@ -28,7 +29,10 @@ export default function StatementDecoderEmbed({ compact = false }) {
         pickFile(f);
     };
 
-    const decode = async () => {
+    const decode = async (opts = {}) => {
+        const sampleText = typeof opts?.sampleText === "string" ? opts.sampleText : null;
+        const isExample = !!sampleText;
+        if (isExample) { setMode("text"); setText(sampleText); }
         setLoading(true);
         setError(null);
         setResult(null);
@@ -38,7 +42,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
 
             while (true) {
                 try {
-                    if (mode === "file") {
+                    if (mode === "file" && !isExample) {
                         if (!file) throw new Error("Please choose a file to decode.");
                         const fd = new FormData();
                         fd.append("file", file);
@@ -47,7 +51,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
                             timeout: 120_000,
                         }));
                     } else {
-                        ({ data: initial } = await api.post("/public/decode-statement-text", { text }, { timeout: 90_000 }));
+                        ({ data: initial } = await api.post("/public/decode-statement-text", { text: isExample ? sampleText : text, example: isExample }, { timeout: 90_000 }));
                     }
                     break;
                 } catch (postErr) {
@@ -191,9 +195,19 @@ export default function StatementDecoderEmbed({ compact = false }) {
                 </div>
             )}
 
-            <div className="mt-3 flex items-center justify-end flex-wrap gap-2">
+            <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
                 <button
-                    onClick={decode}
+                    type="button"
+                    onClick={() => decode({ sampleText: SAMPLE_STATEMENT })}
+                    disabled={loading}
+                    data-testid="decoder-try-sample"
+                    className="text-sm text-primary-k underline underline-offset-2 hover:text-[#091D33] disabled:opacity-60 inline-flex items-center gap-1.5"
+                >
+                    <FileText className="h-4 w-4" /> Try a sample statement
+                </button>
+                <button
+                    type="button"
+                    onClick={() => decode()}
                     disabled={loading || !canSubmit}
                     data-testid="decoder-submit"
                     className="bg-primary-k text-white rounded-full px-5 py-2 text-sm hover:bg-[#091D33] transition-colors disabled:opacity-60 inline-flex items-center gap-2"

@@ -73,7 +73,7 @@ export default function Signup() {
         email: "",
         mobile: "",
         password: "",
-        role: "caregiver",
+        role: ["caregiver", "participant"].includes(params.get("role")) ? params.get("role") : "caregiver",
         // PERSONA-1 §C, persona details captured on signup so the account
         // is persona-correct from day zero.
         care_recipient_first_name: "",

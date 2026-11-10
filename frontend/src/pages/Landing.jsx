@@ -18,21 +18,21 @@ import INDEX1 from "@/data/index1";
 const PERSONAS = [
     {
         id: "caregiver",
-        title: "I'm helping a loved one",
+        title: "I am helping a loved one",
         sub: "Caregiver",
         blurb: "Decode statements, track funding and coordinate the whole family in one place.",
         cta: "Start free trial",
-        href: "/signup",
-        primary: true,
+        href: "/signup?role=caregiver",
         icon: Users2,
     },
     {
         id: "participant",
-        title: "I'm on Support at Home",
+        title: "I am on Support at Home",
         sub: "I receive care",
         blurb: "See your budget, your contributions and what every charge really means.",
         cta: "Start free trial",
-        href: "/signup",
+        href: "/signup?role=participant",
+        primary: true,
         icon: UserRound,
     },
 ];
@@ -124,11 +124,11 @@ export default function Landing() {
 
             {/* PERSONA ON-RAMP */}
             <section className="mx-auto max-w-7xl px-6 pt-10 pb-6 sm:pt-14" data-testid="persona-section">
-                <div className="max-w-2xl mx-auto text-center">
+                <div className="text-center">
                     <span className="overline">Two quick ways in</span>
                     <h2 className="font-heading text-3xl sm:text-4xl text-[#0E2A47] mt-3">Which describes you best?</h2>
-                    <p className="mt-3 text-base text-muted-k leading-relaxed">
-                        On 01/11/2025, Support at Home replaced Home Care Packages. Pick the path that fits your household and we will tailor the next step for you.
+                    <p className="mt-3 text-base text-muted-k leading-relaxed lg:whitespace-nowrap">
+                        On 1 November 2025, Support at Home replaced Home Care Packages. Pick the path that fits your household and we will tailor the next step for you.
                     </p>
                 </div>
 
@@ -186,8 +186,8 @@ export default function Landing() {
             {/* TRY THE DECODER — free, no signup, in its own breathing space */}
             <section className="mx-auto max-w-7xl px-6 pt-4 pb-10 sm:pb-14" data-testid="try-decoder-section">
                 <div className="text-center mb-6">
-                    <span className="overline">Free, no signup</span>
-                    <h2 className="font-heading text-2xl sm:text-3xl text-[#0E2A47] mt-2">See what your statement really says</h2>
+                    <span className="overline">Free to try</span>
+                    <h2 className="font-heading text-2xl sm:text-3xl text-[#0E2A47] mt-2">See What Your Statement Really Means</h2>
                     <p className="mt-2 text-sm text-muted-k max-w-2xl mx-auto leading-relaxed">
                         Paste the text or upload the file and Wayly explains every line in plain English, in about a minute.
                     </p>
