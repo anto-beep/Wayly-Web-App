@@ -78,6 +78,30 @@ export function SmartAISummary({
 
   // Read-aloud: uses the device's built-in voice (no network, no cost, no key).
   const [speaking, setSpeaking] = useState(false);
+  const voiceRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    Speech.getAvailableVoicesAsync()
+      .then((vs) => {
+        if (!alive || !Array.isArray(vs) || !vs.length) return;
+        const score = (v: any) => {
+          const id = `${v.identifier || ""} ${v.name || ""}`.toLowerCase();
+          const lang = (v.language || "").toLowerCase();
+          let s = 0;
+          if (lang.startsWith("en-au")) s += 100;
+          else if (lang.startsWith("en-gb")) s += 45;
+          else if (lang.startsWith("en")) s += 10;
+          if (/enhanced|premium|neural|siri/.test(id)) s += 30;
+          if (/karen|catherine|natasha|aria|libby/.test(id)) s += 20;
+          if ((v as any).quality === Speech.VoiceQuality?.Enhanced) s += 25;
+          return s;
+        };
+        const best = vs.slice().sort((a, b) => score(b) - score(a))[0];
+        if (best && (best.language || "").toLowerCase().startsWith("en")) voiceRef.current = best.identifier;
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
   const toggleSpeak = useCallback(() => {
     if (speaking) {
       Speech.stop();
@@ -88,6 +112,9 @@ export function SmartAISummary({
     setSpeaking(true);
     Speech.speak(summary, {
       language: "en-AU",
+      voice: voiceRef.current,
+      pitch: 1.1,
+      rate: 0.96,
       onDone: () => setSpeaking(false),
       onStopped: () => setSpeaking(false),
       onError: () => setSpeaking(false),

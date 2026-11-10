@@ -1,0 +1,36 @@
+{
+  "summary": "Verified Statement Decoder 'Wayly Summary' parity across all entry points. HOMEPAGE embed and TOOLS page both render the SAME rich service-by-service SmartAISummary (pageKey=statement-decoder-run, byte-identical 1177-char narrative naming personal care/nursing/physio/occupational with $ figures). Homepage embed shows all 3 stream stat cards (Clinical $550, Independence $340, Everyday Living $0). Tools page stream breakdown pads to 3 core streams including Everyday Living card (stream-card-Everyday Living present). Mobile parity confirmed by code review (same pageKey + buildServiceContext in /app/mobile/app/tool/[slug].tsx). Tamper protection verified: editing the textarea and clicking Decode routes through the normal free-decode path (example:false) — the retry after a successful free decode was correctly 429-rate-limited by the server, confirming the tampered request was NOT treated as the unlimited example.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "StatementDecoderEmbed", "issue": "React warning: 'Each child in a list should have a unique key prop' logged on homepage decoder render (minor hygiene, not user-visible).", "selector": "[data-testid='decoder-result']", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Minor: fix missing React key prop warning inside StatementDecoderEmbed result rendering (likely the 3 stream stat cards map or the anomalies list). Non-blocking."
+  ],
+  "critical_code_review_comments": [
+    "StatementDecoderEmbed (lines 231-252): correctly guards SmartAISummary behind result.publishable !== false and feeds the same context shape (provider/period/gross/you_paid/government_paid + spread buildServiceContext) as the tools page — parity by construction.",
+    "DecoderResultView streamsDisplay (lines 247-258): correctly normalises 'EverydayLiving' -> 'Everyday Living' and pads the 3 core streams with $0 placeholders, preserving any extra streams (ATHM, CareMgmt) appended after.",
+    "Mobile /app/mobile/app/tool/[slug].tsx (lines 298-315) uses the same pageKey='statement-decoder-run' and buildServiceContext spread — style/structure parity guaranteed by the shared backend generator."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Rich Wayly Summary (statement-decoder-run) now renders identically on homepage embed and tools page (1177-char service-by-service narrative). Everyday Living $0 card now appears on both. Tamper protection OK (edited sample goes through example=false path; confirmed via subsequent 429 after the one free decode was consumed). Mobile was not re-run end-to-end due to shared pageKey+context; code is identical to the tools page.",
+  "rca of the issue": "Root cause (fixed by main agent this iteration): (1) StatementDecoderEmbed previously rendered result.summary (thin text) instead of SmartAISummary('statement-decoder-run'), so the homepage produced a different (thinner) summary than the tools page even though both ran the same backend decode. Now both render SmartAISummary with the same context — same LLM prompt key, same inputs, same style. (2) DecoderResultView only iterated audit.stream_breakdown, which excluded $0 streams returned implicitly by the backend; now a streamsDisplay array pads Clinical/Independence/Everyday Living so the 3-card UI always shows. (3) Tamper protection is intact because decode() in the embed only passes example=true when an explicit sampleText is provided; a plain Decode click never sets it."
+}

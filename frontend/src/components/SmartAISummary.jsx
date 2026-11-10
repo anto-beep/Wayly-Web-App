@@ -3,6 +3,29 @@ import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info, Volume2, Square
 import { api } from "@/lib/api";
 import { sanitizeAI } from "@/lib/sanitizeAI";
 
+// Pick the most natural-sounding Australian English voice the device offers so
+// the read-aloud sounds like a person, not a flat robot. Prefers en-AU, then a
+// neural/enhanced engine, then known pleasant AU/female voices.
+function pickReadAloudVoice() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+  const score = (v) => {
+    const name = (v.name || "").toLowerCase();
+    const lang = (v.lang || "").toLowerCase();
+    let s = 0;
+    if (lang.startsWith("en-au")) s += 100;
+    else if (lang.startsWith("en-gb")) s += 45;
+    else if (lang.startsWith("en")) s += 10;
+    if (/natural|neural|online|enhanced|premium|siri/.test(name)) s += 30;
+    if (/karen|catherine|natasha|aria|jenny|libby|wavenet|neural2/.test(name)) s += 20;
+    if (/female|woman/.test(name)) s += 8;
+    if (/compact|eloquence|pico|espeak|robot/.test(name)) s -= 20;
+    return s;
+  };
+  return voices.slice().sort((a, b) => score(b) - score(a))[0] || null;
+}
+
 /**
  * SmartAISummary
  *
@@ -34,6 +57,14 @@ export default function SmartAISummary({
 }) {
   const [state, setState] = useState({ status: "idle", data: null });
   const abortRef = useRef(null);
+  const voiceRef = useRef(null);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    const load = () => { const v = pickReadAloudVoice(); if (v) voiceRef.current = v; };
+    load();
+    window.speechSynthesis.addEventListener?.("voiceschanged", load);
+    return () => window.speechSynthesis.removeEventListener?.("voiceschanged", load);
+  }, []);
 
   const run = useCallback(
     async (refresh = false) => {
@@ -80,8 +111,11 @@ export default function SmartAISummary({
     const text = sanitizeAI(state.data?.summary) || "";
     if (!text) return;
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-AU";
-    u.rate = 0.98;
+    const voice = voiceRef.current || pickReadAloudVoice();
+    if (voice) u.voice = voice;
+    u.lang = voice?.lang || "en-AU";
+    u.rate = 0.96;
+    u.pitch = 1.1;
     u.onend = () => setSpeaking(false);
     u.onerror = () => setSpeaking(false);
     synth.cancel();

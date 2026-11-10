@@ -184,7 +184,7 @@ function FeeBreakdown({ extracted, summary }) {
             </dl>
             {/* Total row (emphasised) */}
             <div className="flex items-center justify-between gap-3 border-t-2 border-primary-k/15 bg-surface-2 px-5 py-3.5" data-testid="decoder-fee-total">
-                <dt className="font-heading text-base text-primary-k">Total billed</dt>
+                <dt className="font-heading text-lg text-primary-k">Total Billed</dt>
                 <dd className="font-heading text-lg tabular-nums text-primary-k">{aud(total)}</dd>
             </div>
             {/* Reconcile note — prominent pill */}
@@ -240,6 +240,22 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll })
     const counts = audit.anomaly_count || { high: 0, medium: 0, low: 0, advisory: 0 };
     const streams = audit.stream_breakdown || [];
     const items = extracted.line_items || [];
+    // Always surface the three core Support at Home streams (Clinical,
+    // Independence, Everyday Living) even when a stream had $0 this period, so
+    // the breakdown matches the home-page decoder and the family can see every
+    // stream is accounted for.
+    const _normEL = (k) => (k === "EverydayLiving" ? "Everyday Living" : k);
+    const _byStream = {};
+    streams.forEach((s) => { _byStream[_normEL(s.stream)] = { ...s, stream: _normEL(s.stream) }; });
+    const _zeroStream = (k) => ({ stream: k, line_item_count: 0, gross_total: 0, participant_contribution: 0, government_paid: 0 });
+    const CORE_STREAM_ORDER = ["Clinical", "Independence", "Everyday Living"];
+    const streamsDisplay = [
+        ...CORE_STREAM_ORDER.map((k) => _byStream[k] || _zeroStream(k)),
+        ...streams
+            .map((s) => _normEL(s.stream))
+            .filter((k) => !CORE_STREAM_ORDER.includes(k))
+            .map((k) => _byStream[k]),
+    ];
     // DEC-1 publish gate: the backend refuses to publish a plain-English
     // summary when the statement's own numbers do not reconcile. In that
     // case we must NOT present the (untrusted) totals banner as fact.
@@ -473,7 +489,7 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll })
               <TooltipProvider delayDuration={150}>
                 <div className={`rounded-xl border-l-4 p-5 mb-4 flex items-center gap-4 shadow-sm ${topBanner.cls}`} data-testid="anomaly-top-banner">
                     <topBanner.Icon className="h-7 w-7 flex-shrink-0" />
-                    <div className="text-base md:text-lg font-semibold leading-snug">{topBanner.text}</div>
+                    <div className="text-sm font-semibold leading-snug">{topBanner.text}</div>
                 </div>
 
                 {bandGroups.map((g) => (
@@ -487,9 +503,9 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll })
                 <section data-testid="decoder-stream-breakdown">
                     <div className="overline mb-3">Where the money went</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                        {streams.map((s, sIdx) => {
+                        {streamsDisplay.map((s, sIdx) => {
                             const isOpen = !!openStreams[s.stream];
-                            const itemsInStream = items.filter((li) => li.stream === s.stream && !li.is_cancellation);
+                            const itemsInStream = items.filter((li) => _normEL(li.stream) === s.stream && !li.is_cancellation);
                             const STREAM_TONES = ["#0E4D52", "#A5512B", "#B23A2E", "#425F47", "#8A4423", "#0A3E42"];
                             const tone = STREAM_TONES[sIdx % STREAM_TONES.length];
                             return (
@@ -501,7 +517,7 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll })
                                         className="w-full text-left p-4 transition-opacity hover:opacity-90"
                                     >
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] uppercase tracking-[0.16em] text-white/70">{STREAM_LABEL[s.stream] || s.stream}</span>
+                                            <span className="text-[10px] uppercase tracking-[0.16em] text-white">{STREAM_LABEL[s.stream] || s.stream}</span>
                                             {isOpen ? <ChevronUp className="h-3.5 w-3.5 text-white/80" /> : <ChevronDown className="h-3.5 w-3.5 text-white/80" />}
                                         </div>
                                         <div className="mt-1.5 text-xl text-white"><NumberMono>{aud(s.gross_total)}</NumberMono></div>
