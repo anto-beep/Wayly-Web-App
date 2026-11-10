@@ -49,7 +49,7 @@ export default function SmartAISummary({
         const { data } = await api.post(
           "/insights/summarise",
           { page_key: pageKey, context, refresh },
-          { signal: ctrl.signal }
+          { signal: ctrl.signal, timeout: 45_000 }
         );
         setState({ status: "ready", data });
       } catch (err) {
@@ -117,6 +117,27 @@ export default function SmartAISummary({
               <div className="h-3.5 w-[92%] rounded-full bg-primary-k/10" />
               <div className="h-3.5 w-[84%] rounded-full bg-primary-k/10" />
               <div className="h-3.5 w-[68%] rounded-full bg-primary-k/10" />
+            </div>
+          ) : state.status === "error" ? (
+            <div
+              data-testid={`smart-ai-summary-error-${pageKey}`}
+              className="mt-3 flex flex-col gap-3 rounded-lg border border-terracotta/30 bg-terracotta/5 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
+              role="alert"
+            >
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-terracotta" aria-hidden="true" />
+                <p className="text-sm leading-snug text-primary-k/90">
+                  We couldn't put your summary together just now. The rest of your results are ready below.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => run(true)}
+                data-testid={`smart-ai-summary-retry-${pageKey}`}
+                className="inline-flex flex-none items-center gap-1.5 rounded-full bg-primary-k px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#091D33] transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Try again
+              </button>
             </div>
           ) : (
             <div

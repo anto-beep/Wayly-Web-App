@@ -43,31 +43,35 @@ const HOW_TO_VIDEO_URL = "https://customer-assets-eiarnc6j.emergentagent.net/job
 
 // Clearly-fictional sample used by the "Try it with an example statement"
 // button so a visitor without their own statement can still see the tool work.
+// Built from INDEX-1 (Schedule of Subsidies and Supplements): a Level 4
+// participant, all services as Clinical Supports with $0 participant
+// contribution (no means-tested figures), personal care dated after
+// 01/10/2026 so the "now funded as Clinical Care" note shows, and no GST
+// lines, so the decoder reconciles it to a clean, calm result.
+// KEEP BYTE-FOR-BYTE IN SYNC with _OFFICIAL_SAMPLE_STATEMENT in
+// backend/server.py (the example-decode free/unlimited exemption matches on it).
 const SAMPLE_STATEMENT = `Sunrise Home Care Pty Ltd
-Support at Home monthly statement
-Participant: Jane Sample
-Participant ID: SAMPLE-000123
+Support at Home monthly statement (example, not real data)
+Participant: Jane Sample (full Age Pension)
 Classification level: Level 4
 Statement period: 01/10/2026 to 31/10/2026
-Quarterly budget: $7,250.00
-Carried forward from last quarter: $420.00
-Total available this quarter: $7,670.00
-Services delivered this month
-02/10/2026  Personal care (showering)   Clinical Supports    1.0 hr   $85.00    Contribution $0.00
-09/10/2026  Personal care (showering)   Clinical Supports    1.0 hr   $85.00    Contribution $0.00
-05/10/2026  Domestic assistance         Everyday Living      2.0 hr   $136.00   Contribution $23.80
-19/10/2026  Domestic assistance         Everyday Living      2.0 hr   $136.00   Contribution $23.80
-12/10/2026  Gardening                   Everyday Living      1.5 hr   $108.00   Contribution $18.90
-14/10/2026  Physiotherapy               Clinical Supports    1.0 hr   $150.00   Contribution $0.00
-21/10/2026  Transport to appointment    Independence         1 trip   $45.00    Contribution $2.25
-26/10/2026  Social support (group)      Independence         3.0 hr   $120.00   Contribution $6.00
-Care management (10%)                                                 $86.50    Contribution $0.00
-Total cost of services: $951.50
-Government funded: $877.25
-Participant contribution: $74.25
-Spent this quarter to date: $951.50
-Remaining this quarter: $6,718.50
-Lifetime contributions to date: $1,312.40`;
+Quarterly budget (Level 4): $7,632.04
+Total available this quarter: $7,632.04
+Services delivered this month (all Clinical Supports, $0 participant contribution)
+02/10/2026  Personal care (showering)   1.0 hr   $85.00    Contribution $0.00
+09/10/2026  Personal care (showering)   1.0 hr   $85.00    Contribution $0.00
+16/10/2026  Personal care (showering)   1.0 hr   $85.00    Contribution $0.00
+23/10/2026  Personal care (showering)   1.0 hr   $85.00    Contribution $0.00
+07/10/2026  Nursing visit (wound care)  1.0 hr   $120.00   Contribution $0.00
+21/10/2026  Nursing visit (wound care)  1.0 hr   $120.00   Contribution $0.00
+14/10/2026  Physiotherapy               1.0 hr   $150.00   Contribution $0.00
+28/10/2026  Occupational therapy        1.0 hr   $160.00   Contribution $0.00
+Total cost of services: $890.00
+Government funded: $890.00
+Participant contribution: $0.00
+Spent this quarter to date: $890.00
+Remaining this quarter: $6,742.04
+Lifetime contributions to date: $0.00`;
 
 const _toolJsonLd = (cfg) => {
     const blocks = [softwareApplicationLd({
@@ -192,7 +196,7 @@ export default function StatementDecoderTool() {
                         fd.append("file", file);
                         ({ data: initial } = await api.post("/public/decode-statement", fd, { headers: { "Content-Type": "multipart/form-data" }, timeout: 90_000 }));
                     } else {
-                        ({ data: initial } = await api.post("/public/decode-statement-text", { text: exampleText !== null ? exampleText : text }, { timeout: 90_000 }));
+                        ({ data: initial } = await api.post("/public/decode-statement-text", { text: exampleText !== null ? exampleText : text, example: exampleText !== null }, { timeout: 90_000 }));
                     }
                     break;
                 } catch (postErr) {

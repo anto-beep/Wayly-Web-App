@@ -4835,7 +4835,12 @@ def _add_parse_warnings(audit_result: Dict[str, Any], extracted: Dict[str, Any])
         # where each row of the services table has a GST column. When the
         # service description contains a GST-free care term and the row's
         # GST column shows a positive value, flag it.
-        if _source_text:
+        # GUARD: only run this fragile source-text scan when the statement
+        # actually mentions GST. Without a "GST" token anywhere we cannot
+        # claim "GST charged" — otherwise this heuristic misreads a bare
+        # service RATE (e.g. $85.00 personal care) as a GST amount, producing
+        # a false positive on clean, genuinely GST-free statements.
+        if _source_text and _re_b.search(r"\bg\.?s\.?t\b", _source_text, _re_b.IGNORECASE):
             # Find lines describing a service with a GST amount inline.
             # Pattern: description containing 'personal care' or 'RN' or
             # 'clinical' etc., followed within ~120 chars by a positive $X.XX

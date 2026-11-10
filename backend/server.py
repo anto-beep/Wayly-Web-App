@@ -3814,6 +3814,7 @@ async def _enforce_statement_decoder_limit(request: Request, response: Response)
 
 class PublicTextBody(BaseModel):
     text: str = Field(min_length=10, max_length=40000)
+    example: bool = False  # set by the "Try it with an example statement" runner
 
 
 class PublicBudgetBody(BaseModel):
@@ -5318,12 +5319,57 @@ async def public_decode_job_status(job_id: str):
     return out
 
 
+# Canonical "Try it with an example statement" sample. Kept byte-for-byte in
+# sync with SAMPLE_STATEMENT in frontend/src/pages/tools/StatementDecoderTool.jsx.
+# A logged-out visitor running THIS exact text gets a free, unlimited decode
+# (never counts against their one real free decode). We compare on whitespace-
+# collapsed, case-folded text so trivial reformatting still matches while bogus
+# payloads fall through to normal rate limiting.
+_OFFICIAL_SAMPLE_STATEMENT = """Sunrise Home Care Pty Ltd
+Support at Home monthly statement (example, not real data)
+Participant: Jane Sample (full Age Pension)
+Classification level: Level 4
+Statement period: 01/10/2026 to 31/10/2026
+Quarterly budget (Level 4): $7,632.04
+Total available this quarter: $7,632.04
+Services delivered this month (all Clinical Supports, $0 participant contribution)
+02/10/2026  Personal care (showering)   1.0 hr   $85.00    Contribution $0.00
+09/10/2026  Personal care (showering)   1.0 hr   $85.00    Contribution $0.00
+16/10/2026  Personal care (showering)   1.0 hr   $85.00    Contribution $0.00
+23/10/2026  Personal care (showering)   1.0 hr   $85.00    Contribution $0.00
+07/10/2026  Nursing visit (wound care)  1.0 hr   $120.00   Contribution $0.00
+21/10/2026  Nursing visit (wound care)  1.0 hr   $120.00   Contribution $0.00
+14/10/2026  Physiotherapy               1.0 hr   $150.00   Contribution $0.00
+28/10/2026  Occupational therapy        1.0 hr   $160.00   Contribution $0.00
+Total cost of services: $890.00
+Government funded: $890.00
+Participant contribution: $0.00
+Spent this quarter to date: $890.00
+Remaining this quarter: $6,742.04
+Lifetime contributions to date: $0.00"""
+
+_OFFICIAL_SAMPLE_NORM = "".join(_OFFICIAL_SAMPLE_STATEMENT.split()).lower()
+
+
+def _is_official_sample_text(text: str) -> bool:
+    return "".join((text or "").split()).lower() == _OFFICIAL_SAMPLE_NORM
+
+
 @api.post("/public/decode-statement-text")
 async def public_decode_text(
     body: PublicTextBody, request: Request, response: Response,
     caller_user_id: Optional[str] = Depends(get_current_user_id_optional),
 ):
-    _limit = await _enforce_statement_decoder_limit(request, response)
+    # "Try it with an example statement": the built-in, clearly-fictional
+    # sample is free and unlimited for logged-out prospects, so trying it
+    # never burns their one real free decode. We verify the submitted text
+    # actually matches the official sample server-side (anti-abuse); a bogus
+    # example:true with other text falls through to normal limit enforcement.
+    _is_example = bool(getattr(body, "example", False)) and _is_official_sample_text(body.text or "")
+    if _is_example:
+        _limit = {}  # skip the 120-day cooldown + per-IP burst caps, record no usage
+    else:
+        _limit = await _enforce_statement_decoder_limit(request, response)
     await _block_if_view_only_uid(caller_user_id)
     from lib.upload_guard import classify_content as _classify_content
     _sd_guard = _classify_content("statement-decoder", body.text or "")
@@ -7735,7 +7781,7 @@ init_loop1_addons(
 init_loop1_extras(db=db, user_dep=_user_from_request_required, lca1_scan_for_participant=loop1_lca1_scan, send_email=_send_email_fn, build_digest_for_user=lca1_build_digest)
 init_lca1(db=db, user_dep=_user_from_request_required, core1_write_timeline_event=core1_write_timeline)
 init_sd3(db=db, user_dep=_user_from_request_required, core1_write_timeline_event=core1_write_timeline, core1_assert_access=core1_assert_access, loop1_open_case=loop1_open_case)
-init_insights(db=db, user_dep=_user_from_request_required)
+init_insights(db=db, user_dep=_user_from_request)
 init_payments(db=db, user_dep=_user_from_request_required)
 init_payments_advanced(db=db, user_dep=_user_from_request_required)
 init_ce3_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline, loop1_open_case=loop1_open_case)
